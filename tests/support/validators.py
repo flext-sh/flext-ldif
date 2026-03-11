@@ -5,7 +5,7 @@ This module provides validation utilities for testing flext-ldif functionality.
 
 from __future__ import annotations
 
-from flext_core import FlextResult, u
+from flext_core import r, u
 
 from flext_ldif import m, p, t
 
@@ -84,8 +84,8 @@ class TestValidators:
         }
 
     @staticmethod
-    def validate_result_success(result: FlextResult[object]) -> dict[str, bool]:
-        """Validate FlextResult success characteristics."""
+    def validate_result_success(result: r[object]) -> dict[str, bool]:
+        """Validate r success characteristics."""
         return {
             "is_success": result.is_success,
             "has_value": hasattr(result, "value"),

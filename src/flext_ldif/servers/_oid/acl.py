@@ -8,7 +8,7 @@ import struct
 from collections.abc import Mapping
 from typing import ClassVar, Literal, override
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, r
 from pydantic import BaseModel, Field
 
 from flext_ldif import c, m, t
@@ -273,10 +273,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     @override
     def convert_rfc_acl_to_aci(
         self, rfc_acl_attrs: Mapping[str, list[str]], target_server: str = "oid"
-    ) -> FlextResult[Mapping[str, list[str]]]:
+    ) -> r[Mapping[str, list[str]]]:
         """Convert RFC ACL format to Oracle OID orclaci format."""
         _ = target_server
-        return FlextResult.ok(rfc_acl_attrs)
+        return r.ok(rfc_acl_attrs)
 
     def _build_metadata_extensions(
         self,
@@ -454,7 +454,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 return source_subject_type or "user_dn"
 
     @override
-    def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
+    def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
         """Parse Oracle OID ACL string to RFC-compliant internal model."""
         parent_result = super()._parse_acl(acl_line)
         if parent_result.is_failure:
@@ -469,16 +469,16 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             )
         ):
             updated_acl = self._update_acl_with_oid_metadata(acl_data, acl_line)
-            return FlextResult[m.Ldif.Acl].ok(updated_acl)
+            return r[m.Ldif.Acl].ok(updated_acl)
         if (
             parent_result.is_success
             and (acl_data := parent_result.value)
             and (not self.can_handle_acl(acl_line))
         ):
-            return FlextResult[m.Ldif.Acl].ok(acl_data)
+            return r[m.Ldif.Acl].ok(acl_data)
         return self._parse_oid_specific_acl(acl_line)
 
-    def _parse_oid_specific_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
+    def _parse_oid_specific_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
         """Parse OID-specific ACL format when RFC parser fails."""
         try:
             target_dn, target_attrs = self._extract_oid_target(acl_line)
@@ -578,7 +578,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 ),
                 raw_acl=acl_line,
             )
-            return FlextResult[m.Ldif.Acl].ok(acl_model)
+            return r[m.Ldif.Acl].ok(acl_model)
         except (
             ValueError,
             KeyError,
@@ -595,7 +595,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 acl_line=acl_preview,
                 acl_line_length=len(acl_line),
             )
-            return FlextResult[m.Ldif.Acl].fail(f"OID ACL parsing failed: {e}")
+            return r[m.Ldif.Acl].fail(f"OID ACL parsing failed: {e}")
 
     def _prepare_subject_and_permissions_for_write(
         self,
@@ -668,12 +668,12 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     @override
     def _write_acl(
         self, acl_data: FlextLdifModelsDomains.Acl, _format_option: str | None = None
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Write ACL to OID orclaci format (Phase 2: Denormalization)."""
         if acl_data.raw_acl and acl_data.raw_acl.startswith(
             FlextLdifServersOidConstants.ORCLACI + ":"
         ):
-            return FlextResult[str].ok(acl_data.raw_acl)
+            return r[str].ok(acl_data.raw_acl)
         acl_parts = [
             FlextLdifServersOidConstants.ORCLACI + ":",
             FlextLdifServersOidConstants.ACL_ACCESS_TO,
@@ -715,4 +715,4 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             metadata_public = None
         acl_parts.extend(self._build_metadata_extensions(metadata_public))
         orclaci_str = " ".join(acl_parts)
-        return FlextResult[str].ok(orclaci_str)
+        return r[str].ok(orclaci_str)

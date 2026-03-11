@@ -122,16 +122,16 @@ class FlextLdifParser(Flext[dict[str, object]]):
 
 - **FlextLdifSettings**: Configuration for parsing behavior
 - **FlextLogger**: Structured logging for operations
-- **FlextResult**: Railway-oriented error handling
+- **r**: Railway-oriented error handling
 - **FlextService**: Base class for FLEXT ecosystem integration
 
 ### Design Principles Applied
 
 1. **Single Responsibility Principle**: Service focuses only on parsing operations
 1. **Dependency Injection**: Client and config injected via constructor
-1. **Railway-Oriented Programming**: All methods return FlextResult[T]
+1. **Railway-Oriented Programming**: All methods return r[T]
 1. **Type Safety**: Full Python 3.13+ type annotations
-1. **FLEXT Patterns**: Inherits from FlextService, uses FlextResult
+1. **FLEXT Patterns**: Inherits from FlextService, uses r
 
 ______________________________________________________________________
 
@@ -227,11 +227,11 @@ ______________________________________________________________________
 - ✅ All methods have complete type annotations
 - ✅ Uses Python 3.13+ syntax (`from __future__ import annotations`)
 - ✅ Complex union types properly handled with `cast()`
-- ✅ FlextResult[T] return types for all operations
+- ✅ r[T] return types for all operations
 
 ### Error Handling
 
-- ✅ Railway-oriented programming with FlextResult
+- ✅ Railway-oriented programming with r
 - ✅ Proper exception handling with try/except
 - ✅ Detailed error messages with context
 - ✅ Partial success handling for batch operations
@@ -248,7 +248,7 @@ ______________________________________________________________________
 
 - ✅ Inherits from FlextService\[dict[str, object]\]
 - ✅ Implements execute() method for health checks
-- ✅ Uses FlextResult for all operations
+- ✅ Uses r for all operations
 - ✅ Uses FlextLogger for structured logging
 - ✅ Dependency injection via constructor
 
@@ -339,7 +339,7 @@ ______________________________________________________________________
 - **FLEXT Compliance**: Service follows FLEXT architectural patterns
 - **Dependency Injection**: Clean dependency management
 - **Type Safety**: Full type annotations with Python 3.13+
-- **Error Handling**: Consistent FlextResult pattern throughout
+- **Error Handling**: Consistent r pattern throughout
 
 ### Future Extensibility
 
@@ -373,7 +373,7 @@ ______________________________________________________________________
 ## Success Criteria
 
 - ✅ FlextLdifParser created with all parsing operations
-- ✅ All methods follow FLEXT patterns (FlextService, FlextResult)
+- ✅ All methods follow FLEXT patterns (FlextService, r)
 - ✅ Complete type annotations (Python 3.13+)
 - ✅ Comprehensive documentation with examples
 - ⏳ Integration with api.py (Next: User confirmation)

@@ -78,7 +78,7 @@ UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 123
 **Solution**:
 
 ```python
-def handle_encoding_issues(file_path: str) -> FlextResult[str]:
+def handle_encoding_issues(file_path: str) -> r[str]:
     """Handle various character encodings."""
     encodings_to_try = ["utf-8", "latin-1", "cp1252", "iso-8859-1"]
 
@@ -87,20 +87,20 @@ def handle_encoding_issues(file_path: str) -> FlextResult[str]:
             with open(file_path, "r", encoding=encoding) as f:
                 content = f.read()
             print(f"✓ Successfully read with {encoding} encoding")
-            return FlextResult[str].ok(content)
+            return r[str].ok(content)
         except UnicodeDecodeError:
             print(f"✗ Failed with {encoding} encoding")
             continue
 
-    return FlextResult[str].fail("Unable to decode file with any supported encoding")
+    return r[str].fail("Unable to decode file with any supported encoding")
 
 
 # Usage with custom encoding
-def parse_with_encoding_detection(file_path: str) -> FlextResult[list]:
+def parse_with_encoding_detection(file_path: str) -> r[list]:
     """Parse LDIF with automatic encoding detection."""
     content_result = handle_encoding_issues(file_path)
     if content_result.is_failure:
-        return FlextResult[list].fail(content_result.error)
+        return r[list].fail(content_result.error)
 
     api = FlextLdif()
     return api.parse_string(content_result.unwrap())
@@ -120,7 +120,7 @@ MemoryError: Unable to allocate array
 **Solution**:
 
 ```python
-def process_large_file_safely(file_path: str) -> FlextResult[t.Dict]:
+def process_large_file_safely(file_path: str) -> r[t.Dict]:
     """Process large LDIF files with memory management."""
     import psutil
     import os
@@ -133,7 +133,7 @@ def process_large_file_safely(file_path: str) -> FlextResult[t.Dict]:
     print(f"Available memory: {available_memory_gb:.2f} GB")
 
     if file_size_gb > available_memory_gb * 0.5:
-        return FlextResult[t.Dict].fail(
+        return r[t.Dict].fail(
             f"File too large for available memory. "
             f"File: {file_size_gb:.2f}GB, Available: {available_memory_gb:.2f}GB"
         )
@@ -148,7 +148,7 @@ def process_large_file_safely(file_path: str) -> FlextResult[t.Dict]:
     return api.parse_file(file_path)
 
 
-def chunk_process_file(file_path: str, chunk_size: int = 10000) -> FlextResult[t.Dict]:
+def chunk_process_file(file_path: str, chunk_size: int = 10000) -> r[t.Dict]:
     """Process file in chunks to manage memory."""
     results = {"total_entries": 0, "processed_chunks": 0}
 
@@ -180,12 +180,12 @@ def chunk_process_file(file_path: str, chunk_size: int = 10000) -> FlextResult[t
                     results["total_entries"] += len(current_chunk)
                     results["processed_chunks"] += 1
 
-        return FlextResult[t.Dict].ok(results)
+        return r[t.Dict].ok(results)
     except Exception as e:
-        return FlextResult[t.Dict].fail(f"Chunk processing failed: {e}")
+        return r[t.Dict].fail(f"Chunk processing failed: {e}")
 
 
-def process_chunk(chunk_entries: t.StringList) -> FlextResult[bool]:
+def process_chunk(chunk_entries: t.StringList) -> r[bool]:
     """Process a chunk of LDIF entries."""
     chunk_content = "\n\n".join(chunk_entries)
     api = FlextLdif()
@@ -207,7 +207,7 @@ result = api.validate_entries(entries)
 **Solution**:
 
 ```python
-def handle_validation_errors(entries: list) -> FlextResult[list]:
+def handle_validation_errors(entries: list) -> r[list]:
     """Handle validation errors with detailed reporting."""
     # Try with strict validation first
     strict_config = FlextLdifModels.Config(strict_validation=True)
@@ -216,7 +216,7 @@ def handle_validation_errors(entries: list) -> FlextResult[list]:
     strict_result = strict_api.validate_entries(entries)
     if strict_result.is_success:
         print("✓ All entries pass strict validation")
-        return FlextResult[list].ok(entries)
+        return r[list].ok(entries)
 
     print(f"✗ Strict validation failed: {strict_result.error}")
 
@@ -230,9 +230,9 @@ def handle_validation_errors(entries: list) -> FlextResult[list]:
     if permissive_result.is_success:
         print("✓ Entries pass permissive validation")
         print("⚠️  Consider reviewing data quality")
-        return FlextResult[list].ok(entries)
+        return r[list].ok(entries)
 
-    return FlextResult[list].fail(f"Validation failed: {permissive_result.error}")
+    return r[list].fail(f"Validation failed: {permissive_result.error}")
 
 
 def analyze_entry_issues(entries: list) -> None:
@@ -318,7 +318,7 @@ def optimize_processing_config() -> FlextLdifModels.Config:
     )
 
 
-def process_with_optimization(file_path: str) -> FlextResult[t.Dict]:
+def process_with_optimization(file_path: str) -> r[t.Dict]:
     """Process LDIF with performance optimizations."""
     config = optimize_processing_config()
     api = FlextLdif(config=config)
@@ -372,7 +372,7 @@ def debug_container_issues() -> None:
         print(f"✗ Registration failed: {registration_result.error}")
 
 
-def safe_service_registration() -> FlextResult[FlextLdif]:
+def safe_service_registration() -> r[FlextLdif]:
     """Safely register LDIF service with error handling."""
     container = FlextContainer.get_global()
 
@@ -382,21 +382,21 @@ def safe_service_registration() -> FlextResult[FlextLdif]:
     # Attempt registration
     registration_result = container.register("ldif_api", api)
     if registration_result.is_failure:
-        return FlextResult[FlextLdif].fail(
+        return r[FlextLdif].fail(
             f"Failed to register LDIF API: {registration_result.error}"
         )
 
     # Verify registration by retrieving
     retrieval_result = container.get("ldif_api")
     if retrieval_result.is_failure:
-        return FlextResult[FlextLdif].fail(
+        return r[FlextLdif].fail(
             f"Failed to retrieve LDIF API: {retrieval_result.error}"
         )
 
-    return FlextResult[FlextLdif].ok(retrieval_result.unwrap())
+    return r[FlextLdif].ok(retrieval_result.unwrap())
 ```
 
-#### FlextResult Chain Errors
+#### r Chain Errors
 
 **Symptom**: Railway-oriented programming chains fail unexpectedly.
 
@@ -413,8 +413,8 @@ result = (
 **Solution**:
 
 ```python
-def correct_railway_chaining(file_path: str) -> FlextResult[list]:
-    """Demonstrate correct FlextResult chaining."""
+def correct_railway_chaining(file_path: str) -> r[list]:
+    """Demonstrate correct r chaining."""
     api = FlextLdif()
 
     return (
@@ -432,7 +432,7 @@ def correct_railway_chaining(file_path: str) -> FlextResult[list]:
     )
 
 
-def debug_railway_chain(file_path: str) -> FlextResult[list]:
+def debug_railway_chain(file_path: str) -> r[list]:
     """Debug railway-oriented programming chains."""
     api = FlextLdif()
 
@@ -451,7 +451,7 @@ def debug_railway_chain(file_path: str) -> FlextResult[list]:
     validation_result = api.validate_entries(entries)
     if validation_result.is_failure:
         print(f"❌ Validation failed: {validation_result.error}")
-        return FlextResult[list].fail(validation_result.error)
+        return r[list].fail(validation_result.error)
 
     print("✓ Validation passed")
 
@@ -465,7 +465,7 @@ def debug_railway_chain(file_path: str) -> FlextResult[list]:
     persons = filter_result.unwrap()
     print(f"✓ Found {len(persons)} person entries")
 
-    return FlextResult[list].ok(persons)
+    return r[list].ok(persons)
 ```
 
 ## Diagnostic Tools

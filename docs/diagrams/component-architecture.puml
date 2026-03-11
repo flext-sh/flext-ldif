@@ -60,7 +60,7 @@ Container_Boundary(flext_ldif_lib, "FLEXT-LDIF Library") {
 
     Component_Boundary(infrastructure, "Infrastructure") {
         Component(logging, "Structured Logging", "Python Integration", "Context tracking", "FLEXT ecosystem logging")
-        Component(error_handling, "FlextResult[T]", "Type System", "Railway-oriented programming", "Functional error composition")
+        Component(error_handling, "r[T]", "Type System", "Railway-oriented programming", "Functional error composition")
     }
 }
 

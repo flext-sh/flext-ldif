@@ -8,7 +8,7 @@ import struct
 from collections.abc import Mapping
 from typing import ClassVar, override
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, r
 
 from flext_ldif import c, m, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -274,7 +274,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             )
 
         @override
-        def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
             """Parse OpenLDAP 2.x ACL definition (internal)."""
             try:
                 acl_content = self._strip_acl_prefix_and_index(acl_line)
@@ -294,12 +294,12 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                         raw_acl=acl_line,
                         metadata=self.create_metadata(acl_line),
                     )
-                    return FlextResult[m.Ldif.Acl].ok(acl_minimal)
+                    return r[m.Ldif.Acl].ok(acl_minimal)
                 subject_value, access = self._parse_by_clauses(acl_content)
                 acl = self._build_openldap_acl_model(
                     what, attributes, subject_value, access, acl_line
                 )
-                return FlextResult[m.Ldif.Acl].ok(acl)
+                return r[m.Ldif.Acl].ok(acl)
             except (
                 ValueError,
                 KeyError,
@@ -307,9 +307,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                return FlextResult[m.Ldif.Acl].fail(
-                    f"OpenLDAP 2.x ACL parsing failed: {e}"
-                )
+                return r[m.Ldif.Acl].fail(f"OpenLDAP 2.x ACL parsing failed: {e}")
 
         def _parse_by_clauses(self, acl_content: str) -> tuple[str, str]:
             """Parse "by <who> <access>" clauses."""
@@ -375,11 +373,11 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             return acl_content
 
         @override
-        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
+        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format (internal)."""
             try:
                 if acl_data.raw_acl:
-                    return FlextResult[str].ok(acl_data.raw_acl)
+                    return r[str].ok(acl_data.raw_acl)
                 constants = FlextLdifServersOpenldap.Constants
                 what = (
                     acl_data.target.target_dn
@@ -402,7 +400,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     if perms:
                         acl_parts.append(",".join(perms))
                 acl_str = " ".join(acl_parts)
-                return FlextResult[str].ok(acl_str)
+                return r[str].ok(acl_str)
             except (
                 ValueError,
                 KeyError,
@@ -410,7 +408,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                return FlextResult[str].fail(f"OpenLDAP 2.x ACL write failed: {e}")
+                return r[str].fail(f"OpenLDAP 2.x ACL write failed: {e}")
 
     class Entry(FlextLdifServersRfc.Entry):
         """OpenLDAP 2.x entry quirk (nested)."""

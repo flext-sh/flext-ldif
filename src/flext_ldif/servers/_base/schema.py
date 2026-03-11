@@ -382,18 +382,18 @@ class FlextLdifServersBaseSchema(
 
     def write(
         self,
-        model: p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol,
+        model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> r[str]:
         """Write schema model to string format."""
-        if isinstance(model, p.Ldif.SchemaAttributeProtocol):
+        if isinstance(model, m.Ldif.SchemaAttribute):
             return self.write_attribute(model)
         return self.write_objectclass(model)
 
-    def write_attribute(self, attr_data: p.Ldif.SchemaAttributeProtocol) -> r[str]:
+    def write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> r[str]:
         """Write attribute to RFC-compliant string format (public API)."""
         return self._write_attribute(attr_data)
 
-    def write_objectclass(self, oc_data: p.Ldif.SchemaObjectClassProtocol) -> r[str]:
+    def write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> r[str]:
         """Write objectClass to RFC-compliant string format (public API)."""
         return self._write_objectclass(oc_data)
 
@@ -558,12 +558,12 @@ class FlextLdifServersBaseSchema(
         msg = f"Unknown operation: {operation}"
         raise AssertionError(msg)
 
-    def _write_attribute(self, attr_data: p.Ldif.SchemaAttributeProtocol) -> r[str]:
+    def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> r[str]:
         """Write attribute data to RFC-compliant string format (internal)."""
         _ = attr_data
         return r[str].fail("Must be implemented by subclass")
 
-    def _write_objectclass(self, oc_data: p.Ldif.SchemaObjectClassProtocol) -> r[str]:
+    def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> r[str]:
         """Write objectClass data to RFC-compliant string format (internal)."""
         _ = oc_data
         return r[str].fail("Must be implemented by subclass")

@@ -20,7 +20,7 @@
   - [2. Test Complete Roundtrips](#2-test-complete-roundtrips)
   - [3. Validate Deep Content, Not Just Counts](#3-validate-deep-content-not-just-counts)
   - [4. Use Parametrization for Server Compatibility](#4-use-parametrization-for-server-compatibility)
-  - [5. Handle FlextResult Patterns](#5-handle-flextresult-patterns)
+  - [5. Handle r Patterns](#5-handle-flextresult-patterns)
   - [6. Test Error Cases](#6-test-error-cases)
 - [📊 Test Coverage](#-test-coverage)
   - [Coverage by Category](#coverage-by-category)
@@ -484,7 +484,7 @@ def test_oud_entries(self) -> None:
     # Same test logic, not DRY
 ```
 
-### 5. Handle FlextResult Patterns
+### 5. Handle r Patterns
 
 ✅ **DO**: Check both success and error cases
 
@@ -722,7 +722,7 @@ Tests run with:
 - [ ] Test checks deep content, not just counts
 - [ ] Test includes parametrization for multiple servers
 - [ ] Test handles both success and error cases
-- [ ] Test uses FlextResult patterns correctly
+- [ ] Test uses r patterns correctly
 - [ ] Test passes linting and type checking
 - [ ] Test follows "Best Practices" guidelines above
 

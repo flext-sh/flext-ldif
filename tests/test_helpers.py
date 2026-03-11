@@ -91,7 +91,7 @@ class TestsFlextLdifMatchers(tm_base):
         allowing validation of many different aspects of an entry in one call.
 
         Args:
-            entry: Entry or FlextResult[Entry] to validate
+            entry: Entry or r[Entry] to validate
             dn: Exact DN value to match
             dn_contains: String that DN must contain
             dn_starts: String that DN must start with
@@ -115,7 +115,7 @@ class TestsFlextLdifMatchers(tm_base):
             msg: Custom error message
 
         Returns:
-            The validated Entry (unwrapped if FlextResult)
+            The validated Entry (unwrapped if r)
 
         Examples:
             # Validate DN and attributes
@@ -287,7 +287,7 @@ class TestsFlextLdifMatchers(tm_base):
         Consolidates multiple entry list validation patterns into one method.
 
         Args:
-            entries: Sequence of entries or FlextResult[Sequence[Entry]]
+            entries: Sequence of entries or r[Sequence[Entry]]
             count: Exact number of entries expected
             count_gt: Number of entries must be >
             count_gte: Number of entries must be >=
@@ -468,10 +468,10 @@ class TestsFlextLdifMatchers(tm_base):
         oc_count_lt: int | None = None,
         oc_count_lte: int | None = None,
     ) -> m.Ldif.Entry:
-        """Assert FlextResult success and validate entry.
+        """Assert r success and validate entry.
 
         Args:
-            result: FlextResult[Entry] to validate
+            result: r[Entry] to validate
             msg: Custom error message
             See entry() method for parameter documentation
 
@@ -522,10 +522,10 @@ class TestsFlextLdifMatchers(tm_base):
         any_has_oc: str | Sequence[str] | None = None,
         at_index: dict[int, dict[str, object]] | None = None,
     ) -> list[m.Ldif.Entry]:
-        """Assert FlextResult success and validate entries list.
+        """Assert r success and validate entries list.
 
         Args:
-            result: FlextResult[Sequence[Entry]] or FlextResult[list[Entry]] to validate
+            result: r[Sequence[Entry]] or r[list[Entry]] to validate
             msg: Custom error message
             See entries() method for parameter documentation
 

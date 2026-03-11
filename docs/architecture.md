@@ -32,7 +32,7 @@ to show how the library processes LDIF while adapting to different LDAP servers.
 - Separate RFC-compliant behaviour from server-specific differences via
   discoverable quirks.
 - Provide predictable, typed inputs/outputs using Pydantic v2 models and
-  flext-core `FlextResult`.
+  flext-core `r`.
 - Keep services small and focused so changes remain localized.
 
 ## Package Layout
@@ -62,7 +62,7 @@ Supporting modules live under `_models/` (domain/config/processing/results) and
 and categorization services, maps service types to concrete classes via
 `SERVICE_MAPPING`, and lazily instantiates services on first access. The facade
 inherits flext-core `FlextService`, exposing configuration (`FlextLdifSettings`),
-logging, and `FlextResult` helpers to callers. Builder-style helpers (parse →
+logging, and `r` helpers to callers. Builder-style helpers (parse →
 filter → write) reuse the same instance-level services to avoid redundant
 initialization.
 
@@ -97,7 +97,7 @@ Each service owns one responsibility:
   identify server types, adjust entries, normalize DNs, and orchestrate migration
   flows.
 
-All services return `FlextResult[T]` and share logging/configuration through the
+All services return `r[T]` and share logging/configuration through the
 base class. The writer and conversion services receive the quirk registry so
 they can format entries for the target server type.
 
@@ -157,7 +157,7 @@ encodings.
 - **Adding a service:** subclass `FlextLdifServiceBase`, register a factory in
   `FlextLdifServiceRegistry`, and expose it through the facade mapping.
 - **Reliability:** quirk discovery is idempotent and cached; typed models and
-  `FlextResult` help prevent unexpected exceptions crossing boundaries.
+  `r` help prevent unexpected exceptions crossing boundaries.
 
 The architecture favors discoverability and small, composable services so that
 new behaviours can be added without widening the public API beyond the

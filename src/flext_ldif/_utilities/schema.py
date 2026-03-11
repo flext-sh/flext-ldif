@@ -559,7 +559,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _format_attribute_list(
-        attr_list: str | list[str] | None, prefix: str
+        attr_list: str | Sequence[str] | None, prefix: str
     ) -> str | None:
         """Format attribute list (MUST/MAY) for objectClass definition."""
         if not attr_list:
@@ -572,7 +572,7 @@ class FlextLdifUtilitiesSchema:
         return f"{prefix} {attr_list}"
 
     @staticmethod
-    def _format_sup_list(sup_value: str | list[str] | None) -> str | None:
+    def _format_sup_list(sup_value: str | Sequence[str] | None) -> str | None:
         """Format SUP (superior) list for objectClass definition."""
         if not sup_value:
             return None

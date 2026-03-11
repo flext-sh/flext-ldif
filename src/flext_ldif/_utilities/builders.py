@@ -4,20 +4,20 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from enum import StrEnum
-from typing import Literal, Self
+from typing import Literal, Self, TypeAlias
 
 from flext_ldif import c
 from flext_ldif.models import FlextLdifModels
 
-AclConversionConfig = FlextLdifModels.Ldif.AclConversionConfig
-AttrNormalizationConfig = FlextLdifModels.Ldif.AttrNormalizationConfig
-DnNormalizationConfig = FlextLdifModels.Ldif.DnNormalizationConfig
-FilterConfig = FlextLdifModels.Ldif.FilterConfig
-MetadataConfig = FlextLdifModels.Ldif.MetadataConfig
-ProcessConfig = FlextLdifModels.Ldif.ProcessConfig
-TransformConfig = FlextLdifModels.Ldif.TransformConfig
-ValidationConfig = FlextLdifModels.Ldif.ValidationConfig
-WriteConfig = FlextLdifModels.Ldif.WriteConfig
+AclConversionConfig: TypeAlias = FlextLdifModels.Ldif.AclConversionConfig
+AttrNormalizationConfig: TypeAlias = FlextLdifModels.Ldif.AttrNormalizationConfig
+DnNormalizationConfig: TypeAlias = FlextLdifModels.Ldif.DnNormalizationConfig
+FilterConfig: TypeAlias = FlextLdifModels.Ldif.FilterConfig
+MetadataConfig: TypeAlias = FlextLdifModels.Ldif.MetadataConfig
+ProcessConfig: TypeAlias = FlextLdifModels.Ldif.ProcessConfig
+TransformConfig: TypeAlias = FlextLdifModels.Ldif.TransformConfig
+ValidationConfig: TypeAlias = FlextLdifModels.Ldif.ValidationConfig
+WriteConfig: TypeAlias = FlextLdifModels.Ldif.WriteConfig
 
 
 class ProcessConfigBuilder:

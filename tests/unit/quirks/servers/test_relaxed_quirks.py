@@ -10,7 +10,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_core import FlextResult
+from flext_core import r
 from tests import c, m, s
 
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
@@ -295,9 +295,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         bad_input: str,
     ) -> None:
         """Test relaxed mode recovers from binary content if OID present."""
-        result: (
-            FlextResult[m.Ldif.SchemaAttribute] | FlextResult[m.Ldif.SchemaObjectClass]
-        )
+        result: r[m.Ldif.SchemaAttribute] | r[m.Ldif.SchemaObjectClass]
         if parse_type == "attribute":
             result = schema_quirk.parse_attribute(bad_input)
         else:
@@ -322,9 +320,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         input_without_oid: str,
     ) -> None:
         """Test parsing fails without OID even in relaxed mode."""
-        result: (
-            FlextResult[m.Ldif.SchemaAttribute] | FlextResult[m.Ldif.SchemaObjectClass]
-        )
+        result: r[m.Ldif.SchemaAttribute] | r[m.Ldif.SchemaObjectClass]
         if parse_type == "attribute":
             result = schema_quirk.parse_attribute(input_without_oid)
         else:
@@ -343,9 +339,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         input_with_oid: str,
     ) -> None:
         """Test parsing succeeds with OID even with binary data."""
-        result: (
-            FlextResult[m.Ldif.SchemaAttribute] | FlextResult[m.Ldif.SchemaObjectClass]
-        )
+        result: r[m.Ldif.SchemaAttribute] | r[m.Ldif.SchemaObjectClass]
         if parse_type == "attribute":
             result = schema_quirk.parse_attribute(input_with_oid)
         else:

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from flext_core import FlextResult
+from flext_core import r
 from tests import s, t
 
 from flext_ldif import FlextLdifUtilities, m
@@ -191,9 +191,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
 
         field_transforms: dict[
             str,
-            Callable[
-                [t.ContainerValue], t.ContainerValue | FlextResult[t.ContainerValue]
-            ]
+            Callable[[t.ContainerValue], t.ContainerValue | r[t.ContainerValue]]
             | str
             | list[str]
             | None,
@@ -230,9 +228,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
 
         field_transforms: dict[
             str,
-            Callable[
-                [t.ContainerValue], t.ContainerValue | FlextResult[t.ContainerValue]
-            ]
+            Callable[[t.ContainerValue], t.ContainerValue | r[t.ContainerValue]]
             | str
             | list[str]
             | None,

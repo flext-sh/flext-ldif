@@ -2,7 +2,7 @@
 
 Test suite verifying:
     - Configuration loading from environment variables
-    - Railway-oriented FlextResult composition (write → parse → validate)
+    - Railway-oriented r composition (write → parse → validate)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -56,12 +56,12 @@ class TestRealLdapConfigurationFromEnv:
 
 @pytest.mark.integration
 class TestRealLdapRailwayComposition:
-    """Test railway-oriented FlextResult composition (write -> parse -> validate)."""
+    """Test railway-oriented r composition (write -> parse -> validate)."""
 
     def test_railway_parse_validate_write_cycle(
         self, flext_api: FlextLdif, tmp_path: Path
     ) -> None:
-        """Test FlextResult railway composition: write -> parse -> validate."""
+        """Test r railway composition: write -> parse -> validate."""
         entry_result = flext_api.models.Ldif.Entry.create(
             dn="cn=RailwayTest,ou=people,dc=example,dc=com",
             attributes={

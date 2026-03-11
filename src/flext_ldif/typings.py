@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping
 from typing import Annotated, Literal, TypeAlias, TypeVar
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextTypes, r
 from pydantic import StringConstraints
 
 from flext_ldif import c
@@ -75,9 +75,7 @@ class FlextLdifTypes(FlextTypes):
             """
 
             ParseMethodArg: TypeAlias = str
-            ParseMethodReturn: TypeAlias = FlextResult[
-                FlextTypes.Scalar | list[str] | None
-            ]
+            ParseMethodReturn: TypeAlias = r[FlextTypes.Scalar | list[str] | None]
             ParseMethod: TypeAlias = Callable[[object, str], ParseMethodReturn]
             ParseMethodDecorator: TypeAlias = Callable[[ParseMethod], ParseMethod]
             WriteMethodArg: TypeAlias = FlextTypes.Scalar | list[str] | None
@@ -85,7 +83,7 @@ class FlextLdifTypes(FlextTypes):
                 FlextTypes.Scalar
                 | list[str]
                 | None
-                | FlextResult[FlextTypes.Scalar | list[str] | None]
+                | r[FlextTypes.Scalar | list[str] | None]
             )
             WriteMethod: TypeAlias = Callable[
                 [object, WriteMethodArg], WriteMethodReturn

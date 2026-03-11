@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import re
 
-from flext_core import FlextLogger, FlextResult, FlextUtilities
+from flext_core import FlextLogger, FlextUtilities, r
 
 from flext_ldif._models.domain import FlextLdifModelsDomains
 
 u = FlextUtilities
-r = FlextResult
+r = r
 logger = FlextLogger(__name__)
 
 
@@ -160,16 +160,16 @@ class FlextLdifUtilitiesOID:
             return None
 
     @staticmethod
-    def validate_format(oid: str) -> FlextResult[bool]:
+    def validate_format(oid: str) -> r[bool]:
         """Validate OID format compliance with LDAP OID syntax."""
         if not oid:
-            return FlextResult[bool].ok(False)
+            return r[bool].ok(False)
         oid_pattern = "^[0-2](\\.[0-9]+)*$"
         try:
             is_valid = bool(re.match(oid_pattern, oid))
-            return FlextResult[bool].ok(is_valid)
+            return r[bool].ok(is_valid)
         except (TypeError, re.error) as e:
-            return FlextResult[bool].fail(f"Failed to validate OID format: {e}")
+            return r[bool].fail(f"Failed to validate OID format: {e}")
 
     ORACLE_OID_PATTERN: re.Pattern[str] = re.compile(r"2\\.16\\.840\\.1\\.113894\\..*")
     MICROSOFT_AD_PATTERN: re.Pattern[str] = re.compile(r"1\\.2\\.840\\.113556\\..*")

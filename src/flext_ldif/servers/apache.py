@@ -6,7 +6,7 @@ import re
 from collections.abc import Mapping
 from typing import ClassVar, override
 
-from flext_core import FlextResult
+from flext_core import r
 
 from flext_ldif import c, m, u
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -128,23 +128,19 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             )
 
         @override
-        def _parse_attribute(
-            self, attr_definition: str
-        ) -> FlextResult[m.Ldif.SchemaAttribute]:
+        def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add Apache metadata."""
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
                 attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for("apache")
-                return FlextResult[m.Ldif.SchemaAttribute].ok(
+                return r[m.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata})
                 )
             return result
 
         @override
-        def _parse_objectclass(
-            self, oc_definition: str
-        ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+        def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add Apache metadata."""
             result = super()._parse_objectclass(oc_definition)
             if result.is_success:
@@ -152,7 +148,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 u.Ldif.ObjectClass.fix_missing_sup(oc_data)
                 u.Ldif.ObjectClass.fix_kind_mismatch(oc_data)
                 metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
-                return FlextResult[m.Ldif.SchemaObjectClass].ok(
+                return r[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata})
                 )
             return result
@@ -198,13 +194,13 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             )
 
         @override
-        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
+        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
             """Write ACL data to Apache Directory Server ACI format."""
             parent_result = super()._write_acl(acl_data)
             if parent_result.is_success:
                 acl_str = parent_result.value
                 if acl_str and (not acl_str.strip().startswith(("aci:", "ads-aci:"))):
-                    return FlextResult[str].ok(f"aci: {acl_str}")
+                    return r[str].ok(f"aci: {acl_str}")
                 return parent_result
             return parent_result
 
@@ -222,7 +218,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         def _parse_entry(
             self, entry_dn: str, entry_attrs: Mapping[str, list[str | bytes]]
-        ) -> FlextResult[m.Ldif.Entry]:
+        ) -> r[m.Ldif.Entry]:
             """Parse raw LDIF entry data into Entry model."""
             str_attrs: dict[str, list[str]] = {
                 k: [v.decode() if isinstance(v, bytes) else v for v in vals]
@@ -234,7 +230,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             entry = base_result.value
             try:
                 if not entry.dn:
-                    return FlextResult[m.Ldif.Entry].ok(entry)
+                    return r[m.Ldif.Entry].ok(entry)
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(
                     quirk_type=self._get_server_type()
                 )
@@ -245,9 +241,9 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                     FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
                 )
                 processed_entry = entry.model_copy(update={"metadata": metadata})
-                return FlextResult[m.Ldif.Entry].ok(processed_entry)
+                return r[m.Ldif.Entry].ok(processed_entry)
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[m.Ldif.Entry].fail(
+                return r[m.Ldif.Entry].fail(
                     f"Apache Directory Server entry parsing failed: {exc}"
                 )
 

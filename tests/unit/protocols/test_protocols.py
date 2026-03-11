@@ -10,7 +10,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_core import FlextResult
+from flext_core import r
 from pydantic import BaseModel, ConfigDict, Field
 from tests import s
 
@@ -231,9 +231,9 @@ class TestsTestFlextLdifProtocols(s):
     def test_parse_returns_flext_result(
         self, oid_schema: FlextLdifServersOid.Schema
     ) -> None:
-        """Test parse method returns FlextResult."""
+        """Test parse method returns r."""
         result = oid_schema.parse(self.Constants.SAMPLE_ATTR_DEF)
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)
 
     def test_can_handle_returns_bool(
         self, oid_schema: FlextLdifServersOid.Schema

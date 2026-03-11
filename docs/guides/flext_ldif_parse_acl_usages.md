@@ -58,14 +58,14 @@ ______________________________________________________________________
 class FlextLdifServersBase.Acl(ABC, QuirkRegistrationMixin):
     """Base class for ACL quirks."""
 
-    def parse(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
+    def parse(self, acl_line: str) -> r[FlextLdifModels.Acl]:
         """Parse server-specific ACL definition.
 
         Args:
             acl_line: ACL line from LDIF file
 
         Returns:
-            FlextResult[FlextLdifModels.Acl]
+            r[FlextLdifModels.Acl]
         """
 ```
 
@@ -77,8 +77,8 @@ class FlextLdifServersBase.Acl(ABC, QuirkRegistrationMixin):
 class AclProtocol(Protocol):
     """Protocol for ACL quirks."""
 
-    def parse(self, acl_line: str) -> FlextResult[dict[str, object]]:
-        """Parse ACL - returns FlextResult with dict or Acl model."""
+    def parse(self, acl_line: str) -> r[dict[str, object]]:
+        """Parse ACL - returns r with dict or Acl model."""
 ```
 
 ______________________________________________________________________
@@ -108,9 +108,9 @@ ______________________________________________________________________
 Each server quirks class has:
 
 - `class XyzAcl(FlextLdifServersBase.Acl):`
-- `def parse(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:`
+- `def parse(self, acl_line: str) -> r[FlextLdifModels.Acl]:`
 - Server-specific parsing logic
-- Returns `FlextResult.ok(Acl(...))` or `FlextResult.fail(...)`
+- Returns `r.ok(Acl(...))` or `r.fail(...)`
 
 **Affected Lines**: ~40-50 lines per file × 13 files = ~520-650 lines
 
@@ -127,14 +127,14 @@ ______________________________________________________________________
 ```python
 def parse(
     self, acl_line: str, server_type: str | None = None
-) -> FlextResult[FlextLdifModels.Acl]:
+) -> r[FlextLdifModels.Acl]:
     """Parse ACL line using appropriate quirks.
 
     Delegates to quirks.parse() internally.
     """
     quirk_result = self._get_for_server(server_type)
     if quirk_result.is_failure:
-        return FlextResult[FlextLdifModels.Acl].fail(...)
+        return r[FlextLdifModels.Acl].fail(...)
 
     quirk = quirk_result.unwrap()
     return quirk.parse(acl_line)  # ← Calls quirk.parse()
@@ -151,7 +151,7 @@ def parse(
 ```python
 def _transform_categories(
     self, categorized: dict[str, list[t.Dict]]
-) -> FlextResult[dict[str, list[t.Dict]]]:
+) -> r[dict[str, list[t.Dict]]]:
     """Transform ACL entries using OID→OUD pipeline.
 
     Uses parse()
@@ -232,7 +232,7 @@ Input LDIF with OID ACL (orclaci:)
     ↓
 FlextLdif.parse() → FlextLdifModels.Entry[]
     ↓ (internal quirks usage)
-parse(acl_line: str) → FlextResult[FlextLdifModels.Acl]
+parse(acl_line: str) → r[FlextLdifModels.Acl]
     ↓
 Entry model with aci attributes (after transformation)
     ↓

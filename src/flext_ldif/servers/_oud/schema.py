@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import override
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, r
 
 from flext_ldif import c, m, p, u
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
@@ -41,9 +41,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
     @override
     def extract_schemas_from_ldif(
         self, ldif_content: str, *, validate_dependencies: bool = True
-    ) -> FlextResult[
-        Mapping[str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass]]
-    ]:
+    ) -> r[Mapping[str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass]]]:
         """Extract and parse all schema definitions from LDIF content."""
         return super().extract_schemas_from_ldif(
             ldif_content, validate_dependencies=validate_dependencies
@@ -137,14 +135,14 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
     @override
     def _hook_post_parse_attribute(
         self, attr: m.Ldif.SchemaAttribute
-    ) -> FlextResult[m.Ldif.SchemaAttribute]:
+    ) -> r[m.Ldif.SchemaAttribute]:
         """Hook: Validate OUD-specific attribute features after RFC parsing."""
         if not attr or not attr.oid:
-            return FlextResult[m.Ldif.SchemaAttribute].ok(attr)
+            return r[m.Ldif.SchemaAttribute].ok(attr)
         oid = str(attr.oid)
         oid_validation = self._validate_attribute_oid(oid)
         if oid_validation.is_failure:
-            return FlextResult[m.Ldif.SchemaAttribute].fail(
+            return r[m.Ldif.SchemaAttribute].fail(
                 oid_validation.error or "OID validation failed"
             )
         is_valid_oud_oid = oid_validation.value
@@ -173,25 +171,23 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                 extensions=oud_extensions,
                 extension_count=len(oud_extensions),
             )
-        return FlextResult[m.Ldif.SchemaAttribute].ok(attr)
+        return r[m.Ldif.SchemaAttribute].ok(attr)
 
     @override
     def _hook_post_parse_objectclass(
         self, oc: m.Ldif.SchemaObjectClass
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+    ) -> r[m.Ldif.SchemaObjectClass]:
         """Hook: Validate OUD-specific objectClass features after RFC parsing."""
         if not oc:
-            return FlextResult[m.Ldif.SchemaObjectClass].fail(
-                "ObjectClass is None or empty"
-            )
+            return r[m.Ldif.SchemaObjectClass].fail("ObjectClass is None or empty")
         sup_validation = self._validate_objectclass_sup(oc)
         if sup_validation.is_failure:
-            return FlextResult[m.Ldif.SchemaObjectClass].fail(
+            return r[m.Ldif.SchemaObjectClass].fail(
                 sup_validation.error or "SUP validation failed"
             )
         oid_and_sup_validation = self._validate_objectclass_oid_and_sup(oc)
         if oid_and_sup_validation.is_failure:
-            return FlextResult[m.Ldif.SchemaObjectClass].fail(
+            return r[m.Ldif.SchemaObjectClass].fail(
                 oid_and_sup_validation.error or "OID validation failed"
             )
         oc = oid_and_sup_validation.value
@@ -201,7 +197,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             objectclass_oid=oc.oid,
             sup_value=oc.sup,
         )
-        return FlextResult[m.Ldif.SchemaObjectClass].ok(oc)
+        return r[m.Ldif.SchemaObjectClass].ok(oc)
 
     @override
     def _transform_attribute_for_write(
@@ -225,13 +221,11 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         )
         return self._apply_attribute_oid_metadata(updated_attr)
 
-    def _validate_attribute_oid(self, oid: str) -> FlextResult[bool]:
+    def _validate_attribute_oid(self, oid: str) -> r[bool]:
         """Validate attribute OID format for OUD."""
         oid_validation_result = u.Ldif.OID.validate_format(oid)
         if oid_validation_result.is_failure:
-            return FlextResult[bool].fail(
-                f"OID validation failed: {oid_validation_result.error}"
-            )
+            return r[bool].fail(f"OID validation failed: {oid_validation_result.error}")
         is_valid_basic_oid = oid_validation_result.value
         is_valid_oud_oid = is_valid_basic_oid
         if not is_valid_oud_oid and oid.endswith("-oid"):
@@ -240,20 +234,20 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             if base_validation.is_success:
                 is_valid_oud_oid = base_validation.value
         if not is_valid_oud_oid:
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 f"Invalid OUD OID format: {oid} (must be numeric RFC OID or end with -oid suffix)"
             )
-        return FlextResult[bool].ok(is_valid_oud_oid)
+        return r[bool].ok(is_valid_oud_oid)
 
     def _validate_objectclass_oid_and_sup(
         self, oc: m.Ldif.SchemaObjectClass
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+    ) -> r[m.Ldif.SchemaObjectClass]:
         """Validate ObjectClass OID and SUP OID formats."""
         if oc and oc.oid:
             oid_str = str(oc.oid)
             oid_validation = self._validate_attribute_oid(oid_str)
             if oid_validation.is_failure:
-                return FlextResult[m.Ldif.SchemaObjectClass].fail(
+                return r[m.Ldif.SchemaObjectClass].fail(
                     f"ObjectClass OID validation failed: {oid_validation.error}"
                 )
             is_valid_oud_oid = oid_validation.value
@@ -281,20 +275,18 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             if sup_str and "." in sup_str and sup_str[0].isdigit():
                 sup_validation = self._validate_attribute_oid(sup_str)
                 if sup_validation.is_failure:
-                    return FlextResult[m.Ldif.SchemaObjectClass].fail(
+                    return r[m.Ldif.SchemaObjectClass].fail(
                         f"ObjectClass SUP OID validation failed: {sup_validation.error}"
                     )
-        return FlextResult[m.Ldif.SchemaObjectClass].ok(oc)
+        return r[m.Ldif.SchemaObjectClass].ok(oc)
 
-    def _validate_objectclass_sup(
-        self, oc: m.Ldif.SchemaObjectClass
-    ) -> FlextResult[bool]:
+    def _validate_objectclass_sup(self, oc: m.Ldif.SchemaObjectClass) -> r[bool]:
         """Validate objectClass SUP constraint for OUD."""
         sup = oc.sup
         if sup:
             sup_str = str(sup)
             if "$" in sup_str:
-                return FlextResult[bool].fail(
+                return r[bool].fail(
                     f"OUD objectClass '{oc.name}' has multiple SUPs: {sup_str}. OUD only allows single SUP (use AUXILIARY classes for additional features)."
                 )
-        return FlextResult[bool].ok(value=True)
+        return r[bool].ok(value=True)

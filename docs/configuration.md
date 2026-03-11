@@ -234,16 +234,16 @@ from pydantic import ValidationError
 from flext_ldif import FlextLdifModels
 
 
-def validate_configuration(config_dict: dict) -> FlextResult[FlextLdifModels.Config]:
+def validate_configuration(config_dict: dict) -> r[FlextLdifModels.Config]:
     """Validate configuration with detailed error handling."""
     try:
         config = FlextLdifModels.Config(**config_dict)
-        return FlextResult[FlextLdifModels.Config].ok(config)
+        return r[FlextLdifModels.Config].ok(config)
     except ValidationError as e:
         error_details = "; ".join([
             f"{err['loc'][0]}: {err['msg']}" for err in e.errors()
         ])
-        return FlextResult[FlextLdifModels.Config].fail(
+        return r[FlextLdifModels.Config].fail(
             f"Configuration validation failed: {error_details}"
         )
 
@@ -359,7 +359,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -399,7 +399,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -450,7 +450,7 @@ config_dict = {
 Validate configuration at application startup:
 
 ```python
-def initialize_application_config() -> FlextResult[FlextLdif]:
+def initialize_application_config() -> r[FlextLdif]:
     """Initialize application with validated configuration."""
     try:
         config = FlextLdifModels.Config(
@@ -458,9 +458,9 @@ def initialize_application_config() -> FlextResult[FlextLdif]:
             strict_validation=os.getenv("STRICT_VALIDATION", "").lower() == "true",
         )
         api = FlextLdif(config=config)
-        return FlextResult[FlextLdif].ok(api)
+        return r[FlextLdif].ok(api)
     except Exception as e:
-        return FlextResult[FlextLdif].fail(f"Configuration initialization failed: {e}")
+        return r[FlextLdif].fail(f"Configuration initialization failed: {e}")
 ```
 
 ### 3. Use Environment-Specific Profiles

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, r
 
 from flext_ldif import m
 from flext_ldif.servers._oid import (
@@ -31,13 +31,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
     def extract_schemas_from_ldif(
         self, ldif_content: str
-    ) -> FlextResult[
+    ) -> r[
         dict[str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int]
     ]:
         """Extract and parse all schema definitions from LDIF content."""
         schema_class = getattr(type(self), "Schema", None)
         if not schema_class:
-            return FlextResult[
+            return r[
                 dict[
                     str,
                     list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
@@ -55,13 +55,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 "total_attributes": len(data.get("attributes", [])),
                 "total_objectclasses": len(data.get("objectclasses", [])),
             }
-            return FlextResult[
+            return r[
                 dict[
                     str,
                     list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
                 ]
             ].ok(converted_data)
-        return FlextResult[
+        return r[
             dict[
                 str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int
             ]

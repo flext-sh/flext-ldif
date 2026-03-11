@@ -18,7 +18,7 @@ from contextlib import suppress
 from datetime import datetime
 from typing import ClassVar, Self, TypedDict, Unpack, override
 
-from flext_core import FlextLogger, FlextResult, FlextUtilities, m
+from flext_core import FlextLogger, FlextResult, FlextUtilities, m, r
 from pydantic import (
     ConfigDict,
     Field,
@@ -637,7 +637,7 @@ class FlextLdifModelsDomains:
                         normalized_dict[key] = [str(val)]
                 return FlextResult[Self].ok(cls(attributes=normalized_dict))
             except (ValueError, TypeError, AttributeError) as e:
-                return FlextResult[Self].fail(f"Failed to create Attributes: {e}")
+                return r[Self].fail(f"Failed to create Attributes: {e}")
 
         def add_attribute(self, key: str, values: list[str]) -> Self:
             """Add or update an attribute with values.

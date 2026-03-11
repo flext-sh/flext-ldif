@@ -6,7 +6,7 @@ import struct
 from collections.abc import Mapping
 from typing import override
 
-from flext_core import FlextLogger, FlextResult, r, u as core_u
+from flext_core import FlextLogger, r, u as core_u
 
 from flext_ldif import m
 from flext_ldif.servers.base import FlextLdifServersBase
@@ -68,10 +68,10 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             return r[m.Ldif.Entry].fail(f"Failed to create entry {dn}: {e}")
 
     @override
-    def _parse_content(self, ldif_content: str) -> FlextResult[list[m.Ldif.Entry]]:
+    def _parse_content(self, ldif_content: str) -> r[list[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal)."""
         if not ldif_content or not ldif_content.strip():
-            return FlextResult[list[m.Ldif.Entry]].ok([])
+            return r[list[m.Ldif.Entry]].ok([])
         try:
             entries: list[m.Ldif.Entry] = []
             raw_entries = ldif_content.strip().split("\n\n")
@@ -88,7 +88,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
                     entries.append(result.value)
                 else:
                     logger.debug("Skipping invalid entry block", error=result.error)
-            return FlextResult[list[m.Ldif.Entry]].ok(entries)
+            return r[list[m.Ldif.Entry]].ok(entries)
         except (
             ValueError,
             KeyError,
@@ -97,9 +97,9 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             struct.error,
         ) as e:
             logger.exception("Failed to parse LDIF content")
-            return FlextResult[list[m.Ldif.Entry]].fail(f"Processing failed: {e}")
+            return r[list[m.Ldif.Entry]].fail(f"Processing failed: {e}")
 
-    def _parse_entry_from_lines(self, lines: list[str]) -> FlextResult[m.Ldif.Entry]:
+    def _parse_entry_from_lines(self, lines: list[str]) -> r[m.Ldif.Entry]:
         """Parse entry from LDIF lines."""
         dn: str = ""
         attrs: dict[str, list[str]] = {}
@@ -126,7 +126,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
                     attrs[key] = []
                 attrs[key].append(value)
         if not dn:
-            return FlextResult[m.Ldif.Entry].fail("No DN found in entry")
+            return r[m.Ldif.Entry].fail("No DN found in entry")
         create_result = self._create_entry(dn, attrs)
         if create_result.is_failure:
             return create_result
@@ -137,7 +137,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         if original_ldif:
             entry.metadata.original_strings["entry_original_ldif"] = original_ldif
         entry.metadata.original_strings["dn_original"] = dn
-        return FlextResult[m.Ldif.Entry].ok(entry)
+        return r[m.Ldif.Entry].ok(entry)
 
 
 __all__ = ["FlextLdifServersRfcEntry"]

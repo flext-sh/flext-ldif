@@ -13,7 +13,7 @@ import re
 from collections.abc import Callable, Mapping
 from typing import override
 
-from flext_core import FlextLogger, FlextResult, u as core_u
+from flext_core import FlextLogger, r, u as core_u
 
 from flext_ldif import c, m, p, t, u
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -276,12 +276,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     @staticmethod
     def _hook_pre_write_entry_static(
         entry: m.Ldif.Entry,
-        validate_aci_macros: Callable[[str], FlextResult[bool]],
+        validate_aci_macros: Callable[[str], r[bool]],
         correct_rfc_syntax_in_attributes: Callable[
             [t.Ldif.CommonDict.AttributeDict],
-            FlextResult[t.Ldif.CommonDict.AttributeDict],
+            r[t.Ldif.CommonDict.AttributeDict],
         ],
-    ) -> FlextResult[m.Ldif.Entry]:
+    ) -> r[m.Ldif.Entry]:
         """Hook: Validate and CORRECT RFC syntax issues before writing Entry - static helper.
 
         This hook ensures that Entry data with RFC-valid syntax is properly
@@ -294,7 +294,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             correct_rfc_syntax_in_attributes: Function to correct RFC syntax
 
         Returns:
-            FlextResult[Entry] - entry with corrected syntax, fail() if syntax errors
+            r[Entry] - entry with corrected syntax, fail() if syntax errors
 
         """
         attrs_dict_raw = entry.attributes.attributes if entry.attributes else {}
@@ -303,7 +303,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             attrs_dict, validate_aci_macros
         )
         if aci_validation_error:
-            return FlextResult[m.Ldif.Entry].fail(aci_validation_error)
+            return r[m.Ldif.Entry].fail(aci_validation_error)
         return FlextLdifServersOudEntry.correct_syntax_and_return_entry(
             entry, attrs_dict, correct_rfc_syntax_in_attributes
         )
@@ -363,11 +363,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             str, t.Scalar | list[str] | Mapping[str, str | list[str]] | None
         ],
         syntax_corrections: list[str] | Mapping[str, str] | None,
-    ) -> FlextResult[m.Ldif.Entry]:
+    ) -> r[m.Ldif.Entry]:
         """Apply syntax corrections to entry."""
         corrected_attrs_raw = corrected_data.get("corrected_attributes")
         if not isinstance(corrected_attrs_raw, Mapping):
-            return FlextResult[m.Ldif.Entry].ok(entry)
+            return r[m.Ldif.Entry].ok(entry)
         attrs_for_model: dict[str, list[str]] = {}
         for raw_key, raw_value in corrected_attrs_raw.items():
             if isinstance(raw_value, list):
@@ -383,7 +383,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             corrections=syntax_corrections,
             corrected_attributes=list(attrs_for_model.keys()),
         )
-        return FlextResult[m.Ldif.Entry].ok(corrected_entry)
+        return r[m.Ldif.Entry].ok(corrected_entry)
 
     @staticmethod
     def correct_syntax_and_return_entry(
@@ -391,15 +391,13 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         attrs_dict: t.Ldif.CommonDict.AttributeDict,
         correct_rfc_syntax_in_attributes: Callable[
             [t.Ldif.CommonDict.AttributeDict],
-            FlextResult[t.Ldif.CommonDict.AttributeDict],
+            r[t.Ldif.CommonDict.AttributeDict],
         ],
-    ) -> FlextResult[m.Ldif.Entry]:
+    ) -> r[m.Ldif.Entry]:
         """Correct RFC syntax issues and return entry."""
         corrected_result = correct_rfc_syntax_in_attributes(attrs_dict)
         if corrected_result.is_failure:
-            return FlextResult[m.Ldif.Entry].fail(
-                corrected_result.error or "Unknown error"
-            )
+            return r[m.Ldif.Entry].fail(corrected_result.error or "Unknown error")
         corrected_data = corrected_result.value
         corrected_data_typed: dict[
             str, t.Scalar | list[str] | dict[str, str | list[str]] | None
@@ -417,7 +415,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return FlextLdifServersOudEntry.apply_syntax_corrections(
                 entry, corrected_data_typed, syntax_corrections_typed
             )
-        return FlextResult[m.Ldif.Entry].ok(entry)
+        return r[m.Ldif.Entry].ok(entry)
 
     @staticmethod
     def extract_and_remove_acl_attributes(
@@ -507,7 +505,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     @staticmethod
     def validate_aci_macros_in_entry(
         attrs_dict: t.Ldif.CommonDict.AttributeDict,
-        validate_aci_macros: Callable[[str], FlextResult[bool]],
+        validate_aci_macros: Callable[[str], r[bool]],
     ) -> str | None:
         """Validate ACI macros if present. Returns error message or None if valid."""
         aci_attrs = attrs_dict.get("aci")
@@ -623,7 +621,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         return "\n".join(comment_lines) + "\n" if comment_lines else ""
 
     @override
-    def parse(self, ldif_content: str) -> FlextResult[list[m.Ldif.Entry]]:
+    def parse(self, ldif_content: str) -> r[list[m.Ldif.Entry]]:
         """Parse LDIF content and apply OUD post-processing hooks."""
         parsed_result = super().parse(ldif_content)
         if parsed_result.is_failure:
@@ -632,7 +630,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         for parsed_entry in parsed_result.value:
             post_parse_result = self._hook_post_parse_entry(parsed_entry)
             if post_parse_result.is_failure:
-                return FlextResult[list[m.Ldif.Entry]].fail(
+                return r[list[m.Ldif.Entry]].fail(
                     post_parse_result.error or "OUD post-parse failed"
                 )
             entry_after_post = post_parse_result.value
@@ -647,16 +645,16 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 entry_after_post, original_dn, original_attrs
             )
             if finalize_result.is_failure:
-                return FlextResult[list[m.Ldif.Entry]].fail(
+                return r[list[m.Ldif.Entry]].fail(
                     finalize_result.error or "OUD finalize parse failed"
                 )
             processed_entries.append(finalize_result.value)
-        return FlextResult[list[m.Ldif.Entry]].ok(processed_entries)
+        return r[list[m.Ldif.Entry]].ok(processed_entries)
 
     @override
     def parse_entry(
         self, entry_dn: str, entry_attrs: Mapping[str, list[str]] | m.Ldif.Entry
-    ) -> FlextResult[m.Ldif.Entry]:
+    ) -> r[m.Ldif.Entry]:
         """Parse entry with OUD-specific metadata population.
 
         RFC vs OUD Behavior Differences
@@ -697,7 +695,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entry_attrs: Entry attributes mapping
 
         Returns:
-            FlextResult[Entry] with OUD-specific metadata populated
+            r[Entry] with OUD-specific metadata populated
 
         References:
             - Oracle OUD LDIF Format: https://docs.oracle.com/cd/E22289_01/html/821-1273/understanding-ldif-files.html
@@ -733,7 +731,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             metadata_config
         )
         entry.metadata = metadata
-        return FlextResult[m.Ldif.Entry].ok(entry)
+        return r[m.Ldif.Entry].ok(entry)
 
     def _add_acl_value_comments(
         self,
@@ -1409,7 +1407,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         entry: m.Ldif.Entry,
         original_dn: str,
         original_attrs: t.Ldif.CommonDict.AttributeDictGeneric,
-    ) -> FlextResult[m.Ldif.Entry]:
+    ) -> r[m.Ldif.Entry]:
         """Hook: Process ACLs and propagate their extensions to entry metadata.
 
         This hook processes ACL attributes (aci) in the entry and extracts
@@ -1422,13 +1420,13 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             original_attrs: Original attributes for ACL processing
 
         Returns:
-            FlextResult with entry containing ACL metadata extensions
+            r with entry containing ACL metadata extensions
 
         """
         _ = original_dn
         aci_values = self._find_aci_values(entry, original_attrs)
         if not aci_values:
-            return FlextResult.ok(entry)
+            return r.ok(entry)
         if not entry.metadata:
             entry.metadata = m.Ldif.QuirkMetadata.create_for(
                 "oud", extensions=FlextLdifModelsMetadata.DynamicMetadata()
@@ -1440,12 +1438,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         )
         parent = self._get_parent_quirk_safe()
         if parent is None:
-            return FlextResult.ok(entry)
+            return r.ok(entry)
         acl_quirk_raw = getattr(parent, "_acl_quirk", None)
         if not acl_quirk_raw:
-            return FlextResult.ok(entry)
+            return r.ok(entry)
         if not core_u.is_type(acl_quirk_raw, FlextLdifServersOudAcl):
-            return FlextResult.ok(entry)
+            return r.ok(entry)
         acl_quirk: FlextLdifServersOudAcl = acl_quirk_raw
         self._process_aci_list_for_finalize(aci_values, acl_quirk, current_extensions)
         if current_extensions:
@@ -1463,10 +1461,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         )
                     }
                 )
-        return FlextResult.ok(entry)
+        return r.ok(entry)
 
     @override
-    def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> FlextResult[m.Ldif.Entry]:
+    def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Hook: Validate OUD ACI macros after parsing Entry.
 
         RFC vs OUD Behavior Differences
@@ -1527,7 +1525,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entry: Entry parsed from OUD LDIF (in RFC canonical format)
 
         Returns:
-            FlextResult[Entry] - validated entry, unchanged if valid
+            r[Entry] - validated entry, unchanged if valid
 
         References:
             - Oracle OUD ACI Macros: https://docs.oracle.com/cd/E22289_01/html/821-1277/aci-syntax.html
@@ -1544,7 +1542,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         aci_value, acl_metadata_extensions
                     )
                     if process_result.is_failure:
-                        return FlextResult[m.Ldif.Entry].fail(
+                        return r[m.Ldif.Entry].fail(
                             process_result.error or "ACI processing failed"
                         )
                     if process_result.value:
@@ -1565,10 +1563,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     ],
                 )
             entry = self._merge_acl_metadata_to_entry(entry, acl_metadata_extensions)
-        return FlextResult[m.Ldif.Entry].ok(entry)
+        return r[m.Ldif.Entry].ok(entry)
 
     @override
-    def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> FlextResult[m.Ldif.Entry]:
+    def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Hook: Pre-write entry validation (simplified).
 
         Entry is returned unchanged (RFC-valid format preserved).
@@ -1577,10 +1575,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entry: RFC Entry (already canonical)
 
         Returns:
-            FlextResult[Entry] - entry unchanged
+            r[Entry] - entry unchanged
 
         """
-        return FlextResult[m.Ldif.Entry].ok(entry)
+        return r[m.Ldif.Entry].ok(entry)
 
     def _is_schema_entry(self, entry: m.Ldif.Entry) -> bool:
         """Check if entry is a schema entry - delegate to utility."""
@@ -1801,12 +1799,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _process_single_aci_value(
         self, aci_value: str, acl_metadata_extensions: dict[str, t.MetadataValue]
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Process single ACI value, extract metadata, return has_macros flag."""
         has_macros = bool(re.search(r"\(\$dn\)|\[\$dn\]|\(\$attr\.", aci_value))
         validation_result = self._validate_aci_macros(aci_value)
         if validation_result.is_failure:
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 f"ACI macro validation failed: {validation_result.error}"
             )
         normalized_aci = aci_value.strip()
@@ -1836,7 +1834,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     self._extract_acl_metadata_from_dict(
                         acl_extensions_dict, acl_metadata_extensions
                     )
-        return FlextResult.ok(has_macros)
+        return r.ok(has_macros)
 
     def _restore_entry_from_metadata(self, entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
         """Restore original DN and attributes using generic utilities.
@@ -1941,12 +1939,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 )
         return entry_data
 
-    def _validate_aci_macros(self, _aci_value: str) -> FlextResult[bool]:
+    def _validate_aci_macros(self, _aci_value: str) -> r[bool]:
         """Validate OUD ACI macro consistency rules (no-op)."""
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 
     @override
-    def _write_entry(self, entry_data: m.Ldif.Entry) -> FlextResult[str]:
+    def _write_entry(self, entry_data: m.Ldif.Entry) -> r[str]:
         """Write Entry to LDIF with OUD-specific formatting + phase-aware ACL handling.
 
         RFC vs OUD Behavior Differences
@@ -2010,7 +2008,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entry_data: Entry model to write (with complete metadata)
 
         Returns:
-            FlextResult with LDIF string (with original formatting restored when possible)
+            r with LDIF string (with original formatting restored when possible)
 
         References:
             - Oracle OUD LDIF Format: https://docs.oracle.com/cd/E22289_01/html/821-1273/understanding-ldif-files.html
@@ -2019,7 +2017,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """
         hook_result = self._hook_pre_write_entry(entry_data)
         if hook_result.is_failure:
-            return FlextResult[str].fail(f"Pre-write hook failed: {hook_result.error}")
+            return r[str].fail(f"Pre-write hook failed: {hook_result.error}")
         normalized_entry = hook_result.value
         entry_to_write = self._restore_entry_from_metadata(normalized_entry)
         write_options_raw = FlextLdifUtilitiesMetadata.extract_write_options(
@@ -2045,14 +2043,14 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             )
         )
 
-    def _write_entry_as_comment(self, entry_data: m.Ldif.Entry) -> FlextResult[str]:
+    def _write_entry_as_comment(self, entry_data: m.Ldif.Entry) -> r[str]:
         """Write entry as commented LDIF (each line prefixed with '# ').
 
         Args:
             entry_data: Entry to write as comment
 
         Returns:
-            FlextResult with commented LDIF string
+            r with commented LDIF string
 
         """
         return (

@@ -124,7 +124,7 @@ git checkout -b feature/amazing-feature
 
 Follow FLEXT development standards:
 
-- **Use FlextResult[T]** for all operations
+- **Use r[T]** for all operations
 - **Follow Clean Architecture** principles
 - **Maintain type safety** with MyPy strict mode
 - **Write comprehensive tests**
@@ -153,12 +153,12 @@ git push origin feature/amazing-feature
 
 ```python
 # ✅ CORRECT - Complete type annotations
-def process_data(data: dict[str, object]) -> FlextResult[ProcessedData]:
+def process_data(data: dict[str, object]) -> r[ProcessedData]:
     """Process data with type safety."""
     if not data:
-        return FlextResult[ProcessedData].fail("Data required")
+        return r[ProcessedData].fail("Data required")
 
-    return FlextResult[ProcessedData].ok(ProcessedData(**data))
+    return r[ProcessedData].ok(ProcessedData(**data))
 
 
 # ❌ WRONG - Missing type annotations
@@ -169,8 +169,8 @@ def process_data(data):
 ### Railway-Oriented Programming
 
 ```python
-# ✅ CORRECT - Use FlextResult for all operations
-def validate_and_process(data: dict) -> FlextResult[ProcessedData]:
+# ✅ CORRECT - Use r for all operations
+def validate_and_process(data: dict) -> r[ProcessedData]:
     return (
         validate_data(data)
         .flat_map(transform_data)
@@ -195,7 +195,7 @@ class FlextApiModels:
         data: dict[str, object]
 
     class Response(BaseModel):
-        result: FlextResult[object]
+        result: r[object]
         status: int
 
 
@@ -244,7 +244,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -330,7 +330,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -342,8 +342,8 @@ class FlextNewlib:
     def __init__(self, config: FlextNewlibSettings):
         self.config = config
 
-    def process(self, data: dict) -> FlextResult[dict]:
-        """Process data using FlextResult pattern."""
+    def process(self, data: dict) -> r[dict]:
+        """Process data using r pattern."""
         # Implementation here
         pass
 
@@ -357,7 +357,7 @@ class FlextNewlibModels:
         data: dict[str, object]
 
     class Response(BaseModel):
-        result: FlextResult[object]
+        result: r[object]
 ```
 
 ### 3. Add to Workspace
@@ -406,7 +406,7 @@ poetry env info
 ### Code Documentation
 
 ```python
-def process_data(data: dict[str, object]) -> FlextResult[ProcessedData]:
+def process_data(data: dict[str, object]) -> r[ProcessedData]:
     """
     Process data using the FLEXT pipeline.
 
@@ -414,7 +414,7 @@ def process_data(data: dict[str, object]) -> FlextResult[ProcessedData]:
         data: Input data dictionary
 
     Returns:
-        FlextResult containing processed data or error
+        r containing processed data or error
 
     Raises:
         ValidationError: If data validation fails

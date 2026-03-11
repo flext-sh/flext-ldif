@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, r
 
 from flext_ldif import m
 from flext_ldif.servers._rfc import (
@@ -22,16 +22,14 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     """RFC-Compliant LDAP Server Implementation - STRICT Baseline."""
 
     @override
-    def _handle_parse_operation(
-        self, ldif_text: str
-    ) -> FlextResult[m.Ldif.Entry | str]:
+    def _handle_parse_operation(self, ldif_text: str) -> r[m.Ldif.Entry | str]:
         """Handle parse operation for main quirk."""
         return super()._handle_parse_operation(ldif_text)
 
     @override
     def _handle_write_operation(
         self, entries: list[m.Ldif.Entry]
-    ) -> FlextResult[m.Ldif.Entry | str]:
+    ) -> r[m.Ldif.Entry | str]:
         """Handle write operation for main quirk."""
         return super()._handle_write_operation(entries)
 
@@ -42,7 +40,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         | m.Ldif.SchemaAttribute
         | m.Ldif.SchemaObjectClass
         | m.Ldif.Acl,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Route a single model to appropriate write method."""
         return super()._route_model_to_write(model)
 

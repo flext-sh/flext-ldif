@@ -401,7 +401,7 @@ from flext_ldif.protocols import p  # FlextLdifProtocols
 from flext_ldif.utilities import u  # FlextLdifUtilities
 
 # flext_core aliases (also available)
-from flext_core import r  # FlextResult
+from flext_core import r  # r
 from flext_core import e  # FlextExceptions
 from flext_core import d  # FlextDecorators
 from flext_core import mx  # FlextMixins
@@ -706,13 +706,13 @@ tm.entries(result, count=5, all_have_attr="cn")
 tm.entries(entries, at_index={0: {"dn": "cn=first"}, 1: {"has_attr": "mail"}})
 ```
 
-**`tm.ok_entry()`** - Assert FlextResult success and validate entry:
+**`tm.ok_entry()`** - Assert r success and validate entry:
 
 ```python
 entry = tm.ok_entry(result, has_dn="cn=test,dc=example", has_attrs=["cn", "sn"])
 ```
 
-**`tm.ok_entries()`** - Assert FlextResult success and validate entries list:
+**`tm.ok_entries()`** - Assert r success and validate entries list:
 
 ```python
 entries = tm.ok_entries(result, count=3, empty=False)
@@ -749,7 +749,7 @@ ______________________________________________________________________
 
 ## Key Patterns
 
-### FlextResult Pattern (Railway-Oriented Programming)
+### r Pattern (Railway-Oriented Programming)
 
 ```python
 from flext_ldif import FlextLdif
@@ -757,12 +757,12 @@ from pathlib import Path
 
 ldif = FlextLdif()
 
-# All operations return FlextResult for composable error handling
+# All operations return r for composable error handling
 result = ldif.parse(Path("directory.ldif"))
 if result.is_success:
     entries = result.unwrap()
 
-    # Chain operations with FlextResult
+    # Chain operations with r
     validation_result = ldif.validate_entries(entries)
     if validation_result.is_success:
         print("LDIF processing successful")

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Self, overload, override
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextLogger, FlextTypes, r
 
 from flext_ldif import m, p, t, u
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -133,10 +133,10 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         return (permission, None)
 
     @override
-    def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
+    def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
         """Parse RFC-compliant ACL line (implements abstract method)."""
         if not acl_line or not acl_line.strip():
-            return FlextResult[m.Ldif.Acl].fail("ACL line must be a non-empty string.")
+            return r[m.Ldif.Acl].fail("ACL line must be a non-empty string.")
         server_type_str = self._get_server_type()
         server_type_value = FlextLdifUtilitiesServer.normalize_server_type(
             server_type_str
@@ -151,7 +151,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
                 quirk_type=server_type_value, extensions=extensions_meta
             ),
         )
-        return FlextResult.ok(acl_model)
+        return r.ok(acl_model)
 
     def _preserve_unsupported_feature(
         self, feature_id: str, original_value: str, metadata: m.Ldif.DynamicMetadata
@@ -166,10 +166,10 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         return super()._supports_feature(_feature_id)
 
     @override
-    def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
+    def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
         """Write ACL to RFC-compliant string format (internal)."""
         if acl_data.raw_acl and acl_data.raw_acl.strip():
-            return FlextResult[str].ok(acl_data.raw_acl)
+            return r[str].ok(acl_data.raw_acl)
         if acl_data.name and u.Guards.is_string_non_empty(acl_data.name):
-            return FlextResult[str].ok(f"{acl_data.name}:")
-        return FlextResult[str].fail("ACL has no raw_acl or name to write")
+            return r[str].ok(f"{acl_data.name}:")
+        return r[str].fail("ACL has no raw_acl or name to write")

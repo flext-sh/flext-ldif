@@ -101,7 +101,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         sort_attributes: bool = False,
         sort_acl: bool = False,
     ) -> r[list[m.Ldif.Entry]]:
-        """Sort entries with FlextResult for composable operations."""
+        """Sort entries with r for composable operations."""
         default_target = c.Ldif.SortTarget.ENTRIES.value
         default_by = c.Ldif.SortStrategy.HIERARCHY.value
         default_acl_attrs = list(c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES)

@@ -319,8 +319,22 @@ class FlextLdifConversion(
                     | m.Ldif.SchemaObjectClass
                     | m.Ldif.Acl
                 ].fail("Schema quirks missing attribute conversion methods")
-            write_attr = source_schema.write_attribute
-            parse_attr = target_schema.parse_attribute
+            write_attr = getattr(source_schema, "write_attribute", None)
+            parse_attr = getattr(target_schema, "parse_attribute", None)
+            if write_attr is None or not callable(write_attr):
+                return r[
+                    m.Ldif.Entry
+                    | m.Ldif.SchemaAttribute
+                    | m.Ldif.SchemaObjectClass
+                    | m.Ldif.Acl
+                ].fail("Source schema write_attribute is unavailable")
+            if parse_attr is None or not callable(parse_attr):
+                return r[
+                    m.Ldif.Entry
+                    | m.Ldif.SchemaAttribute
+                    | m.Ldif.SchemaObjectClass
+                    | m.Ldif.Acl
+                ].fail("Target schema parse_attribute is unavailable")
 
             def _parse_attribute_pipeline(
                 _target_schema: p.Ldif.SchemaAttributeProtocol
@@ -329,21 +343,40 @@ class FlextLdifConversion(
                 ldif: str,
             ) -> r[p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol]:
                 parse_result = parse_attr(ldif)
+                if not isinstance(parse_result, r):
+                    return r[
+                        p.Ldif.SchemaAttributeProtocol
+                        | p.Ldif.SchemaObjectClassProtocol
+                    ].fail("Failed to parse attribute")
                 if parse_result.is_failure:
                     return r[
                         p.Ldif.SchemaAttributeProtocol
                         | p.Ldif.SchemaObjectClassProtocol
                     ].fail(parse_result.error or "Failed to parse attribute")
+                parsed_value = parse_result.value
+                if isinstance(parsed_value, m.Ldif.SchemaAttribute):
+                    return r[
+                        p.Ldif.SchemaAttributeProtocol
+                        | p.Ldif.SchemaObjectClassProtocol
+                    ].ok(parsed_value)
+                if isinstance(parsed_value, m.Ldif.SchemaObjectClass):
+                    return r[
+                        p.Ldif.SchemaAttributeProtocol
+                        | p.Ldif.SchemaObjectClassProtocol
+                    ].ok(parsed_value)
                 return r[
                     p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol
-                ].ok(parse_result.value)
+                ].fail("Parsed attribute has invalid schema type")
 
             def _write_attribute_pipeline(
                 _source_schema: p.Ldif.SchemaAttributeProtocol
                 | p.Ldif.SchemaObjectClassProtocol
                 | p.Ldif.SchemaQuirkProtocol,
             ) -> r[str]:
-                return write_attr(attribute)
+                write_result = write_attr(attribute)
+                if isinstance(write_result, r):
+                    return write_result
+                return r[str].fail("Failed to write attribute")
 
             config = m.Ldif.SchemaConversionPipelineConfig(
                 source_schema=source_schema,
@@ -409,8 +442,22 @@ class FlextLdifConversion(
                     | m.Ldif.SchemaObjectClass
                     | m.Ldif.Acl
                 ].fail("Schema quirks missing objectclass conversion methods")
-            write_oc = source_schema.write_objectclass
-            parse_oc = target_schema.parse_objectclass
+            write_oc = getattr(source_schema, "write_objectclass", None)
+            parse_oc = getattr(target_schema, "parse_objectclass", None)
+            if write_oc is None or not callable(write_oc):
+                return r[
+                    m.Ldif.Entry
+                    | m.Ldif.SchemaAttribute
+                    | m.Ldif.SchemaObjectClass
+                    | m.Ldif.Acl
+                ].fail("Source schema write_objectclass is unavailable")
+            if parse_oc is None or not callable(parse_oc):
+                return r[
+                    m.Ldif.Entry
+                    | m.Ldif.SchemaAttribute
+                    | m.Ldif.SchemaObjectClass
+                    | m.Ldif.Acl
+                ].fail("Target schema parse_objectclass is unavailable")
 
             def _parse_objectclass_pipeline(
                 _target_schema: p.Ldif.SchemaAttributeProtocol
@@ -419,21 +466,40 @@ class FlextLdifConversion(
                 ldif: str,
             ) -> r[p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol]:
                 parse_result = parse_oc(ldif)
+                if not isinstance(parse_result, r):
+                    return r[
+                        p.Ldif.SchemaAttributeProtocol
+                        | p.Ldif.SchemaObjectClassProtocol
+                    ].fail("Failed to parse objectclass")
                 if parse_result.is_failure:
                     return r[
                         p.Ldif.SchemaAttributeProtocol
                         | p.Ldif.SchemaObjectClassProtocol
                     ].fail(parse_result.error or "Failed to parse objectclass")
+                parsed_value = parse_result.value
+                if isinstance(parsed_value, m.Ldif.SchemaAttribute):
+                    return r[
+                        p.Ldif.SchemaAttributeProtocol
+                        | p.Ldif.SchemaObjectClassProtocol
+                    ].ok(parsed_value)
+                if isinstance(parsed_value, m.Ldif.SchemaObjectClass):
+                    return r[
+                        p.Ldif.SchemaAttributeProtocol
+                        | p.Ldif.SchemaObjectClassProtocol
+                    ].ok(parsed_value)
                 return r[
                     p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol
-                ].ok(parse_result.value)
+                ].fail("Parsed objectclass has invalid schema type")
 
             def _write_objectclass_pipeline(
                 _source_schema: p.Ldif.SchemaAttributeProtocol
                 | p.Ldif.SchemaObjectClassProtocol
                 | p.Ldif.SchemaQuirkProtocol,
             ) -> r[str]:
-                return write_oc(objectclass)
+                write_result = write_oc(objectclass)
+                if isinstance(write_result, r):
+                    return write_result
+                return r[str].fail("Failed to write objectclass")
 
             config = m.Ldif.SchemaConversionPipelineConfig(
                 source_schema=source_schema,

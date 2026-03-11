@@ -6,7 +6,7 @@ import re
 from collections.abc import Mapping
 from typing import ClassVar, override
 
-from flext_core import FlextResult
+from flext_core import r
 
 from flext_ldif import c, m
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -181,23 +181,19 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return False
 
         @override
-        def _parse_attribute(
-            self, attr_definition: str
-        ) -> FlextResult[m.Ldif.SchemaAttribute]:
+        def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add 389 DS metadata."""
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
                 attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
-                return FlextResult[m.Ldif.SchemaAttribute].ok(
+                return r[m.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata})
                 )
             return result
 
         @override
-        def _parse_objectclass(
-            self, oc_definition: str
-        ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+        def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add 389 DS metadata."""
             result = super()._parse_objectclass(oc_definition)
             if result.is_success:
@@ -205,7 +201,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 FlextLdifUtilitiesObjectClass.fix_missing_sup(oc_data)
                 FlextLdifUtilitiesObjectClass.fix_kind_mismatch(oc_data)
                 metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
-                return FlextResult[m.Ldif.SchemaObjectClass].ok(
+                return r[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata})
                 )
             return result
@@ -269,7 +265,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         def _build_acl_string(
             self, acl_name: str, permissions: list[str], targetattr: str, userdn: str
-        ) -> FlextResult[str]:
+        ) -> r[str]:
             """Build ACI string from components."""
             version_prefix = FlextLdifServersDs389.Constants.ACL_VERSION_PREFIX
             parts = [version_prefix, f'acl "{acl_name}"']
@@ -294,7 +290,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 if acl_content
                 else FlextLdifServersDs389.Constants.ACL_ACI_PREFIX
             )
-            return FlextResult[str].ok(acl_str)
+            return r[str].ok(acl_str)
 
         def _extract_acl_permissions(
             self,
@@ -321,7 +317,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return permissions
 
         @override
-        def _parse_acl(self, acl_line: str) -> FlextResult[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
             """Parse 389 DS ACI definition."""
             try:
                 attr_name, content = FlextLdifUtilitiesACL.split_acl_line(acl_line)
@@ -414,21 +410,21 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     metadata=metadata,
                     raw_acl=acl_line,
                 )
-                return FlextResult[m.Ldif.Acl].ok(acl)
+                return r[m.Ldif.Acl].ok(acl)
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[m.Ldif.Acl].fail(
+                return r[m.Ldif.Acl].fail(
                     FlextLdifServersDs389.Constants.ERROR_ACL_PARSING_FAILED.format(
                         exc=exc
                     )
                 )
 
         @override
-        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> FlextResult[str]:
+        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
                 if acl_data.raw_acl:
                     acl_str = f"{FlextLdifServersDs389.Constants.ACL_ACI_PREFIX} {acl_data.raw_acl}"
-                    return FlextResult[str].ok(acl_str)
+                    return r[str].ok(acl_str)
                 acl_name = (
                     acl_data.name or FlextLdifServersDs389.Constants.ACL_DEFAULT_NAME
                 )
@@ -449,7 +445,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 userdn = self._resolve_acl_userdn(subject_raw)
                 return self._build_acl_string(acl_name, permissions, targetattr, userdn)
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[str].fail(
+                return r[str].fail(
                     FlextLdifServersDs389.Constants.ERROR_ACL_WRITE_FAILED.format(
                         exc=exc
                     )
@@ -492,11 +488,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
             )
 
-        def process_entry(self, entry: m.Ldif.Entry) -> FlextResult[m.Ldif.Entry]:
+        def process_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
             """Normalise 389 DS entries and attach metadata."""
             try:
                 if not entry.attributes or not entry.dn:
-                    return FlextResult[m.Ldif.Entry].ok(entry)
+                    return r[m.Ldif.Entry].ok(entry)
                 attributes = entry.attributes.attributes.copy()
                 entry_dn = entry.dn.value
                 dn_lower = entry_dn.lower()
@@ -514,9 +510,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     attributes=m.Ldif.Attributes(attributes=attributes),
                     metadata=metadata,
                 )
-                return FlextResult[m.Ldif.Entry].ok(processed_entry)
+                return r[m.Ldif.Entry].ok(processed_entry)
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[m.Ldif.Entry].fail(
+                return r[m.Ldif.Entry].fail(
                     FlextLdifServersDs389.Constants.ERROR_ENTRY_PROCESSING_FAILED.format(
                         exc=exc
                     )

@@ -7,7 +7,7 @@ import struct
 from collections.abc import Callable, Mapping, Sequence
 from typing import Literal
 
-from flext_core import FlextLogger, FlextResult, FlextTypes, r
+from flext_core import FlextLogger, FlextTypes, r
 
 from flext_ldif import m, t
 from flext_ldif._models.settings import FlextLdifModelsSettings
@@ -209,7 +209,7 @@ class FlextLdifUtilitiesEntry:
         entries: Sequence[m.Ldif.Entry],
         config: FlextLdifModelsSettings.EntryFilterConfig | None = None,
         **kwargs: str | float | bool | None,
-    ) -> FlextResult[list[m.Ldif.Entry]]:
+    ) -> r[list[m.Ldif.Entry]]:
         """Filter entries based on criteria."""
         if config is None:
             effective_is_schema = kwargs.get("is_schema")
@@ -447,7 +447,7 @@ class FlextLdifUtilitiesEntry:
         entries: Sequence[m.Ldif.Entry],
         config: FlextLdifModelsSettings.EntryTransformConfig | None = None,
         **kwargs: str | float | bool | None,
-    ) -> FlextResult[list[m.Ldif.Entry]]:
+    ) -> r[list[m.Ldif.Entry]]:
         """Transform multiple entries with common operations."""
         if config is None:
             config = FlextLdifModelsSettings.EntryTransformConfig.model_validate(kwargs)

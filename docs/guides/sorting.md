@@ -171,13 +171,13 @@ result = FlextLdifSorting.by_custom(
 
 | Method                                             | Returns                    | Description                          |
 | -------------------------------------------------- | -------------------------- | ------------------------------------ |
-| `sort(entries, target=..., by=..., predicate=...)` | `FlextResult[list[Entry]]` | For chaining                         |
-| `by_hierarchy(entries)`                            | `FlextResult[list[Entry]]` | Depth-first + alphabetical           |
-| `by_dn(entries)`                                   | `FlextResult[list[Entry]]` | Alphabetical by full DN              |
-| `by_schema(entries)`                               | `FlextResult[list[Entry]]` | Schema entries by OID                |
-| `by_custom(entries, predicate)`                    | `FlextResult[list[Entry]]` | Custom sort function                 |
-| `sort_attributes_in_entries(entries, order=None)`  | `FlextResult[list[Entry]]` | Sort attrs within entries            |
-| `sort_acl_in_entries(entries, acl_attrs=None)`     | `FlextResult[list[Entry]]` | Sort ACL values                      |
+| `sort(entries, target=..., by=..., predicate=...)` | `r[list[Entry]]` | For chaining                         |
+| `by_hierarchy(entries)`                            | `r[list[Entry]]` | Depth-first + alphabetical           |
+| `by_dn(entries)`                                   | `r[list[Entry]]` | Alphabetical by full DN              |
+| `by_schema(entries)`                               | `r[list[Entry]]` | Schema entries by OID                |
+| `by_custom(entries, predicate)`                    | `r[list[Entry]]` | Custom sort function                 |
+| `sort_attributes_in_entries(entries, order=None)`  | `r[list[Entry]]` | Sort attrs within entries            |
+| `sort_acl_in_entries(entries, acl_attrs=None)`     | `r[list[Entry]]` | Sort ACL values                      |
 | `builder()`                                        | `FlextLdifSorting`         | Fluent builder, terminal: `.build()` |
 
 ## Quick Reference

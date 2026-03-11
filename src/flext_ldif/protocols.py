@@ -51,12 +51,12 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             @property
-            def extensions(self) -> Mapping[str, object]:
+            def extensions(self) -> Mapping[str, t.MetadataValue]:
                 """Get server-specific extensions."""
                 ...
 
             @property
-            def schema_format_details(self) -> object | None:
+            def schema_format_details(self) -> t.MetadataValue | None:
                 """Get original schema formatting details."""
                 ...
 

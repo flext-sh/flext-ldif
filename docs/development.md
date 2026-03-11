@@ -131,18 +131,18 @@ result = api.parse_file("small_directory.ldif")
 
 ```python
 # LDIF-specific validation
-def validate_ldif_structure(entries: list[FlextLdifModels.Entry]) -> FlextResult[bool]:
+def validate_ldif_structure(entries: list[FlextLdifModels.Entry]) -> r[bool]:
     """Validate LDIF entries for common issues."""
     for entry in entries:
         # Check DN format
         if not entry.dn.value:
-            return FlextResult[bool].fail("Empty DN found")
+            return r[bool].fail("Empty DN found")
 
         # Check required attributes
         if "objectClass" not in entry.attributes.data:
-            return FlextResult[bool].fail(f"Missing objectClass in {entry.dn.value}")
+            return r[bool].fail(f"Missing objectClass in {entry.dn.value}")
 
-    return FlextResult[bool].| ok(value=True)
+    return r[bool].| ok(value=True)
 ```
 
 #### Memory-Conscious Processing
@@ -228,14 +228,14 @@ def test_memory_usage():
 
 ```python
 # Good: Process small files directly
-def process_small_ldif(file_path: str) -> FlextResult[t.Dict]:
+def process_small_ldif(file_path: str) -> r[t.Dict]:
     """Process LDIF files under 100MB."""
     api = FlextLdif()
     return api.parse_file(file_path)
 
 
 # Consider: External tools for large files
-def process_large_ldif(file_path: str) -> FlextResult[t.Dict]:
+def process_large_ldif(file_path: str) -> r[t.Dict]:
     """Process large LDIF files using external tools."""
     # Use grep, awk, or other streaming tools
     # Then process results with FLEXT-LDIF
@@ -243,11 +243,11 @@ def process_large_ldif(file_path: str) -> FlextResult[t.Dict]:
 
 
 # Monitor: Memory usage for production systems
-def process_with_monitoring(file_path: str) -> FlextResult[t.Dict]:
+def process_with_monitoring(file_path: str) -> r[t.Dict]:
     """Process LDIF with memory monitoring."""
     file_size = os.path.getsize(file_path)
     if file_size > 100 * 1024 * 1024:  # 100MB
-        return FlextResult[t.Dict].fail("File too large for current implementation")
+        return r[t.Dict].fail("File too large for current implementation")
 
     return process_small_ldif(file_path)
 ```
@@ -309,7 +309,7 @@ top -p $(pgrep -f python)
 
 For FLEXT ecosystem integration patterns, see [flext-core documentation](https://github.com/organization/flext/tree/main/flext-core/AGENTS.md). FLEXT-LDIF follows standard patterns for:
 
-- FlextResult error handling
+- r error handling
 - FlextContainer dependency injection
 - FlextService architecture
 - Type safety with Pydantic v2

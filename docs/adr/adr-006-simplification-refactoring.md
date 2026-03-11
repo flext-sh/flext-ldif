@@ -224,7 +224,7 @@ from flext_core import FlextDecorators
 class RfcLdifParser:
     @FlextDecorators.log_operation(level="info")
     @FlextDecorators.track_performance()
-    def parse(self, file_path: Path) -> FlextResult[list[Entry]]:
+    def parse(self, file_path: Path) -> r[list[Entry]]:
         """Parse LDIF with automatic logging and metrics."""
         # Implementation
 ```
@@ -259,13 +259,13 @@ class FlextLdifDetector:
 **After**:
 
 ```python
-from flext_core import FlextService, FlextResult
+from flext_core import FlextService, r
 
 
 class FlextLdifDetector(Flext):
     """Server detection service with automatic logging."""
 
-    def execute(self, content: str) -> FlextResult[dict]:
+    def execute(self, content: str) -> r[dict]:
         self.logger.info("Detecting server type", extra={"size": len(content)})
         # self.logger available automatically from FlextService
 ```
@@ -311,7 +311,7 @@ def parse(
     mode: Literal["single", "batch", "paginate"] = "single",
     server_type: str = "rfc",
     page_size: int = 1000,
-) -> FlextResult[list[Entry] | Callable]:
+) -> r[list[Entry] | Callable]:
     """Parse LDIF with pattern matching mode dispatch."""
     match mode:
         case "batch":
@@ -321,7 +321,7 @@ def parse(
         case "single":
             return self._client.parse_ldif(source, server_type)
         case _:
-            return FlextResult.fail(f"Invalid mode: {mode}")
+            return r.fail(f"Invalid mode: {mode}")
 ```
 
 **Benefits**:

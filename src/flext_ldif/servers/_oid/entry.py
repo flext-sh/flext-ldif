@@ -8,7 +8,7 @@ from collections.abc import Mapping
 from functools import reduce
 from typing import override
 
-from flext_core import FlextLogger, FlextResult, u as core_u
+from flext_core import FlextLogger, r, u as core_u
 
 from flext_ldif import c, m, p, t
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -195,7 +195,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         attribute_conflicts: list[Mapping[str, str | list[str]]],
         converted_attributes: Mapping[str, list[str]],
         original_entry: m.Ldif.Entry,
-    ) -> FlextResult[m.Ldif.Entry]:
+    ) -> r[m.Ldif.Entry]:
         """Create entry result with complete metadata."""
         original_attrs: dict[str, list[str]] = (
             original_entry.attributes.attributes if original_entry.attributes else {}
@@ -447,7 +447,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 **acl_transformations,
             }
         ldif_attrs = m.Ldif.Attributes(attributes=dict(converted_attributes))
-        return FlextResult[m.Ldif.Entry].ok(
+        return r[m.Ldif.Entry].ok(
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value=cleaned_dn), attributes=ldif_attrs, metadata=metadata
             )
@@ -662,11 +662,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         entry: m.Ldif.Entry,
         original_dn: str,
         original_attrs: Mapping[str, list[str]],
-    ) -> FlextResult[m.Ldif.Entry]:
+    ) -> r[m.Ldif.Entry]:
         """Finalize OID entry with ACL and RFC violation metadata."""
         _ = original_dn
         if not entry.attributes:
-            return FlextResult.ok(entry)
+            return r.ok(entry)
         normalized_attrs = entry.attributes.attributes
         if not entry.metadata:
             entry.metadata = m.Ldif.QuirkMetadata.create_for(
@@ -720,14 +720,14 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 violations_count=len(rfc_violations),
                 conflicts_count=len(attribute_conflicts),
             )
-        return FlextResult.ok(entry)
+        return r.ok(entry)
 
     @override
-    def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> FlextResult[m.Ldif.Entry]:
+    def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Hook: Transform parsed entry using OID-specific enhancements."""
         try:
             if not entry.attributes or not entry.dn:
-                return FlextResult.ok(entry)
+                return r.ok(entry)
             logger.debug(
                 "_hook_post_parse_entry attributes",
                 attributes=",".join(entry.attributes.attributes.keys()),
@@ -768,7 +768,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     entry.metadata.extensions[mk.CONVERTED_ATTRIBUTES] = (
                         converted_attrs_list
                     )
-            return FlextResult[m.Ldif.Entry].ok(entry)
+            return r[m.Ldif.Entry].ok(entry)
         except (
             ValueError,
             KeyError,
@@ -777,13 +777,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             struct.error,
         ) as e:
             logger.exception("OID post-parse entry hook failed")
-            return FlextResult[m.Ldif.Entry].fail(
-                f"OID post-parse entry hook failed: {e}"
-            )
+            return r[m.Ldif.Entry].fail(f"OID post-parse entry hook failed: {e}")
 
     def _hook_transform_entry_raw(
         self, dn: str, attrs: Mapping[str, list[str | bytes]]
-    ) -> FlextResult[tuple[str, Mapping[str, list[str | bytes]]]]:
+    ) -> r[tuple[str, Mapping[str, list[str | bytes]]]]:
         """Transform OID-specific DN and attributes before RFC parsing."""
         cleaned_dn, _ = FlextLdifUtilitiesDN.clean_dn_with_statistics(dn)
         normalized_dn = cleaned_dn
@@ -794,7 +792,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 original_dn=cleaned_dn,
                 normalized_dn=normalized_dn,
             )
-        return FlextResult.ok((normalized_dn, attrs))
+        return r.ok((normalized_dn, attrs))
 
     def _merge_parsed_acl_extensions(
         self,
@@ -839,7 +837,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 return super()._normalize_attribute_name(attr_name)
 
     @override
-    def _parse_entry_from_lines(self, lines: list[str]) -> FlextResult[m.Ldif.Entry]:
+    def _parse_entry_from_lines(self, lines: list[str]) -> r[m.Ldif.Entry]:
         """Parse entry from LDIF lines and finalize with OID metadata (original_dn_complete)."""
         result = super()._parse_entry_from_lines(lines)
         if result.is_failure:

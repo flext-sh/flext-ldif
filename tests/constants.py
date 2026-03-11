@@ -21,7 +21,7 @@ from collections.abc import Callable, Sequence, Sized
 from pathlib import Path
 from typing import Final, cast
 
-from flext_core import FlextResult, r
+from flext_core import r
 from flext_tests import FlextTestsConstants
 
 from flext_ldif import (
@@ -741,7 +741,7 @@ class RfcTestHelpers:
         """Assert result is successful and unwrap its value.
 
         Args:
-            result: FlextResult instance to check
+            result: r instance to check
             expected_type: Optional expected type for the unwrapped value
             expected_count: Optional expected count if value is a sequence
 
@@ -754,7 +754,7 @@ class RfcTestHelpers:
         """
         is_failure = getattr(result, "is_failure", None)
         if not isinstance(is_failure, bool):
-            raise TypeError(f"Expected FlextResult-like object, got {type(result)}")
+            raise TypeError(f"Expected r-like object, got {type(result)}")
         if is_failure:
             error = getattr(result, "error", "Unknown error")
             raise AssertionError(f"Result is failure: {error}")
@@ -1657,7 +1657,7 @@ class TestDeduplicationHelpers:
         """
         if not isinstance(parser_service, FlextLdifParser):
             raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-        results: list[FlextResult[m.Ldif.ParseResponse]] = []
+        results: list[r[m.Ldif.ParseResponse]] = []
         for test_case in test_cases:
             ldif_content = str(test_case.get("ldif_content", ""))
             should_succeed = test_case.get("should_succeed")
@@ -1799,7 +1799,7 @@ class TestDeduplicationHelpers:
         is_success = getattr(result, "is_success", None)
         is_failure = getattr(result, "is_failure", None)
         if not isinstance(is_success, bool) or not isinstance(is_failure, bool):
-            msg = "Parse method must return FlextResult-like object"
+            msg = "Parse method must return r-like object"
             raise AssertionError(msg)
         error = getattr(result, "error", None)
         error_message = str(error) if error is not None else "Unknown parse error"

@@ -9,7 +9,7 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import ClassVar, Self, override
 
-from flext_core import FlextLogger, FlextResult, FlextService, u as core_u
+from flext_core import FlextLogger, FlextService, r, u as core_u
 from pydantic import Field, ValidationError
 
 from flext_ldif import c, m, p, t
@@ -99,7 +99,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
     @override
     def execute(
         self, **kwargs: Mapping[str, t.ContainerValue]
-    ) -> FlextResult[m.Ldif.Entry | str]:
+    ) -> r[m.Ldif.Entry | str]:
         """Execute entry operation (parse/write)."""
         kwargs_map: Mapping[str, object] = kwargs
         ldif_content = kwargs_map.get("ldif_content")
@@ -108,20 +108,20 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
             entries_result = self._parse_content(ldif_content)
             if entries_result.is_success:
                 entries = entries_result.value
-                return FlextResult[m.Ldif.Entry | str].ok(entries[0] if entries else "")
-            return FlextResult[m.Ldif.Entry | str].ok("")
+                return r[m.Ldif.Entry | str].ok(entries[0] if entries else "")
+            return r[m.Ldif.Entry | str].ok("")
         if isinstance(entry_model, m.Ldif.Entry):
             str_result = self._write_entry(entry_model)
-            return FlextResult[m.Ldif.Entry | str].ok(str_result.map_or(""))
-        return FlextResult[m.Ldif.Entry | str].ok("")
+            return r[m.Ldif.Entry | str].ok(str_result.map_or(""))
+        return r[m.Ldif.Entry | str].ok("")
 
-    def parse(self, ldif_content: str) -> FlextResult[list[m.Ldif.Entry]]:
+    def parse(self, ldif_content: str) -> r[list[m.Ldif.Entry]]:
         """Parse LDIF content string into Entry models."""
         return self._parse_content(ldif_content)
 
     def parse_entry(
         self, entry_dn: str, entry_attrs: Mapping[str, list[str]]
-    ) -> FlextResult[m.Ldif.Entry]:
+    ) -> r[m.Ldif.Entry]:
         """Parse a single entry from DN and attributes."""
         attrs_dict = dict(entry_attrs)
         ldif_lines = [f"dn: {entry_dn}"]
@@ -130,9 +130,9 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         ldif_content = "\n".join(ldif_lines) + "\n"
         return self._parse_content(ldif_content).flat_map(
             lambda entries: (
-                FlextResult[m.Ldif.Entry].ok(entries[0])
+                r[m.Ldif.Entry].ok(entries[0])
                 if entries
-                else FlextResult[m.Ldif.Entry].fail("No entries parsed")
+                else r[m.Ldif.Entry].fail("No entries parsed")
             )
         )
 
@@ -140,7 +140,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         self,
         entry_data: m.Ldif.Entry | list[m.Ldif.Entry],
         write_options: FlextLdifModelsSettings.WriteFormatOptions | None = None,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Write Entry model(s) to LDIF string format."""
         if isinstance(entry_data, list):
             return self._write_entry_list(entry_data, write_options)
@@ -222,22 +222,22 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         _ = target_server
         return entry
 
-    def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> FlextResult[m.Ldif.Entry]:
+    def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Hook called after parsing an entry."""
-        return FlextResult.ok(entry)
+        return r.ok(entry)
 
-    def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> FlextResult[m.Ldif.Entry]:
+    def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Hook called before writing an entry."""
-        return FlextResult.ok(entry)
+        return r.ok(entry)
 
     def _hook_validate_entry_raw(
         self, dn: str, attrs: Mapping[str, list[str | bytes]]
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Hook to validate raw entry before parsing."""
         _ = attrs
         if not dn:
-            return FlextResult[bool].fail("DN cannot be empty")
-        return FlextResult.ok(True)
+            return r[bool].fail("DN cannot be empty")
+        return r.ok(True)
 
     def _inject_write_options(
         self,
@@ -280,10 +280,10 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         """Normalize entry to RFC format with metadata tracking."""
         return entry
 
-    def _parse_content(self, ldif_content: str) -> FlextResult[list[m.Ldif.Entry]]:
+    def _parse_content(self, ldif_content: str) -> r[list[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal)."""
         _ = ldif_content
-        return FlextResult[list[m.Ldif.Entry]].fail("Must be implemented by subclass")
+        return r[list[m.Ldif.Entry]].fail("Must be implemented by subclass")
 
     def _resolve_write_options_for_header(
         self, write_options: FlextLdifModelsSettings.WriteFormatOptions | None
@@ -293,7 +293,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
             return FlextLdifModelsSettings.WriteFormatOptions()
         return write_options
 
-    def _write_entry(self, entry_data: m.Ldif.Entry) -> FlextResult[str]:
+    def _write_entry(self, entry_data: m.Ldif.Entry) -> r[str]:
         """Write Entry model to RFC-compliant LDIF string (internal)."""
         ascii_printable_limit = 127
         output_lines: list[str] = []
@@ -423,7 +423,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
             dn_line = f"dn: {entry_data.dn.value}"
             output_lines.extend(fold_line(dn_line))
         else:
-            return FlextResult[str].fail("Entry DN is None")
+            return r[str].fail("Entry DN is None")
         if core_u.has(entry_data, "attributes") and entry_data.attributes:
             for attr_name, values in entry_data.attributes.items():
                 attr_is_hidden = attr_name.lower() in hidden_attributes
@@ -446,13 +446,13 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
                     append_attribute_line(attr_name, attr_line)
         output_lines.append("")
         ldif_content = "\n".join(output_lines)
-        return FlextResult.ok(ldif_content)
+        return r.ok(ldif_content)
 
     def _write_entry_list(
         self,
         entries: list[m.Ldif.Entry],
         write_options: FlextLdifModelsSettings.WriteFormatOptions | None,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Write list of entries to LDIF."""
         opts = self._resolve_write_options_for_header(write_options)
         header_lines = self._build_header_lines(opts, len(entries))
@@ -464,7 +464,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
                 ldif_output += "\n"
             return ldif_output
 
-        return FlextResult.traverse(
+        return r.traverse(
             entries, lambda e: self._write_single_entry(e, write_options)
         ).map(format_output)
 
@@ -472,7 +472,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         self,
         entry: m.Ldif.Entry,
         write_options: FlextLdifModelsSettings.WriteFormatOptions | None,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Write single entry to LDIF."""
         if write_options is not None:
             entry = self._inject_write_options(entry, write_options)
