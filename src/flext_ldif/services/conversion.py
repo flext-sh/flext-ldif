@@ -1407,14 +1407,24 @@ class FlextLdifConversion(
         try:
             source_schema_result = self._get_schema_quirk_safe(source, "Source")
             if source_schema_result.is_failure:
-                return r[m.Ldif.SchemaAttribute].fail(source_schema_result.error or "")
+                return r[
+                    m.Ldif.Entry
+                    | m.Ldif.SchemaAttribute
+                    | m.Ldif.SchemaObjectClass
+                    | m.Ldif.Acl
+                ].fail(source_schema_result.error or "")
             source_quirk: FlextLdifServersBase = cast(
                 "FlextLdifServersBase", source_schema_result.value
             )
 
             target_schema_result = self._get_schema_quirk_safe(target, "Target")
             if target_schema_result.is_failure:
-                return r[m.Ldif.SchemaAttribute].fail(target_schema_result.error or "")
+                return r[
+                    m.Ldif.Entry
+                    | m.Ldif.SchemaAttribute
+                    | m.Ldif.SchemaObjectClass
+                    | m.Ldif.Acl
+                ].fail(target_schema_result.error or "")
             target_quirk: FlextLdifServersBase = cast(
                 "FlextLdifServersBase", target_schema_result.value
             )
