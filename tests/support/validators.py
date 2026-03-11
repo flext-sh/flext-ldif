@@ -15,23 +15,23 @@ class MockResultHelpers:
 
     @staticmethod
     def validate_composition(
-        *args: t.ContainerValue, **kwargs: t.ContainerValue
+        *args: object, **kwargs: object
     ) -> bool:
         """Validate composition."""
         return True
 
     @staticmethod
-    def validate_chain(*args: t.ContainerValue, **kwargs: t.ContainerValue) -> bool:
+    def validate_chain(*args: object, **kwargs: object) -> bool:
         """Validate chain."""
         return True
 
     @staticmethod
-    def assert_composition(*args: t.ContainerValue, **kwargs: t.ContainerValue) -> None:
+    def assert_composition(*args: object, **kwargs: object) -> None:
         """Assert composition."""
 
     @staticmethod
     def assert_chain_success(
-        *args: t.ContainerValue, **kwargs: t.ContainerValue
+        *args: object, **kwargs: object
     ) -> None:
         """Assert chain success."""
 
@@ -40,7 +40,7 @@ class MockMatchers:
     """Mock matchers for testing."""
 
     @staticmethod
-    def assert_success(*args: t.ContainerValue, **kwargs: t.ContainerValue) -> None:
+    def assert_success(*args: object, **kwargs: object) -> None:
         """Assert success."""
 
 
