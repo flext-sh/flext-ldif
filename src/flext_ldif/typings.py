@@ -6,14 +6,28 @@ All model-based unions belong in consuming modules, NOT here.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping
 from datetime import datetime
-from typing import Annotated, Any, Literal, Self, TypeAlias, TypeVar
+from typing import Annotated, Literal, TypeAlias, TypeVar
 
 from flext_core import FlextTypes, r
 from pydantic import StringConstraints
 
 from flext_ldif import c
+
+# =========================================================================
+# RECURSIVE TYPES - Defined at module level for reliable scope resolution
+# =========================================================================
+
+type _Scalar = str | int | float | bool | None
+
+type _RecursiveMetadata = (
+    _Scalar | list[_RecursiveMetadata] | Mapping[str, _RecursiveMetadata] | datetime
+)
+
+type _RecursiveContainer = (
+    _Scalar | list[_RecursiveContainer] | Mapping[str, _RecursiveContainer] | datetime
+)
 
 
 class FlextLdifTypes(FlextTypes):
@@ -22,22 +36,9 @@ class FlextLdifTypes(FlextTypes):
     class Ldif:
         """LDIF domain type namespace."""
 
-        Scalar: TypeAlias = str | int | float | bool | None
-        type RecursiveMetadata = (
-            Scalar
-            | list[RecursiveMetadata]
-            | Mapping[str, RecursiveMetadata]
-            | datetime
-        )
-        MetadataValue: TypeAlias = RecursiveMetadata
-
-        type RecursiveContainer = (
-            Scalar
-            | list[RecursiveContainer]
-            | Mapping[str, RecursiveContainer]
-            | datetime
-        )
-        ContainerValue: TypeAlias = RecursiveContainer
+        Scalar: TypeAlias = _Scalar
+        MetadataValue: TypeAlias = _RecursiveMetadata
+        ContainerValue: TypeAlias = _RecursiveContainer
 
         ValueType: TypeAlias = Scalar | list[str]
         ValueList: TypeAlias = list[ValueType]
@@ -97,7 +98,7 @@ class FlextLdifTypes(FlextTypes):
             ParseMethodReturn: TypeAlias = r[FlextTypes.Scalar | list[str] | None]
             ParseMethod: TypeAlias = Callable[[object, str], ParseMethodReturn]
             ParseMethodDecorator: TypeAlias = Callable[[ParseMethod], ParseMethod]
-            WriteMethodArg: TypeAlias = FlextTypes.Scalar
+            WriteMethodArg: TypeAlias = FlextTypes.Scalar | list[str] | None
             WriteMethodReturn: TypeAlias = (
                 FlextTypes.Scalar
                 | list[str]

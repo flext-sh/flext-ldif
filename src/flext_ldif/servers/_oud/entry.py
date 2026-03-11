@@ -633,7 +633,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 return r[list[m.Ldif.Entry]].fail(
                     post_parse_result.error or "OUD post-parse failed"
                 )
-            entry_after_post = post_parse_result.value
+            entry_after_post: m.Ldif.Entry = post_parse_result.value
             original_dn = entry_after_post.dn.value if entry_after_post.dn else ""
             original_attrs = (
                 entry_after_post.attributes.attributes

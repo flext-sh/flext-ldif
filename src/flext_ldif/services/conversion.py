@@ -403,7 +403,12 @@ class FlextLdifConversion(
             return r[p.Ldif.SchemaQuirkProtocol].fail(
                 result.error or f"{quirk_type} quirk error: Schema not available"
             )
-        return r[p.Ldif.SchemaQuirkProtocol].ok(result.value)
+        schema_quirk = result.value
+        if not FlextLdifConversion._is_schema_quirk_protocol(schema_quirk):
+            return r[p.Ldif.SchemaQuirkProtocol].fail(
+                f"{quirk_type} quirk {type(schema_quirk)} doesn't satisfy SchemaQuirkProtocol"
+            )
+        return r[p.Ldif.SchemaQuirkProtocol].ok(schema_quirk)
 
     @staticmethod
     def _normalize_metadata_value(value: t.ContainerValue) -> t.MetadataValue:
@@ -474,10 +479,6 @@ class FlextLdifConversion(
         | m.Ldif.SchemaObjectClassConversionPipelineConfig,
     ) -> r[_TConvertedModel]:
         """Process schema conversion pipeline using direct method dispatch."""
-        parse_callable: Callable[
-            [str],
-            r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
-        ]
         write_result = (
             config.source_schema.write_attribute(config.item)
             if isinstance(config, m.Ldif.SchemaAttributeConversionPipelineConfig)
@@ -488,8 +489,14 @@ class FlextLdifConversion(
                 f"Failed to write {config.item_name} in source format: {write_result.error}"
             )
 
+        write_val = write_result.value
+        if not isinstance(write_val, str):
+            return r[_TConvertedModel].fail(
+                f"Expected str from schema write, got {type(write_val)}"
+            )
+
         ldif_result = FlextLdifConversion._validate_ldif_string(
-            write_result.value, config.item_name
+            write_val, config.item_name
         )
         if ldif_result.is_failure:
             return r[_TConvertedModel].fail(
@@ -550,11 +557,12 @@ class FlextLdifConversion(
 
     @staticmethod
     def _schema_passthrough_ok(
-        value: m.Ldif.Schema.SchemaElement,
+        value: _TSchemaConversionValue,
     ) -> r[_TSchemaConversionValue] | None:
         if isinstance(value, str):
             return FlextLdifConversion._schema_conversion_ok(value)
         if isinstance(value, dict):
+            # Convert dict to str for LDIF representation if passthrough
             return FlextLdifConversion._schema_conversion_ok(str(value))
         return None
 
@@ -1143,7 +1151,7 @@ class FlextLdifConversion(
         self,
         source: str | FlextLdifServersBase,
         target: str | FlextLdifServersBase,
-        data: str | t.MetadataValue,
+        data: _TSchemaConversionValue,
     ) -> r[_TSchemaConversionValue]:
         """Convert attribute from source to target quirk via write->parse pipeline."""
         try:
@@ -1161,17 +1169,25 @@ class FlextLdifConversion(
                 data,
                 parse_error_message="Failed to parse attribute",
             )
-            parsed_attr = parse_result.map_or(None)
-            if parsed_attr is None:
+            if parse_result.is_failure:
                 return FlextLdifConversion._schema_conversion_fail(
                     parse_result.error, "Failed to parse source attribute"
                 )
+            parsed_attr = parse_result.value
+            # Ensure it's an attribute
+            if not isinstance(parsed_attr, m.Ldif.SchemaAttribute):
+                return FlextLdifConversion._schema_conversion_fail(
+                    f"Expected SchemaAttribute, got {type(parsed_attr)}",
+                    "Schema conversion type mismatch",
+                )
             rfc_result = self._write_attribute_to_rfc(source, parsed_attr)
-            rfc_value = rfc_result.map_or(None)
-            if rfc_value is None:
+            if rfc_result.is_failure:
                 return rfc_result
+            rfc_value = rfc_result.value
+
             if not isinstance(rfc_value, str):
                 return FlextLdifConversion._schema_conversion_ok(rfc_value)
+
             target_schema_result = self._resolve_schema_quirk(target, role="Target")
             if target_schema_result.is_failure:
                 return FlextLdifConversion._schema_conversion_fail(
@@ -1186,8 +1202,9 @@ class FlextLdifConversion(
                 return FlextLdifConversion._schema_conversion_fail(
                     target_parse_result.error, "Failed to parse target attribute"
                 )
-            parsed_value: m.Ldif.SchemaAttribute = target_parse_result.value
-            return self._write_target_attribute(parsed_value)
+
+            final_val: _TSchemaConversionValue = target_parse_result.value
+            return FlextLdifConversion._schema_conversion_ok(final_val)
         except (
             ValueError,
             KeyError,
@@ -1417,7 +1434,7 @@ class FlextLdifConversion(
         self,
         source: str | FlextLdifServersBase,
         target: str | FlextLdifServersBase,
-        data: str | t.MetadataValue,
+        data: _TSchemaConversionValue,
     ) -> r[_TSchemaConversionValue]:
         """Convert objectClass from source to target quirk via write->parse pipeline."""
         try:
@@ -1435,33 +1452,43 @@ class FlextLdifConversion(
                 data,
                 parse_error_message="Failed to parse objectClass",
             )
-            parsed_oc = parse_result.map_or(None)
-            if parsed_oc is None:
+            if parse_result.is_failure:
                 return FlextLdifConversion._schema_conversion_fail(
                     parse_result.error, "Failed to parse source objectClass"
                 )
-            write_result = self._write_objectclass_to_rfc(source, parsed_oc)
-            rfc_value = write_result.map_or(None)
-            if rfc_value is None:
-                return write_result
+            parsed_oc = parse_result.value
+            # Ensure it's an objectClass
+            if not isinstance(parsed_oc, m.Ldif.SchemaObjectClass):
+                return FlextLdifConversion._schema_conversion_fail(
+                    f"Expected SchemaObjectClass, got {type(parsed_oc)}",
+                    "Schema conversion type mismatch",
+                )
+
+            rfc_result = self._write_objectclass_to_rfc(source, parsed_oc)
+            if rfc_result.is_failure:
+                return rfc_result
+            rfc_value = rfc_result.value
+
             if not isinstance(rfc_value, str):
                 return FlextLdifConversion._schema_conversion_ok(rfc_value)
+
             target_schema_result = self._resolve_schema_quirk(target, role="Target")
             if target_schema_result.is_failure:
                 return FlextLdifConversion._schema_conversion_fail(
                     target_schema_result.error, "Target schema not available"
                 )
-            target_result = self._parse_objectclass_with_schema(
+            target_parse_result = self._parse_objectclass_with_schema(
                 target_schema_result.value,
                 rfc_value,
                 parse_error_message="Failed to parse target objectClass",
             )
-            if target_result.is_failure:
+            if target_parse_result.is_failure:
                 return FlextLdifConversion._schema_conversion_fail(
-                    target_result.error, "Failed to parse target objectClass"
+                    target_parse_result.error, "Failed to parse target objectClass"
                 )
-            parsed_value = target_result.value
-            return self._write_target_objectclass(target, parsed_value)
+
+            final_val: _TSchemaConversionValue = target_parse_result.value
+            return FlextLdifConversion._schema_conversion_ok(final_val)
         except (
             ValueError,
             KeyError,
@@ -1748,22 +1775,25 @@ class FlextLdifConversion(
         self,
         source: str | FlextLdifServersBase,
         source_attr: m.Ldif.SchemaAttribute | t.MetadataValue | str,
-    ) -> r[str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | t.MetadataValue]:
+    ) -> r[_TSchemaConversionValue]:
         """Write attribute to RFC string representation."""
         if isinstance(source_attr, str):
-            return r[str].ok(source_attr)
+            return r[_TSchemaConversionValue].ok(source_attr)
         if not isinstance(source_attr, m.Ldif.SchemaAttribute):
-            return r[str].ok(source_attr)
+            return r[_TSchemaConversionValue].ok(source_attr)
         source_quirk = self._resolve_quirk(source)
         try:
             schema_quirk = FlextLdifConversion._get_schema_quirk(source_quirk)
         except TypeError:
-            return r[str].ok(source_attr)
+            return r[_TSchemaConversionValue].ok(source_attr)
         if not isinstance(schema_quirk, FlextLdifServersBaseSchema):
-            return r[str].ok(source_attr)
-        return r[
-            str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | t.MetadataValue
-        ].ok(schema_quirk.write_attribute(source_attr).map_or(source_attr))
+            return r[_TSchemaConversionValue].ok(source_attr)
+
+        write_res = schema_quirk.write_attribute(source_attr)
+        # Use return value directly if possible, else wrap
+        if write_res.is_success:
+            return r[_TSchemaConversionValue].ok(write_res.value)
+        return r[_TSchemaConversionValue].fail(write_res.error or "Schema write failed")
 
     def _write_objectclass_to_rfc(
         self,
@@ -1784,13 +1814,13 @@ class FlextLdifConversion(
             return r[_TSchemaConversionValue].ok(source_oc)
         if not isinstance(schema_quirk, FlextLdifServersBaseSchema):
             return r[_TSchemaConversionValue].ok(source_oc)
-        write_result: r[_TSchemaConversionValue] = r[_TSchemaConversionValue].ok(
-            schema_quirk.write_objectclass(source_oc).map_or(source_oc)
+
+        write_res = schema_quirk.write_objectclass(source_oc)
+        if write_res.is_success:
+            return r[_TSchemaConversionValue].ok(write_res.value)
+        return r[_TSchemaConversionValue].fail(
+            write_res.error or "Schema OC write failed"
         )
-        write_value = write_result.map_or(None)
-        if write_value is not None and isinstance(write_value, str):
-            return FlextLdifConversion._schema_conversion_ok(write_value)
-        return write_result
 
     def _write_target_attribute(
         self, parsed_attr: m.Ldif.SchemaAttribute | str | t.MetadataValue
