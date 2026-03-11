@@ -51,13 +51,13 @@ class DRYRailwayExample:
             if result.is_success:
                 entries.append(result.value)
         if not entries:
-            return r.fail("Failed to create entries")
+            return r[list[m.Ldif.Entry]].fail("Failed to create entries")
         transform_result = api.process(
             "transform", entries, parallel=True, max_workers=6
         )
         if transform_result.is_failure:
-            return r.fail(transform_result.error or "Transform failed")
-        return r.ok(entries)
+            return r[list[m.Ldif.Entry]].fail(transform_result.error or "Transform failed")
+        return r[list[m.Ldif.Entry]].ok(entries)
 
     @staticmethod
     def file_pipeline() -> r[str]:
@@ -70,11 +70,11 @@ class DRYRailwayExample:
         api = FlextLdif.get_instance()
         sample_file = Path("examples/sample_basic.ldif")
         if not sample_file.exists():
-            return r.fail("Sample file not found")
+            return r[str].fail("Sample file not found")
         ldif_content = sample_file.read_text(encoding="utf-8")
         detect_result = api.detect_server_type(ldif_content=ldif_content)
         if detect_result.is_failure:
-            return r.fail(detect_result.error or "Server detection failed")
+            return r[str].fail(detect_result.error or "Server detection failed")
         detected = detect_result.value
         server_type = detected.detected_server_type or "rfc"
         parse_result = api.parse(sample_file, server_type=server_type)
@@ -87,8 +87,8 @@ class DRYRailwayExample:
             parse_result.value, Path("examples/output_dry.ldif")
         )
         if write_result.is_failure:
-            return r.fail(write_result.error or "Write failed")
-        return r.ok("File processing complete")
+            return r[str].fail(write_result.error or "Write failed")
+        return r[str].ok("File processing complete")
 
     def context_pipeline(self) -> r[list[m.Ldif.Entry]]:
         """Context-aware processing with correlation tracking.
@@ -101,7 +101,7 @@ class DRYRailwayExample:
         with FlextContext.Correlation.new_correlation("req-123-dry"):
             server_result = api.get_effective_server_type()
             if server_result.is_failure:
-                return r.fail(server_result.error or "Server detection failed")
+                return r[list[m.Ldif.Entry]].fail(server_result.error or "Server detection failed")
             parse_result = api.parse(
                 self.SAMPLE_LDIF[:100], server_type=server_result.value
             )
@@ -109,8 +109,8 @@ class DRYRailwayExample:
                 return parse_result
             validate_result = api.validate_entries(parse_result.value)
             if validate_result.is_failure:
-                return r.fail(validate_result.error or "Validation failed")
-            return r.ok(parse_result.value)
+                return r[list[m.Ldif.Entry]].fail(validate_result.error or "Validation failed")
+            return r[list[m.Ldif.Entry]].ok(parse_result.value)
 
     def process_pipeline(self) -> r[list[m.Ldif.Entry]]:
         """DRY railway: detect → parse → validate → parallel process.
@@ -130,15 +130,15 @@ class DRYRailwayExample:
         if detect_result.is_success and detect_result.value.detected_server_type:
             server_type = detect_result.value.detected_server_type
         elif detect_result.is_failure:
-            return r.fail(detect_result.error or "Detection failed")
+            return r[list[m.Ldif.Entry]].fail(detect_result.error or "Detection failed")
         parse_result = api.parse(self.SAMPLE_LDIF, server_type=server_type)
         if parse_result.is_failure:
-            return r.fail(parse_result.error or "Parse failed")
+            return r[list[m.Ldif.Entry]].fail(parse_result.error or "Parse failed")
         entries = parse_result.value
         validate_result = api.validate_entries(entries)
         if validate_result.is_failure:
-            return r.fail(validate_result.error or "Validation failed")
+            return r[list[m.Ldif.Entry]].fail(validate_result.error or "Validation failed")
         process_result = api.process("transform", entries, parallel=True, max_workers=4)
         if process_result.is_success:
             return r[list[m.Ldif.Entry]].ok(entries)
-        return r.fail(process_result.error or "Process failed")
+        return r[list[m.Ldif.Entry]].fail(process_result.error or "Process failed")
