@@ -12,6 +12,7 @@ from flext_core import FlextLogger, FlextTypes, r
 from pydantic import Field
 
 from flext_ldif import FlextLdifServer, FlextLdifServiceBase, c, m, p, t, u
+from flext_ldif.servers._base import FlextLdifServersBaseSchema
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.base import FlextLdifServersBase
 
@@ -341,39 +342,37 @@ class FlextLdifConversion(
                 | p.Ldif.SchemaObjectClassProtocol
                 | p.Ldif.SchemaQuirkProtocol,
                 ldif: str,
-            ) -> r[p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol]:
-                parse_result = parse_attr(ldif)
+            ) -> r[t.ContainerValue]:
+                local_parse_attr = parse_attr
+                if local_parse_attr is None:
+                    return r[t.ContainerValue].fail(
+                        "Target schema parse_attribute unavailable"
+                    )
+                parse_result = local_parse_attr(ldif)
                 if not isinstance(parse_result, r):
-                    return r[
-                        p.Ldif.SchemaAttributeProtocol
-                        | p.Ldif.SchemaObjectClassProtocol
-                    ].fail("Failed to parse attribute")
+                    return r[t.ContainerValue].fail("Failed to parse attribute")
                 if parse_result.is_failure:
-                    return r[
-                        p.Ldif.SchemaAttributeProtocol
-                        | p.Ldif.SchemaObjectClassProtocol
-                    ].fail(parse_result.error or "Failed to parse attribute")
+                    return r[t.ContainerValue].fail(
+                        parse_result.error or "Failed to parse attribute"
+                    )
                 parsed_value = parse_result.value
                 if isinstance(parsed_value, m.Ldif.SchemaAttribute):
-                    return r[
-                        p.Ldif.SchemaAttributeProtocol
-                        | p.Ldif.SchemaObjectClassProtocol
-                    ].ok(parsed_value)
+                    return r[t.ContainerValue].ok(parsed_value)
                 if isinstance(parsed_value, m.Ldif.SchemaObjectClass):
-                    return r[
-                        p.Ldif.SchemaAttributeProtocol
-                        | p.Ldif.SchemaObjectClassProtocol
-                    ].ok(parsed_value)
-                return r[
-                    p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol
-                ].fail("Parsed attribute has invalid schema type")
+                    return r[t.ContainerValue].ok(parsed_value)
+                return r[t.ContainerValue].fail(
+                    "Parsed attribute has invalid schema type"
+                )
 
             def _write_attribute_pipeline(
                 _source_schema: p.Ldif.SchemaAttributeProtocol
                 | p.Ldif.SchemaObjectClassProtocol
                 | p.Ldif.SchemaQuirkProtocol,
             ) -> r[str]:
-                write_result = write_attr(attribute)
+                local_write_attr = write_attr
+                if local_write_attr is None:
+                    return r[str].fail("Source schema write_attribute unavailable")
+                write_result = local_write_attr(attribute)
                 if isinstance(write_result, r):
                     return write_result
                 return r[str].fail("Failed to write attribute")
@@ -464,39 +463,37 @@ class FlextLdifConversion(
                 | p.Ldif.SchemaObjectClassProtocol
                 | p.Ldif.SchemaQuirkProtocol,
                 ldif: str,
-            ) -> r[p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol]:
-                parse_result = parse_oc(ldif)
+            ) -> r[t.ContainerValue]:
+                local_parse_oc = parse_oc
+                if local_parse_oc is None:
+                    return r[t.ContainerValue].fail(
+                        "Target schema parse_objectclass unavailable"
+                    )
+                parse_result = local_parse_oc(ldif)
                 if not isinstance(parse_result, r):
-                    return r[
-                        p.Ldif.SchemaAttributeProtocol
-                        | p.Ldif.SchemaObjectClassProtocol
-                    ].fail("Failed to parse objectclass")
+                    return r[t.ContainerValue].fail("Failed to parse objectclass")
                 if parse_result.is_failure:
-                    return r[
-                        p.Ldif.SchemaAttributeProtocol
-                        | p.Ldif.SchemaObjectClassProtocol
-                    ].fail(parse_result.error or "Failed to parse objectclass")
+                    return r[t.ContainerValue].fail(
+                        parse_result.error or "Failed to parse objectclass"
+                    )
                 parsed_value = parse_result.value
                 if isinstance(parsed_value, m.Ldif.SchemaAttribute):
-                    return r[
-                        p.Ldif.SchemaAttributeProtocol
-                        | p.Ldif.SchemaObjectClassProtocol
-                    ].ok(parsed_value)
+                    return r[t.ContainerValue].ok(parsed_value)
                 if isinstance(parsed_value, m.Ldif.SchemaObjectClass):
-                    return r[
-                        p.Ldif.SchemaAttributeProtocol
-                        | p.Ldif.SchemaObjectClassProtocol
-                    ].ok(parsed_value)
-                return r[
-                    p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol
-                ].fail("Parsed objectclass has invalid schema type")
+                    return r[t.ContainerValue].ok(parsed_value)
+                return r[t.ContainerValue].fail(
+                    "Parsed objectclass has invalid schema type"
+                )
 
             def _write_objectclass_pipeline(
                 _source_schema: p.Ldif.SchemaAttributeProtocol
                 | p.Ldif.SchemaObjectClassProtocol
                 | p.Ldif.SchemaQuirkProtocol,
             ) -> r[str]:
-                write_result = write_oc(objectclass)
+                local_write_oc = write_oc
+                if local_write_oc is None:
+                    return r[str].fail("Source schema write_objectclass unavailable")
+                write_result = local_write_oc(objectclass)
                 if isinstance(write_result, r):
                     return write_result
                 return r[str].fail("Failed to write objectclass")
@@ -602,7 +599,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _process_schema_conversion_pipeline(
-        config: p.Ldif.SchemaConversionPipelineConfigProtocol,
+        config: m.Ldif.SchemaConversionPipelineConfig,
     ) -> r[
         m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
     ]:
@@ -1909,6 +1906,8 @@ class FlextLdifConversion(
             schema_quirk = FlextLdifConversion._get_schema_quirk(source_quirk)
         except TypeError:
             return r[str].ok(source_attr)
+        if not isinstance(schema_quirk, FlextLdifServersBaseSchema):
+            return r[str].ok(source_attr)
         return r.ok(schema_quirk.write_attribute(source_attr).map_or(source_attr))
 
     def _write_objectclass_to_rfc(
@@ -1927,6 +1926,8 @@ class FlextLdifConversion(
         try:
             schema_quirk = FlextLdifConversion._get_schema_quirk(source_quirk)
         except TypeError:
+            return r[_TSchemaConversionValue].ok(source_oc)
+        if not isinstance(schema_quirk, FlextLdifServersBaseSchema):
             return r[_TSchemaConversionValue].ok(source_oc)
         write_result: r[_TSchemaConversionValue] = r[_TSchemaConversionValue].ok(
             schema_quirk.write_objectclass(source_oc).map_or(source_oc)
@@ -1964,6 +1965,8 @@ class FlextLdifConversion(
         try:
             schema_quirk = FlextLdifConversion._get_schema_quirk(target_quirk)
         except TypeError:
+            return FlextLdifConversion._schema_conversion_ok(parsed_oc)
+        if not isinstance(schema_quirk, FlextLdifServersBaseSchema):
             return FlextLdifConversion._schema_conversion_ok(parsed_oc)
         write_result = schema_quirk.write_objectclass(parsed_oc)
         written_str = write_result.map_or(None)

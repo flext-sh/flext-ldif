@@ -1656,10 +1656,7 @@ class FlextLdifModelsSettings:
         )
         parse_method: Callable[
             ...,
-            r[
-                FlextLdifProtocols.Ldif.SchemaAttributeProtocol
-                | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
-            ],
+            r[t.ContainerValue],
         ] = Field(..., description="Parse method to call on target schema")
         item_name: str = Field(..., description="Item name for error messages")
 

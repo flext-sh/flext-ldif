@@ -9,7 +9,6 @@ from flext_core import FlextLogger, FlextUtilities, r
 from flext_ldif._models.domain import FlextLdifModelsDomains
 
 u = FlextUtilities
-r = r
 logger = FlextLogger(__name__)
 
 

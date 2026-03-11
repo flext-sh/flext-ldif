@@ -7,12 +7,11 @@ import struct
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from flext_core import FlextLogger, FlextResult, t, u
+from flext_core import FlextLogger, r, t, u
 
 from flext_ldif import c, m
 from flext_ldif._models.settings import FlextLdifModelsSettings
 
-r = FlextResult
 _TUPLE_LENGTH_TWO = 2
 logger = FlextLogger(__name__)
 
@@ -446,7 +445,7 @@ class FlextLdifUtilitiesWriter:
     @staticmethod
     def write_file(
         content: str, file_path: Path, encoding: str = "utf-8"
-    ) -> FlextResult[Mapping[str, str | int]]:
+    ) -> r[Mapping[str, str | int]]:
         """Write content to file (pure I/O operation)."""
         try:
             file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -456,7 +455,7 @@ class FlextLdifUtilitiesWriter:
                 "path": str(file_path),
                 "encoding": encoding,
             }
-            return FlextResult[Mapping[str, str | int]].ok(stats)
+            return r[Mapping[str, str | int]].ok(stats)
         except (
             ValueError,
             KeyError,
@@ -465,39 +464,35 @@ class FlextLdifUtilitiesWriter:
             struct.error,
         ) as e:
             logger.exception("File write failed", file_path=str(file_path))
-            return FlextResult[Mapping[str, str | int]].fail(f"File write failed: {e}")
+            return r[Mapping[str, str | int]].fail(f"File write failed: {e}")
 
     @staticmethod
     def write_rfc_attribute(
         attr_data: m.Ldif.SchemaAttribute,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Write attribute data to RFC 4512 format."""
         try:
             if not attr_data.oid:
-                return FlextResult[str].fail(
-                    "RFC attribute writing failed: missing OID"
-                )
+                return r[str].fail("RFC attribute writing failed: missing OID")
             parts = FlextLdifUtilitiesWriter._build_attribute_parts(attr_data)
-            return FlextResult[str].ok(" ".join(parts))
+            return r[str].ok(" ".join(parts))
         except (ValueError, TypeError, AttributeError) as e:
             logger.exception("RFC attribute writing exception")
-            return FlextResult[str].fail(f"RFC attribute writing failed: {e}")
+            return r[str].fail(f"RFC attribute writing failed: {e}")
 
     @staticmethod
     def write_rfc_objectclass(
         objectclass: m.Ldif.SchemaObjectClass,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Write objectClass data to RFC 4512 format."""
         try:
             if not objectclass.oid:
-                return FlextResult[str].fail(
-                    "RFC objectClass writing failed: missing OID"
-                )
+                return r[str].fail("RFC objectClass writing failed: missing OID")
             parts = FlextLdifUtilitiesWriter._build_objectclass_parts(objectclass)
-            return FlextResult[str].ok(" ".join(parts))
+            return r[str].ok(" ".join(parts))
         except (ValueError, TypeError, AttributeError) as e:
             logger.exception("RFC objectClass writing exception")
-            return FlextResult[str].fail(f"RFC objectClass writing failed: {e}")
+            return r[str].fail(f"RFC objectClass writing failed: {e}")
 
 
 __all__ = ["FlextLdifUtilitiesWriter"]

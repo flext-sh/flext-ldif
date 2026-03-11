@@ -9,7 +9,7 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from typing import TypeVar
 
-from flext_core import FlextLogger, FlextResult, FlextTypes, r, u
+from flext_core import FlextLogger, FlextTypes, r, u
 
 from flext_ldif import c, p, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -30,7 +30,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _add_objectclass_must_may(
-        oc_data: p.Ldif.SchemaObjectClassProtocol, parts: list[str]
+        oc_data: FlextLdifModelsDomains.SchemaObjectClass, parts: list[str]
     ) -> None:
         """Add MUST and MAY to objectclass parts list."""
         if oc_data.must:
@@ -56,7 +56,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _add_objectclass_sup(
-        oc_data: p.Ldif.SchemaObjectClassProtocol, parts: list[str]
+        oc_data: FlextLdifModelsDomains.SchemaObjectClass, parts: list[str]
     ) -> None:
         """Add SUP to objectclass parts list."""
         if oc_data.sup:
@@ -77,9 +77,9 @@ class FlextLdifUtilitiesSchema:
         field_name: str,
         transform_fn: Callable[
             [FlextTypes.ContainerValue],
-            FlextTypes.ContainerValue | FlextResult[FlextTypes.ContainerValue],
+            FlextTypes.ContainerValue | r[FlextTypes.ContainerValue],
         ],
-    ) -> FlextResult[
+    ) -> r[
         FlextLdifModelsDomains.SchemaAttribute
         | FlextLdifModelsDomains.SchemaObjectClass
     ]:
@@ -87,7 +87,7 @@ class FlextLdifUtilitiesSchema:
         try:
             old_value = getattr(transformed, field_name, None)
             new_value = transform_fn(old_value)
-            if isinstance(new_value, FlextResult):
+            if isinstance(new_value, r):
                 if new_value.is_failure:
                     return r[
                         FlextLdifModelsDomains.SchemaAttribute
@@ -98,7 +98,7 @@ class FlextLdifUtilitiesSchema:
                 setattr(transformed, field_name, new_value.value)
             else:
                 setattr(transformed, field_name, new_value)
-            return FlextResult.ok(transformed)
+            return r.ok(transformed)
         except (
             ValueError,
             KeyError,
@@ -122,7 +122,7 @@ class FlextLdifUtilitiesSchema:
             str,
             Callable[
                 [FlextTypes.ContainerValue],
-                FlextTypes.ContainerValue | FlextResult[FlextTypes.ContainerValue],
+                FlextTypes.ContainerValue | r[FlextTypes.ContainerValue],
             ]
             | str
             | list[str]
@@ -130,7 +130,7 @@ class FlextLdifUtilitiesSchema:
         ],
         schema_obj: FlextLdifModelsDomains.SchemaAttribute
         | FlextLdifModelsDomains.SchemaObjectClass,
-    ) -> FlextResult[
+    ) -> r[
         FlextLdifModelsDomains.SchemaAttribute
         | FlextLdifModelsDomains.SchemaObjectClass
     ]:
@@ -198,14 +198,15 @@ class FlextLdifUtilitiesSchema:
                 ].fail(
                     f"Unexpected type after transformation: {type(unwrapped_validated).__name__}"
                 )
-        return FlextResult[
+        return r[
             FlextLdifModelsDomains.SchemaAttribute
             | FlextLdifModelsDomains.SchemaObjectClass
         ].ok(current)
 
     @staticmethod
     def _apply_trailing_spaces(
-        attr_data: p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol,
+        attr_data: FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass,
         parts: list[str],
     ) -> None:
         """Apply trailing spaces from metadata if available."""
@@ -219,7 +220,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _build_attribute_parts_from_model(
-        attr_data: p.Ldif.SchemaAttributeProtocol,
+        attr_data: FlextLdifModelsDomains.SchemaAttribute,
     ) -> list[str]:
         """Build RFC 4512 attribute definition parts (simple version)."""
         parts: list[str] = [f"( {attr_data.oid}"]
@@ -245,7 +246,8 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _build_name_part(
-        attr_data: p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol,
+        attr_data: FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass,
         *,
         restore_format: bool = False,
     ) -> str | None:
@@ -269,7 +271,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _build_objectclass_parts_from_model(
-        oc_data: p.Ldif.SchemaObjectClassProtocol,
+        oc_data: FlextLdifModelsDomains.SchemaObjectClass,
     ) -> list[str]:
         """Build RFC 4512 objectClass definition parts (extracted to reduce complexity)."""
         parts: list[str] = [f"( {oc_data.oid}"]
@@ -292,7 +294,8 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _build_obsolete_part(
-        attr_data: p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol,
+        attr_data: FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass,
         parts: list[str],
         field_order: list[str] | None,
         *,
@@ -321,7 +324,8 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _build_x_origin_part(
-        attr_data: p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol,
+        attr_data: FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass,
         *,
         restore_format: bool = False,
     ) -> str | None:
@@ -530,7 +534,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _extract_schema_items_from_lines(
         ldif_content: str,
-        parse_callback: Callable[[str], FlextResult[SchemaModelT]],
+        parse_callback: Callable[[str], r[SchemaModelT]],
         line_prefix: str,
         model_type: type[SchemaModelT],
     ) -> list[SchemaModelT]:
@@ -583,7 +587,8 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _get_field_order(
-        attr_data: p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol,
+        attr_data: FlextLdifModelsDomains.SchemaAttribute
+        | FlextLdifModelsDomains.SchemaObjectClass,
     ) -> list[str] | None:
         """Extract field order from metadata if available."""
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
@@ -601,13 +606,13 @@ class FlextLdifUtilitiesSchema:
         | FlextLdifModelsDomains.SchemaObjectClass,
         _original_type: FlextLdifModelsDomains.SchemaAttribute
         | FlextLdifModelsDomains.SchemaObjectClass,
-    ) -> FlextResult[
+    ) -> r[
         FlextLdifModelsDomains.SchemaAttribute
         | FlextLdifModelsDomains.SchemaObjectClass
     ]:
         """Wrap transformation result with proper type."""
         try:
-            return FlextResult.ok(
+            return r.ok(
                 FlextLdifModelsDomains.SchemaAttribute.model_validate(transformed)
             )
         except (
@@ -622,7 +627,7 @@ class FlextLdifUtilitiesSchema:
                 error=str(exc),
             )
         try:
-            return FlextResult.ok(
+            return r.ok(
                 FlextLdifModelsDomains.SchemaObjectClass.model_validate(transformed)
             )
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
@@ -637,7 +642,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _try_restore_objectclass_original_format(
-        oc_data: p.Ldif.SchemaObjectClassProtocol,
+        oc_data: FlextLdifModelsDomains.SchemaObjectClass,
         *,
         restore_original: bool = True,
     ) -> list[str] | None:
@@ -657,7 +662,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _try_restore_original_format(
-        attr_data: p.Ldif.SchemaAttributeProtocol,
+        attr_data: FlextLdifModelsDomains.SchemaAttribute,
     ) -> list[str] | None:
         """Try to restore original format from metadata for perfect round-trip."""
         if not (
@@ -715,7 +720,7 @@ class FlextLdifUtilitiesSchema:
         | FlextLdifModelsDomains.SchemaObjectClass,
         schema_obj: FlextLdifModelsDomains.SchemaAttribute
         | FlextLdifModelsDomains.SchemaObjectClass,
-    ) -> FlextResult[
+    ) -> r[
         FlextLdifModelsDomains.SchemaAttribute
         | FlextLdifModelsDomains.SchemaObjectClass
     ]:
@@ -725,7 +730,7 @@ class FlextLdifUtilitiesSchema:
             validated_attr = FlextLdifModelsDomains.SchemaAttribute.model_validate(
                 unwrapped
             )
-            return FlextResult.ok(validated_attr)
+            return r.ok(validated_attr)
         except (
             ValueError,
             KeyError,
@@ -741,7 +746,7 @@ class FlextLdifUtilitiesSchema:
             validated_oc = FlextLdifModelsDomains.SchemaObjectClass.model_validate(
                 unwrapped
             )
-            return FlextResult.ok(validated_oc)
+            return r.ok(validated_oc)
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return r[
                 FlextLdifModelsDomains.SchemaAttribute
@@ -777,14 +782,14 @@ class FlextLdifUtilitiesSchema:
             str,
             Callable[
                 [FlextTypes.ContainerValue],
-                FlextTypes.ContainerValue | FlextResult[FlextTypes.ContainerValue],
+                FlextTypes.ContainerValue | r[FlextTypes.ContainerValue],
             ]
             | str
             | list[str]
             | None,
         ]
         | None = None,
-    ) -> FlextResult[
+    ) -> r[
         FlextLdifModelsDomains.SchemaAttribute
         | FlextLdifModelsDomains.SchemaObjectClass
     ]:
@@ -814,7 +819,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def build_attribute_parts_with_metadata(
-        attr_data: p.Ldif.SchemaAttributeProtocol,
+        attr_data: FlextLdifModelsDomains.SchemaAttribute,
         *,
         restore_original: bool = True,
     ) -> list[str]:
@@ -882,7 +887,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def build_objectclass_parts_with_metadata(
-        oc_data: p.Ldif.SchemaObjectClassProtocol,
+        oc_data: FlextLdifModelsDomains.SchemaObjectClass,
         *,
         restore_original: bool = True,
     ) -> list[str]:
@@ -1010,9 +1015,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def extract_attributes_from_lines(
         ldif_content: str,
-        parse_callback: Callable[
-            [str], FlextResult[FlextLdifModelsDomains.SchemaAttribute]
-        ],
+        parse_callback: Callable[[str], r[FlextLdifModelsDomains.SchemaAttribute]],
     ) -> list[FlextLdifModelsDomains.SchemaAttribute]:
         """Extract and parse all attributeTypes from LDIF content lines."""
         return FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
@@ -1025,9 +1028,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def extract_objectclasses_from_lines(
         ldif_content: str,
-        parse_callback: Callable[
-            [str], FlextResult[FlextLdifModelsDomains.SchemaObjectClass]
-        ],
+        parse_callback: Callable[[str], r[FlextLdifModelsDomains.SchemaObjectClass]],
     ) -> list[FlextLdifModelsDomains.SchemaObjectClass]:
         """Extract and parse all objectClasses from LDIF content lines."""
         return FlextLdifUtilitiesSchema._extract_schema_items_from_lines(

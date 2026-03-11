@@ -8,7 +8,7 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Literal, Self, overload, override
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, r
 
 from flext_ldif import c, m, p, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -348,15 +348,13 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def extract_schemas_from_ldif(
         self, ldif_content: str, *, validate_dependencies: bool = False
-    ) -> FlextResult[
-        Mapping[str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass]]
-    ]:
+    ) -> r[Mapping[str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass]]]:
         """Extract schema definitions from LDIF using u."""
         try:
 
             def parse_attribute_domain(
                 attr_definition: str,
-            ) -> FlextResult[FlextLdifModelsDomains.SchemaAttribute]:
+            ) -> r[FlextLdifModelsDomains.SchemaAttribute]:
                 return self.parse_attribute(attr_definition).map(
                     lambda attr: FlextLdifModelsDomains.SchemaAttribute.model_validate(
                         attr.model_dump()
@@ -380,7 +378,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                     attributes_parsed_model, available_attrs
                 )
                 if not validation_result.is_success:
-                    return FlextResult[
+                    return r[
                         Mapping[
                             str,
                             list[m.Ldif.SchemaAttribute]
@@ -390,7 +388,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
             def parse_objectclass_domain(
                 oc_definition: str,
-            ) -> FlextResult[FlextLdifModelsDomains.SchemaObjectClass]:
+            ) -> r[FlextLdifModelsDomains.SchemaObjectClass]:
                 return self.parse_objectclass(oc_definition).map(
                     lambda oc: FlextLdifModelsDomains.SchemaObjectClass.model_validate(
                         oc.model_dump()
@@ -412,7 +410,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 str(c.Ldif.DictKeys.ATTRIBUTES): attributes_parsed_model,
                 str(c.Ldif.DictKeys.OBJECTCLASS): objectclasses_parsed_model,
             }
-            return FlextResult[
+            return r[
                 Mapping[
                     str,
                     list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
@@ -426,7 +424,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             struct.error,
         ) as e:
             logger.exception("Schema extraction failed")
-            return FlextResult[
+            return r[
                 Mapping[
                     str,
                     list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
@@ -490,15 +488,13 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return output_str.rstrip(")") + x_origin_str + ")"
 
     @override
-    def _parse_attribute(
-        self, attr_definition: str
-    ) -> FlextResult[m.Ldif.SchemaAttribute]:
+    def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
         """Parse RFC 4512 attribute definition using generalized parser."""
         server_type = self._get_server_type()
 
         def parse_parts_hook(
             definition: str,
-        ) -> FlextResult[dict[str, t.ContainerValue]]:
+        ) -> r[dict[str, t.ContainerValue]]:
             return FlextLdifUtilitiesSchema.parse_attribute(definition)
 
         parse_result_raw = FlextLdifUtilitiesAttribute.parse(
@@ -507,7 +503,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             parse_parts_hook=parse_parts_hook,
         )
         if parse_result_raw.is_failure:
-            return FlextResult[m.Ldif.SchemaAttribute].fail(
+            return r[m.Ldif.SchemaAttribute].fail(
                 parse_result_raw.error or "Attribute parsing failed"
             )
         parsed = parse_result_raw.value
@@ -553,9 +549,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return self._hook_post_parse_attribute(attr_model)
 
     @override
-    def _parse_objectclass(
-        self, oc_definition: str
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+    def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition using core parser."""
         parse_result = self._parse_objectclass_core(oc_definition)
         if parse_result.is_failure:
@@ -564,7 +558,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def _parse_objectclass_core(
         self, oc_definition: str
-    ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+    ) -> r[m.Ldif.SchemaObjectClass]:
         """Core RFC 4512 objectClass parsing per Section 4.1.1."""
         try:
             parsed = FlextLdifUtilitiesSchema.parse_objectclass(oc_definition)
@@ -627,10 +621,10 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 may=oc_may,
                 metadata=metadata,
             )
-            return FlextResult[m.Ldif.SchemaObjectClass].ok(objectclass)
+            return r[m.Ldif.SchemaObjectClass].ok(objectclass)
         except (ValueError, TypeError, AttributeError) as e:
             logger.exception("RFC objectClass parsing exception")
-            return FlextResult[m.Ldif.SchemaObjectClass].fail(
+            return r[m.Ldif.SchemaObjectClass].fail(
                 f"RFC objectClass parsing failed: {e}"
             )
 
@@ -673,26 +667,24 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                     pass
 
     @override
-    def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> FlextResult[str]:
+    def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> r[str]:
         """Write attribute to RFC-compliant string format (internal)."""
         return self._write_schema_item(attr_data)
 
     @override
-    def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> FlextResult[str]:
+    def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> r[str]:
         """Write objectClass to RFC-compliant string format (internal)."""
         return self._write_schema_item(oc_data)
 
     def _write_schema_item(
         self, data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Write schema item (attribute or objectClass) to RFC-compliant format."""
         try:
             if isinstance(data, m.Ldif.SchemaAttribute):
                 attr_transformed = self._transform_attribute_for_write(data)
                 if not attr_transformed.oid:
-                    return FlextResult[str].fail(
-                        "RFC attribute writing failed: missing OID"
-                    )
+                    return r[str].fail("RFC attribute writing failed: missing OID")
                 parts = self._build_attribute_parts(attr_transformed)
                 written_str = " ".join(parts)
                 transformed_str = self._post_write_attribute(written_str)
@@ -710,18 +702,16 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                                 transformed_str,
                                 flags=re.IGNORECASE,
                             )
-                return FlextResult[str].ok(
+                return r[str].ok(
                     self._ensure_x_origin(transformed_str, attr_transformed.metadata)
                 )
             oc_transformed = self._transform_objectclass_for_write(data)
             if not oc_transformed.oid:
-                return FlextResult[str].fail(
-                    "RFC objectclass writing failed: missing OID"
-                )
+                return r[str].fail("RFC objectclass writing failed: missing OID")
             parts = self._build_objectclass_parts(oc_transformed)
             written_str = " ".join(parts)
             transformed_str = self._post_write_objectclass(written_str)
-            return FlextResult[str].ok(
+            return r[str].ok(
                 self._ensure_x_origin(transformed_str, oc_transformed.metadata)
             )
         except (ValueError, TypeError, AttributeError) as e:
@@ -731,4 +721,4 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 else "objectclass"
             )
             logger.exception("RFC %s writing exception", item_type)
-            return FlextResult[str].fail(f"RFC {item_type} writing failed: {e}")
+            return r[str].fail(f"RFC {item_type} writing failed: {e}")
