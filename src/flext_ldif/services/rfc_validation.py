@@ -6,7 +6,7 @@ import struct
 from collections.abc import Mapping
 from typing import Self, override
 
-from flext_core import d, r, t
+from flext_core import d, r, t, u
 from pydantic import Field
 
 from flext_ldif import FlextLdifServiceBase, c, m
@@ -58,18 +58,16 @@ class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
 
     def validate_attribute_name(self, name: str) -> r[bool]:
         """Validate_attribute_name method."""
-        try:
-            return r[bool].ok(
-                FlextLdifUtilitiesValidation.Rfc.is_valid_rfc4512_descriptor(name)
-            )
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            return r[bool].fail(f"Failed to validate attribute name: {e}")
+        return u.try_(
+            lambda: FlextLdifUtilitiesValidation.Rfc.is_valid_rfc4512_descriptor(name),
+            catch=(
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ),
+        ).map_error(lambda e: f"Failed to validate attribute name: {e}")
 
     def validate_attribute_names(self, names: list[str]) -> r[Mapping[str, bool]]:
         """Validate_attribute_names method."""

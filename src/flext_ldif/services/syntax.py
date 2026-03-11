@@ -76,17 +76,17 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
         """Check if OID is a standard RFC 4517 syntax OID."""
         if not oid:
             return r[bool].ok(False)
-        try:
-            return r[bool].ok(oid in self._oid_to_name)
-        except (TypeError, AttributeError) as e:
-            return r[bool].fail(f"Failed to check RFC 4517 standard: {e}")
+        return u.try_(
+            lambda: oid in self._oid_to_name,
+            catch=(TypeError, AttributeError),
+        ).map_error(lambda e: f"Failed to check RFC 4517 standard: {e}")
 
     def list_common_syntaxes(self) -> r[list[str]]:
         """List all supported RFC 4517 syntax OIDs."""
-        try:
-            return r[list[str]].ok(sorted(self._common_syntaxes))
-        except (TypeError, AttributeError) as e:
-            return r[list[str]].fail(f"Failed to list common syntaxes: {e}")
+        return u.try_(
+            lambda: sorted(self._common_syntaxes),
+            catch=(TypeError, AttributeError),
+        ).map_error(lambda e: f"Failed to list common syntaxes: {e}")
 
     def lookup_name(self, name: str) -> r[str]:
         """Look up OID for a given syntax name."""
@@ -153,10 +153,10 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
         """Validate OID format compliance with LDAP OID syntax."""
         if not oid:
             return r[bool].ok(False)
-        try:
-            return r[bool].ok(bool(re.match(r"^[0-2](\\.[0-9]+)*$", oid)))
-        except (TypeError, re.error) as e:
-            return r[bool].fail(f"Failed to validate OID format: {e}")
+        return u.try_(
+            lambda: bool(re.match(r"^[0-2](\\.[0-9]+)*$", oid)),
+            catch=(TypeError, re.error),
+        ).map_error(lambda e: f"Failed to validate OID format: {e}")
 
     @d.track_operation()
     def validate_value(
