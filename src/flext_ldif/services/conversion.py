@@ -1366,11 +1366,20 @@ class FlextLdifConversion(
                 )
                 for k, v in current_attrs.items():
                     lower_k = k.lower()
+                    normalized_values: list[str] = [str(item) for item in v]
+                    converted_values = (
+                        [
+                            FlextLdifServersOidConstants.OID_TO_RFC.get(value, value)
+                            for value in normalized_values
+                        ]
+                        if lower_k in FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES
+                        else normalized_values
+                    )
                     if lower_k in mapping:
                         new_key = mapping[lower_k]
-                        updated_attrs[new_key] = v
+                        updated_attrs[new_key] = converted_values
                     else:
-                        updated_attrs[lower_k] = v
+                        updated_attrs[lower_k] = converted_values
                 new_attributes = m.Ldif.Attributes(attributes=updated_attrs)
                 converted_entry = converted_entry.model_copy(
                     update={"attributes": new_attributes}
@@ -1388,11 +1397,20 @@ class FlextLdifConversion(
                 )
                 for k, v in current_attrs.items():
                     lower_k = k.lower()
+                    normalized_values = [str(item) for item in v]
+                    converted_values = (
+                        [
+                            FlextLdifServersOidConstants.RFC_TO_OID.get(value, value)
+                            for value in normalized_values
+                        ]
+                        if lower_k in FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES
+                        else normalized_values
+                    )
                     if lower_k in mapping:
                         new_key = mapping[lower_k]
-                        updated_attrs_rfc_to_oid[new_key] = v
+                        updated_attrs_rfc_to_oid[new_key] = converted_values
                     else:
-                        updated_attrs_rfc_to_oid[lower_k] = v
+                        updated_attrs_rfc_to_oid[lower_k] = converted_values
                 new_attributes = m.Ldif.Attributes(attributes=updated_attrs_rfc_to_oid)
                 converted_entry = converted_entry.model_copy(
                     update={"attributes": new_attributes}

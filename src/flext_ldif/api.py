@@ -284,6 +284,8 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                             expected_values = [str(v) for v in expected_list]
                         case _:
                             expected_values = [str(expected_raw)]
+                    if expected_values and all(not value for value in expected_values):
+                        continue
                     existing_values = [str(v) for v in entry_values]
                     if not any(value in existing_values for value in expected_values):
                         matches_values = False
@@ -419,14 +421,9 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     ) -> r[list[m.Ldif.Entry]]:
         """Parse LDIF content from string or file."""
         effective_type = server_type or self._get_effective_server_type_value()
-        source_content: str
-        match source:
-            case Path() as source_path:
-                return self._parse_file(source_path, server_type=effective_type)
-            case str() as content:
-                source_content = content
-            case _:
-                return r[list[m.Ldif.Entry]].fail("Unsupported source type")
+        if isinstance(source, Path):
+            return self._parse_file(source, server_type=effective_type)
+        source_content = source
         parse_result = self.parser.parse_string(
             source_content, server_type=effective_type
         )

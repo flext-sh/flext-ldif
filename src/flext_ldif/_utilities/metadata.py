@@ -204,7 +204,7 @@ class FlextLdifUtilitiesMetadata:
         """Extract DESC details."""
         details: dict[str, str | bool] = {}
         desc_match = re.search(
-            r"DESC\\s+([\\\"']?)([^\\\"']+)([\\\"']?)", definition, re.IGNORECASE
+            r"DESC\s+([\"']?)([^\"']+)([\"']?)", definition, re.IGNORECASE
         )
         if desc_match:
             details["desc_presence"] = True
@@ -213,7 +213,7 @@ class FlextLdifUtilitiesMetadata:
             desc_pos = definition.find("DESC")
             if desc_pos >= 0:
                 before_desc = definition[:desc_pos]
-                before_match = re.search(r"(\\s+)$", before_desc)
+                before_match = re.search(r"(\s+)$", before_desc)
                 details["desc_spacing_before"] = (
                     before_match.group(1) if before_match else ""
                 )
@@ -262,31 +262,31 @@ class FlextLdifUtilitiesMetadata:
     def _extract_matching_rule_details(definition: str) -> Mapping[str, bool | str]:
         """Extract EQUALITY/SUBSTR/ORDERING details."""
         details: dict[str, bool | str] = {}
-        equality_match = re.search(r"\\bEQUALITY\\b", definition, re.IGNORECASE)
+        equality_match = re.search(r"\bEQUALITY\b", definition, re.IGNORECASE)
         if equality_match:
             details["equality_presence"] = True
             before_rule = definition[: equality_match.start()]
-            before_match = re.search(r"(\\s+)$", before_rule)
+            before_match = re.search(r"(\s+)$", before_rule)
             details["equality_spacing_before"] = (
                 before_match.group(1) if before_match else ""
             )
         else:
             details["equality_presence"] = False
-        substr_match = re.search(r"\\bSUBSTR\\b", definition, re.IGNORECASE)
+        substr_match = re.search(r"\bSUBSTR\b", definition, re.IGNORECASE)
         if substr_match:
             details["substr_presence"] = True
             before_rule = definition[: substr_match.start()]
-            before_match = re.search(r"(\\s+)$", before_rule)
+            before_match = re.search(r"(\s+)$", before_rule)
             details["substr_spacing_before"] = (
                 before_match.group(1) if before_match else ""
             )
         else:
             details["substr_presence"] = False
-        ordering_match = re.search(r"\\bORDERING\\b", definition, re.IGNORECASE)
+        ordering_match = re.search(r"\bORDERING\b", definition, re.IGNORECASE)
         if ordering_match:
             details["ordering_presence"] = True
             before_rule = definition[: ordering_match.start()]
-            before_match = re.search(r"(\\s+)$", before_rule)
+            before_match = re.search(r"(\s+)$", before_rule)
             details["ordering_spacing_before"] = (
                 before_match.group(1) if before_match else ""
             )
@@ -297,9 +297,17 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _extract_name_details(definition: str) -> Mapping[str, str | list[str]]:
         """Extract NAME format details."""
-        details: dict[str, str | list[str]] = {}
+        empty_name_values: list[str] = []
+        empty_name_quotes: list[str] = []
+        details: dict[str, str | list[str]] = {
+            "name_format": "single",
+            "name_values": empty_name_values,
+            "name_quotes": empty_name_quotes,
+            "name_spacing_before": "",
+        }
         name_match = re.search(
-            r"NAME\\s+(\\()?\\s*([\\\"']?)([^\\\"'()]+)([\\\"']?)(\\s*\\))?", definition
+            r"NAME\s+(\()?\s*([\"']?)([^\"'()]+)([\"']?)(\s*\))?",
+            definition,
         )
         if name_match:
             has_parens = bool(name_match.group(1))
@@ -307,13 +315,13 @@ class FlextLdifUtilitiesMetadata:
             name_value = name_match.group(3)
             name_quote_end = name_match.group(4) or ""
             multiple_match = re.search(
-                r"NAME\\s+\\(\\s*([\\\"'])([^\\\"']+)([\\\"'])\\s+([\\\"'])([^\\\"']+)([\\\"'])",
+                r"NAME\s+\(\s*([\"'])([^\"']+)([\"'])\s+([\"'])([^\"']+)([\"'])",
                 definition,
             )
             if multiple_match or (has_parens and " " in name_value):
                 details["name_format"] = "multiple"
                 all_name_matches = re.findall(
-                    r"([\\\"'])([^\\\"']+)([\\\"'])",
+                    r"([\"'])([^\"']+)([\"'])",
                     definition[name_match.start() : name_match.end() + 50],
                 )
                 details["name_values"] = [m[1] for m in all_name_matches]
@@ -322,7 +330,7 @@ class FlextLdifUtilitiesMetadata:
                 )
                 details["name_quotes"] = name_quotes_list
                 name_section = definition[name_match.start() : name_match.end() + 50]
-                name_spacing = re.findall(r"[\\\"']\\s+([\\\"'])", name_section)
+                name_spacing = re.findall(r"[\"']\s+([\"'])", name_section)
                 details["name_spacing_between"] = name_spacing
             else:
                 details["name_format"] = "single"
@@ -333,7 +341,7 @@ class FlextLdifUtilitiesMetadata:
             name_pos = definition.find("NAME")
             if name_pos >= 0:
                 before_name = definition[:name_pos]
-                before_match = re.search(r"(\\s+)$", before_name)
+                before_match = re.search(r"(\s+)$", before_name)
                 details["name_spacing_before"] = (
                     before_match.group(1) if before_match else ""
                 )
@@ -345,12 +353,12 @@ class FlextLdifUtilitiesMetadata:
     ) -> Mapping[str, bool | int | str | None]:
         """Extract OBSOLETE details."""
         details: dict[str, bool | int | str | None] = {}
-        obsolete_match = re.search(r"\\bOBSOLETE\\b", definition, re.IGNORECASE)
+        obsolete_match = re.search(r"\bOBSOLETE\b", definition, re.IGNORECASE)
         if obsolete_match:
             details["obsolete_presence"] = True
             details["obsolete_position"] = obsolete_match.start()
             before_obsolete = definition[: obsolete_match.start()]
-            before_match = re.search(r"(\\s+)$", before_obsolete)
+            before_match = re.search(r"(\s+)$", before_obsolete)
             details["obsolete_spacing_before"] = (
                 before_match.group(1) if before_match else ""
             )
@@ -382,7 +390,7 @@ class FlextLdifUtilitiesMetadata:
                 colon_pos = definition.find(":")
                 if colon_pos >= 0 and colon_pos + 1 < len(definition):
                     after_colon = definition[colon_pos + 1 :]
-                    spacing_match = re.match(r"(\\s*)", after_colon)
+                    spacing_match = re.match(r"(\s*)", after_colon)
                     if spacing_match:
                         details["attribute_prefix_spacing"] = spacing_match.group(1)
         if "objectclasses:" in definition.lower() or "objectClasses:" in definition:
@@ -394,7 +402,7 @@ class FlextLdifUtilitiesMetadata:
                 colon_pos = definition.find(":")
                 if colon_pos >= 0 and colon_pos + 1 < len(definition):
                     after_colon = definition[colon_pos + 1 :]
-                    spacing_match = re.match(r"(\\s*)", after_colon)
+                    spacing_match = re.match(r"(\s*)", after_colon)
                     if spacing_match:
                         details["objectclass_prefix_spacing"] = spacing_match.group(1)
         return details
@@ -407,7 +415,7 @@ class FlextLdifUtilitiesMetadata:
         if single_value_match:
             details["single_value_presence"] = True
             before_sv = definition[: single_value_match.start()]
-            before_match = re.search(r"(\\s+)$", before_sv)
+            before_match = re.search(r"(\s+)$", before_sv)
             details["single_value_spacing_before"] = (
                 before_match.group(1) if before_match else ""
             )
@@ -457,14 +465,14 @@ class FlextLdifUtilitiesMetadata:
     def _extract_sup_details(definition: str) -> Mapping[str, bool | str]:
         """Extract SUP details."""
         details: dict[str, bool | str] = {}
-        sup_match = re.search(r"SUP\\s+([^\\s]+)", definition, re.IGNORECASE)
+        sup_match = re.search(r"SUP\s+([^\s]+)", definition, re.IGNORECASE)
         if sup_match:
             details["sup_presence"] = True
             details["sup_value"] = sup_match.group(1)
             sup_pos = definition.find("SUP")
             if sup_pos >= 0:
                 before_sup = definition[:sup_pos]
-                before_match = re.search(r"(\\s+)$", before_sup)
+                before_match = re.search(r"(\s+)$", before_sup)
                 details["sup_spacing_before"] = (
                     before_match.group(1) if before_match else ""
                 )
@@ -475,9 +483,14 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _extract_syntax_details(definition: str) -> Mapping[str, bool | str | None]:
         """Extract SYNTAX formatting details."""
-        details: dict[str, bool | str | None] = {}
+        details: dict[str, bool | str | None] = {
+            "syntax_quotes": False,
+            "syntax_quote_char": "",
+            "syntax_oid": None,
+            "syntax_length": None,
+        }
         syntax_match = re.search(
-            r"SYNTAX\\s*([\\\"']?)([0-9.]+)([\\\"']?)(\\{[0-9]+\\})?",
+            r"SYNTAX\s*([\"']?)([0-9.]+)([\"']?)(\{[0-9]+\})?",
             definition,
             re.IGNORECASE,
         )
@@ -493,11 +506,11 @@ class FlextLdifUtilitiesMetadata:
             syntax_pos = definition.find("SYNTAX")
             if syntax_pos >= 0:
                 after_syntax = definition[syntax_pos + 6 :]
-                spacing_match = re.match(r"(\\s*)", after_syntax)
+                spacing_match = re.match(r"(\s*)", after_syntax)
                 if spacing_match:
                     details["syntax_spacing"] = spacing_match.group(1)
                 before_syntax = definition[:syntax_pos]
-                before_match = re.search(r"(\\s+)$", before_syntax)
+                before_match = re.search(r"(\s+)$", before_syntax)
                 details["syntax_spacing_before"] = (
                     before_match.group(1) if before_match else ""
                 )
@@ -508,7 +521,7 @@ class FlextLdifUtilitiesMetadata:
         """Extract X-ORIGIN details."""
         details: dict[str, str | bool | None] = {}
         x_origin_match = re.search(
-            r"X-ORIGIN\\s+([\\\"']?)([^\\\"']+)([\\\"']?)", definition, re.IGNORECASE
+            r"X-ORIGIN\s+([\"']?)([^\"']+)([\"']?)", definition, re.IGNORECASE
         )
         if x_origin_match:
             details["x_origin_presence"] = True
@@ -519,7 +532,7 @@ class FlextLdifUtilitiesMetadata:
             x_origin_pos = definition.find("X-ORIGIN")
             if x_origin_pos >= 0:
                 before_x_origin = definition[:x_origin_pos]
-                before_match = re.search(r"(\\s+)$", before_x_origin)
+                before_match = re.search(r"(\s+)$", before_x_origin)
                 details["x_origin_spacing_before"] = (
                     before_match.group(1) if before_match else ""
                 )

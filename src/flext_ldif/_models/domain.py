@@ -938,7 +938,9 @@ class FlextLdifModelsDomains:
             """
             normalized = self._normalize_dn(dn)
             value = self._registry.get(normalized)
-            return str(value)
+            if isinstance(value, str):
+                return value
+            return None
 
         def get_case_variants(self, dn: str) -> set[str]:
             """Get all case variants seen for a DN.
@@ -1068,7 +1070,9 @@ class FlextLdifModelsDomains:
             for normalized_dn, variants in self._case_variants.items():
                 if len(variants) > 1:
                     canonical_value = self._registry.get(normalized_dn)
-                    canonical = str(canonical_value)
+                    canonical = (
+                        canonical_value if isinstance(canonical_value, str) else ""
+                    )
                     inconsistencies.append({
                         "normalized_dn": normalized_dn,
                         "canonical_case": canonical,
@@ -1316,7 +1320,8 @@ class FlextLdifModelsDomains:
                     "ACL is defined (has target/subject/permissions) but raw_acl is empty"
                 )
             if violations:
-                object.__setattr__(self, "validation_violations", violations)
+                model_state = getattr(self, "__dict__")
+                model_state["validation_violations"] = violations
                 return self
             return self
 
