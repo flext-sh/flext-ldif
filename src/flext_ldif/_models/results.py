@@ -368,6 +368,51 @@ class FlextLdifModelsResults:
         def output_file_count(self) -> int:
             return len(self.output_files)
 
+    class MigrationComparisonResult(FlextLdifModelsBase):
+        """Result of a migration comparison between source and target."""
+
+        model_config = ConfigDict(frozen=True, validate_default=True)
+        total_oid: int = Field(ge=0)
+        total_target: int = Field(ge=0)
+        status: str = Field()
+        details: str = Field()
+        id: str = Field()
+        timestamp: str = Field()
+        is_synchronized: bool = Field()
+
+    class MigrationWorkflowResult(FlextLdifModelsBase):
+        """Result of a comprehensive migration workflow."""
+
+        model_config = ConfigDict(frozen=True, validate_default=True)
+        intermediate_migration: str = Field()
+        final_migration: str = Field()
+        final_entry_count: int = Field(ge=0)
+        source_server_detected: str = Field()
+        migration_pipeline: str = Field()
+        parallel_processing: bool = Field()
+        validation_performed: bool = Field()
+        detection_confidence: float = Field(ge=0.0, le=1.0)
+        detected_server: str = Field()
+
+    class AutoDetectionResult(FlextLdifModelsBase):
+        """Result of an auto-detection migration pipeline."""
+
+        model_config = ConfigDict(frozen=True, validate_default=True)
+        detected_server: str = Field()
+        confidence: float = Field(ge=0.0, le=1.0)
+        patterns_found: list[str] = Field(default_factory=list)
+        total_entries: int = Field(ge=0)
+        migration_success: bool = Field()
+
+    class ServerComparisonSummary(FlextLdifModelsBase):
+        """Summary of batch server comparisons."""
+
+        model_config = ConfigDict(frozen=True, validate_default=True)
+        servers_tested: int = Field(ge=0)
+        successful_parses: int = Field(ge=0)
+        success_rate: float = Field(ge=0.0)
+        server_results: dict[str, t.Ldif.MetadataDict] = Field(default_factory=dict)
+
     class ClientStatus(m.Value):
         model_config = ConfigDict(frozen=True, validate_default=True)
         status: str = Field()

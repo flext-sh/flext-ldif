@@ -17,6 +17,7 @@ Original: 252 lines | Advanced: ~200 lines with parallel migration + auto-detect
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 from flext_core import r
 
@@ -99,12 +100,14 @@ class ExampleServerMigration:
         mixed_ldif = 'dn: cn=Auto Detect Test,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Auto Detect Test\nsn: Test\nmail: auto@example.com\n# This could be from OID (has orclaci) or OUD (has aci)\norclaci: access to * by * read\naci: (target="ldap:///cn=Auto Detect Test")(version 3.0; acl "test"; allow (read) userdn="ldap:///anyone";)\n\ndn: cn=Auto Group,ou=Groups,dc=example,dc=com\nobjectClass: groupOfUniqueNames\nobjectClass: groupOfNames\ncn: Auto Group\nuniquemember: cn=Auto Detect Test,ou=People,dc=example,dc=com\nmember: cn=Auto Detect Test,ou=People,dc=example,dc=com\n'
         detect_result = api.detect_server_type(ldif_content=mixed_ldif)
         if detect_result.is_failure:
-            return r.fail(f"Server detection failed: {detect_result.error}")
+            return r[dict[str, object]].fail(
+                f"Server detection failed: {detect_result.error}"
+            )
         detection = detect_result.value
         detected_server = detection.detected_server_type or "rfc"
         parse_result = api.parse(mixed_ldif, server_type=detected_server)
         if parse_result.is_failure:
-            return r.fail(f"Parse failed: {parse_result.error}")
+            return r[dict[str, object]].fail(f"Parse failed: {parse_result.error}")
         entries = parse_result.value
         migration_dir = Path("examples/auto_migration")
         migration_dir.mkdir(exist_ok=True, parents=True)
@@ -116,8 +119,10 @@ class ExampleServerMigration:
             target_server="rfc",
         )
         if migration_result.is_failure:
-            return r.fail(f"Migration to RFC failed: {migration_result.error}")
-        return r.ok({
+            return r[dict[str, object]].fail(
+                f"Migration to RFC failed: {migration_result.error}"
+            )
+        return r[dict[str, object]].ok({
             "detected_server": detected_server,
             "confidence": detection.confidence,
             "patterns_found": detection.patterns_found,
@@ -162,8 +167,8 @@ class ExampleServerMigration:
                 }
         successful_parses = sum(
             1
-            for r in comparison_results.values()
-            if isinstance(r, dict) and r.get("parsed_successfully", False)
+            for res in comparison_results.values()
+            if isinstance(res, dict) and res.get("parsed_successfully", False)
         )
         total_servers = len(servers)
         return r.ok({
@@ -200,7 +205,7 @@ class ExampleServerMigration:
             ),
         )
         if intermediate_migration.is_failure:
-            return r.fail(
+            return r[dict[str, object]].fail(
                 f"Intermediate migration failed: {intermediate_migration.error}"
             )
         final_migration = api.migrate(
@@ -210,7 +215,9 @@ class ExampleServerMigration:
             target_server="rfc",
         )
         if final_migration.is_failure:
-            return r.fail(f"Final migration failed: {final_migration.error}")
+            return r[dict[str, object]].fail(
+                f"Final migration failed: {final_migration.error}"
+            )
         final_result = final_migration.value
         final_count = final_result.stats.processed_entries if final_result.stats else 0
         workflow_results = {
@@ -223,7 +230,7 @@ class ExampleServerMigration:
             "parallel_processing": True,
             "validation_performed": True,
         }
-        return r.ok(workflow_results)
+        return r[dict[str, object]].ok(workflow_results)
 
     @staticmethod
     def parallel_server_migration() -> r[m.Ldif.LdifResults.MigrationPipelineResult]:
@@ -249,7 +256,9 @@ class ExampleServerMigration:
             ),
         )
         if migration_result.is_failure:
-            return r.fail(f"Migration failed: {migration_result.error}")
+            return r[m.Ldif.LdifResults.MigrationPipelineResult].fail(
+                f"Migration failed: {migration_result.error}"
+            )
         result = migration_result.value
         _ = len(result.entries)
         _ = result.stats.processed_entries if result.stats else 0

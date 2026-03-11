@@ -1408,12 +1408,16 @@ class FlextLdifConversion(
             source_schema_result = self._get_schema_quirk_safe(source, "Source")
             if source_schema_result.is_failure:
                 return r[m.Ldif.SchemaAttribute].fail(source_schema_result.error or "")
-            source_schema = cast(p.Ldif.SchemaQuirkProtocol, source_schema_result.value)
+            source_quirk: FlextLdifServersBase = cast(
+                "FlextLdifServersBase", source_schema_result.value
+            )
 
             target_schema_result = self._get_schema_quirk_safe(target, "Target")
             if target_schema_result.is_failure:
                 return r[m.Ldif.SchemaAttribute].fail(target_schema_result.error or "")
-            target_schema = cast(p.Ldif.SchemaQuirkProtocol, target_schema_result.value)
+            target_quirk: FlextLdifServersBase = cast(
+                "FlextLdifServersBase", target_schema_result.value
+            )
             if isinstance(model_instance, m.Ldif.Entry):
                 return self._convert_entry(source_quirk, target_quirk, model_instance)
             if isinstance(model_instance, m.Ldif.SchemaAttribute):

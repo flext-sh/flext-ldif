@@ -15,6 +15,8 @@ SRP: Dataset generation, validation, analysis - each isolated, composition handl
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import r
 
 from flext_ldif import FlextLdif, m
@@ -35,7 +37,7 @@ class DRYValidationAnalysis:
                 if category not in error_groups:
                     error_groups[category] = []
                 error_groups[category].append(str(error))
-        return r.ok(validation_result)
+        return r[m.Ldif.Results.ValidationResult].ok(validation_result)
 
     @staticmethod
     def _generate_test_dataset(

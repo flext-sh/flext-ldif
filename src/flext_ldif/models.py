@@ -90,6 +90,10 @@ class FlextLdifModels(FlextModels):
             ParseResponse = FlextLdifModelsResults.ParseResponse
             WriteResponse = FlextLdifModelsResults.WriteResponse
             MigrationPipelineResult = FlextLdifModelsResults.MigrationPipelineResult
+            MigrationComparisonResult = FlextLdifModelsResults.MigrationComparisonResult
+            MigrationWorkflowResult = FlextLdifModelsResults.MigrationWorkflowResult
+            AutoDetectionResult = FlextLdifModelsResults.AutoDetectionResult
+            ServerComparisonSummary = FlextLdifModelsResults.ServerComparisonSummary
             SchemaServiceStatus = FlextLdifModelsResults.SchemaServiceStatus
             ValidationServiceStatus = FlextLdifModelsResults.ValidationServiceStatus
             ValidationResult = FlextLdifModelsResults.ValidationResult

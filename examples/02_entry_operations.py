@@ -15,6 +15,8 @@ SRP: Each method does ONE thing, composition handles complexity
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import r
 
 from flext_ldif import FlextLdif, m
@@ -30,7 +32,7 @@ class DRYEntryOperations:
         entries_result = DRYEntryOperations.intelligent_builders()
         if entries_result.is_failure:
             return entries_result
-        entries = entries_result.value
+        entries = cast("list[m.Ldif.Entry]", entries_result.value)
         filtered_it = api.filter_entries(
             entries,
             filter_func=lambda item: (
@@ -41,7 +43,7 @@ class DRYEntryOperations:
         if filtered_it.is_failure:
             return filtered_it
         return api.filter_entries(
-            filtered_it.value,
+            cast("list[m.Ldif.Entry]", filtered_it.value),
             filter_func=lambda item: (
                 item.attributes is not None
                 and "@example.com"
@@ -58,8 +60,12 @@ class DRYEntryOperations:
         """DRY batch processing: parallel transformation pipeline."""
         api = FlextLdif.get_instance()
         return DRYEntryOperations.advanced_filtering().flat_map(
-            lambda e: api.process("transform", e, parallel=True, max_workers=4).map(
-                lambda results: [r.model_dump() for r in results]
+            lambda e: api.process(
+                "transform", cast("list[m.Ldif.Entry]", e), parallel=True, max_workers=4
+            ).map(
+                lambda res: [
+                    entry.model_dump() for entry in cast("list[m.Ldif.Entry]", res)
+                ]
             )
         )
 
@@ -67,28 +73,38 @@ class DRYEntryOperations:
     def intelligent_builders() -> r[list[m.Ldif.Entry]]:
         """DRY intelligent builders: auto-detect types from attributes."""
         api = FlextLdif.get_instance()
-        return r.ok([
-            api.create_entry(
-                dn=f"cn={name},ou=People,dc=example,dc=com",
-                attributes={
-                    "cn": name,
-                    "sn": surname,
-                    "mail": email,
-                    "telephoneNumber": phone,
-                },
-            ).value
-            for name, surname, email, phone in [
-                ("Alice Johnson", "Johnson", "alice@example.com", "+1-555-0101"),
-                ("Bob Smith", "Smith", "bob@example.com", "+1-555-0102"),
-                ("Carol Davis", "Davis", "carol@example.com", "+1-555-0103"),
-            ]
-            if api.create_entry(
-                dn=f"cn={name},ou=People,dc=example,dc=com",
-                attributes={
-                    "cn": name,
-                    "sn": surname,
-                    "mail": email,
-                    "telephoneNumber": phone,
-                },
-            ).is_success
-        ])
+        return r[list[m.Ldif.Entry]].ok(
+            cast(
+                "list[m.Ldif.Entry]",
+                [
+                    api.create_entry(
+                        dn=f"cn={name},ou=People,dc=example,dc=com",
+                        attributes={
+                            "cn": name,
+                            "sn": surname,
+                            "mail": email,
+                            "telephoneNumber": phone,
+                        },
+                    ).value
+                    for name, surname, email, phone in [
+                        (
+                            "Alice Johnson",
+                            "Johnson",
+                            "alice@example.com",
+                            "+1-555-0101",
+                        ),
+                        ("Bob Smith", "Smith", "bob@example.com", "+1-555-0102"),
+                        ("Carol Davis", "Davis", "carol@example.com", "+1-555-0103"),
+                    ]
+                    if api.create_entry(
+                        dn=f"cn={name},ou=People,dc=example,dc=com",
+                        attributes={
+                            "cn": name,
+                            "sn": surname,
+                            "mail": email,
+                            "telephoneNumber": phone,
+                        },
+                    ).is_success
+                ],
+            )
+        )
