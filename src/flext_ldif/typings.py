@@ -6,8 +6,9 @@ All model-based unions belong in consuming modules, NOT here.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping
-from typing import Annotated, Literal, TypeAlias, TypeVar
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from datetime import datetime
+from typing import Annotated, Any, Literal, Self, TypeAlias, TypeVar
 
 from flext_core import FlextTypes, r
 from pydantic import StringConstraints
@@ -22,10 +23,19 @@ class FlextLdifTypes(FlextTypes):
         """LDIF domain type namespace."""
 
         Scalar: TypeAlias = str | int | float | bool | None
-        MetadataValue: TypeAlias = Scalar | list[str | int | float | bool | datetime]
+        type RecursiveMetadata = (
+            Scalar
+            | list[RecursiveMetadata]
+            | Mapping[str, RecursiveMetadata]
+            | datetime
+        )
+        MetadataValue: TypeAlias = RecursiveMetadata
 
         type RecursiveContainer = (
-            Scalar | list[RecursiveContainer] | dict[str, RecursiveContainer]
+            Scalar
+            | list[RecursiveContainer]
+            | Mapping[str, RecursiveContainer]
+            | datetime
         )
         ContainerValue: TypeAlias = RecursiveContainer
 
@@ -53,6 +63,7 @@ class FlextLdifTypes(FlextTypes):
                     strip_whitespace=True,
                 ),
             ]
+            # Validation types for conversion pipeline
             type Rfc4514DnComponent = Annotated[
                 str,
                 StringConstraints(
@@ -86,7 +97,7 @@ class FlextLdifTypes(FlextTypes):
             ParseMethodReturn: TypeAlias = r[FlextTypes.Scalar | list[str] | None]
             ParseMethod: TypeAlias = Callable[[object, str], ParseMethodReturn]
             ParseMethodDecorator: TypeAlias = Callable[[ParseMethod], ParseMethod]
-            WriteMethodArg: TypeAlias = FlextTypes.Scalar | list[str] | None
+            WriteMethodArg: TypeAlias = FlextTypes.Scalar
             WriteMethodReturn: TypeAlias = (
                 FlextTypes.Scalar
                 | list[str]

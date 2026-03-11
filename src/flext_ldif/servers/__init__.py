@@ -5,7 +5,6 @@ from __future__ import annotations
 from importlib import import_module
 from typing import TYPE_CHECKING
 
-from flext_core import t
 from flext_core.lazy import cleanup_submodule_namespace
 
 if TYPE_CHECKING:
@@ -68,7 +67,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> t.GeneralValueType:
+def __getattr__(name: str) -> type[object]:
     """Lazy-load module attributes on first access (PEP 562)."""
     lazy_import = _LAZY_IMPORTS.get(name)
     if lazy_import is None:

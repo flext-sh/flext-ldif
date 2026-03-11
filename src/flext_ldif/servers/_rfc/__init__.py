@@ -38,7 +38,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> type:
+def __getattr__(name: str) -> type[object]:
     """Lazy-load module attributes on first access (PEP 562)."""
     lazy_import = _LAZY_IMPORTS.get(name)
     if lazy_import is None:

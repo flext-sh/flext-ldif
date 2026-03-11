@@ -478,32 +478,44 @@ class FlextLdifConversion(
             [str],
             r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
         ]
-        if isinstance(config, m.Ldif.SchemaAttributeConversionPipelineConfig):
-            write_result = config.source_schema.write_attribute(config.item)
-            parse_callable = config.target_schema.parse_attribute
-        else:
-            write_result = config.source_schema.write_objectclass(config.item)
-            parse_callable = config.target_schema.parse_objectclass
-        write_value = write_result.map_or(None)
-        if write_value is None:
+        write_result = (
+            config.source_schema.write_attribute(config.item)
+            if isinstance(config, m.Ldif.SchemaAttributeConversionPipelineConfig)
+            else config.source_schema.write_objectclass(config.item)
+        )
+        if write_result.is_failure:
             return r[_TConvertedModel].fail(
                 f"Failed to write {config.item_name} in source format: {write_result.error}"
             )
+
         ldif_result = FlextLdifConversion._validate_ldif_string(
-            write_value, config.item_name
+            write_result.value, config.item_name
         )
-        ldif_string = ldif_result.map_or(None)
-        if ldif_string is None:
+        if ldif_result.is_failure:
             return r[_TConvertedModel].fail(
                 ldif_result.error or "LDIF validation failed"
             )
-        parse_result = parse_callable(ldif_string)
-        parsed_value = parse_result.value if parse_result.is_success else None
-        if parsed_value is None:
+        ldif_string: str = ldif_result.value
+        parse_result = (
+            config.target_schema.parse_attribute(ldif_string)
+            if isinstance(config, m.Ldif.SchemaAttributeConversionPipelineConfig)
+            else config.target_schema.parse_objectclass(ldif_string)
+        )
+        if parse_result.is_failure:
             parse_error = parse_result.error or "Unknown parse error"
             return r[_TConvertedModel].fail(
                 f"Failed to parse {config.item_name} in target format: {parse_error}"
             )
+
+        parsed_value = parse_result.value
+        # Narrow T_co to _TConvertedModel (SchemaAttribute | SchemaObjectClass)
+        if not isinstance(
+            parsed_value, (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass)
+        ):
+            return r[_TConvertedModel].fail(
+                "Parsed value is not a valid schema element"
+            )
+
         return r[_TConvertedModel].ok(parsed_value)
 
     @staticmethod
@@ -515,10 +527,12 @@ class FlextLdifConversion(
             server = FlextLdifServer.get_global_instance()
             server_type_str: str = quirk_or_type
             resolved_result = server.quirk(server_type_str)
-            resolved = resolved_result.map_or(None)
-            if resolved is None:
-                error_msg = f"Unknown server type: {quirk_or_type}"
+            if resolved_result.is_failure:
+                error_msg = (
+                    f"Unknown server type: {quirk_or_type}: {resolved_result.error}"
+                )
                 raise ValueError(error_msg)
+            resolved: FlextLdifServersBase = resolved_result.value
             return resolved
         return quirk_or_type
 
@@ -536,7 +550,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _schema_passthrough_ok(
-        value: t.ContainerValue,
+        value: m.Ldif.Schema.SchemaElement,
     ) -> r[_TSchemaConversionValue] | None:
         if isinstance(value, str):
             return FlextLdifConversion._schema_conversion_ok(value)
