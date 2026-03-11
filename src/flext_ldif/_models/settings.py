@@ -1632,33 +1632,43 @@ class FlextLdifModelsSettings:
             default=None, description="ACL attributes to sort"
         )
 
-    class SchemaConversionPipelineConfig(FlextModels.Value):
-        """Configuration for schema conversion pipeline.
+    class SchemaAttributeConversionPipelineConfig(FlextModels.Value):
+        """Config for schema attribute conversion pipeline (discriminated union)."""
 
-        Consolidates parameters for _process_schema_conversion_pipeline method.
-        Reduces function signature from 6 parameters to 1 model.
-
-        """
-
-        model_config = ConfigDict(extra="forbid", validate_assignment=True)
-        source_schema: (
-            FlextLdifProtocols.Ldif.SchemaAttributeProtocol
-            | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
-            | FlextLdifProtocols.Ldif.SchemaQuirkProtocol
-        ) = Field(..., description="Source schema quirk")
-        target_schema: (
-            FlextLdifProtocols.Ldif.SchemaAttributeProtocol
-            | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
-            | FlextLdifProtocols.Ldif.SchemaQuirkProtocol
-        ) = Field(..., description="Target schema quirk")
-        write_method: Callable[..., r[str]] = Field(
-            ..., description="Write method to call on source schema"
+        model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
+        item_type: Literal["attribute"] = Field(
+            default="attribute", description="Discriminator"
         )
-        parse_method: Callable[
-            ...,
-            r[t.ContainerValue],
-        ] = Field(..., description="Parse method to call on target schema")
-        item_name: str = Field(..., description="Item name for error messages")
+        source_schema: FlextLdifProtocols.Ldif.SchemaQuirkProtocol = Field(
+            ..., description="Source schema quirk"
+        )
+        target_schema: FlextLdifProtocols.Ldif.SchemaQuirkProtocol = Field(
+            ..., description="Target schema quirk"
+        )
+        item: FlextLdifModelsDomains.SchemaAttribute = Field(
+            ..., description="Schema attribute to convert"
+        )
+        item_name: str = Field(default="attribute", description="Item name for errors")
+
+    class SchemaObjectClassConversionPipelineConfig(FlextModels.Value):
+        """Config for schema objectclass conversion pipeline (discriminated union)."""
+
+        model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
+        item_type: Literal["objectclass"] = Field(
+            default="objectclass", description="Discriminator"
+        )
+        source_schema: FlextLdifProtocols.Ldif.SchemaQuirkProtocol = Field(
+            ..., description="Source schema quirk"
+        )
+        target_schema: FlextLdifProtocols.Ldif.SchemaQuirkProtocol = Field(
+            ..., description="Target schema quirk"
+        )
+        item: FlextLdifModelsDomains.SchemaObjectClass = Field(
+            ..., description="Schema objectclass to convert"
+        )
+        item_name: str = Field(
+            default="objectclass", description="Item name for errors"
+        )
 
     class PermissionMappingConfig(FlextModels.Value):
         """Configuration for permission mapping during ACL conversion.

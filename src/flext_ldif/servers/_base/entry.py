@@ -312,8 +312,6 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
             metadata_extensions = entry_data.metadata.extensions
             if core_u.is_type(metadata_extensions, Mapping):
                 extensions_data = dict(metadata_extensions)
-            elif isinstance(metadata_extensions, m.Ldif.DynamicMetadata):
-                extensions_data = dict(metadata_extensions.to_dict())
         hidden_raw = extensions_data.get(c.Ldif.MetadataKeys.HIDDEN_ATTRIBUTES)
         if isinstance(hidden_raw, list):
             hidden_text: list[str] = [str(value) for value in hidden_raw]

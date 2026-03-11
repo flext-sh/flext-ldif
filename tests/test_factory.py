@@ -7,7 +7,6 @@ following the strict type system architecture rules.
 from __future__ import annotations
 
 import uuid
-from typing import Any
 
 from tests import m
 
@@ -31,10 +30,13 @@ class FlextLdifTestFactory:
                 "mail": [f"test-{uuid.uuid4().hex[:8]}@example.com"],
                 "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
             }
-        attrs_result = m.Ldif.Attributes.create(attributes)
+
+        # Direct instantiation for test data to avoid Generic Result inference issues in linter
+        attrs = m.Ldif.Attributes(attributes=attributes)
+
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
-            attributes=attrs_result.value,
+            attributes=attrs,
             server_type=server_type,
         )
 
@@ -69,17 +71,20 @@ class FlextLdifTestFactory:
         return "\n".join(lines)
 
     @staticmethod
-    def parametrize_real_data() -> list[dict[str, Any]]:
+    def parametrize_real_data() -> list[m.Tests.LdifTestData]:
         """Generate parametrized test data for comprehensive coverage."""
         return [
-            {
-                "id": f"entry_{server_type}",
-                "server_type": server_type,
-                "dn": f"cn=test-{server_type},ou=users,dc=example,dc=com",
-                "attributes": {
+            m.Tests.LdifTestData(
+                id=f"entry_{server_type}",
+                server_type=server_type,
+                dn=f"cn=test-{server_type},ou=users,dc=example,dc=com",
+                attributes={
                     "cn": [f"test-{server_type}"],
                     "objectClass": ["person", "organizationalPerson"],
                 },
-            }
+            )
             for server_type in ["generic", "openldap", "ad", "oid", "oud"]
         ]
+
+
+__all__ = ["FlextLdifTestFactory"]

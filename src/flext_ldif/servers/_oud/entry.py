@@ -828,12 +828,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if not (entry_data.metadata and entry_data.metadata.write_options):
             return []
         write_opts = entry_data.metadata.write_options
-        original_entry_obj = (
-            getattr(write_opts, "original_entry", None)
-            if isinstance(write_opts, m.Ldif.WriteOptions)
-            else None
-        )
-        if not (original_entry_obj and isinstance(original_entry_obj, m.Ldif.Entry)):
+        write_opts_data = write_opts.model_dump(exclude_none=True)
+        original_entry_raw = write_opts_data.get("original_entry")
+        original_entry_obj: m.Ldif.Entry | None = None
+        if isinstance(original_entry_raw, Mapping):
+            original_entry_obj = m.Ldif.Entry.model_validate(original_entry_raw)
+        if original_entry_obj is None:
             return []
         ldif_parts: list[str] = []
         ldif_parts.extend([

@@ -4,11 +4,14 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, m, r
 
 from flext_ldif import c, t
+
+if TYPE_CHECKING:
+    from flext_ldif._models.domain import FlextLdifModelsDomains
 
 
 class FlextLdifProtocols(FlextProtocols):
@@ -56,7 +59,9 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             @property
-            def schema_format_details(self) -> t.MetadataValue | None:
+            def schema_format_details(
+                self,
+            ) -> FlextLdifModelsDomains.SchemaFormatDetails | None:
                 """Get original schema formatting details."""
                 ...
 
@@ -269,11 +274,21 @@ class FlextLdifProtocols(FlextProtocols):
                 """Parse schema definition."""
                 ...
 
-            def parse_attribute(self, definition: str) -> r:
+            def parse_attribute(
+                self, definition: str
+            ) -> r[
+                FlextLdifModelsDomains.SchemaAttribute
+                | FlextLdifModelsDomains.SchemaObjectClass
+            ]:
                 """Parse individual attribute definition."""
                 ...
 
-            def parse_objectclass(self, definition: str) -> r:
+            def parse_objectclass(
+                self, definition: str
+            ) -> r[
+                FlextLdifModelsDomains.SchemaAttribute
+                | FlextLdifModelsDomains.SchemaObjectClass
+            ]:
                 """Parse individual objectClass definition."""
                 ...
 
@@ -288,13 +303,13 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def write_attribute(
-                self, attr_data: FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+                self, attr_data: FlextLdifModelsDomains.SchemaAttribute
             ) -> r[str]:
                 """Write individual attribute definition."""
                 ...
 
             def write_objectclass(
-                self, oc_data: FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+                self, oc_data: FlextLdifModelsDomains.SchemaObjectClass
             ) -> r[str]:
                 """Write individual objectClass definition."""
                 ...

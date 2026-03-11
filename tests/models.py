@@ -75,6 +75,14 @@ class TestsFlextLdifModels:
         DnCaseRules = FlextLdifModelsSettings.DnCaseRules
         AclFormatRules = FlextLdifModelsSettings.AclFormatRules
 
+        class LdifTestData(FlextLdifModels.Value):
+            """Test data for LDIF utilities."""
+
+            id: str
+            server_type: str
+            dn: str
+            attributes: dict[str, list[str]]
+
 
 # Short aliases for tests
 m = TestsFlextLdifModels

@@ -5,17 +5,13 @@ data between different LDAP server types, including initialization,
 validation, and execution with various server type combinations.
 """
 
-from __future__ import annotations
-
 from pathlib import Path
 from typing import cast
 
 import pytest
 
-from flext_ldif import FlextLdifMigrationPipeline, FlextLdifModels
-from tests import c, s
-
-m = FlextLdifModels
+from flext_ldif import FlextLdifMigrationPipeline
+from tests import c, m, s, t
 
 
 class TestsTestFlextLdifMigrationPipeline(s):
@@ -77,8 +73,8 @@ class TestsTestFlextLdifMigrationPipeline(s):
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type=cast("c.Ldif.LiteralTypes.ServerTypeLiteral", source),
-            target_server_type=cast("c.Ldif.LiteralTypes.ServerTypeLiteral", target),
+            source_server_type=cast(t.Ldif.LiteralTypes.ServerTypeLiteral, source),
+            target_server_type=cast(t.Ldif.LiteralTypes.ServerTypeLiteral, target),
         )
         assert pipeline is not None
         assert pipeline.source_server_type == source

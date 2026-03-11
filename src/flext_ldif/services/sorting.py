@@ -107,7 +107,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         default_acl_attrs = list(c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES)
         if config is not None:
             strategy = config.by
-            entries_final = [e for e in config.entries if isinstance(e, m.Ldif.Entry)]
+            entries_final = [e for e in config.entries]
             acl_attrs_final = config.acl_attributes or []
             sorting_instance = cls(
                 entries=entries_final,

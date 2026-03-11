@@ -9,10 +9,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Final
+
 from flext_ldif import c, t
 
-_MISSING_ATTR = object()
-"Sentinel for _has_attr — a single canonical instance shared across all callers."
+
+class _MissingSentinel:
+    pass
+
+
+_MISSING_ATTR: Final[_MissingSentinel] = _MissingSentinel()
 
 
 class FlextLdifShared:

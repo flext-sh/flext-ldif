@@ -14,7 +14,13 @@ from flext_ldif.constants import logger
 from flext_ldif.servers._base.constants import FlextLdifServersBaseConstants
 
 _MAX_DN_PREVIEW_LENGTH: Final[int] = 100
-_MISSING_ATTR = object()
+
+
+class _MissingSentinel:
+    pass
+
+
+_MISSING_ATTR: Final[_MissingSentinel] = _MissingSentinel()
 
 
 class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):

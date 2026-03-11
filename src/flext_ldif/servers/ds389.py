@@ -429,19 +429,10 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     acl_data.name or FlextLdifServersDs389.Constants.ACL_DEFAULT_NAME
                 )
                 permissions_raw = acl_data.permissions
-                if not isinstance(permissions_raw, (m.Ldif.AclPermissions, type(None))):
-                    msg = f"Expected AclPermissions | None, got {type(permissions_raw)}"
-                    raise TypeError(msg)
                 permissions = self._extract_acl_permissions(permissions_raw)
                 target_raw = acl_data.target
-                if not isinstance(target_raw, (m.Ldif.AclTarget, type(None))):
-                    msg = f"Expected AclTarget | None, got {type(target_raw)}"
-                    raise TypeError(msg)
                 targetattr = self._resolve_acl_targetattr(target_raw)
                 subject_raw = acl_data.subject
-                if not isinstance(subject_raw, (m.Ldif.AclSubject, type(None))):
-                    msg = f"Expected AclSubject | None, got {type(subject_raw)}"
-                    raise TypeError(msg)
                 userdn = self._resolve_acl_userdn(subject_raw)
                 return self._build_acl_string(acl_name, permissions, targetattr, userdn)
             except (ValueError, TypeError, AttributeError) as exc:
