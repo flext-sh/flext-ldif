@@ -276,7 +276,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     ) -> r[Mapping[str, list[str]]]:
         """Convert RFC ACL format to Oracle OID orclaci format."""
         _ = target_server
-        return r.ok(rfc_acl_attrs)
+        return r[Mapping[str, list[str]]].ok(rfc_acl_attrs)
 
     def _build_metadata_extensions(
         self,

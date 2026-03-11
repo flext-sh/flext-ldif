@@ -151,7 +151,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
                 quirk_type=server_type_value, extensions=extensions_meta
             ),
         )
-        return r.ok(acl_model)
+        return r[m.Ldif.Acl].ok(acl_model)
 
     def _preserve_unsupported_feature(
         self, feature_id: str, original_value: str, metadata: m.Ldif.DynamicMetadata

@@ -430,7 +430,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         if parse_result.is_failure:
             return r[list[m.Ldif.Entry]].fail(str(parse_result.error))
         response = parse_result.value
-        entries_list: list[m.Ldif.Entry] = [entry for entry in response.entries]
+        entries_list: list[m.Ldif.Entry] = list(response.entries)
         return r[list[m.Ldif.Entry]].ok(entries_list)
 
     def process(

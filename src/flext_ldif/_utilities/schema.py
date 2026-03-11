@@ -24,6 +24,10 @@ SchemaModelT = TypeVar(
     FlextLdifModelsDomains.SchemaObjectClass,
 )
 
+type _SchemaElementUnion = (
+    FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass
+)
+
 
 class FlextLdifUtilitiesSchema:
     """Generic attribute definition normalization utilities."""
@@ -98,7 +102,7 @@ class FlextLdifUtilitiesSchema:
                 setattr(transformed, field_name, new_value.value)
             else:
                 setattr(transformed, field_name, new_value)
-            return r.ok(transformed)
+            return r[_SchemaElementUnion].ok(transformed)
         except (
             ValueError,
             KeyError,
@@ -365,15 +369,12 @@ class FlextLdifUtilitiesSchema:
         if isinstance(value, list):
             return FlextLdifUtilitiesSchema._convert_sequence_to_str_list(value)
         converted_nested: dict[str, t.Scalar | list[str]] = {}
-        mapping_value: Mapping[str, t.MetadataValue] = value
-        for k, v_raw in mapping_value.items():
+        for k, v_raw in value.items():
             k_str = str(k)
             if isinstance(v_raw, (str, int, float, bool)):
                 converted_nested[k_str] = v_raw
             elif isinstance(v_raw, datetime):
                 converted_nested[k_str] = v_raw.isoformat()
-            elif isinstance(v_raw, Mapping):
-                converted_nested[k_str] = str(v_raw)
             else:
                 converted_nested[k_str] = (
                     FlextLdifUtilitiesSchema._convert_sequence_to_str_list(v_raw)
@@ -381,7 +382,7 @@ class FlextLdifUtilitiesSchema:
         return converted_nested
 
     @staticmethod
-    def _convert_sequence_to_str_list(seq: Sequence[object]) -> list[str]:
+    def _convert_sequence_to_str_list(seq: Sequence[t.Scalar]) -> list[str]:
         """Convert Sequence to list[str] (internal helper, no loose functions)."""
         return [str(item) for item in seq]
 
@@ -612,7 +613,7 @@ class FlextLdifUtilitiesSchema:
     ]:
         """Wrap transformation result with proper type."""
         try:
-            return r.ok(
+            return r[_SchemaElementUnion].ok(
                 FlextLdifModelsDomains.SchemaAttribute.model_validate(transformed)
             )
         except (
@@ -627,7 +628,7 @@ class FlextLdifUtilitiesSchema:
                 error=str(exc),
             )
         try:
-            return r.ok(
+            return r[_SchemaElementUnion].ok(
                 FlextLdifModelsDomains.SchemaObjectClass.model_validate(transformed)
             )
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
@@ -730,7 +731,7 @@ class FlextLdifUtilitiesSchema:
             validated_attr = FlextLdifModelsDomains.SchemaAttribute.model_validate(
                 unwrapped
             )
-            return r.ok(validated_attr)
+            return r[_SchemaElementUnion].ok(validated_attr)
         except (
             ValueError,
             KeyError,
@@ -746,7 +747,7 @@ class FlextLdifUtilitiesSchema:
             validated_oc = FlextLdifModelsDomains.SchemaObjectClass.model_validate(
                 unwrapped
             )
-            return r.ok(validated_oc)
+            return r[_SchemaElementUnion].ok(validated_oc)
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return r[
                 FlextLdifModelsDomains.SchemaAttribute

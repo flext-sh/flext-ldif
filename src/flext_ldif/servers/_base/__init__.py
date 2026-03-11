@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from importlib import import_module
+from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import cleanup_submodule_namespace
 
 if TYPE_CHECKING:
     from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
@@ -51,11 +52,17 @@ __all__ = [
 ]
 
 
-def __getattr__(
-    name: str,
-) -> Any:  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/
+def __getattr__(name: str) -> type:
     """Lazy-load module attributes on first access (PEP 562)."""
-    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
+    lazy_import = _LAZY_IMPORTS.get(name)
+    if lazy_import is None:
+        msg = f"module {__name__!r} has no attribute {name!r}"
+        raise AttributeError(msg)
+    module_path, attr_name = lazy_import
+    module = import_module(module_path)
+    value = getattr(module, attr_name)
+    globals()[name] = value
+    return value
 
 
 def __dir__() -> list[str]:

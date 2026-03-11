@@ -306,8 +306,7 @@ class FlextLdifConversion(
             target_schema_result = FlextLdifConversion._get_schema_quirk_safe(
                 target_quirk, "Target"
             )
-            target_schema = target_schema_result.map_or(None)
-            if target_schema is None:
+            if target_schema_result.is_failure:
                 return r[
                     m.Ldif.Entry
                     | m.Ldif.SchemaAttribute
@@ -317,6 +316,7 @@ class FlextLdifConversion(
                     target_schema_result.error
                     or "Target schema quirk error: Schema not available"
                 )
+            target_schema: p.Ldif.SchemaQuirkProtocol = target_schema_result.value
 
             config = m.Ldif.SchemaAttributeConversionPipelineConfig(
                 source_schema=source_schema,
@@ -1747,7 +1747,9 @@ class FlextLdifConversion(
             return r[str].ok(source_attr)
         if not isinstance(schema_quirk, FlextLdifServersBaseSchema):
             return r[str].ok(source_attr)
-        return r.ok(schema_quirk.write_attribute(source_attr).map_or(source_attr))
+        return r[
+            str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | t.MetadataValue
+        ].ok(schema_quirk.write_attribute(source_attr).map_or(source_attr))
 
     def _write_objectclass_to_rfc(
         self,

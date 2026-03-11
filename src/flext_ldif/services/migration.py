@@ -114,7 +114,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                     res = result.value
                     total_processed += res.stats.total_entries
                     total_migrated += res.stats.processed_entries
-                    converted_res_entries: list[m.Ldif.Entry] = [e for e in res.entries]
+                    converted_res_entries: list[m.Ldif.Entry] = list(res.entries)
                     all_entries.extend(converted_res_entries)
                     output_files.extend(res.output_files)
                 else:
@@ -182,7 +182,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                     f"Parse failed: {parse_result.error}"
                 )
             response = parse_result.value
-            entries_list: list[m.Ldif.Entry] = [e for e in response.entries]
+            entries_list: list[m.Ldif.Entry] = list(response.entries)
             migrate_result = self.migrate_entries(entries_list)
             if migrate_result.is_failure:
                 return r[m.Ldif.MigrationPipelineResult].fail(

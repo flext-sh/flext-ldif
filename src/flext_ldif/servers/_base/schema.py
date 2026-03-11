@@ -475,13 +475,13 @@ class FlextLdifServersBaseSchema(
         self, attr: m.Ldif.SchemaAttribute
     ) -> r[m.Ldif.SchemaAttribute]:
         """Hook called after parsing an attribute definition."""
-        return r.ok(attr)
+        return r[m.Ldif.SchemaAttribute].ok(attr)
 
     def _hook_post_parse_objectclass(
         self, oc: m.Ldif.SchemaObjectClass
     ) -> r[m.Ldif.SchemaObjectClass]:
         """Hook called after parsing an objectClass definition."""
-        return r.ok(oc)
+        return r[m.Ldif.SchemaObjectClass].ok(oc)
 
     def _hook_validate_attributes(
         self, attributes: list[m.Ldif.SchemaAttribute], available_attrs: set[str]

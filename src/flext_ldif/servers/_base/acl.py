@@ -255,7 +255,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
 
     def _hook_post_parse_acl(self, acl: m.Ldif.Acl) -> r[m.Ldif.Acl]:
         """Hook called after parsing an ACL line."""
-        return r.ok(acl)
+        return r[m.Ldif.Acl].ok(acl)
 
     def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
         """REQUIRED: Parse server-specific ACL definition (internal)."""

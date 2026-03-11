@@ -1426,7 +1426,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         _ = original_dn
         aci_values = self._find_aci_values(entry, original_attrs)
         if not aci_values:
-            return r.ok(entry)
+            return r[m.Ldif.Entry].ok(entry)
         if not entry.metadata:
             entry.metadata = m.Ldif.QuirkMetadata.create_for(
                 "oud", extensions=FlextLdifModelsMetadata.DynamicMetadata()
@@ -1438,12 +1438,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         )
         parent = self._get_parent_quirk_safe()
         if parent is None:
-            return r.ok(entry)
+            return r[m.Ldif.Entry].ok(entry)
         acl_quirk_raw = getattr(parent, "_acl_quirk", None)
         if not acl_quirk_raw:
-            return r.ok(entry)
+            return r[m.Ldif.Entry].ok(entry)
         if not core_u.is_type(acl_quirk_raw, FlextLdifServersOudAcl):
-            return r.ok(entry)
+            return r[m.Ldif.Entry].ok(entry)
         acl_quirk: FlextLdifServersOudAcl = acl_quirk_raw
         self._process_aci_list_for_finalize(aci_values, acl_quirk, current_extensions)
         if current_extensions:
@@ -1461,7 +1461,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         )
                     }
                 )
-        return r.ok(entry)
+        return r[m.Ldif.Entry].ok(entry)
 
     @override
     def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
@@ -1834,7 +1834,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     self._extract_acl_metadata_from_dict(
                         acl_extensions_dict, acl_metadata_extensions
                     )
-        return r.ok(has_macros)
+        return r[bool].ok(has_macros)
 
     def _restore_entry_from_metadata(self, entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
         """Restore original DN and attributes using generic utilities.

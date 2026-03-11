@@ -131,12 +131,22 @@ class FlextLdifServer(FlextRegistry):
             normalized = FlextLdifUtilitiesServer.normalize_server_type(server_type)
         except ValueError as e:
             return r[FlextLdifServersBase].fail(str(e))
-        result = self.get_plugin(self.SERVERS, normalized, scope="class")
-        if result.is_failure:
-            return r[FlextLdifServersBase].fail(str(result.error))
-        if isinstance(result.value, FlextLdifServersBase):
-            return r[FlextLdifServersBase].ok(result.value)
-        return r[FlextLdifServersBase].fail(f"Invalid quirk type: {type(result.value)}")
+        plugin_key = f"{self.SERVERS}::{normalized}"
+        cls = type(self)
+        if plugin_key not in cls._class_registered_keys:
+            available = [
+                key.split("::", 1)[1]
+                for key in cls._class_registered_keys
+                if key.startswith(f"{self.SERVERS}::")
+            ]
+            return r[FlextLdifServersBase].fail(
+                f"{self.SERVERS} '{normalized}' not found. Available: {available}"
+            )
+        plugin = cls._class_plugin_storage[plugin_key]
+        if isinstance(plugin, FlextLdifServersBase):
+            return r[FlextLdifServersBase].ok(plugin)
+        plugin_type = type(plugin).__name__
+        return r[FlextLdifServersBase].fail(f"Invalid quirk type: {plugin_type}")
 
     def _auto_discover(self) -> None:
         """Discover and register concrete quirk classes from servers package."""

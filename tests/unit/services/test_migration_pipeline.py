@@ -11,7 +11,7 @@ from typing import cast
 import pytest
 
 from flext_ldif import FlextLdifMigrationPipeline
-from tests import c, m, s, t
+from tests import c, m, s
 
 
 class TestsTestFlextLdifMigrationPipeline(s):
@@ -73,8 +73,8 @@ class TestsTestFlextLdifMigrationPipeline(s):
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type=cast(t.Ldif.LiteralTypes.ServerTypeLiteral, source),
-            target_server_type=cast(t.Ldif.LiteralTypes.ServerTypeLiteral, target),
+            source_server_type=cast("c.Ldif.LiteralTypes.ServerTypeLiteral", source),
+            target_server_type=cast("c.Ldif.LiteralTypes.ServerTypeLiteral", target),
         )
         assert pipeline is not None
         assert pipeline.source_server_type == source
@@ -126,8 +126,8 @@ class TestsTestFlextLdifMigrationPipeline(s):
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=nonexistent_output,
-            source_server_type="rfc",
-            target_server_type="rfc",
+            source_server_type=cast("c.Ldif.LiteralTypes.ServerTypeLiteral", "rfc"),
+            target_server_type=cast("c.Ldif.LiteralTypes.ServerTypeLiteral", "rfc"),
         )
         result = pipeline.execute()
         assert result.is_success
@@ -141,15 +141,14 @@ class TestsTestFlextLdifMigrationPipeline(s):
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-        pipeline = FlextLdifMigrationPipeline(
-            input_dir=input_dir,
-            output_dir=output_dir,
-            source_server_type="oid",
-            target_server_type="oud",
+        pipeline: FlextLdifMigrationPipeline = FlextLdifMigrationPipeline(
+            input_dir=input_dir, output_dir=output_dir
         )
         result = pipeline.execute()
         assert result.is_success
-        migration_result = result.value
+        migration_result: m.Ldif.MigrationPipelineResult = cast(
+            "m.Ldif.MigrationPipelineResult", result.value
+        )
         assert migration_result.stats.total_entries == 0
 
     def test_basic_execution_rfc_to_rfc(self, tmp_path: Path) -> None:
@@ -168,7 +167,9 @@ class TestsTestFlextLdifMigrationPipeline(s):
         )
         result = pipeline.execute()
         assert result.is_success
-        migration_result = result.value
+        migration_result: m.Ldif.MigrationPipelineResult = cast(
+            "m.Ldif.MigrationPipelineResult", result.value
+        )
         assert migration_result.stats.processed_entries >= 1
 
     def test_migrate_entries_method(self, tmp_path: Path) -> None:
@@ -260,7 +261,9 @@ class TestsTestFlextLdifMigrationPipeline(s):
         )
         result = pipeline.execute()
         assert result.is_success
-        migration_result = result.value
+        migration_result: m.Ldif.MigrationPipelineResult = cast(
+            "m.Ldif.MigrationPipelineResult", result.value
+        )
         assert migration_result.stats.total_entries >= 2
 
     def test_migrate_file_not_found(self, tmp_path: Path) -> None:

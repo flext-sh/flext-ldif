@@ -224,11 +224,11 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
 
     def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Hook called after parsing an entry."""
-        return r.ok(entry)
+        return r[m.Ldif.Entry].ok(entry)
 
     def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Hook called before writing an entry."""
-        return r.ok(entry)
+        return r[m.Ldif.Entry].ok(entry)
 
     def _hook_validate_entry_raw(
         self, dn: str, attrs: Mapping[str, list[str | bytes]]
@@ -237,7 +237,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         _ = attrs
         if not dn:
             return r[bool].fail("DN cannot be empty")
-        return r.ok(True)
+        return r[bool].ok(True)
 
     def _inject_write_options(
         self,
@@ -444,7 +444,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
                     append_attribute_line(attr_name, attr_line)
         output_lines.append("")
         ldif_content = "\n".join(output_lines)
-        return r.ok(ldif_content)
+        return r[str].ok(ldif_content)
 
     def _write_entry_list(
         self,

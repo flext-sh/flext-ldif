@@ -2248,12 +2248,9 @@ class FlextLdifModelsDomains:
                 if statistics is not None:
                     entry_data["statistics"] = statistics
                 entry_instance = cls.model_validate(entry_data)
-                return r.ok(entry_instance)
+                return r[Self].ok(entry_instance)
             except (ValueError, TypeError, AttributeError) as e:
-                return r[Self](
-                    error=f"Failed to create Entry: {e}",
-                    is_success=False,
-                )
+                return r[Self].fail(f"Failed to create Entry: {e}")
 
         @classmethod
         def _normalize_attributes(

@@ -666,7 +666,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         """Finalize OID entry with ACL and RFC violation metadata."""
         _ = original_dn
         if not entry.attributes:
-            return r.ok(entry)
+            return r[m.Ldif.Entry].ok(entry)
         normalized_attrs = entry.attributes.attributes
         if not entry.metadata:
             entry.metadata = m.Ldif.QuirkMetadata.create_for(
@@ -720,14 +720,14 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 violations_count=len(rfc_violations),
                 conflicts_count=len(attribute_conflicts),
             )
-        return r.ok(entry)
+        return r[m.Ldif.Entry].ok(entry)
 
     @override
     def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Hook: Transform parsed entry using OID-specific enhancements."""
         try:
             if not entry.attributes or not entry.dn:
-                return r.ok(entry)
+                return r[m.Ldif.Entry].ok(entry)
             logger.debug(
                 "_hook_post_parse_entry attributes",
                 attributes=",".join(entry.attributes.attributes.keys()),
@@ -792,7 +792,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 original_dn=cleaned_dn,
                 normalized_dn=normalized_dn,
             )
-        return r.ok((normalized_dn, attrs))
+        return r[tuple[str, Mapping[str, list[str | bytes]]]].ok((normalized_dn, attrs))
 
     def _merge_parsed_acl_extensions(
         self,
