@@ -21,7 +21,15 @@ class FlextLdifTypes(FlextTypes):
     class Ldif:
         """LDIF domain type namespace."""
 
-        ValueType: TypeAlias = str | bytes | int | float | bool | list[str] | None
+        Scalar: TypeAlias = str | int | float | bool | None
+        MetadataValue: TypeAlias = Scalar | list[str | int | float | bool | datetime]
+
+        type RecursiveContainer = (
+            Scalar | list[RecursiveContainer] | dict[str, RecursiveContainer]
+        )
+        ContainerValue: TypeAlias = RecursiveContainer
+
+        ValueType: TypeAlias = Scalar | list[str]
         ValueList: TypeAlias = list[ValueType]
         AttributeValue: TypeAlias = str | bytes
         DnString: TypeAlias = str
