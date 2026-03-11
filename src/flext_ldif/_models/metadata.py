@@ -30,9 +30,11 @@ class FlextLdifModelsMetadata:
         relaxed_mode: bool | None = Field(default=None)
 
         @override
-        def __eq__(self, other: Self | Mapping[str, t.MetadataValue]) -> bool:
+        def __eq__(self, other: object) -> bool:
             if other.__class__ is dict:
                 return dict(self.items()) == other
+            if isinstance(other, type(self)):
+                return dict(self.items()) == dict(other.items())
             return NotImplemented
 
         def __hash__(self) -> int:
