@@ -156,12 +156,11 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
         acls: list[FlextLdifModelsDomains.Acl] = []
         failed_count = 0
 
-        def parse_acl_wrapper(acl_value: str) -> m.Ldif.Acl:
-            """Parse single ACL value - returns Acl directly for batch compatibility."""
-            nonlocal failed_count
+        for acl_value in acl_values:
             parse_result = self.parse_acl_string(acl_value, server_type)
             if parse_result.is_success:
-                return parse_result.value
+                acls.append(parse_result.value)
+                continue
             failed_count += 1
             logger = FlextLogger(__name__)
             logger.warning(
@@ -169,15 +168,6 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
                 error=parse_result.error,
                 server_type=server_type,
             )
-            msg = parse_result.error or "Failed to parse ACL"
-            raise ValueError(msg)
-
-        batch_result = u.Collection.batch(
-            list(acl_values), parse_acl_wrapper, on_error="skip"
-        )
-        if batch_result.is_success:
-            results_raw = batch_result.value.results
-            acls.extend(item for item in results_raw if isinstance(item, m.Ldif.Acl))
         return r[m.Ldif.AclResponse].ok(
             self._build_acl_response(acls, failed_entries=failed_count)
         )
@@ -204,20 +194,20 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
             return r[m.Ldif.Acl].fail(
                 f"No ACL quirk found for server type: {normalized_server_type}"
             )
-        parse_result = acl_quirk.parse(acl_string)
-        if parse_result.is_failure:
-            return r[m.Ldif.Acl].fail(parse_result.error or "ACL parsing failed")
-        return r[m.Ldif.Acl].ok(parse_result.value)
+        return acl_quirk.parse(acl_string).fold(
+            on_failure=lambda e: r[m.Ldif.Acl].fail(e or "ACL parsing failed"),
+            on_success=lambda v: r[m.Ldif.Acl].ok(v),
+        )
 
     def write_acl(self, acl: m.Ldif.Acl, server_type: str) -> r[str]:
         """Write ACL model to string format."""
         acl_quirk = self._server.acl(server_type)
         if acl_quirk is None:
             return r[str].fail(f"No ACL quirk found for server type: {server_type}")
-        write_result = acl_quirk.write(acl)
-        if write_result.is_failure:
-            return r[str].fail(write_result.error or "ACL writing failed")
-        return r[str].ok(write_result.value)
+        return acl_quirk.write(acl).fold(
+            on_failure=lambda e: r[str].fail(e or "ACL writing failed"),
+            on_success=lambda v: r[str].ok(v),
+        )
 
 
 __all__ = ["FlextLdifAcl"]

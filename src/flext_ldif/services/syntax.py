@@ -65,10 +65,12 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
 
     def get_syntax_category(self, oid: str) -> r[str]:
         """Get type category for a syntax OID."""
-        resolve_result = self.resolve_syntax(oid)
-        if resolve_result.is_failure:
-            return r[str].fail(f"Cannot determine category - unknown syntax OID: {oid}")
-        return r[str].ok(resolve_result.value.type_category)
+        return self.resolve_syntax(oid).fold(
+            on_failure=lambda _: r[str].fail(
+                f"Cannot determine category - unknown syntax OID: {oid}"
+            ),
+            on_success=lambda v: r[str].ok(v.type_category),
+        )
 
     def is_rfc4517_standard(self, oid: str) -> r[bool]:
         """Check if OID is a standard RFC 4517 syntax OID."""

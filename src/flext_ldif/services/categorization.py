@@ -240,7 +240,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 filtered[category] = passthrough_entries
         if excluded_entries:
             rejected_category = c.Ldif.Category.REJECTED
-            existing_rejected_raw: Sequence[object] = filtered.get(
+            existing_rejected_raw: Sequence[t.ContainerValue] = filtered.get(
                 rejected_category, []
             )
             merged_rejected: list[m.Ldif.Entry] = []
@@ -429,7 +429,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 filtered[category] = passthrough_entries
         if all_excluded_entries:
             rejected_category = c.Ldif.Category.REJECTED
-            existing_rejected_raw: Sequence[object] = filtered.get(
+            existing_rejected_raw: Sequence[t.ContainerValue] = filtered.get(
                 rejected_category, []
             )
             merged_rejected: list[m.Ldif.Entry] = []
@@ -639,11 +639,10 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         self, server_type: str
     ) -> r[type[FlextLdifServersBaseConstants]]:
         """Get and validate server constants via FlextLdifServer registry."""
-        constants_result = self._server_registry.get_constants(server_type)
-        if constants_result.is_failure:
-            return r[type[FlextLdifServersBaseConstants]].fail(constants_result.error)
-        constants_raw = constants_result.value
-        return r[type[FlextLdifServersBaseConstants]].ok(constants_raw)
+        return self._server_registry.get_constants(server_type).fold(
+            on_failure=lambda e: r[type[FlextLdifServersBaseConstants]].fail(e),
+            on_success=lambda v: r[type[FlextLdifServersBaseConstants]].ok(v),
+        )
 
     def _match_entry_to_category(
         self,

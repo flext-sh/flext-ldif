@@ -215,10 +215,10 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
                 f"No entry quirk found for server type: {effective_server_type}"
             )
         options = self._normalize_format_options(format_options)
-        write_result = entry_quirk.write(entries, options)
-        if write_result.is_failure:
-            return r[str].fail(write_result.error or "LDIF writing failed")
-        return r[str].ok(write_result.value)
+        return entry_quirk.write(entries, options).fold(
+            on_failure=lambda e: r[str].fail(e or "LDIF writing failed"),
+            on_success=lambda v: r[str].ok(v),
+        )
 
 
 __all__ = ["FlextLdifWriter"]

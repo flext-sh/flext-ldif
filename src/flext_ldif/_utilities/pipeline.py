@@ -69,11 +69,10 @@ class Pipeline:
 
         def wrapped_transformer(entry: m.Ldif.Entry) -> r[m.Ldif.Entry | _Filtered]:
             """Wrap transformer to match pipeline filter signature."""
-            transformer_result = transformer.apply(entry)
-            if transformer_result.is_failure:
-                return r[m.Ldif.Entry | _Filtered].fail(transformer_result.error)
-            entry_value = transformer_result.value
-            return r[m.Ldif.Entry | _Filtered].ok(entry_value)
+            return transformer.apply(entry).fold(
+                on_failure=lambda e: r[m.Ldif.Entry | _Filtered].fail(e),
+                on_success=lambda v: r[m.Ldif.Entry | _Filtered].ok(v),
+            )
 
         self._steps.append((step_name, wrapped_transformer))
         return self
