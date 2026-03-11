@@ -74,7 +74,7 @@ class FlextLdifConversion(
     @staticmethod
     def _is_schema_quirk_protocol(
         obj: t.ContainerValue | FlextLdifServersBase | p.Ldif.SchemaQuirkProtocol,
-    ) -> TypeGuard[p.Ldif.SchemaQuirkProtocol]:
+    ) -> TypeIs[p.Ldif.SchemaQuirkProtocol]:
         return (
             FlextLdifConversion._has_attr(obj, "parse")
             and FlextLdifConversion._has_attr(obj, "write")
@@ -408,7 +408,9 @@ class FlextLdifConversion(
             return r[p.Ldif.SchemaQuirkProtocol].fail(
                 f"{quirk_type} quirk {type(schema_quirk)} doesn't satisfy SchemaQuirkProtocol"
             )
-        return r[p.Ldif.SchemaQuirkProtocol].ok(schema_quirk)
+        # Narrowing schema_quirk to the protocol so r[p.Ldif.SchemaQuirkProtocol].ok works
+        final_quirk: p.Ldif.SchemaQuirkProtocol = schema_quirk
+        return r[p.Ldif.SchemaQuirkProtocol].ok(final_quirk)
 
     @staticmethod
     def _normalize_metadata_value(value: t.ContainerValue) -> t.MetadataValue:
