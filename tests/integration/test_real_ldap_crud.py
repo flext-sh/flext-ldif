@@ -23,8 +23,10 @@ from pathlib import Path
 
 import pytest
 from ldap3 import Connection
+from src.flext_ldif.models import FlextLdifModels
 
-from flext_ldif import FlextLdif, m
+from flext_ldif import FlextLdif, FlextLdifModels, m
+from flext_ldif.models import FlextLdifModels
 
 
 @pytest.fixture
@@ -176,7 +178,7 @@ class TestRealLdapBatchOperations:
         )
         actual_count = len(ldap_connection.entries)
         assert actual_count > 0, "No entries found in LDAP"
-        entries = []
+        entries: list[FlextLdifModels.Ldif.Entry] = []
         for entry in ldap_connection.entries:
             attrs_dict = {}
             for attr_name in entry.entry_attributes:

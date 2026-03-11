@@ -25,8 +25,10 @@ from flext_tests import (
     FlextTestsValidator as tv_base,
     tt as tt_base,
 )
+from src.flext_ldif.models import FlextLdifModels
 
-from flext_ldif import FlextLdif, FlextLdifEntries, m
+from flext_ldif import FlextLdif, FlextLdifEntries, FlextLdifModels, m
+from flext_ldif.models import FlextLdifModels
 
 TResult = TypeVar("TResult")
 
@@ -659,7 +661,7 @@ class TestsFlextLdifFixtures(tf_base):
             List of created entries
 
         """
-        result = []
+        result: list[FlextLdifModels.Ldif.Entry] = []
         for dn, attrs in entries_data:
             entry = cls.create_entry(dn, **attrs)
             result.append(entry)

@@ -19,9 +19,14 @@ from pathlib import Path
 from typing import ClassVar
 
 import pytest
+from _pytest.nodes import Item
 from flext_core import FlextConstants, FlextLogger, FlextResult, FlextSettings, t
 from flext_tests import FlextTestsDocker
 from ldap3 import ALL, Connection, Server
+from tomlkit.items import Item
+from typings.tomlkit.items import Item
+from typings.vulture.core import Item
+from vulture.core import Item
 
 from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifServer, FlextLdifWriter, p
 from flext_ldif.servers.base import FlextLdifServersBase
@@ -665,7 +670,7 @@ class FlextLdifTestConftest:
         self, config: pytest.Config, items: list[pytest.Item]
     ) -> None:
         """Filter test items."""
-        filtered_items = []
+        filtered_items: list[Item] = []
         for item in items:
             if hasattr(item, "parent") and item.parent is not None:
                 parent = item.parent

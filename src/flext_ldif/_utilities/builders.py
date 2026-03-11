@@ -97,7 +97,7 @@ class ProcessConfigBuilder:
         escapes: c.Ldif.EscapeHandlingOption | None = None,
     ) -> Self:
         """Configure DN normalization."""
-        config_kwargs = {}
+        config_kwargs: dict[str, StrEnum] = {}
         if case is not None:
             config_kwargs["case_fold"] = case
         if spaces is not None:

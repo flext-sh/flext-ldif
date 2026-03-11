@@ -20,14 +20,16 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core import r
+from src.flext_ldif.models import FlextLdifModels
 
-from flext_ldif import FlextLdif, m, u
+from flext_ldif import FlextLdif, FlextLdifModels, m, u
+from flext_ldif.models import FlextLdifModels
 
 
 def intelligent_schema_building() -> r[list[m.Ldif.Entry]]:
     """Intelligent schema building with automatic type detection and validation."""
     api = FlextLdif.get_instance()
-    schema_entries = []
+    schema_entries: list[FlextLdifModels.Ldif.Entry] = []
     schema_root_result = api.create_entry(
         dn="cn=schema",
         attributes={
@@ -335,8 +337,8 @@ def schema_migration_pipeline() -> r[dict[str, object]]:
 def batch_schema_operations() -> r[dict[str, object]]:
     """Batch schema operations with parallel processing."""
     api = FlextLdif.get_instance()
-    schema_batches = []
-    core_attrs = []
+    schema_batches: list[tuple[str, list[FlextLdifModels.Ldif.Entry]]] = []
+    core_attrs: list[FlextLdifModels.Ldif.Entry] = []
     core_attribute_definitions = [
         ("cn", "Common Name", "1.3.6.1.4.1.1466.115.121.1.15", False),
         ("sn", "Surname", "1.3.6.1.4.1.1466.115.121.1.15", False),
@@ -365,7 +367,7 @@ def batch_schema_operations() -> r[dict[str, object]]:
     if batch_result.is_success:
         core_attrs.extend([x for x in batch_result.value if x is not None])
     schema_batches.append(("core_attributes", core_attrs))
-    object_classes = []
+    object_classes: list[FlextLdifModels.Ldif.Entry] = []
     oc_definitions = [
         ("person", "Person", "top", ["cn", "sn"], ["mail", "telephoneNumber"]),
         (

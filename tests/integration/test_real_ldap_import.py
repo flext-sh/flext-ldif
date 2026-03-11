@@ -58,7 +58,7 @@ class TestRealLdapImport:
         object_classes = entry.get_attribute_values("objectclass")
         if not isinstance(object_classes, list):
             object_classes = list(object_classes) if object_classes else []
-        attrs_dict = {}
+        attrs_dict: dict[str, list[str]] = {}
         assert entry.attributes is not None
         for attr_name, attr_values in entry.attributes.attributes.items():
             if attr_name.lower() == "objectclass":
@@ -136,7 +136,7 @@ class TestRealLdapImport:
         object_classes = entry.get_attribute_values("objectclass")
         if not isinstance(object_classes, list):
             object_classes = list(object_classes) if object_classes else []
-        attrs_dict = {}
+        attrs_dict: dict[str, list[str]] = {}
         assert entry.attributes is not None
         for attr_name, attr_values in entry.attributes.attributes.items():
             if attr_name.lower() == "objectclass":

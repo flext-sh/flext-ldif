@@ -21,8 +21,10 @@ from pathlib import Path
 
 import pytest
 from ldap3 import Connection
+from src.flext_ldif.models import FlextLdifModels
 
-from flext_ldif import FlextLdif, m
+from flext_ldif import FlextLdif, FlextLdifModels, m
+from flext_ldif.models import FlextLdifModels
 
 
 @pytest.fixture
@@ -119,7 +121,7 @@ class TestRealLdapExport:
             )
         ldap_connection.search(clean_test_ou, "(objectClass=person)", attributes=["*"])
         assert len(ldap_connection.entries) == 5
-        entries = []
+        entries: list[FlextLdifModels.Ldif.Entry] = []
         for entry in ldap_connection.entries:
             attrs_dict = {}
             for attr_name in entry.entry_attributes:
@@ -189,7 +191,7 @@ class TestRealLdapExport:
         ldap_connection.search(
             clean_test_ou, "(objectClass=*)", search_scope="SUBTREE", attributes=["*"]
         )
-        entries = []
+        entries: list[FlextLdifModels.Ldif.Entry] = []
         for entry in ldap_connection.entries:
             attrs_dict = {}
             for attr_name in entry.entry_attributes:

@@ -43,7 +43,7 @@ class FlextLdifTestFactory:
         entries_count: int = 3, *, include_schema: bool = False
     ) -> str:
         """Create real LDIF content for testing."""
-        lines = []
+        lines: list[str] = []
         if include_schema:
             lines.extend([
                 "dn: cn=schema",

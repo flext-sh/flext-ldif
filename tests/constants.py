@@ -21,14 +21,18 @@ from collections.abc import Callable, Sized
 from pathlib import Path
 from typing import Final
 
-from flext_core import r
+from flext_core import FlextResult, r
+from flext_core.result import FlextResult
 from flext_tests import FlextTestsConstants
+from src.flext_core.result import FlextResult
+from src.flext_ldif.models import FlextLdifModels
 
 from flext_ldif import (
     FlextLdif,
     FlextLdifConstants,
     FlextLdifConversion,
     FlextLdifEntries,
+    FlextLdifModels,
     FlextLdifParser,
     FlextLdifSchema,
     FlextLdifWriter,
@@ -36,6 +40,7 @@ from flext_ldif import (
     p,
     t,
 )
+from flext_ldif.models import FlextLdifModels
 
 
 class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
@@ -1603,7 +1608,7 @@ class TestDeduplicationHelpers:
 
         """
         service = FlextLdifEntries()
-        entries = []
+        entries: list[FlextLdifModels.Ldif.Entry] = []
         for entry_data in entries_data:
             dn_raw = entry_data.get("dn")
             attrs_raw = entry_data.get("attributes")
@@ -1655,7 +1660,7 @@ class TestDeduplicationHelpers:
         """
         if not isinstance(parser_service, FlextLdifParser):
             raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-        results = []
+        results: list[FlextResult[FlextLdifModels.Ldif.ParseResponse]] = []
         for test_case in test_cases:
             ldif_content = str(test_case.get("ldif_content", ""))
             should_succeed = test_case.get("should_succeed")
