@@ -110,6 +110,10 @@ class FlextLdifServer(FlextRegistry):
             "server_priorities": priorities,
         }
 
+    def schema(self, server_type: str) -> FlextLdifServersBaseSchema | None:
+        """Get schema quirk for a server type."""
+        return self.get_schema_quirk(server_type)
+
     def get_schema_quirk(self, server_type: str) -> FlextLdifServersBaseSchema | None:
         """Get schema quirk for a server type."""
         base = self.quirk(server_type).map_or(None)

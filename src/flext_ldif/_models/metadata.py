@@ -8,7 +8,7 @@ from collections.abc import (
     Mapping,
     ValuesView,
 )
-from typing import ClassVar, override
+from typing import ClassVar, Self, override
 
 from flext_core import FlextModels
 from pydantic import ConfigDict, Field
@@ -30,7 +30,7 @@ class FlextLdifModelsMetadata:
         relaxed_mode: bool | None = Field(default=None)
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: Self | Mapping[str, t.MetadataValue]) -> bool:
             if other.__class__ is dict:
                 return dict(self.items()) == other
             return NotImplemented
@@ -54,9 +54,7 @@ class FlextLdifModelsMetadata:
             return key in self._extra()
 
         @classmethod
-        def from_dict(
-            cls, data: Mapping[str, t.MetadataValue] | None = None
-        ) -> FlextLdifModelsMetadata.DynamicMetadata:
+        def from_dict(cls, data: Mapping[str, t.MetadataValue] | None = None) -> Self:
             """Create DynamicMetadata from a dictionary."""
             if data is None:
                 return cls()

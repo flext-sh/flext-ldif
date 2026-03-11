@@ -6,7 +6,7 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
-from flext_core import FlextProtocols, FlextResult, m
+from flext_core import FlextProtocols, m, r
 
 from flext_ldif import c, t
 
@@ -42,6 +42,25 @@ class FlextLdifProtocols(FlextProtocols):
             values: list[str] | str
 
         @runtime_checkable
+        class SchemaMetadataProtocol(Protocol):
+            """Protocol for schema quirk metadata."""
+
+            @property
+            def quirk_type(self) -> str:
+                """Get the quirk type (e.g., 'novell', 'rfc')."""
+                ...
+
+            @property
+            def extensions(self) -> Mapping[str, object]:
+                """Get server-specific extensions."""
+                ...
+
+            @property
+            def schema_format_details(self) -> object | None:
+                """Get original schema formatting details."""
+                ...
+
+        @runtime_checkable
         class AclProtocol(Protocol):
             """Protocol for LDIF ACL models."""
 
@@ -51,24 +70,120 @@ class FlextLdifProtocols(FlextProtocols):
 
         @runtime_checkable
         class SchemaAttributeProtocol(Protocol):
-            """Protocol for LDIF SchemaAttribute models."""
+            """Protocol for LDIF schema attributes."""
 
-            name: str
-            oid: str
-            syntax: str | None
-            single_value: bool
-            desc: str | None
+            @property
+            def oid(self) -> str:
+                """Get the attribute OID."""
+                ...
+
+            @property
+            def name(self) -> str:
+                """Get the attribute name."""
+                ...
+
+            @property
+            def desc(self) -> str | None:
+                """Get the attribute description."""
+                ...
+
+            @property
+            def equality(self) -> str | None:
+                """Get the equality matching rule."""
+                ...
+
+            @property
+            def ordering(self) -> str | None:
+                """Get the ordering matching rule."""
+                ...
+
+            @property
+            def substr(self) -> str | None:
+                """Get the substring matching rule."""
+                ...
+
+            @property
+            def syntax(self) -> str | None:
+                """Get the attribute syntax OID."""
+                ...
+
+            @property
+            def length(self) -> int | None:
+                """Get the maximum length of the attribute."""
+                ...
+
+            @property
+            def single_value(self) -> bool:
+                """Whether the attribute is single-valued."""
+                ...
+
+            @property
+            def no_user_modification(self) -> bool:
+                """Whether the attribute is non-user-modifiable."""
+                ...
+
+            @property
+            def usage(self) -> str | None:
+                """Get the attribute usage (e.g., 'userApplications')."""
+                ...
+
+            @property
+            def sup(self) -> str | None:
+                """Get the superior attribute type."""
+                ...
+
+            @property
+            def metadata(
+                self,
+            ) -> FlextLdifProtocols.Ldif.SchemaMetadataProtocol | None:
+                """Get quirk-specific metadata."""
+                ...
 
         @runtime_checkable
         class SchemaObjectClassProtocol(Protocol):
-            """Protocol for LDIF SchemaObjectClass models."""
+            """Protocol for LDIF schema object classes."""
 
-            name: str
-            oid: str
-            kind: str
-            must: list[str] | None
-            may: list[str] | None
-            desc: str | None
+            @property
+            def oid(self) -> str:
+                """Get the objectClass OID."""
+                ...
+
+            @property
+            def name(self) -> str:
+                """Get the objectClass name."""
+                ...
+
+            @property
+            def desc(self) -> str | None:
+                """Get the objectClass description."""
+                ...
+
+            @property
+            def sup(self) -> str | Sequence[str] | None:
+                """Get the superior objectClass(es)."""
+                ...
+
+            @property
+            def kind(self) -> str:
+                """Get the class type (e.g., 'STRUCTURAL')."""
+                ...
+
+            @property
+            def must(self) -> Sequence[str] | None:
+                """Get the required attributes."""
+                ...
+
+            @property
+            def may(self) -> Sequence[str] | None:
+                """Get the optional attributes."""
+                ...
+
+            @property
+            def metadata(
+                self,
+            ) -> FlextLdifProtocols.Ldif.SchemaMetadataProtocol | None:
+                """Get quirk-specific metadata."""
+                ...
 
         @runtime_checkable
         class HasParseMethodProtocol(Protocol):
@@ -76,7 +191,7 @@ class FlextLdifProtocols(FlextProtocols):
 
             def parse(
                 self, ldif_input: str | Path, server_type: str | None = None
-            ) -> FlextResult[Sequence[FlextLdifProtocols.Ldif.EntryProtocol]]:
+            ) -> r[Sequence[FlextLdifProtocols.Ldif.EntryProtocol]]:
                 """Parse LDIF content."""
                 ...
 
@@ -100,7 +215,7 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
             ) -> Callable[
                 ...,
-                FlextResult[
+                r[
                     FlextLdifProtocols.Ldif.SchemaAttributeProtocol
                     | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
                 ],
@@ -131,7 +246,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             @property
-            def write_method(self) -> Callable[..., FlextResult[str]]:
+            def write_method(self) -> Callable[..., r[str]]:
                 """Method to write schema object to LDIF."""
                 ...
 
@@ -150,44 +265,37 @@ class FlextLdifProtocols(FlextProtocols):
         class SchemaQuirkProtocol(Protocol):
             """Protocol for Schema quirk implementations."""
 
-            def parse(
-                self, attr_definition: str
-            ) -> FlextResult[
-                FlextLdifProtocols.Ldif.SchemaAttributeProtocol
-                | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
-            ]:
+            def parse(self, definition: str) -> r:
                 """Parse schema definition."""
                 ...
 
-            def parse_attribute(
-                self, attr_definition: str
-            ) -> FlextResult[FlextLdifProtocols.Ldif.SchemaAttributeProtocol]:
+            def parse_attribute(self, definition: str) -> r:
                 """Parse individual attribute definition."""
                 ...
 
-            def parse_objectclass(
-                self, oc_definition: str
-            ) -> FlextResult[FlextLdifProtocols.Ldif.SchemaObjectClassProtocol]:
+            def parse_objectclass(self, definition: str) -> r:
                 """Parse individual objectClass definition."""
                 ...
 
             def write(
                 self,
-                model: FlextLdifProtocols.Ldif.SchemaAttributeProtocol
-                | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol,
-            ) -> FlextResult[str]:
+                model: (
+                    FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+                    | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+                ),
+            ) -> r[str]:
                 """Write schema definition."""
                 ...
 
             def write_attribute(
-                self, attribute: FlextLdifProtocols.Ldif.SchemaAttributeProtocol
-            ) -> FlextResult[str]:
+                self, attr_data: FlextLdifProtocols.Ldif.SchemaAttributeProtocol
+            ) -> r[str]:
                 """Write individual attribute definition."""
                 ...
 
             def write_objectclass(
-                self, objectclass: FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
-            ) -> FlextResult[str]:
+                self, oc_data: FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+            ) -> r[str]:
                 """Write individual objectClass definition."""
                 ...
 
@@ -195,15 +303,11 @@ class FlextLdifProtocols(FlextProtocols):
         class AclQuirkProtocol(Protocol):
             """Protocol for ACL quirk implementations."""
 
-            def parse(
-                self, acl_line: str
-            ) -> FlextResult[FlextLdifProtocols.Ldif.AclProtocol]:
+            def parse(self, acl_line: str) -> r[FlextLdifProtocols.Ldif.AclProtocol]:
                 """Parse ACL definition."""
                 ...
 
-            def write(
-                self, acl_data: FlextLdifProtocols.Ldif.AclProtocol
-            ) -> FlextResult[str]:
+            def write(self, acl_data: FlextLdifProtocols.Ldif.AclProtocol) -> r[str]:
                 """Write ACL definition."""
                 ...
 
@@ -213,13 +317,13 @@ class FlextLdifProtocols(FlextProtocols):
 
             def parse(
                 self, entry_lines: Sequence[str]
-            ) -> FlextResult[FlextLdifProtocols.Ldif.EntryProtocol]:
+            ) -> r[FlextLdifProtocols.Ldif.EntryProtocol]:
                 """Parse entry definition."""
                 ...
 
             def parse_entry(
                 self, entry_dn: str, entry_attrs: Mapping[str, Sequence[str]]
-            ) -> FlextResult[FlextLdifProtocols.Ldif.EntryProtocol]:
+            ) -> r[FlextLdifProtocols.Ldif.EntryProtocol]:
                 """Parse single entry from DN and attributes."""
                 ...
 
@@ -228,13 +332,31 @@ class FlextLdifProtocols(FlextProtocols):
                 entries: FlextLdifProtocols.Ldif.EntryProtocol
                 | Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
                 format_options: m.ConfigMap | None = None,
-            ) -> FlextResult[str]:
+            ) -> r[str]:
                 """Write entries to LDIF."""
                 ...
 
         @runtime_checkable
         class QuirkRegistryProtocol(Protocol):
             """Protocol for quirk registry implementations."""
+
+            def schema(
+                self, server_type: str
+            ) -> FlextLdifProtocols.Ldif.SchemaQuirkProtocol | None:
+                """Get schema quirk for server type."""
+                ...
+
+            def acl(
+                self, server_type: str
+            ) -> FlextLdifProtocols.Ldif.AclQuirkProtocol | None:
+                """Get ACL quirk for server type."""
+                ...
+
+            def entry(
+                self, server_type: str
+            ) -> FlextLdifProtocols.Ldif.EntryQuirkProtocol | None:
+                """Get entry quirk for server type."""
+                ...
 
             def get_quirk(
                 self, server_type: str
@@ -270,7 +392,7 @@ class FlextLdifProtocols(FlextProtocols):
         class TransformerProtocol[T](Protocol):
             """Protocol for transformers in pipelines."""
 
-            def apply(self, item: T) -> T | FlextResult[T]:
+            def apply(self, item: T) -> T | r[T]:
                 """Apply the transformation."""
                 ...
 
@@ -278,7 +400,7 @@ class FlextLdifProtocols(FlextProtocols):
         class BatchTransformerProtocol[T](Protocol):
             """Protocol for batch transformers."""
 
-            def apply_batch(self, items: Sequence[T]) -> FlextResult[list[T]]:
+            def apply_batch(self, items: Sequence[T]) -> r[list[T]]:
                 """Apply transformation to batch."""
                 ...
 
@@ -310,7 +432,7 @@ class FlextLdifProtocols(FlextProtocols):
         class ValidatorProtocol[T](Protocol):
             """Protocol for validators."""
 
-            def validate(self, item: T) -> FlextResult[T]:
+            def validate(self, item: T) -> r[T]:
                 """Validate an item."""
                 ...
 
@@ -330,7 +452,7 @@ class FlextLdifProtocols(FlextProtocols):
 
             name: str
 
-            def execute(self, input_data: TIn) -> FlextResult[TOut]:
+            def execute(self, input_data: TIn) -> r[TOut]:
                 """Execute pipeline step."""
                 ...
 
@@ -346,15 +468,29 @@ class FlextLdifProtocols(FlextProtocols):
         class FluentOpsProtocol[T](Protocol):
             """Protocol for fluent operation chains."""
 
-            def build(self) -> FlextResult[T]:
+            def build(self) -> r[T]:
                 """Build/finalize and return the result."""
                 ...
+
+        # =================================================================
+        # PROTOCOL ALIASES — for backwards compatibility and shorter access
+        # =================================================================
+
+        Entry = EntryProtocol
+        SchemaAttribute = SchemaAttributeProtocol
+        SchemaObjectClass = SchemaObjectClassProtocol
+        SchemaQuirk = SchemaQuirkProtocol
+        AclQuirk = AclQuirkProtocol
+        EntryQuirk = EntryQuirkProtocol
+        Acl = AclProtocol
+        Parser = SchemaQuirkProtocol  # Often referred to as Parser in tests
+        QuirkRegistry = QuirkRegistryProtocol
 
         @runtime_checkable
         class LoadableProtocol[T](Protocol):
             """Protocol for loadable data sources."""
 
-            def load(self) -> FlextResult[T]:
+            def load(self) -> r[T]:
                 """Load and return the data."""
                 ...
 

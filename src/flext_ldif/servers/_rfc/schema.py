@@ -445,7 +445,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         _ = (self, _objectclass)
         return False
 
-    def _build_attribute_parts(self, attr_data: m.Ldif.SchemaAttribute) -> list[str]:
+    def _build_attribute_parts(
+        self, attr_data: p.Ldif.SchemaAttributeProtocol
+    ) -> list[str]:
         """Build RFC attribute definition parts."""
         return FlextLdifUtilitiesSchema.build_attribute_parts_with_metadata(
             attr_data, restore_original=True
@@ -467,14 +469,18 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         FlextLdifUtilitiesMetadata.preserve_schema_formatting(metadata, oc_definition)
         return metadata
 
-    def _build_objectclass_parts(self, oc_data: m.Ldif.SchemaObjectClass) -> list[str]:
+    def _build_objectclass_parts(
+        self, oc_data: p.Ldif.SchemaObjectClassProtocol
+    ) -> list[str]:
         """Build RFC objectClass definition parts."""
         return FlextLdifUtilitiesSchema.build_objectclass_parts_with_metadata(
             oc_data, restore_original=True
         )
 
     def _ensure_x_origin(
-        self, output_str: str, metadata: FlextLdifModelsDomains.QuirkMetadata | None
+        self,
+        output_str: str,
+        metadata: p.Ldif.SchemaMetadataProtocol | None,
     ) -> str:
         """Ensure X-ORIGIN extension is present if in metadata."""
         if not metadata or not metadata.extensions:
@@ -641,14 +647,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return written_str
 
     def _transform_attribute_for_write(
-        self, attr_data: m.Ldif.SchemaAttribute
-    ) -> m.Ldif.SchemaAttribute:
+        self, attr_data: p.Ldif.SchemaAttributeProtocol
+    ) -> p.Ldif.SchemaAttributeProtocol:
         """Hook for subclasses to transform attribute before writing."""
         return attr_data
 
     def _transform_objectclass_for_write(
-        self, oc_data: m.Ldif.SchemaObjectClass
-    ) -> m.Ldif.SchemaObjectClass:
+        self, oc_data: p.Ldif.SchemaObjectClassProtocol
+    ) -> p.Ldif.SchemaObjectClassProtocol:
         """Hook for subclasses to transform objectClass before writing."""
         return oc_data
 
@@ -671,21 +677,25 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                     pass
 
     @override
-    def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> FlextResult[str]:
+    def _write_attribute(
+        self, attr_data: p.Ldif.SchemaAttributeProtocol
+    ) -> FlextResult[str]:
         """Write attribute to RFC-compliant string format (internal)."""
         return self._write_schema_item(attr_data)
 
     @override
-    def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> FlextResult[str]:
+    def _write_objectclass(
+        self, oc_data: p.Ldif.SchemaObjectClassProtocol
+    ) -> FlextResult[str]:
         """Write objectClass to RFC-compliant string format (internal)."""
         return self._write_schema_item(oc_data)
 
     def _write_schema_item(
-        self, data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
+        self, data: p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol
     ) -> FlextResult[str]:
         """Write schema item (attribute or objectClass) to RFC-compliant format."""
         try:
-            if isinstance(data, m.Ldif.SchemaAttribute):
+            if isinstance(data, p.Ldif.SchemaAttributeProtocol):
                 attr_transformed = self._transform_attribute_for_write(data)
                 if not attr_transformed.oid:
                     return FlextResult[str].fail(

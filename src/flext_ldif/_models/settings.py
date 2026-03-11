@@ -1427,9 +1427,9 @@ class FlextLdifModelsSettings:
         server_type: str = Field(
             ..., description="Server type identifier (e.g., 'rfc', 'oid')"
         )
-        parse_entry_hook: Callable[[str, Mapping[str, list[str]]], r[object]] = Field(
-            ..., description="Hook to parse (dn, attrs) into Entry"
-        )
+        parse_entry_hook: Callable[
+            [str, Mapping[str, list[str]]], r[FlextLdifModelsDomains.Entry]
+        ] = Field(..., description="Hook to parse (dn, attrs) into Entry")
         transform_attrs_hook: (
             Callable[
                 [str, Mapping[str, list[str]]], tuple[str, Mapping[str, list[str]]]
@@ -1470,9 +1470,9 @@ class FlextLdifModelsSettings:
         parsed_entries: list[tuple[str, Mapping[str, list[str]]]] = Field(
             ..., description="List of (dn, attrs) tuples from parser"
         )
-        parse_entry_hook: Callable[[str, Mapping[str, list[str]]], r[object]] = Field(
-            ..., description="Hook to parse (dn, attrs) into Entry"
-        )
+        parse_entry_hook: Callable[
+            [str, Mapping[str, list[str]]], r[FlextLdifModelsDomains.Entry]
+        ] = Field(..., description="Hook to parse (dn, attrs) into Entry")
         transform_attrs_hook: (
             Callable[
                 [str, Mapping[str, list[str]]], tuple[str, Mapping[str, list[str]]]
@@ -1505,9 +1505,9 @@ class FlextLdifModelsSettings:
         model_config = ConfigDict(extra="forbid", validate_assignment=True)
         definition: str = Field(..., description="Raw objectClass definition")
         server_type: str = Field(..., description="Server type identifier")
-        parse_core_hook: Callable[[str], r[object]] = Field(
-            ..., description="Core parsing logic"
-        )
+        parse_core_hook: Callable[
+            [str], r[FlextLdifModelsDomains.SchemaObjectClass]
+        ] = Field(..., description="Core parsing logic")
         validate_structural_hook: Callable[[str, list[str]], bool] | None = Field(
             default=None, description="Optional structural validation"
         )
@@ -1530,9 +1530,9 @@ class FlextLdifModelsSettings:
         dn: str = Field(..., description="Distinguished name")
         attrs: Mapping[str, list[str]] = Field(..., description="Entry attributes")
         server_type: str = Field(..., description="Server type identifier")
-        create_entry_hook: Callable[[str, Mapping[str, list[str]]], r[object]] = Field(
-            ..., description="Entry creation logic"
-        )
+        create_entry_hook: Callable[
+            [str, Mapping[str, list[str]]], r[FlextLdifModelsDomains.Entry]
+        ] = Field(..., description="Entry creation logic")
         build_metadata_hook: (
             Callable[[str, Mapping[str, list[str]]], dict[str, t.MetadataValue] | None]
             | None
@@ -1610,15 +1610,17 @@ class FlextLdifModelsSettings:
         """
 
         model_config = ConfigDict(extra="forbid", validate_assignment=True)
-        entries: list[object] = Field(..., description="List of entries to sort")
+        entries: list[FlextLdifModelsDomains.Entry] = Field(
+            ..., description="List of entries to sort"
+        )
         target: str = Field(
             default="entries", description="Sort target (entries, attributes, acl)"
         )
         by: str = Field(default="hierarchy", description="Sort strategy")
         traversal: str = Field(default="depth-first", description="Traversal order")
-        predicate: Callable[[object], str | int | float] | None = Field(
-            default=None, description="Custom predicate function"
-        )
+        predicate: (
+            Callable[[FlextLdifModelsDomains.Entry], str | int | float] | None
+        ) = Field(default=None, description="Custom predicate function")
         sort_attributes: bool = Field(
             default=False, description="Sort attributes within entries"
         )

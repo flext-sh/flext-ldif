@@ -17,22 +17,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sized
+from collections.abc import Callable, Sequence, Sized
 from pathlib import Path
-from typing import Final
+from typing import Final, cast
 
 from flext_core import FlextResult, r
-from flext_core.result import FlextResult
 from flext_tests import FlextTestsConstants
-from src.flext_core.result import FlextResult
-from src.flext_ldif.models import FlextLdifModels
 
 from flext_ldif import (
     FlextLdif,
     FlextLdifConstants,
     FlextLdifConversion,
     FlextLdifEntries,
-    FlextLdifModels,
     FlextLdifParser,
     FlextLdifSchema,
     FlextLdifWriter,
@@ -40,29 +36,10 @@ from flext_ldif import (
     p,
     t,
 )
-from flext_ldif.models import FlextLdifModels
 
 
 class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
-    """Constants for flext-ldif tests using COMPOSITION INHERITANCE.
-
-    MANDATORY: Inherits from BOTH:
-    1. FlextTestsConstants - for test infrastructure (.Tests.*)
-    2. FlextLdifConstants - for domain constants (.Ldif.*)
-
-    Access patterns:
-    - c.Tests.Docker.* (container testing)
-    - c.Tests.Matcher.* (assertion messages)
-    - c.Tests.Factory.* (test data generation)
-    - c.Ldif.* (domain constants from production)
-    - c.TestLdif.* (project-specific test data)
-
-    Rules:
-    - NEVER duplicate constants from FlextTestsConstants or FlextLdifConstants
-    - Only flext-ldif-specific test constants allowed
-    - All generic constants come from FlextTestsConstants
-    - All production constants come from FlextLdifConstants
-    """
+    """Constants for flext-ldif tests using COMPOSITION INHERITANCE."""
 
     class Schema:
         """Schema constants wrapper for test convenience."""
@@ -893,8 +870,20 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_quirk_parse_success_and_unwrap(
-        quirk: p.Ldif.SchemaQuirk, content: str, parse_method: str | None = None
-    ) -> p.Ldif.SchemaAttribute | None:
+        quirk: (
+            p.Ldif.SchemaQuirkProtocol
+            | p.Ldif.AclQuirkProtocol
+            | p.Ldif.EntryQuirkProtocol
+        ),
+        content: str,
+        parse_method: str | None = None,
+    ) -> (
+        p.Ldif.SchemaAttributeProtocol
+        | p.Ldif.SchemaObjectClassProtocol
+        | p.Ldif.AclProtocol
+        | p.Ldif.EntryProtocol
+        | None
+    ):
         """Parse using quirk and assert success.
 
         Args:
@@ -918,7 +907,10 @@ class RfcTestHelpers:
         if isinstance(is_failure, bool) and is_failure:
             error = getattr(result, "error", "Unknown error")
             raise AssertionError(f"Parsing failed: {error}")
-        return getattr(result, "value", result)
+        return cast(
+            "p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol | p.Ldif.AclProtocol | p.Ldif.EntryProtocol | None",
+            getattr(result, "value", result),
+        )
 
     @staticmethod
     def test_schema_quirk_parse_and_assert(
@@ -1080,7 +1072,7 @@ class RfcTestHelpers:
             name=str(data.get("name", "")),
             desc=desc_value if isinstance(desc_value, str) else None,
             kind=str(data.get("kind", "STRUCTURAL")),
-            sup=sup_value if isinstance(sup_value, str | list) else None,
+            sup=sup_value if isinstance(sup_value, (str, list)) else None,
             must=must_list,
             may=may_list,
         )
@@ -1419,7 +1411,7 @@ class RfcTestHelpers:
         if should_succeed is False and result.is_success:
             msg = "Expected failure but got success"
             raise AssertionError(msg)
-        return result.map_or(None)
+        return result.map(lambda r: list(r.entries)).map_or(None)
 
     @staticmethod
     def test_write_entry_variations(
@@ -1440,9 +1432,14 @@ class RfcTestHelpers:
             raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
         for test_name, data in entry_data.items():
             dn = str(data.get("dn", ""))
-            attributes = data.get("attributes", {})
-            if not isinstance(attributes, dict):
-                attributes = {}
+            raw_attributes = data.get("attributes", {})
+            if not isinstance(raw_attributes, dict):
+                attributes: dict[str, list[str]] = {}
+            else:
+                attributes = {
+                    str(k): [str(i) for i in v] if isinstance(v, list) else [str(v)]
+                    for k, v in raw_attributes.items()
+                }
             entry_result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
             if entry_result.is_failure:
                 raise AssertionError(
@@ -1608,7 +1605,7 @@ class TestDeduplicationHelpers:
 
         """
         service = FlextLdifEntries()
-        entries: list[FlextLdifModels.Ldif.Entry] = []
+        entries: list[m.Ldif.Entry] = []
         for entry_data in entries_data:
             dn_raw = entry_data.get("dn")
             attrs_raw = entry_data.get("attributes")
@@ -1660,7 +1657,7 @@ class TestDeduplicationHelpers:
         """
         if not isinstance(parser_service, FlextLdifParser):
             raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-        results: list[FlextResult[FlextLdifModels.Ldif.ParseResponse]] = []
+        results: list[FlextResult[m.Ldif.ParseResponse]] = []
         for test_case in test_cases:
             ldif_content = str(test_case.get("ldif_content", ""))
             should_succeed = test_case.get("should_succeed")
@@ -1751,17 +1748,22 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def quirk_parse_and_unwrap(
-        quirk: p.Ldif.SchemaQuirkProtocol,
+        quirk: (
+            p.Ldif.SchemaQuirkProtocol
+            | p.Ldif.AclQuirkProtocol
+            | p.Ldif.EntryQuirkProtocol
+        ),
         content: str,
         msg: str | None = None,
         parse_method: str | None = None,
         expected_type: type | None = None,
         should_succeed: bool | None = None,
     ) -> (
-        m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass
-        | m.Ldif.Entry
-        | m.Ldif.Acl
+        p.Ldif.SchemaAttributeProtocol
+        | p.Ldif.SchemaObjectClassProtocol
+        | p.Ldif.EntryProtocol
+        | p.Ldif.AclProtocol
+        | Sequence[p.Ldif.EntryProtocol]
         | None
     ):
         """Parse using quirk and unwrap result.

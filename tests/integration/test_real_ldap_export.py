@@ -21,10 +21,8 @@ from pathlib import Path
 
 import pytest
 from ldap3 import Connection
-from src.flext_ldif.models import FlextLdifModels
 
 from flext_ldif import FlextLdif, FlextLdifModels, m
-from flext_ldif.models import FlextLdifModels
 
 
 @pytest.fixture

@@ -25,10 +25,8 @@ from flext_tests import (
     FlextTestsValidator as tv_base,
     tt as tt_base,
 )
-from src.flext_ldif.models import FlextLdifModels
 
 from flext_ldif import FlextLdif, FlextLdifEntries, FlextLdifModels, m
-from flext_ldif.models import FlextLdifModels
 
 TResult = TypeVar("TResult")
 

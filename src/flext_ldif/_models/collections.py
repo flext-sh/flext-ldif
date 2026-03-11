@@ -6,8 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Sequence
-from typing import override
+from collections.abc import Iterator, Mapping, Sequence
+from typing import Self, override
 
 from flext_core import m
 from pydantic import ConfigDict, Field
@@ -33,7 +33,7 @@ class FlextLdifModelsCollections:
         )
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: Self | Mapping[str, int]) -> bool:
             if other.__class__ is dict:
                 self_dict = {
                     key: value
@@ -117,7 +117,7 @@ class FlextLdifModelsCollections:
         )
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: Self | Mapping[str, bool]) -> bool:
             if isinstance(other, dict):
                 extra = self.model_extra
                 return (extra or {}) == other
@@ -142,7 +142,7 @@ class FlextLdifModelsCollections:
         model_config = ConfigDict(extra="allow", frozen=False)
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: Self | Mapping[str, list[str]]) -> bool:
             if isinstance(other, self.__class__):
                 return self.categories == other.categories
             if isinstance(other, dict):

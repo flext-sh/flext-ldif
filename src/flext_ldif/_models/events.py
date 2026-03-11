@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Self
 
 from flext_core import m
 from pydantic import ConfigDict, Field
@@ -77,7 +78,7 @@ class FlextLdifModelsEvents:
             entries_failed: int = 0,
             parse_duration_ms: float = 0.0,
             error_details: Sequence[str] | None = None,
-        ) -> FlextLdifModelsEvents.ParseEvent:
+        ) -> Self:
             return cls(
                 event_type="ldif.parse",
                 aggregate_id=str(file_path),
@@ -97,7 +98,7 @@ class FlextLdifModelsEvents:
             entries_failed: int = 0,
             parse_duration_ms: float = 0.0,
             error_details: Sequence[str] | None = None,
-        ) -> FlextLdifModelsEvents.ParseEvent:
+        ) -> Self:
             return cls(
                 event_type="ldif.parse",
                 aggregate_id=connection_info,
@@ -117,7 +118,7 @@ class FlextLdifModelsEvents:
             entries_failed: int = 0,
             parse_duration_ms: float = 0.0,
             error_details: Sequence[str] | None = None,
-        ) -> FlextLdifModelsEvents.ParseEvent:
+        ) -> Self:
             return cls(
                 event_type="ldif.parse",
                 aggregate_id=f"content_{content_length}chars",

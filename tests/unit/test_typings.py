@@ -165,6 +165,7 @@ class TestModelsNamespace:
         oid_value: str | None = data[c.Names.INETORGPERSON].get("oid")
         assert oid_value == "2.16.840.1.113730.3.2.2"
         may_values: list[str] | None = data[c.Names.INETORGPERSON].get("may")
+        assert may_values is not None
         assert c.Names.MAIL in may_values
 
     def test_extensions_with_reals(self) -> None:

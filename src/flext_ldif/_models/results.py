@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import overload
+from typing import Self, overload
 
 from flext_core import m
 from pydantic import ConfigDict, Field, computed_field, field_validator
@@ -110,7 +110,7 @@ class FlextLdifModelsResults:
             return value
 
         @classmethod
-        def empty(cls) -> FlextLdifModelsResults.EntryResult:
+        def empty(cls) -> Self:
             return cls(
                 entries_by_category=FlextLdifModelsCollections.FlexibleCategories(),
                 statistics=FlextLdifModelsResults.Statistics.for_pipeline(),
@@ -122,7 +122,7 @@ class FlextLdifModelsResults:
             entries: Sequence[FlextLdifModelsDomains.Entry],
             category: str = "all",
             statistics: FlextLdifModelsResults.Statistics | None = None,
-        ) -> FlextLdifModelsResults.EntryResult:
+        ) -> Self:
             entry_list = list(entries)
             stats = statistics or FlextLdifModelsResults.Statistics.for_pipeline(
                 total=len(entry_list)
@@ -146,9 +146,7 @@ class FlextLdifModelsResults:
                 return self.entries_by_category[category]
             return default if default is not None else []
 
-        def merge(
-            self, other: FlextLdifModelsResults.EntryResult
-        ) -> FlextLdifModelsResults.EntryResult:
+        def merge(self, other: FlextLdifModelsResults.EntryResult) -> Self:
             merged_categories = FlextLdifModelsCollections.FlexibleCategories()
             for cat, entries in self.entries_by_category.items():
                 merged_categories.add_entries(cat, list(entries))
@@ -247,7 +245,7 @@ class FlextLdifModelsResults:
             schema_objectclasses: int = 0,
             processing_duration: float = 0.0,
             rejection_reasons: FlextLdifModelsCollections.DynamicCounts | None = None,
-        ) -> FlextLdifModelsResults.Statistics:
+        ) -> Self:
             return cls(
                 total_entries=total,
                 processed_entries=processed,

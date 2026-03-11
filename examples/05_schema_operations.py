@@ -20,10 +20,8 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core import r
-from src.flext_ldif.models import FlextLdifModels
 
 from flext_ldif import FlextLdif, FlextLdifModels, m, u
-from flext_ldif.models import FlextLdifModels
 
 
 def intelligent_schema_building() -> r[list[m.Ldif.Entry]]:

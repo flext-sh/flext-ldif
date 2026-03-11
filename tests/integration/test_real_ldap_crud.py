@@ -23,10 +23,8 @@ from pathlib import Path
 
 import pytest
 from ldap3 import Connection
-from src.flext_ldif.models import FlextLdifModels
 
-from flext_ldif import FlextLdif, FlextLdifModels, m
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdif, m
 
 
 @pytest.fixture
@@ -105,7 +103,7 @@ class TestRealLdapBatchOperations:
         make_test_username: Callable[[str], str],
     ) -> None:
         """Create batch of entries using FlextLdif API and write to LDAP."""
-        entries = []
+        entries: list[m.Ldif.Entry] = []
         for i in range(20):
             unique_username = make_test_username(f"BatchUser{i}")
             person_dn = f"cn={unique_username},{clean_test_ou}"
@@ -129,7 +127,7 @@ class TestRealLdapBatchOperations:
                     facade_entry = m.Ldif.Entry.model_validate(entry_dict)
                     entries.append(facade_entry)
         assert len(entries) == 20
-        ldap_entries = []
+        ldap_entries: list[m.Ldif.DN | None] = []
         for entry in entries:
             object_classes = entry.get_attribute_values("objectclass")
             if not isinstance(object_classes, list):
@@ -178,7 +176,7 @@ class TestRealLdapBatchOperations:
         )
         actual_count = len(ldap_connection.entries)
         assert actual_count > 0, "No entries found in LDAP"
-        entries: list[FlextLdifModels.Ldif.Entry] = []
+        entries: list[m.Ldif.Entry] = []
         for entry in ldap_connection.entries:
             attrs_dict = {}
             for attr_name in entry.entry_attributes:

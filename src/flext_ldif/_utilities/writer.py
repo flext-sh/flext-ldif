@@ -9,8 +9,7 @@ from pathlib import Path
 
 from flext_core import FlextLogger, FlextResult, t, u
 
-from flext_ldif import c, m
-from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif import c, m, p
 from flext_ldif._models.settings import FlextLdifModelsSettings
 
 r = FlextResult
@@ -82,7 +81,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _build_attribute_parts(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttributeProtocol,
     ) -> list[str]:
         """Build RFC attribute definition parts (extracted to reduce complexity)."""
         parts: list[str] = [f"( {attr_data.oid}"]
@@ -113,7 +112,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _build_objectclass_parts(
-        oc_data: FlextLdifModelsDomains.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClassProtocol,
     ) -> list[str]:
         """Build RFC objectClass definition parts (extracted to reduce complexity)."""
         parts: list[str] = [f"( {oc_data.oid}"]
@@ -251,7 +250,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_flags(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute, parts: list[str]
+        attr_data: p.Ldif.SchemaAttributeProtocol, parts: list[str]
     ) -> None:
         """Add flags to attribute parts list."""
         if attr_data.single_value:
@@ -265,7 +264,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_matching_rules(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute, parts: list[str]
+        attr_data: p.Ldif.SchemaAttributeProtocol, parts: list[str]
     ) -> None:
         """Add matching rules to attribute parts list."""
         if attr_data.equality:
@@ -277,7 +276,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_syntax(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute, parts: list[str]
+        attr_data: p.Ldif.SchemaAttributeProtocol, parts: list[str]
     ) -> None:
         """Add syntax and length to attribute parts list."""
         if attr_data.syntax:
@@ -470,7 +469,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def write_rfc_attribute(
-        attr_data: FlextLdifModelsDomains.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttributeProtocol,
     ) -> FlextResult[str]:
         """Write attribute data to RFC 4512 format."""
         try:
@@ -486,7 +485,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def write_rfc_objectclass(
-        objectclass: FlextLdifModelsDomains.SchemaObjectClass,
+        objectclass: p.Ldif.SchemaObjectClassProtocol,
     ) -> FlextResult[str]:
         """Write objectClass data to RFC 4512 format."""
         try:

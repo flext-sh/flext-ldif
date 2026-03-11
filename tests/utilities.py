@@ -6,7 +6,7 @@ from pathlib import Path
 
 from flext_tests import FlextTestsUtilities
 
-from flext_ldif import FlextLdifModels, FlextLdifUtilities, p
+from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifUtilities
 from tests.constants import RfcTestHelpers as _RfcTestHelpers, TestDeduplicationHelpers
 
 
@@ -21,7 +21,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
 
         @staticmethod
         def test_parse_ldif_file(
-            parser_service: p.Ldif.Parser,
+            parser_service: FlextLdifParser,
             file_path: Path,
             expected_count: int,
             server_type: str = "rfc",

@@ -16,17 +16,15 @@ import tempfile
 import time
 from collections.abc import Callable, Collection, Generator
 from pathlib import Path
-from typing import ClassVar
+from typing import (
+    ClassVar,
+    cast,
+)
 
 import pytest
-from _pytest.nodes import Item
 from flext_core import FlextConstants, FlextLogger, FlextResult, FlextSettings, t
 from flext_tests import FlextTestsDocker
 from ldap3 import ALL, Connection, Server
-from tomlkit.items import Item
-from typings.tomlkit.items import Item
-from typings.vulture.core import Item
-from vulture.core import Item
 
 from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifServer, FlextLdifWriter, p
 from flext_ldif.servers.base import FlextLdifServersBase
@@ -670,7 +668,7 @@ class FlextLdifTestConftest:
         self, config: pytest.Config, items: list[pytest.Item]
     ) -> None:
         """Filter test items."""
-        filtered_items: list[Item] = []
+        filtered_items: list[pytest.Item] = []
         for item in items:
             if hasattr(item, "parent") and item.parent is not None:
                 parent = item.parent
@@ -769,9 +767,11 @@ class FlextLdifTestConftest:
     def oid(self) -> p.Ldif.SchemaQuirkProtocol:
         """OID quirk (deprecated)."""
         server = FlextLdifServer()
-        quirk = server.quirk("oid")
+        result = server.quirk("oid")
+        assert result.is_success, f"OID quirk must be registered: {result.error}"
+        quirk = result.value
         assert quirk is not None, "OID quirk must be registered"
-        return quirk
+        return cast("p.Ldif.SchemaQuirkProtocol", quirk.schema_quirk)
 
 
 __all__ = ["FlextLdifTestConftest", "FlextTestsDocker"]

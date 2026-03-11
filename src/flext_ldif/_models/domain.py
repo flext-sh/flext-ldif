@@ -615,7 +615,7 @@ class FlextLdifModelsDomains:
             attrs_data: Mapping[
                 str, str | list[str] | bytes | list[bytes] | int | float | bool | None
             ],
-        ) -> FlextResult[FlextLdifModelsDomains.Attributes]:
+        ) -> FlextResult[Self]:
             """Create an Attributes instance from data.
 
             Args:
@@ -635,13 +635,9 @@ class FlextLdifModelsDomains:
                         normalized_dict[key] = [val]
                     else:
                         normalized_dict[key] = [str(val)]
-                return FlextResult[FlextLdifModelsDomains.Attributes].ok(
-                    cls(attributes=normalized_dict)
-                )
+                return FlextResult[Self].ok(cls(attributes=normalized_dict))
             except (ValueError, TypeError, AttributeError) as e:
-                return FlextResult[FlextLdifModelsDomains.Attributes].fail(
-                    f"Failed to create Attributes: {e}"
-                )
+                return FlextResult[Self].fail(f"Failed to create Attributes: {e}")
 
         def add_attribute(self, key: str, values: list[str]) -> Self:
             """Add or update an attribute with values.
