@@ -7,15 +7,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from flext_core import m
 from pydantic import ConfigDict, Field
 
-from flext_ldif import t
 from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
+
+if TYPE_CHECKING:
+    from flext_ldif.typings import FlextLdifTypes as t
 
 
 def _schema_attributes_factory() -> list[FlextLdifModelsDomains.SchemaAttribute]:
