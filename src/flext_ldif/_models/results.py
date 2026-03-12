@@ -174,7 +174,7 @@ class FlextLdifModelsResults:
                 file_paths=merged_paths,
             )
 
-    class Statistics(m.CollectionsStatistics):
+    class Statistics(m.Statistics):
         model_config = ConfigDict(
             frozen=True,
             extra="forbid",
