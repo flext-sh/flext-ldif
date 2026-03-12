@@ -26,7 +26,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
     server_type: ClassVar[str]
     priority: ClassVar[int]
 
-    def __init__(self, **kwargs: object) -> None:
+    def __init__(self, **kwargs: t.Scalar) -> None:
         """Initialize base quirk and its nested quirks."""
         init_kwargs: dict[str, t.Scalar | None] = {}
         for key, value in kwargs.items():
@@ -94,7 +94,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     auto_execute: ClassVar[bool] = False
 
-    def __new__(cls, **kwargs: object) -> Self:
+    def __new__(cls, **kwargs: t.Scalar) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         instance: Self = object.__new__(cls)
         filtered_kwargs: dict[str, str | float | bool | None] = {}

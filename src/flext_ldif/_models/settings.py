@@ -685,7 +685,7 @@ class FlextLdifModelsSettings:
     class LogContextExtras(FlextModels.Value):
         """Additional context fields for logging events.
 
-        Replaces **extra_context: object pattern with typed Model.
+        Replaces **extra_context: t.Scalar pattern with typed Model.
         Eliminates use of object and Any types in logging functions.
 
         Example:

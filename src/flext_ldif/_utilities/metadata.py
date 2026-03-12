@@ -813,7 +813,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def build_rfc_compliance_metadata(
-        quirk_type: str, **extra: object
+        quirk_type: str, **extra: t.Scalar
     ) -> Mapping[str, str | bool | list[str] | Mapping[str, str | list[str]]]:
         """Build RFC compliance metadata as a dictionary."""
         result: dict[str, str | bool | list[str] | dict[str, str | list[str]]] = {

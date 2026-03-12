@@ -43,6 +43,7 @@ from flext_ldif._utilities.type_guards import FlextLdifUtilitiesTypeGuards
 from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
+from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 
@@ -1353,7 +1354,7 @@ class FlextLdifUtilities(FlextUtilities):
         ) -> Callable[..., object]:
             """Curry function (mnemonic: cy)."""
 
-            def curried(*more_args: object, **_kwargs: object) -> object:
+            def curried(*more_args: object, **_kwargs: t.Scalar) -> object:
                 combined_args: tuple[object, ...] = args + more_args
                 converted_args: list[object] = []
                 for arg in combined_args:
@@ -1677,7 +1678,7 @@ class FlextLdifUtilities(FlextUtilities):
             cls,
             fn: FlextLdifUtilities.Ldif.VariadicCallable[object] | object,
             *args: object,
-            **kwargs: object,
+            **kwargs: t.Scalar,
         ) -> object:
             """Apply function (mnemonic: ap)."""
             if callable(fn):

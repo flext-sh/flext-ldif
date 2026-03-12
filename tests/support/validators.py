@@ -8,27 +8,28 @@ from __future__ import annotations
 from flext_core import r, u
 
 from flext_ldif import m, p
+from flext_ldif.typings import t
 
 
 class MockResultHelpers:
     """Mock result helpers for testing."""
 
     @staticmethod
-    def validate_composition(*args: object, **kwargs: object) -> bool:
+    def validate_composition(*args: object, **kwargs: t.Scalar) -> bool:
         """Validate composition."""
         return True
 
     @staticmethod
-    def validate_chain(*args: object, **kwargs: object) -> bool:
+    def validate_chain(*args: object, **kwargs: t.Scalar) -> bool:
         """Validate chain."""
         return True
 
     @staticmethod
-    def assert_composition(*args: object, **kwargs: object) -> None:
+    def assert_composition(*args: object, **kwargs: t.Scalar) -> None:
         """Assert composition."""
 
     @staticmethod
-    def assert_chain_success(*args: object, **kwargs: object) -> None:
+    def assert_chain_success(*args: object, **kwargs: t.Scalar) -> None:
         """Assert chain success."""
 
 
@@ -36,7 +37,7 @@ class MockMatchers:
     """Mock matchers for testing."""
 
     @staticmethod
-    def assert_success(*args: object, **kwargs: object) -> None:
+    def assert_success(*args: object, **kwargs: t.Scalar) -> None:
         """Assert success."""
 
 

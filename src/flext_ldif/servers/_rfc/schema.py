@@ -28,7 +28,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         cls,
         schema_service: p.Ldif.SchemaQuirkProtocol | None = None,
         parent_quirk: p.Ldif.SchemaQuirkProtocol | None = None,
-        **kwargs: object | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        **kwargs: t.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         instance = object.__new__(cls)
@@ -97,10 +97,10 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         self,
         schema_service: p.Ldif.SchemaQuirkProtocol | None = None,
         parent_quirk: p.Ldif.SchemaQuirkProtocol | None = None,
-        **kwargs: object | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        **kwargs: t.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize RFC schema quirk service."""
-        filtered_kwargs: dict[str, t.Scalar | None] = {}
+        filtered_kwargs: dict[str, t.Scalar] = {}
         excluded_keys = {
             "_parent_quirk",
             "parent_quirk",
@@ -114,7 +114,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         for key, value in kwargs.items():
             if key in excluded_keys:
                 continue
-            if isinstance(value, (str, int, float, bool)) or value is None:
+            if isinstance(value, (str, int, float, bool, datetime)):
                 filtered_kwargs[key] = value
         schema_service_typed: p.Ldif.SchemaQuirkProtocol | None = schema_service
         FlextLdifServersBaseSchema.__init__(

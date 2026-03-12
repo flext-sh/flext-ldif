@@ -12,6 +12,7 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 
@@ -23,7 +24,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         cls,
         acl_service: p.Ldif.AclQuirkProtocol | None = None,
         parent_quirk: Self | None = None,
-        **kwargs: object,
+        **kwargs: t.Scalar,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         _ = acl_service
@@ -59,7 +60,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         self,
         acl_service: p.Ldif.AclQuirkProtocol | None = None,
         parent_quirk: Self | None = None,
-        **kwargs: object,
+        **kwargs: t.Scalar,
     ) -> None:
         """Initialize RFC ACL quirk service."""
         filtered_kwargs: dict[str, object] = {

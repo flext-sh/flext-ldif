@@ -14,6 +14,7 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
+from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 
@@ -37,7 +38,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         self,
         acl_service: p.Ldif.AclQuirkProtocol | None = None,
         _parent_quirk: Self | None = None,
-        **_kwargs: object,
+        **_kwargs: t.Scalar,
     ) -> None:
         """Initialize ACL quirk service with optional DI service injection."""
         super().__init__()
@@ -113,7 +114,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         *,
         data: str | m.Ldif.Acl | None = None,
         operation: str | None = None,
-        **kwargs: object,
+        **kwargs: t.Scalar,
     ) -> r[m.Ldif.Acl | str]:
         """Execute ACL operation with auto-detection: str→parse, Acl→write."""
         kwargs_dict = dict(kwargs)

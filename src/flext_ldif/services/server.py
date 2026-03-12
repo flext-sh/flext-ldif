@@ -17,6 +17,7 @@ from flext_ldif.servers._base import (
     FlextLdifServersBaseSchemaAcl,
 )
 from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 type QuirkComponent = (
@@ -32,7 +33,9 @@ class FlextLdifServer(FlextRegistry):
     SERVERS: ClassVar[str] = "ldif_servers"
     _discovery_initialized: ClassVar[bool] = False
 
-    def __init__(self, dispatcher: p.CommandBus | None = None, **data: object) -> None:
+    def __init__(
+        self, dispatcher: p.CommandBus | None = None, **data: t.Scalar
+    ) -> None:
         """Initialize registry and trigger auto-discovery."""
         filtered_data = {
             k: v for k, v in data.items() if isinstance(v, (str, int, float, bool))

@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_ldif import m
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
+from flext_ldif.typings import t
 
 logger = FlextLogger.create_module_logger(__name__)
 
@@ -61,7 +62,7 @@ class FlextLdifUtilitiesWriters:
         def write(
             *,
             config: FlextLdifModelsSettings.EntryWriteConfig | None = None,
-            **kwargs: object,
+            **kwargs: t.Scalar,
         ) -> r[str]:
             """Write entry to LDIF string using hooks."""
             if config is None:
@@ -254,7 +255,7 @@ class FlextLdifUtilitiesWriters:
         def write(
             *,
             config: FlextLdifModelsSettings.BatchWriteConfig | None = None,
-            **kwargs: object,
+            **kwargs: t.Scalar,
         ) -> r[str]:
             """Write multiple entries to LDIF string."""
             if config is None:

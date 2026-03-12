@@ -7,6 +7,8 @@ from typing import ClassVar
 
 from flext_core import FlextRegistry, p
 
+from flext_ldif.typings import t
+
 type FilterFactoryType = Callable[[], object]
 type CategorizationFactoryType = Callable[[str], object]
 
@@ -17,7 +19,9 @@ class FlextLdifServiceRegistry(FlextRegistry):
     FACTORIES: ClassVar[str] = "ldif_factories"
     _global_instance: ClassVar[FlextLdifServiceRegistry | None] = None
 
-    def __init__(self, dispatcher: p.CommandBus | None = None, **data: object) -> None:
+    def __init__(
+        self, dispatcher: p.CommandBus | None = None, **data: t.Scalar
+    ) -> None:
         """Initialize with FlextRegistry infrastructure."""
         _ = data
         super().__init__(dispatcher=dispatcher)
