@@ -59,7 +59,7 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
         """Validate entry objectClass values."""
         errors: list[str] = []
         is_valid = True
-        oc_values_raw: t.Ldif.object = u.Mapper.get(
+        oc_values_raw: t.Ldif.object = u.get(
             entry.attributes.attributes if entry.attributes else {},
             "objectClass",
             default=[],
@@ -149,7 +149,7 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
             errors.extend(entry_errors)
             return is_entry_valid
 
-        validation_results = u.Collection.map(entries, validate_entry)
+        validation_results = u.map(entries, validate_entry)
         valid_results = [r for r in validation_results if r is True]
         valid_count = u.count(valid_results)
         total_entries = u.count(entries)

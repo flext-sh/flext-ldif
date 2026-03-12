@@ -574,22 +574,16 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         """Build category map from rules."""
         category_map: dict[str, frozenset[str]] = {}
         if rules.hierarchy_objectclasses:
-            mapped = u.Collection.map(
-                rules.hierarchy_objectclasses, mapper=lambda oc: oc.lower()
-            )
+            mapped = u.map(rules.hierarchy_objectclasses, mapper=lambda oc: oc.lower())
             category_map[c.Ldif.Category.HIERARCHY] = frozenset(mapped)
         if rules.user_objectclasses:
-            mapped = u.Collection.map(
-                rules.user_objectclasses, mapper=lambda oc: oc.lower()
-            )
+            mapped = u.map(rules.user_objectclasses, mapper=lambda oc: oc.lower())
             category_map[c.Ldif.Category.USERS] = frozenset(mapped)
         if rules.group_objectclasses:
-            mapped = u.Collection.map(
-                rules.group_objectclasses, mapper=lambda oc: oc.lower()
-            )
+            mapped = u.map(rules.group_objectclasses, mapper=lambda oc: oc.lower())
             category_map[c.Ldif.Category.GROUPS] = frozenset(mapped)
         if rules.acl_attributes:
-            mapped = u.Collection.map(
+            mapped = u.map(
                 rules.acl_attributes, mapper=lambda attr: f"attr:{attr.lower()}"
             )
             category_map[c.Ldif.Category.ACL] = frozenset(mapped)
@@ -713,11 +707,11 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 return f"attr:{attr.lower()}"
 
             if override_existing or acl_category not in category_map:
-                mapped = u.Collection.map(acl_attrs, mapper=_to_attr_key)
+                mapped = u.map(acl_attrs, mapper=_to_attr_key)
                 category_map[acl_category] = frozenset(mapped)
             else:
                 existing_acl = category_map.get(acl_category, frozenset())
-                mapped = u.Collection.map(acl_attrs, mapper=_to_attr_key)
+                mapped = u.map(acl_attrs, mapper=_to_attr_key)
                 new_acl_attrs = frozenset(mapped)
                 category_map[acl_category] = existing_acl | new_acl_attrs
         return category_map

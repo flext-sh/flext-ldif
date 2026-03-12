@@ -313,7 +313,7 @@ class FlextLdifUtilitiesDN:
                 reason=f"BaseDN transformation: {config.source_dn} → {config.target_dn}",
             )
 
-        _ = u.Collection.process(
+        _ = u.process(
             config.transformed_attr_names, processor=track_attr, on_error="skip"
         )
         _ = metadata.add_conversion_note(
@@ -343,7 +343,7 @@ class FlextLdifUtilitiesDN:
             attr, _, value = comp.partition("=")
             return bool(attr.strip() and value.strip())
 
-        filtered = u.Collection.filter(components, is_valid_component)
+        filtered = u.filter(components, is_valid_component)
         return len(filtered) == len(components)
 
     @staticmethod
@@ -559,7 +559,7 @@ class FlextLdifUtilitiesDN:
             return char
 
         enumerated = list(enumerate(value))
-        mapped_result = u.Collection.map(enumerated, mapper=escape_char)
+        mapped_result = u.map(enumerated, mapper=escape_char)
         return "".join(mapped_result)
 
     @staticmethod
@@ -735,7 +735,7 @@ class FlextLdifUtilitiesDN:
                 attr, _, value = comp.partition("=")
                 return f"{attr.strip().lower()}={value.strip()}"
 
-            process_result = u.Collection.process(
+            process_result = u.process(
                 components,
                 processor=normalize_component,
                 predicate=lambda comp: "=" in comp,
@@ -746,7 +746,7 @@ class FlextLdifUtilitiesDN:
                     f"Failed to normalize DN: no valid components in '{dn_str}'"
                 )
             normalized_list = process_result.value
-            filtered_str = u.Collection.filter(
+            filtered_str = u.filter(
                 normalized_list, predicate=lambda x: isinstance(x, str)
             )
             normalized: list[str] = [
@@ -872,9 +872,7 @@ class FlextLdifUtilitiesDN:
         """Normalize full DN to RFC 4514 format."""
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         components = FlextLdifUtilitiesDN.split(dn_str)
-        normalized = u.Collection.map(
-            components, mapper=FlextLdifUtilitiesDN.norm_component
-        )
+        normalized = u.map(components, mapper=FlextLdifUtilitiesDN.norm_component)
         return ",".join(normalized)
 
     @overload
@@ -1318,7 +1316,7 @@ class FlextLdifUtilitiesDN:
             is_valid, dn_errors = FlextLdifUtilitiesDN.is_valid_dn_string(dn)
             return (dn, is_valid, dn_errors)
 
-        batch_result = u.Collection.batch(list(dns), validate_dn, on_error="skip")
+        batch_result = u.batch(list(dns), validate_dn, on_error="skip")
         if batch_result.is_failure:
             return r[list[tuple[str, bool, list[str]]]].fail(
                 batch_result.error or "Validation failed"

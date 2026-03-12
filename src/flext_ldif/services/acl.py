@@ -130,7 +130,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
                 return False
             for attr_name in acl_attributes:
                 attr_values = entry.get_attribute_values(attr_name)
-                if u.Guards.is_list_non_empty(attr_values):
+                if u.is_list_non_empty(attr_values):
                     return True
             return False
 

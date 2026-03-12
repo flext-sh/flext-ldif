@@ -141,7 +141,7 @@ class TestSystematicFixtureCoverage:
         write_result = api.write(entries)
         assert write_result.is_success, f"Write failed: {write_result.error}"
         written_content = write_result.value
-        if u.Guards.is_list_non_empty(entries):
+        if u.is_list_non_empty(entries):
             assert len(written_content) >= 0, "Write result should be string"
 
     @pytest.mark.parametrize(

@@ -200,9 +200,9 @@ class FlextLdifConversion(
         ):
             return conversion_analysis
         target_server_str = target_server_type
-        get_boolean = u.Mapper.prop("boolean_conversions")
-        get_attr_case = u.Mapper.prop("original_attribute_case")
-        get_format_details = u.Mapper.prop("original_format_details")
+        get_boolean = u.prop("boolean_conversions")
+        get_attr_case = u.prop("original_attribute_case")
+        get_format_details = u.prop("original_format_details")
         boolean_raw = get_boolean(source_metadata)
         boolean_conversions: t.Ldif.object = (
             boolean_raw if isinstance(boolean_raw, dict) else {}
@@ -564,7 +564,7 @@ class FlextLdifConversion(
     @staticmethod
     def _validate_ldif_string(ldif_string: str, operation: str) -> r[str]:
         """Validate LDIF string is not empty."""
-        if u.Guards.is_string_non_empty(ldif_string):
+        if u.is_string_non_empty(ldif_string):
             return r[str].ok(ldif_string)
         return r[str].fail(f"Write operation returned empty {operation} LDIF")
 
@@ -591,14 +591,14 @@ class FlextLdifConversion(
         if isinstance(source, str):
             source_format: str = source
         else:
-            source_name_result = u.Mapper.prop("server_name")(source)
+            source_name_result = u.prop("server_name")(source)
             source_format = (
                 source_name_result if isinstance(source_name_result, str) else "unknown"
             )
         if isinstance(target, str):
             target_format: str = target
         else:
-            target_name_result = u.Mapper.prop("server_name")(target)
+            target_name_result = u.prop("server_name")(target)
             target_format = (
                 target_name_result if isinstance(target_name_result, str) else "unknown"
             )
@@ -1033,7 +1033,7 @@ class FlextLdifConversion(
             acl = acl.model_copy(deep=True)
             entry_dn = m.Ldif.DN(value="cn=acl-conversion,dc=example,dc=com")
             entry_attributes = m.Ldif.Attributes(attributes={})
-            get_server_type = u.Mapper.prop("server_type")
+            get_server_type = u.prop("server_type")
             server_type_raw = get_server_type(source_quirk)
             server_type_attr = (
                 server_type_raw if isinstance(server_type_raw, str) else None
@@ -1069,8 +1069,8 @@ class FlextLdifConversion(
                     f"Entry conversion returned unexpected type: {type(converted_entry_value).__name__}"
                 )
             converted_entry: m.Ldif.Entry = converted_entry_value
-            get_metadata = u.Mapper.prop("metadata")
-            get_acls = u.Mapper.prop("acls")
+            get_metadata = u.prop("metadata")
+            get_acls = u.prop("acls")
             converted_metadata_raw = get_metadata(converted_entry)
             if not isinstance(
                 converted_metadata_raw, (m.Ldif.QuirkMetadata, type(None))
@@ -1104,7 +1104,7 @@ class FlextLdifConversion(
                 ].fail("No ACL found in converted entry metadata")
             domain_acl = acls[0]
             converted_acl: m.Ldif.Acl = domain_acl
-            get_server_type = u.Mapper.prop("server_type")
+            get_server_type = u.prop("server_type")
             target_server_raw = get_server_type(target_quirk)
             target_server_type_raw = (
                 target_server_raw if isinstance(target_server_raw, str) else "unknown"
@@ -1225,7 +1225,7 @@ class FlextLdifConversion(
                 ].fail(f"Entry DN failed RFC 4514 validation: {entry_dn}")
             _ = self.dn_registry.register_dn(entry_dn)
             converted_entry = entry.model_copy(deep=True)
-            get_server_type = u.Mapper.prop("server_type")
+            get_server_type = u.prop("server_type")
             target_server_type_obj = get_server_type(target_quirk)
             target_server_type_raw = (
                 target_server_type_obj
@@ -1525,8 +1525,8 @@ class FlextLdifConversion(
                 return [to_general_value(item) for item in value]
             return str(value)
 
-        get_metadata = u.Mapper.prop("metadata")
-        get_extensions = u.Mapper.prop("extensions")
+        get_metadata = u.prop("metadata")
+        get_extensions = u.prop("extensions")
         if not get_metadata(acl) or not acl.metadata:
             return {}
         extensions_raw = get_extensions(acl.metadata)
@@ -1585,8 +1585,8 @@ class FlextLdifConversion(
             target_server_type,
             converted_has_permissions=converted_has_permissions,
         )
-        get_metadata = u.Mapper.prop("metadata")
-        get_extensions = u.Mapper.prop("extensions")
+        get_metadata = u.prop("metadata")
+        get_extensions = u.prop("extensions")
         acl_step1: m.Ldif.Acl = (
             converted_acl.model_copy(
                 update={
@@ -1710,8 +1710,8 @@ class FlextLdifConversion(
         source_quirk_name: str,
     ) -> m.Ldif.Entry:
         """Update entry metadata for conversion (internal helper)."""
-        get_metadata = u.Mapper.prop("metadata")
-        get_extensions = u.Mapper.prop("extensions")
+        get_metadata = u.prop("metadata")
+        get_extensions = u.prop("extensions")
         current_entry = entry
         if not get_metadata(current_entry):
             metadata_obj = m.Ldif.QuirkMetadata(quirk_type=validated_quirk_type)

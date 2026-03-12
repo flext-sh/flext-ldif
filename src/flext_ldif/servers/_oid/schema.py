@@ -81,7 +81,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 c.Ldif.MetadataKeys.SCHEMA_TARGET_MATCHING_RULES
             ] = target_rules
         attr_data.metadata.extensions[c.Ldif.Format.META_TRANSFORMATION_TIMESTAMP] = (
-            u.Generators.generate_iso_timestamp()
+            u.generate_iso_timestamp()
         )
 
     def _capture_attribute_values(
@@ -325,7 +325,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             if oc_data.metadata:
                 oc_data.metadata.extensions[
                     c.Ldif.Format.META_TRANSFORMATION_TIMESTAMP
-                ] = u.Generators.generate_iso_timestamp()
+                ] = u.generate_iso_timestamp()
             return r[m.Ldif.SchemaObjectClass].ok(oc_data)
         except (
             ValueError,

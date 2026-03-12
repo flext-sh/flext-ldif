@@ -420,7 +420,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         if parse_result.is_success:
             parse_response = parse_result.value
             entries = getattr(parse_response, "entries", [])
-            if u.Guards.is_list_non_empty(entries):
+            if u.is_list_non_empty(entries):
                 domain_entry = entries[0]
                 if isinstance(domain_entry, m.Ldif.Entry):
                     return r[m.Ldif.Entry | str].ok(domain_entry)

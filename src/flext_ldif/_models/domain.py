@@ -803,7 +803,7 @@ class FlextLdifModelsDomains:
 
             self.attribute_metadata[str(attribute_name)] = {
                 "status": "deleted",
-                "deleted_at": u.Generators.generate_iso_timestamp(),
+                "deleted_at": u.generate_iso_timestamp(),
                 "deleted_reason": reason,
                 "deleted_by": deleted_by,
                 "original_values": [
@@ -1312,7 +1312,7 @@ class FlextLdifModelsDomains:
                 or self.subject is not None
                 or self.permissions is not None
             )
-            if acl_is_defined and (not u.Guards.is_string_non_empty(self.raw_acl)):
+            if acl_is_defined and (not u.is_string_non_empty(self.raw_acl)):
                 violations.append(
                     "ACL is defined (has target/subject/permissions) but raw_acl is empty"
                 )

@@ -168,7 +168,7 @@ class TestMinimalDifferencesOidOud:
         else:
             boolean_conversions = {}
         if (
-            u.Guards.is_dict_non_empty(boolean_conversions)
+            u.is_dict_non_empty(boolean_conversions)
             and "orcldasisenabled" in boolean_conversions
         ):
             conv = boolean_conversions["orcldasisenabled"]

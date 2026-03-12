@@ -69,7 +69,7 @@ class FlextLdifProcessing(FlextLdifServiceBase[list[m.Ldif.ProcessingResult]]):
         _batch_size: int,
     ) -> r[list[m.Ldif.ProcessingResult]]:
         """Execute batch processing sequentially."""
-        return u.Collection.process(entries, processor_func, on_error="collect").fold(
+        return u.process(entries, processor_func, on_error="collect").fold(
             on_failure=lambda e: r[list[m.Ldif.ProcessingResult]].fail(
                 e or "Batch processing failed"
             ),

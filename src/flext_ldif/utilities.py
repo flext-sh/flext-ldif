@@ -59,14 +59,14 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def to_config_map_value(value: object) -> object:
             """Convert value to object (general value or str)."""
-            if FlextUtilities.Guards.is_general_value_type(value):
+            if FlextUtilities.is_general_value_type(value):
                 return value
             return str(value)
 
         @staticmethod
         def normalize_container(value: object) -> object:
             """Normalize a object to a canonical form."""
-            if FlextUtilities.Guards.is_general_value_type(value):
+            if FlextUtilities.is_general_value_type(value):
                 return value
             return str(value)
 
@@ -513,22 +513,16 @@ class FlextLdifUtilities(FlextUtilities):
             """Filter using base class Collection.filter (internal helper)."""
             if isinstance(items_or_entries, (list, tuple)):
                 items_list: list[object] = list(items_or_entries)
-                list_filter_result = FlextUtilities.Collection.filter(
-                    items_list, predicate
-                )
+                list_filter_result = FlextUtilities.filter(items_list, predicate)
                 return list(list_filter_result) if list_filter_result else []
             if isinstance(items_or_entries, dict):
                 items_dict: dict[str, object] = {}
                 for k, v in items_or_entries.items():
                     items_dict[k] = FlextLdifUtilities.Ldif.to_config_map_value(v)
-                dict_filter_result = FlextUtilities.Collection.filter(
-                    items_dict, predicate
-                )
+                dict_filter_result = FlextUtilities.filter(items_dict, predicate)
                 return dict_filter_result or {}
             items_single_list: list[object] = [items_or_entries]
-            single_filter_result = FlextUtilities.Collection.filter(
-                items_single_list, predicate
-            )
+            single_filter_result = FlextUtilities.filter(items_single_list, predicate)
             return list(single_filter_result) if single_filter_result else []
 
         @staticmethod
@@ -1308,7 +1302,7 @@ class FlextLdifUtilities(FlextUtilities):
                 resolved_type: type | None = (
                     type_map.get(t_val) if isinstance(t_val, str) else t_val
                 )
-                if resolved_type is not None and FlextUtilities.Guards.is_type(
+                if resolved_type is not None and FlextUtilities.is_type(
                     value, resolved_type
                 ):
                     return True
@@ -1619,7 +1613,7 @@ class FlextLdifUtilities(FlextUtilities):
                     case _:
                         value = default
                 if as_type is not None and value is not None:
-                    if FlextUtilities.Guards.is_type(value, as_type):
+                    if FlextUtilities.is_type(value, as_type):
                         return value
                     return default
                 return value
@@ -1809,7 +1803,7 @@ class FlextLdifUtilities(FlextUtilities):
         def invert(cls, obj: Mapping[str, object]) -> Mapping[str, str]:
             """Invert dict using FlextUtilities.map_dict() pattern (mnemonic: iv)."""
             str_dict: Mapping[str, str] = {k: str(v) for k, v in obj.items()}
-            inverted = FlextUtilities.Mapper.invert_dict(str_dict)
+            inverted = FlextUtilities.invert_dict(str_dict)
             return dict(inverted)
 
         iv = invert

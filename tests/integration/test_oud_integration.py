@@ -51,7 +51,7 @@ class TestOudSchemaIntegration:
         result = api.parse(oud_schema_fixture)
         assert result.is_success
         entries = result.value
-        if not u.Guards.is_list_non_empty(entries):
+        if not u.is_list_non_empty(entries):
             assert True
             return
         schema_entry = entries[0]
@@ -76,7 +76,7 @@ class TestOudSchemaIntegration:
         result = api.parse(oud_schema_fixture)
         assert result.is_success
         entries = result.value
-        if not u.Guards.is_list_non_empty(entries):
+        if not u.is_list_non_empty(entries):
             assert True
             return
         schema_entry = entries[0]
@@ -268,7 +268,7 @@ class TestOudRoundTripIntegration:
             for entry in entries
             if entry.dn is not None and ", " in entry.dn.value
         ]
-        if u.Guards.is_list_non_empty(entries_with_dn_spaces):
+        if u.is_list_non_empty(entries_with_dn_spaces):
             test_entry = entries_with_dn_spaces[0]
             assert test_entry.dn is not None
             original_dn = test_entry.dn.value
