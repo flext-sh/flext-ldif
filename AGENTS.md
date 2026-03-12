@@ -210,7 +210,7 @@ model_config = ConfigDict(...)
 ```python
 # ❌ PROIBIDO
 class _FlextLdifConstantsMeta(type):
-    def __getattr__(cls, name: str) -> object:
+    def __getattr__(cls, name: str) -> t.Container:
         if name == "LiteralTypes":
             return cls.Ldif.LiteralTypes
         ...
@@ -259,7 +259,7 @@ if isinstance(data, MyModel):
 
 
 # ou
-def is_my_model(obj: object) -> TypeGuard[MyModel]:
+def is_my_model(obj: t.Container) -> TypeGuard[MyModel]:
     return isinstance(obj, MyModel)
 ```
 
@@ -267,16 +267,16 @@ def is_my_model(obj: object) -> TypeGuard[MyModel]:
 
 ```python
 # ❌ PROIBIDO
-def process(data: Any) -> Any:
-    """Process any data."""
+def process(data):
+    """Process generic data without strong typing."""
 
 
 # ✅ CORRETO - Usar tipos específicos
 from flext_core import FlextTypes
 
 
-def process(data: object) -> object:
-    """Process general value type data."""
+def process(data: t.Container) -> t.Container:
+    """Process general typed value data."""
 ```
 
 ______________________________________________________________________
