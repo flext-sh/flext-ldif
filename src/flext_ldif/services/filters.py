@@ -8,7 +8,7 @@ from typing import Final
 
 from flext_core import FlextLogger, r
 
-from flext_ldif import m
+from flext_ldif.models import FlextLdifModels as m
 
 logger: Final = FlextLogger(__name__)
 

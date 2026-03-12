@@ -72,7 +72,7 @@ class FlextLdifServersBaseSchema(
         cls,
         _schema_service: p.Ldif.SchemaQuirkProtocol | None = None,
         _parent_quirk: Self | None = None,
-        **kwargs: t.ContainerValue,
+        **kwargs: object,
     ) -> Self:
         """Override __new__ to filter _parent_quirk before passing to s."""
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
@@ -85,7 +85,7 @@ class FlextLdifServersBaseSchema(
         self,
         _schema_service: p.Ldif.SchemaQuirkProtocol | None = None,
         _parent_quirk: Self | None = None,
-        **kwargs: t.ContainerValue,
+        **kwargs: object,
     ) -> None:
         """Initialize schema quirk service with optional DI service injection."""
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
@@ -290,7 +290,7 @@ class FlextLdifServersBaseSchema(
         *,
         data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None,
         operation: str | None = None,
-        **kwargs: t.ContainerValue,
+        **kwargs: object,
     ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
         """Execute schema operation with auto-detection: str→parse, Model→write."""
         if data is None:

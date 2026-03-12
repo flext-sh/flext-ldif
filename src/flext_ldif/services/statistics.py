@@ -9,7 +9,9 @@ from typing import override
 
 from flext_core import d, r
 
-from flext_ldif import FlextLdifServiceBase, m, t, u
+from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.models import FlextLdifModels as m
+from flext_ldif.typings import FlextLdifTypes as t, u
 
 
 class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
@@ -71,7 +73,9 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
         output_files: Mapping[str, str],
     ) -> r[m.Ldif.StatisticsResult]:
         """Generate complete statistics for categorized migration."""
-        categorized_values_list: list[t.ContainerValue] = list(categorized.values())
+        categorized_values_list: list[t.Ldif.ContainerValue] = list(
+            categorized.values()
+        )
         total_entries = sum(
             len(entries) if isinstance(entries, list) else 0
             for entries in categorized_values_list

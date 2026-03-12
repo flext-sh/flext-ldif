@@ -26,7 +26,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
     server_type: ClassVar[str]
     priority: ClassVar[int]
 
-    def __init__(self, **kwargs: t.ContainerValue) -> None:
+    def __init__(self, **kwargs: object) -> None:
         """Initialize base quirk and its nested quirks."""
         init_kwargs: dict[str, t.Scalar | None] = {}
         for key, value in kwargs.items():
@@ -94,11 +94,11 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     auto_execute: ClassVar[bool] = False
 
-    def __new__(cls, **kwargs: t.ContainerValue) -> Self:
+    def __new__(cls, **kwargs: object) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         instance: Self = object.__new__(cls)
         filtered_kwargs: dict[str, str | float | bool | None] = {}
-        execute_kwargs: dict[str, t.ContainerValue] = {}
+        execute_kwargs: dict[str, object] = {}
         for k, v in kwargs.items():
             value = v
             if isinstance(value, (str, float, bool)) or value is None:
@@ -152,7 +152,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     @classmethod
     def _extract_execute_params(
-        cls, kwargs: Mapping[str, t.ContainerValue]
+        cls, kwargs: Mapping[str, object]
     ) -> tuple[str | None, list[m.Ldif.Entry] | None, str | None]:
         """Extract type-safe execution parameters from kwargs."""
         return (
@@ -288,7 +288,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
 
     @staticmethod
     def _extract_entries(
-        kwargs: Mapping[str, t.ContainerValue],
+        kwargs: Mapping[str, object],
     ) -> list[m.Ldif.Entry] | None:
         """Extract and validate entries parameter."""
         if "entries" not in kwargs:
@@ -311,7 +311,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
         return entries
 
     @staticmethod
-    def _extract_ldif_text(kwargs: Mapping[str, t.ContainerValue]) -> str | None:
+    def _extract_ldif_text(kwargs: Mapping[str, object]) -> str | None:
         """Extract and validate ldif_text parameter."""
         if "ldif_text" not in kwargs:
             return None

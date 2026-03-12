@@ -242,12 +242,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             hidden_attrs_set = {str(item) for item in hidden_attrs_raw}
         hidden_attrs_set.update(hidden_attrs)
         if isinstance(write_opts, FlextLdifModelsDomains.WriteOptions):
-            write_opts_data: dict[str, t.ContainerValue] = write_opts.model_dump()
+            write_opts_data: dict[str, object] = write_opts.model_dump()
             write_opts_data["hidden_attrs"] = list(hidden_attrs_set)
             return m.Ldif.WriteOptions.model_validate(write_opts_data)
-        write_opts_dict: dict[str, t.ContainerValue] = {
-            "hidden_attrs": list(hidden_attrs_set)
-        }
+        write_opts_dict: dict[str, object] = {"hidden_attrs": list(hidden_attrs_set)}
         format_value = write_opts.get("format")
         if isinstance(format_value, str):
             write_opts_dict["format"] = format_value
@@ -1248,7 +1246,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 acl_metadata_extensions[dest_key] = str(value_raw)
 
     def _finalize_and_parse_entry(
-        self, entry_dict: dict[str, t.ContainerValue], entries_list: list[m.Ldif.Entry]
+        self, entry_dict: dict[str, object], entries_list: list[m.Ldif.Entry]
     ) -> None:
         """Finalize entry dict and parse into entries list.
 

@@ -603,7 +603,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             else None
         )
         if isinstance(converted_attrs_data, Mapping):
-            boolean_conversions_obj: t.ContainerValue = converted_attrs_data.get(
+            boolean_conversions_obj: object = converted_attrs_data.get(
                 mk.CONVERSION_BOOLEAN_CONVERSIONS, {}
             )
             if isinstance(boolean_conversions_obj, Mapping):
@@ -810,7 +810,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 return
             acl_extensions = (
                 acl_model.metadata.extensions.model_dump()
-                if core_u.has(acl_model.metadata.extensions, "model_dump")
+                if hasattr(acl_model.metadata.extensions, "model_dump")
                 else dict(acl_model.metadata.extensions)
             )
             key_mapping = {
@@ -1017,7 +1017,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             ldif_lines.append(line_to_write)
         logger.debug(
             "Restored original attribute lines from metadata",
-            entry_dn=entry_data.dn.value[:50] if entry_data.dn else None,
+            entry_dn=entry_data.dn.value[:50] if entry_data.dn else "",
             original_lines_count=len(original_attr_lines_complete),
             written_attrs=list(written_attrs),
         )

@@ -474,12 +474,12 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             entry.metadata.extensions["validation_rules"] = json.dumps(validation_rules)
             logger.debug(
                 "Injected OpenLDAP validation rules into Entry metadata",
-                entry_dn=entry.dn.value if entry.dn else None,
-                requires_objectclass=validation_rules["requires_objectclass"],
+                entry_dn=entry.dn.value if entry.dn else "",
+                requires_objectclass=bool(validation_rules["requires_objectclass"]),
                 server_type=c.Ldif.ServerTypes.OPENLDAP.value,
-                requires_naming_attr=validation_rules["requires_naming_attr"],
-                requires_binary_option=validation_rules["requires_binary_option"],
-                acl_format=validation_rules["acl_format_rules"],
+                requires_naming_attr=bool(validation_rules["requires_naming_attr"]),
+                requires_binary_option=bool(validation_rules["requires_binary_option"]),
+                acl_format=json.dumps(validation_rules["acl_format_rules"]),
             )
             return entry
 

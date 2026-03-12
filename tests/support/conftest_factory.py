@@ -22,7 +22,7 @@ from typing import (
 )
 
 import pytest
-from flext_core import FlextConstants, FlextLogger, FlextSettings, r, t
+from flext_core import FlextConstants, FlextLogger, FlextSettings, r
 from flext_tests import FlextTestsDocker
 from ldap3 import ALL, Connection, Server
 
@@ -574,9 +574,7 @@ class FlextLdifTestConftest:
     class LocalTestDomains:
         """Local test domains."""
 
-        def create_configuration(
-            self, **kwargs: t.ContainerValue
-        ) -> dict[str, t.ContainerValue]:
+        def create_configuration(self, **kwargs: object) -> dict[str, object]:
             """Create config."""
             return dict(kwargs)
 

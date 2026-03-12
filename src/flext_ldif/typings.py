@@ -38,6 +38,7 @@ class FlextLdifTypes(FlextTypes):
 
         Scalar: TypeAlias = _Scalar
         MetadataValue: TypeAlias = _RecursiveMetadata
+        MetadataDict: TypeAlias = Mapping[str, MetadataValue]
         ContainerValue: TypeAlias = _RecursiveContainer
 
         ValueType: TypeAlias = Scalar | list[str]

@@ -9,7 +9,11 @@ from typing import override
 
 from flext_core import r
 
-from flext_ldif import FlextLdifServer, m, s, t, u
+from flext_ldif.base import FlextLdifServer
+from flext_ldif.models import FlextLdifModels as m
+from flext_ldif.settings import FlextLdifSettings as s
+from flext_ldif.typings import FlextLdifTypes as t
+from flext_ldif.utilities import FlextLdifUtilities as u
 
 
 class FlextLdifWriter(s[m.Ldif.WriteResponse]):
@@ -47,9 +51,9 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
 
     @staticmethod
     def _normalize_write_format(
-        d: Mapping[str, t.ContainerValue],
-    ) -> Mapping[str, t.ContainerValue]:
-        mapped: dict[str, t.ContainerValue] = {
+        d: Mapping[str, t.Ldif.ContainerValue],
+    ) -> Mapping[str, t.Ldif.ContainerValue]:
+        mapped: dict[str, t.Ldif.ContainerValue] = {
             "base64_encode_binary": d.get("base64_encode_binary"),
             "sort_attributes": d.get("sort_entries"),
             "include_dn_comments": d.get("include_comments"),

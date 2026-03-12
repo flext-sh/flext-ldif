@@ -8,7 +8,7 @@ from typing import TypeGuard
 
 from flext_core import u
 
-from flext_ldif import m, p, t
+from flext_ldif import m, p
 
 
 class FlextLdifUtilitiesDetection:
@@ -44,9 +44,7 @@ class FlextLdifUtilitiesDetection:
                     and getattr(cls, "Constants", None) is not None
                     and (not u.is_dict_like(getattr(cls, "Constants", None)))
                 ):
-                    constants_obj: t.ContainerValue | None = getattr(
-                        cls, "Constants", None
-                    )
+                    constants_obj: object | None = getattr(cls, "Constants", None)
                     if not isinstance(constants_obj, type):
                         continue
                     if FlextLdifUtilitiesDetection._is_server_constants_class(

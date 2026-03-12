@@ -13,7 +13,7 @@ from typing import ClassVar, Self, override
 from flext_core import FlextModels
 from pydantic import ConfigDict, Field
 
-from flext_ldif import t
+from flext_ldif.typings import FlextLdifTypes as t
 
 
 class FlextLdifModelsMetadata:

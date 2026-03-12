@@ -9,9 +9,9 @@ from typing import Self
 from flext_core import m
 from pydantic import ConfigDict, Field
 
-from flext_ldif import c
 from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.settings import FlextLdifModelsSettings
+from flext_ldif.constants import FlextLdifConstants as c
 
 
 def _filter_criteria_factory() -> list[FlextLdifModelsSettings.FilterCriteria]:

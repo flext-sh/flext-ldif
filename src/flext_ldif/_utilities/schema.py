@@ -1169,13 +1169,13 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def parse_attribute(
         attr_definition: str, *, validate_syntax: bool = True
-    ) -> r[dict[str, t.ContainerValue]]:
+    ) -> r[dict[str, object]]:
         """Parse RFC 4512 attribute definition into structured data."""
         basic_fields_result = FlextLdifUtilitiesSchema._extract_attribute_basic_fields(
             attr_definition
         )
         if basic_fields_result.is_failure:
-            return r[dict[str, t.ContainerValue]].fail(basic_fields_result.error)
+            return r[dict[str, object]].fail(basic_fields_result.error)
         oid, name, desc = basic_fields_result.value
         syntax, length = FlextLdifUtilitiesSchema._extract_attribute_syntax(
             attr_definition
@@ -1213,7 +1213,7 @@ class FlextLdifUtilitiesSchema:
                     syntax_validation_result
                 )
             )
-        parsed_dict: dict[str, t.ContainerValue] = {
+        parsed_dict: dict[str, object] = {
             "oid": oid,
             "name": name,
             "desc": desc,
@@ -1229,7 +1229,7 @@ class FlextLdifUtilitiesSchema:
             "metadata_extensions": extensions_converted,
             "syntax_validation": syntax_validation_converted,
         }
-        return r[dict[str, t.ContainerValue]].ok(parsed_dict)
+        return r[dict[str, object]].ok(parsed_dict)
 
     @staticmethod
     def parse_objectclass(

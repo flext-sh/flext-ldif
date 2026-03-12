@@ -9,9 +9,14 @@ from typing import Final, override
 from flext_core import r
 from pydantic import BaseModel, ValidationError
 
-from flext_ldif import FlextLdifFilters, FlextLdifServer, c, m, s, t, u
-from flext_ldif.constants import logger
+from flext_ldif.base import FlextLdifServer
+from flext_ldif.constants import FlextLdifConstants as c, logger
+from flext_ldif.models import FlextLdifModels as m
 from flext_ldif.servers._base.constants import FlextLdifServersBaseConstants
+from flext_ldif.services.filters import FlextLdifFilters
+from flext_ldif.settings import FlextLdifSettings as s
+from flext_ldif.typings import FlextLdifTypes as t
+from flext_ldif.utilities import FlextLdifUtilities as u
 
 _MAX_DN_PREVIEW_LENGTH: Final[int] = 100
 
@@ -128,7 +133,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         return category
 
     @staticmethod
-    def _ensure_entry_model(value: t.ContainerValue) -> m.Ldif.Entry | None:
+    def _ensure_entry_model(value: t.Ldif.ContainerValue) -> m.Ldif.Entry | None:
         if isinstance(value, m.Ldif.Entry):
             return value
         if isinstance(value, BaseModel):
@@ -159,7 +164,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         return (included, excluded)
 
     @staticmethod
-    def _has_attr(obj: t.ContainerValue | type, attr_name: str) -> bool:
+    def _has_attr(obj: t.Ldif.ContainerValue | type, attr_name: str) -> bool:
         return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
 
     @staticmethod
@@ -246,7 +251,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 filtered[category] = passthrough_entries
         if excluded_entries:
             rejected_category = c.Ldif.Category.REJECTED
-            existing_rejected_raw: Sequence[t.ContainerValue] = filtered.get(
+            existing_rejected_raw: Sequence[t.Ldif.ContainerValue] = filtered.get(
                 rejected_category, []
             )
             merged_rejected: list[m.Ldif.Entry] = []
@@ -435,7 +440,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 filtered[category] = passthrough_entries
         if all_excluded_entries:
             rejected_category = c.Ldif.Category.REJECTED
-            existing_rejected_raw: Sequence[t.ContainerValue] = filtered.get(
+            existing_rejected_raw: Sequence[t.Ldif.ContainerValue] = filtered.get(
                 rejected_category, []
             )
             merged_rejected: list[m.Ldif.Entry] = []

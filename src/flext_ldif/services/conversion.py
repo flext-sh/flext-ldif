@@ -11,10 +11,15 @@ from typing import ClassVar, Final, Self, TypeIs, cast, override
 from flext_core import FlextLogger, FlextTypes, r
 from pydantic import Field
 
-from flext_ldif import FlextLdifServer, FlextLdifServiceBase, c, m, p, t, u
+from flext_ldif.base import FlextLdifServer, FlextLdifServiceBase
+from flext_ldif.constants import FlextLdifConstants as c
+from flext_ldif.models import FlextLdifModels as m
+from flext_ldif.protocols import FlextLdifProtocols as p
 from flext_ldif.servers._base import FlextLdifServersBaseSchema
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.typings import FlextLdifTypes as t
+from flext_ldif.utilities import FlextLdifUtilities as u
 
 TUPLE_LENGTH_PAIR = 2
 type _TConvertedModel = (
@@ -61,7 +66,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _has_attr(
-        obj: t.ContainerValue
+        obj: t.Ldif.ContainerValue
         | FlextLdifServersBase
         | FlextLogger
         | p.Ldif.SchemaQuirkProtocol
@@ -73,7 +78,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _is_schema_quirk_protocol(
-        obj: t.ContainerValue | FlextLdifServersBase | p.Ldif.SchemaQuirkProtocol,
+        obj: t.Ldif.ContainerValue | FlextLdifServersBase | p.Ldif.SchemaQuirkProtocol,
     ) -> TypeIs[p.Ldif.SchemaQuirkProtocol]:
         return (
             FlextLdifConversion._has_attr(obj, "parse")
@@ -130,7 +135,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_attribute_case(
-        original_attribute_case: t.ContainerValue, target_server_type: str
+        original_attribute_case: t.Ldif.ContainerValue, target_server_type: str
     ) -> Mapping[str, Mapping[str, t.MetadataValue]]:
         """Analyze attribute case for target compatibility."""
         if bool(original_attribute_case):
@@ -147,7 +152,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_boolean_conversions(
-        boolean_conversions: t.ContainerValue, target_server_type: str
+        boolean_conversions: t.Ldif.ContainerValue, target_server_type: str
     ) -> Mapping[str, Mapping[str, str]]:
         """Analyze boolean conversions for target compatibility."""
         if not boolean_conversions or not isinstance(boolean_conversions, dict):
@@ -166,7 +171,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_dn_format(
-        original_format_details: t.ContainerValue, target_server_type: str
+        original_format_details: t.Ldif.ContainerValue, target_server_type: str
     ) -> Mapping[str, Mapping[str, t.MetadataValue]]:
         """Analyze DN spacing for target compatibility."""
         if isinstance(original_format_details, dict):
@@ -199,7 +204,7 @@ class FlextLdifConversion(
         get_attr_case = u.Mapper.prop("original_attribute_case")
         get_format_details = u.Mapper.prop("original_format_details")
         boolean_raw = get_boolean(source_metadata)
-        boolean_conversions: t.ContainerValue = (
+        boolean_conversions: t.Ldif.ContainerValue = (
             boolean_raw if isinstance(boolean_raw, dict) else {}
         )
         boolean_analysis = FlextLdifConversion._analyze_boolean_conversions(
@@ -413,7 +418,7 @@ class FlextLdifConversion(
         return r[p.Ldif.SchemaQuirkProtocol].ok(final_quirk)
 
     @staticmethod
-    def _normalize_metadata_value(value: t.ContainerValue) -> t.MetadataValue:
+    def _normalize_metadata_value(value: t.Ldif.ContainerValue) -> t.MetadataValue:
         """Normalize metadata value to proper type."""
         if value is None:
             return ""
@@ -639,8 +644,8 @@ class FlextLdifConversion(
                     errors.append(f"Item {idx}: {error_msg}")
                     error_details.append(f"batch_item_{idx}: {error_msg}")
             duration_ms = (time.perf_counter() - start_time) * 1000.0
-            model_list_typed: list[t.ContainerValue] = list(model_list)
-            converted_typed: list[t.ContainerValue] = list(converted)
+            model_list_typed: list[t.Ldif.ContainerValue] = list(model_list)
+            converted_typed: list[t.Ldif.ContainerValue] = list(converted)
             errors_typed: list[str] = errors
             items_processed = u.count(model_list_typed)
             items_converted = u.count(converted_typed)
@@ -691,7 +696,7 @@ class FlextLdifConversion(
             ].ok(converted)
         except (ValueError, TypeError, AttributeError, RuntimeError, Exception) as e:
             duration_ms = (time.perf_counter() - start_time) * 1000.0
-            model_list_as_list: list[t.ContainerValue] = (
+            model_list_as_list: list[t.Ldif.ContainerValue] = (
                 list(model_list) if model_list else []
             )
             items_count = u.count(model_list_as_list)
@@ -927,7 +932,7 @@ class FlextLdifConversion(
 
     def _check_attribute_support(
         self,
-        quirk_schema: t.ContainerValue,
+        quirk_schema: t.Ldif.ContainerValue,
         test_attr_def: str,
         support: t.Ldif.CommonDict.DistributionDict,
     ) -> t.Ldif.CommonDict.DistributionDict:
@@ -991,7 +996,7 @@ class FlextLdifConversion(
 
     def _check_objectclass_support(
         self,
-        quirk_schema: t.ContainerValue,
+        quirk_schema: t.Ldif.ContainerValue,
         test_oc_def: str,
         support: t.Ldif.CommonDict.DistributionDict,
     ) -> t.Ldif.CommonDict.DistributionDict:
@@ -1552,7 +1557,7 @@ class FlextLdifConversion(
     ) -> Mapping[str, FlextTypes.ContainerValue]:
         """Extract extensions dict from ACL metadata."""
 
-        def to_general_value(value: t.ContainerValue) -> FlextTypes.ContainerValue:
+        def to_general_value(value: t.Ldif.ContainerValue) -> FlextTypes.ContainerValue:
             if value is None:
                 return None
             if isinstance(value, str):
@@ -1590,7 +1595,7 @@ class FlextLdifConversion(
 
     def _get_schema_quirk_for_support_check(
         self, quirk: FlextLdifServersBase
-    ) -> t.ContainerValue | None:
+    ) -> t.Ldif.ContainerValue | None:
         """Get schema quirk from base quirk for support checking."""
         if FlextLdifConversion._has_attr(
             quirk, "parse_attribute"
@@ -1603,7 +1608,9 @@ class FlextLdifConversion(
             ):
                 return quirk
             return None
-        schema_quirk_raw: t.ContainerValue | None = getattr(quirk, "schema_quirk", None)
+        schema_quirk_raw: t.Ldif.ContainerValue | None = getattr(
+            quirk, "schema_quirk", None
+        )
         if schema_quirk_raw is not None:
             required_methods = ("parse", "write")
             if all(
@@ -1654,7 +1661,7 @@ class FlextLdifConversion(
             return acl_step1
         conv_ext = self._get_extensions_dict(acl_step1)
         orig_ext = self._get_extensions_dict(original_acl)
-        merged_ext_raw: dict[str, t.ContainerValue] = {**orig_ext, **conv_ext}
+        merged_ext_raw: dict[str, t.Ldif.ContainerValue] = {**orig_ext, **conv_ext}
         if (
             not merged_ext_raw
             or not get_metadata(acl_step1)
@@ -1778,7 +1785,7 @@ class FlextLdifConversion(
             )
         entry_metadata = current_entry.metadata
         if entry_metadata and get_metadata(current_entry):
-            extensions_update: dict[str, t.ContainerValue] = {
+            extensions_update: dict[str, t.Ldif.ContainerValue] = {
                 "converted_from_server": source_quirk_name
             }
             if conversion_analysis:

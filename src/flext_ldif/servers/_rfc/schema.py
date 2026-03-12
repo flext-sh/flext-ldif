@@ -28,7 +28,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         cls,
         schema_service: p.Ldif.SchemaQuirkProtocol | None = None,
         parent_quirk: p.Ldif.SchemaQuirkProtocol | None = None,
-        **kwargs: t.ContainerValue | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        **kwargs: object | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         instance = object.__new__(cls)
@@ -97,7 +97,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         self,
         schema_service: p.Ldif.SchemaQuirkProtocol | None = None,
         parent_quirk: p.Ldif.SchemaQuirkProtocol | None = None,
-        **kwargs: t.ContainerValue | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        **kwargs: object | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize RFC schema quirk service."""
         filtered_kwargs: dict[str, t.Scalar | None] = {}
@@ -202,9 +202,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return result.value
 
     @classmethod
-    def _extract_syntax_validation_error(
-        cls, value: t.ContainerValue | None
-    ) -> str | None:
+    def _extract_syntax_validation_error(cls, value: object | None) -> str | None:
         syntax_validation = cls._coerce_dynamic_metadata(value)
         syntax_error = syntax_validation.get("syntax_validation_error")
         if isinstance(syntax_error, str):
@@ -212,9 +210,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return None
 
     @classmethod
-    def _to_optional_str_or_list(
-        cls, value: t.ContainerValue | None
-    ) -> str | list[str] | None:
+    def _to_optional_str_or_list(cls, value: object | None) -> str | list[str] | None:
         if isinstance(value, str):
             return value
         return cls._to_string_list(value)
@@ -247,7 +243,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     @staticmethod
     def _coerce_dynamic_metadata(
-        value: t.ContainerValue | None,
+        value: object | None,
     ) -> m.Ldif.DynamicMetadata:
         if isinstance(value, m.Ldif.DynamicMetadata):
             return value
@@ -280,7 +276,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return extensions
 
     @staticmethod
-    def _to_optional_int(value: t.ContainerValue) -> int | None:
+    def _to_optional_int(value: object) -> int | None:
         match value:
             case int() as int_value:
                 return int_value
@@ -290,7 +286,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 return None
 
     @staticmethod
-    def _to_optional_str(value: t.ContainerValue) -> str | None:
+    def _to_optional_str(value: object) -> str | None:
         match value:
             case str() as str_value:
                 return str_value
@@ -300,7 +296,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 return None
 
     @staticmethod
-    def _to_required_str(value: t.ContainerValue, default: str = "") -> str:
+    def _to_required_str(value: object, default: str = "") -> str:
         match value:
             case str() as str_value:
                 return str_value
@@ -310,7 +306,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 return default
 
     @staticmethod
-    def _to_string_list(value: t.ContainerValue | None) -> list[str] | None:
+    def _to_string_list(value: object | None) -> list[str] | None:
         if isinstance(value, Sequence) and (
             not isinstance(value, str | bytes | bytearray)
         ):
@@ -494,7 +490,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
         def parse_parts_hook(
             definition: str,
-        ) -> r[dict[str, t.ContainerValue]]:
+        ) -> r[dict[str, object]]:
             return FlextLdifUtilitiesSchema.parse_attribute(definition)
 
         parse_result_raw = FlextLdifUtilitiesAttribute.parse(

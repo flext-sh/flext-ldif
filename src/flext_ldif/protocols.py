@@ -521,7 +521,7 @@ class FlextLdifProtocols(FlextProtocols):
         class ValuePredicate(Protocol):
             """Protocol for predicates that test ContainerValue values."""
 
-            def __call__(self, value: t.ContainerValue, /) -> bool:
+            def __call__(self, value: object, /) -> bool:
                 """Test if value matches predicate condition."""
                 ...
 

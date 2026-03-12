@@ -6,8 +6,10 @@ from typing import override
 
 from flext_core import r
 
-from flext_ldif import FlextLdifConversion, c, m
 from flext_ldif._utilities.transformers import EntryTransformer
+from flext_ldif.constants import FlextLdifConstants as c
+from flext_ldif.models import FlextLdifModels as m
+from flext_ldif.services.conversion import FlextLdifConversion
 
 
 class ServerTransformer(EntryTransformer[m.Ldif.Entry]):

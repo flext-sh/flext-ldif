@@ -54,11 +54,11 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
     ) -> FlextLdifModelsSettings.WriteFormatOptions | None:
         if metadata is None:
             return None
-        format_options_raw: t.ContainerValue | None = metadata.extensions.get(
+        format_options_raw: object | None = metadata.extensions.get(
             "write_format_options"
         )
         if isinstance(format_options_raw, Mapping):
-            format_options_map: dict[str, t.ContainerValue] = {}
+            format_options_map: dict[str, object] = {}
             for raw_key, raw_value in format_options_raw.items():
                 key = str(raw_key)
                 format_options_map[key] = raw_value
@@ -97,9 +97,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         return False
 
     @override
-    def execute(
-        self, **kwargs: Mapping[str, t.ContainerValue]
-    ) -> r[m.Ldif.Entry | str]:
+    def execute(self, **kwargs: Mapping[str, object]) -> r[m.Ldif.Entry | str]:
         """Execute entry operation (parse/write)."""
         kwargs_map: Mapping[str, object] = kwargs
         ldif_content = kwargs_map.get("ldif_content")

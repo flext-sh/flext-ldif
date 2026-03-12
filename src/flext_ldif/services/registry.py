@@ -3,15 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from flext_core import FlextRegistry, p
 
-if TYPE_CHECKING:
-    from flext_ldif.typings import FlextLdifTypes as t
-
-type FilterFactoryType = Callable[[], t.ContainerValue]
-type CategorizationFactoryType = Callable[[str], t.ContainerValue]
+type FilterFactoryType = Callable[[], object]
+type CategorizationFactoryType = Callable[[str], object]
 
 
 class FlextLdifServiceRegistry(FlextRegistry):
@@ -20,9 +17,7 @@ class FlextLdifServiceRegistry(FlextRegistry):
     FACTORIES: ClassVar[str] = "ldif_factories"
     _global_instance: ClassVar[FlextLdifServiceRegistry | None] = None
 
-    def __init__(
-        self, dispatcher: p.CommandBus | None = None, **data: t.ContainerValue
-    ) -> None:
+    def __init__(self, dispatcher: p.CommandBus | None = None, **data: object) -> None:
         """Initialize with FlextRegistry infrastructure."""
         _ = data
         super().__init__(dispatcher=dispatcher)

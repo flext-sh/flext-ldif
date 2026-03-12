@@ -13,7 +13,7 @@ from flext_ldif import m
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 
 
-class FlextLdifResult[T: t.ContainerValue]:
+class FlextLdifResult[T: object]:
     """Extended r with LDIF-specific DSL operators."""
 
     __slots__ = ("_inner",)
@@ -164,14 +164,14 @@ class FlextLdifResult[T: t.ContainerValue]:
         return cls(r[T].fail(error_msg))
 
     @staticmethod
-    def from_result[TResult: t.ContainerValue](
+    def from_result[TResult: object](
         result: r[TResult],
     ) -> FlextLdifResult[TResult]:
         """Wrap an existing r[T] in FlextLdifResult."""
         return FlextLdifResult(result)
 
     @staticmethod
-    def ok[TResult: t.ContainerValue](value: TResult) -> FlextLdifResult[TResult]:
+    def ok[TResult: object](value: TResult) -> FlextLdifResult[TResult]:
         """Create a successful result with the given value."""
         return FlextLdifResult(r[TResult].ok(value))
 
@@ -232,14 +232,12 @@ class FlextLdifResult[T: t.ContainerValue]:
             return FlextLdifResult.ok(value)
         return FlextLdifResult[T].fail("Value did not match filter predicate")
 
-    def flat_map[U: t.ContainerValue](
-        self, func: Callable[[T], r[U]]
-    ) -> FlextLdifResult[U]:
+    def flat_map[U: object](self, func: Callable[[T], r[U]]) -> FlextLdifResult[U]:
         """Flat map a function that returns r[U]."""
         mapped_result = self._inner.flat_map(func)
         return FlextLdifResult(mapped_result)
 
-    def map[U: t.ContainerValue](self, func: Callable[[T], U]) -> FlextLdifResult[U]:
+    def map[U: object](self, func: Callable[[T], U]) -> FlextLdifResult[U]:
         """Map a function over the success value."""
         mapped_result = self._inner.map(func)
         return FlextLdifResult(mapped_result)

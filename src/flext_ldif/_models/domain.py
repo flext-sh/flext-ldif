@@ -28,10 +28,11 @@ from pydantic import (
     model_validator,
 )
 
-from flext_ldif import FlextLdifShared, c
 from flext_ldif._models.base import AclElement, FlextLdifModelsBase, SchemaElement
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
+from flext_ldif._shared import FlextLdifShared
+from flext_ldif.constants import FlextLdifConstants as c
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.typings import FlextLdifTypes
 
@@ -1633,7 +1634,7 @@ class FlextLdifModelsDomains:
             return violations
 
         @override
-        def model_post_init(self, _context: t.ContainerValue, /) -> None:
+        def model_post_init(self, _context: t.Ldif.ContainerValue, /) -> None:
             """Post-init hook to ensure metadata is always initialized.
 
             Properly initialized before any code tries to access it.

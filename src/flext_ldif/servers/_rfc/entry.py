@@ -35,9 +35,9 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         """Validate RFC 2849 compliance."""
         if not entry or not core_u.is_type(entry, m.Ldif.Entry):
             return r[m.Ldif.Entry].fail(f"Invalid entry: {entry}")
-        if not entry.dn or not core_u.has(entry.dn, "value"):
+        if not entry.dn or not hasattr(entry.dn, "value"):
             return r[m.Ldif.Entry].fail(f"Invalid DN in entry: {entry.dn}")
-        if not entry.attributes or not core_u.is_type(entry.attributes, dict):
+        if not entry.attributes or not isinstance(entry.attributes.attributes, Mapping):
             return r[m.Ldif.Entry].fail(
                 f"Invalid attributes in entry: {entry.attributes}"
             )
@@ -87,7 +87,10 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
                 if result.is_success:
                     entries.append(result.value)
                 else:
-                    logger.debug("Skipping invalid entry block", error=result.error)
+                    logger.debug(
+                        "Skipping invalid entry block",
+                        error=str(result.error) if result.error else "",
+                    )
             return r[list[m.Ldif.Entry]].ok(entries)
         except (
             ValueError,

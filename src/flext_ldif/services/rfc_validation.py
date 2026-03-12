@@ -9,8 +9,10 @@ from typing import Self, override
 from flext_core import d, r, t, u
 from pydantic import Field
 
-from flext_ldif import FlextLdifServiceBase, c, m
 from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
+from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.constants import FlextLdifConstants as c
+from flext_ldif.models import FlextLdifModels as m
 
 
 class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):

@@ -8,7 +8,9 @@ from typing import override
 
 from flext_core import r
 
-from flext_ldif import FlextLdifServiceBase, m, u
+from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.models import FlextLdifModels as m
+from flext_ldif.utilities import FlextLdifUtilities as u
 
 
 class FlextLdifProcessing(FlextLdifServiceBase[list[m.Ldif.ProcessingResult]]):

@@ -17,7 +17,7 @@ logger = FlextLogger(__name__)
 
 
 def _is_metadata_attachable(
-    obj: t.ContainerValue,
+    obj: object,
 ) -> TypeGuard[
     m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
 ]:
@@ -33,7 +33,7 @@ class FlextLdifUtilitiesDecorators:
 
     @staticmethod
     def _attach_metadata_if_present(
-        result_value: t.ContainerValue | None,
+        result_value: object | None,
         quirk_type: str,
         server_type: str | None,
     ) -> None:
@@ -70,7 +70,7 @@ class FlextLdifUtilitiesDecorators:
             logger.debug("Failed to attach metadata", error=str(e))
 
     @staticmethod
-    def _get_server_type_from_class(obj: t.ContainerValue) -> str | None:
+    def _get_server_type_from_class(obj: object) -> str | None:
         """Extract SERVER_TYPE from class Constants via MRO traversal."""
         if not getattr(obj, "__class__", None) is not None:
             return None

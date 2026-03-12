@@ -569,17 +569,17 @@ class FlextLdifUtilitiesMetadata:
         )
 
     @staticmethod
-    def _is_metadata_scalar(value: t.ContainerValue) -> bool:
+    def _is_metadata_scalar(value: object) -> bool:
         return isinstance(value, (str, int, float, bool, datetime, type(None)))
 
     @staticmethod
     def _is_metadata_scalar_typed(
-        value: t.ContainerValue,
+        value: object,
     ) -> TypeGuard[t.Scalar | None]:
         return FlextLdifUtilitiesMetadata._is_metadata_scalar(value)
 
     @staticmethod
-    def _normalize_dict_list(values: Sequence[t.ContainerValue]) -> list[t.Scalar]:
+    def _normalize_dict_list(values: Sequence[object]) -> list[t.Scalar]:
         normalized: list[t.Scalar] = []
         for item in values:
             if isinstance(item, (str, int, float, bool, datetime)):
@@ -590,7 +590,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _normalize_mapping_list(
-        values: Sequence[t.ContainerValue],
+        values: Sequence[object],
     ) -> list[t.Scalar]:
         normalized: list[t.Scalar] = [
             item
@@ -613,7 +613,7 @@ class FlextLdifUtilitiesMetadata:
         """Set validation_metadata on model (handles both mutable and frozen models)."""
         try:
             metadata_obj = metadata.to_dict()
-            normalized_metadata: dict[str, t.ContainerValue] = {}
+            normalized_metadata: dict[str, object] = {}
             for key, value in metadata_obj.items():
                 if isinstance(value, (str, int, float, bool)):
                     normalized_metadata[key] = value
@@ -694,7 +694,7 @@ class FlextLdifUtilitiesMetadata:
                 )
             )
             setattr(entry, "metadata", entry_metadata)
-        update_dict: dict[str, t.ContainerValue] = {"processing_stats": updated_stats}
+        update_dict: dict[str, object] = {"processing_stats": updated_stats}
         updated_metadata = entry_metadata.model_copy(update=update_dict)
         return entry.model_copy(update={"metadata": updated_metadata})
 
@@ -815,7 +815,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def build_rfc_compliance_metadata(
-        quirk_type: str, **extra: t.ContainerValue
+        quirk_type: str, **extra: object
     ) -> Mapping[str, str | bool | list[str] | Mapping[str, str | list[str]]]:
         """Build RFC compliance metadata as a dictionary."""
         result: dict[str, str | bool | list[str] | dict[str, str | list[str]]] = {
@@ -849,7 +849,7 @@ class FlextLdifUtilitiesMetadata:
         key = c.Ldif.MetadataKeys.WRITE_OPTIONS
         raw_extras = getattr(write_opts, "model_extra", None)
         extras: dict[str, t.MetadataValue] = {}
-        opt: t.ContainerValue | None = None
+        opt: object | None = None
         if isinstance(raw_extras, Mapping):
             extras = {
                 extra_key: u.normalize_to_metadata_value(extra_value)

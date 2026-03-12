@@ -6,11 +6,11 @@ import inspect
 from collections.abc import Mapping
 from typing import ClassVar
 
-from flext_core import FlextLogger, FlextRegistry, r, t
+from flext_core import FlextLogger, FlextRegistry, r
 
 import flext_ldif.servers as servers_package
-from flext_ldif import p
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
+from flext_ldif.protocols import FlextLdifProtocols as p
 from flext_ldif.servers._base import (
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,
@@ -32,9 +32,7 @@ class FlextLdifServer(FlextRegistry):
     SERVERS: ClassVar[str] = "ldif_servers"
     _discovery_initialized: ClassVar[bool] = False
 
-    def __init__(
-        self, dispatcher: p.CommandBus | None = None, **data: t.ContainerValue
-    ) -> None:
+    def __init__(self, dispatcher: p.CommandBus | None = None, **data: object) -> None:
         """Initialize registry and trigger auto-discovery."""
         filtered_data = {
             k: v for k, v in data.items() if isinstance(v, (str, int, float, bool))
@@ -87,7 +85,7 @@ class FlextLdifServer(FlextRegistry):
 
         return self.quirk(server_type).flat_map(validate_constants)
 
-    def get_registry_stats(self) -> Mapping[str, t.ContainerValue]:
+    def get_registry_stats(self) -> Mapping[str, object]:
         """Get comprehensive registry statistics."""
         servers = self.list_registered_servers()
         quirks_by_server: dict[str, dict[str, str | None]] = {}

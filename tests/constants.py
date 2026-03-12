@@ -34,7 +34,6 @@ from flext_ldif import (
     FlextLdifWriter,
     m,
     p,
-    t,
 )
 
 
@@ -734,10 +733,10 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_result_success_and_unwrap(
-        result: r[t.ContainerValue],
+        result: r[object],
         expected_type: type | None = None,
         expected_count: int | None = None,
-    ) -> t.ContainerValue:
+    ) -> object:
         """Assert result is successful and unwrap its value.
 
         Args:
@@ -1019,7 +1018,7 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_create_schema_attribute_from_dict(
-        data: dict[str, t.ContainerValue],
+        data: dict[str, object],
     ) -> m.Ldif.SchemaAttribute:
         """Create a schema attribute from dictionary.
 
@@ -1042,7 +1041,7 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_create_schema_objectclass_from_dict(
-        data: dict[str, t.ContainerValue],
+        data: dict[str, object],
     ) -> m.Ldif.SchemaObjectClass:
         """Create a schema objectClass from dictionary.
 

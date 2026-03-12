@@ -7,7 +7,7 @@ from collections.abc import Callable, Mapping
 
 from flext_core import FlextLogger, r
 
-from flext_ldif import c, m, t
+from flext_ldif import c, m
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 
@@ -104,11 +104,11 @@ class FlextLdifUtilitiesObjectClass:
     def parse(
         definition: str,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], Mapping[str, t.ContainerValue]] | None = None,
+        parse_parts_hook: Callable[[str], Mapping[str, object]] | None = None,
     ) -> r[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition into SchemaObjectClass model."""
         try:
-            parsed_dict: Mapping[str, t.ContainerValue] = (
+            parsed_dict: Mapping[str, object] = (
                 FlextLdifUtilitiesSchema.parse_objectclass(definition)
             )
             if parse_parts_hook is not None:

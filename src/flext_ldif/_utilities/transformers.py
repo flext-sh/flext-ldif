@@ -302,7 +302,7 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         if self._include is not None:
             include_lower = {i.lower() for i in self._include}
 
-            def key_in_include(key: str, _value: t.ContainerValue) -> bool:
+            def key_in_include(key: str, _value: object) -> bool:
                 """Check if key lowercase is in include set."""
                 return key.lower() in include_lower
 
@@ -310,7 +310,7 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         if self._exclude:
             exclude_lower = {e.lower() for e in self._exclude}
 
-            def key_not_in_exclude(key: str, _value: t.ContainerValue) -> bool:
+            def key_not_in_exclude(key: str, _value: object) -> bool:
                 """Check if key lowercase is not in exclude set."""
                 return key.lower() not in exclude_lower
 

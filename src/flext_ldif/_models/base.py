@@ -5,7 +5,8 @@ from __future__ import annotations
 from flext_core import FlextModels
 from pydantic import ConfigDict, Field, computed_field
 
-from flext_ldif import FlextLdifShared, c
+from flext_ldif._shared import FlextLdifShared
+from flext_ldif.constants import FlextLdifConstants as c
 
 
 class FlextLdifModelsBase(FlextModels.ArbitraryTypesModel):

@@ -7,7 +7,7 @@ import struct
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from flext_core import FlextLogger, r, t, u
+from flext_core import FlextLogger, r, u
 
 from flext_ldif import c, m
 from flext_ldif._models.settings import FlextLdifModelsSettings
@@ -24,7 +24,7 @@ class FlextLdifUtilitiesWriter:
         ldif_lines: list[str],
         *,
         format_type: str,
-        changetype_config: Mapping[str, t.ContainerValue],
+        changetype_config: Mapping[str, object],
     ) -> None:
         """Add changetype lines based on format."""
         include_changetype = bool(u.get(changetype_config, "include_changetype"))
@@ -286,8 +286,8 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def determine_attribute_order(
-        entry_data: Mapping[str, t.ContainerValue],
-    ) -> list[tuple[str, t.ContainerValue]] | None:
+        entry_data: Mapping[str, object],
+    ) -> list[tuple[str, object]] | None:
         """Determine attribute processing order from entry metadata."""
         metadata = entry_data.get("_metadata")
         if metadata is None:
@@ -296,9 +296,7 @@ class FlextLdifUtilitiesWriter:
         metadata_extensions = getattr(metadata, "extensions", None)
         if isinstance(metadata_extensions, Mapping):
             typed_extensions = m.ConfigMap.model_validate(metadata_extensions).root
-            raw_attr_order: t.ContainerValue | None = typed_extensions.get(
-                "attribute_order"
-            )
+            raw_attr_order: object | None = typed_extensions.get("attribute_order")
             if isinstance(raw_attr_order, Sequence) and not isinstance(
                 raw_attr_order, (str, bytes)
             ):
@@ -316,7 +314,7 @@ class FlextLdifUtilitiesWriter:
             return None
         attr_order = attr_order_raw
         skip_keys = {c.Ldif.DictKeys.DN, "_metadata", "server_type", "_acl_attributes"}
-        result: list[tuple[str, t.ContainerValue]] = [
+        result: list[tuple[str, object]] = [
             (key, entry_data[key])
             for key in attr_order
             if key in entry_data and key not in skip_keys

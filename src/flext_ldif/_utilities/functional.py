@@ -26,7 +26,7 @@ class FlextFunctional:
     """Pure functional utilities without circular dependencies."""
 
     @staticmethod
-    def _to_general(value: t.ContainerValue) -> t.ContainerValue:
+    def _to_general(value: object) -> object:
         """Normalize arbitrary values into ContainerValue-compatible shape."""
         if value is None or isinstance(value, (str, int, float, bool)):
             return value
@@ -35,7 +35,7 @@ class FlextFunctional:
         if isinstance(value, Path):
             return str(value)
         if isinstance(value, BaseModel):
-            model_mapping: dict[str, t.ContainerValue] = {
+            model_mapping: dict[str, object] = {
                 key: FlextFunctional._to_general(getattr(value, key))
                 for key in type(value).model_fields
             }
@@ -45,7 +45,7 @@ class FlextFunctional:
                     model_mapping[key] = FlextFunctional._to_general(item)
             return model_mapping
         if isinstance(value, Mapping):
-            normalized_mapping: dict[str, t.ContainerValue] = {}
+            normalized_mapping: dict[str, object] = {}
             for key, item in value.items():
                 normalized_mapping[key] = FlextFunctional._to_general(item)
             return normalized_mapping
@@ -221,27 +221,27 @@ class FlextFunctional:
 
     @staticmethod
     def process_flatten(
-        items: Sequence[t.ContainerValue],
+        items: Sequence[object],
         processor: Callable[
-            [t.ContainerValue],
-            list[t.ContainerValue] | tuple[t.ContainerValue, ...] | t.ContainerValue,
+            [object],
+            list[object] | tuple[object, ...] | object,
         ],
         *,
-        predicate: Callable[[t.ContainerValue], bool] = lambda x: x is not None,
+        predicate: Callable[[object], bool] = lambda x: x is not None,
         on_error: Literal["skip", "stop", "collect"] = "skip",
-    ) -> list[t.ContainerValue]:
+    ) -> list[object]:
         """Process and flatten items (mnemonic: pf)."""
-        result: list[t.ContainerValue] = []
+        result: list[object] = []
         for item in items:
             try:
                 processed = processor(item)
                 if isinstance(processed, list):
-                    processed_values: list[t.ContainerValue] = processed
+                    processed_values: list[object] = processed
                     result.extend(
                         sub_item for sub_item in processed_values if predicate(sub_item)
                     )
                 elif isinstance(processed, tuple):
-                    processed_tuple_values: list[t.ContainerValue] = list(processed)
+                    processed_tuple_values: list[object] = list(processed)
                     result.extend(
                         sub_item
                         for sub_item in processed_tuple_values
@@ -265,23 +265,23 @@ class FlextFunctional:
     @classmethod
     def normalize_list(
         cls,
-        value: t.ContainerValue | Sequence[t.ContainerValue] | None,
+        value: object | Sequence[object] | None,
         *,
-        mapper: Callable[[t.ContainerValue], t.ContainerValue] | None = None,
-        predicate: Callable[[t.ContainerValue], bool] | None = None,
-        default: list[t.ContainerValue] | None = None,
-    ) -> list[t.ContainerValue]:
+        mapper: Callable[[object], object] | None = None,
+        predicate: Callable[[object], bool] | None = None,
+        default: list[object] | None = None,
+    ) -> list[object]:
         """Normalize to list (mnemonic: nl)."""
         if value is None:
             if default is not None:
                 return list(default)
             return []
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            items: list[t.ContainerValue] = list(value)
+            items: list[object] = list(value)
         else:
             items = [value]
         if mapper is not None:
-            items_mapped: list[t.ContainerValue] = [mapper(item) for item in items]
+            items_mapped: list[object] = [mapper(item) for item in items]
             if predicate is not None:
                 return [item for item in items_mapped if predicate(item)]
             return items_mapped
@@ -417,9 +417,9 @@ class FlextFunctional:
     it = is_type
     _ConvertibleType = (
         t.Scalar
-        | list[t.ContainerValue]
-        | tuple[t.ContainerValue, ...]
-        | set[t.ContainerValue]
+        | list[object]
+        | tuple[object, ...]
+        | set[object]
         | t.ConfigurationMapping
     )
     _TYPE_MAP: ClassVar[Mapping[str, type]] = {
@@ -436,7 +436,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: t.ContainerValue,
+        value: object,
         *,
         target: type[str] | Literal["str"],
         default: str | None = None,
@@ -446,7 +446,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: t.ContainerValue,
+        value: object,
         *,
         target: type[bool] | Literal["bool"],
         default: bool | None = None,
@@ -456,7 +456,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: t.ContainerValue,
+        value: object,
         *,
         target: type[int] | Literal["int"],
         default: int | None = None,
@@ -466,7 +466,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: t.ContainerValue,
+        value: object,
         *,
         target: type[float] | Literal["float"],
         default: float | None = None,
@@ -476,40 +476,40 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: t.ContainerValue,
+        value: object,
         *,
-        target: type[list[t.ContainerValue]] | Literal["list"],
-        default: list[t.ContainerValue] | None = None,
-    ) -> list[t.ContainerValue] | None: ...
+        target: type[list[object]] | Literal["list"],
+        default: list[object] | None = None,
+    ) -> list[object] | None: ...
 
     @overload
     @classmethod
     def as_type(
         cls,
-        value: t.ContainerValue,
+        value: object,
         *,
-        target: type[tuple[t.ContainerValue, ...]] | Literal["tuple"],
-        default: tuple[t.ContainerValue, ...] | None = None,
-    ) -> tuple[t.ContainerValue, ...] | None: ...
+        target: type[tuple[object, ...]] | Literal["tuple"],
+        default: tuple[object, ...] | None = None,
+    ) -> tuple[object, ...] | None: ...
 
     @overload
     @classmethod
     def as_type(
         cls,
-        value: t.ContainerValue,
+        value: object,
         *,
-        target: type[Mapping[str, t.ContainerValue]] | Literal["dict"],
-        default: Mapping[str, t.ContainerValue] | None = None,
-    ) -> Mapping[str, t.ContainerValue] | None: ...
+        target: type[Mapping[str, object]] | Literal["dict"],
+        default: Mapping[str, object] | None = None,
+    ) -> Mapping[str, object] | None: ...
 
     @classmethod
     def as_type(
         cls,
-        value: t.ContainerValue,
+        value: object,
         *,
         target: type | str,
-        default: t.ContainerValue | None = None,
-    ) -> t.ContainerValue | None:
+        default: object | None = None,
+    ) -> object | None:
         """Safe cast (mnemonic: at)."""
         target_type: type | None = (
             cls._TYPE_MAP.get(target) if isinstance(target, str) else target
@@ -537,8 +537,8 @@ class FlextFunctional:
 
     @staticmethod
     def _convert_with_target(
-        value: t.ContainerValue, target_type: type, default: t.ContainerValue | None
-    ) -> t.ContainerValue | None:
+        value: object, target_type: type, default: object | None
+    ) -> object | None:
         """Execute type conversion using centralized Pydantic v2 models.
 
         Dispatches to the appropriate ConversionRequest model based on target_type
@@ -588,12 +588,12 @@ class FlextFunctional:
     at = as_type
 
     @classmethod
-    def prop(cls, key: str) -> Callable[[t.ContainerValue], t.ContainerValue]:
+    def prop(cls, key: str) -> Callable[[object], object]:
         """Property accessor (mnemonic: pp)."""
 
-        def getter(obj: t.ContainerValue) -> t.ContainerValue:
+        def getter(obj: object) -> object:
             """Get value from object by key."""
-            normalized_obj: t.ContainerValue = FlextFunctional._to_general(obj)
+            normalized_obj: object = FlextFunctional._to_general(obj)
             if isinstance(normalized_obj, dict):
                 return FlextFunctional._to_general(normalized_obj.get(key))
             return None
@@ -603,18 +603,16 @@ class FlextFunctional:
     prop_get = prop
 
     @classmethod
-    def props(
-        cls, *keys: str
-    ) -> Callable[[t.ContainerValue], Mapping[str, t.ContainerValue]]:
+    def props(cls, *keys: str) -> Callable[[object], Mapping[str, object]]:
         """Multiple property accessor (mnemonic: ps)."""
 
-        def accessor(obj: t.ContainerValue) -> Mapping[str, t.ContainerValue]:
+        def accessor(obj: object) -> Mapping[str, object]:
             """Get multiple values from object by keys."""
-            result_dict: dict[str, t.ContainerValue] = {}
-            normalized_obj: t.ContainerValue = FlextFunctional._to_general(obj)
+            result_dict: dict[str, object] = {}
+            normalized_obj: object = FlextFunctional._to_general(obj)
             for k in keys:
                 if isinstance(normalized_obj, dict):
-                    val: t.ContainerValue | None = normalized_obj.get(k)
+                    val: object | None = normalized_obj.get(k)
                     result_dict[k] = FlextFunctional._to_general(val)
                 else:
                     result_dict[k] = None
@@ -625,32 +623,30 @@ class FlextFunctional:
     ps = props
 
     @classmethod
-    def path(cls, *keys: str) -> Callable[[t.ContainerValue], t.ContainerValue]:
+    def path(cls, *keys: str) -> Callable[[object], object]:
         """Path accessor using chain() DSL (mnemonic: ph)."""
 
-        def make_getter(key: str) -> Callable[[t.ContainerValue], t.ContainerValue]:
+        def make_getter(key: str) -> Callable[[object], object]:
             """Create a single-key getter."""
 
-            def getter_fn(obj: t.ContainerValue) -> t.ContainerValue:
+            def getter_fn(obj: object) -> object:
                 """Get value from object by key."""
                 if obj is None:
                     return None
-                normalized_obj: t.ContainerValue = FlextFunctional._to_general(obj)
+                normalized_obj: object = FlextFunctional._to_general(obj)
                 if isinstance(normalized_obj, dict):
                     return FlextFunctional._to_general(normalized_obj.get(key))
                 return None
 
             return getter_fn
 
-        getters: list[Callable[[t.ContainerValue], t.ContainerValue]] = [
-            make_getter(k) for k in keys
-        ]
+        getters: list[Callable[[object], object]] = [make_getter(k) for k in keys]
 
-        def path_getter(obj: t.ContainerValue) -> t.ContainerValue:
+        def path_getter(obj: object) -> object:
             """Get value at path."""
             if obj is None:
                 return None
-            result: t.ContainerValue = obj
+            result: object = obj
             for getter in getters:
                 if result is None:
                     return None

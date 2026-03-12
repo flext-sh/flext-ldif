@@ -15,8 +15,10 @@ from typing import TYPE_CHECKING, Annotated, Literal
 from flext_core import FlextModels, r
 from pydantic import ConfigDict, Field, StringConstraints
 
-from flext_ldif import FlextLdifProtocols, c, t
 from flext_ldif._models.base import FlextLdifModelsBase
+from flext_ldif.constants import FlextLdifConstants as c
+from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.typings import FlextLdifTypes as t
 
 if TYPE_CHECKING:
     from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -952,7 +954,7 @@ class FlextLdifModelsSettings:
                 result = ldif.write(entries, options=options)
 
                 # NEW (correct):
-                from flext_ldif import FlextLdifSettings
+                from flext_ldif.settings import FlextLdifSettings
 
                 config = FlextSettings.get_global().get_namespace(
                     "ldif", FlextLdifSettings
@@ -1231,7 +1233,7 @@ class FlextLdifModelsSettings:
             .. code-block:: python
 
                 # Config is source of truth
-                from flext_ldif import FlextLdifSettings
+                from flext_ldif.settings import FlextLdifSettings
 
                 config = FlextSettings.get_global().get_namespace(
                     "ldif", FlextLdifSettings

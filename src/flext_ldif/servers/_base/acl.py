@@ -37,7 +37,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         self,
         acl_service: p.Ldif.AclQuirkProtocol | None = None,
         _parent_quirk: Self | None = None,
-        **_kwargs: t.ContainerValue,
+        **_kwargs: object,
     ) -> None:
         """Initialize ACL quirk service with optional DI service injection."""
         super().__init__()
@@ -165,7 +165,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         return self._write_acl(acl_data)
 
     def _coerce_acl_data(
-        self, value: str | m.Ldif.Acl | t.ContainerValue
+        self, value: str | m.Ldif.Acl | object
     ) -> str | m.Ldif.Acl | None:
         """Coerce generic value to ACL payload union."""
         if value is None:

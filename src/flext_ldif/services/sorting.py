@@ -10,7 +10,10 @@ from typing import ClassVar, Self, override
 from flext_core import r, t
 from pydantic import Field, field_validator, model_validator
 
-from flext_ldif import FlextLdifServiceBase, c, m, u
+from flext_ldif.base import FlextLdifServiceBase
+from flext_ldif.constants import FlextLdifConstants as c
+from flext_ldif.models import FlextLdifModels as m
+from flext_ldif.utilities import FlextLdifUtilities as u
 
 
 class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
@@ -352,7 +355,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         self, *, alphabetical: bool | None = None, order: list[str] | None = None
     ) -> Self:
         """Configure attribute sorting."""
-        update_dict: dict[str, t.ContainerValue] = {}
+        update_dict: dict[str, t.Ldif.ContainerValue] = {}
         if alphabetical is not None:
             update_dict["sort_attributes"] = alphabetical
             update_dict["attribute_order"] = None

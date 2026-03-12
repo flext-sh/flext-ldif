@@ -9,7 +9,10 @@ from typing import override
 from flext_core import r
 from pydantic import PrivateAttr
 
-from flext_ldif import FlextLdifServer, m, s, u
+from flext_ldif.base import FlextLdifServer
+from flext_ldif.models import FlextLdifModels as m
+from flext_ldif.settings import FlextLdifSettings as s
+from flext_ldif.utilities import FlextLdifUtilities as u
 
 
 class FlextLdifParser(s[m.Ldif.ParseResponse]):

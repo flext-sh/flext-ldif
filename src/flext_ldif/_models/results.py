@@ -6,11 +6,12 @@ from typing import Self, overload
 from flext_core import m
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
-from flext_ldif import c, t
 from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.collections import FlextLdifModelsCollections
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.events import FlextLdifModelsEvents
+from flext_ldif.constants import FlextLdifConstants as c
+from flext_ldif.typings import FlextLdifTypes as t
 
 
 def _events_factory() -> list[FlextLdifModelsResults.EventType]:
@@ -518,7 +519,7 @@ class FlextLdifModelsResults:
         def keys(self) -> list[str]:
             return list(self.model_fields_set)
 
-        def _resolve_key(self, key: str) -> t.ContainerValue:
+        def _resolve_key(self, key: str) -> object:
             if key in type(self).model_fields:
                 return getattr(self, key)
             extra = self.__pydantic_extra__

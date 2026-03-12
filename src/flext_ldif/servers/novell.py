@@ -9,7 +9,7 @@ from typing import ClassVar, override
 
 from flext_core import r
 
-from flext_ldif import c, m, t, u
+from flext_ldif import c, m, u
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
@@ -416,7 +416,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             )
 
         @override
-        def model_post_init(self, _context: t.ContainerValue, /) -> None:
+        def model_post_init(self, _context: object, /) -> None:
             """Initialize eDirectory entry quirk."""
 
         def process_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:

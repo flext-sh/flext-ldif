@@ -6,7 +6,7 @@ import struct
 from collections.abc import Callable
 from typing import Protocol
 
-from flext_core import FlextLogger, r, t
+from flext_core import FlextLogger, r
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif import m
@@ -61,7 +61,7 @@ class FlextLdifUtilitiesWriters:
         def write(
             *,
             config: FlextLdifModelsSettings.EntryWriteConfig | None = None,
-            **kwargs: t.ContainerValue,
+            **kwargs: object,
         ) -> r[str]:
             """Write entry to LDIF string using hooks."""
             if config is None:
@@ -254,7 +254,7 @@ class FlextLdifUtilitiesWriters:
         def write(
             *,
             config: FlextLdifModelsSettings.BatchWriteConfig | None = None,
-            **kwargs: t.ContainerValue,
+            **kwargs: object,
         ) -> r[str]:
             """Write multiple entries to LDIF string."""
             if config is None:
@@ -304,5 +304,9 @@ class FlextLdifUtilitiesWriters:
                 return result.value
             stats.failed += 1
             dn_str = FlextLdifUtilitiesWriters.Content.get_entry_dn_for_error(entry)
-            logger.error("Failed to write entry", dn=dn_str, error=str(result.error))
+            logger.error(
+                "Failed to write entry",
+                dn=dn_str or "",
+                error=str(result.error),
+            )
             return None

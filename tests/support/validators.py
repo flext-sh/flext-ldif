@@ -14,9 +14,7 @@ class MockResultHelpers:
     """Mock result helpers for testing."""
 
     @staticmethod
-    def validate_composition(
-        *args: object, **kwargs: object
-    ) -> bool:
+    def validate_composition(*args: object, **kwargs: object) -> bool:
         """Validate composition."""
         return True
 
@@ -30,9 +28,7 @@ class MockResultHelpers:
         """Assert composition."""
 
     @staticmethod
-    def assert_chain_success(
-        *args: object, **kwargs: object
-    ) -> None:
+    def assert_chain_success(*args: object, **kwargs: object) -> None:
         """Assert chain success."""
 
 

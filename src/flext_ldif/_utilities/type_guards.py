@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Sequence as ABCSequence
 from typing import TypeGuard
 
-from flext_core import FlextUtilities, t
+from flext_core import FlextUtilities
 
 
 class FlextLdifUtilitiesTypeGuards(FlextUtilities):
@@ -26,8 +26,8 @@ class FlextLdifUtilitiesTypeGuards(FlextUtilities):
 
     @staticmethod
     def is_entry_sequence(
-        obj: t.ContainerValue,
-    ) -> TypeGuard[ABCSequence[t.ContainerValue]]:
+        obj: object,
+    ) -> TypeGuard[ABCSequence[object]]:
         """Check if object is a Sequence of Entry instances.
 
         Uses duck typing to identify Entry sequences:

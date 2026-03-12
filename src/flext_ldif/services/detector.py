@@ -9,7 +9,10 @@ from typing import Protocol, override
 
 from flext_core import r
 
-from flext_ldif import FlextLdifServer, FlextLdifSettings, m, s, u
+from flext_ldif.base import FlextLdifServer
+from flext_ldif.models import FlextLdifModels as m
+from flext_ldif.settings import FlextLdifSettings, FlextLdifSettings as s
+from flext_ldif.utilities import FlextLdifUtilities as u
 
 
 class ServerDetectionConstants(Protocol):
