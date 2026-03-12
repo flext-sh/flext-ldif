@@ -198,7 +198,7 @@ TypeClassVar = ClassVar
 
 ```python
 # ❌ PROIBIDO
-Field(default="lower")  # type: ignore[assignment]
+Field(default="lower")
 
 # ✅ CORRETO - Usar model_config ou type hints adequados
 from pydantic import ConfigDict
