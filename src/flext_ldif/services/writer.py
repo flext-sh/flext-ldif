@@ -32,10 +32,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
 
     @staticmethod
     def _normalize_format_options(
-        format_options: m.Ldif.WriteFormatOptions
-        | m.Ldif.WriteOptions
-        | object
-        | None,
+        format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | object | None,
     ) -> m.Ldif.WriteFormatOptions:
         """Normalize format options to WriteFormatOptions."""
         result_raw: m.Ldif.WriteFormatOptions | None
@@ -69,9 +66,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
         return m.Ldif.WriteFormatOptions.model_validate(normalized)
 
     @override
-    def execute(
-        self, params: object | None = None
-    ) -> r[m.Ldif.WriteResponse]:
+    def execute(self, params: object | None = None) -> r[m.Ldif.WriteResponse]:
         """Execute write operation with parameters."""
         params_data: object = params if params is not None else {}
         entries_raw = u.take(params_data, "entries")

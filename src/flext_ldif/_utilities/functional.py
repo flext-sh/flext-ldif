@@ -416,11 +416,7 @@ class FlextFunctional:
 
     it = is_type
     _ConvertibleType = (
-        t.Scalar
-        | list[object]
-        | tuple[object, ...]
-        | set[object]
-        | object
+        t.Scalar | list[object] | tuple[object, ...] | set[object] | object
     )
     _TYPE_MAP: ClassVar[Mapping[str, type]] = {
         "list": list,
