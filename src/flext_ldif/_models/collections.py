@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
-from typing import TYPE_CHECKING, override
+from typing import override
 
 from flext_core import m
 from pydantic import ConfigDict, Field
@@ -15,9 +15,6 @@ from pydantic import ConfigDict, Field
 from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
-
-if TYPE_CHECKING:
-    from flext_ldif.typings import FlextLdifTypes as t
 
 
 def _schema_attributes_factory() -> list[FlextLdifModelsDomains.SchemaAttribute]:
@@ -67,7 +64,7 @@ class FlextLdifModelsCollections:
             return key in self._extra()
 
         @staticmethod
-        def _to_count(value: t.MetadataValue) -> int:
+        def _to_count(value: object) -> int:
             if isinstance(value, int | float):
                 return int(value)
             if isinstance(value, str):
@@ -96,7 +93,7 @@ class FlextLdifModelsCollections:
         def set_count(self, key: str, value: int) -> None:
             setattr(self, key, value)
 
-        def _extra(self) -> dict[str, t.MetadataValue]:
+        def _extra(self) -> dict[str, object]:
             return self.__pydantic_extra__ or {}
 
     class SchemaContent(FlextLdifModelsBase):

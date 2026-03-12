@@ -612,10 +612,10 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return parent_result
             logger.debug(
                 "RFC parser failed, using relaxed mode",
-                error=str(parent_result.error) if parent_result.error else None,
+                error=str(parent_result.error) if parent_result.error else "",
                 error_type=type(parent_result.error).__name__
                 if parent_result.error
-                else None,
+                else "",
             )
             return u.Ldif.Parsers.Content.parse(
                 ldif_content=ldif_content,
@@ -693,10 +693,10 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return parent_result
             logger.debug(
                 "RFC write failed, using relaxed mode",
-                error=str(parent_result.error) if parent_result.error else None,
+                error=str(parent_result.error) if parent_result.error else "",
                 error_type=type(parent_result.error).__name__
                 if parent_result.error
-                else None,
+                else "",
             )
             try:
                 ldif_lines: list[str] = []

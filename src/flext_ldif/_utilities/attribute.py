@@ -6,7 +6,7 @@ import re
 from collections.abc import Callable
 from typing import Final
 
-from flext_core import FlextTypes, r
+from flext_core import r
 
 from flext_ldif import c
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
@@ -63,9 +63,8 @@ class FlextLdifUtilitiesAttribute:
         definition: str,
         *,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], r[dict[str, FlextTypes.ContainerValue]]]
-        | None = None,
-    ) -> r[dict[str, FlextTypes.ContainerValue]]:
+        parse_parts_hook: Callable[[str], r[dict[str, object]]] | None = None,
+    ) -> r[dict[str, object]]:
         """Parse RFC 4512 attribute definition into structured data."""
         _ = server_type
         if parse_parts_hook:

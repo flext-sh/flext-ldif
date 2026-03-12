@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Self, overload, override
 
-from flext_core import FlextLogger, FlextTypes, r
+from flext_core import FlextLogger, r
 
-from flext_ldif import m, p, t, u
+from flext_ldif import m, p, u
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
@@ -23,7 +23,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         cls,
         acl_service: p.Ldif.AclQuirkProtocol | None = None,
         parent_quirk: Self | None = None,
-        **kwargs: FlextTypes.ContainerValue,
+        **kwargs: object,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         _ = acl_service
@@ -59,10 +59,10 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         self,
         acl_service: p.Ldif.AclQuirkProtocol | None = None,
         parent_quirk: Self | None = None,
-        **kwargs: FlextTypes.ContainerValue,
+        **kwargs: object,
     ) -> None:
         """Initialize RFC ACL quirk service."""
-        filtered_kwargs: dict[str, FlextTypes.ContainerValue] = {
+        filtered_kwargs: dict[str, object] = {
             k: v
             for k, v in kwargs.items()
             if k not in {"_parent_quirk", "parent_quirk"}
@@ -116,7 +116,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         self,
         permission: str,
         _feature_id: str | None,
-        _metadata: Mapping[str, t.MetadataValue],
+        _metadata: Mapping[str, object],
     ) -> str:
         """Convert RFC permission back to server-specific format."""
         return permission
@@ -127,7 +127,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         return super()._get_feature_fallback(_feature_id)
 
     def _normalize_permission(
-        self, permission: str, _metadata: Mapping[str, t.MetadataValue]
+        self, permission: str, _metadata: Mapping[str, object]
     ) -> tuple[str, str | None]:
         """Normalize a server-specific permission to RFC standard."""
         return (permission, None)

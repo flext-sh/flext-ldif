@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, m, r
 
-from flext_ldif import c, t
+from flext_ldif import c
 
 if TYPE_CHECKING:
     from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -54,7 +54,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             @property
-            def extensions(self) -> Mapping[str, t.MetadataValue]:
+            def extensions(self) -> Mapping[str, object]:
                 """Get server-specific extensions."""
                 ...
 
@@ -519,7 +519,7 @@ class FlextLdifProtocols(FlextProtocols):
 
         @runtime_checkable
         class ValuePredicate(Protocol):
-            """Protocol for predicates that test ContainerValue values."""
+            """Protocol for predicates that tesobject values."""
 
             def __call__(self, value: object, /) -> bool:
                 """Test if value matches predicate condition."""

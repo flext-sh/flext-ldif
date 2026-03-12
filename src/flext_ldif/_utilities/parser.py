@@ -9,7 +9,7 @@ from collections.abc import Mapping
 
 from flext_core import FlextLogger, u
 
-from flext_ldif import c, m, t
+from flext_ldif import c, m
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
@@ -47,9 +47,9 @@ class FlextLdifUtilitiesParser:
             else FlextLdifUtilitiesServer.normalize_server_type("rfc")
         )
         if metadata_extensions:
-            extensions_typed: dict[str, t.MetadataValue] = {}
+            extensions_typed: dict[str, object] = {}
             for key, val in metadata_extensions.items():
-                typed_val: t.MetadataValue = list(val)
+                typed_val: object = list(val)
                 extensions_typed[key] = typed_val
             return m.Ldif.QuirkMetadata(
                 quirk_type=quirk_type,
@@ -119,7 +119,7 @@ class FlextLdifUtilitiesParser:
     def ext(metadata: m.Ldif.DynamicMetadata) -> Mapping[str, list[str]]:
         """Extract extension information from parsed metadata."""
 
-        def _as_str_list(value: t.MetadataValue) -> list[str] | None:
+        def _as_str_list(value: object) -> list[str] | None:
             if isinstance(value, list):
                 normalized: list[str] = []
                 for item in value:

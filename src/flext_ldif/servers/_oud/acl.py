@@ -9,7 +9,7 @@ from typing import ClassVar, override
 
 from flext_core import FlextLogger, r
 
-from flext_ldif import c, m, p, t
+from flext_ldif import c, m, p
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
@@ -84,7 +84,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         )
 
     @staticmethod
-    def _scalar_or_list_value(value: t.MetadataValue) -> bool:
+    def _scalar_or_list_value(value: object) -> bool:
         """Check if value is scalar metadata value or list."""
         return value.__class__ in {str, int, float, bool, list}
 
@@ -143,7 +143,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     def _build_aci_permissions(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
         """Build ACI permissions clause from ACL model."""
         perms = acl_data.permissions
-        target_perms_dict: Mapping[str, t.MetadataValue] | None = None
+        target_perms_dict: Mapping[str, object] | None = None
         if not perms and acl_data.metadata:
             extensions = acl_data.metadata.extensions
             target_perms_dict_raw = (
@@ -250,7 +250,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if not target and acl_data.metadata:
             extensions = acl_data.metadata.extensions
             target_dict = extensions.get("acl_target_target") if extensions else None
-            target_data: dict[str, t.MetadataValue] = {}
+            target_data: dict[str, object] = {}
             if isinstance(target_dict, Mapping):
                 for raw_key, raw_value in target_dict.items():
                     if isinstance(raw_value, Mapping):
@@ -417,7 +417,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Write RFC-compliant ACL model to OUD ACI string format (protected internal method)."""
         try:
             sc = FlextLdifServersOudConstants
-            extensions: dict[str, t.MetadataValue] | None = (
+            extensions: dict[str, object] | None = (
                 dict(acl_data.metadata.extensions.to_dict())
                 if acl_data.metadata and acl_data.metadata.extensions
                 else None

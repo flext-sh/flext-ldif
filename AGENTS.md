@@ -275,7 +275,7 @@ def process(data: Any) -> Any:
 from flext_core import FlextTypes
 
 
-def process(data: FlextTypes.GeneralValueType) -> FlextTypes.GeneralValueType:
+def process(data: object) -> object:
     """Process general value type data."""
 ```
 

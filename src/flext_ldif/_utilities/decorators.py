@@ -44,7 +44,7 @@ class FlextLdifUtilitiesDecorators:
             "server_type": server_type,
             "parsed_timestamp": datetime.now(UTC).replace(microsecond=0).isoformat(),
         }
-        extensions_dict: dict[str, t.MetadataValue] = {
+        extensions_dict: dict[str, object] = {
             key: value
             for key, value in extensions_dict_raw.items()
             if value is not None

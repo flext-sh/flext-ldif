@@ -168,7 +168,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
             logger = FlextLogger(__name__)
             logger.warning(
                 "Failed to parse ACL value",
-                error=parse_result.error,
+                error=str(parse_result.error) if parse_result.error else "",
                 server_type=server_type,
             )
         return r[m.Ldif.AclResponse].ok(

@@ -73,9 +73,7 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
         output_files: Mapping[str, str],
     ) -> r[m.Ldif.StatisticsResult]:
         """Generate complete statistics for categorized migration."""
-        categorized_values_list: list[t.Ldif.ContainerValue] = list(
-            categorized.values()
-        )
+        categorized_values_list: list[t.Ldif.object] = list(categorized.values())
         total_entries = sum(
             len(entries) if isinstance(entries, list) else 0
             for entries in categorized_values_list

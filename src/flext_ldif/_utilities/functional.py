@@ -27,7 +27,7 @@ class FlextFunctional:
 
     @staticmethod
     def _to_general(value: object) -> object:
-        """Normalize arbitrary values into ContainerValue-compatible shape."""
+        """Normalize arbitrary values into object-compatible shape."""
         if value is None or isinstance(value, (str, int, float, bool)):
             return value
         if isinstance(value, datetime):
@@ -420,7 +420,7 @@ class FlextFunctional:
         | list[object]
         | tuple[object, ...]
         | set[object]
-        | t.ConfigurationMapping
+        | object
     )
     _TYPE_MAP: ClassVar[Mapping[str, type]] = {
         "list": list,

@@ -46,7 +46,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         return r[str].fail("Dict entry has unsupported 'dn' value type")
 
     @staticmethod
-    def _extract_dn_from_object(entry: t.Ldif.ContainerValue) -> r[str]:
+    def _extract_dn_from_object(entry: t.Ldif.object) -> r[str]:
         dn_value = getattr(entry, "dn", None)
         if dn_value is None:
             return r[str].fail("Entry missing DN (dn is None)")

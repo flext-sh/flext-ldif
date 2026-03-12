@@ -41,12 +41,12 @@ class FlextLdifModelsMetadata:
             msg = "unhashable type: 'DynamicMetadata'"
             raise TypeError(msg)
 
-        def __getitem__(self, key: str) -> t.MetadataValue:
+        def __getitem__(self, key: str) -> object:
             if key in type(self).model_fields:
                 return getattr(self, key)
             return self._extra()[key]
 
-        def __setitem__(self, key: str, value: t.MetadataValue) -> None:
+        def __setitem__(self, key: str, value: object) -> None:
             setattr(self, key, value)
 
         def __len__(self) -> int:
@@ -56,14 +56,14 @@ class FlextLdifModelsMetadata:
             return key in self._extra()
 
         @classmethod
-        def from_dict(cls, data: Mapping[str, t.MetadataValue] | None = None) -> Self:
+        def from_dict(cls, data: Mapping[str, object] | None = None) -> Self:
             """Create DynamicMetadata from a dictionary."""
             if data is None:
                 return cls()
             return cls.model_validate(dict(data))
 
         @staticmethod
-        def coerce_metadata_value(value: t.MetadataValue) -> t.MetadataValue:
+        def coerce_metadata_value(value: object) -> object:
             """Identity coercion — value already typed by MetadataAttributeValue."""
             return value
 
@@ -72,39 +72,35 @@ class FlextLdifModelsMetadata:
             if extra is not None:
                 extra.clear()
 
-        def get(
-            self, key: str, default: t.MetadataValue | None = None
-        ) -> t.MetadataValue | None:
+        def get(self, key: str, default: object | None = None) -> object | None:
             """Get value by key, returning default if not found."""
             if key in type(self).model_fields:
                 return getattr(self, key)
             return self._extra().get(key, default)
 
-        def items(self) -> ItemsView[str, t.MetadataValue]:
+        def items(self) -> ItemsView[str, object]:
             return self._extra().items()
 
         def keys(self) -> KeysView[str]:
             return self._extra().keys()
 
-        def pop(
-            self, key: str, default: t.MetadataValue | None = None
-        ) -> t.MetadataValue | None:
+        def pop(self, key: str, default: object | None = None) -> object | None:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
                 return extra.pop(key)
             return default
 
-        def to_dict(self) -> Mapping[str, t.MetadataValue]:
+        def to_dict(self) -> Mapping[str, object]:
             return dict(self.items())
 
-        def update(self, other: Mapping[str, t.MetadataValue]) -> None:
+        def update(self, other: Mapping[str, object]) -> None:
             for key, value in other.items():
                 setattr(self, key, value)
 
-        def values(self) -> ValuesView[t.MetadataValue]:
+        def values(self) -> ValuesView[object]:
             return self._extra().values()
 
-        def _extra(self) -> dict[str, t.MetadataValue]:
+        def _extra(self) -> dict[str, object]:
             return self.__pydantic_extra__ or {}
 
     class EntryMetadata(FlextModels.ArbitraryTypesModel):
@@ -114,18 +110,16 @@ class FlextLdifModelsMetadata:
             frozen=True, extra="allow", use_enum_values=True, str_strip_whitespace=True
         )
 
-        def __getitem__(self, key: str) -> t.MetadataValue:
+        def __getitem__(self, key: str) -> object:
             return self._extra()[key]
 
         def __contains__(self, key: str) -> bool:
             return key in self._extra()
 
-        def get(
-            self, key: str, default: t.MetadataValue | None = None
-        ) -> t.MetadataValue | None:
+        def get(self, key: str, default: object | None = None) -> object | None:
             return self._extra().get(key, default)
 
-        def _extra(self) -> dict[str, t.MetadataValue]:
+        def _extra(self) -> dict[str, object]:
             return self.__pydantic_extra__ or {}
 
     class TransformationInfo(FlextModels.ArbitraryTypesModel):

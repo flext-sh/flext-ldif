@@ -34,7 +34,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
     def _normalize_format_options(
         format_options: m.Ldif.WriteFormatOptions
         | m.Ldif.WriteOptions
-        | t.ConfigurationMapping
+        | object
         | None,
     ) -> m.Ldif.WriteFormatOptions:
         """Normalize format options to WriteFormatOptions."""
@@ -51,9 +51,9 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
 
     @staticmethod
     def _normalize_write_format(
-        d: Mapping[str, t.Ldif.ContainerValue],
-    ) -> Mapping[str, t.Ldif.ContainerValue]:
-        mapped: dict[str, t.Ldif.ContainerValue] = {
+        d: Mapping[str, t.Ldif.object],
+    ) -> Mapping[str, t.Ldif.object]:
+        mapped: dict[str, t.Ldif.object] = {
             "base64_encode_binary": d.get("base64_encode_binary"),
             "sort_attributes": d.get("sort_entries"),
             "include_dn_comments": d.get("include_comments"),
@@ -70,10 +70,10 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
 
     @override
     def execute(
-        self, params: t.ConfigurationMapping | None = None
+        self, params: object | None = None
     ) -> r[m.Ldif.WriteResponse]:
         """Execute write operation with parameters."""
-        params_data: t.ConfigurationMapping = params if params is not None else {}
+        params_data: object = params if params is not None else {}
         entries_raw = u.take(params_data, "entries")
         entries: list[m.Ldif.Entry] = []
         entry_candidates: tuple[object, ...] = ()

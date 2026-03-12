@@ -133,7 +133,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         return category
 
     @staticmethod
-    def _ensure_entry_model(value: t.Ldif.ContainerValue) -> m.Ldif.Entry | None:
+    def _ensure_entry_model(value: t.Ldif.object) -> m.Ldif.Entry | None:
         if isinstance(value, m.Ldif.Entry):
             return value
         if isinstance(value, BaseModel):
@@ -164,7 +164,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         return (included, excluded)
 
     @staticmethod
-    def _has_attr(obj: t.Ldif.ContainerValue | type, attr_name: str) -> bool:
+    def _has_attr(obj: t.Ldif.object | type, attr_name: str) -> bool:
         return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
 
     @staticmethod
@@ -251,7 +251,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 filtered[category] = passthrough_entries
         if excluded_entries:
             rejected_category = c.Ldif.Category.REJECTED
-            existing_rejected_raw: Sequence[t.Ldif.ContainerValue] = filtered.get(
+            existing_rejected_raw: Sequence[t.Ldif.object] = filtered.get(
                 rejected_category, []
             )
             merged_rejected: list[m.Ldif.Entry] = []
@@ -312,8 +312,8 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 self._rejection_tracker["categorization_rejected"].append(reason)
                 logger.debug(
                     "Entry rejected during categorization",
-                    entry_dn=str(reason.dn) if reason.dn else None,
-                    rejection_reason=None,
+                    entry_dn=str(reason.dn) if reason.dn else "",
+                    rejection_reason="",
                 )
             updated_entries = [*categories[category], reason]
             categories[category] = updated_entries
@@ -440,7 +440,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 filtered[category] = passthrough_entries
         if all_excluded_entries:
             rejected_category = c.Ldif.Category.REJECTED
-            existing_rejected_raw: Sequence[t.Ldif.ContainerValue] = filtered.get(
+            existing_rejected_raw: Sequence[t.Ldif.object] = filtered.get(
                 rejected_category, []
             )
             merged_rejected: list[m.Ldif.Entry] = []
@@ -564,7 +564,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
             logger.debug(
                 "Sample rejected DNs",
                 sample_count=len(sample_rejected_dns),
-                rejected_dns_preview=sample_rejected_dns,
+                rejected_dns_preview=", ".join(sample_rejected_dns),
             )
         return r[list[m.Ldif.Entry]].ok(validated)
 

@@ -8,7 +8,7 @@ from typing import override
 
 from flext_core import r
 
-from flext_ldif import c, m, t
+from flext_ldif import c, m
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 
@@ -87,7 +87,7 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
             return r[m.Ldif.Entry].fail(norm_result.error)
         normalized_dn = norm_result.value
         normalized_dn = self._normalize_dn_case_and_spaces(normalized_dn)
-        update_dict: dict[str, t.JsonValue] = {"dn": normalized_dn}
+        update_dict: dict[str, object] = {"dn": normalized_dn}
         updated_entry = item.model_copy(update=update_dict)
         return r[m.Ldif.Entry].ok(updated_entry)
 

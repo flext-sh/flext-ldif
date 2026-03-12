@@ -10,9 +10,9 @@ from flext_ldif import p, t
 
 class FlextLdifUtilitiesValidation(FlextUtilities):
     @staticmethod
-    def validate(value: t.JsonValue, *validators: p.ValidatorSpec) -> r[t.JsonValue]:
+    def validate(value: object, *validators: p.ValidatorSpec) -> r[object]:
         del validators
-        return r[t.JsonValue].ok(value)
+        return r[object].ok(value)
 
     class Rfc:
         """RFC validation helpers."""

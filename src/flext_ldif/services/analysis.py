@@ -59,7 +59,7 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
         """Validate entry objectClass values."""
         errors: list[str] = []
         is_valid = True
-        oc_values_raw: t.Ldif.ContainerValue = u.Mapper.get(
+        oc_values_raw: t.Ldif.object = u.Mapper.get(
             entry.attributes.attributes if entry.attributes else {},
             "objectClass",
             default=[],

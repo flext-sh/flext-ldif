@@ -23,9 +23,9 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _add_to_dict_metadata(
-        metadata: dict[str, t.MetadataValue],
+        metadata: dict[str, object],
         metadata_key: str,
-        item_data: t.MetadataValue,
+        item_data: object,
     ) -> None:
         """Add item to dict metadata."""
         value = metadata.get(metadata_key)
@@ -47,9 +47,9 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _add_to_list_metadata(
-        metadata: dict[str, t.MetadataValue],
+        metadata: dict[str, object],
         metadata_key: str,
-        item_data: t.MetadataValue,
+        item_data: object,
     ) -> None:
         """Add item to list metadata."""
         value = metadata.get(metadata_key)
@@ -87,7 +87,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _build_schema_format_model(
-        definition: str, combined: Mapping[str, t.MetadataValue]
+        definition: str, combined: Mapping[str, object]
     ) -> m.Ldif.SchemaFormatDetails:
         """Build SchemaFormatDetails model from combined details."""
         known_fields = {
@@ -98,10 +98,8 @@ class FlextLdifUtilitiesMetadata:
             "x_origin",
             "x_ordered",
         }
-        known_field_values: dict[str, t.MetadataValue] = {
-            "original_string_complete": definition
-        }
-        extension_kwargs: dict[str, t.MetadataValue] = {}
+        known_field_values: dict[str, object] = {"original_string_complete": definition}
+        extension_kwargs: dict[str, object] = {}
         for key, value in combined.items():
             if key in known_fields:
                 known_field_values[key] = value
@@ -140,9 +138,9 @@ class FlextLdifUtilitiesMetadata:
             ]
 
     @staticmethod
-    def _extract_all_schema_details(definition: str) -> Mapping[str, t.MetadataValue]:
+    def _extract_all_schema_details(definition: str) -> Mapping[str, object]:
         """Extract all schema formatting details into combined dict."""
-        combined: dict[str, t.MetadataValue] = {}
+        combined: dict[str, object] = {}
         extractors = [
             FlextLdifUtilitiesMetadata._extract_prefix_details,
             FlextLdifUtilitiesMetadata._extract_oid_details,
@@ -173,8 +171,8 @@ class FlextLdifUtilitiesMetadata:
         field_order, field_positions = FlextLdifUtilitiesMetadata._extract_field_order(
             definition
         )
-        field_order_typed: t.MetadataValue = list(field_order)
-        field_positions_typed: t.MetadataValue = dict(field_positions)
+        field_order_typed: object = list(field_order)
+        field_positions_typed: object = dict(field_positions)
         combined["field_order"] = field_order_typed
         combined["field_positions"] = field_positions_typed
         spacing_result = FlextLdifUtilitiesMetadata._extract_spacing_between_fields(
@@ -195,7 +193,7 @@ class FlextLdifUtilitiesMetadata:
                 "X-ORIGIN": "X-ORIGIN",
             },
         )
-        spacing_typed: t.MetadataValue = dict(spacing_result)
+        spacing_typed: object = dict(spacing_result)
         combined["spacing_between_fields"] = spacing_typed
         return combined
 
@@ -545,7 +543,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _get_metadata_dict(
         model: p.Ldif.ModelWithValidationMetadataProtocol,
-    ) -> dict[str, t.MetadataValue]:
+    ) -> dict[str, object]:
         """Get mutable metadata dict from model."""
         metadata_obj = getattr(model, "validation_metadata", None)
         if metadata_obj is None:
@@ -600,7 +598,7 @@ class FlextLdifUtilitiesMetadata:
         return normalized
 
     @staticmethod
-    def _normalize_metadata_list_item(item: t.MetadataValue) -> t.Scalar | None:
+    def _normalize_metadata_list_item(item: object) -> t.Scalar | None:
         if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(item):
             return item
         return str(item)
@@ -634,7 +632,7 @@ class FlextLdifUtilitiesMetadata:
     def _track_metadata_item(
         model: p.Ldif.ModelWithValidationMetadataProtocol,
         metadata_key: str,
-        item_data: t.MetadataValue,
+        item_data: object,
         *,
         append_to_list: bool = True,
         update_conversion_path: str | None = None,
@@ -666,7 +664,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _update_conversion_path(
-        metadata: dict[str, t.MetadataValue], update_conversion_path: str
+        metadata: dict[str, object], update_conversion_path: str
     ) -> None:
         """Update conversion_path in metadata."""
         if "conversion_path" not in metadata:
@@ -701,10 +699,10 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def analyze_minimal_differences(
         original: str, converted: str | None, context: str = "entry"
-    ) -> Mapping[str, t.MetadataValue]:
+    ) -> Mapping[str, object]:
         """Analyze minimal differences between original and converted strings."""
         mk = c.Ldif.MetadataKeys
-        differences: dict[str, t.MetadataValue] = {
+        differences: dict[str, object] = {
             mk.HAS_DIFFERENCES: False,
             "context": context,
             "original": original,
@@ -753,7 +751,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def build_entry_metadata_extensions(
         quirk_type: str,
-    ) -> Mapping[str, t.MetadataValue]:
+    ) -> Mapping[str, object]:
         """Build metadata extensions for entry as a dictionary."""
         return {"quirk_type": quirk_type, "source_server": quirk_type}
 
@@ -762,21 +760,21 @@ class FlextLdifUtilitiesMetadata:
         config: FlextLdifModelsSettings.EntryParseMetadataConfig,
     ) -> m.Ldif.QuirkMetadata:
         """Build QuirkMetadata for entry parsing with format preservation."""
-        server_data_dict: dict[str, t.MetadataValue] = {}
-        dn_typed: t.MetadataValue = config.original_entry_dn
-        cleaned_typed: t.MetadataValue = config.cleaned_dn
-        base64_typed: t.MetadataValue = config.dn_was_base64
+        server_data_dict: dict[str, object] = {}
+        dn_typed: object = config.original_entry_dn
+        cleaned_typed: object = config.cleaned_dn
+        base64_typed: object = config.dn_was_base64
         server_data_dict["original_entry_dn"] = dn_typed
         server_data_dict["cleaned_dn"] = cleaned_typed
         server_data_dict["dn_was_base64"] = base64_typed
         if config.original_dn_line:
-            dn_line_typed: t.MetadataValue = config.original_dn_line
+            dn_line_typed: object = config.original_dn_line
             server_data_dict["original_dn_line"] = dn_line_typed
         if config.original_attr_lines:
-            attr_lines_typed: t.MetadataValue = list(config.original_attr_lines)
+            attr_lines_typed: object = list(config.original_attr_lines)
             server_data_dict["original_attribute_lines"] = attr_lines_typed
         if config.original_attribute_case:
-            attr_case_typed: t.MetadataValue = dict(config.original_attribute_case)
+            attr_case_typed: object = dict(config.original_attribute_case)
             server_data_dict["original_attribute_case"] = attr_case_typed
         server_data = FlextLdifModelsMetadata.EntryMetadata.model_validate(
             server_data_dict
@@ -787,7 +785,7 @@ class FlextLdifUtilitiesMetadata:
         if config.original_attr_lines:
             original_ldif_parts.extend(config.original_attr_lines)
         original_ldif = "\n".join(original_ldif_parts) if original_ldif_parts else ""
-        extensions_dict: dict[str, t.MetadataValue] = {}
+        extensions_dict: dict[str, object] = {}
         mk = c.Ldif.MetadataKeys
         extensions_dict[mk.ORIGINAL_DN_COMPLETE] = config.original_entry_dn
         dynamic_extensions = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
@@ -848,7 +846,7 @@ class FlextLdifUtilitiesMetadata:
             return None
         key = c.Ldif.MetadataKeys.WRITE_OPTIONS
         raw_extras = getattr(write_opts, "model_extra", None)
-        extras: dict[str, t.MetadataValue] = {}
+        extras: dict[str, object] = {}
         opt: object | None = None
         if isinstance(raw_extras, Mapping):
             extras = {

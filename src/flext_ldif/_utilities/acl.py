@@ -61,9 +61,9 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _build_extensions(
         aci_content: str, version: str, acl_line: str, extra_patterns: Mapping[str, str]
-    ) -> Mapping[str, t.MetadataValue]:
+    ) -> Mapping[str, object]:
         """Build metadata extensions dict."""
-        extensions: dict[str, t.MetadataValue] = {
+        extensions: dict[str, object] = {
             "version": version,
             "original_format": acl_line,
         }
@@ -332,7 +332,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def build_metadata_extensions(
         config: FlextLdifModelsSettings.AclMetadataConfig,
-    ) -> Mapping[str, t.MetadataValue]:
+    ) -> Mapping[str, object]:
         """Build QuirkMetadata extensions for ACL."""
         normalized_line_breaks: list[t.Scalar] | None = None
         if config.line_breaks is not None:
@@ -340,14 +340,14 @@ class FlextLdifUtilitiesACL:
         normalized_targetscope: list[t.Scalar] | None = None
         if config.targetscope is not None:
             normalized_targetscope = [int(value) for value in config.targetscope]
-        extension_items: list[tuple[str, t.MetadataValue | None]] = [
+        extension_items: list[tuple[str, object | None]] = [
             ("line_breaks", normalized_line_breaks),
             ("dn_spaces", config.dn_spaces),
             ("targetscope", normalized_targetscope),
             ("version", config.version),
             ("action_type", config.action_type),
         ]
-        result: dict[str, t.MetadataValue] = {
+        result: dict[str, object] = {
             key: value
             for key, value in extension_items
             if value is not None
@@ -410,7 +410,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def extract_bind_rules_from_extensions(
-        extensions: Mapping[str, t.MetadataValue] | None,
+        extensions: Mapping[str, object] | None,
         rule_config: list[tuple[str, str, str | None]],
         *,
         tuple_length: int = 2,
@@ -496,7 +496,7 @@ class FlextLdifUtilitiesACL:
         patterns: Mapping[str, str | tuple[str, int]],
         *,
         defaults: Mapping[str, object] | None = None,
-    ) -> Mapping[str, t.JsonValue]:
+    ) -> Mapping[str, object]:
         r"""Extract multiple ACL components in one call.
 
         Replaces repetitive extract_component() calls with a single batch call.
@@ -544,7 +544,7 @@ class FlextLdifUtilitiesACL:
 
         def extract_component_batch(
             name: str, pattern_spec: str | tuple[str, int]
-        ) -> tuple[str, t.JsonValue | None]:
+        ) -> tuple[str, object | None]:
             """Extract component from pattern spec."""
             if isinstance(pattern_spec, tuple):
                 pattern, group_idx = pattern_spec
@@ -553,7 +553,7 @@ class FlextLdifUtilitiesACL:
                 group_idx = 1
             value = FlextLdifUtilitiesACL.extract_component(content, pattern, group_idx)
             raw_default = effective_defaults.get(name) if effective_defaults else None
-            default_value: t.JsonValue | None
+            default_value: object | None
             if raw_default is None:
                 default_value = None
             elif isinstance(raw_default, (str, int, float, bool)):
@@ -587,19 +587,17 @@ class FlextLdifUtilitiesACL:
                 default_value = normalized_mapping
             else:
                 default_value = str(raw_default)
-            final_value: t.JsonValue | None = (
-                value if value is not None else default_value
-            )
+            final_value: object | None = value if value is not None else default_value
             return (name, final_value)
 
-        result_dict: dict[str, tuple[str, t.JsonValue | None]] = {}
+        result_dict: dict[str, tuple[str, object | None]] = {}
         for key, pattern in patterns.items():
             try:
                 result = extract_component_batch(key, pattern)
                 result_dict[key] = result
             except (ValueError, TypeError, AttributeError):
                 continue
-        final_result: dict[str, t.JsonValue] = {}
+        final_result: dict[str, object] = {}
         for key, value_item in result_dict.items():
             if len(value_item) == TUPLE_LENGTH_PAIR and value_item[1] is not None:
                 final_result[key] = value_item[1]
@@ -654,7 +652,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def extract_target_extensions(
         extensions: FlextLdifModelsMetadata.DynamicMetadata
-        | Mapping[str, t.MetadataValue]
+        | Mapping[str, object]
         | None,
         target_config: list[tuple[str, str]],
     ) -> list[str]:
@@ -749,7 +747,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def format_conversion_comments(
         extensions: FlextLdifModelsMetadata.DynamicMetadata
-        | Mapping[str, t.MetadataValue]
+        | Mapping[str, object]
         | None,
         converted_from_key: str,
         comments_key: str,

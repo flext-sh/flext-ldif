@@ -207,10 +207,10 @@ class FlextLdifServersBaseSchema(
         metadata_extensions["original_format"] = attr_definition.strip()
         metadata_extensions["schema_original_string_complete"] = attr_definition
         quirk_type = FlextLdifServersBaseSchema._resolve_quirk_type(server_type)
-        extensions_typed: dict[str, t.MetadataValue] = {}
+        extensions_typed: dict[str, object] = {}
         for key, val in metadata_extensions.items():
             if isinstance(val, list):
-                list_typed: t.MetadataValue = list(val)
+                list_typed: object = list(val)
                 extensions_typed[key] = list_typed
             elif val is not None:
                 extensions_typed[key] = val

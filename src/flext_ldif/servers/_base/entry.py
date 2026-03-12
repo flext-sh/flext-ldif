@@ -186,7 +186,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         self,
         write_options: FlextLdifModelsSettings.WriteFormatOptions
         | FlextLdifModelsDomains.WriteOptions
-        | t.ConfigurationMapping,
+        | object,
     ) -> FlextLdifModelsDomains.WriteOptions:
         if isinstance(write_options, FlextLdifModelsDomains.WriteOptions):
             return write_options
@@ -305,7 +305,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         use_original_acl_format_as_name = False
         hidden_attributes: set[str] = set()
         acl_original_format: str | None = None
-        extensions_data: Mapping[str, t.MetadataValue] = {}
+        extensions_data: Mapping[str, object] = {}
         if entry_data.metadata:
             metadata_extensions = entry_data.metadata.extensions
             if core_u.is_type(metadata_extensions, Mapping):
@@ -420,7 +420,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
             output_lines.extend(fold_line(dn_line))
         else:
             return r[str].fail("Entry DN is None")
-        if core_u.has(entry_data, "attributes") and entry_data.attributes:
+        if hasattr(entry_data, "attributes") and entry_data.attributes:
             for attr_name, values in entry_data.attributes.items():
                 attr_is_hidden = attr_name.lower() in hidden_attributes
                 if core_u.is_type(values, list):

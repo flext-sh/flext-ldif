@@ -355,7 +355,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         self, *, alphabetical: bool | None = None, order: list[str] | None = None
     ) -> Self:
         """Configure attribute sorting."""
-        update_dict: dict[str, t.Ldif.ContainerValue] = {}
+        update_dict: dict[str, t.Ldif.object] = {}
         if alphabetical is not None:
             update_dict["sort_attributes"] = alphabetical
             update_dict["attribute_order"] = None
