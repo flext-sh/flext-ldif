@@ -68,9 +68,9 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                 "OUD QUIRK: FOUND REDUNDANT EQUALITY+SUBSTR - Removing redundant EQUALITY",
                 attribute_name=attr_data.name,
                 attribute_oid=attr_data.oid,
-                original_equality=fixed_equality,
-                original_substr=fixed_substr,
-                new_equality=None,
+                original_equality=fixed_equality or "unknown",
+                original_substr=fixed_substr or "unknown",
+                new_equality="",
                 new_substr="caseIgnoreSubstringsMatch",
                 redundant_equality="caseIgnoreMatch",
             )
@@ -84,8 +84,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                 "Replaced invalid SUBSTR rule",
                 attribute_name=attr_data.name,
                 attribute_oid=attr_data.oid,
-                original_substr=original_substr,
-                replacement_substr=fixed_substr,
+                original_substr=original_substr or "",
+                replacement_substr=fixed_substr or "",
             )
         return (fixed_equality, fixed_substr)
 
@@ -168,7 +168,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                 "Attribute has OUD X-* extensions",
                 attribute_name=attr.name,
                 attribute_oid=attr.oid,
-                extensions=oud_extensions,
+                extensions=",".join(oud_extensions),
                 extension_count=len(oud_extensions),
             )
         return r[m.Ldif.SchemaAttribute].ok(attr)
@@ -191,11 +191,12 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                 oid_and_sup_validation.error or "OID validation failed"
             )
         oc = oid_and_sup_validation.value
+        sup_str = str(oc.sup) if oc.sup else "none"
         logger.debug(
             "ObjectClass validated: SingleSUP constraint OK",
             objectclass_name=oc.name,
             objectclass_oid=oc.oid,
-            sup_value=oc.sup,
+            sup_value=sup_str,
         )
         return r[m.Ldif.SchemaObjectClass].ok(oc)
 

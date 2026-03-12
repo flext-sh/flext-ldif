@@ -22,12 +22,11 @@ SRP: Each method does ONE thing, composition handles complexity
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Final, cast
 
-from typing import cast, Final
-from flext_core import r, FlextLogger, FlextContext
+from flext_core import FlextContext, FlextLogger, r
 
 from flext_ldif import FlextLdif, m
-
 
 logger: Final = FlextLogger(__name__)
 
@@ -91,7 +90,7 @@ class BasicUsageDry:
         if parse_result.is_failure:
             return r[str].fail(parse_result.error or "Parse failed")
 
-        parsed_entries = cast(list[m.Ldif.Entry], parse_result.value)
+        parsed_entries = cast("list[m.Ldif.Entry]", parse_result.value)
         validate_result = api.validate_entries(parsed_entries)
         if validate_result.is_failure:
             return r[str].fail(validate_result.error or "Validation failed")

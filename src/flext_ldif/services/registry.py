@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import FlextRegistry, p
 
-from flext_ldif import t
+if TYPE_CHECKING:
+    from flext_ldif.typings import FlextLdifTypes as t
 
 type FilterFactoryType = Callable[[], t.ContainerValue]
 type CategorizationFactoryType = Callable[[str], t.ContainerValue]

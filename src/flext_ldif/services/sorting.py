@@ -506,16 +506,18 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             else:
                 result = self._sort_entry_attributes_alphabetically(entry)
             if result.is_failure:
+                entry_dn_value = self._entry_dn_value(entry)
+                error_type = "unknown_error"
+                if result.error is not None:
+                    error_type = result.error.__class__.__name__
                 self.logger.error(
                     "Failed to sort entry attributes",
                     action_attempted="sort_entry_attributes",
-                    entry_dn=str(entry.dn) if entry.dn else None,
+                    entry_dn=entry_dn_value,
                     entry_index=0,
                     total_entries=u.count(entries),
                     error=str(result.error),
-                    error_type=result.error.__class__.__name__
-                    if result.error
-                    else None,
+                    error_type=error_type,
                     attributes_count=u.count(
                         list(entry.attributes.attributes.keys())
                         if entry.attributes
@@ -632,7 +634,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 extensions[c.Ldif.MetadataKeys.SORTING_STRATEGY] = strategy_type.value
                 self.logger.debug(
                     "Sorted entry attributes",
-                    entry_dn=str(entry.dn) if entry.dn else None,
+                    entry_dn=self._entry_dn_value(entry),
                     attributes_count=u.count(original_attr_order),
                 )
         return r[m.Ldif.Entry].ok(new_entry)
@@ -696,7 +698,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 ]
                 self.logger.debug(
                     "Sorted entry attributes by custom order",
-                    entry_dn=str(entry.dn) if entry.dn else None,
+                    entry_dn=self._entry_dn_value(entry),
                     attributes_count=u.count(original_attr_order),
                     ordered_count=u.count(ordered_attrs),
                     remaining_count=u.count(remaining_attrs),

@@ -6,7 +6,6 @@ Tests all 830 uncovered lines in utilities.py with real data and automation.
 from __future__ import annotations
 
 import pytest
-
 from tests import m, u
 from tests.test_factory import FlextLdifTestFactory
 

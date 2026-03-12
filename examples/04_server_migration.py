@@ -17,7 +17,6 @@ Original: 252 lines | Advanced: ~200 lines with parallel migration + auto-detect
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
 
 from flext_core import r
 

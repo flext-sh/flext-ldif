@@ -212,8 +212,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             case [_, fmt] if fmt and "AUXILLARY" in fmt:
                 logger.debug(
                     "OID→RFC: AUXILLARY → AUXILIARY (original_format)",
-                    objectclass_name=getattr(oc_data, "name", None),
-                    objectclass_oid=getattr(oc_data, "oid", None),
+                    objectclass_name=oc_data.name,
+                    objectclass_oid=oc_data.oid,
                     original_format_preview=fmt[
                         : FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
                     ],
@@ -356,8 +356,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 "Replaced invalid SUBSTR rule",
                 attribute_name=attr_data.name,
                 attribute_oid=attr_data.oid,
-                original_substr=original_substr,
-                replacement_substr=fixed_substr,
+                original_substr=original_substr or "",
+                replacement_substr=fixed_substr or "",
             )
         is_boolean = u.Ldif.Schema.is_boolean_attribute(
             fixed_name, set(FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES)
@@ -423,8 +423,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             logger.debug(
                 "Moved caseIgnoreSubstringsMatch from EQUALITY to SUBSTR",
                 attribute_name=attr_data.name,
-                original_equality=attr_data.equality,
-                normalized_substr=normalized_substr,
+                original_equality=attr_data.equality or "",
+                normalized_substr=normalized_substr or "",
             )
             original_format: str | None = None
             key = c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT
