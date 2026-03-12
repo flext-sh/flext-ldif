@@ -1010,11 +1010,11 @@ class FlextLdifModelsDomains:
                     if field_name not in normalized_data:
                         continue
                     field_value = normalized_data[field_name]
-                    if field_value.__class__ is str:
+                    if isinstance(field_value, str):
                         normalized_data[field_name] = self._normalize_single_dn(
                             str(field_value)
                         )
-                    elif field_value.__class__ is list:
+                    elif isinstance(field_value, list):
                         field_value_list = [str(item) for item in field_value]
                         normalized_data[field_name] = self._normalize_dn_list(
                             field_value_list
@@ -1503,7 +1503,7 @@ class FlextLdifModelsDomains:
             if extra is None:
                 return {}
             result = extra.get("unconverted_attributes")
-            if result is not None and result.__class__ is dict:
+            if result is not None and isinstance(result, dict):
                 return result
             return {}
 
@@ -2272,9 +2272,9 @@ class FlextLdifModelsDomains:
                 return attributes
             attrs_dict: dict[str, list[str]] = {}
             for attr_name, attr_values in attributes.items():
-                if attr_values.__class__ is str:
+                if isinstance(attr_values, str):
                     values_list: list[str] = [str(attr_values)]
-                elif attr_values.__class__ is list:
+                elif isinstance(attr_values, list):
                     values_list = [str(v) for v in attr_values]
                 else:
                     values_list = [str(attr_values)]

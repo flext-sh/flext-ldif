@@ -31,7 +31,7 @@ class FlextLdifModelsMetadata:
 
         @override
         def __eq__(self, other: object) -> bool:
-            if other.__class__ is dict:
+            if isinstance(other, dict):
                 return dict(self.items()) == other
             if isinstance(other, type(self)):
                 return dict(self.items()) == dict(other.items())

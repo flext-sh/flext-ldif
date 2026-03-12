@@ -183,7 +183,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _is_metadata_scalar_or_container(value: object) -> bool:
         """Check supported metadata extension value shape."""
-        return value.__class__ in {str, int, float, bool, list, dict}
+        return isinstance(value, (str, int, float, bool, list, dict))
 
     @staticmethod
     def _normalize_permission(

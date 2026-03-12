@@ -1097,7 +1097,7 @@ class FlextLdifUtilitiesSchema:
         attribute_name: str | None, *, case_sensitive: bool = False
     ) -> str | None:
         """Normalize attribute name for case-insensitive comparisons."""
-        if not attribute_name or attribute_name.__class__ is not str:
+        if not attribute_name or not isinstance(attribute_name, str):
             return attribute_name
         return attribute_name if case_sensitive else attribute_name.lower()
 
@@ -1137,7 +1137,7 @@ class FlextLdifUtilitiesSchema:
         char_replacements: Mapping[str, str] | None = None,
     ) -> str | None:
         """Normalize attribute NAME field."""
-        if not name_value or name_value.__class__ is not str:
+        if not name_value or not isinstance(name_value, str):
             return name_value
         result = name_value
         if suffixes_to_remove is None:

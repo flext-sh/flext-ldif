@@ -476,7 +476,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         if not metadata or not metadata.extensions:
             return output_str
         x_origin_raw = metadata.extensions.get(c.Ldif.MetadataKeys.X_ORIGIN)
-        if x_origin_raw.__class__ is not str:
+        if not isinstance(x_origin_raw, str):
             return output_str
         if ")" not in output_str or "X-ORIGIN" in output_str:
             return output_str

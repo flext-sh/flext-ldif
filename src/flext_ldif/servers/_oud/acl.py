@@ -86,7 +86,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     @staticmethod
     def _scalar_or_list_value(value: object) -> bool:
         """Check if value is scalar metadata value or list."""
-        return value.__class__ in {str, int, float, bool, list}
+        return isinstance(value, (str, int, float, bool, list))
 
     @override
     def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
@@ -161,7 +161,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 k = str(key)
                 if isinstance(val, Mapping):
                     continue
-                if val.__class__ in {str, bool, int, float}:
+                if isinstance(val, (str, bool, int, float)):
                     perms_data[k] = val
                 elif isinstance(val, list):
                     str_list = [str(item) for item in val if isinstance(item, str)]
