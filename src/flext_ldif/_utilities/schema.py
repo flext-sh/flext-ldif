@@ -171,7 +171,9 @@ class FlextLdifUtilitiesSchema:
                 return validation_result
             unwrapped_validated = validation_result.value
             try:
-                current = FlextLdifModelsDomains.SchemaAttribute.model_validate(unwrapped_validated)
+                current = FlextLdifModelsDomains.SchemaAttribute.model_validate(
+                    unwrapped_validated
+                )
                 continue
             except (
                 ValueError,
@@ -184,7 +186,9 @@ class FlextLdifUtilitiesSchema:
                     "SchemaAttribute cast failed after transformation", error=str(exc)
                 )
             try:
-                current = FlextLdifModelsDomains.SchemaObjectClass.model_validate(unwrapped_validated)
+                current = FlextLdifModelsDomains.SchemaObjectClass.model_validate(
+                    unwrapped_validated
+                )
                 continue
             except (
                 ValueError,
@@ -741,7 +745,9 @@ class FlextLdifUtilitiesSchema:
         """Validate that transformation result matches input type."""
         try:
             _ = FlextLdifModelsDomains.SchemaAttribute.model_validate(schema_obj)
-            validated_attr = FlextLdifModelsDomains.SchemaAttribute.model_validate(unwrapped)
+            validated_attr = FlextLdifModelsDomains.SchemaAttribute.model_validate(
+                unwrapped
+            )
             return r[_SchemaElementUnion].ok(validated_attr)
         except (
             ValueError,
@@ -755,7 +761,9 @@ class FlextLdifUtilitiesSchema:
             )
         try:
             _ = FlextLdifModelsDomains.SchemaObjectClass.model_validate(schema_obj)
-            validated_oc = FlextLdifModelsDomains.SchemaObjectClass.model_validate(unwrapped)
+            validated_oc = FlextLdifModelsDomains.SchemaObjectClass.model_validate(
+                unwrapped
+            )
             return r[_SchemaElementUnion].ok(validated_oc)
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return r[

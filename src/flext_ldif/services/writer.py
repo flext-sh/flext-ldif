@@ -105,13 +105,17 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
         if format_options_raw is not None:
             validated_format_options: m.Ldif.WriteFormatOptions | None = None
             with suppress(Exception):
-                validated_format_options = m.Ldif.WriteFormatOptions.model_validate(format_options_raw)
+                validated_format_options = m.Ldif.WriteFormatOptions.model_validate(
+                    format_options_raw
+                )
             if validated_format_options is not None:
                 format_options = validated_format_options
             else:
                 validated_write_options: m.Ldif.WriteOptions | None = None
                 with suppress(Exception):
-                    validated_write_options = m.Ldif.WriteOptions.model_validate(format_options_raw)
+                    validated_write_options = m.Ldif.WriteOptions.model_validate(
+                        format_options_raw
+                    )
                 format_options = validated_write_options
         write_result = self.write(
             entries=entries,

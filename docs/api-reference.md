@@ -1019,7 +1019,7 @@ from flext_ldif import QuirkRegistryService
 class QuirkRegistryService:
     """Registry for managing LDAP server quirks."""
 
-    def get_schemas(self, server_type: str) -> list[SchemaProtocol]:
+    def get_schemas(self, server_type: str) -> list[Schema]:
         """Get schema quirks for server type.
 
         Args:

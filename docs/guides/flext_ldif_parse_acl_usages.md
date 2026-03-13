@@ -5,7 +5,7 @@
 - [SUMMARY](#summary)
 - [1. METHOD DEFINITIONS](#1-method-definitions)
   - [Base Class Definition](#base-class-definition)
-  - [Protocol Definition](#protocol-definition)
+  - [Definition](#protocol-definition)
 - [2. SERVER QUIRKS IMPLEMENTATIONS](#2-server-quirks-implementations)
   - [13 Server Quirks Classes Implementing parse()](#13-server-quirks-classes-implementing-parse)
   - [Implementation Pattern](#implementation-pattern)

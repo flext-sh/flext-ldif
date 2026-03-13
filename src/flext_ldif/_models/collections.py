@@ -210,6 +210,9 @@ class FlextLdifModelsCollections:
 
         def _entry_categories(self) -> dict[str, list[FlextLdifModelsDomains.Entry]]:
             return {
-                str(category): [FlextLdifModelsDomains.Entry.model_validate(value) for value in values]
+                str(category): [
+                    FlextLdifModelsDomains.Entry.model_validate(value)
+                    for value in values
+                ]
                 for category, values in self.categories.items()
             }

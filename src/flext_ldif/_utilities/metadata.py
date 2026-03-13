@@ -423,7 +423,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _extract_source_metadata(
-        model: p.Ldif.ModelWithValidationMetadataProtocol,
+        model: p.Ldif.ModelWithValidationMetadata,
     ) -> FlextLdifModelsMetadata.DynamicMetadata | None:
         """Extract validation metadata from a model."""
         source_metadata_obj = getattr(model, "validation_metadata", None)
@@ -542,7 +542,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _get_metadata_dict(
-        model: p.Ldif.ModelWithValidationMetadataProtocol,
+        model: p.Ldif.ModelWithValidationMetadata,
     ) -> dict[str, object]:
         """Get mutable metadata dict from model."""
         metadata_obj = getattr(model, "validation_metadata", None)
@@ -554,7 +554,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _get_or_create_target_metadata(
-        model: p.Ldif.ModelWithValidationMetadataProtocol,
+        model: p.Ldif.ModelWithValidationMetadata,
     ) -> FlextLdifModelsMetadata.DynamicMetadata:
         """Get or create validation metadata for a model."""
         target_metadata_obj = getattr(model, "validation_metadata", None)
@@ -605,7 +605,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _set_model_metadata(
-        model: p.Ldif.ModelWithValidationMetadataProtocol,
+        model: p.Ldif.ModelWithValidationMetadata,
         metadata: FlextLdifModelsMetadata.DynamicMetadata,
     ) -> None:
         """Set validation_metadata on model (handles both mutable and frozen models)."""
@@ -630,13 +630,13 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _track_metadata_item(
-        model: p.Ldif.ModelWithValidationMetadataProtocol,
+        model: p.Ldif.ModelWithValidationMetadata,
         metadata_key: str,
         item_data: object,
         *,
         append_to_list: bool = True,
         update_conversion_path: str | None = None,
-    ) -> p.Ldif.ModelWithValidationMetadataProtocol:
+    ) -> p.Ldif.ModelWithValidationMetadata:
         """Generic helper to track items in model validation_metadata."""
         metadata = FlextLdifUtilitiesMetadata._get_metadata_dict(model)
         if metadata_key not in metadata:

@@ -72,7 +72,8 @@ class FlextLdifModels(FlextModels):
             ) -> Sequence[FlextLdifModelsDomains.Entry]:
                 """Backward-compatible accessor for category entries."""
                 return [
-                    FlextLdifModelsDomains.Entry.model_validate(value) for value in self.get(category)
+                    FlextLdifModelsDomains.Entry.model_validate(value)
+                    for value in self.get(category)
                 ]
 
             def set_entries(

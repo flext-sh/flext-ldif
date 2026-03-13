@@ -295,7 +295,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     def filter_entries(
         self,
         entries: list[m.Ldif.Entry],
-        filter_func: p.Ldif.PredicateProtocol[m.Ldif.Entry],
+        filter_func: p.Ldif.Predicate[m.Ldif.Entry],
     ) -> r[list[m.Ldif.Entry]]:
         """Filter entries using predicate function."""
         try:

@@ -248,12 +248,12 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     def _register_in_registry(
         cls,
         quirk_instance: p.Ldif.SchemaQuirk | FlextLdifServersBase,
-        registry: p.Ldif.QuirkRegistryProtocol | object,
+        registry: p.Ldif.QuirkRegistry | object,
     ) -> None:
         """Helper method to register a quirk instance in the registry."""
 
         def validate_registry(
-            registry_obj: p.Ldif.QuirkRegistryProtocol | object,
+            registry_obj: p.Ldif.QuirkRegistry | object,
         ) -> Callable[[str, p.Ldif.SchemaQuirk | object], None] | None:
             """Validate registry has register method."""
             method = getattr(registry_obj, "register_quirk", None)
@@ -423,7 +423,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 domain_entry = entries[0]
                 if isinstance(domain_entry, m.Ldif.Entry):
                     return r[m.Ldif.Entry | str].ok(domain_entry)
-                public_entry = m.Ldif.Entry.model_validate(domain_entry.model_dump(mode="python"))
+                public_entry = m.Ldif.Entry.model_validate(
+                    domain_entry.model_dump(mode="python")
+                )
                 return r[m.Ldif.Entry | str].ok(public_entry)
             return r[m.Ldif.Entry | str].ok("")
         error_msg: str = parse_result.error or "Parse failed"

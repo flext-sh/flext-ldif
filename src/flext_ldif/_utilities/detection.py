@@ -17,7 +17,7 @@ class FlextLdifUtilitiesDetection:
     @staticmethod
     def _is_server_constants_class(
         value: type, required_attr: str | None = None
-    ) -> TypeGuard[type[p.Ldif.ServerConstantsProtocol]]:
+    ) -> TypeGuard[type[p.Ldif.ServerConstants]]:
         if required_attr is not None:
             return getattr(value, required_attr, None) is not None
         return all(
@@ -36,7 +36,7 @@ class FlextLdifUtilitiesDetection:
 
         def _get_constants(
             self, required_attr: str | None = None
-        ) -> type[p.Ldif.ServerConstantsProtocol] | None:
+        ) -> type[p.Ldif.ServerConstants] | None:
             """Get Constants class from server class via MRO traversal."""
             for cls in type(self).__mro__:
                 if (

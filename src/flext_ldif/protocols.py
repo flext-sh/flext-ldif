@@ -34,19 +34,19 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class EntryWithDnProtocol(Protocol):
+        class EntryWithDn(Protocol):
             """Protocol for objects that have a DN attribute."""
 
             dn: str | None
 
         @runtime_checkable
-        class AttributeValueProtocol(Protocol):
+        class AttributeValue(Protocol):
             """Protocol for objects that have attribute values."""
 
             values: list[str] | str
 
         @runtime_checkable
-        class SchemaMetadataProtocol(Protocol):
+        class SchemaMetadata(Protocol):
             """Protocol for schema quirk metadata."""
 
             @property
@@ -141,7 +141,7 @@ class FlextLdifProtocols(FlextProtocols):
             @property
             def metadata(
                 self,
-            ) -> FlextLdifProtocols.Ldif.SchemaMetadataProtocol | None:
+            ) -> FlextLdifProtocols.Ldif.SchemaMetadata | None:
                 """Get quirk-specific metadata."""
                 ...
 
@@ -187,12 +187,12 @@ class FlextLdifProtocols(FlextProtocols):
             @property
             def metadata(
                 self,
-            ) -> FlextLdifProtocols.Ldif.SchemaMetadataProtocol | None:
+            ) -> FlextLdifProtocols.Ldif.SchemaMetadata | None:
                 """Get quirk-specific metadata."""
                 ...
 
         @runtime_checkable
-        class HasParseMethodProtocol(Protocol):
+        class HasParseMethod(Protocol):
             """Protocol for objects with parse method."""
 
             def parse(
@@ -202,13 +202,13 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class HasEntriesProtocol(Protocol):
+        class HasEntries(Protocol):
             """Protocol for objects that have an entries attribute."""
 
             entries: Sequence[FlextLdifProtocols.Ldif.Entry]
 
         @runtime_checkable
-        class SchemaConversionPipelineConfigProtocol(Protocol):
+        class SchemaConversionPipelineConfig(Protocol):
             """Protocol for schema conversion pipeline configuration objects."""
 
             @property
@@ -257,7 +257,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class EntryResultProtocol(Protocol):
+        class EntryResult(Protocol):
             """Protocol for EntryResult model."""
 
             entries: Sequence[FlextLdifProtocols.Ldif.Entry]
@@ -350,7 +350,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class QuirkRegistryProtocol(Protocol):
+        class QuirkRegistry(Protocol):
             """Protocol for quirk registry implementations."""
 
             def schema(
@@ -370,7 +370,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class ServerConstantsProtocol(Protocol):
+        class ServerConstants(Protocol):
             """Protocol for server Constants classes."""
 
             SERVER_TYPE: str
@@ -384,13 +384,13 @@ class FlextLdifProtocols(FlextProtocols):
             CATEGORY_OBJECTCLASSES: Mapping[str, frozenset[str]]
 
         @runtime_checkable
-        class ModelWithValidationMetadataProtocol(Protocol):
+        class ModelWithValidationMetadata(Protocol):
             """Protocol for models with validation_metadata attribute."""
 
             validation_metadata: m.ConfigMap | None
 
         @runtime_checkable
-        class TransformerProtocol[T](Protocol):
+        class Transformer[T](Protocol):
             """Protocol for transformers in pipelines."""
 
             def apply(self, item: T) -> T | r[T]:
@@ -398,7 +398,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class BatchTransformerProtocol[T](Protocol):
+        class BatchTransformer[T](Protocol):
             """Protocol for batch transformers."""
 
             def apply_batch(self, items: Sequence[T]) -> r[list[T]]:
@@ -406,22 +406,22 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class FilterProtocol[T](Protocol):
+        class Filter[T](Protocol):
             """Protocol for filters in pipelines."""
 
             def __and__(
-                self, other: FlextLdifProtocols.Ldif.FilterProtocol[T]
-            ) -> FlextLdifProtocols.Ldif.FilterProtocol[T]:
+                self, other: FlextLdifProtocols.Ldif.Filter[T]
+            ) -> FlextLdifProtocols.Ldif.Filter[T]:
                 """AND combination."""
                 ...
 
-            def __invert__(self) -> FlextLdifProtocols.Ldif.FilterProtocol[T]:
+            def __invert__(self) -> FlextLdifProtocols.Ldif.Filter[T]:
                 """NOT negation."""
                 ...
 
             def __or__(
-                self, other: FlextLdifProtocols.Ldif.FilterProtocol[T]
-            ) -> FlextLdifProtocols.Ldif.FilterProtocol[T]:
+                self, other: FlextLdifProtocols.Ldif.Filter[T]
+            ) -> FlextLdifProtocols.Ldif.Filter[T]:
                 """OR combination."""
                 ...
 
@@ -430,7 +430,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class ValidatorProtocol[T](Protocol):
+        class Validator[T](Protocol):
             """Protocol for validators."""
 
             def validate(self, item: T) -> r[T]:
@@ -438,7 +438,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class ValidationRuleProtocol[T](Protocol):
+        class ValidationRule[T](Protocol):
             """Protocol for validation rules."""
 
             name: str
@@ -448,7 +448,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class PipelineStepProtocol[TIn, TOut](Protocol):
+        class PipelineStep[TIn, TOut](Protocol):
             """Protocol for pipeline steps."""
 
             name: str
@@ -458,7 +458,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class FluentBuilderProtocol[TConfig](Protocol):
+        class FluentBuilder[TConfig](Protocol):
             """Protocol for fluent builders."""
 
             def build(self) -> TConfig:
@@ -466,7 +466,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class FluentOpsProtocol[T](Protocol):
+        class FluentOps[T](Protocol):
             """Protocol for fluent operation chains."""
 
             def build(self) -> r[T]:
@@ -474,7 +474,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class ServerBaseProtocol(Protocol):
+        class ServerBase(Protocol):
             """Protocol for LDIF/LDAP server quirk implementations."""
 
             server_type: str
@@ -513,11 +513,11 @@ class FlextLdifProtocols(FlextProtocols):
         EntryQuirk = EntryQuirk
         Acl = Acl
         Parser = SchemaQuirk  # Often referred to as Parser in tests
-        QuirkRegistry = QuirkRegistryProtocol
-        ServerBase = ServerBaseProtocol
+        QuirkRegistry = QuirkRegistry
+        ServerBase = ServerBase
 
         @runtime_checkable
-        class LoadableProtocol[T](Protocol):
+        class Loadable[T](Protocol):
             """Protocol for loadable data sources."""
 
             def load(self) -> r[T]:
@@ -525,7 +525,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class PredicateProtocol[T](Protocol):
+        class Predicate[T](Protocol):
             """Protocol for predicate functions that test items."""
 
             def __call__(self, item: T) -> bool:

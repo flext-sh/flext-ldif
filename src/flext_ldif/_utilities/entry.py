@@ -391,7 +391,9 @@ class FlextLdifUtilitiesEntry:
     ) -> Mapping[str, list[t.Ldif.AttributeValue]]:
         """Batch normalize attributes from server format to RFC format."""
         if config is None:
-            config = FlextLdifModelsSettings.AttributeNormalizeConfig.model_validate(kwargs)
+            config = FlextLdifModelsSettings.AttributeNormalizeConfig.model_validate(
+                kwargs
+            )
         result: dict[str, list[str | bytes]] = {}
         operational_lower: set[str] = (
             {a.lower() for a in config.operational_attrs}

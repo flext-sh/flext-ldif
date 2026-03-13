@@ -111,7 +111,7 @@ class FlextLdifServer(FlextRegistry):
 
     @override
     def schema(self, server_type: str) -> FlextLdifServersBaseSchema | None:
-        """Get schema quirk for a server type (QuirkRegistryProtocol compliance)."""
+        """Get schema quirk for a server type (QuirkRegistry compliance)."""
         return self.get_schema_quirk(server_type)
 
     def schema_quirk(self, server_type: str) -> FlextLdifServersBaseSchema | None:

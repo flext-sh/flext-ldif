@@ -463,7 +463,9 @@ class FlextLdifUtilitiesDN:
             stats_domain = FlextLdifModelsDomains.DNStatistics.create_minimal(
                 original_dn
             )
-            stats = FlextLdifModelsDomains.DNStatistics.model_validate(stats_domain.model_dump())
+            stats = FlextLdifModelsDomains.DNStatistics.model_validate(
+                stats_domain.model_dump()
+            )
             return (original_dn, stats)
         result, transformations, flags = FlextLdifUtilitiesDN._apply_dn_transformations(
             original_dn

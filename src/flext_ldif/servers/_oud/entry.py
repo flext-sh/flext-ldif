@@ -148,7 +148,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """Initialize OUD entry quirk.
 
         Args:
-            entry_service: Injected entry service (optional, must satisfy HasParseMethodProtocol)
+            entry_service: Injected entry service (optional, must satisfy HasParseMethod)
             _parent_quirk: Reference to parent FlextLdifServersBase (optional)
             **kwargs: Additional arguments passed to parent
 
@@ -192,7 +192,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if not existing_metadata:
             existing_metadata = m.Ldif.QuirkMetadata.create_for("oud")
         else:
-            existing_metadata = m.Ldif.QuirkMetadata.model_validate(existing_metadata.model_dump())
+            existing_metadata = m.Ldif.QuirkMetadata.model_validate(
+                existing_metadata.model_dump()
+            )
         new_attributes_dict, commented_acl_values, hidden_attrs = (
             FlextLdifServersOudEntry.extract_and_remove_acl_attributes(
                 entry_data.attributes.attributes, acl_attribute_names
