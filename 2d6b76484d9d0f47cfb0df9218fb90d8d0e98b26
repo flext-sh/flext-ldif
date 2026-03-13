@@ -1,0 +1,49 @@
+src/flext_ldif/_models/base.py
+  1300c54449415602 5-6
+tests/unit/_utilities/oid/test_oid_utilities.py
+  ce5e07fdfc2b7f80 6
+src/flext_ldif/_models/settings.py
+  ce5e07fdfc2b7f80 2023-2026
+  1300c54449415602 1916-1920,1924,1927-1930,1932,1935-1941,1952-1955,1969-1972,1974,1978,1981-1984,1986,1989-1995,2011-2014,2042-2046,2048-2050,2055,2059-2061,2076-2084,2086-2088,2149-2152
+src/flext_ldif/_models/domain.py
+  1300c54449415602 580-583,3405-3406,3410-3411
+tests/unit/_utilities/parser/test_parser_utilities.py
+  ce5e07fdfc2b7f80 3
+src/flext_ldif/models.py
+  1300c54449415602 140-143
+src/flext_ldif/protocols.py
+  ce5e07fdfc2b7f80 284,290
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "2d6b76484d9d0f47cfb0df9218fb90d8d0e98b26",
+  "prompts": {
+    "1300c54449415602": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_317e21e59ffeOl8GXb1MCEOvu4",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 97,
+      "total_deletions": 72,
+      "accepted_lines": 86,
+      "overriden_lines": 0
+    },
+    "ce5e07fdfc2b7f80": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_31c0d781effeEYhdKVHKtAobke",
+        "model": "kimi-for-coding/k2p5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 17,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    }
+  }
+}
