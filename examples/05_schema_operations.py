@@ -18,10 +18,16 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path
+from typing import TypedDict
 
 from flext_core import r
 
 from flext_ldif import FlextLdif, FlextLdifModels, m, u
+
+
+class _InvalidScenario(TypedDict):
+    dn: str
+    attributes: dict[str, list[str]]
 
 
 def intelligent_schema_building() -> r[list[m.Ldif.Entry]]:
@@ -103,7 +109,7 @@ def intelligent_schema_building() -> r[list[m.Ldif.Entry]]:
             "name": "inetOrgPerson",
             "description": "Internet Organization Person",
             "sup": "person",
-            "must": [],
+            "must": ["cn"],
             "may": ["mail", "departmentNumber"],
         },
         {
@@ -125,10 +131,10 @@ def intelligent_schema_building() -> r[list[m.Ldif.Entry]]:
             "sup": [str(oc_def["sup"])],
         }
         must_raw = oc_def.get("must")
-        if isinstance(must_raw, list) and all(isinstance(x, str) for x in must_raw):
+        if isinstance(must_raw, list):
             attrs["must"] = must_raw
         may_raw = oc_def.get("may")
-        if isinstance(may_raw, list) and all(isinstance(x, str) for x in may_raw):
+        if isinstance(may_raw, list):
             attrs["may"] = may_raw
         oc_result = api.create_entry(dn=oc_dn, attributes=attrs)
         return oc_result.map_or(None)
@@ -143,7 +149,7 @@ def intelligent_schema_building() -> r[list[m.Ldif.Entry]]:
 def parallel_schema_validation() -> r[dict[str, object]]:
     """Parallel schema validation with comprehensive error analysis."""
     api = FlextLdif.get_instance()
-    test_entries = []
+    test_entries: list[m.Ldif.Entry] = []
     for i in range(30):
         if i % 3 == 0:
             entry_result = api.create_entry(
@@ -178,7 +184,7 @@ def parallel_schema_validation() -> r[dict[str, object]]:
             )
         if entry_result.is_success:
             test_entries.append(entry_result.value)
-    invalid_scenarios = [
+    invalid_scenarios: list[_InvalidScenario] = [
         {
             "dn": "cn=Invalid Person,ou=People,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["Invalid Person"]},
@@ -204,20 +210,14 @@ def parallel_schema_validation() -> r[dict[str, object]]:
     for invalid in invalid_scenarios:
         dn = invalid["dn"]
         attributes = invalid["attributes"]
-        if isinstance(dn, dict):
-            continue
-        if not isinstance(dn, str):
-            continue
-        if isinstance(attributes, dict):
-            attrs_dict = attributes
-        else:
-            continue
-        entry_result = api.create_entry(dn=dn, attributes=attrs_dict)
+        entry_result = api.create_entry(dn=dn, attributes=attributes)
         if entry_result.is_success:
             test_entries.append(entry_result.value)
     validation_result = api.validate_entries(test_entries)
     if validation_result.is_failure:
-        return r.fail(f"Schema validation failed: {validation_result.error}")
+        return r[dict[str, object]].fail(
+            f"Schema validation failed: {validation_result.error}"
+        )
     validation_report = validation_result.value
     error_analysis: dict[str, int] = {}
     analysis: dict[str, object] = {
@@ -272,11 +272,11 @@ def schema_migration_pipeline() -> r[dict[str, object]]:
     batch_result = u.process(
         list(source_dir.glob("*.ldif")), parse_file, on_error="skip"
     )
-    all_entries = (
-        [e for sub in batch_result.value for e in sub]
-        if batch_result.is_success
-        else []
-    )
+    all_entries: list[m.Ldif.Entry]
+    if batch_result.is_success:
+        all_entries = [e for sub in batch_result.value for e in sub]
+    else:
+        all_entries = []
     migration_results["source_entries_parsed"] = len(all_entries)
     pre_validation = api.validate_entries(all_entries)
     if pre_validation.is_success:
@@ -311,11 +311,11 @@ def schema_migration_pipeline() -> r[dict[str, object]]:
         return migrate_result.map_or(None)
 
     batch_result = u.process(all_entries, migrate_entry, on_error="skip")
-    migrated_entries = (
-        [x for x in batch_result.value if x is not None]
-        if batch_result.is_success
-        else []
-    )
+    migrated_entries: list[m.Ldif.Entry]
+    if batch_result.is_success:
+        migrated_entries = [x for x in batch_result.value if x is not None]
+    else:
+        migrated_entries = []
     migration_results["entries_migrated"] = len(migrated_entries)
     post_validation = api.validate_entries(migrated_entries)
     if post_validation.is_success:
@@ -372,7 +372,7 @@ def batch_schema_operations() -> r[dict[str, object]]:
             "inetOrgPerson",
             "Internet Organization Person",
             "person",
-            [],
+            ["cn"],
             ["departmentNumber", "employeeNumber"],
         ),
         ("groupOfNames", "Group of Names", "top", ["cn", "member"], ["description"]),
@@ -445,10 +445,14 @@ def railway_schema_pipeline() -> r[dict[str, object]]:
     schema_entries = schema_build_result.value
     schema_validation = api.validate_entries(schema_entries)
     if schema_validation.is_failure:
-        return r.fail(f"Schema validation failed: {schema_validation.error}")
+        return r[dict[str, object]].fail(
+            f"Schema validation failed: {schema_validation.error}"
+        )
     schema_report = schema_validation.value
     if not schema_report.is_valid:
-        return r.fail(f"Schema entries invalid: {schema_report.errors}")
+        return r[dict[str, object]].fail(
+            f"Schema entries invalid: {schema_report.errors}"
+        )
 
     def create_test_entry(i: int) -> m.Ldif.Entry | None:
         """Create test entry compliant with schema."""
@@ -486,10 +490,12 @@ def railway_schema_pipeline() -> r[dict[str, object]]:
     )
     entry_validation = api.validate_entries(test_entries)
     if entry_validation.is_failure:
-        return r.fail(f"Entry validation failed: {entry_validation.error}")
+        return r[dict[str, object]].fail(
+            f"Entry validation failed: {entry_validation.error}"
+        )
     entry_report = entry_validation.value
     if not entry_report.is_valid:
-        return r.fail(f"Test entries invalid: {entry_report.errors}")
+        return r[dict[str, object]].fail(f"Test entries invalid: {entry_report.errors}")
     process_result = api.process(
         "transform", test_entries, parallel=True, max_workers=4
     )

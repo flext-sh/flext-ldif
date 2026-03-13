@@ -48,9 +48,7 @@ class ExampleServerMigration:
         batch_result = u.process(list(range(20)), create_entry_data, on_error="skip")
         source_data: list[str] = []
         if batch_result.is_success:
-            value = batch_result.value
-            if isinstance(value, list):
-                source_data = value
+            source_data = batch_result.value
 
         def write_file(item: tuple[int, str]) -> None:
             """Write entry to file."""
@@ -135,7 +133,10 @@ class ExampleServerMigration:
         api = FlextLdif.get_instance()
         test_ldif = 'dn: cn=Server Comparison,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Server Comparison\nsn: Test\nmail: comparison@example.com\n# OID-specific attributes\norclguid: abc123def456\norclaci: access to attr=mail by * read\n# OUD-specific attributes\naci: (targetattr="mail")(version 3.0; acl "mail access"; allow (read,search) userdn="ldap:///anyone";)\n# OpenLDAP-specific attributes\nentryUUID: 12345678-1234-1234-1234-123456789012\nentryCSN: 20240101000000.000000Z#000000#000#000000\n'
         servers: list[str] = ["rfc", "oid", "oud", "openldap"]
-        comparison_results: dict[str, object] = {}
+        comparison_results: dict[
+            str,
+            dict[str, bool | int | str | None],
+        ] = {}
         for server in servers:
             server_type = server
             parse_result = api.parse(test_ldif, server_type=server_type)
@@ -151,13 +152,12 @@ class ExampleServerMigration:
                     if validate_result.is_success:
                         report = validate_result.value
                         server_result = comparison_results[server]
-                        if isinstance(server_result, dict):
-                            server_result["validation"] = {
-                                "is_valid": report.is_valid,
-                                "valid_entries": report.valid_entries,
-                                "invalid_entries": report.invalid_entries,
-                                "error_count": len(report.errors),
-                            }
+                        server_result["validation_is_valid"] = report.is_valid
+                        server_result["validation_valid_entries"] = report.valid_entries
+                        server_result["validation_invalid_entries"] = (
+                            report.invalid_entries
+                        )
+                        server_result["validation_error_count"] = len(report.errors)
             else:
                 comparison_results[server] = {
                     "parsed_successfully": False,
@@ -167,7 +167,7 @@ class ExampleServerMigration:
         successful_parses = sum(
             1
             for res in comparison_results.values()
-            if isinstance(res, dict) and res.get("parsed_successfully", False)
+            if res.get("parsed_successfully", False)
         )
         total_servers = len(servers)
         return r.ok({
@@ -198,8 +198,8 @@ class ExampleServerMigration:
             source_server=source_server_typed,
             target_server="oud",
             options=m.Ldif.MigrateOptions(
-                write_options=m.Ldif.LdifResults.WriteFormatOptions(
-                    fold_long_lines=False, sort_attributes=True
+                write_options=m.Ldif.WriteConfig(
+                    fold_lines=False,
                 )
             ),
         )
@@ -249,8 +249,8 @@ class ExampleServerMigration:
             source_server="oid",
             target_server="oud",
             options=m.Ldif.MigrateOptions(
-                write_options=m.Ldif.LdifResults.WriteFormatOptions(
-                    fold_long_lines=False, sort_attributes=True
+                write_options=m.Ldif.WriteConfig(
+                    fold_lines=False,
                 )
             ),
         )

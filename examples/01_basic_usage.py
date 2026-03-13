@@ -22,7 +22,7 @@ SRP: Each method does ONE thing, composition handles complexity
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Final, cast
+from typing import Final
 
 from flext_core import FlextContext, FlextLogger, r
 
@@ -40,7 +40,7 @@ class BasicUsageDry:
     def batch_transform() -> r[list[m.Ldif.Entry]]:
         """DRY batch transformation - returns created entries."""
         api = FlextLdif.get_instance()
-        entries = []
+        entries: list[m.Ldif.Entry] = []
         for i in range(10):
             result = api.create_entry(
                 dn=f"cn=User{i},ou=People,dc=example,dc=com",
@@ -90,7 +90,7 @@ class BasicUsageDry:
         if parse_result.is_failure:
             return r[str].fail(parse_result.error or "Parse failed")
 
-        parsed_entries = cast("list[m.Ldif.Entry]", parse_result.value)
+        parsed_entries = parse_result.value
         validate_result = api.validate_entries(parsed_entries)
         if validate_result.is_failure:
             return r[str].fail(validate_result.error or "Validation failed")
