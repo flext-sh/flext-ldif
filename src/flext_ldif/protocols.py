@@ -359,9 +359,7 @@ class FlextLdifProtocols(FlextProtocols):
                 """Get schema quirk for server type."""
                 ...
 
-            def acl(
-                self, server_type: str
-            ) -> FlextLdifProtocols.Ldif.AclQuirk | None:
+            def acl(self, server_type: str) -> FlextLdifProtocols.Ldif.AclQuirk | None:
                 """Get ACL quirk for server type."""
                 ...
 

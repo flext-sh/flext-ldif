@@ -869,11 +869,7 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_quirk_parse_success_and_unwrap(
-        quirk: (
-            p.Ldif.SchemaQuirk
-            | p.Ldif.AclQuirk
-            | p.Ldif.EntryQuirk
-        ),
+        quirk: (p.Ldif.SchemaQuirk | p.Ldif.AclQuirk | p.Ldif.EntryQuirk),
         content: str,
         parse_method: str | None = None,
     ) -> (
@@ -1747,11 +1743,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def quirk_parse_and_unwrap(
-        quirk: (
-            p.Ldif.SchemaQuirk
-            | p.Ldif.AclQuirk
-            | p.Ldif.EntryQuirk
-        ),
+        quirk: (p.Ldif.SchemaQuirk | p.Ldif.AclQuirk | p.Ldif.EntryQuirk),
         content: str,
         msg: str | None = None,
         parse_method: str | None = None,
