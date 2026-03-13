@@ -1,0 +1,43 @@
+src/flext_ldif/protocols.py
+  ce5e07fdfc2b7f80 320,324
+  1300c54449415602 489-513,527
+src/flext_ldif/services/server.py
+  ce5e07fdfc2b7f80 112-115
+src/flext_ldif/_models/processing.py
+  1300c54449415602 5-6
+src/flext_ldif/settings.py
+  1300c54449415602 15-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "fe8085602c40762e7abcca6e4c89df72d3b56fc0",
+  "prompts": {
+    "1300c54449415602": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_317e21e59ffeOl8GXb1MCEOvu4",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 30,
+      "total_deletions": 0,
+      "accepted_lines": 30,
+      "overriden_lines": 0
+    },
+    "ce5e07fdfc2b7f80": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_31c0d781effeEYhdKVHKtAobke",
+        "model": "kimi-for-coding/k2p5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 2,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}
