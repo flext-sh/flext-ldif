@@ -1,0 +1,40 @@
+src/flext_ldif/servers/base.py
+  8d15f73659801343 21-22
+src/flext_ldif/_utilities/filters.py
+  8d15f73659801343 14-15,37
+tests/integration/test_zero_data_loss_schema.py
+  ce5e07fdfc2b7f80 35,84,141,296,462
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "0fa872c737a9b1db2da9a075be2410c75859f36f",
+  "prompts": {
+    "8d15f73659801343": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_317c8daa4ffeZFqGQ1ResSXlsF",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 13,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    },
+    "ce5e07fdfc2b7f80": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_31c0d781effeEYhdKVHKtAobke",
+        "model": "kimi-for-coding/k2p5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 17,
+      "accepted_lines": 11,
+      "overriden_lines": 0
+    }
+  }
+}
