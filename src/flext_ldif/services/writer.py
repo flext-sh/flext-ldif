@@ -44,8 +44,8 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
         elif not isinstance(format_options, Mapping):
             result_raw = m.Ldif.WriteFormatOptions()
         else:
-            result_raw = m.Ldif.WriteFormatOptions(dict(format_options))
-        return m.Ldif.WriteFormatOptions(result_raw)
+            result_raw = m.Ldif.WriteFormatOptions.model_validate(dict(format_options))
+        return m.Ldif.WriteFormatOptions.model_validate(result_raw)
 
     @staticmethod
     def _normalize_write_format(
@@ -64,7 +64,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
     ) -> m.Ldif.WriteFormatOptions:
         dumped = write_options.model_dump(exclude_none=True)
         normalized = FlextLdifWriter._normalize_write_format(dumped)
-        return m.Ldif.WriteFormatOptions(normalized)
+        return m.Ldif.WriteFormatOptions.model_validate(normalized)
 
     @override
     def execute(self, params: object | None = None) -> r[m.Ldif.WriteResponse]:
@@ -80,7 +80,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
         for entry_candidate in entry_candidates:
             validated_entry: m.Ldif.Entry | None = None
             with suppress(Exception):
-                validated_entry = m.Ldif.Entry(entry_candidate)
+                validated_entry = m.Ldif.Entry.model_validate(entry_candidate)
             if validated_entry is not None:
                 entries.append(validated_entry)
         target_server_type_raw = u.take(
@@ -105,13 +105,13 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
         if format_options_raw is not None:
             validated_format_options: m.Ldif.WriteFormatOptions | None = None
             with suppress(Exception):
-                validated_format_options = m.Ldif.WriteFormatOptions(format_options_raw)
+                validated_format_options = m.Ldif.WriteFormatOptions.model_validate(format_options_raw)
             if validated_format_options is not None:
                 format_options = validated_format_options
             else:
                 validated_write_options: m.Ldif.WriteOptions | None = None
                 with suppress(Exception):
-                    validated_write_options = m.Ldif.WriteOptions(format_options_raw)
+                    validated_write_options = m.Ldif.WriteOptions.model_validate(format_options_raw)
                 format_options = validated_write_options
         write_result = self.write(
             entries=entries,
@@ -123,7 +123,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
             return r[m.Ldif.WriteResponse].fail(write_result.error)
         result_value = write_result.value
         with suppress(Exception):
-            result_response = m.Ldif.WriteResponse(result_value)
+            result_response = m.Ldif.WriteResponse.model_validate(result_value)
             return r[m.Ldif.WriteResponse].ok(result_response)
         return r[m.Ldif.WriteResponse].ok(
             m.Ldif.WriteResponse(

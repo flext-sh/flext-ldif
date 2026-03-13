@@ -151,16 +151,13 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
 
     @classmethod
     @override
-    def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+    def _runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
         """Allow per-instance config overrides on initialization."""
-        base_options = super()._runtime_bootstrap_options()
+        base_options = m.RuntimeBootstrapOptions(config_type=FlextLdifSettings)
         overrides = cls._init_config_overrides
         if not overrides:
             return base_options
-        model_copy = getattr(base_options, "model_copy", None)
-        if model_copy:
-            return model_copy(update={"config_overrides": dict(overrides)})
-        return base_options
+        return base_options.model_copy(update={"config_overrides": dict(overrides)})
 
     @classmethod
     def _set_init_config_overrides(cls, config: FlextLdifSettings) -> None:
@@ -220,7 +217,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             _ = self.parser
             _ = self.writer
             _ = self.detector
-            health_entry = m.Ldif.Entry({
+            health_entry = m.Ldif.Entry.model_validate({
                 "dn": "cn=health-check",
                 "attributes": {"cn": ["health-check"]},
             })
@@ -243,9 +240,9 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             case m.Ldif.Entry() as ldif_entry:
                 entry_typed = ldif_entry
             case BaseModel() as model:
-                entry_typed = m.Ldif.Entry(model)
+                entry_typed = m.Ldif.Entry.model_validate(model)
             case _:
-                entry_typed = m.Ldif.Entry(entry)
+                entry_typed = m.Ldif.Entry.model_validate(entry)
         return self.acl_service.extract_acls_from_entry(entry_typed, server_type)
 
     def filter(
@@ -347,9 +344,9 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             case m.Ldif.Entry() as ldif_entry:
                 entry_typed = ldif_entry
             case BaseModel() as model:
-                entry_typed = m.Ldif.Entry(model)
+                entry_typed = m.Ldif.Entry.model_validate(model)
             case _:
-                entry_typed = m.Ldif.Entry(entry)
+                entry_typed = m.Ldif.Entry.model_validate(entry)
         return FlextLdifEntries.get_entry_attributes(entry_typed)
 
     def get_entry_dn(
@@ -366,9 +363,9 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             case m.Ldif.Entry() as ldif_entry:
                 entry_typed = ldif_entry
             case BaseModel() as model:
-                entry_typed = m.Ldif.Entry(model)
+                entry_typed = m.Ldif.Entry.model_validate(model)
             case _:
-                entry_typed = m.Ldif.Entry(entry)
+                entry_typed = m.Ldif.Entry.model_validate(entry)
         return FlextLdifEntries.get_entry_objectclasses(entry_typed)
 
     def get_entry_statistics(

@@ -291,7 +291,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 attr_data.metadata.extensions[
                     c.Ldif.MetadataKeys.SCHEMA_SOURCE_SERVER
                 ] = "oid"
-                metadata_public = m.Ldif.QuirkMetadata(attr_data.metadata.model_dump())
+                metadata_public = m.Ldif.QuirkMetadata.model_validate(attr_data.metadata.model_dump())
                 u.Ldif.Metadata.preserve_schema_formatting(
                     metadata_public, attr_definition
                 )

@@ -589,7 +589,7 @@ class RfcTestHelpers:
             raise AssertionError(
                 f"Expected {expected_count} entries, got {len(entries)}"
             )
-        return [m.Ldif.Entry(entry) for entry in entries]
+        return [m.Ldif.Entry.model_validate(entry) for entry in entries]
 
     @staticmethod
     def test_entry_create_and_unwrap(
@@ -1228,7 +1228,7 @@ class RfcTestHelpers:
         result = parser_service.parse_string(content=content, server_type="rfc")
         if result.is_failure:
             raise AssertionError(f"Parsing failed: {result.error}")
-        entries = [m.Ldif.Entry(entry) for entry in result.value.entries]
+        entries = [m.Ldif.Entry.model_validate(entry) for entry in result.value.entries]
         if len(entries) != expected_count:
             raise AssertionError(
                 f"Expected {expected_count} entries, got {len(entries)}"
@@ -1274,7 +1274,7 @@ class RfcTestHelpers:
         result = parser_service.parse_string(content=content, server_type="rfc")
         if result.is_failure:
             raise AssertionError(f"Parsing failed: {result.error}")
-        entries = [m.Ldif.Entry(entry) for entry in result.value.entries]
+        entries = [m.Ldif.Entry.model_validate(entry) for entry in result.value.entries]
         if len(entries) != expected_count:
             raise AssertionError(
                 f"Expected {expected_count} entries, got {len(entries)}"
@@ -1818,7 +1818,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def quirk_write_and_unwrap(
-        quirk: p.Ldif.SchemaQuirk,
+        quirk: p.Ldif.SchemaQuirk | p.Ldif.AclQuirk,
         data: m.Ldif.Entry
         | m.Ldif.SchemaAttribute
         | m.Ldif.SchemaObjectClass

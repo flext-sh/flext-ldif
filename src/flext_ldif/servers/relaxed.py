@@ -492,7 +492,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     raw_acl=acl_line,
                     metadata=m.Ldif.QuirkMetadata(
                         quirk_type=self._get_server_type(),
-                        extensions=m.Ldif.DynamicMetadata({
+                        extensions=m.Ldif.DynamicMetadata.model_validate({
                             "original_format": acl_line.strip()
                         }),
                     ),
@@ -656,7 +656,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 format_details = m.Ldif.FormatDetails(
                     dn_line=entry_dn, spacing=entry_dn
                 )
-                case_metadata = m.Ldif.DynamicMetadata(original_attribute_case)
+                case_metadata = m.Ldif.DynamicMetadata.model_validate(
+                    original_attribute_case
+                )
                 metadata = m.Ldif.QuirkMetadata(
                     quirk_type="relaxed",
                     original_format_details=format_details,

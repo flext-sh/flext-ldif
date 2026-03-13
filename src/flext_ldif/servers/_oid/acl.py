@@ -163,7 +163,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         if not permissions:
             return {}
         try:
-            permissions_model = m.Ldif.AclPermissions(permissions)
+            permissions_model = m.Ldif.AclPermissions.model_validate(permissions)
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return {}
         raw_perms = permissions_model.model_dump()
@@ -250,7 +250,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         """Check if this is an Oracle OID ACL."""
         if not isinstance(acl_line, str):
             try:
-                acl_model = m.Ldif.Acl(acl_line)
+                acl_model = m.Ldif.Acl.model_validate(acl_line)
             except (
                 ValueError,
                 KeyError,
@@ -341,7 +341,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     ) -> Mapping[str, t.Scalar | list[str] | None]:
         """Extract extensions dict from metadata, converting types if needed."""
         try:
-            metadata = m.Ldif.QuirkMetadata(metadata)
+            metadata = m.Ldif.QuirkMetadata.model_validate(metadata)
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return {}
         return getattr(metadata, "extensions", None) or {}
@@ -545,7 +545,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 FlextLdifServersOidConstants.ACL_CONSTRAIN_TO_ADDED_PATTERN,
                 group=1,
             )
-            config = self.OidAclMetadataConfig({
+            config = self.OidAclMetadataConfig.model_validate({
                 "acl_line": acl_line,
                 "oid_subject_type": oid_subject_type,
                 "rfc_subject_type": rfc_subject_type,
@@ -574,7 +574,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 target=m.Ldif.AclTarget(
                     target_dn=target_dn, attributes=target_attrs or []
                 ),
-                subject=m.Ldif.AclSubject({
+                subject=m.Ldif.AclSubject.model_validate({
                     "subject_type": str(rfc_subject_type),
                     "subject_value": rfc_subject_value,
                 }),
@@ -614,11 +614,11 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     ) -> tuple[str, str]:
         """Prepare OID subject and permissions clauses for ACL write."""
         subject_dict = self._normalize_to_dict(acl_subject)
-        subject_public = m.Ldif.AclSubject(subject_dict)
+        subject_public = m.Ldif.AclSubject.model_validate(subject_dict)
         metadata_public: m.Ldif.QuirkMetadata | None = None
         if metadata:
             try:
-                metadata_public = m.Ldif.QuirkMetadata(metadata)
+                metadata_public = m.Ldif.QuirkMetadata.model_validate(metadata)
             except (
                 ValueError,
                 KeyError,
@@ -627,7 +627,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 struct.error,
             ):
                 metadata_dict = self._normalize_to_dict(metadata)
-                metadata_public = m.Ldif.QuirkMetadata(metadata_dict)
+                metadata_public = m.Ldif.QuirkMetadata.model_validate(metadata_dict)
         oid_subject_type = self._map_rfc_subject_to_oid(subject_public, metadata_public)
         subject_value = self._prepare_subject_value_with_suffix(
             subject_public.subject_value, oid_subject_type
@@ -686,20 +686,24 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             FlextLdifServersOidConstants.ACL_ACCESS_TO,
         ]
         if acl_data.target:
-            target_public = m.Ldif.AclTarget(acl_data.target.model_dump())
+            target_public = m.Ldif.AclTarget.model_validate(
+                acl_data.target.model_dump()
+            )
             acl_parts.append(
                 self._format_oid_target(
                     target_public.target_dn, target_public.attributes or []
                 )
             )
         if acl_data.subject:
-            subject_public = m.Ldif.AclSubject(acl_data.subject)
+            subject_public = m.Ldif.AclSubject.model_validate(acl_data.subject)
             if acl_data.permissions:
-                permissions_public = m.Ldif.AclPermissions(acl_data.permissions)
+                permissions_public = m.Ldif.AclPermissions.model_validate(
+                    acl_data.permissions
+                )
             else:
                 permissions_public = None
             if acl_data.metadata:
-                metadata_public = m.Ldif.QuirkMetadata(acl_data.metadata)
+                metadata_public = m.Ldif.QuirkMetadata.model_validate(acl_data.metadata)
             else:
                 metadata_public = None
             subject_clause, permissions_clause = (
@@ -713,7 +717,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 permissions_clause,
             ])
         if acl_data.metadata:
-            metadata_public = m.Ldif.QuirkMetadata(acl_data.metadata)
+            metadata_public = m.Ldif.QuirkMetadata.model_validate(acl_data.metadata)
         else:
             metadata_public = None
         acl_parts.extend(self._build_metadata_extensions(metadata_public))

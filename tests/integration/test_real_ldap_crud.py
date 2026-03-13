@@ -124,15 +124,19 @@ class TestRealLdapBatchOperations:
                     entries.append(unwrapped_entry)
                 else:
                     entry_dict = unwrapped_entry.model_dump()
-                    facade_entry = m.Ldif.Entry(entry_dict)
+                    facade_entry = m.Ldif.Entry.model_validate(entry_dict)
                     entries.append(facade_entry)
         assert len(entries) == 20
         ldap_entries: list[m.Ldif.DN | None] = []
         for entry in entries:
             object_classes = entry.get_attribute_values("objectclass")
             if not isinstance(object_classes, list):
-                object_classes = list(object_classes) if object_classes else []
-            attrs_dict = {}
+                object_classes_typed: list[str] = (
+                    list(object_classes) if object_classes else []
+                )
+                object_classes = object_classes_typed
+            attrs_dict: dict[str, list[str]] = {}
+            assert entry.attributes is not None
             for attr_name, attr_values in entry.attributes.attributes.items():
                 if attr_name.lower() == "objectclass":
                     continue
@@ -199,7 +203,7 @@ class TestRealLdapBatchOperations:
                 entries.append(unwrapped_entry)
             else:
                 entry_dict = unwrapped_entry.model_dump()
-                facade_entry = m.Ldif.Entry(entry_dict)
+                facade_entry = m.Ldif.Entry.model_validate(entry_dict)
                 entries.append(facade_entry)
         export_file = tmp_path / "batch_export.ldif"
         write_result = flext_api.write_file(entries, export_file)

@@ -192,7 +192,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if not existing_metadata:
             existing_metadata = m.Ldif.QuirkMetadata.create_for("oud")
         else:
-            existing_metadata = m.Ldif.QuirkMetadata(existing_metadata.model_dump())
+            existing_metadata = m.Ldif.QuirkMetadata.model_validate(existing_metadata.model_dump())
         new_attributes_dict, commented_acl_values, hidden_attrs = (
             FlextLdifServersOudEntry.extract_and_remove_acl_attributes(
                 entry_data.attributes.attributes, acl_attribute_names
@@ -241,7 +241,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if isinstance(write_opts, FlextLdifModelsDomains.WriteOptions):
             write_opts_data: dict[str, object] = write_opts.model_dump()
             write_opts_data["hidden_attrs"] = list(hidden_attrs_set)
-            return m.Ldif.WriteOptions(write_opts_data)
+            return m.Ldif.WriteOptions.model_validate(write_opts_data)
         write_opts_dict: dict[str, object] = {"hidden_attrs": list(hidden_attrs_set)}
         format_value = write_opts.get("format")
         if isinstance(format_value, str):
@@ -266,7 +266,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         base64_encode_binary_value = write_opts.get("base64_encode_binary")
         if isinstance(base64_encode_binary_value, bool):
             write_opts_dict["base64_encode_binary"] = base64_encode_binary_value
-        return m.Ldif.WriteOptions(write_opts_dict)
+        return m.Ldif.WriteOptions.model_validate(write_opts_dict)
 
     @staticmethod
     def _hook_pre_write_entry_static(
@@ -825,7 +825,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         original_entry_raw = write_opts_data.get("original_entry")
         original_entry_obj: m.Ldif.Entry | None = None
         if isinstance(original_entry_raw, Mapping):
-            original_entry_obj = m.Ldif.Entry(original_entry_raw)
+            original_entry_obj = m.Ldif.Entry.model_validate(original_entry_raw)
         if original_entry_obj is None:
             return []
         ldif_parts: list[str] = []
@@ -2016,7 +2016,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entry_to_write
         )
         write_options = (
-            m.Ldif.WriteFormatOptions(write_options_raw.model_dump())
+            m.Ldif.WriteFormatOptions.model_validate(write_options_raw.model_dump())
             if write_options_raw is not None
             else None
         )

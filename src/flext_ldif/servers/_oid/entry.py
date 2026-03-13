@@ -629,7 +629,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if isinstance(boolean_conversions_obj, Mapping):
                 for key, value in boolean_conversions_obj.items():
                     if isinstance(value, Mapping):
-                        value_metadata = m.Ldif.DynamicMetadata(value)
+                        value_metadata = m.Ldif.DynamicMetadata.model_validate(value)
                         typed_dict: dict[str, str | list[str]] = {}
                         for key_str, raw_value in value_metadata.items():
                             if isinstance(raw_value, str):
@@ -835,7 +835,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             acl_result = acl_quirk.parse(acl_value)
             if not acl_result.is_success:
                 return
-            acl_model = m.Ldif.Acl(acl_result.value)
+            acl_model = m.Ldif.Acl.model_validate(acl_result.value)
             if not (acl_model.metadata and acl_model.metadata.extensions):
                 return
             acl_extensions = (

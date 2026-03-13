@@ -154,7 +154,7 @@ class TestRealLdapExport:
                 entries.append(unwrapped_entry)
             else:
                 entry_dict = unwrapped_entry.model_dump()
-                facade_entry = m.Ldif.Entry(entry_dict)
+                facade_entry = m.Ldif.Entry.model_validate(entry_dict)
                 entries.append(facade_entry)
         write_result = flext_api.write(entries)
         assert write_result.is_success
@@ -224,7 +224,7 @@ class TestRealLdapExport:
                 entries.append(unwrapped_entry)
             else:
                 entry_dict = unwrapped_entry.model_dump()
-                facade_entry = m.Ldif.Entry(entry_dict)
+                facade_entry = m.Ldif.Entry.model_validate(entry_dict)
                 entries.append(facade_entry)
         write_result = flext_api.write(entries)
         assert write_result.is_success

@@ -362,7 +362,7 @@ class TestsFlextLdifMatchers(tm_base):
                         and attrs_obj.attributes is not None
                         else attrs_obj
                         if isinstance(attrs_obj, dict)
-                        else {}
+                        else dict[str, object]()
                     )
                     if isinstance(attrs, dict) and all(
                         attr in attrs for attr in attr_list
@@ -386,14 +386,22 @@ class TestsFlextLdifMatchers(tm_base):
                         and attrs_obj.attributes is not None
                         else attrs_obj
                         if isinstance(attrs_obj, dict)
-                        else {}
+                        else dict[str, object]()
                     )
                     if isinstance(attrs, dict):
-                        objectclasses = attrs.get(
+                        objectclasses_raw = attrs.get(
                             "objectClass", attrs.get("objectclass", [])
                         )
-                        if isinstance(objectclasses, str):
-                            objectclasses = [objectclasses]
+                        if isinstance(objectclasses_raw, str):
+                            objectclasses = [objectclasses_raw]
+                        elif isinstance(objectclasses_raw, list):
+                            objectclasses = [
+                                item
+                                for item in objectclasses_raw
+                                if isinstance(item, str)
+                            ]
+                        else:
+                            objectclasses: list[str] = []
                         if all(oc in objectclasses for oc in oc_list):
                             found = True
                             break
@@ -591,7 +599,7 @@ class TestsFlextLdifValidators(tv_base):
                 if hasattr(attrs_obj, "attributes") and attrs_obj.attributes is not None
                 else attrs_obj
                 if isinstance(attrs_obj, dict)
-                else {}
+                else dict[str, object]()
             )
             if not isinstance(attrs, dict):
                 return False

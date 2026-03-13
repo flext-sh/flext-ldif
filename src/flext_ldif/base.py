@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import override
 
-from flext_core import FlextService, FlextSettings, m, p, s
+from flext_core import FlextService, FlextSettings, m, s
 
 from flext_ldif.settings import FlextLdifSettings
 
@@ -23,7 +23,7 @@ class FlextLdifServiceBase[TDomainResult: object](
 
     @classmethod
     @override
-    def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+    def _runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDIF services."""
         return m.RuntimeBootstrapOptions(config_type=FlextLdifSettings)
 

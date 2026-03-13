@@ -66,7 +66,7 @@ class FlextLdifUtilitiesWriters:
         ) -> r[str]:
             """Write entry to LDIF string using hooks."""
             if config is None:
-                config = FlextLdifModelsSettings.EntryWriteConfig(kwargs)
+                config = FlextLdifModelsSettings.EntryWriteConfig.model_validate(kwargs)
             try:
                 lines: list[str] = []
                 entry: FlextLdifModelsDomains.Entry = config.entry
@@ -259,7 +259,7 @@ class FlextLdifUtilitiesWriters:
         ) -> r[str]:
             """Write multiple entries to LDIF string."""
             if config is None:
-                config = FlextLdifModelsSettings.BatchWriteConfig(kwargs)
+                config = FlextLdifModelsSettings.BatchWriteConfig.model_validate(kwargs)
             try:
                 parts: list[str] = []
                 if config.include_header and config.write_header_hook:

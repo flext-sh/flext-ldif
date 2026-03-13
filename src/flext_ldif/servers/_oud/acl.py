@@ -100,7 +100,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Check if this is an Oracle OUD ACL line (implements abstract method from base.py)."""
         if not isinstance(acl_line, str):
             try:
-                acl_model = m.Ldif.Acl(acl_line)
+                acl_model = m.Ldif.Acl.model_validate(acl_line)
             except (
                 ValueError,
                 KeyError,

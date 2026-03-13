@@ -66,7 +66,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
             object.__setattr__(
                 self,
                 "_categorization_rules",
-                m.Ldif.CategoryRules(categorization_rules),
+                m.Ldif.CategoryRules.model_validate(categorization_rules),
             )
         else:
             object.__setattr__(self, "_categorization_rules", m.Ldif.CategoryRules())
@@ -76,7 +76,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
             object.__setattr__(
                 self,
                 "_schema_whitelist_rules",
-                m.Ldif.WhitelistRules(schema_whitelist_rules),
+                m.Ldif.WhitelistRules.model_validate(schema_whitelist_rules),
             )
         else:
             object.__setattr__(self, "_schema_whitelist_rules", None)
@@ -137,7 +137,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
             return value
         if isinstance(value, BaseModel):
             try:
-                return m.Ldif.Entry(value)
+                return m.Ldif.Entry.model_validate(value)
             except ValidationError as exc:
                 logger.warning(
                     "Failed to coerce BaseModel to Entry",
@@ -724,7 +724,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         if rules is None:
             return r[m.Ldif.CategoryRules].ok(self._categorization_rules)
         return u.try_(
-            lambda: m.Ldif.CategoryRules(dict(rules)),
+            lambda: m.Ldif.CategoryRules.model_validate(dict(rules)),
             catch=(
                 ValueError,
                 KeyError,

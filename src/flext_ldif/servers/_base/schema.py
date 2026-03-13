@@ -146,7 +146,7 @@ class FlextLdifServersBaseSchema(
         extensions_raw = extract_method(attr_definition)
         if not isinstance(extensions_raw, Mapping):
             return {}
-        extensions_map = m.Ldif.DynamicMetadata(extensions_raw)
+        extensions_map = m.Ldif.DynamicMetadata.model_validate(extensions_raw)
         extracted: dict[str, list[str] | str | bool | None] = {}
         for raw_key, raw_value in extensions_map.items():
             if isinstance(raw_value, str | bool):
@@ -319,7 +319,7 @@ class FlextLdifServersBaseSchema(
                         data = data_raw
                     else:
                         try:
-                            data = m.Ldif.SchemaAttribute(data_raw)
+                            data = m.Ldif.SchemaAttribute.model_validate(data_raw)
                         except (
                             ValueError,
                             KeyError,
@@ -327,7 +327,7 @@ class FlextLdifServersBaseSchema(
                             UnicodeDecodeError,
                             struct.error,
                         ):
-                            data = m.Ldif.SchemaObjectClass(data_raw)
+                            data = m.Ldif.SchemaObjectClass.model_validate(data_raw)
                 except (
                     ValueError,
                     KeyError,
@@ -545,7 +545,7 @@ class FlextLdifServersBaseSchema(
             )
         if operation == "write":
             try:
-                attr_model = m.Ldif.SchemaAttribute(data)
+                attr_model = m.Ldif.SchemaAttribute.model_validate(data)
             except (
                 ValueError,
                 KeyError,
@@ -559,7 +559,7 @@ class FlextLdifServersBaseSchema(
                     attr_model=attr_model, oc_model=None
                 )
             try:
-                oc_model = m.Ldif.SchemaObjectClass(data)
+                oc_model = m.Ldif.SchemaObjectClass.model_validate(data)
             except (
                 ValueError,
                 KeyError,

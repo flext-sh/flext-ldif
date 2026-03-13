@@ -90,7 +90,7 @@ class TestMinimalDifferencesOidOud:
         original_entry = entries[0]
         assert original_entry.metadata is not None
         assert "original_dn_complete" in original_entry.metadata.extensions
-        write_result = writer.write(entries=[m.Ldif.Entry(original_entry)])
+        write_result = writer.write(entries=[m.Ldif.Entry.model_validate(original_entry)])
         assert write_result.is_success
         written_ldif = write_result.value
         assert isinstance(written_ldif, str)

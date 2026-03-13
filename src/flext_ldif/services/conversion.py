@@ -481,7 +481,7 @@ class FlextLdifConversion(
         clean_dict: dict[str, bool] = {
             k: v for k, v in perms_dict.items() if v is not None
         }
-        return m.Ldif.AclPermissions(clean_dict)
+        return m.Ldif.AclPermissions.model_validate(clean_dict)
 
     @staticmethod
     def _process_schema_conversion_pipeline(
@@ -1053,7 +1053,7 @@ class FlextLdifConversion(
                 source_server_type, extensions=None
             )
             entry_metadata.acls = [acl.raw_acl] if acl.raw_acl else []
-            rfc_entry = m.Ldif.Entry({
+            rfc_entry = m.Ldif.Entry.model_validate({
                 "dn": entry_dn,
                 "attributes": entry_attributes,
                 "metadata": entry_metadata,

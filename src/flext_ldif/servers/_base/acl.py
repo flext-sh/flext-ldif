@@ -175,7 +175,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         if isinstance(value, str):
             return value
         try:
-            return m.Ldif.Acl(value)
+            return m.Ldif.Acl.model_validate(value)
         except ValidationError as exc:
             logger.warning(
                 "Failed to coerce value to ACL model",

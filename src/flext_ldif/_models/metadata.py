@@ -62,7 +62,7 @@ class FlextLdifModelsMetadata:
             """Create DynamicMetadata from a dictionary."""
             if data is None:
                 return cls()
-            return cls(dict(data))
+            return cls.model_validate(dict(data))
 
         @staticmethod
         def coerce_metadata_value(value: t.Ldif.MetadataValue) -> t.Ldif.MetadataValue:

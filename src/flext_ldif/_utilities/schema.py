@@ -171,7 +171,7 @@ class FlextLdifUtilitiesSchema:
                 return validation_result
             unwrapped_validated = validation_result.value
             try:
-                current = FlextLdifModelsDomains.SchemaAttribute(unwrapped_validated)
+                current = FlextLdifModelsDomains.SchemaAttribute.model_validate(unwrapped_validated)
                 continue
             except (
                 ValueError,
@@ -184,7 +184,7 @@ class FlextLdifUtilitiesSchema:
                     "SchemaAttribute cast failed after transformation", error=str(exc)
                 )
             try:
-                current = FlextLdifModelsDomains.SchemaObjectClass(unwrapped_validated)
+                current = FlextLdifModelsDomains.SchemaObjectClass.model_validate(unwrapped_validated)
                 continue
             except (
                 ValueError,
@@ -627,7 +627,7 @@ class FlextLdifUtilitiesSchema:
         """Wrap transformation result with proper type."""
         try:
             return r[_SchemaElementUnion].ok(
-                FlextLdifModelsDomains.SchemaAttribute(transformed)
+                FlextLdifModelsDomains.SchemaAttribute.model_validate(transformed)
             )
         except (
             ValueError,
@@ -642,7 +642,7 @@ class FlextLdifUtilitiesSchema:
             )
         try:
             return r[_SchemaElementUnion].ok(
-                FlextLdifModelsDomains.SchemaObjectClass(transformed)
+                FlextLdifModelsDomains.SchemaObjectClass.model_validate(transformed)
             )
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return r[
@@ -740,8 +740,8 @@ class FlextLdifUtilitiesSchema:
     ]:
         """Validate that transformation result matches input type."""
         try:
-            _ = FlextLdifModelsDomains.SchemaAttribute(schema_obj)
-            validated_attr = FlextLdifModelsDomains.SchemaAttribute(unwrapped)
+            _ = FlextLdifModelsDomains.SchemaAttribute.model_validate(schema_obj)
+            validated_attr = FlextLdifModelsDomains.SchemaAttribute.model_validate(unwrapped)
             return r[_SchemaElementUnion].ok(validated_attr)
         except (
             ValueError,
@@ -754,8 +754,8 @@ class FlextLdifUtilitiesSchema:
                 "SchemaAttribute validation failed after transformation", error=str(exc)
             )
         try:
-            _ = FlextLdifModelsDomains.SchemaObjectClass(schema_obj)
-            validated_oc = FlextLdifModelsDomains.SchemaObjectClass(unwrapped)
+            _ = FlextLdifModelsDomains.SchemaObjectClass.model_validate(schema_obj)
+            validated_oc = FlextLdifModelsDomains.SchemaObjectClass.model_validate(unwrapped)
             return r[_SchemaElementUnion].ok(validated_oc)
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return r[
@@ -972,7 +972,7 @@ class FlextLdifUtilitiesSchema:
 
         """
         try:
-            _ = FlextLdifModelsDomains.SchemaAttribute(definition)
+            _ = FlextLdifModelsDomains.SchemaAttribute.model_validate(definition)
             return "attribute"
         except (
             ValueError,
@@ -985,7 +985,7 @@ class FlextLdifUtilitiesSchema:
                 "SchemaAttribute model validation did not match", error=str(exc)
             )
         try:
-            _ = FlextLdifModelsDomains.SchemaObjectClass(definition)
+            _ = FlextLdifModelsDomains.SchemaObjectClass.model_validate(definition)
             return "objectclass"
         except (
             ValueError,
