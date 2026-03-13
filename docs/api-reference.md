@@ -1029,7 +1029,7 @@ class QuirkRegistryService:
             List of schema quirks sorted by priority
         """
 
-    def get_entrys(self, server_type: str) -> list[EntryProtocol]:
+    def get_entrys(self, server_type: str) -> list[Entry]:
         """Get entry quirks for server type.
 
         Args:

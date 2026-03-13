@@ -1550,7 +1550,7 @@ class FlextLdifModelsDomains:
     class Entry(m.Entity):
         """LDIF entry domain model.
 
-        Implements p.Models.EntryProtocol through structural typing.
+        Implements p.Models.Entry through structural typing.
         The protocol requires:
         - dn: str
         - attributes: FlextLdifModelsMetadata.DynamicMetadata
@@ -1567,14 +1567,14 @@ class FlextLdifModelsDomains:
             FlextLdifModelsDomains.DN | None,
             Field(
                 ...,
-                description="Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from str via field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.EntryProtocol",
+                description="Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from str via field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.Entry",
             ),
         ]
         attributes: Annotated[
             FlextLdifModelsDomains.Attributes | None,
             Field(
                 ...,
-                description="Entry attributes container (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from dict[str, list[str]] via field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.EntryProtocol",
+                description="Entry attributes container (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from dict[str, list[str]] via field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.Entry",
             ),
         ]
 
@@ -1636,7 +1636,7 @@ class FlextLdifModelsDomains:
 
         @computed_field
         def attributes_dict(self) -> Mapping[str, list[str]]:
-            """Protocol compliance: p.Ldif.Entry.EntryProtocol requires attributes: dict[str, list[str]].
+            """Protocol compliance: p.Ldif.Entry.Entry requires attributes: dict[str, list[str]].
 
             Returns the attributes as a dict for protocol compatibility.
             """
@@ -1646,7 +1646,7 @@ class FlextLdifModelsDomains:
 
         @computed_field
         def dn_str(self) -> str:
-            """Protocol compliance: p.Ldif.Entry.EntryProtocol requires dn: str.
+            """Protocol compliance: p.Ldif.Entry.Entry requires dn: str.
 
             Returns the DN as a string for protocol compatibility.
             """

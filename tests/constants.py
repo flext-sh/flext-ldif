@@ -880,7 +880,7 @@ class RfcTestHelpers:
         p.Ldif.SchemaAttributeProtocol
         | p.Ldif.SchemaObjectClassProtocol
         | p.Ldif.AclProtocol
-        | p.Ldif.EntryProtocol
+        | p.Ldif.Entry
         | None
     ):
         """Parse using quirk and assert success.
@@ -907,7 +907,7 @@ class RfcTestHelpers:
             error = getattr(result, "error", "Unknown error")
             raise AssertionError(f"Parsing failed: {error}")
         return cast(
-            "p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol | p.Ldif.AclProtocol | p.Ldif.EntryProtocol | None",
+            "p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol | p.Ldif.AclProtocol | p.Ldif.Entry | None",
             getattr(result, "value", result),
         )
 
@@ -1760,9 +1760,9 @@ class TestDeduplicationHelpers:
     ) -> (
         p.Ldif.SchemaAttributeProtocol
         | p.Ldif.SchemaObjectClassProtocol
-        | p.Ldif.EntryProtocol
+        | p.Ldif.Entry
         | p.Ldif.AclProtocol
-        | Sequence[p.Ldif.EntryProtocol]
+        | Sequence[p.Ldif.Entry]
         | None
     ):
         """Parse using quirk and unwrap result.

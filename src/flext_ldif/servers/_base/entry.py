@@ -21,7 +21,7 @@ logger = FlextLogger(__name__)
 
 
 class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | str]):
-    """Base class for entry processing quirks - satisfies EntryProtocol (structural typing)."""
+    """Base class for entry processing quirks - satisfies Entry (structural typing)."""
 
     server_type: str = "unknown"
     "Server type identifier."

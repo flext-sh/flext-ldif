@@ -11,8 +11,8 @@ from flext_core import FlextProtocols, r
 from flext_ldif import c
 
 if TYPE_CHECKING:
-    from flext_ldif._models.domain import FlextLdifModelsDomains
     from flext_ldif import m
+    from flext_ldif._models.domain import FlextLdifModelsDomains
 
 
 class FlextLdifProtocols(FlextProtocols):
@@ -22,7 +22,7 @@ class FlextLdifProtocols(FlextProtocols):
         """LDIF-specific protocol namespace."""
 
         @runtime_checkable
-        class EntryProtocol(Protocol):
+        class Entry(Protocol):
             """Protocol for LDIF Entry models."""
 
             dn: str | None
@@ -197,7 +197,7 @@ class FlextLdifProtocols(FlextProtocols):
 
             def parse(
                 self, ldif_input: str | Path, server_type: str | None = None
-            ) -> r[Sequence[FlextLdifProtocols.Ldif.EntryProtocol]]:
+            ) -> r[Sequence[FlextLdifProtocols.Ldif.Entry]]:
                 """Parse LDIF content."""
                 ...
 
@@ -205,7 +205,7 @@ class FlextLdifProtocols(FlextProtocols):
         class HasEntriesProtocol(Protocol):
             """Protocol for objects that have an entries attribute."""
 
-            entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
+            entries: Sequence[FlextLdifProtocols.Ldif.Entry]
 
         @runtime_checkable
         class SchemaConversionPipelineConfigProtocol(Protocol):
@@ -260,8 +260,8 @@ class FlextLdifProtocols(FlextProtocols):
         class EntryResultProtocol(Protocol):
             """Protocol for EntryResult model."""
 
-            entries: Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
-            content: Sequence[FlextLdifProtocols.Ldif.EntryProtocol]
+            entries: Sequence[FlextLdifProtocols.Ldif.Entry]
+            content: Sequence[FlextLdifProtocols.Ldif.Entry]
 
             def __len__(self) -> int:
                 """Return the number of entries."""
@@ -484,7 +484,7 @@ class FlextLdifProtocols(FlextProtocols):
 
             def write(
                 self,
-                entries: list[FlextLdifProtocols.Ldif.EntryProtocol],
+                entries: list[FlextLdifProtocols.Ldif.Entry],
             ) -> r[str]:
                 """Write Entry models to LDIF text."""
                 ...
@@ -493,9 +493,9 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 *,
                 ldif_text: str | None = None,
-                entries: (Sequence[FlextLdifProtocols.Ldif.EntryProtocol] | None),
+                entries: (Sequence[FlextLdifProtocols.Ldif.Entry] | None),
                 _operation: str | None = None,
-            ) -> r[FlextLdifProtocols.Ldif.EntryProtocol]:
+            ) -> r[FlextLdifProtocols.Ldif.Entry]:
                 """Execute quirk operation with auto-detection."""
                 ...
 
@@ -503,7 +503,7 @@ class FlextLdifProtocols(FlextProtocols):
         # PROTOCOL ALIASES — for backwards compatibility and shorter access
         # =================================================================
 
-        Entry = EntryProtocol
+        Entry = Entry
         SchemaAttribute = SchemaAttributeProtocol
         SchemaObjectClass = SchemaObjectClassProtocol
         SchemaQuirk = SchemaQuirkProtocol
