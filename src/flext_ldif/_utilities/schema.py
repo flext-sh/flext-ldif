@@ -99,7 +99,8 @@ class FlextLdifUtilitiesSchema:
                     ].fail(
                         f"Transformation of '{field_name}' failed: {new_value.error}"
                     )
-                setattr(transformed, field_name, new_value.value)
+                resolved_value: object = new_value.value
+                setattr(transformed, field_name, resolved_value)
             else:
                 setattr(transformed, field_name, new_value)
             return r[_SchemaElementUnion].ok(transformed)
@@ -367,20 +368,20 @@ class FlextLdifUtilitiesSchema:
         if isinstance(value, datetime):
             return value.isoformat()
         if isinstance(value, list):
-            return FlextLdifUtilitiesSchema._convert_sequence_to_str_list(value)
+            return [str(item) for item in value]
         if not isinstance(value, Mapping):
             return str(value)
         converted_nested: dict[str, t.Scalar | list[str]] = {}
-        for k, v_raw in value.items():
-            k_str = str(k)
+        for k_raw, v_raw in value.items():
+            k_str = str(k_raw)
             if isinstance(v_raw, (str, int, float, bool)):
                 converted_nested[k_str] = v_raw
             elif isinstance(v_raw, datetime):
                 converted_nested[k_str] = v_raw.isoformat()
+            elif isinstance(v_raw, Sequence) and not isinstance(v_raw, str):
+                converted_nested[k_str] = [str(nested_item) for nested_item in v_raw]
             else:
-                converted_nested[k_str] = (
-                    FlextLdifUtilitiesSchema._convert_sequence_to_str_list(v_raw)
-                )
+                converted_nested[k_str] = str(v_raw)
         return converted_nested
 
     @staticmethod
@@ -407,10 +408,17 @@ class FlextLdifUtilitiesSchema:
         attr_definition: str,
     ) -> r[tuple[str, str, str | None]]:
         """Extract OID, NAME, and DESC from attribute definition."""
-        oid = FlextLdifUtilitiesParser.extract_oid(attr_definition)
-        if not oid:
-            msg = "RFC attribute parsing failed: missing an OID"
-            return r[tuple[str, str, str | None]].fail(msg)
+        oid_result = FlextLdifUtilitiesParser.extract_oid(attr_definition)
+        if oid_result.is_failure:
+            error = oid_result.error or "unknown OID extraction error"
+            return r[tuple[str, str, str | None]].fail(
+                f"RFC attribute parsing failed: {error}"
+            )
+        if not oid_result.is_success:
+            return r[tuple[str, str, str | None]].fail(
+                "RFC attribute parsing failed: unknown result state"
+            )
+        oid = oid_result.value
         name_raw = FlextLdifUtilitiesParser.extract_optional_field(
             attr_definition, c.Ldif.LdifPatterns.SCHEMA_NAME, default=oid
         )
@@ -479,12 +487,19 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _extract_objectclass_basic_fields(
         oc_definition: str,
-    ) -> tuple[str, str, str | None]:
+    ) -> r[tuple[str, str, str | None]]:
         """Extract OID, NAME, and DESC from objectClass definition."""
-        oid = FlextLdifUtilitiesParser.extract_oid(oc_definition)
-        if not oid:
-            msg = "RFC objectClass parsing failed: missing an OID"
-            raise ValueError(msg)
+        oid_result = FlextLdifUtilitiesParser.extract_oid(oc_definition)
+        if oid_result.is_failure:
+            error = oid_result.error or "unknown OID extraction error"
+            return r[tuple[str, str, str | None]].fail(
+                f"RFC objectClass parsing failed: {error}"
+            )
+        if not oid_result.is_success:
+            return r[tuple[str, str, str | None]].fail(
+                "RFC objectClass parsing failed: unknown result state"
+            )
+        oid = oid_result.value
         name_raw = FlextLdifUtilitiesParser.extract_optional_field(
             oc_definition, c.Ldif.LdifPatterns.SCHEMA_NAME, default=oid
         )
@@ -492,7 +507,7 @@ class FlextLdifUtilitiesSchema:
         desc = FlextLdifUtilitiesParser.extract_optional_field(
             oc_definition, c.Ldif.LdifPatterns.SCHEMA_DESC
         )
-        return (oid, name, desc)
+        return r[tuple[str, str, str | None]].ok((oid, name, desc))
 
     @staticmethod
     def _extract_objectclass_kind(oc_definition: str) -> str:
@@ -1099,7 +1114,7 @@ class FlextLdifUtilitiesSchema:
         attribute_name: str | None, *, case_sensitive: bool = False
     ) -> str | None:
         """Normalize attribute name for case-insensitive comparisons."""
-        if not attribute_name or not isinstance(attribute_name, str):
+        if not attribute_name:
             return attribute_name
         return attribute_name if case_sensitive else attribute_name.lower()
 
@@ -1139,7 +1154,7 @@ class FlextLdifUtilitiesSchema:
         char_replacements: Mapping[str, str] | None = None,
     ) -> str | None:
         """Normalize attribute NAME field."""
-        if not name_value or not isinstance(name_value, str):
+        if not name_value:
             return name_value
         result = name_value
         if suffixes_to_remove is None:
@@ -1238,9 +1253,13 @@ class FlextLdifUtilitiesSchema:
         oc_definition: str,
     ) -> Mapping[str, object]:
         """Parse RFC 4512 objectClass definition into structured data."""
-        oid, name, desc = FlextLdifUtilitiesSchema._extract_objectclass_basic_fields(
-            oc_definition
+        basic_fields_result = (
+            FlextLdifUtilitiesSchema._extract_objectclass_basic_fields(oc_definition)
         )
+        if basic_fields_result.is_failure:
+            msg = basic_fields_result.error or "RFC objectClass parsing failed"
+            raise ValueError(msg)
+        oid, name, desc = basic_fields_result.value
         sup = FlextLdifUtilitiesSchema._extract_objectclass_sup(oc_definition)
         kind = FlextLdifUtilitiesSchema._extract_objectclass_kind(oc_definition)
         must, may = FlextLdifUtilitiesSchema._extract_objectclass_must_may(

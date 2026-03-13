@@ -135,9 +135,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         def _extract_oid_from_attribute(self, attr_definition: str) -> str | None:
             """Extract OID from attribute definition using multiple strategies."""
-            oid = u.Ldif.LdifParser.extract_oid(attr_definition)
-            if oid:
-                return oid
+            oid_result = u.Ldif.LdifParser.extract_oid(attr_definition)
+            if oid_result.is_success:
+                return oid_result.value
             oid_match = re.search(
                 FlextLdifServersRelaxed.Constants.OID_NUMERIC_WITH_PAREN,
                 attr_definition,
@@ -159,9 +159,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         def _extract_oid_with_fallback_patterns(self, definition: str) -> str | None:
             """Extract OID using multiple fallback patterns for relaxed mode."""
-            oid = u.Ldif.LdifParser.extract_oid(definition)
-            if oid:
-                return oid
+            oid_result = u.Ldif.LdifParser.extract_oid(definition)
+            if oid_result.is_success:
+                return oid_result.value
             oid_match = re.search(
                 FlextLdifServersRelaxed.Constants.OID_NUMERIC_WITH_PAREN, definition
             )
@@ -737,5 +737,4 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return r[str].fail(f"Failed to write entry: {e}")
 
 
-__all__ = ["FlextLdifServersRelaxed"]
 __all__ = ["FlextLdifServersRelaxed"]

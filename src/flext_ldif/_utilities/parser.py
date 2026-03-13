@@ -6,10 +6,11 @@ import base64
 import contextlib
 import re
 from collections.abc import Mapping
+from typing import TypeGuard
 
-from flext_core import FlextLogger, u
+from flext_core import FlextLogger, r, u
 
-from flext_ldif import c, m
+from flext_ldif import c, m, t
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
@@ -47,10 +48,9 @@ class FlextLdifUtilitiesParser:
             else FlextLdifUtilitiesServer.normalize_server_type("rfc")
         )
         if metadata_extensions:
-            extensions_typed: dict[str, object] = {}
+            extensions_typed: dict[str, list[str]] = {}
             for key, val in metadata_extensions.items():
-                typed_val: object = list(val)
-                extensions_typed[key] = typed_val
+                extensions_typed[key] = list(val)
             return m.Ldif.QuirkMetadata(
                 quirk_type=quirk_type,
                 extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
@@ -119,7 +119,12 @@ class FlextLdifUtilitiesParser:
     def ext(metadata: m.Ldif.DynamicMetadata) -> Mapping[str, list[str]]:
         """Extract extension information from parsed metadata."""
 
-        def _as_str_list(value: object) -> list[str] | None:
+        def _is_metadata_value(value: object) -> TypeGuard[t.Ldif.MetadataValue]:
+            return value is None or isinstance(
+                value, (str, int, float, bool, list, Mapping)
+            )
+
+        def _as_str_list(value: t.Ldif.MetadataValue) -> list[str] | None:
             if isinstance(value, list):
                 normalized: list[str] = []
                 for item in value:
@@ -133,12 +138,17 @@ class FlextLdifUtilitiesParser:
         if not isinstance(result, Mapping):
             extensions: dict[str, list[str]] = {}
             for key, value in metadata.items():
+                if not _is_metadata_value(value):
+                    continue
                 str_list = _as_str_list(value)
                 if str_list is not None:
                     extensions[key] = str_list
             return extensions
+        extensions_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(result)
         strict_result: dict[str, list[str]] = {}
-        for key, value in result.items():
+        for key, value in extensions_metadata.items():
+            if not _is_metadata_value(value):
+                continue
             str_list = _as_str_list(value)
             if str_list is not None:
                 strict_result[key] = str_list
@@ -182,13 +192,15 @@ class FlextLdifUtilitiesParser:
         return extensions
 
     @staticmethod
-    def extract_oid(definition: str) -> str | None:
+    def extract_oid(definition: str) -> r[str]:
         """Extract OID from schema definition string."""
         if not definition:
-            return None
+            return r[str].fail("Empty definition: cannot extract OID")
         oid_pattern = re.compile(r"\(\s*([0-9.]+)")
         match = re.match(oid_pattern, definition.strip())
-        return match.group(1) if match else None
+        if match:
+            return r[str].ok(match.group(1))
+        return r[str].fail(f"No OID found in definition: {definition!r}")
 
     @staticmethod
     def extract_optional_field(
@@ -260,10 +272,12 @@ class FlextLdifUtilitiesParser:
         return True
 
     @staticmethod
-    def parse_attribute_line(line: str) -> tuple[str, str, bool] | None:
+    def parse_attribute_line(line: str) -> r[tuple[str, str, bool]]:
         """Parse LDIF attribute line into name, value, and base64 flag."""
         if ":" not in line:
-            return None
+            return r[tuple[str, str, bool]].fail(
+                f"No colon separator in line: {line!r}"
+            )
         attr_name, attr_value = line.split(":", 1)
         attr_name = attr_name.strip()
         attr_value = attr_value.strip()
@@ -271,7 +285,7 @@ class FlextLdifUtilitiesParser:
         if attr_value.startswith(":"):
             is_base64 = True
             attr_value = attr_value[1:].strip()
-        return (attr_name, attr_value, is_base64)
+        return r[tuple[str, str, bool]].ok((attr_name, attr_value, is_base64))
 
     @staticmethod
     def parse_ldif(ldif_lines: list[str]) -> list[m.Ldif.RawEntryDict]:
