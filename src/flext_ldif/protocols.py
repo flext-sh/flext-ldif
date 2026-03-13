@@ -317,11 +317,11 @@ class FlextLdifProtocols(FlextProtocols):
         class AclQuirkProtocol(Protocol):
             """Protocol for ACL quirk implementations."""
 
-            def parse(self, acl_line: str) -> r[FlextLdifProtocols.Ldif.AclProtocol]:
+            def parse(self, acl_line: str) -> r[FlextLdifModelsDomains.Acl]:
                 """Parse ACL definition."""
                 ...
 
-            def write(self, acl_data: FlextLdifProtocols.Ldif.AclProtocol) -> r[str]:
+            def write(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
                 """Write ACL definition."""
                 ...
 
@@ -486,6 +486,31 @@ class FlextLdifProtocols(FlextProtocols):
                 """Build/finalize and return the result."""
                 ...
 
+        @runtime_checkable
+        class ServerBaseProtocol(Protocol):
+            """Protocol for LDIF/LDAP server quirk implementations."""
+
+            server_type: str
+            priority: int
+
+            def parse(self, ldif_text: str) -> r[object]:
+                """Parse LDIF text to Entry models."""
+                ...
+
+            def write(self, entries: list[m.Ldif.Entry]) -> r[str]:
+                """Write Entry models to LDIF text."""
+                ...
+
+            def execute(
+                self,
+                *,
+                ldif_text: str | None = None,
+                entries: Sequence[m.Ldif.Entry] | None = None,
+                _operation: str | None = None,
+            ) -> r[m.Ldif.Entry]:
+                """Execute quirk operation with auto-detection."""
+                ...
+
         # =================================================================
         # PROTOCOL ALIASES — for backwards compatibility and shorter access
         # =================================================================
@@ -499,6 +524,7 @@ class FlextLdifProtocols(FlextProtocols):
         Acl = AclProtocol
         Parser = SchemaQuirkProtocol  # Often referred to as Parser in tests
         QuirkRegistry = QuirkRegistryProtocol
+        ServerBase = ServerBaseProtocol
 
         @runtime_checkable
         class LoadableProtocol[T](Protocol):
