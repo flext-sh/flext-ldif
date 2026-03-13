@@ -220,7 +220,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _create_write_options_with_hidden_attrs(
-        write_opts: FlextLdifModelsDomains.WriteOptions | object | None,
+        write_opts: FlextLdifModelsDomains.WriteOptions | Mapping[str, object] | None,
         hidden_attrs: set[str],
     ) -> m.Ldif.WriteOptions:
         """Create WriteOptions with updated hidden attributes.
@@ -375,10 +375,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         corrected_entry = entry.model_copy(update={"attributes": corrected_ldif_attrs})
         logger.debug(
             "OUD quirks: Applied syntax corrections before writing (structure preserved)",
-            entry_dn=entry.dn.value if entry.dn else None,
+            entry_dn=entry.dn.value if entry.dn else "",
             corrections_count=len(syntax_corrections) if syntax_corrections else 0,
-            corrections=syntax_corrections,
-            corrected_attributes=list(attrs_for_model.keys()),
         )
         return r[m.Ldif.Entry].ok(corrected_entry)
 
@@ -1174,7 +1172,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 if isinstance(value_raw, (str, int, float, bool, type(None))):
                     acl_metadata_extensions[dest_key] = value_raw
                 elif isinstance(value_raw, (list, tuple)):
-                    value_list: list[t.Scalar] = [
+                    value_list: list[t.Ldif.Scalar] = [
                         item
                         if isinstance(item, (str, int, float, bool, type(None)))
                         else str(item)
@@ -1188,8 +1186,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         value_dict_2[key] = (
                             v if isinstance(v, (str, int, float, bool)) else str(v)
                         )
-                    value_dict_typed_2: object = dict(value_dict_2)
-                    acl_metadata_extensions[dest_key] = value_dict_typed_2
+                    acl_metadata_extensions[dest_key] = dict(value_dict_2)
                 else:
                     acl_metadata_extensions[dest_key] = str(value_raw)
 
@@ -1224,7 +1221,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 scalar_value: t.Scalar = value_raw
                 acl_metadata_extensions[dest_key] = scalar_value
             elif isinstance(value_raw, (list, tuple)):
-                value_list: list[t.Scalar] = [
+                value_list: list[t.Ldif.Scalar] = [
                     item
                     if isinstance(item, (str, int, float, bool, type(None)))
                     else str(item)
@@ -1332,7 +1329,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             )
             logger.debug(
                 "OUD entry parsed with minimal differences",
-                entry_dn=original_dn[:50] if original_dn else None,
+                entry_dn=original_dn[:50] if original_dn else "",
             )
             entries_list.append(entry)
 
@@ -1551,7 +1548,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     if process_result.value:
                         has_macros = True
             if has_macros:
-                max_len = FlextLdifServersOudConstants.MAX_LOG_LINE_LENGTH
                 aci_list = (
                     list(aci_attrs)
                     if core_u.is_type(aci_attrs, (list, tuple))
@@ -1559,11 +1555,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 )
                 logger.debug(
                     "Entry contains OUD ACI macros - preserved for runtime expansion",
-                    entry_dn=entry.dn.value if entry.dn else None,
+                    entry_dn=entry.dn.value if entry.dn else "",
                     aci_count=len(aci_list),
-                    aci_preview=[
-                        s[:max_len] for s in aci_list[:10] if core_u.is_type(s, str)
-                    ],
                 )
             entry = self._merge_acl_metadata_to_entry(entry, acl_metadata_extensions)
         return r[m.Ldif.Entry].ok(entry)
@@ -1778,7 +1771,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if isinstance(value, (str, int, float, bool, type(None))):
                 current_extensions[final_key] = value
             elif isinstance(value, (list, tuple)):
-                value_list: list[t.Scalar] = [
+                value_list: list[t.Ldif.Scalar] = [
                     item
                     if isinstance(item, (str, int, float, bool, type(None)))
                     else str(item)

@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Annotated, Literal, TypeAlias, TypeVar
 
 from flext_core import FlextTypes, r
-from pydantic import StringConstraints
+from pydantic import BaseModel, StringConstraints
 
 from flext_ldif import c
 
@@ -26,7 +26,11 @@ type _RecursiveMetadata = (
 )
 
 type _RecursiveContainer = (
-    _Scalar | list[_RecursiveContainer] | Mapping[str, _RecursiveContainer] | datetime
+    _Scalar
+    | BaseModel
+    | list[_RecursiveContainer]
+    | Mapping[str, _RecursiveContainer]
+    | datetime
 )
 
 

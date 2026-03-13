@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Iterator, Sequence
 from typing import override
 
-from flext_core import m
+from flext_core import t
 from pydantic import ConfigDict, Field
 
 from flext_ldif._models.base import FlextLdifModelsBase
@@ -64,7 +64,7 @@ class FlextLdifModelsCollections:
             return key in self._extra()
 
         @staticmethod
-        def _to_count(value: object) -> int:
+        def _to_count(value: t.MetadataValue) -> int:
             if isinstance(value, int | float):
                 return int(value)
             if isinstance(value, str):
@@ -93,8 +93,11 @@ class FlextLdifModelsCollections:
         def set_count(self, key: str, value: int) -> None:
             setattr(self, key, value)
 
-        def _extra(self) -> dict[str, object]:
-            return self.__pydantic_extra__ or {}
+        def _extra(self) -> dict[str, t.MetadataValue]:
+            extra = self.__pydantic_extra__
+            if extra is None:
+                return {}
+            return {str(k): v for k, v in extra.items()}
 
     class SchemaContent(FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True)
@@ -139,8 +142,11 @@ class FlextLdifModelsCollections:
                 raise KeyError(msg)
             return bool(extra[key])
 
-    class FlexibleCategories(m.Categories):
+    class FlexibleCategories(FlextLdifModelsBase):
         model_config = ConfigDict(extra="allow", frozen=False)
+        categories: dict[str, list[FlextLdifModelsDomains.Entry]] = Field(
+            default_factory=dict
+        )
 
         @override
         def __eq__(self, other: object) -> bool:
@@ -155,15 +161,23 @@ class FlextLdifModelsCollections:
             raise TypeError(msg)
 
         def __getitem__(self, category: str) -> list[FlextLdifModelsDomains.Entry]:
-            return [
-                FlextLdifModelsDomains.Entry.model_validate(v)
-                for v in self.categories[category]
-            ]
+            return self._entry_categories()[category]
 
         def __setitem__(
             self, category: str, entries: Sequence[FlextLdifModelsDomains.Entry]
         ) -> None:
-            self.categories[category] = list(entries)
+            updated_categories = self._entry_categories()
+            updated_categories[category] = [
+                FlextLdifModelsDomains.Entry.model_validate(entry) for entry in entries
+            ]
+            object.__setattr__(self, "categories", updated_categories)
+
+        def add_entries(self, category: str, entries: Sequence[object]) -> None:
+            existing = self._entry_categories().get(category, [])
+            normalized_entries = [
+                FlextLdifModelsDomains.Entry.model_validate(entry) for entry in entries
+            ]
+            self[category] = [*existing, *normalized_entries]
 
         def __contains__(self, category: str) -> bool:
             return category in self.categories
@@ -178,6 +192,25 @@ class FlextLdifModelsCollections:
         def keys(self) -> Iterator[str]:
             return iter(self.categories.keys())
 
+        def get(
+            self,
+            category: str,
+            default: list[FlextLdifModelsDomains.Entry] | None = None,
+        ) -> list[FlextLdifModelsDomains.Entry]:
+            entries = self._entry_categories().get(category)
+            if entries is not None:
+                return entries
+            return default if default is not None else []
+
         def values(self) -> Iterator[list[FlextLdifModelsDomains.Entry]]:
-            for values in self.categories.values():
+            for values in self._entry_categories().values():
                 yield [FlextLdifModelsDomains.Entry.model_validate(v) for v in values]
+
+        def _entry_categories(self) -> dict[str, list[FlextLdifModelsDomains.Entry]]:
+            return {
+                str(category): [
+                    FlextLdifModelsDomains.Entry.model_validate(value)
+                    for value in values
+                ]
+                for category, values in self.categories.items()
+            }

@@ -270,7 +270,14 @@ class FlextLdifProtocols(FlextProtocols):
         class SchemaQuirkProtocol(Protocol):
             """Protocol for Schema quirk implementations."""
 
-            def parse(self, definition: str) -> r:
+            def parse(
+                self, definition: str
+            ) -> r[
+                list[
+                    FlextLdifModelsDomains.SchemaAttribute
+                    | FlextLdifModelsDomains.SchemaObjectClass
+                ]
+            ]:
                 """Parse schema definition."""
                 ...
 

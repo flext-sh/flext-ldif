@@ -41,8 +41,10 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize OUD ACL quirk."""
-        filtered_kwargs: dict[str, str | float | bool | None] = {
-            k: v for k, v in kwargs.items() if k != "_parent_quirk"
+        filtered_kwargs: dict[str, str | float | bool] = {
+            k: v
+            for k, v in kwargs.items()
+            if k != "_parent_quirk" and isinstance(v, (str, float, bool))
         }
         acl_service_typed: p.Ldif.AclQuirkProtocol | None = (
             acl_service if acl_service is not None else None

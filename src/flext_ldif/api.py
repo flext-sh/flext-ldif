@@ -28,6 +28,7 @@ from flext_ldif import (
     c,
     m,
     p,
+    t,
 )
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 
@@ -234,7 +235,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             return r[m.Ldif.Entry].fail(f"Health check failed: {e}")
 
     def extract_acls(
-        self, entry: m.Ldif.Entry | BaseModel | Mapping[str, object]
+        self, entry: m.Ldif.Entry | BaseModel | Mapping[str, t.Ldif.object]
     ) -> r[m.Ldif.AclResponse]:
         """Extract ACLs from entry."""
         server_type: str = "rfc"
@@ -339,7 +340,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         return self.detector.get_effective_server_type(ldif_content=ldif_content)
 
     def get_entry_attributes(
-        self, entry: m.Ldif.Entry | BaseModel | Mapping[str, object]
+        self, entry: m.Ldif.Entry | BaseModel | Mapping[str, t.Ldif.object]
     ) -> r[Mapping[str, list[str]]]:
         """Get entry attributes dictionary."""
         match entry:
@@ -358,7 +359,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         return FlextLdifEntries.get_entry_dn(entry)
 
     def get_entry_objectclasses(
-        self, entry: m.Ldif.Entry | BaseModel | Mapping[str, object]
+        self, entry: m.Ldif.Entry | BaseModel | Mapping[str, t.Ldif.object]
     ) -> r[list[str]]:
         """Get entry objectClass values."""
         match entry:

@@ -3,20 +3,32 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from datetime import datetime
+from pathlib import Path
 from typing import Literal
 
+from flext_core import t
 from pydantic import BaseModel, ConfigDict, Field
 
 _TRUE_STRINGS: frozenset[str] = frozenset({"true", "1", "yes", "on"})
+type _ConvertValue = t.Container | Sequence[t.Container] | Mapping[str, t.Container]
+_CONTAINER_TYPES: tuple[type[str | int | float | bool | datetime | Path], ...] = (
+    str,
+    int,
+    float,
+    bool,
+    datetime,
+    Path,
+)
 
 
 class ConvertToStr(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["str"] = "str"
-    value: object = Field(...)
-    default: object | None = None
+    value: _ConvertValue = Field(...)
+    default: _ConvertValue | None = None
 
-    def convert(self) -> object | None:
+    def convert(self) -> _ConvertValue | None:
         try:
             return str(self.value)
         except (TypeError, ValueError):
@@ -26,10 +38,10 @@ class ConvertToStr(BaseModel):
 class ConvertToInt(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["int"] = "int"
-    value: object = Field(...)
-    default: object | None = None
+    value: _ConvertValue = Field(...)
+    default: _ConvertValue | None = None
 
-    def convert(self) -> object | None:
+    def convert(self) -> _ConvertValue | None:
         try:
             return int(str(self.value))
         except (TypeError, ValueError):
@@ -39,10 +51,10 @@ class ConvertToInt(BaseModel):
 class ConvertToFloat(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["float"] = "float"
-    value: object = Field(...)
-    default: object | None = None
+    value: _ConvertValue = Field(...)
+    default: _ConvertValue | None = None
 
-    def convert(self) -> object | None:
+    def convert(self) -> _ConvertValue | None:
         try:
             return float(str(self.value))
         except (TypeError, ValueError):
@@ -52,10 +64,10 @@ class ConvertToFloat(BaseModel):
 class ConvertToBool(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["bool"] = "bool"
-    value: object = Field(...)
-    default: object | None = None
+    value: _ConvertValue = Field(...)
+    default: _ConvertValue | None = None
 
-    def convert(self) -> object | None:
+    def convert(self) -> _ConvertValue | None:
         val = self.value
         if isinstance(val, str):
             return val.lower() in _TRUE_STRINGS
@@ -68,38 +80,45 @@ class ConvertToBool(BaseModel):
 class ConvertToList(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["list"] = "list"
-    value: object = Field(...)
-    default: object | None = None
+    value: _ConvertValue = Field(...)
+    default: _ConvertValue | None = None
 
-    def convert(self) -> object | None:
+    def convert(self) -> _ConvertValue | None:
         val = self.value
         if isinstance(val, Sequence) and not isinstance(val, (str, bytes, bytearray)):
-            seq_val: Sequence[object] = val
-            return list(seq_val)
-        return [val]
+            return [
+                item if isinstance(item, _CONTAINER_TYPES) else str(item)
+                for item in val
+            ]
+        return [val if isinstance(val, _CONTAINER_TYPES) else str(val)]
 
 
 class ConvertToTuple(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["tuple"] = "tuple"
-    value: object = Field(...)
-    default: object | None = None
+    value: _ConvertValue = Field(...)
+    default: _ConvertValue | None = None
 
-    def convert(self) -> object | None:
+    def convert(self) -> _ConvertValue | None:
         val = self.value
         if isinstance(val, Sequence) and not isinstance(val, (str, bytes, bytearray)):
-            seq_val: Sequence[object] = val
-            return tuple(seq_val)
-        return (val,)
+            return tuple(
+                item if isinstance(item, _CONTAINER_TYPES) else str(item)
+                for item in val
+            )
+        return (val if isinstance(val, _CONTAINER_TYPES) else str(val),)
 
 
 class ConvertToDict(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["dict"] = "dict"
-    value: object = Field(...)
-    default: object | None = None
+    value: _ConvertValue = Field(...)
+    default: _ConvertValue | None = None
 
-    def convert(self) -> object | None:
+    def convert(self) -> _ConvertValue | None:
         if isinstance(self.value, Mapping):
-            return dict(self.value)
+            return {
+                str(key): item if isinstance(item, _CONTAINER_TYPES) else str(item)
+                for key, item in self.value.items()
+            }
         return self.default

@@ -32,29 +32,28 @@ class FlextLdifUtilitiesOID:
         | FlextLdifModelsDomains.SchemaObjectClass,
     ) -> str | None:
         """Extract OID from schema object metadata or model."""
-        if schema_obj.metadata and schema_obj.metadata.extensions.get(
-            "original_format"
-        ):
+        if schema_obj.metadata and schema_obj.metadata.extensions:
+            extensions_dump: dict[str, object] = (
+                schema_obj.metadata.extensions.model_dump()
+            )
+            original_format_value_raw: object | None = extensions_dump.get(
+                "original_format"
+            )
+            if not isinstance(original_format_value_raw, str):
+                return schema_obj.oid
+            original_format_value = original_format_value_raw
             try:
-                original_format = schema_obj.metadata.extensions.get("original_format")
-                if isinstance(original_format, str):
-                    match = re.search(r"\(\s*([\d.]+)", original_format)
-                else:
-                    match = None
+                match = re.search(r"\(\s*([\d.]+)", original_format_value)
                 if match:
                     return match.group(1)
             except (re.error, AttributeError):
-                original_fmt = schema_obj.metadata.extensions.get("original_format")
-                debug_msg = (
-                    str(original_fmt)[:100] if isinstance(original_fmt, str) else "None"
-                )
-                original_format_preview = (
-                    str(original_fmt)[:200] if isinstance(original_fmt, str) else None
-                )
+                debug_msg = original_format_value[:100]
+                original_format_preview = original_format_value[:200]
+                preview_for_log: str = original_format_preview
                 logger.debug(
                     "Failed to extract OID from original_format: debug_message=%s, original_format_preview=%s",
                     debug_msg,
-                    original_format_preview,
+                    preview_for_log,
                 )
         return schema_obj.oid
 

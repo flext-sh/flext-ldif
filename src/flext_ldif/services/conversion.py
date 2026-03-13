@@ -136,7 +136,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_attribute_case(
-        original_attribute_case: t.Ldif.object, target_server_type: str
+        original_attribute_case: object, target_server_type: str
     ) -> Mapping[str, Mapping[str, object]]:
         """Analyze attribute case for target compatibility."""
         if bool(original_attribute_case):
@@ -153,7 +153,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_boolean_conversions(
-        boolean_conversions: t.Ldif.object, target_server_type: str
+        boolean_conversions: object, target_server_type: str
     ) -> Mapping[str, Mapping[str, str]]:
         """Analyze boolean conversions for target compatibility."""
         if not boolean_conversions or not isinstance(boolean_conversions, dict):
@@ -162,7 +162,7 @@ class FlextLdifConversion(
         for attr_name, conv_info in boolean_conversions.items():
             source_format = ""
             if isinstance(conv_info, dict):
-                source_format = str(u.take(conv_info, "format", default=""))
+                source_format = str(conv_info.get("format", "") or "")
             result[f"boolean_{attr_name}"] = {
                 "source_format": source_format,
                 "target_server": target_server_type,
@@ -172,11 +172,11 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_dn_format(
-        original_format_details: t.Ldif.object, target_server_type: str
+        original_format_details: object, target_server_type: str
     ) -> Mapping[str, Mapping[str, object]]:
         """Analyze DN spacing for target compatibility."""
         if isinstance(original_format_details, dict):
-            spacing = u.take(original_format_details, "dn_spacing")
+            spacing = original_format_details.get("dn_spacing")
             if spacing:
                 return {
                     "dn_format": {
@@ -419,7 +419,7 @@ class FlextLdifConversion(
         return r[p.Ldif.SchemaQuirkProtocol].ok(final_quirk)
 
     @staticmethod
-    def _normalize_metadata_value(value: t.Ldif.object) -> object:
+    def _normalize_metadata_value(value: object) -> object:
         """Normalize metadata value to proper type."""
         if value is None:
             return ""
@@ -1485,7 +1485,7 @@ class FlextLdifConversion(
 
     def _convert_to_metadata_attribute_value(
         self,
-        value: object | Mapping[str, object] | Sequence[object] | None,
+        value: object | Mapping[str, t.Ldif.object] | Sequence[object] | None,
     ) -> object:
         """Convert value to MetadataAttributeValue type."""
         if value is None:
@@ -1507,7 +1507,7 @@ class FlextLdifConversion(
     def _get_extensions_dict(self, acl: m.Ldif.Acl) -> Mapping[str, object]:
         """Extract extensions dict from ACL metadata."""
 
-        def to_general_value(value: t.Ldif.object) -> object:
+        def to_general_value(value: object) -> object:
             if value is None:
                 return None
             if isinstance(value, str):
@@ -1609,7 +1609,7 @@ class FlextLdifConversion(
             return acl_step1
         conv_ext = self._get_extensions_dict(acl_step1)
         orig_ext = self._get_extensions_dict(original_acl)
-        merged_ext_raw: dict[str, t.Ldif.object] = {**orig_ext, **conv_ext}
+        merged_ext_raw: dict[str, object] = {**orig_ext, **conv_ext}
         if (
             not merged_ext_raw
             or not get_metadata(acl_step1)

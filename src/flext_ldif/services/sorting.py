@@ -7,7 +7,7 @@ import struct
 from collections.abc import Callable, Mapping, Sequence
 from typing import ClassVar, Self, override
 
-from flext_core import r, t
+from flext_core import r
 from pydantic import Field, field_validator, model_validator
 
 from flext_ldif.base import FlextLdifServiceBase
@@ -355,7 +355,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         self, *, alphabetical: bool | None = None, order: list[str] | None = None
     ) -> Self:
         """Configure attribute sorting."""
-        update_dict: dict[str, t.Ldif.object] = {}
+        update_dict: dict[str, bool | list[str] | None] = {}
         if alphabetical is not None:
             update_dict["sort_attributes"] = alphabetical
             update_dict["attribute_order"] = None

@@ -10,7 +10,6 @@ from flext_core import r, s
 
 from flext_ldif.models import FlextLdifModels as m
 from flext_ldif.services.rfc_validation import FlextLdifValidation
-from flext_ldif.typings import FlextLdifTypes as t
 from flext_ldif.utilities import FlextLdifUtilities as u
 
 
@@ -58,7 +57,7 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
         """Validate entry objectClass values."""
         errors: list[str] = []
         is_valid = True
-        oc_values_raw: t.Ldif.object = u.get(
+        oc_values_raw = u.get(
             entry.attributes.attributes if entry.attributes else {},
             "objectClass",
             default=[],

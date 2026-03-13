@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import ClassVar, Literal, overload
@@ -49,7 +49,9 @@ class FlextFunctional:
             for key, item in value.items():
                 normalized_mapping[key] = FlextFunctional._to_general(item)
             return normalized_mapping
-        return [FlextFunctional._to_general(item) for item in value]
+        if isinstance(value, Iterable):
+            return [FlextFunctional._to_general(item) for item in value]
+        return value
 
     @staticmethod
     def or_[T](*values: T | None, default: T | None = None) -> T | None:
@@ -549,6 +551,47 @@ class FlextFunctional:
             Converted value or default if conversion fails
 
         """
+        normalized_value: (
+            t.Container | Sequence[t.Container] | Mapping[str, t.Container]
+        )
+        if isinstance(value, t.CONTAINER_TYPES):
+            normalized_value = value
+        elif isinstance(value, Mapping):
+            normalized_value = {
+                str(key): item if isinstance(item, t.CONTAINER_TYPES) else str(item)
+                for key, item in value.items()
+            }
+        elif isinstance(value, Sequence) and not isinstance(
+            value, (str, bytes, bytearray)
+        ):
+            normalized_value = [
+                item if isinstance(item, t.CONTAINER_TYPES) else str(item)
+                for item in value
+            ]
+        else:
+            normalized_value = str(value)
+        normalized_default: (
+            t.Container | Sequence[t.Container] | Mapping[str, t.Container] | None
+        )
+        if default is None:
+            normalized_default = None
+        elif isinstance(default, t.CONTAINER_TYPES):
+            normalized_default = default
+        elif isinstance(default, Mapping):
+            normalized_default = {
+                str(key): item if isinstance(item, t.CONTAINER_TYPES) else str(item)
+                for key, item in default.items()
+            }
+        elif isinstance(default, Sequence) and not isinstance(
+            default, (str, bytes, bytearray)
+        ):
+            normalized_default = [
+                item if isinstance(item, t.CONTAINER_TYPES) else str(item)
+                for item in default
+            ]
+        else:
+            normalized_default = str(default)
+
         conversion_model: (
             ConvertToStr
             | ConvertToInt
@@ -560,19 +603,33 @@ class FlextFunctional:
             | None
         ) = None
         if target_type is str:
-            conversion_model = ConvertToStr(value=value, default=default)
+            conversion_model = ConvertToStr(
+                value=normalized_value, default=normalized_default
+            )
         elif target_type is int:
-            conversion_model = ConvertToInt(value=value, default=default)
+            conversion_model = ConvertToInt(
+                value=normalized_value, default=normalized_default
+            )
         elif target_type is float:
-            conversion_model = ConvertToFloat(value=value, default=default)
+            conversion_model = ConvertToFloat(
+                value=normalized_value, default=normalized_default
+            )
         elif target_type is bool:
-            conversion_model = ConvertToBool(value=value, default=default)
+            conversion_model = ConvertToBool(
+                value=normalized_value, default=normalized_default
+            )
         elif target_type is list:
-            conversion_model = ConvertToList(value=value, default=default)
+            conversion_model = ConvertToList(
+                value=normalized_value, default=normalized_default
+            )
         elif target_type is tuple:
-            conversion_model = ConvertToTuple(value=value, default=default)
+            conversion_model = ConvertToTuple(
+                value=normalized_value, default=normalized_default
+            )
         elif target_type is dict:
-            conversion_model = ConvertToDict(value=value, default=default)
+            conversion_model = ConvertToDict(
+                value=normalized_value, default=normalized_default
+            )
         if conversion_model is None:
             return default
         try:

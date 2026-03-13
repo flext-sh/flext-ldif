@@ -63,16 +63,14 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         **kwargs: t.Scalar,
     ) -> None:
         """Initialize RFC ACL quirk service."""
-        filtered_kwargs: dict[str, object] = {
-            k: v
-            for k, v in kwargs.items()
-            if k not in {"_parent_quirk", "parent_quirk"}
-        }
+        _ = kwargs
         acl_service_typed: p.Ldif.AclQuirkProtocol | None = (
             acl_service if acl_service is not None else None
         )
         FlextLdifServersBaseSchemaAcl.__init__(
-            self, acl_service=acl_service_typed, _parent_quirk=None, **filtered_kwargs
+            self,
+            acl_service=acl_service_typed,
+            _parent_quirk=None,
         )
         if parent_quirk is not None:
             object.__setattr__(self, "_parent_quirk", parent_quirk)

@@ -201,17 +201,9 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
                     "base64_encode_binary", False
                 ),
             })
-        write_options_payload = dict(write_options)
-        sort_entries_raw = write_options_payload.get("sort_attributes", False)
-        include_comments_raw = write_options_payload.get("include_dn_comments", False)
-        base64_encode_binary_raw = write_options_payload.get(
-            "base64_encode_binary", False
-        )
-        return FlextLdifModelsDomains.WriteOptions(
-            sort_entries=bool(sort_entries_raw),
-            include_comments=bool(include_comments_raw),
-            base64_encode_binary=bool(base64_encode_binary_raw),
-        )
+        if not isinstance(write_options, Mapping):
+            return FlextLdifModelsDomains.WriteOptions()
+        return FlextLdifModelsDomains.WriteOptions.model_validate(write_options)
 
     def _denormalize_entry(
         self, entry: m.Ldif.Entry, target_server: str | None = None

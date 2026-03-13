@@ -456,7 +456,7 @@ class FlextLdifUtilities(FlextUtilities):
             mode: Literal["all", "any"] = "all",
         ) -> (
             list[object]
-            | Mapping[str, object]
+            | Mapping[str, t.Ldif.object]
             | object
             | FlextLdifResult[list[m.Ldif.Entry]]
         ):
@@ -606,7 +606,7 @@ class FlextLdifUtilities(FlextUtilities):
             items_or_entries: object
             | list[object]
             | tuple[object, ...]
-            | Mapping[str, object],
+            | Mapping[str, t.Ldif.object],
             processor_or_config: Callable[[object], object]
             | Callable[[str, object], object]
             | None = None,
@@ -650,7 +650,7 @@ class FlextLdifUtilities(FlextUtilities):
             items_or_entries: object
             | list[object]
             | tuple[object, ...]
-            | Mapping[str, object]
+            | Mapping[str, t.Ldif.object]
             | Sequence[m.Ldif.Entry],
             processor_or_config: Callable[[object], object]
             | Callable[[str, object], object]
@@ -820,23 +820,23 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         @overload
         def validate(
-            value_or_entries: object,
+            value_or_entries: t.Container,
             validator_first: p.ValidatorSpec,
             *validators_rest: p.ValidatorSpec,
             strict: bool = True,
             collect_all: bool = True,
             max_errors: int = 0,
-        ) -> r[object]: ...
+        ) -> r[t.Container]: ...
 
         @staticmethod
         def validate(
-            value_or_entries: Sequence[m.Ldif.Entry] | object,
+            value_or_entries: Sequence[m.Ldif.Entry] | t.Container,
             validator_first: p.ValidatorSpec | None = None,
             *validators_rest: p.ValidatorSpec,
             strict: bool = True,
             collect_all: bool = True,
             max_errors: int = 0,
-        ) -> r[list[ValidationResult]] | r[object]:
+        ) -> r[list[ValidationResult]] | r[t.Container]:
             """Validate entries against rules."""
             if (
                 FlextLdifUtilities.Ldif.is_entry_sequence(value_or_entries)
@@ -854,8 +854,8 @@ class FlextLdifUtilities(FlextUtilities):
             if isinstance(value_or_entries, Sequence) and (
                 not isinstance(value_or_entries, (str, bytes))
             ):
-                return r[object].fail(
-                    "validator call requires object, not entry sequence"
+                return r[t.Container].fail(
+                    "validator call requires scalar, not entry sequence"
                 )
             return FlextLdifUtilitiesValidation.validate(value_or_entries, *validators)
 

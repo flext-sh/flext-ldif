@@ -368,6 +368,8 @@ class FlextLdifUtilitiesSchema:
             return value.isoformat()
         if isinstance(value, list):
             return FlextLdifUtilitiesSchema._convert_sequence_to_str_list(value)
+        if not isinstance(value, Mapping):
+            return str(value)
         converted_nested: dict[str, t.Scalar | list[str]] = {}
         for k, v_raw in value.items():
             k_str = str(k)
@@ -1229,7 +1231,7 @@ class FlextLdifUtilitiesSchema:
             "metadata_extensions": extensions_converted,
             "syntax_validation": syntax_validation_converted,
         }
-        return r[dict[str, object]].ok(parsed_dict)
+        return r[dict[str, t.Ldif.object]].ok(parsed_dict)
 
     @staticmethod
     def parse_objectclass(

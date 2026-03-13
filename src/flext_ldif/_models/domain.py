@@ -1429,7 +1429,9 @@ class FlextLdifModelsDomains:
         @classmethod
         def coerce_attributes_from_dict(
             cls,
-            value: FlextLdifModelsDomains.Attributes | Mapping[str, t.Ldif.object] | None,
+            value: FlextLdifModelsDomains.Attributes
+            | Mapping[str, t.Ldif.object]
+            | None,
         ) -> FlextLdifModelsDomains.Attributes | None:
             """Convert dict to Attributes instance.
 
@@ -1740,10 +1742,10 @@ class FlextLdifModelsDomains:
                     )
                 )
                 self.metadata.validation_results = updated_validation_results
-                violations_typed: object = list(server_violations)
-                self.metadata.extensions["server_specific_violations"] = (
-                    violations_typed
-                )
+                ext_violations: list[t.Ldif.MetadataValue] = []
+                for v in server_violations:
+                    ext_violations.append(v)
+                self.metadata.extensions["server_specific_violations"] = ext_violations
             return self
 
         def _check_binary_option_rule(
@@ -3337,8 +3339,10 @@ class FlextLdifModelsDomains:
                 ... )
 
             """
-            values_typed: object = list(values)
-            self.removed_attributes[attribute_name] = values_typed
+            ext_values: list[t.Ldif.MetadataValue] = []
+            for v in values:
+                ext_values.append(v)
+            self.removed_attributes[attribute_name] = ext_values
             return self.track_attribute_transformation(
                 original_name=attribute_name,
                 new_name=None,
@@ -3432,8 +3436,10 @@ class FlextLdifModelsDomains:
             self.original_strings[rfc_format.META_DN_ORIGINAL] = original_dn
             self.extensions[rfc_format.META_DN_WAS_BASE64] = was_base64
             if escapes_applied:
-                escapes_typed: object = list(escapes_applied)
-                self.extensions[rfc_format.META_DN_ESCAPES_APPLIED] = escapes_typed
+                ext_escapes: list[t.Ldif.MetadataValue] = []
+                for v in escapes_applied:
+                    ext_escapes.append(v)
+                self.extensions[rfc_format.META_DN_ESCAPES_APPLIED] = ext_escapes
             self.conversion_notes[f"dn_{transformation_type}"] = (
                 f"DN {transformation_type}: '{original_dn}' → '{transformed_dn}'"
             )

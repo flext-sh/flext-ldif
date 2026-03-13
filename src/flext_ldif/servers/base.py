@@ -97,11 +97,11 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
     def __new__(cls, **kwargs: t.Scalar) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         instance: Self = object.__new__(cls)
-        filtered_kwargs: dict[str, str | float | bool | None] = {}
+        filtered_kwargs: dict[str, str | float | bool] = {}
         execute_kwargs: dict[str, object] = {}
         for k, v in kwargs.items():
             value = v
-            if isinstance(value, (str, float, bool)) or value is None:
+            if isinstance(value, (str, float, bool)):
                 filtered_kwargs[k] = value
             if isinstance(value, (str, int, bool, list)) or value is None:
                 execute_kwargs[k] = value

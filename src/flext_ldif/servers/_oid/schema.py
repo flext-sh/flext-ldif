@@ -28,11 +28,11 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize OID schema quirk."""
-        filtered_kwargs: dict[str, str | float | bool | None] = {
+        filtered_kwargs: dict[str, str | float | bool] = {
             k: v
             for k, v in kwargs.items()
             if k not in ("_parent_quirk", "_schema_service")
-            and (v is None or isinstance(v, (str, float, bool)))
+            and isinstance(v, (str, float, bool))
         }
         schema_service_typed: p.Ldif.SchemaQuirkProtocol | None = (
             schema_service if schema_service is not None else None
@@ -376,12 +376,10 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             else:
                 logger.warning(
                     "x_origin extension is not a string, ignoring",
-                    extra={
-                        "x_origin_type": type(x_origin_raw).__name__,
-                        "x_origin_value": str(x_origin_raw)[:100],
-                        "attribute_name": attr_data.name,
-                        "attribute_oid": attr_data.oid,
-                    },
+                    x_origin_type=type(x_origin_raw).__name__,
+                    x_origin_value=str(x_origin_raw)[:100],
+                    attribute_name=attr_data.name,
+                    attribute_oid=attr_data.oid,
                 )
         return m.Ldif.SchemaAttribute(
             oid=attr_data.oid,

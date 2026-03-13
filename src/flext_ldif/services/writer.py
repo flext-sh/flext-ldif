@@ -41,8 +41,12 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
             result_raw = format_options
         elif isinstance(format_options, m.Ldif.WriteOptions):
             result_raw = FlextLdifWriter._to_format_options(format_options)
+        elif not isinstance(format_options, Mapping):
+            result_raw = m.Ldif.WriteFormatOptions()
         else:
-            result_raw = m.Ldif.WriteFormatOptions.model_validate(dict(format_options))
+            result_raw = m.Ldif.WriteFormatOptions.model_validate(
+                dict(format_options)
+            )
         return m.Ldif.WriteFormatOptions.model_validate(result_raw)
 
     @staticmethod
@@ -67,7 +71,9 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
     @override
     def execute(self, params: object | None = None) -> r[m.Ldif.WriteResponse]:
         """Execute write operation with parameters."""
-        params_data: object = params if params is not None else {}
+        params_data: Mapping[str, t.GeneralValueType] = (
+            params if isinstance(params, Mapping) else {}
+        )
         entries_raw = u.take(params_data, "entries")
         entries: list[m.Ldif.Entry] = []
         entry_candidates: tuple[object, ...] = ()

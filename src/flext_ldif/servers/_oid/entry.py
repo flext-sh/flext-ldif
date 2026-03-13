@@ -457,9 +457,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 else []
             )
             schema_transformations.append("schema_dn_normalization")
-            schema_transformations_typed: list[t.Scalar] = [
-                str(item) for item in schema_transformations
-            ]
+            schema_transformations_typed: list[t.Ldif.MetadataValue] = []
+            for item in schema_transformations:
+                schema_transformations_typed.append(str(item))
             metadata.extensions["schema_transformations"] = schema_transformations_typed
         if acl_transformations:
             metadata.attribute_transformations = {
@@ -774,16 +774,18 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     entry.metadata.extensions = (
                         FlextLdifModelsMetadata.DynamicMetadata()
                     )
-                converted_attrs_list: list[t.Scalar] = [
-                    str(item) for item in converted_attrs
-                ]
+                converted_attrs_list: list[t.Ldif.MetadataValue] = []
+                for item in converted_attrs:
+                    converted_attrs_list.append(str(item))
                 if boolean_conversions:
                     boolean_conversions_dict: dict[str, dict[str, str | list[str]]] = {
                         attr_name: dict(conversion_data)
                         for attr_name, conversion_data in boolean_conversions.items()
                     }
                     conv_data: dict[
-                        str, dict[str, dict[str, str | list[str]]] | list[t.Scalar]
+                        str,
+                        dict[str, dict[str, str | list[str]]]
+                        | list[t.Ldif.MetadataValue],
                     ] = {
                         mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: converted_attrs_list,
                         mk.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions_dict,

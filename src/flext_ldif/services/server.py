@@ -37,10 +37,8 @@ class FlextLdifServer(FlextRegistry):
         self, dispatcher: p.CommandBus | None = None, **data: t.Scalar
     ) -> None:
         """Initialize registry and trigger auto-discovery."""
-        filtered_data = {
-            k: v for k, v in data.items() if isinstance(v, (str, int, float, bool))
-        }
-        super().__init__(dispatcher=dispatcher, **filtered_data)
+        _ = data
+        super().__init__(dispatcher=dispatcher)
         if not type(self)._discovery_initialized:
             self._auto_discover()
             type(self)._discovery_initialized = True

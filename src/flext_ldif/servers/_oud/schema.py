@@ -25,11 +25,11 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize OUD schema quirk."""
-        filtered_kwargs: dict[str, str | float | bool | None] = {
+        filtered_kwargs: dict[str, str | float | bool] = {
             k: v
             for k, v in kwargs.items()
             if k not in {"_parent_quirk", "_schema_service"}
-            and isinstance(v, (str, float, bool, type(None)))
+            and isinstance(v, (str, float, bool))
         }
         FlextLdifServersBaseSchema.__init__(
             self,

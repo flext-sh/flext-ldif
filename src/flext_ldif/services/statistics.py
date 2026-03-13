@@ -11,7 +11,6 @@ from flext_core import d, r
 
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import FlextLdifModels as m
-from flext_ldif.typings import FlextLdifTypes as t
 from flext_ldif.utilities import FlextLdifUtilities as u
 
 
@@ -74,10 +73,9 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
         output_files: Mapping[str, str],
     ) -> r[m.Ldif.StatisticsResult]:
         """Generate complete statistics for categorized migration."""
-        categorized_values_list: list[t.Ldif.object] = list(categorized.values())
         total_entries = sum(
             len(entries) if isinstance(entries, list) else 0
-            for entries in categorized_values_list
+            for entries in categorized.values()
         )
         categorized_counts_dict = {
             category: u.count(entries) for category, entries in categorized.items()

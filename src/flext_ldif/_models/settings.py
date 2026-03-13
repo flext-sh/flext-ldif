@@ -1536,7 +1536,7 @@ class FlextLdifModelsSettings:
             [str, Mapping[str, list[str]]], r[FlextLdifModelsDomains.Entry]
         ] = Field(..., description="Entry creation logic")
         build_metadata_hook: (
-            Callable[[str, Mapping[str, list[str]]], dict[str, object] | None] | None
+            Callable[[str, Mapping[str, list[str]]], dict[str, t.Ldif.object] | None] | None
         ) = Field(default=None, description="Optional metadata building")
         normalize_dn_hook: Callable[[str], str] | None = Field(
             default=None, description="Optional DN normalization"
