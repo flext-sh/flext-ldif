@@ -7,11 +7,10 @@ from contextlib import suppress
 from pathlib import Path
 from typing import override
 
-from flext_core import r
+from flext_core import r, s
 
-from flext_ldif.base import FlextLdifServer
 from flext_ldif.models import FlextLdifModels as m
-from flext_ldif.settings import FlextLdifSettings as s
+from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import FlextLdifTypes as t
 from flext_ldif.utilities import FlextLdifUtilities as u
 

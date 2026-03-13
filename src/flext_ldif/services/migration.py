@@ -6,7 +6,7 @@ import struct
 from pathlib import Path
 from typing import Final, override
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger, r, s
 from pydantic import PrivateAttr
 
 from flext_ldif.constants import FlextLdifConstants as c
@@ -14,7 +14,6 @@ from flext_ldif.models import FlextLdifModels as m
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.pipeline import ProcessingPipeline
 from flext_ldif.services.writer import FlextLdifWriter
-from flext_ldif.settings import FlextLdifSettings as s
 
 logger: Final = FlextLogger(__name__)
 

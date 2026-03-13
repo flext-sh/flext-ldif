@@ -7,11 +7,11 @@ from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 from typing import Protocol, override
 
-from flext_core import r
+from flext_core import r, s
 
-from flext_ldif.base import FlextLdifServer
 from flext_ldif.models import FlextLdifModels as m
-from flext_ldif.settings import FlextLdifSettings, FlextLdifSettings as s
+from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.settings import FlextLdifSettings
 from flext_ldif.utilities import FlextLdifUtilities as u
 
 

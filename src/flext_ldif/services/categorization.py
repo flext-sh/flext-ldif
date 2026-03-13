@@ -6,15 +6,14 @@ import struct
 from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Final, override
 
-from flext_core import r
+from flext_core import r, s
 from pydantic import BaseModel, ValidationError
 
-from flext_ldif.base import FlextLdifServer
 from flext_ldif.constants import FlextLdifConstants as c, logger
 from flext_ldif.models import FlextLdifModels as m
 from flext_ldif.servers._base.constants import FlextLdifServersBaseConstants
 from flext_ldif.services.filters import FlextLdifFilters
-from flext_ldif.settings import FlextLdifSettings as s
+from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import FlextLdifTypes as t
 from flext_ldif.utilities import FlextLdifUtilities as u
 
