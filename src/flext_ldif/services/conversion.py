@@ -11,13 +11,14 @@ from typing import ClassVar, Final, Self, TypeIs, override
 from flext_core import FlextLogger, r
 from pydantic import Field
 
-from flext_ldif.base import FlextLdifServer, FlextLdifServiceBase
+from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants as c
 from flext_ldif.models import FlextLdifModels as m
 from flext_ldif.protocols import FlextLdifProtocols as p
 from flext_ldif.servers._base import FlextLdifServersBaseSchema
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.typings import FlextLdifTypes as t
 from flext_ldif.utilities import FlextLdifUtilities as u
 
