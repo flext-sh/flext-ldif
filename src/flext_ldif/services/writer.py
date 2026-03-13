@@ -44,9 +44,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
         elif not isinstance(format_options, Mapping):
             result_raw = m.Ldif.WriteFormatOptions()
         else:
-            result_raw = m.Ldif.WriteFormatOptions.model_validate(
-                dict(format_options)
-            )
+            result_raw = m.Ldif.WriteFormatOptions.model_validate(dict(format_options))
         return m.Ldif.WriteFormatOptions.model_validate(result_raw)
 
     @staticmethod
