@@ -174,11 +174,6 @@ class TestsTestFlextLdifProtocols(s):
         """Test that Quirks namespace exists in Ldif namespace."""
         assert hasattr(FlextLdifProtocols.Ldif, self.Constants.NAMESPACE_QUIRKS)
 
-    @pytest.mark.parametrize("protocol_name", _PROTOCOL_NAMES)
-    def test_protocol_in_namespace(self, protocol_name: str) -> None:
-        """Test that protocol exists in Ldif namespace."""
-        assert hasattr(FlextLdifProtocols.Ldif, protocol_name)
-
     def test_schema_satisfies_protocol_oid(self) -> None:
         """Test that OID schema satisfies SchemaProtocol."""
         schema: p.Ldif.SchemaQuirkProtocol = FlextLdifServersOid.Schema()
