@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import struct
 from collections.abc import Callable
-from typing import Protocol
+from typing import Annotated, Protocol
 
 from flext_core import FlextLogger, r
 from pydantic import BaseModel, ConfigDict, Field
@@ -225,9 +225,9 @@ class FlextLdifUtilitiesWriters:
 
         class Stats(BaseModel):
             model_config = ConfigDict(validate_default=True)
-            total_entries: int = Field(default=0, ge=0)
-            successful: int = Field(default=0, ge=0)
-            failed: int = Field(default=0, ge=0)
+            total_entries: Annotated[int, Field(default=0, ge=0)]
+            successful: Annotated[int, Field(default=0, ge=0)]
+            failed: Annotated[int, Field(default=0, ge=0)]
 
         class WriteEntryHook(Protocol):
             """Protocol for writing individual entries."""

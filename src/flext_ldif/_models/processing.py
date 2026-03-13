@@ -14,7 +14,10 @@ class FlextLdifModelsProcessing:
         """Result of entry processing (transform or validate operation)."""
 
         model_config = ConfigDict(frozen=False, validate_assignment=True)
-        dn: str = Field(..., description="Distinguished name of the processed entry")
-        attributes: dict[str, list[str]] = Field(
-            ..., description="LDAP attributes as name -> list of values"
-        )
+        dn: Annotated[
+            str, Field(..., description="Distinguished name of the processed entry")
+        ]
+        attributes: Annotated[
+            dict[str, list[str]],
+            Field(..., description="LDAP attributes as name -> list of values"),
+        ]

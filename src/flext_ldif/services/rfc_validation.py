@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import struct
 from collections.abc import Mapping
-from typing import Self, override
+from typing import Annotated, Self, override
 
 from flext_core import d, r, t, u
 from pydantic import Field
@@ -18,9 +18,9 @@ from flext_ldif.models import FlextLdifModels as m
 class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
     """FlextLdifValidation class."""
 
-    attribute_names: list[str] = Field(default_factory=list)
-    objectclass_names: list[str] = Field(default_factory=list)
-    max_attr_value_length: int | None = Field(default=None)
+    attribute_names: Annotated[list[str], Field(default_factory=list)]
+    objectclass_names: Annotated[list[str], Field(default_factory=list)]
+    max_attr_value_length: Annotated[int | None, Field(default=None)]
 
     @classmethod
     def builder(cls) -> Self:

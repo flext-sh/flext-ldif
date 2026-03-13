@@ -5,7 +5,7 @@ from __future__ import annotations
 import operator
 import struct
 from collections.abc import Callable, Mapping, Sequence
-from typing import ClassVar, Self, override
+from typing import Annotated, ClassVar, Self, override
 
 from flext_core import r
 from pydantic import Field, field_validator, model_validator
@@ -30,19 +30,22 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         """Create a new sorting service instance for builder pattern."""
         return cls()
 
-    entries: list[m.Ldif.Entry] = Field(default_factory=_empty_entries)
-    sort_target: str = Field(default="entries")
-    sort_by: str = Field(default="hierarchy")
-    custom_predicate: Callable[[m.Ldif.Entry], str | int | float] | None = Field(
-        default=None
-    )
-    sort_attributes: bool = Field(default=False)
-    attribute_order: list[str] | None = Field(default=None)
-    sort_acl: bool = Field(default=False)
-    acl_attributes: list[str] = Field(
-        default_factory=lambda: list(c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES)
-    )
-    traversal: str = Field(default="depth-first")
+    entries: Annotated[list[m.Ldif.Entry], Field(default_factory=_empty_entries)]
+    sort_target: Annotated[str, Field(default="entries")]
+    sort_by: Annotated[str, Field(default="hierarchy")]
+    custom_predicate: Annotated[
+        Callable[[m.Ldif.Entry], str | int | float] | None, Field(default=None)
+    ]
+    sort_attributes: Annotated[bool, Field(default=False)]
+    attribute_order: Annotated[list[str] | None, Field(default=None)]
+    sort_acl: Annotated[bool, Field(default=False)]
+    acl_attributes: Annotated[
+        list[str],
+        Field(
+            default_factory=lambda: list(c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES)
+        ),
+    ]
+    traversal: Annotated[str, Field(default="depth-first")]
 
     @classmethod
     def by_custom(

@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
-from typing import override
+from typing import Annotated, override
 
 from flext_core import t
 from pydantic import ConfigDict, Field
@@ -101,12 +101,14 @@ class FlextLdifModelsCollections:
 
     class SchemaContent(FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True)
-        attributes: list[FlextLdifModelsDomains.SchemaAttribute] = Field(
-            default_factory=_schema_attributes_factory
-        )
-        object_classes: list[FlextLdifModelsDomains.SchemaObjectClass] = Field(
-            default_factory=_schema_object_classes_factory
-        )
+        attributes: Annotated[
+            list[FlextLdifModelsDomains.SchemaAttribute],
+            Field(default_factory=_schema_attributes_factory),
+        ]
+        object_classes: Annotated[
+            list[FlextLdifModelsDomains.SchemaObjectClass],
+            Field(default_factory=_schema_object_classes_factory),
+        ]
 
     class CategoryPaths(FlextLdifModelsMetadata.DynamicMetadata):
         """Category to file path mapping model."""
@@ -144,9 +146,9 @@ class FlextLdifModelsCollections:
 
     class FlexibleCategories(FlextLdifModelsBase):
         model_config = ConfigDict(extra="allow", frozen=False)
-        categories: dict[str, list[FlextLdifModelsDomains.Entry]] = Field(
-            default_factory=dict
-        )
+        categories: Annotated[
+            dict[str, list[FlextLdifModelsDomains.Entry]], Field(default_factory=dict)
+        ]
 
         @override
         def __eq__(self, other: object) -> bool:

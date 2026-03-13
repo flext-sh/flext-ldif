@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
-from typing import Self, override
+from typing import Annotated, Self, override
 
 from flext_core import r
 from pydantic import Field, PrivateAttr, field_validator
@@ -18,20 +18,30 @@ from flext_ldif.models import FlextLdifModels as m
 class FlextLdifDn(FlextLdifServiceBase[str]):
     """RFC 4514 Compliant DN Operations Service with Nested Classes."""
 
-    dn: str = Field(default="", description="Distinguished name to operate on.")
-    other_dn: str | None = Field(
-        default=None, description="Second DN for comparison operations."
-    )
-    operation: str = Field(
-        default="normalize",
-        description="Operation: parse|validate|normalize|clean|escape|unescape|compare|parse_rdn",
-    )
-    escape_mode: str = Field(
-        default="standard", description="Escape mode: standard (backslash) or hex"
-    )
-    enable_events: bool = Field(
-        default=False, description="Enable domain event emission for operations"
-    )
+    dn: Annotated[
+        str, Field(default="", description="Distinguished name to operate on.")
+    ]
+    other_dn: Annotated[
+        str | None,
+        Field(default=None, description="Second DN for comparison operations."),
+    ]
+    operation: Annotated[
+        str,
+        Field(
+            default="normalize",
+            description="Operation: parse|validate|normalize|clean|escape|unescape|compare|parse_rdn",
+        ),
+    ]
+    escape_mode: Annotated[
+        str,
+        Field(
+            default="standard", description="Escape mode: standard (backslash) or hex"
+        ),
+    ]
+    enable_events: Annotated[
+        bool,
+        Field(default=False, description="Enable domain event emission for operations"),
+    ]
     _last_event: m.Ldif.DnEvent | None = PrivateAttr(default=None)
     _normalizer_instance: FlextLdifDn.Normalizer | None = PrivateAttr(default=None)
     _parser_instance: FlextLdifDn.Parser | None = PrivateAttr(default=None)

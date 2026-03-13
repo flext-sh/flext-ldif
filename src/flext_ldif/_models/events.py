@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Self
+from typing import Annotated, Self
 
 from flext_core import m
 from pydantic import ConfigDict, Field
@@ -56,9 +56,10 @@ class FlextLdifModelsEvents:
         filter_operation: str
         entries_before: int
         entries_after: int
-        filter_criteria: list[FlextLdifModelsSettings.FilterCriteria] = Field(
-            default_factory=_filter_criteria_factory
-        )
+        filter_criteria: Annotated[
+            list[FlextLdifModelsSettings.FilterCriteria],
+            Field(default_factory=_filter_criteria_factory),
+        ]
         filter_duration_ms: float = 0.0
 
     class ParseEvent(m.DomainEvent):
@@ -143,7 +144,7 @@ class FlextLdifModelsEvents:
         model_config = ConfigDict(extra="forbid", validate_assignment=True)
         category_operation: str
         entries_categorized: int = 0
-        categories_created: list[str] = Field(default_factory=list)
+        categories_created: Annotated[list[str], Field(default_factory=list)]
         categorization_duration_ms: float = 0.0
 
     class AclEvent(m.DomainEvent):

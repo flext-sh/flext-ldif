@@ -8,7 +8,7 @@ from collections.abc import (
     Mapping,
     ValuesView,
 )
-from typing import ClassVar, Self, override
+from typing import Annotated, ClassVar, Self, override
 
 from flext_core import FlextModels
 from pydantic import ConfigDict, Field
@@ -25,11 +25,11 @@ class FlextLdifModelsMetadata:
         model_config = ConfigDict(
             extra="allow", arbitrary_types_allowed=True, frozen=False
         )
-        transformations: list[t.Scalar] | None = Field(default=None)
-        original_format: str | None = Field(default=None)
-        schema_source_server: str | None = Field(default=None)
-        server_type: str | None = Field(default=None)
-        relaxed_mode: bool | None = Field(default=None)
+        transformations: Annotated[list[t.Scalar] | None, Field(default=None)]
+        original_format: Annotated[str | None, Field(default=None)]
+        schema_source_server: Annotated[str | None, Field(default=None)]
+        server_type: Annotated[str | None, Field(default=None)]
+        relaxed_mode: Annotated[bool | None, Field(default=None)]
 
         @override
         def __eq__(self, other: object) -> bool:

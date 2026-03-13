@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import struct
 from collections.abc import Mapping
-from typing import ClassVar, Literal, override
+from typing import Annotated, ClassVar, Literal, override
 
 from flext_core import FlextLogger, r
 from pydantic import BaseModel, Field, RootModel
@@ -30,20 +30,20 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     """Oracle Internet Directory (OID) ACL implementation."""
 
     class OidAclMetadataConfig(BaseModel):
-        acl_line: str = Field(default="")
-        oid_subject_type: str = Field(default="")
-        rfc_subject_type: str = Field(default="")
-        oid_subject_value: str = Field(default="")
-        perms_dict: Mapping[str, bool] = Field(default_factory=dict)
-        target_dn: str = Field(default="entry")
-        target_attrs: list[str] = Field(default_factory=list)
-        acl_filter: str = Field(default="")
-        acl_constraint: str = Field(default="")
-        bindmode: str = Field(default="")
-        deny_group_override: bool = Field(default=False)
-        append_to_all: bool = Field(default=False)
-        bind_ip_filter: str = Field(default="")
-        constrain_to_added_object: str = Field(default="")
+        acl_line: Annotated[str, Field(default="")]
+        oid_subject_type: Annotated[str, Field(default="")]
+        rfc_subject_type: Annotated[str, Field(default="")]
+        oid_subject_value: Annotated[str, Field(default="")]
+        perms_dict: Annotated[Mapping[str, bool], Field(default_factory=dict)]
+        target_dn: Annotated[str, Field(default="entry")]
+        target_attrs: Annotated[list[str], Field(default_factory=list)]
+        acl_filter: Annotated[str, Field(default="")]
+        acl_constraint: Annotated[str, Field(default="")]
+        bindmode: Annotated[str, Field(default="")]
+        deny_group_override: Annotated[bool, Field(default=False)]
+        append_to_all: Annotated[bool, Field(default=False)]
+        bind_ip_filter: Annotated[str, Field(default="")]
+        constrain_to_added_object: Annotated[str, Field(default="")]
 
     RFC_ACL_ATTRIBUTES: ClassVar[list[str]] = [
         "aci",

@@ -273,37 +273,29 @@ class FlextLdifProtocols(FlextProtocols):
             def parse(
                 self, definition: str
             ) -> r[
-                list[
-                    FlextLdifModelsDomains.SchemaAttribute
-                    | FlextLdifModelsDomains.SchemaObjectClass
-                ]
+                FlextLdifModelsDomains.SchemaAttribute
+                | FlextLdifModelsDomains.SchemaObjectClass
             ]:
                 """Parse schema definition."""
                 ...
 
             def parse_attribute(
                 self, definition: str
-            ) -> r[
-                FlextLdifModelsDomains.SchemaAttribute
-                | FlextLdifModelsDomains.SchemaObjectClass
-            ]:
+            ) -> r[FlextLdifModelsDomains.SchemaAttribute]:
                 """Parse individual attribute definition."""
                 ...
 
             def parse_objectclass(
                 self, definition: str
-            ) -> r[
-                FlextLdifModelsDomains.SchemaAttribute
-                | FlextLdifModelsDomains.SchemaObjectClass
-            ]:
+            ) -> r[FlextLdifModelsDomains.SchemaObjectClass]:
                 """Parse individual objectClass definition."""
                 ...
 
             def write(
                 self,
                 model: (
-                    FlextLdifProtocols.Ldif.SchemaAttributeProtocol
-                    | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+                    FlextLdifModelsDomains.SchemaAttribute
+                    | FlextLdifModelsDomains.SchemaObjectClass
                 ),
             ) -> r[str]:
                 """Write schema definition."""

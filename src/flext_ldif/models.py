@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Final, TypeAlias
+from typing import Annotated, Final, TypeAlias
 
 from flext_core import FlextModels
 from pydantic import Field
@@ -108,31 +108,40 @@ class FlextLdifModels(FlextModels):
         class QuirksByServerDict(FlextModels.ArbitraryTypesModel):
             """Quirks by server dictionary model."""
 
-            schema_type: str | None = Field(
-                default=None,
-                alias="schema",
-                description="Schema quirk type",
-            )
-            acl_type: str | None = Field(
-                default=None,
-                alias="acl",
-                description="ACL quirk type",
-            )
-            entry_type: str | None = Field(
-                default=None,
-                alias="entry",
-                description="Entry quirk type",
-            )
+            schema_type: Annotated[
+                str | None,
+                Field(
+                    default=None,
+                    alias="schema",
+                    description="Schema quirk type",
+                ),
+            ]
+            acl_type: Annotated[
+                str | None,
+                Field(
+                    default=None,
+                    alias="acl",
+                    description="ACL quirk type",
+                ),
+            ]
+            entry_type: Annotated[
+                str | None,
+                Field(
+                    default=None,
+                    alias="entry",
+                    description="Entry quirk type",
+                ),
+            ]
 
         class RegistryStatsDict(FlextModels.ArbitraryTypesModel):
             """Registry statistics dictionary model."""
 
-            total_servers: int = Field(default=0)
-            quirks_by_server: dict[
-                str,
-                FlextLdifModels.Ldif.QuirksByServerDict,
-            ] = Field(default_factory=dict)
-            server_priorities: dict[str, int] = Field(default_factory=dict)
+            total_servers: Annotated[int, Field(default=0)]
+            quirks_by_server: Annotated[
+                dict[str, FlextLdifModels.Ldif.QuirksByServerDict],
+                Field(default_factory=dict),
+            ]
+            server_priorities: Annotated[dict[str, int], Field(default_factory=dict)]
 
         # =================================================================
         # NON-CLASS TYPE ALIASES — type unions, protocol references

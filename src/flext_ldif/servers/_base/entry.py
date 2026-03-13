@@ -7,7 +7,7 @@ import re
 from collections.abc import Mapping
 from contextlib import suppress
 from datetime import UTC, datetime
-from typing import ClassVar, Self, override
+from typing import Annotated, ClassVar, Self, override
 
 from flext_core import FlextLogger, FlextService, r, u as core_u
 from pydantic import Field, ValidationError
@@ -27,12 +27,15 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
     "Server type identifier."
     priority: int = 0
     "Quirk priority (lower number = higher priority)."
-    parent_quirk: Self | None = Field(
-        default=None,
-        exclude=True,
-        repr=False,
-        description="Reference to parent quirk instance for server-level access",
-    )
+    parent_quirk: Annotated[
+        Self | None,
+        Field(
+            default=None,
+            exclude=True,
+            repr=False,
+            description="Reference to parent quirk instance for server-level access",
+        ),
+    ]
 
     def __init__(
         self,

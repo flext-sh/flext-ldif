@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
 from flext_core import t
 from pydantic import BaseModel, ConfigDict, Field
@@ -25,7 +25,7 @@ _CONTAINER_TYPES: tuple[type[str | int | float | bool | datetime | Path], ...] =
 class ConvertToStr(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["str"] = "str"
-    value: _ConvertValue = Field(...)
+    value: Annotated[_ConvertValue, Field(...)]
     default: _ConvertValue | None = None
 
     def convert(self) -> _ConvertValue | None:
@@ -38,7 +38,7 @@ class ConvertToStr(BaseModel):
 class ConvertToInt(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["int"] = "int"
-    value: _ConvertValue = Field(...)
+    value: Annotated[_ConvertValue, Field(...)]
     default: _ConvertValue | None = None
 
     def convert(self) -> _ConvertValue | None:
@@ -51,7 +51,7 @@ class ConvertToInt(BaseModel):
 class ConvertToFloat(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["float"] = "float"
-    value: _ConvertValue = Field(...)
+    value: Annotated[_ConvertValue, Field(...)]
     default: _ConvertValue | None = None
 
     def convert(self) -> _ConvertValue | None:
@@ -64,7 +64,7 @@ class ConvertToFloat(BaseModel):
 class ConvertToBool(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["bool"] = "bool"
-    value: _ConvertValue = Field(...)
+    value: Annotated[_ConvertValue, Field(...)]
     default: _ConvertValue | None = None
 
     def convert(self) -> _ConvertValue | None:
@@ -80,7 +80,7 @@ class ConvertToBool(BaseModel):
 class ConvertToList(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["list"] = "list"
-    value: _ConvertValue = Field(...)
+    value: Annotated[_ConvertValue, Field(...)]
     default: _ConvertValue | None = None
 
     def convert(self) -> _ConvertValue | None:
@@ -96,7 +96,7 @@ class ConvertToList(BaseModel):
 class ConvertToTuple(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["tuple"] = "tuple"
-    value: _ConvertValue = Field(...)
+    value: Annotated[_ConvertValue, Field(...)]
     default: _ConvertValue | None = None
 
     def convert(self) -> _ConvertValue | None:
@@ -112,7 +112,7 @@ class ConvertToTuple(BaseModel):
 class ConvertToDict(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["dict"] = "dict"
-    value: _ConvertValue = Field(...)
+    value: Annotated[_ConvertValue, Field(...)]
     default: _ConvertValue | None = None
 
     def convert(self) -> _ConvertValue | None:

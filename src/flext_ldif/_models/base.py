@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
 from flext_core import FlextModels
 from pydantic import ConfigDict, Field, computed_field
 
@@ -83,13 +85,20 @@ class AclElement(FlextModels.ArbitraryTypesModel):
         use_enum_values=True,
         str_strip_whitespace=True,
     )
-    server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = Field(
-        default="rfc", description="LDAP server type (oid, oud, openldap, rfc, etc.)"
-    )
-    validation_violations: list[str] = Field(
-        default_factory=list,
-        description="Validation violations captured during parsing/processing",
-    )
+    server_type: Annotated[
+        c.Ldif.LiteralTypes.ServerTypeLiteral,
+        Field(
+            default="rfc",
+            description="LDAP server type (oid, oud, openldap, rfc, etc.)",
+        ),
+    ]
+    validation_violations: Annotated[
+        list[str],
+        Field(
+            default_factory=list,
+            description="Validation violations captured during parsing/processing",
+        ),
+    ]
 
     @computed_field
     def has_server_quirks(self) -> bool:

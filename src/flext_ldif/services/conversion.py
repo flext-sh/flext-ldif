@@ -6,7 +6,7 @@ import struct
 import time
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
-from typing import ClassVar, Final, Self, TypeIs, override
+from typing import Annotated, ClassVar, Final, Self, TypeIs, override
 
 from flext_core import FlextLogger, r
 from pydantic import Field
@@ -120,7 +120,9 @@ class FlextLdifConversion(
         """Default DN registry factory function."""
         return m.Ldif.DnRegistry()
 
-    dn_registry: m.Ldif.DnRegistry = Field(default_factory=_default_dn_registry)
+    dn_registry: Annotated[
+        m.Ldif.DnRegistry, Field(default_factory=_default_dn_registry)
+    ]
 
     def __new__(cls) -> Self:
         """Create service instance with matching signature for type checker."""

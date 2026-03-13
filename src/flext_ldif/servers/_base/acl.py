@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import ClassVar, Self, override
+from typing import Annotated, ClassVar, Self, override
 
 from flext_core import FlextLogger, FlextService, r
 from pydantic import Field, ValidationError
@@ -27,12 +27,15 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
     "Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')."
     priority: int = 0
     "Quirk priority (lower number = higher priority)."
-    parent_quirk: Self | None = Field(
-        default=None,
-        exclude=True,
-        repr=False,
-        description="Reference to parent quirk instance for server-level access",
-    )
+    parent_quirk: Annotated[
+        Self | None,
+        Field(
+            default=None,
+            exclude=True,
+            repr=False,
+            description="Reference to parent quirk instance for server-level access",
+        ),
+    ]
 
     def __init__(
         self,
