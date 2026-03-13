@@ -112,7 +112,7 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             parsed_dict = dict(parse_result.value)
             metadata_extensions = parsed_dict.pop("metadata_extensions", {})
             parsed_dict.pop("syntax_validation", None)
-            attr_domain = m.Ldif.SchemaAttribute.model_validate(parsed_dict)
+            attr_domain = m.Ldif.SchemaAttribute(parsed_dict)
             if metadata_extensions and issubclass(metadata_extensions.__class__, dict):
                 attr_domain.metadata = m.Ldif.QuirkMetadata(
                     quirk_type="rfc", extensions=m.Ldif.DynamicMetadata.from_dict({})
@@ -152,7 +152,7 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
                 "must": parsed_dict.get("must"),
                 "may": parsed_dict.get("may"),
             }
-            oc_domain = m.Ldif.SchemaObjectClass.model_validate(oc_dict)
+            oc_domain = m.Ldif.SchemaObjectClass(oc_dict)
             if metadata_extensions and issubclass(metadata_extensions.__class__, dict):
                 oc_domain.metadata = m.Ldif.QuirkMetadata(
                     quirk_type="rfc", extensions=m.Ldif.DynamicMetadata.from_dict({})

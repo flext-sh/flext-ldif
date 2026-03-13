@@ -63,7 +63,7 @@ def parse_and_evaluate_acls() -> None:
     required_perms: dict[str, bool] = {}
     if "permissions" in eval_context and isinstance(eval_context["permissions"], dict):
         required_perms = cast("dict[str, bool]", eval_context["permissions"])
-    acls_for_eval = [m.Ldif.Acl.model_validate(acl) for acl in acls]
+    acls_for_eval = [m.Ldif.Acl(acl) for acl in acls]
     evaluation_result = api.acl_service.evaluate_acl_context(
         acls_for_eval, required_perms
     )
@@ -138,7 +138,7 @@ def acl_pipeline() -> None:
         "subject_dn": "cn=anonymous",
         "permissions": {"read": True},
     }
-    acls_typed = [m.Ldif.Acl.model_validate(acl) for acl in acls]
+    acls_typed = [m.Ldif.Acl(acl) for acl in acls]
     required_perms: dict[str, bool] = {}
     if "permissions" in eval_context and isinstance(eval_context["permissions"], dict):
         required_perms = cast("dict[str, bool]", eval_context["permissions"])

@@ -171,9 +171,7 @@ class FlextLdifUtilitiesSchema:
                 return validation_result
             unwrapped_validated = validation_result.value
             try:
-                current = FlextLdifModelsDomains.SchemaAttribute.model_validate(
-                    unwrapped_validated
-                )
+                current = FlextLdifModelsDomains.SchemaAttribute(unwrapped_validated)
                 continue
             except (
                 ValueError,
@@ -186,9 +184,7 @@ class FlextLdifUtilitiesSchema:
                     "SchemaAttribute cast failed after transformation", error=str(exc)
                 )
             try:
-                current = FlextLdifModelsDomains.SchemaObjectClass.model_validate(
-                    unwrapped_validated
-                )
+                current = FlextLdifModelsDomains.SchemaObjectClass(unwrapped_validated)
                 continue
             except (
                 ValueError,
@@ -565,7 +561,7 @@ class FlextLdifUtilitiesSchema:
                 result = parse_callback(item_def)
                 if result.is_success:
                     try:
-                        items.append(model_type.model_validate(result.value))
+                        items.append(model_type(result.value))
                     except (
                         ValueError,
                         KeyError,
@@ -631,7 +627,7 @@ class FlextLdifUtilitiesSchema:
         """Wrap transformation result with proper type."""
         try:
             return r[_SchemaElementUnion].ok(
-                FlextLdifModelsDomains.SchemaAttribute.model_validate(transformed)
+                FlextLdifModelsDomains.SchemaAttribute(transformed)
             )
         except (
             ValueError,
@@ -646,7 +642,7 @@ class FlextLdifUtilitiesSchema:
             )
         try:
             return r[_SchemaElementUnion].ok(
-                FlextLdifModelsDomains.SchemaObjectClass.model_validate(transformed)
+                FlextLdifModelsDomains.SchemaObjectClass(transformed)
             )
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return r[
@@ -744,10 +740,8 @@ class FlextLdifUtilitiesSchema:
     ]:
         """Validate that transformation result matches input type."""
         try:
-            _ = FlextLdifModelsDomains.SchemaAttribute.model_validate(schema_obj)
-            validated_attr = FlextLdifModelsDomains.SchemaAttribute.model_validate(
-                unwrapped
-            )
+            _ = FlextLdifModelsDomains.SchemaAttribute(schema_obj)
+            validated_attr = FlextLdifModelsDomains.SchemaAttribute(unwrapped)
             return r[_SchemaElementUnion].ok(validated_attr)
         except (
             ValueError,
@@ -760,10 +754,8 @@ class FlextLdifUtilitiesSchema:
                 "SchemaAttribute validation failed after transformation", error=str(exc)
             )
         try:
-            _ = FlextLdifModelsDomains.SchemaObjectClass.model_validate(schema_obj)
-            validated_oc = FlextLdifModelsDomains.SchemaObjectClass.model_validate(
-                unwrapped
-            )
+            _ = FlextLdifModelsDomains.SchemaObjectClass(schema_obj)
+            validated_oc = FlextLdifModelsDomains.SchemaObjectClass(unwrapped)
             return r[_SchemaElementUnion].ok(validated_oc)
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return r[
@@ -980,7 +972,7 @@ class FlextLdifUtilitiesSchema:
 
         """
         try:
-            _ = FlextLdifModelsDomains.SchemaAttribute.model_validate(definition)
+            _ = FlextLdifModelsDomains.SchemaAttribute(definition)
             return "attribute"
         except (
             ValueError,
@@ -993,7 +985,7 @@ class FlextLdifUtilitiesSchema:
                 "SchemaAttribute model validation did not match", error=str(exc)
             )
         try:
-            _ = FlextLdifModelsDomains.SchemaObjectClass.model_validate(definition)
+            _ = FlextLdifModelsDomains.SchemaObjectClass(definition)
             return "objectclass"
         except (
             ValueError,

@@ -27,7 +27,7 @@ class TestSchemaDeviationsSyntaxQuotes:
     """Test syntax OID quotation tracking (OID uses quotes, OUD/RFC don't)."""
 
     @pytest.fixture
-    def oid_schema(self) -> FlextLdifServersOid.Schema:
+    def oid_schema(self) -> FlextLdifServersBaseSchema:
         """Create OID schema quirk instance."""
         return FlextLdifServersOid().schema_quirk
 
@@ -76,7 +76,7 @@ class TestSchemaDeviationsXOrigin:
     """Test X-ORIGIN presence/absence tracking."""
 
     @pytest.fixture
-    def oid_schema(self) -> FlextLdifServersOid.Schema:
+    def oid_schema(self) -> FlextLdifServersBaseSchema:
         """Create OID schema quirk instance."""
         return FlextLdifServersOid().schema_quirk
 
@@ -133,7 +133,7 @@ class TestSchemaDeviationsNameAliases:
     """Test multiple NAME aliases preservation."""
 
     @pytest.fixture
-    def oid_schema(self) -> FlextLdifServersOid.Schema:
+    def oid_schema(self) -> FlextLdifServersBaseSchema:
         """Create OID schema quirk instance."""
         return FlextLdifServersOid().schema_quirk
 
@@ -190,7 +190,7 @@ class TestSchemaDeviationsObsolete:
     """Test OBSOLETE marker preservation."""
 
     @pytest.fixture
-    def oid_schema(self) -> FlextLdifServersOid.Schema:
+    def oid_schema(self) -> FlextLdifServersBaseSchema:
         """Create OID schema quirk instance."""
         return FlextLdifServersOid().schema_quirk
 
@@ -236,7 +236,7 @@ class TestSchemaDeviationsSpacing:
     """Test spacing preservation between fields."""
 
     @pytest.fixture
-    def oid_schema(self) -> FlextLdifServersOid.Schema:
+    def oid_schema(self) -> FlextLdifServersBaseSchema:
         """Create OID schema quirk instance."""
         return FlextLdifServersOid().schema_quirk
 
@@ -288,7 +288,7 @@ class TestSchemaDeviationsOriginalString:
     """Test complete original string preservation."""
 
     @pytest.fixture
-    def oid_schema(self) -> FlextLdifServersOid.Schema:
+    def oid_schema(self) -> FlextLdifServersBaseSchema:
         """Create OID schema quirk instance."""
         return FlextLdifServersOid().schema_quirk
 
@@ -537,7 +537,7 @@ class TestSchemaDeviationsComplete:
         ]
         assert format_details is not None
         extensions_dict = format_details.extensions.model_dump()
-        missing = []
+        missing: list[str] = []
         for f in oid_must_track:
             if f == "original_string_complete":
                 if format_details.original_string_complete is None:
@@ -580,7 +580,7 @@ class TestSchemaDeviationsComplete:
         ]
         assert format_details is not None
         extensions_dict = format_details.extensions.model_dump()
-        missing = []
+        missing: list[str] = []
         for f in oud_must_track:
             if f == "original_string_complete":
                 if format_details.original_string_complete is None:

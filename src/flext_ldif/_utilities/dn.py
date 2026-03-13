@@ -463,9 +463,7 @@ class FlextLdifUtilitiesDN:
             stats_domain = FlextLdifModelsDomains.DNStatistics.create_minimal(
                 original_dn
             )
-            stats = FlextLdifModelsDomains.DNStatistics.model_validate(
-                stats_domain.model_dump()
-            )
+            stats = FlextLdifModelsDomains.DNStatistics(stats_domain.model_dump())
             return (original_dn, stats)
         result, transformations, flags = FlextLdifUtilitiesDN._apply_dn_transformations(
             original_dn
@@ -1222,7 +1220,7 @@ class FlextLdifUtilitiesDN:
         )
         metadata: m.Ldif.QuirkMetadata
         if entry.metadata:
-            metadata = m.Ldif.QuirkMetadata.model_validate(entry.metadata)
+            metadata = m.Ldif.QuirkMetadata(entry.metadata)
         else:
             metadata = m.Ldif.QuirkMetadata.create_for()
         transform_config = FlextLdifModelsSettings.MetadataTransformationConfig(

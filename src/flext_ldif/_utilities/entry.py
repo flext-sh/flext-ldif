@@ -217,7 +217,7 @@ class FlextLdifUtilitiesEntry:
             if exclude_schema and effective_is_schema is None:
                 effective_is_schema = False
             kwargs["is_schema"] = effective_is_schema
-            config = FlextLdifModelsSettings.EntryFilterConfig.model_validate(kwargs)
+            config = FlextLdifModelsSettings.EntryFilterConfig(kwargs)
         filtered: list[m.Ldif.Entry] = [
             entry
             for entry in entries
@@ -297,7 +297,7 @@ class FlextLdifUtilitiesEntry:
     ) -> bool:
         """Check multiple entry criteria in one call."""
         if config is None:
-            config = FlextLdifModelsSettings.EntryCriteriaConfig.model_validate(kwargs)
+            config = FlextLdifModelsSettings.EntryCriteriaConfig(kwargs)
         checks: list[bool] = []
         if config.is_schema is not None:
             checks.append(
@@ -391,9 +391,7 @@ class FlextLdifUtilitiesEntry:
     ) -> Mapping[str, list[t.Ldif.AttributeValue]]:
         """Batch normalize attributes from server format to RFC format."""
         if config is None:
-            config = FlextLdifModelsSettings.AttributeNormalizeConfig.model_validate(
-                kwargs
-            )
+            config = FlextLdifModelsSettings.AttributeNormalizeConfig(kwargs)
         result: dict[str, list[str | bytes]] = {}
         operational_lower: set[str] = (
             {a.lower() for a in config.operational_attrs}
@@ -450,7 +448,7 @@ class FlextLdifUtilitiesEntry:
     ) -> r[list[m.Ldif.Entry]]:
         """Transform multiple entries with common operations."""
         if config is None:
-            config = FlextLdifModelsSettings.EntryTransformConfig.model_validate(kwargs)
+            config = FlextLdifModelsSettings.EntryTransformConfig(kwargs)
 
         def transform_entry(entry: m.Ldif.Entry) -> m.Ldif.Entry:
             """Transform single entry with all operations."""

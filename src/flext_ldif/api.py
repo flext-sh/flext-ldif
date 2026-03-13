@@ -220,7 +220,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             _ = self.parser
             _ = self.writer
             _ = self.detector
-            health_entry = m.Ldif.Entry.model_validate({
+            health_entry = m.Ldif.Entry({
                 "dn": "cn=health-check",
                 "attributes": {"cn": ["health-check"]},
             })
@@ -243,9 +243,9 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             case m.Ldif.Entry() as ldif_entry:
                 entry_typed = ldif_entry
             case BaseModel() as model:
-                entry_typed = m.Ldif.Entry.model_validate(model)
+                entry_typed = m.Ldif.Entry(model)
             case _:
-                entry_typed = m.Ldif.Entry.model_validate(entry)
+                entry_typed = m.Ldif.Entry(entry)
         return self.acl_service.extract_acls_from_entry(entry_typed, server_type)
 
     def filter(
@@ -347,9 +347,9 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             case m.Ldif.Entry() as ldif_entry:
                 entry_typed = ldif_entry
             case BaseModel() as model:
-                entry_typed = m.Ldif.Entry.model_validate(model)
+                entry_typed = m.Ldif.Entry(model)
             case _:
-                entry_typed = m.Ldif.Entry.model_validate(entry)
+                entry_typed = m.Ldif.Entry(entry)
         return FlextLdifEntries.get_entry_attributes(entry_typed)
 
     def get_entry_dn(
@@ -366,9 +366,9 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             case m.Ldif.Entry() as ldif_entry:
                 entry_typed = ldif_entry
             case BaseModel() as model:
-                entry_typed = m.Ldif.Entry.model_validate(model)
+                entry_typed = m.Ldif.Entry(model)
             case _:
-                entry_typed = m.Ldif.Entry.model_validate(entry)
+                entry_typed = m.Ldif.Entry(entry)
         return FlextLdifEntries.get_entry_objectclasses(entry_typed)
 
     def get_entry_statistics(

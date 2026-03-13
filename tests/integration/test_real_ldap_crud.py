@@ -124,7 +124,7 @@ class TestRealLdapBatchOperations:
                     entries.append(unwrapped_entry)
                 else:
                     entry_dict = unwrapped_entry.model_dump()
-                    facade_entry = m.Ldif.Entry.model_validate(entry_dict)
+                    facade_entry = m.Ldif.Entry(entry_dict)
                     entries.append(facade_entry)
         assert len(entries) == 20
         ldap_entries: list[m.Ldif.DN | None] = []
@@ -199,7 +199,7 @@ class TestRealLdapBatchOperations:
                 entries.append(unwrapped_entry)
             else:
                 entry_dict = unwrapped_entry.model_dump()
-                facade_entry = m.Ldif.Entry.model_validate(entry_dict)
+                facade_entry = m.Ldif.Entry(entry_dict)
                 entries.append(facade_entry)
         export_file = tmp_path / "batch_export.ldif"
         write_result = flext_api.write_file(entries, export_file)

@@ -80,12 +80,9 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
         categorized_counts_dict = {
             category: u.count(entries) for category, entries in categorized.items()
         }
-        categorized_counts_model = m.Ldif.DynamicCounts.model_validate(
-            categorized_counts_dict
-        )
+        categorized_counts_model = m.Ldif.DynamicCounts(categorized_counts_dict)
         rejected_entries: list[m.Ldif.Entry] = [
-            m.Ldif.Entry.model_validate(entry)
-            for entry in categorized.get("rejected", [])
+            m.Ldif.Entry(entry) for entry in categorized.get("rejected", [])
         ]
         rejection_count = u.count(rejected_entries)
         _ = self._extract_rejection_reasons(rejected_entries)
@@ -93,7 +90,7 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
         rejection_rate = (
             rejection_count / total_entries_int if total_entries_int > 0 else 0.0
         )
-        written_counts_model = m.Ldif.DynamicCounts.model_validate(written_counts)
+        written_counts_model = m.Ldif.DynamicCounts(written_counts)
         output_files_model = m.Ldif.CategoryPaths()
         for category in written_counts:
             filename = u.take(output_files, category, default=f"{category}.ldif")

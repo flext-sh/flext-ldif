@@ -248,7 +248,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         if isinstance(value, m.Ldif.DynamicMetadata):
             return value
         if isinstance(value, Mapping):
-            return m.Ldif.DynamicMetadata.model_validate(value)
+            return m.Ldif.DynamicMetadata(value)
         return m.Ldif.DynamicMetadata()
 
     @staticmethod
@@ -352,7 +352,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 attr_definition: str,
             ) -> r[FlextLdifModelsDomains.SchemaAttribute]:
                 return self.parse_attribute(attr_definition).map(
-                    lambda attr: FlextLdifModelsDomains.SchemaAttribute.model_validate(
+                    lambda attr: FlextLdifModelsDomains.SchemaAttribute(
                         attr.model_dump()
                     )
                 )
@@ -361,8 +361,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 ldif_content, parse_attribute_domain
             )
             attributes_parsed_model: list[m.Ldif.SchemaAttribute] = [
-                m.Ldif.SchemaAttribute.model_validate(attr.model_dump())
-                for attr in attributes_parsed
+                m.Ldif.SchemaAttribute(attr.model_dump()) for attr in attributes_parsed
             ]
             if validate_dependencies:
                 available_attrs = (
@@ -386,9 +385,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 oc_definition: str,
             ) -> r[FlextLdifModelsDomains.SchemaObjectClass]:
                 return self.parse_objectclass(oc_definition).map(
-                    lambda oc: FlextLdifModelsDomains.SchemaObjectClass.model_validate(
-                        oc.model_dump()
-                    )
+                    lambda oc: FlextLdifModelsDomains.SchemaObjectClass(oc.model_dump())
                 )
 
             objectclasses_parsed = (
@@ -397,8 +394,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 )
             )
             objectclasses_parsed_model: list[m.Ldif.SchemaObjectClass] = [
-                m.Ldif.SchemaObjectClass.model_validate(oc.model_dump())
-                for oc in objectclasses_parsed
+                m.Ldif.SchemaObjectClass(oc.model_dump()) for oc in objectclasses_parsed
             ]
             schema_dict: dict[
                 str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass]
@@ -454,7 +450,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         server_type: Literal["rfc"] = "rfc"
         metadata = m.Ldif.QuirkMetadata(
             quirk_type=server_type,
-            extensions=m.Ldif.DynamicMetadata.model_validate(metadata_extensions)
+            extensions=m.Ldif.DynamicMetadata(metadata_extensions)
             if metadata_extensions
             else m.Ldif.DynamicMetadata(),
         )

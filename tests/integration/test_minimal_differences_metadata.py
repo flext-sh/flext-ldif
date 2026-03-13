@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdif, FlextLdifParser, c, m, u
+from flext_ldif import FlextLdif, FlextLdifParser, c, m, t, u
 
 
 class TestMinimalDifferencesOidOud:
@@ -90,9 +90,7 @@ class TestMinimalDifferencesOidOud:
         original_entry = entries[0]
         assert original_entry.metadata is not None
         assert "original_dn_complete" in original_entry.metadata.extensions
-        write_result = writer.write(
-            entries=[m.Ldif.Entry.model_validate(original_entry)]
-        )
+        write_result = writer.write(entries=[m.Ldif.Entry(original_entry)])
         assert write_result.is_success
         written_ldif = write_result.value
         assert isinstance(written_ldif, str)
@@ -160,13 +158,13 @@ class TestMinimalDifferencesOidOud:
             raw_boolean_conversions = converted_attrs.get(
                 c.Ldif.MetadataKeys.CONVERSION_BOOLEAN_CONVERSIONS, {}
             )
-            boolean_conversions = (
+            boolean_conversions: t.Ldif.MetadataDict = (
                 raw_boolean_conversions
                 if isinstance(raw_boolean_conversions, dict)
                 else {}
             )
         else:
-            boolean_conversions = {}
+            boolean_conversions = dict[str, t.Ldif.MetadataValue]()
         if (
             u.is_dict_non_empty(boolean_conversions)
             and "orcldasisenabled" in boolean_conversions

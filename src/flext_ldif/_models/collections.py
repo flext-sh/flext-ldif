@@ -170,14 +170,14 @@ class FlextLdifModelsCollections:
         ) -> None:
             updated_categories = self._entry_categories()
             updated_categories[category] = [
-                FlextLdifModelsDomains.Entry.model_validate(entry) for entry in entries
+                FlextLdifModelsDomains.Entry(entry) for entry in entries
             ]
             object.__setattr__(self, "categories", updated_categories)
 
         def add_entries(self, category: str, entries: Sequence[object]) -> None:
             existing = self._entry_categories().get(category, [])
             normalized_entries = [
-                FlextLdifModelsDomains.Entry.model_validate(entry) for entry in entries
+                FlextLdifModelsDomains.Entry(entry) for entry in entries
             ]
             self[category] = [*existing, *normalized_entries]
 
@@ -188,7 +188,7 @@ class FlextLdifModelsCollections:
             for category, values in self.categories.items():
                 yield (
                     category,
-                    [FlextLdifModelsDomains.Entry.model_validate(v) for v in values],
+                    [FlextLdifModelsDomains.Entry(v) for v in values],
                 )
 
         def keys(self) -> Iterator[str]:
@@ -206,13 +206,10 @@ class FlextLdifModelsCollections:
 
         def values(self) -> Iterator[list[FlextLdifModelsDomains.Entry]]:
             for values in self._entry_categories().values():
-                yield [FlextLdifModelsDomains.Entry.model_validate(v) for v in values]
+                yield [FlextLdifModelsDomains.Entry(v) for v in values]
 
         def _entry_categories(self) -> dict[str, list[FlextLdifModelsDomains.Entry]]:
             return {
-                str(category): [
-                    FlextLdifModelsDomains.Entry.model_validate(value)
-                    for value in values
-                ]
+                str(category): [FlextLdifModelsDomains.Entry(value) for value in values]
                 for category, values in self.categories.items()
             }

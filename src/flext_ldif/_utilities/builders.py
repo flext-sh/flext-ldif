@@ -86,7 +86,7 @@ class ProcessConfigBuilder:
             "lowercase_keys": lowercase_keys,
             "sort_attributes": sort_attributes,
         }
-        self._attr_config = AttrNormalizationConfig.model_validate(config_kwargs)
+        self._attr_config = AttrNormalizationConfig(config_kwargs)
         return self
 
     def normalize_dn(
@@ -104,7 +104,7 @@ class ProcessConfigBuilder:
             config_kwargs["space_handling"] = spaces
         if escapes is not None:
             config_kwargs["escape_handling"] = escapes
-        self._dn_config = DnNormalizationConfig.model_validate(config_kwargs)
+        self._dn_config = DnNormalizationConfig(config_kwargs)
         return self
 
     def preserve_metadata(

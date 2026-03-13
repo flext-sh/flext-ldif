@@ -105,10 +105,8 @@ class FlextLdifUtilitiesMetadata:
                 known_field_values[key] = value
             else:
                 extension_kwargs[key] = value
-        extensions = FlextLdifModelsMetadata.DynamicMetadata.model_validate(
-            extension_kwargs
-        )
-        return m.Ldif.SchemaFormatDetails.model_validate({
+        extensions = FlextLdifModelsMetadata.DynamicMetadata(extension_kwargs)
+        return m.Ldif.SchemaFormatDetails({
             **known_field_values,
             "extensions": extensions,
         })
@@ -431,9 +429,7 @@ class FlextLdifUtilitiesMetadata:
             return None
         if not isinstance(source_metadata_obj, m.Metadata):
             return None
-        return FlextLdifModelsMetadata.DynamicMetadata.model_validate(
-            source_metadata_obj.attributes
-        )
+        return FlextLdifModelsMetadata.DynamicMetadata(source_metadata_obj.attributes)
 
     @staticmethod
     def _extract_spacing_between_fields(
@@ -562,9 +558,7 @@ class FlextLdifUtilitiesMetadata:
             target_metadata_obj, m.Metadata
         ):
             target_metadata_obj = m.Metadata(attributes={})
-        return FlextLdifModelsMetadata.DynamicMetadata.model_validate(
-            target_metadata_obj.attributes
-        )
+        return FlextLdifModelsMetadata.DynamicMetadata(target_metadata_obj.attributes)
 
     @staticmethod
     def _is_metadata_scalar(value: object) -> bool:
@@ -776,9 +770,7 @@ class FlextLdifUtilitiesMetadata:
         if config.original_attribute_case:
             attr_case_typed: object = dict(config.original_attribute_case)
             server_data_dict["original_attribute_case"] = attr_case_typed
-        server_data = FlextLdifModelsMetadata.EntryMetadata.model_validate(
-            server_data_dict
-        )
+        server_data = FlextLdifModelsMetadata.EntryMetadata(server_data_dict)
         original_ldif_parts: list[str] = []
         if config.original_dn_line:
             original_ldif_parts.append(config.original_dn_line)
@@ -851,13 +843,11 @@ class FlextLdifUtilitiesMetadata:
         if isinstance(raw_extras, Mapping):
             extras = {
                 extra_key: u.normalize_to_metadata_value(extra_value)
-                for extra_key, extra_value in m.ConfigMap.model_validate(
-                    raw_extras
-                ).root.items()
+                for extra_key, extra_value in m.ConfigMap(raw_extras).root.items()
             }
         opt = extras.get(key)
         if isinstance(opt, Mapping):
-            return FlextLdifModelsSettings.WriteFormatOptions.model_validate(opt)
+            return FlextLdifModelsSettings.WriteFormatOptions(opt)
         return None
 
     @staticmethod
@@ -922,9 +912,7 @@ class FlextLdifUtilitiesMetadata:
         processing_stats = entry.metadata.processing_stats
         if not processing_stats:
             return entry
-        updated_stats = m.Ldif.EntryStatistics.model_validate(
-            processing_stats.model_dump()
-        )
+        updated_stats = m.Ldif.EntryStatistics(processing_stats.model_dump())
         if category is not None:
             updated_stats = FlextLdifUtilitiesMetadata._apply_category_update(
                 updated_stats, category

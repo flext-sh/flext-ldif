@@ -243,7 +243,7 @@ def flext_ldif_api():
 def sample_entries():
     """Sample LDIF entries for testing."""
     return [
-        FlextLdifModels.Entry.model_validate({
+        FlextLdifModels.Entry({
             "dn": FlextLdifModels.DN(value="cn=John Doe,ou=people,dc=example,dc=com"),
             "attributes": FlextLdifModels.Attributes(
                 data={
