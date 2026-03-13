@@ -373,11 +373,15 @@ class FlextLdifProtocols(FlextProtocols):
         class ServerConstantsProtocol(Protocol):
             """Protocol for server Constants classes."""
 
+            SERVER_TYPE: str
+            PRIORITY: int
             DETECTION_OID_PATTERN: str | None
             DETECTION_ATTRIBUTE_PREFIXES: frozenset[str] | None
             DETECTION_OBJECTCLASS_NAMES: frozenset[str] | None
             DETECTION_DN_MARKERS: frozenset[str] | None
             ACL_ATTRIBUTE_NAME: str | None
+            CATEGORIZATION_PRIORITY: list[str]
+            CATEGORY_OBJECTCLASSES: Mapping[str, frozenset[str]]
 
         @runtime_checkable
         class ModelWithValidationMetadataProtocol(Protocol):

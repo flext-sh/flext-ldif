@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from abc import ABC
 from collections.abc import Mapping
 from typing import ClassVar
 
@@ -14,8 +13,8 @@ from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 logger = FlextLogger(__name__)
 
 
-class FlextLdifServersBaseConstants(ABC):
-    """Abstract base class for server constants."""
+class FlextLdifServersBaseConstants:
+    """Base class for server constants."""
 
     SERVER_TYPE: ClassVar[str]
     PRIORITY: ClassVar[int]

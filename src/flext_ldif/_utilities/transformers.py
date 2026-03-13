@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 from typing import override
 
@@ -13,15 +12,14 @@ from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 
 
-class EntryTransformer[T](ABC):
-    """Abstract base class for entry transformers."""
+class EntryTransformer[T]:
+    """Base class for entry transformers."""
 
     __slots__ = ()
 
-    @abstractmethod
     def apply(self, item: T) -> r[T]:
         """Apply the transformation to an item."""
-        ...
+        raise NotImplementedError
 
     def apply_batch(self, items: Sequence[T]) -> r[list[T]]:
         """Apply transformation to a batch of items."""
