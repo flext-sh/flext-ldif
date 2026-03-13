@@ -16,15 +16,16 @@ class FlextLdifUtilitiesOID:
     """OID extraction and validation utilities."""
 
     @staticmethod
-    def extract_from_definition(definition: str) -> str | None:
+    def extract_from_definition(definition: str) -> r[str]:
         """Extract OID from schema definition string."""
         try:
             match = re.search(r"\(\s*([\d.]+)", definition)
             if match:
-                return match.group(1)
+                return r[str].ok(match.group(1))
+            return r[str].fail(f"No OID found in definition: {definition!r}")
         except (re.error, AttributeError) as e:
             logger.debug("Failed to extract OID from definition", error=str(e))
-        return None
+            return r[str].fail(f"OID extraction failed: {e}")
 
     @staticmethod
     def extract_from_schema_object(
@@ -33,15 +34,10 @@ class FlextLdifUtilitiesOID:
     ) -> str | None:
         """Extract OID from schema object metadata or model."""
         if schema_obj.metadata and schema_obj.metadata.extensions:
-            extensions_dump: dict[str, object] = (
-                schema_obj.metadata.extensions.model_dump()
-            )
-            original_format_value_raw: object | None = extensions_dump.get(
-                "original_format"
-            )
-            if not isinstance(original_format_value_raw, str):
+            original_format = schema_obj.metadata.extensions.original_format
+            if not isinstance(original_format, str):
                 return schema_obj.oid
-            original_format_value = original_format_value_raw
+            original_format_value = original_format
             try:
                 match = re.search(r"\(\s*([\d.]+)", original_format_value)
                 if match:
@@ -58,7 +54,7 @@ class FlextLdifUtilitiesOID:
         return schema_obj.oid
 
     @staticmethod
-    def get_server_type_from_oid(definition_or_oid: str) -> str | None:
+    def get_server_type_from_oid(definition_or_oid: str) -> r[str]:
         """Detect server type from OID pattern."""
         early_checks = [
             (FlextLdifUtilitiesOID.is_oracle_oid, "oid"),
@@ -67,15 +63,17 @@ class FlextLdifUtilitiesOID:
         ]
         for check_func, server_type in early_checks:
             if check_func(definition_or_oid):
-                return server_type
+                return r[str].ok(server_type)
         if not definition_or_oid:
-            return None
+            return r[str].fail("Empty definition or OID")
         oid = definition_or_oid
         if definition_or_oid.startswith("("):
-            extracted = FlextLdifUtilitiesOID.extract_from_definition(definition_or_oid)
-            if not extracted:
-                return None
-            oid = extracted
+            extracted_result = FlextLdifUtilitiesOID.extract_from_definition(
+                definition_or_oid
+            )
+            if extracted_result.is_failure:
+                return r[str].fail(f"Cannot extract OID: {extracted_result.error}")
+            oid = extracted_result.value
         pattern_checks = [
             (FlextLdifUtilitiesOID.REDHAT_389DS_PATTERN, "ds389"),
             (FlextLdifUtilitiesOID.NOVELL_PATTERN, "novell"),
@@ -83,8 +81,8 @@ class FlextLdifUtilitiesOID:
         ]
         for pattern, server_type in pattern_checks:
             if pattern.match(oid):
-                return server_type
-        return None
+                return r[str].ok(server_type)
+        return r[str].fail(f"Unknown server type for OID: {oid!r}")
 
     @staticmethod
     def is_microsoft_ad_oid(definition_or_oid: str) -> bool:
@@ -144,18 +142,18 @@ class FlextLdifUtilitiesOID:
             True if OID matches pattern, False otherwise
 
         """
-        oid = FlextLdifUtilitiesOID.extract_from_definition(definition)
-        if not oid:
+        result = FlextLdifUtilitiesOID.extract_from_definition(definition)
+        if result.is_failure:
             return False
-        return bool(oid_pattern.match(oid))
+        return bool(oid_pattern.match(result.value))
 
     @staticmethod
-    def parse_to_tuple(oid: str) -> tuple[int, ...] | None:
+    def parse_to_tuple(oid: str) -> r[tuple[int, ...]]:
         """Parse OID string to tuple of integers for numeric sorting."""
         try:
-            return tuple(int(x) for x in oid.split("."))
-        except ValueError:
-            return None
+            return r[tuple[int, ...]].ok(tuple(int(x) for x in oid.split(".")))
+        except ValueError as e:
+            return r[tuple[int, ...]].fail(f"Invalid OID format {oid!r}: {e}")
 
     @staticmethod
     def validate_format(oid: str) -> r[bool]:

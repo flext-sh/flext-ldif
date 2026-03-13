@@ -444,7 +444,8 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 dn_value = u.Ldif.DN.get_dn_value(entry.dn) if entry.dn else ""
                 return (3, dn_value.lower())
             first_val = str(oid_values[0])
-            oid = u.Ldif.OID.extract_from_definition(first_val) or first_val
+            oid_result = u.Ldif.OID.extract_from_definition(first_val)
+            oid = oid_result.value if oid_result.is_success else first_val
             return (priority, oid)
 
         sorted_entries = sorted(self.entries, key=schema_key)
