@@ -1,0 +1,25 @@
+src/flext_ldif/services/conversion.py
+  00fa95b37860ab7c 14
+src/flext_ldif/services/statistics.py
+  00fa95b37860ab7c 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "57f8fc13b39feb1306e21a9f40ab89213172bf2a",
+  "prompts": {
+    "00fa95b37860ab7c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_31b7450d5ffeFd8tYeKPduNQ1d",
+        "model": "anthropic/claude-sonnet-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 2,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
