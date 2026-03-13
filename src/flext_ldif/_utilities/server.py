@@ -6,7 +6,9 @@ import re
 import sys
 from typing import Literal, TypeGuard
 
-from flext_ldif import FlextLdifShared, c
+from flext_core import r
+
+from flext_ldif import FlextLdifShared, c, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 
 _VALID_SERVER_TYPES: frozenset[str] = frozenset({
@@ -48,33 +50,38 @@ class FlextLdifUtilitiesServer:
         return any(marker in name_lower for marker in detection_names)
 
     @staticmethod
-    def _extract_server_name(name_without_prefix: str) -> str | None:
+    def _extract_server_name(name_without_prefix: str) -> r[str]:
         """Extract server name from class name suffix."""
         for suffix in _CLASS_SUFFIXES:
             if name_without_prefix.endswith(suffix):
-                return name_without_prefix[: -len(suffix)] or None
-        return None
+                server_name = name_without_prefix[: -len(suffix)]
+                if server_name:
+                    return r[str].ok(server_name)
+                return r[str].fail("Server name is empty after suffix extraction")
+        return r[str].fail("Class name does not contain a supported server suffix")
 
     @staticmethod
     def _get_type_from_independent_class(
-        target_cls: type[object],
+        target_cls: type,
     ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
         """Extract server type from independent class naming pattern."""
         class_name = target_cls.__name__
         if not class_name.startswith("FlextLdifServers"):
             return None
         name_without_prefix = class_name[len("FlextLdifServers") :]
-        server_name = FlextLdifUtilitiesServer._extract_server_name(name_without_prefix)
-        if not server_name:
+        server_name_result = FlextLdifUtilitiesServer._extract_server_name(
+            name_without_prefix
+        )
+        if server_name_result.is_failure:
             return None
-        server_type_lower = server_name.lower()
+        server_type_lower = server_name_result.value.lower()
         if FlextLdifUtilitiesServer._is_valid_server_type_literal(server_type_lower):
             return server_type_lower
         return None
 
     @staticmethod
     def _get_type_from_nested_class(
-        target_cls: type[object],
+        target_cls: type,
     ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
         """Extract server type from nested class via parent's Constants."""
         if "." in target_cls.__qualname__:
@@ -107,7 +114,7 @@ class FlextLdifUtilitiesServer:
 
     @staticmethod
     def extract_server_type_from_constants(
-        cls_with_constants: type[object] | None,
+        cls_with_constants: type | None,
     ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
         """Extract server type from a class's Constants.SERVER_TYPE."""
         if cls_with_constants is None:
@@ -130,7 +137,7 @@ class FlextLdifUtilitiesServer:
 
     @staticmethod
     def get_parent_server_type(
-        nested_class_instance_or_type: type[object] | object,
+        nested_class_instance_or_type: type | t.Container,
     ) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
         """Get server_type from parent server class via __qualname__."""
         cls = (
