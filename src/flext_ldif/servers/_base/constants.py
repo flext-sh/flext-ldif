@@ -49,9 +49,7 @@ class FlextLdifServersBaseQuirkHelpers:
         instance: QuirkMethodsMixin,
     ) -> p.Ldif.SchemaQuirk | None:
         """Get _parent_quirk attribute safely with type narrowing."""
-        parent_raw: p.Ldif.SchemaQuirk | None = getattr(
-            instance, "_parent_quirk", None
-        )
+        parent_raw: p.Ldif.SchemaQuirk | None = getattr(instance, "_parent_quirk", None)
         if (
             parent_raw is not None
             and getattr(parent_raw, "_parent_quirk", None) is not None

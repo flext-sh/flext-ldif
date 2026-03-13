@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from abc import ABC
 from collections.abc import Callable, Mapping, Sequence
 from typing import ClassVar, Self, overload, override
 
@@ -19,8 +18,8 @@ from flext_ldif.servers._base import (
 logger = FlextLogger(__name__)
 
 
-class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
-    """Abstract base class for LDIF/LDAP server quirks as FlextService V2."""
+class FlextLdifServersBase(s[m.Ldif.Entry]):
+    """Base class for LDIF/LDAP server quirks as FlextService V2."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
     server_type: ClassVar[str]

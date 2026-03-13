@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 from re import Pattern
 from typing import Literal, override
@@ -12,8 +11,8 @@ from flext_ldif import m
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 
 
-class EntryFilter[T](ABC):
-    """Abstract base class for entry filters."""
+class EntryFilter[T]:
+    """Base class for entry filters."""
 
     __slots__ = ()
 
@@ -33,10 +32,9 @@ class EntryFilter[T](ABC):
         """Filter a sequence of items."""
         return [item for item in items if self.matches(item)]
 
-    @abstractmethod
     def matches(self, item: T) -> bool:
         """Check if an item matches the filter criteria."""
-        ...
+        raise NotImplementedError
 
 
 class AndFilter[T](EntryFilter[T]):

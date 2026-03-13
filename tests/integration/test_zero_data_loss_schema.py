@@ -32,12 +32,12 @@ class TestSchemaDeviationsSyntaxQuotes:
         return FlextLdifServersOid().schema_quirk
 
     @pytest.fixture
-    def oud_schema(self) -> FlextLdifServersOud.Schema:
+    def oud_schema(self) -> FlextLdifServersBaseSchema:
         """Create OUD schema quirk instance."""
         return FlextLdifServersOud().schema_quirk
 
     def test_oid_syntax_quotes_tracked(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self, oid_schema: FlextLdifServersBaseSchema
     ) -> None:
         """Test OID syntax with quotes is tracked in metadata."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' EQUALITY caseIgnoreMatch SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )"
@@ -55,7 +55,7 @@ class TestSchemaDeviationsSyntaxQuotes:
         )
 
     def test_oud_syntax_no_quotes_tracked(
-        self, oud_schema: FlextLdifServersOud.Schema
+        self, oud_schema: FlextLdifServersBaseSchema
     ) -> None:
         """Test OUD syntax without quotes is tracked in metadata."""
         oud_definition = "( 0.9.2342.19200300.100.1.1 NAME ( 'uid' 'userid' ) EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} X-ORIGIN 'RFC 4519' )"
@@ -81,12 +81,12 @@ class TestSchemaDeviationsXOrigin:
         return FlextLdifServersOid().schema_quirk
 
     @pytest.fixture
-    def oud_schema(self) -> FlextLdifServersOud.Schema:
+    def oud_schema(self) -> FlextLdifServersBaseSchema:
         """Create OUD schema quirk instance."""
         return FlextLdifServersOud().schema_quirk
 
     def test_oid_no_x_origin_tracked(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self, oid_schema: FlextLdifServersBaseSchema
     ) -> None:
         """Test OID without X-ORIGIN is tracked in metadata."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' EQUALITY caseIgnoreMatch SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )"
@@ -107,7 +107,7 @@ class TestSchemaDeviationsXOrigin:
             "x_origin_value should be None when X-ORIGIN is absent"
         )
 
-    def test_oud_x_origin_tracked(self, oud_schema: FlextLdifServersOud.Schema) -> None:
+    def test_oud_x_origin_tracked(self, oud_schema: FlextLdifServersBaseSchema) -> None:
         """Test OUD with X-ORIGIN is tracked in metadata."""
         oud_definition = "( 0.9.2342.19200300.100.1.1 NAME ( 'uid' 'userid' ) EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} X-ORIGIN 'RFC 4519' )"
         result = oud_schema._parse_attribute(oud_definition)
@@ -138,12 +138,12 @@ class TestSchemaDeviationsNameAliases:
         return FlextLdifServersOid().schema_quirk
 
     @pytest.fixture
-    def oud_schema(self) -> FlextLdifServersOud.Schema:
+    def oud_schema(self) -> FlextLdifServersBaseSchema:
         """Create OUD schema quirk instance."""
         return FlextLdifServersOud().schema_quirk
 
     def test_oid_single_name_tracked(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self, oid_schema: FlextLdifServersBaseSchema
     ) -> None:
         """Test OID single NAME format is tracked."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )"
@@ -165,7 +165,7 @@ class TestSchemaDeviationsNameAliases:
         assert len(name_values) == 1, "Single name should have one value"
 
     def test_oud_multiple_names_tracked(
-        self, oud_schema: FlextLdifServersOud.Schema
+        self, oud_schema: FlextLdifServersBaseSchema
     ) -> None:
         """Test OUD multiple NAME aliases are tracked."""
         oud_definition = "( 0.9.2342.19200300.100.1.1 NAME ( 'uid' 'userid' ) SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
@@ -195,7 +195,7 @@ class TestSchemaDeviationsObsolete:
         return FlextLdifServersOid().schema_quirk
 
     def test_obsolete_marker_tracked(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self, oid_schema: FlextLdifServersBaseSchema
     ) -> None:
         """Test OBSOLETE marker is tracked in metadata."""
         oid_definition = "( 0.9.2342.19200300.100.1.23 NAME 'lastModifiedTime' OBSOLETE SYNTAX '1.3.6.1.4.1.1466.115.121.1.53' )"
@@ -217,7 +217,7 @@ class TestSchemaDeviationsObsolete:
             "obsolete_position should be int or str"
         )
 
-    def test_no_obsolete_tracked(self, oid_schema: FlextLdifServersOid.Schema) -> None:
+    def test_no_obsolete_tracked(self, oid_schema: FlextLdifServersBaseSchema) -> None:
         """Test absence of OBSOLETE is tracked."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )"
         result = oid_schema._parse_attribute(oid_definition)
@@ -241,7 +241,7 @@ class TestSchemaDeviationsSpacing:
         return FlextLdifServersOid().schema_quirk
 
     def test_trailing_spaces_tracked(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self, oid_schema: FlextLdifServersBaseSchema
     ) -> None:
         """Test trailing spaces are tracked."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  "
@@ -261,7 +261,7 @@ class TestSchemaDeviationsSpacing:
         assert original is not None, "original_string_complete should be preserved"
         assert isinstance(original, str), "original_string_complete should be a string"
 
-    def test_field_order_tracked(self, oid_schema: FlextLdifServersOid.Schema) -> None:
+    def test_field_order_tracked(self, oid_schema: FlextLdifServersBaseSchema) -> None:
         """Test field order is tracked."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )"
         result = oid_schema._parse_attribute(oid_definition)
@@ -293,12 +293,12 @@ class TestSchemaDeviationsOriginalString:
         return FlextLdifServersOid().schema_quirk
 
     @pytest.fixture
-    def oud_schema(self) -> FlextLdifServersOud.Schema:
+    def oud_schema(self) -> FlextLdifServersBaseSchema:
         """Create OUD schema quirk instance."""
         return FlextLdifServersOud().schema_quirk
 
     def test_oid_original_string_preserved(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self, oid_schema: FlextLdifServersBaseSchema
     ) -> None:
         """Test complete OID original string is preserved."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' EQUALITY caseIgnoreMatch SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  "
@@ -321,7 +321,7 @@ class TestSchemaDeviationsOriginalString:
         assert len(original) > 0, "original_string_complete should not be empty"
 
     def test_oud_original_string_preserved(
-        self, oud_schema: FlextLdifServersOud.Schema
+        self, oud_schema: FlextLdifServersBaseSchema
     ) -> None:
         """Test complete OUD original string is preserved."""
         oud_definition = "( 0.9.2342.19200300.100.1.1 NAME ( 'uid' 'userid' ) EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} X-ORIGIN 'RFC 4519' )"
@@ -459,12 +459,12 @@ class TestSchemaDeviationsMissingSpaces:
     """Test malformed definitions with missing spaces."""
 
     @pytest.fixture
-    def oud_schema(self) -> FlextLdifServersOud.Schema:
+    def oud_schema(self) -> FlextLdifServersBaseSchema:
         """Create OUD schema quirk instance."""
         return FlextLdifServersOud().schema_quirk
 
     def test_missing_space_before_syntax_oid_tracked(
-        self, oud_schema: FlextLdifServersOud.Schema
+        self, oud_schema: FlextLdifServersBaseSchema
     ) -> None:
         """Test malformed SYNTAX1.3.6.1 is tracked for restoration."""
         oud_definition = "( 0.9.2342.19200300.100.1.47 NAME 'mailPreferenceOption' SYNTAX1.3.6.1.4.1.1466.115.121.1.27 SINGLE-VALUE X-ORIGIN 'RFC 1274' )"
