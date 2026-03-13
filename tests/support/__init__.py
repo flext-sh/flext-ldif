@@ -12,17 +12,16 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
-    from ldif_data import LdifSample, LdifTestData
-    from real_services import FlextLdifTestFactory
-    from test_files import FileManager
-    from validators import TestValidators
+    from tests.support.ldif_data import LdifSample, LdifTestData
+    from tests.support.real_services import FlextLdifTestFactory
+    from tests.support.test_files import FileManager
+    from tests.support.validators import TestValidators
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FileManager": ("test_files", "FileManager"),
-    "FlextLdifTestFactory": ("real_services", "FlextLdifTestFactory"),
-    "LdifSample": ("ldif_data", "LdifSample"),
-    "LdifTestData": ("ldif_data", "LdifTestData"),
-    "TestValidators": ("validators", "TestValidators"),
+    "FileManager": ("tests.support.test_files", "FileManager"),
+    "FlextLdifTestFactory": ("tests.support.real_services", "FlextLdifTestFactory"),
+    "LdifSample": ("tests.support.ldif_data", "LdifSample"),
+    "LdifTestData": ("tests.support.ldif_data", "LdifTestData"),
+    "TestValidators": ("tests.support.validators", "TestValidators"),
 }
 __all__ = [
     "FileManager",
@@ -33,7 +32,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
+def __getattr__(name: str) -> object:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

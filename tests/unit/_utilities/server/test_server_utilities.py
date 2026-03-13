@@ -7,15 +7,23 @@ from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 
 
 class OidServer:
+    """Stub OID server for testing."""
+
     class Constants:
+        """OID server constants."""
+
         SERVER_TYPE = "oid"
 
     class Entry:
-        pass
+        """OID entry stub."""
 
 
 class OudServer:
+    """Stub OUD server for testing."""
+
     class Constants:
+        """OUD server constants."""
+
         SERVER_TYPE = "oud"
 
 

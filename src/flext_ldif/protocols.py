@@ -6,12 +6,13 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import FlextProtocols, m, r
+from flext_core import FlextProtocols, r
 
 from flext_ldif import c
 
 if TYPE_CHECKING:
     from flext_ldif._models.domain import FlextLdifModelsDomains
+    from flext_ldif import m
 
 
 class FlextLdifProtocols(FlextProtocols):
@@ -329,23 +330,21 @@ class FlextLdifProtocols(FlextProtocols):
         class EntryQuirkProtocol(Protocol):
             """Protocol for Entry quirk implementations."""
 
-            def parse(
-                self, entry_lines: Sequence[str]
-            ) -> r[FlextLdifProtocols.Ldif.EntryProtocol]:
+            def parse(self, ldif_content: str) -> r[list[FlextLdifModelsDomains.Entry]]:
                 """Parse entry definition."""
                 ...
 
             def parse_entry(
-                self, entry_dn: str, entry_attrs: Mapping[str, Sequence[str]]
-            ) -> r[FlextLdifProtocols.Ldif.EntryProtocol]:
+                self, entry_dn: str, entry_attrs: Mapping[str, list[str]]
+            ) -> r[FlextLdifModelsDomains.Entry]:
                 """Parse single entry from DN and attributes."""
                 ...
 
             def write(
                 self,
-                entries: FlextLdifProtocols.Ldif.EntryProtocol
-                | Sequence[FlextLdifProtocols.Ldif.EntryProtocol],
-                format_options: m.ConfigMap | None = None,
+                entry_data: FlextLdifModelsDomains.Entry
+                | list[FlextLdifModelsDomains.Entry],
+                write_options: m.Ldif.WriteFormatOptions | None = None,
             ) -> r[str]:
                 """Write entries to LDIF."""
                 ...
@@ -370,20 +369,6 @@ class FlextLdifProtocols(FlextProtocols):
                 self, server_type: str
             ) -> FlextLdifProtocols.Ldif.EntryQuirkProtocol | None:
                 """Get entry quirk for server type."""
-                ...
-
-            def get_quirk(
-                self, server_type: str
-            ) -> FlextLdifProtocols.Ldif.SchemaQuirkProtocol | None:
-                """Get quirk for server type."""
-                ...
-
-            def register_quirk(
-                self,
-                server_type: str,
-                quirk: FlextLdifProtocols.Ldif.SchemaQuirkProtocol,
-            ) -> None:
-                """Register a quirk for server type."""
                 ...
 
         @runtime_checkable
@@ -497,7 +482,10 @@ class FlextLdifProtocols(FlextProtocols):
                 """Parse LDIF text to Entry models."""
                 ...
 
-            def write(self, entries: list[m.Ldif.Entry]) -> r[str]:
+            def write(
+                self,
+                entries: list[FlextLdifProtocols.Ldif.EntryProtocol],
+            ) -> r[str]:
                 """Write Entry models to LDIF text."""
                 ...
 
@@ -505,9 +493,9 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 *,
                 ldif_text: str | None = None,
-                entries: Sequence[m.Ldif.Entry] | None = None,
+                entries: (Sequence[FlextLdifProtocols.Ldif.EntryProtocol] | None),
                 _operation: str | None = None,
-            ) -> r[m.Ldif.Entry]:
+            ) -> r[FlextLdifProtocols.Ldif.EntryProtocol]:
                 """Execute quirk operation with auto-detection."""
                 ...
 
