@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import re
 import struct
 from collections.abc import Mapping
@@ -471,7 +470,17 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 )
             if entry.metadata is None:
                 return entry
-            entry.metadata.extensions["validation_rules"] = json.dumps(validation_rules)
+            validation_rules_payload = dict(validation_rules.items())
+            validation_rules_str = m.Ldif.DynamicMetadata.from_dict(
+                validation_rules_payload
+            ).model_dump_json()
+            entry.metadata.extensions["validation_rules"] = validation_rules_str
+            acl_format_rules = validation_rules["acl_format_rules"]
+            acl_format_str = (
+                m.Ldif.DynamicMetadata.from_dict(acl_format_rules).model_dump_json()
+                if isinstance(acl_format_rules, Mapping)
+                else ""
+            )
             logger.debug(
                 "Injected OpenLDAP validation rules into Entry metadata",
                 entry_dn=entry.dn.value if entry.dn else "",
@@ -479,7 +488,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 server_type=c.Ldif.ServerTypes.OPENLDAP.value,
                 requires_naming_attr=bool(validation_rules["requires_naming_attr"]),
                 requires_binary_option=bool(validation_rules["requires_binary_option"]),
-                acl_format=json.dumps(validation_rules["acl_format_rules"]),
+                acl_format=acl_format_str,
             )
             return entry
 

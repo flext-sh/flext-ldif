@@ -8,7 +8,6 @@ Provides OUD-specific quirks for schema, ACL, and entry processing.
 
 from __future__ import annotations
 
-import json
 import re
 from collections.abc import Callable, Mapping
 from typing import override
@@ -342,7 +341,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """
         parsed: object
         if isinstance(commented_raw, str):
-            parsed = json.loads(commented_raw)
+            parsed = m.Ldif.DynamicMetadata.model_validate_json(commented_raw)
         else:
             parsed = commented_raw
         if not isinstance(parsed, Mapping):
@@ -479,8 +478,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             converted_attrs_list: list[str] = list(commented_acl_values.keys())
             converted_attrs_typed: object = list(converted_attrs_list)
             current_extensions["converted_attributes"] = converted_attrs_typed
-            current_extensions["commented_attribute_values"] = json.dumps(
-                commented_acl_values
+            current_extensions["commented_attribute_values"] = (
+                m.Ldif.DynamicMetadata.from_dict(commented_acl_values).model_dump_json()
             )
         commented_attrs_raw = current_extensions.get("acl_commented_attributes", [])
         commented_attrs: list[str] = (
@@ -1319,11 +1318,17 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 )
             FlextLdifUtilitiesMetadata.store_minimal_differences(
                 metadata=entry.metadata,
-                dn_differences=json.dumps(dn_differences),
-                attribute_differences=json.dumps(attribute_differences),
+                dn_differences=m.Ldif.DynamicMetadata.from_dict(
+                    dn_differences
+                ).model_dump_json(),
+                attribute_differences=m.Ldif.DynamicMetadata.from_dict(
+                    attribute_differences
+                ).model_dump_json(),
                 original_dn=original_dn or "",
                 parsed_dn=parsed_dn or "",
-                original_attributes_complete=json.dumps(original_attrs_complete),
+                original_attributes_complete=m.Ldif.DynamicMetadata.from_dict(
+                    original_attrs_complete
+                ).model_dump_json(),
             )
             logger.debug(
                 "OUD entry parsed with minimal differences",

@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import json
 import re
 import struct
 from collections.abc import Callable, KeysView, Mapping, Sequence, ValuesView
@@ -1430,7 +1429,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def coerce_attributes_from_dict(
             cls,
-            value: FlextLdifModelsDomains.Attributes | Mapping[str, object] | None,
+            value: FlextLdifModelsDomains.Attributes | Mapping[str, t.Ldif.object] | None,
         ) -> FlextLdifModelsDomains.Attributes | None:
             """Convert dict to Attributes instance.
 
@@ -1450,7 +1449,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def coerce_dn_from_string(
             cls,
-            value: FlextLdifModelsDomains.DN | Mapping[str, object] | str | None,
+            value: FlextLdifModelsDomains.DN | Mapping[str, t.Ldif.object] | str | None,
         ) -> FlextLdifModelsDomains.DN | None:
             """Convert string DN to DN instance.
 
@@ -1497,15 +1496,16 @@ class FlextLdifModelsDomains:
         @computed_field
         def unconverted_attributes(self) -> Mapping[str, str | list[str] | bytes]:
             """Get unconverted attributes from metadata extensions (read-only view, DRY pattern)."""
+            empty_attrs: dict[str, str | list[str] | bytes] = {}
             if self.metadata is None:
-                return {}
+                return empty_attrs
             extra = self.metadata.extensions.__pydantic_extra__
             if extra is None:
-                return {}
+                return empty_attrs
             result = extra.get("unconverted_attributes")
             if result is not None and isinstance(result, dict):
                 return result
-            return {}
+            return empty_attrs
 
         @model_validator(mode="before")
         @classmethod
@@ -1564,26 +1564,23 @@ class FlextLdifModelsDomains:
                 return validation_rules
             if isinstance(validation_rules, str):
                 try:
-                    parsed_rules = json.loads(validation_rules)
-                except (ValueError, SyntaxError):
-                    return None
-                if not isinstance(parsed_rules, dict):
-                    return None
-                try:
-                    return FlextLdifModelsSettings.ServerValidationRules.model_validate(
-                        parsed_rules
+                    return FlextLdifModelsSettings.ServerValidationRules.model_validate_json(
+                        validation_rules
                     )
                 except ValidationError as exc:
                     logger.warning(
-                        "Failed to validate server rules from parsed dict",
+                        "Failed to validate server rules from JSON string",
                         error=str(exc),
                         error_type=type(exc).__name__,
                     )
                     return None
             if isinstance(validation_rules, Mapping):
                 try:
+                    validation_rules_payload: dict[str, object] = {
+                        str(key): value for key, value in validation_rules.items()
+                    }
                     return FlextLdifModelsSettings.ServerValidationRules.model_validate(
-                        dict(validation_rules)
+                        validation_rules_payload
                     )
                 except ValidationError as exc:
                     logger.warning(
@@ -2356,17 +2353,19 @@ class FlextLdifModelsDomains:
                 entry_attrs_payload = ldap3_entry.get("entry_attributes_as_dict", {})
                 attrs_dict: dict[str, str | list[str]] = {}
                 if isinstance(entry_attrs_payload, Mapping):
-                    for attr_name, attr_value_list in entry_attrs_payload.items():
-                        if isinstance(attr_value_list, Sequence) and (
-                            not isinstance(attr_value_list, str | bytes)
+                    entry_attrs_payload_typed: Mapping[str, object] = {
+                        str(raw_key): raw_value
+                        for raw_key, raw_value in entry_attrs_payload.items()
+                    }
+                    for attr_name, attr_value in entry_attrs_payload_typed.items():
+                        if isinstance(attr_value, Sequence) and (
+                            not isinstance(attr_value, str | bytes)
                         ):
-                            attrs_dict[str(attr_name)] = [
-                                str(v) for v in attr_value_list
-                            ]
-                        elif isinstance(attr_value_list, str):
-                            attrs_dict[str(attr_name)] = [attr_value_list]
+                            attrs_dict[attr_name] = [str(v) for v in attr_value]
+                        elif isinstance(attr_value, str):
+                            attrs_dict[attr_name] = [attr_value]
                         else:
-                            attrs_dict[str(attr_name)] = [str(attr_value_list)]
+                            attrs_dict[attr_name] = [str(attr_value)]
                 return cls.create(dn=dn_str, attributes=attrs_dict)
             except (
                 ValueError,
@@ -3207,7 +3206,7 @@ class FlextLdifModelsDomains:
             cls,
             quirk_type: str | c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
             extensions: FlextLdifModelsMetadata.DynamicMetadata
-            | Mapping[str, object]
+            | Mapping[str, t.Ldif.object]
             | None = None,
         ) -> Self:
             """Factory method to create QuirkMetadata with extensions.

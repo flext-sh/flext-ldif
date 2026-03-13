@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import json
 import re
 import struct
 from collections.abc import Mapping
 from typing import ClassVar, Literal, override
 
 from flext_core import FlextLogger, r
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 from flext_ldif import c, m, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -21,6 +20,10 @@ from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 logger = FlextLogger(__name__)
 _OidConstants = FlextLdifServersOidConstants
+
+
+class _OidAclTargetAttributesJson(RootModel[list[str]]):
+    pass
 
 
 class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
@@ -297,10 +300,14 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     ) -> Mapping[str, str | int | bool]:
         """Build metadata extensions for OID ACL with Oracle-specific features."""
         target_attrs_str: str = (
-            json.dumps(config.target_attrs) if config.target_attrs else ""
+            _OidAclTargetAttributesJson(root=config.target_attrs).model_dump_json()
+            if config.target_attrs
+            else ""
         )
         permissions_str: str = (
-            json.dumps(config.perms_dict) if config.perms_dict else ""
+            m.Ldif.DynamicMetadata.from_dict(config.perms_dict).model_dump_json()
+            if config.perms_dict
+            else ""
         )
         metadata_dict: dict[str, str | int | bool] = dict(
             FlextLdifUtilitiesMetadata.build_acl_metadata_complete(
