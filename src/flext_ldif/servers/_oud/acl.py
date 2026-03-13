@@ -36,8 +36,8 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     def __init__(
         self,
-        acl_service: p.Ldif.AclQuirkProtocol | None = None,
-        _parent_quirk: p.Ldif.SchemaQuirkProtocol | None = None,
+        acl_service: p.Ldif.AclQuirk | None = None,
+        _parent_quirk: p.Ldif.SchemaQuirk | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize OUD ACL quirk."""
@@ -46,7 +46,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             for k, v in kwargs.items()
             if k != "_parent_quirk" and isinstance(v, (str, float, bool))
         }
-        acl_service_typed: p.Ldif.AclQuirkProtocol | None = (
+        acl_service_typed: p.Ldif.AclQuirk | None = (
             acl_service if acl_service is not None else None
         )
         parent_quirk_typed: FlextLdifServersBaseSchemaAcl | None = (

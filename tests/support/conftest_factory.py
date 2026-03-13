@@ -762,14 +762,14 @@ class FlextLdifTestConftest:
         assert quirk is not None, "OUD quirk must be registered"
         return quirk
 
-    def oid(self) -> p.Ldif.SchemaQuirkProtocol:
+    def oid(self) -> p.Ldif.SchemaQuirk:
         """OID quirk (deprecated)."""
         server = FlextLdifServer()
         result = server.quirk("oid")
         assert result.is_success, f"OID quirk must be registered: {result.error}"
         quirk = result.value
         assert quirk is not None, "OID quirk must be registered"
-        return cast("p.Ldif.SchemaQuirkProtocol", quirk.schema_quirk)
+        return cast("p.Ldif.SchemaQuirk", quirk.schema_quirk)
 
 
 __all__ = ["FlextLdifTestConftest", "FlextTestsDocker"]

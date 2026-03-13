@@ -248,21 +248,21 @@ class FlextLdifServersBase(s[m.Ldif.Entry], ABC):
     @classmethod
     def _register_in_registry(
         cls,
-        quirk_instance: p.Ldif.SchemaQuirkProtocol | FlextLdifServersBase,
+        quirk_instance: p.Ldif.SchemaQuirk | FlextLdifServersBase,
         registry: p.Ldif.QuirkRegistryProtocol | object,
     ) -> None:
         """Helper method to register a quirk instance in the registry."""
 
         def validate_registry(
             registry_obj: p.Ldif.QuirkRegistryProtocol | object,
-        ) -> Callable[[str, p.Ldif.SchemaQuirkProtocol | object], None] | None:
+        ) -> Callable[[str, p.Ldif.SchemaQuirk | object], None] | None:
             """Validate registry has register method."""
             method = getattr(registry_obj, "register_quirk", None)
             if method is not None and callable(method):
                 captured = method
 
                 def typed_register(
-                    server_type: str, quirk: p.Ldif.SchemaQuirkProtocol | object
+                    server_type: str, quirk: p.Ldif.SchemaQuirk | object
                 ) -> None:
                     _ = captured(server_type, quirk)
 

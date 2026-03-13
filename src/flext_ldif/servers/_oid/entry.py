@@ -826,7 +826,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _merge_parsed_acl_extensions(
         self,
-        acl_quirk: p.Ldif.AclQuirkProtocol,
+        acl_quirk: p.Ldif.AclQuirk,
         acl_value: str,
         current_extensions: dict[str, object],
     ) -> None:

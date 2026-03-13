@@ -2172,11 +2172,11 @@ class FlextLdifModelsSettings:
             Field(default="attribute", description="Discriminator"),
         ]
         source_schema: Annotated[
-            FlextLdifProtocols.Ldif.SchemaQuirkProtocol,
+            FlextLdifProtocols.Ldif.SchemaQuirk,
             Field(..., description="Source schema quirk"),
         ]
         target_schema: Annotated[
-            FlextLdifProtocols.Ldif.SchemaQuirkProtocol,
+            FlextLdifProtocols.Ldif.SchemaQuirk,
             Field(..., description="Target schema quirk"),
         ]
         item: Annotated[
@@ -2196,11 +2196,11 @@ class FlextLdifModelsSettings:
             Field(default="objectclass", description="Discriminator"),
         ]
         source_schema: Annotated[
-            FlextLdifProtocols.Ldif.SchemaQuirkProtocol,
+            FlextLdifProtocols.Ldif.SchemaQuirk,
             Field(..., description="Source schema quirk"),
         ]
         target_schema: Annotated[
-            FlextLdifProtocols.Ldif.SchemaQuirkProtocol,
+            FlextLdifProtocols.Ldif.SchemaQuirk,
             Field(..., description="Target schema quirk"),
         ]
         item: Annotated[

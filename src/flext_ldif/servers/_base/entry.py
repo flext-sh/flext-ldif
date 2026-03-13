@@ -39,7 +39,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
 
     def __init__(
         self,
-        entry_service: p.Ldif.EntryQuirkProtocol | None = None,
+        entry_service: p.Ldif.EntryQuirk | None = None,
         _parent_quirk: Self | None = None,
         **_kwargs: str | float | bool | None,
     ) -> None:

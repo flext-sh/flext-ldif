@@ -141,7 +141,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def __init__(
         self,
-        entry_service: p.Ldif.EntryQuirkProtocol | None = None,
+        entry_service: p.Ldif.EntryQuirk | None = None,
         _parent_quirk: FlextLdifServersBase | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
@@ -159,7 +159,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if k != "_parent_quirk"
             and core_u.is_type(v, (str, float, bool, type(None)))
         }
-        entry_service_typed: p.Ldif.EntryQuirkProtocol | None = (
+        entry_service_typed: p.Ldif.EntryQuirk | None = (
             entry_service if entry_service is not None else None
         )
         FlextLdifServersBaseEntry.__init__(

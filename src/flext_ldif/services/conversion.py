@@ -51,7 +51,7 @@ class FlextLdifConversion(
     @staticmethod
     def _get_schema_from_attribute(
         quirk: FlextLdifServersBase,
-    ) -> p.Ldif.SchemaQuirkProtocol:
+    ) -> p.Ldif.SchemaQuirk:
         if FlextLdifConversion._has_attr(quirk, "schema_quirk"):
             schema = quirk.schema_quirk
             if FlextLdifConversion._is_schema_quirk_protocol(schema):
@@ -62,7 +62,7 @@ class FlextLdifConversion(
         raise TypeError(msg)
 
     @staticmethod
-    def _get_schema_quirk(quirk: FlextLdifServersBase) -> p.Ldif.SchemaQuirkProtocol:
+    def _get_schema_quirk(quirk: FlextLdifServersBase) -> p.Ldif.SchemaQuirk:
         return FlextLdifConversion._get_schema_from_attribute(quirk)
 
     @staticmethod
@@ -70,7 +70,7 @@ class FlextLdifConversion(
         obj: t.Ldif.object
         | FlextLdifServersBase
         | FlextLogger
-        | p.Ldif.SchemaQuirkProtocol
+        | p.Ldif.SchemaQuirk
         | m.Ldif.SchemaAttributeConversionPipelineConfig
         | m.Ldif.SchemaObjectClassConversionPipelineConfig,
         attr_name: str,
@@ -79,8 +79,8 @@ class FlextLdifConversion(
 
     @staticmethod
     def _is_schema_quirk_protocol(
-        obj: t.Ldif.object | FlextLdifServersBase | p.Ldif.SchemaQuirkProtocol,
-    ) -> TypeIs[p.Ldif.SchemaQuirkProtocol]:
+        obj: t.Ldif.object | FlextLdifServersBase | p.Ldif.SchemaQuirk,
+    ) -> TypeIs[p.Ldif.SchemaQuirk]:
         return (
             FlextLdifConversion._has_attr(obj, "parse")
             and FlextLdifConversion._has_attr(obj, "write")
@@ -90,14 +90,14 @@ class FlextLdifConversion(
     @staticmethod
     def _validate_schema_quirk(
         quirk: FlextLdifServersBase,
-    ) -> p.Ldif.SchemaQuirkProtocol:
+    ) -> p.Ldif.SchemaQuirk:
         if not FlextLdifConversion._has_attr(
             quirk, "parse"
         ) or not FlextLdifConversion._has_attr(quirk, "write_attribute"):
             msg = f"Expected Schema quirk, got {type(quirk)}"
             raise TypeError(msg)
         if not FlextLdifConversion._is_schema_quirk_protocol(quirk):
-            msg = f"Quirk {type(quirk)} doesn't satisfy SchemaQuirkProtocol"
+            msg = f"Quirk {type(quirk)} doesn't satisfy SchemaQuirk"
             raise TypeError(msg)
         return quirk
 
@@ -324,7 +324,7 @@ class FlextLdifConversion(
                     target_schema_result.error
                     or "Target schema quirk error: Schema not available"
                 )
-            target_schema: p.Ldif.SchemaQuirkProtocol = target_schema_result.value
+            target_schema: p.Ldif.SchemaQuirk = target_schema_result.value
 
             config = m.Ldif.SchemaAttributeConversionPipelineConfig(
                 source_schema=source_schema,
@@ -402,23 +402,23 @@ class FlextLdifConversion(
     @staticmethod
     def _get_schema_quirk_safe(
         quirk: FlextLdifServersBase, quirk_type: str
-    ) -> r[p.Ldif.SchemaQuirkProtocol]:
+    ) -> r[p.Ldif.SchemaQuirk]:
         """Get schema quirk safely with error handling."""
         result = u.try_(
             lambda: FlextLdifConversion._get_schema_quirk(quirk), default=None
         )
         if result.is_failure:
-            return r[p.Ldif.SchemaQuirkProtocol].fail(
+            return r[p.Ldif.SchemaQuirk].fail(
                 result.error or f"{quirk_type} quirk error: Schema not available"
             )
         schema_quirk = result.value
         if not FlextLdifConversion._is_schema_quirk_protocol(schema_quirk):
-            return r[p.Ldif.SchemaQuirkProtocol].fail(
-                f"{quirk_type} quirk {type(schema_quirk)} doesn't satisfy SchemaQuirkProtocol"
+            return r[p.Ldif.SchemaQuirk].fail(
+                f"{quirk_type} quirk {type(schema_quirk)} doesn't satisfy SchemaQuirk"
             )
-        # Narrowing schema_quirk to the protocol so r[p.Ldif.SchemaQuirkProtocol].ok works
-        final_quirk: p.Ldif.SchemaQuirkProtocol = schema_quirk
-        return r[p.Ldif.SchemaQuirkProtocol].ok(final_quirk)
+        # Narrowing schema_quirk to the protocol so r[p.Ldif.SchemaQuirk].ok works
+        final_quirk: p.Ldif.SchemaQuirk = schema_quirk
+        return r[p.Ldif.SchemaQuirk].ok(final_quirk)
 
     @staticmethod
     def _normalize_metadata_value(value: object) -> object:
@@ -443,7 +443,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _parse_attribute_with_schema(
-        schema: p.Ldif.SchemaQuirkProtocol, value: str, *, parse_error_message: str
+        schema: p.Ldif.SchemaQuirk, value: str, *, parse_error_message: str
     ) -> r[m.Ldif.SchemaAttribute]:
         parse_result = schema.parse_attribute(value)
         if parse_result.is_failure:
@@ -459,7 +459,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _parse_objectclass_with_schema(
-        schema: p.Ldif.SchemaQuirkProtocol, value: str, *, parse_error_message: str
+        schema: p.Ldif.SchemaQuirk, value: str, *, parse_error_message: str
     ) -> r[m.Ldif.SchemaObjectClass]:
         parse_result = schema.parse_objectclass(value)
         if parse_result.is_failure:
@@ -1697,13 +1697,13 @@ class FlextLdifConversion(
 
     def _resolve_schema_quirk(
         self, quirk_or_type: str | FlextLdifServersBase, *, role: str
-    ) -> r[p.Ldif.SchemaQuirkProtocol]:
+    ) -> r[p.Ldif.SchemaQuirk]:
         quirk = self._resolve_quirk(quirk_or_type)
         try:
             schema = FlextLdifConversion._get_schema_quirk(quirk)
-            return r[p.Ldif.SchemaQuirkProtocol].ok(schema)
+            return r[p.Ldif.SchemaQuirk].ok(schema)
         except TypeError as e:
-            return r[p.Ldif.SchemaQuirkProtocol].fail(f"{role} quirk error: {e}")
+            return r[p.Ldif.SchemaQuirk].fail(f"{role} quirk error: {e}")
 
     def _update_entry_metadata(
         self,

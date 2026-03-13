@@ -46,8 +46,8 @@ class TestOidToOudSchemaConversion:
 
     def test_convert_oid_attribute_to_oud(
         self,
-        oid_schema_quirk: p.Ldif.SchemaQuirkProtocol,
-        oud_schema_quirk: p.Ldif.SchemaQuirkProtocol,
+        oid_schema_quirk: p.Ldif.SchemaQuirk,
+        oud_schema_quirk: p.Ldif.SchemaQuirk,
     ) -> None:
         """Test converting OID attribute definition to OUD format."""
         oid_attribute = CROSS_QUIRK_CONVERSION_CONSTANTS.OID_ATTRIBUTE_ORCLGUID
@@ -79,8 +79,8 @@ class TestOidToOudSchemaConversion:
 
     def test_convert_oid_objectclass_to_oud(
         self,
-        oid_schema_quirk: p.Ldif.SchemaQuirkProtocol,
-        oud_schema_quirk: p.Ldif.SchemaQuirkProtocol,
+        oid_schema_quirk: p.Ldif.SchemaQuirk,
+        oud_schema_quirk: p.Ldif.SchemaQuirk,
     ) -> None:
         """Test converting OID objectClass definition to OUD format."""
         oid_objectclass = CROSS_QUIRK_CONVERSION_CONSTANTS.OID_OBJECTCLASS_ORCLCONTAINER
@@ -125,7 +125,7 @@ class TestOidToOudAclConversion:
     """
 
     def test_oid_acl_parsing_and_roundtrip(
-        self, oid_acl_quirk: p.Ldif.AclQuirkProtocol
+        self, oid_acl_quirk: p.Ldif.AclQuirk
     ) -> None:
         """Test OID ACL parsing and round-trip within OID format."""
         oid_acl_str = CROSS_QUIRK_CONVERSION_CONSTANTS.OID_ACL_ANONYMOUS
@@ -139,7 +139,7 @@ class TestOidToOudAclConversion:
         assert hasattr(parsed_data, "permissions")
 
     def test_oud_acl_parsing_and_roundtrip(
-        self, oud_acl_quirk: p.Ldif.AclQuirkProtocol
+        self, oud_acl_quirk: p.Ldif.AclQuirk
     ) -> None:
         """Test OUD ACL parsing and round-trip within OUD format."""
         oud_aci = CROSS_QUIRK_CONVERSION_CONSTANTS.OUD_ACI_ANONYMOUS
@@ -165,8 +165,8 @@ class TestOidToOudIntegrationConversion:
 
     def test_convert_oid_schema_fixture_to_oud(
         self,
-        oid_schema_quirk: p.Ldif.SchemaQuirkProtocol,
-        oud_schema_quirk: p.Ldif.SchemaQuirkProtocol,
+        oid_schema_quirk: p.Ldif.SchemaQuirk,
+        oud_schema_quirk: p.Ldif.SchemaQuirk,
         oid_schema_fixture: str,
     ) -> None:
         """Test converting OID schema fixture to OUD format.

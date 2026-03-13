@@ -74,7 +74,7 @@ class FlextLdifServersBase.Acl(ABC, QuirkRegistrationMixin):
 **File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/protocols.py`
 
 ```python
-class AclProtocol(Protocol):
+class Acl(Protocol):
     """Protocol for ACL quirks."""
 
     def parse(self, acl_line: str) -> r[dict[str, object]]:
@@ -247,7 +247,7 @@ ______________________________________________________________________
 
 1. **Protocol Definition** (3-5 lines)
 
-   - `/flext_ldif/protocols.py` - Update AclProtocol signature
+   - `/flext_ldif/protocols.py` - Update Acl signature
 
 1. **Base Class** (10-15 lines)
 

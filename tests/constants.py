@@ -870,16 +870,16 @@ class RfcTestHelpers:
     @staticmethod
     def test_quirk_parse_success_and_unwrap(
         quirk: (
-            p.Ldif.SchemaQuirkProtocol
-            | p.Ldif.AclQuirkProtocol
-            | p.Ldif.EntryQuirkProtocol
+            p.Ldif.SchemaQuirk
+            | p.Ldif.AclQuirk
+            | p.Ldif.EntryQuirk
         ),
         content: str,
         parse_method: str | None = None,
     ) -> (
-        p.Ldif.SchemaAttributeProtocol
-        | p.Ldif.SchemaObjectClassProtocol
-        | p.Ldif.AclProtocol
+        p.Ldif.SchemaAttribute
+        | p.Ldif.SchemaObjectClass
+        | p.Ldif.Acl
         | p.Ldif.Entry
         | None
     ):
@@ -907,7 +907,7 @@ class RfcTestHelpers:
             error = getattr(result, "error", "Unknown error")
             raise AssertionError(f"Parsing failed: {error}")
         return cast(
-            "p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol | p.Ldif.AclProtocol | p.Ldif.Entry | None",
+            "p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | p.Ldif.Acl | p.Ldif.Entry | None",
             getattr(result, "value", result),
         )
 
@@ -1748,9 +1748,9 @@ class TestDeduplicationHelpers:
     @staticmethod
     def quirk_parse_and_unwrap(
         quirk: (
-            p.Ldif.SchemaQuirkProtocol
-            | p.Ldif.AclQuirkProtocol
-            | p.Ldif.EntryQuirkProtocol
+            p.Ldif.SchemaQuirk
+            | p.Ldif.AclQuirk
+            | p.Ldif.EntryQuirk
         ),
         content: str,
         msg: str | None = None,
@@ -1758,10 +1758,10 @@ class TestDeduplicationHelpers:
         expected_type: type | None = None,
         should_succeed: bool | None = None,
     ) -> (
-        p.Ldif.SchemaAttributeProtocol
-        | p.Ldif.SchemaObjectClassProtocol
+        p.Ldif.SchemaAttribute
+        | p.Ldif.SchemaObjectClass
         | p.Ldif.Entry
-        | p.Ldif.AclProtocol
+        | p.Ldif.Acl
         | Sequence[p.Ldif.Entry]
         | None
     ):
@@ -1826,7 +1826,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def quirk_write_and_unwrap(
-        quirk: p.Ldif.SchemaQuirkProtocol,
+        quirk: p.Ldif.SchemaQuirk,
         data: m.Ldif.Entry
         | m.Ldif.SchemaAttribute
         | m.Ldif.SchemaObjectClass
@@ -1879,8 +1879,8 @@ class TestDeduplicationHelpers:
     @staticmethod
     def helper_convert_and_assert_strings(
         conversion_matrix: FlextLdifConversion,
-        source_quirk: p.Ldif.SchemaQuirkProtocol,
-        target_quirk: p.Ldif.SchemaQuirkProtocol,
+        source_quirk: p.Ldif.SchemaQuirk,
+        target_quirk: p.Ldif.SchemaQuirk,
         conversion_type: str,
         data: str,
         must_contain: list[str] | None = None,
@@ -1950,7 +1950,7 @@ class TestDeduplicationHelpers:
     @staticmethod
     def helper_get_supported_conversions_and_assert(
         conversion_matrix: FlextLdifConversion,
-        quirk: p.Ldif.SchemaQuirkProtocol,
+        quirk: p.Ldif.SchemaQuirk,
         must_have_keys: list[str] | None = None,
         expected_support: dict[str, bool] | None = None,
     ) -> dict[str, bool]:
@@ -2000,8 +2000,8 @@ class TestDeduplicationHelpers:
     @staticmethod
     def helper_batch_convert_and_assert(
         conversion_matrix: FlextLdifConversion,
-        source_quirk: p.Ldif.SchemaQuirkProtocol,
-        target_quirk: p.Ldif.SchemaQuirkProtocol,
+        source_quirk: p.Ldif.SchemaQuirk,
+        target_quirk: p.Ldif.SchemaQuirk,
         conversion_type: str,
         items: list[str],
         expected_count: int | None = None,

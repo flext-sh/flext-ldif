@@ -773,7 +773,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _write_schema_element(
-        data: p.Ldif.SchemaAttributeProtocol | p.Ldif.SchemaObjectClassProtocol,
+        data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         expected_type: (
             type[
                 FlextLdifModelsDomains.SchemaAttribute
@@ -1316,7 +1316,7 @@ class FlextLdifUtilitiesSchema:
         return None
 
     @staticmethod
-    def write_attribute(attr_data: p.Ldif.SchemaAttributeProtocol) -> str:
+    def write_attribute(attr_data: p.Ldif.SchemaAttribute) -> str:
         """Write RFC 4512 attribute definition string from SchemaAttribute protocol."""
         return FlextLdifUtilitiesSchema._write_schema_element(
             attr_data,
@@ -1326,7 +1326,7 @@ class FlextLdifUtilitiesSchema:
         )
 
     @staticmethod
-    def write_objectclass(oc_data: p.Ldif.SchemaObjectClassProtocol) -> str:
+    def write_objectclass(oc_data: p.Ldif.SchemaObjectClass) -> str:
         """Write RFC 4512 objectClass definition string from SchemaObjectClass protocol."""
         return FlextLdifUtilitiesSchema._write_schema_element(
             oc_data,

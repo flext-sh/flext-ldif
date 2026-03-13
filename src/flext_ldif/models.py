@@ -165,9 +165,9 @@ class FlextLdifModels(FlextModels):
 
             type QuirksDict = Mapping[
                 str,
-                p.Ldif.SchemaQuirkProtocol
-                | p.Ldif.AclQuirkProtocol
-                | p.Ldif.EntryQuirkProtocol
+                p.Ldif.SchemaQuirk
+                | p.Ldif.AclQuirk
+                | p.Ldif.EntryQuirk
                 | None,
             ]
 

@@ -26,8 +26,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def __new__(
         cls,
-        schema_service: p.Ldif.SchemaQuirkProtocol | None = None,
-        parent_quirk: p.Ldif.SchemaQuirkProtocol | None = None,
+        schema_service: p.Ldif.SchemaQuirk | None = None,
+        parent_quirk: p.Ldif.SchemaQuirk | None = None,
         **kwargs: t.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
@@ -45,9 +45,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         parent_quirk_raw = (
             parent_quirk if parent_quirk is not None else kwargs.get("_parent_quirk")
         )
-        parent_quirk_value: p.Ldif.SchemaQuirkProtocol | None = (
+        parent_quirk_value: p.Ldif.SchemaQuirk | None = (
             parent_quirk_raw
-            if isinstance(parent_quirk_raw, p.Ldif.SchemaQuirkProtocol)
+            if isinstance(parent_quirk_raw, p.Ldif.SchemaQuirk)
             else None
         )
         schema_instance: Self = instance
@@ -95,8 +95,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def __init__(
         self,
-        schema_service: p.Ldif.SchemaQuirkProtocol | None = None,
-        parent_quirk: p.Ldif.SchemaQuirkProtocol | None = None,
+        schema_service: p.Ldif.SchemaQuirk | None = None,
+        parent_quirk: p.Ldif.SchemaQuirk | None = None,
         **kwargs: t.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize RFC schema quirk service."""
@@ -116,7 +116,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 continue
             if isinstance(value, (str, int, float, bool, datetime)):
                 filtered_kwargs[key] = value
-        schema_service_typed: p.Ldif.SchemaQuirkProtocol | None = schema_service
+        schema_service_typed: p.Ldif.SchemaQuirk | None = schema_service
         FlextLdifServersBaseSchema.__init__(
             self,
             _schema_service=schema_service_typed,

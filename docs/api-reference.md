@@ -1039,7 +1039,7 @@ class QuirkRegistryService:
             List of entry quirks sorted by priority
         """
 
-    def get_acls(self, server_type: str) -> list[AclProtocol]:
+    def get_acls(self, server_type: str) -> list[Acl]:
         """Get ACL quirks for server type.
 
         Args:

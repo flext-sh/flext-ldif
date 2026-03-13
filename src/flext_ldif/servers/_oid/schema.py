@@ -23,7 +23,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     def __init__(
         self,
-        schema_service: p.Ldif.SchemaQuirkProtocol | None = None,
+        schema_service: p.Ldif.SchemaQuirk | None = None,
         _parent_quirk: FlextLdifServersRfc | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
@@ -34,7 +34,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             if k not in ("_parent_quirk", "_schema_service")
             and isinstance(v, (str, float, bool))
         }
-        schema_service_typed: p.Ldif.SchemaQuirkProtocol | None = (
+        schema_service_typed: p.Ldif.SchemaQuirk | None = (
             schema_service if schema_service is not None else None
         )
         FlextLdifServersBaseSchema.__init__(

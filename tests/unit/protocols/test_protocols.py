@@ -42,9 +42,9 @@ class TestsTestFlextLdifProtocols(s):
         """Protocol names in FlextLdifProtocols.Ldif namespace organized as nested enum."""
 
         __test__ = False
-        SCHEMA = "SchemaQuirkProtocol"
-        ACL = "AclQuirkProtocol"
-        ENTRY = "EntryQuirkProtocol"
+        SCHEMA = "SchemaQuirk"
+        ACL = "AclQuirk"
+        ENTRY = "EntryQuirk"
 
     _PROTOCOL_NAMES: ClassVar[list[str]] = [
         ProtocolNames.SCHEMA.value,
@@ -95,7 +95,7 @@ class TestsTestFlextLdifProtocols(s):
         """Helper methods organized as nested class."""
 
         @staticmethod
-        def verify_protocol_methods(schema: p.Ldif.SchemaQuirkProtocol) -> None:
+        def verify_protocol_methods(schema: p.Ldif.SchemaQuirk) -> None:
             """Verify schema has all required protocol methods."""
             assert hasattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_PARSE)
             assert callable(
@@ -176,22 +176,22 @@ class TestsTestFlextLdifProtocols(s):
 
     def test_schema_satisfies_protocol_oid(self) -> None:
         """Test that OID schema satisfies SchemaProtocol."""
-        schema: p.Ldif.SchemaQuirkProtocol = FlextLdifServersOid.Schema()
+        schema: p.Ldif.SchemaQuirk = FlextLdifServersOid.Schema()
         self.Helpers.verify_protocol_methods(schema)
 
     def test_schema_satisfies_protocol_oud(self) -> None:
         """Test that OUD schema satisfies SchemaProtocol."""
-        schema: p.Ldif.SchemaQuirkProtocol = FlextLdifServersOud.Schema()
+        schema: p.Ldif.SchemaQuirk = FlextLdifServersOud.Schema()
         self.Helpers.verify_protocol_methods(schema)
 
     def test_schema_satisfies_protocol_openldap(self) -> None:
         """Test that OpenLDAP schema satisfies SchemaProtocol."""
-        schema: p.Ldif.SchemaQuirkProtocol = FlextLdifServersOpenldap.Schema()
+        schema: p.Ldif.SchemaQuirk = FlextLdifServersOpenldap.Schema()
         self.Helpers.verify_protocol_methods(schema)
 
     def test_schema_satisfies_protocol_relaxed(self) -> None:
         """Test that Relaxed schema satisfies SchemaProtocol."""
-        schema: p.Ldif.SchemaQuirkProtocol = FlextLdifServersRelaxed.Schema()
+        schema: p.Ldif.SchemaQuirk = FlextLdifServersRelaxed.Schema()
         self.Helpers.verify_protocol_methods(schema)
 
     def test_server_has_protocol_attributes_oid(self) -> None:
@@ -264,7 +264,7 @@ class TestsTestFlextLdifProtocols(s):
 
     def test_protocol_type_checking(self) -> None:
         """Test protocol can be used for type checking."""
-        oid_schema: p.Ldif.SchemaQuirkProtocol = FlextLdifServersOid.Schema()
+        oid_schema: p.Ldif.SchemaQuirk = FlextLdifServersOid.Schema()
         is_schema = hasattr(oid_schema, self.Constants.ATTR_PARSE) and hasattr(
             oid_schema, self.Constants.ATTR_WRITE
         )

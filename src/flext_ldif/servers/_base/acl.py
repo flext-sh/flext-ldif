@@ -20,7 +20,7 @@ logger = FlextLogger(__name__)
 
 
 class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl | str]):
-    """Base class for ACL quirks - satisfies AclProtocol (structural typing)."""
+    """Base class for ACL quirks - satisfies Acl (structural typing)."""
 
     acl_attribute_name: ClassVar[str] = "acl"
     server_type: str = "rfc"
@@ -39,7 +39,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
 
     def __init__(
         self,
-        acl_service: p.Ldif.AclQuirkProtocol | None = None,
+        acl_service: p.Ldif.AclQuirk | None = None,
         _parent_quirk: Self | None = None,
         **_kwargs: t.Scalar,
     ) -> None:

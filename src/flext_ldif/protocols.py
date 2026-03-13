@@ -67,7 +67,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class AclProtocol(Protocol):
+        class Acl(Protocol):
             """Protocol for LDIF ACL models."""
 
             name: str
@@ -75,7 +75,7 @@ class FlextLdifProtocols(FlextProtocols):
             server_type: c.Ldif.LiteralTypes.ServerTypeLiteral
 
         @runtime_checkable
-        class SchemaAttributeProtocol(Protocol):
+        class SchemaAttribute(Protocol):
             """Protocol for LDIF schema attributes."""
 
             @property
@@ -146,7 +146,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class SchemaObjectClassProtocol(Protocol):
+        class SchemaObjectClass(Protocol):
             """Protocol for LDIF schema object classes."""
 
             @property
@@ -222,8 +222,8 @@ class FlextLdifProtocols(FlextProtocols):
             ) -> Callable[
                 ...,
                 r[
-                    FlextLdifProtocols.Ldif.SchemaAttributeProtocol
-                    | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
+                    FlextLdifProtocols.Ldif.SchemaAttribute
+                    | FlextLdifProtocols.Ldif.SchemaObjectClass
                 ],
             ]:
                 """Method to parse LDIF into schema object."""
@@ -233,9 +233,9 @@ class FlextLdifProtocols(FlextProtocols):
             def source_schema(
                 self,
             ) -> (
-                FlextLdifProtocols.Ldif.SchemaAttributeProtocol
-                | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
-                | FlextLdifProtocols.Ldif.SchemaQuirkProtocol
+                FlextLdifProtocols.Ldif.SchemaAttribute
+                | FlextLdifProtocols.Ldif.SchemaObjectClass
+                | FlextLdifProtocols.Ldif.SchemaQuirk
             ):
                 """Source schema object to convert."""
                 ...
@@ -244,9 +244,9 @@ class FlextLdifProtocols(FlextProtocols):
             def target_schema(
                 self,
             ) -> (
-                FlextLdifProtocols.Ldif.SchemaAttributeProtocol
-                | FlextLdifProtocols.Ldif.SchemaObjectClassProtocol
-                | FlextLdifProtocols.Ldif.SchemaQuirkProtocol
+                FlextLdifProtocols.Ldif.SchemaAttribute
+                | FlextLdifProtocols.Ldif.SchemaObjectClass
+                | FlextLdifProtocols.Ldif.SchemaQuirk
             ):
                 """Target schema object template."""
                 ...
@@ -268,7 +268,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class SchemaQuirkProtocol(Protocol):
+        class SchemaQuirk(Protocol):
             """Protocol for Schema quirk implementations."""
 
             def parse(
@@ -315,7 +315,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class AclQuirkProtocol(Protocol):
+        class AclQuirk(Protocol):
             """Protocol for ACL quirk implementations."""
 
             def parse(self, acl_line: str) -> r[FlextLdifModelsDomains.Acl]:
@@ -327,7 +327,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class EntryQuirkProtocol(Protocol):
+        class EntryQuirk(Protocol):
             """Protocol for Entry quirk implementations."""
 
             def parse(self, ldif_content: str) -> r[list[FlextLdifModelsDomains.Entry]]:
@@ -355,19 +355,19 @@ class FlextLdifProtocols(FlextProtocols):
 
             def schema(
                 self, server_type: str
-            ) -> FlextLdifProtocols.Ldif.SchemaQuirkProtocol | None:
+            ) -> FlextLdifProtocols.Ldif.SchemaQuirk | None:
                 """Get schema quirk for server type."""
                 ...
 
             def acl(
                 self, server_type: str
-            ) -> FlextLdifProtocols.Ldif.AclQuirkProtocol | None:
+            ) -> FlextLdifProtocols.Ldif.AclQuirk | None:
                 """Get ACL quirk for server type."""
                 ...
 
             def entry(
                 self, server_type: str
-            ) -> FlextLdifProtocols.Ldif.EntryQuirkProtocol | None:
+            ) -> FlextLdifProtocols.Ldif.EntryQuirk | None:
                 """Get entry quirk for server type."""
                 ...
 
@@ -504,13 +504,13 @@ class FlextLdifProtocols(FlextProtocols):
         # =================================================================
 
         Entry = Entry
-        SchemaAttribute = SchemaAttributeProtocol
-        SchemaObjectClass = SchemaObjectClassProtocol
-        SchemaQuirk = SchemaQuirkProtocol
-        AclQuirk = AclQuirkProtocol
-        EntryQuirk = EntryQuirkProtocol
-        Acl = AclProtocol
-        Parser = SchemaQuirkProtocol  # Often referred to as Parser in tests
+        SchemaAttribute = SchemaAttribute
+        SchemaObjectClass = SchemaObjectClass
+        SchemaQuirk = SchemaQuirk
+        AclQuirk = AclQuirk
+        EntryQuirk = EntryQuirk
+        Acl = Acl
+        Parser = SchemaQuirk  # Often referred to as Parser in tests
         QuirkRegistry = QuirkRegistryProtocol
         ServerBase = ServerBaseProtocol
 

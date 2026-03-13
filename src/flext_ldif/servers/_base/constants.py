@@ -47,9 +47,9 @@ class FlextLdifServersBaseQuirkHelpers:
     @staticmethod
     def get_parent_quirk_safe(
         instance: QuirkMethodsMixin,
-    ) -> p.Ldif.SchemaQuirkProtocol | None:
+    ) -> p.Ldif.SchemaQuirk | None:
         """Get _parent_quirk attribute safely with type narrowing."""
-        parent_raw: p.Ldif.SchemaQuirkProtocol | None = getattr(
+        parent_raw: p.Ldif.SchemaQuirk | None = getattr(
             instance, "_parent_quirk", None
         )
         if (
@@ -60,7 +60,7 @@ class FlextLdifServersBaseQuirkHelpers:
         return None
 
     @staticmethod
-    def get_priority_from_parent(parent: p.Ldif.SchemaQuirkProtocol | None) -> int:
+    def get_priority_from_parent(parent: p.Ldif.SchemaQuirk | None) -> int:
         """Get priority from parent server class Constants."""
         if parent is None:
             return 100
@@ -83,7 +83,7 @@ class FlextLdifServersBaseQuirkHelpers:
 class QuirkMethodsMixin:
     """Mixin providing common quirk methods for Schema, Acl, and Entry classes."""
 
-    def _get_parent_quirk_safe(self) -> p.Ldif.SchemaQuirkProtocol | None:
+    def _get_parent_quirk_safe(self) -> p.Ldif.SchemaQuirk | None:
         """Get _parent_quirk attribute safely with type narrowing."""
         return FlextLdifServersBaseQuirkHelpers.get_parent_quirk_safe(self)
 

@@ -21,7 +21,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     def __init__(
         self,
-        schema_service: p.Ldif.SchemaQuirkProtocol | None = None,
+        schema_service: p.Ldif.SchemaQuirk | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize OUD schema quirk."""

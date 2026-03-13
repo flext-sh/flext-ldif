@@ -22,7 +22,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     def __new__(
         cls,
-        acl_service: p.Ldif.AclQuirkProtocol | None = None,
+        acl_service: p.Ldif.AclQuirk | None = None,
         parent_quirk: Self | None = None,
         **kwargs: t.Scalar,
     ) -> Self:
@@ -58,13 +58,13 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     def __init__(
         self,
-        acl_service: p.Ldif.AclQuirkProtocol | None = None,
+        acl_service: p.Ldif.AclQuirk | None = None,
         parent_quirk: Self | None = None,
         **kwargs: t.Scalar,
     ) -> None:
         """Initialize RFC ACL quirk service."""
         _ = kwargs
-        acl_service_typed: p.Ldif.AclQuirkProtocol | None = (
+        acl_service_typed: p.Ldif.AclQuirk | None = (
             acl_service if acl_service is not None else None
         )
         FlextLdifServersBaseSchemaAcl.__init__(
