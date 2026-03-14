@@ -191,7 +191,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
 
         field_transforms: dict[
             str,
-            Callable[, object | r] | str | list[str] | None,
+            Callable[..., object | r] | str | list[str] | None,
         ] = {
             "name": transform_name,
             "equality": transform_equality,
@@ -225,7 +225,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
 
         field_transforms: dict[
             str,
-            Callable[, object | r] | str | list[str] | None,
+            Callable[..., object | r] | str | list[str] | None,
         ] = {"name": transform_name}
         result = FlextLdifUtilities.Ldif.Schema.apply_transformations(
             attr, field_transforms=field_transforms

@@ -1,7 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
-"""Tests for flext_ldif._utilities.oid module."""
+"""Constants package."""
 
 from __future__ import annotations
 
@@ -10,18 +10,32 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from tests.unit._utilities.oid.test_oid_utilities import TestFlextLdifUtilitiesOID
+    from tests.unit.constants.test_acl_registry import (
+        GetAclAttributesServerType,
+        IsAclAttributeType,
+        TestsTestFlextLdifAclAttributeRegistry,
+    )
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "TestFlextLdifUtilitiesOID": (
-        "tests.unit._utilities.oid.test_oid_utilities",
-        "TestFlextLdifUtilitiesOID",
+    "GetAclAttributesServerType": (
+        "tests.unit.constants.test_acl_registry",
+        "GetAclAttributesServerType",
+    ),
+    "IsAclAttributeType": (
+        "tests.unit.constants.test_acl_registry",
+        "IsAclAttributeType",
+    ),
+    "TestsTestFlextLdifAclAttributeRegistry": (
+        "tests.unit.constants.test_acl_registry",
+        "TestsTestFlextLdifAclAttributeRegistry",
     ),
 }
 
 __all__ = [
-    "TestFlextLdifUtilitiesOID",
+    "GetAclAttributesServerType",
+    "IsAclAttributeType",
+    "TestsTestFlextLdifAclAttributeRegistry",
 ]
 
 

@@ -230,7 +230,7 @@ class FlextFunctional:
             list[builtins.object] | tuple[builtins.object, ...] | object,
         ],
         *,
-        predicate: Callable[, bool] = lambda x: x is not None,
+        predicate: Callable[..., bool] = lambda x: x is not None,
         on_error: Literal["skip", "stop", "collect"] = "skip",
     ) -> list[builtins.object]:
         """Process and flatten items (mnemonic: pf)."""
@@ -270,8 +270,8 @@ class FlextFunctional:
         cls,
         value: builtins.object | Sequence[builtins.object] | None,
         *,
-        mapper: Callable[, object] | None = None,
-        predicate: Callable[, bool] | None = None,
+        mapper: Callable[..., object] | None = None,
+        predicate: Callable[..., bool] | None = None,
         default: list[builtins.object] | None = None,
     ) -> list[builtins.object]:
         """Normalize to list (mnemonic: nl)."""
@@ -646,7 +646,7 @@ class FlextFunctional:
     at = as_type
 
     @classmethod
-    def prop(cls, key: str) -> Callable[, object]:
+    def prop(cls, key: str) -> Callable[..., object]:
         """Property accessor (mnemonic: pp)."""
 
         def getter(obj: builtins.object) -> builtins.object:
@@ -661,7 +661,7 @@ class FlextFunctional:
     prop_get = prop
 
     @classmethod
-    def props(cls, *keys: str) -> Callable[, Mapping[str, builtins.object]]:
+    def props(cls, *keys: str) -> Callable[..., Mapping[str, builtins.object]]:
         """Multiple property accessor (mnemonic: ps)."""
 
         def accessor(obj: builtins.object) -> Mapping[str, builtins.object]:
@@ -681,10 +681,10 @@ class FlextFunctional:
     ps = props
 
     @classmethod
-    def path(cls, *keys: str) -> Callable[, object]:
+    def path(cls, *keys: str) -> Callable[..., object]:
         """Path accessor using chain() DSL (mnemonic: ph)."""
 
-        def make_getter(key: str) -> Callable[, object]:
+        def make_getter(key: str) -> Callable[..., object]:
             """Create a single-key getter."""
 
             def getter_fn(obj: builtins.object) -> builtins.object:
@@ -698,7 +698,7 @@ class FlextFunctional:
 
             return getter_fn
 
-        getters: list[Callable[, object]] = [make_getter(k) for k in keys]
+        getters: list[Callable[..., object]] = [make_getter(k) for k in keys]
 
         def path_getter(obj: builtins.object) -> builtins.object:
             """Get value at path."""

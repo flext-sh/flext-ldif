@@ -1,17 +1,26 @@
+# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
+# Regenerate with: make codegen
+#
 """OUD (Oracle Unified Directory) Server Classes."""
 
 from __future__ import annotations
 
-from importlib import import_module
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace
+from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
-    from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
+    from flext_ldif.servers._oud.constants import (
+        FlextLdifServersOudConstants,
+        FlextLdifServersOudConstants as c,
+    )
     from flext_ldif.servers._oud.entry import FlextLdifServersOudEntry
-    from flext_ldif.servers._oud.schema import FlextLdifServersOudSchema
+    from flext_ldif.servers._oud.schema import FlextLdifServersOudSchema, logger
+    from flext_ldif.servers._oud.utilities import (
+        FlextLdifServersOudUtilities,
+        FlextLdifServersOudUtilities as u,
+    )
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -28,6 +37,13 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif.servers._oud.schema",
         "FlextLdifServersOudSchema",
     ),
+    "FlextLdifServersOudUtilities": (
+        "flext_ldif.servers._oud.utilities",
+        "FlextLdifServersOudUtilities",
+    ),
+    "c": ("flext_ldif.servers._oud.constants", "FlextLdifServersOudConstants"),
+    "logger": ("flext_ldif.servers._oud.schema", "logger"),
+    "u": ("flext_ldif.servers._oud.utilities", "FlextLdifServersOudUtilities"),
 }
 
 __all__ = [
@@ -35,20 +51,16 @@ __all__ = [
     "FlextLdifServersOudConstants",
     "FlextLdifServersOudEntry",
     "FlextLdifServersOudSchema",
+    "FlextLdifServersOudUtilities",
+    "c",
+    "logger",
+    "u",
 ]
 
 
-def __getattr__(name: str) -> type:
+def __getattr__(name: str) -> t.ModuleExport:
     """Lazy-load module attributes on first access (PEP 562)."""
-    lazy_import = _LAZY_IMPORTS.get(name)
-    if lazy_import is None:
-        msg = f"module {__name__!r} has no attribute {name!r}"
-        raise AttributeError(msg)
-    module_path, attr_name = lazy_import
-    module = import_module(module_path)
-    value = getattr(module, attr_name)
-    globals()[name] = value
-    return value
+    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 
 
 def __dir__() -> list[str]:

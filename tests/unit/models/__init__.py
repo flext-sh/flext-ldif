@@ -1,7 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
-"""Tests for flext_ldif._utilities.oid module."""
+"""Models package."""
 
 from __future__ import annotations
 
@@ -10,18 +10,20 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from tests.unit._utilities.oid.test_oid_utilities import TestFlextLdifUtilitiesOID
+    from tests.unit.models.test_models import (
+        TestFlextLdifModels,
+        TestFlextLdifModels as m,
+    )
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "TestFlextLdifUtilitiesOID": (
-        "tests.unit._utilities.oid.test_oid_utilities",
-        "TestFlextLdifUtilitiesOID",
-    ),
+    "TestFlextLdifModels": ("tests.unit.models.test_models", "TestFlextLdifModels"),
+    "m": ("tests.unit.models.test_models", "TestFlextLdifModels"),
 }
 
 __all__ = [
-    "TestFlextLdifUtilitiesOID",
+    "TestFlextLdifModels",
+    "m",
 ]
 
 
