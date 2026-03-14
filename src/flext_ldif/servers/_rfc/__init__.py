@@ -23,18 +23,9 @@ if TYPE_CHECKING:
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifServersRfcAcl": ("flext_ldif.servers._rfc.acl", "FlextLdifServersRfcAcl"),
-    "FlextLdifServersRfcConstants": (
-        "flext_ldif.servers._rfc.constants",
-        "FlextLdifServersRfcConstants",
-    ),
-    "FlextLdifServersRfcEntry": (
-        "flext_ldif.servers._rfc.entry",
-        "FlextLdifServersRfcEntry",
-    ),
-    "FlextLdifServersRfcSchema": (
-        "flext_ldif.servers._rfc.schema",
-        "FlextLdifServersRfcSchema",
-    ),
+    "FlextLdifServersRfcConstants": ("flext_ldif.servers._rfc.constants", "FlextLdifServersRfcConstants"),
+    "FlextLdifServersRfcEntry": ("flext_ldif.servers._rfc.entry", "FlextLdifServersRfcEntry"),
+    "FlextLdifServersRfcSchema": ("flext_ldif.servers._rfc.schema", "FlextLdifServersRfcSchema"),
     "c": ("flext_ldif.servers._rfc.constants", "FlextLdifServersRfcConstants"),
     "logger": ("flext_ldif.servers._rfc.schema", "logger"),
 }

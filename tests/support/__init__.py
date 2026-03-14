@@ -26,10 +26,7 @@ if TYPE_CHECKING:
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FileManager": ("tests.support.test_files", "FileManager"),
-    "FlextLdifTestConftest": (
-        "tests.support.conftest_factory",
-        "FlextLdifTestConftest",
-    ),
+    "FlextLdifTestConftest": ("tests.support.conftest_factory", "FlextLdifTestConftest"),
     "FlextLdifTestFactory": ("tests.support.real_services", "FlextLdifTestFactory"),
     "FlextTestsDocker": ("tests.support.conftest_factory", "FlextTestsDocker"),
     "LdifSample": ("tests.support.ldif_data", "LdifSample"),
