@@ -559,7 +559,7 @@ class TestSchemaDeviationsComplete:
         assert tracked_fields >= len(oid_must_track), (
             f"Should track at least {len(oid_must_track)} fields, got {tracked_fields}"
         )
-        assert extensions_dict["syntax_quotes"] is True, "OID should have syntax quotes"
+        assert extensions_dict["syntax_quotes"], "OID should have syntax quotes"
         assert extensions_dict.get("syntax_quote_char") == "'", (
             "OID should use single quotes"
         )

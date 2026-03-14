@@ -9,10 +9,10 @@ from collections.abc import (
     Mapping,
     ValuesView,
 )
-from typing import Annotated, ClassVar, Self, override
+from typing import ClassVar, Self, override
 
 from flext_core import FlextModels
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict
 
 from flext_ldif.typings import FlextLdifTypes as t
 
@@ -26,11 +26,11 @@ class FlextLdifModelsMetadata:
         model_config = ConfigDict(
             extra="allow", arbitrary_types_allowed=True, frozen=False
         )
-        transformations: Annotated[list[t.Scalar] | None, Field(default=None)]
-        original_format: Annotated[str | None, Field(default=None)]
-        schema_source_server: Annotated[str | None, Field(default=None)]
-        server_type: Annotated[str | None, Field(default=None)]
-        relaxed_mode: Annotated[bool | None, Field(default=None)]
+        transformations: list[t.Scalar] | None = None
+        original_format: str | None = None
+        schema_source_server: str | None = None
+        server_type: str | None = None
+        relaxed_mode: bool | None = None
 
         @override
         def __eq__(self, other: builtins.object) -> bool:

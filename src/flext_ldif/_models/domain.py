@@ -86,7 +86,7 @@ class FlextLdifModelsDomains:
         metadata: Annotated[
             FlextLdifModelsMetadata.EntryMetadata,
             Field(
-                default_factory=FlextLdifModelsMetadata.EntryMetadata,
+                default_factory=lambda: FlextLdifModelsMetadata.EntryMetadata(),
                 description="Quirk-specific metadata for preserving original format",
             ),
         ]
@@ -963,7 +963,7 @@ class FlextLdifModelsDomains:
         context: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
-                default_factory=FlextLdifModelsMetadata.DynamicMetadata,
+                default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata(),
                 description="Context",
             ),
         ]
@@ -3339,7 +3339,7 @@ class FlextLdifModelsDomains:
         extensions: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
-                default_factory=FlextLdifModelsMetadata.DynamicMetadata,
+                default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata(),
                 description="Non-standard schema extensions",
             ),
         ]
@@ -3383,7 +3383,7 @@ class FlextLdifModelsDomains:
         extensions: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
-                default_factory=FlextLdifModelsMetadata.DynamicMetadata,
+                default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata(),
                 description="Extensible metadata storage for quirk-specific data (server-injected validation rules, unconverted attributes, etc.)",
             ),
         ]
@@ -3404,7 +3404,7 @@ class FlextLdifModelsDomains:
         conversion_notes: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
-                default_factory=FlextLdifModelsMetadata.DynamicMetadata,
+                default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata(),
                 description="Map of conversion operation name → human-readable description",
             ),
         ]
@@ -3418,7 +3418,7 @@ class FlextLdifModelsDomains:
         server_specific_data: Annotated[
             FlextLdifModelsMetadata.EntryMetadata,
             Field(
-                default_factory=FlextLdifModelsMetadata.EntryMetadata,
+                default_factory=lambda: FlextLdifModelsMetadata.EntryMetadata(),
                 description="Preservation of server-proprietary data for round-trip conversions",
             ),
         ]
@@ -3474,7 +3474,7 @@ class FlextLdifModelsDomains:
         removed_attributes: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
-                default_factory=FlextLdifModelsMetadata.DynamicMetadata,
+                default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata(),
                 description="Attributes removed during conversion (was entry_metadata.removed_attributes_with_values)",
             ),
         ]
@@ -3501,7 +3501,7 @@ class FlextLdifModelsDomains:
         original_attribute_case: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
-                default_factory=FlextLdifModelsMetadata.DynamicMetadata,
+                default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata(),
                 description="Original case of attribute names: {'objectclass': 'objectClass', 'cn': 'CN'}. Used to restore original case during reverse conversion.",
             ),
         ]
@@ -3515,21 +3515,21 @@ class FlextLdifModelsDomains:
         boolean_conversions: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
-                default_factory=FlextLdifModelsMetadata.DynamicMetadata,
+                default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata(),
                 description="Boolean conversion tracking: {'orcldasisenabled': {'original': '1', 'converted': 'TRUE', 'format': 'OID->RFC'}}",
             ),
         ]
         minimal_differences: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
-                default_factory=FlextLdifModelsMetadata.DynamicMetadata,
+                default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata(),
                 description="Complete minimal differences tracking for zero data loss: {'dn': {'has_differences': True, 'original': 'cn=test, dc=example', 'converted': 'cn=test,dc=example', 'differences': [...], 'spacing_changes': {...}, 'case_changes': [...], 'punctuation_changes': [...], 'original_length': 20, 'converted_length': 19}, 'attribute_cn': {'has_differences': False, ...}, 'schema_attr_uid': {'has_differences': True, 'original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", 'converted': 'attributeTypes: ( 0.9.2342... NAME uid SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )', 'differences': [...], 'syntax_quotes_removed': True, 'trailing_spaces_removed': True, ...}}",
             ),
         ]
         original_strings: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
-                default_factory=FlextLdifModelsMetadata.DynamicMetadata,
+                default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata(),
                 description="Complete preservation of original strings before ANY conversion: {'dn_original': 'cn=test, dc=example;', 'attribute_cn_original': 'CN', 'schema_attr_uid_original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", 'acl_original': 'orclaci: { ... }', 'entry_original_ldif': 'dn: cn=test\\ncn: test\\n'}",
             ),
         ]
