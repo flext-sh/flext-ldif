@@ -24,13 +24,24 @@ if TYPE_CHECKING:
         FlextLdifServersOudUtilities as u,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifServersOudAcl": ("flext_ldif.servers._oud.acl", "FlextLdifServersOudAcl"),
-    "FlextLdifServersOudConstants": ("flext_ldif.servers._oud.constants", "FlextLdifServersOudConstants"),
-    "FlextLdifServersOudEntry": ("flext_ldif.servers._oud.entry", "FlextLdifServersOudEntry"),
-    "FlextLdifServersOudSchema": ("flext_ldif.servers._oud.schema", "FlextLdifServersOudSchema"),
-    "FlextLdifServersOudUtilities": ("flext_ldif.servers._oud.utilities", "FlextLdifServersOudUtilities"),
+    "FlextLdifServersOudConstants": (
+        "flext_ldif.servers._oud.constants",
+        "FlextLdifServersOudConstants",
+    ),
+    "FlextLdifServersOudEntry": (
+        "flext_ldif.servers._oud.entry",
+        "FlextLdifServersOudEntry",
+    ),
+    "FlextLdifServersOudSchema": (
+        "flext_ldif.servers._oud.schema",
+        "FlextLdifServersOudSchema",
+    ),
+    "FlextLdifServersOudUtilities": (
+        "flext_ldif.servers._oud.utilities",
+        "FlextLdifServersOudUtilities",
+    ),
     "c": ("flext_ldif.servers._oud.constants", "FlextLdifServersOudConstants"),
     "logger": ("flext_ldif.servers._oud.schema", "logger"),
     "u": ("flext_ldif.servers._oud.utilities", "FlextLdifServersOudUtilities"),

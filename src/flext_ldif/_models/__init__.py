@@ -30,19 +30,33 @@ if TYPE_CHECKING:
     from flext_ldif._models.results import FlextLdifModelsResults
     from flext_ldif._models.settings import FlextLdifModelsSettings
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "AclElement": ("flext_ldif._models.base", "AclElement"),
     "FlextLdifModelsBase": ("flext_ldif._models.base", "FlextLdifModelsBase"),
     "FlextLdifModelsBases": ("flext_ldif._models.base", "FlextLdifModelsBases"),
-    "FlextLdifModelsCollections": ("flext_ldif._models.collections", "FlextLdifModelsCollections"),
-    "FlextLdifModelsConversions": ("flext_ldif._models.conversion", "FlextLdifModelsConversions"),
+    "FlextLdifModelsCollections": (
+        "flext_ldif._models.collections",
+        "FlextLdifModelsCollections",
+    ),
+    "FlextLdifModelsConversions": (
+        "flext_ldif._models.conversion",
+        "FlextLdifModelsConversions",
+    ),
     "FlextLdifModelsDomains": ("flext_ldif._models.domain", "FlextLdifModelsDomains"),
     "FlextLdifModelsEvents": ("flext_ldif._models.events", "FlextLdifModelsEvents"),
-    "FlextLdifModelsMetadata": ("flext_ldif._models.metadata", "FlextLdifModelsMetadata"),
-    "FlextLdifModelsProcessing": ("flext_ldif._models.processing", "FlextLdifModelsProcessing"),
+    "FlextLdifModelsMetadata": (
+        "flext_ldif._models.metadata",
+        "FlextLdifModelsMetadata",
+    ),
+    "FlextLdifModelsProcessing": (
+        "flext_ldif._models.processing",
+        "FlextLdifModelsProcessing",
+    ),
     "FlextLdifModelsResults": ("flext_ldif._models.results", "FlextLdifModelsResults"),
-    "FlextLdifModelsSettings": ("flext_ldif._models.settings", "FlextLdifModelsSettings"),
+    "FlextLdifModelsSettings": (
+        "flext_ldif._models.settings",
+        "FlextLdifModelsSettings",
+    ),
     "FrozenIgnoreLdifModel": ("flext_ldif._models.base", "FrozenIgnoreLdifModel"),
     "FrozenLdifModel": ("flext_ldif._models.base", "FrozenLdifModel"),
     "MutableIgnoreLdifModel": ("flext_ldif._models.base", "MutableIgnoreLdifModel"),

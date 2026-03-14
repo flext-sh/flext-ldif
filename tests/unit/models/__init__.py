@@ -17,7 +17,6 @@ if TYPE_CHECKING:
         TestFlextLdifModels as m,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestFlextLdifModels": ("tests.unit.models.test_models", "TestFlextLdifModels"),
     "m": ("tests.unit.models.test_models", "TestFlextLdifModels"),

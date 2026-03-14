@@ -14,9 +14,11 @@ if TYPE_CHECKING:
 
     from tests.unit.__init__.test_version import TestsFlextLdifVersion
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "TestsFlextLdifVersion": ("tests.unit.__init__.test_version", "TestsFlextLdifVersion"),
+    "TestsFlextLdifVersion": (
+        "tests.unit.__init__.test_version",
+        "TestsFlextLdifVersion",
+    ),
 }
 
 __all__ = [

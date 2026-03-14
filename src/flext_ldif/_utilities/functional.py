@@ -226,7 +226,7 @@ class FlextFunctional:
     def process_flatten(
         items: Sequence[builtins.object],
         processor: Callable[
-            ,
+            ...,
             list[builtins.object] | tuple[builtins.object, ...] | object,
         ],
         *,

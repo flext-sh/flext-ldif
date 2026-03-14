@@ -81,7 +81,7 @@ class FlextLdifUtilitiesSchema:
         | FlextLdifModelsDomains.SchemaObjectClass,
         field_name: str,
         transform_fn: Callable[
-            ,
+            ...,
             builtins.object | r[builtins.object],
         ],
     ) -> r[
@@ -127,7 +127,7 @@ class FlextLdifUtilitiesSchema:
         field_transforms: Mapping[
             str,
             Callable[
-                ,
+                ...,
                 builtins.object | r[builtins.object],
             ]
             | str
@@ -803,7 +803,7 @@ class FlextLdifUtilitiesSchema:
         field_transforms: Mapping[
             str,
             Callable[
-                ,
+                ...,
                 builtins.object | r[builtins.object],
             ]
             | str

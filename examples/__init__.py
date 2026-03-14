@@ -14,7 +14,6 @@ if TYPE_CHECKING:
 
     from examples.demo_structured_migration import main
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "main": ("examples.demo_structured_migration", "main"),
 }
