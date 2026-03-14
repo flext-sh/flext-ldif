@@ -145,3 +145,9 @@ class FlextLdifTypes(FlextTypes):
 t = FlextLdifTypes
 
 __all__ = ["FlextLdifTypes", "t"]
+
+
+type FilterFactoryType = Callable[[], object]
+
+
+type CategorizationFactoryType = Callable[[str], object]
