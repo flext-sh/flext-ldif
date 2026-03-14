@@ -28,7 +28,7 @@ class FlextLdifUtilitiesTypeGuards(FlextUtilities):
     @staticmethod
     def is_entry_sequence(
         obj: builtins.object,
-    ) -> TypeGuard[ABCSequence[object]]:
+    ) -> TypeGuard[ABCSequence]:
         """Check if object is a Sequence of Entry instances.
 
         Uses duck typing to identify Entry sequences:

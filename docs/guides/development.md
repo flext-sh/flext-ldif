@@ -205,7 +205,7 @@ class ApiRequest(BaseModel):
 
 
 class ApiResponse(BaseModel):
-    result: object
+    result
 ```
 
 ## Testing

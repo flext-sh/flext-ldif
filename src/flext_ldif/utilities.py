@@ -183,7 +183,7 @@ class FlextLdifUtilities(FlextUtilities):
         def find(
             items: Sequence[builtins.object],
             *,
-            predicate: Callable[[object], bool],
+            predicate: Callable[, bool],
         ) -> builtins.object | None:
             """Find first item matching predicate."""
             for elem in items:
@@ -514,8 +514,8 @@ class FlextLdifUtilities(FlextUtilities):
             items_or_entries: Sequence[builtins.object]
             | Mapping[str, builtins.object]
             | object,
-            predicate: Callable[[object], bool],
-            _mapper: Callable[[object], object] | None = None,
+            predicate: Callable[, bool],
+            _mapper: Callable[, object] | None = None,
         ) -> list[builtins.object] | Mapping[str, builtins.object]:
             """Filter using base class Collection.filter (internal helper)."""
             if isinstance(items_or_entries, (list, tuple)):
@@ -586,7 +586,7 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def is_object_arg_callable[R](
             func: Callable[..., R] | object,
-        ) -> TypeGuard[Callable[[object], R]]:
+        ) -> TypeGuard[Callable[, R]]:
             """Check if callable accepts 1 object argument."""
             if not callable(func):
                 return False
@@ -614,15 +614,15 @@ class FlextLdifUtilities(FlextUtilities):
             | list[builtins.object]
             | tuple[builtins.object, ...]
             | Mapping[str, builtins.object],
-            processor_or_config: Callable[[object], object]
+            processor_or_config: Callable[, object]
             | Callable[[str, object], object]
             | None = None,
             *,
-            processor: Callable[[object], object]
+            processor: Callable[, object]
             | Callable[[str, object], object]
             | None = None,
             on_error: str = "collect",
-            predicate: Callable[[object], bool]
+            predicate: Callable[, bool]
             | Callable[[str, object], bool]
             | None = None,
             filter_keys: set[str] | None = None,
@@ -659,17 +659,17 @@ class FlextLdifUtilities(FlextUtilities):
             | tuple[builtins.object, ...]
             | Mapping[str, builtins.object]
             | Sequence[m.Ldif.Entry],
-            processor_or_config: Callable[[object], object]
+            processor_or_config: Callable[, object]
             | Callable[[str, object], object]
             | m.Ldif.ProcessConfig
             | None = None,
             *,
-            processor: Callable[[object], object]
+            processor: Callable[, object]
             | Callable[[str, object], object]
             | Callable[[m.Ldif.Entry], object]
             | None = None,
             on_error: str = "collect",
-            predicate: Callable[[object], bool]
+            predicate: Callable[, bool]
             | Callable[[str, object], bool]
             | Callable[[m.Ldif.Entry], bool]
             | None = None,
@@ -897,7 +897,7 @@ class FlextLdifUtilities(FlextUtilities):
         def zip_with(
             cls,
             *sequences: Sequence[builtins.object],
-            combiner: FlextLdifUtilities.Ldif.VariadicCallable[object] | None = None,
+            combiner: FlextLdifUtilities.Ldif.VariadicCallable | None = None,
         ) -> list[builtins.object]:
             """Zip with combiner (generalized: uses zip from base, mnemonic: zw)."""
             if not sequences:
@@ -915,7 +915,7 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def pipe_ldif(
             value: builtins.object,
-            *ops: Mapping[str, builtins.object] | Callable[[object], object],
+            *ops: Mapping[str, builtins.object] | Callable[, object],
         ) -> builtins.object:
             """LDIF-specific pipe - supports dict operations via flow()."""
             result: builtins.object = value
@@ -937,7 +937,7 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def pp(
             value: builtins.object,
-            *ops: Mapping[str, builtins.object] | Callable[[object], object],
+            *ops: Mapping[str, builtins.object] | Callable[, object],
         ) -> builtins.object:
             """Alias for pipe_ldif (mnemonic: pp)."""
             return FlextLdifUtilities.Ldif.pipe_ldif(value, *ops)
@@ -949,7 +949,7 @@ class FlextLdifUtilities(FlextUtilities):
             cls,
             items: Sequence[builtins.object],
             *,
-            key: Callable[[object], object],
+            key: Callable[, object],
         ) -> Mapping[object, list[builtins.object]]:
             """Group by key function (generalized, mnemonic: gb)."""
             items_list = list(items)
@@ -968,7 +968,7 @@ class FlextLdifUtilities(FlextUtilities):
             cls,
             items: Sequence[builtins.object],
             *,
-            predicate: Callable[[object], bool],
+            predicate: Callable[, bool],
         ) -> tuple[list[builtins.object], list[builtins.object]]:
             """Partition items by predicate into (matches, non-matches) (mnemonic: pt)."""
             matches: list[builtins.object] = []
@@ -1029,7 +1029,7 @@ class FlextLdifUtilities(FlextUtilities):
             cls,
             items: Sequence[builtins.object],
             *,
-            key: str | int | Callable[[object], object],
+            key: str | int | Callable[, object],
         ) -> list[builtins.object]:
             """Extract values from sequence by key/index/function (mnemonic: pk)."""
             result: list[builtins.object] = []
@@ -1186,7 +1186,7 @@ class FlextLdifUtilities(FlextUtilities):
             value: builtins.object | r[builtins.object],
             *,
             target_type: str,
-            predicate: Callable[[object], bool] | None = None,
+            predicate: Callable[, bool] | None = None,
             default: builtins.object = None,
         ) -> builtins.object:
             """Smart convert using FlextUtilities.build() DSL (mnemonic: sc)."""
@@ -1323,7 +1323,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         @classmethod
         def thru(
-            cls, value: builtins.object, *, fn: Callable[[object], object]
+            cls, value: builtins.object, *, fn: Callable[, object]
         ) -> builtins.object:
             """Thru using direct call (mnemonic: th)."""
             return fn(value)
@@ -1331,7 +1331,7 @@ class FlextLdifUtilities(FlextUtilities):
         th = thru
 
         @classmethod
-        def comp(cls, *fns: Callable[[object], object]) -> Callable[[object], object]:
+        def comp(cls, *fns: Callable[, object]) -> Callable[, object]:
             """Compose using FlextUtilities.chain() (mnemonic: cp)."""
             if not fns:
                 return lambda x: x
@@ -1341,8 +1341,8 @@ class FlextLdifUtilities(FlextUtilities):
 
         @classmethod
         def juxt(
-            cls, *fns: Callable[[object], object]
-        ) -> Callable[[object], tuple[builtins.object, ...]]:
+            cls, *fns: Callable[, object]
+        ) -> Callable[, tuple[builtins.object, ...]]:
             """Juxtapose functions (mnemonic: jx)."""
             if not fns:
                 return lambda _x: ()
@@ -1386,7 +1386,7 @@ class FlextLdifUtilities(FlextUtilities):
             cls,
             pairs: tuple[
                 tuple[
-                    Callable[[], bool] | Callable[[object], bool] | bool,
+                    Callable[[], bool] | Callable[, bool] | bool,
                     object,
                 ],
                 ...,
@@ -1415,7 +1415,7 @@ class FlextLdifUtilities(FlextUtilities):
         def _evaluate_value_arg_predicate(
             cls,
             *,
-            pred: Callable[[], bool] | Callable[[object], bool] | bool,
+            pred: Callable[[], bool] | Callable[, bool] | bool,
             value: builtins.object,
         ) -> bool:
             """Evaluate a value-arg predicate."""
@@ -1439,11 +1439,11 @@ class FlextLdifUtilities(FlextUtilities):
         def cond(
             cls,
             *pairs: tuple[
-                Callable[[], bool] | Callable[[object], bool] | bool,
+                Callable[[], bool] | Callable[, bool] | bool,
                 object,
             ],
             default: builtins.object | None = None,
-        ) -> Callable[[], object] | Callable[[object], object]:
+        ) -> Callable[[], object] | Callable[, object]:
             """Cond pattern (mnemonic: cd)."""
             is_no_arg = cls._detect_predicate_type(pairs)
             if is_no_arg:
@@ -1682,7 +1682,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         @classmethod
         def let(
-            cls, value: builtins.object, *, fn: Callable[[object], object]
+            cls, value: builtins.object, *, fn: Callable[, object]
         ) -> builtins.object:
             """Let using chain() (mnemonic: lt)."""
             return FlextLdifUtilities.Ldif.chain(value, fn)
@@ -1692,7 +1692,7 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def apply(
             cls,
-            fn: FlextLdifUtilities.Ldif.VariadicCallable[object] | object,
+            fn: FlextLdifUtilities.Ldif.VariadicCallable | object,
             *args: builtins.object,
             **kwargs: t.Scalar,
         ) -> builtins.object:
@@ -1705,7 +1705,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         @classmethod
         def bind(
-            cls, value: builtins.object, *fns: Callable[[object], object]
+            cls, value: builtins.object, *fns: Callable[, object]
         ) -> builtins.object:
             """Bind using chain() (mnemonic: bd)."""
             return FlextLdifUtilities.Ldif.chain(value, *fns)
@@ -1714,8 +1714,8 @@ class FlextLdifUtilities(FlextUtilities):
 
         @classmethod
         def lift(
-            cls, fn: Callable[[object], object]
-        ) -> Callable[[object], builtins.object | None]:
+            cls, fn: Callable[, object]
+        ) -> Callable[, builtins.object | None]:
             """Lift function for optionals (mnemonic: lf)."""
 
             def lifted_fn(v: builtins.object) -> builtins.object | None:
@@ -1847,7 +1847,7 @@ class FlextLdifUtilities(FlextUtilities):
         wh = where
 
         @classmethod
-        def prop(cls, key: str) -> Callable[[object], object]:
+        def prop(cls, key: str) -> Callable[, object]:
             """Property accessor using FlextUtilities.get() (mnemonic: pp)."""
 
             def getter(obj: builtins.object) -> builtins.object:
@@ -1868,7 +1868,7 @@ class FlextLdifUtilities(FlextUtilities):
         prop_get = prop
 
         @classmethod
-        def props(cls, *keys: str) -> Callable[[object], Mapping[str, builtins.object]]:
+        def props(cls, *keys: str) -> Callable[, Mapping[str, builtins.object]]:
             """Props accessor using FlextUtilities.pick() directly (mnemonic: ps)."""
 
             def accessor(obj: builtins.object) -> Mapping[str, builtins.object]:
@@ -1897,12 +1897,12 @@ class FlextLdifUtilities(FlextUtilities):
         ps = props
 
         @classmethod
-        def path(cls, *keys: str) -> Callable[[object], object]:
+        def path(cls, *keys: str) -> Callable[, object]:
             """Path accessor using FlextUtilities.chain() DSL (mnemonic: ph)."""
 
             def make_getter(
                 key: str,
-            ) -> Callable[[object], object]:
+            ) -> Callable[, object]:
 
                 def getter_fn(obj: builtins.object) -> builtins.object:
                     """Get value from object by key."""
@@ -1921,7 +1921,7 @@ class FlextLdifUtilities(FlextUtilities):
 
                 return getter_fn
 
-            getters: list[Callable[[object], object]] = [make_getter(k) for k in keys]
+            getters: list[Callable[, object]] = [make_getter(k) for k in keys]
             return lambda obj: cls.chain(obj, *getters)
 
         ph = path
@@ -1997,7 +1997,7 @@ class FlextLdifUtilities(FlextUtilities):
             value: builtins.object | None,
             *,
             default: builtins.object | None = None,
-            mapper: Callable[[object], object] | None = None,
+            mapper: Callable[, object] | None = None,
         ) -> builtins.object | None:
             """Maybe monad pattern (mnemonic: mb)."""
             if value is None:
@@ -2010,7 +2010,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def chain(
-            value: builtins.object, *funcs: Callable[[object], object]
+            value: builtins.object, *funcs: Callable[, object]
         ) -> builtins.object:
             """Chain function calls (DSL helper, mnemonic: ch)."""
             result = value
@@ -2108,7 +2108,7 @@ class FlextLdifUtilities(FlextUtilities):
             *,
             initial: builtins.object,
             folder: Callable[[object, object], object] | None = None,
-            predicate: Callable[[object], bool] | None = None,
+            predicate: Callable[, bool] | None = None,
         ) -> builtins.object:
             """Fold items using folder function (mnemonic: fd)."""
             if not folder:
@@ -2133,8 +2133,8 @@ class FlextLdifUtilities(FlextUtilities):
         def map_filter(
             items: Sequence[builtins.object] | object,
             *,
-            mapper: Callable[[object], object] | None = None,
-            predicate: Callable[[object], bool] | None = None,
+            mapper: Callable[, object] | None = None,
+            predicate: Callable[, bool] | None = None,
         ) -> list[builtins.object]:
             """Map then filter items (mnemonic: mf)."""
             items_list: list[builtins.object]
@@ -2158,10 +2158,10 @@ class FlextLdifUtilities(FlextUtilities):
             | list[builtins.object]
             | tuple[builtins.object, ...]
             | set[builtins.object]
-            | frozenset[object]
+            | frozenset
             | object,
             *,
-            processor: Callable[[object], object] | None = None,
+            processor: Callable[, object] | None = None,
             on_error: str = "skip",
         ) -> list[builtins.object]:
             """Process and flatten items (mnemonic: pf)."""

@@ -408,30 +408,30 @@ class FlextLdifTestConftest:
         """Integration services."""
         return FlextLdifTestFactory.services_for_integration_test()
 
-    def assert_result_success(self) -> Callable[[r[object]], None]:
+    def assert_result_success(self) -> Callable[[r], None]:
         """Result success assertion."""
         return self._assert_result_success
 
-    def assert_result_failure(self) -> Callable[[r[object]], None]:
+    def assert_result_failure(self) -> Callable[[r], None]:
         """Result failure assertion."""
         return self._assert_result_failure
 
     @staticmethod
-    def _assert_result_success(result: r[object]) -> None:
+    def _assert_result_success(result: r) -> None:
         """Assert success."""
         assert result.is_success, f"Expected success: {result.error}"
 
     @staticmethod
-    def _assert_result_failure(result: r[object]) -> None:
+    def _assert_result_failure(result: r) -> None:
         """Assert failure."""
         assert result.is_failure, f"Expected failure: {result.value}"
 
     def validate_flext_result_success(
         self,
-    ) -> Callable[[r[object]], dict[str, bool]]:
+    ) -> Callable[[r], dict[str, bool]]:
         """Validate success result."""
 
-        def validator(result: r[object]) -> dict[str, bool]:
+        def validator(result: r) -> dict[str, bool]:
             return {
                 "is_success": result.is_success,
                 "has_value": result.is_success and result.value is not None,
@@ -444,10 +444,10 @@ class FlextLdifTestConftest:
 
     def validate_flext_result_failure(
         self,
-    ) -> Callable[[r[object]], dict[str, bool]]:
+    ) -> Callable[[r], dict[str, bool]]:
         """Validate failure result."""
 
-        def validator(result: r[object]) -> dict[str, bool]:
+        def validator(result: r) -> dict[str, bool]:
             return {
                 "is_failure": result.is_failure,
                 "has_error": result.error is not None,
@@ -460,10 +460,10 @@ class FlextLdifTestConftest:
 
     def flext_result_composition_helper(
         self,
-    ) -> Callable[[list[r[object]]], dict[str, object]]:
+    ) -> Callable[[list[r]], dict[str, object]]:
         """Result composition helper."""
 
-        def helper(results: list[r[object]]) -> dict[str, object]:
+        def helper(results: list[r]) -> dict[str, object]:
             successes = [r for r in results if r.is_success]
             failures = [r for r in results if r.is_failure]
             return {
@@ -562,12 +562,12 @@ class FlextLdifTestConftest:
         """Local test matchers."""
 
         @staticmethod
-        def assert_result_success(result: r[object]) -> None:
+        def assert_result_success(result: r) -> None:
             """Assert success."""
             assert result.is_success, f"Expected success: {result.error}"
 
         @staticmethod
-        def assert_result_failure(result: r[object]) -> None:
+        def assert_result_failure(result: r) -> None:
             """Assert failure."""
             assert result.is_failure, f"Expected failure: {result.value}"
 

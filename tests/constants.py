@@ -733,10 +733,10 @@ class RfcTestHelpers:
 
     @staticmethod
     def test_result_success_and_unwrap(
-        result: r[object],
+        result: r,
         expected_type: type | None = None,
         expected_count: int | None = None,
-    ) -> object:
+    ):
         """Assert result is successful and unwrap its value.
 
         Args:

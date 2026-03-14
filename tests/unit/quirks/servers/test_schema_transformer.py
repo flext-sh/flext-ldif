@@ -146,7 +146,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
             syntax="'1.3.6.1.4.1.1466.115.121.1.1'",
         )
 
-        def transform_name(n: object) -> object:
+        def transform_name(n):
             n_str: str | None = (
                 str(n) if isinstance(n, str) else n if n is None else str(n)
             )
@@ -154,7 +154,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
                 n_str, suffixes_to_remove=[";binary"], char_replacements={"_": "-"}
             )
 
-        def transform_equality(eq: object) -> object:
+        def transform_equality(eq):
             eq_str: str | None = (
                 str(eq) if isinstance(eq, str) else eq if eq is None else str(eq)
             )
@@ -166,7 +166,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
                 },
             )[0]
 
-        def transform_substr(sub: object) -> object:
+        def transform_substr(sub):
             sub_str: str | None = (
                 str(sub) if isinstance(sub, str) else sub if sub is None else str(sub)
             )
@@ -178,7 +178,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
                 },
             )[1]
 
-        def transform_syntax(syn: object) -> object:
+        def transform_syntax(syn):
             syn_str: str | None = (
                 str(syn) if isinstance(syn, str) else syn if syn is None else str(syn)
             )
@@ -191,7 +191,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
 
         field_transforms: dict[
             str,
-            Callable[[object], object | r[object]] | str | list[str] | None,
+            Callable[, object | r] | str | list[str] | None,
         ] = {
             "name": transform_name,
             "equality": transform_equality,
@@ -215,7 +215,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
             oid="2.5.4.3", name="cn;binary", equality="caseIgnoreMatch"
         )
 
-        def transform_name(n: object) -> object:
+        def transform_name(n):
             n_str: str | None = (
                 str(n) if isinstance(n, str) else n if n is None else str(n)
             )
@@ -225,7 +225,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
 
         field_transforms: dict[
             str,
-            Callable[[object], object | r[object]] | str | list[str] | None,
+            Callable[, object | r] | str | list[str] | None,
         ] = {"name": transform_name}
         result = FlextLdifUtilities.Ldif.Schema.apply_transformations(
             attr, field_transforms=field_transforms
