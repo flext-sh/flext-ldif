@@ -3,12 +3,7 @@
     {
       "dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
       "attributes": {
-        "objectClass": [
-          "person",
-          "orclPerson",
-          "organizationalPerson",
-          "inetOrgPerson"
-        ],
+        "objectClass": ["person", "orclPerson", "organizationalPerson", "inetOrgPerson"],
         "cn": ["REDACTED_LDAP_BIND_PASSWORD"],
         "sn": ["Administrator"],
         "givenName": ["System"],

@@ -139,6 +139,7 @@ src/flext_ldif/
 
 ```python
 from flext_ldif import FlextLdif
+
 ldif = FlextLdif()
 processor = ldif.processors  # Unnecessary wrapper
 result = processor.batch_process(entries, func)
@@ -148,6 +149,7 @@ result = processor.batch_process(entries, func)
 
 ```python
 from flext_core import FlextProcessors
+
 processor = FlextProcessors()  # Direct usage
 result = processor.batch_process(entries, func)
 ```
@@ -181,6 +183,7 @@ attrs = ldif.get_entry_attributes(entry)  # Wrapper
 
 ```python
 from flext_ldif import FlextLdifModels
+
 dn = entry.dn.value  # Direct
 attrs = entry.attributes.to_ldap3()  # Direct
 ```
@@ -217,10 +220,11 @@ attrs = entry.attributes.to_ldap3()  # Direct
 ```python
 from flext_core import FlextDecorators
 
+
 class RfcLdifParser:
     @FlextDecorators.log_operation(level="info")
     @FlextDecorators.track_performance()
-    def parse(self, file_path: Path) -> FlextResult[list[Entry]]:
+    def parse(self, file_path: Path) -> r[list[Entry]]:
         """Parse LDIF with automatic logging and metrics."""
         # Implementation
 ```
@@ -255,12 +259,13 @@ class FlextLdifDetector:
 **After**:
 
 ```python
-from flext_core import FlextService, FlextResult
+from flext_core import FlextService, r
+
 
 class FlextLdifDetector(Flext):
     """Server detection service with automatic logging."""
 
-    def execute(self, content: str) -> FlextResult[dict]:
+    def execute(self, content: str) -> r[dict]:
         self.logger.info("Detecting server type", extra={"size": len(content)})
         # self.logger available automatically from FlextService
 ```
@@ -279,12 +284,16 @@ class FlextLdifDetector(Flext):
 **Before** (170 lines with nested if/else):
 
 ```python
-def parse(self, source, server_type="rfc", *, batch=False, paginate=False, page_size=1000):
+def parse(
+    self, source, server_type="rfc", *, batch=False, paginate=False, page_size=1000
+):
     if batch:
-        if not isinstance(source, list): ...
+        if not isinstance(source, list):
+            ...
         # 50 lines
     if paginate:
-        if isinstance(source, list): ...
+        if isinstance(source, list):
+            ...
         # 35 lines
     # 40 lines single source
 ```
@@ -294,6 +303,7 @@ def parse(self, source, server_type="rfc", *, batch=False, paginate=False, page_
 ```python
 from typing import Literal
 
+
 def parse(
     self,
     source: str | Path | list[str | Path],
@@ -301,13 +311,17 @@ def parse(
     mode: Literal["single", "batch", "paginate"] = "single",
     server_type: str = "rfc",
     page_size: int = 1000,
-) -> FlextResult[list[Entry] | Callable]:
+) -> r[list[Entry] | Callable]:
     """Parse LDIF with pattern matching mode dispatch."""
     match mode:
-        case "batch": return self._client.parse_batch(source, server_type)
-        case "paginate": return self._client.parse_paginated(source, server_type, page_size)
-        case "single": return self._client.parse_ldif(source, server_type)
-        case _: return FlextResult.fail(f"Invalid mode: {mode}")
+        case "batch":
+            return self._client.parse_batch(source, server_type)
+        case "paginate":
+            return self._client.parse_paginated(source, server_type, page_size)
+        case "single":
+            return self._client.parse_ldif(source, server_type)
+        case _:
+            return r.fail(f"Invalid mode: {mode}")
 ```
 
 **Benefits**:

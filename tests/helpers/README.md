@@ -100,6 +100,7 @@ def test_parse_attribute(self, schema_quirk):
     assert attr.oid == "1.2.3.4"
     assert attr.name == "testAttr"
 
+
 def test_parse_another_attribute(self, schema_quirk):
     """Test parse another attribute."""
     result = schema_quirk.parse_attribute("( 1.2.3.5 NAME 'anotherAttr' )")
@@ -114,14 +115,16 @@ def test_parse_another_attribute(self, schema_quirk):
 ```python
 from tests.helpers import TestOperations
 
+
 def test_parse_attribute(self, schema_quirk):
     """Test parse attribute."""
     attr = TestOperations.parse_attribute_and_validate(
         schema_quirk,
         "( 1.2.3.4 NAME 'testAttr' )",
         expected_oid="1.2.3.4",
-        expected_name="testAttr"
+        expected_name="testAttr",
     )
+
 
 def test_parse_another_attribute(self, schema_quirk):
     """Test parse another attribute."""
@@ -129,7 +132,7 @@ def test_parse_another_attribute(self, schema_quirk):
         schema_quirk,
         "( 1.2.3.5 NAME 'anotherAttr' )",
         expected_oid="1.2.3.5",
-        expected_name="anotherAttr"
+        expected_name="anotherAttr",
     )
 ```
 
@@ -147,10 +150,14 @@ def test_parse_another_attribute(self, schema_quirk):
 import pytest
 from tests.helpers import TestOperations
 
-@pytest.mark.parametrize("attr_def,expected_oid,expected_name", [
-    ("( 1.2.3.4 NAME 'testAttr' )", "1.2.3.4", "testAttr"),
-    ("( 1.2.3.5 NAME 'anotherAttr' )", "1.2.3.5", "anotherAttr"),
-])
+
+@pytest.mark.parametrize(
+    "attr_def,expected_oid,expected_name",
+    [
+        ("( 1.2.3.4 NAME 'testAttr' )", "1.2.3.4", "testAttr"),
+        ("( 1.2.3.5 NAME 'anotherAttr' )", "1.2.3.5", "anotherAttr"),
+    ],
+)
 def test_parse_multiple_attributes(schema_quirk, attr_def, expected_oid, expected_name):
     """Test parse multiple attributes."""
     TestOperations.parse_attribute_and_validate(
@@ -162,6 +169,7 @@ def test_parse_multiple_attributes(schema_quirk, attr_def, expected_oid, expecte
 
 ```python
 from tests.helpers import TestOperations, TestAssertions
+
 
 def test_roundtrip_with_fixture(ldif_api, tmp_path):
     """Test roundtrip using fixture."""

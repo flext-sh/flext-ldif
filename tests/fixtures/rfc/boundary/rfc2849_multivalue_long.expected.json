@@ -3,12 +3,7 @@
     {
       "dn": "cn=John Michael Smith,ou=Engineering,ou=People,dc=company,dc=example,dc=com",
       "attributes": {
-        "objectClass": [
-          "inetOrgPerson",
-          "organizationalPerson",
-          "person",
-          "top"
-        ],
+        "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
         "cn": ["John Michael Smith", "J.M. Smith", "John Smith"],
         "sn": ["Smith"],
         "givenName": ["John"],
@@ -37,11 +32,6 @@
   "valid": true,
   "metadata": {
     "type": "boundary_case",
-    "test_aspects": [
-      "multi_valued_attributes",
-      "line_folding",
-      "complex_dn",
-      "special_attributes"
-    ]
+    "test_aspects": ["multi_valued_attributes", "line_folding", "complex_dn", "special_attributes"]
   }
 }

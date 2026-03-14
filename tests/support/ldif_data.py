@@ -9,17 +9,22 @@ from __future__ import annotations
 
 import base64
 from pathlib import Path
-from typing import NamedTuple
+
+from pydantic import BaseModel, Field
 
 
-class LdifSample(NamedTuple):
+class LdifSample(BaseModel):
     """LDIF sample with metadata."""
 
-    content: str
-    description: str
-    expected_entries: int
-    has_binary: bool = False
-    has_changes: bool = False
+    content: str = Field(description="LDIF content as string")
+    description: str = Field(description="Human-readable description of the sample")
+    expected_entries: int = Field(description="Expected number of entries in the LDIF")
+    has_binary: bool = Field(
+        default=False, description="Whether the sample contains binary data"
+    )
+    has_changes: bool = Field(
+        default=False, description="Whether the sample contains change records"
+    )
 
 
 class LdifTestData:
@@ -28,40 +33,7 @@ class LdifTestData:
     @staticmethod
     def basic_entries() -> LdifSample:
         """Basic LDIF entries following RFC 2849."""
-        content = """dn: uid=john.doe,ou=people,dc=example,dc=com
-objectClass: inetOrgPerson
-objectClass: organizationalPerson
-objectClass: person
-objectClass: top
-uid: john.doe
-cn: John Doe
-sn: Doe
-givenName: John
-mail: john.doe@example.com
-telephoneNumber: +1-555-123-4567
-employeeNumber: E12345
-
-dn: uid=jane.smith,ou=people,dc=example,dc=com
-objectClass: inetOrgPerson
-objectClass: organizationalPerson
-objectClass: person
-objectClass: top
-uid: jane.smith
-cn: Jane Smith
-sn: Smith
-givenName: Jane
-mail: jane.smith@example.com
-telephoneNumber: +1-555-234-5678
-employeeNumber: E23456
-
-dn: cn=Engineering,ou=groups,dc=example,dc=com
-objectClass: groupOfNames
-objectClass: top
-cn: Engineering
-description: Engineering Department Group
-member: uid=john.doe,ou=people,dc=example,dc=com
-"""
-
+        content = "dn: uid=john.doe,ou=people,dc=example,dc=com\nobjectClass: inetOrgPerson\nobjectClass: organizationalPerson\nobjectClass: person\nobjectClass: top\nuid: john.doe\ncn: John Doe\nsn: Doe\ngivenName: John\nmail: john.doe@example.com\ntelephoneNumber: +1-555-123-4567\nemployeeNumber: E12345\n\ndn: uid=jane.smith,ou=people,dc=example,dc=com\nobjectClass: inetOrgPerson\nobjectClass: organizationalPerson\nobjectClass: person\nobjectClass: top\nuid: jane.smith\ncn: Jane Smith\nsn: Smith\ngivenName: Jane\nmail: jane.smith@example.com\ntelephoneNumber: +1-555-234-5678\nemployeeNumber: E23456\n\ndn: cn=Engineering,ou=groups,dc=example,dc=com\nobjectClass: groupOfNames\nobjectClass: top\ncn: Engineering\ndescription: Engineering Department Group\nmember: uid=john.doe,ou=people,dc=example,dc=com\n"
         return LdifSample(
             content=content,
             description="Basic LDIF entries with people and groups",
@@ -71,25 +43,11 @@ member: uid=john.doe,ou=people,dc=example,dc=com
     @staticmethod
     def with_binary_data() -> LdifSample:
         """LDIF with binary data (base64 encoded)."""
-        # Create a small PNG-like binary data
         binary_data = (
             b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
         )
         encoded_data = base64.b64encode(binary_data).decode("ascii")
-
-        content = f"""dn: uid=photo.user,ou=people,dc=example,dc=com
-objectClass: inetOrgPerson
-objectClass: organizationalPerson
-objectClass: person
-objectClass: top
-uid: photo.user
-cn: Photo User
-sn: User
-givenName: Photo
-mail: photo.user@example.com
-jpegPhoto:: {encoded_data}
-"""
-
+        content = f"dn: uid=photo.user,ou=people,dc=example,dc=com\nobjectClass: inetOrgPerson\nobjectClass: organizationalPerson\nobjectClass: person\nobjectClass: top\nuid: photo.user\ncn: Photo User\nsn: User\ngivenName: Photo\nmail: photo.user@example.com\njpegPhoto:: {encoded_data}\n"
         return LdifSample(
             content=content,
             description="LDIF with binary data (base64 encoded)",
@@ -100,31 +58,7 @@ jpegPhoto:: {encoded_data}
     @staticmethod
     def with_changes() -> LdifSample:
         """LDIF with change records."""
-        content = """dn: uid=john.doe,ou=people,dc=example,dc=com
-changetype: modify
-replace: mail
-mail: john.doe.updated@example.com
--
-add: description
-description: Software Engineer
--
-
-dn: uid=new.employee,ou=people,dc=example,dc=com
-changetype: add
-objectClass: inetOrgPerson
-objectClass: organizationalPerson
-objectClass: person
-objectClass: top
-uid: new.employee
-cn: New Employee
-sn: Employee
-givenName: New
-mail: new.employee@example.com
-
-dn: uid=old.employee,ou=people,dc=example,dc=com
-changetype: delete
-"""
-
+        content = "dn: uid=john.doe,ou=people,dc=example,dc=com\nchangetype: modify\nreplace: mail\nmail: john.doe.updated@example.com\n-\nadd: description\ndescription: Software Engineer\n-\n\ndn: uid=new.employee,ou=people,dc=example,dc=com\nchangetype: add\nobjectClass: inetOrgPerson\nobjectClass: organizationalPerson\nobjectClass: person\nobjectClass: top\nuid: new.employee\ncn: New Employee\nsn: Employee\ngivenName: New\nmail: new.employee@example.com\n\ndn: uid=old.employee,ou=people,dc=example,dc=com\nchangetype: delete\n"
         return LdifSample(
             content=content,
             description="LDIF with change records (modify, add, delete)",
@@ -135,23 +69,7 @@ changetype: delete
     @staticmethod
     def multi_valued_attributes() -> LdifSample:
         """LDIF with multi-valued attributes."""
-        content = """dn: uid=multi.user,ou=people,dc=example,dc=com
-objectClass: inetOrgPerson
-objectClass: organizationalPerson
-objectClass: person
-objectClass: top
-uid: multi.user
-cn: Multi User
-sn: User
-givenName: Multi
-mail: multi.user@example.com
-mail: multi.user.alt@example.com
-telephoneNumber: +1-555-111-1111
-telephoneNumber: +1-555-222-2222
-description: Primary description
-description: Secondary description
-"""
-
+        content = "dn: uid=multi.user,ou=people,dc=example,dc=com\nobjectClass: inetOrgPerson\nobjectClass: organizationalPerson\nobjectClass: person\nobjectClass: top\nuid: multi.user\ncn: Multi User\nsn: User\ngivenName: Multi\nmail: multi.user@example.com\nmail: multi.user.alt@example.com\ntelephoneNumber: +1-555-111-1111\ntelephoneNumber: +1-555-222-2222\ndescription: Primary description\ndescription: Secondary description\n"
         return LdifSample(
             content=content,
             description="LDIF with multi-valued attributes",
@@ -161,26 +79,8 @@ description: Secondary description
     @staticmethod
     def long_lines() -> LdifSample:
         """LDIF with line continuations."""
-        long_description = (
-            "This is a very long description that spans multiple lines and "
-            "needs to be wrapped according to LDIF specification which requires "
-            "lines longer than 76 characters to be continued on the next line "
-            "with a single space prefix"
-        )
-
-        content = f"""dn: uid=long.lines,ou=people,dc=example,dc=com
-objectClass: inetOrgPerson
-objectClass: organizationalPerson
-objectClass: person
-objectClass: top
-uid: long.lines
-cn: Long Lines User
-sn: User
-givenName: Long Lines
-mail: long.lines@example.com
-description: {long_description}
-"""
-
+        long_description = "This is a very long description that spans multiple lines and needs to be wrapped according to LDIF specification which requires lines longer than 76 characters to be continued on the next line with a single space prefix"
+        content = f"dn: uid=long.lines,ou=people,dc=example,dc=com\nobjectClass: inetOrgPerson\nobjectClass: organizationalPerson\nobjectClass: person\nobjectClass: top\nuid: long.lines\ncn: Long Lines User\nsn: User\ngivenName: Long Lines\nmail: long.lines@example.com\ndescription: {long_description}\n"
         return LdifSample(
             content=content,
             description="LDIF with long lines requiring continuation",
@@ -190,20 +90,7 @@ description: {long_description}
     @staticmethod
     def special_characters() -> LdifSample:
         """LDIF with special characters and UTF-8."""
-        content = """dn: uid=special.chars,ou=people,dc=example,dc=com
-objectClass: inetOrgPerson
-objectClass: organizationalPerson
-objectClass: person
-objectClass: top
-uid: special.chars
-cn: José María Ñuñez
-sn: Ñuñez
-givenName: José María
-mail: jose.maria@example.com
-description: User with special UTF-8 characters: áéíóú ÁÉÍÓÚ ñÑ ¿¡
-postalAddress: Calle de la Paz, 123$ Piso 2º$ Madrid, España
-"""
-
+        content = "dn: uid=special.chars,ou=people,dc=example,dc=com\nobjectClass: inetOrgPerson\nobjectClass: organizationalPerson\nobjectClass: person\nobjectClass: top\nuid: special.chars\ncn: José María Ñuñez\nsn: Ñuñez\ngivenName: José María\nmail: jose.maria@example.com\ndescription: User with special UTF-8 characters: áéíóú ÁÉÍÓÚ ñÑ ¿¡\npostalAddress: Calle de la Paz, 123$ Piso 2º$ Madrid, España\n"
         return LdifSample(
             content=content,
             description="LDIF with UTF-8 special characters",
@@ -213,20 +100,7 @@ postalAddress: Calle de la Paz, 123$ Piso 2º$ Madrid, España
     @staticmethod
     def empty_and_null_values() -> LdifSample:
         """LDIF with empty values and edge cases."""
-        content = """dn: uid=empty.values,ou=people,dc=example,dc=com
-objectClass: inetOrgPerson
-objectClass: organizationalPerson
-objectClass: person
-objectClass: top
-uid: empty.values
-cn: Empty Values User
-sn: User
-givenName: Empty Values
-mail: empty.values@example.com
-description:
-telephoneNumber:
-"""
-
+        content = "dn: uid=empty.values,ou=people,dc=example,dc=com\nobjectClass: inetOrgPerson\nobjectClass: organizationalPerson\nobjectClass: person\nobjectClass: top\nuid: empty.values\ncn: Empty Values User\nsn: User\ngivenName: Empty Values\nmail: empty.values@example.com\ndescription:\ntelephoneNumber:\n"
         return LdifSample(
             content=content,
             description="LDIF with empty attribute values",
@@ -236,24 +110,11 @@ telephoneNumber:
     @staticmethod
     def invalid_data() -> LdifSample:
         """Invalid LDIF data for error testing."""
-        content = """dn: invalid-dn-without-equals
-objectClass: nonExistentClass
-invalidAttribute: value
-missing required attributes for objectClass
-
-dn:
-objectClass: person
-empty DN above
-
-dn: uid=malformed,dc=example,dc=com
-objectClass: person
-missing required attributes like cn, sn
-"""
-
+        content = "dn: invalid-dn-without-equals\nobjectClass: nonExistentClass\ninvalidAttribute: value\nmissing required attributes for objectClass\n\ndn:\nobjectClass: person\nempty DN above\n\ndn: uid=malformed,dc=example,dc=com\nobjectClass: person\nmissing required attributes like cn, sn\n"
         return LdifSample(
             content=content,
             description="Invalid LDIF data for error testing",
-            expected_entries=0,  # Should fail parsing
+            expected_entries=0,
         )
 
     @staticmethod
@@ -261,22 +122,8 @@ missing required attributes like cn, sn
         """Generate large LDIF dataset for performance testing."""
         entries: list[str] = []
         for i in range(num_entries):
-            entry = f"""dn: uid=user{i:04d},ou=people,dc=example,dc=com
-objectClass: inetOrgPerson
-objectClass: organizationalPerson
-objectClass: person
-objectClass: top
-uid: user{i:04d}
-cn: User {i:04d}
-sn: User
-givenName: Test
-mail: user{i:04d}@example.com
-employeeNumber: E{i:06d}
-
-"""
-
+            entry = f"dn: uid=user{i:04d},ou=people,dc=example,dc=com\nobjectClass: inetOrgPerson\nobjectClass: organizationalPerson\nobjectClass: person\nobjectClass: top\nuid: user{i:04d}\ncn: User {i:04d}\nsn: User\ngivenName: Test\nmail: user{i:04d}@example.com\nemployeeNumber: E{i:06d}\n\n"
             entries.append(entry)
-
         content = "".join(entries).rstrip()
         return LdifSample(
             content=content,
@@ -303,10 +150,8 @@ employeeNumber: E{i:06d}
         """Write all samples to files in the given directory."""
         directory.mkdir(exist_ok=True)
         files: dict[str, Path] = {}
-
         for name, sample in cls.all_samples().items():
             file_path = directory / f"{name}.ldif"
-            file_path.write_text(sample.content, encoding="utf-8")
+            _ = file_path.write_text(sample.content, encoding="utf-8")
             files[name] = file_path
-
         return files

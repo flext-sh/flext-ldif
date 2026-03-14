@@ -9,8 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import flext_ldif.__version__ as version_module
 from tests import s
+
+import flext_ldif.__version__ as version_module
 
 
 class TestsFlextLdifVersion(s):
@@ -32,9 +33,7 @@ class TestsFlextLdifVersion(s):
         """Test __version_info__ correctly parses version string."""
         version_parts = version_module.__version__.split(".")
         version_info = version_module.__version_info__
-
         assert len(version_info) == len(version_parts)
-
         for part, info_part in zip(version_parts, version_info, strict=False):
             if part.isdigit():
                 assert isinstance(info_part, int)
@@ -87,45 +86,35 @@ class TestsFlextLdifVersion(s):
             "__version__",
             "__version_info__",
         ]
-
         assert hasattr(version_module, "__all__")
         assert isinstance(version_module.__all__, list)
-
         for export in expected_exports:
             assert export in version_module.__all__, f"{export} not in __all__"
             assert hasattr(version_module, export), f"{export} not accessible"
 
     def test_version_default_fallback(self) -> None:
         """Test version falls back to default when metadata missing."""
-        # Test that version has a fallback mechanism
-        # The actual implementation uses .get() with default, so we test that
         original_version = version_module.__version__
         assert original_version != ""
-        assert original_version != "0.0.0"  # Should have real version
+        assert original_version != "0.0.0"
 
     def test_version_info_with_prerelease(self) -> None:
         """Test __version_info__ handles prerelease versions correctly."""
-        # Test parsing logic with a version string that has prerelease
-        # The actual implementation splits on "." so "1.2.3-alpha.1" becomes ["1", "2", "3-alpha", "1"]
         version_str = "1.2.3-alpha.1"
         parts = version_str.split(".")
         version_info = tuple(int(part) if part.isdigit() else part for part in parts)
         assert version_info[0] == 1
         assert version_info[1] == 2
-        # "3-alpha" is not a digit, so it stays as string
         assert isinstance(version_info[2], str)
         assert "alpha" in version_info[2]
 
     def test_version_info_with_build(self) -> None:
         """Test __version_info__ handles build metadata correctly."""
-        # Test parsing logic with a version string that has build metadata
-        # The actual implementation splits on "." so "1.2.3+build.123" becomes ["1", "2", "3+build", "123"]
         version_str = "1.2.3+build.123"
         parts = version_str.split(".")
         version_info = tuple(int(part) if part.isdigit() else part for part in parts)
         assert version_info[0] == 1
         assert version_info[1] == 2
-        # "3+build" is not a digit, so it stays as string
         assert isinstance(version_info[2], str)
         assert "+build" in version_info[2]
         assert version_info[3] == 123

@@ -21,19 +21,22 @@ from collections.abc import Callable, Generator
 from pathlib import Path
 
 import pytest
-from flext_ldif import (
-    FlextLdif,
-    FlextLdifParser,
-    FlextLdifProtocols,
-    FlextLdifWriter,
-    p,
-)
-from flext_ldif.servers.base import FlextLdifServersBase
-from flext_ldif.services.conversion import FlextLdifConversion
-from flext_ldif.services.server import FlextLdifServer
 from flext_tests import FlextTestsDocker
 from ldap3 import ALL, Connection, Server
 
+from flext_ldif import (
+    FlextLdif,
+    FlextLdifConversion,
+    FlextLdifParser,
+    FlextLdifServer,
+    FlextLdifWriter,
+    m,
+)
+from flext_ldif.servers._base import (
+    FlextLdifServersBaseSchema,
+    FlextLdifServersBaseSchemaAcl,
+)
+from flext_ldif.servers.base import FlextLdifServersBase
 from tests.conftest import FlextLdifFixtures
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[3]
@@ -71,8 +74,7 @@ def _lock_file(worker_id: str) -> Generator[None]:
 
 
 def _wait_for_ldap_ready(
-    server_url: str,
-    max_wait: float = 10.0,
+    server_url: str, max_wait: float = 10.0
 ) -> tuple[str, str] | None:
     waited = 0.0
     interval = 1.0
@@ -81,10 +83,7 @@ def _wait_for_ldap_ready(
             server = Server(server_url, get_info=ALL)
             for bind_dn, password in _candidate_bind_credentials():
                 conn = Connection(
-                    server,
-                    user=bind_dn,
-                    password=password,
-                    auto_bind=False,
+                    server, user=bind_dn, password=password, auto_bind=False
                 )
                 if conn.bind():
                     conn.unbind()
@@ -93,11 +92,6 @@ def _wait_for_ldap_ready(
         time.sleep(interval)
         waited += interval
     return None
-
-
-# ============================================================================
-# API FIXTURES
-# ============================================================================
 
 
 @pytest.fixture
@@ -131,11 +125,6 @@ def writer() -> FlextLdifWriter:
 
     """
     return FlextLdifWriter()
-
-
-# ============================================================================
-# OID SERVER FIXTURES
-# ============================================================================
 
 
 @pytest.fixture
@@ -187,10 +176,7 @@ def oid_integration_fixture() -> str:
 
 
 @pytest.fixture
-def oid_schema_entries(
-    api: FlextLdif,
-    oid_schema_fixture: str,
-) -> list[p.Entry]:
+def oid_schema_entries(api: FlextLdif, oid_schema_fixture: str) -> list[m.Ldif.Entry]:
     """Parse OID schema fixture into Entry models.
 
     Args:
@@ -210,10 +196,7 @@ def oid_schema_entries(
 
 
 @pytest.fixture
-def oid_entries(
-    api: FlextLdif,
-    oid_entries_fixture: str,
-) -> list[p.Entry]:
+def oid_entries(api: FlextLdif, oid_entries_fixture: str) -> list[m.Ldif.Entry]:
     """Parse OID entries fixture into Entry models.
 
     Args:
@@ -230,11 +213,6 @@ def oid_entries(
     result = api.parse(oid_entries_fixture)
     assert result.is_success, f"OID entries parsing failed: {result.error}"
     return result.value
-
-
-# ============================================================================
-# OUD SERVER FIXTURES
-# ============================================================================
 
 
 @pytest.fixture
@@ -286,10 +264,7 @@ def oud_integration_fixture() -> str:
 
 
 @pytest.fixture
-def oud_schema_entries(
-    api: FlextLdif,
-    oud_schema_fixture: str,
-) -> list[p.Entry]:
+def oud_schema_entries(api: FlextLdif, oud_schema_fixture: str) -> list[m.Ldif.Entry]:
     """Parse OUD schema fixture into Entry models.
 
     Args:
@@ -309,10 +284,7 @@ def oud_schema_entries(
 
 
 @pytest.fixture
-def oud_entries(
-    api: FlextLdif,
-    oud_entries_fixture: str,
-) -> list[p.Entry]:
+def oud_entries(api: FlextLdif, oud_entries_fixture: str) -> list[m.Ldif.Entry]:
     """Parse OUD entries fixture into Entry models.
 
     Args:
@@ -329,11 +301,6 @@ def oud_entries(
     result = api.parse(oud_entries_fixture)
     assert result.is_success, f"OUD entries parsing failed: {result.error}"
     return result.value
-
-
-# ============================================================================
-# OPENLDAP SERVER FIXTURES
-# ============================================================================
 
 
 @pytest.fixture
@@ -386,9 +353,8 @@ def openldap_integration_fixture() -> str:
 
 @pytest.fixture
 def openldap_schema_entries(
-    api: FlextLdif,
-    openldap_schema_fixture: str,
-) -> list[p.Entry]:
+    api: FlextLdif, openldap_schema_fixture: str
+) -> list[m.Ldif.Entry]:
     """Parse OpenLDAP schema fixture into Entry models.
 
     Args:
@@ -409,9 +375,8 @@ def openldap_schema_entries(
 
 @pytest.fixture
 def openldap_entries(
-    api: FlextLdif,
-    openldap_entries_fixture: str,
-) -> list[p.Entry]:
+    api: FlextLdif, openldap_entries_fixture: str
+) -> list[m.Ldif.Entry]:
     """Parse OpenLDAP entries fixture into Entry models.
 
     Args:
@@ -430,11 +395,6 @@ def openldap_entries(
     return result.value
 
 
-# ============================================================================
-# RFC REFERENCE FIXTURES
-# ============================================================================
-
-
 @pytest.fixture
 def rfc_schema_fixture() -> str:
     """Load RFC reference schema fixture data.
@@ -448,10 +408,7 @@ def rfc_schema_fixture() -> str:
 
 
 @pytest.fixture
-def rfc_schema_entries(
-    api: FlextLdif,
-    rfc_schema_fixture: str,
-) -> list[p.Entry]:
+def rfc_schema_entries(api: FlextLdif, rfc_schema_fixture: str) -> list[m.Ldif.Entry]:
     """Parse RFC schema fixture into Entry models.
 
     Args:
@@ -468,11 +425,6 @@ def rfc_schema_entries(
     result = api.parse(rfc_schema_fixture)
     assert result.is_success, f"RFC schema parsing failed: {result.error}"
     return result.value
-
-
-# ============================================================================
-# PARAMETRIZED FIXTURE PROVIDERS
-# ============================================================================
 
 
 @pytest.fixture
@@ -536,11 +488,6 @@ def all_integration_fixtures() -> dict[str, str]:
     }
 
 
-# ============================================================================
-# TEMPORARY FIXTURES
-# ============================================================================
-
-
 @pytest.fixture
 def tmp_ldif_path(tmp_path: Path) -> Path:
     """Create temporary LDIF file path.
@@ -564,16 +511,6 @@ def fixtures_dir() -> Path:
 
     """
     return Path(__file__).parent.parent / "fixtures"
-
-
-# ============================================================================
-# CLEANUP FIXTURES
-# ============================================================================
-
-
-# ============================================================================
-# CONVERSION TEST FIXTURES
-# ============================================================================
 
 
 @pytest.fixture
@@ -609,40 +546,27 @@ def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
 
 
 @pytest.fixture
-def oid_schema_quirk(
-    oid_quirk: FlextLdifServersBase,
-) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+def oid_schema_quirk(oid_quirk: FlextLdifServersBase) -> FlextLdifServersBaseSchema:
     """Create OID schema quirk instance for conversion tests."""
     return oid_quirk.schema_quirk
 
 
 @pytest.fixture
-def oud_schema_quirk(
-    oud_quirk: FlextLdifServersBase,
-) -> FlextLdifProtocols.Quirks.SchemaProtocol:
+def oud_schema_quirk(oud_quirk: FlextLdifServersBase) -> FlextLdifServersBaseSchema:
     """Create OUD schema quirk instance for conversion tests."""
     return oud_quirk.schema_quirk
 
 
 @pytest.fixture
-def oid_acl_quirk(
-    oid_quirk: FlextLdifServersBase,
-) -> FlextLdifProtocols.Quirks.AclProtocol:
+def oid_acl_quirk(oid_quirk: FlextLdifServersBase) -> FlextLdifServersBaseSchemaAcl:
     """Create OID ACL quirk instance for conversion tests."""
     return oid_quirk.acl_quirk
 
 
 @pytest.fixture
-def oud_acl_quirk(
-    oud_quirk: FlextLdifServersBase,
-) -> FlextLdifProtocols.Quirks.AclProtocol:
+def oud_acl_quirk(oud_quirk: FlextLdifServersBase) -> FlextLdifServersBaseSchemaAcl:
     """Create OUD ACL quirk instance for conversion tests."""
     return oud_quirk.acl_quirk
-
-
-# ============================================================================
-# LDAP CONTAINER FIXTURES
-# ============================================================================
 
 
 @pytest.fixture(scope="session")
@@ -652,29 +576,23 @@ def ldap_container(worker_id: str) -> dict[str, object]:
         workspace_root=WORKSPACE_ROOT, worker_id=worker_id
     )
     server_url = f"ldap://localhost:{LDAP_PORT}"
-
     with _lock_file(worker_id):
         start_result = docker_control.start_existing_container(LDAP_CONTAINER_NAME)
         if start_result.is_failure:
             compose_result = docker_control.compose_up(
-                str(LDAP_COMPOSE_FILE),
-                LDAP_SERVICE_NAME,
+                str(LDAP_COMPOSE_FILE), LDAP_SERVICE_NAME
             )
             if compose_result.is_failure:
                 pytest.skip(
                     f"Could not start shared OpenLDAP container: {compose_result.error}"
                 )
-
         port_result = docker_control.wait_for_port_ready("localhost", LDAP_PORT, 15)
         if port_result.is_failure or not port_result.value:
             pytest.skip(f"LDAP container port {LDAP_PORT} is not ready")
-
         bind_credentials = _wait_for_ldap_ready(server_url)
         if bind_credentials is None:
             pytest.skip("LDAP container is running but bind is not ready")
-
     bind_dn, bind_password = bind_credentials
-
     return {
         "server_url": server_url,
         "host": "localhost",
@@ -731,30 +649,22 @@ def ldap_connection(ldap_container: dict[str, object]) -> Generator[Connection]:
     server_url = str(ldap_container.get("server_url", f"ldap://localhost:{LDAP_PORT}"))
     bind_dn = str(ldap_container.get("bind_dn", LDAP_ADMIN_DN))
     password = str(ldap_container.get("password", LDAP_ADMIN_PASSWORD))
-
     server = Server(server_url, get_info=ALL)
-    conn = Connection(
-        server,
-        user=bind_dn,
-        password=password,
-        auto_bind=False,
-    )
+    conn = Connection(server, user=bind_dn, password=password, auto_bind=False)
     try:
         if not conn.bind():
             pytest.skip(
-                f"LDAP server not available at {server_url} for bind_dn={bind_dn}",
+                f"LDAP server not available at {server_url} for bind_dn={bind_dn}"
             )
     except Exception as exc:
         pytest.skip(f"LDAP server not available: {exc}")
-
     yield conn
     conn.unbind()
 
 
 @pytest.fixture
 def clean_test_ou(
-    ldap_connection: Connection,
-    make_test_base_dn: Callable[[str], str],
+    ldap_connection: Connection, make_test_base_dn: Callable[[str], str]
 ) -> Generator[str]:
     """Create and clean up an isolated OU for integration tests."""
     test_ou_dn = make_test_base_dn("FlextLdifTests")
@@ -765,14 +675,11 @@ def clean_test_ou(
             for dn in reversed(dns_to_delete):
                 with contextlib.suppress(Exception):
                     ldap_connection.delete(dn)
-
     with contextlib.suppress(Exception):
         ldap_connection.add(
             test_ou_dn, ["organizationalUnit"], {"ou": "FlextLdifTests"}
         )
-
     yield test_ou_dn
-
     with contextlib.suppress(Exception):
         ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
         if ldap_connection.entries:

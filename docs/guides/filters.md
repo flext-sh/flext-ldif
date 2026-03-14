@@ -38,9 +38,7 @@
 ```python
 # Filter entries by DN pattern
 result = FlextLdifFilters.by_dn(
-    entries=my_entries,
-    pattern="*,ou=users,dc=example,dc=com",
-    mode="include"
+    entries=my_entries, pattern="*,ou=users,dc=example,dc=com", mode="include"
 )
 filtered = result.unwrap()
 
@@ -48,7 +46,7 @@ filtered = result.unwrap()
 result = FlextLdifFilters.by_objectclass(
     entries=my_entries,
     objectclass=("person", "inetOrgPerson"),
-    required_attributes=["cn", "mail"]
+    required_attributes=["cn", "mail"],
 )
 
 # Filter by attribute presence
@@ -56,7 +54,7 @@ result = FlextLdifFilters.by_attributes(
     entries=my_entries,
     attributes=["mail"],
     match_all=False,  # Has ANY attribute
-    mode="include"
+    mode="include",
 )
 ```
 
@@ -64,13 +62,14 @@ result = FlextLdifFilters.by_attributes(
 
 ```python
 result = (
-    FlextLdifFilters.filter(
-        entries=my_entries,
-        criteria="dn",
-        pattern="*,ou=users,*"
-    )
+    FlextLdifFilters
+    .filter(entries=my_entries, criteria="dn", pattern="*,ou=users,*")
     .map(lambda e: e[:10])  # Take first 10
-    .and_then(lambda e: FlextLdifFilters.filter(e, criteria="objectclass", objectclass="person"))
+    .and_then(
+        lambda e: FlextLdifFilters.filter(
+            e, criteria="objectclass", objectclass="person"
+        )
+    )
 )
 ```
 
@@ -78,7 +77,8 @@ result = (
 
 ```python
 filtered_result = (
-    FlextLdifFilters.builder()
+    FlextLdifFilters
+    .builder()
     .with_entries(my_entries)
     .with_dn_pattern("*,ou=users,dc=example,dc=com")
     .with_objectclass("person")
@@ -95,19 +95,13 @@ result = FlextLdifFilters.by_dn(entries, "*,ou=users,*")
 filtered = result.unwrap()
 
 # Filter by objectClass
-result = FlextLdifFilters.by_objectclass(
-    entries, ("person", "inetOrgPerson")
-)
+result = FlextLdifFilters.by_objectclass(entries, ("person", "inetOrgPerson"))
 
 # Filter by attributes
-result = FlextLdifFilters.by_attributes(
-    entries, ["mail"], match_all=False
-)
+result = FlextLdifFilters.by_attributes(entries, ["mail"], match_all=False)
 
 # Filter by base DN
-included, excluded = FlextLdifFilters.by_base_dn(
-    entries, "dc=example,dc=com"
-)
+included, excluded = FlextLdifFilters.by_base_dn(entries, "dc=example,dc=com")
 
 # Extract ACL entries
 result = FlextLdifFilters.extract_acl_entries(entries)
@@ -121,14 +115,12 @@ category, reason = FlextLdifFilters.categorize(entry, rules)
 ```python
 # Remove temporary attributes
 result = FlextLdifFilters.remove_attributes(
-    entry=my_entry,
-    attributes=["tempAttribute", "debugInfo"]
+    entry=my_entry, attributes=["tempAttribute", "debugInfo"]
 )
 
 # Remove unwanted objectClasses
 result = FlextLdifFilters.remove_objectclasses(
-    entry=my_entry,
-    objectclasses=["temporaryClass"]
+    entry=my_entry, objectclasses=["temporaryClass"]
 )
 ```
 
@@ -141,10 +133,7 @@ is_schema = FlextLdifFilters.is_schema(entry)
 # Filter schema by OID whitelist
 result = FlextLdifFilters.filter_schema_by_oids(
     entries=schema_entries,
-    allowed_oids={
-        "attributes": ["2.5.4.*"],
-        "objectclasses": ["2.5.6.*"]
-    }
+    allowed_oids={"attributes": ["2.5.4.*"], "objectclasses": ["2.5.6.*"]},
 )
 ```
 
@@ -158,13 +147,12 @@ result = FlextLdifFilters.by_dn(entries, "*,ou=users,*")
 filtered = result.unwrap()
 
 # Filter by objectClass
-result = FlextLdifFilters.by_objectclass(
-    entries, ("person", "inetOrgPerson")
-)
+result = FlextLdifFilters.by_objectclass(entries, ("person", "inetOrgPerson"))
 
 # Combine multiple conditions (builder)
 filtered_result = (
-    FlextLdifFilters.builder()
+    FlextLdifFilters
+    .builder()
     .with_entries(entries)
     .with_dn_pattern("*,ou=users,*")
     .with_objectclass("person")

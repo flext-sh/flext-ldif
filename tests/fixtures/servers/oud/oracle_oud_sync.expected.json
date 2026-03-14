@@ -3,12 +3,7 @@
     {
       "dn": "cn=user1,ou=People,dc=example,dc=com",
       "attributes": {
-        "objectClass": [
-          "person",
-          "organizationalPerson",
-          "inetOrgPerson",
-          "top"
-        ],
+        "objectClass": ["person", "organizationalPerson", "inetOrgPerson", "top"],
         "cn": ["user1"],
         "sn": ["User"],
         "givenName": ["First"],

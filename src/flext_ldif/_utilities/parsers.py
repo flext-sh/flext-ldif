@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import struct
+from collections.abc import Mapping
 from typing import Protocol
 
-from flext_core import FlextLogger, FlextResult, r
+from flext_core import FlextLogger, r
 
-from flext_ldif.models import m
+from flext_ldif import m
 
 logger = FlextLogger.create_module_logger(__name__)
 
@@ -15,28 +16,18 @@ logger = FlextLogger.create_module_logger(__name__)
 class FlextLdifUtilitiesParsers:
     """Master class for all LDIF parsing utilities."""
 
-    # ENTRY PARSER - Parse individual LDIF entries
-
     class Entry:
         """Generalized entry parser with hook-based customization."""
-
-        # ===== NESTED PROTOCOL DEFINITIONS =====
 
         class ParseCommentsHook(Protocol):
             """Protocol for parsing comments and metadata."""
 
-            def __call__(
-                self,
-                lines: list[str],
-            ) -> dict[str, list[str]]: ...
+            def __call__(self, lines: list[str]) -> Mapping[str, list[str]]: ...
 
         class ParseAttributesHook(Protocol):
             """Protocol for parsing attributes."""
 
-            def __call__(
-                self,
-                lines: list[str],
-            ) -> dict[str, list[str]]: ...
+            def __call__(self, lines: list[str]) -> Mapping[str, list[str]]: ...
 
         class ParseValueHook(Protocol):
             """Protocol for parsing attribute values."""
@@ -46,29 +37,12 @@ class FlextLdifUtilitiesParsers:
         class TransformEntryHook(Protocol):
             """Protocol for entry transformation after parse."""
 
-            def __call__(
-                self,
-                entry: m.Ldif.Entry,
-            ) -> m.Ldif.Entry: ...
+            def __call__(self, entry: m.Ldif.Entry) -> m.Ldif.Entry: ...
 
         class ParseDnHook(Protocol):
             """Protocol for parsing DN line."""
 
             def __call__(self, line: str) -> str | None: ...
-
-        # ===== NESTED STATISTICS DATACLASS =====
-
-        @dataclass
-        class Stats:
-            """Statistics for entry parsing."""
-
-            total_entries: int = 0
-            successful: int = 0
-            failed: int = 0
-            total_attributes: int = 0
-            base64_values: int = 0
-
-        # ===== STATIC METHODS =====
 
         @staticmethod
         def parse(
@@ -85,8 +59,6 @@ class FlextLdifUtilitiesParsers:
                 lines = ldif_content.strip().split("\n")
                 dn: str | None = None
                 attributes: dict[str, list[str]] = {}
-
-                # Parse DN
                 for line in lines:
                     if line.lower().startswith("dn:"):
                         if parse_dn_hook:
@@ -94,71 +66,47 @@ class FlextLdifUtilitiesParsers:
                         else:
                             dn = line.split(":", 1)[1].strip()
                         break
-
                 if dn is None:
                     return r[m.Ldif.Entry].fail("No DN found in LDIF content")
-
-                # Parse attributes
-                attributes = parse_attributes_hook(lines)
-
-                # Parse comments if hook provided
+                attributes = dict(parse_attributes_hook(lines))
                 if parse_comments_hook:
                     comments = parse_comments_hook(lines)
                     attributes.update(comments)
-
-                # Create entry
-                # Entry field validators will coerce str -> DN and dict -> m.Ldif.
-                # Convert types explicitly for mypy
-                dn_obj = dn if isinstance(dn, m.Ldif.DN) else m.Ldif.DN(value=dn)
-                attrs_obj = (
-                    attributes
-                    if isinstance(attributes, m.Ldif.Attributes)
-                    else m.Ldif.Attributes(attributes=attributes)
-                )
+                dn_obj = m.Ldif.DN(value=dn)
+                attrs_obj = m.Ldif.Attributes(attributes=attributes)
                 entry = m.Ldif.Entry(dn=dn_obj, attributes=attrs_obj)
-
-                # Transform if hook provided
                 if transform_entry_hook:
                     entry = transform_entry_hook(entry)
-
                 return r[m.Ldif.Entry].ok(entry)
-
-            except Exception as e:
-                logger.exception(
-                    "Failed to parse entry",
-                    server_type=server_type,
-                )
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
+                logger.exception("Failed to parse entry", server_type=server_type)
                 return r[m.Ldif.Entry].fail(f"Failed to parse entry: {e}")
-
-    # ATTRIBUTE PARSER - Parse attribute type definitions
 
     class Attribute:
         """Generalized attribute definition parser."""
 
-        # ===== NESTED PROTOCOL DEFINITIONS =====
-
         class ParsePartsHook(Protocol):
             """Protocol for parsing attribute definition parts."""
 
-            def __call__(
-                self,
-                definition: str,
-            ) -> dict[str, str | bool | None]: ...
+            def __call__(self, definition: str) -> Mapping[str, str | bool | None]: ...
 
         class TransformHook(Protocol):
             """Protocol for attribute transformation."""
 
             def __call__(
-                self,
-                attribute: m.Ldif.SchemaAttribute,
+                self, attribute: m.Ldif.SchemaAttribute
             ) -> m.Ldif.SchemaAttribute: ...
 
         class ParseOidHook(Protocol):
             """Protocol for OID parsing."""
 
             def __call__(self, definition: str) -> str | None: ...
-
-        # ===== STATIC METHODS =====
 
         @staticmethod
         def parse(
@@ -168,75 +116,61 @@ class FlextLdifUtilitiesParsers:
             *,
             transform_hook: TransformHook | None = None,
             parse_oid_hook: ParseOidHook | None = None,
-        ) -> FlextResult[m.Ldif.SchemaAttribute]:
+        ) -> r[m.Ldif.SchemaAttribute]:
             """Parse attribute definition using hooks."""
             try:
-                # Parse parts using hook
                 parts = parse_parts_hook(definition)
-
-                # Parse OID if hook provided
                 oid = parts.get("oid", "")
                 if parse_oid_hook:
                     parsed_oid = parse_oid_hook(definition)
                     if parsed_oid:
                         oid = parsed_oid
-
-                # Create attribute
                 attribute = m.Ldif.SchemaAttribute(
                     oid=str(oid) if oid else "",
                     name=str(parts.get("name", oid or "")),
                     desc=str(parts.get("desc")) if parts.get("desc") else None,
                     syntax=str(parts.get("syntax")) if parts.get("syntax") else None,
-                    equality=(
-                        str(parts.get("equality")) if parts.get("equality") else None
-                    ),
-                    ordering=(
-                        str(parts.get("ordering")) if parts.get("ordering") else None
-                    ),
+                    equality=str(parts.get("equality"))
+                    if parts.get("equality")
+                    else None,
+                    ordering=str(parts.get("ordering"))
+                    if parts.get("ordering")
+                    else None,
                     substr=str(parts.get("substr")) if parts.get("substr") else None,
                     single_value=bool(parts.get("single_value", False)),
                     no_user_modification=bool(parts.get("no_user_modification", False)),
                     sup=str(parts.get("sup")) if parts.get("sup") else None,
                     usage=str(parts.get("usage")) if parts.get("usage") else None,
                 )
-
-                # Transform if hook provided
                 if transform_hook:
                     attribute = transform_hook(attribute)
-
-                return FlextResult[m.Ldif.SchemaAttribute].ok(attribute)
-
-            except Exception as e:
-                logger.exception(
-                    "Failed to parse attribute",
-                    server_type=server_type,
-                )
-                return FlextResult.fail(f"Failed to parse attribute: {e}")
-
-    # OBJECTCLASS PARSER - Parse objectClass definitions
+                return r[m.Ldif.SchemaAttribute].ok(attribute)
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
+                logger.exception("Failed to parse attribute", server_type=server_type)
+                return r[m.Ldif.SchemaAttribute].fail(f"Failed to parse attribute: {e}")
 
     class ObjectClass:
         """Generalized objectClass definition parser."""
-
-        # ===== NESTED PROTOCOL DEFINITIONS =====
 
         class ParsePartsHook(Protocol):
             """Protocol for parsing objectClass definition parts."""
 
             def __call__(
-                self,
-                definition: str,
-            ) -> dict[str, str | list[str] | None]: ...
+                self, definition: str
+            ) -> Mapping[str, str | list[str] | None]: ...
 
         class TransformHook(Protocol):
             """Protocol for objectClass transformation."""
 
             def __call__(
-                self,
-                objectclass: m.Ldif.SchemaObjectClass,
+                self, objectclass: m.Ldif.SchemaObjectClass
             ) -> m.Ldif.SchemaObjectClass: ...
-
-        # ===== STATIC METHODS =====
 
         @staticmethod
         def parse(
@@ -245,22 +179,26 @@ class FlextLdifUtilitiesParsers:
             parse_parts_hook: ParsePartsHook,
             *,
             transform_hook: TransformHook | None = None,
-        ) -> FlextResult[m.Ldif.SchemaObjectClass]:
+        ) -> r[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition using hooks."""
             try:
-                # Parse parts using hook
                 parts = parse_parts_hook(definition)
-
-                # Extract lists
-                must = parts.get("must")
-                if must is not None and not isinstance(must, list):
-                    must = [str(must)]
-
-                may = parts.get("may")
-                if may is not None and not isinstance(may, list):
-                    may = [str(may)]
-
-                # Create objectClass
+                must_raw = parts.get("must")
+                must: list[str] | None
+                if isinstance(must_raw, list):
+                    must = [str(item) for item in must_raw]
+                elif must_raw is None:
+                    must = None
+                else:
+                    must = [str(must_raw)]
+                may_raw = parts.get("may")
+                may: list[str] | None
+                if isinstance(may_raw, list):
+                    may = [str(item) for item in may_raw]
+                elif may_raw is None:
+                    may = None
+                else:
+                    may = [str(may_raw)]
                 objectclass = m.Ldif.SchemaObjectClass(
                     oid=str(parts.get("oid", "")),
                     name=str(parts.get("name", parts.get("oid", ""))),
@@ -270,26 +208,23 @@ class FlextLdifUtilitiesParsers:
                     must=must,
                     may=may,
                 )
-
-                # Transform if hook provided
                 if transform_hook:
                     objectclass = transform_hook(objectclass)
-
-                return FlextResult[m.Ldif.SchemaObjectClass].ok(objectclass)
-
-            except Exception as e:
-                logger.exception(
-                    "Failed to parse objectClass",
-                    server_type=server_type,
+                return r[m.Ldif.SchemaObjectClass].ok(objectclass)
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
+                logger.exception("Failed to parse objectClass", server_type=server_type)
+                return r[m.Ldif.SchemaObjectClass].fail(
+                    f"Failed to parse objectClass: {e}"
                 )
-                return FlextResult.fail(f"Failed to parse objectClass: {e}")
-
-    # CONTENT PARSER - Parse multiple entries
 
     class Content:
         """Generalized content parser for multiple entries."""
-
-        # ===== NESTED PROTOCOL DEFINITIONS =====
 
         class ParseEntryHook(Protocol):
             """Protocol for parsing individual entries."""
@@ -299,19 +234,7 @@ class FlextLdifUtilitiesParsers:
         class ParseHeaderHook(Protocol):
             """Protocol for parsing LDIF header."""
 
-            def __call__(self, header: str) -> dict[str, str]: ...
-
-        # ===== NESTED STATISTICS DATACLASS =====
-
-        @dataclass
-        class Stats:
-            """Statistics for content parsing."""
-
-            total_entries: int = 0
-            successful: int = 0
-            failed: int = 0
-
-        # ===== STATIC METHODS =====
+            def __call__(self, header: str) -> Mapping[str, str]: ...
 
         @staticmethod
         def parse(
@@ -324,49 +247,47 @@ class FlextLdifUtilitiesParsers:
             """Parse multiple entries from LDIF content."""
             try:
                 entries: list[m.Ldif.Entry] = []
-                stats = FlextLdifUtilitiesParsers.Content.Stats()
-
-                # Split content by empty lines
                 raw_entries = ldif_content.strip().split("\n\n")
-                stats.total_entries = len(raw_entries)
-
+                successful = 0
+                failed = 0
                 for raw_entry in raw_entries:
                     if not raw_entry.strip():
                         continue
-
                     processed_entry = ""
-                    # Handle version line (global header or per-entry if malformed)
-                    # Business Rule: RFC 2849 specifies version header at start of file
-                    # If split logic groups it with first entry, strip it but keep entry content
                     lines = raw_entry.strip().split("\n")
                     if lines and lines[0].lower().startswith("version:"):
                         lines = lines[1:]
                         if not lines:
-                            # Block was only version header
                             continue
                         processed_entry = "\n".join(lines)
                     else:
                         processed_entry = raw_entry.strip()
-
                     result = parse_entry_hook(processed_entry)
                     if result.is_success:
-                        stats.successful += 1
+                        successful += 1
                         entries.append(result.value)
                     else:
-                        stats.failed += 1
+                        failed += 1
                         logger.warning(
                             "Failed to parse entry",
                             error=str(result.error),
                             server_type=server_type,
                         )
-
-                return r[list[m.Ldif.Entry]].ok(entries)
-
-            except Exception as e:
-                logger.exception(
-                    "Failed to parse content",
-                    server_type=server_type,
+                logger.debug(
+                    "LDIF content parse stats",
+                    total_entries=len(raw_entries),
+                    successful=successful,
+                    failed=failed,
                 )
+                return r[list[m.Ldif.Entry]].ok(entries)
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
+                logger.exception("Failed to parse content", server_type=server_type)
                 return r[list[m.Ldif.Entry]].fail(f"Failed to parse content: {e}")
 
 

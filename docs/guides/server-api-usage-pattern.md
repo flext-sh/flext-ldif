@@ -49,7 +49,7 @@ ______________________________________________________________________
 
 ```python
 # CORRETO - Via FlextLdifServer API
-from flext_ldif.services.server import FlextLdifServer
+from flext_ldif import FlextLdifServer
 from flext_ldif.servers.base import FlextLdifServersBase
 
 server = FlextLdifServer()
@@ -76,7 +76,7 @@ ______________________________________________________________________
 
 ```python
 import pytest
-from flext_ldif.services.server import FlextLdifServer
+from flext_ldif import FlextLdifServer
 from flext_ldif.servers.base import FlextLdifServersBase
 
 
@@ -135,7 +135,7 @@ from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 
 # DEPOIS
-from flext_ldif.services.server import FlextLdifServer
+from flext_ldif import FlextLdifServer
 from flext_ldif.servers.base import FlextLdifServersBase
 ```
 
@@ -158,6 +158,7 @@ oud = server.quirk("oud")
 # ANTES
 def my_function(oid: FlextLdifServersOid) -> None:
     pass
+
 
 # DEPOIS
 def my_function(oid: FlextLdifServersBase) -> None:
@@ -190,19 +191,19 @@ ______________________________________________________________________
 server = FlextLdifServer()
 
 # Servers totalmente implementados
-server.quirk("rfc")      # RFC 2849/4512 baseline
-server.quirk("oid")      # Oracle Internet Directory
-server.quirk("oud")      # Oracle Unified Directory
-server.quirk("openldap") # OpenLDAP 2.x
-server.quirk("openldap1")# OpenLDAP 1.x
+server.quirk("rfc")  # RFC 2849/4512 baseline
+server.quirk("oid")  # Oracle Internet Directory
+server.quirk("oud")  # Oracle Unified Directory
+server.quirk("openldap")  # OpenLDAP 2.x
+server.quirk("openldap1")  # OpenLDAP 1.x
 server.quirk("relaxed")  # Lenient parsing mode
 
 # Servers com stubs
-server.quirk("ad")       # Active Directory
-server.quirk("apache")   # Apache Directory Server
-server.quirk("ds389")    # Red Hat DS
-server.quirk("novell")   # Novell eDirectory
-server.quirk("tivoli")   # IBM Tivoli DS
+server.quirk("ad")  # Active Directory
+server.quirk("apache")  # Apache Directory Server
+server.quirk("ds389")  # Red Hat DS
+server.quirk("novell")  # Novell eDirectory
+server.quirk("tivoli")  # IBM Tivoli DS
 ```
 
 ______________________________________________________________________

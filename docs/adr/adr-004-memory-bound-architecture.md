@@ -41,7 +41,7 @@ Implement a **memory-bound processing architecture** that loads entire LDIF file
 
 ```python
 # Memory-bound file processing
-def parse_ldif_file(self, file_path: Path) -> FlextResult[list[Entry]]:
+def parse_ldif_file(self, file_path: Path) -> r[list[Entry]]:
     """Parse LDIF file with memory-bound architecture."""
 
     # Check file size and warn
@@ -50,7 +50,7 @@ def parse_ldif_file(self, file_path: Path) -> FlextResult[list[Entry]]:
         logger.warning(f"Large file detected: {file_size_mb:.1f}MB")
 
     # Load entire file into memory
-    with file_path.open('r', encoding='utf-8') as f:
+    with file_path.open("r", encoding="utf-8") as f:
         content = f.read()
 
     # Process in memory

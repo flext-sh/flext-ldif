@@ -5,12 +5,12 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import ClassVar
 
-from flext_core import FlextTypes as t
-from flext_core.protocols import p
-from flext_core.registry import FlextRegistry
+from flext_core import FlextRegistry, p
 
-type FilterFactoryType = Callable[[], t.GeneralValueType]
-type CategorizationFactoryType = Callable[[str], t.GeneralValueType]
+from flext_ldif.typings import t
+
+type FilterFactoryType = Callable[[], object]
+type CategorizationFactoryType = Callable[[str], object]
 
 
 class FlextLdifServiceRegistry(FlextRegistry):
@@ -20,15 +20,11 @@ class FlextLdifServiceRegistry(FlextRegistry):
     _global_instance: ClassVar[FlextLdifServiceRegistry | None] = None
 
     def __init__(
-        self, dispatcher: p.CommandBus | None = None, **data: t.GeneralValueType
+        self, dispatcher: p.CommandBus | None = None, **data: t.Scalar
     ) -> None:
         """Initialize with FlextRegistry infrastructure."""
-        super().__init__(dispatcher=dispatcher, **data)
-
-    def reset(self) -> None:
-        """Reset registry (for testing only)."""
-        _ = self.unregister_class_plugin(self.FACTORIES, "filter")
-        _ = self.unregister_class_plugin(self.FACTORIES, "categorization")
+        _ = data
+        super().__init__(dispatcher=dispatcher)
 
     @classmethod
     def get_global(cls) -> FlextLdifServiceRegistry:
@@ -44,19 +40,10 @@ class FlextLdifServiceRegistry(FlextRegistry):
             cls._global_instance.reset()
         cls._global_instance = None
 
-
-def get_registry() -> FlextLdifServiceRegistry:
-    """Get or create global registry instance."""
-    return FlextLdifServiceRegistry.get_global()
-
-
-def reset_registry() -> None:
-    """Reset global registry (for testing)."""
-    FlextLdifServiceRegistry.reset_global()
+    def reset(self) -> None:
+        """Reset registry (for testing only)."""
+        _ = self.unregister_plugin(self.FACTORIES, "filter", scope="class")
+        _ = self.unregister_plugin(self.FACTORIES, "categorization", scope="class")
 
 
-__all__ = [
-    "FlextLdifServiceRegistry",
-    "get_registry",
-    "reset_registry",
-]
+__all__ = ["FlextLdifServiceRegistry"]

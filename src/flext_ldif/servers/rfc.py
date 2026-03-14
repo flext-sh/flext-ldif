@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult
+from typing import override
 
-from flext_ldif.models import m
+from flext_core import FlextLogger, r
+
+from flext_ldif import m
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
     FlextLdifServersRfcConstants,
@@ -19,27 +21,26 @@ logger = FlextLogger(__name__)
 class FlextLdifServersRfc(FlextLdifServersBase):
     """RFC-Compliant LDAP Server Implementation - STRICT Baseline."""
 
-    def _handle_parse_operation(
-        self,
-        ldif_text: str,
-    ) -> FlextResult[m.Ldif.Entry | str]:
+    @override
+    def _handle_parse_operation(self, ldif_text: str) -> r[m.Ldif.Entry | str]:
         """Handle parse operation for main quirk."""
         return super()._handle_parse_operation(ldif_text)
 
+    @override
     def _handle_write_operation(
-        self,
-        entries: list[m.Ldif.Entry],
-    ) -> FlextResult[m.Ldif.Entry | str]:
+        self, entries: list[m.Ldif.Entry]
+    ) -> r[m.Ldif.Entry | str]:
         """Handle write operation for main quirk."""
         return super()._handle_write_operation(entries)
 
+    @override
     def _route_model_to_write(
         self,
         model: m.Ldif.Entry
         | m.Ldif.SchemaAttribute
         | m.Ldif.SchemaObjectClass
         | m.Ldif.Acl,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Route a single model to appropriate write method."""
         return super()._route_model_to_write(model)
 
@@ -56,6 +57,4 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         """RFC baseline constants (RFC 4512 compliant)."""
 
 
-__all__ = [
-    "FlextLdifServersRfc",
-]
+__all__ = ["FlextLdifServersRfc"]

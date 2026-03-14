@@ -9,8 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.protocols import FlextLdifProtocols
-from flext_tests.protocols import FlextTestsProtocols
+from flext_tests import FlextTestsProtocols
+
+from flext_ldif import FlextLdifProtocols
 
 
 class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
@@ -20,31 +21,25 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
     protocol definitions.
 
     Provides access to:
-    - tp.Tests.Docker.* (from FlextTestsProtocols)
-    - tp.Tests.Factory.* (from FlextTestsProtocols)
-    - tp.Ldif.* (from FlextLdifProtocols)
+    - p.Tests.Docker.* (from FlextTestsProtocols)
+    - p.Tests.Factory.* (from FlextTestsProtocols)
+    - p.Ldif.* (from FlextLdifProtocols)
 
     Rules:
     - NEVER redeclare protocols from parent classes
     - Only flext-ldif-specific test protocols allowed
     """
 
-    class Tests:
-        """Project-specific test protocols.
+    class LdifTests:
+        """Project-specific test protocols for flext-ldif.
 
-        Extends FlextTestsProtocols.Tests with flext-ldif-specific protocols.
+        Separated from FlextTestsProtocols.Tests to avoid bad-override.
+        Access via p.LdifTests.* for flext-ldif-specific protocols.
         """
 
         class Ldif:
             """Flext-ldif-specific test protocols."""
 
 
-# Runtime aliases
 p = TestsFlextLdifProtocols
-tp = TestsFlextLdifProtocols
-
-__all__ = [
-    "TestsFlextLdifProtocols",
-    "p",
-    "tp",
-]
+__all__ = ["TestsFlextLdifProtocols", "p"]

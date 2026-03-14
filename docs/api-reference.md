@@ -16,7 +16,7 @@
   - [Global Configuration](#global-configuration)
   - [Instance Configuration](#instance-configuration)
 - [Error Handling](#error-handling)
-  - [FlextResult Integration](#flextresult-integration)
+  - [r Integration](#flextresult-integration)
   - [Exception Types](#exception-types)
 - [⚠️ Library-Only Usage](#library-only-usage)
 - [Advanced Usage Patterns](#advanced-usage-patterns)
@@ -98,14 +98,14 @@ class FlextLdif:
 Parse LDIF file into structured entries.
 
 ```python
-def parse_file(self, file_path: Path | str) -> FlextResult[list[FlextLdifModels.Entry]]:
+def parse_file(self, file_path: Path | str) -> r[list[FlextLdifModels.Entry]]:
     """Parse LDIF file using railway-oriented programming.
 
     Args:
         file_path: Path to LDIF file to parse
 
     Returns:
-        FlextResult containing list of parsed entries or error
+        r containing list of parsed entries or error
 
     Example:
         >>> api = FlextLdif()
@@ -121,14 +121,14 @@ def parse_file(self, file_path: Path | str) -> FlextResult[list[FlextLdifModels.
 Parse LDIF string content into structured entries.
 
 ```python
-def parse_string(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]:
+def parse_string(self, content: str) -> r[list[FlextLdifModels.Entry]]:
     """Parse LDIF string content.
 
     Args:
         content: LDIF string content to parse
 
     Returns:
-        FlextResult containing parsed entries or error
+        r containing parsed entries or error
 
     Example:
         >>> ldif_content = '''
@@ -146,14 +146,14 @@ def parse_string(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]
 Validate LDIF entries against RFC 2849 and business rules.
 
 ```python
-def validate_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[bool]:
+def validate_entries(self, entries: list[FlextLdifModels.Entry]) -> r[bool]:
     """Validate LDIF entries.
 
     Args:
         entries: List of LDIF entries to validate
 
     Returns:
-        FlextResult[bool] indicating validation success
+        r[bool] indicating validation success
 
     Example:
         >>> entries = parse_result.unwrap()
@@ -169,10 +169,8 @@ Write LDIF entries to file.
 
 ```python
 def write_file(
-    self,
-    entries: list[FlextLdifModels.Entry],
-    file_path: Path | str
-) -> FlextResult[bool]:
+    self, entries: list[FlextLdifModels.Entry], file_path: Path | str
+) -> r[bool]:
     """Write LDIF entries to file.
 
     Args:
@@ -180,7 +178,7 @@ def write_file(
         file_path: Output file path
 
     Returns:
-        FlextResult[bool] indicating write success
+        r[bool] indicating write success
 
     Example:
         >>> entries = [...]
@@ -195,14 +193,14 @@ def write_file(
 Convert entries to LDIF string format.
 
 ```python
-def write(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
+def write(self, entries: list[FlextLdifModels.Entry]) -> r[str]:
     """Convert entries to LDIF string.
 
     Args:
         entries: List of entries to convert
 
     Returns:
-        FlextResult containing LDIF string or error
+        r containing LDIF string or error
 
     Example:
         >>> result = api.write(entries)
@@ -219,14 +217,16 @@ def write(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
 Filter entries with person object class.
 
 ```python
-def filter_persons(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[list[FlextLdifModels.Entry]]:
+def filter_persons(
+    self, entries: list[FlextLdifModels.Entry]
+) -> r[list[FlextLdifModels.Entry]]:
     """Filter person entries from entry list.
 
     Args:
         entries: List of entries to filter
 
     Returns:
-        FlextResult containing filtered person entries
+        r containing filtered person entries
 
     Example:
         >>> result = api.filter_persons(all_entries)
@@ -241,14 +241,16 @@ def filter_persons(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[li
 Filter entries with group object classes.
 
 ```python
-def filter_groups(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[list[FlextLdifModels.Entry]]:
+def filter_groups(
+    self, entries: list[FlextLdifModels.Entry]
+) -> r[list[FlextLdifModels.Entry]]:
     """Filter group entries from entry list.
 
     Args:
         entries: List of entries to filter
 
     Returns:
-        FlextResult containing filtered group entries
+        r containing filtered group entries
 
     Example:
         >>> groups_result = api.filter_groups(all_entries)
@@ -262,10 +264,8 @@ Filter entries by specific object class.
 
 ```python
 def filter_by_objectclass(
-    self,
-    entries: list[FlextLdifModels.Entry],
-    object_class: str
-) -> FlextResult[list[FlextLdifModels.Entry]]:
+    self, entries: list[FlextLdifModels.Entry], object_class: str
+) -> r[list[FlextLdifModels.Entry]]:
     """Filter entries by object class.
 
     Args:
@@ -273,7 +273,7 @@ def filter_by_objectclass(
         object_class: Object class to filter by
 
     Returns:
-        FlextResult containing filtered entries
+        r containing filtered entries
 
     Example:
         >>> ou_result = api.filter_by_objectclass(entries, "organizationalUnit")
@@ -288,14 +288,16 @@ def filter_by_objectclass(
 Generate statistics about LDIF entries.
 
 ```python
-def get_entry_statistics(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[dict[str, int]]:
+def get_entry_statistics(
+    self, entries: list[FlextLdifModels.Entry]
+) -> r[dict[str, int]]:
     """Get statistics about LDIF entries.
 
     Args:
         entries: List of entries to analyze
 
     Returns:
-        FlextResult containing statistics dictionary
+        r containing statistics dictionary
 
     Example:
         >>> stats_result = api.get_entry_statistics(entries)
@@ -310,14 +312,14 @@ def get_entry_statistics(self, entries: list[FlextLdifModels.Entry]) -> FlextRes
 Perform comprehensive analysis of LDIF entries.
 
 ```python
-def analyze_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[t.Dict]:
+def analyze_entries(self, entries: list[FlextLdifModels.Entry]) -> r[t.Dict]:
     """Perform comprehensive entry analysis.
 
     Args:
         entries: List of entries to analyze
 
     Returns:
-        FlextResult containing analysis results
+        r containing analysis results
 
     Example:
         >>> analysis = api.analyze_entries(entries)
@@ -352,7 +354,7 @@ class QuirksConversionMatrix:
         target: object,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
         data: str | dict[str, object],
-    ) -> FlextResult[str | dict[str, object]]:
+    ) -> r[str | dict[str, object]]:
         """Convert data from source quirk format to target quirk format via RFC.
 
         Args:
@@ -362,7 +364,7 @@ class QuirksConversionMatrix:
             data: Data to convert (string or dict)
 
         Returns:
-            FlextResult containing converted data in target quirk format
+            r containing converted data in target quirk format
 
         """
 
@@ -372,7 +374,7 @@ class QuirksConversionMatrix:
         target: object,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
         data_batch: Sequence[str | dict[str, object]],
-    ) -> FlextResult[Sequence[str | dict[str, object]]]:
+    ) -> r[Sequence[str | dict[str, object]]]:
         """Convert batch of data from source to target quirk format via RFC.
 
         Args:
@@ -382,7 +384,7 @@ class QuirksConversionMatrix:
             data_batch: Sequence of data items to convert
 
         Returns:
-            FlextResult containing sequence of converted data items
+            r containing sequence of converted data items
 
         """
 
@@ -396,14 +398,14 @@ class QuirksConversionMatrix:
 
     def validate_oud_conversion(
         self, converted_data: Sequence[str | dict[str, object]]
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Validate converted data for OUD compatibility.
 
         Args:
             converted_data: Data converted for OUD target
 
         Returns:
-            FlextResult[bool]: Success if OUD-compatible, failure with validation errors
+            r[bool]: Success if OUD-compatible, failure with validation errors
 
         """
 
@@ -458,11 +460,11 @@ class DnCaseRegistry:
 
         """
 
-    def validate_oud_consistency(self) -> FlextResult[bool]:
+    def validate_oud_consistency(self) -> r[bool]:
         """Validate registry for OUD case-sensitive consistency.
 
         Returns:
-            FlextResult[bool]: Success if no case conflicts, failure with conflicts
+            r[bool]: Success if no case conflicts, failure with conflicts
 
         """
 
@@ -498,8 +500,7 @@ class Entry(BaseModel):
 
     dn: str = Field(..., description="Distinguished Name")
     attributes: dict[str, t.StringList] = Field(
-        default_factory=dict,
-        description="Entry attributes as key-value pairs"
+        default_factory=dict, description="Entry attributes as key-value pairs"
     )
 
     def get_object_classes(self) -> t.StringList:
@@ -530,7 +531,7 @@ print(f"Object Classes: {entry.get_object_classes()}")
 # Check entry type
 if entry.is_person():
     print("This is a person entry")
-    email = entry.get_attribute_values('mail')
+    email = entry.get_attribute_values("mail")
     if email:
         print(f"Email: {email[0]}")
 ```
@@ -544,25 +545,16 @@ class Config(BaseModel):
     """LDIF processing configuration."""
 
     max_entries: int | None = Field(
-        None,
-        description="Maximum number of entries to process"
+        None, description="Maximum number of entries to process"
     )
     strict_validation: bool = Field(
-        False,
-        description="Enable strict RFC 2849 validation"
+        False, description="Enable strict RFC 2849 validation"
     )
     ignore_unknown_attributes: bool = Field(
-        True,
-        description="Ignore attributes not in standard schema"
+        True, description="Ignore attributes not in standard schema"
     )
-    encoding: str = Field(
-        "utf-8",
-        description="Character encoding for LDIF processing"
-    )
-    line_separator: str = Field(
-        "\n",
-        description="Line separator for LDIF output"
-    )
+    encoding: str = Field("utf-8", description="Character encoding for LDIF processing")
+    line_separator: str = Field("\n", description="Line separator for LDIF output")
 ```
 
 **Example Usage**:
@@ -573,7 +565,7 @@ config = FlextLdifModels.Config(
     max_entries=50000,
     strict_validation=True,
     ignore_unknown_attributes=False,
-    encoding='utf-8'
+    encoding="utf-8",
 )
 
 # Use configuration with API
@@ -589,7 +581,9 @@ class Factory:
     """Factory for creating LDIF domain objects."""
 
     @staticmethod
-    def create(data: t.Dict | str, attributes: dict[str, t.StringList] | None = None) -> Entry:
+    def create(
+        data: t.Dict | str, attributes: dict[str, t.StringList] | None = None
+    ) -> Entry:
         """Create LDIF entry with validation."""
 
     @staticmethod
@@ -597,20 +591,12 @@ class Factory:
         """Create configuration with validation."""
 
     @staticmethod
-    def create_person_entry(
-        dn: str,
-        cn: str,
-        sn: str,
-        **additional_attrs
-    ) -> Entry:
+    def create_person_entry(dn: str, cn: str, sn: str, **additional_attrs) -> Entry:
         """Create person entry with common attributes."""
 
     @staticmethod
     def create_group_entry(
-        dn: str,
-        cn: str,
-        members: t.StringList,
-        **additional_attrs
+        dn: str, cn: str, members: t.StringList, **additional_attrs
     ) -> Entry:
         """Create group entry with members."""
 ```
@@ -623,13 +609,13 @@ person = FlextLdifModels.Factory.create_person_entry(
     dn="cn=John Doe,ou=People,dc=example,dc=com",
     cn="John Doe",
     sn="Doe",
-    mail=["john.doe@example.com"]
+    mail=["john.doe@example.com"],
 )
 
 group = FlextLdifModels.Factory.create_group_entry(
     dn="cn=Admins,ou=Groups,dc=example,dc=com",
     cn="Administrators",
-    members=["cn=John Doe,ou=People,dc=example,dc=com"]
+    members=["cn=John Doe,ou=People,dc=example,dc=com"],
 )
 ```
 
@@ -642,9 +628,9 @@ from flext_ldif import FlextLdifSettings, initialize_ldif_config, get_ldif_confi
 
 # Initialize global configuration
 initialize_ldif_config({
-    'max_entries': 100000,
-    'strict_validation': True,
-    'encoding': 'utf-8'
+    "max_entries": 100000,
+    "strict_validation": True,
+    "encoding": "utf-8",
 })
 
 # Access global configuration
@@ -658,7 +644,7 @@ print(f"Max entries: {config.max_entries}")
 # Create instance-specific configuration
 instance_config = FlextLdifModels.Config(
     max_entries=10000,  # Override global setting
-    strict_validation=False
+    strict_validation=False,
 )
 
 # Use with API instance
@@ -667,9 +653,9 @@ api = FlextLdif(config=instance_config)
 
 ## Error Handling
 
-### FlextResult Integration
+### r Integration
 
-All API operations return FlextResult for composable error handling:
+All API operations return r for composable error handling:
 
 ```python
 from flext_core import FlextBus
@@ -687,7 +673,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -707,7 +693,8 @@ entries = result.unwrap_or([])  # Empty list if failed
 
 # Railway-oriented composition
 final_result = (
-    api.parse_file("input.ldif")
+    api
+    .parse_file("input.ldif")
     .flat_map(api.validate_entries)
     .flat_map(lambda entries: api.filter_persons(entries))
     .flat_map(lambda persons: api.write_file(persons, "persons.ldif"))
@@ -718,9 +705,9 @@ final_result = (
 
 ```python
 from flext_ldif import (
-    FlextLdifError,           # Base LDIF error
-    FlextLdifParseError,      # LDIF parsing errors
-    FlextLdifValidationError, # Validation errors
+    FlextLdifError,  # Base LDIF error
+    FlextLdifParseError,  # LDIF parsing errors
+    FlextLdifValidationError,  # Validation errors
 )
 
 # Exception builder pattern
@@ -783,32 +770,30 @@ if result.is_success:
 ### Pipeline Processing
 
 ```python
-def process_enterprise_directory(input_file: Path, output_file: Path) -> FlextResult[t.Dict]:
+def process_enterprise_directory(input_file: Path, output_file: Path) -> r[t.Dict]:
     """Process enterprise directory with complete pipeline."""
     api = FlextLdif(FlextLdifModels.Config(strict_validation=True))
 
     return (
         # Parse directory export
-        api.parse_file(input_file)
-
+        api
+        .parse_file(input_file)
         # Validate all entries
-        .flat_map(lambda entries:
-            api.validate_entries(entries).map(lambda _: entries))
-
+        .flat_map(lambda entries: api.validate_entries(entries).map(lambda _: entries))
         # Extract person entries
         .flat_map(api.filter_persons)
-
         # Generate statistics
-        .flat_map(lambda persons: (
-            api.get_entry_statistics(persons)
-            .map(lambda stats: {'persons': persons, 'stats': stats})
-        ))
-
+        .flat_map(
+            lambda persons: api.get_entry_statistics(persons).map(
+                lambda stats: {"persons": persons, "stats": stats}
+            )
+        )
         # Write processed entries
-        .flat_map(lambda data:
-            api.write_file(data['persons'], output_file)
-            .map(lambda _: data['stats']))
-
+        .flat_map(
+            lambda data: api.write_file(data["persons"], output_file).map(
+                lambda _: data["stats"]
+            )
+        )
         # Add error context
         .map_error(lambda error: f"Enterprise processing failed: {error}")
     )
@@ -817,7 +802,7 @@ def process_enterprise_directory(input_file: Path, output_file: Path) -> FlextRe
 ### Batch Processing
 
 ```python
-def process_multiple_files(file_paths: list[Path]) -> FlextResult[t.Dict]:
+def process_multiple_files(file_paths: list[Path]) -> r[t.Dict]:
     """Process multiple LDIF files in batch."""
     api = FlextLdif()
     all_entries = []
@@ -830,12 +815,12 @@ def process_multiple_files(file_paths: list[Path]) -> FlextResult[t.Dict]:
             all_entries.extend(entries)
             processing_stats[str(file_path)] = len(entries)
         else:
-            return FlextResult[t.Dict].fail(f"Failed to process {file_path}: {result.error}")
+            return r[t.Dict].fail(f"Failed to process {file_path}: {result.error}")
 
-    return FlextResult[t.Dict].ok({
-        'total_entries': len(all_entries),
-        'file_stats': processing_stats,
-        'entries': all_entries
+    return r[t.Dict].ok({
+        "total_entries": len(all_entries),
+        "file_stats": processing_stats,
+        "entries": all_entries,
     })
 ```
 
@@ -843,24 +828,23 @@ def process_multiple_files(file_paths: list[Path]) -> FlextResult[t.Dict]:
 
 ```python
 def filter_by_custom_criteria(
-    api: FlextLdif,
-    entries: list[FlextLdifModels.Entry]
-) -> FlextResult[list[FlextLdifModels.Entry]]:
+    api: FlextLdif, entries: list[FlextLdifModels.Entry]
+) -> r[list[FlextLdifModels.Entry]]:
     """Apply custom filtering logic."""
 
     def matches_criteria(entry: FlextLdifModels.Entry) -> bool:
         # Custom business logic
         return (
-            entry.has_object_class('person') and
-            entry.get_attribute_values('mail') and
-            'REDACTED_LDAP_BIND_PASSWORD' not in entry.dn.lower()
+            entry.has_object_class("person")
+            and entry.get_attribute_values("mail")
+            and "REDACTED_LDAP_BIND_PASSWORD" not in entry.dn.lower()
         )
 
     try:
         filtered = [entry for entry in entries if matches_criteria(entry)]
-        return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
+        return r[list[FlextLdifModels.Entry]].ok(filtered)
     except Exception as e:
-        return FlextResult[list[FlextLdifModels.Entry]].fail(f"Filtering failed: {e}")
+        return r[list[FlextLdifModels.Entry]].fail(f"Filtering failed: {e}")
 ```
 
 ## RFC Schema Parser API
@@ -871,8 +855,9 @@ Parse LDAP schema definitions with RFC 4512 compliance and **MANDATORY quirks su
 
 ```python
 # ✅ v1.0+ Flat imports
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.server import QuirkRegistryService  # Unchanged - quirks subdirectory
+from flext_ldif import FlextLdifParser
+from flext_ldif import QuirkRegistryService  # Unchanged - quirks subdirectory
+
 
 class RfcSchemaParserService:
     """RFC 4512 compliant schema parser with MANDATORY quirks integration."""
@@ -892,11 +877,11 @@ class RfcSchemaParserService:
             server_type: Optional server type to select specific quirks (None = pure RFC)
         """
 
-    def execute(self) -> FlextResult[t.Dict]:
+    def execute(self) -> r[t.Dict]:
         """Execute RFC-compliant schema parsing with quirks.
 
         Returns:
-            FlextResult with parsed schema data containing:
+            r with parsed schema data containing:
                 - attributes: Dict of attribute definitions by name
                 - objectclasses: Dict of objectClass definitions by name
                 - source_dn: DN of schema subentry
@@ -912,8 +897,8 @@ The `quirk_registry` parameter is **MANDATORY** (not Optional) to enforce RFC-fi
 
 ```python
 # ✅ CORRECT: v1.0+ flat imports with MANDATORY quirk_registry
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.server import QuirkRegistryService
+from flext_ldif import FlextLdifParser
+from flext_ldif import QuirkRegistryService
 
 # Initialize registry FIRST (auto-discovers all standard quirks)
 quirk_registry = QuirkRegistryService()
@@ -960,8 +945,9 @@ rfc_parser = RfcSchemaParserService(
 Generic LDIF migration between different LDAP servers.
 
 ```python
-from flext_ldif.migration_pipeline import FlextLdifMigration
+from flext_ldif import FlextLdifMigration
 from pathlib import Path
+
 
 class FlextLdifMigration:
     """Generic LDIF migration pipeline using quirks-based transformation."""
@@ -982,7 +968,7 @@ class FlextLdifMigration:
             target_server_type: Target server type (e.g., "oud", "openldap")
         """
 
-    def execute(self) -> FlextResult[t.Dict]:
+    def execute(self) -> r[t.Dict]:
         """Execute migration pipeline.
 
         Generic transformation process:
@@ -992,7 +978,7 @@ class FlextLdifMigration:
         4. Write target LDIF files
 
         Returns:
-            FlextResult with migration results containing:
+            r with migration results containing:
                 - entries_migrated: Number of entries migrated
                 - schema_files: List of schema files processed
                 - output_files: List of generated output files
@@ -1027,12 +1013,13 @@ if result.is_success:
 Central registry for managing server-specific quirks.
 
 ```python
-from flext_ldif.services.server import QuirkRegistryService
+from flext_ldif import QuirkRegistryService
+
 
 class QuirkRegistryService:
     """Registry for managing LDAP server quirks."""
 
-    def get_schemas(self, server_type: str) -> list[SchemaProtocol]:
+    def get_schemas(self, server_type: str) -> list[Schema]:
         """Get schema quirks for server type.
 
         Args:
@@ -1042,7 +1029,7 @@ class QuirkRegistryService:
             List of schema quirks sorted by priority
         """
 
-    def get_entrys(self, server_type: str) -> list[EntryProtocol]:
+    def get_entrys(self, server_type: str) -> list[Entry]:
         """Get entry quirks for server type.
 
         Args:
@@ -1052,7 +1039,7 @@ class QuirkRegistryService:
             List of entry quirks sorted by priority
         """
 
-    def get_acls(self, server_type: str) -> list[AclProtocol]:
+    def get_acls(self, server_type: str) -> list[Acl]:
         """Get ACL quirks for server type.
 
         Args:
@@ -1098,7 +1085,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -1135,7 +1122,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -1145,16 +1132,16 @@ from flext_core import u
 logger = FlextLogger(__name__)
 
 # Log processing operations
-logger.info("Starting LDIF processing", extra={
-    'file_path': str(input_file),
-    'config': config.model_dump()
-})
+logger.info(
+    "Starting LDIF processing",
+    extra={"file_path": str(input_file), "config": config.model_dump()},
+)
 
 # Log processing results
-logger.info("LDIF processing completed", extra={
-    'entries_processed': len(entries),
-    'processing_time': elapsed_time
-})
+logger.info(
+    "LDIF processing completed",
+    extra={"entries_processed": len(entries), "processing_time": elapsed_time},
+)
 ```
 
 ## 🚀 Quick Start Guide
@@ -1201,8 +1188,8 @@ if write_result.is_success:
 
 ```python
 # ✅ v1.0+ Flat imports
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.server import QuirkRegistryService  # Unchanged - quirks subdirectory
+from flext_ldif import FlextLdifParser
+from flext_ldif import QuirkRegistryService  # Unchanged - quirks subdirectory
 
 # ⚠️ MANDATORY: Initialize quirk registry first
 quirk_registry = QuirkRegistryService()
@@ -1242,15 +1229,15 @@ rfc_parser = RfcSchemaParserService(
 ### Generic Migration Pipeline
 
 ```python
-from flext_ldif.migration_pipeline import FlextLdifMigration
+from flext_ldif import FlextLdifMigration
 from pathlib import Path
 
 # Migrate OID → OUD using generic transformation pipeline
 migration = FlextLdifMigration(
     input_dir=Path("source_oid_ldif"),
     output_dir=Path("target_oud_ldif"),
-    source_server_type="oid",     # Oracle Internet Directory
-    target_server_type="oud",     # Oracle Unified Directory
+    source_server_type="oid",  # Oracle Internet Directory
+    target_server_type="oud",  # Oracle Unified Directory
 )
 
 # Execute migration: OID → RFC → OUD
@@ -1278,25 +1265,24 @@ api = FlextLdif()
 # Composable pipeline with explicit error handling
 result = (
     # Parse LDIF file
-    api.parse_file(Path("directory.ldif"))
-
+    api
+    .parse_file(Path("directory.ldif"))
     # Validate all entries
-    .flat_map(lambda entries:
-        api.validate_entries(entries).map(lambda _: entries))
-
+    .flat_map(lambda entries: api.validate_entries(entries).map(lambda _: entries))
     # Filter person entries
     .flat_map(api.filter_persons)
-
     # Generate statistics
-    .flat_map(lambda persons:
-        api.get_entry_statistics(persons)
-        .map(lambda stats: {"persons": persons, "stats": stats}))
-
+    .flat_map(
+        lambda persons: api.get_entry_statistics(persons).map(
+            lambda stats: {"persons": persons, "stats": stats}
+        )
+    )
     # Write filtered entries
-    .flat_map(lambda data:
-        api.write_file(data["persons"], Path("persons.ldif"))
-        .map(lambda _: data["stats"]))
-
+    .flat_map(
+        lambda data: api.write_file(data["persons"], Path("persons.ldif")).map(
+            lambda _: data["stats"]
+        )
+    )
     # Add error context
     .map_error(lambda error: f"Processing failed: {error}")
 )
@@ -1315,43 +1301,43 @@ else:
 
 ```python
 # Oracle Internet Directory
-server_type="oid"
+server_type = "oid"
 
 # Oracle Unified Directory
-server_type="oud"
+server_type = "oud"
 
 # OpenLDAP 2.x
-server_type="openldap"
+server_type = "openldap"
 
 # OpenLDAP 1.x
-server_type="openldap1"
+server_type = "openldap1"
 ```
 
 **Stub Implementations** (5 servers - ready for enhancement):
 
 ```python
 # Active Directory (stub - not implemented)
-server_type="ad"
+server_type = "ad"
 
 # Apache Directory Server (stub - not implemented)
-server_type="apache"
+server_type = "apache"
 
 # 389 Directory Server (stub - not implemented)
-server_type="389ds"
+server_type = "389ds"
 
 # Novell eDirectory (stub - not implemented)
-server_type="novell"
+server_type = "novell"
 
 # IBM Tivoli Directory Server (stub - not implemented)
-server_type="tivoli"
+server_type = "tivoli"
 ```
 
 **Generic/Unknown Servers**:
 
 ```python
 # Works with ANY LDAP server using pure RFC baseline
-server_type=None  # Pure RFC 2849/4512 compliance
-server_type="my_custom_ldap_v5"  # Unknown server = RFC baseline
+server_type = None  # Pure RFC 2849/4512 compliance
+server_type = "my_custom_ldap_v5"  # Unknown server = RFC baseline
 ```
 
 ______________________________________________________________________
@@ -1370,7 +1356,7 @@ This API reference provides complete coverage of FLEXT-LDIF functionality, inclu
 
 - [flext-core Foundation](https://github.com/organization/flext/tree/main/flext-core/docs/api-reference/foundation.md) - Core APIs and patterns
 - [flext-ldap Operations](https://github.com/organization/flext/tree/main/flext-ldap/docs/api-reference.md) - LDAP operations API
-- [flext-meltano Pipelines](https://github.com/organization/flext/tree/main/flext-meltano/CLAUDE.md) - Data integration and ELT orchestration
+- [flext-meltano Pipelines](https://github.com/organization/flext/tree/main/flext-meltano/AGENTS.md) - Data integration and ELT orchestration
 
 **External Resources**:
 

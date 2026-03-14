@@ -29,10 +29,7 @@ class FileManager:
     """
 
     def create_ldif_file(
-        self,
-        content: str,
-        filename: str = "test.ldif",
-        directory: Path | None = None,
+        self, content: str, filename: str = "test.ldif", directory: Path | None = None
     ) -> Path:
         """Create LDIF file with given content.
 
@@ -70,7 +67,6 @@ class FileManager:
             ).strip()
             safe_name = safe_name.replace(" ", "_")
             filename = f"{safe_name}.ldif"
-
         return self.create_ldif_file(sample.content, filename, directory)
 
     def create_all_samples(self, directory: Path | None = None) -> dict[str, Path]:
@@ -85,11 +81,9 @@ class FileManager:
         """
         target_dir = self._resolve_directory(directory)
         files: dict[str, Path] = {}
-
         for name, sample in LdifTestData.all_samples().items():
             file_path = self.create_sample_file(sample, f"{name}.ldif", target_dir)
             files[name] = file_path
-
         return files
 
     def create_large_ldif_file(
@@ -113,9 +107,7 @@ class FileManager:
         return self.create_sample_file(sample, filename, directory)
 
     def create_invalid_file(
-        self,
-        filename: str = "invalid.ldif",
-        directory: Path | None = None,
+        self, filename: str = "invalid.ldif", directory: Path | None = None
     ) -> Path:
         """Create file with invalid LDIF data for error testing.
 
@@ -140,15 +132,11 @@ class FileManager:
 
         """
         with cls() as manager:
-            files = manager.create_all_samples()
-            yield files
+            yield manager.create_all_samples()
 
     @classmethod
     @contextmanager
-    def ldif_files(
-        cls,
-        files: dict[str, str],
-    ) -> Generator[dict[str, Path]]:
+    def ldif_files(cls, files: dict[str, str]) -> Generator[dict[str, Path]]:
         """Context manager for LDIF files.
 
         Args:
@@ -159,11 +147,11 @@ class FileManager:
 
         """
         with cls() as manager:
-            created_files = manager.create_file_set(files, extension=".ldif")
-            yield created_files
+            yield manager.create_file_set(files, extension=".ldif")
 
     def __init__(self) -> None:
         """Initialize FileManager."""
+        super().__init__()
         self._temp_dir: TemporaryDirectory[str] | None = None
 
     def __enter__(self) -> Self:
@@ -191,24 +179,19 @@ class FileManager:
         raise RuntimeError(msg)
 
     def create_text_file(
-        self,
-        content: str,
-        filename: str,
-        directory: Path | None = None,
+        self, content: str, filename: str, directory: Path | None = None
     ) -> Path:
         """Create text file with given content."""
         target_dir = self._resolve_directory(directory)
         file_path = target_dir / filename
-        file_path.write_text(content, encoding="utf-8")
+        _ = file_path.write_text(content, encoding="utf-8")
         return file_path
 
     def create_file_set(
-        self,
-        files: dict[str, str],
-        extension: str = "",
+        self, files: dict[str, str], extension: str = ""
     ) -> dict[str, Path]:
         """Create set of files."""
-        created = {}
+        created: dict[str, Path] = {}
         for name, content in files.items():
             filename = f"{name}{extension}"
             created[name] = self.create_text_file(content, filename)

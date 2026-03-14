@@ -72,7 +72,7 @@ src/flext_ldif/
 
 ### FLEXT Ecosystem Integration
 
-- **flext-core**: Foundation patterns and FlextResult error handling
+- **flext-core**: Foundation patterns and r error handling
 - **flext-observability**: Monitoring and tracing integration
 - **Type Safety**: MyPy strict mode adoption; aiming for 95%+ coverage
 
@@ -111,7 +111,7 @@ src/flext_ldif/
 
 ### Code Standards
 
-- **Error Handling**: FlextResult pattern for error composition
+- **Error Handling**: r pattern for error composition
 - **Configuration**: Environment variable support with validation
 - **Logging**: Structured logging with correlation IDs
 - **Performance**: Memory-efficient batch processing
@@ -128,16 +128,16 @@ src/flext_ldif/
 
 ```python
 # Domain model usage
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 
 # Application service usage
-from flext_ldif.api import FlextLdif
+from flext_ldif import FlextLdif
 
 # Configuration management
-from flext_ldif.settings import FlextLdifSettings
+from flext_ldif import FlextLdifSettings
 
 # Core processing (advanced usage)
-from flext_ldif.core import TLdif
+from flext_ldif import TLdif
 ```
 
 ### Recommended Public API
@@ -145,9 +145,9 @@ from flext_ldif.core import TLdif
 ```python
 # Simplified public interface
 from flext_ldif import (
-    FlextLdif,           # Main application service
-    FlextLdifSettings,        # Configuration management
-    FlextLdifModels,        # Unified domain models
+    FlextLdif,  # Main application service
+    FlextLdifSettings,  # Configuration management
+    FlextLdifModels,  # Unified domain models
 )
 ```
 
@@ -188,4 +188,4 @@ When contributing to the source code:
 - **[Architecture Guide](../docs/architecture/ARCHITECTURE.md)** - Detailed architectural patterns
 - **[API Documentation](../docs/api/API.md)** - Complete API reference
 - **[Module Organization](../docs/standards/python-module-organization.md)** - Detailed module standards
-- **[Development Guide](../CLAUDE.md)** - Development patterns and practices
+- **[Development Guide](../AGENTS.md)** - Development patterns and practices

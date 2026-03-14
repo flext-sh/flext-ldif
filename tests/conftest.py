@@ -9,42 +9,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# PYTHON_VERSION_GUARD — Do not remove. Managed by scripts/maintenance/enforce_python_version.py
-import sys as _sys
-
-if _sys.version_info[:2] != (3, 13):
-    _v = (
-        f"{_sys.version_info.major}.{_sys.version_info.minor}.{_sys.version_info.micro}"
-    )
-    raise RuntimeError(
-        f"\n{'=' * 72}\n"
-        f"FATAL: Python {_v} detected — this project requires Python 3.13.\n"
-        f"\n"
-        f"The virtual environment was created with the WRONG Python interpreter.\n"
-        f"\n"
-        f"Fix:\n"
-        f"  1. rm -rf .venv\n"
-        f"  2. poetry env use python3.13\n"
-        f"  3. poetry install\n"
-        f"\n"
-        f"Or use the workspace Makefile:\n"
-        f"  make setup PROJECT=<project-name>\n"
-        f"{'=' * 72}\n"
-    )
-del _sys
-# PYTHON_VERSION_GUARD_END
-
-from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 from typing import ClassVar, Final
 
 import pytest
-from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
+from pydantic import BaseModel, ConfigDict, Field
 
-# =============================================================================
-# CORE PYTEST CONFIGURATION
-# =============================================================================
+from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -55,8 +27,6 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "docker: marks tests that require Docker")
     config.addinivalue_line("markers", "slow: marks tests as slow tests")
     config.addinivalue_line("markers", "real: marks tests using real functionality")
-
-    # Rebuild Pydantic models with forward references (session-level initialization)
     _rebuild_pydantic_models()
 
 
@@ -66,26 +36,12 @@ def _rebuild_pydantic_models() -> None:
     Pydantic v2 requires model_rebuild() when using forward references
     between modules. This ensures Entry and result models are fully defined.
     """
-    # Don't rebuild models - rely on Pydantic's native handling of forward references
-    # Entry.create() will call model_rebuild internally when needed
-
-
-# =============================================================================
-# FLEXT CORE FIXTURES
-# =============================================================================
 
 
 @pytest.fixture(scope="session")
 def flext_ldif() -> FlextLdif:
     """Provide FlextLdif instance for tests."""
     return FlextLdif.get_instance()
-
-
-# NOTE: flext_result_success and flext_result_failure are now consolidated
-# in flext-core/tests/conftest.py and available to all projects via pytest's
-# fixture discovery mechanism. Similarly, temp_dir is consolidated.
-# Projects can use flext-core's temp_dir fixture or define project-specific
-# variants (like the ldif-specific temp_file below)
 
 
 @pytest.fixture
@@ -97,107 +53,28 @@ def temp_file(temp_dir: Path) -> Path:
     return temp_dir / "test_file.ldif"
 
 
-# =============================================================================
-# LDIF TEST DATA FIXTURES
-# =============================================================================
-
-
 @pytest.fixture
 def sample_ldif_entries() -> str:
     """Sample LDIF entries for testing."""
-    return """dn: cn=John Doe,ou=people,dc=example,dc=com
-objectClass: inetOrgPerson
-cn: John Doe
-sn: Doe
-mail: john.doe@example.com
-
-dn: cn=Jane Smith,ou=people,dc=example,dc=com
-objectClass: inetOrgPerson
-cn: Jane Smith
-sn: Smith
-mail: jane.smith@example.com
-
-dn: ou=groups,dc=example,dc=com
-objectClass: organizationalUnit
-ou: groups
-description: Groups organizational unit
-"""
+    return "dn: cn=John Doe,ou=people,dc=example,dc=com\nobjectClass: inetOrgPerson\ncn: John Doe\nsn: Doe\nmail: john.doe@example.com\n\ndn: cn=Jane Smith,ou=people,dc=example,dc=com\nobjectClass: inetOrgPerson\ncn: Jane Smith\nsn: Smith\nmail: jane.smith@example.com\n\ndn: ou=groups,dc=example,dc=com\nobjectClass: organizationalUnit\nou: groups\ndescription: Groups organizational unit\n"
 
 
 @pytest.fixture
 def real_ldif_user_entry() -> str:
     """Real LDIF entry for a user with complete attributes."""
-    return """dn: cn=John Doe,ou=people,dc=example,dc=com
-objectClass: top
-objectClass: person
-objectClass: inetOrgPerson
-objectClass: organizationalPerson
-cn: John Doe
-sn: Doe
-givenName: John
-mail: john.doe@example.com
-uid: jdoe
-telephoneNumber: +1-555-1234
-street: 123 Main St
-l: New York
-st: NY
-postalCode: 10001
-c: US
-description: Software Engineer
-employeeNumber: 12345
-"""
+    return "dn: cn=John Doe,ou=people,dc=example,dc=com\nobjectClass: top\nobjectClass: person\nobjectClass: inetOrgPerson\nobjectClass: organizationalPerson\ncn: John Doe\nsn: Doe\ngivenName: John\nmail: john.doe@example.com\nuid: jdoe\ntelephoneNumber: +1-555-1234\nstreet: 123 Main St\nl: New York\nst: NY\npostalCode: 10001\nc: US\ndescription: Software Engineer\nemployeeNumber: 12345\n"
 
 
 @pytest.fixture
 def real_ldif_group_entry() -> str:
     """Real LDIF entry for a group with complete attributes."""
-    return """dn: cn=developers,ou=groups,dc=example,dc=com
-objectClass: top
-objectClass: groupOfNames
-objectClass: groupOfUniqueNames
-cn: developers
-description: Development team group
-member: cn=John Doe,ou=people,dc=example,dc=com
-member: cn=Jane Smith,ou=people,dc=example,dc=com
-uniqueMember: cn=John Doe,ou=people,dc=example,dc=com
-uniqueMember: cn=Jane Smith,ou=people,dc=example,dc=com
-"""
+    return "dn: cn=developers,ou=groups,dc=example,dc=com\nobjectClass: top\nobjectClass: groupOfNames\nobjectClass: groupOfUniqueNames\ncn: developers\ndescription: Development team group\nmember: cn=John Doe,ou=people,dc=example,dc=com\nmember: cn=Jane Smith,ou=people,dc=example,dc=com\nuniqueMember: cn=John Doe,ou=people,dc=example,dc=com\nuniqueMember: cn=Jane Smith,ou=people,dc=example,dc=com\n"
 
 
 @pytest.fixture
 def real_ldif_multiple_entries() -> str:
     """Real LDIF with multiple entries separated by blank lines."""
-    return """dn: dc=example,dc=com
-objectClass: top
-objectClass: domain
-dc: example
-
-dn: ou=people,dc=example,dc=com
-objectClass: top
-objectClass: organizationalUnit
-ou: people
-
-dn: cn=John Doe,ou=people,dc=example,dc=com
-objectClass: top
-objectClass: person
-objectClass: inetOrgPerson
-cn: John Doe
-sn: Doe
-mail: john.doe@example.com
-
-dn: cn=Jane Smith,ou=people,dc=example,dc=com
-objectClass: top
-objectClass: person
-objectClass: inetOrgPerson
-cn: Jane Smith
-sn: Smith
-mail: jane.smith@example.com
-"""
-
-
-# =============================================================================
-# PARSER AND WRITER FIXTURES
-# =============================================================================
+    return "dn: dc=example,dc=com\nobjectClass: top\nobjectClass: domain\ndc: example\n\ndn: ou=people,dc=example,dc=com\nobjectClass: top\nobjectClass: organizationalUnit\nou: people\n\ndn: cn=John Doe,ou=people,dc=example,dc=com\nobjectClass: top\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: John Doe\nsn: Doe\nmail: john.doe@example.com\n\ndn: cn=Jane Smith,ou=people,dc=example,dc=com\nobjectClass: top\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Jane Smith\nsn: Smith\nmail: jane.smith@example.com\n"
 
 
 @pytest.fixture
@@ -210,11 +87,6 @@ def ldif_parser() -> FlextLdifParser:
 def ldif_writer() -> FlextLdifWriter:
     """Provide LDIF writer for tests."""
     return FlextLdifWriter()
-
-
-# =============================================================================
-# FIXTURE LOADER (migrated from tests/fixtures/loader.py)
-# =============================================================================
 
 
 class FlextLdifFixtures:
@@ -237,7 +109,6 @@ class FlextLdifFixtures:
         metadata = loader.get_metadata(FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.SCHEMA)
     """
 
-    # Singleton instances for server-specific loaders
     _instances: ClassVar[dict[str, object]] = {}
 
     @classmethod
@@ -298,16 +169,21 @@ class FlextLdifFixtures:
         ENTRIES = "entries"
         INTEGRATION = "integration"
 
-    @dataclass(frozen=True)
-    class Metadata:
+    class Metadata(BaseModel):
         """Metadata about a loaded fixture."""
 
-        server_type: FlextLdifFixtures.ServerType
-        fixture_type: FlextLdifFixtures.FixtureType
-        file_path: Path
-        line_count: int
-        entry_count: int
-        size_bytes: int
+        model_config = ConfigDict(frozen=True)
+
+        server_type: FlextLdifFixtures.ServerType = Field(
+            description="LDAP server type for the fixture"
+        )
+        fixture_type: FlextLdifFixtures.FixtureType = Field(
+            description="Fixture category identifier"
+        )
+        file_path: Path = Field(description="Fixture file path")
+        line_count: int = Field(description="Number of lines in the fixture file")
+        entry_count: int = Field(description="Number of LDIF entries in the fixture")
+        size_bytes: int = Field(description="Fixture file size in bytes")
 
     class Loader:
         """Generic fixture loader for all LDAP server types.
@@ -321,11 +197,9 @@ class FlextLdifFixtures:
                 {server_type}_integration_fixtures.ldif
         """
 
-        # Class-level caches for performance optimization
         _content_cache: ClassVar[
             dict[
-                tuple[FlextLdifFixtures.ServerType, FlextLdifFixtures.FixtureType],
-                str,
+                tuple[FlextLdifFixtures.ServerType, FlextLdifFixtures.FixtureType], str
             ]
         ] = {}
         _metadata_cache: ClassVar[dict[Path, FlextLdifFixtures.Metadata]] = {}
@@ -338,9 +212,6 @@ class FlextLdifFixtures:
 
             """
             if fixtures_root is None:
-                # CRITICAL: Use relative path from conftest.py location
-                # This works correctly regardless of working directory or parent conftest loading
-                # Pattern: tests/conftest.py → fixtures/ is tests/fixtures/
                 conftest_dir = Path(__file__).parent
                 fixtures_root = conftest_dir / "fixtures"
             self.fixtures_root: Final[Path] = fixtures_root
@@ -366,14 +237,9 @@ class FlextLdifFixtures:
             server_dir = self.fixtures_root / server_type.value
             filename = f"{server_type.value}_{fixture_type.value}_fixtures.ldif"
             file_path = server_dir / filename
-
             if not file_path.exists():
-                msg = (
-                    f"Fixture file not found: {file_path}\n"
-                    f"Expected: {server_type.value}/{filename}"
-                )
+                msg = f"Fixture file not found: {file_path}\nExpected: {server_type.value}/{filename}"
                 raise FileNotFoundError(msg)
-
             return file_path
 
         def load(
@@ -401,8 +267,7 @@ class FlextLdifFixtures:
             return self._content_cache[cache_key]
 
         def load_all(
-            self,
-            server_type: FlextLdifFixtures.ServerType,
+            self, server_type: FlextLdifFixtures.ServerType
         ) -> dict[FlextLdifFixtures.FixtureType, str]:
             """Load all fixtures for a server type.
 
@@ -414,7 +279,6 @@ class FlextLdifFixtures:
 
             """
             fixtures: dict[FlextLdifFixtures.FixtureType, str] = {}
-
             fixture_types = [
                 FlextLdifFixtures.FixtureType.SCHEMA,
                 FlextLdifFixtures.FixtureType.ACL,
@@ -425,9 +289,7 @@ class FlextLdifFixtures:
                 try:
                     fixtures[fixture_type] = self.load(server_type, fixture_type)
                 except FileNotFoundError:
-                    # Skip fixtures that don't exist for this server
                     continue
-
             return fixtures
 
         def get_available_servers(self) -> list[FlextLdifFixtures.ServerType]:
@@ -438,7 +300,6 @@ class FlextLdifFixtures:
 
             """
             available: list[FlextLdifFixtures.ServerType] = []
-
             server_types = [
                 FlextLdifFixtures.ServerType.OID,
                 FlextLdifFixtures.ServerType.OUD,
@@ -454,12 +315,10 @@ class FlextLdifFixtures:
                 server_dir = self.fixtures_root / server_type.value
                 if server_dir.exists() and server_dir.is_dir():
                     available.append(server_type)
-
             return available
 
         def get_available_fixtures(
-            self,
-            server_type: FlextLdifFixtures.ServerType,
+            self, server_type: FlextLdifFixtures.ServerType
         ) -> list[FlextLdifFixtures.FixtureType]:
             """Get list of available fixture types for a server.
 
@@ -471,14 +330,12 @@ class FlextLdifFixtures:
 
             """
             available: list[FlextLdifFixtures.FixtureType] = []
-
             for fixture_type in FlextLdifFixtures.FixtureType.__members__.values():
                 try:
                     self._get_fixture_path(server_type, fixture_type)
                     available.append(fixture_type)
                 except FileNotFoundError:
                     continue
-
             return available
 
         def get_metadata(
@@ -500,18 +357,11 @@ class FlextLdifFixtures:
 
             """
             file_path = self._get_fixture_path(server_type, fixture_type)
-
-            # Use cache if available
             if file_path in self._metadata_cache:
                 return self._metadata_cache[file_path]
-
-            # Use content cache to avoid double read
             content = self.load(server_type, fixture_type)
             lines = content.splitlines()
-
-            # Count entries (lines starting with "dn:")
             entry_count = sum(1 for line in lines if line.strip().startswith("dn:"))
-
             metadata = FlextLdifFixtures.Metadata(
                 server_type=server_type,
                 fixture_type=fixture_type,
@@ -520,7 +370,6 @@ class FlextLdifFixtures:
                 entry_count=entry_count,
                 size_bytes=file_path.stat().st_size,
             )
-
             self._metadata_cache[file_path] = metadata
             return metadata
 
@@ -573,8 +422,7 @@ class FlextLdifFixtures:
 
             """
             return self._loader.load(
-                FlextLdifFixtures.ServerType.OID,
-                FlextLdifFixtures.FixtureType.SCHEMA,
+                FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.SCHEMA
             )
 
         def acl(self) -> str:
@@ -585,8 +433,7 @@ class FlextLdifFixtures:
 
             """
             return self._loader.load(
-                FlextLdifFixtures.ServerType.OID,
-                FlextLdifFixtures.FixtureType.ACL,
+                FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.ACL
             )
 
         def entries(self) -> str:
@@ -597,8 +444,7 @@ class FlextLdifFixtures:
 
             """
             return self._loader.load(
-                FlextLdifFixtures.ServerType.OID,
-                FlextLdifFixtures.FixtureType.ENTRIES,
+                FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.ENTRIES
             )
 
         def integration(self) -> str:
@@ -623,8 +469,7 @@ class FlextLdifFixtures:
             return self._loader.load_all(FlextLdifFixtures.ServerType.OID)
 
         def metadata(
-            self,
-            fixture_type: FlextLdifFixtures.FixtureType,
+            self, fixture_type: FlextLdifFixtures.FixtureType
         ) -> FlextLdifFixtures.Metadata:
             """Get metadata about an OID fixture.
 
@@ -636,8 +481,7 @@ class FlextLdifFixtures:
 
             """
             return self._loader.get_metadata(
-                FlextLdifFixtures.ServerType.OID,
-                fixture_type,
+                FlextLdifFixtures.ServerType.OID, fixture_type
             )
 
     class OUD:
@@ -653,22 +497,19 @@ class FlextLdifFixtures:
         def schema(self) -> str:
             """Load OUD schema fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.OUD,
-                FlextLdifFixtures.FixtureType.SCHEMA,
+                FlextLdifFixtures.ServerType.OUD, FlextLdifFixtures.FixtureType.SCHEMA
             )
 
         def acl(self) -> str:
             """Load OUD ACL fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.OUD,
-                FlextLdifFixtures.FixtureType.ACL,
+                FlextLdifFixtures.ServerType.OUD, FlextLdifFixtures.FixtureType.ACL
             )
 
         def entries(self) -> str:
             """Load OUD entry fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.OUD,
-                FlextLdifFixtures.FixtureType.ENTRIES,
+                FlextLdifFixtures.ServerType.OUD, FlextLdifFixtures.FixtureType.ENTRIES
             )
 
         def integration(self) -> str:
@@ -695,22 +536,19 @@ class FlextLdifFixtures:
         def schema(self) -> str:
             """Load RFC schema fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.RFC,
-                FlextLdifFixtures.FixtureType.SCHEMA,
+                FlextLdifFixtures.ServerType.RFC, FlextLdifFixtures.FixtureType.SCHEMA
             )
 
         def acl(self) -> str:
             """Load RFC ACL fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.RFC,
-                FlextLdifFixtures.FixtureType.ACL,
+                FlextLdifFixtures.ServerType.RFC, FlextLdifFixtures.FixtureType.ACL
             )
 
         def entries(self) -> str:
             """Load RFC entry fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.RFC,
-                FlextLdifFixtures.FixtureType.ENTRIES,
+                FlextLdifFixtures.ServerType.RFC, FlextLdifFixtures.FixtureType.ENTRIES
             )
 
         def integration(self) -> str:
@@ -744,8 +582,7 @@ class FlextLdifFixtures:
         def acl(self) -> str:
             """Load OpenLDAP ACL fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.OPENLDAP,
-                FlextLdifFixtures.FixtureType.ACL,
+                FlextLdifFixtures.ServerType.OPENLDAP, FlextLdifFixtures.FixtureType.ACL
             )
 
         def entries(self) -> str:
@@ -767,6 +604,5 @@ class FlextLdifFixtures:
             return self._loader.load_all(FlextLdifFixtures.ServerType.OPENLDAP)
 
 
-# Fixture paths (for backward compatibility) - tests/conftest.py -> tests/fixtures/
 FIXTURES_DIR: Final[Path] = Path(__file__).parent / "fixtures"
 OID_FIXTURES_DIR: Final[Path] = FIXTURES_DIR / "oid"

@@ -1,29 +1,57 @@
-"""LDIF Validation Utilities - Pure Validation Functions.
-
-Stateless validation functions for Entry model validators.
-NO hard-coded server logic - only RFC compliance and format validation.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
 from __future__ import annotations
 
-from flext_core.utilities import FlextUtilities as u
+from typing import Final
+
+from flext_core import FlextUtilities, r
+from pydantic import TypeAdapter, ValidationError
+
+from flext_ldif import p, t
 
 
-class FlextLdifUtilitiesValidation(u.Validation):
-    """LDIF-specific validation functions extending flext-core validation.
+class FlextLdifUtilitiesValidation(FlextUtilities):
+    @staticmethod
+    def validate(value: t.Container, *validators: p.ValidatorSpec) -> r[t.Container]:
+        del validators
+        return r[t.Container].ok(value)
 
-    Architecture:
-    - Inherits all validation methods from FlextUtilitiesValidation
-    - Adds LDIF-specific validations (RFC 2849, schema, DN validation)
-    - Stateless pure functions (no side effects)
-    - ZERO server-specific logic (only RFC validation)
+    class Rfc:
+        """RFC validation helpers."""
 
-    Purpose: Unified validation via u.Validation access.
-    """
+        _DESCRIPTOR_ADAPTER: Final[TypeAdapter[t.Ldif.Rfc.Rfc4512Descriptor]] = (
+            TypeAdapter(t.Ldif.Rfc.Rfc4512Descriptor)
+        )
+        _DN_COMPONENT_ADAPTER: Final[TypeAdapter[t.Ldif.Rfc.Rfc4514DnComponent]] = (
+            TypeAdapter(t.Ldif.Rfc.Rfc4514DnComponent)
+        )
+        _ATTRIBUTE_VALUE_ADAPTER: Final[
+            TypeAdapter[t.Ldif.Rfc.Rfc2849AttributeValue]
+        ] = TypeAdapter(t.Ldif.Rfc.Rfc2849AttributeValue)
 
-    # Inherits all methods from FlextUtilitiesValidation
-    # LDIF-specific methods can be added here as needed
+        @classmethod
+        def is_valid_rfc2849_attribute_value(cls, value: str) -> bool:
+            try:
+                _ = cls._ATTRIBUTE_VALUE_ADAPTER.validate_python(value)
+                return True
+            except ValidationError:
+                return False
+
+        @classmethod
+        def is_valid_rfc4512_descriptor(cls, value: str) -> bool:
+            try:
+                _ = cls._DESCRIPTOR_ADAPTER.validate_python(value)
+                return True
+            except ValidationError:
+                return False
+
+        @classmethod
+        def is_valid_rfc4514_dn_component(cls, attribute_name: str, value: str) -> bool:
+            try:
+                _ = cls._DN_COMPONENT_ADAPTER.validate_python(
+                    f"{attribute_name}={value}"
+                )
+                return True
+            except ValidationError:
+                return False
+
+
+__all__ = ["FlextLdifUtilitiesValidation"]

@@ -48,7 +48,7 @@ This guide provides step-by-step instructions for installing and using FLEXT-LDI
 
 FLEXT-LDIF integrates with the broader FLEXT ecosystem:
 
-- **[flext-core](https://github.com/organization/flext/tree/main/flext-core/README.md)**: Foundation library providing FlextResult, FlextContainer, and logging patterns
+- **[flext-core](https://github.com/organization/flext/tree/main/flext-core/README.md)**: Foundation library providing r, FlextContainer, and logging patterns
 - **Poetry**: Dependency management and virtual environment handling
 - **Python 3.13+**: Modern Python features including improved type annotations
 
@@ -124,7 +124,7 @@ objectClass: groupOfNames
 member: cn=John Doe,ou=People,dc=example,dc=com
 """
 
-# Parse LDIF content using FlextResult patterns
+# Parse LDIF content using r patterns
 result = api.parse_string(sample_ldif)
 if result.is_success:
     entries = result.unwrap()
@@ -183,10 +183,10 @@ from flext_ldif import FlextLdif, FlextLdifModels
 
 # Create configuration
 config = FlextLdifModels.Config(
-    max_entries=10000,              # Limit number of entries processed
-    strict_validation=True,         # Enable strict RFC 2849 validation
-    ignore_unknown_attributes=False, # Process all attributes
-    encoding='utf-8'                # Character encoding
+    max_entries=10000,  # Limit number of entries processed
+    strict_validation=True,  # Enable strict RFC 2849 validation
+    ignore_unknown_attributes=False,  # Process all attributes
+    encoding="utf-8",  # Character encoding
 )
 
 # Initialize API with configuration
@@ -243,8 +243,8 @@ Parse LDAP schema files with automatic server-specific handling:
 
 ```python
 # ✅ v1.0+ Service imports
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.server import QuirkRegistryService  # Unchanged - quirks subdirectory
+from flext_ldif import FlextLdifParser
+from flext_ldif import QuirkRegistryService  # Unchanged - quirks subdirectory
 from pathlib import Path
 
 # Initialize quirks registry
@@ -281,15 +281,15 @@ if result.is_success:
 Migrate entries between different LDAP servers using generic transformation:
 
 ```python
-from flext_ldif.migration_pipeline import FlextLdifMigration
+from flext_ldif import FlextLdifMigration
 from pathlib import Path
 
 # Initialize migration pipeline with source and target servers
 pipeline = FlextLdifMigration(
     input_dir=Path("source_ldifs"),
     output_dir=Path("target_ldifs"),
-    source_server_type="oid",    # Source: Oracle Internet Directory
-    target_server_type="oud",    # Target: Oracle Unified Directory
+    source_server_type="oid",  # Source: Oracle Internet Directory
+    target_server_type="oud",  # Target: Oracle Unified Directory
 )
 
 # Execute generic transformation: OID → RFC → OUD
@@ -311,7 +311,7 @@ if result.is_success:
 Handle entries from different LDAP servers in the same workflow:
 
 ```python
-from flext_ldif.services.server import QuirkRegistryService
+from flext_ldif import QuirkRegistryService
 
 # Initialize registry once
 quirk_registry = QuirkRegistryService()

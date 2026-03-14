@@ -10,15 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_tests import FlextTestsModels
+
+from flext_ldif import FlextLdifModels
 from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._models.validation import (
-    AclFormatRules,
-    DnCaseRules,
-    EncodingRules,
-    ServerValidationRules,
-)
-from flext_ldif.models import FlextLdifModels
-from flext_tests.models import FlextTestsModels
+from flext_ldif._models.settings import FlextLdifModelsSettings
 
 
 class TestsFlextLdifModels:
@@ -38,8 +34,8 @@ class TestsFlextLdifModels:
     Ldif = FlextLdifModels.Ldif
 
     # Root-level aliases for frequently used test models
-    WriteFormatOptions = FlextLdifModels.Ldif.LdifResults.WriteFormatOptions
-    StatisticsResult = FlextLdifModels.Ldif.LdifResults.StatisticsResult
+    WriteFormatOptions = FlextLdifModels.Ldif.WriteFormatOptions
+    StatisticsResult = FlextLdifModels.Ldif.StatisticsResult
 
     class Tests(FlextTestsModels.Tests):
         """Test fixture models namespace.
@@ -61,35 +57,37 @@ class TestsFlextLdifModels:
         SchemaObjectClass = FlextLdifModels.Ldif.SchemaObjectClass
 
         # Format options for testing
-        WriteFormatOptions = FlextLdifModels.Ldif.LdifResults.WriteFormatOptions
+        WriteFormatOptions = FlextLdifModels.Ldif.WriteFormatOptions
 
         # Service status models for testing
-        ValidationServiceStatus = (
-            FlextLdifModels.Ldif.LdifResults.ValidationServiceStatus
-        )
-        SchemaServiceStatus = FlextLdifModels.Ldif.LdifResults.SchemaServiceStatus
-        StatisticsServiceStatus = (
-            FlextLdifModels.Ldif.LdifResults.StatisticsServiceStatus
-        )
+        ValidationServiceStatus = FlextLdifModels.Ldif.ValidationServiceStatus
+        SchemaServiceStatus = FlextLdifModels.Ldif.SchemaServiceStatus
+        StatisticsServiceStatus = FlextLdifModels.Ldif.StatisticsServiceStatus
 
         # Result models for testing
-        ValidationBatchResult = FlextLdifModels.Ldif.LdifResults.ValidationBatchResult
+        ValidationBatchResult = FlextLdifModels.Ldif.ValidationBatchResult
         ValidationMetadata = FlextLdifModelsDomains.ValidationMetadata
-        StatisticsResult = FlextLdifModels.Ldif.LdifResults.StatisticsResult
+        StatisticsResult = FlextLdifModels.Ldif.StatisticsResult
 
         # Validation rules for testing
-        ServerValidationRules = ServerValidationRules
-        EncodingRules = EncodingRules
-        DnCaseRules = DnCaseRules
-        AclFormatRules = AclFormatRules
+        ServerValidationRules = FlextLdifModelsSettings.ServerValidationRules
+        EncodingRules = FlextLdifModelsSettings.EncodingRules
+        DnCaseRules = FlextLdifModelsSettings.DnCaseRules
+        AclFormatRules = FlextLdifModelsSettings.AclFormatRules
+
+        class LdifTestData(FlextLdifModels.Value):
+            """Test data for LDIF utilities."""
+
+            id: str
+            server_type: str
+            dn: str
+            attributes: dict[str, list[str]]
 
 
 # Short aliases for tests
-tm = TestsFlextLdifModels
 m = TestsFlextLdifModels
 
 __all__ = [
     "TestsFlextLdifModels",
     "m",
-    "tm",
 ]

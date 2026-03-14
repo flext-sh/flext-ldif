@@ -18,14 +18,13 @@ from __future__ import annotations
 from collections.abc import Sequence
 from itertools import starmap
 
-from flext_ldif.protocols import p
-from flext_ldif.services.entries import FlextLdifEntries
 from flext_tests import s as flext_tests_s
 
+from flext_ldif import FlextLdifEntries, FlextLdifModels
 from tests.constants import TestsFlextLdifConstants
 
 
-class FlextLdifTestsServiceBase(flext_tests_s):
+class FlextLdifTestsServiceBase(flext_tests_s[object]):
     """Base class for all test services in flext-ldif.
 
     Extends FlextTestsServiceBase from flext_tests with LDIF-specific utilities:
@@ -48,15 +47,12 @@ class FlextLdifTestsServiceBase(flext_tests_s):
 
     """
 
-    # Expose test constants for convenience in test methods (self.c.*)
     c = TestsFlextLdifConstants
 
     @classmethod
     def create_entry(
-        cls,
-        dn: str,
-        attributes: dict[str, str | list[str]] | None = None,
-    ) -> p.Entry:
+        cls, dn: str, attributes: dict[str, str | list[str]] | None = None
+    ) -> FlextLdifModels.Ldif.Entry:
         """Create test entry using real FlextLdifEntries service.
 
         Args:
@@ -81,9 +77,8 @@ class FlextLdifTestsServiceBase(flext_tests_s):
 
     @classmethod
     def create_entries(
-        cls,
-        entries_data: Sequence[tuple[str, dict[str, str | list[str]]]],
-    ) -> list[p.Entry]:
+        cls, entries_data: Sequence[tuple[str, dict[str, str | list[str]]]]
+    ) -> list[FlextLdifModels.Ldif.Entry]:
         """Create multiple test entries.
 
         Args:
@@ -96,10 +91,5 @@ class FlextLdifTestsServiceBase(flext_tests_s):
         return list(starmap(cls.create_entry, entries_data))
 
 
-# Standardized short name for use in tests
 s = FlextLdifTestsServiceBase
-
-__all__ = [
-    "FlextLdifTestsServiceBase",
-    "s",
-]
+__all__ = ["FlextLdifTestsServiceBase", "s"]

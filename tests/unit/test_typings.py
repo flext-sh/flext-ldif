@@ -7,14 +7,14 @@ import inspect
 from pathlib import Path
 from typing import Any, ClassVar
 
-import flext_ldif
 import pytest
-from flext_ldif.typings import t as t_ldif
 
+import flext_ldif
+from flext_ldif import t as t_ldif
 from tests import OIDs, c, s
 
 
-class TestFlextLdifTypesStructure:  # Class name contains FlextLdifTypes (acceptable)
+class TestFlextLdifTypesStructure:
     """Tests for FlextLdifTypes structure and namespace access."""
 
     def test_namespace_exists(self) -> None:
@@ -25,49 +25,41 @@ class TestFlextLdifTypesStructure:  # Class name contains FlextLdifTypes (accept
     def test_has_required_namespaces(self) -> None:
         """t_ldif must have required namespaces."""
         assert hasattr(t_ldif, "Ldif")
-        # Entry namespace was removed as part of dict -> model migration
         assert not hasattr(t_ldif.Ldif, "Entry")
         assert hasattr(t_ldif.Ldif, "CommonDict")
 
     def test_srp_compliance_no_functions(self) -> None:
         """typings.py must not contain functions (SRP violation)."""
         members = inspect.getmembers(flext_ldif.typings)
-        # Filter out built-in functions like TypedDict from typing module
         user_functions = [
             m
             for m in members
             if inspect.isfunction(m[1])
-            and not m[0].startswith("__")
-            and m[1].__module__ not in {"typing", "builtins"}
+            and (not m[0].startswith("__"))
+            and (m[1].__module__ not in {"typing", "builtins"})
         ]
         assert len(user_functions) == 0, "typings.py must not contain functions"
 
     def test_only_required_imports(self) -> None:
         """typings.py must only import from flext_core (Tier 0 architecture rule)."""
-        project_root = Path(
-            __file__
-        ).parent.parent.parent  # tests/unit/test_typings.py -> project root
+        project_root = Path(__file__).parent.parent.parent
         types_path = project_root / "src" / "flext_ldif" / "typings.py"
         tree = ast.parse(types_path.read_text())
-
         flext_ldif_imports = [
             node.module
             for node in ast.walk(tree)
             if isinstance(node, ast.ImportFrom)
             and node.module
-            and "flext_ldif" in node.module
+            and ("flext_ldif" in node.module)
         ]
-
-        # typings.py is Tier 0 - it should NOT import from other flext_ldif modules
-        # This is correct architecture: typings.py is pure type definitions
-        # Verify no internal imports (no _models, _utilities, services, etc.)
         internal_imports = [
-            imp for imp in flext_ldif_imports if "_" in imp.split(".")[-1]
+            imp
+            for imp in flext_ldif_imports
+            if imp.startswith("flext_ldif.") and "_" in imp.split(".")[-1]
         ]
         assert len(internal_imports) == 0, (
             f"typings.py must not import from internal modules: {internal_imports}"
         )
-        # Also verify no imports from services or higher tiers
         service_imports = [
             imp for imp in flext_ldif_imports if "services" in imp or "api" in imp
         ]
@@ -85,7 +77,6 @@ class TestsFlextLdifCommonDictionaryTypes(s):
         c.Names.MAIL: ["john@example.com", "john.doe@example.com"],
         c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INETORGPERSON],
     }
-
     SAMPLE_DISTRIBUTION: ClassVar[dict[str, int]] = {
         c.Names.INETORGPERSON: 1245,
         "groupOfNames": 89,
@@ -128,27 +119,20 @@ class TestModelsNamespace:
 
     def test_entry_attributes_dict_with_real_ldif_data(self) -> None:
         """EntryAttributesDict must work with real LDIF attribute data."""
-        # GenericFieldsDict is a flexible TypedDict for test data
         attrs: dict[str, Any] = {
             c.Names.CN: ["John Doe"],
-            c.Names.OBJECTCLASS: [
-                c.Names.INETORGPERSON,
-                c.Names.PERSON,
-                c.Names.TOP,
-            ],
+            c.Names.OBJECTCLASS: [c.Names.INETORGPERSON, c.Names.PERSON, c.Names.TOP],
             c.Names.SN: "Doe",
             c.Names.MAIL: ["john@example.com"],
             c.Names.UID: "jdoe",
         }
-        # Access test data directly
-        cn_value: Any = attrs.get(c.Names.CN)
+        cn_value: str | list[str] | None = attrs.get(c.Names.CN)
         assert cn_value == ["John Doe"]
-        objectclass_value: Any = attrs.get(c.Names.OBJECTCLASS)
+        objectclass_value: str | list[str] | None = attrs.get(c.Names.OBJECTCLASS)
         assert isinstance(objectclass_value, list)
 
     def test_attributes_data_with_real_schema(self) -> None:
         """AttributesData must support real schema attribute patterns."""
-        # Use dict[str, Any] for flexible test data
         data: dict[str, dict[str, Any]] = {
             c.Names.CN: {
                 "oid": OIDs.CN,
@@ -162,15 +146,13 @@ class TestModelsNamespace:
                 "single_valued": True,
             },
         }
-        # Access test data directly with Any type
-        cn_oid: Any = data[c.Names.CN].get("oid")
+        cn_oid: str | None = data[c.Names.CN].get("oid")
         assert cn_oid == OIDs.CN
-        uid_single_valued: Any = data[c.Names.UID].get("single_valued")
+        uid_single_valued: bool | None = data[c.Names.UID].get("single_valued")
         assert uid_single_valued is True
 
     def test_objectclasses_data_with_real_schema(self) -> None:
         """ObjectClassesData must support real objectClass patterns."""
-        # Use dict[str, Any] for flexible test data
         data: dict[str, dict[str, Any]] = {
             c.Names.INETORGPERSON: {
                 "oid": "2.16.840.1.113730.3.2.2",
@@ -178,24 +160,22 @@ class TestModelsNamespace:
                 "sup": "organizationalPerson",
                 "must": [c.Names.UID],
                 "may": [c.Names.MAIL, "mobile"],
-            },
+            }
         }
-        # Access test data directly with Any type
-        oid_value: Any = data[c.Names.INETORGPERSON].get("oid")
+        oid_value: str | None = data[c.Names.INETORGPERSON].get("oid")
         assert oid_value == "2.16.840.1.113730.3.2.2"
-        may_values: Any = data[c.Names.INETORGPERSON].get("may")
+        may_values: list[str] | None = data[c.Names.INETORGPERSON].get("may")
+        assert may_values is not None
         assert c.Names.MAIL in may_values
 
     def test_extensions_with_reals(self) -> None:
         """QuirkExtensions must support real quirk metadata."""
-        # Use dict[str, Any] for flexible test data
         extensions: dict[str, Any] = {
             "supports_dn_case_registry": True,
             "priority": 10,
             "server_type": "oud",
         }
-        # Access test data directly with Any type
-        supports_dn_case: Any = extensions.get("supports_dn_case_registry")
+        supports_dn_case: bool | None = extensions.get("supports_dn_case_registry")
         assert supports_dn_case is True
 
 
@@ -216,20 +196,17 @@ class TestRemovalOfOverEngineering:
         "LdifProject",
         "Project",
     ]
-
     REMOVED_COMMON_DICT: ClassVar[list[str]] = [
         "ChangeDict",
         "CategorizedDict",
         "TreeDict",
         "HierarchyDict",
     ]
-
     REMOVED_ENTRY: ClassVar[list[str]] = [
         "EntryConfiguration",
         "EntryValidation",
         "EntryTransformation",
         "EntryProcessing",
-        # Note: EntryAttributes and EntryMetadata still exist and are used
     ]
 
     @pytest.mark.parametrize("namespace", REMOVED_NAMESPACES)
@@ -245,7 +222,6 @@ class TestRemovalOfOverEngineering:
     @pytest.mark.parametrize("type_name", REMOVED_ENTRY)
     def test_removed_entry_types(self, type_name: str) -> None:
         """Unused Entry types must be removed."""
-        # Entry namespace itself was removed
         assert not hasattr(t_ldif.Ldif, "Entry")
 
 
@@ -257,22 +233,30 @@ class TestPhase1StandardizationResults:
         classes = [
             m
             for m in inspect.getmembers(t_ldif)
-            if inspect.isclass(m[1]) and not m[0].startswith("_")
+            if inspect.isclass(m[1]) and (not m[0].startswith("_"))
         ]
         assert len(classes) >= 1
 
     @pytest.mark.parametrize("attr", ["AttributeDict", "DistributionDict"])
     def test_common_dict_simple_patterns(self, attr: str) -> None:
         """Simple patterns should be kept in CommonDict."""
-        # CommonDict exists in Ldif namespace only (proper architecture)
-        # However, DistributionDict might have been removed if unused
         if hasattr(t_ldif.Ldif, "CommonDict"):
             assert hasattr(t_ldif.Ldif.CommonDict, "AttributeDict")
 
     def test_types_work_with_real_data(self) -> None:
         """Verify types work with real data."""
-        # AttributeDict usage test
-        pass
+        attr_dict: t_ldif.Ldif.CommonDict.AttributeDict = {
+            c.Names.CN: ["Jane Doe"],
+            c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INETORGPERSON],
+        }
+        distribution: t_ldif.Ldif.CommonDict.DistributionDict = {
+            c.Names.INETORGPERSON: 2,
+            c.Names.PERSON: 1,
+        }
+        assert attr_dict[c.Names.CN] == ["Jane Doe"]
+        assert c.Names.INETORGPERSON in attr_dict[c.Names.OBJECTCLASS]
+        assert sum(distribution.values()) == 3
+        assert distribution[c.Names.PERSON] == 1
 
 
 class TestIntegrationWithLdifFixtures:
@@ -281,11 +265,8 @@ class TestIntegrationWithLdifFixtures:
     @pytest.fixture
     def oid_ldif_path(self) -> Path:
         """Path to OID LDIF fixtures."""
-        # Fix path to be relative to project root or use absolute path logic
-        # Assuming pytest is run from repo root or flext-ldif root
         base_path = Path("flext-ldif/tests/fixtures/oid/oid_entries_fixtures.ldif")
         if not base_path.exists():
-            # Try relative to flext-ldif if running from there
             base_path = Path("tests/fixtures/oid/oid_entries_fixtures.ldif")
         return base_path
 
@@ -300,10 +281,8 @@ class TestIntegrationWithLdifFixtures:
 
     def test_models_namespace_with_schema_data(self) -> None:
         """Verify Models namespace types work with schema data."""
-        # Use dict[str, Any] for flexible test data
         schema_attrs: dict[str, dict[str, Any]] = {
             c.Names.CN: {"oid": OIDs.CN, "syntax": "Directory String"}
         }
-        # Access test data directly with Any type
-        cn_oid: Any = schema_attrs[c.Names.CN].get("oid")
+        cn_oid: str | None = schema_attrs[c.Names.CN].get("oid")
         assert cn_oid == OIDs.CN

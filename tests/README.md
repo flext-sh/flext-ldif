@@ -156,7 +156,16 @@ def test_e2e_ldif_processing_workflow(tmp_path):
     input_file.write_text(SAMPLE_LDIF_CONTENT)
 
     # Execute CLI command (pseudo-code helper)
-    rc, out, err = run_cli([sys.executable, "-m", "flext_ldif.cli", "transform", "--filter", "objectClass=person", str(input_file), str(output_file)])
+    rc, out, err = run_cli([
+        sys.executable,
+        "-m",
+        "flext_ldif.cli",
+        "transform",
+        "--filter",
+        "objectClass=person",
+        str(input_file),
+        str(output_file),
+    ])
     assert rc == 0
     assert output_file.exists()
 ```
@@ -225,23 +234,27 @@ def flext_ldif_api():
     config = FlextLdifSettings(
         max_entries=1000,
         strict_validation=True,
-        enable_observability=False  # Disable for testing
+        enable_observability=False,  # Disable for testing
     )
     return FlextLdif(config)
+
 
 @pytest.fixture
 def sample_entries():
     """Sample LDIF entries for testing."""
     return [
-        FlextLdifModels.Entry.model_validate({
+        FlextLdifModels.Entry({
             "dn": FlextLdifModels.DN(value="cn=John Doe,ou=people,dc=example,dc=com"),
-            "attributes": FlextLdifModels.Attributes(data={
-                "cn": ["John Doe"],
-                "objectClass": ["person", "inetOrgPerson"],
-                "mail": ["john@example.com"]
-            })
+            "attributes": FlextLdifModels.Attributes(
+                data={
+                    "cn": ["John Doe"],
+                    "objectClass": ["person", "inetOrgPerson"],
+                    "mail": ["john@example.com"],
+                }
+            ),
         })
     ]
+
 
 @pytest.fixture
 def ldif_test_data():
@@ -274,7 +287,7 @@ def ldap_server():
             "LDAP_DOMAIN": "example.com",
         },
         ports={"389/tcp": 1389},
-        detach=True
+        detach=True,
     )
 
     # Wait for container to be ready
@@ -455,4 +468,4 @@ When adding new tests:
 
 - **[API Documentation](../docs/api/API.md)** - Complete API reference for testing
 - **[Architecture Guide](../docs/architecture/ARCHITECTURE.md)** - Understanding system design for testing
-- **[Development Guide](../CLAUDE.md)** - Development patterns and practices
+- **[Development Guide](../AGENTS.md)** - Development patterns and practices

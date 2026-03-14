@@ -43,13 +43,13 @@ All examples demonstrate library usage only - no CLI patterns, no `main()` funct
 
 ### 01_basic_usage.py - Core API Operations
 
-**Demonstrates**: `parse()`, `write()`, FlextResult error handling
+**Demonstrates**: `parse()`, `write()`, r error handling
 
 Learn the fundamentals:
 
 - Parse LDIF from strings and files
 - Write LDIF to strings and files
-- Error handling with FlextResult
+- Error handling with r
 - Entry model inspection
 
 **Key Functions**:
@@ -232,7 +232,7 @@ else:
 - **Library demonstrations** - Pure library API usage
 - **Reusable patterns** - Copy-paste friendly code
 - **API coverage** - FlextLdif functionality
-- **Error handling** - FlextResult pattern
+- **Error handling** - r pattern
 
 ### ❌ What These Examples Are NOT
 
@@ -314,7 +314,7 @@ Looking for specific features? Use this quick reference:
 
 ## 💡 Tips
 
-1. **Always use FlextResult** - Check `is_success` before `unwrap()`
+1. **Always use r** - Check `is_success` before `unwrap()`
 1. **Access through API** - Use `api.*` properties, not direct imports
 1. **Error composition** - Chain operations with early returns on failure
 1. **Type hints** - Examples show proper typing patterns
@@ -325,7 +325,7 @@ When adding examples:
 
 - Use FlextLdif (api.py) exclusively
 - No CLI patterns (main, print, argparse)
-- Include FlextResult error handling
+- Include r error handling
 - Demonstrate specific functionality
 - Add clear docstrings
 

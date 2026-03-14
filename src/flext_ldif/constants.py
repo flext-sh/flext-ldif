@@ -7,7 +7,7 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import ClassVar, Final, Literal
 
-from flext_core import FlextConstants
+from flext_core import FlextConstants, FlextLogger
 
 type ValidationLevelLiteral = Literal["strict", "moderate", "lenient"]
 
@@ -17,6 +17,16 @@ class FlextLdifConstants(FlextConstants):
 
     class Ldif:
         """LDIF domain constants namespace."""
+
+        class Category(StrEnum):
+            """LDIF entry categories — single source of truth."""
+
+            USERS = "users"
+            GROUPS = "groups"
+            HIERARCHY = "hierarchy"
+            SCHEMA = "schema"
+            ACL = "acl"
+            REJECTED = "rejected"
 
         class SortStrategy(StrEnum):
             """Valid sorting strategies for LDIF entries (V2 type-safe enum)."""
@@ -66,7 +76,6 @@ class FlextLdifConstants(FlextConstants):
             COMPARE = "compare"
             ALL = "all"
             NONE = "none"
-
             AUTH = "auth"
             CREATE = "create"
             CONTROL_ACCESS = "control_access"
@@ -101,7 +110,6 @@ class FlextLdifConstants(FlextConstants):
         LDIF_BASE64_INDICATOR: Final[str] = LdifFormat.BASE64.value
         LDIF_REGULAR_INDICATOR: Final[str] = LdifFormat.REGULAR.value
         LDIF_URL_INDICATOR: Final[str] = LdifFormat.URL.value
-
         LDIF_DEFAULT_ENCODING: Final[str] = FlextConstants.Utilities.DEFAULT_ENCODING
 
         class AclSubjectType(StrEnum):
@@ -187,22 +195,16 @@ class FlextLdifConstants(FlextConstants):
 
             DN_ATTRIBUTE: Final[str] = "dn"
             ATTRIBUTE_SEPARATOR: Final[str] = ":"
-
             LDIF_OBJECTCLASS_GROUPOFNAMES: Final[str] = "groupOfNames"
-
             MIN_LINE_LENGTH: Final[int] = 40
             MAX_LINE_LENGTH: Final[int] = 78
             MAX_LINE_LENGTH_EXTENDED: Final[int] = 200
-
             MIN_TUPLE_SIZE: Final[int] = 2
-
             MIN_BUFFER_SIZE: Final[int] = 1024
             CONTENT_PREVIEW_LENGTH: Final[int] = 100
             MINIMAL_DIFF_PREVIEW_LENGTH: Final[int] = 50
             MAX_ATTRIBUTES_DISPLAY: Final[int] = 10
-
             MAX_FILENAME_LENGTH: Final[int] = 255
-
             BASE64_PREFIX: Final[str] = "::"
             COMMENT_PREFIX: Final[str] = "#"
             VERSION_PREFIX: Final[str] = "version:"
@@ -210,28 +212,25 @@ class FlextLdifConstants(FlextConstants):
             ATTRIBUTE_OPTION_SEPARATOR: Final[str] = ";"
             URL_PREFIX: Final[str] = "<"
             URL_SUFFIX: Final[str] = ">"
-
             LDIF_VERSION_1: Final[str] = "1"
             DEFAULT_LDIF_VERSION: Final[str] = LDIF_VERSION_1
 
             class Rfc:
                 """RFC 2849/4512/4514 Standard Constants."""
 
-            SAFE_CHAR_MIN: Final[int] = 0x01
-            SAFE_CHAR_MAX: Final[int] = 0x7F
-            SAFE_CHAR_EXCLUDE: Final[frozenset[int]] = frozenset({0x00, 0x0A, 0x0D})
-
+            SAFE_CHAR_MIN: Final[int] = 1
+            SAFE_CHAR_MAX: Final[int] = 127
+            SAFE_CHAR_EXCLUDE: Final[frozenset[int]] = frozenset({0, 10, 13})
             SAFE_INIT_CHAR_EXCLUDE: Final[frozenset[int]] = frozenset({
-                0x00,
-                0x0A,
-                0x0D,
-                0x20,
-                0x3A,
-                0x3C,
+                0,
+                10,
+                13,
+                32,
+                58,
+                60,
             })
-
             BASE64_CHARS: Final[frozenset[str]] = frozenset(
-                "+/0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+                "+/0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
             )
 
             class Base64StartChar(StrEnum):
@@ -246,26 +245,21 @@ class FlextLdifConstants(FlextConstants):
                 Base64StartChar.LANGLE,
                 Base64StartChar.COLON,
             })
-
             LINE_FOLD_WIDTH: Final[int] = 76
             LINE_CONTINUATION_SPACE: Final[str] = " "
             LINE_SEPARATOR: Final[str] = "\n"
-
             ENTRY_SEPARATOR: Final[str] = "\n\n"
             ATTR_SEPARATOR: Final[str] = ":"
             BASE64_SEPARATOR: Final[str] = "::"
             URL_SEPARATOR: Final[str] = ":<"
-
             KEYWORD_DN: Final[str] = "dn"
             KEYWORD_CHANGETYPE: Final[str] = "changetype"
             KEYWORD_CONTROL: Final[str] = "control"
             KEYWORD_NEWRDN: Final[str] = "newrdn"
             KEYWORD_DELETEOLDRDN: Final[str] = "deleteoldrdn"
             KEYWORD_NEWSUPERIOR: Final[str] = "newsuperior"
-
             SCHEMA_WSP: Final[str] = " "
             SCHEMA_SPACE: Final[str] = " "
-
             SCHEMA_LPAREN: Final[str] = "("
             SCHEMA_RPAREN: Final[str] = ")"
             SCHEMA_SQUOTE: Final[str] = "'"
@@ -273,9 +267,7 @@ class FlextLdifConstants(FlextConstants):
             SCHEMA_LCURLY: Final[str] = "{"
             SCHEMA_RCURLY: Final[str] = "}"
             SCHEMA_DOLLAR: Final[str] = "$"
-
             SCHEMA_EXTENSION_PREFIX: Final[str] = "X-"
-
             SCHEMA_KW_OBSOLETE: Final[str] = "OBSOLETE"
             SCHEMA_KW_SUP: Final[str] = "SUP"
             SCHEMA_KW_EQUALITY: Final[str] = "EQUALITY"
@@ -293,7 +285,6 @@ class FlextLdifConstants(FlextConstants):
             SCHEMA_KW_NOT: Final[str] = "NOT"
             SCHEMA_KW_OC: Final[str] = "OC"
             SCHEMA_KW_FORM: Final[str] = "FORM"
-
             ATTR_CREATORS_NAME: Final[str] = "creatorsName"
             ATTR_CREATE_TIMESTAMP: Final[str] = "createTimestamp"
             ATTR_MODIFIERS_NAME: Final[str] = "modifiersName"
@@ -325,7 +316,6 @@ class FlextLdifConstants(FlextConstants):
                 OperationalAttribute.SUBSCHEMA_SUBENTRY,
                 OperationalAttribute.ENTRY_DN,
             })
-
             ATTR_OBJECTCLASSES: Final[str] = "objectClasses"
             ATTR_ATTRIBUTETYPES: Final[str] = "attributeTypes"
             ATTR_MATCHINGRULES: Final[str] = "matchingRules"
@@ -334,41 +324,38 @@ class FlextLdifConstants(FlextConstants):
             ATTR_DITCONTENTRULES: Final[str] = "dITContentRules"
             ATTR_DITSTRUCTURERULES: Final[str] = "dITStructureRules"
             ATTR_NAMEFORMS: Final[str] = "nameForms"
-
             DN_LUTF1_EXCLUDE: Final[frozenset[int]] = frozenset({
-                0x00,
-                0x20,
-                0x22,
-                0x23,
-                0x2B,
-                0x2C,
-                0x3B,
-                0x3C,
-                0x3E,
-                0x5C,
+                0,
+                32,
+                34,
+                35,
+                43,
+                44,
+                59,
+                60,
+                62,
+                92,
             })
-
             DN_TUTF1_EXCLUDE: Final[frozenset[int]] = frozenset({
-                0x00,
-                0x20,
-                0x22,
-                0x2B,
-                0x2C,
-                0x3B,
-                0x3C,
-                0x3E,
-                0x5C,
+                0,
+                32,
+                34,
+                43,
+                44,
+                59,
+                60,
+                62,
+                92,
             })
-
             DN_SUTF1_EXCLUDE: Final[frozenset[int]] = frozenset({
-                0x00,
-                0x22,
-                0x2B,
-                0x2C,
-                0x3B,
-                0x3C,
-                0x3E,
-                0x5C,
+                0,
+                34,
+                43,
+                44,
+                59,
+                60,
+                62,
+                92,
             })
 
             class DnEscapeChar(StrEnum):
@@ -407,10 +394,7 @@ class FlextLdifConstants(FlextConstants):
                 DnEscapeAtStart.SPACE,
                 DnEscapeAtStart.SHARP,
             })
-            DN_ESCAPE_AT_END: Final[frozenset[str]] = frozenset({
-                DnEscapeAtEnd.SPACE,
-            })
-
+            DN_ESCAPE_AT_END: Final[frozenset[str]] = frozenset({DnEscapeAtEnd.SPACE})
             DN_ATTR_CN: Final[str] = "CN"
             DN_ATTR_L: Final[str] = "L"
             DN_ATTR_ST: Final[str] = "ST"
@@ -420,7 +404,6 @@ class FlextLdifConstants(FlextConstants):
             DN_ATTR_STREET: Final[str] = "STREET"
             DN_ATTR_DC: Final[str] = "DC"
             DN_ATTR_UID: Final[str] = "UID"
-
             DN_ATTRIBUTE_TYPES: Final[MappingProxyType[str, str]] = MappingProxyType({
                 "CN": "2.5.4.3",
                 "L": "2.5.4.7",
@@ -432,19 +415,14 @@ class FlextLdifConstants(FlextConstants):
                 "DC": "0.9.2342.19200300.100.1.25",
                 "UID": "0.9.2342.19200300.100.1.1",
             })
-
             DN_RDN_SEPARATOR: Final[str] = ","
             DN_RDN_SEPARATOR_ALT: Final[str] = ";"
             DN_MULTIVALUE_SEPARATOR: Final[str] = "+"
             DN_ATTR_VALUE_SEPARATOR: Final[str] = "="
-
             MIN_DN_LENGTH: Final[int] = 2
-
-            ASCII_PRINTABLE_MIN: Final[int] = 0x20
-            ASCII_PRINTABLE_MAX: Final[int] = 0x7E
-
+            ASCII_PRINTABLE_MIN: Final[int] = 32
+            ASCII_PRINTABLE_MAX: Final[int] = 126
             MIN_BASE64_LENGTH: Final[int] = 8
-
             SYNTAX_DIRECTORY_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.15"
             SYNTAX_OCTET_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.40"
             SYNTAX_INTEGER: Final[str] = "1.3.6.1.4.1.1466.115.121.1.27"
@@ -454,29 +432,24 @@ class FlextLdifConstants(FlextConstants):
             SYNTAX_OID: Final[str] = "1.3.6.1.4.1.1466.115.121.1.38"
             SYNTAX_BIT_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.6"
             SYNTAX_JPEG: Final[str] = "1.3.6.1.4.1.1466.115.121.1.28"
-
             MATCH_CASE_IGNORE: Final[str] = "2.5.13.2"
             MATCH_CASE_EXACT: Final[str] = "2.5.13.5"
             MATCH_DISTINGUISHED_NAME: Final[str] = "2.5.13.1"
             MATCH_INTEGER: Final[str] = "2.5.13.14"
             MATCH_GENERALIZED_TIME: Final[str] = "2.5.13.27"
             MATCH_OID: Final[str] = "2.5.13.0"
-
             META_RFC_VERSION: Final[str] = "_rfc_version"
             META_RFC_LINE_FOLDING: Final[str] = "_rfc_line_folding"
             META_RFC_BASE64_ENCODED: Final[str] = "_rfc_base64"
             META_RFC_URL_REFERENCE: Final[str] = "_rfc_url_ref"
             META_RFC_CHANGETYPE: Final[str] = "_rfc_changetype"
             META_RFC_CONTROLS: Final[str] = "_rfc_controls"
-
             META_SCHEMA_EXTENSIONS: Final[str] = "_schema_extensions"
             META_SCHEMA_ORIGIN: Final[str] = "_schema_origin"
             META_SCHEMA_OBSOLETE: Final[str] = "_schema_obsolete"
-
             META_DN_ORIGINAL: Final[str] = "_dn_original"
             META_DN_WAS_BASE64: Final[str] = "_dn_was_base64"
             META_DN_ESCAPES_APPLIED: Final[str] = "_dn_escapes"
-
             META_TRANSFORMATION_SOURCE: Final[str] = "_transform_source"
             META_TRANSFORMATION_TARGET: Final[str] = "_transform_target"
             META_TRANSFORMATION_TIMESTAMP: Final[str] = "_transform_ts"
@@ -490,63 +463,40 @@ class FlextLdifConstants(FlextConstants):
             ACL_DELETE: Final[str] = "acl:delete"
             ACL_SEARCH: Final[str] = "acl:search"
             ACL_COMPARE: Final[str] = "acl:compare"
-
             ACL_SUBJECT_USER_DN: Final[str] = "acl:subject:user_dn"
             ACL_SUBJECT_GROUP_DN: Final[str] = "acl:subject:group_dn"
             ACL_SUBJECT_SELF: Final[str] = "acl:subject:self"
             ACL_SUBJECT_ANONYMOUS: Final[str] = "acl:subject:anonymous"
             ACL_SUBJECT_ALL: Final[str] = "acl:subject:all"
-
             ACL_TARGET_ENTRY: Final[str] = "acl:target:entry"
             ACL_TARGET_ATTRS: Final[str] = "acl:target:attrs"
             ACL_TARGET_DN: Final[str] = "acl:target:dn"
-
             SCHEMA_ATTR_SYNTAX: Final[str] = "schema:attr:syntax"
             SCHEMA_ATTR_MATCHING: Final[str] = "schema:attr:matching"
             SCHEMA_ATTR_SINGLE_VALUE: Final[str] = "schema:attr:single_value"
             SCHEMA_OC_SUP: Final[str] = "schema:oc:sup"
             SCHEMA_OC_KIND: Final[str] = "schema:oc:kind"
-
             ENTRY_DN: Final[str] = "entry:dn"
             ENTRY_CHANGETYPE: Final[str] = "entry:changetype"
             ENTRY_CONTROLS: Final[str] = "entry:controls"
-
             ACL_SELF_WRITE: Final[str] = "acl:vendor:self_write"
-
             ACL_PROXY_AUTH: Final[str] = "acl:vendor:proxy_auth"
-
             ACL_BROWSE_PERMISSION: Final[str] = "acl:vendor:browse"
-
             ACL_AUTH_PERMISSION: Final[str] = "acl:vendor:auth"
-
             ACL_ALL_PERMISSIONS: Final[str] = "acl:vendor:all"
-
             ACL_NEGATIVE_PERMISSIONS: Final[str] = "acl:vendor:negative"
-
             ACL_DNATTR_SUBJECT: Final[str] = "acl:vendor:dnattr"
-
             ACL_GUIDATTR_SUBJECT: Final[str] = "acl:vendor:guidattr"
-
             ACL_BIND_IP: Final[str] = "acl:vendor:bind_ip"
-
             ACL_BIND_TIME: Final[str] = "acl:vendor:bind_time"
-
             ACL_BIND_AUTHMETHOD: Final[str] = "acl:vendor:bind_authmethod"
-
             ACL_BIND_SSF: Final[str] = "acl:vendor:bind_ssf"
-
             ACL_TARGET_FILTER: Final[str] = "acl:vendor:target_filter"
-
             SCHEMA_X_ORIGIN: Final[str] = "schema:vendor:x_origin"
-
             SCHEMA_X_SCHEMA_FILE: Final[str] = "schema:vendor:x_schema_file"
-
             SCHEMA_CUSTOM_SYNTAX: Final[str] = "schema:vendor:custom_syntax"
-
             ENTRY_OPERATIONAL_ATTRS: Final[str] = "entry:vendor:operational"
-
             ENTRY_VENDOR_CONTROLS: Final[str] = "entry:vendor:controls"
-
             RFC_FALLBACKS: Final[MappingProxyType[str, str | None]] = MappingProxyType({
                 ACL_SELF_WRITE: "write",
                 ACL_BROWSE_PERMISSION: "read,search",
@@ -562,7 +512,6 @@ class FlextLdifConstants(FlextConstants):
                 ACL_BIND_SSF: None,
                 ACL_TARGET_FILTER: None,
             })
-
             META_UNSUPPORTED_FEATURES: Final[str] = "_unsupported_features"
             META_FEATURE_SOURCE: Final[str] = "_feature_source_server"
             META_FEATURE_ORIGINAL_VALUE: Final[str] = "_feature_original_value"
@@ -576,38 +525,29 @@ class FlextLdifConstants(FlextConstants):
             MIN_WORKERS_FOR_PARALLEL: Final[int] = 2
             MAX_WORKERS_LIMIT: Final[int] = 16
             PERFORMANCE_MIN_WORKERS: Final[int] = 4
-
             MIN_CHUNK_SIZE: Final[int] = 100
             MAX_CHUNK_SIZE: Final[int] = 10000
             PERFORMANCE_MIN_CHUNK_SIZE: Final[int] = 1000
-
             HIGH_FAILURE_RATE_THRESHOLD: Final[float] = 50.0
-
             MIN_ENTRIES: Final[int] = 1000
             MAX_ENTRIES_ABSOLUTE: Final[int] = 10000000
-
             MIN_ANALYTICS_CACHE_SIZE: Final[int] = 100
             MAX_ANALYTICS_CACHE_SIZE: Final[int] = 10000
             MIN_SAMPLE_RATE: Final[float] = 0.0
             MAX_SAMPLE_RATE: Final[float] = 1.0
             MAX_ANALYTICS_ENTRIES_ABSOLUTE: Final[int] = 100000
-
             MIN_MEMORY_MB: Final[int] = 64
             MAX_MEMORY_MB: Final[int] = 8192
-
             ENCODING_CONFIDENCE_THRESHOLD: Final[float] = 0.7
-
             MIN_BATCH_SIZE: Final[int] = 1
             MAX_BATCH_SIZE: Final[int] = (
                 FlextConstants.Performance.BatchProcessing.MAX_ITEMS
             )
-
             PERFORMANCE_MEMORY_MB_THRESHOLD: Final[int] = 512
             DEBUG_MAX_WORKERS: Final[int] = 2
             SMALL_ENTRY_COUNT_THRESHOLD: Final[int] = 100
             MEDIUM_ENTRY_COUNT_THRESHOLD: Final[int] = 1000
             MIN_ATTRIBUTE_PARTS: Final[int] = 2
-
             ASCII_SPACE_CHAR: Final[int] = 32
             ASCII_TILDE_CHAR: Final[int] = 126
             ASCII_DEL_CHAR: Final[int] = 127
@@ -616,13 +556,10 @@ class FlextLdifConstants(FlextConstants):
             DN_LOG_PREVIEW_LENGTH: Final[int] = 80
             ACI_PREVIEW_LENGTH: Final[int] = 200
             ACI_LIST_PREVIEW_LIMIT: Final[int] = 3
-
             DEFAULT_SEARCH_TIME_LIMIT: Final[int] = 30
             DEFAULT_SEARCH_SIZE_LIMIT: Final[int] = 0
-
             LDIF_VERSION: Final[str] = "0.9.9"
             LDIF_VERSION_INFO: Final[tuple[int, int, int]] = (0, 9, 9)
-
             MAX_PATH_LENGTH_CHECK: Final[int] = 500
             MAX_LOGGED_ERRORS: Final[int] = 5
 
@@ -634,15 +571,12 @@ class FlextLdifConstants(FlextConstants):
             LDIF_STRICT_VALIDATION: Final[bool] = True
             LDIF_LINE_SEPARATOR: Final[str] = "\n"
             LDIF_VERSION_STRING: Final[str] = "version: 1"
-
             LDIF_DEFAULT_ENCODING: Final[str] = (
                 FlextConstants.Utilities.DEFAULT_ENCODING
             )
-
             LDIF_MAX_ENTRIES: Final[int] = 1000000
             ENABLE_PERFORMANCE_OPTIMIZATIONS: Final[bool] = True
             ENABLE_PARALLEL_PROCESSING: Final[bool] = True
-
             LDIF_ENABLE_ANALYTICS: Final[bool] = True
             LDIF_FAIL_ON_WARNINGS: Final[bool] = False
             LDIF_ANALYTICS_SAMPLE_RATE: Final[float] = 1.0
@@ -650,12 +584,9 @@ class FlextLdifConstants(FlextConstants):
             ANALYTICS_DETAIL_LEVEL_LOW: Final[str] = "low"
             ANALYTICS_DETAIL_LEVEL_MEDIUM: Final[str] = "medium"
             ANALYTICS_DETAIL_LEVEL_HIGH: Final[str] = "high"
-
             LDIF_SERVER_SPECIFICS: Final[bool] = True
             STRICT_RFC_COMPLIANCE: Final[bool] = True
-
             ERROR_RECOVERY_MODE_CONTINUE: Final[str] = "continue"
-
             DEBUG_MODE: Final[bool] = False
             VERBOSE_LOGGING: Final[bool] = False
 
@@ -675,25 +606,23 @@ class FlextLdifConstants(FlextConstants):
             """LDIF-specific validation rules and constraints."""
 
             MIN_DN_COMPONENTS: Final[int] = 1
-
             MAX_DN_LENGTH: Final[int] = 2048
-
             MAX_ATTRIBUTES_PER_ENTRY: Final[int] = 1000
             MAX_VALUES_PER_ATTRIBUTE: Final[int] = 100
             MAX_ATTRIBUTE_VALUE_LENGTH: Final[int] = 10000
-
             MIN_ATTRIBUTE_NAME_LENGTH: Final[int] = 1
             MAX_ATTRIBUTE_NAME_LENGTH: Final[int] = 127
-            ATTRIBUTE_NAME_PATTERN: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*$"
-
+            ATTRIBUTE_NAME_PATTERN: Final[str] = "^[a-zA-Z][a-zA-Z0-9-]*$"
             MIN_URL_LENGTH: Final[int] = 1
             MAX_URL_LENGTH: Final[int] = 2048
-            URL_PATTERN: Final[str] = r"^(https?|ldap)://[^\s/$.?#].[^\s]*$"
-
+            URL_PATTERN: Final[str] = "^(https?|ldap)://[^\\s/$.?#].[^\\s]*$"
             MIN_ENCODING_LENGTH: Final[int] = 1
             MAX_ENCODING_LENGTH: Final[int] = 50
-
             MIN_LDIF_LINE_PARTS: Final[int] = 2
+            RFC4512_DESCRIPTOR_PATTERN: Final[str] = "^[A-Za-z][A-Za-z0-9-]{0,126}$"
+            RFC4514_DN_COMPONENT_PATTERN: Final[str] = (
+                "^(?:[A-Za-z][A-Za-z0-9-]{0,126})=(?:[^\\\\,]|\\\\.)*$"
+            )
 
         class ObjectClasses:
             """LDAP object class name constants (RFC 4512 standard classes)."""
@@ -706,7 +635,6 @@ class FlextLdifConstants(FlextConstants):
             POSIX_GROUP: Final[str] = "posixGroup"
             ORGANIZATION: Final[str] = "organization"
             DOMAIN: Final[str] = "domain"
-
             COUNTRY: Final[str] = "country"
             LOCALITY: Final[str] = "locality"
 
@@ -718,13 +646,10 @@ class FlextLdifConstants(FlextConstants):
             CERTIFICATE_REVOCATION_LIST: Final[str] = "certificaterevocationlist"
             AUTHORITY_REVOCATION_LIST: Final[str] = "authorityrevocationlist"
             CROSS_CERTIFICATE_PAIR: Final[str] = "crosscertificatepair"
-
             PHOTO: Final[str] = "photo"
             JPEG_PHOTO: Final[str] = "jpegphoto"
-
             USER_PKCS12: Final[str] = "userpkcs12"
             USER_SMIME_CERTIFICATE: Final[str] = "usersmimecertificate"
-
             THUMBNAIL_PHOTO: Final[str] = "thumbnailphoto"
             THUMBNAIL_LOGO: Final[str] = "thumbnaillogo"
             OBJECT_GUID: Final[str] = "objectguid"
@@ -776,19 +701,16 @@ class FlextLdifConstants(FlextConstants):
                 "novell_edirectory",
                 "ibm_tivoli",
             ])
-
             NAMING_ATTR_REQUIRED_SERVERS: ClassVar[frozenset[str]] = frozenset([
                 "oid",
                 "oud",
                 "ad",
             ])
-
             BINARY_OPTION_REQUIRED_SERVERS: ClassVar[frozenset[str]] = frozenset([
                 "openldap",
                 "oid",
                 "oud",
             ])
-
             SCHEMA_ENTRY_PATTERNS: ClassVar[Mapping[str, Sequence[str]]] = (
                 MappingProxyType({
                     "rfc": ("cn=schema",),
@@ -801,84 +723,54 @@ class FlextLdifConstants(FlextConstants):
                     "apache_directory": ("ou=schema",),
                     "novell_edirectory": ("cn=schema",),
                     "ibm_tivoli": ("cn=schema",),
-                    "relaxed": (
-                        "cn=schema",
-                        "cn=subschema",
-                        "ou=schema",
-                    ),
+                    "relaxed": ("cn=schema", "cn=subschema", "ou=schema"),
                 })
             )
-
             SERVER_BINARY_ATTRIBUTES: ClassVar[Mapping[str, frozenset[str]]] = (
                 MappingProxyType({
-                    "oid": frozenset(
-                        [
-                            "orclguid",
-                            "userpassword",
-                        ],
-                    ),
-                    "oud": frozenset(
-                        [
-                            "ds-sync-hist",
-                            "ds-sync-state",
-                        ],
-                    ),
-                    "ad": frozenset(
-                        [
-                            "objectguid",
-                            "objectsid",
-                            "msexchmailboxguid",
-                            "msexchmailboxsecuritydescriptor",
-                        ],
-                    ),
-                    "openldap": frozenset(
-                        [
-                            "entryuuid",
-                        ],
-                    ),
+                    "oid": frozenset(["orclguid", "userpassword"]),
+                    "oud": frozenset(["ds-sync-hist", "ds-sync-state"]),
+                    "ad": frozenset([
+                        "objectguid",
+                        "objectsid",
+                        "msexchmailboxguid",
+                        "msexchmailboxsecuritydescriptor",
+                    ]),
+                    "openldap": frozenset(["entryuuid"]),
                 })
             )
-
             OPERATIONAL_ATTRIBUTES: ClassVar[Mapping[str, frozenset[str]]] = (
                 MappingProxyType({
-                    "oid": frozenset(
-                        [
-                            "orclguid",
-                            "createtimestamp",
-                            "modifytimestamp",
-                            "creatorsname",
-                            "modifiersname",
-                        ],
-                    ),
-                    "oud": frozenset(
-                        [
-                            "entryuuid",
-                            "ds-sync-generation-id",
-                            "ds-sync-state",
-                            "createtimestamp",
-                            "modifytimestamp",
-                        ],
-                    ),
-                    "ad": frozenset(
-                        [
-                            "objectguid",
-                            "objectsid",
-                            "whencreated",
-                            "whenchanged",
-                            "usnchanged",
-                            "usncreated",
-                        ],
-                    ),
-                    "openldap": frozenset(
-                        [
-                            "entryuuid",
-                            "entrycsn",
-                            "createtimestamp",
-                            "modifytimestamp",
-                            "creatorsname",
-                            "modifiersname",
-                        ],
-                    ),
+                    "oid": frozenset([
+                        "orclguid",
+                        "createtimestamp",
+                        "modifytimestamp",
+                        "creatorsname",
+                        "modifiersname",
+                    ]),
+                    "oud": frozenset([
+                        "entryuuid",
+                        "ds-sync-generation-id",
+                        "ds-sync-state",
+                        "createtimestamp",
+                        "modifytimestamp",
+                    ]),
+                    "ad": frozenset([
+                        "objectguid",
+                        "objectsid",
+                        "whencreated",
+                        "whenchanged",
+                        "usnchanged",
+                        "usncreated",
+                    ]),
+                    "openldap": frozenset([
+                        "entryuuid",
+                        "entrycsn",
+                        "createtimestamp",
+                        "modifytimestamp",
+                        "creatorsname",
+                        "modifiersname",
+                    ]),
                 })
             )
 
@@ -925,14 +817,12 @@ class FlextLdifConstants(FlextConstants):
             BASE64_DECODED = "base64_decoded"
             TRAILING_SPACE_REMOVED = "trailing_space_removed"
             ESCAPE_NORMALIZED = "escape_normalized"
-
             BOOLEAN_CONVERTED = "boolean_converted"
             ACL_CONVERTED = "acl_converted"
             ATTRIBUTE_REMOVED = "attribute_removed"
             ATTRIBUTE_ADDED = "attribute_added"
             ATTRIBUTE_RENAMED = "attribute_renamed"
             MODIFIED = "modified"
-
             MATCHING_RULE_REPLACED = "matching_rule_replaced"
             SYNTAX_OID_REPLACED = "syntax_oid_replaced"
             OBJECTCLASS_FILTERED = "objectclass_filtered"
@@ -984,15 +874,10 @@ class FlextLdifConstants(FlextConstants):
             """Marker status for attribute processing in metadata."""
 
             NORMAL = "normal"
-
             MARKED_FOR_REMOVAL = "marked_for_removal"
-
             FILTERED = "filtered"
-
             OPERATIONAL = "operational"
-
             HIDDEN = "hidden"
-
             RENAMED = "renamed"
 
         class ServerTypes(StrEnum):
@@ -1021,9 +906,7 @@ class FlextLdifConstants(FlextConstants):
                 "analytics",
                 "writing",
             )
-
             HEALTH_STATUS: Final[tuple[str, ...]] = ("healthy", "degraded", "unhealthy")
-
             ENTRY_TYPES: Final[tuple[str, ...]] = (
                 "person",
                 "group",
@@ -1031,14 +914,12 @@ class FlextLdifConstants(FlextConstants):
                 "domain",
                 "other",
             )
-
             MODIFICATION_TYPES: Final[tuple[str, ...]] = (
                 "add",
                 "modify",
                 "delete",
                 "modrdn",
             )
-
             ENCODING_TYPES: Final[tuple[str, ...]] = (
                 "utf-8",
                 "utf-16-le",
@@ -1049,7 +930,6 @@ class FlextLdifConstants(FlextConstants):
                 "cp1252",
                 "iso-8859-1",
             )
-
             SCOPE: Final[tuple[str, ...]] = (
                 "base",
                 "one",
@@ -1057,21 +937,15 @@ class FlextLdifConstants(FlextConstants):
                 "sub",
                 "subtree",
             )
-
             VALIDATION_LEVELS: Final[tuple[str, ...]] = (
                 "strict",
                 "moderate",
                 "lenient",
             )
-
             ANALYTICS_DETAIL_LEVELS: Final[tuple[str, ...]] = ("low", "medium", "high")
-
             DETECTION_MODES: Final[tuple[str, ...]] = ("auto", "manual", "disabled")
-
             ERROR_RECOVERY_MODES: Final[tuple[str, ...]] = ("continue", "stop", "skip")
-
             ATTRIBUTE_OUTPUT_MODES: Final[tuple[str, ...]] = ("show", "hide", "comment")
-
             ATTRIBUTE_MARKER_STATUSES: Final[tuple[str, ...]] = (
                 "normal",
                 "marked_for_removal",
@@ -1080,7 +954,6 @@ class FlextLdifConstants(FlextConstants):
                 "hidden",
                 "renamed",
             )
-
             PROJECT_TYPES: Final[tuple[str, ...]] = (
                 "library",
                 "application",
@@ -1090,13 +963,11 @@ class FlextLdifConstants(FlextConstants):
                 "validation",
                 "analysis",
             )
-
             HEALTH_STATUSES: Final[tuple[str, ...]] = (
                 "healthy",
                 "degraded",
                 "unhealthy",
             )
-
             LDIF_PROJECT_TYPES: Final[tuple[str, ...]] = (
                 "library",
                 "application",
@@ -1121,7 +992,6 @@ class FlextLdifConstants(FlextConstants):
                 "ldif-normalizer",
                 "ldap-directory-tool",
             )
-
             type ServerTypeLiteral = Literal[
                 "oid",
                 "oud",
@@ -1137,7 +1007,6 @@ class FlextLdifConstants(FlextConstants):
                 "ibm_tivoli",
                 "generic",
             ]
-
             type TransformationTypeLiteral = Literal[
                 "dn_cleaned",
                 "dn_normalized",
@@ -1160,7 +1029,6 @@ class FlextLdifConstants(FlextConstants):
                 "renamed",
                 "basedn_transform",
             ]
-
             type EncodingLiteral = Literal[
                 "utf-8",
                 "utf-16-le",
@@ -1171,17 +1039,10 @@ class FlextLdifConstants(FlextConstants):
                 "cp1252",
                 "iso-8859-1",
             ]
-
             type ChangeTypeLiteral = Literal[
-                "add",
-                "delete",
-                "modify",
-                "modrdn",
-                "moddn",
+                "add", "delete", "modify", "modrdn", "moddn"
             ]
-
             type ModifyOperationLiteral = Literal["add", "delete", "replace"]
-
             type AclSubjectTypeLiteral = Literal[
                 "user",
                 "group",
@@ -1194,7 +1055,6 @@ class FlextLdifConstants(FlextConstants):
                 "sddl",
                 "dn",
             ]
-
             type AttributeMarkerStatusLiteral = Literal[
                 "normal",
                 "marked_for_removal",
@@ -1203,23 +1063,12 @@ class FlextLdifConstants(FlextConstants):
                 "hidden",
                 "renamed",
             ]
-
             type AnalyticsDetailLevelLiteral = Literal["low", "medium", "high"]
-
             type CategoryLiteral = Literal[
-                "all",
-                "users",
-                "groups",
-                "hierarchy",
-                "schema",
-                "acl",
-                "rejected",
+                "all", "users", "groups", "hierarchy", "schema", "acl", "rejected"
             ]
-
             type DetectionModeLiteral = Literal["auto", "manual", "disabled"]
-
             type ErrorRecoveryModeLiteral = Literal["continue", "stop", "skip"]
-
             type ValidationLevelLiteral = Literal["strict", "moderate", "lenient"]
 
         class LdapServers:
@@ -1242,18 +1091,15 @@ class FlextLdifConstants(FlextConstants):
 
             LINE_LENGTH_LIMIT: Final[int] = 76
             LINE_WITH_NEWLINE: Final[int] = LINE_LENGTH_LIMIT + 1
-
             MODERATE: Final[str] = "moderate"
 
         class Acl:
             """ACL-related constants - RFC 4876 baseline ONLY."""
 
             SPECIAL_MATCH_MIN_SIZE: Final[int] = 2
-
             GRANT: Final[str] = "grant"
             DENY: Final[str] = "deny"
             ALLOW: Final[str] = "allow"
-
             READ: Final[str] = "read"
             WRITE: Final[str] = "write"
             SEARCH: Final[str] = "search"
@@ -1261,7 +1107,6 @@ class FlextLdifConstants(FlextConstants):
             ADD: Final[str] = "add"
             DELETE: Final[str] = "delete"
             MODIFY: Final[str] = "modify"
-
             SELF_WRITE: Final[str] = "self_write"
             PROXY: Final[str] = "proxy"
 
@@ -1281,10 +1126,8 @@ class FlextLdifConstants(FlextConstants):
             ATTRIBUTE: Final[str] = "attribute"
             SYNTAX: Final[str] = "syntax"
             MATCHINGRULE: Final[str] = "matchingrule"
-
             ACTIVE: Final[str] = "active"
             DEPRECATED: Final[str] = "deprecated"
-
             STRUCTURAL: Final[str] = "STRUCTURAL"
             AUXILIARY: Final[str] = "AUXILIARY"
             ABSTRACT: Final[str] = "ABSTRACT"
@@ -1303,10 +1146,8 @@ class FlextLdifConstants(FlextConstants):
             DIT_STRUCTURE_RULES: Final[str] = "dITStructureRules"
             NAME_FORMS: Final[str] = "nameForms"
             LDAP_SYNTAXES: Final[str] = "ldapSyntaxes"
-
             ATTRIBUTE_TYPES_LOWER: Final[str] = "attributetypes"
             OBJECT_CLASSES_LOWER: Final[str] = "objectclasses"
-
             OBJECT_CLASS_CAMEL: Final[str] = "objectClass"
 
         class AclAttributes:
@@ -1314,12 +1155,7 @@ class FlextLdifConstants(FlextConstants):
 
             ACLRIGHTS: Final[str] = "aclrights"
             ACLENTRY: Final[str] = "aclentry"
-
-            DEFAULT_ACL_ATTRIBUTES: Final[list[str]] = [
-                "acl",
-                "aci",
-                "olcAccess",
-            ]
+            DEFAULT_ACL_ATTRIBUTES: Final[list[str]] = ["acl", "aci", "olcAccess"]
 
         class DnValuedAttributes:
             """Attributes that contain Distinguished Names as values."""
@@ -1331,13 +1167,10 @@ class FlextLdifConstants(FlextConstants):
             MANAGER: Final[str] = "manager"
             SECRETARY: Final[str] = "secretary"
             SEES_ALSO: Final[str] = "seeAlso"
-
             PARENT: Final[str] = "parent"
             REFERS_TO: Final[str] = "refersTo"
-
             MEMBER_OF: Final[str] = "memberOf"
             GROUPS: Final[str] = "groups"
-
             AUTHORIZED_TO: Final[str] = "authorizedTo"
             HAS_SUBORDINATES: Final[str] = "hasSubordinates"
             SUBORDINATE_DN: Final[str] = "subordinateDn"
@@ -1382,7 +1215,6 @@ class FlextLdifConstants(FlextConstants):
 
             TRUE_RFC: Final[str] = "TRUE"
             FALSE_RFC: Final[str] = "FALSE"
-
             TRUE_LOWER: Final[str] = "true"
             FALSE_LOWER: Final[str] = "false"
 
@@ -1391,13 +1223,11 @@ class FlextLdifConstants(FlextConstants):
 
             PROXY_PERMISSIONS: Final[str] = "proxy_permissions"
             SELF_WRITE_TO_WRITE: Final[str] = "self_write_to_write"
-
             SCHEMA_ORIGINAL_FORMAT: Final[str] = "schema_original_format"
             SCHEMA_ORIGINAL_STRING_COMPLETE: Final[str] = (
                 "schema_original_string_complete"
             )
             SCHEMA_SOURCE_SERVER: Final[str] = "schema_source_server"
-
             SCHEMA_SYNTAX_QUOTES: Final[str] = "schema_syntax_quotes"
             SCHEMA_SYNTAX_SPACING: Final[str] = "schema_syntax_spacing"
             SCHEMA_SYNTAX_SPACING_BEFORE: Final[str] = "schema_syntax_spacing_before"
@@ -1419,12 +1249,10 @@ class FlextLdifConstants(FlextConstants):
             SCHEMA_TARGET_MATCHING_RULES: Final[str] = "schema_target_matching_rules"
             SCHEMA_SOURCE_ATTRIBUTE_NAME: Final[str] = "schema_source_attribute_name"
             SCHEMA_TARGET_ATTRIBUTE_NAME: Final[str] = "schema_target_attribute_name"
-
             SYNTAX_OID_VALID: Final[str] = "syntax_oid_valid"
             SYNTAX_VALIDATION_ERROR: Final[str] = "syntax_validation_error"
             X_ORIGIN: Final[str] = "x_origin"
             COLLECTIVE: Final[str] = "collective"
-
             ENTRY_ORIGINAL_FORMAT: Final[str] = "entry_original_format"
             ENTRY_SOURCE_SERVER: Final[str] = "entry_source_server"
             ENTRY_SOURCE_ATTRIBUTES: Final[str] = "entry_source_attributes"
@@ -1439,13 +1267,11 @@ class FlextLdifConstants(FlextConstants):
             )
             ENTRY_SOURCE_DN_CASE: Final[str] = "entry_source_dn_case"
             ENTRY_TARGET_DN_CASE: Final[str] = "entry_target_dn_case"
-
             BASE64_ATTRS: Final[str] = "_base64_attrs"
             MODIFY_ADD_ATTRIBUTETYPES: Final[str] = "_modify_add_attributetypes"
             MODIFY_ADD_OBJECTCLASSES: Final[str] = "_modify_add_objectclasses"
             SKIPPED_ATTRIBUTES: Final[str] = "_skipped_attributes"
             CONVERTED_ATTRIBUTES: Final[str] = "converted_attributes"
-
             ACL_ORIGINAL_FORMAT: Final[str] = "original_format"
             ACL_SOURCE_SERVER: Final[str] = "source_server"
             ACL_SOURCE_SUBJECT_TYPE: Final[str] = "source_subject_type"
@@ -1455,7 +1281,6 @@ class FlextLdifConstants(FlextConstants):
             ACL_TARGET_PERMISSIONS: Final[str] = "target_permissions"
             ACL_ACTION_TYPE: Final[str] = "action_type"
             ACL_NEGATIVE_PERMISSIONS: Final[str] = "negative_permissions"
-
             ACL_FILTER: Final[str] = "filter"
             ACL_CONSTRAINT: Final[str] = "added_object_constraint"
             ACL_BINDMODE: Final[str] = "bindmode"
@@ -1464,23 +1289,18 @@ class FlextLdifConstants(FlextConstants):
             ACL_BIND_IP_FILTER: Final[str] = "bind_ip_filter"
             ACL_BIND_IP: Final[str] = ACL_BIND_IP_FILTER
             ACL_CONSTRAIN_TO_ADDED_OBJECT: Final[str] = "constrain_to_added_object"
-
             ACL_DN_ATTR: Final[str] = "dn_attr"
             ACL_GUID_ATTR: Final[str] = "guid_attr"
             ACL_GROUP_ATTR: Final[str] = "group_attr"
-
             ACL_BROWSE_EXPANDED: Final[str] = "browse_expanded"
             ACL_SELFWRITE_NORMALIZED: Final[str] = "selfwrite_normalized"
-
             ACL_TARGETSCOPE: Final[str] = "targetscope"
             ACL_VERSION: Final[str] = "version"
             ACL_DN_SPACES: Final[str] = "dn_spaces"
             ACL_LINE_BREAKS: Final[str] = "line_breaks"
             ACL_IS_MULTILINE: Final[str] = "is_multiline"
-
             ACL_NUMBERING: Final[str] = "numbering"
             ACL_SSFS: Final[str] = "ssfs"
-
             ACL_TARGETATTR_FILTERS: Final[str] = "targattrfilters"
             ACL_TARGET_CONTROL: Final[str] = "targetcontrol"
             ACL_EXTOP: Final[str] = "extop"
@@ -1489,19 +1309,14 @@ class FlextLdifConstants(FlextConstants):
             ACL_BIND_TIMEOFDAY: Final[str] = "bind_timeofday"
             ACL_AUTHMETHOD: Final[str] = "authmethod"
             ACL_SSF: Final[str] = "ssf"
-
             ACL_NAME_SANITIZED: Final[str] = "name_sanitized"
             ACL_ORIGINAL_NAME_RAW: Final[str] = "original_name_raw"
-
             ACL_SDDL: Final[str] = "sddl"
             ACL_BINARY_SD: Final[str] = "binary_sd"
-
             CONVERTED_FROM_SERVER: Final[str] = "converted_from_server"
             CONVERSION_COMMENTS: Final[str] = "conversion_comments"
-
             ORIGINAL_FORMAT: Final[str] = "original_format"
             ORIGINAL_SOURCE: Final[str] = "original_source"
-
             VERSION: Final[str] = "version"
             LINE_BREAKS: Final[str] = "line_breaks"
             IS_MULTILINE: Final[str] = "is_multiline"
@@ -1509,7 +1324,6 @@ class FlextLdifConstants(FlextConstants):
             TARGETSCOPE: Final[str] = "targetscope"
             ATTRIBUTE_ORDER: Final[str] = "attribute_order"
             SUBJECT_BINDING: Final[str] = "subject_binding"
-
             SORTING_NEW_ATTRIBUTE_ORDER: Final[str] = "sorting_new_attribute_order"
             SORTING_STRATEGY: Final[str] = "sorting_strategy"
             SORTING_CUSTOM_ORDER: Final[str] = "sorting_custom_order"
@@ -1517,17 +1331,14 @@ class FlextLdifConstants(FlextConstants):
             SORTING_REMAINING_ATTRIBUTES: Final[str] = "sorting_remaining_attributes"
             SORTING_ACL_ATTRIBUTES: Final[str] = "sorting_acl_attributes"
             SORTING_ACL_SORTED: Final[str] = "sorting_acl_sorted"
-
             PARSED_TIMESTAMP: Final[str] = "parsed_timestamp"
             SOURCE_FILE: Final[str] = "source_file"
             HIDDEN_ATTRIBUTES: Final[str] = "hidden_attributes"
-
             METADATA: Final[str] = "_metadata"
             ACL_ATTRIBUTES: Final[str] = "_acl_attributes"
             HAS_SYNTAX_EXTENSIONS: Final[str] = "_has_syntax_extensions"
             REQUIRES_RFC_TRANSLATION: Final[str] = "_requires_rfc_translation"
             IS_RELAXED_PARSED: Final[str] = "_is_relaxed_parsed"
-
             OID_SUBJECT_TYPE: Final[str] = "oid_subject_type"
             OUD_SUBJECT_TYPE: Final[str] = "oud_subject_type"
             RFC_SUBJECT_TYPE: Final[str] = "rfc_subject_type"
@@ -1537,7 +1348,6 @@ class FlextLdifConstants(FlextConstants):
             REMOVED_ATTRIBUTES_WITH_VALUES: Final[str] = (
                 "removed_attributes_with_values"
             )
-
             MINIMAL_DIFFERENCES_DN: Final[str] = "minimal_differences_dn"
             MINIMAL_DIFFERENCES_ATTRIBUTES: Final[str] = (
                 "minimal_differences_attributes"
@@ -1547,9 +1357,7 @@ class FlextLdifConstants(FlextConstants):
             ORIGINAL_ATTRIBUTES_COMPLETE: Final[str] = "original_attributes_complete"
             ORIGINAL_DN_LINE_COMPLETE: Final[str] = "original_dn_line_complete"
             ORIGINAL_ATTR_LINES_COMPLETE: Final[str] = "original_attr_lines_complete"
-
             WRITE_OPTIONS: Final[str] = "_write_options"
-
             CONVERSION_BOOLEAN_CONVERSIONS: Final[str] = "boolean_conversions"
             CONVERSION_ATTRIBUTE_NAME_CONVERSIONS: Final[str] = (
                 "attribute_name_conversions"
@@ -1559,7 +1367,6 @@ class FlextLdifConstants(FlextConstants):
             )
             CONVERSION_ORIGINAL_VALUE: Final[str] = "original"
             CONVERSION_CONVERTED_VALUE: Final[str] = "converted"
-
             LEGACY_OID_BOOLEAN_CONVERSIONS_KEY: Final[str] = "oid_boolean_conversions"
 
         class DnPatterns:
@@ -1569,31 +1376,23 @@ class FlextLdifConstants(FlextConstants):
             CN_SUBSCHEMA: Final[str] = "cn=subschema"
             CN_SUBSCHEMA_SUBENTRY: Final[str] = "cn=subschemasubentry"
             CN_SCHEMA_CN_CONFIG: Final[str] = "cn=schema,cn=configuration"
-
             CN_SUBSCHEMASUBENTRY: Final[str] = "cn=subschemasubentry"
-
             CN_SCHEMA_CN_CONFIGURATION: Final[str] = "cn=schema,cn=configuration"
-
             CN_CONFIG: Final[str] = "cn=config"
-
             DN_EQUALS: Final[str] = "="
             DN_COMMA: Final[str] = ","
             DN_PLUS: Final[str] = "+"
-
-            DN_SPACES_AROUND_EQUALS: Final[str] = r"\s*=\s*"
-            DN_TRAILING_BACKSLASH_SPACE: Final[str] = r"\\\s+,"
-            DN_SPACES_AROUND_COMMA: Final[str] = r",\s+"
-            DN_BACKSLASH_SPACE: Final[str] = r"\\\s+"
-            DN_UNNECESSARY_ESCAPES: Final[str] = r'\\([^,+"\<>;\\# ])'
-            DN_MULTIPLE_SPACES: Final[str] = r"\s+"
-
-            ACI_LDAP_URL_PATTERN: Final[str] = r"ldap:///([^\"]+?)"
+            DN_SPACES_AROUND_EQUALS: Final[str] = "\\s*=\\s*"
+            DN_TRAILING_BACKSLASH_SPACE: Final[str] = "\\\\\\s+,"
+            DN_SPACES_AROUND_COMMA: Final[str] = ",\\s+"
+            DN_BACKSLASH_SPACE: Final[str] = "\\\\\\s+"
+            DN_UNNECESSARY_ESCAPES: Final[str] = '\\\\([^,+"\\<>;\\\\# ])'
+            DN_MULTIPLE_SPACES: Final[str] = "\\s+"
+            ACI_LDAP_URL_PATTERN: Final[str] = 'ldap:///([^\\"]+?)'
             ACI_QUOTED_DN_PATTERN: Final[str] = (
-                r'"((?:[a-zA-Z]+=[^,\";\)]+)(?:,[a-zA-Z]+=[^,\";\)]+)*)"'
+                '"((?:[a-zA-Z]+=[^,\\";\\)]+)(?:,[a-zA-Z]+=[^,\\";\\)]+)*)"'
             )
-
-            SCHEMA_OID_EXTRACTION: Final[str] = r"\(\s*([\d.]+)"
-
+            SCHEMA_OID_EXTRACTION: Final[str] = "\\(\\s*([\\d.]+)"
             CN_PREFIX: Final[str] = "cn="
             OU_PREFIX: Final[str] = "ou="
             DC_PREFIX: Final[str] = "dc="
@@ -1608,14 +1407,13 @@ class FlextLdifConstants(FlextConstants):
 
             RFC_GENERIC: Final[str] = "rfc_generic"
             ACI: Final[str] = "aci"
-
             DEFAULT_ACL_FORMAT: Final[str] = ACI
             DEFAULT_ACL_ATTRIBUTE_NAME: Final[str] = ACI
 
         class ServerTypesMappings:
             """Server type mappings and aliases (separate from enum to avoid conflicts)."""
 
-            _LONG_NAMES_DICT: ClassVar[dict[str, str]] = {
+            _LONG_NAMES_DICT: ClassVar[Mapping[str, str]] = {
                 "oid": "oid",
                 "oud": "oud",
                 "openldap": "openldap",
@@ -1631,13 +1429,11 @@ class FlextLdifConstants(FlextConstants):
                 "ibm_tivoli": "ibm_tivoli",
             }
             LONG_NAMES: Final[Mapping[str, str]] = MappingProxyType(_LONG_NAMES_DICT)
-
-            _FROM_LONG_DICT: ClassVar[dict[str, str]] = {
+            _FROM_LONG_DICT: ClassVar[Mapping[str, str]] = {
                 v: k for k, v in _LONG_NAMES_DICT.items()
             }
             FROM_LONG: Final[Mapping[str, str]] = MappingProxyType(_FROM_LONG_DICT)
-
-            _ALIASES_DICT: ClassVar[dict[str, str]] = {
+            _ALIASES_DICT: ClassVar[Mapping[str, str]] = {
                 "ad": "ad",
                 "389": "ds389",
                 "389ds": "ds389",
@@ -1662,7 +1458,6 @@ class FlextLdifConstants(FlextConstants):
                 "EXTENDED": "EXTENDED",
                 "CUSTOM": "CUSTOM",
             })
-
             SERVER_TYPE_VALIDATION_MAP: Final[Mapping[str, str]] = MappingProxyType({
                 "oid": "oid",
                 "oud": "oud",
@@ -1760,82 +1555,73 @@ class FlextLdifConstants(FlextConstants):
         class LdifPatterns:
             """Regex pattern constants for LDIF processing."""
 
-            XML_ENCODING: Final[str] = r'<\?xml[^>]*encoding=["\']([^"\']+)["\']'
-            HTML_CHARSET: Final[str] = r'<meta[^>]*charset=["\']([^"\']+)["\']'
-            PYTHON_CODING: Final[str] = r"#.*-\*-.*coding:\s*([^\s;]+)"
-            LDIF_ENCODING: Final[str] = r"#\s*encoding:\s*([^\s\n]+)"
-
-            DN_COMPONENT: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\,]|\\.)*$"
-            DN_SEPARATOR: Final[str] = r"(?<!\\),"
-
-            LDAP_FILTER: Final[str] = r"^\(.*\)$"
-
-            OBJECTCLASS_NAME: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*$"
-
-            ATTRIBUTE_NAME: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*$"
-
+            XML_ENCODING: Final[str] = "<\\?xml[^>]*encoding=[\"\\']([^\"\\']+)[\"\\']"
+            HTML_CHARSET: Final[str] = "<meta[^>]*charset=[\"\\']([^\"\\']+)[\"\\']"
+            PYTHON_CODING: Final[str] = "#.*-\\*-.*coding:\\s*([^\\s;]+)"
+            LDIF_ENCODING: Final[str] = "#\\s*encoding:\\s*([^\\s\\n]+)"
+            DN_COMPONENT: Final[str] = "^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\\\,]|\\\\.)*$"
+            DN_SEPARATOR: Final[str] = "(?<!\\\\),"
+            LDAP_FILTER: Final[str] = "^\\(.*\\)$"
+            OBJECTCLASS_NAME: Final[str] = "^[a-zA-Z][a-zA-Z0-9-]*$"
+            ATTRIBUTE_NAME: Final[str] = "^[a-zA-Z][a-zA-Z0-9-]*$"
             MAX_ATTRIBUTE_NAME_LENGTH: Final[int] = 127
-
-            ATTRIBUTE_OPTION: Final[str] = r";[a-zA-Z][a-zA-Z0-9-_]*"
-
-            OID_NUMERIC: Final[str] = r"^\d+(\.\d+)*$"
-            OID_DESCRIPTOR: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*$"
-
-            SCHEMA_OID: Final[str] = r"^\s*\(\s*([\d.]+)"
-            SCHEMA_OID_EXTRACTION: Final[str] = r"\(\s*([\d.]+)"
-
-            SCHEMA_OID_EXTRACTION_START: Final[str] = r"^\s*\(\s*([0-9.]+)"
-            SCHEMA_NAME: Final[str] = r"(?i)NAME\s+\(?\s*'([^']+)'"
-            SCHEMA_DESC: Final[str] = r"DESC\s+'([^']+)'"
-            SCHEMA_SYNTAX: Final[str] = r"SYNTAX\s+([\d.]+)"
-            SCHEMA_EQUALITY: Final[str] = r"EQUALITY\s+([^\s)]+)"
-            SCHEMA_SUBSTR: Final[str] = r"SUBSTR\s+([^\s)]+)"
-            SCHEMA_ORDERING: Final[str] = r"ORDERING\s+([^\s)]+)"
-            SCHEMA_SUP: Final[str] = r"SUP\s+(\w+)"
-            SCHEMA_USAGE: Final[str] = r"USAGE\s+(\w+)"
-            SCHEMA_X_ORIGIN: Final[str] = r"X-ORIGIN\s+'([^']+)'"
+            ATTRIBUTE_OPTION: Final[str] = ";[a-zA-Z][a-zA-Z0-9-_]*"
+            OID_NUMERIC: Final[str] = "^\\d+(\\.\\d+)*$"
+            OID_DESCRIPTOR: Final[str] = "^[a-zA-Z][a-zA-Z0-9-]*$"
+            SCHEMA_OID: Final[str] = "^\\s*\\(\\s*([\\d.]+)"
+            SCHEMA_OID_EXTRACTION: Final[str] = "\\(\\s*([\\d.]+)"
+            SCHEMA_OID_EXTRACTION_START: Final[str] = "^\\s*\\(\\s*([0-9.]+)"
+            SCHEMA_NAME: Final[str] = "(?i)NAME\\s+\\(?\\s*'([^']+)'"
+            SCHEMA_DESC: Final[str] = "DESC\\s+'([^']+)'"
+            SCHEMA_SYNTAX: Final[str] = "SYNTAX\\s+([\\d.]+)"
+            SCHEMA_EQUALITY: Final[str] = "EQUALITY\\s+([^\\s)]+)"
+            SCHEMA_SUBSTR: Final[str] = "SUBSTR\\s+([^\\s)]+)"
+            SCHEMA_ORDERING: Final[str] = "ORDERING\\s+([^\\s)]+)"
+            SCHEMA_SUP: Final[str] = "SUP\\s+(\\w+)"
+            SCHEMA_USAGE: Final[str] = "USAGE\\s+(\\w+)"
+            SCHEMA_X_ORIGIN: Final[str] = "X-ORIGIN\\s+'([^']+)'"
             SCHEMA_SYNTAX_LENGTH: Final[str] = (
-                r"SYNTAX\s+(?:')?([0-9.]+)(?:')?(?:\{(\d+)\})?"
+                "SYNTAX\\s+(?:')?([0-9.]+)(?:')?(?:\\{(\\d+)\\})?"
             )
-            SCHEMA_SINGLE_VALUE: Final[str] = r"\bSINGLE-VALUE\b"
-            SCHEMA_COLLECTIVE: Final[str] = r"\bCOLLECTIVE\b"
-            SCHEMA_NO_USER_MODIFICATION: Final[str] = r"\bNO-USER-MODIFICATION\b"
-            SCHEMA_OBSOLETE: Final[str] = r"\bOBSOLETE\b"
-
-            SCHEMA_OBJECTCLASS_KIND: Final[str] = r"\b(ABSTRACT|STRUCTURAL|AUXILIARY)\b"
-            SCHEMA_OBJECTCLASS_SUP: Final[str] = r"SUP\s+(?:\(\s*([^)]+)\s*\)|(\w+))"
-            SCHEMA_OBJECTCLASS_MUST: Final[str] = r"MUST\s+(?:\(\s*([^)]+)\s*\)|(\w+))"
-            SCHEMA_OBJECTCLASS_MAY: Final[str] = r"MAY\s+(?:\(\s*([^)]+)\s*\)|(\w+))"
+            SCHEMA_SINGLE_VALUE: Final[str] = "\\bSINGLE-VALUE\\b"
+            SCHEMA_COLLECTIVE: Final[str] = "\\bCOLLECTIVE\\b"
+            SCHEMA_NO_USER_MODIFICATION: Final[str] = "\\bNO-USER-MODIFICATION\\b"
+            SCHEMA_OBSOLETE: Final[str] = "\\bOBSOLETE\\b"
+            SCHEMA_OBJECTCLASS_KIND: Final[str] = (
+                "\\b(ABSTRACT|STRUCTURAL|AUXILIARY)\\b"
+            )
+            SCHEMA_OBJECTCLASS_SUP: Final[str] = (
+                "SUP\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))"
+            )
+            SCHEMA_OBJECTCLASS_MUST: Final[str] = (
+                "MUST\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))"
+            )
+            SCHEMA_OBJECTCLASS_MAY: Final[str] = (
+                "MAY\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))"
+            )
 
         class ServerDetection:
             """Server type detection patterns and weights for LDIF content analysis."""
 
             DETECTION_THRESHOLD: Final[int] = 5
             CONFIDENCE_THRESHOLD: Final[float] = 0.6
-
             ATTRIBUTE_MATCH_SCORE: Final[int] = 2
-
             DEFAULT_MAX_LINES: Final[int] = 1000
-
             SCHEMA_FIELD_SUPERIOR: Final[str] = "superior"
             SCHEMA_FIELD_REQUIRED_ATTRIBUTES: Final[str] = "required_attributes"
             SCHEMA_FIELD_OPTIONAL_ATTRIBUTES: Final[str] = "optional_attributes"
             SCHEMA_FIELD_STRUCTURAL: Final[str] = "structural"
-
             SCHEMA_SUBENTRY_DN: Final[str] = "cn=subschemasubentry"
             ATTRIBUTE_TYPES_PREFIX: Final[str] = "attributetypes:"
             OBJECT_CLASSES_PREFIX: Final[str] = "objectclasses:"
             ATTRIBUTE_TYPES_PREFIX_LENGTH: Final[int] = len(ATTRIBUTE_TYPES_PREFIX)
             OBJECT_CLASSES_PREFIX_LENGTH: Final[int] = len(OBJECT_CLASSES_PREFIX)
-
             CONTENT_PARAMETER: Final[str] = "content"
             PARSE_CHANGES_PARAMETER: Final[str] = "parse_changes"
             DEFAULT_PARSE_CHANGES: Final[bool] = False
-
             ERROR_UNSUPPORTED_ENTRY_TYPE: Final[str] = "Unsupported entry type"
             ERROR_LDIF_WRITE_FAILED: Final[str] = "LDIF write failed"
             ERROR_FAILED_TO_WRITE: Final[str] = "Failed to write"
-
             MSG_PARSING_LDIF_CONTENT: Final[str] = (
                 "Parsing LDIF content string (RFC 2849 via ldif3)"
             )
@@ -1847,29 +1633,24 @@ class FlextLdifConstants(FlextConstants):
             MSG_EITHER_CONTENT_OR_PATH_REQUIRED: Final[str] = (
                 "Either content or file_path must be provided"
             )
-
             MSG_LDIF_FILE_WRITTEN: Final[str] = "LDIF file written"
             MSG_LDIF_CONTENT_GENERATED: Final[str] = "LDIF content generated"
             MSG_AT_LEAST_ONE_REQUIRED: Final[str] = (
                 "At least one of entries, schema, or acls must be provided"
             )
-
             ACL_WILDCARD_DN: Final[str] = "*"
             LDIF_FILE_EXTENSION: Final[str] = ".ldif"
-
             DEFAULT_ENTRY_COUNT: Final[int] = 0
             DEFAULT_SINGLE_VALUE: Final[bool] = False
-
-            CHANGETYPE: Final[str] = r"^changetype:\s*(add|delete|modify|modrdn|moddn)$"
+            CHANGETYPE: Final[str] = "^changetype:\\s*(add|delete|modify|modrdn|moddn)$"
 
         class ChangeType(StrEnum):
-            """LDIF change types for entry operations."""
+            """LDIF change types — single source of truth."""
 
-            ADD = "add"
-            DELETE = "delete"
-            MODIFY = "modify"
-            MODRDN = "modrdn"
-            MODDN = "moddn"
+            ADDED = "added"
+            REMOVED = "removed"
+            MODIFIED = "modified"
+            FILTERED = "filtered"
 
         class ModifyOperation(StrEnum):
             """LDIF modify operation types."""
@@ -1904,7 +1685,6 @@ class FlextLdifConstants(FlextConstants):
             MAX_WORKERS_DEBUG_RULE: Final[int] = 2
             MIN_ANALYTICS_CACHE_RULE: Final[int] = 1
             MIN_PARALLEL_THRESHOLD_RULE: Final[int] = 1
-
             DEFAULT_MAX_ATTR_VALUE_LENGTH: Final[int] = 1048576
             TYPICAL_ATTR_NAME_LENGTH_LIMIT: Final[int] = 127
 
@@ -1929,7 +1709,6 @@ class FlextLdifConstants(FlextConstants):
             DLEXP_TIME: Final[str] = "1.3.6.1.4.1.1466.115.121.1.18"
             DN_WITH_BINARY: Final[str] = "1.3.6.1.4.1.1466.115.121.1.19"
             DN_WITH_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.20"
-
             DIRECTORY_STRING_21: Final[str] = "1.3.6.1.4.1.1466.115.121.1.21"
             ENHANCED_GUIDE: Final[str] = "1.3.6.1.4.1.1466.115.121.1.22"
             FACSIMILE_TELEPHONE_NUMBER: Final[str] = "1.3.6.1.4.1.1466.115.121.1.23"
@@ -1940,7 +1719,6 @@ class FlextLdifConstants(FlextConstants):
             INTEGER_RFC: Final[str] = "2.5.5.5"
             JPEG: Final[str] = "1.3.6.1.4.1.1466.115.121.1.28"
             LDAP_SYNTAX_DESCRIPTION: Final[str] = "1.3.6.1.4.1.1466.115.121.1.29"
-
             MATCHING_RULE_DESCRIPTION: Final[str] = "1.3.6.1.4.1.1466.115.121.1.30"
             MATCHING_RULE_USE_DESCRIPTION: Final[str] = "1.3.6.1.4.1.1466.115.121.1.31"
             MHS_OR_ADDRESS: Final[str] = "1.3.6.1.4.1.1466.115.121.1.32"
@@ -1951,7 +1729,6 @@ class FlextLdifConstants(FlextConstants):
             OBJECT_CLASS_DESCRIPTION: Final[str] = "1.3.6.1.4.1.1466.115.121.1.37"
             OID: Final[str] = "1.3.6.1.4.1.1466.115.121.1.38"
             OCTET_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.39"
-
             OTHER_MAILBOX: Final[str] = "1.3.6.1.4.1.1466.115.121.1.40"
             OCTET_STRING_40: Final[str] = "1.3.6.1.4.1.1466.115.121.1.40"
             POSTAL_ADDRESS: Final[str] = "1.3.6.1.4.1.1466.115.121.1.41"
@@ -1968,7 +1745,6 @@ class FlextLdifConstants(FlextConstants):
             UTF8_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.55"
             UNICODE_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.56"
             UUI: Final[str] = "1.3.6.1.4.1.1466.115.121.1.57"
-
             OID_TO_NAME: ClassVar[Mapping[str, str]] = MappingProxyType({
                 "2.5.5.5": "integer",
                 "1.3.6.1.4.1.1466.115.121.1.1": "aci",
@@ -2025,10 +1801,10 @@ class FlextLdifConstants(FlextConstants):
                 "1.3.6.1.4.1.1466.115.121.1.57": "uui",
                 "1.3.6.1.4.1.1466.115.121.1.58": "substring_assertion",
             })
-
-            NAME_TO_OID: Final[dict[str, str]] = {v: k for k, v in OID_TO_NAME.items()}
-
-            NAME_TO_TYPE_CATEGORY: Final[dict[str, str]] = {
+            NAME_TO_OID: Final[Mapping[str, str]] = {
+                v: k for k, v in OID_TO_NAME.items()
+            }
+            NAME_TO_TYPE_CATEGORY: Final[Mapping[str, str]] = {
                 "integer": "integer",
                 "boolean": "boolean",
                 "distinguished_name": "dn",
@@ -2094,7 +1870,6 @@ class FlextLdifConstants(FlextConstants):
                 "unicode_string": "string",
                 "uui": "string",
             }
-
             COMMON_SYNTAXES: Final[frozenset[str]] = frozenset({
                 "1.3.6.1.4.1.1466.115.121.1.7",
                 "1.3.6.1.4.1.1466.115.121.1.12",
@@ -2108,89 +1883,63 @@ class FlextLdifConstants(FlextConstants):
                 "1.3.6.1.4.1.1466.115.121.1.44",
                 "1.3.6.1.4.1.1466.115.121.1.50",
             })
-
             SERVICE_NAMES: Final[str] = "service_names"
             DATA: Final[str] = "data"
+            SYNTAX_VALID_BOOLEAN_VALUES: Final[frozenset[str]] = frozenset({
+                "TRUE",
+                "FALSE",
+            })
+            SYNTAX_TIME_PATTERN: Final[str] = "^\\d{14}(\\.\\d+)?Z$"
+            SYNTAX_VALIDATOR_CATEGORIES: Final[frozenset[str]] = frozenset({
+                "boolean",
+                "integer",
+                "dn",
+                "time",
+                "binary",
+            })
 
         class LdifFormatting:
             """LDIF formatting constants (line width, folding)."""
 
             DEFAULT_LINE_WIDTH: Final[int] = 78
-
             MAX_LINE_WIDTH: Final[int] = 199
-
             MIN_LINE_WIDTH: Final[int] = 10
 
         class CommentFormats:
             """LDIF comment formatting constants for documentation."""
 
-            SEPARATOR_DOUBLE: Final[str] = "# " + ("═" * 51)
-            SEPARATOR_SINGLE: Final[str] = "# " + ("─" * 51)
+            SEPARATOR_DOUBLE: Final[str] = "# " + "═" * 51
+            SEPARATOR_SINGLE: Final[str] = "# " + "─" * 51
             SEPARATOR_EMPTY: Final[str] = "#"
-
             HEADER_REJECTION_REASON: Final[str] = "# REJECTION REASON"
             HEADER_REMOVED_ATTRIBUTES: Final[str] = (
                 "# REMOVED ATTRIBUTES (Original Values)"
             )
-
             PREFIX_COMMENT: Final[str] = "# "
 
         class MigrationHeaders:
             """Migration header templates for LDIF output."""
 
-            DEFAULT_TEMPLATE: Final[str] = """# Migration Phase: {phase}
-# Timestamp: {timestamp}
-# Source Server: {source_server}
-# Target Server: {target_server}
-# Base DN: {base_dn}
-# Total Entries: {total_entries}
-# Processed: {processed_entries} ({processed_percentage:.1f}%)
-# Rejected: {rejected_entries} ({rejected_percentage:.1f}%)
-#
-"""
-
-            MINIMAL_TEMPLATE: Final[
-                str
-            ] = """# Phase: {phase} | {timestamp} | Entries: {total_entries}
-#
-"""
-
-            DETAILED_TEMPLATE: Final[
-                str
-            ] = """# ============================================================
-# LDIF MIGRATION - {phase_name}
-# Migration Phase: {phase}
-# Timestamp: {timestamp}
-#
-# SOURCE & TARGET:
-#   Source Server: {source_server}
-#   Target Server: {target_server}
-#   Base DN: {base_dn}
-#
-# STATISTICS:
-#   Total Entries: {total_entries}
-#   Processed: {processed_entries} ({processed_percentage:.1f}%)
-#   Rejected: {rejected_entries} ({rejected_percentage:.1f}%)
-#
-#
-"""
+            DEFAULT_TEMPLATE: Final[str] = (
+                "# Migration Phase: {phase}\n# Timestamp: {timestamp}\n# Source Server: {source_server}\n# Target Server: {target_server}\n# Base DN: {base_dn}\n# Total Entries: {total_entries}\n# Processed: {processed_entries} ({processed_percentage:.1f}%)\n# Rejected: {rejected_entries} ({rejected_percentage:.1f}%)\n#\n"
+            )
+            MINIMAL_TEMPLATE: Final[str] = (
+                "# Phase: {phase} | {timestamp} | Entries: {total_entries}\n#\n"
+            )
+            DETAILED_TEMPLATE: Final[str] = (
+                "# ============================================================\n# LDIF MIGRATION - {phase_name}\n# Migration Phase: {phase}\n# Timestamp: {timestamp}\n#\n# SOURCE & TARGET:\n#   Source Server: {source_server}\n#   Target Server: {target_server}\n#   Base DN: {base_dn}\n#\n# STATISTICS:\n#   Total Entries: {total_entries}\n#   Processed: {processed_entries} ({processed_percentage:.1f}%)\n#   Rejected: {rejected_entries} ({rejected_percentage:.1f}%)\n#\n#\n"
+            )
 
         class ConversionStrategy:
             """Server conversion strategy using RFC as canonical intermediate format."""
 
             CANONICAL_FORMAT: Final[str] = "rfc"
-
             ALGORITHM: Final[str] = "adapter_pattern_with_rfc_hub"
-
             CONVERSION_COMPLEXITY: Final[str] = "2N"
-
             ENFORCE_RFC_INTERMEDIATE: Final[bool] = True
-
             PRESERVE_SOURCE_METADATA: Final[bool] = True
-
             DIRECTION_TO_RFC: Final[str] = "normalize"
             DIRECTION_FROM_RFC: Final[str] = "denormalize"
-
             METADATA_ORIGINAL_SERVER: Final[str] = "original_server_type"
             METADATA_CONVERSION_PATH: Final[str] = "conversion_path"
             METADATA_INTERMEDIATE_FORMAT: Final[str] = "rfc_intermediate"
@@ -2198,53 +1947,14 @@ class FlextLdifConstants(FlextConstants):
         class AclSubjectTransformations:
             """Subject transformation mappings for ACL conversions."""
 
-            DS389_TO_RFC_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
+            DS389_TO_RFC_SUBJECTS: Final[Mapping[str, tuple[str, str]]] = {
                 "groupdn": ("group_dn", "{value}"),
                 "userdn": ("user_dn", "{value}"),
             }
-
-            UNIVERSAL_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
+            UNIVERSAL_SUBJECTS: Final[Mapping[str, tuple[str, str]]] = {
                 "anonymous": ("anonymous", "*"),
                 "self": ("self", "self"),
                 "all": ("all", "*"),
-            }
-
-        class AclPermissionCompatibility:
-            """Permission compatibility matrix for server types."""
-
-        class SchemaConversionMappings:
-            """Schema attribute and objectClass conversion mappings."""
-
-            MATCHING_RULE_NORMALIZATIONS: Final[dict[str, str]] = {
-                "caseIgnoreIA5SubstringsMatch": "caseIgnoreIA5Match",
-                "caseIgnoreOrdinalMatch": "caseIgnoreMatch",
-            }
-
-        class AclAttributeRegistry:
-            """LDAP Server-specific ACL attributes with RFC foundation."""
-
-            RFC_FOUNDATION: Final[list[str]] = [
-                "aci",
-                "acl",
-                "olcAccess",
-                "aclRights",
-                "aclEntry",
-            ]
-
-            SERVER_QUIRKS: Final[dict[str, list[str]]] = {
-                "oid": [
-                    "orclaci",
-                    "orclentrylevelaci",
-                    "orclContainerLevelACL",
-                ],
-                "oud": [
-                    "orclaci",
-                    "orclentrylevelaci",
-                ],
-                "ad": [
-                    "nTSecurityDescriptor",
-                ],
-                "generic": [],
             }
 
         class ServiceType(StrEnum):
@@ -2397,8 +2107,7 @@ class FlextLdifConstants(FlextConstants):
 
 
 c = FlextLdifConstants
+__all__ = ["FlextLdifConstants", "c"]
 
-__all__ = [
-    "FlextLdifConstants",
-    "c",
-]
+
+logger: Final = FlextLogger(__name__)

@@ -2,36 +2,60 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
-from typing import ClassVar, Literal, Protocol, TypeVar, overload, runtime_checkable
+import builtins
+import struct
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from datetime import datetime
+from pathlib import Path
+from typing import ClassVar, Literal, overload
 
-from flext_core import FlextTypes as t, T, U
-from flext_core.utilities import FlextUtilities as u
+from pydantic import BaseModel
 
-CallableType = TypeVar("CallableType", bound=type[t.GeneralValueType])
-_TThunk_co = TypeVar("_TThunk_co", covariant=True)
-_TUnaryIn_contra = TypeVar("_TUnaryIn_contra", contravariant=True)
-_TUnaryOut_co = TypeVar("_TUnaryOut_co", covariant=True)
-
-
-@runtime_checkable
-class _Thunk(Protocol[_TThunk_co]):
-    def __call__(self) -> _TThunk_co: ...
-
-
-@runtime_checkable
-class _UnaryCase(Protocol[_TUnaryIn_contra, _TUnaryOut_co]):
-    def __call__(self, value: _TUnaryIn_contra) -> _TUnaryOut_co: ...
+from flext_ldif._models._models import (
+    ConvertToBool,
+    ConvertToDict,
+    ConvertToFloat,
+    ConvertToInt,
+    ConvertToList,
+    ConvertToStr,
+    ConvertToTuple,
+)
+from flext_ldif.typings import t
 
 
 class FlextFunctional:
     """Pure functional utilities without circular dependencies."""
 
     @staticmethod
-    def or_[T](
-        *values: T | None,
-        default: T | None = None,
-    ) -> T | None:
+    def _to_general(value: builtins.object) -> builtins.object:
+        """Normalize arbitrary values into object-compatible shape."""
+        if value is None or isinstance(value, (str, int, float, bool)):
+            return value
+        if isinstance(value, datetime):
+            return value.isoformat()
+        if isinstance(value, Path):
+            return str(value)
+        if isinstance(value, BaseModel):
+            model_mapping: dict[str, builtins.object] = {
+                key: FlextFunctional._to_general(getattr(value, key))
+                for key in type(value).model_fields
+            }
+            extra = value.__pydantic_extra__
+            if extra:
+                for key, item in extra.items():
+                    model_mapping[key] = FlextFunctional._to_general(item)
+            return model_mapping
+        if isinstance(value, Mapping):
+            normalized_mapping: dict[str, builtins.object] = {}
+            for key, item in value.items():
+                normalized_mapping[key] = FlextFunctional._to_general(item)
+            return normalized_mapping
+        if isinstance(value, Iterable):
+            return [FlextFunctional._to_general(item) for item in value]
+        return value
+
+    @staticmethod
+    def or_[T](*values: T | None, default: T | None = None) -> T | None:
         """Return first non-None value (mnemonic: oo)."""
         for v in values:
             if v is not None:
@@ -57,10 +81,7 @@ class FlextFunctional:
     mb = maybe
 
     @staticmethod
-    def chain[T](
-        value: T,
-        *funcs: Callable[[T], T],
-    ) -> T:
+    def chain[T](value: T, *funcs: Callable[[T], T]) -> T:
         """Chain function calls (DSL helper, mnemonic: ch)."""
         result: T = value
         for func in funcs:
@@ -71,10 +92,8 @@ class FlextFunctional:
 
     @staticmethod
     def pick[T](
-        data: dict[str, T],
-        *keys: str,
-        as_dict: bool = True,
-    ) -> dict[str, T] | list[T]:
+        data: Mapping[str, T], *keys: str, as_dict: bool = True
+    ) -> Mapping[str, T] | list[T]:
         """Pick keys from dict (DSL helper, mnemonic: pc)."""
         if as_dict:
             return {k: data[k] for k in keys if k in data}
@@ -84,9 +103,8 @@ class FlextFunctional:
 
     @staticmethod
     def map_dict[T, U](
-        data: dict[str, T],
-        mapper: Callable[[str, T], tuple[str, U]],
-    ) -> dict[str, U]:
+        data: Mapping[str, T], mapper: Callable[[str, T], tuple[str, U]]
+    ) -> Mapping[str, U]:
         """Map dict with transformations (mnemonic: md)."""
         result: dict[str, U] = {}
         for key, value in data.items():
@@ -99,31 +117,31 @@ class FlextFunctional:
     @overload
     @staticmethod
     def reduce_dict[T](
-        data: dict[str, T],
+        data: Mapping[str, T],
         *,
         processor: None = None,
         predicate: Callable[[str, T], bool] = lambda _k, _v: True,
         key_mapper: Callable[[str], str] = lambda k: k,
-    ) -> dict[str, T]: ...
+    ) -> Mapping[str, T]: ...
 
     @overload
     @staticmethod
     def reduce_dict[T, U](
-        data: dict[str, T],
+        data: Mapping[str, T],
         *,
         processor: Callable[[str, T], U],
         predicate: Callable[[str, T], bool] = lambda _k, _v: True,
         key_mapper: Callable[[str], str] = lambda k: k,
-    ) -> dict[str, U]: ...
+    ) -> Mapping[str, U]: ...
 
     @staticmethod
     def reduce_dict[T, U](
-        data: dict[str, T],
+        data: Mapping[str, T],
         *,
         processor: Callable[[str, T], U] | None = None,
         predicate: Callable[[str, T], bool] = lambda _k, _v: True,
         key_mapper: Callable[[str], str] = lambda k: k,
-    ) -> dict[str, T] | dict[str, U]:
+    ) -> Mapping[str, T] | Mapping[str, U]:
         """Reduce dicts with processor/predicate (mnemonic: rd)."""
         if processor is not None:
             result: dict[str, U] = {}
@@ -143,14 +161,12 @@ class FlextFunctional:
 
     @staticmethod
     def find_key[T](
-        data: dict[str, T] | T,
+        data: Mapping[str, T],
         predicate: Callable[[str, T], bool],
         *,
         default: str | None = None,
     ) -> str | None:
         """Find first key matching predicate (mnemonic: fk)."""
-        if not isinstance(data, dict):
-            return default
         for key, value in data.items():
             if predicate(key, value):
                 return key
@@ -160,41 +176,31 @@ class FlextFunctional:
 
     @staticmethod
     def find_val[T](
-        data: dict[str, T] | T,
+        data: Mapping[str, T],
         predicate: Callable[[str, T], bool],
         *,
         default: T | None = None,
     ) -> T | None:
         """Find first value matching predicate (mnemonic: fv)."""
-        if isinstance(data, dict):
-            for key, value in data.items():
-                if predicate(key, value):
-                    return value
+        for key, value in data.items():
+            if predicate(key, value):
+                return value
         return default
 
     fv = find_val
 
     @staticmethod
-    def pairs[T](
-        d: dict[str, T] | Mapping[str, T],
-    ) -> list[tuple[str, T]]:
+    def pairs[T](d: Mapping[str, T]) -> list[tuple[str, T]]:
         """Convert dict/mapping to list of (key, value) tuples (mnemonic: pr)."""
         return list(d.items())
 
     pr = pairs
 
     @staticmethod
-    def fold[T, U](
-        items: Sequence[T] | T,
-        folder: Callable[[U, T], U],
-        initial: U,
-    ) -> U:
+    def fold[T, U](items: Sequence[T], folder: Callable[[U, T], U], initial: U) -> U:
         """Fold items using folder function (mnemonic: fd)."""
-        if not isinstance(items, (list, tuple)):
-            return initial
-        sequence: Sequence[T] = items
         result = initial
-        for item in sequence:
+        for item in items:
             result = folder(result, item)
         return result
 
@@ -202,16 +208,13 @@ class FlextFunctional:
 
     @staticmethod
     def map_filter[T](
-        items: Sequence[T] | T,
+        items: Sequence[T],
         mapper: Callable[[T], T] | None = None,
         predicate: Callable[[T], bool] = lambda x: x is not None,
     ) -> list[T]:
         """Map then filter items (mnemonic: mf)."""
-        if not isinstance(items, (list, tuple)):
-            return []
-        sequence: Sequence[T] = items
         result: list[T] = []
-        for item in sequence:
+        for item in items:
             mapped = mapper(item) if mapper is not None else item
             if predicate(mapped):
                 result.append(mapped)
@@ -220,99 +223,94 @@ class FlextFunctional:
     mf = map_filter
 
     @staticmethod
-    def process_flatten[T, U](
-        items: Sequence[T] | T,
-        processor: Callable[[T], list[U] | tuple[U, ...] | U],
+    def process_flatten(
+        items: Sequence[builtins.object],
+        processor: Callable[
+            [object],
+            list[builtins.object] | tuple[builtins.object, ...] | object,
+        ],
         *,
-        predicate: Callable[[U], bool] = lambda x: x is not None,
+        predicate: Callable[[object], bool] = lambda x: x is not None,
         on_error: Literal["skip", "stop", "collect"] = "skip",
-    ) -> list[U]:
+    ) -> list[builtins.object]:
         """Process and flatten items (mnemonic: pf)."""
-        if not isinstance(items, (list, tuple)):
-            return []
-        sequence: Sequence[T] = items
-        result: list[U] = []
-        for item in sequence:
+        result: list[builtins.object] = []
+        for item in items:
             try:
                 processed = processor(item)
-                if isinstance(processed, (list, tuple)):
-                    result.extend([
-                        sub_item for sub_item in processed if predicate(sub_item)
-                    ])
+                if isinstance(processed, list):
+                    processed_values: list[builtins.object] = processed
+                    result.extend(
+                        sub_item for sub_item in processed_values if predicate(sub_item)
+                    )
+                elif isinstance(processed, tuple):
+                    processed_tuple_values: list[builtins.object] = list(processed)
+                    result.extend(
+                        sub_item
+                        for sub_item in processed_tuple_values
+                        if predicate(sub_item)
+                    )
                 elif predicate(processed):
                     result.append(processed)
-            except Exception:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ):
                 if on_error == "stop":
                     raise
         return result
 
     pf = process_flatten
 
+    @classmethod
+    def normalize_list(
+        cls,
+        value: builtins.object | Sequence[builtins.object] | None,
+        *,
+        mapper: Callable[[object], object] | None = None,
+        predicate: Callable[[object], bool] | None = None,
+        default: list[builtins.object] | None = None,
+    ) -> list[builtins.object]:
+        """Normalize to list (mnemonic: nl)."""
+        if value is None:
+            if default is not None:
+                return list(default)
+            return []
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            items: list[builtins.object] = list(value)
+        else:
+            items = [value]
+        if mapper is not None:
+            items_mapped: list[builtins.object] = [mapper(item) for item in items]
+            if predicate is not None:
+                return [item for item in items_mapped if predicate(item)]
+            return items_mapped
+        if predicate is not None:
+            return [item for item in items if predicate(item)]
+        return items
+
     @staticmethod
-    def build[T](
-        value: T,
-        ops: dict[str, Callable[[T], T]],
-    ) -> T:
+    def build[T](value: T, ops: Mapping[str, Callable[[T], T]]) -> T:
         """Build value using operations dict."""
         result = value
         for op in ops.values():
             result = op(result)
         return result
 
-    @classmethod
-    def normalize_list[T](
-        cls,
-        value: T | list[T] | tuple[T, ...] | None,
-        *,
-        mapper: Callable[[T], T] | None = None,
-        predicate: Callable[[T], bool] | None = None,
-        default: list[T] | None = None,
-    ) -> list[T]:
-        """Normalize to list (mnemonic: nl)."""
-        items: list[T]
-        if value is None:
-            if default is not None:
-                return list(default)
-            return []
-
-        if isinstance(value, (str, bytes)):
-            items = [value]  # Single item of type T
-        elif isinstance(value, list):
-            items = value
-        elif isinstance(value, tuple):
-            items = list(value)
-        else:
-            items = [value]
-
-        if mapper is not None:
-            items_mapped: list[T] = [mapper(item) for item in items]
-            if predicate is not None:
-                return [item for item in items_mapped if predicate(item)]
-            return items_mapped
-
-        if predicate is not None:
-            return [item for item in items if predicate(item)]
-        return items
-
     nl = normalize_list
 
     @staticmethod
-    def get[T](
-        data: dict[str, T] | T,
-        key: str,
-        default: T | None = None,
-    ) -> T | None:
+    def get[T](data: Mapping[str, T], key: str, default: T | None = None) -> T | None:
         """Get value from dict with default (mnemonic: gt)."""
-        if isinstance(data, dict):
-            return data.get(key, default)
-        return default
+        return data.get(key, default)
 
     gt = get
 
     @staticmethod
-    def merge[T](
-        *dicts: dict[str, T],
-    ) -> dict[str, T]:
+    def merge[T](*dicts: Mapping[str, T]) -> Mapping[str, T]:
         """Merge multiple dicts (mnemonic: mg)."""
         result: dict[str, T] = {}
         for d in dicts:
@@ -322,10 +320,7 @@ class FlextFunctional:
     mg = merge
 
     @staticmethod
-    def evolve[T](
-        data: dict[str, T],
-        updates: dict[str, T],
-    ) -> dict[str, T]:
+    def evolve[T](data: Mapping[str, T], updates: Mapping[str, T]) -> Mapping[str, T]:
         """Update dict with changes (mnemonic: ev)."""
         return {**data, **updates}
 
@@ -333,25 +328,18 @@ class FlextFunctional:
 
     @staticmethod
     def when[T](
-        *,
-        condition: bool = False,
-        then: T | _Thunk[T] | None = None,
-        else_: T | None = None,
+        *, condition: bool = False, then: T | None = None, else_: T | None = None
     ) -> T | None:
         """Functional conditional (DSL pattern, mnemonic: wh)."""
-        if condition:
-            if isinstance(then, _Thunk):
-                return then()
-            if then is not None:
-                return then
-        return else_
+        if not condition:
+            return else_
+        return then if then is not None else else_
 
     wh = when
 
     @staticmethod
     def cond[T, U](
-        *cases: tuple[Callable[[T], bool], Callable[[T], U]],
-        default: U | None = None,
+        *cases: tuple[Callable[[T], bool], Callable[[T], U]], default: U | None = None
     ) -> Callable[[T], U | None]:
         """Conditional expression returning curried function (mnemonic: cd)."""
 
@@ -366,10 +354,7 @@ class FlextFunctional:
     cd = cond
 
     @staticmethod
-    def pipe[T](
-        initial: T,
-        *transforms: Callable[[T], T],
-    ) -> T:
+    def pipe[T](initial: T, *transforms: Callable[[T], T]) -> T:
         """Pipe value through transformation functions (mnemonic: pp)."""
         result = initial
         for transform in transforms:
@@ -382,17 +367,15 @@ class FlextFunctional:
     def match[T, U](
         cls,
         value: T,
-        *cases: tuple[
-            type[T] | T | Callable[[T], bool],
-            U,
-        ],
+        *cases: tuple[type[T] | T | Callable[[T], bool], U],
         default: U | None = None,
     ) -> U | None:
         """Pattern match (mnemonic: mt)."""
         for pattern, result in cases:
-            if isinstance(pattern, type) and isinstance(value, pattern):
-                return result
-            if callable(pattern) and not isinstance(pattern, type):
+            if isinstance(pattern, type):
+                if isinstance(value, pattern):
+                    return result
+            elif callable(pattern):
                 try:
                     if pattern(value):
                         return result
@@ -406,25 +389,15 @@ class FlextFunctional:
 
     @classmethod
     def switch[T, U](
-        cls,
-        value: T,
-        cases: dict[T, U | _UnaryCase[T, U]],
-        default: U | None = None,
+        cls, value: T, cases: Mapping[T, U], default: U | None = None
     ) -> U | None:
         """Switch using dict lookup (mnemonic: sw)."""
-        result = cases.get(value, default)
-        if isinstance(result, _UnaryCase):
-            return result(value)
-        return result
+        return cases.get(value, default)
 
     sw = switch
 
     @classmethod
-    def is_type[T](
-        cls,
-        value: T,
-        *types: type[T] | str,
-    ) -> bool:
+    def is_type[T](cls, value: T, *types: type[T] | str) -> bool:
         """Type check (mnemonic: it)."""
         type_map: dict[str, type] = {
             "list": list,
@@ -437,7 +410,6 @@ class FlextFunctional:
             "set": set,
         }
         for t_val in types:
-            # Resolve type: if string, look up in map; if type, use directly
             resolved_type: type | None = (
                 type_map.get(t_val) if isinstance(t_val, str) else t_val
             )
@@ -446,19 +418,14 @@ class FlextFunctional:
         return False
 
     it = is_type
-
     _ConvertibleType = (
-        str
-        | int
-        | float
-        | bool
-        | list[t.GeneralValueType]
-        | tuple[t.GeneralValueType, ...]
-        | set[t.GeneralValueType]
-        | dict[str, t.GeneralValueType]
+        t.Scalar
+        | list[builtins.object]
+        | tuple[builtins.object, ...]
+        | set[builtins.object]
+        | object
     )
-
-    _TYPE_MAP: ClassVar[dict[str, type]] = {
+    _TYPE_MAP: ClassVar[Mapping[str, type]] = {
         "list": list,
         "dict": dict,
         "str": str,
@@ -468,51 +435,11 @@ class FlextFunctional:
         "float": float,
     }
 
-    @staticmethod
-    def _convert_with_target(
-        value: t.GeneralValueType,
-        target_type: type,
-        default: t.GeneralValueType | None,
-    ) -> t.GeneralValueType | None:
-        if target_type is str:
-            return str(value)
-        if target_type is int:
-            if isinstance(value, (str, bytes, bytearray, int, float)):
-                return int(value)
-            try:
-                return int(str(value))
-            except (TypeError, ValueError):
-                return default
-        if target_type is float:
-            if isinstance(value, (str, bytes, bytearray, int, float)):
-                return float(value)
-            try:
-                return float(str(value))
-            except (TypeError, ValueError):
-                return default
-        if target_type is bool:
-            if isinstance(value, str):
-                return value.lower() in {"true", "1", "yes", "on"}
-            return bool(value)
-        if target_type is list:
-            if isinstance(value, (list, tuple, set)):
-                return list(value)
-            return [value]
-        if target_type is tuple:
-            if isinstance(value, (list, tuple)):
-                return tuple(value)
-            return (value,)
-        if target_type is dict:
-            if isinstance(value, dict):
-                return value
-            return default
-        return default
-
     @overload
     @classmethod
     def as_type(
         cls,
-        value: t.GeneralValueType,
+        value: builtins.object,
         *,
         target: type[str] | Literal["str"],
         default: str | None = None,
@@ -522,7 +449,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: t.GeneralValueType,
+        value: builtins.object,
         *,
         target: type[bool] | Literal["bool"],
         default: bool | None = None,
@@ -532,7 +459,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: t.GeneralValueType,
+        value: builtins.object,
         *,
         target: type[int] | Literal["int"],
         default: int | None = None,
@@ -542,7 +469,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: t.GeneralValueType,
+        value: builtins.object,
         *,
         target: type[float] | Literal["float"],
         default: float | None = None,
@@ -552,73 +479,181 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: t.GeneralValueType,
+        value: builtins.object,
         *,
-        target: type[list[t.GeneralValueType]] | Literal["list"],
-        default: list[t.GeneralValueType] | None = None,
-    ) -> list[t.GeneralValueType] | None: ...
+        target: type[list[builtins.object]] | Literal["list"],
+        default: list[builtins.object] | None = None,
+    ) -> list[builtins.object] | None: ...
 
     @overload
     @classmethod
     def as_type(
         cls,
-        value: t.GeneralValueType,
+        value: builtins.object,
         *,
-        target: type[tuple[t.GeneralValueType, ...]] | Literal["tuple"],
-        default: tuple[t.GeneralValueType, ...] | None = None,
-    ) -> tuple[t.GeneralValueType, ...] | None: ...
+        target: type[tuple[builtins.object, ...]] | Literal["tuple"],
+        default: tuple[builtins.object, ...] | None = None,
+    ) -> tuple[builtins.object, ...] | None: ...
 
     @overload
     @classmethod
     def as_type(
         cls,
-        value: t.GeneralValueType,
+        value: builtins.object,
         *,
-        target: type[dict[str, t.GeneralValueType]] | Literal["dict"],
-        default: dict[str, t.GeneralValueType] | None = None,
-    ) -> dict[str, t.GeneralValueType] | None: ...
+        target: type[Mapping[str, builtins.object]] | Literal["dict"],
+        default: Mapping[str, builtins.object] | None = None,
+    ) -> Mapping[str, builtins.object] | None: ...
 
     @classmethod
     def as_type(
         cls,
-        value: t.GeneralValueType,
+        value: builtins.object,
         *,
         target: type | str,
-        default: t.GeneralValueType | None = None,
-    ) -> t.GeneralValueType | None:
+        default: builtins.object | None = None,
+    ) -> builtins.object | None:
         """Safe cast (mnemonic: at)."""
         target_type: type | None = (
             cls._TYPE_MAP.get(target) if isinstance(target, str) else target
         )
-
         if target_type is None:
             return default
-
-        if isinstance(target_type, type) and isinstance(value, target_type):
-            return u.Mapper.narrow_to_general_value_type(value)
-
+        if target_type is str and isinstance(value, str):
+            return value
+        if target_type is bool and isinstance(value, bool):
+            return value
+        if target_type is int and isinstance(value, int):
+            return value
+        if target_type is float and isinstance(value, float):
+            return value
+        if target_type is list and isinstance(value, list):
+            return value
+        if target_type is tuple and isinstance(value, tuple):
+            return value
+        if target_type is dict and isinstance(value, dict):
+            return value
         try:
             return cls._convert_with_target(value, target_type, default)
+        except (TypeError, ValueError):
+            return default
+
+    @staticmethod
+    def _convert_with_target(
+        value: builtins.object, target_type: type, default: builtins.object | None
+    ) -> builtins.object | None:
+        """Execute type conversion using centralized Pydantic v2 models.
+
+        Dispatches to the appropriate ConversionRequest model based on target_type
+        using a discriminated union for type safety and centralized validation.
+
+        Args:
+            value: Value to convert
+            target_type: Target type (str, int, float, bool, list, tuple, dict)
+            default: Default value if conversion fails
+
+        Returns:
+            Converted value or default if conversion fails
+
+        """
+        normalized_value: (
+            t.Container | Sequence[t.Container] | Mapping[str, t.Container]
+        )
+        if isinstance(value, t.CONTAINER_TYPES):
+            normalized_value = value
+        elif isinstance(value, Mapping):
+            normalized_value = {
+                str(key): item if isinstance(item, t.CONTAINER_TYPES) else str(item)
+                for key, item in value.items()
+            }
+        elif isinstance(value, Sequence) and not isinstance(
+            value, (str, bytes, bytearray)
+        ):
+            normalized_value = [
+                item if isinstance(item, t.CONTAINER_TYPES) else str(item)
+                for item in value
+            ]
+        else:
+            normalized_value = str(value)
+        normalized_default: (
+            t.Container | Sequence[t.Container] | Mapping[str, t.Container] | None
+        )
+        if default is None:
+            normalized_default = None
+        elif isinstance(default, t.CONTAINER_TYPES):
+            normalized_default = default
+        elif isinstance(default, Mapping):
+            normalized_default = {
+                str(key): item if isinstance(item, t.CONTAINER_TYPES) else str(item)
+                for key, item in default.items()
+            }
+        elif isinstance(default, Sequence) and not isinstance(
+            default, (str, bytes, bytearray)
+        ):
+            normalized_default = [
+                item if isinstance(item, t.CONTAINER_TYPES) else str(item)
+                for item in default
+            ]
+        else:
+            normalized_default = str(default)
+
+        conversion_model: (
+            ConvertToStr
+            | ConvertToInt
+            | ConvertToFloat
+            | ConvertToBool
+            | ConvertToList
+            | ConvertToTuple
+            | ConvertToDict
+            | None
+        ) = None
+        if target_type is str:
+            conversion_model = ConvertToStr(
+                value=normalized_value, default=normalized_default
+            )
+        elif target_type is int:
+            conversion_model = ConvertToInt(
+                value=normalized_value, default=normalized_default
+            )
+        elif target_type is float:
+            conversion_model = ConvertToFloat(
+                value=normalized_value, default=normalized_default
+            )
+        elif target_type is bool:
+            conversion_model = ConvertToBool(
+                value=normalized_value, default=normalized_default
+            )
+        elif target_type is list:
+            conversion_model = ConvertToList(
+                value=normalized_value, default=normalized_default
+            )
+        elif target_type is tuple:
+            conversion_model = ConvertToTuple(
+                value=normalized_value, default=normalized_default
+            )
+        elif target_type is dict:
+            conversion_model = ConvertToDict(
+                value=normalized_value, default=normalized_default
+            )
+        if conversion_model is None:
+            return default
+        try:
+            converted = conversion_model.convert()
+            return FlextFunctional._to_general(converted)
         except (TypeError, ValueError):
             return default
 
     at = as_type
 
     @classmethod
-    def prop(
-        cls,
-        key: str,
-    ) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
+    def prop(cls, key: str) -> Callable[[object], object]:
         """Property accessor (mnemonic: pp)."""
 
-        def getter(obj: t.GeneralValueType) -> t.GeneralValueType:
+        def getter(obj: builtins.object) -> builtins.object:
             """Get value from object by key."""
-            if isinstance(obj, Mapping):
-                value: t.GeneralValueType = obj.get(key)
-                return value
-            if hasattr(obj, key):
-                attr_val: t.GeneralValueType = getattr(obj, key, None)
-                return attr_val
+            normalized_obj: builtins.object = FlextFunctional._to_general(obj)
+            if isinstance(normalized_obj, dict):
+                return FlextFunctional._to_general(normalized_obj.get(key))
             return None
 
         return getter
@@ -626,22 +661,17 @@ class FlextFunctional:
     prop_get = prop
 
     @classmethod
-    def props(
-        cls,
-        *keys: str,
-    ) -> Callable[[t.GeneralValueType], dict[str, t.GeneralValueType]]:
+    def props(cls, *keys: str) -> Callable[[object], Mapping[str, builtins.object]]:
         """Multiple property accessor (mnemonic: ps)."""
 
-        def accessor(obj: t.GeneralValueType) -> dict[str, t.GeneralValueType]:
+        def accessor(obj: builtins.object) -> Mapping[str, builtins.object]:
             """Get multiple values from object by keys."""
-            result_dict: dict[str, t.GeneralValueType] = {}
+            result_dict: dict[str, builtins.object] = {}
+            normalized_obj: builtins.object = FlextFunctional._to_general(obj)
             for k in keys:
-                if isinstance(obj, Mapping):
-                    value: t.GeneralValueType | None = u.mapper().get(obj, k)
-                    result_dict[k] = value
-                elif hasattr(obj, k):
-                    attr_value: t.GeneralValueType = getattr(obj, k, None)
-                    result_dict[k] = attr_value
+                if isinstance(normalized_obj, dict):
+                    val: builtins.object | None = normalized_obj.get(k)
+                    result_dict[k] = FlextFunctional._to_general(val)
                 else:
                     result_dict[k] = None
             return result_dict
@@ -651,41 +681,30 @@ class FlextFunctional:
     ps = props
 
     @classmethod
-    def path(
-        cls,
-        *keys: str,
-    ) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
+    def path(cls, *keys: str) -> Callable[[object], object]:
         """Path accessor using chain() DSL (mnemonic: ph)."""
 
-        def make_getter(
-            key: str,
-        ) -> Callable[[t.GeneralValueType], t.GeneralValueType]:
+        def make_getter(key: str) -> Callable[[object], object]:
             """Create a single-key getter."""
 
-            def getter_fn(obj: t.GeneralValueType) -> t.GeneralValueType:
+            def getter_fn(obj: builtins.object) -> builtins.object:
                 """Get value from object by key."""
                 if obj is None:
                     return None
-                if isinstance(obj, Mapping):
-                    map_result = u.mapper().get(obj, key)
-                    if map_result == key and isinstance(key, str):
-                        return None
-                    return map_result
-                if hasattr(obj, key):
-                    return getattr(obj, key, None)
+                normalized_obj: builtins.object = FlextFunctional._to_general(obj)
+                if isinstance(normalized_obj, dict):
+                    return FlextFunctional._to_general(normalized_obj.get(key))
                 return None
 
             return getter_fn
 
-        getters: list[Callable[[t.GeneralValueType], t.GeneralValueType]] = [
-            make_getter(k) for k in keys
-        ]
+        getters: list[Callable[[object], object]] = [make_getter(k) for k in keys]
 
-        def path_getter(obj: t.GeneralValueType) -> t.GeneralValueType:
+        def path_getter(obj: builtins.object) -> builtins.object:
             """Get value at path."""
             if obj is None:
                 return None
-            result: t.GeneralValueType = obj
+            result: builtins.object = obj
             for getter in getters:
                 if result is None:
                     return None
@@ -698,9 +717,4 @@ class FlextFunctional:
 
 
 f = FlextFunctional
-
-
-__all__ = [
-    "FlextFunctional",
-    "f",
-]
+__all__ = ["FlextFunctional", "f"]

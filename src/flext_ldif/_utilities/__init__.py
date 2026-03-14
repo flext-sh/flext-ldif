@@ -2,68 +2,192 @@
 
 from __future__ import annotations
 
-# FlextLdifUtilities moved to avoid circular import - import from utilities.py directly when needed
-# Type aliases using string literals to break circular import
-from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
-from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
-from flext_ldif._utilities.builders import (
-    FilterConfigBuilder,
-    ProcessConfigBuilder,
-    TransformConfigBuilder,
-    WriteConfigBuilder,
-)
-from flext_ldif._utilities.decorators import FlextLdifUtilitiesDecorators
-from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
-from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
-from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
-from flext_ldif._utilities.filters import (
-    AndFilter,
-    ByAttrsFilter,
-    ByAttrValueFilter,
-    ByDnFilter,
-    ByDnUnderBaseFilter,
-    ByObjectClassFilter,
-    CustomFilter,
-    EntryFilter,
-    ExcludeAttrsFilter,
-    Filter,
-    IsSchemaEntryFilter,
-    NotFilter,
-    OrFilter,
-)
-from flext_ldif._utilities.fluent import DnOps, EntryOps
-from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
-from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
-from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
-from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
-from flext_ldif._utilities.parsers import FlextLdifUtilitiesParsers
-from flext_ldif._utilities.pipeline import (
-    Pipeline,
-    PipelineStep,
-    ValidationPipeline,
-    ValidationResult,
-)
-from flext_ldif._utilities.result import FlextLdifResult
-from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif._utilities.transformers import (
-    ConvertBooleansTransformer,
-    CustomTransformer,
-    EntryTransformer,
-    FilterAttrsTransformer,
-    Normalize,
-    NormalizeAttrsTransformer,
-    NormalizeDnTransformer,
-    RemoveAttrsTransformer,
-    ReplaceBaseDnTransformer,
-    Transform,
-)
-from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
-from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
-from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
-from flext_ldif.constants import c
-from flext_ldif.typings import t
+from importlib import import_module
+from typing import TYPE_CHECKING
+
+from flext_core.lazy import cleanup_submodule_namespace
+
+if TYPE_CHECKING:
+    from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
+    from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
+    from flext_ldif._utilities.builders import (
+        FilterConfigBuilder,
+        ProcessConfigBuilder,
+        TransformConfigBuilder,
+        WriteConfigBuilder,
+    )
+    from flext_ldif._utilities.decorators import FlextLdifUtilitiesDecorators
+    from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
+    from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
+    from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
+    from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
+    from flext_ldif._utilities.filters import (
+        AndFilter,
+        ByAttrsFilter,
+        ByAttrValueFilter,
+        ByDnFilter,
+        ByDnUnderBaseFilter,
+        ByObjectClassFilter,
+        CustomFilter,
+        EntryFilter,
+        ExcludeAttrsFilter,
+        Filter,
+        IsSchemaEntryFilter,
+        NotFilter,
+        OrFilter,
+    )
+    from flext_ldif._utilities.fluent import DnOps, EntryOps
+    from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
+    from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
+    from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
+    from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
+    from flext_ldif._utilities.parsers import FlextLdifUtilitiesParsers
+    from flext_ldif._utilities.pipeline import (
+        Pipeline,
+        PipelineStep,
+        ValidationPipeline,
+        ValidationResult,
+    )
+    from flext_ldif._utilities.result import FlextLdifResult
+    from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
+    from flext_ldif._utilities.server import FlextLdifUtilitiesServer
+    from flext_ldif._utilities.transformers import (
+        ConvertBooleansTransformer,
+        CustomTransformer,
+        EntryTransformer,
+        FilterAttrsTransformer,
+        Normalize,
+        NormalizeAttrsTransformer,
+        NormalizeDnTransformer,
+        RemoveAttrsTransformer,
+        ReplaceBaseDnTransformer,
+        Transform,
+    )
+    from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
+    from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
+    from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
+    from flext_ldif.constants import c
+    from flext_ldif.typings import t
+
+# Lazy import mapping: export_name -> (module_path, attr_name)
+_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    "AndFilter": ("flext_ldif._utilities.filters", "AndFilter"),
+    "ByAttrValueFilter": ("flext_ldif._utilities.filters", "ByAttrValueFilter"),
+    "ByAttrsFilter": ("flext_ldif._utilities.filters", "ByAttrsFilter"),
+    "ByDnFilter": ("flext_ldif._utilities.filters", "ByDnFilter"),
+    "ByDnUnderBaseFilter": ("flext_ldif._utilities.filters", "ByDnUnderBaseFilter"),
+    "ByObjectClassFilter": ("flext_ldif._utilities.filters", "ByObjectClassFilter"),
+    "ConvertBooleansTransformer": (
+        "flext_ldif._utilities.transformers",
+        "ConvertBooleansTransformer",
+    ),
+    "CustomFilter": ("flext_ldif._utilities.filters", "CustomFilter"),
+    "CustomTransformer": ("flext_ldif._utilities.transformers", "CustomTransformer"),
+    "DnOps": ("flext_ldif._utilities.fluent", "DnOps"),
+    "EntryFilter": ("flext_ldif._utilities.filters", "EntryFilter"),
+    "EntryOps": ("flext_ldif._utilities.fluent", "EntryOps"),
+    "EntryTransformer": ("flext_ldif._utilities.transformers", "EntryTransformer"),
+    "ExcludeAttrsFilter": ("flext_ldif._utilities.filters", "ExcludeAttrsFilter"),
+    "Filter": ("flext_ldif._utilities.filters", "Filter"),
+    "FilterAttrsTransformer": (
+        "flext_ldif._utilities.transformers",
+        "FilterAttrsTransformer",
+    ),
+    "FilterConfigBuilder": ("flext_ldif._utilities.builders", "FilterConfigBuilder"),
+    "FlextLdifResult": ("flext_ldif._utilities.result", "FlextLdifResult"),
+    "FlextLdifUtilitiesACL": ("flext_ldif._utilities.acl", "FlextLdifUtilitiesACL"),
+    "FlextLdifUtilitiesAttribute": (
+        "flext_ldif._utilities.attribute",
+        "FlextLdifUtilitiesAttribute",
+    ),
+    "FlextLdifUtilitiesDN": ("flext_ldif._utilities.dn", "FlextLdifUtilitiesDN"),
+    "FlextLdifUtilitiesDecorators": (
+        "flext_ldif._utilities.decorators",
+        "FlextLdifUtilitiesDecorators",
+    ),
+    "FlextLdifUtilitiesDetection": (
+        "flext_ldif._utilities.detection",
+        "FlextLdifUtilitiesDetection",
+    ),
+    "FlextLdifUtilitiesEntry": (
+        "flext_ldif._utilities.entry",
+        "FlextLdifUtilitiesEntry",
+    ),
+    "FlextLdifUtilitiesEvents": (
+        "flext_ldif._utilities.events",
+        "FlextLdifUtilitiesEvents",
+    ),
+    "FlextLdifUtilitiesMetadata": (
+        "flext_ldif._utilities.metadata",
+        "FlextLdifUtilitiesMetadata",
+    ),
+    "FlextLdifUtilitiesOID": ("flext_ldif._utilities.oid", "FlextLdifUtilitiesOID"),
+    "FlextLdifUtilitiesObjectClass": (
+        "flext_ldif._utilities.object_class",
+        "FlextLdifUtilitiesObjectClass",
+    ),
+    "FlextLdifUtilitiesParser": (
+        "flext_ldif._utilities.parser",
+        "FlextLdifUtilitiesParser",
+    ),
+    "FlextLdifUtilitiesParsers": (
+        "flext_ldif._utilities.parsers",
+        "FlextLdifUtilitiesParsers",
+    ),
+    "FlextLdifUtilitiesSchema": (
+        "flext_ldif._utilities.schema",
+        "FlextLdifUtilitiesSchema",
+    ),
+    "FlextLdifUtilitiesServer": (
+        "flext_ldif._utilities.server",
+        "FlextLdifUtilitiesServer",
+    ),
+    "FlextLdifUtilitiesValidation": (
+        "flext_ldif._utilities.validation",
+        "FlextLdifUtilitiesValidation",
+    ),
+    "FlextLdifUtilitiesWriter": (
+        "flext_ldif._utilities.writer",
+        "FlextLdifUtilitiesWriter",
+    ),
+    "FlextLdifUtilitiesWriters": (
+        "flext_ldif._utilities.writers",
+        "FlextLdifUtilitiesWriters",
+    ),
+    "IsSchemaEntryFilter": ("flext_ldif._utilities.filters", "IsSchemaEntryFilter"),
+    "Normalize": ("flext_ldif._utilities.transformers", "Normalize"),
+    "NormalizeAttrsTransformer": (
+        "flext_ldif._utilities.transformers",
+        "NormalizeAttrsTransformer",
+    ),
+    "NormalizeDnTransformer": (
+        "flext_ldif._utilities.transformers",
+        "NormalizeDnTransformer",
+    ),
+    "NotFilter": ("flext_ldif._utilities.filters", "NotFilter"),
+    "OrFilter": ("flext_ldif._utilities.filters", "OrFilter"),
+    "Pipeline": ("flext_ldif._utilities.pipeline", "Pipeline"),
+    "PipelineStep": ("flext_ldif._utilities.pipeline", "PipelineStep"),
+    "ProcessConfigBuilder": ("flext_ldif._utilities.builders", "ProcessConfigBuilder"),
+    "RemoveAttrsTransformer": (
+        "flext_ldif._utilities.transformers",
+        "RemoveAttrsTransformer",
+    ),
+    "ReplaceBaseDnTransformer": (
+        "flext_ldif._utilities.transformers",
+        "ReplaceBaseDnTransformer",
+    ),
+    "Transform": ("flext_ldif._utilities.transformers", "Transform"),
+    "TransformConfigBuilder": (
+        "flext_ldif._utilities.builders",
+        "TransformConfigBuilder",
+    ),
+    "ValidationPipeline": ("flext_ldif._utilities.pipeline", "ValidationPipeline"),
+    "ValidationResult": ("flext_ldif._utilities.pipeline", "ValidationResult"),
+    "WriteConfigBuilder": ("flext_ldif._utilities.builders", "WriteConfigBuilder"),
+    "c": ("flext_ldif.constants", "c"),
+    "t": ("flext_ldif.typings", "t"),
+}
 
 __all__ = [
     "AndFilter",
@@ -120,3 +244,24 @@ __all__ = [
     "c",
     "t",
 ]
+
+
+def __getattr__(name: str) -> type:
+    """Lazy-load module attributes on first access (PEP 562)."""
+    lazy_import = _LAZY_IMPORTS.get(name)
+    if lazy_import is None:
+        msg = f"module {__name__!r} has no attribute {name!r}"
+        raise AttributeError(msg)
+    module_path, attr_name = lazy_import
+    module = import_module(module_path)
+    value = getattr(module, attr_name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    """Return list of available attributes for dir() and autocomplete."""
+    return sorted(__all__)
+
+
+cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)

@@ -2,80 +2,56 @@
 
 from __future__ import annotations
 
+import builtins
+import struct
 from datetime import UTC, datetime
 from functools import wraps
+from typing import TypeGuard
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, r
 
+from flext_ldif import FlextLdifShared, m, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif._shared import normalize_server_type
-from flext_ldif.models import m
-from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 
 
-def generate_iso_timestamp() -> str:
-    """Generate ISO 8601 timestamp string."""
-    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
+def _is_metadata_attachable(
+    obj: builtins.object,
+) -> TypeGuard[
+    m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+]:
+    """Type guard to check if object supports metadata attachment."""
+    return isinstance(
+        obj,
+        (m.Ldif.Entry, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl),
+    )
 
 
 class FlextLdifUtilitiesDecorators:
     """Decorators for LDIF server quirk metadata assignment."""
 
     @staticmethod
-    def _get_server_type_from_class(
-        obj: (
-            m.Ldif.Entry
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass
-            | m.Ldif.Acl
-            | str
-            | float
-        ),
-    ) -> str | None:
-        """Extract SERVER_TYPE from class Constants via MRO traversal."""
-        if not hasattr(obj, "__class__"):
-            return None
-
-        for cls in obj.__class__.__mro__:
-            if hasattr(cls, "Constants") and hasattr(cls.Constants, "SERVER_TYPE"):
-                return str(cls.Constants.SERVER_TYPE)
-
-        return None
-
-    @staticmethod
     def _attach_metadata_if_present(
-        result_value: (
-            m.Ldif.Entry
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass
-            | m.Ldif.Acl
-            | str
-            | float
-            | None
-        ),
+        result_value: builtins.object | None,
         quirk_type: str,
         server_type: str | None,
     ) -> None:
         """Attach metadata to result value if it has metadata attribute."""
-        # Only attach metadata to models with metadata attribute
-        if not (
-            getattr(result_value, "metadata", None) is not None
-            or hasattr(result_value, "metadata")
-        ):
+        if result_value is None or not _is_metadata_attachable(result_value):
             return
-
-        # Create metadata with extensions
-        extensions_dict = {
+        extensions_dict_raw: dict[str, str | None] = {
             "server_type": server_type,
-            "parsed_timestamp": generate_iso_timestamp(),
+            "parsed_timestamp": datetime.now(UTC).replace(microsecond=0).isoformat(),
         }
-        # Normalize quirk_type if provided, otherwise None
-        # normalize_server_type validates and returns a valid ServerTypeLiteral string
+        extensions_dict: dict[str, builtins.object] = {
+            key: value
+            for key, value in extensions_dict_raw.items()
+            if value is not None
+        }
         normalized_quirk_type: str | None = (
-            normalize_server_type(quirk_type) if quirk_type else None
+            FlextLdifShared.normalize_server_type(quirk_type) if quirk_type else None
         )
         metadata = FlextLdifModelsDomains.QuirkMetadata.create_for(
             quirk_type=normalized_quirk_type,
@@ -83,30 +59,59 @@ class FlextLdifUtilitiesDecorators:
                 extensions_dict
             ),
         )
+        try:
+            setattr(result_value, "metadata", metadata)
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
+            logger.debug("Failed to attach metadata", error=str(e))
 
-        # Attach metadata by checking if object is a model instance with metadata
-        # Use runtime type check instead of protocol isinstance to avoid mypy issues
-        if (
-            hasattr(result_value, "metadata")
-            and hasattr(type(result_value), "model_fields")  # Check class, not instance
-            and isinstance(
-                result_value,
-                (
-                    m.Ldif.Entry,
-                    m.Ldif.SchemaAttribute,
-                    m.Ldif.SchemaObjectClass,
-                    m.Ldif.Acl,
-                ),
-            )
-        ):
-            # This is a Pydantic model with metadata field
-            # Use model_copy to create updated instance (respects validate_assignment)
-            try:
-                setattr(result_value, "metadata", metadata)
-            except Exception as e:
-                # If model_copy fails, skip metadata attachment
-                # This is safe - metadata attachment is optional for frozen models
-                logger.debug("Failed to attach metadata", error=str(e))
+    @staticmethod
+    def _get_server_type_from_class(obj: builtins.object) -> str | None:
+        """Extract SERVER_TYPE from class Constants via MRO traversal."""
+        if not getattr(obj, "__class__", None) is not None:
+            return None
+        for cls in obj.__class__.__mro__:
+            constants_obj = getattr(cls, "Constants", None)
+            if (
+                constants_obj is not None
+                and getattr(constants_obj, "SERVER_TYPE", None) is not None
+            ):
+                return str(constants_obj.SERVER_TYPE)
+        return None
+
+    @staticmethod
+    def _safe_operation(operation_name: str) -> t.Ldif.Decorators.ParseMethodDecorator:
+        """Generic decorator to wrap methods with standardized error handling."""
+
+        def decorator(
+            func: t.Ldif.Decorators.ParseMethod,
+        ) -> t.Ldif.Decorators.ParseMethod:
+
+            @wraps(func)
+            def wrapper(
+                self: builtins.object, arg: t.Ldif.Decorators.ParseMethodArg
+            ) -> t.Ldif.Decorators.ParseMethodReturn:
+                try:
+                    return func(self, arg)
+                except (
+                    ValueError,
+                    KeyError,
+                    AttributeError,
+                    UnicodeDecodeError,
+                    struct.error,
+                ) as e:
+                    error_msg = f"{operation_name} failed: {e}"
+                    logger.exception(error_msg, operation_name=operation_name)
+                    return r[t.Scalar | list[str] | None].fail(error_msg)
+
+            return wrapper
+
+        return decorator
 
     @staticmethod
     def attach_parse_metadata(
@@ -121,40 +126,23 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: object,
-                arg: str,
+                self: builtins.object, arg: str
             ) -> t.Ldif.Decorators.ParseMethodReturn:
                 """Call original function and attach metadata to result."""
                 result = func(self, arg)
-
-                # If result is successful, attach metadata using helper methods
                 if result.is_success:
                     unwrapped = result.value
-                    # Type narrowing: self is a protocol, but we need concrete types
-                    # Check if unwrapped is one of the supported types
-                    if isinstance(
-                        unwrapped,
-                        (
-                            m.Ldif.Entry,
-                            m.Ldif.SchemaAttribute,
-                            m.Ldif.SchemaObjectClass,
-                            m.Ldif.Acl,
-                        ),
-                    ):
+                    if _is_metadata_attachable(unwrapped):
                         server_type = (
                             FlextLdifUtilitiesDecorators._get_server_type_from_class(
-                                unwrapped,
+                                unwrapped
                             )
                         )
                         FlextLdifUtilitiesDecorators._attach_metadata_if_present(
-                            unwrapped,
-                            quirk_type,
-                            server_type,
+                            unwrapped, quirk_type, server_type
                         )
-
                 return result
 
-            # Type narrowing: wrapper is compatible with ParseMethod type
             return wrapper
 
         return decorator
@@ -168,10 +156,10 @@ class FlextLdifUtilitiesDecorators:
         def decorator(
             func: t.Ldif.Decorators.WriteMethod,
         ) -> t.Ldif.Decorators.WriteMethod:
+
             @wraps(func)
             def wrapper(
-                self: object,
-                arg: t.Ldif.Decorators.WriteMethodArg,
+                self: builtins.object, arg: t.Ldif.Decorators.WriteMethodArg
             ) -> t.Ldif.Decorators.WriteMethodReturn:
                 return func(self, arg)
 
@@ -180,68 +168,38 @@ class FlextLdifUtilitiesDecorators:
         return decorator
 
     @staticmethod
-    def _safe_operation(
-        operation_name: str,
-    ) -> t.Ldif.Decorators.ParseMethodDecorator:
-        """Generic decorator to wrap methods with standardized error handling."""
-
-        def decorator(
-            func: t.Ldif.Decorators.ParseMethod,
-        ) -> t.Ldif.Decorators.ParseMethod:
-            @wraps(func)
-            def wrapper(
-                self: object,
-                arg: t.Ldif.Decorators.ParseMethodArg,
-            ) -> t.Ldif.Decorators.ParseMethodReturn:
-                try:
-                    return func(self, arg)
-                except BaseException as e:
-                    error_msg = f"{operation_name} failed: {e}"
-                    logger.exception(error_msg, operation_name=operation_name)
-                    return FlextResult.fail(error_msg)
-
-            return wrapper
-
-        return decorator
-
-    @staticmethod
-    def safe_parse(
-        operation_name: str,
-    ) -> t.Ldif.Decorators.ParseMethodDecorator:
+    def safe_parse(operation_name: str) -> t.Ldif.Decorators.ParseMethodDecorator:
         """Decorator to wrap parse methods with standardized error handling."""
-        # Use _safe_operation which now returns FlextResult (Failure) on error
-        # This matches the ParseMethodDecorator signature
         return FlextLdifUtilitiesDecorators._safe_operation(operation_name)
 
     @staticmethod
-    def safe_write(
-        operation_name: str,
-    ) -> t.Ldif.Decorators.WriteMethodDecorator:
+    def safe_write(operation_name: str) -> t.Ldif.Decorators.WriteMethodDecorator:
         """Decorator to wrap write methods with standardized error handling."""
 
         def decorator(
             func: t.Ldif.Decorators.WriteMethod,
         ) -> t.Ldif.Decorators.WriteMethod:
+
             @wraps(func)
             def wrapper(
-                self: object,
-                arg: t.Ldif.Decorators.WriteMethodArg,
+                self: builtins.object, arg: t.Ldif.Decorators.WriteMethodArg
             ) -> t.Ldif.Decorators.WriteMethodReturn:
                 try:
                     return func(self, arg)
-                except BaseException as e:
+                except (
+                    ValueError,
+                    KeyError,
+                    AttributeError,
+                    UnicodeDecodeError,
+                    struct.error,
+                ) as e:
                     error_msg = f"{operation_name} failed: {e}"
                     logger.exception(error_msg, operation_name=operation_name)
-                    return FlextResult.fail(error_msg)
+                    return r[t.Scalar | list[str] | None].fail(error_msg)
 
             return wrapper
 
         return decorator
 
 
-# Use FlextLdifUtilitiesDecorators directly - no aliases needed
-# Access via: FlextLdifUtilitiesDecorators.attach_parse_metadata(...)
-
-__all__ = [
-    "FlextLdifUtilitiesDecorators",
-]
+__all__ = ["FlextLdifUtilitiesDecorators"]

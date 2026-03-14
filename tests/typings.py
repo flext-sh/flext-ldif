@@ -10,10 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import TypeAlias
 
-from flext_ldif.typings import FlextLdifTypes
-from flext_tests.typings import FlextTestsTypes
+from flext_tests import FlextTestsTypes
+
+from flext_ldif import FlextLdifTypes
 
 
 class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
@@ -31,43 +32,17 @@ class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
     Short name 't' for convenient access in tests, 'tt' as test-specific alias.
     """
 
-    class Tests:
+    class Tests(FlextTestsTypes.Tests):
         """flext-ldif-specific test type definitions namespace.
 
-        Use tt.Tests.* for flext-ldif-specific test types.
+        Use tt.LdifTests.* for flext-ldif-specific test types.
         Use t.Tests.* for generic test types from FlextTestsTypes.
         """
 
         class Fixtures:
             """TypedDict definitions for LDIF test fixtures."""
 
-            class GenericFieldsDict(TypedDict, total=False):
-                """Generic dictionary for flexible test data and configurations."""
 
-            class LdifEntryDict(TypedDict, total=False):
-                """Test LDIF entry data."""
-
-                dn: str
-                changetype: str
-                attributes: dict[str, list[str]]
-
-            class LdifParseResultDict(TypedDict, total=False):
-                """LDIF parse result test data."""
-
-                entries: list[dict[str, object]]
-                errors: list[str]
-                warnings: list[str]
-
-
-# Standardized short name for use in tests (same pattern as flext-core)
 t = TestsFlextLdifTypes
-tt = TestsFlextLdifTypes
-
-GenericFieldsDict = TestsFlextLdifTypes.Tests.Fixtures.GenericFieldsDict
-
-__all__ = [
-    "GenericFieldsDict",
-    "TestsFlextLdifTypes",
-    "t",
-    "tt",
-]
+GenericFieldsDict: TypeAlias = dict[str, str]
+__all__ = ["GenericFieldsDict", "TestsFlextLdifTypes", "t"]

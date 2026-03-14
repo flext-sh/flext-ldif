@@ -6,13 +6,14 @@ Directory Server-specific attributes, object classes, entries, and ACLs in LDIF 
 
 from __future__ import annotations
 
-import dataclasses
 from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_ldif.servers.apache import FlextLdifServersApache
+from pydantic import BaseModel, ConfigDict, Field
 from tests import TestDeduplicationHelpers, c, m, s
+
+from flext_ldif.servers.apache import FlextLdifServersApache
 
 
 class AttributeScenario(StrEnum):
@@ -58,47 +59,67 @@ class AclScenario(StrEnum):
     WRITE_EMPTY = "write_empty"
 
 
-@dataclasses.dataclass(frozen=True)
-class AttributeTestCase:
+class AttributeTestCase(BaseModel):
     """Test case for attribute detection and parsing."""
 
-    scenario: AttributeScenario
-    attr_definition: str
-    expected_can_handle: bool
-    expected_name: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    scenario: AttributeScenario = Field(description="Attribute scenario identifier")
+    attr_definition: str = Field(description="Schema attribute definition string")
+    expected_can_handle: bool = Field(description="Expected can_handle result")
+    expected_name: str | None = Field(
+        default=None,
+        description="Expected parsed attribute name",
+    )
 
 
-@dataclasses.dataclass(frozen=True)
-class ObjectClassTestCase:
+class ObjectClassTestCase(BaseModel):
     """Test case for objectClass detection and parsing."""
 
-    scenario: ObjectClassScenario
-    oc_definition: str
-    expected_can_handle: bool
-    expected_name: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    scenario: ObjectClassScenario = Field(description="ObjectClass scenario identifier")
+    oc_definition: str = Field(description="Schema objectClass definition string")
+    expected_can_handle: bool = Field(description="Expected can_handle result")
+    expected_name: str | None = Field(
+        default=None,
+        description="Expected parsed objectClass name",
+    )
 
 
-@dataclasses.dataclass(frozen=True)
-class EntryTestCase:
+class EntryTestCase(BaseModel):
     """Test case for entry detection."""
 
-    scenario: EntryScenario
-    entry_dn: str
-    attributes: dict[str, list[str]]
-    expected_can_handle: bool
+    model_config = ConfigDict(frozen=True)
+
+    scenario: EntryScenario = Field(description="Entry detection scenario identifier")
+    entry_dn: str = Field(description="Entry distinguished name")
+    attributes: dict[str, list[str]] = Field(
+        description="Entry attributes mapped by name"
+    )
+    expected_can_handle: bool = Field(description="Expected can_handle result")
 
 
-@dataclasses.dataclass(frozen=True)
-class AclTestCase:
+class AclTestCase(BaseModel):
     """Test case for ACL handling."""
 
-    scenario: AclScenario
-    acl_line: str | None = None
-    expected_can_handle: bool = False
-    expected_success: bool = False
+    model_config = ConfigDict(frozen=True)
+
+    scenario: AclScenario = Field(description="ACL scenario identifier")
+    acl_line: str | None = Field(
+        default=None,
+        description="ACL line under test",
+    )
+    expected_can_handle: bool = Field(
+        default=False,
+        description="Expected can_handle result",
+    )
+    expected_success: bool = Field(
+        default=False,
+        description="Expected parse success state",
+    )
 
 
-# Attribute test data
 ATTRIBUTE_TEST_CASES = (
     AttributeTestCase(
         scenario=AttributeScenario.APACHE_OID,
@@ -125,8 +146,6 @@ ATTRIBUTE_TEST_CASES = (
         expected_name="cn",
     ),
 )
-
-# ObjectClass test data
 OBJECTCLASS_TEST_CASES = (
     ObjectClassTestCase(
         scenario=ObjectClassScenario.APACHE_OID,
@@ -147,8 +166,6 @@ OBJECTCLASS_TEST_CASES = (
         expected_name="posixAccount",
     ),
 )
-
-# Entry test data
 ENTRY_TEST_CASES = (
     EntryTestCase(
         scenario=EntryScenario.OU_CONFIG,
@@ -177,19 +194,13 @@ ENTRY_TEST_CASES = (
     EntryTestCase(
         scenario=EntryScenario.ADS_ATTRIBUTE,
         entry_dn="cn=test,dc=example,dc=com",
-        attributes={
-            "ads-enabled": ["TRUE"],
-            "objectClass": ["top"],
-        },
+        attributes={"ads-enabled": ["TRUE"], "objectClass": ["top"]},
         expected_can_handle=True,
     ),
     EntryTestCase(
         scenario=EntryScenario.APACHEDS_ATTRIBUTE,
         entry_dn="cn=test,dc=example,dc=com",
-        attributes={
-            "apachedsSystemId": ["test"],
-            "objectClass": ["top"],
-        },
+        attributes={"apachedsSystemId": ["test"], "objectClass": ["top"]},
         expected_can_handle=True,
     ),
     EntryTestCase(
@@ -201,11 +212,8 @@ ENTRY_TEST_CASES = (
     EntryTestCase(
         scenario=EntryScenario.STANDARD_RFC,
         entry_dn="cn=user,dc=example,dc=com",
-        attributes={
-            "objectClass": ["person"],
-            "cn": ["user"],
-        },
-        expected_can_handle=True,  # Apache quirk accepts all entries
+        attributes={"objectClass": ["person"], "cn": ["user"]},
+        expected_can_handle=True,
     ),
 )
 
@@ -238,13 +246,11 @@ class TestsTestFlextLdifApacheQuirks(s):
         server = FlextLdifServersApache()
         assert server.entry_quirk is not None
 
-    # Schema attribute tests
     @pytest.mark.parametrize("test_case", ATTRIBUTE_TEST_CASES)
     def test_schema_attribute_can_handle(self, test_case: AttributeTestCase) -> None:
         """Test attribute detection for various scenarios."""
         server = FlextLdifServersApache()
         schema_quirk = server.schema_quirk
-
         assert isinstance(schema_quirk, FlextLdifServersApache.Schema)
         result = schema_quirk.can_handle_attribute(test_case.attr_definition)
         assert result is test_case.expected_can_handle
@@ -288,22 +294,16 @@ class TestsTestFlextLdifApacheQuirks(s):
         schema = server.schema_quirk
         attr_def = "NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7"
         TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            schema,
-            attr_def,
-            parse_method="parse_attribute",
-            should_succeed=False,
+            schema, attr_def, parse_method="parse_attribute", should_succeed=False
         )
 
-    # Schema objectClass tests
     @pytest.mark.parametrize("test_case", OBJECTCLASS_TEST_CASES)
     def test_schema_objectclass_can_handle(
-        self,
-        test_case: ObjectClassTestCase,
+        self, test_case: ObjectClassTestCase
     ) -> None:
         """Test objectClass detection for various scenarios."""
         server = FlextLdifServersApache()
         schema_quirk = server.schema_quirk
-
         assert isinstance(schema_quirk, FlextLdifServersApache.Schema)
         result = schema_quirk.can_handle_objectclass(test_case.oc_definition)
         assert result is test_case.expected_can_handle
@@ -366,10 +366,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         schema = server.schema_quirk
         oc_def = "NAME 'ads-directoryService' SUP top STRUCTURAL"
         TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            schema,
-            oc_def,
-            parse_method="parse_objectclass",
-            should_succeed=False,
+            schema, oc_def, parse_method="parse_objectclass", should_succeed=False
         )
 
     def test_schema_write_attribute_to_rfc(self) -> None:
@@ -417,23 +414,17 @@ class TestsTestFlextLdifApacheQuirks(s):
             ],
         )
 
-    # ACL tests
     def test_acl_can_handle_with_ads_aci(self) -> None:
         """Test ACL detection with ads-aci attribute."""
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl_quirk,
-            acl_line,
-            parse_method="parse",
-            expected_type=m.Tests.Acl,
+            acl_quirk, acl_line, parse_method="parse", expected_type=m.Tests.Acl
         )
         assert isinstance(acl_model, m.Tests.Acl)
         roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl_quirk,
-            acl_model.raw_acl or str(acl_model),
-            parse_method="parse",
+            acl_quirk, acl_model.raw_acl or str(acl_model), parse_method="parse"
         )
         assert roundtrip_result is not None
 
@@ -443,16 +434,11 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_quirk = server.acl_quirk
         acl_line = "aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl_quirk,
-            acl_line,
-            parse_method="parse",
-            expected_type=m.Tests.Acl,
+            acl_quirk, acl_line, parse_method="parse", expected_type=m.Tests.Acl
         )
         assert isinstance(acl_model, m.Tests.Acl)
         roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl_quirk,
-            acl_model.raw_acl or str(acl_model),
-            parse_method="parse",
+            acl_quirk, acl_model.raw_acl or str(acl_model), parse_method="parse"
         )
         assert roundtrip_result is not None
 
@@ -462,16 +448,11 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_quirk = server.acl_quirk
         acl_line = "(version 3.0) (deny grantAdd) (grantRemove)"
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl_quirk,
-            acl_line,
-            parse_method="parse",
-            expected_type=m.Tests.Acl,
+            acl_quirk, acl_line, parse_method="parse", expected_type=m.Tests.Acl
         )
         assert isinstance(acl_model, m.Tests.Acl)
         roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl_quirk,
-            acl_model.raw_acl or str(acl_model),
-            parse_method="parse",
+            acl_quirk, acl_model.raw_acl or str(acl_model), parse_method="parse"
         )
         assert roundtrip_result is not None
 
@@ -479,17 +460,14 @@ class TestsTestFlextLdifApacheQuirks(s):
         """Test ACL detection rejects non-ApacheDS ACLs."""
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
-
         assert isinstance(acl_quirk, FlextLdifServersApache.Acl)
         acl_line = "access to * by * read"
-        # Test with string directly - can_handle_acl accepts str | AclProtocol
         assert acl_quirk.can_handle_acl(acl_line) is False
 
     def test_acl_can_handle_empty_line(self) -> None:
         """Test ACL detection rejects empty lines."""
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
-
         assert isinstance(acl_quirk, FlextLdifServersApache.Acl)
         assert acl_quirk.can_handle_acl("") is False
 
@@ -499,10 +477,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_quirk = server.acl_quirk
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
         acl_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl_quirk,
-            acl_line,
-            parse_method="parse",
-            expected_type=m.Tests.Acl,
+            acl_quirk, acl_line, parse_method="parse", expected_type=m.Tests.Acl
         )
         assert isinstance(acl_data, m.Tests.Acl)
         assert acl_data.get_acl_format() == c.Ldif.AclFormats.ACI
@@ -514,10 +489,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_quirk = server.acl_quirk
         acl_line = "aci: ( deny grantAdd )"
         acl_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl_quirk,
-            acl_line,
-            parse_method="parse",
-            expected_type=m.Tests.Acl,
+            acl_quirk, acl_line, parse_method="parse", expected_type=m.Tests.Acl
         )
         assert isinstance(acl_data, m.Tests.Acl)
 
@@ -534,10 +506,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             raw_acl="( version 3.0 ) ( deny grantAdd )",
         )
         TestDeduplicationHelpers.quirk_write_and_unwrap(
-            acl_quirk,
-            acl_model,
-            write_method="_write_acl",
-            must_contain=["aci:"],
+            acl_quirk, acl_model, write_method="_write_acl", must_contain=["aci:"]
         )
 
     def test_acl_write_with_clauses_only(self) -> None:
@@ -553,10 +522,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             raw_acl="( version 3.0 ) ( deny grantAdd )",
         )
         TestDeduplicationHelpers.quirk_write_and_unwrap(
-            acl_quirk,
-            acl_model,
-            write_method="write",
-            must_contain=["aci:"],
+            acl_quirk, acl_model, write_method="write", must_contain=["aci:"]
         )
 
     def test_acl_write_empty(self) -> None:
@@ -572,19 +538,14 @@ class TestsTestFlextLdifApacheQuirks(s):
             raw_acl="",
         )
         TestDeduplicationHelpers.quirk_write_and_unwrap(
-            acl_quirk,
-            acl_model,
-            write_method="write",
-            must_contain=["ads-aci", "aci:"],
+            acl_quirk, acl_model, write_method="write", must_contain=["ads-aci", "aci:"]
         )
 
-    # Entry tests
     @pytest.mark.parametrize("test_case", ENTRY_TEST_CASES)
     def test_entry_can_handle(self, test_case: EntryTestCase) -> None:
         """Test entry detection for various scenarios."""
         server = FlextLdifServersApache()
         entry_quirk = server.entry_quirk
-
         assert isinstance(entry_quirk, FlextLdifServersApache.Entry)
         result = entry_quirk.can_handle(test_case.entry_dn, test_case.attributes)
         assert result is test_case.expected_can_handle
@@ -602,8 +563,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         return ldif
 
     @pytest.mark.parametrize(
-        "test_case",
-        [c for c in ENTRY_TEST_CASES if c.expected_can_handle],
+        "test_case", [c for c in ENTRY_TEST_CASES if c.expected_can_handle]
     )
     def test_entry_parse_ldif(self, test_case: EntryTestCase) -> None:
         """Test entry parsing via LDIF for Apache-detectable entries."""
@@ -611,5 +571,4 @@ class TestsTestFlextLdifApacheQuirks(s):
         entry_quirk = server.entry_quirk
         ldif = self._build_ldif(test_case.entry_dn, test_case.attributes)
         result = entry_quirk.parse(ldif)
-        # Apache entries should be handled - result is a FlextResult
         assert hasattr(result, "is_success")

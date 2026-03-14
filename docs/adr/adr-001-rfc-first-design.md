@@ -36,7 +36,7 @@ Implement a **RFC-First Design with Zero Bypass Paths** where:
 parser = RfcLdifParserService(
     params={"file_path": "data.ldif"},
     quirk_registry=quirk_registry,  # MANDATORY
-    server_type="oid"  # Applied as enhancement
+    server_type="oid",  # Applied as enhancement
 )
 
 # All operations through facade

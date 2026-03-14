@@ -114,24 +114,24 @@ ______________________________________________________________________
 class FlextLdifParser(Flext[dict[str, object]]):
     """LDIF parsing service following FLEXT patterns."""
 
-    _logger: FlextLogger          # Structured logging
-    _config: FlextLdifSettings      # Configuration
+    _logger: FlextLogger  # Structured logging
+    _config: FlextLdifSettings  # Configuration
 ```
 
 ### Dependencies
 
 - **FlextLdifSettings**: Configuration for parsing behavior
 - **FlextLogger**: Structured logging for operations
-- **FlextResult**: Railway-oriented error handling
+- **r**: Railway-oriented error handling
 - **FlextService**: Base class for FLEXT ecosystem integration
 
 ### Design Principles Applied
 
 1. **Single Responsibility Principle**: Service focuses only on parsing operations
 1. **Dependency Injection**: Client and config injected via constructor
-1. **Railway-Oriented Programming**: All methods return FlextResult[T]
+1. **Railway-Oriented Programming**: All methods return r[T]
 1. **Type Safety**: Full Python 3.13+ type annotations
-1. **FLEXT Patterns**: Inherits from FlextService, uses FlextResult
+1. **FLEXT Patterns**: Inherits from FlextService, uses r
 
 ______________________________________________________________________
 
@@ -150,10 +150,7 @@ class FlextLdif(Flext[dict[str, object]]):
         self._config = config if config is not None else FlextLdifSettings()
 
         # Initialize parser service
-        self._parser = FlextLdifParser(
-            client=self._client,
-            config=self._config
-        )
+        self._parser = FlextLdifParser(client=self._client, config=self._config)
         # ... rest of initialization
 
     def parse(self, source, server_type, *, batch, paginate, page_size):
@@ -163,7 +160,7 @@ class FlextLdif(Flext[dict[str, object]]):
             server_type=server_type,
             batch=batch,
             paginate=paginate,
-            page_size=page_size
+            page_size=page_size,
         )
 
     def parse_schema_ldif(self, file_path, server_type=None):
@@ -205,7 +202,7 @@ class FlextLdif(Flext[dict[str, object]]):
 Add parser service to exports:
 
 ```python
-from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif import FlextLdifParser
 
 __all__ = [
     # ... existing exports
@@ -218,7 +215,7 @@ __all__ = [
 Add import for parser service:
 
 ```python
-from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif import FlextLdifParser
 ```
 
 ______________________________________________________________________
@@ -230,11 +227,11 @@ ______________________________________________________________________
 - ✅ All methods have complete type annotations
 - ✅ Uses Python 3.13+ syntax (`from __future__ import annotations`)
 - ✅ Complex union types properly handled with `cast()`
-- ✅ FlextResult[T] return types for all operations
+- ✅ r[T] return types for all operations
 
 ### Error Handling
 
-- ✅ Railway-oriented programming with FlextResult
+- ✅ Railway-oriented programming with r
 - ✅ Proper exception handling with try/except
 - ✅ Detailed error messages with context
 - ✅ Partial success handling for batch operations
@@ -251,7 +248,7 @@ ______________________________________________________________________
 
 - ✅ Inherits from FlextService\[dict[str, object]\]
 - ✅ Implements execute() method for health checks
-- ✅ Uses FlextResult for all operations
+- ✅ Uses r for all operations
 - ✅ Uses FlextLogger for structured logging
 - ✅ Dependency injection via constructor
 
@@ -342,7 +339,7 @@ ______________________________________________________________________
 - **FLEXT Compliance**: Service follows FLEXT architectural patterns
 - **Dependency Injection**: Clean dependency management
 - **Type Safety**: Full type annotations with Python 3.13+
-- **Error Handling**: Consistent FlextResult pattern throughout
+- **Error Handling**: Consistent r pattern throughout
 
 ### Future Extensibility
 
@@ -376,7 +373,7 @@ ______________________________________________________________________
 ## Success Criteria
 
 - ✅ FlextLdifParser created with all parsing operations
-- ✅ All methods follow FLEXT patterns (FlextService, FlextResult)
+- ✅ All methods follow FLEXT patterns (FlextService, r)
 - ✅ Complete type annotations (Python 3.13+)
 - ✅ Comprehensive documentation with examples
 - ⏳ Integration with api.py (Next: User confirmation)

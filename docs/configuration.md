@@ -54,45 +54,33 @@ Core configuration class with validation:
 ```python
 from flext_ldif import FlextLdifModels
 
+
 class Config(BaseModel):
     """LDIF processing configuration with Pydantic validation."""
 
     max_entries: int | None = Field(
         None,
         description="Maximum number of entries to process (None = unlimited)",
-        ge=1
+        ge=1,
     )
 
     strict_validation: bool = Field(
-        False,
-        description="Enable strict RFC 2849 validation"
+        False, description="Enable strict RFC 2849 validation"
     )
 
     ignore_unknown_attributes: bool = Field(
-        True,
-        description="Ignore attributes not in standard LDAP schema"
+        True, description="Ignore attributes not in standard LDAP schema"
     )
 
-    encoding: str = Field(
-        "utf-8",
-        description="Character encoding for LDIF files"
-    )
+    encoding: str = Field("utf-8", description="Character encoding for LDIF files")
 
-    line_separator: str = Field(
-        "\\n",
-        description="Line separator for LDIF output"
-    )
+    line_separator: str = Field("\\n", description="Line separator for LDIF output")
 
     buffer_size: int = Field(
-        8192,
-        description="Buffer size for file operations",
-        ge=1024
+        8192, description="Buffer size for file operations", ge=1024
     )
 
-    log_level: str = Field(
-        "INFO",
-        description="Logging level for LDIF operations"
-    )
+    log_level: str = Field("INFO", description="Logging level for LDIF operations")
 ```
 
 ### Configuration Usage
@@ -100,14 +88,12 @@ class Config(BaseModel):
 ```python
 # Create configuration with custom settings
 config = FlextLdifModels.Config(
-    max_entries=100000,
-    strict_validation=True,
-    encoding='utf-8',
-    log_level='DEBUG'
+    max_entries=100000, strict_validation=True, encoding="utf-8", log_level="DEBUG"
 )
 
 # Use configuration with API
 from flext_ldif import FlextLdif
+
 api = FlextLdif(config=config)
 
 # Access configuration values
@@ -124,10 +110,10 @@ from flext_ldif import initialize_ldif_config, get_ldif_config
 
 # Initialize global configuration
 initialize_ldif_config({
-    'max_entries': 50000,
-    'strict_validation': True,
-    'encoding': 'utf-8',
-    'log_level': 'INFO'
+    "max_entries": 50000,
+    "strict_validation": True,
+    "encoding": "utf-8",
+    "log_level": "INFO",
 })
 
 # Access global configuration
@@ -158,15 +144,18 @@ export FLEXT_LDIF_LOG_LEVEL=DEBUG
 import os
 from flext_ldif import FlextLdifModels
 
+
 def load_config_from_environment() -> FlextLdifModels.Config:
     """Load configuration from environment variables."""
     return FlextLdifModels.Config(
-        max_entries=int(os.getenv('FLEXT_LDIF_MAX_ENTRIES', '0')) or None,
-        strict_validation=os.getenv('FLEXT_LDIF_STRICT_VALIDATION', '').lower() == 'true',
-        encoding=os.getenv('FLEXT_LDIF_ENCODING', 'utf-8'),
-        buffer_size=int(os.getenv('FLEXT_LDIF_BUFFER_SIZE', '8192')),
-        log_level=os.getenv('FLEXT_LDIF_LOG_LEVEL', 'INFO')
+        max_entries=int(os.getenv("FLEXT_LDIF_MAX_ENTRIES", "0")) or None,
+        strict_validation=os.getenv("FLEXT_LDIF_STRICT_VALIDATION", "").lower()
+        == "true",
+        encoding=os.getenv("FLEXT_LDIF_ENCODING", "utf-8"),
+        buffer_size=int(os.getenv("FLEXT_LDIF_BUFFER_SIZE", "8192")),
+        log_level=os.getenv("FLEXT_LDIF_LOG_LEVEL", "INFO"),
     )
+
 
 # Use environment-based configuration
 config = load_config_from_environment()
@@ -183,11 +172,12 @@ Optimized for development and testing:
 def create_development_config() -> FlextLdifModels.Config:
     """Create configuration optimized for development."""
     return FlextLdifModels.Config(
-        max_entries=10000,          # Limit for faster testing
-        strict_validation=True,      # Catch issues early
+        max_entries=10000,  # Limit for faster testing
+        strict_validation=True,  # Catch issues early
         ignore_unknown_attributes=False,  # Strict validation
-        log_level='DEBUG'           # Verbose logging
+        log_level="DEBUG",  # Verbose logging
     )
+
 
 # Development API instance
 dev_api = FlextLdif(config=create_development_config())
@@ -201,13 +191,14 @@ Optimized for production environments:
 def create_production_config() -> FlextLdifModels.Config:
     """Create configuration optimized for production."""
     return FlextLdifModels.Config(
-        max_entries=None,           # No artificial limits
-        strict_validation=False,    # More permissive for real-world data
+        max_entries=None,  # No artificial limits
+        strict_validation=False,  # More permissive for real-world data
         ignore_unknown_attributes=True,  # Handle varied schemas
-        encoding='utf-8',
-        buffer_size=16384,          # Larger buffer for performance
-        log_level='INFO'            # Standard logging
+        encoding="utf-8",
+        buffer_size=16384,  # Larger buffer for performance
+        log_level="INFO",  # Standard logging
     )
+
 
 # Production API instance
 prod_api = FlextLdif(config=create_production_config())
@@ -221,13 +212,14 @@ Optimized for large-scale LDAP migrations:
 def create_migration_config() -> FlextLdifModels.Config:
     """Create configuration optimized for enterprise migrations."""
     return FlextLdifModels.Config(
-        max_entries=None,           # Handle large exports
-        strict_validation=False,    # Accommodate legacy data
+        max_entries=None,  # Handle large exports
+        strict_validation=False,  # Accommodate legacy data
         ignore_unknown_attributes=True,  # Handle custom schemas
-        encoding='utf-8',
-        buffer_size=32768,          # Maximum performance
-        log_level='INFO'
+        encoding="utf-8",
+        buffer_size=32768,  # Maximum performance
+        log_level="INFO",
     )
+
 
 # Migration API instance
 migration_api = FlextLdif(config=create_migration_config())
@@ -241,20 +233,26 @@ migration_api = FlextLdif(config=create_migration_config())
 from pydantic import ValidationError
 from flext_ldif import FlextLdifModels
 
-def validate_configuration(config_dict: dict) -> FlextResult[FlextLdifModels.Config]:
+
+def validate_configuration(config_dict: dict) -> r[FlextLdifModels.Config]:
     """Validate configuration with detailed error handling."""
     try:
         config = FlextLdifModels.Config(**config_dict)
-        return FlextResult[FlextLdifModels.Config].ok(config)
+        return r[FlextLdifModels.Config].ok(config)
     except ValidationError as e:
-        error_details = "; ".join([f"{err['loc'][0]}: {err['msg']}" for err in e.errors()])
-        return FlextResult[FlextLdifModels.Config].fail(f"Configuration validation failed: {error_details}")
+        error_details = "; ".join([
+            f"{err['loc'][0]}: {err['msg']}" for err in e.errors()
+        ])
+        return r[FlextLdifModels.Config].fail(
+            f"Configuration validation failed: {error_details}"
+        )
+
 
 # Validate configuration before use
 config_data = {
-    'max_entries': 'invalid',  # Should be int or None
-    'strict_validation': True,
-    'encoding': 'utf-8'
+    "max_entries": "invalid",  # Should be int or None
+    "strict_validation": True,
+    "encoding": "utf-8",
 }
 
 validation_result = validate_configuration(config_data)
@@ -269,26 +267,27 @@ else:
 
 ```python
 def create_inherited_config(
-    base_config: FlextLdifModels.Config,
-    overrides: dict
+    base_config: FlextLdifModels.Config, overrides: dict
 ) -> FlextLdifModels.Config:
     """Create new configuration inheriting from base with overrides."""
     base_dict = base_config.model_dump()
     base_dict.update(overrides)
     return FlextLdifModels.Config(**base_dict)
 
+
 # Base configuration
 base_config = FlextLdifModels.Config(
-    max_entries=50000,
-    strict_validation=True,
-    encoding='utf-8'
+    max_entries=50000, strict_validation=True, encoding="utf-8"
 )
 
 # Specialized configuration for specific use case
-specialized_config = create_inherited_config(base_config, {
-    'max_entries': 100000,  # Override for larger files
-    'log_level': 'DEBUG'    # Add debugging
-})
+specialized_config = create_inherited_config(
+    base_config,
+    {
+        "max_entries": 100000,  # Override for larger files
+        "log_level": "DEBUG",  # Add debugging
+    },
+)
 ```
 
 ### Configuration Profiles
@@ -301,9 +300,7 @@ class ConfigurationProfiles:
     def minimal() -> FlextLdifModels.Config:
         """Minimal configuration for basic LDIF processing."""
         return FlextLdifModels.Config(
-            max_entries=1000,
-            strict_validation=False,
-            ignore_unknown_attributes=True
+            max_entries=1000, strict_validation=False, ignore_unknown_attributes=True
         )
 
     @staticmethod
@@ -313,7 +310,7 @@ class ConfigurationProfiles:
             max_entries=50000,
             strict_validation=True,
             ignore_unknown_attributes=True,
-            buffer_size=8192
+            buffer_size=8192,
         )
 
     @staticmethod
@@ -324,7 +321,7 @@ class ConfigurationProfiles:
             strict_validation=False,
             ignore_unknown_attributes=True,
             buffer_size=32768,
-            log_level='INFO'
+            log_level="INFO",
         )
 
     @staticmethod
@@ -334,8 +331,9 @@ class ConfigurationProfiles:
             max_entries=100,
             strict_validation=True,
             ignore_unknown_attributes=False,
-            log_level='DEBUG'
+            log_level="DEBUG",
         )
+
 
 # Use predefined profiles
 api = FlextLdif(config=ConfigurationProfiles.enterprise())
@@ -361,7 +359,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -401,23 +399,28 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
 
+
 def log_configuration(config: FlextLdifModels.Config) -> None:
     """Log configuration settings for debugging."""
     logger = FlextLogger(__name__)
 
-    logger.info("LDIF configuration initialized", extra={
-        'max_entries': config.max_entries,
-        'strict_validation': config.strict_validation,
-        'encoding': config.encoding,
-        'buffer_size': config.buffer_size,
-        'log_level': config.log_level
-    })
+    logger.info(
+        "LDIF configuration initialized",
+        extra={
+            "max_entries": config.max_entries,
+            "strict_validation": config.strict_validation,
+            "encoding": config.encoding,
+            "buffer_size": config.buffer_size,
+            "log_level": config.log_level,
+        },
+    )
+
 
 # Log configuration during initialization
 config = FlextLdifModels.Config(max_entries=50000)
@@ -433,15 +436,12 @@ Always use the Pydantic-based configuration models:
 
 ```python
 # ✅ Good: Type-safe configuration
-config = FlextLdifModels.Config(
-    max_entries=50000,
-    strict_validation=True
-)
+config = FlextLdifModels.Config(max_entries=50000, strict_validation=True)
 
 # ❌ Avoid: Raw dictionaries without validation
 config_dict = {
-    'max_entries': '50000',  # Should be int
-    'strict_validation': 'yes'  # Should be bool
+    "max_entries": "50000",  # Should be int
+    "strict_validation": "yes",  # Should be bool
 }
 ```
 
@@ -450,17 +450,17 @@ config_dict = {
 Validate configuration at application startup:
 
 ```python
-def initialize_application_config() -> FlextResult[FlextLdif]:
+def initialize_application_config() -> r[FlextLdif]:
     """Initialize application with validated configuration."""
     try:
         config = FlextLdifModels.Config(
-            max_entries=int(os.getenv('MAX_ENTRIES', '50000')),
-            strict_validation=os.getenv('STRICT_VALIDATION', '').lower() == 'true'
+            max_entries=int(os.getenv("MAX_ENTRIES", "50000")),
+            strict_validation=os.getenv("STRICT_VALIDATION", "").lower() == "true",
         )
         api = FlextLdif(config=config)
-        return FlextResult[FlextLdif].ok(api)
+        return r[FlextLdif].ok(api)
     except Exception as e:
-        return FlextResult[FlextLdif].fail(f"Configuration initialization failed: {e}")
+        return r[FlextLdif].fail(f"Configuration initialization failed: {e}")
 ```
 
 ### 3. Use Environment-Specific Profiles
@@ -471,15 +471,16 @@ Create profiles for different deployment environments:
 def get_environment_config(environment: str) -> FlextLdifModels.Config:
     """Get configuration based on deployment environment."""
     profiles = {
-        'development': ConfigurationProfiles.testing(),
-        'staging': ConfigurationProfiles.standard(),
-        'production': ConfigurationProfiles.enterprise()
+        "development": ConfigurationProfiles.testing(),
+        "staging": ConfigurationProfiles.standard(),
+        "production": ConfigurationProfiles.enterprise(),
     }
 
     return profiles.get(environment, ConfigurationProfiles.standard())
 
+
 # Use environment-based configuration
-env = os.getenv('ENVIRONMENT', 'development')
+env = os.getenv("ENVIRONMENT", "development")
 config = get_environment_config(env)
 api = FlextLdif(config=config)
 ```
@@ -494,9 +495,10 @@ CONFIGURATION_CHANGELOG = {
     "0.9.9": {
         "added": ["buffer_size", "log_level"],
         "changed": ["max_entries default from 10000 to None"],
-        "deprecated": []
+        "deprecated": [],
     }
 }
+
 
 def get_config_version() -> str:
     """Get current configuration version."""

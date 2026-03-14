@@ -57,11 +57,11 @@ class QuirkBase(ABC):
         """Resolution priority (lower = higher priority)."""
 
     @abstractmethod
-    def to_rfc(self, data: str, data_type: str) -> FlextResult[str]:
+    def to_rfc(self, data: str, data_type: str) -> r[str]:
         """Convert server format to RFC standard."""
 
     @abstractmethod
-    def from_rfc(self, data: str, data_type: str) -> FlextResult[str]:
+    def from_rfc(self, data: str, data_type: str) -> r[str]:
         """Convert RFC standard to server format."""
 ```
 
@@ -77,9 +77,7 @@ oid = registry.get_for_server("oid")  # Priority 10
 oud = registry.get_for_server("oud")  # Priority 20
 
 # RFC-first with quirks enhancement
-result = rfc_parser.parse_withs(
-    content, server, data_type="schema"
-)
+result = rfc_parser.parse_withs(content, server, data_type="schema")
 ```
 
 **Consequences**:

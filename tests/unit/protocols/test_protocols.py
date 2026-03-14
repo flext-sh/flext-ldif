@@ -6,19 +6,19 @@ server implementations, ACL handling, and service contracts.
 
 from __future__ import annotations
 
-import dataclasses
 from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_core import FlextResult
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_core import r
+from pydantic import BaseModel, ConfigDict, Field
+from tests import s
+
+from flext_ldif import FlextLdifProtocols, FlextLdifServer, p
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.openldap import FlextLdifServersOpenldap
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
-from flext_ldif.services.server import FlextLdifServer
-from tests import s
 
 
 def _create_server_implementations() -> list[tuple[str, type, type]]:
@@ -42,13 +42,10 @@ class TestsTestFlextLdifProtocols(s):
         """Protocol names in FlextLdifProtocols.Ldif namespace organized as nested enum."""
 
         __test__ = False
+        SCHEMA = "SchemaQuirk"
+        ACL = "AclQuirk"
+        ENTRY = "EntryQuirk"
 
-        SCHEMA = "SchemaQuirkProtocol"
-        ACL = "AclQuirkProtocol"
-        ENTRY = "EntryQuirkProtocol"
-
-    # Protocol names list for parametrization (defined after enum)
-    # Use list() to iterate over enum members
     _PROTOCOL_NAMES: ClassVar[list[str]] = [
         ProtocolNames.SCHEMA.value,
         ProtocolNames.ACL.value,
@@ -59,21 +56,20 @@ class TestsTestFlextLdifProtocols(s):
         """Server types implementing schema protocol organized as nested enum."""
 
         __test__ = False
-
         OID = "oid"
         OUD = "oud"
         OPENLDAP = "openldap"
         RELAXED = "relaxed"
 
-    @dataclasses.dataclass(frozen=True)
-    class ProtocolServer:
-        """Server implementation for schema protocol testing organized as nested dataclass."""
+    class ProtocolServer(BaseModel):
+        """Server implementation for schema protocol testing."""
 
         __test__ = False
+        model_config = ConfigDict(frozen=True)
 
-        name: str
-        server_class: type
-        schema_class: type
+        name: str = Field(description="Protocol server implementation name")
+        server_class: type = Field(description="Server implementation class")
+        schema_class: type = Field(description="Schema implementation class")
 
     class Constants:
         """Test constants organized as nested class."""
@@ -99,25 +95,24 @@ class TestsTestFlextLdifProtocols(s):
         """Helper methods organized as nested class."""
 
         @staticmethod
-        def verify_protocol_methods(schema: object) -> None:
+        def verify_protocol_methods(schema: p.Ldif.SchemaQuirk) -> None:
             """Verify schema has all required protocol methods."""
             assert hasattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_PARSE)
             assert callable(
-                getattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_PARSE),
+                getattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_PARSE)
             )
             assert hasattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_WRITE)
             assert callable(
-                getattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_WRITE),
+                getattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_WRITE)
             )
             assert hasattr(
-                schema,
-                TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_ATTRIBUTE,
+                schema, TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_ATTRIBUTE
             )
             assert callable(
                 getattr(
                     schema,
                     TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_ATTRIBUTE,
-                ),
+                )
             )
             assert hasattr(
                 schema,
@@ -127,34 +122,27 @@ class TestsTestFlextLdifProtocols(s):
                 getattr(
                     schema,
                     TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_OBJECTCLASS,
-                ),
+                )
             )
 
         @staticmethod
-        def verify_server_attributes(server: object) -> None:
+        def verify_server_attributes(server: type) -> None:
             """Verify server has protocol attributes via Constants class.
 
             Server implementations store SERVER_TYPE and PRIORITY in nested Constants class,
             not as direct instance attributes.
             """
-            # Check for Constants class
             assert hasattr(server, "Constants")
-            # Type narrowing: server has Constants attribute
-            # Use getattr for type safety
             constants_cls = server.Constants
-
-            # SERVER_TYPE in Constants
             assert hasattr(constants_cls, "SERVER_TYPE")
             server_type = constants_cls.SERVER_TYPE
             assert isinstance(server_type, str) or hasattr(server_type, "value")
-
-            # PRIORITY in Constants
             assert hasattr(constants_cls, "PRIORITY")
             priority = constants_cls.PRIORITY
             assert isinstance(priority, int)
 
         @staticmethod
-        def verify_registry_methods(registry: object) -> None:
+        def verify_registry_methods(registry: p.Ldif.QuirkRegistry) -> None:
             """Verify registry has required retrieval methods."""
             methods = [
                 TestsTestFlextLdifProtocols.Constants.ATTR_SCHEMA,
@@ -170,17 +158,12 @@ class TestsTestFlextLdifProtocols(s):
         """Get all server implementations for testing."""
         return [
             cls.ProtocolServer(
-                name=name,
-                server_class=server_class,
-                schema_class=schema_class,
+                name=name, server_class=server_class, schema_class=schema_class
             )
             for name, server_class, schema_class in _create_server_implementations()
         ]
 
-    @pytest.mark.parametrize(
-        "protocol_name",
-        _PROTOCOL_NAMES,
-    )
+    @pytest.mark.parametrize("protocol_name", _PROTOCOL_NAMES)
     def test_protocol_is_defined(self, protocol_name: str) -> None:
         """Test that protocol is defined and accessible."""
         assert hasattr(FlextLdifProtocols.Ldif, protocol_name)
@@ -191,32 +174,24 @@ class TestsTestFlextLdifProtocols(s):
         """Test that Quirks namespace exists in Ldif namespace."""
         assert hasattr(FlextLdifProtocols.Ldif, self.Constants.NAMESPACE_QUIRKS)
 
-    @pytest.mark.parametrize(
-        "protocol_name",
-        _PROTOCOL_NAMES,
-    )
-    def test_protocol_in_namespace(self, protocol_name: str) -> None:
-        """Test that protocol exists in Ldif namespace."""
-        assert hasattr(FlextLdifProtocols.Ldif, protocol_name)
-
     def test_schema_satisfies_protocol_oid(self) -> None:
-        """Test that OID schema satisfies SchemaProtocol."""
-        schema: object = FlextLdifServersOid.Schema()
+        """Test that OID schema satisfies Schema."""
+        schema: p.Ldif.SchemaQuirk = FlextLdifServersOid.Schema()
         self.Helpers.verify_protocol_methods(schema)
 
     def test_schema_satisfies_protocol_oud(self) -> None:
-        """Test that OUD schema satisfies SchemaProtocol."""
-        schema: object = FlextLdifServersOud.Schema()
+        """Test that OUD schema satisfies Schema."""
+        schema: p.Ldif.SchemaQuirk = FlextLdifServersOud.Schema()
         self.Helpers.verify_protocol_methods(schema)
 
     def test_schema_satisfies_protocol_openldap(self) -> None:
-        """Test that OpenLDAP schema satisfies SchemaProtocol."""
-        schema: object = FlextLdifServersOpenldap.Schema()
+        """Test that OpenLDAP schema satisfies Schema."""
+        schema: p.Ldif.SchemaQuirk = FlextLdifServersOpenldap.Schema()
         self.Helpers.verify_protocol_methods(schema)
 
     def test_schema_satisfies_protocol_relaxed(self) -> None:
-        """Test that Relaxed schema satisfies SchemaProtocol."""
-        schema: object = FlextLdifServersRelaxed.Schema()
+        """Test that Relaxed schema satisfies Schema."""
+        schema: p.Ldif.SchemaQuirk = FlextLdifServersRelaxed.Schema()
         self.Helpers.verify_protocol_methods(schema)
 
     def test_server_has_protocol_attributes_oid(self) -> None:
@@ -235,7 +210,7 @@ class TestsTestFlextLdifProtocols(s):
         """Test that Relaxed server class has protocol attributes in Constants."""
         self.Helpers.verify_server_attributes(FlextLdifServersRelaxed)
 
-    oid_schema: ClassVar[FlextLdifServersOid.Schema]  # pytest fixture
+    oid_schema: ClassVar[FlextLdifServersOid.Schema]
 
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
@@ -243,54 +218,43 @@ class TestsTestFlextLdifProtocols(s):
         return FlextLdifServersOid.Schema()
 
     def test_schema_has_required_methods(
-        self,
-        oid_schema: FlextLdifServersOid.Schema,
+        self, oid_schema: FlextLdifServersOid.Schema
     ) -> None:
         """Test schema has all required protocol methods."""
         self.Helpers.verify_protocol_methods(oid_schema)
 
     def test_parse_returns_flext_result(
-        self,
-        oid_schema: FlextLdifServersOid.Schema,
+        self, oid_schema: FlextLdifServersOid.Schema
     ) -> None:
-        """Test parse method returns FlextResult."""
+        """Test parse method returns r."""
         result = oid_schema.parse(self.Constants.SAMPLE_ATTR_DEF)
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)
 
     def test_can_handle_returns_bool(
-        self,
-        oid_schema: FlextLdifServersOid.Schema,
+        self, oid_schema: FlextLdifServersOid.Schema
     ) -> None:
         """Test can_handle methods return bool."""
         attr_result = oid_schema.can_handle_attribute(
-            self.Constants.SAMPLE_ATTR_DEF_SIMPLE,
+            self.Constants.SAMPLE_ATTR_DEF_SIMPLE
         )
         assert isinstance(attr_result, bool)
-
         oc_result = oid_schema.can_handle_objectclass(self.Constants.SAMPLE_OC_DEF)
         assert isinstance(oc_result, bool)
 
-    registry: ClassVar[FlextLdifServer]  # pytest fixture
+    registry: ClassVar[FlextLdifServer]
 
     @pytest.fixture
     def registry(self) -> FlextLdifServer:
         """Create quirk registry instance."""
         return FlextLdifServer()
 
-    def test_registry_has_retrieval_methods(
-        self,
-        registry: FlextLdifServer,
-    ) -> None:
+    def test_registry_has_retrieval_methods(self, registry: FlextLdifServer) -> None:
         """Test registry has required retrieval methods."""
         self.Helpers.verify_registry_methods(registry)
 
-    def test_registry_schema_retrieval(
-        self,
-        registry: FlextLdifServer,
-    ) -> None:
+    def test_registry_schema_retrieval(self, registry: FlextLdifServer) -> None:
         """Test registry can retrieve schema quirks."""
         result = registry.get_schema_quirk(self.ServerTypes.OID)
-        # Returns quirk instance or None
         assert result is None or hasattr(result, self.Constants.ATTR_PARSE)
 
     def test_registry_global_instance(self) -> None:
@@ -300,11 +264,9 @@ class TestsTestFlextLdifProtocols(s):
 
     def test_protocol_type_checking(self) -> None:
         """Test protocol can be used for type checking."""
-        oid_schema: object = FlextLdifServersOid.Schema()
-        # Protocol satisfied via structural typing
+        oid_schema: p.Ldif.SchemaQuirk = FlextLdifServersOid.Schema()
         is_schema = hasattr(oid_schema, self.Constants.ATTR_PARSE) and hasattr(
-            oid_schema,
-            self.Constants.ATTR_WRITE,
+            oid_schema, self.Constants.ATTR_WRITE
         )
         assert is_schema
 
@@ -326,11 +288,7 @@ class TestsTestFlextLdifProtocols(s):
     def test_protocol_method_calls(self) -> None:
         """Test calling protocol methods on implementations."""
         schema = FlextLdifServersOid.Schema()
-
-        # Test can_handle_attribute
         result = schema.can_handle_attribute(self.Constants.SAMPLE_ATTR_DEF_SIMPLE)
         assert isinstance(result, bool)
-
-        # Test parse
         parse_result = schema.parse(self.Constants.SAMPLE_ATTR_DEF_SIMPLE)
         assert hasattr(parse_result, self.Constants.ATTR_IS_SUCCESS)

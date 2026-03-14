@@ -2,23 +2,30 @@
 
 from __future__ import annotations
 
+import builtins
 import inspect
-from typing import ClassVar
+from collections.abc import Mapping
+from typing import ClassVar, override
 
-from flext_core import FlextLogger, FlextTypes as t, r
-from flext_core.registry import FlextRegistry
+from flext_core import FlextLogger, FlextRegistry, r
 
 import flext_ldif.servers as servers_package
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif.protocols import p
+from flext_ldif.protocols import FlextLdifProtocols as p
 from flext_ldif.servers._base import (
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,
     FlextLdifServersBaseSchemaAcl,
 )
 from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
+type QuirkComponent = (
+    FlextLdifServersBaseSchema
+    | FlextLdifServersBaseSchemaAcl
+    | FlextLdifServersBaseEntry
+)
 
 
 class FlextLdifServer(FlextRegistry):
@@ -28,99 +35,30 @@ class FlextLdifServer(FlextRegistry):
     _discovery_initialized: ClassVar[bool] = False
 
     def __init__(
-        self, dispatcher: p.CommandBus | None = None, **data: t.GeneralValueType
+        self, dispatcher: p.CommandBus | None = None, **data: t.Scalar
     ) -> None:
         """Initialize registry and trigger auto-discovery."""
-        super().__init__(dispatcher=dispatcher, **data)
+        _ = data
+        super().__init__(dispatcher=dispatcher)
         if not type(self)._discovery_initialized:
             self._auto_discover()
             type(self)._discovery_initialized = True
-
-    def _auto_discover(self) -> None:
-        """Discover and register concrete quirk classes from servers package."""
-        for name, obj in inspect.getmembers(servers_package):
-            if (
-                name.startswith("_")
-                or not inspect.isclass(obj)
-                or obj is FlextLdifServersBase
-                or not issubclass(obj, FlextLdifServersBase)
-            ):
-                continue
-
-            try:
-                instance = obj()
-                server_type = getattr(instance, "server_type", None)
-                if not isinstance(server_type, str):
-                    continue
-
-                quirk_class = type(instance)
-                if not all(hasattr(quirk_class, c) for c in ("Schema", "Acl", "Entry")):
-                    continue
-
-                self.register_class_plugin(self.SERVERS, server_type, instance)
-
-            except (TypeError, AttributeError):
-                continue
-
-    def quirk(self, server_type: str) -> r[FlextLdifServersBase]:
-        """Get base quirk for a server type."""
-        try:
-            normalized = FlextLdifUtilitiesServer.normalize_server_type(server_type)
-        except ValueError as e:
-            return r[FlextLdifServersBase].fail(str(e))
-        result = self.get_class_plugin(self.SERVERS, normalized)
-        if result.is_failure:
-            return r[FlextLdifServersBase].fail(str(result.error))
-
-        if isinstance(result.value, FlextLdifServersBase):
-            return r[FlextLdifServersBase].ok(result.value)
-        return r[FlextLdifServersBase].fail(f"Invalid quirk type: {type(result.value)}")
-
-    def get_base_quirk(self, server_type: str) -> r[FlextLdifServersBase]:
-        """Get base quirk for a given server type."""
-        return self.quirk(server_type)
-
-    def list_registered_servers(self) -> list[str]:
-        """List all registered server types."""
-        return sorted(self.list_class_plugins(self.SERVERS).value or [])
-
-    def get_schema_quirk(self, server_type: str) -> FlextLdifServersBaseSchema | None:
-        """Get schema quirk for a server type."""
-        base = self.quirk(server_type).map_or(None)
-        if base is None:
-            return None
-        quirk = base.schema_quirk
-
-        if isinstance(quirk, FlextLdifServersBaseSchema):
-            return quirk
-        return None
 
     def acl(self, server_type: str) -> FlextLdifServersBaseSchemaAcl | None:
         """Get ACL quirk for a server type."""
         base = self.quirk(server_type).map_or(None)
         if base is None:
             return None
-        quirk = base.acl_quirk
-
-        if isinstance(quirk, FlextLdifServersBaseSchemaAcl):
-            return quirk
-        return None
+        return base.acl_quirk
 
     def entry(self, server_type: str) -> FlextLdifServersBaseEntry | None:
         """Get entry quirk for a server type."""
         base = self.quirk(server_type).map_or(None)
         if base is None:
             return None
-        quirk = base.entry_quirk
+        return base.entry_quirk
 
-        if isinstance(quirk, FlextLdifServersBaseEntry):
-            return quirk
-        return None
-
-    def get_all_quirks(
-        self,
-        server_type: str,
-    ) -> r[dict[str, t.GeneralValueType]]:
+    def get_all_quirks(self, server_type: str) -> r[Mapping[str, QuirkComponent]]:
         """Get all quirk types for a server."""
         return self.quirk(server_type).map(
             lambda base: {
@@ -130,6 +68,10 @@ class FlextLdifServer(FlextRegistry):
             }
         )
 
+    def get_base_quirk(self, server_type: str) -> r[FlextLdifServersBase]:
+        """Get base quirk for a given server type."""
+        return self.quirk(server_type)
+
     def get_constants(self, server_type: str) -> r[type]:
         """Get Constants class from server quirk."""
 
@@ -137,20 +79,19 @@ class FlextLdifServer(FlextRegistry):
             constants = getattr(type(base), "Constants", None)
             if constants is None:
                 return r[type].fail(f"Server {server_type} missing Constants")
-            if not hasattr(constants, "CATEGORIZATION_PRIORITY"):
+            if not getattr(constants, "CATEGORIZATION_PRIORITY", None) is not None:
                 return r[type].fail(
-                    f"Server {server_type} missing CATEGORIZATION_PRIORITY",
+                    f"Server {server_type} missing CATEGORIZATION_PRIORITY"
                 )
             return r[type].ok(constants)
 
         return self.quirk(server_type).flat_map(validate_constants)
 
-    def get_registry_stats(self) -> dict[str, t.GeneralValueType]:
+    def get_registry_stats(self) -> Mapping[str, builtins.object]:
         """Get comprehensive registry statistics."""
         servers = self.list_registered_servers()
         quirks_by_server: dict[str, dict[str, str | None]] = {}
         priorities: dict[str, int] = {}
-
         for st in servers:
             base = self.quirk(st).map_or(None)
             if base is None:
@@ -162,13 +103,83 @@ class FlextLdifServer(FlextRegistry):
                 "acl": type(base.acl_quirk).__name__ if base.acl_quirk else None,
                 "entry": type(base.entry_quirk).__name__ if base.entry_quirk else None,
             }
-            priorities[st] = base.priority if isinstance(base.priority, int) else 0
-
+            priorities[st] = base.priority
         return {
             "total_servers": len(servers),
             "quirks_by_server": quirks_by_server,
             "server_priorities": priorities,
         }
+
+    @override
+    def schema(self, server_type: str) -> FlextLdifServersBaseSchema | None:
+        """Get schema quirk for a server type (QuirkRegistry compliance)."""
+        return self.get_schema_quirk(server_type)
+
+    def schema_quirk(self, server_type: str) -> FlextLdifServersBaseSchema | None:
+        """Get schema quirk for a server type."""
+        return self.get_schema_quirk(server_type)
+
+    def get_schema_quirk(self, server_type: str) -> FlextLdifServersBaseSchema | None:
+        """Get schema quirk for a server type."""
+        base = self.quirk(server_type).map_or(None)
+        if base is None:
+            return None
+        return base.schema_quirk
+
+    def list_registered_servers(self) -> list[str]:
+        """List all registered server types."""
+        return sorted(self.list_plugins(self.SERVERS, scope="class").value or [])
+
+    def quirk(self, server_type: str) -> r[FlextLdifServersBase]:
+        """Get base quirk for a server type."""
+        try:
+            normalized = FlextLdifUtilitiesServer.normalize_server_type(server_type)
+        except ValueError as e:
+            return r[FlextLdifServersBase].fail(str(e))
+        plugin_key = f"{self.SERVERS}::{normalized}"
+        cls = type(self)
+        if plugin_key not in cls._class_registered_keys:
+            available = [
+                key.split("::", 1)[1]
+                for key in cls._class_registered_keys
+                if key.startswith(f"{self.SERVERS}::")
+            ]
+            return r[FlextLdifServersBase].fail(
+                f"{self.SERVERS} '{normalized}' not found. Available: {available}"
+            )
+        plugin = cls._class_plugin_storage[plugin_key]
+        if isinstance(plugin, FlextLdifServersBase):
+            return r[FlextLdifServersBase].ok(plugin)
+        plugin_type = type(plugin).__name__
+        return r[FlextLdifServersBase].fail(f"Invalid quirk type: {plugin_type}")
+
+    def _auto_discover(self) -> None:
+        """Discover and register concrete quirk classes from servers package."""
+        for name, obj in inspect.getmembers(servers_package):
+            if (
+                name.startswith("_")
+                or not inspect.isclass(obj)
+                or obj is FlextLdifServersBase
+                or (not issubclass(obj, FlextLdifServersBase))
+            ):
+                continue
+            try:
+                instance = obj()
+                server_type = getattr(instance, "server_type", None)
+                if not issubclass(server_type.__class__, str):
+                    continue
+                quirk_class = type(instance)
+                if not all(
+                    getattr(quirk_class, c, None) is not None
+                    for c in ("Schema", "Acl", "Entry")
+                ):
+                    continue
+                if server_type and isinstance(server_type, str):
+                    self.register_plugin(
+                        self.SERVERS, server_type, instance, scope="class"
+                    )
+            except (TypeError, AttributeError):
+                continue
 
     _global_instance: ClassVar[FlextLdifServer | None] = None
 
@@ -177,11 +188,7 @@ class FlextLdifServer(FlextRegistry):
         """Get or create global registry instance."""
         if cls._global_instance is None:
             cls._global_instance = cls()
-        instance = cls._global_instance
-        if instance is None:
-            msg = "Global FlextLdifServer instance was not initialized"
-            raise RuntimeError(msg)
-        return instance
+        return cls._global_instance
 
 
 __all__ = ["FlextLdifServer"]

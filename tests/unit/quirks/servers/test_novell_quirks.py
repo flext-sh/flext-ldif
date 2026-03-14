@@ -6,13 +6,14 @@ eDirectory-specific attributes, object classes, and entries in LDIF format.
 
 from __future__ import annotations
 
-import dataclasses
 from enum import StrEnum
 
 import pytest
-from flext_ldif.models import m
-from flext_ldif.servers.novell import FlextLdifServersNovell
+from pydantic import BaseModel, ConfigDict, Field
 from tests import RfcTestHelpers, TestDeduplicationHelpers, s
+
+from flext_ldif import m
+from flext_ldif.servers.novell import FlextLdifServersNovell
 
 
 class AttributeScenario(StrEnum):
@@ -45,40 +46,53 @@ class EntryScenario(StrEnum):
     STANDARD_RFC = "standard_rfc"
 
 
-@dataclasses.dataclass(frozen=True)
-class AttributeTestCase:
+class AttributeTestCase(BaseModel):
     """Test case for attribute detection and parsing."""
 
-    scenario: AttributeScenario
-    attr_definition: str
-    expected_can_handle: bool
-    expected_oid: str | None = None
-    expected_name: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    scenario: AttributeScenario = Field(description="Attribute scenario identifier")
+    attr_definition: str = Field(description="Schema attribute definition string")
+    expected_can_handle: bool = Field(description="Expected can_handle result")
+    expected_oid: str | None = Field(default=None, description="Expected parsed OID")
+    expected_name: str | None = Field(
+        default=None,
+        description="Expected parsed attribute name",
+    )
 
 
-@dataclasses.dataclass(frozen=True)
-class ObjectClassTestCase:
+class ObjectClassTestCase(BaseModel):
     """Test case for objectClass detection and parsing."""
 
-    scenario: ObjectClassScenario
-    oc_definition: str
-    expected_can_handle: bool
-    expected_oid: str | None = None
-    expected_name: str | None = None
-    expected_kind: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    scenario: ObjectClassScenario = Field(description="ObjectClass scenario identifier")
+    oc_definition: str = Field(description="Schema objectClass definition string")
+    expected_can_handle: bool = Field(description="Expected can_handle result")
+    expected_oid: str | None = Field(default=None, description="Expected parsed OID")
+    expected_name: str | None = Field(
+        default=None,
+        description="Expected parsed objectClass name",
+    )
+    expected_kind: str | None = Field(
+        default=None,
+        description="Expected parsed objectClass kind",
+    )
 
 
-@dataclasses.dataclass(frozen=True)
-class EntryTestCase:
+class EntryTestCase(BaseModel):
     """Test case for entry detection."""
 
-    scenario: EntryScenario
-    entry_dn: str
-    attributes: dict[str, list[str]]
-    expected_can_handle: bool
+    model_config = ConfigDict(frozen=True)
+
+    scenario: EntryScenario = Field(description="Entry detection scenario identifier")
+    entry_dn: str = Field(description="Entry distinguished name")
+    attributes: dict[str, list[str]] = Field(
+        description="Entry attributes mapped by name"
+    )
+    expected_can_handle: bool = Field(description="Expected can_handle result")
 
 
-# Attribute test data
 ATTRIBUTE_TEST_CASES = (
     AttributeTestCase(
         scenario=AttributeScenario.NOVELL_OID,
@@ -111,8 +125,6 @@ ATTRIBUTE_TEST_CASES = (
         expected_can_handle=False,
     ),
 )
-
-# ObjectClass test data
 OBJECTCLASS_TEST_CASES = (
     ObjectClassTestCase(
         scenario=ObjectClassScenario.NOVELL_OID,
@@ -133,8 +145,6 @@ OBJECTCLASS_TEST_CASES = (
         expected_can_handle=False,
     ),
 )
-
-# Entry test data
 ENTRY_TEST_CASES = (
     EntryTestCase(
         scenario=EntryScenario.OU_SERVICES,
@@ -157,19 +167,13 @@ ENTRY_TEST_CASES = (
     EntryTestCase(
         scenario=EntryScenario.NSPM_ATTRIBUTE,
         entry_dn="cn=user,o=Example",
-        attributes={
-            "nspmpasswordpolicy": ["policy1"],
-            "objectClass": ["top"],
-        },
+        attributes={"nspmpasswordpolicy": ["policy1"], "objectClass": ["top"]},
         expected_can_handle=True,
     ),
     EntryTestCase(
         scenario=EntryScenario.LOGIN_ATTRIBUTE,
         entry_dn="cn=user,o=Example",
-        attributes={
-            "logindisabled": ["TRUE"],
-            "objectClass": ["top"],
-        },
+        attributes={"logindisabled": ["TRUE"], "objectClass": ["top"]},
         expected_can_handle=True,
     ),
     EntryTestCase(
@@ -181,10 +185,7 @@ ENTRY_TEST_CASES = (
     EntryTestCase(
         scenario=EntryScenario.STANDARD_RFC,
         entry_dn="cn=user,dc=example,dc=com",
-        attributes={
-            "objectClass": ["person"],
-            "cn": ["user"],
-        },
+        attributes={"objectClass": ["person"], "cn": ["user"]},
         expected_can_handle=False,
     ),
 )
@@ -202,9 +203,7 @@ def schema_quirk(
 ) -> FlextLdifServersNovell.Schema:
     """Get schema quirk from Novell server."""
     quirk = novell_server.schema_quirk
-
     assert isinstance(quirk, FlextLdifServersNovell.Schema)
-
     return quirk
 
 
@@ -212,9 +211,7 @@ def schema_quirk(
 def entry_quirk(novell_server: FlextLdifServersNovell) -> FlextLdifServersNovell.Entry:
     """Get entry quirk from Novell server."""
     quirk = novell_server.entry_quirk
-
     assert isinstance(quirk, FlextLdifServersNovell.Entry)
-
     return quirk
 
 
@@ -228,8 +225,7 @@ class TestsFlextLdifNovellInitialization(s):
         assert server.priority == 20
 
     def test_schema_quirk_initialization(
-        self,
-        schema_quirk: object,
+        self, schema_quirk: FlextLdifServersNovell.Schema
     ) -> None:
         """Test schema quirk is initialized."""
         assert schema_quirk is not None
@@ -240,9 +236,7 @@ class TestNovellSchemaAttributeDetection:
 
     @pytest.mark.parametrize("test_case", ATTRIBUTE_TEST_CASES)
     def test_can_handle_attribute(
-        self,
-        test_case: AttributeTestCase,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        self, test_case: AttributeTestCase, schema_quirk: FlextLdifServersNovell.Schema
     ) -> None:
         """Test attribute detection for various scenarios."""
         result = schema_quirk.can_handle_attribute(test_case.attr_definition)
@@ -253,8 +247,7 @@ class TestNovellSchemaAttributeParsing:
     """Test schema attribute parsing."""
 
     def test_parse_attribute_success(
-        self,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        self, schema_quirk: FlextLdifServersNovell.Schema
     ) -> None:
         """Test parsing Novell eDirectory attribute definition."""
         attr_def = "( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' DESC 'Password Policy DN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE )"
@@ -269,8 +262,7 @@ class TestNovellSchemaAttributeParsing:
         )
 
     def test_parse_attribute_with_syntax_length(
-        self,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        self, schema_quirk: FlextLdifServersNovell.Schema
     ) -> None:
         """Test parsing attribute with syntax length specification."""
         attr_def = "( 2.16.840.1.113719.1.1.4.1.1 NAME 'nspmAdminGroup' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
@@ -282,13 +274,11 @@ class TestNovellSchemaAttributeParsing:
         )
 
     def test_parse_attribute_missing_oid(
-        self,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        self, schema_quirk: FlextLdifServersNovell.Schema
     ) -> None:
         """Test parsing attribute without OID fails."""
         attr_def = "NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15"
         result = schema_quirk.parse_attribute(attr_def)
-
         assert result.is_failure
         assert result.error is not None
         assert "missing an OID" in result.error
@@ -312,8 +302,7 @@ class TestNovellSchemaObjectClassParsing:
     """Test schema objectClass parsing."""
 
     def test_parse_objectclass_structural(
-        self,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        self, schema_quirk: FlextLdifServersNovell.Schema
     ) -> None:
         """Test parsing STRUCTURAL objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' DESC 'NDS Person' SUP top STRUCTURAL MUST ( cn ) MAY ( loginDisabled ) )"
@@ -329,45 +318,36 @@ class TestNovellSchemaObjectClassParsing:
         )
 
     def test_parse_objectclass_auxiliary(
-        self,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        self, schema_quirk: FlextLdifServersNovell.Schema
     ) -> None:
         """Test parsing AUXILIARY objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.2 NAME 'nspmPasswordPolicy' AUXILIARY MAY ( nspmPasswordPolicyDN ) )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            schema_quirk,
-            oc_def,
-            expected_kind="AUXILIARY",
+            schema_quirk, oc_def, expected_kind="AUXILIARY"
         )
 
     def test_parse_objectclass_abstract(
-        self,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        self, schema_quirk: FlextLdifServersNovell.Schema
     ) -> None:
         """Test parsing ABSTRACT objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.3 NAME 'ndsbase' ABSTRACT )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            schema_quirk,
-            oc_def,
-            expected_kind="ABSTRACT",
+            schema_quirk, oc_def, expected_kind="ABSTRACT"
         )
 
     def test_parse_objectclass_missing_oid(
-        self,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        self, schema_quirk: FlextLdifServersNovell.Schema
     ) -> None:
         """Test parsing objectClass without OID fails."""
         oc_def = "NAME 'ndsPerson' SUP top STRUCTURAL"
         quirk_schema = schema_quirk
         result = quirk_schema.parse_objectclass(oc_def)
-
         assert result.is_failure
         assert result.error is not None
         assert "missing an OID" in result.error
 
     def test_write_attribute_to_rfc(
-        self,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        self, schema_quirk: FlextLdifServersNovell.Schema
     ) -> None:
         """Test writing attribute to RFC string format."""
         attr_data = m.Ldif.SchemaAttribute(
@@ -389,8 +369,7 @@ class TestNovellSchemaObjectClassParsing:
         )
 
     def test_write_objectclass_to_rfc(
-        self,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        self, schema_quirk: FlextLdifServersNovell.Schema
     ) -> None:
         """Test writing objectClass to RFC string format."""
         oc_data = m.Ldif.SchemaObjectClass(
@@ -412,10 +391,7 @@ class TestNovellSchemaObjectClassParsing:
 class TestNovellAcls:
     """Tests for Novell eDirectory ACL quirk handling."""
 
-    def test_acl_initialization(
-        self,
-        novell_server: FlextLdifServersNovell,
-    ) -> None:
+    def test_acl_initialization(self, novell_server: FlextLdifServersNovell) -> None:
         """Test ACL quirk initialization."""
         novell_server.Acl()
 
@@ -424,17 +400,14 @@ class TestNovellEntryDetection:
     """Test entry detection."""
 
     def test_entry_initialization(
-        self,
-        entry_quirk: object,
+        self, entry_quirk: FlextLdifServersNovell.Entry
     ) -> None:
         """Test entry quirk is initialized."""
         assert entry_quirk is not None
 
     @pytest.mark.parametrize("test_case", ENTRY_TEST_CASES)
     def test_can_handle_entry(
-        self,
-        test_case: EntryTestCase,
-        entry_quirk: FlextLdifServersNovell.Entry,
+        self, test_case: EntryTestCase, entry_quirk: FlextLdifServersNovell.Entry
     ) -> None:
         """Test entry detection for various scenarios."""
         quirk_entry = entry_quirk

@@ -51,10 +51,6 @@
     "type": "edge_case",
     "edge_case_type": "large_multivalue",
     "max_values_per_attribute": 10,
-    "test_aspects": [
-      "multi_valued_attributes",
-      "large_attribute_sets",
-      "attribute_parsing"
-    ]
+    "test_aspects": ["multi_valued_attributes", "large_attribute_sets", "attribute_parsing"]
   }
 }

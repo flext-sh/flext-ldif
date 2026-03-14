@@ -12,10 +12,6 @@ from typing import ClassVar
 import pytest
 from tests import s, u
 
-# =============================================================================
-# TEST SCENARIO ENUMS
-# =============================================================================
-
 
 class GetAclAttributesServerType(StrEnum):
     """Server types for get_acl_attributes tests."""
@@ -38,16 +34,10 @@ class IsAclAttributeType(StrEnum):
     CASE_INSENSITIVE = "case_insensitive"
 
 
-# =============================================================================
-# PARAMETRIZED TEST DATA
-# =============================================================================
-
-
 @pytest.mark.unit
 class TestsTestFlextLdifAclAttributeRegistry(s):
     """Test suite for AclAttributeRegistry."""
 
-    # Get ACL attributes test data - (server_type, required_attrs, forbidden_attrs)
     GET_ACL_ATTRIBUTES_DATA: ClassVar[
         dict[str, tuple[GetAclAttributesServerType, str | None, list[str], list[str]]]
     ] = {
@@ -94,8 +84,6 @@ class TestsTestFlextLdifAclAttributeRegistry(s):
             ["orclaci"],
         ),
     }
-
-    # Is ACL attribute test data - (attr_name, server_type, expected_result)
     IS_ACL_ATTRIBUTE_DATA: ClassVar[
         dict[str, tuple[IsAclAttributeType, str, str | None, bool]]
     ] = {
@@ -152,10 +140,6 @@ class TestsTestFlextLdifAclAttributeRegistry(s):
         ),
     }
 
-    # =======================================================================
-    # Get ACL Attributes Tests
-    # =======================================================================
-
     @pytest.mark.parametrize(
         (
             "scenario",
@@ -184,10 +168,6 @@ class TestsTestFlextLdifAclAttributeRegistry(s):
         for forbidden in forbidden_attrs:
             assert forbidden not in attrs, f"{forbidden} should not be in {scenario}"
 
-    # =======================================================================
-    # Is ACL Attribute Tests
-    # =======================================================================
-
     @pytest.mark.parametrize(
         ("scenario", "test_type", "attr_name", "server_type", "expected_result"),
         [
@@ -207,17 +187,11 @@ class TestsTestFlextLdifAclAttributeRegistry(s):
         result = u.Ldif.ACL.is_acl_attribute(attr_name, server_type)
         assert result == expected_result, f"{scenario} failed"
 
-    # =======================================================================
-    # Immutability Test
-    # =======================================================================
-
     def test_acl_registry_no_mutation(self) -> None:
         """get_acl_attributes should return new list each time."""
         attrs1 = list(u.Ldif.ACL.get_acl_attributes("oid"))
         attrs2 = list(u.Ldif.ACL.get_acl_attributes("oid"))
-        # Should be equal but not the same object
         assert attrs1 == attrs2
         assert attrs1 is not attrs2
-        # Mutating one should not affect the other
         attrs1.append("test_attribute")
         assert "test_attribute" not in attrs2

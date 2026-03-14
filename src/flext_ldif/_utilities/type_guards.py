@@ -9,11 +9,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import builtins
 from collections.abc import Sequence as ABCSequence
 from typing import TypeGuard
 
-from flext_core.typings import t
-from flext_core.utilities import FlextUtilities
+from flext_core import FlextUtilities
 
 
 class FlextLdifUtilitiesTypeGuards(FlextUtilities):
@@ -27,8 +27,8 @@ class FlextLdifUtilitiesTypeGuards(FlextUtilities):
 
     @staticmethod
     def is_entry_sequence(
-        obj: t.GeneralValueType,
-    ) -> TypeGuard[ABCSequence[t.GeneralValueType]]:
+        obj: builtins.object,
+    ) -> TypeGuard[ABCSequence[object]]:
         """Check if object is a Sequence of Entry instances.
 
         Uses duck typing to identify Entry sequences:
@@ -43,7 +43,14 @@ class FlextLdifUtilitiesTypeGuards(FlextUtilities):
             True if object is a Sequence of Entry-like objects
 
         """
-        if not isinstance(obj, ABCSequence) or isinstance(obj, (str, bytes, dict)):
+        if (
+            not isinstance(obj, ABCSequence)
+            or isinstance(obj, str | bytes)
+            or FlextUtilities.is_dict_like(obj)
+        ):
             return False
-        # Check if all items are Entry-like (have dn and attributes)
-        return all(hasattr(item, "dn") and hasattr(item, "attributes") for item in obj)
+        return all(
+            getattr(item, "dn", None) is not None
+            and getattr(item, "attributes", None) is not None
+            for item in obj
+        )

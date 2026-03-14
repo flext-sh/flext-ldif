@@ -2,22 +2,24 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
 from pydantic import ConfigDict, Field
 
 from flext_ldif._models.base import FlextLdifModelsBase
 
 
-class ProcessingResult(FlextLdifModelsBase):
-    """Result of entry processing (transform or validate operation)."""
+class FlextLdifModelsProcessing:
+    """Processing model namespace."""
 
-    model_config = ConfigDict(frozen=False, validate_assignment=True)
+    class ProcessingResult(FlextLdifModelsBase):
+        """Result of entry processing (transform or validate operation)."""
 
-    dn: str = Field(
-        ...,
-        description="Distinguished name of the processed entry",
-    )
-
-    attributes: dict[str, list[str]] = Field(
-        ...,
-        description="LDAP attributes as name -> list of values",
-    )
+        model_config = ConfigDict(frozen=False, validate_assignment=True)
+        dn: Annotated[
+            str, Field(..., description="Distinguished name of the processed entry")
+        ]
+        attributes: Annotated[
+            dict[str, list[str]],
+            Field(..., description="LDAP attributes as name -> list of values"),
+        ]

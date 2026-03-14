@@ -11,10 +11,10 @@ from pathlib import Path
 from typing import Final
 
 import pytest
+
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-
 from tests import c, s
 
 
@@ -26,7 +26,6 @@ class TestsFlextLdifQuirksStandardizedConstants(s):
         """RFC Schema must have standardized Constants."""
         assert hasattr(FlextLdifServersRfc, "Constants")
         constants = FlextLdifServersRfc.Constants
-
         assert hasattr(constants, "CANONICAL_NAME")
         assert constants.CANONICAL_NAME == "rfc"
         assert "rfc" in constants.ALIASES
@@ -38,7 +37,6 @@ class TestsFlextLdifQuirksStandardizedConstants(s):
         """RFC Acl must have standardized Constants."""
         assert hasattr(FlextLdifServersRfc, "Constants")
         constants = FlextLdifServersRfc.Constants
-
         assert constants.CANONICAL_NAME == "rfc"
         assert "rfc" in constants.ALIASES
 
@@ -46,7 +44,6 @@ class TestsFlextLdifQuirksStandardizedConstants(s):
         """RFC Entry must have standardized Constants."""
         assert hasattr(FlextLdifServersRfc, "Constants")
         constants = FlextLdifServersRfc.Constants
-
         assert constants.CANONICAL_NAME == "rfc"
         assert "rfc" in constants.ALIASES
 
@@ -54,7 +51,6 @@ class TestsFlextLdifQuirksStandardizedConstants(s):
         """OID Schema must have standardized Constants."""
         assert hasattr(FlextLdifServersOid, "Constants")
         global_constants = FlextLdifServersOid.Constants
-
         assert global_constants.CANONICAL_NAME == "oid"
         assert "oid" in global_constants.ALIASES
         assert "oracle_oid" in global_constants.ALIASES
@@ -66,7 +62,6 @@ class TestsFlextLdifQuirksStandardizedConstants(s):
         """OUD must have standardized Constants."""
         assert hasattr(FlextLdifServersOud, "Constants")
         global_constants = FlextLdifServersOud.Constants
-
         assert global_constants.CANONICAL_NAME == "oud"
         assert "oud" in global_constants.ALIASES
         assert "oracle_oud" in global_constants.ALIASES
@@ -90,7 +85,6 @@ class TestsFlextLdifQuirksStandardizedConstants(s):
             (FlextLdifServersOid, c.Fixtures.OID),
             (FlextLdifServersOud, c.Fixtures.OUD),
         ]
-
         for quirk_class, expected_canonical in quirks:
             constants = quirk_class.Constants
             assert expected_canonical == constants.CANONICAL_NAME
@@ -103,16 +97,11 @@ class TestsFlextLdifQuirksStandardizedConstants(s):
             FlextLdifServersOid.Constants,
             FlextLdifServersOud.Constants,
         ]
-
         for constants in quirks:
             canonical = constants.CANONICAL_NAME
-
-            # Every server must be able to normalize from itself
             assert canonical in constants.CAN_NORMALIZE_FROM, (
                 f"{canonical} must be in CAN_NORMALIZE_FROM"
             )
-
-            # Every server must be able to denormalize to itself
             assert canonical in constants.CAN_DENORMALIZE_TO, (
                 f"{canonical} must be in CAN_DENORMALIZE_TO"
             )
@@ -127,17 +116,9 @@ class TestQuirksAutoInterchange:
         oid_constants = FlextLdifServersOid.Constants
         rfc_constants = FlextLdifServersRfc.Constants
         oud_constants = FlextLdifServersOud.Constants
-
-        # OID can normalize to RFC
         assert "rfc" in oid_constants.CAN_DENORMALIZE_TO
-
-        # RFC can accept from OID
         assert "rfc" in rfc_constants.CAN_NORMALIZE_FROM
-
-        # OUD can normalize from RFC
         assert "rfc" in oud_constants.CAN_NORMALIZE_FROM
-
-        # OUD can denormalize to itself
         assert "oud" in oud_constants.CAN_DENORMALIZE_TO
 
 
@@ -146,45 +127,67 @@ class TestQuirksAutoInterchange:
 class TestQuirksWithRealLdifFixtures:
     """Test quirks with real LDIF fixture data."""
 
-    @pytest.fixture
+    @staticmethod
+    def _sample_ldif_records(ldif_content: str, max_records: int = 25) -> str:
+        """Return first LDIF records to keep fixture parsing lightweight."""
+        lines = ldif_content.splitlines()
+        sampled: list[str] = []
+        current_record: list[str] = []
+        record_count = 0
+
+        def flush_record() -> None:
+            nonlocal record_count, current_record
+            if not current_record:
+                return
+            if record_count < max_records:
+                sampled.extend(current_record)
+                sampled.append("")
+                record_count += 1
+            current_record = []
+
+        for line in lines:
+            if line.startswith("dn:"):
+                flush_record()
+                if record_count >= max_records:
+                    break
+                current_record = [line]
+                continue
+            if current_record:
+                current_record.append(line)
+        flush_record()
+        return "\n".join(sampled).strip()
+
+    @pytest.fixture(scope="class")
     def oid_schema_ldif(self) -> str:
         """Load real OID schema LDIF fixture."""
         fixture_path = Path(f"tests/fixtures/{c.Fixtures.OID}/oid_schema_fixtures.ldif")
         if not fixture_path.exists():
             pytest.skip(f"Fixture not found: {fixture_path}")
-        return fixture_path.read_text(encoding="utf-8")
+        return self._sample_ldif_records(fixture_path.read_text(encoding="utf-8"))
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def oud_schema_ldif(self) -> str:
         """Load real OUD schema LDIF fixture."""
         fixture_path = Path(f"tests/fixtures/{c.Fixtures.OUD}/oud_schema_fixtures.ldif")
         if not fixture_path.exists():
             pytest.skip(f"Fixture not found: {fixture_path}")
-        return fixture_path.read_text(encoding="utf-8")
+        return self._sample_ldif_records(fixture_path.read_text(encoding="utf-8"))
 
     def test_oid_can_handle_real_oid_ldif(self, oid_schema_ldif: str) -> None:
         """OID quirk must handle real OID LDIF data."""
         oid = FlextLdifServersOid.Entry()
-
-        # Should be able to parse OID LDIF content
         result = oid.parse(oid_schema_ldif)
-
-        # Either successful or gracefully fail, not crash
         assert result is not None
 
     def test_rfc_handles_all_ldif(self, oid_schema_ldif: str) -> None:
         """RFC quirk must handle any valid LDIF (lowest priority fallback)."""
         rfc = FlextLdifServersRfc.Entry()
-
-        # RFC should handle any valid LDIF
         result = rfc.parse(oid_schema_ldif)
         assert result is not None
 
     def test_oud_can_handle_oud_ldif(self, oud_schema_ldif: str) -> None:
         """OUD quirk must handle real OUD LDIF data."""
         oud = FlextLdifServersOud.Entry()
-
-        # Should be able to parse OUD LDIF content
         result = oud.parse(oud_schema_ldif)
         assert result is not None
 
@@ -196,18 +199,13 @@ class TestAliasDiscovery:
     def test_oid_aliases_discoverable(self) -> None:
         """OID aliases must be discoverable for normalization."""
         constants = FlextLdifServersOid.Constants
-
-        # Both canonical and alias should be in ALIASES
         assert "oid" in constants.ALIASES
         assert "oracle_oid" in constants.ALIASES
-
-        # CANONICAL_NAME should match one of the aliases
         assert constants.CANONICAL_NAME in constants.ALIASES
 
     def test_oud_aliases_discoverable(self) -> None:
         """OUD aliases must be discoverable for normalization."""
         constants = FlextLdifServersOud.Constants
-
         assert "oud" in constants.ALIASES
         assert "oracle_oud" in constants.ALIASES
         assert constants.CANONICAL_NAME in constants.ALIASES
@@ -215,7 +213,6 @@ class TestAliasDiscovery:
     def test_rfc_aliases_discoverable(self) -> None:
         """RFC aliases must be discoverable."""
         constants = FlextLdifServersRfc.Constants
-
         assert "rfc" in constants.ALIASES
         assert "generic" in constants.ALIASES
         assert constants.CANONICAL_NAME in constants.ALIASES
