@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import struct
 from datetime import UTC, datetime
 from functools import wraps
@@ -17,7 +18,7 @@ logger = FlextLogger(__name__)
 
 
 def _is_metadata_attachable(
-    obj: object,
+    obj: builtins.object,
 ) -> TypeGuard[
     m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
 ]:
@@ -33,7 +34,7 @@ class FlextLdifUtilitiesDecorators:
 
     @staticmethod
     def _attach_metadata_if_present(
-        result_value: object | None,
+        result_value: builtins.object | None,
         quirk_type: str,
         server_type: str | None,
     ) -> None:
@@ -44,7 +45,7 @@ class FlextLdifUtilitiesDecorators:
             "server_type": server_type,
             "parsed_timestamp": datetime.now(UTC).replace(microsecond=0).isoformat(),
         }
-        extensions_dict: dict[str, object] = {
+        extensions_dict: dict[str, builtins.object] = {
             key: value
             for key, value in extensions_dict_raw.items()
             if value is not None
@@ -70,7 +71,7 @@ class FlextLdifUtilitiesDecorators:
             logger.debug("Failed to attach metadata", error=str(e))
 
     @staticmethod
-    def _get_server_type_from_class(obj: object) -> str | None:
+    def _get_server_type_from_class(obj: builtins.object) -> str | None:
         """Extract SERVER_TYPE from class Constants via MRO traversal."""
         if not getattr(obj, "__class__", None) is not None:
             return None
@@ -93,7 +94,7 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: object, arg: t.Ldif.Decorators.ParseMethodArg
+                self: builtins.object, arg: t.Ldif.Decorators.ParseMethodArg
             ) -> t.Ldif.Decorators.ParseMethodReturn:
                 try:
                     return func(self, arg)
@@ -124,7 +125,9 @@ class FlextLdifUtilitiesDecorators:
             """Wrapper function for parse methods."""
 
             @wraps(func)
-            def wrapper(self: object, arg: str) -> t.Ldif.Decorators.ParseMethodReturn:
+            def wrapper(
+                self: builtins.object, arg: str
+            ) -> t.Ldif.Decorators.ParseMethodReturn:
                 """Call original function and attach metadata to result."""
                 result = func(self, arg)
                 if result.is_success:
@@ -156,7 +159,7 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: object, arg: t.Ldif.Decorators.WriteMethodArg
+                self: builtins.object, arg: t.Ldif.Decorators.WriteMethodArg
             ) -> t.Ldif.Decorators.WriteMethodReturn:
                 return func(self, arg)
 
@@ -179,7 +182,7 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: object, arg: t.Ldif.Decorators.WriteMethodArg
+                self: builtins.object, arg: t.Ldif.Decorators.WriteMethodArg
             ) -> t.Ldif.Decorators.WriteMethodReturn:
                 try:
                     return func(self, arg)

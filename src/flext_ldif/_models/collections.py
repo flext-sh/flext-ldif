@@ -6,12 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import builtins
 from collections.abc import Iterator, Sequence
 from typing import Annotated, override
 
-from flext_core import t
 from pydantic import ConfigDict, Field
 
+from flext_ldif import t
 from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
@@ -32,7 +33,7 @@ class FlextLdifModelsCollections:
         )
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: builtins.object) -> bool:
             if isinstance(other, dict):
                 self_dict = {
                     key: value
@@ -123,7 +124,7 @@ class FlextLdifModelsCollections:
         )
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: builtins.object) -> bool:
             if isinstance(other, dict):
                 extra = self.model_extra
                 return (extra or {}) == other
@@ -151,7 +152,7 @@ class FlextLdifModelsCollections:
         ]
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: builtins.object) -> bool:
             if isinstance(other, self.__class__):
                 return self.categories == other.categories
             if isinstance(other, dict):
@@ -174,7 +175,9 @@ class FlextLdifModelsCollections:
             ]
             object.__setattr__(self, "categories", updated_categories)
 
-        def add_entries(self, category: str, entries: Sequence[object]) -> None:
+        def add_entries(
+            self, category: str, entries: Sequence[builtins.object]
+        ) -> None:
             existing = self._entry_categories().get(category, [])
             normalized_entries = [
                 FlextLdifModelsDomains.Entry.model_validate(entry) for entry in entries

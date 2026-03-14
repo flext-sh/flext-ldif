@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 from abc import ABC
 from typing import override
 
@@ -10,7 +11,7 @@ from flext_core import FlextService, FlextSettings, m, s
 from flext_ldif.settings import FlextLdifSettings
 
 
-class FlextLdifServiceBase[TDomainResult: object](
+class FlextLdifServiceBase[TDomainResult: builtins.object](
     FlextService[TDomainResult],
     ABC,
 ):

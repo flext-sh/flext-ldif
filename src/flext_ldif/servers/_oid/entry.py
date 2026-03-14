@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import struct
 from collections.abc import Mapping
 from functools import reduce
@@ -27,7 +28,7 @@ class _OidStringListJson(RootModel[list[str]]):
     pass
 
 
-class _OidObjectListJson(RootModel[list[object]]):
+class _OidObjectListJson(RootModel[list[builtins.object]]):
     pass
 
 
@@ -179,13 +180,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             original_entry.attributes.attributes if original_entry.attributes else {}
         )
         mk = c.Ldif.MetadataKeys
-        conversion_metadata: dict[str, object] = (
+        conversion_metadata: dict[str, builtins.object] = (
             {mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: list(converted_attrs)}
             if converted_attrs
             else {}
         )
         mk = c.Ldif.MetadataKeys
-        dn_metadata: dict[str, object] = (
+        dn_metadata: dict[str, builtins.object] = (
             {
                 mk.ORIGINAL_DN_COMPLETE: original_dn,
                 mk.ORIGINAL_DN_LINE_COMPLETE: cleaned_dn,
@@ -263,7 +264,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if FlextLdifServersOidConstants.OPERATIONAL_ATTRIBUTES
             else None
         )
-        generic_metadata: dict[str, object] = dict(
+        generic_metadata: dict[str, builtins.object] = dict(
             FlextLdifUtilitiesMetadata.build_entry_metadata_extensions("oid")
         )
         generic_metadata["entry_dn"] = original_dn
@@ -304,7 +305,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             f"OID Entry with {len(converted_attrs)} boolean conversions"
         )
         original_extensions = self._extract_original_extensions(original_entry)
-        extensions_data: dict[str, object] = {
+        extensions_data: dict[str, builtins.object] = {
             **conversion_metadata,
             **dn_metadata,
             **generic_metadata,
@@ -319,7 +320,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                         nested_dict[nk] = [str(item) for item in nv]
                     else:
                         nested_dict[nk] = str(nv)
-                widened_dict: object = nested_dict
+                widened_dict: builtins.object = nested_dict
                 extensions_data[key] = widened_dict
             else:
                 extensions_data[key] = val
@@ -457,9 +458,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 else []
             )
             schema_transformations.append("schema_dn_normalization")
-            schema_transformations_typed: list[t.Ldif.MetadataValue] = []
-            for item in schema_transformations:
-                schema_transformations_typed.append(str(item))
+            schema_transformations_typed: list[t.Ldif.MetadataValue] = [
+                str(item) for item in schema_transformations
+            ]
             metadata.extensions["schema_transformations"] = schema_transformations_typed
         if acl_transformations:
             metadata.attribute_transformations = {
@@ -578,7 +579,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         return (rfc_violations, attribute_conflicts)
 
     def _extract_acl_metadata_from_string(
-        self, acl_value: str, current_extensions: dict[str, object]
+        self, acl_value: str, current_extensions: dict[str, builtins.object]
     ) -> None:
         """Extract OID-specific ACL metadata from ACL string."""
         bindmode = FlextLdifUtilitiesACL.extract_component(
@@ -623,7 +624,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             else None
         )
         if isinstance(converted_attrs_data, Mapping):
-            boolean_conversions_obj: object = converted_attrs_data.get(
+            boolean_conversions_obj: builtins.object = converted_attrs_data.get(
                 mk.CONVERSION_BOOLEAN_CONVERSIONS, {}
             )
             if isinstance(boolean_conversions_obj, Mapping):
@@ -694,7 +695,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             )
         elif entry.metadata.quirk_type != "oid":
             entry.metadata = entry.metadata.model_copy(update={"quirk_type": "oid"})
-        current_extensions: dict[str, object] = (
+        current_extensions: dict[str, builtins.object] = (
             dict(entry.metadata.extensions) if entry.metadata.extensions else {}
         )
         mk = c.Ldif.MetadataKeys
@@ -774,9 +775,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     entry.metadata.extensions = (
                         FlextLdifModelsMetadata.DynamicMetadata()
                     )
-                converted_attrs_list: list[t.Ldif.MetadataValue] = []
-                for item in converted_attrs:
-                    converted_attrs_list.append(str(item))
+                converted_attrs_list: list[t.Ldif.MetadataValue] = [
+                    str(item) for item in converted_attrs
+                ]
                 if boolean_conversions:
                     boolean_conversions_dict: dict[str, dict[str, str | list[str]]] = {
                         attr_name: dict(conversion_data)
@@ -828,7 +829,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         self,
         acl_quirk: p.Ldif.AclQuirk,
         acl_value: str,
-        current_extensions: dict[str, object],
+        current_extensions: dict[str, builtins.object],
     ) -> None:
         """Parse ACL and merge additional extensions from parsed model."""
         try:
@@ -880,7 +881,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     def _process_orclaci_values(
         self,
         orclaci_values: list[str] | str | None,
-        current_extensions: dict[str, object],
+        current_extensions: dict[str, builtins.object],
     ) -> None:
         """Process orclaci values and extract ACL metadata."""
         if not orclaci_values:

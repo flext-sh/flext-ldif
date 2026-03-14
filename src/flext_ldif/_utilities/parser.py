@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import builtins
 import contextlib
 import re
 from collections.abc import Mapping
@@ -119,7 +120,9 @@ class FlextLdifUtilitiesParser:
     def ext(metadata: m.Ldif.DynamicMetadata) -> Mapping[str, list[str]]:
         """Extract extension information from parsed metadata."""
 
-        def _is_metadata_value(value: object) -> TypeGuard[t.Ldif.MetadataValue]:
+        def _is_metadata_value(
+            value: builtins.object,
+        ) -> TypeGuard[t.Ldif.MetadataValue]:
             return value is None or isinstance(
                 value, (str, int, float, bool, list, Mapping)
             )

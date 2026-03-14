@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 from collections.abc import Mapping
 from typing import ClassVar
 
@@ -64,7 +65,7 @@ class FlextLdifServersBaseQuirkHelpers:
         constants_attr = getattr(parent, "Constants", None)
         if constants_attr is None:
             return 100
-        priority_raw: int | object = getattr(constants_attr, "PRIORITY", 100)
+        priority_raw: int | builtins.object = getattr(constants_attr, "PRIORITY", 100)
         if isinstance(priority_raw, int):
             return priority_raw
         return 100

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
@@ -55,7 +56,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             @property
-            def extensions(self) -> Mapping[str, object]:
+            def extensions(self) -> Mapping[str, builtins.object]:
                 """Get server-specific extensions."""
                 ...
 
@@ -480,7 +481,7 @@ class FlextLdifProtocols(FlextProtocols):
             server_type: str
             priority: int
 
-            def parse(self, ldif_text: str) -> r[object]:
+            def parse(self, ldif_text: str) -> r[builtins.object]:
                 """Parse LDIF text to Entry models."""
                 ...
 
@@ -536,7 +537,7 @@ class FlextLdifProtocols(FlextProtocols):
         class ValuePredicate(Protocol):
             """Protocol for predicates that tesobject values."""
 
-            def __call__(self, value: object, /) -> bool:
+            def __call__(self, value: builtins.object, /) -> bool:
                 """Test if value matches predicate condition."""
                 ...
 

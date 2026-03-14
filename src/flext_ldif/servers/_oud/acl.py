@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import re
 import struct
 from collections.abc import Mapping
@@ -86,7 +87,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         )
 
     @staticmethod
-    def _scalar_or_list_value(value: object) -> bool:
+    def _scalar_or_list_value(value: builtins.object) -> bool:
         """Check if value is scalar metadata value or list."""
         return isinstance(value, (str, int, float, bool, list))
 
@@ -145,7 +146,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     def _build_aci_permissions(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
         """Build ACI permissions clause from ACL model."""
         perms = acl_data.permissions
-        target_perms_dict: Mapping[str, object] | None = None
+        target_perms_dict: Mapping[str, builtins.object] | None = None
         if not perms and acl_data.metadata:
             extensions = acl_data.metadata.extensions
             target_perms_dict_raw = (
@@ -158,7 +159,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             if isinstance(target_perms_dict_raw, Mapping):
                 target_perms_dict = target_perms_dict_raw
         if target_perms_dict:
-            perms_data: dict[str, object] = {}
+            perms_data: dict[str, builtins.object] = {}
             for key, val in target_perms_dict.items():
                 k = str(key)
                 if isinstance(val, Mapping):
@@ -252,7 +253,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if not target and acl_data.metadata:
             extensions = acl_data.metadata.extensions
             target_dict = extensions.get("acl_target_target") if extensions else None
-            target_data: dict[str, object] = {}
+            target_data: dict[str, builtins.object] = {}
             if isinstance(target_dict, Mapping):
                 for raw_key, raw_value in target_dict.items():
                     if isinstance(raw_value, Mapping):
@@ -419,7 +420,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Write RFC-compliant ACL model to OUD ACI string format (protected internal method)."""
         try:
             sc = FlextLdifServersOudConstants
-            extensions: dict[str, object] | None = (
+            extensions: dict[str, builtins.object] | None = (
                 dict(acl_data.metadata.extensions.to_dict())
                 if acl_data.metadata and acl_data.metadata.extensions
                 else None

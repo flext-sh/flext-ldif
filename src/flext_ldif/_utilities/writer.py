@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import builtins
 import struct
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -24,7 +25,7 @@ class FlextLdifUtilitiesWriter:
         ldif_lines: list[str],
         *,
         format_type: str,
-        changetype_config: Mapping[str, object],
+        changetype_config: Mapping[str, builtins.object],
     ) -> None:
         """Add changetype lines based on format."""
         include_changetype = bool(u.get(changetype_config, "include_changetype"))
@@ -286,7 +287,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def determine_attribute_order(
-        entry_data: Mapping[str, object],
+        entry_data: Mapping[str, builtins.object],
     ) -> list[tuple[str, object]] | None:
         """Determine attribute processing order from entry metadata."""
         metadata = entry_data.get("_metadata")
@@ -296,7 +297,9 @@ class FlextLdifUtilitiesWriter:
         metadata_extensions = getattr(metadata, "extensions", None)
         if isinstance(metadata_extensions, Mapping):
             typed_extensions = m.ConfigMap(metadata_extensions).root
-            raw_attr_order: object | None = typed_extensions.get("attribute_order")
+            raw_attr_order: builtins.object | None = typed_extensions.get(
+                "attribute_order"
+            )
             if isinstance(raw_attr_order, Sequence) and not isinstance(
                 raw_attr_order, (str, bytes)
             ):

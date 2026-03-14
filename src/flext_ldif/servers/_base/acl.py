@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import re
 from collections.abc import Mapping
 from typing import Annotated, ClassVar, Self, override
@@ -98,10 +99,12 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
     def create_metadata(
         self,
         original_format: str,
-        extensions: Mapping[str, object] | None = None,
+        extensions: Mapping[str, builtins.object] | None = None,
     ) -> m.Ldif.QuirkMetadata:
         """Create ACL quirk metadata."""
-        all_extensions: dict[str, object] = {"original_format": original_format}
+        all_extensions: dict[str, builtins.object] = {
+            "original_format": original_format
+        }
         if extensions:
             all_extensions.update(extensions)
         extensions_model = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
@@ -184,7 +187,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
             )
             return None
 
-    def _coerce_operation(self, value: object) -> str | None:
+    def _coerce_operation(self, value: builtins.object) -> str | None:
         """Coerce operation token to supported ACL operation."""
         if not isinstance(value, str):
             return None
@@ -231,7 +234,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
 
     def _extract_acl_parameters(
         self,
-        kwargs: Mapping[str, object],
+        kwargs: Mapping[str, builtins.object],
     ) -> tuple[str | m.Ldif.Acl | None, str | None]:
         """Extract and validate ACL operation parameters from kwargs."""
         data_raw = kwargs.get("data")
@@ -265,7 +268,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         return r[m.Ldif.Acl].fail("Must be implemented by subclass")
 
     def _resolve_data(
-        self, data: str | m.Ldif.Acl | None, kwargs: Mapping[str, object]
+        self, data: str | m.Ldif.Acl | None, kwargs: Mapping[str, builtins.object]
     ) -> str | m.Ldif.Acl | None:
         """Resolve data from parameter or kwargs."""
         if data is not None:
@@ -274,7 +277,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         return self._coerce_acl_data(data_raw)
 
     def _resolve_operation(
-        self, operation: str | None, kwargs: Mapping[str, object]
+        self, operation: str | None, kwargs: Mapping[str, builtins.object]
     ) -> str | None:
         """Resolve operation from parameter or kwargs."""
         if operation is not None:

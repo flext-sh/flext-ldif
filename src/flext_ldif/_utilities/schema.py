@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import copy
 import re
 import struct
@@ -81,7 +82,7 @@ class FlextLdifUtilitiesSchema:
         field_name: str,
         transform_fn: Callable[
             [object],
-            object | r[object],
+            builtins.object | r[builtins.object],
         ],
     ) -> r[
         FlextLdifModelsDomains.SchemaAttribute
@@ -99,7 +100,7 @@ class FlextLdifUtilitiesSchema:
                     ].fail(
                         f"Transformation of '{field_name}' failed: {new_value.error}"
                     )
-                resolved_value: object = new_value.value
+                resolved_value: builtins.object = new_value.value
                 setattr(transformed, field_name, resolved_value)
             else:
                 setattr(transformed, field_name, new_value)
@@ -127,7 +128,7 @@ class FlextLdifUtilitiesSchema:
             str,
             Callable[
                 [object],
-                object | r[object],
+                builtins.object | r[builtins.object],
             ]
             | str
             | list[str]
@@ -352,7 +353,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_metadata_extensions(
-        extensions_raw: Mapping[str, object],
+        extensions_raw: Mapping[str, builtins.object],
     ) -> Mapping[str, t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]]]:
         return {
             key: FlextLdifUtilitiesSchema._convert_metadata_value(raw_value)
@@ -361,7 +362,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_metadata_value(
-        value: object,
+        value: builtins.object,
     ) -> t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]]:
         if isinstance(value, (str, int, float, bool)):
             return value
@@ -706,7 +707,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _validate_attribute_syntax(
         syntax: str | None,
-    ) -> dict[str, object] | None:
+    ) -> dict[str, builtins.object] | None:
         """Validate syntax OID and return validation result."""
         if not syntax or not syntax.strip():
             return None
@@ -723,10 +724,10 @@ class FlextLdifUtilitiesSchema:
         syntax_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = (
             c.Ldif.MetadataKeys.SYNTAX_VALIDATION_ERROR not in syntax_extensions
         )
-        result_dict: dict[str, object] = {}
+        result_dict: dict[str, builtins.object] = {}
         for key, val in syntax_extensions.items():
             if isinstance(val, list):
-                list_typed: object = list(val)
+                list_typed: builtins.object = list(val)
                 result_dict[key] = list_typed
             elif val is not None:
                 result_dict[key] = val
@@ -803,7 +804,7 @@ class FlextLdifUtilitiesSchema:
             str,
             Callable[
                 [object],
-                object | r[object],
+                builtins.object | r[builtins.object],
             ]
             | str
             | list[str]
@@ -893,13 +894,13 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def build_metadata(
         definition: str,
-        additional_extensions: Mapping[str, object] | None = None,
-    ) -> Mapping[str, object]:
+        additional_extensions: Mapping[str, builtins.object] | None = None,
+    ) -> Mapping[str, builtins.object]:
         """Build metadata extensions dictionary for schema definitions."""
         extensions_raw = FlextLdifUtilitiesParser.extract_extensions(definition)
-        extensions: dict[str, object] = {}
+        extensions: dict[str, builtins.object] = {}
         for key, val in extensions_raw.items():
-            typed_val: object = list(val)
+            typed_val: builtins.object = list(val)
             extensions[key] = typed_val
         extensions[c.Ldif.MetadataKeys.ORIGINAL_FORMAT] = definition.strip()
         if additional_extensions:
@@ -1186,18 +1187,18 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def parse_attribute(
         attr_definition: str, *, validate_syntax: bool = True
-    ) -> r[dict[str, object]]:
+    ) -> r[dict[str, builtins.object]]:
         """Parse RFC 4512 attribute definition into structured data."""
         basic_fields_result = FlextLdifUtilitiesSchema._extract_attribute_basic_fields(
             attr_definition
         )
         if basic_fields_result.is_failure:
-            return r[dict[str, object]].fail(basic_fields_result.error)
+            return r[dict[str, builtins.object]].fail(basic_fields_result.error)
         oid, name, desc = basic_fields_result.value
         syntax, length = FlextLdifUtilitiesSchema._extract_attribute_syntax(
             attr_definition
         )
-        syntax_validation_result: Mapping[str, object] | None = None
+        syntax_validation_result: Mapping[str, builtins.object] | None = None
         if validate_syntax:
             syntax_validation_result = (
                 FlextLdifUtilitiesSchema._validate_attribute_syntax(syntax)
@@ -1211,7 +1212,7 @@ class FlextLdifUtilitiesSchema:
         sup, usage = FlextLdifUtilitiesSchema._extract_attribute_sup_usage(
             attr_definition
         )
-        additional_extensions_converted: Mapping[str, object] | None = (
+        additional_extensions_converted: Mapping[str, builtins.object] | None = (
             syntax_validation_result
         )
         extensions_raw = FlextLdifUtilitiesSchema.build_metadata(
@@ -1230,7 +1231,7 @@ class FlextLdifUtilitiesSchema:
                     syntax_validation_result
                 )
             )
-        parsed_dict: dict[str, object] = {
+        parsed_dict: dict[str, builtins.object] = {
             "oid": oid,
             "name": name,
             "desc": desc,
@@ -1246,12 +1247,12 @@ class FlextLdifUtilitiesSchema:
             "metadata_extensions": extensions_converted,
             "syntax_validation": syntax_validation_converted,
         }
-        return r[dict[str, t.Ldif.object]].ok(parsed_dict)
+        return r[dict[str, builtins.object]].ok(parsed_dict)
 
     @staticmethod
     def parse_objectclass(
         oc_definition: str,
-    ) -> Mapping[str, object]:
+    ) -> Mapping[str, builtins.object]:
         """Parse RFC 4512 objectClass definition into structured data."""
         basic_fields_result = (
             FlextLdifUtilitiesSchema._extract_objectclass_basic_fields(oc_definition)
@@ -1269,7 +1270,7 @@ class FlextLdifUtilitiesSchema:
         extensions_converted = FlextLdifUtilitiesSchema._convert_metadata_extensions(
             extensions_raw
         )
-        parsed_dict: dict[str, object] = {
+        parsed_dict: dict[str, builtins.object] = {
             "oid": oid,
             "name": name,
             "desc": desc,

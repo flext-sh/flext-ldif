@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import re
 import struct
 from collections.abc import Callable, Mapping, Sequence
@@ -86,15 +87,15 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def analyze_differences(
-        entry_attrs: Mapping[str, object],
+        entry_attrs: Mapping[str, builtins.object],
         converted_attrs: Mapping[str, list[t.Ldif.AttributeValue]],
         original_dn: str,
         cleaned_dn: str,
         normalize_attr_fn: Callable[[str], str] | None = None,
     ) -> tuple[
-        Mapping[str, object],
-        Mapping[str, Mapping[str, object]],
-        Mapping[str, object],
+        Mapping[str, builtins.object],
+        Mapping[str, Mapping[str, builtins.object]],
+        Mapping[str, builtins.object],
         Mapping[str, str],
     ]:
         """Analyze DN and attribute differences for round-trip support (DRY utility)."""
@@ -124,8 +125,8 @@ class FlextLdifUtilitiesEntry:
                     original_attribute_case[key] = value
             except (ValueError, TypeError, AttributeError):
                 continue
-        attribute_differences: dict[str, Mapping[str, object]] = {}
-        original_attributes_complete: dict[str, object] = {}
+        attribute_differences: dict[str, Mapping[str, builtins.object]] = {}
+        original_attributes_complete: dict[str, builtins.object] = {}
         for attr_name, attr_values in entry_attrs.items():
             original_attr_name = str(attr_name)
             canonical_name = normalize(original_attr_name)
@@ -136,7 +137,7 @@ class FlextLdifUtilitiesEntry:
                 original_values_list = [str(v) for v in attr_values if v is not None]
             elif attr_values is not None:
                 original_values_list = [str(attr_values)]
-            typed_list: object = list(original_values_list)
+            typed_list: builtins.object = list(original_values_list)
             original_attributes_complete[original_attr_name] = typed_list
             converted_values = converted_attrs.get(canonical_name, [])
             original_str = f"{original_attr_name}: {', '.join(original_values_list)}"
@@ -332,7 +333,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def matches_server_patterns(
         entry_dn: str,
-        attributes: Mapping[str, object],
+        attributes: Mapping[str, builtins.object],
         config: FlextLdifModelsSettings.ServerPatternsConfig,
     ) -> bool:
         """Check if entry matches server-specific patterns."""

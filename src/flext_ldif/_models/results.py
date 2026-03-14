@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 from collections.abc import Sequence
 from typing import Annotated, Self, overload
 
@@ -538,7 +539,7 @@ class FlextLdifModelsResults:
         def keys(self) -> list[str]:
             return list(self.model_fields_set)
 
-        def _resolve_key(self, key: str) -> object:
+        def _resolve_key(self, key: str) -> builtins.object:
             if key in type(self).model_fields:
                 return getattr(self, key)
             extra = self.__pydantic_extra__

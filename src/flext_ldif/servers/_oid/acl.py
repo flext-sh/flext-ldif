@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import re
 import struct
 from collections.abc import Mapping
@@ -666,7 +667,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 server_type, extensions=FlextLdifModelsMetadata.DynamicMetadata()
             )
         )
-        update_dict: dict[str, object] = {
+        update_dict: dict[str, builtins.object] = {
             "server_type": server_type,
             "metadata": updated_metadata,
         }

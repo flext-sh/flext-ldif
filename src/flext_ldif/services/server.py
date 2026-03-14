@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import inspect
 from collections.abc import Mapping
 from typing import ClassVar, override
@@ -86,7 +87,7 @@ class FlextLdifServer(FlextRegistry):
 
         return self.quirk(server_type).flat_map(validate_constants)
 
-    def get_registry_stats(self) -> Mapping[str, object]:
+    def get_registry_stats(self) -> Mapping[str, builtins.object]:
         """Get comprehensive registry statistics."""
         servers = self.list_registered_servers()
         quirks_by_server: dict[str, dict[str, str | None]] = {}

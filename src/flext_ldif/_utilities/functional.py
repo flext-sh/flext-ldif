@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+import builtins
 import struct
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import ClassVar, Literal, overload
 
-from flext_core import t
 from pydantic import BaseModel
 
 from flext_ldif._models._models import (
@@ -20,13 +20,14 @@ from flext_ldif._models._models import (
     ConvertToStr,
     ConvertToTuple,
 )
+from flext_ldif.typings import t
 
 
 class FlextFunctional:
     """Pure functional utilities without circular dependencies."""
 
     @staticmethod
-    def _to_general(value: object) -> object:
+    def _to_general(value: builtins.object) -> builtins.object:
         """Normalize arbitrary values into object-compatible shape."""
         if value is None or isinstance(value, (str, int, float, bool)):
             return value
@@ -35,7 +36,7 @@ class FlextFunctional:
         if isinstance(value, Path):
             return str(value)
         if isinstance(value, BaseModel):
-            model_mapping: dict[str, object] = {
+            model_mapping: dict[str, builtins.object] = {
                 key: FlextFunctional._to_general(getattr(value, key))
                 for key in type(value).model_fields
             }
@@ -45,7 +46,7 @@ class FlextFunctional:
                     model_mapping[key] = FlextFunctional._to_general(item)
             return model_mapping
         if isinstance(value, Mapping):
-            normalized_mapping: dict[str, object] = {}
+            normalized_mapping: dict[str, builtins.object] = {}
             for key, item in value.items():
                 normalized_mapping[key] = FlextFunctional._to_general(item)
             return normalized_mapping
@@ -223,27 +224,27 @@ class FlextFunctional:
 
     @staticmethod
     def process_flatten(
-        items: Sequence[object],
+        items: Sequence[builtins.object],
         processor: Callable[
             [object],
-            list[object] | tuple[object, ...] | object,
+            list[builtins.object] | tuple[builtins.object, ...] | object,
         ],
         *,
         predicate: Callable[[object], bool] = lambda x: x is not None,
         on_error: Literal["skip", "stop", "collect"] = "skip",
-    ) -> list[object]:
+    ) -> list[builtins.object]:
         """Process and flatten items (mnemonic: pf)."""
-        result: list[object] = []
+        result: list[builtins.object] = []
         for item in items:
             try:
                 processed = processor(item)
                 if isinstance(processed, list):
-                    processed_values: list[object] = processed
+                    processed_values: list[builtins.object] = processed
                     result.extend(
                         sub_item for sub_item in processed_values if predicate(sub_item)
                     )
                 elif isinstance(processed, tuple):
-                    processed_tuple_values: list[object] = list(processed)
+                    processed_tuple_values: list[builtins.object] = list(processed)
                     result.extend(
                         sub_item
                         for sub_item in processed_tuple_values
@@ -267,23 +268,23 @@ class FlextFunctional:
     @classmethod
     def normalize_list(
         cls,
-        value: object | Sequence[object] | None,
+        value: builtins.object | Sequence[builtins.object] | None,
         *,
         mapper: Callable[[object], object] | None = None,
         predicate: Callable[[object], bool] | None = None,
-        default: list[object] | None = None,
-    ) -> list[object]:
+        default: list[builtins.object] | None = None,
+    ) -> list[builtins.object]:
         """Normalize to list (mnemonic: nl)."""
         if value is None:
             if default is not None:
                 return list(default)
             return []
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            items: list[object] = list(value)
+            items: list[builtins.object] = list(value)
         else:
             items = [value]
         if mapper is not None:
-            items_mapped: list[object] = [mapper(item) for item in items]
+            items_mapped: list[builtins.object] = [mapper(item) for item in items]
             if predicate is not None:
                 return [item for item in items_mapped if predicate(item)]
             return items_mapped
@@ -418,7 +419,11 @@ class FlextFunctional:
 
     it = is_type
     _ConvertibleType = (
-        t.Scalar | list[object] | tuple[object, ...] | set[object] | object
+        t.Scalar
+        | list[builtins.object]
+        | tuple[builtins.object, ...]
+        | set[builtins.object]
+        | object
     )
     _TYPE_MAP: ClassVar[Mapping[str, type]] = {
         "list": list,
@@ -434,7 +439,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: object,
+        value: builtins.object,
         *,
         target: type[str] | Literal["str"],
         default: str | None = None,
@@ -444,7 +449,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: object,
+        value: builtins.object,
         *,
         target: type[bool] | Literal["bool"],
         default: bool | None = None,
@@ -454,7 +459,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: object,
+        value: builtins.object,
         *,
         target: type[int] | Literal["int"],
         default: int | None = None,
@@ -464,7 +469,7 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: object,
+        value: builtins.object,
         *,
         target: type[float] | Literal["float"],
         default: float | None = None,
@@ -474,40 +479,40 @@ class FlextFunctional:
     @classmethod
     def as_type(
         cls,
-        value: object,
+        value: builtins.object,
         *,
-        target: type[list[object]] | Literal["list"],
-        default: list[object] | None = None,
-    ) -> list[object] | None: ...
+        target: type[list[builtins.object]] | Literal["list"],
+        default: list[builtins.object] | None = None,
+    ) -> list[builtins.object] | None: ...
 
     @overload
     @classmethod
     def as_type(
         cls,
-        value: object,
+        value: builtins.object,
         *,
-        target: type[tuple[object, ...]] | Literal["tuple"],
-        default: tuple[object, ...] | None = None,
-    ) -> tuple[object, ...] | None: ...
+        target: type[tuple[builtins.object, ...]] | Literal["tuple"],
+        default: tuple[builtins.object, ...] | None = None,
+    ) -> tuple[builtins.object, ...] | None: ...
 
     @overload
     @classmethod
     def as_type(
         cls,
-        value: object,
+        value: builtins.object,
         *,
-        target: type[Mapping[str, object]] | Literal["dict"],
-        default: Mapping[str, object] | None = None,
-    ) -> Mapping[str, object] | None: ...
+        target: type[Mapping[str, builtins.object]] | Literal["dict"],
+        default: Mapping[str, builtins.object] | None = None,
+    ) -> Mapping[str, builtins.object] | None: ...
 
     @classmethod
     def as_type(
         cls,
-        value: object,
+        value: builtins.object,
         *,
         target: type | str,
-        default: object | None = None,
-    ) -> object | None:
+        default: builtins.object | None = None,
+    ) -> builtins.object | None:
         """Safe cast (mnemonic: at)."""
         target_type: type | None = (
             cls._TYPE_MAP.get(target) if isinstance(target, str) else target
@@ -535,8 +540,8 @@ class FlextFunctional:
 
     @staticmethod
     def _convert_with_target(
-        value: object, target_type: type, default: object | None
-    ) -> object | None:
+        value: builtins.object, target_type: type, default: builtins.object | None
+    ) -> builtins.object | None:
         """Execute type conversion using centralized Pydantic v2 models.
 
         Dispatches to the appropriate ConversionRequest model based on target_type
@@ -644,9 +649,9 @@ class FlextFunctional:
     def prop(cls, key: str) -> Callable[[object], object]:
         """Property accessor (mnemonic: pp)."""
 
-        def getter(obj: object) -> object:
+        def getter(obj: builtins.object) -> builtins.object:
             """Get value from object by key."""
-            normalized_obj: object = FlextFunctional._to_general(obj)
+            normalized_obj: builtins.object = FlextFunctional._to_general(obj)
             if isinstance(normalized_obj, dict):
                 return FlextFunctional._to_general(normalized_obj.get(key))
             return None
@@ -656,16 +661,16 @@ class FlextFunctional:
     prop_get = prop
 
     @classmethod
-    def props(cls, *keys: str) -> Callable[[object], Mapping[str, object]]:
+    def props(cls, *keys: str) -> Callable[[object], Mapping[str, builtins.object]]:
         """Multiple property accessor (mnemonic: ps)."""
 
-        def accessor(obj: object) -> Mapping[str, object]:
+        def accessor(obj: builtins.object) -> Mapping[str, builtins.object]:
             """Get multiple values from object by keys."""
-            result_dict: dict[str, object] = {}
-            normalized_obj: object = FlextFunctional._to_general(obj)
+            result_dict: dict[str, builtins.object] = {}
+            normalized_obj: builtins.object = FlextFunctional._to_general(obj)
             for k in keys:
                 if isinstance(normalized_obj, dict):
-                    val: object | None = normalized_obj.get(k)
+                    val: builtins.object | None = normalized_obj.get(k)
                     result_dict[k] = FlextFunctional._to_general(val)
                 else:
                     result_dict[k] = None
@@ -682,11 +687,11 @@ class FlextFunctional:
         def make_getter(key: str) -> Callable[[object], object]:
             """Create a single-key getter."""
 
-            def getter_fn(obj: object) -> object:
+            def getter_fn(obj: builtins.object) -> builtins.object:
                 """Get value from object by key."""
                 if obj is None:
                     return None
-                normalized_obj: object = FlextFunctional._to_general(obj)
+                normalized_obj: builtins.object = FlextFunctional._to_general(obj)
                 if isinstance(normalized_obj, dict):
                     return FlextFunctional._to_general(normalized_obj.get(key))
                 return None
@@ -695,11 +700,11 @@ class FlextFunctional:
 
         getters: list[Callable[[object], object]] = [make_getter(k) for k in keys]
 
-        def path_getter(obj: object) -> object:
+        def path_getter(obj: builtins.object) -> builtins.object:
             """Get value at path."""
             if obj is None:
                 return None
-            result: object = obj
+            result: builtins.object = obj
             for getter in getters:
                 if result is None:
                     return None

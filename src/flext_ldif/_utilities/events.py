@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import builtins
 from collections.abc import Mapping
 
 from flext_core import FlextLogger
 
-from flext_ldif import t
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.settings import FlextLdifModelsSettings
+from flext_ldif.typings import t
 
 
 class FlextLdifUtilitiesEvents:
@@ -101,7 +102,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _to_error_details_list(
-        error_details: list[object] | tuple[object, ...] | None,
+        error_details: list[builtins.object] | tuple[builtins.object, ...] | None,
     ) -> list[str]:
         if error_details is None:
             return []

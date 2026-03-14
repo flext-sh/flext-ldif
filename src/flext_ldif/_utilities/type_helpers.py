@@ -5,6 +5,7 @@ Single class per module: all helpers in FlextLdifTypeHelpers.
 
 from __future__ import annotations
 
+import builtins
 from collections.abc import Mapping as ABCMapping, Sequence as ABCSequence
 from typing import TypeGuard
 
@@ -18,7 +19,7 @@ class FlextLdifTypeHelpers:
 
     @staticmethod
     def is_entry_sequence(
-        obj: object,
+        obj: builtins.object,
     ) -> TypeGuard[ABCSequence[m.Ldif.Entry]]:
         """Check if object is a Sequence but not a string, bytes, or dict (for Entry sequences)."""
         return isinstance(obj, ABCSequence) and (
@@ -27,7 +28,7 @@ class FlextLdifTypeHelpers:
 
     @staticmethod
     def is_mapping_of_scalars(
-        obj: object,
+        obj: builtins.object,
     ) -> TypeGuard[ABCMapping[str, t.Scalar | None]]:
         """Check if object is a Mapping of scalar values (for simple dicts)."""
         if not isinstance(obj, ABCMapping):
@@ -36,14 +37,14 @@ class FlextLdifTypeHelpers:
 
     @staticmethod
     def is_mapping_type(
-        obj: object,
-    ) -> TypeGuard[ABCMapping[str, object]]:
+        obj: builtins.object,
+    ) -> TypeGuard[ABCMapping[str, builtins.object]]:
         """Check if object is a Mapping but not a string (for dict-like objects)."""
         return isinstance(obj, ABCMapping) and (not isinstance(obj, str | bytes))
 
     @staticmethod
     def is_sequence_of_scalars(
-        obj: object,
+        obj: builtins.object,
     ) -> TypeGuard[ABCSequence[t.Scalar | None]]:
         """Check if object is a Sequence of scalar values (for simple sequences)."""
         if (

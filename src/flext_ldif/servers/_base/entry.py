@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import builtins
 import re
 from collections.abc import Mapping
 from contextlib import suppress
@@ -57,11 +58,11 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
     ) -> FlextLdifModelsSettings.WriteFormatOptions | None:
         if metadata is None:
             return None
-        format_options_raw: object | None = metadata.extensions.get(
+        format_options_raw: builtins.object | None = metadata.extensions.get(
             "write_format_options"
         )
         if isinstance(format_options_raw, Mapping):
-            format_options_map: dict[str, object] = {}
+            format_options_map: dict[str, builtins.object] = {}
             for raw_key, raw_value in format_options_raw.items():
                 key = str(raw_key)
                 format_options_map[key] = raw_value
@@ -100,9 +101,9 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         return False
 
     @override
-    def execute(self, **kwargs: Mapping[str, object]) -> r[m.Ldif.Entry | str]:
+    def execute(self, **kwargs: Mapping[str, builtins.object]) -> r[m.Ldif.Entry | str]:
         """Execute entry operation (parse/write)."""
-        kwargs_map: Mapping[str, object] = kwargs
+        kwargs_map: Mapping[str, builtins.object] = kwargs
         ldif_content = kwargs_map.get("ldif_content")
         entry_model = kwargs_map.get("entry_model")
         if isinstance(ldif_content, str):
@@ -300,7 +301,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         use_original_acl_format_as_name = False
         hidden_attributes: set[str] = set()
         acl_original_format: str | None = None
-        extensions_data: Mapping[str, object] = {}
+        extensions_data: Mapping[str, builtins.object] = {}
         if entry_data.metadata:
             metadata_extensions = entry_data.metadata.extensions
             if core_u.is_type(metadata_extensions, Mapping):

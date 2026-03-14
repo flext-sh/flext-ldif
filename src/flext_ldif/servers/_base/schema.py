@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import struct
 from collections.abc import Mapping, Sequence
 from datetime import datetime
@@ -225,10 +226,10 @@ class FlextLdifServersBaseSchema(
         metadata_extensions["original_format"] = attr_definition.strip()
         metadata_extensions["schema_original_string_complete"] = attr_definition
         quirk_type = FlextLdifServersBaseSchema._resolve_quirk_type(server_type)
-        extensions_typed: dict[str, object] = {}
+        extensions_typed: dict[str, builtins.object] = {}
         for key, val in metadata_extensions.items():
             if isinstance(val, list):
-                list_typed: object = list(val)
+                list_typed: builtins.object = list(val)
                 extensions_typed[key] = list_typed
             elif val is not None:
                 extensions_typed[key] = val

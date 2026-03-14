@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import builtins
 from collections.abc import Sequence as ABCSequence
 from typing import TypeGuard
 
@@ -26,7 +27,7 @@ class FlextLdifUtilitiesTypeGuards(FlextUtilities):
 
     @staticmethod
     def is_entry_sequence(
-        obj: object,
+        obj: builtins.object,
     ) -> TypeGuard[ABCSequence[object]]:
         """Check if object is a Sequence of Entry instances.
 

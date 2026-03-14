@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import builtins
 from collections.abc import Callable, Mapping, Sequence
 from typing import TYPE_CHECKING, Annotated, Literal
 
@@ -885,7 +886,7 @@ class FlextLdifModelsSettings:
         """Rules for entry categorization.
 
         Contains DN patterns and objectClass lists for each category.
-        Replaces dict[str, object] with type-safe Pydantic model.
+        Replaces dict[str, builtins.object] with type-safe Pydantic model.
         """
 
         user_dn_patterns: Annotated[
@@ -1085,7 +1086,7 @@ class FlextLdifModelsSettings:
         """Whitelist rules for entry validation.
 
         Defines blocked objectClasses and validation rules.
-        Replaces dict[str, object] with type-safe Pydantic model.
+        Replaces dict[str, builtins.object] with type-safe Pydantic model.
         """
 
         blocked_objectclasses: Annotated[
@@ -2044,7 +2045,7 @@ class FlextLdifModelsSettings:
             Field(..., description="Entry creation logic"),
         ]
         build_metadata_hook: Annotated[
-            Callable[[str, Mapping[str, list[str]]], dict[str, t.Ldif.object] | None]
+            Callable[[str, Mapping[str, list[str]]], dict[str, builtins.object] | None]
             | None,
             Field(default=None, description="Optional metadata building"),
         ]

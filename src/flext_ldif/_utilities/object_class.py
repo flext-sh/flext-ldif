@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import struct
 from collections.abc import Callable, Mapping
 
@@ -104,11 +105,11 @@ class FlextLdifUtilitiesObjectClass:
     def parse(
         definition: str,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], Mapping[str, object]] | None = None,
+        parse_parts_hook: Callable[[str], Mapping[str, builtins.object]] | None = None,
     ) -> r[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition into SchemaObjectClass model."""
         try:
-            parsed_dict: Mapping[str, object] = (
+            parsed_dict: Mapping[str, builtins.object] = (
                 FlextLdifUtilitiesSchema.parse_objectclass(definition)
             )
             if parse_parts_hook is not None:

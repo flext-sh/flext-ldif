@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import re
 from collections.abc import Mapping, Sequence
 from typing import TypeGuard
@@ -44,7 +45,9 @@ class FlextLdifUtilitiesDetection:
                     and getattr(cls, "Constants", None) is not None
                     and (not u.is_dict_like(getattr(cls, "Constants", None)))
                 ):
-                    constants_obj: object | None = getattr(cls, "Constants", None)
+                    constants_obj: builtins.object | None = getattr(
+                        cls, "Constants", None
+                    )
                     if not isinstance(constants_obj, type):
                         continue
                     if FlextLdifUtilitiesDetection._is_server_constants_class(

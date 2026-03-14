@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import builtins
 from typing import Final
 
 from flext_ldif import c
@@ -25,7 +26,7 @@ class FlextLdifShared:
     """Shared LDIF helpers — single class per module (no loose functions)."""
 
     @staticmethod
-    def _has_attr(obj: object, attr_name: str) -> bool:
+    def _has_attr(obj: builtins.object, attr_name: str) -> bool:
         """Check if an object has a non-None attribute (canonical implementation).
 
         Uses a sentinel object to distinguish between attributes that are None

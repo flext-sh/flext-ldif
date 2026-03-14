@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import re
 import struct
 from collections.abc import Mapping, Sequence
@@ -61,9 +62,9 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _build_extensions(
         aci_content: str, version: str, acl_line: str, extra_patterns: Mapping[str, str]
-    ) -> Mapping[str, object]:
+    ) -> Mapping[str, builtins.object]:
         """Build metadata extensions dict."""
-        extensions: dict[str, object] = {
+        extensions: dict[str, builtins.object] = {
             "version": version,
             "original_format": acl_line,
         }
@@ -181,7 +182,7 @@ class FlextLdifUtilitiesACL:
         return [f"ACL {idx}: {msg}" for idx, msg in errors]
 
     @staticmethod
-    def _is_metadata_scalar_or_container(value: object) -> bool:
+    def _is_metadata_scalar_or_container(value: builtins.object) -> bool:
         """Check supported metadata extension value shape."""
         return isinstance(value, (str, int, float, bool, list, dict))
 
@@ -332,7 +333,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def build_metadata_extensions(
         config: FlextLdifModelsSettings.AclMetadataConfig,
-    ) -> Mapping[str, object]:
+    ) -> Mapping[str, builtins.object]:
         """Build QuirkMetadata extensions for ACL."""
         normalized_line_breaks: list[t.Scalar] | None = None
         if config.line_breaks is not None:
@@ -340,14 +341,14 @@ class FlextLdifUtilitiesACL:
         normalized_targetscope: list[t.Scalar] | None = None
         if config.targetscope is not None:
             normalized_targetscope = [int(value) for value in config.targetscope]
-        extension_items: list[tuple[str, object | None]] = [
+        extension_items: list[tuple[str, builtins.object | None]] = [
             ("line_breaks", normalized_line_breaks),
             ("dn_spaces", config.dn_spaces),
             ("targetscope", normalized_targetscope),
             ("version", config.version),
             ("action_type", config.action_type),
         ]
-        result: dict[str, object] = {
+        result: dict[str, builtins.object] = {
             key: value
             for key, value in extension_items
             if value is not None
@@ -410,7 +411,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def extract_bind_rules_from_extensions(
-        extensions: Mapping[str, object] | None,
+        extensions: Mapping[str, builtins.object] | None,
         rule_config: list[tuple[str, str, str | None]],
         *,
         tuple_length: int = 2,
@@ -422,7 +423,7 @@ class FlextLdifUtilitiesACL:
         def process_rule_config(rule_item: tuple[str, str, str | None]) -> str | None:
             """Process single rule config item."""
             ext_key, format_template, operator_default = rule_item
-            value_raw: object = extensions.get(ext_key) if extensions else None
+            value_raw: builtins.object = extensions.get(ext_key) if extensions else None
             if value_raw is None:
                 return None
             operator_placeholder = "{" + "operator" + "}"
@@ -495,8 +496,8 @@ class FlextLdifUtilitiesACL:
         content: str,
         patterns: Mapping[str, str | tuple[str, int]],
         *,
-        defaults: Mapping[str, object] | None = None,
-    ) -> Mapping[str, object]:
+        defaults: Mapping[str, builtins.object] | None = None,
+    ) -> Mapping[str, builtins.object]:
         r"""Extract multiple ACL components in one call.
 
         Replaces repetitive extract_component() calls with a single batch call.
@@ -544,7 +545,7 @@ class FlextLdifUtilitiesACL:
 
         def extract_component_batch(
             name: str, pattern_spec: str | tuple[str, int]
-        ) -> tuple[str, object | None]:
+        ) -> tuple[str, builtins.object | None]:
             """Extract component from pattern spec."""
             if isinstance(pattern_spec, tuple):
                 pattern, group_idx = pattern_spec
@@ -553,7 +554,7 @@ class FlextLdifUtilitiesACL:
                 group_idx = 1
             value = FlextLdifUtilitiesACL.extract_component(content, pattern, group_idx)
             raw_default = effective_defaults.get(name) if effective_defaults else None
-            default_value: object | None
+            default_value: builtins.object | None
             if raw_default is None:
                 default_value = None
             elif isinstance(raw_default, (str, int, float, bool)):
@@ -587,17 +588,19 @@ class FlextLdifUtilitiesACL:
                 default_value = normalized_mapping
             else:
                 default_value = str(raw_default)
-            final_value: object | None = value if value is not None else default_value
+            final_value: builtins.object | None = (
+                value if value is not None else default_value
+            )
             return (name, final_value)
 
-        result_dict: dict[str, tuple[str, object | None]] = {}
+        result_dict: dict[str, tuple[str, builtins.object | None]] = {}
         for key, pattern in patterns.items():
             try:
                 result = extract_component_batch(key, pattern)
                 result_dict[key] = result
             except (ValueError, TypeError, AttributeError):
                 continue
-        final_result: dict[str, object] = {}
+        final_result: dict[str, builtins.object] = {}
         for key, value_item in result_dict.items():
             if len(value_item) == TUPLE_LENGTH_PAIR and value_item[1] is not None:
                 final_result[key] = value_item[1]
@@ -652,7 +655,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def extract_target_extensions(
         extensions: FlextLdifModelsMetadata.DynamicMetadata
-        | Mapping[str, object]
+        | Mapping[str, builtins.object]
         | None,
         target_config: list[tuple[str, str]],
     ) -> list[str]:
@@ -663,7 +666,7 @@ class FlextLdifUtilitiesACL:
         def process_target_config(target_item: tuple[str, str]) -> str | None:
             """Process single target config item."""
             ext_key, format_template = target_item
-            value_raw: object = extensions.get(ext_key) if extensions else None
+            value_raw: builtins.object = extensions.get(ext_key) if extensions else None
             if value_raw is None:
                 return None
             return format_template.format(value=str(value_raw))
@@ -747,7 +750,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def format_conversion_comments(
         extensions: FlextLdifModelsMetadata.DynamicMetadata
-        | Mapping[str, object]
+        | Mapping[str, builtins.object]
         | None,
         converted_from_key: str,
         comments_key: str,
@@ -760,7 +763,9 @@ class FlextLdifUtilitiesACL:
         )
         if not converted_from_value:
             return []
-        comments_value: object = extensions.get(comments_key) if extensions else None
+        comments_value: builtins.object = (
+            extensions.get(comments_key) if extensions else None
+        )
         if comments_value is None:
             return []
         normalized: list[str]

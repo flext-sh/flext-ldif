@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import struct
 from collections.abc import Mapping
 from pathlib import Path
@@ -28,7 +29,6 @@ from flext_ldif import (
     c,
     m,
     p,
-    t,
 )
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 
@@ -37,7 +37,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     """Main API facade for LDIF operations using composition pattern."""
 
     _instance: ClassVar[FlextLdif | None] = None
-    _init_config_overrides: ClassVar[Mapping[str, object] | None] = None
+    _init_config_overrides: ClassVar[Mapping[str, builtins.object] | None] = None
     _processing_service: FlextLdifProcessing | None
     _acl_service: FlextLdifAcl | None
     _parser_service: FlextLdifParser | None
@@ -232,7 +232,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             return r[m.Ldif.Entry].fail(f"Health check failed: {e}")
 
     def extract_acls(
-        self, entry: m.Ldif.Entry | BaseModel | Mapping[str, t.Ldif.object]
+        self, entry: m.Ldif.Entry | BaseModel | Mapping[str, builtins.object]
     ) -> r[m.Ldif.AclResponse]:
         """Extract ACLs from entry."""
         server_type: str = "rfc"
@@ -271,7 +271,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                 attr_map = entry.attributes.attributes
                 matches_values = True
                 for attr_name, expected in attributes.items():
-                    expected_raw: object = expected
+                    expected_raw: builtins.object = expected
                     entry_values = attr_map.get(attr_name)
                     if entry_values is None:
                         matches_values = False
@@ -337,7 +337,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         return self.detector.get_effective_server_type(ldif_content=ldif_content)
 
     def get_entry_attributes(
-        self, entry: m.Ldif.Entry | BaseModel | Mapping[str, t.Ldif.object]
+        self, entry: m.Ldif.Entry | BaseModel | Mapping[str, builtins.object]
     ) -> r[Mapping[str, list[str]]]:
         """Get entry attributes dictionary."""
         match entry:
@@ -356,7 +356,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         return FlextLdifEntries.get_entry_dn(entry)
 
     def get_entry_objectclasses(
-        self, entry: m.Ldif.Entry | BaseModel | Mapping[str, t.Ldif.object]
+        self, entry: m.Ldif.Entry | BaseModel | Mapping[str, builtins.object]
     ) -> r[list[str]]:
         """Get entry objectClass values."""
         match entry:

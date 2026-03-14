@@ -3,17 +3,18 @@
 from __future__ import annotations
 
 import base64
+import builtins
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import IO, Self, overload, override
 
-from flext_core import FlextRuntime, r, t
+from flext_core import FlextRuntime, r
 
-from flext_ldif import m
+from flext_ldif import m, t
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 
 
-class FlextLdifResult[T: object]:
+class FlextLdifResult[T: builtins.object]:
     """Extended r with LDIF-specific DSL operators."""
 
     __slots__ = ("_inner",)
@@ -164,14 +165,14 @@ class FlextLdifResult[T: object]:
         return cls(r[T].fail(error_msg))
 
     @staticmethod
-    def from_result[TResult: object](
+    def from_result[TResult: builtins.object](
         result: r[TResult],
     ) -> FlextLdifResult[TResult]:
         """Wrap an existing r[T] in FlextLdifResult."""
         return FlextLdifResult(result)
 
     @staticmethod
-    def ok[TResult: object](value: TResult) -> FlextLdifResult[TResult]:
+    def ok[TResult: builtins.object](value: TResult) -> FlextLdifResult[TResult]:
         """Create a successful result with the given value."""
         return FlextLdifResult(r[TResult].ok(value))
 
@@ -232,12 +233,14 @@ class FlextLdifResult[T: object]:
             return FlextLdifResult.ok(value)
         return FlextLdifResult[T].fail("Value did not match filter predicate")
 
-    def flat_map[U: object](self, func: Callable[[T], r[U]]) -> FlextLdifResult[U]:
+    def flat_map[U: builtins.object](
+        self, func: Callable[[T], r[U]]
+    ) -> FlextLdifResult[U]:
         """Flat map a function that returns r[U]."""
         mapped_result = self._inner.flat_map(func)
         return FlextLdifResult(mapped_result)
 
-    def map[U: object](self, func: Callable[[T], U]) -> FlextLdifResult[U]:
+    def map[U: builtins.object](self, func: Callable[[T], U]) -> FlextLdifResult[U]:
         """Map a function over the success value."""
         mapped_result = self._inner.map(func)
         return FlextLdifResult(mapped_result)

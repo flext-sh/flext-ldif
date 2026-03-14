@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 from collections.abc import Callable, Sequence
 from typing import override
 
@@ -85,7 +86,7 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
             return r[m.Ldif.Entry].fail(norm_result.error)
         normalized_dn = norm_result.value
         normalized_dn = self._normalize_dn_case_and_spaces(normalized_dn)
-        update_dict: dict[str, object] = {"dn": normalized_dn}
+        update_dict: dict[str, builtins.object] = {"dn": normalized_dn}
         updated_entry = item.model_copy(update=update_dict)
         return r[m.Ldif.Entry].ok(updated_entry)
 
@@ -156,7 +157,7 @@ class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
             or (new_attrs != attrs)
         )
         if needs_update:
-            update_dict: dict[str, object] = {
+            update_dict: dict[str, builtins.object] = {
                 "attributes": m.Ldif.Attributes(attributes=new_attrs)
             }
             item = item.model_copy(update=update_dict)
@@ -220,7 +221,7 @@ class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
         new_dn_str = FlextLdifUtilitiesDN.transform_dn_attribute(
             dn_str, self._old_base, self._new_base
         )
-        update_dict: dict[str, object] = {"dn": m.Ldif.DN(value=new_dn_str)}
+        update_dict: dict[str, builtins.object] = {"dn": m.Ldif.DN(value=new_dn_str)}
         updated_entry = item.model_copy(update=update_dict)
         return r[m.Ldif.Entry].ok(updated_entry)
 
@@ -262,7 +263,7 @@ class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
             boolean_attr_names=boolean_attrs,
             target_format=self._format,
         )
-        update_dict: dict[str, object] = {
+        update_dict: dict[str, builtins.object] = {
             "attributes": m.Ldif.Attributes(attributes=dict(converted_attrs))
         }
         updated_entry = item.model_copy(update=update_dict)
@@ -300,7 +301,7 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         if self._include is not None:
             include_lower = {i.lower() for i in self._include}
 
-            def key_in_include(key: str, _value: object) -> bool:
+            def key_in_include(key: str, _value: builtins.object) -> bool:
                 """Check if key lowercase is in include set."""
                 return key.lower() in include_lower
 
@@ -308,12 +309,12 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         if self._exclude:
             exclude_lower = {e.lower() for e in self._exclude}
 
-            def key_not_in_exclude(key: str, _value: object) -> bool:
+            def key_not_in_exclude(key: str, _value: builtins.object) -> bool:
                 """Check if key lowercase is not in exclude set."""
                 return key.lower() not in exclude_lower
 
             attrs = {k: v for k, v in attrs.items() if key_not_in_exclude(k, v)}
-        update_dict: dict[str, object] = {
+        update_dict: dict[str, builtins.object] = {
             "attributes": m.Ldif.Attributes(attributes=dict(attrs))
         }
         updated_entry = item.model_copy(update=update_dict)

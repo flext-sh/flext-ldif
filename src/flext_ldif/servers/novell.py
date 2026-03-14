@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import builtins
 import re
 from collections.abc import Mapping
 from typing import ClassVar, override
@@ -416,7 +417,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             )
 
         @override
-        def model_post_init(self, _context: object, /) -> None:
+        def model_post_init(self, _context: builtins.object, /) -> None:
             """Initialize eDirectory entry quirk."""
 
         def process_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:

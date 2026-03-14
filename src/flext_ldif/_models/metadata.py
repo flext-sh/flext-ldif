@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 from collections.abc import (
     ItemsView,
     KeysView,
@@ -32,7 +33,7 @@ class FlextLdifModelsMetadata:
         relaxed_mode: Annotated[bool | None, Field(default=None)]
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: builtins.object) -> bool:
             if isinstance(other, dict):
                 return dict(self.items()) == other
             if isinstance(other, type(self)):
@@ -58,7 +59,7 @@ class FlextLdifModelsMetadata:
             return key in self._extra()
 
         @classmethod
-        def from_dict(cls, data: Mapping[str, object] | None = None) -> Self:
+        def from_dict(cls, data: Mapping[str, builtins.object] | None = None) -> Self:
             """Create DynamicMetadata from a dictionary."""
             if data is None:
                 return cls()
