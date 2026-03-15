@@ -23,15 +23,6 @@ if TYPE_CHECKING:
         __version__,
         __version_info__,
     )
-    from flext_ldif._models.base import (
-        AclElement,
-        FlextLdifModelsBase,
-        FlextLdifModelsBases,
-        FrozenIgnoreLdifModel,
-        FrozenLdifModel,
-        MutableIgnoreLdifModel,
-        SchemaElement,
-    )
     from flext_ldif._models.collections import FlextLdifModelsCollections
     from flext_ldif._models.conversion import FlextLdifModelsConversions
     from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -165,11 +156,11 @@ if TYPE_CHECKING:
     from flext_ldif.services.validation import FlextLdifValidation
     from flext_ldif.services.writer import FlextLdifWriter
     from flext_ldif.settings import FlextLdifSettings
+    from flext_ldif.shared import FlextLdifShared
     from flext_ldif.typings import FlextLdifTypes, t
     from flext_ldif.utilities import FlextLdifUtilities, u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "AclElement": ("flext_ldif._models.base", "AclElement"),
     "AndFilter": ("flext_ldif._utilities.filters", "AndFilter"),
     "ByAttrValueFilter": ("flext_ldif._utilities.filters", "ByAttrValueFilter"),
     "ByAttrsFilter": ("flext_ldif._utilities.filters", "ByAttrsFilter"),
@@ -213,8 +204,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextLdifMigrationPipeline",
     ),
     "FlextLdifModels": ("flext_ldif.models", "FlextLdifModels"),
-    "FlextLdifModelsBase": ("flext_ldif._models.base", "FlextLdifModelsBase"),
-    "FlextLdifModelsBases": ("flext_ldif._models.base", "FlextLdifModelsBases"),
     "FlextLdifModelsCollections": (
         "flext_ldif._models.collections",
         "FlextLdifModelsCollections",
@@ -334,6 +323,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextLdifServiceRegistry",
     ),
     "FlextLdifSettings": ("flext_ldif.settings", "FlextLdifSettings"),
+    "FlextLdifShared": ("flext_ldif.shared", "FlextLdifShared"),
     "FlextLdifSorting": ("flext_ldif.services.sorting", "FlextLdifSorting"),
     "FlextLdifStatistics": ("flext_ldif.services.statistics", "FlextLdifStatistics"),
     "FlextLdifSyntax": ("flext_ldif.services.syntax", "FlextLdifSyntax"),
@@ -408,10 +398,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextLdifValidation": ("flext_ldif.services.validation", "FlextLdifValidation"),
     "FlextLdifWriter": ("flext_ldif.services.writer", "FlextLdifWriter"),
-    "FrozenIgnoreLdifModel": ("flext_ldif._models.base", "FrozenIgnoreLdifModel"),
-    "FrozenLdifModel": ("flext_ldif._models.base", "FrozenLdifModel"),
     "IsSchemaEntryFilter": ("flext_ldif._utilities.filters", "IsSchemaEntryFilter"),
-    "MutableIgnoreLdifModel": ("flext_ldif._models.base", "MutableIgnoreLdifModel"),
     "Normalize": ("flext_ldif._utilities.transformers", "Normalize"),
     "NormalizeAttrsTransformer": (
         "flext_ldif._utilities.transformers",
@@ -436,7 +423,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._utilities.transformers",
         "ReplaceBaseDnTransformer",
     ),
-    "SchemaElement": ("flext_ldif._models.base", "SchemaElement"),
     "ServerTransformer": ("flext_ldif.services.transformers", "ServerTransformer"),
     "Transform": ("flext_ldif._utilities.transformers", "Transform"),
     "TransformConfigBuilder": (
@@ -468,7 +454,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 }
 
 __all__ = [
-    "AclElement",
     "AndFilter",
     "ByAttrValueFilter",
     "ByAttrsFilter",
@@ -500,8 +485,6 @@ __all__ = [
     "FlextLdifFilters",
     "FlextLdifMigrationPipeline",
     "FlextLdifModels",
-    "FlextLdifModelsBase",
-    "FlextLdifModelsBases",
     "FlextLdifModelsCollections",
     "FlextLdifModelsConversions",
     "FlextLdifModelsDomains",
@@ -549,6 +532,7 @@ __all__ = [
     "FlextLdifServiceBase",
     "FlextLdifServiceRegistry",
     "FlextLdifSettings",
+    "FlextLdifShared",
     "FlextLdifSorting",
     "FlextLdifStatistics",
     "FlextLdifSyntax",
@@ -575,10 +559,7 @@ __all__ = [
     "FlextLdifUtilitiesWriters",
     "FlextLdifValidation",
     "FlextLdifWriter",
-    "FrozenIgnoreLdifModel",
-    "FrozenLdifModel",
     "IsSchemaEntryFilter",
-    "MutableIgnoreLdifModel",
     "Normalize",
     "NormalizeAttrsTransformer",
     "NormalizeDnTransformer",
@@ -591,7 +572,6 @@ __all__ = [
     "QuirkMethodsMixin",
     "RemoveAttrsTransformer",
     "ReplaceBaseDnTransformer",
-    "SchemaElement",
     "ServerTransformer",
     "Transform",
     "TransformConfigBuilder",

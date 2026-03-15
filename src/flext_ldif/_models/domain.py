@@ -31,9 +31,9 @@ from pydantic import (
 from flext_ldif._models.base import AclElement, FlextLdifModelsBase, SchemaElement
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
-from flext_ldif._shared import FlextLdifShared
 from flext_ldif.constants import FlextLdifConstants as c
 from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.shared import FlextLdifShared
 from flext_ldif.typings import FlextLdifTypes
 
 p = FlextLdifProtocols
