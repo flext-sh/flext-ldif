@@ -71,6 +71,7 @@ if TYPE_CHECKING:
         OrFilter,
     )
     from flext_ldif._utilities.fluent import DnOps, EntryOps
+    from flext_ldif._utilities.functional import FlextFunctional, f
     from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
     from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
     from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
@@ -84,6 +85,7 @@ if TYPE_CHECKING:
         ValidationResult as r,
     )
     from flext_ldif._utilities.result import FlextLdifResult
+    from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
     from flext_ldif._utilities.server import FlextLdifUtilitiesServer
     from flext_ldif._utilities.transformers import (
         ConvertBooleansTransformer,
@@ -192,6 +194,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FilterAttrsTransformer",
     ),
     "FilterConfigBuilder": ("flext_ldif._utilities.builders", "FilterConfigBuilder"),
+    "FlextFunctional": ("flext_ldif._utilities.functional", "FlextFunctional"),
     "FlextLdif": ("flext_ldif.api", "FlextLdif"),
     "FlextLdifAcl": ("flext_ldif.services.acl", "FlextLdifAcl"),
     "FlextLdifAnalysis": ("flext_ldif.services.analysis", "FlextLdifAnalysis"),
@@ -379,6 +382,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._utilities.parsers",
         "FlextLdifUtilitiesParsers",
     ),
+    "FlextLdifUtilitiesSchema": (
+        "flext_ldif._utilities.schema",
+        "FlextLdifUtilitiesSchema",
+    ),
     "FlextLdifUtilitiesServer": (
         "flext_ldif._utilities.server",
         "FlextLdifUtilitiesServer",
@@ -450,6 +457,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "__version_info__": ("flext_ldif.__version__", "__version_info__"),
     "c": ("flext_ldif.constants", "c"),
     "d": ("flext_ldif._utilities.decorators", "FlextLdifUtilitiesDecorators"),
+    "f": ("flext_ldif._utilities.functional", "f"),
     "logger": ("flext_ldif._utilities.writers", "logger"),
     "m": ("flext_ldif.models", "m"),
     "p": ("flext_ldif.protocols", "p"),
@@ -479,6 +487,7 @@ __all__ = [
     "Filter",
     "FilterAttrsTransformer",
     "FilterConfigBuilder",
+    "FlextFunctional",
     "FlextLdif",
     "FlextLdifAcl",
     "FlextLdifAnalysis",
@@ -558,6 +567,7 @@ __all__ = [
     "FlextLdifUtilitiesObjectClass",
     "FlextLdifUtilitiesParser",
     "FlextLdifUtilitiesParsers",
+    "FlextLdifUtilitiesSchema",
     "FlextLdifUtilitiesServer",
     "FlextLdifUtilitiesTypeGuards",
     "FlextLdifUtilitiesValidation",
@@ -599,6 +609,7 @@ __all__ = [
     "__version_info__",
     "c",
     "d",
+    "f",
     "logger",
     "m",
     "p",

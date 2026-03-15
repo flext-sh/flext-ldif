@@ -44,6 +44,7 @@ if TYPE_CHECKING:
         OrFilter,
     )
     from flext_ldif._utilities.fluent import DnOps, EntryOps
+    from flext_ldif._utilities.functional import FlextFunctional, f
     from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
     from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
     from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
@@ -57,6 +58,7 @@ if TYPE_CHECKING:
         ValidationResult as r,
     )
     from flext_ldif._utilities.result import FlextLdifResult
+    from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
     from flext_ldif._utilities.server import FlextLdifUtilitiesServer
     from flext_ldif._utilities.transformers import (
         ConvertBooleansTransformer,
@@ -100,6 +102,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FilterAttrsTransformer",
     ),
     "FilterConfigBuilder": ("flext_ldif._utilities.builders", "FilterConfigBuilder"),
+    "FlextFunctional": ("flext_ldif._utilities.functional", "FlextFunctional"),
     "FlextLdifResult": ("flext_ldif._utilities.result", "FlextLdifResult"),
     "FlextLdifTypeHelpers": (
         "flext_ldif._utilities.type_helpers",
@@ -143,6 +146,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifUtilitiesParsers": (
         "flext_ldif._utilities.parsers",
         "FlextLdifUtilitiesParsers",
+    ),
+    "FlextLdifUtilitiesSchema": (
+        "flext_ldif._utilities.schema",
+        "FlextLdifUtilitiesSchema",
     ),
     "FlextLdifUtilitiesServer": (
         "flext_ldif._utilities.server",
@@ -196,6 +203,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ValidationResult": ("flext_ldif._utilities.pipeline", "ValidationResult"),
     "WriteConfigBuilder": ("flext_ldif._utilities.builders", "WriteConfigBuilder"),
     "d": ("flext_ldif._utilities.decorators", "FlextLdifUtilitiesDecorators"),
+    "f": ("flext_ldif._utilities.functional", "f"),
     "logger": ("flext_ldif._utilities.writers", "logger"),
     "r": ("flext_ldif._utilities.pipeline", "ValidationResult"),
 }
@@ -218,6 +226,7 @@ __all__ = [
     "Filter",
     "FilterAttrsTransformer",
     "FilterConfigBuilder",
+    "FlextFunctional",
     "FlextLdifResult",
     "FlextLdifTypeHelpers",
     "FlextLdifUtilitiesACL",
@@ -232,6 +241,7 @@ __all__ = [
     "FlextLdifUtilitiesObjectClass",
     "FlextLdifUtilitiesParser",
     "FlextLdifUtilitiesParsers",
+    "FlextLdifUtilitiesSchema",
     "FlextLdifUtilitiesServer",
     "FlextLdifUtilitiesTypeGuards",
     "FlextLdifUtilitiesValidation",
@@ -254,6 +264,7 @@ __all__ = [
     "ValidationResult",
     "WriteConfigBuilder",
     "d",
+    "f",
     "logger",
     "r",
 ]
