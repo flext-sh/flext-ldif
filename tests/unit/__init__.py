@@ -1,7 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
-"""Unit test package."""
+"""Unit package."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
+    from tests.unit import __init__, constants, models, protocols, services, utilities
     from tests.unit.__init__.test_version import TestsFlextLdifVersion
     from tests.unit.constants.test_acl_registry import (
         GetAclAttributesServerType,
@@ -266,6 +267,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.utilities.test_utilities_constants",
         "ValidateManyType",
     ),
+    "__init__": ("tests.unit.__init__", ""),
     "c": (
         "tests.unit.services.test_quirks_standardization",
         "TestsFlextLdifQuirksStandardizedConstants",
@@ -278,13 +280,17 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.services.test_schema_service",
         "complex_objectclass_definition",
     ),
+    "constants": ("tests.unit.constants", ""),
     "m": ("tests.unit.models.test_models", "TestFlextLdifModels"),
+    "models": ("tests.unit.models", ""),
     "p": ("tests.unit.protocols.test_protocols", "TestsTestFlextLdifProtocols"),
+    "protocols": ("tests.unit.protocols", ""),
     "schema_service": ("tests.unit.services.test_schema_service", "schema_service"),
     "schema_service_oud": (
         "tests.unit.services.test_schema_service",
         "schema_service_oud",
     ),
+    "services": ("tests.unit.services", ""),
     "simple_attribute_definition": (
         "tests.unit.services.test_schema_service",
         "simple_attribute_definition",
@@ -295,6 +301,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "t": ("tests.unit.utilities.test_utilities_core", "TestServerTypes"),
     "u": ("tests.unit.utilities.test_utilities_core", "TestObjectClassUtilities"),
+    "utilities": ("tests.unit.utilities", ""),
 }
 
 __all__ = [
@@ -345,17 +352,23 @@ __all__ = [
     "TestsTestFlextLdifProtocols",
     "TestsTestFlextLdifServiceAPIs",
     "ValidateManyType",
+    "__init__",
     "c",
     "complex_attribute_definition",
     "complex_objectclass_definition",
+    "constants",
     "m",
+    "models",
     "p",
+    "protocols",
     "schema_service",
     "schema_service_oud",
+    "services",
     "simple_attribute_definition",
     "simple_objectclass_definition",
     "t",
     "u",
+    "utilities",
 ]
 
 

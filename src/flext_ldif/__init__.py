@@ -1,7 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
-"""FLEXT-LDIF - RFC-First LDIF Processing Library."""
+"""Flext ldif package."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
+    from flext_ldif import _models, _utilities, servers, services
     from flext_ldif.__version__ import (
         __all__,
         __author__,
@@ -457,6 +458,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "__url__": ("flext_ldif.__version__", "__url__"),
     "__version__": ("flext_ldif.__version__", "__version__"),
     "__version_info__": ("flext_ldif.__version__", "__version_info__"),
+    "_models": ("flext_ldif._models", ""),
+    "_utilities": ("flext_ldif._utilities", ""),
     "c": ("flext_ldif.constants", "c"),
     "d": ("flext_ldif._utilities.decorators", "FlextLdifUtilitiesDecorators"),
     "f": ("flext_ldif._utilities.functional", "f"),
@@ -465,6 +468,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "p": ("flext_ldif.protocols", "p"),
     "r": ("flext_ldif._utilities.pipeline", "ValidationResult"),
     "s": ("flext_ldif.base", "s"),
+    "servers": ("flext_ldif.servers", ""),
+    "services": ("flext_ldif.services", ""),
     "t": ("flext_ldif.typings", "t"),
     "u": ("flext_ldif.utilities", "u"),
 }
@@ -610,6 +615,8 @@ __all__ = [
     "__url__",
     "__version__",
     "__version_info__",
+    "_models",
+    "_utilities",
     "c",
     "d",
     "f",
@@ -618,6 +625,8 @@ __all__ = [
     "p",
     "r",
     "s",
+    "servers",
+    "services",
     "t",
     "u",
 ]

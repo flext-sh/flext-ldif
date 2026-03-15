@@ -1,7 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
-"""Server-Specific Quirks for LDIF/LDAP Parsing."""
+"""Servers package."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
+    from flext_ldif.servers import _base, _oid, _oud, _rfc
     from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
     from flext_ldif.servers._base.constants import (
         FlextLdifServersBaseConstants,
@@ -136,6 +137,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextLdifServersTivoli": ("flext_ldif.servers.tivoli", "FlextLdifServersTivoli"),
     "QuirkMethodsMixin": ("flext_ldif.servers._base.constants", "QuirkMethodsMixin"),
+    "_base": ("flext_ldif.servers._base", ""),
+    "_oid": ("flext_ldif.servers._oid", ""),
+    "_oud": ("flext_ldif.servers._oud", ""),
+    "_rfc": ("flext_ldif.servers._rfc", ""),
     "c": ("flext_ldif.servers._base.constants", "FlextLdifServersBaseConstants"),
     "logger": ("flext_ldif.servers.oid", "logger"),
     "u": ("flext_ldif.servers._oud.utilities", "FlextLdifServersOudUtilities"),
@@ -173,6 +178,10 @@ __all__ = [
     "FlextLdifServersRfcSchema",
     "FlextLdifServersTivoli",
     "QuirkMethodsMixin",
+    "_base",
+    "_oid",
+    "_oud",
+    "_rfc",
     "c",
     "logger",
     "u",

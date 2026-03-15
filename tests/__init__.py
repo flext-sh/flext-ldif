@@ -1,25 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
-"""Tests package for flext-ldif.
-
-Unified test infrastructure providing:
-- t: TestsFlextLdifTypes (type definitions and TypeVars)
-- c: TestsFlextLdifConstants (test constants organized by domain)
-- p: TestsFlextLdifProtocols (test protocol definitions)
-- m: TestsFlextLdifModels (test model definitions)
-- u: TestsFlextLdifUtilities (test utility functions)
-- s: FlextLdifTestsServiceBase (base class for test services with factories)
-- tv: FlextTestsValidator (validation helpers)
-- tf: FlextTestsFactories (factory helpers)
-
-All test files should import these unified infrastructure components:
-    from tests import t, c, p, m, u, s, tv, tf
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
+"""Tests package."""
 
 from __future__ import annotations
 
@@ -30,6 +12,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
+    from tests import integration, support, unit
     from tests.base import FlextLdifTestsServiceBase, s
     from tests.conftest import (
         FIXTURES_DIR,
@@ -228,6 +211,7 @@ if TYPE_CHECKING:
         TestsFlextLdifValidators,
     )
     from tests.typings import GenericFieldsDict, TestsFlextLdifTypes, t
+    from tests.unit import constants, models, protocols, services, utilities
     from tests.unit.__init__.test_version import TestsFlextLdifVersion
     from tests.unit.constants.test_acl_registry import (
         GetAclAttributesServerType,
@@ -772,9 +756,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.services.test_schema_service",
         "complex_objectclass_definition",
     ),
+    "constants": ("tests.unit.constants", ""),
     "conversion_matrix": ("tests.integration.conftest", "conversion_matrix"),
     "fixtures_dir": ("tests.integration.test_quirks_transformations", "fixtures_dir"),
     "flext_ldif": ("tests.conftest", "flext_ldif"),
+    "integration": ("tests.integration", ""),
     "large_test_dataset": ("tests.conftest_shared", "large_test_dataset"),
     "ldap_connection": ("tests.integration.conftest", "ldap_connection"),
     "ldap_container": ("tests.integration.conftest", "ldap_container"),
@@ -789,6 +775,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.test_quirks_transformations",
         "migration_inputs",
     ),
+    "models": ("tests.unit.models", ""),
     "oid_acl_fixture": ("tests.integration.conftest", "oid_acl_fixture"),
     "oid_acl_quirk": ("tests.integration.conftest", "oid_acl_quirk"),
     "oid_entries": ("tests.integration.conftest", "oid_entries"),
@@ -834,6 +821,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "p": ("tests.protocols", "p"),
     "parametrized_real_data": ("tests.conftest_shared", "parametrized_real_data"),
     "parser": ("tests.integration.conftest", "parser"),
+    "protocols": ("tests.unit.protocols", ""),
     "pytest_configure": ("tests.conftest", "pytest_configure"),
     "real_entry": ("tests.conftest_shared", "real_entry"),
     "real_ldif_content": ("tests.conftest_shared", "real_ldif_content"),
@@ -850,6 +838,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "schema_service_oud",
     ),
     "server": ("tests.integration.conftest", "server"),
+    "services": ("tests.unit.services", ""),
     "simple_attribute_definition": (
         "tests.unit.services.test_schema_service",
         "simple_attribute_definition",
@@ -858,6 +847,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.services.test_schema_service",
         "simple_objectclass_definition",
     ),
+    "support": ("tests.support", ""),
     "t": ("tests.typings", "t"),
     "temp_file": ("tests.conftest", "temp_file"),
     "test_create_and_export_entry": (
@@ -875,6 +865,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "tmp_ldif_path": ("tests.integration.conftest", "tmp_ldif_path"),
     "u": ("tests.utilities", "u"),
     "unique_dn_suffix": ("tests.integration.conftest", "unique_dn_suffix"),
+    "unit": ("tests.unit", ""),
+    "utilities": ("tests.unit.utilities", ""),
     "writer": ("tests.integration.conftest", "writer"),
 }
 
@@ -1026,9 +1018,11 @@ __all__ = [
     "clean_test_ou",
     "complex_attribute_definition",
     "complex_objectclass_definition",
+    "constants",
     "conversion_matrix",
     "fixtures_dir",
     "flext_ldif",
+    "integration",
     "large_test_dataset",
     "ldap_connection",
     "ldap_container",
@@ -1040,6 +1034,7 @@ __all__ = [
     "make_test_base_dn",
     "make_test_username",
     "migration_inputs",
+    "models",
     "oid_acl_fixture",
     "oid_acl_quirk",
     "oid_entries",
@@ -1067,6 +1062,7 @@ __all__ = [
     "p",
     "parametrized_real_data",
     "parser",
+    "protocols",
     "pytest_configure",
     "real_entry",
     "real_ldif_content",
@@ -1080,8 +1076,10 @@ __all__ = [
     "schema_service",
     "schema_service_oud",
     "server",
+    "services",
     "simple_attribute_definition",
     "simple_objectclass_definition",
+    "support",
     "t",
     "temp_file",
     "test_create_and_export_entry",
@@ -1090,6 +1088,8 @@ __all__ = [
     "tmp_ldif_path",
     "u",
     "unique_dn_suffix",
+    "unit",
+    "utilities",
     "writer",
 ]
 
