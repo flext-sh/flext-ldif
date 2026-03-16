@@ -203,7 +203,7 @@ class FlextLdifUtilitiesParser:
         match = re.match(oid_pattern, definition.strip())
         if match:
             return r[str].ok(match.group(1))
-            return r[str].fail(f"missing an OID in definition: {definition!r}")
+        return r[str].fail(f"missing an OID in definition: {definition!r}")
 
     @staticmethod
     def extract_optional_field(

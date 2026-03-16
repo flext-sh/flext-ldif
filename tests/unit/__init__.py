@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
     from tests.unit import __init__, constants, models, protocols, services, utilities
-    from tests.unit.__init__.test_version import TestsFlextLdifVersion
+    from tests.unit.__init__.test_version import TestsFlextLdifVersion, version_module
     from tests.unit.constants.test_acl_registry import (
         GetAclAttributesServerType,
         IsAclAttributeType,
@@ -302,6 +302,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "t": ("tests.unit.utilities.test_utilities_core", "TestServerTypes"),
     "u": ("tests.unit.utilities.test_utilities_core", "TestObjectClassUtilities"),
     "utilities": ("tests.unit.utilities", ""),
+    "version_module": ("tests.unit.__init__.test_version", "version_module"),
 }
 
 __all__ = [
@@ -369,6 +370,7 @@ __all__ = [
     "t",
     "u",
     "utilities",
+    "version_module",
 ]
 
 
