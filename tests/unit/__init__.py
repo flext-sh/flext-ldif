@@ -12,7 +12,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-    from tests.unit import constants, models, protocols, services, utilities
+    from tests.unit import __init__, constants, models, protocols, services, utilities
     from tests.unit.__init__.test_version import TestsFlextLdifVersion
     from tests.unit.constants.test_acl_registry import (
         GetAclAttributesServerType,
