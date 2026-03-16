@@ -1,0 +1,27 @@
+src/flext_ldif/_utilities/writer.py
+  a87c37bd85fd5adb 11
+tests/unit/__init__.py
+  a87c37bd85fd5adb 15
+src/flext_ldif/protocols.py
+  a87c37bd85fd5adb 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "f9eebe250b01e42b9a5850c555a8cdb00cd0644c",
+  "prompts": {
+    "a87c37bd85fd5adb": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_308934a72ffeJ6x2A8RvY36ubD",
+        "model": "kimi-for-coding/k2p5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 3,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
