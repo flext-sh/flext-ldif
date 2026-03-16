@@ -59,7 +59,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _log_and_emit_generic_event(
-        logger: p.StructlogLogger,
+        logger: p.Logger,
         log_context: Mapping[str, t.Scalar],
         log_message: str,
         log_level: str = "info",
@@ -183,7 +183,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def log_and_emit_conversion_event(
-        logger: p.StructlogLogger,
+        logger: p.Logger,
         config: FlextLdifModelsEvents.ConversionEventConfig,
         log_level: str = "info",
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
@@ -200,7 +200,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def log_and_emit_dn_event(
-        logger: p.StructlogLogger,
+        logger: p.Logger,
         config: FlextLdifModelsEvents.DnEventConfig,
         log_level: str = "info",
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,

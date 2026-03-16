@@ -16,7 +16,7 @@ class FlextLdifServiceRegistry(FlextRegistry):
     _global_instance: ClassVar[FlextLdifServiceRegistry | None] = None
 
     def __init__(
-        self, dispatcher: p.CommandBus | None = None, **data: t.Scalar
+        self, dispatcher: p.Dispatcher | None = None, **data: t.Scalar
     ) -> None:
         """Initialize with FlextRegistry infrastructure."""
         _ = data
