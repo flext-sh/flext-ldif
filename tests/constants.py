@@ -736,7 +736,7 @@ class RfcTestHelpers:
         result: r,
         expected_type: type | None = None,
         expected_count: int | None = None,
-    ):
+    ) -> str | int | float | bool | Sized | None:
         """Assert result is successful and unwrap its value.
 
         Args:
