@@ -15,6 +15,8 @@ from typing import TypeGuard
 
 from flext_core import FlextUtilities
 
+from flext_ldif.typings import t
+
 
 class FlextLdifUtilitiesTypeGuards(FlextUtilities):
     """Type guards for LDIF Model identification.
@@ -28,7 +30,7 @@ class FlextLdifUtilitiesTypeGuards(FlextUtilities):
     @staticmethod
     def is_entry_sequence(
         obj: builtins.object,
-    ) -> TypeGuard[ABCSequence]:
+    ) -> TypeGuard[ABCSequence[t.Container]]:
         """Check if object is a Sequence of Entry instances.
 
         Uses duck typing to identify Entry sequences:

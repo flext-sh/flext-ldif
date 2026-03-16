@@ -5,7 +5,7 @@ from __future__ import annotations
 import builtins
 from collections.abc import Mapping
 
-from flext_core import FlextLogger
+from flext_core import p
 
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.settings import FlextLdifModelsSettings
@@ -59,7 +59,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _log_and_emit_generic_event(
-        logger: FlextLogger,
+        logger: p.StructlogLogger,
         log_context: Mapping[str, t.Scalar],
         log_message: str,
         log_level: str = "info",
@@ -183,7 +183,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def log_and_emit_conversion_event(
-        logger: FlextLogger,
+        logger: p.StructlogLogger,
         config: FlextLdifModelsEvents.ConversionEventConfig,
         log_level: str = "info",
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
@@ -200,7 +200,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def log_and_emit_dn_event(
-        logger: FlextLogger,
+        logger: p.StructlogLogger,
         config: FlextLdifModelsEvents.DnEventConfig,
         log_level: str = "info",
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,

@@ -216,7 +216,6 @@ if TYPE_CHECKING:
     )
     from tests.typings import GenericFieldsDict, TestsFlextLdifTypes, t
     from tests.unit import constants, models, protocols, services, utilities
-    from tests.unit.__init__.test_version import TestsFlextLdifVersion
     from tests.unit.constants.test_acl_registry import (
         GetAclAttributesServerType,
         IsAclAttributeType,
@@ -713,10 +712,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestsFlextLdifTypes": ("tests.typings", "TestsFlextLdifTypes"),
     "TestsFlextLdifUtilities": ("tests.utilities", "TestsFlextLdifUtilities"),
     "TestsFlextLdifValidators": ("tests.test_helpers", "TestsFlextLdifValidators"),
-    "TestsFlextLdifVersion": (
-        "tests.unit.__init__.test_version",
-        "TestsFlextLdifVersion",
-    ),
     "TestsFlextLdifsFlextLdifWriterDnNormalization": (
         "tests.unit.services.test_writer_dn_normalization",
         "TestsFlextLdifsFlextLdifWriterDnNormalization",
@@ -1008,7 +1003,6 @@ __all__ = [
     "TestsFlextLdifTypes",
     "TestsFlextLdifUtilities",
     "TestsFlextLdifValidators",
-    "TestsFlextLdifVersion",
     "TestsFlextLdifsFlextLdifWriterDnNormalization",
     "TestsTestFlextLdifAclAttributeRegistry",
     "TestsTestFlextLdifConstants",
