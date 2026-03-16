@@ -734,9 +734,19 @@ class TestsFlextLdifFixtures(tf_base):
         return entries
 
 
+tm = TestsFlextLdifMatchers
+tv = TestsFlextLdifValidators
+tf = TestsFlextLdifFixtures
+tt = TestsFlextLdifTypes
+
+
 __all__ = [
     "TestsFlextLdifFixtures",
     "TestsFlextLdifMatchers",
     "TestsFlextLdifTypes",
     "TestsFlextLdifValidators",
+    "tf",
+    "tm",
+    "tt",
+    "tv",
 ]

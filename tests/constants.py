@@ -2067,4 +2067,10 @@ class TestDeduplicationHelpers:
 
 
 c = TestsFlextLdifConstants
-__all__ = ["RfcTestHelpers", "TestDeduplicationHelpers", "TestsFlextLdifConstants", "c"]
+__all__ = [
+    "OIDs",
+    "RfcTestHelpers",
+    "TestDeduplicationHelpers",
+    "TestsFlextLdifConstants",
+    "c",
+]

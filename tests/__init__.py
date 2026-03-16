@@ -35,6 +35,7 @@ if TYPE_CHECKING:
         real_ldif_content,
     )
     from tests.constants import (
+        OIDs,
         RfcTestHelpers,
         TestDeduplicationHelpers,
         TestsFlextLdifConstants,
@@ -213,6 +214,10 @@ if TYPE_CHECKING:
         TestsFlextLdifFixtures,
         TestsFlextLdifMatchers,
         TestsFlextLdifValidators,
+        tf,
+        tm,
+        tt,
+        tv,
     )
     from tests.typings import GenericFieldsDict, TestsFlextLdifTypes, t
     from tests.unit import constants, models, protocols, services, utilities
@@ -329,6 +334,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "MockMatchers": ("tests.support.validators", "MockMatchers"),
     "OID_FIXTURES_DIR": ("tests.conftest", "OID_FIXTURES_DIR"),
+    "OIDs": ("tests.constants", "OIDs"),
     "OidTestConstants": (
         "tests.unit.test_migration_pipeline_quirks",
         "OidTestConstants",
@@ -869,7 +875,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.test_simple_ldap",
         "test_simple_ldap_search",
     ),
+    "tf": ("tests.test_helpers", "tf"),
+    "tm": ("tests.test_helpers", "tm"),
     "tmp_ldif_path": ("tests.integration.conftest", "tmp_ldif_path"),
+    "tt": ("tests.test_helpers", "tt"),
+    "tv": ("tests.test_helpers", "tv"),
     "u": ("tests.utilities", "u"),
     "unique_dn_suffix": ("tests.integration.conftest", "unique_dn_suffix"),
     "unit": ("tests.unit", ""),
@@ -897,6 +907,7 @@ __all__ = [
     "LdifTestData",
     "MockFlextUtilitiesResultHelpers",
     "MockMatchers",
+    "OIDs",
     "OidTestConstants",
     "RfcTestHelpers",
     "TestAclAttributes",
@@ -1092,7 +1103,11 @@ __all__ = [
     "test_create_and_export_entry",
     "test_ldap_connection",
     "test_simple_ldap_search",
+    "tf",
+    "tm",
     "tmp_ldif_path",
+    "tt",
+    "tv",
     "u",
     "unique_dn_suffix",
     "unit",

@@ -22,7 +22,7 @@ class FlextLdifUtilitiesOID:
             match = re.search(r"\(\s*([\d.]+)", definition)
             if match:
                 return r[str].ok(match.group(1))
-            return r[str].fail(f"No OID found in definition: {definition!r}")
+            return r[str].fail(f"missing an OID in definition: {definition!r}")
         except (re.error, AttributeError) as e:
             logger.debug("Failed to extract OID from definition", error=str(e))
             return r[str].fail(f"OID extraction failed: {e}")
