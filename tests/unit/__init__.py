@@ -12,7 +12,8 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-    from tests.unit import constants, models, protocols, services, utilities
+    from tests.unit import __init__, constants, models, protocols, services, utilities
+    from tests.unit.__init__.test_version import TestsFlextLdifVersion
     from tests.unit.constants.test_acl_registry import (
         GetAclAttributesServerType,
         IsAclAttributeType,
@@ -234,6 +235,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.services.test_schema_service",
         "TestsFlextLdifSchemaServiceExecute",
     ),
+    "TestsFlextLdifVersion": (
+        "tests.unit.__init__.test_version",
+        "TestsFlextLdifVersion",
+    ),
     "TestsFlextLdifsFlextLdifWriterDnNormalization": (
         "tests.unit.services.test_writer_dn_normalization",
         "TestsFlextLdifsFlextLdifWriterDnNormalization",
@@ -262,6 +267,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.utilities.test_utilities_constants",
         "ValidateManyType",
     ),
+    "__init__": ("tests.unit.__init__", ""),
     "c": (
         "tests.unit.services.test_quirks_standardization",
         "TestsFlextLdifQuirksStandardizedConstants",
@@ -338,6 +344,7 @@ __all__ = [
     "TestsFlextLdifMigrationPipelineQuirks",
     "TestsFlextLdifQuirksStandardizedConstants",
     "TestsFlextLdifSchemaServiceExecute",
+    "TestsFlextLdifVersion",
     "TestsFlextLdifsFlextLdifWriterDnNormalization",
     "TestsTestFlextLdifAclAttributeRegistry",
     "TestsTestFlextLdifConstants",
@@ -345,6 +352,7 @@ __all__ = [
     "TestsTestFlextLdifProtocols",
     "TestsTestFlextLdifServiceAPIs",
     "ValidateManyType",
+    "__init__",
     "c",
     "complex_attribute_definition",
     "complex_objectclass_definition",
