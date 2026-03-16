@@ -7,7 +7,7 @@ multiple constant values using parametrized test scenarios.
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import ClassVar
 
 import pytest
@@ -16,6 +16,7 @@ from flext_ldif import FlextLdifUtilities
 from tests import s
 
 
+@unique
 class GetValidValuesType(StrEnum):
     """Get valid values test scenarios."""
 
@@ -24,6 +25,7 @@ class GetValidValuesType(StrEnum):
     UNKNOWN_CATEGORY = "unknown_category"
 
 
+@unique
 class IsValidTestType(StrEnum):
     """Is valid test scenarios."""
 
@@ -32,6 +34,7 @@ class IsValidTestType(StrEnum):
     UNKNOWN_CATEGORY = "unknown_category"
 
 
+@unique
 class ValidateManyType(StrEnum):
     """Validate many test scenarios."""
 

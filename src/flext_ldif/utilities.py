@@ -12,7 +12,7 @@ from collections.abc import (
     Sequence,
 )
 from enum import Enum
-from typing import ClassVar, Literal, Self, TypeGuard, TypeIs, overload
+from typing import ClassVar, Literal, Self, TypeIs, overload
 
 from flext_core import FlextLogger, FlextUtilities, r
 
@@ -573,7 +573,7 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def is_no_arg_callable[R](
             func: Callable[..., R] | object,
-        ) -> TypeGuard[Callable[[], R]]:
+        ) -> TypeIs[Callable[[], R]]:
             """Check if callable accepts 0 arguments."""
             if not callable(func):
                 return False
@@ -586,7 +586,7 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def is_object_arg_callable[R](
             func: Callable[..., R] | object,
-        ) -> TypeGuard[Callable[..., R]]:
+        ) -> TypeIs[Callable[..., R]]:
             """Check if callable accepts 1 object argument."""
             if not callable(func):
                 return False
@@ -599,7 +599,7 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def is_two_arg_processor[T, R](
             func: Callable[[str, T], R] | Callable[[T], R],
-        ) -> TypeGuard[Callable[[str, T], R]]:
+        ) -> TypeIs[Callable[[str, T], R]]:
             """Check if processor function accepts 2 arguments."""
             try:
                 sig = inspect.signature(func)

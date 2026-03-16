@@ -8,7 +8,7 @@ constants, utilities, and services modules in the FlextLdif ecosystem.
 from __future__ import annotations
 
 import importlib.util
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import ClassVar
 
 import pytest
@@ -34,12 +34,14 @@ class TestsTestFlextLdifServiceAPIs(s):
     dn_service: ClassVar[FlextLdifDn]
     statistics_service: ClassVar[FlextLdifStatistics]
 
+    @unique
     class ServiceType(StrEnum):
         """Service instantiation test scenarios organized as nested enum."""
 
         DN_SERVICE = "dn_service"
         STATISTICS_SERVICE = "statistics_service"
 
+    @unique
     class ImportCheck(StrEnum):
         """Import verification test scenarios organized as nested enum."""
 

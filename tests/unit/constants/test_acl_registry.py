@@ -6,7 +6,7 @@ attribute mappings and validation.
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import ClassVar
 
 import pytest
@@ -14,6 +14,7 @@ import pytest
 from tests import s, u
 
 
+@unique
 class GetAclAttributesServerType(StrEnum):
     """Server types for get_acl_attributes tests."""
 
@@ -26,6 +27,7 @@ class GetAclAttributesServerType(StrEnum):
     NONE = "none"
 
 
+@unique
 class IsAclAttributeType(StrEnum):
     """Is ACL attribute test scenarios."""
 

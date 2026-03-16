@@ -25,10 +25,6 @@ SchemaModelT = TypeVar(
     FlextLdifModelsDomains.SchemaObjectClass,
 )
 
-type _SchemaElementUnion = (
-    FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass
-)
-
 
 class FlextLdifUtilitiesSchema:
     """Generic attribute definition normalization utilities."""
@@ -82,7 +78,7 @@ class FlextLdifUtilitiesSchema:
         field_name: str,
         transform_fn: Callable[
             ...,
-            builtins.object | r[builtins.object],
+            t.Container | r[t.Container],
         ],
     ) -> r[
         FlextLdifModelsDomains.SchemaAttribute
@@ -100,11 +96,14 @@ class FlextLdifUtilitiesSchema:
                     ].fail(
                         f"Transformation of '{field_name}' failed: {new_value.error}"
                     )
-                resolved_value: builtins.object = new_value.value
+                resolved_value: t.Container = new_value.value
                 setattr(transformed, field_name, resolved_value)
             else:
                 setattr(transformed, field_name, new_value)
-            return r[_SchemaElementUnion].ok(transformed)
+            return r[
+                FlextLdifModelsDomains.SchemaAttribute
+                | FlextLdifModelsDomains.SchemaObjectClass
+            ].ok(transformed)
         except (
             ValueError,
             KeyError,
@@ -128,7 +127,7 @@ class FlextLdifUtilitiesSchema:
             str,
             Callable[
                 ...,
-                builtins.object | r[builtins.object],
+                t.Container | r[t.Container],
             ]
             | str
             | list[str]

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import struct
 from collections.abc import Callable
-from typing import Annotated, Protocol
+from typing import Annotated
 
 from flext_core import FlextLogger, r
 from pydantic import BaseModel, ConfigDict, Field
@@ -22,31 +22,6 @@ class FlextLdifUtilitiesWriters:
 
     class Entry:
         """Generalized entry writer with hook-based customization."""
-
-        class WriteCommentsHook(Protocol):
-            """Protocol for writing comments and metadata."""
-
-            def __call__(self, entry: m.Ldif.Entry, lines: list[str]) -> None: ...
-
-        class WriteAttributesHook(Protocol):
-            """Protocol for writing attributes."""
-
-            def __call__(self, entry: m.Ldif.Entry, lines: list[str]) -> None: ...
-
-        class FormatValueHook(Protocol):
-            """Protocol for formatting attribute values."""
-
-            def __call__(self, attr_name: str, value: str) -> str: ...
-
-        class TransformEntryHook(Protocol):
-            """Protocol for entry transformation before write."""
-
-            def __call__(self, entry: m.Ldif.Entry) -> m.Ldif.Entry: ...
-
-        class WriteDnHook(Protocol):
-            """Protocol for writing DN line."""
-
-            def __call__(self, dn: str, lines: list[str]) -> None: ...
 
         @staticmethod
         def get_dn_string(entry: FlextLdifModelsDomains.Entry) -> str:
@@ -119,31 +94,15 @@ class FlextLdifUtilitiesWriters:
     class Attribute:
         """Generalized attribute definition writer."""
 
-        class BuildPartsHook(Protocol):
-            """Protocol for building attribute definition parts."""
-
-            def __call__(self, attribute: m.Ldif.SchemaAttribute) -> list[str]: ...
-
-        class TransformHook(Protocol):
-            """Protocol for attribute transformation."""
-
-            def __call__(
-                self, attribute: m.Ldif.SchemaAttribute
-            ) -> m.Ldif.SchemaAttribute: ...
-
-        class FormatOidHook(Protocol):
-            """Protocol for OID formatting."""
-
-            def __call__(self, oid: str) -> str: ...
-
         @staticmethod
         def write(
             attribute: m.Ldif.SchemaAttribute,
             server_type: str,
-            build_parts_hook: BuildPartsHook,
+            build_parts_hook: Callable[[m.Ldif.SchemaAttribute], list[str]],
             *,
-            transform_hook: TransformHook | None = None,
-            format_oid_hook: FormatOidHook | None = None,
+            transform_hook: Callable[[m.Ldif.SchemaAttribute], m.Ldif.SchemaAttribute]
+            | None = None,
+            format_oid_hook: Callable[[str], str] | None = None,
         ) -> r[str]:
             """Write attribute definition using hooks."""
             try:
@@ -167,33 +126,20 @@ class FlextLdifUtilitiesWriters:
     class ObjectClass:
         """Generalized objectClass definition writer."""
 
-        class BuildPartsHook(Protocol):
-            """Protocol for building objectClass definition parts."""
-
-            def __call__(
-                self, objectclass: FlextLdifModelsDomains.SchemaObjectClass
-            ) -> list[str]: ...
-
-        class TransformHook(Protocol):
-            """Protocol for objectClass transformation."""
-
-            def __call__(
-                self, objectclass: FlextLdifModelsDomains.SchemaObjectClass
-            ) -> FlextLdifModelsDomains.SchemaObjectClass: ...
-
-        class TransformSupHook(Protocol):
-            """Protocol for SUP clause transformation."""
-
-            def __call__(self, sup: list[str]) -> list[str]: ...
-
         @staticmethod
         def write(
             objectclass: FlextLdifModelsDomains.SchemaObjectClass,
             server_type: str,
-            build_parts_hook: BuildPartsHook,
+            build_parts_hook: Callable[
+                [FlextLdifModelsDomains.SchemaObjectClass], list[str]
+            ],
             *,
-            transform_hook: TransformHook | None = None,
-            transform_sup_hook: TransformSupHook | None = None,
+            transform_hook: Callable[
+                [FlextLdifModelsDomains.SchemaObjectClass],
+                FlextLdifModelsDomains.SchemaObjectClass,
+            ]
+            | None = None,
+            transform_sup_hook: Callable[[list[str]], list[str]] | None = None,
         ) -> r[str]:
             """Write objectClass definition using hooks."""
             try:
@@ -228,16 +174,6 @@ class FlextLdifUtilitiesWriters:
             total_entries: Annotated[int, Field(default=0, ge=0)]
             successful: Annotated[int, Field(default=0, ge=0)]
             failed: Annotated[int, Field(default=0, ge=0)]
-
-        class WriteEntryHook(Protocol):
-            """Protocol for writing individual entries."""
-
-            def __call__(self, entry: FlextLdifModelsDomains.Entry) -> r[str]: ...
-
-        class WriteHeaderHook(Protocol):
-            """Protocol for writing LDIF header."""
-
-            def __call__(self) -> str: ...
 
         @staticmethod
         def get_entry_dn_for_error(entry: FlextLdifModelsDomains.Entry) -> str | None:

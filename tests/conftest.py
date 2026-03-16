@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from pathlib import Path
 from typing import ClassVar, Final
 
@@ -147,6 +147,7 @@ class FlextLdifFixtures:
         assert isinstance(instance, cls.Loader)
         return instance
 
+    @unique
     class ServerType(StrEnum):
         """Supported LDAP server types with quirks."""
 
@@ -161,6 +162,7 @@ class FlextLdifFixtures:
         TIVOLI = "tivoli"
         AD = "ad"
 
+    @unique
     class FixtureType(StrEnum):
         """Types of fixtures available for each server."""
 

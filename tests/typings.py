@@ -10,8 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TypeAlias
-
 from flext_tests import FlextTestsTypes
 
 from flext_ldif import FlextLdifTypes
@@ -44,5 +42,5 @@ class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
 
 
 t = TestsFlextLdifTypes
-GenericFieldsDict: TypeAlias = dict[str, str]
+type GenericFieldsDict = dict[str, str]
 __all__ = ["GenericFieldsDict", "TestsFlextLdifTypes", "t"]

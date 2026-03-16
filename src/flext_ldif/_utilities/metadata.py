@@ -6,7 +6,7 @@ import builtins
 import re
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import TypeGuard
+from typing import TypeIs
 
 from flext_core import FlextLogger, u
 
@@ -576,7 +576,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _is_metadata_scalar_typed(
         value: builtins.object,
-    ) -> TypeGuard[t.Scalar | None]:
+    ) -> TypeIs[t.Scalar | None]:
         return FlextLdifUtilitiesMetadata._is_metadata_scalar(value)
 
     @staticmethod

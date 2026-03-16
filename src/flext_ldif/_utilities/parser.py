@@ -7,7 +7,7 @@ import builtins
 import contextlib
 import re
 from collections.abc import Mapping
-from typing import TypeGuard
+from typing import TypeIs
 
 from flext_core import FlextLogger, r, u
 
@@ -122,7 +122,7 @@ class FlextLdifUtilitiesParser:
 
         def _is_metadata_value(
             value: builtins.object,
-        ) -> TypeGuard[t.Ldif.MetadataValue]:
+        ) -> TypeIs[t.Ldif.MetadataValue]:
             return value is None or isinstance(
                 value, (str, int, float, bool, list, Mapping)
             )

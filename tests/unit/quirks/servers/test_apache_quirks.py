@@ -6,7 +6,7 @@ Directory Server-specific attributes, object classes, entries, and ACLs in LDIF 
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import ClassVar
 
 import pytest
@@ -16,6 +16,7 @@ from tests import TestDeduplicationHelpers, c, m, s
 from flext_ldif.servers.apache import FlextLdifServersApache
 
 
+@unique
 class AttributeScenario(StrEnum):
     """Apache attribute detection scenarios."""
 
@@ -25,6 +26,7 @@ class AttributeScenario(StrEnum):
     STANDARD_RFC = "standard_rfc"
 
 
+@unique
 class ObjectClassScenario(StrEnum):
     """Apache objectClass detection scenarios."""
 
@@ -33,6 +35,7 @@ class ObjectClassScenario(StrEnum):
     STANDARD_RFC = "standard_rfc"
 
 
+@unique
 class EntryScenario(StrEnum):
     """Apache entry detection scenarios."""
 
@@ -46,6 +49,7 @@ class EntryScenario(StrEnum):
     STANDARD_RFC = "standard_rfc"
 
 
+@unique
 class AclScenario(StrEnum):
     """Apache ACL handling scenarios."""
 

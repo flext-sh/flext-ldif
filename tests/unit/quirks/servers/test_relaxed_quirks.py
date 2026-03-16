@@ -6,7 +6,7 @@ accepting entries that don't conform strictly to RFC standards while preserving 
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import ClassVar
 
 import pytest
@@ -18,6 +18,7 @@ from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
 meta_keys = c.Ldif.MetadataKeys
 
 
+@unique
 class ParseScenario(StrEnum):
     """Scenarios for parsing tests."""
 
@@ -32,6 +33,7 @@ class ParseScenario(StrEnum):
     LONG_DEFINITION = "long_definition"
 
 
+@unique
 class WriteScenario(StrEnum):
     """Scenarios for write tests."""
 

@@ -6,7 +6,7 @@ server implementations, ACL handling, and service contracts.
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import ClassVar
 
 import pytest
@@ -38,6 +38,7 @@ class TestsTestFlextLdifProtocols(s):
     Constants, Helpers, and test method groups.
     """
 
+    @unique
     class ProtocolNames(StrEnum):
         """Protocol names in FlextLdifProtocols.Ldif namespace organized as nested enum."""
 
@@ -52,6 +53,7 @@ class TestsTestFlextLdifProtocols(s):
         ProtocolNames.ENTRY.value,
     ]
 
+    @unique
     class ServerTypes(StrEnum):
         """Server types implementing schema protocol organized as nested enum."""
 
