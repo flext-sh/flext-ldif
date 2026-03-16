@@ -203,7 +203,11 @@ if TYPE_CHECKING:
     from tests.support.conftest_factory import FlextLdifTestConftest, FlextTestsDocker
     from tests.support.ldif_data import LdifSample, LdifTestData
     from tests.support.test_files import FileManager
-    from tests.support.validators import MockMatchers, MockResultHelpers, TestValidators
+    from tests.support.validators import (
+        MockFlextUtilitiesResultHelpers,
+        MockMatchers,
+        TestValidators,
+    )
     from tests.test_factory import FlextLdifTestFactory
     from tests.test_helpers import (
         TestsFlextLdifFixtures,
@@ -319,8 +323,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "LdifSample": ("tests.support.ldif_data", "LdifSample"),
     "LdifTestData": ("tests.support.ldif_data", "LdifTestData"),
+    "MockFlextUtilitiesResultHelpers": (
+        "tests.support.validators",
+        "MockFlextUtilitiesResultHelpers",
+    ),
     "MockMatchers": ("tests.support.validators", "MockMatchers"),
-    "MockResultHelpers": ("tests.support.validators", "MockResultHelpers"),
     "OID_FIXTURES_DIR": ("tests.conftest", "OID_FIXTURES_DIR"),
     "OidTestConstants": (
         "tests.unit.test_migration_pipeline_quirks",
@@ -888,8 +895,8 @@ __all__ = [
     "IsValidTestType",
     "LdifSample",
     "LdifTestData",
+    "MockFlextUtilitiesResultHelpers",
     "MockMatchers",
-    "MockResultHelpers",
     "OidTestConstants",
     "RfcTestHelpers",
     "TestAclAttributes",

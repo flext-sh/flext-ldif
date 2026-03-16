@@ -21,7 +21,11 @@ if TYPE_CHECKING:
     from tests.support.ldif_data import LdifSample, LdifTestData
     from tests.support.real_services import FlextLdifTestFactory
     from tests.support.test_files import FileManager
-    from tests.support.validators import MockMatchers, MockResultHelpers, TestValidators
+    from tests.support.validators import (
+        MockFlextUtilitiesResultHelpers,
+        MockMatchers,
+        TestValidators,
+    )
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FileManager": ("tests.support.test_files", "FileManager"),
@@ -33,8 +37,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextTestsDocker": ("tests.support.conftest_factory", "FlextTestsDocker"),
     "LdifSample": ("tests.support.ldif_data", "LdifSample"),
     "LdifTestData": ("tests.support.ldif_data", "LdifTestData"),
+    "MockFlextUtilitiesResultHelpers": (
+        "tests.support.validators",
+        "MockFlextUtilitiesResultHelpers",
+    ),
     "MockMatchers": ("tests.support.validators", "MockMatchers"),
-    "MockResultHelpers": ("tests.support.validators", "MockResultHelpers"),
     "TestValidators": ("tests.support.validators", "TestValidators"),
 }
 
@@ -45,8 +52,8 @@ __all__ = [
     "FlextTestsDocker",
     "LdifSample",
     "LdifTestData",
+    "MockFlextUtilitiesResultHelpers",
     "MockMatchers",
-    "MockResultHelpers",
     "TestValidators",
 ]
 

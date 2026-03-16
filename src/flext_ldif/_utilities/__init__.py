@@ -20,10 +20,7 @@ if TYPE_CHECKING:
         TransformConfigBuilder,
         WriteConfigBuilder,
     )
-    from flext_ldif._utilities.decorators import (
-        FlextLdifUtilitiesDecorators,
-        FlextLdifUtilitiesDecorators as d,
-    )
+    from flext_ldif._utilities.decorators import FlextLdifUtilitiesDecorators
     from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
     from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
     from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
@@ -55,7 +52,6 @@ if TYPE_CHECKING:
         PipelineStep,
         ValidationPipeline,
         ValidationResult,
-        ValidationResult as r,
     )
     from flext_ldif._utilities.result import FlextLdifResult
     from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
@@ -202,10 +198,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ValidationPipeline": ("flext_ldif._utilities.pipeline", "ValidationPipeline"),
     "ValidationResult": ("flext_ldif._utilities.pipeline", "ValidationResult"),
     "WriteConfigBuilder": ("flext_ldif._utilities.builders", "WriteConfigBuilder"),
-    "d": ("flext_ldif._utilities.decorators", "FlextLdifUtilitiesDecorators"),
     "f": ("flext_ldif._utilities.functional", "f"),
     "logger": ("flext_ldif._utilities.writers", "logger"),
-    "r": ("flext_ldif._utilities.pipeline", "ValidationResult"),
 }
 
 __all__ = [
@@ -263,10 +257,8 @@ __all__ = [
     "ValidationPipeline",
     "ValidationResult",
     "WriteConfigBuilder",
-    "d",
     "f",
     "logger",
-    "r",
 ]
 
 

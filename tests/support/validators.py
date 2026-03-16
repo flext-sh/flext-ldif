@@ -11,7 +11,7 @@ from flext_ldif import m, p
 from flext_ldif.typings import t
 
 
-class MockResultHelpers:
+class MockFlextUtilitiesResultHelpers:
     """Mock result helpers for testing."""
 
     @staticmethod

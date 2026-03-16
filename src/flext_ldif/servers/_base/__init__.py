@@ -15,7 +15,6 @@ if TYPE_CHECKING:
     from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
     from flext_ldif.servers._base.constants import (
         FlextLdifServersBaseConstants,
-        FlextLdifServersBaseConstants as c,
         FlextLdifServersBaseQuirkHelpers,
         QuirkMethodsMixin,
     )
@@ -44,7 +43,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextLdifServersBaseSchemaAcl",
     ),
     "QuirkMethodsMixin": ("flext_ldif.servers._base.constants", "QuirkMethodsMixin"),
-    "c": ("flext_ldif.servers._base.constants", "FlextLdifServersBaseConstants"),
     "logger": ("flext_ldif.servers._base.schema", "logger"),
 }
 
@@ -55,7 +53,6 @@ __all__ = [
     "FlextLdifServersBaseSchema",
     "FlextLdifServersBaseSchemaAcl",
     "QuirkMethodsMixin",
-    "c",
     "logger",
 ]
 
