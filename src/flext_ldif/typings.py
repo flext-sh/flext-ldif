@@ -8,12 +8,13 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping
 from datetime import datetime
-from typing import Annotated, Literal, TypeVar
+from typing import Annotated, TypeVar
 
 from flext_core import FlextTypes, r
 from pydantic import BaseModel, StringConstraints
 
 from flext_ldif import c
+from flext_ldif.constants import FlextLdifConstants
 
 # =========================================================================
 # RECURSIVE TYPES - Defined at module level for reliable scope resolution
@@ -52,8 +53,8 @@ class FlextLdifTypes(FlextTypes):
         type RdnString = str
         type ServerType = str
         type MetadataKey = str
-        type ProcessingMode = Literal["strict", "relaxed", "auto"]
-        type ValidationLevel = Literal["none", "basic", "full"]
+        type ProcessingMode = FlextLdifConstants.ProcessingMode
+        type ValidationLevel = FlextLdifConstants.ValidationLevel
         type EntryAttributesDict = dict[str, list[str]]
         type RawEntryDict = dict[str, str | list[str] | set[str]]
 
@@ -131,9 +132,7 @@ class FlextLdifTypes(FlextTypes):
         TSchema = TypeVar("TSchema")
 
     class _Core:
-        type ConversionTargetType = Literal[
-            "str", "int", "float", "bool", "list", "tuple", "dict"
-        ]
+        type ConversionTargetType = FlextLdifConstants.ConversionTargetType
         type ResultValue[T] = T
         type DN = str
 
