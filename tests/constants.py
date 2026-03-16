@@ -2066,5 +2066,6 @@ class TestDeduplicationHelpers:
         return converted_items
 
 
-c = TestsFlextLdifConstants
 __all__ = ["RfcTestHelpers", "TestDeduplicationHelpers", "TestsFlextLdifConstants", "c"]
+
+c = TestsFlextLdifConstants

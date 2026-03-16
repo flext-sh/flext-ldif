@@ -14,17 +14,6 @@ from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.settings import FlextLdifSettings
 from flext_ldif.utilities import FlextLdifUtilities as u
 
-
-class ServerDetectionConstants(Protocol):
-    """Protocol for server Constants classes with detection attributes."""
-
-    DETECTION_PATTERN: str
-    DETECTION_WEIGHT: int
-    DETECTION_ATTRIBUTES: frozenset[str] | list[str]
-    DETECTION_OID_PATTERN: str | None
-    DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None
-
-
 class FlextLdifDetector(s[m.Ldif.ClientStatus]):
     """Service for detecting LDAP server type from LDIF content."""
 
@@ -518,6 +507,5 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
             item_lower = item.lower()
             if server_type_lower in item_lower or item_lower in server_type_lower:
                 scores[server_type] += score_attr_match
-
 
 __all__ = ["FlextLdifDetector"]

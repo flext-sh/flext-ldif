@@ -352,3 +352,5 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "entryUUID": "orclguid",
         "aci": "orclaci",
     }
+
+c = FlextLdifServersOidConstants

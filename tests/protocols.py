@@ -41,5 +41,6 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
             """Flext-ldif-specific test protocols."""
 
 
-p = TestsFlextLdifProtocols
 __all__ = ["TestsFlextLdifProtocols", "p"]
+
+p = TestsFlextLdifProtocols

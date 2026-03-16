@@ -5,6 +5,9 @@ data between different LDAP server types, including initialization,
 validation, and execution with various server type combinations.
 """
 
+from __future__ import annotations
+
+
 from pathlib import Path
 
 import pytest

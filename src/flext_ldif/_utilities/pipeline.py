@@ -11,21 +11,12 @@ from flext_ldif import m
 from flext_ldif._utilities.filters import EntryFilter
 from flext_ldif._utilities.transformers import EntryTransformer
 
-
 class _Filtered:
     """Sentinel class to signal that an entry was filtered out."""
 
     __slots__ = ()
 
-
 FILTERED = _Filtered()
-
-
-class _StepFunction[TIn, TOut](Protocol):
-    """Protocol for pipeline step functions with type safety."""
-
-    def __call__(self, input_data: TIn) -> r[TOut]: ...
-
 
 class PipelineStep[TIn, TOut]:
     """A single step in a pipeline."""
@@ -46,7 +37,6 @@ class PipelineStep[TIn, TOut]:
     def execute(self, input_data: TIn) -> r[TOut]:
         """Execute this step."""
         return self._func(input_data)
-
 
 class Pipeline:
     """Pipeline for executing a sequence of transformations."""
@@ -156,7 +146,6 @@ class Pipeline:
         self._steps.append((step_name, filter_func))
         return self
 
-
 class ValidationPipeline:
     """Pipeline for validating entries."""
 
@@ -229,7 +218,6 @@ class ValidationPipeline:
             )
         )
 
-
 class ValidationResult:
     """Result of entry validation."""
 
@@ -268,6 +256,5 @@ class ValidationResult:
     def warnings(self) -> list[str]:
         """Get list of warning messages."""
         return self._warnings
-
 
 __all__ = ["Pipeline", "PipelineStep", "ValidationPipeline", "ValidationResult"]

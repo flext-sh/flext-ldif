@@ -38,5 +38,6 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
         """Test categorization utilities."""
 
 
-u = TestsFlextLdifUtilities
 __all__ = ["TestsFlextLdifUtilities", "u"]
+
+u = TestsFlextLdifUtilities

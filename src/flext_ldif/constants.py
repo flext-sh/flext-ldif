@@ -2106,8 +2106,9 @@ class FlextLdifConstants(FlextConstants):
         VALUE = "*"
 
 
-c = FlextLdifConstants
 __all__ = ["FlextLdifConstants", "c"]
 
 
 logger: Final = FlextLogger(__name__)
+
+c = FlextLdifConstants
