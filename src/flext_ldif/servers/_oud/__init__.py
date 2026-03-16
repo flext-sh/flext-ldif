@@ -20,22 +20,10 @@ if TYPE_CHECKING:
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifServersOudAcl": ("flext_ldif.servers._oud.acl", "FlextLdifServersOudAcl"),
-    "FlextLdifServersOudConstants": (
-        "flext_ldif.servers._oud.constants",
-        "FlextLdifServersOudConstants",
-    ),
-    "FlextLdifServersOudEntry": (
-        "flext_ldif.servers._oud.entry",
-        "FlextLdifServersOudEntry",
-    ),
-    "FlextLdifServersOudSchema": (
-        "flext_ldif.servers._oud.schema",
-        "FlextLdifServersOudSchema",
-    ),
-    "FlextLdifServersOudUtilities": (
-        "flext_ldif.servers._oud.utilities",
-        "FlextLdifServersOudUtilities",
-    ),
+    "FlextLdifServersOudConstants": ("flext_ldif.servers._oud.constants", "FlextLdifServersOudConstants"),
+    "FlextLdifServersOudEntry": ("flext_ldif.servers._oud.entry", "FlextLdifServersOudEntry"),
+    "FlextLdifServersOudSchema": ("flext_ldif.servers._oud.schema", "FlextLdifServersOudSchema"),
+    "FlextLdifServersOudUtilities": ("flext_ldif.servers._oud.utilities", "FlextLdifServersOudUtilities"),
     "logger": ("flext_ldif.servers._oud.schema", "logger"),
 }
 

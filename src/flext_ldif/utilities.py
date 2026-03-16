@@ -2158,7 +2158,7 @@ class FlextLdifUtilities(FlextUtilities):
             | list[builtins.object]
             | tuple[builtins.object, ...]
             | set[builtins.object]
-            | frozenset
+            | frozenset[object]
             | object,
             *,
             processor: Callable[..., object] | None = None,
