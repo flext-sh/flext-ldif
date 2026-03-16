@@ -8,7 +8,7 @@ import struct
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from flext_core import FlextLogger, r, u
+from flext_core import FlextLogger, r, t, u
 
 from flext_ldif import c, m
 from flext_ldif._models.settings import FlextLdifModelsSettings
