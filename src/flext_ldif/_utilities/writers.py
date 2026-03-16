@@ -69,7 +69,7 @@ class FlextLdifUtilitiesWriters:
                 except (AttributeError, TypeError):
                     dn_for_error = None
                 dn_error_raw = dn_for_error or ""
-                dn_error: str | None = dn_error_raw[:50] if dn_error_raw else None
+                dn_error: str = dn_error_raw[:50] if dn_error_raw else ""
                 logger.exception(
                     "Failed to write entry", server_type=config.server_type, dn=dn_error
                 )

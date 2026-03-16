@@ -630,9 +630,10 @@ class FlextLdifUtilitiesSchema:
     ]:
         """Wrap transformation result with proper type."""
         try:
-            return r[_SchemaElementUnion].ok(
-                FlextLdifModelsDomains.SchemaAttribute.model_validate(transformed)
-            )
+            return r[
+                FlextLdifModelsDomains.SchemaAttribute
+                | FlextLdifModelsDomains.SchemaObjectClass
+            ].ok(FlextLdifModelsDomains.SchemaAttribute.model_validate(transformed))
         except (
             ValueError,
             KeyError,
@@ -645,9 +646,10 @@ class FlextLdifUtilitiesSchema:
                 error=str(exc),
             )
         try:
-            return r[_SchemaElementUnion].ok(
-                FlextLdifModelsDomains.SchemaObjectClass.model_validate(transformed)
-            )
+            return r[
+                FlextLdifModelsDomains.SchemaAttribute
+                | FlextLdifModelsDomains.SchemaObjectClass
+            ].ok(FlextLdifModelsDomains.SchemaObjectClass.model_validate(transformed))
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return r[
                 FlextLdifModelsDomains.SchemaAttribute
@@ -748,7 +750,10 @@ class FlextLdifUtilitiesSchema:
             validated_attr = FlextLdifModelsDomains.SchemaAttribute.model_validate(
                 unwrapped
             )
-            return r[_SchemaElementUnion].ok(validated_attr)
+            return r[
+                FlextLdifModelsDomains.SchemaAttribute
+                | FlextLdifModelsDomains.SchemaObjectClass
+            ].ok(validated_attr)
         except (
             ValueError,
             KeyError,
@@ -764,7 +769,10 @@ class FlextLdifUtilitiesSchema:
             validated_oc = FlextLdifModelsDomains.SchemaObjectClass.model_validate(
                 unwrapped
             )
-            return r[_SchemaElementUnion].ok(validated_oc)
+            return r[
+                FlextLdifModelsDomains.SchemaAttribute
+                | FlextLdifModelsDomains.SchemaObjectClass
+            ].ok(validated_oc)
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return r[
                 FlextLdifModelsDomains.SchemaAttribute
@@ -803,7 +811,7 @@ class FlextLdifUtilitiesSchema:
             str,
             Callable[
                 ...,
-                builtins.object | r[builtins.object],
+                t.Container | r[t.Container],
             ]
             | str
             | list[str]

@@ -897,7 +897,8 @@ class FlextLdifUtilities(FlextUtilities):
         def zip_with(
             cls,
             *sequences: Sequence[builtins.object],
-            combiner: FlextLdifUtilities.Ldif.VariadicCallable | None = None,
+            combiner: FlextLdifUtilities.Ldif.VariadicCallable[tuple[object, ...]]
+            | None = None,
         ) -> list[builtins.object]:
             """Zip with combiner (generalized: uses zip from base, mnemonic: zw)."""
             if not sequences:
@@ -1692,7 +1693,7 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def apply(
             cls,
-            fn: FlextLdifUtilities.Ldif.VariadicCallable | object,
+            fn: FlextLdifUtilities.Ldif.VariadicCallable[object] | object,
             *args: builtins.object,
             **kwargs: t.Scalar,
         ) -> builtins.object:
