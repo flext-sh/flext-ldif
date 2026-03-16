@@ -108,12 +108,12 @@ class FlextLdifServersBaseSchema(
     ) -> None:
         """Initialize schema quirk service with optional DI service injection."""
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
-        service_kwargs: dict[str, t.Scalar | m.ConfigMap | Sequence[t.Scalar]] = {}
+        service_kwargs: dict[str, t.Scalar | t.ConfigMap | Sequence[t.Scalar]] = {}
         for key, value in filtered_kwargs.items():
             if isinstance(value, (str, int, float, bool, datetime)):
                 service_kwargs[key] = value
                 continue
-            if isinstance(value, m.ConfigMap):
+            if isinstance(value, t.ConfigMap):
                 service_kwargs[key] = value
                 continue
             if isinstance(value, Sequence) and (

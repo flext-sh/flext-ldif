@@ -28,7 +28,6 @@ from ldap3 import ALL, Connection, Server
 
 from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifServer, FlextLdifWriter, p
 from flext_ldif.servers.base import FlextLdifServersBase
-from tests import t
 
 from ..conftest import FlextLdifFixtures
 from .ldif_data import LdifTestData
