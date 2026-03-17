@@ -7,13 +7,12 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import FlextProtocols, r, t
+from flext_core import FlextProtocols, r
 
-from flext_ldif import c
+from flext_ldif import c, t
 
 if TYPE_CHECKING:
     from flext_ldif import m
-    from flext_ldif._models.domain import FlextLdifModelsDomains
 
 
 class FlextLdifProtocols(FlextProtocols):
@@ -63,7 +62,7 @@ class FlextLdifProtocols(FlextProtocols):
             @property
             def schema_format_details(
                 self,
-            ) -> FlextLdifModelsDomains.SchemaFormatDetails | None:
+            ) -> m.Ldif.SchemaFormatDetails | None:
                 """Get original schema formatting details."""
                 ...
 
@@ -274,44 +273,30 @@ class FlextLdifProtocols(FlextProtocols):
 
             def parse(
                 self, definition: str
-            ) -> r[
-                FlextLdifModelsDomains.SchemaAttribute
-                | FlextLdifModelsDomains.SchemaObjectClass
-            ]:
+            ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
                 """Parse schema definition."""
                 ...
 
-            def parse_attribute(
-                self, definition: str
-            ) -> r[FlextLdifModelsDomains.SchemaAttribute]:
+            def parse_attribute(self, definition: str) -> r[m.Ldif.SchemaAttribute]:
                 """Parse individual attribute definition."""
                 ...
 
-            def parse_objectclass(
-                self, definition: str
-            ) -> r[FlextLdifModelsDomains.SchemaObjectClass]:
+            def parse_objectclass(self, definition: str) -> r[m.Ldif.SchemaObjectClass]:
                 """Parse individual objectClass definition."""
                 ...
 
             def write(
                 self,
-                model: (
-                    FlextLdifModelsDomains.SchemaAttribute
-                    | FlextLdifModelsDomains.SchemaObjectClass
-                ),
+                model: (m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass),
             ) -> r[str]:
                 """Write schema definition."""
                 ...
 
-            def write_attribute(
-                self, attr_data: FlextLdifModelsDomains.SchemaAttribute
-            ) -> r[str]:
+            def write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> r[str]:
                 """Write individual attribute definition."""
                 ...
 
-            def write_objectclass(
-                self, oc_data: FlextLdifModelsDomains.SchemaObjectClass
-            ) -> r[str]:
+            def write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> r[str]:
                 """Write individual objectClass definition."""
                 ...
 
@@ -319,11 +304,11 @@ class FlextLdifProtocols(FlextProtocols):
         class AclQuirk(Protocol):
             """Protocol for ACL quirk implementations."""
 
-            def parse(self, acl_line: str) -> r[FlextLdifModelsDomains.Acl]:
+            def parse(self, acl_line: str) -> r[m.Ldif.Acl]:
                 """Parse ACL definition."""
                 ...
 
-            def write(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
+            def write(self, acl_data: m.Ldif.Acl) -> r[str]:
                 """Write ACL definition."""
                 ...
 
@@ -331,20 +316,19 @@ class FlextLdifProtocols(FlextProtocols):
         class EntryQuirk(Protocol):
             """Protocol for Entry quirk implementations."""
 
-            def parse(self, ldif_content: str) -> r[list[FlextLdifModelsDomains.Entry]]:
+            def parse(self, ldif_content: str) -> r[list[m.Ldif.Entry]]:
                 """Parse entry definition."""
                 ...
 
             def parse_entry(
                 self, entry_dn: str, entry_attrs: Mapping[str, list[str]]
-            ) -> r[FlextLdifModelsDomains.Entry]:
+            ) -> r[m.Ldif.Entry]:
                 """Parse single entry from DN and attributes."""
                 ...
 
             def write(
                 self,
-                entry_data: FlextLdifModelsDomains.Entry
-                | list[FlextLdifModelsDomains.Entry],
+                entry_data: m.Ldif.Entry | list[m.Ldif.Entry],
                 write_options: m.Ldif.WriteFormatOptions | None = None,
             ) -> r[str]:
                 """Write entries to LDIF."""

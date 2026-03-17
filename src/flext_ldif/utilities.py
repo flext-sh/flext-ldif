@@ -62,7 +62,7 @@ class FlextLdifUtilities(FlextUtilities):
         FlextLdifUtilitiesDN,
         FlextLdifUtilitiesEntry,
         FlextLdifUtilitiesEvents,
-        FlextLdifUtilitiesFilters[m.Ldif.Entry],
+        FlextLdifUtilitiesFilters[builtins.object],
         FlextLdifUtilitiesMetadata,
         FlextLdifUtilitiesObjectClass,
         FlextLdifUtilitiesOID,
@@ -71,7 +71,7 @@ class FlextLdifUtilities(FlextUtilities):
         FlextLdifUtilitiesResult[builtins.object],
         FlextLdifUtilitiesSchema,
         FlextLdifUtilitiesServer,
-        FlextLdifUtilitiesTransformer[m.Ldif.Entry],
+        FlextLdifUtilitiesTransformer[builtins.object],
         FlextLdifUtilitiesTypeGuards,
         FlextLdifUtilitiesValidation,
         FlextLdifUtilitiesWriter,
@@ -236,11 +236,33 @@ class FlextLdifUtilities(FlextUtilities):
             if isinstance(oid_pattern, Mapping) and (
                 not isinstance(detection_names, frozenset)
             ):
-                return FlextLdifUtilitiesEntry.matches_server_patterns(
-                    entry_dn=value if isinstance(value, str) else str(value),
-                    attributes=oid_pattern,
-                    config=detection_names,
-                )
+                entry_dn = value if isinstance(value, str) else str(value)
+                attributes = dict(oid_pattern)
+                attr_names_lower = {k.lower() for k in attributes}
+                dn_patterns = getattr(detection_names, "dn_patterns", None)
+                attr_prefixes = getattr(detection_names, "attr_prefixes", None)
+                attr_names = getattr(detection_names, "attr_names", None)
+                keyword_patterns = getattr(detection_names, "keyword_patterns", None)
+                if dn_patterns and any(
+                    all(pattern in entry_dn for pattern in pattern_set)
+                    for pattern_set in dn_patterns
+                ):
+                    return True
+                if attr_prefixes and any(
+                    attr.startswith(prefix)
+                    for attr in attributes
+                    for prefix in attr_prefixes
+                ):
+                    return True
+                if attr_names and attr_names_lower & set(attr_names):
+                    return True
+                if keyword_patterns:
+                    return any(
+                        keyword in attr
+                        for attr in attr_names_lower
+                        for keyword in keyword_patterns
+                    )
+                return False
             if isinstance(oid_pattern, str) and isinstance(detection_names, frozenset):
                 return FlextLdifUtilitiesServer.matches_server_patterns(
                     value=value,
@@ -254,9 +276,9 @@ class FlextLdifUtilities(FlextUtilities):
         @override
         def __and__(
             self,
-            other: FlextLdifUtilitiesFilters[m.Ldif.Entry],
+            other: FlextLdifUtilitiesFilters[builtins.object],
         ) -> builtins.object:
-            return FlextLdifUtilitiesFilters[m.Ldif.Entry].__and__(self, other)
+            return FlextLdifUtilitiesFilters[builtins.object].__and__(self, other)
 
         @staticmethod
         @override
