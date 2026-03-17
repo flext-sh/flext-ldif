@@ -12,8 +12,7 @@ from typing import ClassVar
 
 import pytest
 
-from flext_ldif import FlextLdifUtilities
-from tests import s
+from tests import s, u
 
 
 @unique
@@ -166,9 +165,9 @@ class TestsTestFlextLdifConstants(s):
         """Parametrized test for get_valid_values."""
         if should_raise:
             with pytest.raises(KeyError):
-                FlextLdifUtilities.Ldif.Constants.get_valid_values(category)
+                u.Ldif.Constants.get_valid_values(category)
         else:
-            values = FlextLdifUtilities.Ldif.Constants.get_valid_values(category)
+            values = u.Ldif.Constants.get_valid_values(category)
             assert isinstance(values, set)
             assert values == expected_values, (
                 f"Expected {expected_values}, got {values}"
@@ -201,7 +200,7 @@ class TestsTestFlextLdifConstants(s):
         if should_raise:
             pytest.skip("is_valid does not raise for unknown category")
         else:
-            result = FlextLdifUtilities.Ldif.Constants.is_valid(value, category)
+            result = u.Ldif.Constants.is_valid(value, category)
             assert result == expected_result
 
     @pytest.mark.parametrize(
@@ -230,21 +229,19 @@ class TestsTestFlextLdifConstants(s):
         """Parametrized test for validate_many."""
         if should_raise:
             with pytest.raises(KeyError):
-                FlextLdifUtilities.Ldif.Constants.validate_many(values, category)
+                u.Ldif.Constants.validate_many(values, category)
         else:
-            is_valid, invalid = FlextLdifUtilities.Ldif.Constants.validate_many(
-                values, category
-            )
+            is_valid, invalid = u.Ldif.Constants.validate_many(values, category)
             assert is_valid == expected_valid
             if not expected_valid:
                 assert len(invalid) > 0
 
     def test_constants_are_accessible(self) -> None:
         """Test that constants are properly defined and accessible."""
-        assert hasattr(FlextLdifUtilities.Ldif.Constants, "_CATEGORY_MAP")
-        category_map = FlextLdifUtilities.Ldif.Constants._CATEGORY_MAP
+        assert hasattr(u.Ldif.Constants, "_CATEGORY_MAP")
+        category_map = u.Ldif.Constants._CATEGORY_MAP
         assert "server_type" in category_map
         assert "encoding" in category_map
-        assert hasattr(FlextLdifUtilities.Ldif.Constants, "get_valid_values")
-        assert hasattr(FlextLdifUtilities.Ldif.Constants, "is_valid")
-        assert hasattr(FlextLdifUtilities.Ldif.Constants, "validate_many")
+        assert hasattr(u.Ldif.Constants, "get_valid_values")
+        assert hasattr(u.Ldif.Constants, "is_valid")
+        assert hasattr(u.Ldif.Constants, "validate_many")

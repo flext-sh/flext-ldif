@@ -12,7 +12,7 @@ from collections.abc import (
     Sequence,
 )
 from enum import Enum
-from typing import ClassVar, Literal, Self, TypeIs, overload
+from typing import ClassVar, Literal, Self, TypeIs, overload, override
 
 from flext_core import FlextLogger, FlextUtilities, r
 
@@ -62,16 +62,16 @@ class FlextLdifUtilities(FlextUtilities):
         FlextLdifUtilitiesDN,
         FlextLdifUtilitiesEntry,
         FlextLdifUtilitiesEvents,
-        FlextLdifUtilitiesFilters,
+        FlextLdifUtilitiesFilters[m.Ldif.Entry],
         FlextLdifUtilitiesMetadata,
         FlextLdifUtilitiesObjectClass,
         FlextLdifUtilitiesOID,
         FlextLdifUtilitiesParser,
         FlextLdifUtilitiesParsers,
-        FlextLdifUtilitiesResult,
+        FlextLdifUtilitiesResult[builtins.object],
         FlextLdifUtilitiesSchema,
         FlextLdifUtilitiesServer,
-        FlextLdifUtilitiesTransformer,
+        FlextLdifUtilitiesTransformer[m.Ldif.Entry],
         FlextLdifUtilitiesTypeGuards,
         FlextLdifUtilitiesValidation,
         FlextLdifUtilitiesWriter,
@@ -83,6 +83,185 @@ class FlextLdifUtilities(FlextUtilities):
         """LDIF-specific utility namespace."""
 
         type VariadicCallable[T] = Callable[..., T]
+
+        class Entry(FlextLdifUtilitiesParsers.Entry, FlextLdifUtilitiesWriters.Entry):
+            """Unified Entry parser/writer namespace."""
+
+            pass
+
+        class Attribute(
+            FlextLdifUtilitiesParsers.Attribute,
+            FlextLdifUtilitiesWriters.Attribute,
+        ):
+            """Unified Attribute parser/writer namespace."""
+
+            pass
+
+        class ObjectClass(
+            FlextLdifUtilitiesParsers.ObjectClass,
+            FlextLdifUtilitiesWriters.ObjectClass,
+        ):
+            """Unified ObjectClass parser/writer namespace."""
+
+            pass
+
+        class Content(
+            FlextLdifUtilitiesParsers.Content, FlextLdifUtilitiesWriters.Content
+        ):
+            """Unified Content parser/writer namespace."""
+
+            pass
+
+        @staticmethod
+        @override
+        def extract_rdn(dn: str) -> r[str]:
+            return FlextLdifUtilitiesDN.extract_rdn(dn)
+
+        @staticmethod
+        @overload
+        def split(dn: str) -> list[str]: ...
+
+        @staticmethod
+        @overload
+        def split(dn: m.Ldif.DN) -> list[str]: ...
+
+        @staticmethod
+        @override
+        def split(dn: str | m.Ldif.DN) -> list[str]:
+            return FlextLdifUtilitiesDN.split(dn)
+
+        @staticmethod
+        @override
+        def has_objectclass(
+            entry: m.Ldif.Entry, objectclasses: str | tuple[str, ...]
+        ) -> bool:
+            return FlextLdifUtilitiesEntry.has_objectclass(entry, objectclasses)
+
+        @staticmethod
+        @overload
+        def validate_batch(
+            values: Sequence[str], *, collect_errors: bool = True
+        ) -> r[list[tuple[str, bool, list[str]]]]: ...
+
+        @staticmethod
+        @overload
+        def validate_batch(
+            values: Sequence[str], *, collect_errors: bool = True
+        ) -> r[list[tuple[str, bool, str | None]]]: ...
+
+        @staticmethod
+        @override
+        def validate_batch(
+            values: Sequence[str], *, collect_errors: bool = True
+        ) -> (
+            r[list[tuple[str, bool, list[str]]]] | r[list[tuple[str, bool, str | None]]]
+        ):
+            return FlextLdifUtilitiesDN.validate_batch(
+                values,
+                collect_errors=collect_errors,
+            )
+
+        @staticmethod
+        @overload
+        def parse(
+            definition: str,
+        ) -> r[list[tuple[str, str]]]: ...
+
+        @staticmethod
+        @overload
+        def parse(
+            definition: m.Ldif.DN,
+        ) -> r[list[tuple[str, str]]]: ...
+
+        @staticmethod
+        @overload
+        def parse(
+            definition: str | m.Ldif.DN,
+            server_type: str | None = None,
+            parse_parts_hook: Callable[[str], Mapping[str, builtins.object]]
+            | Callable[[str], r[dict[str, builtins.object]]]
+            | None = None,
+        ) -> r[dict[str, builtins.object]]: ...
+
+        @staticmethod
+        @overload
+        def parse(
+            definition: str,
+            server_type: str | None = None,
+            parse_parts_hook: Callable[[str], Mapping[str, builtins.object]]
+            | Callable[[str], r[dict[str, builtins.object]]]
+            | None = None,
+        ) -> r[dict[str, builtins.object]]: ...
+
+        @staticmethod
+        @override
+        def parse(
+            definition: str | m.Ldif.DN | None,
+            server_type: str | None = None,
+            parse_parts_hook: Callable[[str], Mapping[str, builtins.object]]
+            | Callable[[str], r[dict[str, builtins.object]]]
+            | None = None,
+        ) -> r[list[tuple[str, str]]] | r[dict[str, builtins.object]]:
+            if definition is None:
+                return r[list[tuple[str, str]]].fail("DN cannot be None")
+            if isinstance(definition, m.Ldif.DN):
+                return FlextLdifUtilitiesDN.parse(definition)
+            if parse_parts_hook is None and server_type is None:
+                return FlextLdifUtilitiesDN.parse(definition)
+
+            def attr_hook(value: str) -> r[dict[str, builtins.object]]:
+                if parse_parts_hook is None:
+                    return r[dict[str, builtins.object]].ok({})
+                parsed_value = parse_parts_hook(value)
+                if isinstance(parsed_value, r):
+                    return parsed_value
+                return r[dict[str, builtins.object]].ok(dict(parsed_value))
+
+            return FlextLdifUtilitiesAttribute.parse(
+                definition=definition,
+                server_type=server_type,
+                parse_parts_hook=attr_hook if parse_parts_hook is not None else None,
+            )
+
+        @staticmethod
+        @override
+        def matches_server_patterns(
+            value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+            oid_pattern: Mapping[str, builtins.object] | str,
+            detection_names: builtins.object | frozenset[str],
+            detection_string: str | None = None,
+            *,
+            use_prefix_match: bool = False,
+        ) -> bool:
+            if isinstance(oid_pattern, Mapping) and (
+                not isinstance(detection_names, frozenset)
+            ):
+                return FlextLdifUtilitiesEntry.matches_server_patterns(
+                    entry_dn=value if isinstance(value, str) else str(value),
+                    attributes=oid_pattern,
+                    config=detection_names,
+                )
+            if isinstance(oid_pattern, str) and isinstance(detection_names, frozenset):
+                return FlextLdifUtilitiesServer.matches_server_patterns(
+                    value=value,
+                    oid_pattern=oid_pattern,
+                    detection_names=detection_names,
+                    detection_string=detection_string,
+                    use_prefix_match=use_prefix_match,
+                )
+            return False
+
+        @override
+        def __and__(
+            self,
+            other: FlextLdifUtilitiesFilters[m.Ldif.Entry],
+        ) -> builtins.object:
+            return FlextLdifUtilitiesFilters[m.Ldif.Entry].__and__(self, other)
+
+        @staticmethod
+        @override
+        def matches(server_type: str, *allowed_types: str) -> bool:
+            return FlextLdifUtilitiesServer.matches(server_type, *allowed_types)
 
         @staticmethod
         def to_config_map_value(value: builtins.object) -> builtins.object:
@@ -207,6 +386,7 @@ class FlextLdifUtilities(FlextUtilities):
             return r[list[U]].ok(results)
 
         @staticmethod
+        @override
         def find(
             items: Sequence[builtins.object],
             *,
@@ -219,6 +399,7 @@ class FlextLdifUtilities(FlextUtilities):
             return None
 
         @staticmethod
+        @override
         def unwrap_or[T](result: r[T], *, default: T | None = None) -> T | None:
             """Unwrap r with default value."""
             if result.is_success:
@@ -336,6 +517,7 @@ class FlextLdifUtilities(FlextUtilities):
             return DnOps(dn)
 
         @classmethod
+        @override
         def entry(cls, entry: m.Ldif.Entry) -> EntryOps:
             """Create fluent entry operations."""
             return EntryOps(entry)
@@ -424,6 +606,7 @@ class FlextLdifUtilities(FlextUtilities):
                 return r[list[R]].fail(f"Processing failed: {e}")
 
         @staticmethod
+        @override
         def filter[T: builtins.object, R: builtins.object](
             items_or_entries: T
             | list[T]
@@ -528,11 +711,12 @@ class FlextLdifUtilities(FlextUtilities):
             return FlextLdifUtilitiesResult[list[m.Ldif.Entry]].ok(filtered)
 
         @staticmethod
+        @override
         def is_entry_sequence(
-            value: builtins.object,
+            obj: builtins.object,
         ) -> TypeIs[Sequence[m.Ldif.Entry]]:
             """Check if value is a Sequence of Entry objects."""
-            match value:
+            match obj:
                 case str() | bytes():
                     return False
                 case Sequence() as seq if seq:
@@ -629,6 +813,7 @@ class FlextLdifUtilities(FlextUtilities):
         ) -> FlextLdifUtilitiesResult[list[m.Ldif.Entry]]: ...
 
         @staticmethod
+        @override
         def process(
             items_or_entries: builtins.object
             | list[builtins.object]
@@ -812,15 +997,31 @@ class FlextLdifUtilities(FlextUtilities):
         ) -> r[t.Container]: ...
 
         @staticmethod
+        @overload
         def validate(
-            value_or_entries: Sequence[m.Ldif.Entry] | t.Container,
+            value_or_entries: str | m.Ldif.DN,
+            *,
+            strict: bool = True,
+            collect_all: bool = True,
+            max_errors: int = 0,
+        ) -> bool: ...
+
+        @staticmethod
+        @override
+        def validate(
+            value_or_entries: Sequence[m.Ldif.Entry] | t.Container | str | m.Ldif.DN,
             validator_first: p.ValidatorSpec | None = None,
             *validators_rest: p.ValidatorSpec,
             strict: bool = True,
             collect_all: bool = True,
             max_errors: int = 0,
-        ) -> r[list[ValidationResult]] | r[t.Container]:
+        ) -> r[list[ValidationResult]] | r[t.Container] | bool:
             """Validate entries against rules."""
+            if (
+                isinstance(value_or_entries, str | m.Ldif.DN)
+                and validator_first is None
+            ):
+                return FlextLdifUtilitiesDN.validate(value_or_entries)
             if (
                 FlextLdifUtilities.Ldif.is_entry_sequence(value_or_entries)
                 and validator_first is None
@@ -839,6 +1040,11 @@ class FlextLdifUtilities(FlextUtilities):
             ):
                 return r[t.Container].fail(
                     "validator call requires scalar, not entry sequence"
+                )
+            if isinstance(value_or_entries, m.Ldif.DN):
+                return FlextLdifUtilitiesValidation.validate(
+                    value_or_entries.value,
+                    *validators,
                 )
             return FlextLdifUtilitiesValidation.validate(value_or_entries, *validators)
 
@@ -922,6 +1128,7 @@ class FlextLdifUtilities(FlextUtilities):
         zw = zip_with
 
         @classmethod
+        @override
         def group_by(
             cls,
             items: Sequence[builtins.object],
@@ -941,6 +1148,7 @@ class FlextLdifUtilities(FlextUtilities):
         gb = group_by
 
         @classmethod
+        @override
         def partition(
             cls,
             items: Sequence[builtins.object],
@@ -1002,6 +1210,7 @@ class FlextLdifUtilities(FlextUtilities):
             return default
 
         @classmethod
+        @override
         def pluck(
             cls,
             items: Sequence[builtins.object],
@@ -1086,6 +1295,7 @@ class FlextLdifUtilities(FlextUtilities):
         pr = pairs
 
         @staticmethod
+        @override
         def count[T](
             items: list[T] | tuple[T, ...], predicate: Callable[[T], bool] | None = None
         ) -> int:
@@ -1098,14 +1308,15 @@ class FlextLdifUtilities(FlextUtilities):
         ct = count
 
         @classmethod
+        @override
         def omit(
-            cls, obj: Mapping[str, builtins.object], *keys: str
+            cls, data: Mapping[str, builtins.object], *keys: str
         ) -> Mapping[str, builtins.object]:
             """Omit keys using FlextUtilities.map_dict() DSL (mnemonic: om)."""
-            if not obj or not keys:
-                return dict(obj) if obj else {}
+            if not data or not keys:
+                return dict(data) if data else {}
             keys_set = set(keys)
-            return cls.map_dict(obj, predicate=lambda k, _: k not in keys_set)
+            return cls.map_dict(data, predicate=lambda k, _: k not in keys_set)
 
         om = omit
 
@@ -1271,6 +1482,7 @@ class FlextLdifUtilities(FlextUtilities):
             return value if check_result else default
 
         @staticmethod
+        @override
         def is_type(
             value: builtins.object, type_spec: str | type | tuple[type, ...]
         ) -> bool:
@@ -1587,6 +1799,7 @@ class FlextLdifUtilities(FlextUtilities):
         dd = defaults_deep
 
         @staticmethod
+        @override
         def take(
             data_or_items: Mapping[str, builtins.object]
             | Sequence[builtins.object]
@@ -1640,6 +1853,7 @@ class FlextLdifUtilities(FlextUtilities):
         tk = take
 
         @classmethod
+        @override
         def try_[T](
             cls,
             func: Callable[[], T],
@@ -1667,6 +1881,7 @@ class FlextLdifUtilities(FlextUtilities):
         lt = let
 
         @classmethod
+        @override
         def apply(
             cls,
             fn: FlextLdifUtilities.Ldif.VariadicCallable[object] | object,
@@ -1733,6 +1948,7 @@ class FlextLdifUtilities(FlextUtilities):
         ds = dissoc
 
         @classmethod
+        @override
         def update(
             cls,
             data: Mapping[str, builtins.object],
@@ -1824,6 +2040,7 @@ class FlextLdifUtilities(FlextUtilities):
         wh = where
 
         @classmethod
+        @override
         def prop(cls, key: str) -> Callable[..., object]:
             """Property accessor using FlextUtilities.get() (mnemonic: pp)."""
 
@@ -1909,6 +2126,7 @@ class FlextLdifUtilities(FlextUtilities):
             return all(args)
 
         @staticmethod
+        @override
         def any_(*args: builtins.object) -> bool:
             """Check if any value is truthy."""
             return any(args)
@@ -1919,19 +2137,21 @@ class FlextLdifUtilities(FlextUtilities):
             return FlextLdifUtilities.Ldif.ConvBuilder(value=value)
 
         @staticmethod
-        def empty(value: builtins.object) -> bool:
+        @override
+        def empty(items: builtins.object) -> bool:
             """Check if value is empty."""
-            if value is None:
+            if items is None:
                 return True
-            if isinstance(value, (str, bytes)):
-                return len(value) == 0
-            if isinstance(value, Mapping):
-                return len(value) == 0
-            if isinstance(value, Sequence):
-                return len(value) == 0
+            if isinstance(items, (str, bytes)):
+                return len(items) == 0
+            if isinstance(items, Mapping):
+                return len(items) == 0
+            if isinstance(items, Sequence):
+                return len(items) == 0
             return False
 
         @staticmethod
+        @override
         def or_[T: builtins.object](
             *values: T | None, default: T | None = None
         ) -> T | None:
@@ -1986,6 +2206,7 @@ class FlextLdifUtilities(FlextUtilities):
         mb = maybe
 
         @staticmethod
+        @override
         def chain(
             value: builtins.object, *funcs: Callable[..., object]
         ) -> builtins.object:
@@ -1998,6 +2219,7 @@ class FlextLdifUtilities(FlextUtilities):
         ch = chain
 
         @staticmethod
+        @override
         def pick(
             data: Mapping[str, builtins.object] | object,
             *keys: str,
@@ -2080,6 +2302,7 @@ class FlextLdifUtilities(FlextUtilities):
         rd = reduce_dict
 
         @staticmethod
+        @override
         def fold(
             items: Sequence[builtins.object] | object,
             *,
@@ -2183,6 +2406,7 @@ class FlextLdifUtilities(FlextUtilities):
         pf = process_flatten
 
         @staticmethod
+        @override
         def build(
             value: builtins.object, *, ops: Mapping[str, builtins.object] | None = None
         ) -> builtins.object:

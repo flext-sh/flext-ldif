@@ -12,9 +12,11 @@ from typing import Final
 
 import pytest
 
-from flext_ldif.servers.oid import FlextLdifServersOid
-from flext_ldif.servers.oud import FlextLdifServersOud
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers import (
+    FlextLdifServersOid,
+    FlextLdifServersOud,
+    FlextLdifServersRfc,
+)
 from tests import c, s
 
 

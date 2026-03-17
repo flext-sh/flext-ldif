@@ -7,8 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import m, u
-from tests.test_factory import FlextLdifTestFactory
+from tests import FlextLdifTestFactory, m, u
 
 
 class TestFlextLdifUtilitiesComprehensive:

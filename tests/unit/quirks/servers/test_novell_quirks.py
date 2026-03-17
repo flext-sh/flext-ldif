@@ -10,10 +10,9 @@ from enum import StrEnum, unique
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
-from tests import RfcTestHelpers, TestDeduplicationHelpers, s
+from tests import RfcTestHelpers, TestDeduplicationHelpers, m, s
 
-from flext_ldif import m
-from flext_ldif.servers.novell import FlextLdifServersNovell
+from flext_ldif import FlextLdifServersNovell
 
 
 @unique

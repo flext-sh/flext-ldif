@@ -11,10 +11,9 @@ from typing import ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
-from tests import RfcTestHelpers, c, s
+from tests import RfcTestHelpers, c, m, s
 
-from flext_ldif import m
-from flext_ldif.servers.ds389 import FlextLdifServersDs389
+from flext_ldif import FlextLdifServersDs389
 
 
 @unique

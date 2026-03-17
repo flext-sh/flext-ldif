@@ -10,24 +10,22 @@ from typing import ClassVar
 import pytest
 
 import flext_ldif
-from flext_ldif import t as t_ldif
-from tests import c, s
-from tests.constants import OIDs
+from tests import OIDs, c, s, t
 
 
 class TestFlextLdifTypesStructure:
     """Tests for FlextLdifTypes structure and namespace access."""
 
     def test_namespace_exists(self) -> None:
-        """t_ldif class must be accessible."""
-        assert t_ldif is not None
-        assert hasattr(t_ldif, "__name__")
+        """T class must be accessible."""
+        assert t is not None
+        assert hasattr(t, "__name__")
 
     def test_has_required_namespaces(self) -> None:
-        """t_ldif must have required namespaces."""
-        assert hasattr(t_ldif, "Ldif")
-        assert not hasattr(t_ldif.Ldif, "Entry")
-        assert hasattr(t_ldif.Ldif, "CommonDict")
+        """T must have required namespaces."""
+        assert hasattr(t, "Ldif")
+        assert not hasattr(t.Ldif, "Entry")
+        assert hasattr(t.Ldif, "CommonDict")
 
     def test_srp_compliance_no_functions(self) -> None:
         """typings.py must not contain functions (SRP violation)."""
@@ -89,25 +87,25 @@ class TestsFlextLdifCommonDictionaryTypes(s):
 
     def test_attribute_dict_with_ldif_entry(self) -> None:
         """AttributeDict must work with real LDIF entry attributes."""
-        attr_dict: t_ldif.Ldif.CommonDict.AttributeDict = self.SAMPLE_ATTR_DICT
+        attr_dict: t.Ldif.CommonDict.AttributeDict = self.SAMPLE_ATTR_DICT
         assert isinstance(attr_dict, dict)
         assert attr_dict[c.Names.CN] == ["John Doe"]
         assert len(attr_dict[c.Names.MAIL]) == 2
 
     def test_attribute_dict_empty(self) -> None:
         """AttributeDict must handle empty attributes."""
-        attr_dict: t_ldif.Ldif.CommonDict.AttributeDict = {}
+        attr_dict: t.Ldif.CommonDict.AttributeDict = {}
         assert len(attr_dict) == 0
 
     def test_distribution_dict_with_entry_counts(self) -> None:
         """DistributionDict must work with entry type statistics."""
-        dist: t_ldif.Ldif.CommonDict.DistributionDict = self.SAMPLE_DISTRIBUTION
+        dist: t.Ldif.CommonDict.DistributionDict = self.SAMPLE_DISTRIBUTION
         assert dist[c.Names.INETORGPERSON] == 1245
         assert sum(dist.values()) == 1371
 
     def test_distribution_dict_from_schema_stats(self) -> None:
         """DistributionDict works for schema statistics."""
-        dist: t_ldif.Ldif.CommonDict.DistributionDict = {
+        dist: t.Ldif.CommonDict.DistributionDict = {
             "attributeTypes": 156,
             "objectClasses": 78,
             "dITContentRules": 23,
@@ -120,7 +118,7 @@ class TestModelsNamespace:
 
     def test_entry_attributes_dict_with_real_ldif_data(self) -> None:
         """EntryAttributesDict must work with real LDIF attribute data."""
-        attrs: dict[str, t_ldif.Scalar | list[str]] = {
+        attrs: dict[str, t.Scalar | list[str]] = {
             c.Names.CN: ["John Doe"],
             c.Names.OBJECTCLASS: [c.Names.INETORGPERSON, c.Names.PERSON, c.Names.TOP],
             c.Names.SN: "Doe",
@@ -134,7 +132,7 @@ class TestModelsNamespace:
 
     def test_attributes_data_with_real_schema(self) -> None:
         """AttributesData must support real schema attribute patterns."""
-        data: dict[str, dict[str, t_ldif.Scalar | list[str]]] = {
+        data: dict[str, dict[str, t.Scalar | list[str]]] = {
             c.Names.CN: {
                 "oid": OIDs.CN,
                 "syntax": "Directory String",
@@ -154,7 +152,7 @@ class TestModelsNamespace:
 
     def test_objectclasses_data_with_real_schema(self) -> None:
         """ObjectClassesData must support real objectClass patterns."""
-        data: dict[str, dict[str, t_ldif.Scalar | list[str]]] = {
+        data: dict[str, dict[str, t.Scalar | list[str]]] = {
             c.Names.INETORGPERSON: {
                 "oid": "2.16.840.1.113730.3.2.2",
                 "kind": "STRUCTURAL",
@@ -171,7 +169,7 @@ class TestModelsNamespace:
 
     def test_extensions_with_reals(self) -> None:
         """QuirkExtensions must support real quirk metadata."""
-        extensions: dict[str, t_ldif.Scalar] = {
+        extensions: dict[str, t.Scalar] = {
             "supports_dn_case_registry": True,
             "priority": 10,
             "server_type": "oud",
@@ -213,17 +211,17 @@ class TestRemovalOfOverEngineering:
     @pytest.mark.parametrize("namespace", REMOVED_NAMESPACES)
     def test_removed_namespaces(self, namespace: str) -> None:
         """Over-engineered namespaces must be removed."""
-        assert not hasattr(t_ldif, namespace)
+        assert not hasattr(t, namespace)
 
     @pytest.mark.parametrize("type_name", REMOVED_COMMON_DICT)
     def test_removed_common_dict_types(self, type_name: str) -> None:
         """Unused CommonDict types must be removed."""
-        assert not hasattr(t_ldif.Ldif.CommonDict, type_name)
+        assert not hasattr(t.Ldif.CommonDict, type_name)
 
     @pytest.mark.parametrize("type_name", REMOVED_ENTRY)
     def test_removed_entry_types(self, type_name: str) -> None:
         """Unused Entry types must be removed."""
-        assert not hasattr(t_ldif.Ldif, "Entry")
+        assert not hasattr(t.Ldif, "Entry")
 
 
 class TestPhase1StandardizationResults:
@@ -233,7 +231,7 @@ class TestPhase1StandardizationResults:
         """Type system should be minimal and focused on actual usage."""
         classes = [
             m
-            for m in inspect.getmembers(t_ldif)
+            for m in inspect.getmembers(t)
             if inspect.isclass(m[1]) and (not m[0].startswith("_"))
         ]
         assert len(classes) >= 1
@@ -241,16 +239,16 @@ class TestPhase1StandardizationResults:
     @pytest.mark.parametrize("attr", ["AttributeDict", "DistributionDict"])
     def test_common_dict_simple_patterns(self, attr: str) -> None:
         """Simple patterns should be kept in CommonDict."""
-        if hasattr(t_ldif.Ldif, "CommonDict"):
-            assert hasattr(t_ldif.Ldif.CommonDict, "AttributeDict")
+        if hasattr(t.Ldif, "CommonDict"):
+            assert hasattr(t.Ldif.CommonDict, "AttributeDict")
 
     def test_types_work_with_real_data(self) -> None:
         """Verify types work with real data."""
-        attr_dict: t_ldif.Ldif.CommonDict.AttributeDict = {
+        attr_dict: t.Ldif.CommonDict.AttributeDict = {
             c.Names.CN: ["Jane Doe"],
             c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INETORGPERSON],
         }
-        distribution: t_ldif.Ldif.CommonDict.DistributionDict = {
+        distribution: t.Ldif.CommonDict.DistributionDict = {
             c.Names.INETORGPERSON: 2,
             c.Names.PERSON: 1,
         }
@@ -274,7 +272,7 @@ class TestIntegrationWithLdifFixtures:
     def test_types_work_with_ldif_fixtures(self, oid_ldif_path: Path) -> None:
         """Verify types work with real LDIF fixture files."""
         assert oid_ldif_path.exists()
-        entry_attrs: t_ldif.Ldif.CommonDict.AttributeDict = {
+        entry_attrs: t.Ldif.CommonDict.AttributeDict = {
             c.Names.CN: ["Test Entry"],
             c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INETORGPERSON],
         }
@@ -282,7 +280,7 @@ class TestIntegrationWithLdifFixtures:
 
     def test_models_namespace_with_schema_data(self) -> None:
         """Verify Models namespace types work with schema data."""
-        schema_attrs: dict[str, dict[str, t_ldif.Scalar | list[str]]] = {
+        schema_attrs: dict[str, dict[str, t.Scalar | list[str]]] = {
             c.Names.CN: {"oid": OIDs.CN, "syntax": "Directory String"}
         }
         cn_oid: str | None = schema_attrs[c.Names.CN].get("oid")

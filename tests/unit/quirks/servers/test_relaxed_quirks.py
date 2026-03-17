@@ -13,7 +13,7 @@ import pytest
 from flext_core import r
 from tests import c, m, s
 
-from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
+from flext_ldif import FlextLdifServersRelaxed
 
 meta_keys = c.Ldif.MetadataKeys
 

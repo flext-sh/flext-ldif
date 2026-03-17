@@ -8,9 +8,9 @@ import struct
 from collections.abc import Mapping, Sequence
 from typing import TypeIs
 
-from flext_core import FlextLogger, r, u
+from flext_core import FlextLogger, r
 
-from flext_ldif import c, m, t
+from flext_ldif import c, m, t, u
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.functional import FlextFunctional
@@ -183,7 +183,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _is_metadata_scalar_or_container(value: builtins.object) -> bool:
         """Check supported metadata extension value shape."""
-        return isinstance(value, (str, int, float, bool, list, dict))
+        return u.is_primitive(value) or isinstance(value, (list, dict))
 
     @staticmethod
     def _normalize_permission(
@@ -556,7 +556,7 @@ class FlextLdifUtilitiesACL:
             default_value: builtins.object | None
             if raw_default is None:
                 default_value = None
-            elif isinstance(raw_default, (str, int, float, bool)):
+            elif u.is_primitive(raw_default):
                 default_value = raw_default
             elif isinstance(raw_default, list):
                 normalized_list: list[t.Scalar] = []

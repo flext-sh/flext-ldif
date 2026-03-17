@@ -14,14 +14,13 @@ from typing import ClassVar
 import pytest
 
 from flext_ldif import (
-    FlextLdifConstants,
     FlextLdifDn,
-    FlextLdifModels,
     FlextLdifSettings,
     FlextLdifStatistics,
+    c,
     services,
 )
-from tests import s
+from tests import c, m, s
 
 
 class TestsTestFlextLdifServiceAPIs(s):
@@ -80,13 +79,9 @@ class TestsTestFlextLdifServiceAPIs(s):
             """Verify import availability based on check type."""
             match check_type:
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.MODELS:
-                    assert FlextLdifModels is not None, (
-                        "FlextLdifModels should be available"
-                    )
+                    assert m is not None, "m should be available"
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.CONSTANTS:
-                    assert hasattr(FlextLdifConstants, check_target), (
-                        f"FlextLdifConstants should have {check_target}"
-                    )
+                    assert hasattr(c, check_target), f"c should have {check_target}"
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.UTILITIES_MODULE:
                     spec = importlib.util.find_spec(check_target)
                     assert spec is not None, f"Module {check_target} should exist"
@@ -134,7 +129,7 @@ class TestsTestFlextLdifServiceAPIs(s):
     @pytest.mark.parametrize(
         ("check_type", "check_target"),
         [
-            (ImportCheck.MODELS, "FlextLdifModels"),
+            (ImportCheck.MODELS, "m"),
             (ImportCheck.CONSTANTS, Constants.CONSTANT_LDIF_NAMESPACE),
             (ImportCheck.UTILITIES_MODULE, Constants.MODULE_UTILITIES),
             (ImportCheck.SERVICES_MODULE, "services"),

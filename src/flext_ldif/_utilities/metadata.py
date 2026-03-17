@@ -5,12 +5,11 @@ from __future__ import annotations
 import builtins
 import re
 from collections.abc import Mapping, Sequence
-from datetime import datetime
 from typing import TypeIs
 
-from flext_core import FlextLogger, u
+from flext_core import FlextLogger
 
-from flext_ldif import c, m, p, t
+from flext_ldif import c, m, p, t, u
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
@@ -571,7 +570,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _is_metadata_scalar(value: builtins.object) -> bool:
-        return isinstance(value, (str, int, float, bool, datetime, type(None)))
+        return value is None or u.is_scalar(value)
 
     @staticmethod
     def _is_metadata_scalar_typed(
@@ -614,7 +613,7 @@ class FlextLdifUtilitiesMetadata:
             metadata_obj = metadata.to_dict()
             normalized_metadata: dict[str, builtins.object] = {}
             for key, value in metadata_obj.items():
-                if isinstance(value, (str, int, float, bool)):
+                if u.is_primitive(value):
                     normalized_metadata[key] = value
                 elif isinstance(value, list):
                     normalized_metadata[key] = [str(item) for item in value]

@@ -426,7 +426,7 @@ class FlextLdifConversion(
         """Normalize metadata value to proper type."""
         if value is None:
             return ""
-        if isinstance(value, (str, int, float, bool)):
+        if u.is_primitive(value):
             return value
         if isinstance(value, (list, tuple)):
             return [
@@ -1494,7 +1494,7 @@ class FlextLdifConversion(
         """Convert value to MetadataAttributeValue type."""
         if value is None:
             return ""
-        if isinstance(value, (str, int, float, bool)):
+        if u.is_primitive(value):
             return value
         if isinstance(value, (list, tuple)):
             converted_list: list[t.Scalar] = []

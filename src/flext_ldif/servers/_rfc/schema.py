@@ -111,7 +111,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         for key, value in kwargs.items():
             if key in excluded_keys:
                 continue
-            if isinstance(value, (str, int, float, bool, datetime)):
+            if u.is_scalar(value):
                 filtered_kwargs[key] = value
         schema_service_typed: p.Ldif.SchemaQuirk | None = schema_service
         FlextLdifServersBaseSchema.__init__(

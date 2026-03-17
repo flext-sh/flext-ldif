@@ -10,9 +10,9 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from typing import TypeVar
 
-from flext_core import FlextLogger, r, u
+from flext_core import FlextLogger, r
 
-from flext_ldif import c, p, t
+from flext_ldif import c, p, t, u
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
@@ -363,7 +363,7 @@ class FlextLdifUtilitiesSchema:
     def _convert_metadata_value(
         value: builtins.object,
     ) -> t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]]:
-        if isinstance(value, (str, int, float, bool)):
+        if u.is_primitive(value):
             return value
         if isinstance(value, datetime):
             return value.isoformat()
@@ -374,7 +374,7 @@ class FlextLdifUtilitiesSchema:
         converted_nested: dict[str, t.Scalar | list[str]] = {}
         for k_raw, v_raw in value.items():
             k_str = str(k_raw)
-            if isinstance(v_raw, (str, int, float, bool)):
+            if u.is_primitive(v_raw):
                 converted_nested[k_str] = v_raw
             elif isinstance(v_raw, datetime):
                 converted_nested[k_str] = v_raw.isoformat()

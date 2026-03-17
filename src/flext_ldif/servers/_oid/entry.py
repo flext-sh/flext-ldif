@@ -11,7 +11,7 @@ from typing import override
 from flext_core import FlextLogger, r, u as core_u
 from pydantic import RootModel
 
-from flext_ldif import c, m, p, t
+from flext_ldif import c, m, p, t, u
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
@@ -639,7 +639,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                                 typed_items: list[str] = [
                                     str(item)
                                     for item in raw_value
-                                    if isinstance(item, (str, int, float, bool))
+                                    if u.is_primitive(item)
                                 ]
                                 typed_dict[key_str] = typed_items
                         boolean_conversions[key] = typed_dict
@@ -658,7 +658,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 original_extensions[k] = v
             elif isinstance(v, list) and (
                 all(isinstance(item, str) for item in v)
-                or all(isinstance(item, (str, int, float, bool)) for item in v)
+                or all(u.is_primitive(item) for item in v)
             ):
                 original_extensions[k] = [str(item) for item in v]
         return original_extensions

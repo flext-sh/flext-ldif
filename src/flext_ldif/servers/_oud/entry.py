@@ -1174,13 +1174,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         for src_key, dest_key in key_mapping.items():
             value_raw = acl_extensions.get(src_key)
             if value_raw is not None:
-                if isinstance(value_raw, (str, int, float, bool, type(None))):
+                if value_raw is None or u.is_primitive(value_raw):
                     acl_metadata_extensions[dest_key] = value_raw
                 elif isinstance(value_raw, (list, tuple)):
                     value_list: list[t.Ldif.Scalar] = [
-                        item
-                        if isinstance(item, (str, int, float, bool, type(None)))
-                        else str(item)
+                        item if item is None or u.is_primitive(item) else str(item)
                         for item in value_raw
                     ]
                     acl_metadata_extensions[dest_key] = value_list
@@ -1188,9 +1186,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     value_dict_2: dict[str, t.Scalar] = {}
                     for k, v in value_raw.items():
                         key = str(k)
-                        value_dict_2[key] = (
-                            v if isinstance(v, (str, int, float, bool)) else str(v)
-                        )
+                        value_dict_2[key] = v if u.is_primitive(v) else str(v)
                     acl_metadata_extensions[dest_key] = dict(value_dict_2)
                 else:
                     acl_metadata_extensions[dest_key] = str(value_raw)
@@ -1222,14 +1218,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             value_raw = acl_extensions.get(src_key)
             if value_raw is None:
                 continue
-            if isinstance(value_raw, (str, int, float, bool)):
+            if u.is_primitive(value_raw):
                 scalar_value: t.Scalar = value_raw
                 acl_metadata_extensions[dest_key] = scalar_value
             elif isinstance(value_raw, (list, tuple)):
                 value_list: list[t.Ldif.Scalar] = [
-                    item
-                    if isinstance(item, (str, int, float, bool, type(None)))
-                    else str(item)
+                    item if item is None or u.is_primitive(item) else str(item)
                     for item in value_raw
                 ]
                 acl_metadata_extensions[dest_key] = value_list
@@ -1237,7 +1231,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 value_dict_1: dict[str, t.Scalar] = {}
                 for k, v in value_raw.items():
                     key = str(k)
-                    if isinstance(v, (str, int, float, bool)):
+                    if u.is_primitive(v):
                         value_dict_1[key] = v
                     else:
                         value_dict_1[key] = str(v)
@@ -1294,9 +1288,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 key_str = str(raw_key)
                 if isinstance(raw_value, bytes):
                     entry_attrs_for_diff[key_str] = raw_value.decode("utf-8")
-                elif (
-                    isinstance(raw_value, (str, int, float, bool)) or raw_value is None
-                ):
+                elif raw_value is None or u.is_primitive(raw_value):
                     entry_attrs_for_diff[key_str] = raw_value
                 elif isinstance(raw_value, list):
                     entry_attrs_for_diff[key_str] = [str(item) for item in raw_value]
@@ -1775,13 +1767,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if mapped_key is None and key in known_keys:
                 mapped_key = key
             final_key = mapped_key or key
-            if isinstance(value, (str, int, float, bool, type(None))):
+            if value is None or u.is_primitive(value):
                 current_extensions[final_key] = value
             elif isinstance(value, (list, tuple)):
                 value_list: list[t.Ldif.Scalar] = [
-                    item
-                    if isinstance(item, (str, int, float, bool, type(None)))
-                    else str(item)
+                    item if item is None or u.is_primitive(item) else str(item)
                     for item in value
                 ]
                 current_extensions[final_key] = value_list
@@ -1789,7 +1779,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 value_dict_inner: dict[str, t.Scalar] = {}
                 for k, v in value.items():
                     key = str(k)
-                    if isinstance(v, (str, int, float, bool)):
+                    if u.is_primitive(v):
                         value_dict_inner[key] = v
                     else:
                         value_dict_inner[key] = str(v)

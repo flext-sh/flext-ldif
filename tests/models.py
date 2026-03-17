@@ -13,8 +13,6 @@ from __future__ import annotations
 from flext_tests import FlextTestsModels
 
 from flext_ldif import FlextLdifModels
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._models.settings import FlextLdifModelsSettings
 
 
 class TestsFlextLdifModels:
@@ -25,13 +23,10 @@ class TestsFlextLdifModels:
 
     Access patterns:
     - tm.Tests.* - Test fixtures (ACL, Schema, etc.)
-    - m.Ldif.* - Production domain models
-    - m.WriteFormatOptions - Root-level test aliases for common fixtures
-    - m.StatisticsResult - Root-level test aliases for common fixtures
+    - FlextLdifModels.Ldif.* - Production domain models
+    - FlextLdifModels.WriteFormatOptions - Root-level test aliases for common fixtures
+    - FlextLdifModels.StatisticsResult - Root-level test aliases for common fixtures
     """
-
-    # Production domain models namespace (composed from FlextLdifModels)
-    Ldif = FlextLdifModels.Ldif
 
     # Root-level aliases for frequently used test models
     WriteFormatOptions = FlextLdifModels.Ldif.WriteFormatOptions
@@ -41,7 +36,7 @@ class TestsFlextLdifModels:
         """Test fixture models namespace.
 
         Convenience aliases for test-only shortcuts.
-        Production code should use m.Ldif.* pattern.
+        Production code should use FlextLdifModels.Ldif.* pattern.
         """
 
         # ACL models for testing
@@ -66,7 +61,7 @@ class TestsFlextLdifModels:
 
         # Result models for testing
         ValidationBatchResult = FlextLdifModels.Ldif.ValidationBatchResult
-        ValidationMetadata = FlextLdifModelsDomains.ValidationMetadata
+        ValidationMetadata = FlextLdifModels.Ldif.ValidationMetadata
         StatisticsResult = FlextLdifModels.Ldif.StatisticsResult
 
         # Validation rules for testing

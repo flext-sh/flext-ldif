@@ -18,13 +18,13 @@ from __future__ import annotations
 from collections.abc import Sequence
 from itertools import starmap
 
-from flext_tests import s as flext_tests_s
+from flext_tests import s
 
-from flext_ldif import FlextLdifEntries, FlextLdifModels
-from tests.constants import TestsFlextLdifConstants
+from flext_ldif import FlextLdifEntries
+from tests import m
 
 
-class FlextLdifTestsServiceBase(flext_tests_s):
+class FlextLdifTestsServiceBase(s):
     """Base class for all test services in flext-ldif.
 
     Extends FlextTestsServiceBase from flext_tests with LDIF-specific utilities:
@@ -43,16 +43,15 @@ class FlextLdifTestsServiceBase(flext_tests_s):
                     {"cn": ["test"], "objectClass": ["person"]}
                 )
                 result = some_service.process(entry)
+
                 unwrapped = self.assert_success(result)
 
     """
 
-    c = TestsFlextLdifConstants
-
     @classmethod
     def create_entry(
         cls, dn: str, attributes: dict[str, str | list[str]] | None = None
-    ) -> FlextLdifModels.Ldif.Entry:
+    ) -> m.Ldif.Entry:
         """Create test entry using real FlextLdifEntries service.
 
         Args:
@@ -78,7 +77,7 @@ class FlextLdifTestsServiceBase(flext_tests_s):
     @classmethod
     def create_entries(
         cls, entries_data: Sequence[tuple[str, dict[str, str | list[str]]]]
-    ) -> list[FlextLdifModels.Ldif.Entry]:
+    ) -> list[m.Ldif.Entry]:
         """Create multiple test entries.
 
         Args:

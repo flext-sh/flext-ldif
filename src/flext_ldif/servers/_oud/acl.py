@@ -10,7 +10,7 @@ from typing import ClassVar, override
 
 from flext_core import FlextLogger, r
 
-from flext_ldif import c, m, p
+from flext_ldif import c, m, p, u
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
@@ -89,7 +89,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     @staticmethod
     def _scalar_or_list_value(value: builtins.object) -> bool:
         """Check if value is scalar metadata value or list."""
-        return isinstance(value, (str, int, float, bool, list))
+        return u.is_primitive(value) or isinstance(value, list)
 
     @override
     def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:

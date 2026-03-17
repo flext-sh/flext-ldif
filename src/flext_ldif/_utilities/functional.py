@@ -11,6 +11,7 @@ from typing import ClassVar, Literal, overload
 
 from pydantic import BaseModel
 
+from flext_ldif import u
 from flext_ldif._models._models import (
     ConvertToBool,
     ConvertToDict,
@@ -29,7 +30,7 @@ class FlextFunctional:
     @staticmethod
     def _to_general(value: builtins.object) -> builtins.object:
         """Normalize arbitrary values into object-compatible shape."""
-        if value is None or isinstance(value, (str, int, float, bool)):
+        if value is None or u.is_primitive(value):
             return value
         if isinstance(value, datetime):
             return value.isoformat()

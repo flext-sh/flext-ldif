@@ -32,7 +32,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         for key, value in kwargs.items():
             if value is None:
                 init_kwargs[key] = None
-            elif isinstance(value, (str, int, float, bool)):
+            elif u.is_primitive(value):
                 init_kwargs[key] = value
         super().__init__()
         parent_ref: FlextLdifServersBase = self

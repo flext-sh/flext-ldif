@@ -13,9 +13,9 @@ from typing import Final
 
 from flext_tests import tm
 
-from flext_ldif import FlextLdifMigrationPipeline, c as lib_c
-from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif import FlextLdifMigrationPipeline
+from flext_ldif.servers import FlextLdifServersRfc
+from flext_ldif.servers._oid import FlextLdifServersOidConstants
 from tests import c, s
 
 
@@ -46,8 +46,8 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             output_dir=output_dir,
             mode="simple",
             output_filename="migrated.ldif",
-            source_server=lib_c.Ldif.ServerTypes.OID,
-            target_server=lib_c.Ldif.ServerTypes.RFC,
+            source_server=c.Ldif.ServerTypes.OID,
+            target_server=c.Ldif.ServerTypes.RFC,
         )
         result = pipeline.execute()
         tm.ok(result)
@@ -78,8 +78,8 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             output_dir=output_dir,
             mode="simple",
             output_filename="migrated.ldif",
-            source_server=lib_c.Ldif.ServerTypes.RFC,
-            target_server=lib_c.Ldif.ServerTypes.OID,
+            source_server=c.Ldif.ServerTypes.RFC,
+            target_server=c.Ldif.ServerTypes.OID,
         )
         result = pipeline.execute()
         tm.ok(result)
@@ -107,8 +107,8 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             output_dir=output_dir,
             mode="simple",
             output_filename="migrated.ldif",
-            source_server=lib_c.Ldif.ServerTypes.OID,
-            target_server=lib_c.Ldif.ServerTypes.RFC,
+            source_server=c.Ldif.ServerTypes.OID,
+            target_server=c.Ldif.ServerTypes.RFC,
         )
         result = pipeline.execute()
         tm.ok(result)
@@ -134,8 +134,8 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             output_dir=output_dir,
             mode="simple",
             output_filename="migrated.ldif",
-            source_server=lib_c.Ldif.ServerTypes.RFC,
-            target_server=lib_c.Ldif.ServerTypes.OID,
+            source_server=c.Ldif.ServerTypes.RFC,
+            target_server=c.Ldif.ServerTypes.OID,
         )
         result = pipeline.execute()
         tm.ok(result)
@@ -160,8 +160,8 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             output_dir=output_dir,
             mode="simple",
             output_filename="migrated.ldif",
-            source_server=lib_c.Ldif.ServerTypes.OID,
-            target_server=lib_c.Ldif.ServerTypes.RFC,
+            source_server=c.Ldif.ServerTypes.OID,
+            target_server=c.Ldif.ServerTypes.RFC,
         )
         result = pipeline.execute()
         tm.ok(result)
@@ -186,8 +186,8 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             output_dir=output_dir,
             mode="simple",
             output_filename="migrated.ldif",
-            source_server=lib_c.Ldif.ServerTypes.RFC,
-            target_server=lib_c.Ldif.ServerTypes.OID,
+            source_server=c.Ldif.ServerTypes.RFC,
+            target_server=c.Ldif.ServerTypes.OID,
         )
         result = pipeline.execute()
         tm.ok(result)
