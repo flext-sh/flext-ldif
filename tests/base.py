@@ -24,7 +24,7 @@ from flext_ldif import FlextLdifEntries
 from tests import m
 
 
-class FlextLdifTestsServiceBase(FlextTestsServiceBase[object]):
+class FlextLdifTestsServiceBase(FlextTestsServiceBase[m.Ldif.Entry]):
     """Base class for all test services in flext-ldif.
 
     Extends FlextTestsServiceBase from flext_tests with LDIF-specific utilities:

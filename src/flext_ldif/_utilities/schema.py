@@ -80,7 +80,7 @@ class FlextLdifUtilitiesSchema:
         field_name: str,
         transform_fn: Callable[
             ...,
-            t.Container | r[t.Container],
+            t.Container | r[t.Container] | None,
         ],
     ) -> r[
         FlextLdifModelsDomains.SchemaAttribute
@@ -129,7 +129,7 @@ class FlextLdifUtilitiesSchema:
             str,
             Callable[
                 ...,
-                t.Container | r[t.Container],
+                t.Container | r[t.Container] | None,
             ]
             | str
             | list[str]
@@ -813,7 +813,7 @@ class FlextLdifUtilitiesSchema:
             str,
             Callable[
                 ...,
-                t.Container | r[t.Container],
+                t.Container | r[t.Container] | None,
             ]
             | str
             | list[str]

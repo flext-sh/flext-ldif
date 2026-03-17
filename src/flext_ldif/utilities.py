@@ -12,7 +12,7 @@ from collections.abc import (
     Sequence,
 )
 from enum import Enum
-from typing import ClassVar, Literal, Self, TypeIs, overload, override
+from typing import ClassVar, Literal, Self, TypeIs, cast, overload, override
 
 from flext_core import FlextLogger, FlextUtilities, r
 
@@ -663,7 +663,9 @@ class FlextLdifUtilities(FlextUtilities):
                         entries_list, filter_entry, filters, mode
                     )
 
-            entry_filter = predicate_or_filter1
+            if not isinstance(predicate_or_filter1, FlextLdifUtilitiesFilters):
+                return []
+            entry_filter: FlextLdifUtilitiesFilters[m.Ldif.Entry] = predicate_or_filter1
 
             def predicate_wrapper(item: builtins.object) -> bool:
                 """Wrap FlextLdifUtilitiesFilters as VariadicCallable for base class compatibility."""
@@ -716,7 +718,10 @@ class FlextLdifUtilities(FlextUtilities):
                 return FlextLdifUtilitiesResult[list[m.Ldif.Entry]].ok(list(entries))
             combined: FlextLdifUtilitiesFilters[m.Ldif.Entry] = filter_list[0]
             for f in filter_list[1:]:
-                combined = combined & f if mode == "all" else combined | f
+                combined = cast(
+                    "FlextLdifUtilitiesFilters[m.Ldif.Entry]",
+                    combined & f if mode == "all" else combined | f,
+                )
             filtered = [entry for entry in entries if combined.matches(entry)]
             return FlextLdifUtilitiesResult[list[m.Ldif.Entry]].ok(filtered)
 
@@ -877,9 +882,13 @@ class FlextLdifUtilities(FlextUtilities):
                     return FlextLdifUtilitiesResult.from_result(result)
                 if processor_normalized is None:
                     msg = "processor is required for base class process"
-                    return FlextLdifUtilitiesResult[list[m.Ldif.Entry]].fail(msg)
+                    return FlextLdifUtilitiesResult.from_result(
+                        r[list[m.Ldif.Entry]].fail(msg)
+                    )
                 msg = "ProcessConfig requires LDIF entry sequence"
-                return FlextLdifUtilitiesResult[list[m.Ldif.Entry]].fail(msg)
+                return FlextLdifUtilitiesResult.from_result(
+                    r[list[m.Ldif.Entry]].fail(msg)
+                )
             processor_func: Callable[..., object] = processor_normalized
             match items_or_entries:
                 case dict() | Mapping():

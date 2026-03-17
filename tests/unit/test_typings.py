@@ -10,7 +10,8 @@ from typing import ClassVar
 import pytest
 
 import flext_ldif
-from tests import OIDs, c, s, t
+from tests import c, s, t
+from tests.constants import OIDs
 
 
 class TestFlextLdifTypesStructure:
