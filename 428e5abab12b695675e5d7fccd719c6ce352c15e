@@ -1,0 +1,23 @@
+src/flext_ldif/constants.py
+  805a7c426a49e940 2175-2176,2183-2184,2191-2192
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "428e5abab12b695675e5d7fccd719c6ce352c15e",
+  "prompts": {
+    "805a7c426a49e940": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_306f4527effedylQR79HqiACVE",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 0,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}
