@@ -180,6 +180,7 @@ class FlextLdifModels(FlextModels):
 # MODULE ALIASES - Runtime access patterns
 # =========================================================================
 
-m = FlextLdifModels
 
 __all__ = ["FlextLdifModels", "m"]
+
+m = FlextLdifModels

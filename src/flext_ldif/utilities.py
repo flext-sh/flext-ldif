@@ -2266,5 +2266,6 @@ class FlextLdifUtilities(FlextUtilities):
             """Type guards for Model identification."""
 
 
-u = FlextLdifUtilities
 __all__ = ["FlextLdifUtilities", "u"]
+
+u = FlextLdifUtilities

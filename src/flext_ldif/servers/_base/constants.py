@@ -103,3 +103,5 @@ __all__ = [
     "QuirkMethodsMixin",
     "logger",
 ]
+
+c = FlextLdifServersBaseConstants

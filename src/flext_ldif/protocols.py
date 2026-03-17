@@ -548,5 +548,22 @@ class FlextLdifProtocols(FlextProtocols):
             """Quirks namespace containing quirk protocol aliases."""
 
 
-p = FlextLdifProtocols
 __all__ = ["FlextLdifProtocols", "p"]
+
+p = FlextLdifProtocols
+
+from typing import Protocol
+
+class _StepFunction[TIn, TOut](Protocol):
+    """Protocol for pipeline step functions with type safety."""
+
+    def __call__(self, input_data: TIn) -> r[TOut]: ...
+
+class ServerDetectionConstants(Protocol):
+    """Protocol for server Constants classes with detection attributes."""
+
+    DETECTION_PATTERN: str
+    DETECTION_WEIGHT: int
+    DETECTION_ATTRIBUTES: frozenset[str] | list[str]
+    DETECTION_OID_PATTERN: str | None
+    DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None

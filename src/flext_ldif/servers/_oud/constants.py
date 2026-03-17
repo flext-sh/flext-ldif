@@ -283,3 +283,5 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "cn=tasks",
         "cn=monitor",
     ])
+
+c = FlextLdifServersOudConstants

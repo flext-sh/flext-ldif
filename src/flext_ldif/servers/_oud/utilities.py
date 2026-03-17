@@ -36,3 +36,5 @@ class FlextLdifServersOudUtilities:
 
 
 __all__ = ["FlextLdifServersOudUtilities"]
+
+u = FlextLdifServersOudUtilities
