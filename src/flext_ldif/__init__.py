@@ -109,7 +109,7 @@ if TYPE_CHECKING:
     from flext_ldif.base import FlextLdifServiceBase, s
     from flext_ldif.constants import FlextLdifConstants, c
     from flext_ldif.models import FlextLdifModels, m
-    from flext_ldif.protocols import FlextLdifProtocols, p
+    from flext_ldif.protocols import FlextLdifProtocols, ServerDetectionConstants, p
     from flext_ldif.results import DynamicCounts, FlextLdifModelsResults
     from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
     from flext_ldif.servers._base.constants import (
@@ -440,6 +440,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "ReplaceBaseDnTransformer",
     ),
     "SchemaElement": ("flext_ldif._models.base", "SchemaElement"),
+    "ServerDetectionConstants": ("flext_ldif.protocols", "ServerDetectionConstants"),
     "ServerTransformer": ("flext_ldif.services.transformers", "ServerTransformer"),
     "Transform": ("flext_ldif._utilities.transformers", "Transform"),
     "TransformConfigBuilder": (
@@ -600,6 +601,7 @@ __all__ = [
     "RemoveAttrsTransformer",
     "ReplaceBaseDnTransformer",
     "SchemaElement",
+    "ServerDetectionConstants",
     "ServerTransformer",
     "Transform",
     "TransformConfigBuilder",

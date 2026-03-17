@@ -9,10 +9,8 @@ from typing import override
 
 from flext_core import r, s
 
-from flext_ldif.models import FlextLdifModels as m
-from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.settings import FlextLdifSettings
-from flext_ldif.utilities import FlextLdifUtilities as u
+from flext_ldif import FlextLdifServer, FlextLdifSettings, m, u
+from flext_ldif.protocols import ServerDetectionConstants
 
 
 class FlextLdifDetector(s[m.Ldif.ClientStatus]):

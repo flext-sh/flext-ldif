@@ -7,12 +7,13 @@ from typing import Annotated, Self, overload
 from flext_core import m
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
-from flext_ldif._models.base import FlextLdifModelsBase
-from flext_ldif._models.collections import FlextLdifModelsCollections
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._models.events import FlextLdifModelsEvents
-from flext_ldif.constants import FlextLdifConstants as c
-from flext_ldif.typings import FlextLdifTypes as t
+from flext_ldif import c, t
+from flext_ldif._models import (
+    FlextLdifModelsBase,
+    FlextLdifModelsCollections,
+    FlextLdifModelsDomains,
+    FlextLdifModelsEvents,
+)
 
 
 def _events_factory() -> list[FlextLdifModelsResults.EventType]:
@@ -528,7 +529,7 @@ class FlextLdifModelsResults:
             results: list[tuple[str, t.Scalar]] = []
             for key in self.model_fields_set:
                 val = getattr(self, key)
-                if isinstance(val, t.Primitives):
+                if isinstance(val, t.PRIMITIVES_TYPES):
                     results.append((key, val))
                 elif val is None:
                     continue

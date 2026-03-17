@@ -9,7 +9,7 @@ from typing import ClassVar
 from flext_core import FlextLogger
 
 from flext_ldif import c, p
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer
+from flext_ldif._utilities import FlextLdifUtilitiesServer
 
 logger = FlextLogger(__name__)
 
@@ -103,5 +103,3 @@ __all__ = [
     "QuirkMethodsMixin",
     "logger",
 ]
-
-c = FlextLdifServersBaseConstants

@@ -11,7 +11,8 @@ import pytest
 
 import flext_ldif
 from flext_ldif import t as t_ldif
-from tests import OIDs, c, s
+from tests import c, s
+from tests.constants import OIDs
 
 
 class TestFlextLdifTypesStructure:
