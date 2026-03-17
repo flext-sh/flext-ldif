@@ -5,7 +5,7 @@ from __future__ import annotations
 import ast
 import inspect
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import ClassVar
 
 import pytest
 
@@ -120,7 +120,7 @@ class TestModelsNamespace:
 
     def test_entry_attributes_dict_with_real_ldif_data(self) -> None:
         """EntryAttributesDict must work with real LDIF attribute data."""
-        attrs: dict[str, Any] = {
+        attrs: dict[str, t_ldif.Scalar | list[str]] = {
             c.Names.CN: ["John Doe"],
             c.Names.OBJECTCLASS: [c.Names.INETORGPERSON, c.Names.PERSON, c.Names.TOP],
             c.Names.SN: "Doe",
@@ -134,7 +134,7 @@ class TestModelsNamespace:
 
     def test_attributes_data_with_real_schema(self) -> None:
         """AttributesData must support real schema attribute patterns."""
-        data: dict[str, dict[str, Any]] = {
+        data: dict[str, dict[str, t_ldif.Scalar | list[str]]] = {
             c.Names.CN: {
                 "oid": OIDs.CN,
                 "syntax": "Directory String",
@@ -154,7 +154,7 @@ class TestModelsNamespace:
 
     def test_objectclasses_data_with_real_schema(self) -> None:
         """ObjectClassesData must support real objectClass patterns."""
-        data: dict[str, dict[str, Any]] = {
+        data: dict[str, dict[str, t_ldif.Scalar | list[str]]] = {
             c.Names.INETORGPERSON: {
                 "oid": "2.16.840.1.113730.3.2.2",
                 "kind": "STRUCTURAL",
@@ -171,7 +171,7 @@ class TestModelsNamespace:
 
     def test_extensions_with_reals(self) -> None:
         """QuirkExtensions must support real quirk metadata."""
-        extensions: dict[str, Any] = {
+        extensions: dict[str, t_ldif.Scalar] = {
             "supports_dn_case_registry": True,
             "priority": 10,
             "server_type": "oud",
@@ -282,7 +282,7 @@ class TestIntegrationWithLdifFixtures:
 
     def test_models_namespace_with_schema_data(self) -> None:
         """Verify Models namespace types work with schema data."""
-        schema_attrs: dict[str, dict[str, Any]] = {
+        schema_attrs: dict[str, dict[str, t_ldif.Scalar | list[str]]] = {
             c.Names.CN: {"oid": OIDs.CN, "syntax": "Directory String"}
         }
         cn_oid: str | None = schema_attrs[c.Names.CN].get("oid")
