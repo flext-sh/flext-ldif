@@ -31,7 +31,6 @@ class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
 
     # Production models namespace delegation
     class Ldif(FlextLdifModels.Ldif):
-
         class Tests:
             """Test fixture models namespace.
 

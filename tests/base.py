@@ -18,13 +18,13 @@ from __future__ import annotations
 from collections.abc import Sequence
 from itertools import starmap
 
-from flext_tests import s
+from flext_tests import FlextTestsServiceBase
 
 from flext_ldif import FlextLdifEntries
 from tests import m
 
 
-class FlextLdifTestsServiceBase(s):
+class FlextLdifTestsServiceBase(FlextTestsServiceBase[object]):
     """Base class for all test services in flext-ldif.
 
     Extends FlextTestsServiceBase from flext_tests with LDIF-specific utilities:
