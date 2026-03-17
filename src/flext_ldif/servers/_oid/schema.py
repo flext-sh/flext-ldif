@@ -103,14 +103,12 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         """Hook: Transform parsed attribute using OID-specific normalizations."""
         try:
             if attr.syntax:
-                attr.syntax = u.Ldif.Schema.normalize_syntax_oid(str(attr.syntax))
-            normalized_equality, normalized_substr = (
-                u.Ldif.Schema.normalize_matching_rules(
-                    attr.equality,
-                    attr.substr,
-                    replacements=_OidConstants.MATCHING_RULE_TO_RFC,
-                    normalized_substr_values=_OidConstants.MATCHING_RULE_TO_RFC,
-                )
+                attr.syntax = u.Ldif.normalize_syntax_oid(str(attr.syntax))
+            normalized_equality, normalized_substr = u.Ldif.normalize_matching_rules(
+                attr.equality,
+                attr.substr,
+                replacements=_OidConstants.MATCHING_RULE_TO_RFC,
+                normalized_substr_values=_OidConstants.MATCHING_RULE_TO_RFC,
             )
             if normalized_equality != attr.equality:
                 attr.equality = normalized_equality
@@ -123,7 +121,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 if normalized_ordering:
                     attr.ordering = normalized_ordering
             if attr.syntax:
-                attr.syntax = u.Ldif.Schema.normalize_syntax_oid(
+                attr.syntax = u.Ldif.normalize_syntax_oid(
                     str(attr.syntax), replacements=_OidConstants.SYNTAX_OID_TO_RFC
                 )
             attr = self._transform_case_ignore_substrings(attr)
@@ -294,9 +292,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 metadata_public = m.Ldif.QuirkMetadata.model_validate(
                     attr_data.metadata.model_dump()
                 )
-                u.Ldif.Metadata.preserve_schema_formatting(
-                    metadata_public, attr_definition
-                )
+                u.Ldif.preserve_schema_formatting(metadata_public, attr_definition)
                 self._add_target_metadata(attr_data, target_values)
             return r[m.Ldif.SchemaAttribute].ok(attr_data)
         except (
@@ -344,11 +340,11 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         self, attr_data: m.Ldif.SchemaAttribute
     ) -> m.Ldif.SchemaAttribute:
         """Apply OID-specific attribute transformations before writing."""
-        fixed_name = u.Ldif.Schema.normalize_name(attr_data.name) or attr_data.name
+        fixed_name = u.Ldif.normalize_name(attr_data.name) or attr_data.name
         fixed_equality = attr_data.equality
         fixed_substr = attr_data.substr
         original_substr = fixed_substr
-        fixed_substr = u.Ldif.Schema.replace_invalid_substr_rule(
+        fixed_substr = u.Ldif.replace_invalid_substr_rule(
             fixed_substr, FlextLdifServersOidConstants.INVALID_SUBSTR_RULES
         )
         if fixed_substr != original_substr:
@@ -359,7 +355,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 original_substr=original_substr or "",
                 replacement_substr=fixed_substr or "",
             )
-        is_boolean = u.Ldif.Schema.is_boolean_attribute(
+        is_boolean = u.Ldif.is_boolean_attribute(
             fixed_name, set(FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES)
         )
         if is_boolean:
@@ -406,7 +402,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         self, attr_data: m.Ldif.SchemaAttribute
     ) -> m.Ldif.SchemaAttribute:
         """Transform caseIgnoreSubstringsMatch from EQUALITY to SUBSTR."""
-        normalized_equality, normalized_substr = u.Ldif.Schema.normalize_matching_rules(
+        normalized_equality, normalized_substr = u.Ldif.normalize_matching_rules(
             attr_data.equality,
             attr_data.substr,
             substr_rules_in_equality={
@@ -474,7 +470,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 ordering_raw if isinstance(ordering_raw, str) else attr_copy.ordering
             )
         else:
-            oid_equality, oid_substr = u.Ldif.Schema.normalize_matching_rules(
+            oid_equality, oid_substr = u.Ldif.normalize_matching_rules(
                 attr_copy.equality,
                 attr_copy.substr,
                 replacements=_OidConstants.MATCHING_RULE_RFC_TO_OID,

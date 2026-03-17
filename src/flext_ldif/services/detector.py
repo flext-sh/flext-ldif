@@ -27,7 +27,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
     @staticmethod
     def _get_all_server_types() -> list[str]:
         """Get all supported server types from constants."""
-        return u.Ldif.Server.get_all_server_types()
+        return u.Ldif.get_all_server_types()
 
     @staticmethod
     def _get_server_constants(
@@ -82,15 +82,15 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
             "enable_relaxed_parsing",
             getattr(getattr(config, "ldif", None), "enable_relaxed_parsing", False),
         ):
-            return u.Ldif.Server.get_server_type_value("RELAXED")
+            return u.Ldif.get_server_type_value("RELAXED")
         if detection_mode == "manual":
             if configured_server is None:
-                return u.Ldif.Server.get_server_type_value("RFC")
+                return u.Ldif.get_server_type_value("RFC")
             if not configured_server.strip():
-                return u.Ldif.Server.get_server_type_value("RFC")
+                return u.Ldif.get_server_type_value("RFC")
             return configured_server
         if detection_mode == "disabled":
-            return u.Ldif.Server.get_server_type_value("RFC")
+            return u.Ldif.get_server_type_value("RFC")
         default_server_raw = getattr(config, "ldif_default_server_type", "rfc")
         return default_server_raw if isinstance(default_server_raw, str) else "rfc"
 
@@ -101,7 +101,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         max_lines: int | None = None,
     ) -> r[m.Ldif.ServerDetectionResult]:
         """Detect LDAP server type from LDIF file or content."""
-        max_lines = max_lines or u.Ldif.Server.get_server_detection_default_max_lines()
+        max_lines = max_lines or u.Ldif.get_server_detection_default_max_lines()
         if ldif_path is None and ldif_content is None:
             return r[m.Ldif.ServerDetectionResult].fail(
                 "Either ldif_path or ldif_content must be provided"
@@ -124,7 +124,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         scores_dict = self._calculate_scores(content_sample)
         detected_type_raw, confidence = self._determine_server_type(scores_dict)
         patterns_found = self._extract_patterns(content_sample)
-        detected_type = u.Ldif.Server.normalize_server_type(detected_type_raw)
+        detected_type = u.Ldif.normalize_server_type(detected_type_raw)
         scores_model = m.Ldif.DynamicCounts(**scores_dict)
         detection_result = m.Ldif.ServerDetectionResult(
             detected_server_type=detected_type,
@@ -132,7 +132,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
             scores=scores_model,
             patterns_found=patterns_found,
             is_confident=confidence
-            >= u.Ldif.Server.get_server_detection_confidence_threshold(),
+            >= u.Ldif.get_server_detection_confidence_threshold(),
         )
         return r[m.Ldif.ServerDetectionResult].ok(detection_result)
 
@@ -163,10 +163,10 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
     def _calculate_scores(self, content: str) -> dict[str, int]:
         """Calculate detection scores for each server type."""
         scores: dict[str, int] = dict.fromkeys(self._get_all_server_types(), 0)
-        scores[u.Ldif.Server.get_server_type_value("GENERIC")] = 1
+        scores[u.Ldif.get_server_type_value("GENERIC")] = 1
         content_lower = content.lower()
-        oid_server_type = u.Ldif.Server.normalize_server_type(
-            u.Ldif.Server.get_server_type_value("OID")
+        oid_server_type = u.Ldif.normalize_server_type(
+            u.Ldif.get_server_type_value("OID")
         )
         oid_constants = self._get_server_constants(oid_server_type)
         if oid_constants:
@@ -178,16 +178,16 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
                 scores,
                 case_sensitive=True,
             )
-        oud_server_type = u.Ldif.Server.normalize_server_type(
-            u.Ldif.Server.get_server_type_value("OUD")
+        oud_server_type = u.Ldif.normalize_server_type(
+            u.Ldif.get_server_type_value("OUD")
         )
         oud_constants = self._get_server_constants(oud_server_type)
         if oud_constants:
             self._process_server_with_oid_pattern(
                 oud_server_type, oud_constants, content, content_lower, scores
             )
-        openldap_server_type = u.Ldif.Server.normalize_server_type(
-            u.Ldif.Server.get_server_type_value("OPENLDAP")
+        openldap_server_type = u.Ldif.normalize_server_type(
+            u.Ldif.get_server_type_value("OPENLDAP")
         )
         openldap_constants = self._get_server_constants(openldap_server_type)
         if (
@@ -208,8 +208,8 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
                         openldap_constants, "DETECTION_OBJECTCLASS_NAMES", None
                     ),
                 )
-        ad_server_type = u.Ldif.Server.normalize_server_type(
-            u.Ldif.Server.get_server_type_value("AD")
+        ad_server_type = u.Ldif.normalize_server_type(
+            u.Ldif.get_server_type_value("AD")
         )
         ad_constants = self._get_server_constants(ad_server_type)
         if (
@@ -237,7 +237,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
             "389ds",
             "apache_directory",
         ):
-            server_literal = u.Ldif.Server.normalize_server_type(server_type_str)
+            server_literal = u.Ldif.normalize_server_type(server_type_str)
             constants = self._get_server_constants(server_literal)
             if constants:
                 self._process_server_with_pattern(
@@ -256,7 +256,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
             return ("rfc", 0.0)
         confidence = max_score / total_score if total_score > 0 else 0.0
         detected_key: str = max(scores, key=lambda k: scores[k])
-        if confidence < u.Ldif.Server.get_server_detection_confidence_threshold():
+        if confidence < u.Ldif.get_server_detection_confidence_threshold():
             return ("rfc", confidence)
         if detected_key == "generic":
             return ("rfc", confidence)
@@ -341,8 +341,8 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         """Extract detected patterns from content."""
         patterns: list[str] = []
         content_lower = content.lower()
-        oid_server_type = u.Ldif.Server.normalize_server_type(
-            u.Ldif.Server.get_server_type_value("OID")
+        oid_server_type = u.Ldif.normalize_server_type(
+            u.Ldif.get_server_type_value("OID")
         )
         oid_constants = self._get_server_constants(oid_server_type)
         if oid_constants:
@@ -357,8 +357,8 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
                 case_sensitive=True,
             )
             self._extract_oid_specific_patterns(oid_constants, content, patterns)
-        oud_server_type = u.Ldif.Server.normalize_server_type(
-            u.Ldif.Server.get_server_type_value("OUD")
+        oud_server_type = u.Ldif.normalize_server_type(
+            u.Ldif.get_server_type_value("OUD")
         )
         oud_constants = self._get_server_constants(oud_server_type)
         if oud_constants:
@@ -371,8 +371,8 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
                 content_lower,
                 patterns,
             )
-        openldap_server_type = u.Ldif.Server.normalize_server_type(
-            u.Ldif.Server.get_server_type_value("OPENLDAP")
+        openldap_server_type = u.Ldif.normalize_server_type(
+            u.Ldif.get_server_type_value("OPENLDAP")
         )
         openldap_constants = self._get_server_constants(openldap_server_type)
         if openldap_constants:
@@ -387,8 +387,8 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
                 content_lower,
                 patterns,
             )
-        ad_server_type = u.Ldif.Server.normalize_server_type(
-            u.Ldif.Server.get_server_type_value("AD")
+        ad_server_type = u.Ldif.normalize_server_type(
+            u.Ldif.get_server_type_value("AD")
         )
         ad_constants = self._get_server_constants(ad_server_type)
         if ad_constants:
@@ -410,24 +410,24 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
             )
         for server_type_str, description in [
             (
-                u.Ldif.Server.get_server_type_value("NOVELL"),
+                u.Ldif.get_server_type_value("NOVELL"),
                 "Novell eDirectory attributes (GUID, Modifiers, etc.)",
             ),
             (
-                u.Ldif.Server.get_server_type_value("DS389"),
+                u.Ldif.get_server_type_value("DS389"),
                 "389 Directory Server attributes (389ds, redhat-ds, dirsrv)",
             ),
             (
-                u.Ldif.Server.get_server_type_value("APACHE"),
+                u.Ldif.get_server_type_value("APACHE"),
                 "Apache DS attributes (apacheDS, apache-*)",
             ),
         ]:
-            server_type = u.Ldif.Server.normalize_server_type(server_type_str)
+            server_type = u.Ldif.normalize_server_type(server_type_str)
             self._extract_pattern_with_attr(
                 server_type, "DETECTION_PATTERN", description, content_lower, patterns
             )
-        tivoli_server_type = u.Ldif.Server.normalize_server_type(
-            u.Ldif.Server.get_server_type_value("IBM_TIVOLI")
+        tivoli_server_type = u.Ldif.normalize_server_type(
+            u.Ldif.get_server_type_value("IBM_TIVOLI")
         )
         tivoli_constants = self._get_server_constants(tivoli_server_type)
         if tivoli_constants:
@@ -500,7 +500,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         search_content = content if case_sensitive else content_lower
         if re.search(pattern, search_content) and server_type:
             scores[server_type] += weight
-        score_attr_match = u.Ldif.Server.get_server_detection_attribute_match_score()
+        score_attr_match = u.Ldif.get_server_detection_attribute_match_score()
         for item in (*attributes, *(objectclasses or [])):
             server_type_lower = server_type.lower() if server_type else ""
             item_lower = item.lower()

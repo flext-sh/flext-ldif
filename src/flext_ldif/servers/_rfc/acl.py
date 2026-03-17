@@ -8,12 +8,9 @@ from typing import Self, overload, override
 
 from flext_core import FlextLogger, r
 
-from flext_ldif import m, p, u
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
-from flext_ldif.servers.base import FlextLdifServersBase
-from flext_ldif.typings import t
+from flext_ldif import m, p, t, u
+from flext_ldif.servers import FlextLdifServersBase
+from flext_ldif.servers._base import FlextLdifServersBaseSchemaAcl
 
 logger = FlextLogger(__name__)
 
@@ -138,9 +135,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         if not acl_line or not acl_line.strip():
             return r[m.Ldif.Acl].fail("ACL line must be a non-empty string.")
         server_type_str = self._get_server_type()
-        server_type_value = FlextLdifUtilitiesServer.normalize_server_type(
-            server_type_str
-        )
+        server_type_value = u.Ldif.normalize_server_type(server_type_str)
         extensions_meta = m.Ldif.DynamicMetadata.model_construct(
             _fields_set={"original_format"}, original_format=acl_line
         )
@@ -166,7 +161,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         return super()._supports_feature(_feature_id)
 
     @override
-    def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
+    def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
         """Write ACL to RFC-compliant string format (internal)."""
         if acl_data.raw_acl and acl_data.raw_acl.strip():
             return r[str].ok(acl_data.raw_acl)

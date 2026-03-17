@@ -208,7 +208,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def filter_batch(
         entries: Sequence[m.Ldif.Entry],
-        config: FlextLdifModelsSettings.EntryFilterConfig | None = None,
+        config: FlextLdifModelsSettings.FlextLdifUtilitiesFiltersConfig | None = None,
         **kwargs: str | float | bool | None,
     ) -> r[list[m.Ldif.Entry]]:
         """Filter entries based on criteria."""
@@ -218,7 +218,11 @@ class FlextLdifUtilitiesEntry:
             if exclude_schema and effective_is_schema is None:
                 effective_is_schema = False
             kwargs["is_schema"] = effective_is_schema
-            config = FlextLdifModelsSettings.EntryFilterConfig.model_validate(kwargs)
+            config = (
+                FlextLdifModelsSettings.FlextLdifUtilitiesFiltersConfig.model_validate(
+                    kwargs
+                )
+            )
         filtered: list[m.Ldif.Entry] = [
             entry
             for entry in entries

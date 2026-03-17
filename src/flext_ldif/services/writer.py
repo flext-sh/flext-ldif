@@ -89,7 +89,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
         )
         target_server_type: str | None = None
         try:
-            target_server_type = u.Ldif.Server.normalize_server_type(
+            target_server_type = u.Ldif.normalize_server_type(
                 str(target_server_type_raw)
             )
         except ValueError:

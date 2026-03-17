@@ -4,14 +4,13 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextModels
+from flext_core import m
 from pydantic import ConfigDict, Field, computed_field
 
-from flext_ldif.constants import FlextLdifConstants as c
-from flext_ldif.shared import FlextLdifShared
+from flext_ldif import FlextLdifShared, c
 
 
-class FlextLdifModelsBase(FlextModels.ArbitraryTypesModel):
+class FlextLdifModelsBase(m.ArbitraryTypesModel):
     """Base class for all FLEXT-LDIF models (events, configs, processing results)."""
 
     model_config = ConfigDict(
@@ -62,7 +61,7 @@ class FrozenLdifModel(FlextLdifModelsBase):
     model_config = ConfigDict(frozen=True)
 
 
-class FrozenIgnoreLdifModel(FlextModels.ArbitraryTypesModel):
+class FrozenIgnoreLdifModel(m.ArbitraryTypesModel):
     """Immutable LDIF model that silently ignores extra fields."""
 
     model_config = ConfigDict(frozen=True, extra="ignore")
@@ -74,7 +73,7 @@ class MutableIgnoreLdifModel(FlextLdifModelsBase):
     model_config = ConfigDict(frozen=False, extra="ignore")
 
 
-class AclElement(FlextModels.ArbitraryTypesModel):
+class AclElement(m.ArbitraryTypesModel):
     """Base class for all ACL-related models."""
 
     model_config = ConfigDict(

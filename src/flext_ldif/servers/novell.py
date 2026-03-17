@@ -113,7 +113,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         ) -> bool:
             """Detect eDirectory attribute definitions using Constants."""
             if isinstance(attr_definition, m.Ldif.SchemaAttribute):
-                return u.Ldif.Server.matches_server_patterns(
+                return u.Ldif.matches_server_patterns(
                     value=attr_definition,
                     oid_pattern=FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES,
@@ -147,7 +147,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         ) -> bool:
             """Detect eDirectory objectClass definitions using Constants."""
             if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
-                return u.Ldif.Server.matches_server_patterns(
+                return u.Ldif.matches_server_patterns(
                     value=oc_definition,
                     oid_pattern=FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES,

@@ -16,35 +16,35 @@ from typing import ClassVar, Literal, Self, TypeIs, overload
 
 from flext_core import FlextLogger, FlextUtilities, r
 
-from flext_ldif import c, m, p
-from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
-from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
-from flext_ldif._utilities.decorators import FlextLdifUtilitiesDecorators
-from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
-from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
-from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
-from flext_ldif._utilities.filters import EntryFilter
-from flext_ldif._utilities.fluent import DnOps, EntryOps
-from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
-from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
-from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
-from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
-from flext_ldif._utilities.parsers import FlextLdifUtilitiesParsers
-from flext_ldif._utilities.pipeline import (
+from flext_ldif import c, m, p, t
+from flext_ldif._utilities import (
+    DnOps,
+    EntryOps,
+    FlextLdifUtilitiesACL,
+    FlextLdifUtilitiesAttribute,
+    FlextLdifUtilitiesDecorators,
+    FlextLdifUtilitiesDetection,
+    FlextLdifUtilitiesDN,
+    FlextLdifUtilitiesEntry,
+    FlextLdifUtilitiesEvents,
+    FlextLdifUtilitiesFilters,
+    FlextLdifUtilitiesMetadata,
+    FlextLdifUtilitiesObjectClass,
+    FlextLdifUtilitiesOID,
+    FlextLdifUtilitiesParser,
+    FlextLdifUtilitiesParsers,
+    FlextLdifUtilitiesResult,
+    FlextLdifUtilitiesSchema,
+    FlextLdifUtilitiesServer,
+    FlextLdifUtilitiesTransformer,
+    FlextLdifUtilitiesTypeGuards,
+    FlextLdifUtilitiesValidation,
+    FlextLdifUtilitiesWriter,
+    FlextLdifUtilitiesWriters,
     Pipeline,
     ValidationPipeline,
     ValidationResult,
 )
-from flext_ldif._utilities.result import FlextLdifResult
-from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif._utilities.transformers import EntryTransformer
-from flext_ldif._utilities.type_guards import FlextLdifUtilitiesTypeGuards
-from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
-from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
-from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
-from flext_ldif.typings import t
 
 logger = FlextLogger(__name__)
 
@@ -52,7 +52,34 @@ logger = FlextLogger(__name__)
 class FlextLdifUtilities(FlextUtilities):
     """FLEXT LDIF Utilities - Centralized helpers for LDIF operations."""
 
-    class Ldif:
+    class Ldif(
+        DnOps,
+        EntryOps,
+        FlextLdifUtilitiesACL,
+        FlextLdifUtilitiesAttribute,
+        FlextLdifUtilitiesDecorators,
+        FlextLdifUtilitiesDetection,
+        FlextLdifUtilitiesDN,
+        FlextLdifUtilitiesEntry,
+        FlextLdifUtilitiesEvents,
+        FlextLdifUtilitiesFilters,
+        FlextLdifUtilitiesMetadata,
+        FlextLdifUtilitiesObjectClass,
+        FlextLdifUtilitiesOID,
+        FlextLdifUtilitiesParser,
+        FlextLdifUtilitiesParsers,
+        FlextLdifUtilitiesResult,
+        FlextLdifUtilitiesSchema,
+        FlextLdifUtilitiesServer,
+        FlextLdifUtilitiesTransformer,
+        FlextLdifUtilitiesTypeGuards,
+        FlextLdifUtilitiesValidation,
+        FlextLdifUtilitiesWriter,
+        FlextLdifUtilitiesWriters,
+        Pipeline,
+        ValidationPipeline,
+        ValidationResult,
+    ):
         """LDIF-specific utility namespace."""
 
         type VariadicCallable[T] = Callable[..., T]
@@ -198,12 +225,6 @@ class FlextLdifUtilities(FlextUtilities):
                 return result.value
             return default
 
-        class ACL(FlextLdifUtilitiesACL):
-            """ACL utilities for LDIF operations."""
-
-        class Attribute(FlextLdifUtilitiesAttribute):
-            """Attribute utilities for LDIF operations."""
-
         class Constants(c):
             """Constants for LDIF operations."""
 
@@ -241,51 +262,6 @@ class FlextLdifUtilities(FlextUtilities):
                 valid_lower = {v.lower() for v in valid_values}
                 invalid = {v for v in values if v.lower() not in valid_lower}
                 return (len(invalid) == 0, invalid)
-
-        class Decorators(FlextLdifUtilitiesDecorators):
-            """Decorator utilities for LDIF operations."""
-
-        class Detection(FlextLdifUtilitiesDetection):
-            """Detection utilities for LDIF operations."""
-
-        class DN(FlextLdifUtilitiesDN):
-            """DN utilities for LDIF operations."""
-
-        class Entry(FlextLdifUtilitiesEntry):
-            """Entry utilities for LDIF operations."""
-
-        class Events(FlextLdifUtilitiesEvents):
-            """Event utilities for LDIF operations."""
-
-        class Metadata(FlextLdifUtilitiesMetadata):
-            """Metadata utilities for LDIF operations."""
-
-        class ObjectClass(FlextLdifUtilitiesObjectClass):
-            """ObjectClass utilities for LDIF operations."""
-
-        class OID(FlextLdifUtilitiesOID):
-            """OID utilities for LDIF operations."""
-
-        class LdifParser(FlextLdifUtilitiesParser):
-            """LDIF parser utilities."""
-
-        class Parsers(FlextLdifUtilitiesParsers):
-            """Parser utilities for LDIF operations."""
-
-        class Schema(FlextLdifUtilitiesSchema):
-            """Schema utilities for LDIF operations."""
-
-        class Server(FlextLdifUtilitiesServer):
-            """Server utilities for LDIF operations."""
-
-        class LdifValidation(FlextLdifUtilitiesValidation):
-            """LDIF validation utilities."""
-
-        class Writer(FlextLdifUtilitiesWriter):
-            """Writer utilities for LDIF operations."""
-
-        class Writers(FlextLdifUtilitiesWriters):
-            """Writers utilities for LDIF operations."""
 
         @staticmethod
         def evaluate_predicate(
@@ -455,19 +431,19 @@ class FlextLdifUtilities(FlextUtilities):
             | Mapping[str, T]
             | Sequence[m.Ldif.Entry],
             predicate_or_filter1: FlextLdifUtilities.Ldif.VariadicCallable[bool]
-            | EntryFilter[m.Ldif.Entry],
-            *filters: EntryFilter[m.Ldif.Entry],
+            | FlextLdifUtilitiesFilters[m.Ldif.Entry],
+            *filters: FlextLdifUtilitiesFilters[m.Ldif.Entry],
             _mapper: FlextLdifUtilities.Ldif.VariadicCallable[R] | None = None,
             mode: Literal["all", "any"] = "all",
         ) -> (
             list[builtins.object]
             | Mapping[str, builtins.object]
             | object
-            | FlextLdifResult[list[m.Ldif.Entry]]
+            | FlextLdifUtilitiesResult[list[m.Ldif.Entry]]
         ):
             """Filter entries using composable filter predicates."""
             match predicate_or_filter1:
-                case EntryFilter():
+                case FlextLdifUtilitiesFilters():
                     pass
                 case _:
                     predicate: FlextLdifUtilities.Ldif.VariadicCallable[bool] = (
@@ -497,7 +473,7 @@ class FlextLdifUtilities(FlextUtilities):
             entry_filter = predicate_or_filter1
 
             def predicate_wrapper(item: builtins.object) -> bool:
-                """Wrap EntryFilter as VariadicCallable for base class compatibility."""
+                """Wrap FlextLdifUtilitiesFilters as VariadicCallable for base class compatibility."""
                 match item:
                     case m.Ldif.Entry() as entry_item:
                         return entry_filter.matches(entry_item)
@@ -535,21 +511,21 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def filter_ldif_entries(
             entries: Sequence[m.Ldif.Entry],
-            predicate_or_filter1: EntryFilter[m.Ldif.Entry],
-            filters: tuple[EntryFilter[m.Ldif.Entry], ...],
+            predicate_or_filter1: FlextLdifUtilitiesFilters[m.Ldif.Entry],
+            filters: tuple[FlextLdifUtilitiesFilters[m.Ldif.Entry], ...],
             mode: Literal["all", "any"],
-        ) -> FlextLdifResult[list[m.Ldif.Entry]]:
-            """Filter LDIF entries using EntryFilter (internal helper)."""
-            filter_list: list[EntryFilter[m.Ldif.Entry]] = [
+        ) -> FlextLdifUtilitiesResult[list[m.Ldif.Entry]]:
+            """Filter LDIF entries using FlextLdifUtilitiesFilters (internal helper)."""
+            filter_list: list[FlextLdifUtilitiesFilters[m.Ldif.Entry]] = [
                 predicate_or_filter1
             ] + list(filters)
             if not filter_list:
-                return FlextLdifResult[list[m.Ldif.Entry]].ok(list(entries))
-            combined: EntryFilter[m.Ldif.Entry] = filter_list[0]
+                return FlextLdifUtilitiesResult[list[m.Ldif.Entry]].ok(list(entries))
+            combined: FlextLdifUtilitiesFilters[m.Ldif.Entry] = filter_list[0]
             for f in filter_list[1:]:
                 combined = combined & f if mode == "all" else combined | f
             filtered = [entry for entry in entries if combined.matches(entry)]
-            return FlextLdifResult[list[m.Ldif.Entry]].ok(filtered)
+            return FlextLdifUtilitiesResult[list[m.Ldif.Entry]].ok(filtered)
 
         @staticmethod
         def is_entry_sequence(
@@ -650,7 +626,7 @@ class FlextLdifUtilities(FlextUtilities):
             target_server: c.Ldif.ServerTypes | None = None,
             normalize_dns: bool = True,
             normalize_attrs: bool = True,
-        ) -> FlextLdifResult[list[m.Ldif.Entry]]: ...
+        ) -> FlextLdifUtilitiesResult[list[m.Ldif.Entry]]: ...
 
         @staticmethod
         def process(
@@ -680,7 +656,7 @@ class FlextLdifUtilities(FlextUtilities):
             target_server: c.Ldif.ServerTypes | None = None,
             normalize_dns: bool = True,
             normalize_attrs: bool = True,
-        ) -> r[list[builtins.object]] | FlextLdifResult[list[m.Ldif.Entry]]:
+        ) -> r[list[builtins.object]] | FlextLdifUtilitiesResult[list[m.Ldif.Entry]]:
             """Universal entry processor."""
             processor_normalized = (
                 processor_or_config if processor_or_config is not None else processor
@@ -698,17 +674,17 @@ class FlextLdifUtilities(FlextUtilities):
                     entries: list[m.Ldif.Entry] = [
                         x for x in items_or_entries if isinstance(x, m.Ldif.Entry)
                     ]
-                    result = FlextLdifUtilities.Ldif.Entry.transform_batch(
+                    result = FlextLdifUtilities.Ldif.transform_batch(
                         entries,
                         normalize_dns=normalize_dns,
                         normalize_attrs=normalize_attrs,
                     )
-                    return FlextLdifResult.from_result(result)
+                    return FlextLdifUtilitiesResult.from_result(result)
                 if processor_normalized is None:
                     msg = "processor is required for base class process"
-                    return FlextLdifResult[list[m.Ldif.Entry]].fail(msg)
+                    return FlextLdifUtilitiesResult[list[m.Ldif.Entry]].fail(msg)
                 msg = "ProcessConfig requires LDIF entry sequence"
-                return FlextLdifResult[list[m.Ldif.Entry]].fail(msg)
+                return FlextLdifUtilitiesResult[list[m.Ldif.Entry]].fail(msg)
             processor_func: Callable[..., object] = processor_normalized
             match items_or_entries:
                 case dict() | Mapping():
@@ -803,14 +779,14 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def transform_entries(
             entries: Sequence[m.Ldif.Entry],
-            *transformers: EntryTransformer[m.Ldif.Entry],
+            *transformers: FlextLdifUtilitiesTransformer[m.Ldif.Entry],
             fail_fast: bool = True,
-        ) -> FlextLdifResult[list[m.Ldif.Entry]]:
+        ) -> FlextLdifUtilitiesResult[list[m.Ldif.Entry]]:
             """Apply entry transformers to LDIF entries using pipeline semantics."""
             pipeline = Pipeline(fail_fast=fail_fast)
             for transformer in transformers:
                 _ = pipeline.add(transformer)
-            return FlextLdifResult[list[m.Ldif.Entry]].from_result(
+            return FlextLdifUtilitiesResult[list[m.Ldif.Entry]].from_result(
                 pipeline.execute(entries)
             )
 
@@ -2261,9 +2237,6 @@ class FlextLdifUtilities(FlextUtilities):
             if result.is_success:
                 return result.value
             return default
-
-        class TypeGuards(FlextLdifUtilitiesTypeGuards):
-            """Type guards for Model identification."""
 
 
 __all__ = ["FlextLdifUtilities", "u"]

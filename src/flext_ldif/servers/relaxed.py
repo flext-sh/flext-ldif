@@ -135,7 +135,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         def _extract_oid_from_attribute(self, attr_definition: str) -> str | None:
             """Extract OID from attribute definition using multiple strategies."""
-            oid_result = u.Ldif.LdifParser.extract_oid(attr_definition)
+            oid_result = u.Ldif.extract_oid(attr_definition)
             if oid_result.is_success:
                 return oid_result.value
             oid_match = re.search(
@@ -159,7 +159,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         def _extract_oid_with_fallback_patterns(self, definition: str) -> str | None:
             """Extract OID using multiple fallback patterns for relaxed mode."""
-            oid_result = u.Ldif.LdifParser.extract_oid(definition)
+            oid_result = u.Ldif.extract_oid(definition)
             if oid_result.is_success:
                 return oid_result.value
             oid_match = re.search(
@@ -317,10 +317,10 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return r[m.Ldif.SchemaObjectClass].fail(
                     "Failed to extract OID from objectClass definition"
                 )
-            name = u.Ldif.LdifParser.extract_optional_field(
+            name = u.Ldif.extract_optional_field(
                 oc_definition, "\\bNAME\\s+(?:'([^']+)'|\\(([^)]+)\\))\\b", default=oid
             )
-            desc = u.Ldif.LdifParser.extract_optional_field(
+            desc = u.Ldif.extract_optional_field(
                 oc_definition, "\\bDESC\\s+'([^']+)'\\b"
             )
             sup = self._extract_sup_from_objectclass(oc_definition)
@@ -552,7 +552,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             if not dn or not dn.strip():
                 return r[str].fail("DN cannot be empty")
             try:
-                norm_result = u.Ldif.DN.norm(dn)
+                norm_result = u.Ldif.norm(dn)
                 if norm_result.is_success:
                     return r[str].ok(norm_result.value)
                 return r[str].fail(
@@ -617,7 +617,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 if parent_result.error
                 else "",
             )
-            return u.Ldif.Parsers.Content.parse(
+            return u.Ldif.Content.parse(
                 ldif_content=ldif_content,
                 server_type=self._get_server_type(),
                 parse_entry_hook=self._adapted_parse_entry_relaxed,

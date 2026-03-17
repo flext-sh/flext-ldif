@@ -165,7 +165,7 @@ class TestsTestFlextLdifAclAttributeRegistry(s):
         forbidden_attrs: list[str],
     ) -> None:
         """Parametrized test for get_acl_attributes."""
-        attrs = u.Ldif.ACL.get_acl_attributes(param_server_type)
+        attrs = u.Ldif.get_acl_attributes(param_server_type)
         for required in required_attrs:
             assert required in attrs, f"{required} not in {scenario}"
         for forbidden in forbidden_attrs:
@@ -187,13 +187,13 @@ class TestsTestFlextLdifAclAttributeRegistry(s):
         expected_result: bool,
     ) -> None:
         """Parametrized test for is_acl_attribute."""
-        result = u.Ldif.ACL.is_acl_attribute(attr_name, server_type)
+        result = u.Ldif.is_acl_attribute(attr_name, server_type)
         assert result == expected_result, f"{scenario} failed"
 
     def test_acl_registry_no_mutation(self) -> None:
         """get_acl_attributes should return new list each time."""
-        attrs1 = list(u.Ldif.ACL.get_acl_attributes("oid"))
-        attrs2 = list(u.Ldif.ACL.get_acl_attributes("oid"))
+        attrs1 = list(u.Ldif.get_acl_attributes("oid"))
+        attrs2 = list(u.Ldif.get_acl_attributes("oid"))
         assert attrs1 == attrs2
         assert attrs1 is not attrs2
         attrs1.append("test_attribute")

@@ -7,8 +7,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Literal
 
-from flext_core import t
 from pydantic import BaseModel, ConfigDict, Field
+
+from flext_ldif import t
 
 _TRUE_STRINGS: frozenset[str] = frozenset({"true", "1", "yes", "on"})
 type _ConvertValue = t.Container | Sequence[t.Container] | Mapping[str, t.Container]

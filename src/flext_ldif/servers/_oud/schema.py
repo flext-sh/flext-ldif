@@ -224,14 +224,14 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     def _validate_attribute_oid(self, oid: str) -> r[bool]:
         """Validate attribute OID format for OUD."""
-        oid_validation_result = u.Ldif.OID.validate_format(oid)
+        oid_validation_result = u.Ldif.validate_format(oid)
         if oid_validation_result.is_failure:
             return r[bool].fail(f"OID validation failed: {oid_validation_result.error}")
         is_valid_basic_oid = oid_validation_result.value
         is_valid_oud_oid = is_valid_basic_oid
         if not is_valid_oud_oid and oid.endswith("-oid"):
             base_oid = oid[:-4]
-            base_validation = u.Ldif.OID.validate_format(base_oid)
+            base_validation = u.Ldif.validate_format(base_oid)
             if base_validation.is_success:
                 is_valid_oud_oid = base_validation.value
         if not is_valid_oud_oid:

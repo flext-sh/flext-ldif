@@ -131,7 +131,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
             return r[m.Ldif.Syntax].fail(f"Invalid OID format: {oid}")
         try:
             normalized_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = (
-                u.Ldif.Server.normalize_server_type(server_type)
+                u.Ldif.normalize_server_type(server_type)
             )
             syntax = m.Ldif.Syntax.resolve_syntax_oid(
                 oid=oid, server_type=normalized_server_type

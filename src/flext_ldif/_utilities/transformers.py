@@ -13,7 +13,7 @@ from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 
 
-class EntryTransformer[T]:
+class FlextLdifUtilitiesTransformer[T]:
     """Base class for entry transformers."""
 
     __slots__ = ()
@@ -27,7 +27,7 @@ class EntryTransformer[T]:
         return r.traverse(items, self.apply)
 
 
-class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
+class NormalizeDnTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
     """Transformer for DN normalization."""
 
     __slots__ = ("_case", "_spaces", "_validate")
@@ -104,7 +104,7 @@ class NormalizeDnTransformer(EntryTransformer[m.Ldif.Entry]):
         return normalized_dn
 
 
-class NormalizeAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
+class NormalizeAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
     """Transformer for attribute normalization."""
 
     __slots__ = ("_case_fold_names", "_remove_empty", "_trim_values")
@@ -194,7 +194,7 @@ class Normalize:
         return NormalizeDnTransformer(case=case, spaces=spaces, validate=validate)
 
 
-class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
+class ReplaceBaseDnTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
     """Transformer for replacing base DN in entries."""
 
     __slots__ = ("_case_insensitive", "_new_base", "_old_base")
@@ -226,7 +226,7 @@ class ReplaceBaseDnTransformer(EntryTransformer[m.Ldif.Entry]):
         return r[m.Ldif.Entry].ok(updated_entry)
 
 
-class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
+class ConvertBooleansTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
     """Transformer for converting boolean attribute values."""
 
     __slots__ = ("_attributes", "_format")
@@ -270,7 +270,7 @@ class ConvertBooleansTransformer(EntryTransformer[m.Ldif.Entry]):
         return r[m.Ldif.Entry].ok(updated_entry)
 
 
-class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
+class FilterAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
     """Transformer for filtering entry attributes."""
 
     __slots__ = ("_exclude", "_include")
@@ -321,7 +321,7 @@ class FilterAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         return r[m.Ldif.Entry].ok(updated_entry)
 
 
-class RemoveAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
+class RemoveAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
     """Transformer for removing specific attributes from entries."""
 
     __slots__ = ("_attributes",)
@@ -340,7 +340,7 @@ class RemoveAttrsTransformer(EntryTransformer[m.Ldif.Entry]):
         return r[m.Ldif.Entry].ok(updated_entry)
 
 
-class CustomTransformer(EntryTransformer[m.Ldif.Entry]):
+class CustomTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
     """Transformer using a custom function."""
 
     __slots__ = ("_func",)
@@ -405,8 +405,8 @@ class Transform:
 __all__ = [
     "ConvertBooleansTransformer",
     "CustomTransformer",
-    "EntryTransformer",
     "FilterAttrsTransformer",
+    "FlextLdifUtilitiesTransformer",
     "Normalize",
     "NormalizeAttrsTransformer",
     "NormalizeDnTransformer",

@@ -8,8 +8,8 @@ from typing import Self, override
 from flext_core import r
 
 from flext_ldif import m
-from flext_ldif._utilities.filters import EntryFilter
-from flext_ldif._utilities.transformers import EntryTransformer
+from flext_ldif._utilities.filters import FlextLdifUtilitiesFilters
+from flext_ldif._utilities.transformers import FlextLdifUtilitiesTransformer
 
 
 class _Filtered:
@@ -56,7 +56,10 @@ class Pipeline:
         self._fail_fast = fail_fast
 
     def add(
-        self, transformer: EntryTransformer[m.Ldif.Entry], *, name: str | None = None
+        self,
+        transformer: FlextLdifUtilitiesTransformer[m.Ldif.Entry],
+        *,
+        name: str | None = None,
     ) -> Self:
         """Add a transformer to the pipeline."""
         step_name = name or transformer.__class__.__name__
@@ -137,7 +140,10 @@ class Pipeline:
         return r[m.Ldif.Entry | _Filtered].ok(current)
 
     def filter(
-        self, entry_filter: EntryFilter[m.Ldif.Entry], *, name: str | None = None
+        self,
+        entry_filter: FlextLdifUtilitiesFilters[m.Ldif.Entry],
+        *,
+        name: str | None = None,
     ) -> Self:
         """Add a filter to the pipeline."""
         step_name = name or entry_filter.__class__.__name__

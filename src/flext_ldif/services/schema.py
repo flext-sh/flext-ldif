@@ -104,7 +104,7 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
         try:
             if not attr_definition or not attr_definition.strip():
                 return r[m.Ldif.SchemaAttribute].fail("Attribute definition is empty")
-            parse_result = u.Ldif.Schema.parse_attribute(attr_definition)
+            parse_result = u.Ldif.parse_attribute(attr_definition)
             if parse_result.is_failure:
                 return r[m.Ldif.SchemaAttribute].fail(
                     f"Parse failed: {parse_result.error}"
@@ -139,7 +139,7 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
                 return r[m.Ldif.SchemaObjectClass].fail(
                     "ObjectClass definition is empty"
                 )
-            parsed_dict = dict(u.Ldif.Schema.parse_objectclass(oc_definition))
+            parsed_dict = dict(u.Ldif.parse_objectclass(oc_definition))
             metadata_extensions = parsed_dict.pop("metadata_extensions", {})
             oc_dict = {
                 "oid": str(parsed_dict["oid"]) if parsed_dict["oid"] else "",
@@ -180,7 +180,7 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             if not attr.name or not attr.name.strip():
                 return r[bool].fail("Attribute NAME is required and cannot be empty")
             if attr.syntax:
-                validation_result = u.Ldif.OID.validate_format(attr.syntax)
+                validation_result = u.Ldif.validate_format(attr.syntax)
                 if validation_result.is_failure or not validation_result.value:
                     return r[bool].fail(f"Invalid SYNTAX OID: {attr.syntax}")
             return r[bool].ok(value=True)
@@ -233,7 +233,7 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             validation = self.validate_attribute(attr)
             if not validation.is_success:
                 return r[str].fail(validation.error or "Unknown error")
-            return u.Ldif.Writer.write_rfc_attribute(attr)
+            return u.Ldif.write_rfc_attribute(attr)
         except (
             ValueError,
             KeyError,
@@ -251,7 +251,7 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             validation = self.validate_objectclass(oc)
             if not validation.is_success:
                 return r[str].fail(validation.error or "Unknown error")
-            return u.Ldif.Writer.write_rfc_objectclass(oc)
+            return u.Ldif.write_rfc_objectclass(oc)
         except (
             ValueError,
             KeyError,

@@ -7,13 +7,14 @@ from pathlib import Path
 from flext_tests import FlextTestsUtilities
 
 from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifUtilities
+from flext_ldif._utilities import FlextLdifUtilitiesOID
 from tests.constants import RfcTestHelpers as _RfcTestHelpers, TestDeduplicationHelpers
 
 
 class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
     """Project test utility namespace extension."""
 
-    OID = FlextLdifUtilities.Ldif.OID
+    OID = FlextLdifUtilitiesOID
     TestDeduplicationHelpers = TestDeduplicationHelpers
 
     class RfcTestHelpers(_RfcTestHelpers):

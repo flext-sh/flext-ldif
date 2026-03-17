@@ -406,7 +406,7 @@ class TestSchemaDeviationsUtilities:
     def test_analyze_schema_formatting_comprehensive(self) -> None:
         """Test analyze_schema_formatting captures all deviations."""
         definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' DESC 'User identifier' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  "
-        details = FlextLdifUtilities.Ldif.Metadata.analyze_schema_formatting(definition)
+        details = FlextLdifUtilities.Ldif.analyze_schema_formatting(definition)
         assert details.original_string_complete is not None, (
             "Missing original_string_complete"
         )
@@ -442,7 +442,7 @@ class TestSchemaDeviationsUtilities:
     def test_analyze_oud_style_formatting(self) -> None:
         """Test analyze_schema_formatting for OUD-style definition."""
         definition = "( 0.9.2342.19200300.100.1.1 NAME ( 'uid' 'userid' ) EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} X-ORIGIN 'RFC 4519' )"
-        details = FlextLdifUtilities.Ldif.Metadata.analyze_schema_formatting(definition)
+        details = FlextLdifUtilities.Ldif.analyze_schema_formatting(definition)
         extensions_dict = details.extensions.model_dump()
         assert extensions_dict["syntax_quotes"] is False, (
             "OUD should not have syntax quotes"
@@ -494,7 +494,7 @@ class TestSchemaDeviationsAttributeKeyCasing:
     def test_oid_lowercase_attribute_key(self) -> None:
         """Test OID lowercase 'attributetypes:' is tracked."""
         definition = "attributetypes: ( 0.9.2342.19200300.100.1.1 NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )"
-        details = FlextLdifUtilities.Ldif.Metadata.analyze_schema_formatting(definition)
+        details = FlextLdifUtilities.Ldif.analyze_schema_formatting(definition)
         extensions_dict = details.extensions.model_dump()
         assert extensions_dict.get("attribute_case") == "attributetypes", (
             "Should detect lowercase 'attributetypes'"
@@ -506,7 +506,7 @@ class TestSchemaDeviationsAttributeKeyCasing:
     def test_oud_mixed_case_attribute_key(self) -> None:
         """Test OUD mixed-case 'attributeTypes:' is tracked."""
         definition = "attributeTypes: ( 0.9.2342.19200300.100.1.1 NAME 'uid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
-        details = FlextLdifUtilities.Ldif.Metadata.analyze_schema_formatting(definition)
+        details = FlextLdifUtilities.Ldif.analyze_schema_formatting(definition)
         extensions_dict = details.extensions.model_dump()
         assert extensions_dict.get("attribute_case") == "attributeTypes", (
             "Should detect mixed-case 'attributeTypes'"

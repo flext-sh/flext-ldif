@@ -18,7 +18,7 @@ from contextlib import suppress
 from datetime import datetime
 from typing import Annotated, ClassVar, Self, TypedDict, Unpack, override
 
-from flext_core import FlextLogger, FlextUtilities, m, r
+from flext_core import FlextLogger, m, r, u
 from pydantic import (
     ConfigDict,
     Field,
@@ -28,17 +28,15 @@ from pydantic import (
     model_validator,
 )
 
-from flext_ldif._models.base import AclElement, FlextLdifModelsBase, SchemaElement
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif._models.settings import FlextLdifModelsSettings
-from flext_ldif.constants import FlextLdifConstants as c
-from flext_ldif.protocols import FlextLdifProtocols
-from flext_ldif.shared import FlextLdifShared
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif import FlextLdifConstants as c, FlextLdifShared, t
+from flext_ldif._models import (
+    AclElement,
+    FlextLdifModelsBase,
+    FlextLdifModelsMetadata,
+    FlextLdifModelsSettings,
+    SchemaElement,
+)
 
-p = FlextLdifProtocols
-t = FlextLdifTypes
-u = FlextUtilities
 logger = FlextLogger(__name__)
 
 

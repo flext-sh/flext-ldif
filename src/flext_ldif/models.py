@@ -172,7 +172,9 @@ class FlextLdifModels(FlextModels):
             """Processing configuration models namespace."""
 
             EntryTransformConfig: Final = FlextLdifModelsSettings.EntryTransformConfig
-            EntryFilterConfig: Final = FlextLdifModelsSettings.EntryFilterConfig
+            FlextLdifUtilitiesFiltersConfig: Final = (
+                FlextLdifModelsSettings.FlextLdifUtilitiesFiltersConfig
+            )
             CaseFoldOption: Final = c.Ldif.CaseFoldOption
 
 

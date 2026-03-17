@@ -276,7 +276,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
     @staticmethod
     def _entry_dn_value(entry: m.Ldif.Entry) -> str:
-        return str(u.Ldif.DN.get_dn_value(entry.dn)) if entry.dn else ""
+        return str(u.Ldif.get_dn_value(entry.dn)) if entry.dn else ""
 
     @staticmethod
     def _identify_root_dns(
@@ -312,7 +312,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
     @staticmethod
     def _normalized_dn_key(dn_value: str) -> str:
-        norm_result = u.Ldif.DN.norm(dn_value)
+        norm_result = u.Ldif.norm(dn_value)
         normalized = norm_result.map_or(None)
         normalized_result = u.Ldif.normalize_ldif(normalized or dn_value, case="lower")
         if isinstance(normalized_result, str):
@@ -321,7 +321,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
     @staticmethod
     def _normalized_parent_dn_key(parent_dn: str) -> str:
-        parent_norm_result = u.Ldif.DN.norm(parent_dn)
+        parent_norm_result = u.Ldif.norm(parent_dn)
         parent_normalized: str | None = parent_norm_result.map_or(None)
         return parent_normalized.lower() if parent_normalized else parent_dn.lower()
 
@@ -434,7 +434,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
 
         def schema_key(entry: m.Ldif.Entry) -> tuple[int, str]:
             if not entry.attributes:
-                dn_value = u.Ldif.DN.get_dn_value(entry.dn) if entry.dn else ""
+                dn_value = u.Ldif.get_dn_value(entry.dn) if entry.dn else ""
                 return (3, dn_value.lower())
             attrs = entry.attributes.attributes
             if c.Ldif.SchemaFields.ATTRIBUTE_TYPES in attrs:
@@ -444,10 +444,10 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 priority = 2
                 oid_values = attrs[c.Ldif.SchemaFields.OBJECT_CLASSES]
             else:
-                dn_value = u.Ldif.DN.get_dn_value(entry.dn) if entry.dn else ""
+                dn_value = u.Ldif.get_dn_value(entry.dn) if entry.dn else ""
                 return (3, dn_value.lower())
             first_val = str(oid_values[0])
-            oid_result = u.Ldif.OID.extract_from_definition(first_val)
+            oid_result = u.Ldif.extract_from_definition(first_val)
             oid = oid_result.value if oid_result.is_success else first_val
             return (priority, oid)
 

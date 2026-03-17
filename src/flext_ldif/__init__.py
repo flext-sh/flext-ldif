@@ -64,10 +64,10 @@ if TYPE_CHECKING:
         ByDnUnderBaseFilter,
         ByObjectClassFilter,
         CustomFilter,
-        EntryFilter,
         ExcludeAttrsFilter,
         Filter,
-        IsSchemaEntryFilter,
+        FlextLdifUtilitiesFilters,
+        IsSchemaFlextLdifUtilitiesFilters,
         NotFilter,
         OrFilter,
     )
@@ -85,14 +85,14 @@ if TYPE_CHECKING:
         ValidationResult,
         ValidationResult as r,
     )
-    from flext_ldif._utilities.result import FlextLdifResult
+    from flext_ldif._utilities.result import FlextLdifUtilitiesResult
     from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
     from flext_ldif._utilities.server import FlextLdifUtilitiesServer
     from flext_ldif._utilities.transformers import (
         ConvertBooleansTransformer,
         CustomTransformer,
-        EntryTransformer,
         FilterAttrsTransformer,
+        FlextLdifUtilitiesTransformer,
         Normalize,
         NormalizeAttrsTransformer,
         NormalizeDnTransformer,
@@ -186,9 +186,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "CustomTransformer": ("flext_ldif._utilities.transformers", "CustomTransformer"),
     "DnOps": ("flext_ldif._utilities.fluent", "DnOps"),
     "DynamicCounts": ("flext_ldif.results", "DynamicCounts"),
-    "EntryFilter": ("flext_ldif._utilities.filters", "EntryFilter"),
     "EntryOps": ("flext_ldif._utilities.fluent", "EntryOps"),
-    "EntryTransformer": ("flext_ldif._utilities.transformers", "EntryTransformer"),
     "ExcludeAttrsFilter": ("flext_ldif._utilities.filters", "ExcludeAttrsFilter"),
     "Filter": ("flext_ldif._utilities.filters", "Filter"),
     "FilterAttrsTransformer": (
@@ -243,7 +241,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifParser": ("flext_ldif.services.parser", "FlextLdifParser"),
     "FlextLdifProcessing": ("flext_ldif.services.processing", "FlextLdifProcessing"),
     "FlextLdifProtocols": ("flext_ldif.protocols", "FlextLdifProtocols"),
-    "FlextLdifResult": ("flext_ldif._utilities.result", "FlextLdifResult"),
     "FlextLdifSchema": ("flext_ldif.services.schema", "FlextLdifSchema"),
     "FlextLdifServer": ("flext_ldif.services.server", "FlextLdifServer"),
     "FlextLdifServersAd": ("flext_ldif.servers.ad", "FlextLdifServersAd"),
@@ -368,6 +365,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._utilities.events",
         "FlextLdifUtilitiesEvents",
     ),
+    "FlextLdifUtilitiesFilters": (
+        "flext_ldif._utilities.filters",
+        "FlextLdifUtilitiesFilters",
+    ),
     "FlextLdifUtilitiesMetadata": (
         "flext_ldif._utilities.metadata",
         "FlextLdifUtilitiesMetadata",
@@ -385,6 +386,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._utilities.parsers",
         "FlextLdifUtilitiesParsers",
     ),
+    "FlextLdifUtilitiesResult": (
+        "flext_ldif._utilities.result",
+        "FlextLdifUtilitiesResult",
+    ),
     "FlextLdifUtilitiesSchema": (
         "flext_ldif._utilities.schema",
         "FlextLdifUtilitiesSchema",
@@ -392,6 +397,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifUtilitiesServer": (
         "flext_ldif._utilities.server",
         "FlextLdifUtilitiesServer",
+    ),
+    "FlextLdifUtilitiesTransformer": (
+        "flext_ldif._utilities.transformers",
+        "FlextLdifUtilitiesTransformer",
     ),
     "FlextLdifUtilitiesTypeGuards": (
         "flext_ldif._utilities.type_guards",
@@ -413,7 +422,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifWriter": ("flext_ldif.services.writer", "FlextLdifWriter"),
     "FrozenIgnoreLdifModel": ("flext_ldif._models.base", "FrozenIgnoreLdifModel"),
     "FrozenLdifModel": ("flext_ldif._models.base", "FrozenLdifModel"),
-    "IsSchemaEntryFilter": ("flext_ldif._utilities.filters", "IsSchemaEntryFilter"),
+    "IsSchemaFlextLdifUtilitiesFilters": (
+        "flext_ldif._utilities.filters",
+        "IsSchemaFlextLdifUtilitiesFilters",
+    ),
     "MutableIgnoreLdifModel": ("flext_ldif._models.base", "MutableIgnoreLdifModel"),
     "Normalize": ("flext_ldif._utilities.transformers", "Normalize"),
     "NormalizeAttrsTransformer": (
@@ -488,9 +500,7 @@ __all__ = [
     "CustomTransformer",
     "DnOps",
     "DynamicCounts",
-    "EntryFilter",
     "EntryOps",
-    "EntryTransformer",
     "ExcludeAttrsFilter",
     "Filter",
     "FilterAttrsTransformer",
@@ -521,7 +531,6 @@ __all__ = [
     "FlextLdifParser",
     "FlextLdifProcessing",
     "FlextLdifProtocols",
-    "FlextLdifResult",
     "FlextLdifSchema",
     "FlextLdifServer",
     "FlextLdifServersAd",
@@ -571,13 +580,16 @@ __all__ = [
     "FlextLdifUtilitiesDetection",
     "FlextLdifUtilitiesEntry",
     "FlextLdifUtilitiesEvents",
+    "FlextLdifUtilitiesFilters",
     "FlextLdifUtilitiesMetadata",
     "FlextLdifUtilitiesOID",
     "FlextLdifUtilitiesObjectClass",
     "FlextLdifUtilitiesParser",
     "FlextLdifUtilitiesParsers",
+    "FlextLdifUtilitiesResult",
     "FlextLdifUtilitiesSchema",
     "FlextLdifUtilitiesServer",
+    "FlextLdifUtilitiesTransformer",
     "FlextLdifUtilitiesTypeGuards",
     "FlextLdifUtilitiesValidation",
     "FlextLdifUtilitiesWriter",
@@ -586,7 +598,7 @@ __all__ = [
     "FlextLdifWriter",
     "FrozenIgnoreLdifModel",
     "FrozenLdifModel",
-    "IsSchemaEntryFilter",
+    "IsSchemaFlextLdifUtilitiesFilters",
     "MutableIgnoreLdifModel",
     "Normalize",
     "NormalizeAttrsTransformer",

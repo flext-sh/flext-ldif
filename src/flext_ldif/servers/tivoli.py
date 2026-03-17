@@ -108,7 +108,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ) -> bool:
             """Detect Tivoli-specific attributes."""
             if isinstance(attr_definition, m.Ldif.SchemaAttribute):
-                return u.Ldif.Server.matches_server_patterns(
+                return u.Ldif.matches_server_patterns(
                     value=attr_definition,
                     oid_pattern=FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES,
@@ -130,7 +130,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ) -> bool:
             """Detect Tivoli objectClass definitions."""
             if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
-                return u.Ldif.Server.matches_server_patterns(
+                return u.Ldif.matches_server_patterns(
                     value=oc_definition,
                     oid_pattern=FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersTivoli.Constants.DETECTION_OBJECTCLASS_NAMES,
@@ -340,7 +340,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         def normalize_dn(self, entry_dn: str) -> str:
             """Normalize DN for Tivoli DS."""
-            norm_result = u.Ldif.DN.norm(entry_dn)
+            norm_result = u.Ldif.norm(entry_dn)
             if norm_result.is_success:
                 return norm_result.value
             return entry_dn.lower()

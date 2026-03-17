@@ -83,7 +83,7 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
         """Parse LDIF content from a string using the requested server type."""
         effective_server_type_raw = server_type or "rfc"
         try:
-            effective_server_type = u.Ldif.Server.normalize_server_type(
+            effective_server_type = u.Ldif.normalize_server_type(
                 effective_server_type_raw
             )
         except (ValueError, TypeError) as e:

@@ -6,13 +6,13 @@ from typing import override
 
 from flext_core import r
 
-from flext_ldif._utilities.transformers import EntryTransformer
+from flext_ldif._utilities.transformers import FlextLdifUtilitiesTransformer
 from flext_ldif.constants import FlextLdifConstants as c
 from flext_ldif.models import FlextLdifModels as m
 from flext_ldif.services.conversion import FlextLdifConversion
 
 
-class ServerTransformer(EntryTransformer[m.Ldif.Entry]):
+class ServerTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
     """Transformer for server-specific conversions."""
 
     __slots__ = ("_source_server", "_target_server")

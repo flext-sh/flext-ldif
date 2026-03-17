@@ -75,7 +75,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ) -> bool:
             """Detect ApacheDS attribute definitions using centralized constants."""
             if isinstance(attr_definition, m.Ldif.SchemaAttribute):
-                return u.Ldif.Server.matches_server_patterns(
+                return u.Ldif.matches_server_patterns(
                     value=attr_definition,
                     oid_pattern=FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersApache.Constants.DETECTION_ATTRIBUTE_PREFIXES,
@@ -107,7 +107,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ) -> bool:
             """Detect ApacheDS objectClass definitions using centralized constants."""
             if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
-                return u.Ldif.Server.matches_server_patterns(
+                return u.Ldif.matches_server_patterns(
                     value=oc_definition,
                     oid_pattern=FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersApache.Constants.DETECTION_OBJECTCLASS_NAMES,
@@ -145,8 +145,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             result = super()._parse_objectclass(oc_definition)
             if result.is_success:
                 oc_data = result.value
-                u.Ldif.ObjectClass.fix_missing_sup(oc_data)
-                u.Ldif.ObjectClass.fix_kind_mismatch(oc_data)
+                u.Ldif.fix_missing_sup(oc_data)
+                u.Ldif.fix_kind_mismatch(oc_data)
                 metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
                 return r[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata})

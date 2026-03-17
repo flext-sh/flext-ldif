@@ -16,13 +16,11 @@ from typing import TYPE_CHECKING, Annotated, Literal
 from flext_core import FlextModels, r
 from pydantic import ConfigDict, Field, StringConstraints
 
-from flext_ldif._models.base import FlextLdifModelsBase
-from flext_ldif.constants import FlextLdifConstants as c
-from flext_ldif.protocols import FlextLdifProtocols
-from flext_ldif.typings import FlextLdifTypes as t
+from flext_ldif import c, p, t
+from flext_ldif._models import FlextLdifModelsBase
 
 if TYPE_CHECKING:
-    from flext_ldif._models.domain import FlextLdifModelsDomains
+    from flext_ldif._models import FlextLdifModelsDomains
 
 
 def _rdn_pairs_factory() -> list[tuple[str, str]]:
@@ -618,14 +616,14 @@ class FlextLdifModelsSettings:
             bool, Field(default=False, description="Stop on first error")
         ]
 
-    class EntryFilterConfig(FlextModels.Value):
+    class FlextLdifUtilitiesFiltersConfig(FlextModels.Value):
         """Configuration for entry filtering.
 
         Consolidates parameters for filter_batch utility function.
         Reduces function signature from 7 parameters to 1 model.
 
         Example:
-            config = FlextLdifModelsSettings.EntryFilterConfig(
+            config = FlextLdifModelsSettings.FlextLdifUtilitiesFiltersConfig(
                 objectclasses=["inetOrgPerson"],
                 exclude_schema=True,
             )
@@ -2173,11 +2171,11 @@ class FlextLdifModelsSettings:
             Field(default="attribute", description="Discriminator"),
         ]
         source_schema: Annotated[
-            FlextLdifProtocols.Ldif.SchemaQuirk,
+            p.Ldif.SchemaQuirk,
             Field(..., description="Source schema quirk"),
         ]
         target_schema: Annotated[
-            FlextLdifProtocols.Ldif.SchemaQuirk,
+            p.Ldif.SchemaQuirk,
             Field(..., description="Target schema quirk"),
         ]
         item: Annotated[
@@ -2197,11 +2195,11 @@ class FlextLdifModelsSettings:
             Field(default="objectclass", description="Discriminator"),
         ]
         source_schema: Annotated[
-            FlextLdifProtocols.Ldif.SchemaQuirk,
+            p.Ldif.SchemaQuirk,
             Field(..., description="Source schema quirk"),
         ]
         target_schema: Annotated[
-            FlextLdifProtocols.Ldif.SchemaQuirk,
+            p.Ldif.SchemaQuirk,
             Field(..., description="Target schema quirk"),
         ]
         item: Annotated[

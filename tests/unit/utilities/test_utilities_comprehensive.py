@@ -21,7 +21,7 @@ class TestFlextLdifUtilitiesComprehensive:
         """Test all utility functions with real generated data."""
         if test_data.dn:
             dn = test_data.dn
-            result = u.Ldif.DN.norm_string(dn)
+            result = u.Ldif.norm_string(dn)
             assert isinstance(result, str)
             assert len(result) > 0
 
@@ -66,6 +66,6 @@ class TestFlextLdifUtilitiesComprehensive:
         assert entry is not None
         assert hasattr(entry, "dn")
         assert hasattr(entry, "attributes")
-        normalized = u.Ldif.Server.normalize_server_type(server_type)
+        normalized = u.Ldif.normalize_server_type(server_type)
         assert isinstance(normalized, str)
         assert len(normalized) > 0

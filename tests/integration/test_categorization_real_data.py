@@ -269,7 +269,7 @@ class TestCategorizationRealData:
             if not isinstance(entry, m.Ldif.Entry):
                 continue
             dn_str = entry.dn.value if entry.dn is not None else None
-            if dn_str and FlextLdifUtilities.Ldif.DN.is_under_base(dn_str, base_dn):
+            if dn_str and FlextLdifUtilities.Ldif.is_under_base(dn_str, base_dn):
                 acls_with_basedn.append(entry)
             else:
                 acls_without_basedn.append(entry)

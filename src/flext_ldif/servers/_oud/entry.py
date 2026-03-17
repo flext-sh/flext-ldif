@@ -566,7 +566,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         **Utilities Used**:
 
-        - ``u.Ldif.Entry.matches_server_patterns()`` - Pattern matching
+        - ``u.Ldif.matches_server_patterns()`` - Pattern matching
 
         **RFC Override**: Extends RFC (RFC returns True for all entries as fallback).
 
@@ -589,7 +589,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             keyword_patterns=oud_constants.KEYWORD_PATTERNS,
         )
         return (
-            u.Ldif.Entry.matches_server_patterns(entry_dn, attributes, patterns_config)
+            u.Ldif.matches_server_patterns(entry_dn, attributes, patterns_config)
             or "objectclass" in attributes
         )
 
@@ -1307,7 +1307,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 else:
                     entry_attrs_for_diff[key_str] = str(raw_value)
             dn_differences, attribute_differences, original_attrs_complete, _ = (
-                u.Ldif.Entry.analyze_differences(
+                u.Ldif.analyze_differences(
                     entry_attrs=entry_attrs_for_diff,
                     converted_attrs=converted_attrs,
                     original_dn=original_dn,
@@ -1584,7 +1584,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _is_schema_entry(self, entry: m.Ldif.Entry) -> bool:
         """Check if entry is a schema entry - delegate to utility."""
         facade_entry = entry
-        return u.Ldif.Entry.is_schema_entry(facade_entry, strict=False)
+        return u.Ldif.is_schema_entry(facade_entry, strict=False)
 
     def _merge_acl_metadata_to_entry(
         self,
@@ -2037,11 +2037,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         return (
             super()
             ._write_entry(entry_data)
-            .map(
-                lambda ldif_text: u.Ldif.Writer.finalize_ldif_text(
-                    ldif_parts + [ldif_text]
-                )
-            )
+            .map(lambda ldif_text: u.Ldif.finalize_ldif_text(ldif_parts + [ldif_text]))
         )
 
     def _write_entry_as_comment(self, entry_data: m.Ldif.Entry) -> r[str]:

@@ -260,7 +260,7 @@ class FlextLdifConversion(
             FlextLdifConversion._normalize_permission_key(k): v
             for k, v in orig_perms_dict.items()
         }
-        mapped_perms = u.Ldif.ACL.map_oid_to_oud_permissions(normalized_orig_perms)
+        mapped_perms = u.Ldif.map_oid_to_oud_permissions(normalized_orig_perms)
         oid_to_oud_perms = FlextLdifConversion._build_permissions_dict(mapped_perms)
         perms_model = perms_to_model(oid_to_oud_perms)
         return converted_acl.model_copy(update={"permissions": perms_model}, deep=True)
@@ -272,7 +272,7 @@ class FlextLdifConversion(
         perms_to_model: Callable[[Mapping[str, bool | None]], m.Ldif.AclPermissions],
     ) -> m.Ldif.Acl:
         """Apply OUD to OID permission mapping."""
-        mapped_perms = u.Ldif.ACL.map_oud_to_oid_permissions(orig_perms_dict)
+        mapped_perms = u.Ldif.map_oud_to_oid_permissions(orig_perms_dict)
         oud_to_oid_perms = FlextLdifConversion._build_permissions_dict(mapped_perms)
         perms_model = perms_to_model(oud_to_oid_perms)
         return converted_acl.model_copy(update={"permissions": perms_model}, deep=True)
@@ -653,7 +653,7 @@ class FlextLdifConversion(
             if FlextLdifConversion._has_attr(logger, "bind") and callable(
                 getattr(logger, "bind", None)
             ):
-                _ = u.Ldif.Events.log_and_emit_conversion_event(
+                _ = u.Ldif.log_and_emit_conversion_event(
                     logger=logger,
                     config=conversion_config,
                     log_level="warning" if errors else "info",
@@ -703,7 +703,7 @@ class FlextLdifConversion(
             if FlextLdifConversion._has_attr(logger, "bind") and callable(
                 getattr(logger, "bind", None)
             ):
-                _ = u.Ldif.Events.log_and_emit_conversion_event(
+                _ = u.Ldif.log_and_emit_conversion_event(
                     logger=logger, config=conversion_config, log_level="error"
                 )
             return r[
@@ -760,7 +760,7 @@ class FlextLdifConversion(
             if result.is_failure
             else [],
         )
-        _ = u.Ldif.Events.log_and_emit_conversion_event(
+        _ = u.Ldif.log_and_emit_conversion_event(
             logger=logger,
             config=conversion_config,
             log_level="info" if result.is_success else "error",
@@ -856,12 +856,12 @@ class FlextLdifConversion(
                 converted_has_permissions=converted_has_permissions,
             )
         normalized_source = (
-            u.Ldif.Server.normalize_server_type(config.source_server_type)
+            u.Ldif.normalize_server_type(config.source_server_type)
             if isinstance(config.source_server_type, str)
             else config.source_server_type
         )
         normalized_target = (
-            u.Ldif.Server.normalize_server_type(config.target_server_type)
+            u.Ldif.normalize_server_type(config.target_server_type)
             if isinstance(config.target_server_type, str)
             else config.target_server_type
         )
@@ -1042,7 +1042,7 @@ class FlextLdifConversion(
             )
             source_server_type: str | None = u.try_(
                 lambda: (
-                    u.Ldif.Server.normalize_server_type(str(server_type_attr))
+                    u.Ldif.normalize_server_type(str(server_type_attr))
                     if isinstance(server_type_attr, str)
                     else None
                 ),
@@ -1113,7 +1113,7 @@ class FlextLdifConversion(
             )
             target_server_type: str | None = u.try_(
                 lambda: (
-                    u.Ldif.Server.normalize_server_type(target_server_type_raw)
+                    u.Ldif.normalize_server_type(target_server_type_raw)
                     if target_server_type_raw != "unknown"
                     else None
                 ),
@@ -1218,7 +1218,7 @@ class FlextLdifConversion(
         """Convert Entry model directly without serialization."""
         try:
             entry_dn = entry.dn.value if entry.dn else ""
-            if not u.Ldif.DN.validate(entry_dn):
+            if not u.Ldif.validate(entry_dn):
                 return r[
                     m.Ldif.Entry
                     | m.Ldif.SchemaAttribute
@@ -1235,12 +1235,12 @@ class FlextLdifConversion(
                 else "unknown"
             )
             if target_server_type_raw != "unknown":
-                target_server_type_str = u.Ldif.Server.normalize_server_type(
+                target_server_type_str = u.Ldif.normalize_server_type(
                     target_server_type_raw
                 )
             else:
                 target_server_type_str = "rfc"
-            validated_quirk_type = u.Ldif.Server.normalize_server_type(
+            validated_quirk_type = u.Ldif.normalize_server_type(
                 str(target_server_type_str)
             )
             metadata_for_analysis: (

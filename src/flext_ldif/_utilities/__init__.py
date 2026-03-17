@@ -33,10 +33,10 @@ if TYPE_CHECKING:
         ByDnUnderBaseFilter,
         ByObjectClassFilter,
         CustomFilter,
-        EntryFilter,
         ExcludeAttrsFilter,
         Filter,
-        IsSchemaEntryFilter,
+        FlextLdifUtilitiesFilters,
+        IsSchemaFlextLdifUtilitiesFilters,
         NotFilter,
         OrFilter,
     )
@@ -53,14 +53,14 @@ if TYPE_CHECKING:
         ValidationPipeline,
         ValidationResult,
     )
-    from flext_ldif._utilities.result import FlextLdifResult
+    from flext_ldif._utilities.result import FlextLdifUtilitiesResult
     from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
     from flext_ldif._utilities.server import FlextLdifUtilitiesServer
     from flext_ldif._utilities.transformers import (
         ConvertBooleansTransformer,
         CustomTransformer,
-        EntryTransformer,
         FilterAttrsTransformer,
+        FlextLdifUtilitiesTransformer,
         Normalize,
         NormalizeAttrsTransformer,
         NormalizeDnTransformer,
@@ -88,9 +88,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "CustomFilter": ("flext_ldif._utilities.filters", "CustomFilter"),
     "CustomTransformer": ("flext_ldif._utilities.transformers", "CustomTransformer"),
     "DnOps": ("flext_ldif._utilities.fluent", "DnOps"),
-    "EntryFilter": ("flext_ldif._utilities.filters", "EntryFilter"),
     "EntryOps": ("flext_ldif._utilities.fluent", "EntryOps"),
-    "EntryTransformer": ("flext_ldif._utilities.transformers", "EntryTransformer"),
     "ExcludeAttrsFilter": ("flext_ldif._utilities.filters", "ExcludeAttrsFilter"),
     "Filter": ("flext_ldif._utilities.filters", "Filter"),
     "FilterAttrsTransformer": (
@@ -99,7 +97,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FilterConfigBuilder": ("flext_ldif._utilities.builders", "FilterConfigBuilder"),
     "FlextFunctional": ("flext_ldif._utilities.functional", "FlextFunctional"),
-    "FlextLdifResult": ("flext_ldif._utilities.result", "FlextLdifResult"),
     "FlextLdifTypeHelpers": (
         "flext_ldif._utilities.type_helpers",
         "FlextLdifTypeHelpers",
@@ -126,6 +123,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._utilities.events",
         "FlextLdifUtilitiesEvents",
     ),
+    "FlextLdifUtilitiesFilters": (
+        "flext_ldif._utilities.filters",
+        "FlextLdifUtilitiesFilters",
+    ),
     "FlextLdifUtilitiesMetadata": (
         "flext_ldif._utilities.metadata",
         "FlextLdifUtilitiesMetadata",
@@ -143,6 +144,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._utilities.parsers",
         "FlextLdifUtilitiesParsers",
     ),
+    "FlextLdifUtilitiesResult": (
+        "flext_ldif._utilities.result",
+        "FlextLdifUtilitiesResult",
+    ),
     "FlextLdifUtilitiesSchema": (
         "flext_ldif._utilities.schema",
         "FlextLdifUtilitiesSchema",
@@ -150,6 +155,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifUtilitiesServer": (
         "flext_ldif._utilities.server",
         "FlextLdifUtilitiesServer",
+    ),
+    "FlextLdifUtilitiesTransformer": (
+        "flext_ldif._utilities.transformers",
+        "FlextLdifUtilitiesTransformer",
     ),
     "FlextLdifUtilitiesTypeGuards": (
         "flext_ldif._utilities.type_guards",
@@ -167,7 +176,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._utilities.writers",
         "FlextLdifUtilitiesWriters",
     ),
-    "IsSchemaEntryFilter": ("flext_ldif._utilities.filters", "IsSchemaEntryFilter"),
+    "IsSchemaFlextLdifUtilitiesFilters": (
+        "flext_ldif._utilities.filters",
+        "IsSchemaFlextLdifUtilitiesFilters",
+    ),
     "Normalize": ("flext_ldif._utilities.transformers", "Normalize"),
     "NormalizeAttrsTransformer": (
         "flext_ldif._utilities.transformers",
@@ -213,15 +225,12 @@ __all__ = [
     "CustomFilter",
     "CustomTransformer",
     "DnOps",
-    "EntryFilter",
     "EntryOps",
-    "EntryTransformer",
     "ExcludeAttrsFilter",
     "Filter",
     "FilterAttrsTransformer",
     "FilterConfigBuilder",
     "FlextFunctional",
-    "FlextLdifResult",
     "FlextLdifTypeHelpers",
     "FlextLdifUtilitiesACL",
     "FlextLdifUtilitiesAttribute",
@@ -230,18 +239,21 @@ __all__ = [
     "FlextLdifUtilitiesDetection",
     "FlextLdifUtilitiesEntry",
     "FlextLdifUtilitiesEvents",
+    "FlextLdifUtilitiesFilters",
     "FlextLdifUtilitiesMetadata",
     "FlextLdifUtilitiesOID",
     "FlextLdifUtilitiesObjectClass",
     "FlextLdifUtilitiesParser",
     "FlextLdifUtilitiesParsers",
+    "FlextLdifUtilitiesResult",
     "FlextLdifUtilitiesSchema",
     "FlextLdifUtilitiesServer",
+    "FlextLdifUtilitiesTransformer",
     "FlextLdifUtilitiesTypeGuards",
     "FlextLdifUtilitiesValidation",
     "FlextLdifUtilitiesWriter",
     "FlextLdifUtilitiesWriters",
-    "IsSchemaEntryFilter",
+    "IsSchemaFlextLdifUtilitiesFilters",
     "Normalize",
     "NormalizeAttrsTransformer",
     "NormalizeDnTransformer",

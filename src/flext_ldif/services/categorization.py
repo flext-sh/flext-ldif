@@ -151,13 +151,13 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
     def _filter_entries_by_base_dn(
         entries: list[m.Ldif.Entry], base_dn: str
     ) -> tuple[list[m.Ldif.Entry], list[m.Ldif.Entry]]:
-        """Filter entries by base DN using u.Ldif.DN."""
+        """Filter entries by base DN using u.Ldif."""
         model_entries: list[m.Ldif.Entry] = list(entries)
         included: list[m.Ldif.Entry] = []
         excluded: list[m.Ldif.Entry] = []
         for entry in model_entries:
             dn_str = entry.dn.value if entry.dn else None
-            if dn_str and u.Ldif.DN.is_under_base(dn_str, base_dn):
+            if dn_str and u.Ldif.is_under_base(dn_str, base_dn):
                 included.append(entry)
             else:
                 excluded.append(entry)
@@ -172,9 +172,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         entry: m.Ldif.Entry, category: str, reason: str
     ) -> m.Ldif.Entry:
         """Mark entry as rejected in metadata using u."""
-        return u.Ldif.Metadata.update_entry_statistics(
-            entry, mark_rejected=(category, reason)
-        )
+        return u.Ldif.update_entry_statistics(entry, mark_rejected=(category, reason))
 
     @staticmethod
     def _merge_category_from_constants(
@@ -294,7 +292,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 category_literal = c.Ldif.Category.ACL
             elif category == c.Ldif.Category.REJECTED:
                 category_literal = c.Ldif.Category.REJECTED
-            entry_to_append = u.Ldif.Metadata.update_entry_statistics(
+            entry_to_append = u.Ldif.update_entry_statistics(
                 entry,
                 category=category_literal,
                 mark_rejected=(
@@ -341,7 +339,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
             )
         effective_server_type_raw = server_type or self._server_type
         try:
-            effective_server_type = u.Ldif.Server.normalize_server_type(
+            effective_server_type = u.Ldif.normalize_server_type(
                 effective_server_type_raw
             )
         except (ValueError, TypeError) as e:
@@ -513,8 +511,8 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         def validate_entry(entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
             """Validate and normalize entry DN."""
             dn_str = entry.dn.value if entry.dn else ""
-            if not u.Ldif.DN.validate(dn_str):
-                rejected_entry = u.Ldif.Metadata.update_entry_statistics(
+            if not u.Ldif.validate(dn_str):
+                rejected_entry = u.Ldif.update_entry_statistics(
                     entry,
                     mark_rejected=(
                         "invalid_dn",
@@ -524,10 +522,10 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 self._rejection_tracker["invalid_dn_rfc4514"].append(rejected_entry)
                 logger.debug("Entry DN failed RFC 4514 validation", entry_dn=dn_str)
                 return r[m.Ldif.Entry].fail(f"DN validation failed: {dn_str[:80]}")
-            norm_result = u.Ldif.DN.norm(dn_str)
+            norm_result = u.Ldif.norm(dn_str)
             normalized_dn = norm_result.map_or(None)
             if normalized_dn is None:
-                rejected_entry = u.Ldif.Metadata.update_entry_statistics(
+                rejected_entry = u.Ldif.update_entry_statistics(
                     entry,
                     mark_rejected=(
                         "invalid_dn",
@@ -745,7 +743,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         """Update metadata for filtered entries using u."""
         updated_entries: list[m.Ldif.Entry] = []
         for entry in entries:
-            updated_entry = u.Ldif.Metadata.update_entry_statistics(
+            updated_entry = u.Ldif.update_entry_statistics(
                 entry,
                 mark_filtered=("base_dn_filter", passed),
                 mark_rejected=(c.Ldif.Category.REJECTED, rejection_reason)

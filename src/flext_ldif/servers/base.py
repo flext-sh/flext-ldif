@@ -239,7 +239,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 None,
             )
             if server_type:
-                return u.Ldif.Server.normalize_server_type(server_type)
+                return u.Ldif.normalize_server_type(server_type)
         except StopIteration:
             pass
         msg = f"Cannot find SERVER_TYPE in Constants for quirk class: {quirk_class.__name__}"

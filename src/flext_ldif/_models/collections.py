@@ -13,9 +13,11 @@ from typing import Annotated, override
 from pydantic import ConfigDict, Field
 
 from flext_ldif import t
-from flext_ldif._models.base import FlextLdifModelsBase
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif._models import (
+    FlextLdifModelsBase,
+    FlextLdifModelsDomains,
+    FlextLdifModelsMetadata,
+)
 
 
 def _schema_attributes_factory() -> list[FlextLdifModelsDomains.SchemaAttribute]:

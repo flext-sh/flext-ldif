@@ -11,13 +11,9 @@ from typing import Literal, Self, overload, override
 
 from flext_core import FlextLogger, r
 
-from flext_ldif import c, m, p, t
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
-from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
-from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
-from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
-from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif import c, m, p, t, u
+from flext_ldif.servers import FlextLdifServersBase
+from flext_ldif.servers._base import FlextLdifServersBaseSchema
 
 logger = FlextLogger(__name__)
 
@@ -355,14 +351,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
             def parse_attribute_domain(
                 attr_definition: str,
-            ) -> r[FlextLdifModelsDomains.SchemaAttribute]:
+            ) -> r[m.Ldif.SchemaAttribute]:
                 return self.parse_attribute(attr_definition).map(
-                    lambda attr: FlextLdifModelsDomains.SchemaAttribute.model_validate(
+                    lambda attr: m.Ldif.SchemaAttribute.model_validate(
                         attr.model_dump()
                     )
                 )
 
-            attributes_parsed = FlextLdifUtilitiesSchema.extract_attributes_from_lines(
+            attributes_parsed = u.Ldif.extract_attributes_from_lines(
                 ldif_content, parse_attribute_domain
             )
             attributes_parsed_model: list[m.Ldif.SchemaAttribute] = [
@@ -370,10 +366,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 for attr in attributes_parsed
             ]
             if validate_dependencies:
-                available_attrs = (
-                    FlextLdifUtilitiesSchema.build_available_attributes_set(
-                        attributes_parsed
-                    )
+                available_attrs = u.Ldif.build_available_attributes_set(
+                    attributes_parsed
                 )
                 validation_result = self._hook_validate_attributes(
                     attributes_parsed_model, available_attrs
@@ -389,17 +383,13 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
             def parse_objectclass_domain(
                 oc_definition: str,
-            ) -> r[FlextLdifModelsDomains.SchemaObjectClass]:
+            ) -> r[m.Ldif.SchemaObjectClass]:
                 return self.parse_objectclass(oc_definition).map(
-                    lambda oc: FlextLdifModelsDomains.SchemaObjectClass.model_validate(
-                        oc.model_dump()
-                    )
+                    lambda oc: m.Ldif.SchemaObjectClass.model_validate(oc.model_dump())
                 )
 
-            objectclasses_parsed = (
-                FlextLdifUtilitiesSchema.extract_objectclasses_from_lines(
-                    ldif_content, parse_objectclass_domain
-                )
+            objectclasses_parsed = u.Ldif.extract_objectclasses_from_lines(
+                ldif_content, parse_objectclass_domain
             )
             objectclasses_parsed_model: list[m.Ldif.SchemaObjectClass] = [
                 m.Ldif.SchemaObjectClass.model_validate(oc.model_dump())
@@ -446,7 +436,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def _build_attribute_parts(self, attr_data: m.Ldif.SchemaAttribute) -> list[str]:
         """Build RFC attribute definition parts."""
-        return FlextLdifUtilitiesSchema.build_attribute_parts_with_metadata(
+        return u.Ldif.build_attribute_parts_with_metadata(
             attr_data, restore_original=True
         )
 
@@ -463,12 +453,12 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             if metadata_extensions
             else m.Ldif.DynamicMetadata(),
         )
-        FlextLdifUtilitiesMetadata.preserve_schema_formatting(metadata, oc_definition)
+        u.Ldif.preserve_schema_formatting(metadata, oc_definition)
         return metadata
 
     def _build_objectclass_parts(self, oc_data: m.Ldif.SchemaObjectClass) -> list[str]:
         """Build RFC objectClass definition parts."""
-        return FlextLdifUtilitiesSchema.build_objectclass_parts_with_metadata(
+        return u.Ldif.build_objectclass_parts_with_metadata(
             oc_data, restore_original=True
         )
 
@@ -496,9 +486,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         def parse_parts_hook(
             definition: str,
         ) -> r[dict[str, builtins.object]]:
-            return FlextLdifUtilitiesSchema.parse_attribute(definition)
+            return u.Ldif.parse_attribute(definition)
 
-        parse_result_raw = FlextLdifUtilitiesAttribute.parse(
+        parse_result_raw = u.Ldif.parse(
             definition=attr_definition,
             server_type=server_type,
             parse_parts_hook=parse_parts_hook,
@@ -562,7 +552,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     ) -> r[m.Ldif.SchemaObjectClass]:
         """Core RFC 4512 objectClass parsing per Section 4.1.1."""
         try:
-            parsed = FlextLdifUtilitiesSchema.parse_objectclass(oc_definition)
+            parsed = u.Ldif.parse_objectclass(oc_definition)
             metadata_extensions = self._convert_extensions_for_quirk(
                 self._coerce_dynamic_metadata(parsed.get("metadata_extensions"))
             )

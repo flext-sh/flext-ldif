@@ -6,10 +6,10 @@ import struct
 from collections.abc import Mapping
 from typing import override
 
-from flext_core import FlextLogger, r, u as core_u
+from flext_core import FlextLogger, r
 
-from flext_ldif import m
-from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif import m, u
+from flext_ldif.servers import FlextLdifServersBase
 
 logger = FlextLogger(__name__)
 
@@ -33,7 +33,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
 
     def validate_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Validate RFC 2849 compliance."""
-        if not entry or not core_u.is_type(entry, m.Ldif.Entry):
+        if not entry or not u.is_type(entry, m.Ldif.Entry):
             return r[m.Ldif.Entry].fail(f"Invalid entry: {entry}")
         if not entry.dn or not hasattr(entry.dn, "value"):
             return r[m.Ldif.Entry].fail(f"Invalid DN in entry: {entry.dn}")
@@ -47,7 +47,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         self, dn: str, attributes: Mapping[str, list[str]]
     ) -> r[m.Ldif.Entry]:
         """Create Entry from DN and attributes."""
-        if not dn or not core_u.is_type(dn, str):
+        if not dn or not u.is_type(dn, str):
             return r[m.Ldif.Entry].fail(f"Invalid DN: {dn}")
         if not isinstance(attributes, dict):
             return r[m.Ldif.Entry].fail(f"Invalid attributes: {attributes}")
