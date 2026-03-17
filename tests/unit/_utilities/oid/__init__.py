@@ -11,7 +11,8 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
-    from tests.unit._utilities.oid.test_oid_utilities import TestFlextLdifUtilitiesOID
+
+    from .test_oid_utilities import TestFlextLdifUtilitiesOID
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestFlextLdifUtilitiesOID": (

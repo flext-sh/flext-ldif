@@ -528,20 +528,20 @@ class FlextLdifProtocols(FlextProtocols):
         class Constants:
             """Constants namespace for protocol access."""
 
+            @runtime_checkable
+            class Detection(Protocol):
+                """Protocol for server Constants classes with detection attributes."""
+
+                DETECTION_PATTERN: str
+                DETECTION_WEIGHT: int
+                DETECTION_ATTRIBUTES: frozenset[str] | list[str]
+                DETECTION_OID_PATTERN: str | None
+                DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None
+
         class Quirks:
             """Quirks namespace containing quirk protocol aliases."""
 
 
-__all__ = ["FlextLdifProtocols", "ServerDetectionConstants", "p"]
+__all__ = ["FlextLdifProtocols", "p"]
 
 p = FlextLdifProtocols
-
-
-class ServerDetectionConstants(Protocol):
-    """Protocol for server Constants classes with detection attributes."""
-
-    DETECTION_PATTERN: str
-    DETECTION_WEIGHT: int
-    DETECTION_ATTRIBUTES: frozenset[str] | list[str]
-    DETECTION_OID_PATTERN: str | None
-    DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None

@@ -12,32 +12,34 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-    from tests.unit import __init__, constants, models, protocols, services, utilities
-    from tests.unit.__init__.test_version import TestsFlextLdifVersion, version_module
-    from tests.unit.constants.test_acl_registry import (
+    from . import (
+        __init__ as __init__,
+        constants as constants,
+        models as models,
+        protocols as protocols,
+        services as services,
+        utilities as utilities,
+    )
+    from .__init__.test_version import TestsFlextLdifVersion, version_module
+    from .constants.test_acl_registry import (
         GetAclAttributesServerType,
         IsAclAttributeType,
         TestsTestFlextLdifAclAttributeRegistry,
     )
-    from tests.unit.models.test_models import (
-        TestFlextLdifModels,
-        TestFlextLdifModels as m,
-    )
-    from tests.unit.protocols.test_protocols import (
+    from .models.test_models import TestFlextLdifModels, TestFlextLdifModels as m
+    from .protocols.test_protocols import (
         TestsTestFlextLdifProtocols,
         TestsTestFlextLdifProtocols as p,
     )
-    from tests.unit.services.test_migration_pipeline import (
-        TestsTestFlextLdifMigrationPipeline,
-    )
-    from tests.unit.services.test_quirks_standardization import (
+    from .services.test_migration_pipeline import TestsTestFlextLdifMigrationPipeline
+    from .services.test_quirks_standardization import (
         TestAliasDiscovery,
         TestQuirksAutoInterchange,
         TestQuirksWithRealLdifFixtures,
         TestsFlextLdifQuirksStandardizedConstants,
         TestsFlextLdifQuirksStandardizedConstants as c,
     )
-    from tests.unit.services.test_schema_service import (
+    from .services.test_schema_service import (
         TestSchemaServiceBuilder,
         TestSchemaServiceCanHandleAttribute,
         TestSchemaServiceIntegration,
@@ -56,17 +58,17 @@ if TYPE_CHECKING:
         simple_attribute_definition,
         simple_objectclass_definition,
     )
-    from tests.unit.services.test_writer_dn_normalization import (
+    from .services.test_writer_dn_normalization import (
         TestsFlextLdifsFlextLdifWriterDnNormalization,
     )
-    from tests.unit.test_filters import TestAclAttributes
-    from tests.unit.test_helpers import TestFlextLdifDeduplicationHelpers
-    from tests.unit.test_migration_pipeline import TestsFlextLdifMigrationPipeline
-    from tests.unit.test_migration_pipeline_quirks import (
+    from .test_filters import TestAclAttributes
+    from .test_helpers import TestFlextLdifDeduplicationHelpers
+    from .test_migration_pipeline import TestsFlextLdifMigrationPipeline
+    from .test_migration_pipeline_quirks import (
         OidTestConstants,
         TestsFlextLdifMigrationPipelineQuirks,
     )
-    from tests.unit.test_typings import (
+    from .test_typings import (
         TestFlextLdifTypesStructure,
         TestIntegrationWithLdifFixtures,
         TestModelsNamespace,
@@ -74,17 +76,17 @@ if TYPE_CHECKING:
         TestRemovalOfOverEngineering,
         TestsFlextLdifCommonDictionaryTypes,
     )
-    from tests.unit.utilities.test_utilities import TestsTestFlextLdifServiceAPIs
-    from tests.unit.utilities.test_utilities_comprehensive import (
+    from .utilities.test_utilities import TestsTestFlextLdifServiceAPIs
+    from .utilities.test_utilities_comprehensive import (
         TestFlextLdifUtilitiesComprehensive,
     )
-    from tests.unit.utilities.test_utilities_constants import (
+    from .utilities.test_utilities_constants import (
         GetValidValuesType,
         IsValidTestType,
         TestsTestFlextLdifConstants,
         ValidateManyType,
     )
-    from tests.unit.utilities.test_utilities_core import (
+    from .utilities.test_utilities_core import (
         TestAclParser,
         TestAttributeFixer,
         TestDnObjectClassMethods,

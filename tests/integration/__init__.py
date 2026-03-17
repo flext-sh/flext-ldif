@@ -17,7 +17,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-    from tests.integration.conftest import (
+    from .conftest import (
         LDAP_ADMIN_DN,
         LDAP_ADMIN_PASSWORD,
         LDAP_BASE_DN,
@@ -70,108 +70,96 @@ if TYPE_CHECKING:
         unique_dn_suffix,
         writer,
     )
-    from tests.integration.test_acl_metadata_preservation import (
+    from .test_acl_metadata_preservation import (
         TestAclRoundTripPreservation,
         TestOidAclMetadataPreservation,
         TestOudAciMetadataPreservation,
     )
-    from tests.integration.test_api_integration import (
+    from .test_api_integration import (
         APIScenarios,
         TestData,
         TestFlextLdifAPIIntegration,
     )
-    from tests.integration.test_categorization_real_data import (
-        TestCategorizationRealData,
-    )
-    from tests.integration.test_config_integration import (
+    from .test_categorization_real_data import TestCategorizationRealData
+    from .test_config_integration import (
         ConfigTestData,
         TestFlextLdifSettingsIntegration,
         logger,
     )
-    from tests.integration.test_cross_quirk_conversion import (
+    from .test_cross_quirk_conversion import (
         TestOidToOudAclConversion,
         TestOidToOudIntegrationConversion,
         TestOidToOudSchemaConversion,
         TestQuirksConversionMatrixFacade,
     )
-    from tests.integration.test_dn_case_handling import (
+    from .test_dn_case_handling import (
         TestDnCaseNormalizationScenarios,
         TestDnCaseRegistry,
     )
-    from tests.integration.test_edge_cases import (
+    from .test_edge_cases import (
         TestBoundaryValues,
         TestEmptyAndMinimalCases,
         TestLargeAndComplexCases,
         TestRoundtripEdgeCases,
         TestUnicodeBoundaries,
     )
-    from tests.integration.test_error_recovery import (
+    from .test_error_recovery import (
         TestEncodingErrors,
         TestIncompleteEntries,
         TestInvalidSchemaDefinitions,
         TestMalformedLdifHandling,
     )
-    from tests.integration.test_ldif_fixtures_integration import TestsFlextLdifFixtures
-    from tests.integration.test_minimal_differences_metadata import (
-        TestMinimalDifferencesOidOud,
-    )
-    from tests.integration.test_oid_integration import (
+    from .test_ldif_fixtures_integration import TestsFlextLdifFixtures
+    from .test_minimal_differences_metadata import TestMinimalDifferencesOidOud
+    from .test_oid_integration import (
         TestOidEntryIntegration,
         TestOidRoundTripIntegration,
         TestOidSchemaIntegration,
     )
-    from tests.integration.test_oud_integration import (
+    from .test_oud_integration import (
         TestOudAclIntegration,
         TestOudEntryIntegration,
         TestOudMetadataPreservation,
         TestOudRoundTripIntegration,
         TestOudSchemaIntegration,
     )
-    from tests.integration.test_oud_to_oid_migration import (
+    from .test_oud_to_oid_migration import (
         TestOudToOidAclMigration,
         TestOudToOidEntryMigration,
         TestOudToOidFullMigration,
         TestOudToOidSchemaMigration,
     )
-    from tests.integration.test_pipeline_integration import TestFlextLdifFacadeWorkflows
-    from tests.integration.test_quirks_transformations import (
+    from .test_pipeline_integration import TestFlextLdifFacadeWorkflows
+    from .test_quirks_transformations import (
         TestOidQuirksTransformations,
         TestOudQuirksTransformations,
         TestQuirksPropertyValidation,
         fixtures_dir,
         migration_inputs,
     )
-    from tests.integration.test_real_ldap_config import (
+    from .test_real_ldap_config import (
         TestRealLdapConfigurationFromEnv,
         TestRealLdapRailwayComposition,
     )
-    from tests.integration.test_real_ldap_crud import (
-        TestRealLdapBatchOperations,
-        TestRealLdapCRUD,
-    )
-    from tests.integration.test_real_ldap_export import TestRealLdapExport
-    from tests.integration.test_real_ldap_import import TestRealLdapImport
-    from tests.integration.test_real_ldap_roundtrip import TestRealLdapRoundtrip
-    from tests.integration.test_rfc_docker_real import (
-        TestRfcDockerRealData,
-        TestRfcIntegrationRealWorld,
-    )
-    from tests.integration.test_rfc_docker_real_integration import (
+    from .test_real_ldap_crud import TestRealLdapBatchOperations, TestRealLdapCRUD
+    from .test_real_ldap_export import TestRealLdapExport
+    from .test_real_ldap_import import TestRealLdapImport
+    from .test_real_ldap_roundtrip import TestRealLdapRoundtrip
+    from .test_rfc_docker_real import TestRfcDockerRealData, TestRfcIntegrationRealWorld
+    from .test_rfc_docker_real_integration import (
         TestRfcExceptionHandlingRealScenarios,
         TestRfcParserRealFixtures,
         TestRfcSchemaParserRealFixtures,
         TestRfcWriterRealFixtures,
     )
-    from tests.integration.test_simple_ldap import (
+    from .test_simple_ldap import (
         test_create_and_export_entry,
         test_ldap_connection,
         test_simple_ldap_search,
     )
-    from tests.integration.test_systematic_fixture_coverage import (
-        TestSystematicFixtureCoverage,
-    )
-    from tests.integration.test_zero_data_loss_oid_oud import TestZeroDataLossOidOud
-    from tests.integration.test_zero_data_loss_schema import (
+    from .test_systematic_fixture_coverage import TestSystematicFixtureCoverage
+    from .test_zero_data_loss_oid_oud import TestZeroDataLossOidOud
+    from .test_zero_data_loss_schema import (
         TestSchemaDeviationsAttributeKeyCasing,
         TestSchemaDeviationsComplete,
         TestSchemaDeviationsMissingSpaces,

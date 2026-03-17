@@ -91,6 +91,18 @@ class FlextLdifTypes(FlextTypes):
             type ExtensionValue = str | list[str]
             type ExtensionKey = str
 
+        class Factories:
+            """Factory callable type aliases for LDIF processing.
+
+            These factory types use `object` return/parameter types because they are
+            callables that dynamically create or process instances of diverse,
+            unrelated classes (e.g., different filter/categorization implementations).
+            This is a permitted exception per AGENTS.md §3.2 exception #1.
+            """
+
+            type FilterFactory = Callable[[], object]
+            type CategorizationFactory = Callable[[str], object]
+
         class Decorators:
             """Decorator-related type aliases for quirk server decorators.
 
@@ -142,9 +154,3 @@ class FlextLdifTypes(FlextTypes):
 t = FlextLdifTypes
 
 __all__ = ["FlextLdifTypes", "t"]
-
-
-type FilterFactoryType = Callable[[], object]
-
-
-type CategorizationFactoryType = Callable[[str], object]
