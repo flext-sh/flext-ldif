@@ -34,6 +34,7 @@ from flext_ldif import (
     FlextLdifWriter,
     m,
     p,
+    t,
 )
 
 
@@ -732,7 +733,7 @@ class RfcTestHelpers:
         return value
 
     @staticmethod
-    def test_result_success_and_unwrap[TResult](
+    def test_result_success_and_unwrap[TResult: t.Ldif.object](
         result: r[TResult],
         expected_type: type | None = None,
         expected_count: int | None = None,

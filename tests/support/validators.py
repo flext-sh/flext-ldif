@@ -16,21 +16,21 @@ class MockFlextUtilitiesResultHelpers:
     """Mock result helpers for testing."""
 
     @staticmethod
-    def validate_composition(*args, **kwargs: t.Scalar) -> bool:
+    def validate_composition(*args: t.Scalar, **kwargs: t.Scalar) -> bool:
         """Validate composition."""
         return True
 
     @staticmethod
-    def validate_chain(*args, **kwargs: t.Scalar) -> bool:
+    def validate_chain(*args: t.Scalar, **kwargs: t.Scalar) -> bool:
         """Validate chain."""
         return True
 
     @staticmethod
-    def assert_composition(*args, **kwargs: t.Scalar) -> None:
+    def assert_composition(*args: t.Scalar, **kwargs: t.Scalar) -> None:
         """Assert composition."""
 
     @staticmethod
-    def assert_chain_success(*args, **kwargs: t.Scalar) -> None:
+    def assert_chain_success(*args: t.Scalar, **kwargs: t.Scalar) -> None:
         """Assert chain success."""
 
 
@@ -38,7 +38,7 @@ class MockMatchers:
     """Mock matchers for testing."""
 
     @staticmethod
-    def assert_success(*args, **kwargs: t.Scalar) -> None:
+    def assert_success(*args: t.Scalar, **kwargs: t.Scalar) -> None:
         """Assert success."""
 
 
@@ -82,7 +82,7 @@ class TestValidators:
         }
 
     @staticmethod
-    def validate_result_success(result: r) -> dict[str, bool]:
+    def validate_result_success(result: r[t.Ldif.object]) -> dict[str, bool]:
         """Validate r success characteristics."""
         return {
             "is_success": result.is_success,

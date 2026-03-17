@@ -7,6 +7,8 @@ splitting, component extraction, and handling of special characters and escaped 
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from tests import c, m, s, u
@@ -94,7 +96,7 @@ class TestsFlextLdifDnOperationsPure(s):
         dn = "cn=John,ou=Users,dc=example"
         result = u.Ldif.parse(dn)
         assert result.is_success
-        parsed = result.value
+        parsed = cast("list[tuple[str, str]]", result.value)
         assert len(parsed) >= 2
 
     def test_compare_dns(self) -> None:
@@ -103,7 +105,7 @@ class TestsFlextLdifDnOperationsPure(s):
         dn2 = "cn=jane,dc=example,dc=com"
         result = u.Ldif.compare_dns(dn1, dn2)
         assert result.is_success
-        comparison = result.value
+        comparison = cast("int", result.value)
         assert isinstance(comparison, int)
 
     def test_escape_dn_value(self) -> None:

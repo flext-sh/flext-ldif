@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Final
+
 from flext_tests import FlextTestsModels
 
 from flext_ldif import FlextLdifModels
@@ -25,12 +27,18 @@ class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
     Access patterns:
     - m.Ldif.* - Production domain models (delegated from FlextLdifModels.Ldif)
     - m.Ldif.Tests.* - Test fixtures (ACL, Schema, etc.)
-    - m.WriteFormatOptions - Root-level test aliases for common fixtures
-    - m.StatisticsResult - Root-level test aliases for common fixtures
+    - m.WriteFormatOptions - Root-level production models
+    - m.StatisticsResult - Root-level production models
     """
+
+    # Root-level test aliases for common domain models
+    WriteFormatOptions: Final = FlextLdifModels.WriteFormatOptions
+    StatisticsResult: Final = FlextLdifModels.StatisticsResult
 
     # Production models namespace delegation
     class Ldif(FlextLdifModels.Ldif):
+        """Production LDIF models with nested test fixture aliases."""
+
         class Tests:
             """Test fixture models namespace.
 

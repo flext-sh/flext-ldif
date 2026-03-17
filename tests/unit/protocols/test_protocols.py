@@ -274,7 +274,7 @@ class TestsTestFlextLdifProtocols(s):
 
     def test_protocol_filtering(self) -> None:
         """Test filtering implementations by protocol."""
-        schemas_list: list = [
+        schemas_list: list[p.Ldif.SchemaQuirk] = [
             FlextLdifServersOid.Schema(),
             FlextLdifServersOud.Schema(),
             FlextLdifServersOpenldap.Schema(),

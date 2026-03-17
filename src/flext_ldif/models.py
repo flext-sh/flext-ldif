@@ -36,6 +36,9 @@ class FlextLdifModels(FlextModels):
     Types live in ``typings.py``, constants in ``constants.py``.
     """
 
+    WriteFormatOptions: Final = FlextLdifModelsSettings.WriteFormatOptions
+    StatisticsResult: Final = FlextLdifModelsResults.StatisticsResult
+
     class Ldif(
         FlextLdifModelsDomains,
         FlextLdifModelsMetadata,
@@ -98,6 +101,7 @@ class FlextLdifModels(FlextModels):
             ValidationServiceStatus = FlextLdifModelsResults.ValidationServiceStatus
             ValidationResult = FlextLdifModelsResults.ValidationResult
             EntryResult = FlextLdifModelsResults.EntryResult
+            StatisticsResult = FlextLdifModelsResults.StatisticsResult
             WhitelistRules = FlextLdifModelsSettings.WhitelistRules
             WriteFormatOptions = FlextLdifModelsSettings.WriteFormatOptions
 

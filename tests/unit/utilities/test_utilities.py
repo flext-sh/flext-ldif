@@ -17,7 +17,6 @@ from flext_ldif import (
     FlextLdifDn,
     FlextLdifSettings,
     FlextLdifStatistics,
-    c,
     services,
 )
 from tests import c, m, s

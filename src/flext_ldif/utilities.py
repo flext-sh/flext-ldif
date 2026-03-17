@@ -667,7 +667,7 @@ class FlextLdifUtilities(FlextUtilities):
                 return []
             entry_filter: FlextLdifUtilitiesFilters[m.Ldif.Entry] = predicate_or_filter1
 
-            def predicate_wrapper(item: builtins.object) -> bool:
+            def predicate_wrapper(item: t.Ldif.object) -> bool:
                 """Wrap FlextLdifUtilitiesFilters as VariadicCallable for base class compatibility."""
                 match item:
                     case m.Ldif.Entry() as entry_item:

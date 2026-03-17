@@ -5,7 +5,7 @@ from __future__ import annotations
 import ast
 import inspect
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 
@@ -126,9 +126,13 @@ class TestModelsNamespace:
             c.Names.MAIL: ["john@example.com"],
             c.Names.UID: "jdoe",
         }
-        cn_value: str | list[str] | None = attrs.get(c.Names.CN)
+        cn_value: str | list[str] | None = cast(
+            "str | list[str] | None", attrs.get(c.Names.CN)
+        )
         assert cn_value == ["John Doe"]
-        objectclass_value: str | list[str] | None = attrs.get(c.Names.OBJECTCLASS)
+        objectclass_value: str | list[str] | None = cast(
+            "str | list[str] | None", attrs.get(c.Names.OBJECTCLASS)
+        )
         assert isinstance(objectclass_value, list)
 
     def test_attributes_data_with_real_schema(self) -> None:
