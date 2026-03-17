@@ -2172,18 +2172,24 @@ class FlextLdifConstants(FlextConstants):
 
     @unique
     class ProcessingMode(StrEnum):
+        """Processing mode enumeration."""
+
         STRICT = "strict"
         RELAXED = "relaxed"
         AUTO = "auto"
 
     @unique
     class ValidationLevel(StrEnum):
+        """Validation level enumeration."""
+
         NONE = "none"
         BASIC = "basic"
         FULL = "full"
 
     @unique
     class ConversionTargetType(StrEnum):
+        """Conversion target type enumeration."""
+
         STR = "str"
         INT = "int"
         FLOAT = "float"

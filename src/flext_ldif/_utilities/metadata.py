@@ -657,7 +657,7 @@ class FlextLdifUtilitiesMetadata:
                 metadata, update_conversion_path
             )
         metadata_typed = {
-            key: u.normalize_to_metadata_value(value) for key, value in metadata.items()
+            key: u.normalize_to_metadata(value) for key, value in metadata.items()
         }
         dynamic_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
             metadata_typed
@@ -853,7 +853,7 @@ class FlextLdifUtilitiesMetadata:
         opt: builtins.object | None = None
         if isinstance(raw_extras, Mapping):
             extras = {
-                extra_key: u.normalize_to_metadata_value(extra_value)
+                extra_key: u.normalize_to_metadata(extra_value)
                 for extra_key, extra_value in t.ConfigMap(raw_extras).root.items()
             }
         opt = extras.get(key)
