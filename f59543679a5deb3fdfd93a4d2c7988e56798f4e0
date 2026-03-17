@@ -1,0 +1,23 @@
+src/flext_ldif/protocols.py
+  a67aecf2aed82465 551
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "f59543679a5deb3fdfd93a4d2c7988e56798f4e0",
+  "prompts": {
+    "a67aecf2aed82465": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_306ac70d0ffe586Q2jOSyOlEHF",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 19,
+      "accepted_lines": 4,
+      "overriden_lines": 1
+    }
+  }
+}
