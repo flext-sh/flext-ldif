@@ -7,9 +7,9 @@ import re
 from collections.abc import Mapping, Sequence
 from typing import TypeIs
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, u
 
-from flext_ldif import c, m, p, t, u
+from flext_ldif import c, m, p, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
