@@ -53,8 +53,6 @@ class FlextLdifUtilities(FlextUtilities):
     """FLEXT LDIF Utilities - Centralized helpers for LDIF operations."""
 
     class Ldif(
-        DnOps,
-        EntryOps,
         FlextLdifUtilitiesACL,
         FlextLdifUtilitiesAttribute,
         FlextLdifUtilitiesDecorators,
@@ -62,25 +60,22 @@ class FlextLdifUtilities(FlextUtilities):
         FlextLdifUtilitiesDN,
         FlextLdifUtilitiesEntry,
         FlextLdifUtilitiesEvents,
-        FlextLdifUtilitiesFilters[builtins.object],
         FlextLdifUtilitiesMetadata,
         FlextLdifUtilitiesObjectClass,
         FlextLdifUtilitiesOID,
         FlextLdifUtilitiesParser,
         FlextLdifUtilitiesParsers,
-        FlextLdifUtilitiesResult[builtins.object],
         FlextLdifUtilitiesSchema,
         FlextLdifUtilitiesServer,
-        FlextLdifUtilitiesTransformer[builtins.object],
         FlextLdifUtilitiesTypeGuards,
         FlextLdifUtilitiesValidation,
         FlextLdifUtilitiesWriter,
         FlextLdifUtilitiesWriters,
-        Pipeline,
-        ValidationPipeline,
-        ValidationResult,
     ):
         """LDIF-specific utility namespace."""
+
+        DN = FlextLdifUtilitiesDN
+        """Alias for DN utilities — enables u.Ldif.DN.get_dn_value() access pattern."""
 
         type VariadicCallable[T] = Callable[..., T]
 
@@ -272,13 +267,6 @@ class FlextLdifUtilities(FlextUtilities):
                     use_prefix_match=use_prefix_match,
                 )
             return False
-
-        @override
-        def __and__(
-            self,
-            other: FlextLdifUtilitiesFilters[builtins.object],
-        ) -> builtins.object:
-            return FlextLdifUtilitiesFilters[builtins.object].__and__(self, other)
 
         @staticmethod
         @override

@@ -9,9 +9,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import ClassVar, Literal, overload
 
+from flext_core import u
 from pydantic import BaseModel
 
-from flext_ldif import u
 from flext_ldif._models._models import (
     ConvertToBool,
     ConvertToDict,

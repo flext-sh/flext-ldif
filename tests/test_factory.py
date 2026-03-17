@@ -71,10 +71,10 @@ class FlextLdifTestFactory:
         return "\n".join(lines)
 
     @staticmethod
-    def parametrize_real_data() -> list[m.Tests.LdifTestData]:
+    def parametrize_real_data() -> list[m.Ldif.Tests.LdifTestData]:
         """Generate parametrized test data for comprehensive coverage."""
         return [
-            m.Tests.LdifTestData(
+            m.Ldif.Tests.LdifTestData(
                 id=f"entry_{server_type}",
                 server_type=server_type,
                 dn=f"cn=test-{server_type},ou=users,dc=example,dc=com",

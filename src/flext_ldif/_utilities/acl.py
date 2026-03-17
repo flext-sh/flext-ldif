@@ -8,9 +8,9 @@ import struct
 from collections.abc import Mapping, Sequence
 from typing import TypeIs
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger, r, u
 
-from flext_ldif import c, m, t, u
+from flext_ldif import c, m, t
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.functional import FlextFunctional

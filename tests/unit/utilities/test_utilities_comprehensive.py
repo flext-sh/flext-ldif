@@ -15,7 +15,7 @@ class TestFlextLdifUtilitiesComprehensive:
 
     @pytest.mark.parametrize("test_data", FlextLdifTestFactory.parametrize_real_data())
     def test_all_utility_functions_with_real_data(
-        self, test_data: m.Tests.LdifTestData
+        self, test_data: m.Ldif.Tests.LdifTestData
     ) -> None:
         """Test all utility functions with real generated data."""
         if test_data.dn:
@@ -30,13 +30,13 @@ class TestFlextLdifUtilitiesComprehensive:
             entries_count=5, include_schema=True
         )
         lines = ldif_content.split("\n")
-        entries: list[m.Tests.LdifTestData] = []
+        entries: list[m.Ldif.Tests.LdifTestData] = []
         for line in lines:
             if line.startswith("dn:"):
                 current_dn = line[4:].strip()
                 current_attrs: dict[str, list[str]] = {}
                 entries.append(
-                    m.Tests.LdifTestData(
+                    m.Ldif.Tests.LdifTestData(
                         id=f"entry_{len(entries)}",
                         server_type="generic",
                         dn=current_dn,

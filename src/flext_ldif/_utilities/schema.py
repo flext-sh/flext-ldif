@@ -10,13 +10,15 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from typing import TypeVar
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger, r, u
 
-from flext_ldif import c, p, t, u
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
-from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
-from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
+from flext_ldif import c, p, t
+from flext_ldif._models import FlextLdifModelsDomains
+from flext_ldif._utilities import (
+    FlextLdifUtilitiesOID,
+    FlextLdifUtilitiesParser,
+    FlextLdifUtilitiesWriter,
+)
 
 logger = FlextLogger(__name__)
 SchemaModelT = TypeVar(

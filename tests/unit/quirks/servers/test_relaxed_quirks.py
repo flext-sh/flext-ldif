@@ -257,11 +257,11 @@ class TestsTestFlextLdifRelaxedQuirks(s):
     ) -> None:
         """Test that writing ACL preserves raw content."""
         raw_acl = '(targetentry="cn=REDACTED_LDAP_BIND_PASSWORD")(version 3.0;acl "REDACTED_LDAP_BIND_PASSWORD";allow(all)'
-        acl_data = m.Tests.Acl(
+        acl_data = m.Ldif.Tests.Acl(
             name="test_acl",
-            target=m.Tests.AclTarget(target_dn="*", attributes=[]),
-            subject=m.Tests.AclSubject(subject_type="all", subject_value="*"),
-            permissions=m.Tests.AclPermissions(),
+            target=m.Ldif.Tests.AclTarget(target_dn="*", attributes=[]),
+            subject=m.Ldif.Tests.AclSubject(subject_type="all", subject_value="*"),
+            permissions=m.Ldif.Tests.AclPermissions(),
             raw_acl=raw_acl,
         )
         result = acl_quirk.write(acl_data)
