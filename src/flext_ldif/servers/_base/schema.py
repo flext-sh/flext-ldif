@@ -5,7 +5,6 @@ from __future__ import annotations
 import builtins
 import struct
 from collections.abc import Mapping, Sequence
-from datetime import datetime
 from typing import Annotated, ClassVar, Self, override
 
 from flext_core import FlextLogger, r, s
@@ -110,7 +109,7 @@ class FlextLdifServersBaseSchema(
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
         service_kwargs: dict[str, t.Scalar | t.ConfigMap | Sequence[t.Scalar]] = {}
         for key, value in filtered_kwargs.items():
-            if isinstance(value, (str, int, float, bool, datetime)):
+            if isinstance(value, t.SCALAR_TYPES):
                 service_kwargs[key] = value
                 continue
             if isinstance(value, t.ConfigMap):
@@ -121,7 +120,7 @@ class FlextLdifServersBaseSchema(
             ):
                 scalar_values: list[t.Scalar] = []
                 for item in value:
-                    if isinstance(item, (str, int, float, bool, datetime)):
+                    if isinstance(item, t.SCALAR_TYPES):
                         scalar_values.append(item)
                     else:
                         scalar_values = []

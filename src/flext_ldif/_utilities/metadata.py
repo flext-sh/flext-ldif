@@ -583,7 +583,7 @@ class FlextLdifUtilitiesMetadata:
     def _normalize_dict_list(values: Sequence[builtins.object]) -> list[t.Scalar]:
         normalized: list[t.Scalar] = []
         for item in values:
-            if isinstance(item, (str, int, float, bool, datetime)):
+            if isinstance(item, t.SCALAR_TYPES):
                 normalized.append(item)
             elif item is not None:
                 normalized.append(str(item))
@@ -594,9 +594,7 @@ class FlextLdifUtilitiesMetadata:
         values: Sequence[builtins.object],
     ) -> list[t.Scalar]:
         normalized: list[t.Scalar] = [
-            item
-            for item in values
-            if isinstance(item, (str, int, float, bool, datetime))
+            item for item in values if isinstance(item, t.SCALAR_TYPES)
         ]
         return normalized
 

@@ -33,7 +33,7 @@ class FlextLdifTypeHelpers:
         """Check if object is a Mapping of scalar values (for simple dicts)."""
         if not isinstance(obj, ABCMapping):
             return False
-        return all(isinstance(v, str | int | float | bool | None) for v in obj.values())
+        return all(isinstance(v, t.Primitives | None) for v in obj.values())
 
     @staticmethod
     def is_mapping_type(
@@ -53,7 +53,7 @@ class FlextLdifTypeHelpers:
             or FlextUtilities.is_dict_like(obj)
         ):
             return False
-        return all(isinstance(item, str | int | float | bool | None) for item in obj)
+        return all(isinstance(item, t.Primitives | None) for item in obj)
 
 
 __all__ = ["FlextLdifTypeHelpers"]

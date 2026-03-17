@@ -528,7 +528,7 @@ class FlextLdifModelsResults:
             results: list[tuple[str, t.Scalar]] = []
             for key in self.model_fields_set:
                 val = getattr(self, key)
-                if isinstance(val, str | int | float | bool):
+                if isinstance(val, t.Primitives):
                     results.append((key, val))
                 elif val is None:
                     continue

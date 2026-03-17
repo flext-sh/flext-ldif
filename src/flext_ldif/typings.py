@@ -20,7 +20,7 @@ from flext_ldif.constants import FlextLdifConstants
 # RECURSIVE TYPES - Defined at module level for reliable scope resolution
 # =========================================================================
 
-type _Scalar = str | int | float | bool | None
+type _Scalar = t.Primitives | None
 
 type _RecursiveMetadata = (
     _Scalar | list[_RecursiveMetadata] | Mapping[str, _RecursiveMetadata] | datetime

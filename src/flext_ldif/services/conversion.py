@@ -430,9 +430,7 @@ class FlextLdifConversion(
             return value
         if isinstance(value, (list, tuple)):
             return [
-                item
-                if isinstance(item, (str, int, float, bool, datetime))
-                else str(item)
+                item if isinstance(item, t.SCALAR_TYPES) else str(item)
                 for item in value
             ]
         return str(value)
@@ -1501,7 +1499,7 @@ class FlextLdifConversion(
         if isinstance(value, (list, tuple)):
             converted_list: list[t.Scalar] = []
             for item in value:
-                if isinstance(item, (str, int, float, bool, datetime)):
+                if isinstance(item, t.SCALAR_TYPES):
                     converted_list.append(item)
                 else:
                     converted_list.append(str(item))
@@ -1627,7 +1625,7 @@ class FlextLdifConversion(
             if value is None:
                 dynamic_metadata_dict[key] = ""
                 continue
-            if isinstance(value, (str, int, float, bool, datetime)):
+            if isinstance(value, t.SCALAR_TYPES):
                 dynamic_metadata_dict[key] = self._convert_to_metadata_attribute_value(
                     value
                 )

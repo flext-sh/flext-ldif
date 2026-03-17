@@ -6,7 +6,6 @@ import builtins
 import re
 import struct
 from collections.abc import Mapping, Sequence
-from datetime import datetime
 from typing import TypeIs
 
 from flext_core import FlextLogger, r, u
@@ -562,7 +561,7 @@ class FlextLdifUtilitiesACL:
             elif isinstance(raw_default, list):
                 normalized_list: list[t.Scalar] = []
                 for item in raw_default:
-                    if isinstance(item, (str, int, float, bool, datetime)):
+                    if isinstance(item, t.SCALAR_TYPES):
                         normalized_list.append(item)
                     else:
                         normalized_list.append(str(item))
@@ -570,15 +569,13 @@ class FlextLdifUtilitiesACL:
             elif isinstance(raw_default, Mapping):
                 normalized_mapping: dict[str, t.Scalar | list[t.Scalar]] = {}
                 for key, item in raw_default.items():
-                    if isinstance(item, (str, int, float, bool, datetime)):
+                    if isinstance(item, t.SCALAR_TYPES):
                         normalized_mapping[key] = item
                         continue
                     if isinstance(item, list):
                         nested_list: list[t.Scalar] = []
                         for nested_item in item:
-                            if isinstance(
-                                nested_item, (str, int, float, bool, datetime)
-                            ):
+                            if isinstance(nested_item, t.SCALAR_TYPES):
                                 nested_list.append(nested_item)
                             else:
                                 nested_list.append(str(nested_item))

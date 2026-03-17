@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 _TRUE_STRINGS: frozenset[str] = frozenset({"true", "1", "yes", "on"})
 type _ConvertValue = t.Container | Sequence[t.Container] | Mapping[str, t.Container]
-_CONTAINER_TYPES: tuple[type[str | int | float | bool | datetime | Path], ...] = (
+_CONTAINER_TYPES: tuple[type[t.Container], ...] = (
     str,
     int,
     float,
