@@ -16,14 +16,13 @@ if TYPE_CHECKING:
     from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
     from flext_ldif.servers._base.constants import (
         FlextLdifServersBaseConstants,
-        FlextLdifServersBaseConstants as c,
         FlextLdifServersBaseQuirkHelpers,
         QuirkMethodsMixin,
     )
     from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
     from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
     from flext_ldif.servers._oid.acl import FlextLdifServersOidAcl
-    from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
+    from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants, c
     from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
     from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema
     from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
@@ -141,7 +140,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "_oid": ("flext_ldif.servers._oid", ""),
     "_oud": ("flext_ldif.servers._oud", ""),
     "_rfc": ("flext_ldif.servers._rfc", ""),
-    "c": ("flext_ldif.servers._base.constants", "FlextLdifServersBaseConstants"),
+    "c": ("flext_ldif.servers._oid.constants", "c"),
     "logger": ("flext_ldif.servers.oid", "logger"),
     "u": ("flext_ldif.servers._oud.utilities", "FlextLdifServersOudUtilities"),
 }

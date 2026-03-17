@@ -7,7 +7,6 @@ validation, and execution with various server type combinations.
 
 from __future__ import annotations
 
-
 from pathlib import Path
 
 import pytest

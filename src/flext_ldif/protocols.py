@@ -554,10 +554,12 @@ p = FlextLdifProtocols
 
 from typing import Protocol
 
+
 class _StepFunction[TIn, TOut](Protocol):
     """Protocol for pipeline step functions with type safety."""
 
     def __call__(self, input_data: TIn) -> r[TOut]: ...
+
 
 class ServerDetectionConstants(Protocol):
     """Protocol for server Constants classes with detection attributes."""

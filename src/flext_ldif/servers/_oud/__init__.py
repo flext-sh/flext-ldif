@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
     from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
-    from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
+    from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants, c
     from flext_ldif.servers._oud.entry import FlextLdifServersOudEntry
     from flext_ldif.servers._oud.schema import FlextLdifServersOudSchema, logger
     from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
@@ -36,6 +36,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif.servers._oud.utilities",
         "FlextLdifServersOudUtilities",
     ),
+    "c": ("flext_ldif.servers._oud.constants", "c"),
     "logger": ("flext_ldif.servers._oud.schema", "logger"),
 }
 
@@ -45,6 +46,7 @@ __all__ = [
     "FlextLdifServersOudEntry",
     "FlextLdifServersOudSchema",
     "FlextLdifServersOudUtilities",
+    "c",
     "logger",
 ]
 

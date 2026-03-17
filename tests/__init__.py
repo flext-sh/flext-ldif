@@ -35,7 +35,6 @@ if TYPE_CHECKING:
         real_ldif_content,
     )
     from tests.constants import (
-        OIDs,
         RfcTestHelpers,
         TestDeduplicationHelpers,
         TestsFlextLdifConstants,
@@ -334,7 +333,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "MockMatchers": ("tests.support.validators", "MockMatchers"),
     "OID_FIXTURES_DIR": ("tests.conftest", "OID_FIXTURES_DIR"),
-    "OIDs": ("tests.constants", "OIDs"),
     "OidTestConstants": (
         "tests.unit.test_migration_pipeline_quirks",
         "OidTestConstants",
@@ -908,7 +906,6 @@ __all__ = [
     "LdifTestData",
     "MockFlextUtilitiesResultHelpers",
     "MockMatchers",
-    "OIDs",
     "OidTestConstants",
     "RfcTestHelpers",
     "TestAclAttributes",

@@ -6,10 +6,10 @@ This module provides validation utilities for testing flext-ldif functionality.
 from __future__ import annotations
 
 from flext_core import r
-from tests import u
 
 from flext_ldif import m, p
 from flext_ldif.typings import t
+from tests import u
 
 
 class MockFlextUtilitiesResultHelpers:

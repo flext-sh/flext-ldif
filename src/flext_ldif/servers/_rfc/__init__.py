@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
     from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
-    from flext_ldif.servers._rfc.constants import FlextLdifServersRfcConstants
+    from flext_ldif.servers._rfc.constants import FlextLdifServersRfcConstants, c
     from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
     from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema, logger
 
@@ -31,6 +31,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif.servers._rfc.schema",
         "FlextLdifServersRfcSchema",
     ),
+    "c": ("flext_ldif.servers._rfc.constants", "c"),
     "logger": ("flext_ldif.servers._rfc.schema", "logger"),
 }
 
@@ -39,6 +40,7 @@ __all__ = [
     "FlextLdifServersRfcConstants",
     "FlextLdifServersRfcEntry",
     "FlextLdifServersRfcSchema",
+    "c",
     "logger",
 ]
 

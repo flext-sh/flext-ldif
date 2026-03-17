@@ -125,4 +125,5 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     ACL_SELF_SUBJECT: ClassVar[str] = "ldap:///self"
     ACL_ANONYMOUS_SUBJECT: ClassVar[str] = "ldap:///anyone"
 
+
 c = FlextLdifServersRfcConstants
