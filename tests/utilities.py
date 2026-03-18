@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_tests import FlextTestsUtilities
+from flext_tests import u
 
 from flext_ldif import FlextLdifParser, FlextLdifUtilities
 from flext_ldif._utilities import FlextLdifUtilitiesOID

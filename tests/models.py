@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Final
 
-from flext_tests import FlextTestsModels
+from flext_tests import m
 
 from flext_ldif import FlextLdifModels
 from flext_ldif._models.settings import FlextLdifModelsSettings

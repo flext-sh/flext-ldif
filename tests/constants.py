@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Final, cast
 
 from flext_core import r
-from flext_tests import FlextTestsConstants
+from flext_tests import c
 
 from flext_ldif import (
     FlextLdif,
