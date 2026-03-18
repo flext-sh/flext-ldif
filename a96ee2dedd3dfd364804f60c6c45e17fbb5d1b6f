@@ -1,0 +1,23 @@
+src/flext_ldif/servers/relaxed.py
+  0fb2d9539512fe80 499-502,504-506,508-513
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "a96ee2dedd3dfd364804f60c6c45e17fbb5d1b6f",
+  "prompts": {
+    "0fb2d9539512fe80": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2feca499dffeo7Yde2XRqw4tW3",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 58,
+      "total_deletions": 80,
+      "accepted_lines": 13,
+      "overriden_lines": 0
+    }
+  }
+}
