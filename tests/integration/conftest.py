@@ -23,6 +23,7 @@ from pathlib import Path
 import pytest
 from flext_tests.docker import tk
 from ldap3 import ALL, Connection, Server
+from ldap3.core.exceptions import LDAPException
 
 from flext_ldif import (
     FlextLdif,
@@ -654,7 +655,7 @@ def ldap_connection(ldap_container: dict[str, object]) -> Generator[Connection]:
             pytest.skip(
                 f"LDAP server not available at {server_url} for bind_dn={bind_dn}"
             )
-    except Exception as exc:
+    except (LDAPException, ConnectionError, TimeoutError, OSError) as exc:
         pytest.skip(f"LDAP server not available: {exc}")
     yield conn
     conn.unbind()
