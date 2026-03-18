@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
     from . import (
+        __init__ as __init__,
         constants as constants,
         models as models,
         protocols as protocols,
@@ -268,6 +269,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.utilities.test_utilities_constants",
         "ValidateManyType",
     ),
+    "__init__": ("tests.unit.__init__", ""),
     "c": (
         "tests.unit.services.test_quirks_standardization",
         "TestsFlextLdifQuirksStandardizedConstants",
@@ -353,6 +355,7 @@ __all__ = [
     "TestsTestFlextLdifProtocols",
     "TestsTestFlextLdifServiceAPIs",
     "ValidateManyType",
+    "__init__",
     "c",
     "complex_attribute_definition",
     "complex_objectclass_definition",
