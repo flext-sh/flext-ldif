@@ -435,10 +435,11 @@ class TestsTestFlextLdifApacheQuirks(s):
             acl_quirk, acl_line, parse_method="parse", expected_type=m.Ldif.Tests.Acl
         )
         tm.that(isinstance(acl_model, m.Ldif.Tests.Acl), eq=True)
-        roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl_quirk, acl_model.raw_acl or str(acl_model), parse_method="parse"
-        )
-        tm.that(roundtrip_result is not None, eq=True)
+        if isinstance(acl_model, m.Ldif.Tests.Acl):
+            roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+                acl_quirk, acl_model.raw_acl or str(acl_model), parse_method="parse"
+            )
+            tm.that(roundtrip_result is not None, eq=True)
 
     def test_acl_can_handle_with_aci(self) -> None:
         """Test ACL detection with aci attribute."""
@@ -449,10 +450,11 @@ class TestsTestFlextLdifApacheQuirks(s):
             acl_quirk, acl_line, parse_method="parse", expected_type=m.Ldif.Tests.Acl
         )
         tm.that(isinstance(acl_model, m.Ldif.Tests.Acl), eq=True)
-        roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl_quirk, acl_model.raw_acl or str(acl_model), parse_method="parse"
-        )
-        tm.that(roundtrip_result is not None, eq=True)
+        if isinstance(acl_model, m.Ldif.Tests.Acl):
+            roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+                acl_quirk, acl_model.raw_acl or str(acl_model), parse_method="parse"
+            )
+            tm.that(roundtrip_result is not None, eq=True)
 
     def test_acl_can_handle_with_version_prefix(self) -> None:
         """Test ACL detection with version prefix."""
@@ -463,10 +465,11 @@ class TestsTestFlextLdifApacheQuirks(s):
             acl_quirk, acl_line, parse_method="parse", expected_type=m.Ldif.Tests.Acl
         )
         tm.that(isinstance(acl_model, m.Ldif.Tests.Acl), eq=True)
-        roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl_quirk, acl_model.raw_acl or str(acl_model), parse_method="parse"
-        )
-        tm.that(roundtrip_result is not None, eq=True)
+        if isinstance(acl_model, m.Ldif.Tests.Acl):
+            roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+                acl_quirk, acl_model.raw_acl or str(acl_model), parse_method="parse"
+            )
+            tm.that(roundtrip_result is not None, eq=True)
 
     def test_acl_can_handle_negative(self) -> None:
         """Test ACL detection rejects non-ApacheDS ACLs."""
@@ -492,8 +495,11 @@ class TestsTestFlextLdifApacheQuirks(s):
             acl_quirk, acl_line, parse_method="parse", expected_type=m.Ldif.Tests.Acl
         )
         tm.that(isinstance(acl_data, m.Ldif.Tests.Acl), eq=True)
-        tm.that(acl_data.get_acl_format() == c.Ldif.AclFormats.ACI, eq=True)
-        tm.that(acl_data.server_type == c.Ldif.LdapServers.APACHE_DIRECTORY, eq=True)
+        if isinstance(acl_data, m.Ldif.Tests.Acl):
+            tm.that(acl_data.get_acl_format() == c.Ldif.AclFormats.ACI, eq=True)
+            tm.that(
+                acl_data.server_type == c.Ldif.LdapServers.APACHE_DIRECTORY, eq=True
+            )
 
     def test_acl_parse_with_aci_attribute(self) -> None:
         """Test parsing ACI with aci attribute."""

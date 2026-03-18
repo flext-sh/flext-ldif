@@ -12,9 +12,11 @@ from typing import ClassVar
 import pytest
 from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
-from tests import RfcTestHelpers, c, m, s
+from tests import c, m, s
 
 from flext_ldif import FlextLdifServersDs389
+
+RfcTestHelpers = c.RfcTestHelpers
 
 
 @unique
@@ -384,7 +386,7 @@ class TestsTestFlextLdifDs389Quirks(s):
         result = schema_quirk.parse(oc_def)
         tm.that(result.is_success, eq=True)
         oc_data = result.value
-        tm.that(isinstance(oc_data, m.Ldif.SchemaObjectClass), eq=True)
+        assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
         tm.that(oc_data.kind == "ABSTRACT", eq=True)
 
     def test_parse_objectclass_missing_oid(self) -> None:

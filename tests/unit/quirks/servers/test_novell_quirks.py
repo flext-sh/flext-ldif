@@ -210,7 +210,7 @@ def schema_quirk(
 ) -> FlextLdifServersNovell.Schema:
     """Get schema quirk from Novell server."""
     quirk = novell_server.schema_quirk
-    tm.that(isinstance(quirk, FlextLdifServersNovell.Schema), eq=True)
+    assert isinstance(quirk, FlextLdifServersNovell.Schema)
     return quirk
 
 
@@ -218,7 +218,7 @@ def schema_quirk(
 def entry_quirk(novell_server: FlextLdifServersNovell) -> FlextLdifServersNovell.Entry:
     """Get entry quirk from Novell server."""
     quirk = novell_server.entry_quirk
-    tm.that(isinstance(quirk, FlextLdifServersNovell.Entry), eq=True)
+    assert isinstance(quirk, FlextLdifServersNovell.Entry)
     return quirk
 
 

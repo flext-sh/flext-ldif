@@ -555,7 +555,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_typings",
         "TestRemovalOfOverEngineering",
     ),
-    "RfcTestHelpers": ("tests.constants", "RfcTestHelpers"),
     "TestRfcDockerRealData": (
         "tests.integration.test_rfc_docker_real",
         "TestRfcDockerRealData",
@@ -904,7 +903,6 @@ __all__ = [
     "MockFlextUtilitiesResultHelpers",
     "MockMatchers",
     "OidTestConstants",
-    "RfcTestHelpers",
     "TestAclAttributes",
     "TestAclParser",
     "TestAclRoundTripPreservation",
