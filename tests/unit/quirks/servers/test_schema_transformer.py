@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from flext_core import r, t
-from tests import m, s, u
+from flext_core import r
+from tests import m, s, t, u
 
 
 class TestsFlextLdifSchemaTransformerNormalizeAttributeName(s):
