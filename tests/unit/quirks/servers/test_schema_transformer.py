@@ -195,10 +195,11 @@ class TestSchemaTransformerApplyAttributeTransformations:
         tm.that(result.is_success, eq=True)
         transformed = result.value
         tm.that(isinstance(transformed, m.Ldif.SchemaAttribute), eq=True)
-        tm.that(transformed.name == "cn", eq=True)
-        tm.that(transformed.equality == "caseIgnoreMatch", eq=True)
-        tm.that(transformed.substr == "caseIgnoreSubstringsMatch", eq=True)
-        tm.that(transformed.syntax == "1.3.6.1.4.1.1466.115.121.1.15", eq=True)
+        if isinstance(transformed, m.Ldif.SchemaAttribute):
+            tm.that(transformed.name == "cn", eq=True)
+            tm.that(transformed.equality == "caseIgnoreMatch", eq=True)
+            tm.that(transformed.substr == "caseIgnoreSubstringsMatch", eq=True)
+            tm.that(transformed.syntax == "1.3.6.1.4.1.1466.115.121.1.15", eq=True)
 
     def test_partial_transformations(self) -> None:
         """Test applying only some transformations."""
@@ -222,8 +223,9 @@ class TestSchemaTransformerApplyAttributeTransformations:
         tm.that(result.is_success, eq=True)
         transformed = result.value
         tm.that(isinstance(transformed, m.Ldif.SchemaAttribute), eq=True)
-        tm.that(transformed.name == "cn", eq=True)
-        tm.that(transformed.equality == "caseIgnoreMatch", eq=True)
+        if isinstance(transformed, m.Ldif.SchemaAttribute):
+            tm.that(transformed.name == "cn", eq=True)
+            tm.that(transformed.equality == "caseIgnoreMatch", eq=True)
 
 
 class TestSchemaTransformerApplyObjectClassTransformations:

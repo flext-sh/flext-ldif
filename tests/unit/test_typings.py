@@ -177,7 +177,7 @@ class TestModelsNamespace:
         tm.that(oid_value == "2.16.840.1.113730.3.2.2", eq=True)
         may_values: t.Scalar | list[str] | None = data[c.Names.INETORGPERSON].get("may")
         tm.that(may_values is not None, eq=True)
-        if may_values is not None:
+        if may_values is not None and isinstance(may_values, list):
             tm.that(c.Names.MAIL in may_values, eq=True)
 
     def test_extensions_with_reals(self) -> None:
