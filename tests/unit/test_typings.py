@@ -155,9 +155,11 @@ class TestModelsNamespace:
                 "single_valued": True,
             },
         }
-        cn_oid: str | None = data[c.Names.CN].get("oid")
+        cn_oid: t.Scalar | list[str] | None = data[c.Names.CN].get("oid")
         tm.that(cn_oid == c.OIDs.CN, eq=True)
-        uid_single_valued: bool | None = data[c.Names.UID].get("single_valued")
+        uid_single_valued: t.Scalar | list[str] | None = data[c.Names.UID].get(
+            "single_valued"
+        )
         tm.that(uid_single_valued is True, eq=True)
 
     def test_objectclasses_data_with_real_schema(self) -> None:

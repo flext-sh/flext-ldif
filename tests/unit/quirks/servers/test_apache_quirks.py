@@ -329,17 +329,18 @@ class TestsTestFlextLdifApacheQuirks(s):
             expected_type=m.Ldif.SchemaObjectClass,
         )
         tm.that(isinstance(oc_data, m.Ldif.SchemaObjectClass), eq=True)
-        tm.that(oc_data.oid == "1.3.6.1.4.1.18060.0.4.1.3.100", eq=True)
-        tm.that(oc_data.name == "ads-directoryService", eq=True)
-        tm.that(oc_data.kind == "STRUCTURAL", eq=True)
-        tm.that(oc_data.sup == "top", eq=True)
-        must_attrs = oc_data.must
-        tm.that(isinstance(must_attrs, list), eq=True)
-        tm.that("cn" in must_attrs, eq=True)
-        tm.that("ads-directoryServiceId" in must_attrs, eq=True)
-        may_attrs = oc_data.may
-        tm.that(isinstance(may_attrs, list), eq=True)
-        tm.that("ads-enabled" in may_attrs, eq=True)
+        if isinstance(oc_data, m.Ldif.SchemaObjectClass):
+            tm.that(oc_data.oid == "1.3.6.1.4.1.18060.0.4.1.3.100", eq=True)
+            tm.that(oc_data.name == "ads-directoryService", eq=True)
+            tm.that(oc_data.kind == "STRUCTURAL", eq=True)
+            tm.that(oc_data.sup == "top", eq=True)
+            must_attrs = oc_data.must
+            tm.that(isinstance(must_attrs, list), eq=True)
+            tm.that("cn" in must_attrs, eq=True)
+            tm.that("ads-directoryServiceId" in must_attrs, eq=True)
+            may_attrs = oc_data.may
+            tm.that(isinstance(may_attrs, list), eq=True)
+            tm.that("ads-enabled" in may_attrs, eq=True)
 
     def test_schema_objectclass_parse_auxiliary(self) -> None:
         """Test parsing AUXILIARY objectClass."""
@@ -353,7 +354,8 @@ class TestsTestFlextLdifApacheQuirks(s):
             expected_type=m.Ldif.SchemaObjectClass,
         )
         tm.that(isinstance(oc_data, m.Ldif.SchemaObjectClass), eq=True)
-        tm.that(oc_data.kind == "AUXILIARY", eq=True)
+        if isinstance(oc_data, m.Ldif.SchemaObjectClass):
+            tm.that(oc_data.kind == "AUXILIARY", eq=True)
 
     def test_schema_objectclass_parse_abstract(self) -> None:
         """Test parsing ABSTRACT objectClass."""
@@ -367,7 +369,8 @@ class TestsTestFlextLdifApacheQuirks(s):
             expected_type=m.Ldif.SchemaObjectClass,
         )
         tm.that(isinstance(oc_data, m.Ldif.SchemaObjectClass), eq=True)
-        tm.that(oc_data.kind == "ABSTRACT", eq=True)
+        if isinstance(oc_data, m.Ldif.SchemaObjectClass):
+            tm.that(oc_data.kind == "ABSTRACT", eq=True)
 
     def test_schema_objectclass_parse_missing_oid(self) -> None:
         """Test parsing objectClass without OID fails."""
