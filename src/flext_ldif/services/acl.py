@@ -74,7 +74,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
                     granted=False,
                     matched_acl=None,
                     message="No ACLs to evaluate - access denied by default",
-                )
+                ),
             )
         perm_names = ["read", "write", "delete", "add", "search", "compare"]
         required_perms = [p for p in perm_names if getattr(required, p, False)]
@@ -84,7 +84,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
                     granted=True,
                     matched_acl=acls[0] if acls else None,
                     message="No permissions required - access granted trivially",
-                )
+                ),
             )
 
         def acl_grants_all(acl: m.Ldif.Acl) -> bool:
@@ -103,19 +103,20 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
                     granted=True,
                     matched_acl=found_acl,
                     message=f"ACL '{found_acl.name}' grants required permissions: {required_perms}",
-                )
+                ),
             )
         return r[m.Ldif.AclEvaluationResult].ok(
             m.Ldif.AclEvaluationResult(
                 granted=False,
                 matched_acl=None,
                 message=f"No ACL grants required permissions: {required_perms}",
-            )
+            ),
         )
 
     @staticmethod
     def extract_acl_entries(
-        entries: list[m.Ldif.Entry], acl_attributes: list[str] | None = None
+        entries: list[m.Ldif.Entry],
+        acl_attributes: list[str] | None = None,
     ) -> r[list[m.Ldif.Entry]]:
         """Extract entries that contain ACL attributes."""
         if not entries:
@@ -142,11 +143,13 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
     def execute(self) -> r[m.Ldif.AclResponse]:
         """Execute ACL service health check."""
         return r[m.Ldif.AclResponse].ok(
-            m.Ldif.AclResponse(acls=[], statistics=m.Ldif.Statistics())
+            m.Ldif.AclResponse(acls=[], statistics=m.Ldif.Statistics()),
         )
 
     def extract_acls_from_entry(
-        self, entry: m.Ldif.Entry, server_type: str
+        self,
+        entry: m.Ldif.Entry,
+        server_type: str,
     ) -> r[m.Ldif.AclResponse]:
         """Extract ACLs from entry using server-specific attribute names."""
         acl_attr_name = FlextLdifUtilitiesACL.get_acl_attributes()
@@ -171,7 +174,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
                 server_type=server_type,
             )
         return r[m.Ldif.AclResponse].ok(
-            self._build_acl_response(acls, failed_entries=failed_count)
+            self._build_acl_response(acls, failed_entries=failed_count),
         )
 
     def parse_acl_string(self, acl_string: str, server_type: str) -> r[m.Ldif.Acl]:
@@ -179,7 +182,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
         original_server_type = str(server_type)
         try:
             normalized_server_type = FlextLdifUtilitiesServer.normalize_server_type(
-                original_server_type
+                original_server_type,
             )
         except (ValueError, TypeError) as e:
             return r[m.Ldif.Acl].fail(f"Invalid server type: {server_type} - {e}")
@@ -194,7 +197,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
             return r[m.Ldif.Acl].fail(str(e))
         if acl_quirk is None:
             return r[m.Ldif.Acl].fail(
-                f"No ACL quirk found for server type: {normalized_server_type}"
+                f"No ACL quirk found for server type: {normalized_server_type}",
             )
         return acl_quirk.parse(acl_string).fold(
             on_failure=lambda e: r[m.Ldif.Acl].fail(e or "ACL parsing failed"),

@@ -158,7 +158,7 @@ class NormalizeAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
         )
         if needs_update:
             update_dict: dict[str, builtins.object] = {
-                "attributes": m.Ldif.Attributes(attributes=new_attrs)
+                "attributes": m.Ldif.Attributes(attributes=new_attrs),
             }
             item = item.model_copy(update=update_dict)
         return r[m.Ldif.Entry].ok(item)
@@ -200,7 +200,11 @@ class ReplaceBaseDnTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
     __slots__ = ("_case_insensitive", "_new_base", "_old_base")
 
     def __init__(
-        self, old_base: str, new_base: str, *, case_insensitive: bool = True
+        self,
+        old_base: str,
+        new_base: str,
+        *,
+        case_insensitive: bool = True,
     ) -> None:
         """Initialize base DN replacement transformer."""
         super().__init__()
@@ -219,7 +223,9 @@ class ReplaceBaseDnTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
             else str(item.dn)
         )
         new_dn_str = FlextLdifUtilitiesDN.transform_dn_attribute(
-            dn_str, self._old_base, self._new_base
+            dn_str,
+            self._old_base,
+            self._new_base,
         )
         update_dict: dict[str, builtins.object] = {"dn": m.Ldif.DN(value=new_dn_str)}
         updated_entry = item.model_copy(update=update_dict)
@@ -264,7 +270,7 @@ class ConvertBooleansTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
             target_format=self._format,
         )
         update_dict: dict[str, builtins.object] = {
-            "attributes": m.Ldif.Attributes(attributes=dict(converted_attrs))
+            "attributes": m.Ldif.Attributes(attributes=dict(converted_attrs)),
         }
         updated_entry = item.model_copy(update=update_dict)
         return r[m.Ldif.Entry].ok(updated_entry)
@@ -315,7 +321,7 @@ class FilterAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
 
             attrs = {k: v for k, v in attrs.items() if key_not_in_exclude(k, v)}
         update_dict: dict[str, builtins.object] = {
-            "attributes": m.Ldif.Attributes(attributes=dict(attrs))
+            "attributes": m.Ldif.Attributes(attributes=dict(attrs)),
         }
         updated_entry = item.model_copy(update=update_dict)
         return r[m.Ldif.Entry].ok(updated_entry)
@@ -335,7 +341,8 @@ class RemoveAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Remove attributes from an entry."""
         updated_entry = FlextLdifUtilitiesEntry.remove_attributes(
-            item, list(self._attributes)
+            item,
+            list(self._attributes),
         )
         return r[m.Ldif.Entry].ok(updated_entry)
 
@@ -346,7 +353,8 @@ class CustomTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
     __slots__ = ("_func",)
 
     def __init__(
-        self, func: Callable[[m.Ldif.Entry], m.Ldif.Entry | r[m.Ldif.Entry]]
+        self,
+        func: Callable[[m.Ldif.Entry], m.Ldif.Entry | r[m.Ldif.Entry]],
     ) -> None:
         """Initialize custom transformer."""
         super().__init__()
@@ -368,7 +376,9 @@ class Transform:
 
     @staticmethod
     def convert_booleans(
-        boolean_format: str = "TRUE/FALSE", *, attributes: Sequence[str] | None = None
+        boolean_format: str = "TRUE/FALSE",
+        *,
+        attributes: Sequence[str] | None = None,
     ) -> ConvertBooleansTransformer:
         """Create a boolean conversion transformer."""
         return ConvertBooleansTransformer(boolean_format, attributes=attributes)
@@ -382,7 +392,9 @@ class Transform:
 
     @staticmethod
     def filter_attrs(
-        *, include: Sequence[str] | None = None, exclude: Sequence[str] | None = None
+        *,
+        include: Sequence[str] | None = None,
+        exclude: Sequence[str] | None = None,
     ) -> FilterAttrsTransformer:
         """Create an attribute filter transformer."""
         return FilterAttrsTransformer(include=include, exclude=exclude)
@@ -394,11 +406,16 @@ class Transform:
 
     @staticmethod
     def replace_base(
-        old_base: str, new_base: str, *, case_insensitive: bool = True
+        old_base: str,
+        new_base: str,
+        *,
+        case_insensitive: bool = True,
     ) -> ReplaceBaseDnTransformer:
         """Create a base DN replacement transformer."""
         return ReplaceBaseDnTransformer(
-            old_base, new_base, case_insensitive=case_insensitive
+            old_base,
+            new_base,
+            case_insensitive=case_insensitive,
         )
 
 

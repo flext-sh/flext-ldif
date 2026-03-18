@@ -43,7 +43,8 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def align_kind_with_superior(
-        schema_oc: FlextLdifModelsDomains.SchemaObjectClass, superior_kind: str | None
+        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
+        superior_kind: str | None,
     ) -> None:
         """Align ObjectClass kind with its superior class kind."""
         if (
@@ -52,20 +53,22 @@ class FlextLdifUtilitiesObjectClass:
             and superior_kind
             and (schema_oc.kind != superior_kind)
         ):
-            setattr(schema_oc, "kind", superior_kind)
+            schema_oc.kind = superior_kind
 
     @staticmethod
     def ensure_sup_for_auxiliary(
-        schema_oc: FlextLdifModelsDomains.SchemaObjectClass, default_sup: str = "top"
+        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
+        default_sup: str = "top",
     ) -> None:
         """Ensure AUXILIARY ObjectClass has SUP attribute."""
         schema_constants = _SchemaConstants.get_instance()
         if schema_oc.kind == schema_constants.auxiliary and (not schema_oc.sup):
-            setattr(schema_oc, "sup", default_sup)
+            schema_oc.sup = default_sup
 
     @staticmethod
     def fix_kind_mismatch(
-        schema_oc: FlextLdifModelsDomains.SchemaObjectClass, _server_type: str = "oid"
+        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
+        _server_type: str = "oid",
     ) -> None:
         """Fix objectClass kind mismatches with superior classes (server-specific)."""
         if not schema_oc.sup or not schema_oc.kind:
@@ -87,19 +90,19 @@ class FlextLdifUtilitiesObjectClass:
             sup_lower in structural_superiors
             and schema_oc.kind == schema_constants.auxiliary
         ):
-            setattr(schema_oc, "kind", schema_constants.structural)
+            schema_oc.kind = schema_constants.structural
         elif (
             sup_lower in auxiliary_superiors
             and schema_oc.kind == schema_constants.structural
         ):
-            setattr(schema_oc, "kind", schema_constants.auxiliary)
+            schema_oc.kind = schema_constants.auxiliary
 
     @staticmethod
     def fix_missing_sup(schema_oc: FlextLdifModelsDomains.SchemaObjectClass) -> None:
         """Fix AUXILIARY ObjectClass missing SUP (superior) attribute."""
         schema_constants = _SchemaConstants.get_instance()
         if schema_oc.kind == schema_constants.auxiliary and (not schema_oc.sup):
-            setattr(schema_oc, "sup", "top")
+            schema_oc.sup = "top"
 
     @staticmethod
     def parse(
@@ -117,7 +120,7 @@ class FlextLdifUtilitiesObjectClass:
             oid_raw = parsed_dict.get("oid")
             if not isinstance(oid_raw, str):
                 return r[m.Ldif.SchemaObjectClass].fail(
-                    "Failed to parse objectClass definition: missing oid"
+                    "Failed to parse objectClass definition: missing oid",
                 )
             name_raw = parsed_dict.get("name")
             name_value = name_raw if isinstance(name_raw, str) else ""
@@ -161,5 +164,5 @@ class FlextLdifUtilitiesObjectClass:
             struct.error,
         ) as e:
             return r[m.Ldif.SchemaObjectClass].fail(
-                f"Failed to parse objectClass definition: {e}"
+                f"Failed to parse objectClass definition: {e}",
             )

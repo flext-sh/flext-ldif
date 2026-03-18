@@ -85,7 +85,8 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(
-            self, attr_definition: str | m.Ldif.SchemaAttribute
+            self,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Check if this is an OpenLDAP 1.x attribute."""
             if isinstance(attr_definition, str):
@@ -104,7 +105,8 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(
-            self, oc_definition: str | m.Ldif.SchemaObjectClass
+            self,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Check if this is an OpenLDAP 1.x objectClass."""
             if isinstance(oc_definition, str):
@@ -135,7 +137,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for("openldap1")
                 return r[m.Ldif.SchemaAttribute].ok(
-                    attr_data.model_copy(update={"metadata": metadata})
+                    attr_data.model_copy(update={"metadata": metadata}),
                 )
             return result
 
@@ -152,7 +154,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 oc_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for("openldap1")
                 return r[m.Ldif.SchemaObjectClass].ok(
-                    oc_data.model_copy(update={"metadata": metadata})
+                    oc_data.model_copy(update={"metadata": metadata}),
                 )
             return result
 
@@ -246,7 +248,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                         FlextLdifServersOpenldap1.Constants.ACL_ACCESS_TO_PATTERN,
                         acl_line,
                         re.IGNORECASE,
-                    )
+                    ),
                 )
             raw_acl = getattr(acl_line, "raw_acl", None)
             if not isinstance(raw_acl, str) or not raw_acl:
@@ -256,7 +258,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     FlextLdifServersOpenldap1.Constants.ACL_ACCESS_TO_PATTERN,
                     raw_acl,
                     re.IGNORECASE,
-                )
+                ),
             )
 
         @override
@@ -265,7 +267,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             try:
                 acl_content = acl_line
                 if acl_line.lower().startswith(
-                    FlextLdifServersOpenldap1.Constants.ACL_ATTRIBUTE_NAME
+                    FlextLdifServersOpenldap1.Constants.ACL_ATTRIBUTE_NAME,
                 ):
                     acl_content = acl_line[
                         len(FlextLdifServersOpenldap1.Constants.ACL_ATTRIBUTE_NAME) :
@@ -277,7 +279,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 )
                 if not to_match:
                     return r[m.Ldif.Acl].fail(
-                        "Invalid OpenLDAP 1.x ACL format: missing 'to' clause"
+                        "Invalid OpenLDAP 1.x ACL format: missing 'to' clause",
                     )
                 what = to_match.group(1).strip()
                 by_matches = list(
@@ -285,7 +287,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                         FlextLdifServersOpenldap1.Constants.ACL_BY_PATTERN,
                         acl_content,
                         re.IGNORECASE,
-                    )
+                    ),
                 )
                 first_who = by_matches[0].group(1) if by_matches else "*"
                 first_access = by_matches[0].group(2).lower() if by_matches else "none"
@@ -302,7 +304,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     target_attrs = [
                         a.strip()
                         for a in attrs_str.split(
-                            FlextLdifServersOpenldap1.Constants.ACL_OPS_SEPARATOR
+                            FlextLdifServersOpenldap1.Constants.ACL_OPS_SEPARATOR,
                         )
                     ]
                 read_perm = FlextLdifServersRfc.Constants.PERMISSION_READ
@@ -329,19 +331,23 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 else:
                     subject_type = "user"
                 acl_extensions = m.Ldif.DynamicMetadata.model_construct(
-                    _fields_set={"original_format"}, original_format=acl_line
+                    _fields_set={"original_format"},
+                    original_format=acl_line,
                 )
                 acl = m.Ldif.Acl(
                     name=FlextLdifServersOpenldap1.Constants.ACL_ATTRIBUTE_NAME,
                     target=m.Ldif.AclTarget(
-                        target_dn=target_dn, attributes=target_attrs
+                        target_dn=target_dn,
+                        attributes=target_attrs,
                     ),
                     subject=m.Ldif.AclSubject(
-                        subject_type=subject_type, subject_value=first_who
+                        subject_type=subject_type,
+                        subject_value=first_who,
                     ),
                     permissions=permissions,
                     metadata=m.Ldif.QuirkMetadata.create_for(
-                        quirk_type=self._get_server_type(), extensions=acl_extensions
+                        quirk_type=self._get_server_type(),
+                        extensions=acl_extensions,
                     ),
                     raw_acl=acl_line,
                 )
@@ -368,11 +374,11 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     perms: list[str] = []
                     if acl_data.permissions.read:
                         perms.append(
-                            FlextLdifServersOpenldap1.Constants.PERMISSION_READ
+                            FlextLdifServersOpenldap1.Constants.PERMISSION_READ,
                         )
                     if acl_data.permissions.write:
                         perms.append(
-                            FlextLdifServersOpenldap1.Constants.PERMISSION_WRITE
+                            FlextLdifServersOpenldap1.Constants.PERMISSION_WRITE,
                         )
                     if perms:
                         acl_str += f" {','.join(perms)}"
@@ -391,7 +397,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         @override
         def can_handle(
-            self, entry_dn: str, attributes: Mapping[str, list[str]]
+            self,
+            entry_dn: str,
+            attributes: Mapping[str, list[str]],
         ) -> bool:
             """Check if this quirk should handle the entry."""
             if not entry_dn:
@@ -407,13 +415,15 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             """Process entry for OpenLDAP 1.x format."""
             try:
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(
-                    quirk_type=c.Ldif.ServerTypes.OPENLDAP1
+                    quirk_type=c.Ldif.ServerTypes.OPENLDAP1,
                 )
                 metadata.extensions[
                     c.Ldif.Domain.QuirkMetadataKeys.IS_TRADITIONAL_DIT
                 ] = True
                 processed_entry = m.Ldif.Entry(
-                    dn=entry.dn, attributes=entry.attributes, metadata=metadata
+                    dn=entry.dn,
+                    attributes=entry.attributes,
+                    metadata=metadata,
                 )
                 return r[m.Ldif.Entry].ok(processed_entry)
             except (
@@ -424,5 +434,5 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 struct.error,
             ) as e:
                 return r[m.Ldif.Entry].fail(
-                    f"OpenLDAP 1.x entry processing failed: {e}"
+                    f"OpenLDAP 1.x entry processing failed: {e}",
                 )

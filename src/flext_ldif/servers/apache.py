@@ -71,7 +71,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(
-            self, attr_definition: str | m.Ldif.SchemaAttribute
+            self,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect ApacheDS attribute definitions using centralized constants."""
             if isinstance(attr_definition, m.Ldif.SchemaAttribute):
@@ -83,7 +84,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 )
             attr_lower = attr_definition.lower()
             if re.search(
-                FlextLdifServersApache.Constants.DETECTION_OID_PATTERN, attr_definition
+                FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
+                attr_definition,
             ):
                 return True
             name_matches = re.findall(
@@ -93,7 +95,9 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             )
             if any(
                 name.lower().startswith(
-                    tuple(FlextLdifServersApache.Constants.DETECTION_ATTRIBUTE_PREFIXES)
+                    tuple(
+                        FlextLdifServersApache.Constants.DETECTION_ATTRIBUTE_PREFIXES
+                    ),
                 )
                 for name in name_matches
             ):
@@ -103,7 +107,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(
-            self, oc_definition: str | m.Ldif.SchemaObjectClass
+            self,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect ApacheDS objectClass definitions using centralized constants."""
             if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
@@ -113,7 +118,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                     detection_names=FlextLdifServersApache.Constants.DETECTION_OBJECTCLASS_NAMES,
                 )
             if re.search(
-                FlextLdifServersApache.Constants.DETECTION_OID_PATTERN, oc_definition
+                FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
+                oc_definition,
             ):
                 return True
             name_matches = re.findall(
@@ -135,7 +141,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for("apache")
                 return r[m.Ldif.SchemaAttribute].ok(
-                    attr_data.model_copy(update={"metadata": metadata})
+                    attr_data.model_copy(update={"metadata": metadata}),
                 )
             return result
 
@@ -149,7 +155,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 u.Ldif.fix_kind_mismatch(oc_data)
                 metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
                 return r[m.Ldif.SchemaObjectClass].ok(
-                    oc_data.model_copy(update={"metadata": metadata})
+                    oc_data.model_copy(update={"metadata": metadata}),
                 )
             return result
 
@@ -175,7 +181,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 ):
                     return True
                 return normalized.lower().startswith(
-                    FlextLdifServersApache.Constants.ACL_VERSION_PATTERN
+                    FlextLdifServersApache.Constants.ACL_VERSION_PATTERN,
                 )
             raw_acl = getattr(acl_line, "raw_acl", None)
             if not isinstance(raw_acl, str) or not raw_acl:
@@ -190,7 +196,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             ):
                 return True
             return normalized.lower().startswith(
-                FlextLdifServersApache.Constants.ACL_VERSION_PATTERN
+                FlextLdifServersApache.Constants.ACL_VERSION_PATTERN,
             )
 
         @override
@@ -209,7 +215,9 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         @override
         def can_handle(
-            self, entry_dn: str, attributes: Mapping[str, list[str]]
+            self,
+            entry_dn: str,
+            attributes: Mapping[str, list[str]],
         ) -> bool:
             """Check if this quirk can handle the entry."""
             _ = entry_dn
@@ -217,7 +225,9 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             return True
 
         def _parse_entry(
-            self, entry_dn: str, entry_attrs: Mapping[str, list[str | bytes]]
+            self,
+            entry_dn: str,
+            entry_attrs: Mapping[str, list[str | bytes]],
         ) -> r[m.Ldif.Entry]:
             """Parse raw LDIF entry data into Entry model."""
             str_attrs: dict[str, list[str]] = {
@@ -232,7 +242,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 if not entry.dn:
                     return r[m.Ldif.Entry].ok(entry)
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(
-                    quirk_type=self._get_server_type()
+                    quirk_type=self._get_server_type(),
                 )
                 dn_lower = entry.dn.value.lower()
                 if not metadata.extensions:
@@ -244,7 +254,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 return r[m.Ldif.Entry].ok(processed_entry)
             except (ValueError, TypeError, AttributeError) as exc:
                 return r[m.Ldif.Entry].fail(
-                    f"Apache Directory Server entry parsing failed: {exc}"
+                    f"Apache Directory Server entry parsing failed: {exc}",
                 )
 
 

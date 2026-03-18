@@ -196,7 +196,9 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for objects with parse method."""
 
             def parse(
-                self, ldif_input: str | Path, server_type: str | None = None
+                self,
+                ldif_input: str | Path,
+                server_type: str | None = None,
             ) -> r[Sequence[FlextLdifProtocols.Ldif.Entry]]:
                 """Parse LDIF content."""
                 ...
@@ -272,7 +274,8 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for Schema quirk implementations."""
 
             def parse(
-                self, definition: str
+                self,
+                definition: str,
             ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
                 """Parse schema definition."""
                 ...
@@ -321,7 +324,9 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def parse_entry(
-                self, entry_dn: str, entry_attrs: Mapping[str, list[str]]
+                self,
+                entry_dn: str,
+                entry_attrs: Mapping[str, list[str]],
             ) -> r[m.Ldif.Entry]:
                 """Parse single entry from DN and attributes."""
                 ...
@@ -339,7 +344,8 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for quirk registry implementations."""
 
             def schema(
-                self, server_type: str
+                self,
+                server_type: str,
             ) -> FlextLdifProtocols.Ldif.SchemaQuirk | None:
                 """Get schema quirk for server type."""
                 ...
@@ -349,7 +355,8 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def entry(
-                self, server_type: str
+                self,
+                server_type: str,
             ) -> FlextLdifProtocols.Ldif.EntryQuirk | None:
                 """Get entry quirk for server type."""
                 ...
@@ -395,7 +402,8 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for filters in pipelines."""
 
             def __and__(
-                self, other: FlextLdifProtocols.Ldif.Filter[T]
+                self,
+                other: FlextLdifProtocols.Ldif.Filter[T],
             ) -> FlextLdifProtocols.Ldif.Filter[T]:
                 """AND combination."""
                 ...
@@ -405,7 +413,8 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def __or__(
-                self, other: FlextLdifProtocols.Ldif.Filter[T]
+                self,
+                other: FlextLdifProtocols.Ldif.Filter[T],
             ) -> FlextLdifProtocols.Ldif.Filter[T]:
                 """OR combination."""
                 ...

@@ -31,10 +31,10 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "caseIgnoreMatch": "accessDirectiveMatch",
     }
     SYNTAX_OID_TO_RFC: ClassVar[Mapping[str, str]] = {
-        "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15"
+        "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15",
     }
     SYNTAX_RFC_TO_OID: ClassVar[Mapping[str, str]] = {
-        "1.3.6.1.4.1.1466.115.121.1.15": "1.3.6.1.4.1.1466.115.121.1.1"
+        "1.3.6.1.4.1.1466.115.121.1.15": "1.3.6.1.4.1.1466.115.121.1.1",
     }
     ATTR_NAME_CASE_MAP: ClassVar[Mapping[str, str]] = {"middlename": "middleName"}
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = (

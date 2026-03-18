@@ -517,26 +517,26 @@ class TestsFlextLdifConstants(c, FlextLdifConstants):
         Used by test files to reference OID constants with short names.
         """
 
-        CN: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_CN
-        SN: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_SN
-        ST: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_ST
-        MAIL: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_MAIL
+        CN: Final[str] = FlextLdifConstants.Ldif.Rfc.ATTR_OID_CN
+        SN: Final[str] = FlextLdifConstants.Ldif.Rfc.ATTR_OID_SN
+        ST: Final[str] = FlextLdifConstants.Ldif.Rfc.ATTR_OID_ST
+        MAIL: Final[str] = FlextLdifConstants.Ldif.Rfc.ATTR_OID_MAIL
         MODIFY_TIMESTAMP: Final[str] = (
-            TestsFlextLdifConstants.Rfc.ATTR_OID_MODIFY_TIMESTAMP
+            FlextLdifConstants.Ldif.Rfc.ATTR_OID_MODIFY_TIMESTAMP
         )
-        OID_O: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_O
-        OBJECTCLASS: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_OBJECTCLASS
-        PERSON: Final[str] = TestsFlextLdifConstants.Rfc.OC_OID_PERSON
+        OID_O: Final[str] = FlextLdifConstants.Ldif.Rfc.ATTR_OID_O
+        OBJECTCLASS: Final[str] = FlextLdifConstants.Ldif.Rfc.ATTR_OID_OBJECTCLASS
+        PERSON: Final[str] = FlextLdifConstants.Ldif.Rfc.OC_OID_PERSON
         DIRECTORY_STRING: Final[str] = (
-            TestsFlextLdifConstants.Rfc.SYNTAX_OID_DIRECTORY_STRING
+            FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_DIRECTORY_STRING
         )
-        BOOLEAN: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_BOOLEAN
-        INTEGER: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_INTEGER
-        IA5_STRING: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_IA5_STRING
+        BOOLEAN: Final[str] = FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_BOOLEAN
+        INTEGER: Final[str] = FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_INTEGER
+        IA5_STRING: Final[str] = FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_IA5_STRING
         GENERALIZED_TIME: Final[str] = (
-            TestsFlextLdifConstants.Rfc.SYNTAX_OID_GENERALIZED_TIME
+            FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_GENERALIZED_TIME
         )
-        OID: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_OID
+        OID: Final[str] = FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_OID
 
     class Syntax:
         """Syntax OID constant namespace for cleaner test access.
@@ -546,15 +546,15 @@ class TestsFlextLdifConstants(c, FlextLdifConstants):
         """
 
         DIRECTORY_STRING: Final[str] = (
-            TestsFlextLdifConstants.Rfc.SYNTAX_OID_DIRECTORY_STRING
+            FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_DIRECTORY_STRING
         )
-        BOOLEAN: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_BOOLEAN
-        INTEGER: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_INTEGER
-        IA5_STRING: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_IA5_STRING
+        BOOLEAN: Final[str] = FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_BOOLEAN
+        INTEGER: Final[str] = FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_INTEGER
+        IA5_STRING: Final[str] = FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_IA5_STRING
         GENERALIZED_TIME: Final[str] = (
-            TestsFlextLdifConstants.Rfc.SYNTAX_OID_GENERALIZED_TIME
+            FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_GENERALIZED_TIME
         )
-        OID: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_OID
+        OID: Final[str] = FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_OID
 
     class RfcTestHelpers:
         """RFC test helper utilities for LDIF testing."""
@@ -1189,7 +1189,7 @@ class TestsFlextLdifConstants(c, FlextLdifConstants):
                 AssertionError: If parsing/writing fails or validations don't pass
 
             """
-            attr = RfcTestHelpers.test_schema_parse_attribute(
+            attr = TestsFlextLdifConstants.RfcTestHelpers.test_schema_parse_attribute(
                 schema_quirk, attr_def, expected_oid, expected_name
             )
             write_method = getattr(schema_quirk, "write_attribute", None)
@@ -1750,7 +1750,7 @@ class TestsFlextLdifConstants(c, FlextLdifConstants):
             """
             assert isinstance(api, FlextLdif)
             assert isinstance(output_file, Path)
-            ldif_string = TestDeduplicationHelpers.helper_api_write_and_unwrap(
+            ldif_string = TestsFlextLdifConstants.TestDeduplicationHelpers.helper_api_write_and_unwrap(
                 api, entries, must_contain=must_contain
             )
             output_file.write_text(ldif_string)
@@ -1770,7 +1770,7 @@ class TestsFlextLdifConstants(c, FlextLdifConstants):
                 must_contain: List of strings that must appear in output
 
             """
-            TestDeduplicationHelpers.helper_api_write_and_unwrap(
+            TestsFlextLdifConstants.TestDeduplicationHelpers.helper_api_write_and_unwrap(
                 api, entries, must_contain=must_contain
             )
 

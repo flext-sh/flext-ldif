@@ -207,7 +207,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "group_attribute": ("bind_rules", 'userattr="{value}#GROUPDN"'),
     }
     OUD_TO_RFC_SUBJECTS: ClassVar[Mapping[str, tuple[str, str]]] = {
-        "bind_rules": ("group_membership", "{value}")
+        "bind_rules": ("group_membership", "{value}"),
     }
     INVALID_SUBSTR_RULES: ClassVar[Mapping[str, str | None]] = {
         "caseIgnoreMatch": "caseIgnoreSubstringsMatch",

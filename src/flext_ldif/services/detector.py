@@ -18,7 +18,10 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
 
     @staticmethod
     def _add_pattern_if_match(
-        *, condition: bool, description: str, patterns: list[str]
+        *,
+        condition: bool,
+        description: str,
+        patterns: list[str],
     ) -> None:
         """Add pattern description if condition is met."""
         if condition:
@@ -64,7 +67,8 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
 
     @staticmethod
     def resolve_from_config(
-        config: FlextLdifSettings, target_server_type: str | None = None
+        config: FlextLdifSettings,
+        target_server_type: str | None = None,
     ) -> str:
         """Determine effective server type based on a prioritized configuration hierarchy."""
         if target_server_type:
@@ -104,18 +108,18 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         max_lines = max_lines or u.Ldif.get_server_detection_default_max_lines()
         if ldif_path is None and ldif_content is None:
             return r[m.Ldif.ServerDetectionResult].fail(
-                "Either ldif_path or ldif_content must be provided"
+                "Either ldif_path or ldif_content must be provided",
             )
         if ldif_content is None and ldif_path is not None:
             if not ldif_path.exists():
                 return r[m.Ldif.ServerDetectionResult].fail(
-                    f"LDIF file not found: {ldif_path}"
+                    f"LDIF file not found: {ldif_path}",
                 )
             try:
                 ldif_content = ldif_path.read_text(encoding="utf-8")
             except UnicodeDecodeError as e:
                 return r[m.Ldif.ServerDetectionResult].fail(
-                    f"LDIF file is not valid UTF-8 (RFC 2849 violation): {e}"
+                    f"LDIF file is not valid UTF-8 (RFC 2849 violation): {e}",
                 )
         if ldif_content is None:
             return r[m.Ldif.ServerDetectionResult].fail("No LDIF content provided")
@@ -149,12 +153,15 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         return r[m.Ldif.ClientStatus].ok(status_result)
 
     def get_effective_server_type(
-        self, ldif_path: Path | None = None, ldif_content: str | None = None
+        self,
+        ldif_path: Path | None = None,
+        ldif_content: str | None = None,
     ) -> r[str]:
         """Resolve the effective LDAP server type to use for processing."""
         if ldif_path is not None or ldif_content is not None:
             detection_result = self.detect_server_type(
-                ldif_path=ldif_path, ldif_content=ldif_content
+                ldif_path=ldif_path,
+                ldif_content=ldif_content,
             )
             if detection_result.is_success:
                 return r[str].ok(detection_result.value.detected_server_type)
@@ -166,7 +173,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         scores[u.Ldif.get_server_type_value("GENERIC")] = 1
         content_lower = content.lower()
         oid_server_type = u.Ldif.normalize_server_type(
-            u.Ldif.get_server_type_value("OID")
+            u.Ldif.get_server_type_value("OID"),
         )
         oid_constants = self._get_server_constants(oid_server_type)
         if oid_constants:
@@ -179,15 +186,19 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
                 case_sensitive=True,
             )
         oud_server_type = u.Ldif.normalize_server_type(
-            u.Ldif.get_server_type_value("OUD")
+            u.Ldif.get_server_type_value("OUD"),
         )
         oud_constants = self._get_server_constants(oud_server_type)
         if oud_constants:
             self._process_server_with_oid_pattern(
-                oud_server_type, oud_constants, content, content_lower, scores
+                oud_server_type,
+                oud_constants,
+                content,
+                content_lower,
+                scores,
             )
         openldap_server_type = u.Ldif.normalize_server_type(
-            u.Ldif.get_server_type_value("OPENLDAP")
+            u.Ldif.get_server_type_value("OPENLDAP"),
         )
         openldap_constants = self._get_server_constants(openldap_server_type)
         if (
@@ -205,11 +216,13 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
                     content_lower,
                     scores,
                     objectclasses=getattr(
-                        openldap_constants, "DETECTION_OBJECTCLASS_NAMES", None
+                        openldap_constants,
+                        "DETECTION_OBJECTCLASS_NAMES",
+                        None,
                     ),
                 )
         ad_server_type = u.Ldif.normalize_server_type(
-            u.Ldif.get_server_type_value("AD")
+            u.Ldif.get_server_type_value("AD"),
         )
         ad_constants = self._get_server_constants(ad_server_type)
         if (
@@ -228,7 +241,9 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
                     scores,
                     case_sensitive=True,
                     objectclasses=getattr(
-                        ad_constants, "DETECTION_OBJECTCLASS_NAMES", None
+                        ad_constants,
+                        "DETECTION_OBJECTCLASS_NAMES",
+                        None,
                     ),
                 )
         for server_type_str in (
@@ -241,7 +256,10 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
             constants = self._get_server_constants(server_literal)
             if constants:
                 self._process_server_with_pattern(
-                    server_literal, constants, content_lower, scores
+                    server_literal,
+                    constants,
+                    content_lower,
+                    scores,
                 )
         return scores
 
@@ -342,7 +360,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         patterns: list[str] = []
         content_lower = content.lower()
         oid_server_type = u.Ldif.normalize_server_type(
-            u.Ldif.get_server_type_value("OID")
+            u.Ldif.get_server_type_value("OID"),
         )
         oid_constants = self._get_server_constants(oid_server_type)
         if oid_constants:
@@ -358,7 +376,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
             )
             self._extract_oid_specific_patterns(oid_constants, content, patterns)
         oud_server_type = u.Ldif.normalize_server_type(
-            u.Ldif.get_server_type_value("OUD")
+            u.Ldif.get_server_type_value("OUD"),
         )
         oud_constants = self._get_server_constants(oud_server_type)
         if oud_constants:
@@ -372,12 +390,14 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
                 patterns,
             )
         openldap_server_type = u.Ldif.normalize_server_type(
-            u.Ldif.get_server_type_value("OPENLDAP")
+            u.Ldif.get_server_type_value("OPENLDAP"),
         )
         openldap_constants = self._get_server_constants(openldap_server_type)
         if openldap_constants:
             openldap_pattern = getattr(
-                openldap_constants, "DETECTION_OID_PATTERN", None
+                openldap_constants,
+                "DETECTION_OID_PATTERN",
+                None,
             )
             self._extract_oid_patterns(
                 openldap_constants,
@@ -388,7 +408,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
                 patterns,
             )
         ad_server_type = u.Ldif.normalize_server_type(
-            u.Ldif.get_server_type_value("AD")
+            u.Ldif.get_server_type_value("AD"),
         )
         ad_constants = self._get_server_constants(ad_server_type)
         if ad_constants:
@@ -424,16 +444,21 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         ]:
             server_type = u.Ldif.normalize_server_type(server_type_str)
             self._extract_pattern_with_attr(
-                server_type, "DETECTION_PATTERN", description, content_lower, patterns
+                server_type,
+                "DETECTION_PATTERN",
+                description,
+                content_lower,
+                patterns,
             )
         tivoli_server_type = u.Ldif.normalize_server_type(
-            u.Ldif.get_server_type_value("IBM_TIVOLI")
+            u.Ldif.get_server_type_value("IBM_TIVOLI"),
         )
         tivoli_constants = self._get_server_constants(tivoli_server_type)
         if tivoli_constants:
             tivoli_pattern = getattr(tivoli_constants, "DETECTION_PATTERN", None)
             if tivoli_pattern is not None and re.search(
-                str(tivoli_pattern), content_lower
+                str(tivoli_pattern),
+                content_lower,
             ):
                 patterns.append("IBM Tivoli attributes (ibm-*, tivoli, ldapdb)")
         return patterns

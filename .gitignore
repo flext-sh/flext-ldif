@@ -326,3 +326,6 @@ __pycache__/
 # --- workspace-sync: required ignores (auto-managed) ---
 .reports/
 .venv/
+
+# --- workspace-sync: required ignores (auto-managed) ---
+base.mk

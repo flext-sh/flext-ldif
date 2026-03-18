@@ -90,7 +90,7 @@ class ProcessConfigBuilder:
             "sort_attributes": sort_attributes,
         }
         self._attr_config = FlextLdifModels.Ldif.AttrNormalizationConfig.model_validate(
-            config_kwargs
+            config_kwargs,
         )
         return self
 
@@ -110,7 +110,7 @@ class ProcessConfigBuilder:
         if escapes is not None:
             config_kwargs["escape_handling"] = escapes
         self._dn_config = FlextLdifModels.Ldif.DnNormalizationConfig.model_validate(
-            config_kwargs
+            config_kwargs,
         )
         return self
 

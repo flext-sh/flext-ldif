@@ -86,7 +86,8 @@ class FlextLdifModelsResults:
         def __getitem__(self, key: int) -> FlextLdifModelsDomains.Entry: ...
 
         def __getitem__(
-            self, key: int | slice
+            self,
+            key: int | slice,
         ) -> FlextLdifModelsDomains.Entry | list[FlextLdifModelsDomains.Entry]:
             return self.get_all_entries()[key]
 
@@ -131,7 +132,7 @@ class FlextLdifModelsResults:
         ) -> Self:
             entry_list = list(entries)
             stats = statistics or FlextLdifModelsResults.Statistics.for_pipeline(
-                total=len(entry_list)
+                total=len(entry_list),
             )
             flex = FlextLdifModelsCollections.FlexibleCategories()
             flex[category] = entry_list
@@ -167,8 +168,8 @@ class FlextLdifModelsResults:
             merged_stats = self_stats.model_copy(
                 update={
                     "total_entries": self_stats.total_entries
-                    + other_stats.total_entries
-                }
+                    + other_stats.total_entries,
+                },
             )
             merged_paths = FlextLdifModelsCollections.CategoryPaths()
             merged_paths.update(self.file_paths.to_dict())
@@ -276,7 +277,8 @@ class FlextLdifModelsResults:
             )
 
         def merge(
-            self, other: FlextLdifModelsResults.Statistics
+            self,
+            other: FlextLdifModelsResults.Statistics,
         ) -> FlextLdifModelsResults.Statistics:
             merged_reasons: dict[str, int] = dict(self.rejection_reasons.items())
             for reason, count in other.rejection_reasons.items():
@@ -313,7 +315,7 @@ class FlextLdifModelsResults:
                 "output_file": self.output_file or other.output_file,
                 "encoding": self.encoding,
                 "rejection_reasons": FlextLdifModelsCollections.DynamicCounts(
-                    **merged_reasons
+                    **merged_reasons,
                 ),
             }
             events_merged: list[FlextLdifModelsResults.EventType] = [
@@ -344,7 +346,8 @@ class FlextLdifModelsResults:
             Field(default_factory=FlextLdifModelsCollections.SchemaContent),
         ]
         entries: Annotated[
-            Sequence[FlextLdifModelsDomains.Entry], Field(default_factory=tuple)
+            Sequence[FlextLdifModelsDomains.Entry],
+            Field(default_factory=tuple),
         ]
         stats: Annotated[
             FlextLdifModelsResults.Statistics,
@@ -424,7 +427,8 @@ class FlextLdifModelsResults:
         successful_parses: Annotated[int, Field(ge=0)]
         success_rate: Annotated[float, Field(ge=0.0)]
         server_results: Annotated[
-            dict[str, t.Ldif.MetadataDict], Field(default_factory=dict)
+            dict[str, t.Ldif.MetadataDict],
+            Field(default_factory=dict),
         ]
 
     class ClientStatus(m.Value):
@@ -518,7 +522,9 @@ class FlextLdifModelsResults:
             return extra is not None and key in extra
 
         def get(
-            self, key: str, default: str | float | bool | None = None
+            self,
+            key: str,
+            default: str | float | bool | None = None,
         ) -> t.Scalar | None:
             try:
                 return self[key]
@@ -616,7 +622,8 @@ class FlextLdifModelsResults:
     class ParseResponse(m.Value):
         model_config = ConfigDict(frozen=True, validate_default=True)
         entries: Annotated[
-            Sequence[FlextLdifModelsDomains.Entry], Field(default_factory=tuple)
+            Sequence[FlextLdifModelsDomains.Entry],
+            Field(default_factory=tuple),
         ]
         statistics: Annotated[FlextLdifModelsResults.Statistics, Field()]
         detected_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None
@@ -631,7 +638,8 @@ class FlextLdifModelsResults:
     class AclResponse(m.Value):
         model_config = ConfigDict(frozen=True, validate_default=True)
         acls: Annotated[
-            Sequence[FlextLdifModelsDomains.Acl], Field(default_factory=tuple)
+            Sequence[FlextLdifModelsDomains.Acl],
+            Field(default_factory=tuple),
         ]
         statistics: Annotated[FlextLdifModelsResults.Statistics, Field()]
 

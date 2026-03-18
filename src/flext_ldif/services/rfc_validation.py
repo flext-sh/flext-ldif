@@ -55,7 +55,7 @@ class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
                     "objectclass_name",
                     "attribute_value",
                 ],
-            )
+            ),
         )
 
     def validate_attribute_name(self, name: str) -> r[bool]:
@@ -85,11 +85,13 @@ class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
             return r[Mapping[str, bool]].ok(validated_mapping)
         except (ValueError, TypeError, AttributeError) as e:
             return r[Mapping[str, bool]].fail(
-                f"Failed to batch validate attribute names: {e}"
+                f"Failed to batch validate attribute names: {e}",
             )
 
     def validate_attribute_value(
-        self, value: str, max_length: int | None = None
+        self,
+        value: str,
+        max_length: int | None = None,
     ) -> r[bool]:
         """Validate_attribute_value method."""
         try:
@@ -103,7 +105,9 @@ class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
             if len(value) > max_len:
                 return r[bool].ok(False)
             return r[bool].ok(
-                FlextLdifUtilitiesValidation.Rfc.is_valid_rfc2849_attribute_value(value)
+                FlextLdifUtilitiesValidation.Rfc.is_valid_rfc2849_attribute_value(
+                    value
+                ),
             )
         except (ValueError, TypeError, AttributeError) as e:
             return r[bool].fail(f"Failed to validate attribute value: {e}")
@@ -118,8 +122,9 @@ class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
             dn_value = value.replace(",", "\\,")
             return r[bool].ok(
                 FlextLdifUtilitiesValidation.Rfc.is_valid_rfc4514_dn_component(
-                    attr, dn_value
-                )
+                    attr,
+                    dn_value,
+                ),
             )
         except (ValueError, TypeError, AttributeError) as e:
             return r[bool].fail(f"Failed to validate DN component: {e}")

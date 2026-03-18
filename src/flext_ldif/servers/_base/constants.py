@@ -93,7 +93,7 @@ class QuirkMethodsMixin:
     def _get_server_type(self) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
         """Get server_type from parent server class via __qualname__."""
         return FlextLdifServersBaseQuirkHelpers.get_server_type_from_utilities(
-            type(self)
+            type(self),
         )
 
 

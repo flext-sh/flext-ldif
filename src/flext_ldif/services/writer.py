@@ -85,12 +85,15 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
             if validated_entry is not None:
                 entries.append(validated_entry)
         target_server_type_raw = u.take(
-            params_data, "target_server_type", as_type=str, default="rfc"
+            params_data,
+            "target_server_type",
+            as_type=str,
+            default="rfc",
         )
         target_server_type: str | None = None
         try:
             target_server_type = u.Ldif.normalize_server_type(
-                str(target_server_type_raw)
+                str(target_server_type_raw),
             )
         except ValueError:
             target_server_type = None
@@ -107,7 +110,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
             validated_format_options: m.Ldif.WriteFormatOptions | None = None
             with suppress(Exception):
                 validated_format_options = m.Ldif.WriteFormatOptions.model_validate(
-                    format_options_raw
+                    format_options_raw,
                 )
             if validated_format_options is not None:
                 format_options = validated_format_options
@@ -115,7 +118,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
                 validated_write_options: m.Ldif.WriteOptions | None = None
                 with suppress(Exception):
                     validated_write_options = m.Ldif.WriteOptions.model_validate(
-                        format_options_raw
+                        format_options_raw,
                     )
                 format_options = validated_write_options
         write_result = self.write(
@@ -134,9 +137,10 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
             m.Ldif.WriteResponse(
                 content=str(result_value),
                 statistics=m.Ldif.Statistics(
-                    total_entries=len(entries), processed_entries=len(entries)
+                    total_entries=len(entries),
+                    processed_entries=len(entries),
                 ),
-            )
+            ),
         )
 
     def write(
@@ -151,19 +155,24 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
         """Write entries to LDIF format (string or file)."""
         if output_path is not None:
             file_result = self.write_to_file(
-                entries, output_path, target_server_type, format_options
+                entries,
+                output_path,
+                target_server_type,
+                format_options,
             )
             if file_result.is_failure:
                 return r[str | m.Ldif.WriteResponse].fail(
-                    file_result.error or "File write failed"
+                    file_result.error or "File write failed",
                 )
             return r[str | m.Ldif.WriteResponse].ok(file_result.value)
         string_result = self.write_to_string(
-            entries, target_server_type, format_options
+            entries,
+            target_server_type,
+            format_options,
         )
         if string_result.is_failure:
             return r[str | m.Ldif.WriteResponse].fail(
-                string_result.error or "String write failed"
+                string_result.error or "String write failed",
             )
         return r[str | m.Ldif.WriteResponse].ok(string_result.value)
 
@@ -178,25 +187,26 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
         string_result = self.write_to_string(entries, server_type, format_options)
         if string_result.is_failure:
             return r[m.Ldif.WriteResponse].fail(
-                string_result.error or "Failed to generate LDIF content"
+                string_result.error or "Failed to generate LDIF content",
             )
         ldif_content = string_result.value
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
         except OSError as e:
             return r[m.Ldif.WriteResponse].fail(
-                f"Failed to create parent directories for {path}: {e}"
+                f"Failed to create parent directories for {path}: {e}",
             )
         try:
             _ = path.write_text(ldif_content, encoding="utf-8")
         except (OSError, UnicodeEncodeError) as e:
             return r[m.Ldif.WriteResponse].fail(
-                f"Failed to write LDIF file {path}: {e}"
+                f"Failed to write LDIF file {path}: {e}",
             )
         response = m.Ldif.WriteResponse(
             content=ldif_content,
             statistics=m.Ldif.Statistics(
-                total_entries=u.count(entries), processed_entries=u.count(entries)
+                total_entries=u.count(entries),
+                processed_entries=u.count(entries),
             ),
         )
         return r[m.Ldif.WriteResponse].ok(response)
@@ -215,7 +225,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
             return r[str].fail(f"Invalid server type: {effective_server_type}. {e!s}")
         if entry_quirk is None:
             return r[str].fail(
-                f"No entry quirk found for server type: {effective_server_type}"
+                f"No entry quirk found for server type: {effective_server_type}",
             )
         options = self._normalize_format_options(format_options)
         return entry_quirk.write(entries, options).fold(

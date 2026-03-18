@@ -24,7 +24,9 @@ class FlextLdifModelsMetadata:
         """Model with extra='allow' for dynamic field storage."""
 
         model_config = ConfigDict(
-            extra="allow", arbitrary_types_allowed=True, frozen=False
+            extra="allow",
+            arbitrary_types_allowed=True,
+            frozen=False,
         )
         transformations: list[t.Scalar] | None = None
         original_format: str | None = None
@@ -76,7 +78,9 @@ class FlextLdifModelsMetadata:
                 extra.clear()
 
         def get(
-            self, key: str, default: t.Ldif.MetadataValue | None = None
+            self,
+            key: str,
+            default: t.Ldif.MetadataValue | None = None,
         ) -> t.Ldif.MetadataValue | None:
             """Get value by key, returning default if not found."""
             if key in type(self).model_fields:
@@ -90,7 +94,9 @@ class FlextLdifModelsMetadata:
             return self._extra().keys()
 
         def pop(
-            self, key: str, default: t.Ldif.MetadataValue | None = None
+            self,
+            key: str,
+            default: t.Ldif.MetadataValue | None = None,
         ) -> t.Ldif.MetadataValue | None:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
@@ -114,7 +120,10 @@ class FlextLdifModelsMetadata:
         """Entry metadata for tracking processing details."""
 
         model_config = ConfigDict(
-            frozen=True, extra="allow", use_enum_values=True, str_strip_whitespace=True
+            frozen=True,
+            extra="allow",
+            use_enum_values=True,
+            str_strip_whitespace=True,
         )
 
         def __getitem__(self, key: str) -> t.Ldif.MetadataValue:
@@ -124,7 +133,9 @@ class FlextLdifModelsMetadata:
             return key in self._extra()
 
         def get(
-            self, key: str, default: t.Ldif.MetadataValue | None = None
+            self,
+            key: str,
+            default: t.Ldif.MetadataValue | None = None,
         ) -> t.Ldif.MetadataValue | None:
             return self._extra().get(key, default)
 

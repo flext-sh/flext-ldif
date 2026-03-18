@@ -31,7 +31,10 @@ def _schema_object_classes_factory() -> list[FlextLdifModelsDomains.SchemaObject
 class FlextLdifModelsCollections:
     class DynamicCounts(FlextLdifModelsBase):
         model_config = ConfigDict(
-            frozen=False, extra="allow", use_enum_values=True, str_strip_whitespace=True
+            frozen=False,
+            extra="allow",
+            use_enum_values=True,
+            str_strip_whitespace=True,
         )
 
         @override
@@ -122,7 +125,10 @@ class FlextLdifModelsCollections:
 
     class BooleanFlags(FlextLdifModelsBase):
         model_config = ConfigDict(
-            frozen=True, extra="allow", use_enum_values=True, str_strip_whitespace=True
+            frozen=True,
+            extra="allow",
+            use_enum_values=True,
+            str_strip_whitespace=True,
         )
 
         @override
@@ -150,7 +156,8 @@ class FlextLdifModelsCollections:
     class FlexibleCategories(FlextLdifModelsBase):
         model_config = ConfigDict(extra="allow", frozen=False)
         categories: Annotated[
-            dict[str, list[FlextLdifModelsDomains.Entry]], Field(default_factory=dict)
+            dict[str, list[FlextLdifModelsDomains.Entry]],
+            Field(default_factory=dict),
         ]
 
         @override
@@ -169,7 +176,9 @@ class FlextLdifModelsCollections:
             return self._entry_categories()[category]
 
         def __setitem__(
-            self, category: str, entries: Sequence[FlextLdifModelsDomains.Entry]
+            self,
+            category: str,
+            entries: Sequence[FlextLdifModelsDomains.Entry],
         ) -> None:
             updated_categories = self._entry_categories()
             updated_categories[category] = [
@@ -178,7 +187,9 @@ class FlextLdifModelsCollections:
             object.__setattr__(self, "categories", updated_categories)
 
         def add_entries(
-            self, category: str, entries: Sequence[builtins.object]
+            self,
+            category: str,
+            entries: Sequence[builtins.object],
         ) -> None:
             existing = self._entry_categories().get(category, [])
             normalized_entries = [

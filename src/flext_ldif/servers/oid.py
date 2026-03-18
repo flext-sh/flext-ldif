@@ -30,7 +30,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         return cls.Constants.SCHEMA_FILTERABLE_FIELDS
 
     def extract_schemas_from_ldif(
-        self, ldif_content: str
+        self,
+        ldif_content: str,
     ) -> r[
         dict[str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int]
     ]:
@@ -48,7 +49,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         if result.is_success:
             data = result.value
             converted_data: dict[
-                str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int
+                str,
+                list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
             ] = {
                 "attributes": data.get("attributes", []),
                 "objectclasses": data.get("objectclasses", []),
@@ -63,7 +65,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             ].ok(converted_data)
         return r[
             dict[
-                str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int
+                str,
+                list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
             ]
         ].fail(result.error or "Failed to extract schemas")
 

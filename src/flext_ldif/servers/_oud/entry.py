@@ -164,14 +164,17 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entry_service if entry_service is not None else None
         )
         FlextLdifServersBaseEntry.__init__(
-            self, entry_service_typed, _parent_quirk=None
+            self,
+            entry_service_typed,
+            _parent_quirk=None,
         )
         if _parent_quirk is not None:
             object.__setattr__(self, "_parent_quirk", _parent_quirk)
 
     @staticmethod
     def _comment_acl_attributes(
-        entry_data: m.Ldif.Entry, acl_attribute_names: list[str]
+        entry_data: m.Ldif.Entry,
+        acl_attribute_names: list[str],
     ) -> m.Ldif.Entry:
         """Comment out ACL attributes by removing them from attributes dict and storing in metadata.
 
@@ -194,11 +197,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             existing_metadata = m.Ldif.QuirkMetadata.create_for("oud")
         else:
             existing_metadata = m.Ldif.QuirkMetadata.model_validate(
-                existing_metadata.model_dump()
+                existing_metadata.model_dump(),
             )
         new_attributes_dict, commented_acl_values, hidden_attrs = (
             FlextLdifServersOudEntry.extract_and_remove_acl_attributes(
-                entry_data.attributes.attributes, acl_attribute_names
+                entry_data.attributes.attributes,
+                acl_attribute_names,
             )
         )
         updated_metadata = FlextLdifServersOudEntry.update_metadata_with_commented_acls(
@@ -216,7 +220,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     metadata=entry_data.attributes.metadata,
                 ),
                 "metadata": updated_metadata,
-            }
+            },
         )
 
     @staticmethod
@@ -248,7 +252,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             write_opts_data["hidden_attrs"] = list(hidden_attrs_set)
             return m.Ldif.WriteOptions.model_validate(write_opts_data)
         write_opts_dict: dict[str, builtins.object] = {
-            "hidden_attrs": list(hidden_attrs_set)
+            "hidden_attrs": list(hidden_attrs_set),
         }
         format_value = write_opts.get("format")
         if isinstance(format_value, str):
@@ -302,12 +306,15 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         attrs_dict_raw = entry.attributes.attributes if entry.attributes else {}
         attrs_dict: t.Ldif.CommonDict.AttributeDict = dict(attrs_dict_raw.items())
         aci_validation_error = FlextLdifServersOudEntry.validate_aci_macros_in_entry(
-            attrs_dict, validate_aci_macros
+            attrs_dict,
+            validate_aci_macros,
         )
         if aci_validation_error:
             return r[m.Ldif.Entry].fail(aci_validation_error)
         return FlextLdifServersOudEntry.correct_syntax_and_return_entry(
-            entry, attrs_dict, correct_rfc_syntax_in_attributes
+            entry,
+            attrs_dict,
+            correct_rfc_syntax_in_attributes,
         )
 
     @staticmethod
@@ -362,7 +369,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def apply_syntax_corrections(
         entry: m.Ldif.Entry,
         corrected_data: Mapping[
-            str, t.Scalar | list[str] | Mapping[str, str | list[str]] | None
+            str,
+            t.Scalar | list[str] | Mapping[str, str | list[str]] | None,
         ],
         syntax_corrections: list[str] | Mapping[str, str] | None,
     ) -> r[m.Ldif.Entry]:
@@ -400,7 +408,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return r[m.Ldif.Entry].fail(corrected_result.error or "Unknown error")
         corrected_data = corrected_result.value
         corrected_data_typed: dict[
-            str, t.Scalar | list[str] | dict[str, str | list[str]] | None
+            str,
+            t.Scalar | list[str] | dict[str, str | list[str]] | None,
         ] = dict(corrected_data)
         syntax_corrections_raw = corrected_data_typed.get("syntax_corrections")
         syntax_corrections_typed: list[str] | dict[str, str] | None = None
@@ -413,13 +422,16 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             syntax_corrections_typed = syntax_corrections_dict
         if syntax_corrections_typed is not None:
             return FlextLdifServersOudEntry.apply_syntax_corrections(
-                entry, corrected_data_typed, syntax_corrections_typed
+                entry,
+                corrected_data_typed,
+                syntax_corrections_typed,
             )
         return r[m.Ldif.Entry].ok(entry)
 
     @staticmethod
     def extract_and_remove_acl_attributes(
-        attributes_dict: Mapping[str, list[str]], acl_attribute_names: list[str]
+        attributes_dict: Mapping[str, list[str]],
+        acl_attribute_names: list[str],
     ) -> tuple[dict[str, list[str]], dict[str, list[str]], set[str]]:
         """Extract ACL attributes and remove from active dict.
 
@@ -472,7 +484,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         )
         new_write_options = (
             FlextLdifServersOudEntry._create_write_options_with_hidden_attrs(
-                metadata_typed.write_options, hidden_attrs
+                metadata_typed.write_options,
+                hidden_attrs,
             )
         )
         update_dict: dict[str, builtins.object] = {"write_options": new_write_options}
@@ -631,7 +644,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             post_parse_result = self._hook_post_parse_entry(parsed_entry)
             if post_parse_result.is_failure:
                 return r[list[m.Ldif.Entry]].fail(
-                    post_parse_result.error or "OUD post-parse failed"
+                    post_parse_result.error or "OUD post-parse failed",
                 )
             entry_after_post: m.Ldif.Entry = post_parse_result.value
             original_dn = entry_after_post.dn.value if entry_after_post.dn else ""
@@ -642,18 +655,22 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 else {}
             )
             finalize_result = self._hook_finalize_entry_parse(
-                entry_after_post, original_dn, original_attrs
+                entry_after_post,
+                original_dn,
+                original_attrs,
             )
             if finalize_result.is_failure:
                 return r[list[m.Ldif.Entry]].fail(
-                    finalize_result.error or "OUD finalize parse failed"
+                    finalize_result.error or "OUD finalize parse failed",
                 )
             processed_entries.append(finalize_result.value)
         return r[list[m.Ldif.Entry]].ok(processed_entries)
 
     @override
     def parse_entry(
-        self, entry_dn: str, entry_attrs: Mapping[str, list[str]] | m.Ldif.Entry
+        self,
+        entry_dn: str,
+        entry_attrs: Mapping[str, list[str]] | m.Ldif.Entry,
     ) -> r[m.Ldif.Entry]:
         """Parse entry with OUD-specific metadata population.
 
@@ -728,7 +745,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             original_attribute_case=original_attribute_case,
         )
         metadata = FlextLdifUtilitiesMetadata.build_entry_parse_metadata(
-            metadata_config
+            metadata_config,
         )
         entry.metadata = metadata
         return r[m.Ldif.Entry].ok(entry)
@@ -773,7 +790,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         comment_lines.append(f"# [{comment_type}] {attr_name}: transformation applied")
 
     def _add_original_entry_comments(
-        self, entry_data: m.Ldif.Entry, write_options: m.Ldif.WriteFormatOptions | None
+        self,
+        entry_data: m.Ldif.Entry,
+        write_options: m.Ldif.WriteFormatOptions | None,
     ) -> list[str]:
         """Add original entry as commented LDIF block.
 
@@ -869,15 +888,20 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return acl_attr_names_to_skip
         acl_comments_dict: dict[str, list[str]] = {}
         self._collect_acl_from_transformations(
-            entry, acl_comments_dict, acl_attr_names_to_skip
+            entry,
+            acl_comments_dict,
+            acl_attr_names_to_skip,
         )
         self._collect_acl_from_extensions(
-            entry, acl_comments_dict, acl_attr_names_to_skip
+            entry,
+            acl_comments_dict,
+            acl_attr_names_to_skip,
         )
         if acl_comments_dict:
             acl_attr_names = list(acl_comments_dict.keys())
             ordered_acl_attrs = self._determine_attribute_order(
-                acl_attr_names, format_options
+                acl_attr_names,
+                format_options,
             )
             for attr_name in ordered_acl_attrs:
                 if attr_name in acl_comments_dict:
@@ -885,7 +909,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         return acl_attr_names_to_skip
 
     def _add_rejection_reason_comments(
-        self, comment_lines: list[str], entry: m.Ldif.Entry
+        self,
+        comment_lines: list[str],
+        entry: m.Ldif.Entry,
     ) -> None:
         """Add comments with rejection reason if entry was rejected.
 
@@ -927,7 +953,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if not entry.metadata:
             return
         acl_attr_names_to_skip = self._add_oud_acl_comments(
-            comment_lines, entry, format_options
+            comment_lines,
+            entry,
+            format_options,
         )
         processed_attrs: set[str] = set()
         if entry.metadata.attribute_transformations:
@@ -937,7 +965,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 if attr_name.lower() not in acl_attr_names_to_skip
             ]
             ordered_attr_names = self._determine_attribute_order(
-                attr_names, format_options
+                attr_names,
+                format_options,
             )
             for attr_name in ordered_attr_names:
                 transformation = entry.metadata.attribute_transformations[attr_name]
@@ -948,7 +977,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     else transformation_type
                 )
                 self._add_attribute_transformation_comments(
-                    comment_lines, attr_name, transformation, comment_type
+                    comment_lines,
+                    attr_name,
+                    transformation,
+                    comment_type,
                 )
                 processed_attrs.add(attr_name.lower())
         if (
@@ -964,7 +996,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 and attr_name.lower() not in acl_attr_names_to_skip
             ]
             ordered_removed_attrs = self._determine_attribute_order(
-                removed_attr_names, format_options
+                removed_attr_names,
+                format_options,
             )
             for attr_name in ordered_removed_attrs:
                 if attr_name.lower() in processed_attrs:
@@ -980,7 +1013,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             comment_lines.append("")
 
     def _apply_phase_aware_acl_handling(
-        self, entry_data: m.Ldif.Entry, write_options: m.Ldif.WriteFormatOptions | None
+        self,
+        entry_data: m.Ldif.Entry,
+        write_options: m.Ldif.WriteFormatOptions | None,
     ) -> m.Ldif.Entry:
         """Apply phase-aware ACL attribute commenting.
 
@@ -1048,7 +1083,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if not entry.metadata or not entry.metadata.extensions:
             return
         commented_acl_values_raw = entry.metadata.extensions.get(
-            "commented_attribute_values"
+            "commented_attribute_values",
         )
         if not commented_acl_values_raw:
             return
@@ -1099,7 +1134,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     ])
 
     def _determine_attribute_order(
-        self, attr_names: list[str], format_options: m.Ldif.WriteFormatOptions | None
+        self,
+        attr_names: list[str],
+        format_options: m.Ldif.WriteFormatOptions | None,
     ) -> list[str]:
         """Determine attribute order based on format options.
 
@@ -1116,7 +1153,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         return attr_names
 
     def _extract_acl_metadata(
-        self, entry_data: m.Ldif.Entry
+        self,
+        entry_data: m.Ldif.Entry,
     ) -> tuple[str | None, m.Ldif.DnRegistry | None]:
         """Extract base_dn and dn_registry from entry metadata for ACL processing.
 
@@ -1134,7 +1172,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if isinstance(base_dn_value, str):
                 base_dn = base_dn_value
             dn_registry_value = getattr(
-                entry_data.metadata.write_options, "dn_registry", None
+                entry_data.metadata.write_options,
+                "dn_registry",
+                None,
             )
             if isinstance(dn_registry_value, m.Ldif.DnRegistry):
                 dn_registry = dn_registry_value
@@ -1241,7 +1281,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 acl_metadata_extensions[dest_key] = str(value_raw)
 
     def _finalize_and_parse_entry(
-        self, entry_dict: dict[str, builtins.object], entries_list: list[m.Ldif.Entry]
+        self,
+        entry_dict: dict[str, builtins.object],
+        entries_list: list[m.Ldif.Entry],
     ) -> None:
         """Finalize entry dict and parse into entries list.
 
@@ -1282,7 +1324,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 k: list(v) for k, v in parsed_attrs.items()
             }
             entry_attrs_for_diff: dict[
-                str, t.Scalar | list[str] | Mapping[str, str] | None
+                str,
+                t.Scalar | list[str] | Mapping[str, str] | None,
             ] = {}
             for raw_key, raw_value in original_entry_dict.items():
                 key_str = str(raw_key)
@@ -1308,20 +1351,21 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             )
             if not entry.metadata:
                 entry.metadata = m.Ldif.QuirkMetadata.create_for(
-                    "oud", extensions=FlextLdifModelsMetadata.DynamicMetadata()
+                    "oud",
+                    extensions=FlextLdifModelsMetadata.DynamicMetadata(),
                 )
             FlextLdifUtilitiesMetadata.store_minimal_differences(
                 metadata=entry.metadata,
                 dn_differences=m.Ldif.DynamicMetadata.from_dict(
-                    dn_differences
+                    dn_differences,
                 ).model_dump_json(),
                 attribute_differences=m.Ldif.DynamicMetadata.from_dict(
-                    attribute_differences
+                    attribute_differences,
                 ).model_dump_json(),
                 original_dn=original_dn or "",
                 parsed_dn=parsed_dn or "",
                 original_attributes_complete=m.Ldif.DynamicMetadata.from_dict(
-                    original_attrs_complete
+                    original_attrs_complete,
                 ).model_dump_json(),
             )
             logger.debug(
@@ -1331,7 +1375,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entries_list.append(entry)
 
     def _find_aci_in_dict(
-        self, attrs: Mapping[str, builtins.object] | None
+        self,
+        attrs: Mapping[str, builtins.object] | None,
     ) -> list[str] | str | None:
         """Find ACI value in dictionary (case-insensitive)."""
         if not attrs:
@@ -1426,7 +1471,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return r[m.Ldif.Entry].ok(entry)
         if not entry.metadata:
             entry.metadata = m.Ldif.QuirkMetadata.create_for(
-                "oud", extensions=FlextLdifModelsMetadata.DynamicMetadata()
+                "oud",
+                extensions=FlextLdifModelsMetadata.DynamicMetadata(),
             )
         current_extensions: dict[str, builtins.object] = (
             dict(entry.metadata.extensions.to_dict())
@@ -1454,9 +1500,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 entry.metadata = entry.metadata.model_copy(
                     update={
                         "extensions": FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                            merged_extensions
-                        )
-                    }
+                            merged_extensions,
+                        ),
+                    },
                 )
         return r[m.Ldif.Entry].ok(entry)
 
@@ -1536,11 +1582,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             for aci_value in aci_attrs:
                 if core_u.is_type(aci_value, str):
                     process_result = self._process_single_aci_value(
-                        aci_value, acl_metadata_extensions
+                        aci_value,
+                        acl_metadata_extensions,
                     )
                     if process_result.is_failure:
                         return r[m.Ldif.Entry].fail(
-                            process_result.error or "ACI processing failed"
+                            process_result.error or "ACI processing failed",
                         )
                     if process_result.value:
                         has_macros = True
@@ -1594,20 +1641,21 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             )
             current_extensions.update(acl_metadata_extensions)
             merged_extensions = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                current_extensions
+                current_extensions,
             )
             return entry.model_copy(
                 update={
                     "metadata": entry.metadata.model_copy(
-                        update={"extensions": merged_extensions}, deep=True
-                    )
+                        update={"extensions": merged_extensions},
+                        deep=True,
+                    ),
                 },
                 deep=True,
             )
         entry_metadata = m.Ldif.QuirkMetadata.create_for(
             "oud",
             extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                acl_metadata_extensions
+                acl_metadata_extensions,
             ),
         )
         return entry.model_copy(update={"metadata": entry_metadata}, deep=True)
@@ -1622,7 +1670,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         return (aci_value, False)
 
     def _normalize_aci_value_simple(
-        self, value: builtins.object
+        self,
+        value: builtins.object,
     ) -> list[str] | str | None:
         """Normalize ACI value to list[str] | str | None."""
         if isinstance(value, list):
@@ -1684,7 +1733,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         for aci in aci_values:
             aci_str = aci if core_u.is_type(aci, str) else str(aci)
             normalized_aci, was_filtered = self._normalize_aci_value(
-                aci_str, base_dn, dn_registry
+                aci_str,
+                base_dn,
+                dn_registry,
             )
             if not was_filtered and normalized_aci:
                 normalized_aci_values.append(normalized_aci)
@@ -1716,11 +1767,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         key = str(raw_key)
                         acl_extensions[key] = (
                             FlextLdifModelsMetadata.DynamicMetadata.coerce_metadata_value(
-                                raw_value
+                                raw_value,
                             )
                         )
                     self._process_parsed_acl_extensions(
-                        acl_extensions, current_extensions
+                        acl_extensions,
+                        current_extensions,
                     )
 
     def _process_parsed_acl_extensions(
@@ -1789,14 +1841,16 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 current_extensions[final_key] = str(value)
 
     def _process_single_aci_value(
-        self, aci_value: str, acl_metadata_extensions: dict[str, builtins.object]
+        self,
+        aci_value: str,
+        acl_metadata_extensions: dict[str, builtins.object],
     ) -> r[bool]:
         """Process single ACI value, extract metadata, return has_macros flag."""
         has_macros = bool(re.search(r"\(\$dn\)|\[\$dn\]|\(\$attr\.", aci_value))
         validation_result = self._validate_aci_macros(aci_value)
         if validation_result.is_failure:
             return r[bool].fail(
-                f"ACI macro validation failed: {validation_result.error}"
+                f"ACI macro validation failed: {validation_result.error}",
             )
         normalized_aci = aci_value.strip()
         if not normalized_aci.startswith("aci:"):
@@ -1808,22 +1862,25 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if parsed_acl.metadata and parsed_acl.metadata.extensions:
                 acl_extensions = parsed_acl.metadata.extensions
                 if core_u.is_type(
-                    acl_extensions, FlextLdifModelsMetadata.DynamicMetadata
+                    acl_extensions,
+                    FlextLdifModelsMetadata.DynamicMetadata,
                 ):
                     self._extract_acl_metadata_from_dynamic(
-                        acl_extensions, acl_metadata_extensions
+                        acl_extensions,
+                        acl_metadata_extensions,
                     )
                 elif isinstance(acl_extensions, Mapping):
                     acl_extensions_dict: dict[str, builtins.object] = {
                         str(
-                            k
+                            k,
                         ): FlextLdifModelsMetadata.DynamicMetadata.coerce_metadata_value(
-                            v
+                            v,
                         )
                         for k, v in acl_extensions.items()
                     }
                     self._extract_acl_metadata_from_dict(
-                        acl_extensions_dict, acl_metadata_extensions
+                        acl_extensions_dict,
+                        acl_metadata_extensions,
                     )
         return r[bool].ok(has_macros)
 
@@ -1886,13 +1943,13 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 has_diff = bool(dn_diff_raw.get(mk.HAS_DIFFERENCES, False))
                 if has_diff:
                     entry_data = entry_data.model_copy(
-                        update={"dn": m.Ldif.DN(value=original_dn_value)}
+                        update={"dn": m.Ldif.DN(value=original_dn_value)},
                     )
         original_case_map_raw = (
             entry_data.metadata.original_attribute_case if entry_data.metadata else None
         )
         original_attributes_raw = ext.get(
-            c.Ldif.MetadataKeys.ORIGINAL_ATTRIBUTES_COMPLETE
+            c.Ldif.MetadataKeys.ORIGINAL_ATTRIBUTES_COMPLETE,
         )
         if (
             entry_data.attributes
@@ -1925,8 +1982,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                             attributes=restored,
                             attribute_metadata=entry_data.attributes.attribute_metadata,
                             metadata=entry_data.attributes.metadata,
-                        )
-                    }
+                        ),
+                    },
                 )
         return entry_data
 
@@ -2012,7 +2069,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         normalized_entry = hook_result.value
         entry_to_write = self._restore_entry_from_metadata(normalized_entry)
         write_options_raw = FlextLdifUtilitiesMetadata.extract_write_options(
-            entry_to_write
+            entry_to_write,
         )
         write_options = (
             m.Ldif.WriteFormatOptions.model_validate(write_options_raw.model_dump())
@@ -2046,6 +2103,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             .map(
                 lambda ldif_text: "\n".join(
                     f"# {line}" for line in ldif_text.split("\n")
-                )
+                ),
             )
         )

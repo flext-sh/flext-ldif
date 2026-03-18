@@ -149,7 +149,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(
-            self, attr_definition: str | m.Ldif.SchemaAttribute
+            self,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect AD attribute definitions using centralized constants."""
             return FlextLdifUtilitiesServer.matches_server_patterns(
@@ -161,7 +162,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(
-            self, oc_definition: str | m.Ldif.SchemaObjectClass
+            self,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect AD objectClass definitions using centralized constants."""
             return FlextLdifUtilitiesServer.matches_server_patterns(
@@ -225,7 +227,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                         FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN,
                         normalized,
                         re.IGNORECASE,
-                    )
+                    ),
                 )
             raw_acl = getattr(acl_line, "raw_acl", None)
             if not isinstance(raw_acl, str) or not raw_acl:
@@ -244,7 +246,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN,
                     normalized,
                     re.IGNORECASE,
-                )
+                ),
             )
 
         @override
@@ -316,7 +318,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             try:
                 if not acl_data.raw_acl:
                     return r[str].fail(
-                        "Active Directory ACL write requires raw_acl value"
+                        "Active Directory ACL write requires raw_acl value",
                     )
                 raw_value = acl_data.raw_acl
                 acl_attribute = FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME
@@ -334,7 +336,9 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         @override
         def can_handle(
-            self, entry_dn: str, attributes: Mapping[str, list[str]]
+            self,
+            entry_dn: str,
+            attributes: Mapping[str, list[str]],
         ) -> bool:
             """Detect Active Directory entries based on DN, attributes, or classes."""
             if not entry_dn:
@@ -371,7 +375,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     oc.lower()
                     in FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES
                     for oc in normalized_object_classes
-                )
+                ),
             )
 
 

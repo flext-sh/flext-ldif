@@ -18,7 +18,7 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
     """Unified schema validation, transformation, and detection service."""
 
     _registry: FlextLdifServer = PrivateAttr(
-        default_factory=FlextLdifServer.get_global_instance
+        default_factory=FlextLdifServer.get_global_instance,
     )
     _server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = PrivateAttr(default="rfc")
 
@@ -94,11 +94,14 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
                     "write_objectclass",
                     "is_schema",
                 ],
-            )
+            ),
         )
 
     def parse_attribute(
-        self, attr_definition: str, *, _server_type: str | None = None
+        self,
+        attr_definition: str,
+        *,
+        _server_type: str | None = None,
     ) -> r[m.Ldif.SchemaAttribute]:
         """Parse attribute type definition."""
         try:
@@ -107,7 +110,7 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             parse_result = u.Ldif.parse_attribute(attr_definition)
             if parse_result.is_failure:
                 return r[m.Ldif.SchemaAttribute].fail(
-                    f"Parse failed: {parse_result.error}"
+                    f"Parse failed: {parse_result.error}",
                 )
             parsed_dict = dict(parse_result.value)
             metadata_extensions = parsed_dict.pop("metadata_extensions", {})
@@ -115,7 +118,8 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             attr_domain = m.Ldif.SchemaAttribute.model_validate(parsed_dict)
             if metadata_extensions and issubclass(metadata_extensions.__class__, dict):
                 attr_domain.metadata = m.Ldif.QuirkMetadata(
-                    quirk_type="rfc", extensions=m.Ldif.DynamicMetadata.from_dict({})
+                    quirk_type="rfc",
+                    extensions=m.Ldif.DynamicMetadata.from_dict({}),
                 )
             attr: m.Ldif.SchemaAttribute = attr_domain
             return r[m.Ldif.SchemaAttribute].ok(attr)
@@ -131,13 +135,16 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             return r[m.Ldif.SchemaAttribute].fail(error_msg)
 
     def parse_objectclass(
-        self, oc_definition: str, *, _server_type: str | None = None
+        self,
+        oc_definition: str,
+        *,
+        _server_type: str | None = None,
     ) -> r[m.Ldif.SchemaObjectClass]:
         """Parse objectClass definition."""
         try:
             if not oc_definition or not oc_definition.strip():
                 return r[m.Ldif.SchemaObjectClass].fail(
-                    "ObjectClass definition is empty"
+                    "ObjectClass definition is empty",
                 )
             parsed_dict = dict(u.Ldif.parse_objectclass(oc_definition))
             metadata_extensions = parsed_dict.pop("metadata_extensions", {})
@@ -155,7 +162,8 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             oc_domain = m.Ldif.SchemaObjectClass.model_validate(oc_dict)
             if metadata_extensions and issubclass(metadata_extensions.__class__, dict):
                 oc_domain.metadata = m.Ldif.QuirkMetadata(
-                    quirk_type="rfc", extensions=m.Ldif.DynamicMetadata.from_dict({})
+                    quirk_type="rfc",
+                    extensions=m.Ldif.DynamicMetadata.from_dict({}),
                 )
             oc: m.Ldif.SchemaObjectClass = oc_domain
             return r[m.Ldif.SchemaObjectClass].ok(oc)
@@ -168,7 +176,8 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
         ) as e:
             error_msg = f"Error parsing objectClass: {e}"
             self.logger.exception(
-                "Failed to parse objectClass definition", error=str(e)
+                "Failed to parse objectClass definition",
+                error=str(e),
             )
             return r[m.Ldif.SchemaObjectClass].fail(error_msg)
 
@@ -206,7 +215,7 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             if oc.kind not in valid_kinds:
                 valid_kinds_str = "ABSTRACT, STRUCTURAL, or AUXILIARY"
                 return r[bool].fail(
-                    f"Invalid objectclass kind: {oc.kind}. Must be {valid_kinds_str}"
+                    f"Invalid objectclass kind: {oc.kind}. Must be {valid_kinds_str}",
                 )
             return r[bool].ok(value=True)
         except (
@@ -221,7 +230,8 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             return r[bool].fail(error_msg)
 
     def with_server_type(
-        self, server_type: c.Ldif.LiteralTypes.ServerTypeLiteral
+        self,
+        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
     ) -> Self:
         """Set server type for schema operations (fluent builder)."""
         object.__setattr__(self, "_server_type", server_type)

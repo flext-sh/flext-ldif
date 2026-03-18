@@ -81,11 +81,17 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     @overload
     def __call__(
-        self, data: str | m.Ldif.Acl | None = None, *, operation: str | None = None
+        self,
+        data: str | m.Ldif.Acl | None = None,
+        *,
+        operation: str | None = None,
     ) -> m.Ldif.Acl | str: ...
 
     def __call__(
-        self, data: str | m.Ldif.Acl | None = None, *, operation: str | None = None
+        self,
+        data: str | m.Ldif.Acl | None = None,
+        *,
+        operation: str | None = None,
     ) -> m.Ldif.Acl | str:
         """Callable interface - automatic polymorphic processor."""
         result = self.execute(data=data, operation=operation)
@@ -124,7 +130,9 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         return super()._get_feature_fallback(_feature_id)
 
     def _normalize_permission(
-        self, permission: str, _metadata: Mapping[str, builtins.object]
+        self,
+        permission: str,
+        _metadata: Mapping[str, builtins.object],
     ) -> tuple[str, str | None]:
         """Normalize a server-specific permission to RFC standard."""
         return (permission, None)
@@ -137,19 +145,24 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         server_type_str = self._get_server_type()
         server_type_value = u.Ldif.normalize_server_type(server_type_str)
         extensions_meta = m.Ldif.DynamicMetadata.model_construct(
-            _fields_set={"original_format"}, original_format=acl_line
+            _fields_set={"original_format"},
+            original_format=acl_line,
         )
         acl_model = m.Ldif.Acl(
             raw_acl=acl_line,
             server_type=server_type_value,
             metadata=m.Ldif.QuirkMetadata(
-                quirk_type=server_type_value, extensions=extensions_meta
+                quirk_type=server_type_value,
+                extensions=extensions_meta,
             ),
         )
         return r[m.Ldif.Acl].ok(acl_model)
 
     def _preserve_unsupported_feature(
-        self, feature_id: str, original_value: str, metadata: m.Ldif.DynamicMetadata
+        self,
+        feature_id: str,
+        original_value: str,
+        metadata: m.Ldif.DynamicMetadata,
     ) -> None:
         """Preserve unsupported feature in metadata for round-trip."""
         base_key = "unsupported_feature"

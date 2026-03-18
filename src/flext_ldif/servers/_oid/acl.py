@@ -85,7 +85,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         if target_match:
             target_dn = target_match.group(1)
         attr_match = re.search(
-            patterns.ACL_TARGET_ATTR_OID_EXTRACT, content, re.IGNORECASE
+            patterns.ACL_TARGET_ATTR_OID_EXTRACT,
+            content,
+            re.IGNORECASE,
         )
         if attr_match:
             attr_str = attr_match.group(1)
@@ -258,7 +260,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @override
     def convert_rfc_acl_to_aci(
-        self, rfc_acl_attrs: Mapping[str, list[str]], target_server: str = "oid"
+        self,
+        rfc_acl_attrs: Mapping[str, list[str]],
+        target_server: str = "oid",
     ) -> r[Mapping[str, list[str]]]:
         """Convert RFC ACL format to Oracle OID orclaci format."""
         _ = target_server
@@ -279,7 +283,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         return self._format_extensions(meta_extensions)
 
     def _build_oid_acl_metadata(
-        self, config: FlextLdifServersOidAcl.OidAclMetadataConfig
+        self,
+        config: FlextLdifServersOidAcl.OidAclMetadataConfig,
     ) -> Mapping[str, str | int | bool]:
         """Build metadata extensions for OID ACL with Oracle-specific features."""
         target_attrs_str: str = (
@@ -311,7 +316,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 bind_ip_filter=config.bind_ip_filter,
                 constrain_to_added_object=config.constrain_to_added_object,
                 target_key=FlextLdifServersOidConstants.OID_ACL_SOURCE_TARGET,
-            )
+            ),
         )
         if config.oid_subject_type:
             metadata_dict["acl_source_subject_type"] = config.oid_subject_type
@@ -330,7 +335,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         return getattr(metadata, "extensions", None) or {}
 
     def _format_extensions(
-        self, meta_extensions: Mapping[str, t.Scalar | list[str] | None]
+        self,
+        meta_extensions: Mapping[str, t.Scalar | list[str] | None],
     ) -> list[str]:
         """Format extension values based on metadata key type."""
         extensions: list[str] = []
@@ -347,12 +353,12 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         if isinstance(bind_ip_filter, str) and bind_ip_filter:
             extensions.append(f"bindipfilter=({bind_ip_filter})")
         constrain_to_added = meta_extensions.get(
-            c.Ldif.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT
+            c.Ldif.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT,
         )
         if isinstance(constrain_to_added, str) and constrain_to_added:
             extensions.append(f"constraintonaddedobject=({constrain_to_added})")
         deny_group_override = meta_extensions.get(
-            c.Ldif.MetadataKeys.ACL_DENY_GROUP_OVERRIDE
+            c.Ldif.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,
         )
         if deny_group_override is True or (
             isinstance(deny_group_override, str) and deny_group_override
@@ -364,13 +370,14 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         return extensions
 
     def _get_source_subject_type(
-        self, metadata: m.Ldif.QuirkMetadata | None
+        self,
+        metadata: m.Ldif.QuirkMetadata | None,
     ) -> str | None:
         """Get source subject type from metadata."""
         if not metadata or not metadata.extensions:
             return None
         source_subject_type_raw = metadata.extensions.get(
-            c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE
+            c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE,
         )
         if isinstance(source_subject_type_raw, str):
             return source_subject_type_raw
@@ -378,7 +385,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         raise TypeError(msg)
 
     def _map_bind_rules_to_oid(
-        self, rfc_subject_value: str, source_subject_type: str | None
+        self,
+        rfc_subject_value: str,
+        source_subject_type: str | None,
     ) -> str:
         """Map bind_rules/group to OID subject type."""
         if source_subject_type in {"dn_attr", "guid_attr", "group_attr"}:
@@ -397,7 +406,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         return "user_dn"
 
     def _map_oid_subject_to_rfc(
-        self, oid_subject_type: str, oid_subject_value: str
+        self,
+        oid_subject_type: str,
+        oid_subject_value: str,
     ) -> tuple[c.Ldif.AclSubjectType, str]:
         """Map OID subject types to RFC subject types."""
         if oid_subject_type == "self":
@@ -413,7 +424,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         return (c.Ldif.AclSubjectType.DN, oid_subject_value)
 
     def _map_rfc_subject_to_oid(
-        self, rfc_subject: m.Ldif.AclSubject, metadata: m.Ldif.QuirkMetadata | None
+        self,
+        rfc_subject: m.Ldif.AclSubject,
+        metadata: m.Ldif.QuirkMetadata | None,
     ) -> str:
         """Map RFC subject type to OID subject type for writing."""
         rfc_subject_type = rfc_subject.subject_type
@@ -484,7 +497,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 ) in FlextLdifServersOidConstants.ACL_SUBJECT_PATTERNS.values():
                     if subj_type == oid_subject_type and regex:
                         oid_subject_value = FlextLdifUtilitiesACL.extract_component(
-                            acl_line, regex, group=1
+                            acl_line,
+                            regex,
+                            group=1,
                         )
                         if oid_subject_value:
                             break
@@ -493,17 +508,24 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 oid_subject_type = "self"
                 oid_subject_value = "self"
             rfc_subject_type, rfc_subject_value = self._map_oid_subject_to_rfc(
-                oid_subject_type, oid_subject_value
+                oid_subject_type,
+                oid_subject_value,
             )
             perms_dict = self._parse_oid_permissions(acl_line)
             acl_filter = FlextLdifUtilitiesACL.extract_component(
-                acl_line, FlextLdifServersOidConstants.ACL_FILTER_PATTERN, group=1
+                acl_line,
+                FlextLdifServersOidConstants.ACL_FILTER_PATTERN,
+                group=1,
             )
             acl_constraint = FlextLdifUtilitiesACL.extract_component(
-                acl_line, FlextLdifServersOidConstants.ACL_CONSTRAINT_PATTERN, group=1
+                acl_line,
+                FlextLdifServersOidConstants.ACL_CONSTRAINT_PATTERN,
+                group=1,
             )
             bindmode = FlextLdifUtilitiesACL.extract_component(
-                acl_line, FlextLdifServersOidConstants.ACL_BINDMODE_PATTERN, group=1
+                acl_line,
+                FlextLdifServersOidConstants.ACL_BINDMODE_PATTERN,
+                group=1,
             )
             deny_group_override = (
                 FlextLdifUtilitiesACL.extract_component(
@@ -514,7 +536,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             )
             append_to_all = (
                 FlextLdifUtilitiesACL.extract_component(
-                    acl_line, FlextLdifServersOidConstants.ACL_APPEND_TO_ALL_PATTERN
+                    acl_line,
+                    FlextLdifServersOidConstants.ACL_APPEND_TO_ALL_PATTERN,
                 )
                 is not None
             )
@@ -547,15 +570,16 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             extensions = self._build_oid_acl_metadata(config)
             server_type: Literal["oid"] = "oid"
             rfc_compliant_perms = m.Ldif.AclPermissions.get_rfc_compliant_permissions(
-                perms_dict
+                perms_dict,
             )
             extensions_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                extensions
+                extensions,
             )
             acl_model = m.Ldif.Acl.model_validate({
                 "name": FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME,
                 "target": m.Ldif.AclTarget(
-                    target_dn=target_dn, attributes=target_attrs or []
+                    target_dn=target_dn,
+                    attributes=target_attrs or [],
                 ),
                 "subject": m.Ldif.AclSubject.model_validate({
                     "subject_type": str(rfc_subject_type),
@@ -616,7 +640,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 metadata_public = m.Ldif.QuirkMetadata.model_validate(metadata_dict)
         oid_subject_type = self._map_rfc_subject_to_oid(subject_public, metadata_public)
         subject_value = self._prepare_subject_value_with_suffix(
-            subject_public.subject_value, oid_subject_type
+            subject_public.subject_value,
+            oid_subject_type,
         )
         subject_clause = self._format_oid_subject(oid_subject_type, subject_value)
         permissions_dict = self._normalize_permissions_to_dict(acl_permissions)
@@ -625,7 +650,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         return (subject_clause, permissions_clause)
 
     def _prepare_subject_value_with_suffix(
-        self, subject_value: str, oid_subject_type: str
+        self,
+        subject_value: str,
+        oid_subject_type: str,
     ) -> str:
         """Prepare subject value with OID-specific suffix if needed."""
         if (
@@ -641,7 +668,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         return subject_value
 
     def _update_acl_with_oid_metadata(
-        self, acl_data: m.Ldif.Acl, _acl_line: str
+        self,
+        acl_data: m.Ldif.Acl,
+        _acl_line: str,
     ) -> m.Ldif.Acl:
         """Update ACL with OID server type and metadata."""
         server_type = FlextLdifServersOidConstants.SERVER_TYPE
@@ -649,7 +678,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             acl_data.metadata.model_copy(update={"quirk_type": server_type})
             if acl_data.metadata
             else m.Ldif.QuirkMetadata.create_for(
-                server_type, extensions=FlextLdifModelsMetadata.DynamicMetadata()
+                server_type,
+                extensions=FlextLdifModelsMetadata.DynamicMetadata(),
             )
         )
         update_dict: dict[str, builtins.object] = {
@@ -660,11 +690,13 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @override
     def _write_acl(
-        self, acl_data: FlextLdifModelsDomains.Acl, _format_option: str | None = None
+        self,
+        acl_data: FlextLdifModelsDomains.Acl,
+        _format_option: str | None = None,
     ) -> r[str]:
         """Write ACL to OID orclaci format (Phase 2: Denormalization)."""
         if acl_data.raw_acl and acl_data.raw_acl.startswith(
-            FlextLdifServersOidConstants.ORCLACI + ":"
+            FlextLdifServersOidConstants.ORCLACI + ":",
         ):
             return r[str].ok(acl_data.raw_acl)
         acl_parts = [
@@ -673,18 +705,19 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         ]
         if acl_data.target:
             target_public = m.Ldif.AclTarget.model_validate(
-                acl_data.target.model_dump()
+                acl_data.target.model_dump(),
             )
             acl_parts.append(
                 self._format_oid_target(
-                    target_public.target_dn, target_public.attributes or []
-                )
+                    target_public.target_dn,
+                    target_public.attributes or [],
+                ),
             )
         if acl_data.subject:
             subject_public = m.Ldif.AclSubject.model_validate(acl_data.subject)
             if acl_data.permissions:
                 permissions_public = m.Ldif.AclPermissions.model_validate(
-                    acl_data.permissions
+                    acl_data.permissions,
                 )
             else:
                 permissions_public = None
@@ -694,7 +727,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 metadata_public = None
             subject_clause, permissions_clause = (
                 self._prepare_subject_and_permissions_for_write(
-                    subject_public, permissions_public, metadata_public
+                    subject_public,
+                    permissions_public,
+                    metadata_public,
                 )
             )
             acl_parts.extend([

@@ -124,7 +124,8 @@ class FlextLdifUtilitiesParsers:
             parse_parts_hook: Callable[[str], Mapping[str, str | list[str] | None]],
             *,
             transform_hook: Callable[
-                [m.Ldif.SchemaObjectClass], m.Ldif.SchemaObjectClass
+                [m.Ldif.SchemaObjectClass],
+                m.Ldif.SchemaObjectClass,
             ]
             | None = None,
         ) -> r[m.Ldif.SchemaObjectClass]:
@@ -168,7 +169,7 @@ class FlextLdifUtilitiesParsers:
             ) as e:
                 logger.exception("Failed to parse objectClass", server_type=server_type)
                 return r[m.Ldif.SchemaObjectClass].fail(
-                    f"Failed to parse objectClass: {e}"
+                    f"Failed to parse objectClass: {e}",
                 )
 
     class Content:

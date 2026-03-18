@@ -17,22 +17,23 @@ class FlextLdifUtilitiesAttribute:
     """Attribute utilities for RFC-compliant attribute operations."""
 
     _ATTRIBUTE_NAME_PATTERN: Final[re.Pattern[str]] = re.compile(
-        c.Ldif.LdifPatterns.ATTRIBUTE_NAME
+        c.Ldif.LdifPatterns.ATTRIBUTE_NAME,
     )
     _ATTRIBUTE_OPTION_PATTERN: Final[re.Pattern[str]] = re.compile(
-        c.Ldif.LdifPatterns.ATTRIBUTE_OPTION
+        c.Ldif.LdifPatterns.ATTRIBUTE_OPTION,
     )
 
     @classmethod
     def validate_attribute_description(
-        cls, attribute_description: str
+        cls,
+        attribute_description: str,
     ) -> tuple[bool, list[str]]:
         """Validate complete attribute description (base + options)."""
         violations: list[str] = []
         base_attr, options = cls.split_attribute_description(attribute_description)
         if not cls.validate_attribute_name(base_attr):
             violations.append(
-                f"Invalid base attribute '{base_attr}' - must start with letter and contain only letters, digits, hyphens"
+                f"Invalid base attribute '{base_attr}' - must start with letter and contain only letters, digits, hyphens",
             )
         violations.extend(
             f"Invalid option '{option}' - must start with letter and contain only letters, digits, hyphens, underscores"

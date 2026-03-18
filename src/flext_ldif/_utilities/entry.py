@@ -35,7 +35,9 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def _check_objectclass_criteria(
-        entry: m.Ldif.Entry, objectclasses: Sequence[str], mode: Literal["any", "all"]
+        entry: m.Ldif.Entry,
+        objectclasses: Sequence[str],
+        mode: Literal["any", "all"],
     ) -> bool:
         """Check objectClass criteria."""
         matching_ocs: list[str] = [
@@ -56,19 +58,25 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def _convert_attribute_values(
-        values: list[str], source_format: str, target_format: str
+        values: list[str],
+        source_format: str,
+        target_format: str,
     ) -> list[str]:
         """Convert all boolean values in an attribute's value list."""
         return [
             FlextLdifUtilitiesEntry._convert_single_boolean_value(
-                value, source_format, target_format
+                value,
+                source_format,
+                target_format,
             )
             for value in values
         ]
 
     @staticmethod
     def _convert_single_boolean_value(
-        value: str, source_format: str, target_format: str
+        value: str,
+        source_format: str,
+        target_format: str,
     ) -> str:
         """Convert a single boolean value between formats."""
         if source_format == "0/1" and target_format == "TRUE/FALSE":
@@ -176,7 +184,7 @@ class FlextLdifUtilitiesEntry:
                 raw_values = attributes[attr_name]
                 if isinstance(raw_values, str | bytes):
                     normalized_result[attr_name] = [
-                        FlextLdifUtilitiesEntry._stringify_attribute_value(raw_values)
+                        FlextLdifUtilitiesEntry._stringify_attribute_value(raw_values),
                     ]
                 else:
                     normalized_result[attr_name] = [
@@ -190,7 +198,7 @@ class FlextLdifUtilitiesEntry:
             str_values: list[str]
             if isinstance(attr_raw_values, str | bytes):
                 str_values = [
-                    FlextLdifUtilitiesEntry._stringify_attribute_value(attr_raw_values)
+                    FlextLdifUtilitiesEntry._stringify_attribute_value(attr_raw_values),
                 ]
             else:
                 str_values = [
@@ -199,7 +207,9 @@ class FlextLdifUtilitiesEntry:
                 ]
             if attr_name.lower() in boolean_attr_names:
                 result[attr_name] = FlextLdifUtilitiesEntry._convert_attribute_values(
-                    str_values, source_format, target_format
+                    str_values,
+                    source_format,
+                    target_format,
                 )
             else:
                 result[attr_name] = str_values
@@ -220,7 +230,7 @@ class FlextLdifUtilitiesEntry:
             kwargs["is_schema"] = effective_is_schema
             config = (
                 FlextLdifModelsSettings.FlextLdifUtilitiesFiltersConfig.model_validate(
-                    kwargs
+                    kwargs,
                 )
             )
         filtered: list[m.Ldif.Entry] = [
@@ -261,7 +271,8 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def has_objectclass(
-        entry: m.Ldif.Entry, objectclasses: str | tuple[str, ...]
+        entry: m.Ldif.Entry,
+        objectclasses: str | tuple[str, ...],
     ) -> bool:
         """Check if entry has any of the specified objectClasses."""
         if not entry.attributes:
@@ -307,30 +318,35 @@ class FlextLdifUtilitiesEntry:
         if config.is_schema is not None:
             checks.append(
                 FlextLdifUtilitiesEntry._check_schema_criteria(
-                    entry, is_schema=config.is_schema
-                )
+                    entry,
+                    is_schema=config.is_schema,
+                ),
             )
         if config.objectclasses:
             checks.append(
                 FlextLdifUtilitiesEntry._check_objectclass_criteria(
-                    entry, config.objectclasses, config.objectclass_mode
-                )
+                    entry,
+                    config.objectclasses,
+                    config.objectclass_mode,
+                ),
             )
         if config.required_attrs:
             checks.append(
                 FlextLdifUtilitiesEntry.has_all_attributes(
-                    entry, list(config.required_attrs)
-                )
+                    entry,
+                    list(config.required_attrs),
+                ),
             )
         if config.any_attrs:
             checks.append(
                 FlextLdifUtilitiesEntry.has_any_attributes(
-                    entry, list(config.any_attrs)
-                )
+                    entry,
+                    list(config.any_attrs),
+                ),
             )
         if config.dn_pattern:
             checks.append(
-                FlextLdifUtilitiesEntry._check_dn_pattern(entry, config.dn_pattern)
+                FlextLdifUtilitiesEntry._check_dn_pattern(entry, config.dn_pattern),
             )
         return all(checks)
 
@@ -397,7 +413,7 @@ class FlextLdifUtilitiesEntry:
         """Batch normalize attributes from server format to RFC format."""
         if config is None:
             config = FlextLdifModelsSettings.AttributeNormalizeConfig.model_validate(
-                kwargs
+                kwargs,
             )
         result: dict[str, list[str | bytes]] = {}
         operational_lower: set[str] = (
@@ -417,7 +433,7 @@ class FlextLdifUtilitiesEntry:
             def normalize_value(value: t.Ldif.AttributeValue) -> str:
                 """Normalize single value."""
                 normalized_value = FlextLdifUtilitiesEntry._stringify_attribute_value(
-                    value
+                    value,
                 )
                 if (
                     config.boolean_mappings
@@ -444,7 +460,8 @@ class FlextLdifUtilitiesEntry:
             if k.lower() not in attrs_to_remove
         }
         return m.Ldif.Entry.create(
-            dn=entry.dn, attributes=m.Ldif.Attributes(attributes=filtered)
+            dn=entry.dn,
+            attributes=m.Ldif.Attributes(attributes=filtered),
         ).unwrap_or(entry)
 
     @staticmethod
@@ -469,7 +486,7 @@ class FlextLdifUtilitiesEntry:
                 norm_result = FlextLdifUtilitiesDN.norm(dn_value)
                 if norm_result.is_success:
                     current = current.model_copy(
-                        update={"dn": m.Ldif.DN(value=norm_result.value)}
+                        update={"dn": m.Ldif.DN(value=norm_result.value)},
                     )
             if config.normalize_attrs and current.attributes:
                 attrs = current.attributes.attributes
@@ -481,7 +498,9 @@ class FlextLdifUtilitiesEntry:
                     else attrs
                 )
                 current = current.model_copy(
-                    update={"attributes": m.Ldif.Attributes(attributes=dict(new_attrs))}
+                    update={
+                        "attributes": m.Ldif.Attributes(attributes=dict(new_attrs))
+                    },
                 )
             if config.convert_booleans and current.attributes:
                 source_format, target_format = config.convert_booleans
@@ -500,11 +519,14 @@ class FlextLdifUtilitiesEntry:
                     target_format=target_format,
                 )
                 current = current.model_copy(
-                    update={"attributes": m.Ldif.Attributes(attributes=dict(converted))}
+                    update={
+                        "attributes": m.Ldif.Attributes(attributes=dict(converted))
+                    },
                 )
             if config.remove_attrs:
                 current = FlextLdifUtilitiesEntry.remove_attributes(
-                    current, list(config.remove_attrs)
+                    current,
+                    list(config.remove_attrs),
                 )
             return current
 
@@ -523,7 +545,7 @@ class FlextLdifUtilitiesEntry:
             ) as exc:
                 if config.fail_fast:
                     return r[list[m.Ldif.Entry]].fail(
-                        f"Transform failed at entry {i}: {exc}"
+                        f"Transform failed at entry {i}: {exc}",
                     )
                 errors.append((i, f"Transform failed at entry {i}: {exc}"))
         if errors and config.fail_fast:

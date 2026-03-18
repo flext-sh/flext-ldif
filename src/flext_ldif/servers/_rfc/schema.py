@@ -200,7 +200,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     @classmethod
     def _extract_syntax_validation_error(
-        cls, value: builtins.object | None
+        cls,
+        value: builtins.object | None,
     ) -> str | None:
         syntax_validation = cls._coerce_dynamic_metadata(value)
         syntax_error = syntax_validation.get("syntax_validation_error")
@@ -210,7 +211,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     @classmethod
     def _to_optional_str_or_list(
-        cls, value: builtins.object | None
+        cls,
+        value: builtins.object | None,
     ) -> str | list[str] | None:
         if isinstance(value, str):
             return value
@@ -316,7 +318,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     @override
     def can_handle_attribute(
-        self, attr_definition: str | m.Ldif.SchemaAttribute
+        self,
+        attr_definition: str | m.Ldif.SchemaAttribute,
     ) -> bool:
         """Check if RFC quirk can handle attribute definitions (abstract impl)."""
         _ = (self, attr_definition)
@@ -324,14 +327,17 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     @override
     def can_handle_objectclass(
-        self, oc_definition: str | m.Ldif.SchemaObjectClass
+        self,
+        oc_definition: str | m.Ldif.SchemaObjectClass,
     ) -> bool:
         """Check if RFC quirk can handle objectClass definitions (abstract impl)."""
         _ = (self, oc_definition)
         return True
 
     def create_metadata(
-        self, original_format: str, extensions: m.Ldif.DynamicMetadata | None = None
+        self,
+        original_format: str,
+        extensions: m.Ldif.DynamicMetadata | None = None,
     ) -> m.Ldif.QuirkMetadata:
         """Create quirk metadata with consistent server-specific extensions."""
         server_type_value = self._get_server_type()
@@ -340,11 +346,15 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         if extensions:
             all_extensions.update(extensions.to_dict())
         return m.Ldif.QuirkMetadata(
-            quirk_type=server_type_value, extensions=all_extensions
+            quirk_type=server_type_value,
+            extensions=all_extensions,
         )
 
     def extract_schemas_from_ldif(
-        self, ldif_content: str, *, validate_dependencies: bool = False
+        self,
+        ldif_content: str,
+        *,
+        validate_dependencies: bool = False,
     ) -> r[Mapping[str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass]]]:
         """Extract schema definitions from LDIF using u."""
         try:
@@ -354,12 +364,13 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             ) -> r[m.Ldif.SchemaAttribute]:
                 return self.parse_attribute(attr_definition).map(
                     lambda attr: m.Ldif.SchemaAttribute.model_validate(
-                        attr.model_dump()
-                    )
+                        attr.model_dump(),
+                    ),
                 )
 
             attributes_parsed = u.Ldif.extract_attributes_from_lines(
-                ldif_content, parse_attribute_domain
+                ldif_content,
+                parse_attribute_domain,
             )
             attributes_parsed_model: list[m.Ldif.SchemaAttribute] = [
                 m.Ldif.SchemaAttribute.model_validate(attr.model_dump())
@@ -367,10 +378,11 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             ]
             if validate_dependencies:
                 available_attrs = u.Ldif.build_available_attributes_set(
-                    attributes_parsed
+                    attributes_parsed,
                 )
                 validation_result = self._hook_validate_attributes(
-                    attributes_parsed_model, available_attrs
+                    attributes_parsed_model,
+                    available_attrs,
                 )
                 if not validation_result.is_success:
                     return r[
@@ -385,18 +397,20 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 oc_definition: str,
             ) -> r[m.Ldif.SchemaObjectClass]:
                 return self.parse_objectclass(oc_definition).map(
-                    lambda oc: m.Ldif.SchemaObjectClass.model_validate(oc.model_dump())
+                    lambda oc: m.Ldif.SchemaObjectClass.model_validate(oc.model_dump()),
                 )
 
             objectclasses_parsed = u.Ldif.extract_objectclasses_from_lines(
-                ldif_content, parse_objectclass_domain
+                ldif_content,
+                parse_objectclass_domain,
             )
             objectclasses_parsed_model: list[m.Ldif.SchemaObjectClass] = [
                 m.Ldif.SchemaObjectClass.model_validate(oc.model_dump())
                 for oc in objectclasses_parsed
             ]
             schema_dict: dict[
-                str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass]
+                str,
+                list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
             ] = {
                 str(c.Ldif.DictKeys.ATTRIBUTES): attributes_parsed_model,
                 str(c.Ldif.DictKeys.OBJECTCLASS): objectclasses_parsed_model,
@@ -428,7 +442,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return False
 
     def should_filter_out_objectclass(
-        self, _objectclass: m.Ldif.SchemaObjectClass
+        self,
+        _objectclass: m.Ldif.SchemaObjectClass,
     ) -> bool:
         """RFC quirk does not filter objectClasses."""
         _ = (self, _objectclass)
@@ -437,7 +452,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     def _build_attribute_parts(self, attr_data: m.Ldif.SchemaAttribute) -> list[str]:
         """Build RFC attribute definition parts."""
         return u.Ldif.build_attribute_parts_with_metadata(
-            attr_data, restore_original=True
+            attr_data,
+            restore_original=True,
         )
 
     def _build_objectclass_metadata(
@@ -459,7 +475,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     def _build_objectclass_parts(self, oc_data: m.Ldif.SchemaObjectClass) -> list[str]:
         """Build RFC objectClass definition parts."""
         return u.Ldif.build_objectclass_parts_with_metadata(
-            oc_data, restore_original=True
+            oc_data,
+            restore_original=True,
         )
 
     def _ensure_x_origin(
@@ -495,13 +512,13 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         )
         if parse_result_raw.is_failure:
             return r[m.Ldif.SchemaAttribute].fail(
-                parse_result_raw.error or "Attribute parsing failed"
+                parse_result_raw.error or "Attribute parsing failed",
             )
         parsed = parse_result_raw.value
         syntax = parsed.get("syntax")
         syntax_str = str(syntax) if syntax is not None else None
         syntax_validation_error = self._extract_syntax_validation_error(
-            parsed.get("syntax_validation")
+            parsed.get("syntax_validation"),
         )
         attribute_oid = str(parsed.get("oid")) if parsed.get("oid") else None
         metadata = self._build_attribute_metadata(
@@ -548,13 +565,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return self._hook_post_parse_objectclass(parse_result.value)
 
     def _parse_objectclass_core(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> r[m.Ldif.SchemaObjectClass]:
         """Core RFC 4512 objectClass parsing per Section 4.1.1."""
         try:
             parsed = u.Ldif.parse_objectclass(oc_definition)
             metadata_extensions = self._convert_extensions_for_quirk(
-                self._coerce_dynamic_metadata(parsed.get("metadata_extensions"))
+                self._coerce_dynamic_metadata(parsed.get("metadata_extensions")),
             )
             metadata_extensions[c.Ldif.MetadataKeys.ORIGINAL_FORMAT] = (
                 oc_definition.strip()
@@ -566,11 +584,15 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             match objectclass_oid:
                 case None:
                     FlextLdifServersBase.Schema.validate_and_track_oid(
-                        metadata_extensions, objectclass_oid, "objectClass"
+                        metadata_extensions,
+                        objectclass_oid,
+                        "objectClass",
                     )
                 case str() as objectclass_oid_str:
                     FlextLdifServersBase.Schema.validate_and_track_oid(
-                        metadata_extensions, objectclass_oid_str, "objectClass"
+                        metadata_extensions,
+                        objectclass_oid_str,
+                        "objectClass",
                     )
                 case _:
                     pass
@@ -578,11 +600,15 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             match objectclass_sup_oid:
                 case None:
                     FlextLdifServersBase.Schema.validate_and_track_oid(
-                        metadata_extensions, objectclass_sup_oid, "objectClass SUP"
+                        metadata_extensions,
+                        objectclass_sup_oid,
+                        "objectClass SUP",
                     )
                 case str() as objectclass_sup_oid_str:
                     FlextLdifServersBase.Schema.validate_and_track_oid(
-                        metadata_extensions, objectclass_sup_oid_str, "objectClass SUP"
+                        metadata_extensions,
+                        objectclass_sup_oid_str,
+                        "objectClass SUP",
                     )
                 case _:
                     pass
@@ -591,14 +617,16 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             may_list = self._to_string_list(parsed.get("may"))
             self._validate_oid_list(may_list, "MAY", metadata_extensions)
             metadata = self._build_objectclass_metadata(
-                oc_definition, metadata_extensions
+                oc_definition,
+                metadata_extensions,
             )
             oc_oid: str = self._to_required_str(parsed.get("oid"))
             oc_name: str = self._to_required_str(parsed.get("name"))
             oc_desc: str | None = self._to_optional_str(parsed.get("desc"))
             oc_sup = self._to_optional_str_or_list(parsed.get("sup"))
             oc_kind: str = self._to_required_str(
-                parsed.get("kind"), default="STRUCTURAL"
+                parsed.get("kind"),
+                default="STRUCTURAL",
             )
             oc_must = self._to_string_list(parsed.get("must"))
             oc_may = self._to_string_list(parsed.get("may"))
@@ -616,7 +644,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         except (ValueError, TypeError, AttributeError) as e:
             logger.exception("RFC objectClass parsing exception")
             return r[m.Ldif.SchemaObjectClass].fail(
-                f"RFC objectClass parsing failed: {e}"
+                f"RFC objectClass parsing failed: {e}",
             )
 
     def _post_write_attribute(self, written_str: str) -> str:
@@ -628,13 +656,15 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return written_str
 
     def _transform_attribute_for_write(
-        self, attr_data: m.Ldif.SchemaAttribute
+        self,
+        attr_data: m.Ldif.SchemaAttribute,
     ) -> m.Ldif.SchemaAttribute:
         """Hook for subclasses to transform attribute before writing."""
         return attr_data
 
     def _transform_objectclass_for_write(
-        self, oc_data: m.Ldif.SchemaObjectClass
+        self,
+        oc_data: m.Ldif.SchemaObjectClass,
     ) -> m.Ldif.SchemaObjectClass:
         """Hook for subclasses to transform objectClass before writing."""
         return oc_data
@@ -652,7 +682,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             match oid:
                 case str() as oid_str if oid_str:
                     FlextLdifServersBase.Schema.validate_and_track_oid(
-                        metadata_extensions, oid_str, f"objectClass {oid_type}[{idx}]"
+                        metadata_extensions,
+                        oid_str,
+                        f"objectClass {oid_type}[{idx}]",
                     )
                 case _:
                     pass
@@ -668,7 +700,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return self._write_schema_item(oc_data)
 
     def _write_schema_item(
-        self, data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
+        self,
+        data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> r[str]:
         """Write schema item (attribute or objectClass) to RFC-compliant format."""
         try:
@@ -683,7 +716,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                     fmt = attr_transformed.metadata.schema_format_details
                     if fmt:
                         attr_case = getattr(
-                            fmt, "attribute_case", c.Ldif.SchemaFields.ATTRIBUTE_TYPES
+                            fmt,
+                            "attribute_case",
+                            c.Ldif.SchemaFields.ATTRIBUTE_TYPES,
                         )
                         attr_types_lower = c.Ldif.SchemaFields.ATTRIBUTE_TYPES.lower()
                         if attr_types_lower in transformed_str.lower():
@@ -694,7 +729,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                                 flags=re.IGNORECASE,
                             )
                 return r[str].ok(
-                    self._ensure_x_origin(transformed_str, attr_transformed.metadata)
+                    self._ensure_x_origin(transformed_str, attr_transformed.metadata),
                 )
             oc_transformed = self._transform_objectclass_for_write(data)
             if not oc_transformed.oid:
@@ -703,7 +738,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             written_str = " ".join(parts)
             transformed_str = self._post_write_objectclass(written_str)
             return r[str].ok(
-                self._ensure_x_origin(transformed_str, oc_transformed.metadata)
+                self._ensure_x_origin(transformed_str, oc_transformed.metadata),
             )
         except (ValueError, TypeError, AttributeError) as e:
             item_type = (

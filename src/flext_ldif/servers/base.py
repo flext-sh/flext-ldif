@@ -109,7 +109,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         if cls.auto_execute:
             ldif_text, entries, operation = cls._extract_execute_params(execute_kwargs)
             result = instance.execute(
-                ldif_text=ldif_text, entries=entries, _operation=operation
+                ldif_text=ldif_text,
+                entries=entries,
+                _operation=operation,
             )
             unwrapped = result.value
             if isinstance(unwrapped, cls):
@@ -118,7 +120,11 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     @overload
     def __call__(
-        self, ldif_text: str, *, entries: None = None, operation: str | None = None
+        self,
+        ldif_text: str,
+        *,
+        entries: None = None,
+        operation: str | None = None,
     ) -> m.Ldif.Entry | str: ...
 
     @overload
@@ -146,13 +152,16 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     ) -> m.Ldif.Entry | str:
         """Callable interface - use as processor."""
         result = self.execute(
-            ldif_text=ldif_text, entries=entries, _operation=operation
+            ldif_text=ldif_text,
+            entries=entries,
+            _operation=operation,
         )
         return result.value
 
     @classmethod
     def _extract_execute_params(
-        cls, kwargs: Mapping[str, builtins.object]
+        cls,
+        kwargs: Mapping[str, builtins.object],
     ) -> tuple[str | None, list[m.Ldif.Entry] | None, str | None]:
         """Extract type-safe execution parameters from kwargs."""
         return (
@@ -262,7 +271,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 captured = method
 
                 def typed_register(
-                    server_type: str, quirk: p.Ldif.SchemaQuirk | object
+                    server_type: str,
+                    quirk: p.Ldif.SchemaQuirk | object,
                 ) -> None:
                     _ = captured(server_type, quirk)
 
@@ -357,7 +367,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         entry_quirk = getattr(self, "entry_quirk", None)
         if entry_quirk is None:
             return r[FlextLdifModelsResults.ParseResponse].fail(
-                "Entry quirk not available"
+                "Entry quirk not available",
             )
         entries_result: r[list[m.Ldif.Entry]] = entry_quirk.parse(ldif_text)
         if entries_result.is_failure:
@@ -425,7 +435,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 if isinstance(domain_entry, m.Ldif.Entry):
                     return r[m.Ldif.Entry | str].ok(domain_entry)
                 public_entry = m.Ldif.Entry.model_validate(
-                    domain_entry.model_dump(mode="python")
+                    domain_entry.model_dump(mode="python"),
                 )
                 return r[m.Ldif.Entry | str].ok(public_entry)
             return r[m.Ldif.Entry | str].ok("")
@@ -433,7 +443,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         return r[m.Ldif.Entry | str].fail(error_msg)
 
     def _handle_write_operation(
-        self, entries: list[m.Ldif.Entry]
+        self,
+        entries: list[m.Ldif.Entry],
     ) -> r[m.Ldif.Entry | str]:
         """Handle write operation for main quirk."""
         write_result = self.write(entries)
@@ -485,7 +496,9 @@ class _ServerTypeDescriptor:
         self.value = value
 
     def __get__(
-        self, obj: FlextLdifServersBase | None, _objtype: type | None = None
+        self,
+        obj: FlextLdifServersBase | None,
+        _objtype: type | None = None,
     ) -> str:
         """Return the stored SERVER_TYPE value."""
         return self.value
@@ -499,12 +512,14 @@ class _PriorityDescriptor:
         self.value = value
 
     def __get__(
-        self, obj: FlextLdifServersBase | None, _objtype: type | None = None
+        self,
+        obj: FlextLdifServersBase | None,
+        _objtype: type | None = None,
     ) -> int:
         """Return the stored PRIORITY value."""
         return self.value
 
 
-setattr(FlextLdifServersBase, "server_type", _ServerTypeDescriptor("unknown"))
-setattr(FlextLdifServersBase, "priority", _PriorityDescriptor(0))
+FlextLdifServersBase.server_type = _ServerTypeDescriptor("unknown")
+FlextLdifServersBase.priority = _PriorityDescriptor(0)
 __all__ = ["FlextLdifServersBase"]

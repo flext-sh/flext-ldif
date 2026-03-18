@@ -39,7 +39,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ])
         DETECTION_OID_PATTERN: ClassVar[str] = "\\b1\\.3\\.18\\."
         DETECTION_OID_PATTERN_COMPILED: ClassVar[re.Pattern[str]] = re.compile(
-            r"\\b1\\.3\\.18\\.", re.IGNORECASE
+            r"\\b1\\.3\\.18\\.",
+            re.IGNORECASE,
         )
         DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
             "ibm-",
@@ -47,7 +48,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ])
         DETECTION_PATTERN_STR: ClassVar[str] = "\\b(ibm|tivoli|ldapdb)\\b"
         DETECTION_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            DETECTION_PATTERN_STR, re.IGNORECASE
+            DETECTION_PATTERN_STR,
+            re.IGNORECASE,
         )
         DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             "ibm-entryuuid",
@@ -104,7 +106,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(
-            self, attr_definition: str | m.Ldif.SchemaAttribute
+            self,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect Tivoli-specific attributes."""
             if isinstance(attr_definition, m.Ldif.SchemaAttribute):
@@ -115,7 +118,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     use_prefix_match=True,
                 )
             if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN_COMPILED.search(
-                attr_definition
+                attr_definition,
             ):
                 return True
             attr_lower = attr_definition.lower()
@@ -126,7 +129,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(
-            self, oc_definition: str | m.Ldif.SchemaObjectClass
+            self,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect Tivoli objectClass definitions."""
             if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
@@ -136,7 +140,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     detection_names=FlextLdifServersTivoli.Constants.DETECTION_OBJECTCLASS_NAMES,
                 )
             if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN_COMPILED.search(
-                oc_definition
+                oc_definition,
             ):
                 return True
             oc_lower = oc_definition.lower()
@@ -153,7 +157,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for("ibm_tivoli")
                 return r[m.Ldif.SchemaAttribute].ok(
-                    attr_data.model_copy(update={"metadata": metadata})
+                    attr_data.model_copy(update={"metadata": metadata}),
                 )
             return result
 
@@ -165,7 +169,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 oc_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for("ibm_tivoli")
                 return r[m.Ldif.SchemaObjectClass].ok(
-                    oc_data.model_copy(update={"metadata": metadata})
+                    oc_data.model_copy(update={"metadata": metadata}),
                 )
             return result
 
@@ -303,7 +307,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         @override
         def can_handle(
-            self, entry_dn: str, attributes: Mapping[str, list[str]]
+            self,
+            entry_dn: str,
+            attributes: Mapping[str, list[str]],
         ) -> bool:
             """Detect Tivoli DS-specific entries."""
             if not entry_dn:
@@ -331,7 +337,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     str(oc).lower()
                     in FlextLdifServersTivoli.Constants.DETECTION_OBJECTCLASS_NAMES
                     for oc in object_classes
-                )
+                ),
             )
 
         def normalize_attribute_name(self, attr_name: str) -> str:
@@ -350,11 +356,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             try:
                 if not entry.dn:
                     return r[m.Ldif.Entry].fail(
-                        "Entry DN is required for Tivoli DS normalization"
+                        "Entry DN is required for Tivoli DS normalization",
                     )
                 if not entry.attributes:
                     return r[m.Ldif.Entry].fail(
-                        "Entry attributes are required for Tivoli DS normalization"
+                        "Entry attributes are required for Tivoli DS normalization",
                     )
                 entry_dn = entry.dn.value
                 attributes = entry.attributes.attributes.copy()
@@ -374,7 +380,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                         processed_values.append(str_value)
                     processed_attributes[attr_name] = processed_values
                 processed_attributes[c.Ldif.Domain.QuirkMetadataKeys.SERVER_TYPE] = [
-                    self._get_server_type()
+                    self._get_server_type(),
                 ]
                 is_config = any(
                     marker in dn_lower
@@ -389,7 +395,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 return r[m.Ldif.Entry].ok(processed_entry)
             except (ValueError, TypeError, AttributeError) as exc:
                 return r[m.Ldif.Entry].fail(
-                    f"IBM Tivoli DS entry processing failed: {exc}"
+                    f"IBM Tivoli DS entry processing failed: {exc}",
                 )
 
 

@@ -35,7 +35,9 @@ class FlextLdifServer(FlextRegistry):
     _discovery_initialized: ClassVar[bool] = False
 
     def __init__(
-        self, dispatcher: p.Dispatcher | None = None, **data: t.Scalar
+        self,
+        dispatcher: p.Dispatcher | None = None,
+        **data: t.Scalar,
     ) -> None:
         """Initialize registry and trigger auto-discovery."""
         _ = data
@@ -65,7 +67,7 @@ class FlextLdifServer(FlextRegistry):
                 "schema": base.schema_quirk,
                 "acl": base.acl_quirk,
                 "entry": base.entry_quirk,
-            }
+            },
         )
 
     def get_base_quirk(self, server_type: str) -> r[FlextLdifServersBase]:
@@ -81,7 +83,7 @@ class FlextLdifServer(FlextRegistry):
                 return r[type].fail(f"Server {server_type} missing Constants")
             if not getattr(constants, "CATEGORIZATION_PRIORITY", None) is not None:
                 return r[type].fail(
-                    f"Server {server_type} missing CATEGORIZATION_PRIORITY"
+                    f"Server {server_type} missing CATEGORIZATION_PRIORITY",
                 )
             return r[type].ok(constants)
 
@@ -145,7 +147,7 @@ class FlextLdifServer(FlextRegistry):
                 if key.startswith(f"{self.SERVERS}::")
             ]
             return r[FlextLdifServersBase].fail(
-                f"{self.SERVERS} '{normalized}' not found. Available: {available}"
+                f"{self.SERVERS} '{normalized}' not found. Available: {available}",
             )
         plugin = cls._class_plugin_storage[plugin_key]
         if isinstance(plugin, FlextLdifServersBase):
@@ -176,7 +178,10 @@ class FlextLdifServer(FlextRegistry):
                     continue
                 if server_type and isinstance(server_type, str):
                     self.register_plugin(
-                        self.SERVERS, server_type, instance, scope="class"
+                        self.SERVERS,
+                        server_type,
+                        instance,
+                        scope="class",
                     )
             except (TypeError, AttributeError):
                 continue

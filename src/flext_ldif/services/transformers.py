@@ -18,7 +18,9 @@ class ServerTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
     __slots__ = ("_source_server", "_target_server")
 
     def __init__(
-        self, source_server: c.Ldif.ServerTypes, target_server: c.Ldif.ServerTypes
+        self,
+        source_server: c.Ldif.ServerTypes,
+        target_server: c.Ldif.ServerTypes,
     ) -> None:
         """Initialize server transformer."""
         super().__init__()
@@ -42,5 +44,5 @@ class ServerTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
                 return r[m.Ldif.Entry].ok(converted_entry)
             case _:
                 return r[m.Ldif.Entry].fail(
-                    f"Conversion returned unexpected type: {type(converted).__name__}"
+                    f"Conversion returned unexpected type: {type(converted).__name__}",
                 )

@@ -51,7 +51,8 @@ class FlextLdifUtilitiesResult[T: builtins.object]:
         return self.is_success
 
     def __and__(
-        self, other: FlextLdifUtilitiesResult[T]
+        self,
+        other: FlextLdifUtilitiesResult[T],
     ) -> FlextLdifUtilitiesResult[list[T]]:
         """Combine operator: result1 & result2."""
         if self.is_failure:
@@ -61,7 +62,8 @@ class FlextLdifUtilitiesResult[T: builtins.object]:
         return FlextLdifUtilitiesResult.ok([self.value, other.value])
 
     def __matmul__(
-        self, metadata: Mapping[str, t.Scalar | list[str] | None]
+        self,
+        metadata: Mapping[str, t.Scalar | list[str] | None],
     ) -> FlextLdifUtilitiesResult[T]:
         """Metadata operator: result @ metadata."""
         if self.is_failure:
@@ -69,10 +71,10 @@ class FlextLdifUtilitiesResult[T: builtins.object]:
         value = self.value
         if isinstance(value, Sequence) and (not isinstance(value, str)):
             return FlextLdifUtilitiesResult[T].fail(
-                "attach_metadata not yet implemented for sequences"
+                "attach_metadata not yet implemented for sequences",
             )
         return FlextLdifUtilitiesResult[T].fail(
-            "attach_metadata not yet implemented for single entry"
+            "attach_metadata not yet implemented for single entry",
         )
 
     @overload
@@ -80,7 +82,8 @@ class FlextLdifUtilitiesResult[T: builtins.object]:
 
     @overload
     def __or__(
-        self, transformer: Callable[[T], r[T]]
+        self,
+        transformer: Callable[[T], r[T]],
     ) -> FlextLdifUtilitiesResult[T]: ...
 
     def __or__(
@@ -108,13 +111,13 @@ class FlextLdifUtilitiesResult[T: builtins.object]:
             for item in raw_value:
                 if not isinstance(item, m.Ldif.Entry):
                     return FlextLdifUtilitiesResult[str].fail(
-                        "Entry serialization failed: sequence contains non-entry value"
+                        "Entry serialization failed: sequence contains non-entry value",
                     )
                 entries.append(item)
             entry_payload = entries
         else:
             return FlextLdifUtilitiesResult[str].fail(
-                "Entry serialization failed: value must be Entry or sequence of Entry"
+                "Entry serialization failed: value must be Entry or sequence of Entry",
             )
         serialized = FlextLdifUtilitiesResult._serialize_entries_to_ldif(entry_payload)
         if serialized.is_failure:
@@ -131,7 +134,7 @@ class FlextLdifUtilitiesResult[T: builtins.object]:
                 write_error = write_result.error
                 if write_error is None:
                     return FlextLdifUtilitiesResult[str].fail(
-                        "write_entries_to_file failed"
+                        "write_entries_to_file failed",
                     )
                 return FlextLdifUtilitiesResult[str].fail(write_error)
             return FlextLdifUtilitiesResult.ok(ldif_content)
@@ -139,7 +142,7 @@ class FlextLdifUtilitiesResult[T: builtins.object]:
             _ = output.write(ldif_content)
         except (ValueError, AttributeError, OSError, TypeError) as exc:
             return FlextLdifUtilitiesResult[str].fail(
-                f"write_entries_to_string failed: {exc}"
+                f"write_entries_to_string failed: {exc}",
             )
         return FlextLdifUtilitiesResult.ok(ldif_content)
 
@@ -166,7 +169,8 @@ class FlextLdifUtilitiesResult[T: builtins.object]:
 
     @classmethod
     def fail(
-        cls: type[FlextLdifUtilitiesResult[T]], error: str | Exception
+        cls: type[FlextLdifUtilitiesResult[T]],
+        error: str | Exception,
     ) -> FlextLdifUtilitiesResult[T]:
         """Create a failed result with the given error."""
         error_msg = str(error) if isinstance(error, Exception) else error
@@ -228,7 +232,8 @@ class FlextLdifUtilitiesResult[T: builtins.object]:
         for attr_name, values in entry_attributes.items():
             for value in values:
                 attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(
-                    attr_name, value
+                    attr_name,
+                    value,
                 )
                 lines.extend(FlextLdifUtilitiesWriter.fold(attr_line))
         lines.append("")
@@ -244,14 +249,16 @@ class FlextLdifUtilitiesResult[T: builtins.object]:
         return FlextLdifUtilitiesResult[T].fail("Value did not match filter predicate")
 
     def flat_map[U: builtins.object](
-        self, func: Callable[[T], r[U]]
+        self,
+        func: Callable[[T], r[U]],
     ) -> FlextLdifUtilitiesResult[U]:
         """Flat map a function that returns r[U]."""
         mapped_result = self._inner.flat_map(func)
         return FlextLdifUtilitiesResult(mapped_result)
 
     def map[U: builtins.object](
-        self, func: Callable[[T], U]
+        self,
+        func: Callable[[T], U],
     ) -> FlextLdifUtilitiesResult[U]:
         """Map a function over the success value."""
         mapped_result = self._inner.map(func)

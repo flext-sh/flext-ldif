@@ -247,7 +247,7 @@ class FlextLdifConstants(FlextConstants):
                 60,
             })
             BASE64_CHARS: Final[frozenset[str]] = frozenset(
-                "+/0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+                "+/0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
             )
 
             @unique
@@ -1074,7 +1074,11 @@ class FlextLdifConstants(FlextConstants):
                 "iso-8859-1",
             ]
             type ChangeTypeLiteral = Literal[
-                "add", "delete", "modify", "modrdn", "moddn"
+                "add",
+                "delete",
+                "modify",
+                "modrdn",
+                "moddn",
             ]
             type ModifyOperationLiteral = Literal["add", "delete", "replace"]
             type AclSubjectTypeLiteral = Literal[
@@ -1099,7 +1103,13 @@ class FlextLdifConstants(FlextConstants):
             ]
             type AnalyticsDetailLevelLiteral = Literal["low", "medium", "high"]
             type CategoryLiteral = Literal[
-                "all", "users", "groups", "hierarchy", "schema", "acl", "rejected"
+                "all",
+                "users",
+                "groups",
+                "hierarchy",
+                "schema",
+                "acl",
+                "rejected",
             ]
             type DetectionModeLiteral = Literal["auto", "manual", "disabled"]
             type ErrorRecoveryModeLiteral = Literal["continue", "stop", "skip"]

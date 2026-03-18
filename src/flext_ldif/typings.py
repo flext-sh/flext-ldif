@@ -81,7 +81,7 @@ class FlextLdifTypes(FlextTypes):
             type Rfc2849AttributeValue = Annotated[
                 str,
                 StringConstraints(
-                    max_length=c.Ldif.ValidationRules.DEFAULT_MAX_ATTR_VALUE_LENGTH
+                    max_length=c.Ldif.ValidationRules.DEFAULT_MAX_ATTR_VALUE_LENGTH,
                 ),
             ]
 
@@ -126,7 +126,8 @@ class FlextLdifTypes(FlextTypes):
             type WriteMethod = Callable[[object, WriteMethodArg], WriteMethodReturn]
             type WriteMethodDecorator = Callable[[WriteMethod], WriteMethod]
             type SafeMethod = Callable[
-                [object, ParseMethodArg], FlextTypes.Scalar | list[str] | None
+                [object, ParseMethodArg],
+                FlextTypes.Scalar | list[str] | None,
             ]
             type SafeMethodDecorator = Callable[[SafeMethod], SafeMethod]
 

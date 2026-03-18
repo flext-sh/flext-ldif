@@ -32,11 +32,13 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
     def execute(self) -> r[m.Ldif.ParseResponse]:
         """Guard against invoking the service without input data."""
         return r[m.Ldif.ParseResponse].fail(
-            "FlextLdifParser requires input data to parse. Use parse(), parse_string(), parse_ldif_file(), or parse_ldap3_results() methods."
+            "FlextLdifParser requires input data to parse. Use parse(), parse_string(), parse_ldif_file(), or parse_ldap3_results() methods.",
         )
 
     def parse(
-        self, source: str | Path, server_type: str | None = None
+        self,
+        source: str | Path,
+        server_type: str | None = None,
     ) -> r[m.Ldif.ParseResponse]:
         """Parse LDIF from either raw text or a filesystem path."""
         if isinstance(source, Path):
@@ -68,7 +70,10 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
         return self.parse_string(content, server_type)
 
     def parse_ldif_file(
-        self, path: Path, server_type: str | None = None, encoding: str = "utf-8"
+        self,
+        path: Path,
+        server_type: str | None = None,
+        encoding: str = "utf-8",
     ) -> r[m.Ldif.ParseResponse]:
         """Parse LDIF content from a file path with optional encoding override."""
         try:
@@ -78,17 +83,19 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
         return self.parse_string(content, server_type)
 
     def parse_string(
-        self, content: str, server_type: str | None = None
+        self,
+        content: str,
+        server_type: str | None = None,
     ) -> r[m.Ldif.ParseResponse]:
         """Parse LDIF content from a string using the requested server type."""
         effective_server_type_raw = server_type or "rfc"
         try:
             effective_server_type = u.Ldif.normalize_server_type(
-                effective_server_type_raw
+                effective_server_type_raw,
             )
         except (ValueError, TypeError) as e:
             return r[m.Ldif.ParseResponse].fail(
-                f"Invalid server type: {effective_server_type_raw} - {e}"
+                f"Invalid server type: {effective_server_type_raw} - {e}",
             )
         try:
             entry_quirk_raw = self._server.entry(effective_server_type)
@@ -96,18 +103,20 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
             return r[m.Ldif.ParseResponse].fail(str(e))
         if entry_quirk_raw is None:
             return r[m.Ldif.ParseResponse].fail(
-                f"No entry quirk found for server type: {effective_server_type}"
+                f"No entry quirk found for server type: {effective_server_type}",
             )
         if not getattr(entry_quirk_raw, "parse", None) is not None:
             return r[m.Ldif.ParseResponse].fail(
-                f"Entry quirk for server type {effective_server_type} does not have parse method"
+                f"Entry quirk for server type {effective_server_type} does not have parse method",
             )
         parse_attr: Callable[[str], r[list[m.Ldif.Entry]]] | None = getattr(
-            entry_quirk_raw, "parse", None
+            entry_quirk_raw,
+            "parse",
+            None,
         )
         if parse_attr is None or not callable(parse_attr):
             return r[m.Ldif.ParseResponse].fail(
-                f"Entry quirk for server type {effective_server_type} parse is not callable"
+                f"Entry quirk for server type {effective_server_type} parse is not callable",
             )
         parse_result = parse_attr(content)
         if parse_result.is_failure:

@@ -34,7 +34,8 @@ class FlextLdifFilters:
 
     @classmethod
     def _extract_allowed_oids(
-        cls, allowed_oids: Mapping[str, frozenset[str]]
+        cls,
+        allowed_oids: Mapping[str, frozenset[str]],
     ) -> tuple[frozenset[str], frozenset[str], frozenset[str], frozenset[str]]:
         """Extract allowed OID sets from mapping."""
         return (
@@ -77,16 +78,24 @@ class FlextLdifFilters:
         else:
             return True
         is_attr, include_attr = cls._check_schema_oid(
-            attrs_dict, ("attributeTypes", "attributetypes"), allowed_attr
+            attrs_dict,
+            ("attributeTypes", "attributetypes"),
+            allowed_attr,
         )
         is_oc, include_oc = cls._check_schema_oid(
-            attrs_dict, ("objectClasses", "objectclasses"), allowed_oc
+            attrs_dict,
+            ("objectClasses", "objectclasses"),
+            allowed_oc,
         )
         is_mr, include_mr = cls._check_schema_oid(
-            attrs_dict, ("matchingRules", "matchingrules"), allowed_mr
+            attrs_dict,
+            ("matchingRules", "matchingrules"),
+            allowed_mr,
         )
         is_mru, include_mru = cls._check_schema_oid(
-            attrs_dict, ("matchingRuleUse", "matchingruleuse"), allowed_mru
+            attrs_dict,
+            ("matchingRuleUse", "matchingruleuse"),
+            allowed_mru,
         )
         is_schema_entry = is_attr or is_oc or is_mr or is_mru
         should_include = include_attr and include_oc and include_mr and include_mru
@@ -94,7 +103,9 @@ class FlextLdifFilters:
 
     @classmethod
     def filter_schema_by_oids(
-        cls, entries: list[m.Ldif.Entry], allowed_oids: Mapping[str, frozenset[str]]
+        cls,
+        entries: list[m.Ldif.Entry],
+        allowed_oids: Mapping[str, frozenset[str]],
     ) -> r[list[m.Ldif.Entry]]:
         """Filter schema entries by allowed OIDs."""
         try:
@@ -107,7 +118,11 @@ class FlextLdifFilters:
                 entry
                 for entry in entries
                 if cls._should_include_entry(
-                    entry, allowed_attr, allowed_oc, allowed_mr, allowed_mru
+                    entry,
+                    allowed_attr,
+                    allowed_oc,
+                    allowed_mr,
+                    allowed_mru,
                 )
             ]
             logger.debug(

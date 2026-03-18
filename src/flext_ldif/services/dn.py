@@ -19,7 +19,8 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
     """RFC 4514 Compliant DN Operations Service with Nested Classes."""
 
     dn: Annotated[
-        str, Field(default="", description="Distinguished name to operate on.")
+        str,
+        Field(default="", description="Distinguished name to operate on."),
     ]
     other_dn: Annotated[
         str | None,
@@ -35,7 +36,8 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
     escape_mode: Annotated[
         str,
         Field(
-            default="standard", description="Escape mode: standard (backslash) or hex"
+            default="standard",
+            description="Escape mode: standard (backslash) or hex",
         ),
     ]
     enable_events: Annotated[
@@ -218,7 +220,8 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
             "normalize": lambda: self._normalizer.normalize_operation(self.dn),
             "clean": lambda: self._normalizer.clean_operation(self.dn),
             "escape": lambda: self._normalizer.escape_operation(
-                self.dn, self.escape_mode
+                self.dn,
+                self.escape_mode,
             ),
             "unescape": lambda: self._normalizer.unescape_operation(self.dn),
             "compare": self._handle_compare,
@@ -258,8 +261,8 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
             """Parse DN operation (internal)."""
             return FlextLdifDn.Parser.parse_components(dn).map(
                 lambda components: ", ".join(
-                    (f"{attr}={value}" for attr, value in components)
-                )
+                    (f"{attr}={value}" for attr, value in components),
+                ),
             )
 
         @staticmethod
@@ -271,7 +274,7 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
         def parse_rdn_operation(dn: str) -> r[str]:
             """Parse RDN operation (internal)."""
             return FlextLdifDn.Parser.parse_rdn(dn).map(
-                lambda pairs: ", ".join((f"{attr}={value}" for attr, value in pairs))
+                lambda pairs: ", ".join((f"{attr}={value}" for attr, value in pairs)),
             )
 
         @staticmethod

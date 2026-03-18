@@ -77,7 +77,8 @@ class ProcessingPipeline:
             ]
             pipeline.add(
                 ServerTransformer(
-                    source_server=source_server, target_server=target_server
+                    source_server=source_server,
+                    target_server=target_server,
                 ),
                 name="server_transform",
             )

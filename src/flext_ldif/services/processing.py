@@ -37,14 +37,16 @@ class FlextLdifProcessing(FlextLdifServiceBase[list[m.Ldif.ProcessingResult]]):
 
     @staticmethod
     def _create_transform_processor() -> Callable[
-        [m.Ldif.Entry], m.Ldif.ProcessingResult
+        [m.Ldif.Entry],
+        m.Ldif.ProcessingResult,
     ]:
         """Create transform processor function."""
         return FlextLdifProcessing._create_entry_processor()
 
     @staticmethod
     def _create_validate_processor() -> Callable[
-        [m.Ldif.Entry], m.Ldif.ProcessingResult
+        [m.Ldif.Entry],
+        m.Ldif.ProcessingResult,
     ]:
         """Create validate processor function."""
         return FlextLdifProcessing._create_entry_processor()
@@ -58,7 +60,7 @@ class FlextLdifProcessing(FlextLdifServiceBase[list[m.Ldif.ProcessingResult]]):
         """Execute batch processing sequentially."""
         return u.process(entries, processor_func, on_error="collect").fold(
             on_failure=lambda e: r[list[m.Ldif.ProcessingResult]].fail(
-                e or "Batch processing failed"
+                e or "Batch processing failed",
             ),
             on_success=lambda v: r[list[m.Ldif.ProcessingResult]].ok(v),
         )
@@ -82,7 +84,7 @@ class FlextLdifProcessing(FlextLdifServiceBase[list[m.Ldif.ProcessingResult]]):
     def execute(self) -> r[list[m.Ldif.ProcessingResult]]:
         """Execute method required by FlextService abstract base class."""
         return r[list[m.Ldif.ProcessingResult]].fail(
-            "FlextLdifProcessing does not support generic execute(). Use specific methods instead."
+            "FlextLdifProcessing does not support generic execute(). Use specific methods instead.",
         )
 
     def process(
@@ -98,32 +100,36 @@ class FlextLdifProcessing(FlextLdifServiceBase[list[m.Ldif.ProcessingResult]]):
         processor_result = self._get_processor_function(processor_name)
         if processor_result.is_failure:
             return r[list[m.Ldif.ProcessingResult]].fail(
-                processor_result.error or "Processor function not found"
+                processor_result.error or "Processor function not found",
             )
         processor_func = processor_result.value
         if parallel:
             return self._execute_parallel_processing(
-                entries, processor_func, max_workers
+                entries,
+                processor_func,
+                max_workers,
             )
         return self._execute_batch_processing(entries, processor_func, batch_size)
 
     def _get_processor_function(
-        self, processor_name: str
+        self,
+        processor_name: str,
     ) -> r[Callable[[m.Ldif.Entry], m.Ldif.ProcessingResult]]:
         """Get processor function by name."""
         processor_map: dict[
-            str, Callable[[], Callable[[m.Ldif.Entry], m.Ldif.ProcessingResult]]
+            str,
+            Callable[[], Callable[[m.Ldif.Entry], m.Ldif.ProcessingResult]],
         ] = {
             "transform": self._create_transform_processor,
             "validate": self._create_validate_processor,
         }
         if processor_name in processor_map:
             return r[Callable[[m.Ldif.Entry], m.Ldif.ProcessingResult]].ok(
-                processor_map[processor_name]()
+                processor_map[processor_name](),
             )
         supported = "'transform', 'validate'"
         return r[Callable[[m.Ldif.Entry], m.Ldif.ProcessingResult]].fail(
-            f"Unknown processor: '{processor_name}'. Supported: {supported}"
+            f"Unknown processor: '{processor_name}'. Supported: {supported}",
         )
 
 

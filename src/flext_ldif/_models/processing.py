@@ -17,7 +17,8 @@ class FlextLdifModelsProcessing:
 
         model_config = ConfigDict(frozen=False, validate_assignment=True)
         dn: Annotated[
-            str, Field(..., description="Distinguished name of the processed entry")
+            str,
+            Field(..., description="Distinguished name of the processed entry"),
         ]
         attributes: Annotated[
             dict[str, list[str]],

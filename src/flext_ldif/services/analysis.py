@@ -18,7 +18,9 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
 
     @staticmethod
     def _validate_entry_attributes(
-        entry: m.Ldif.Entry, dn_str: str, validation_service: FlextLdifValidation
+        entry: m.Ldif.Entry,
+        dn_str: str,
+        validation_service: FlextLdifValidation,
     ) -> tuple[bool, list[str]]:
         """Validate entry attributes."""
         errors: list[str] = []
@@ -52,7 +54,9 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
 
     @staticmethod
     def _validate_entry_objectclasses(
-        entry: m.Ldif.Entry, dn_str: str, validation_service: FlextLdifValidation
+        entry: m.Ldif.Entry,
+        dn_str: str,
+        validation_service: FlextLdifValidation,
     ) -> tuple[bool, list[str]]:
         """Validate entry objectClass values."""
         errors: list[str] = []
@@ -77,7 +81,8 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
 
     @staticmethod
     def _validate_single_entry(
-        entry: m.Ldif.Entry, validation_service: FlextLdifValidation
+        entry: m.Ldif.Entry,
+        validation_service: FlextLdifValidation,
     ) -> tuple[bool, list[str]]:
         """Validate a single LDIF entry."""
         errors: list[str] = []
@@ -88,14 +93,18 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
             return (False, errors)
         is_entry_valid = is_entry_valid and dn_valid
         attrs_valid, attrs_errors = FlextLdifAnalysis._validate_entry_attributes(
-            entry, dn_str, validation_service
+            entry,
+            dn_str,
+            validation_service,
         )
         errors.extend(attrs_errors)
         if not attrs_valid:
             return (False, errors)
         is_entry_valid = is_entry_valid and attrs_valid
         oc_valid, oc_errors = FlextLdifAnalysis._validate_entry_objectclasses(
-            entry, dn_str, validation_service
+            entry,
+            dn_str,
+            validation_service,
         )
         errors.extend(oc_errors)
         is_entry_valid = is_entry_valid and oc_valid
@@ -125,15 +134,16 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
             m.Ldif.EntryAnalysisResult(
                 total_entries=total_entries,
                 objectclass_distribution=m.Ldif.DynamicCounts(
-                    **objectclass_distribution
+                    **objectclass_distribution,
                 ),
                 patterns_detected=sorted(patterns_detected),
-            )
+            ),
         )
 
     @staticmethod
     def validate_entries(
-        entries: list[m.Ldif.Entry], validation_service: FlextLdifValidation
+        entries: list[m.Ldif.Entry],
+        validation_service: FlextLdifValidation,
     ) -> r[m.Ldif.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards."""
         errors: list[str] = []
@@ -142,7 +152,8 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
         def validate_entry(entry: m.Ldif.Entry) -> bool:
             """Validate single entry and collect errors."""
             is_entry_valid, entry_errors = FlextLdifAnalysis._validate_single_entry(
-                entry, validation_service
+                entry,
+                validation_service,
             )
             errors.extend(entry_errors)
             return is_entry_valid
@@ -159,14 +170,14 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
                 valid_entries=valid_count,
                 invalid_entries=invalid_count,
                 errors=errors[:100],
-            )
+            ),
         )
 
     @override
     def execute(self) -> r[m.Ldif.EntryAnalysisResult]:
         """Execute method required by FlextService abstract base class."""
         return r[m.Ldif.EntryAnalysisResult].fail(
-            "FlextLdifAnalysis does not support generic execute(). Use specific methods instead."
+            "FlextLdifAnalysis does not support generic execute(). Use specific methods instead.",
         )
 
 

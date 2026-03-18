@@ -35,7 +35,7 @@ m = FlextAutoModels
 class _RecursiveMetadata(
     RootModel[
         _Scalar | list[_RecursiveMetadata] | Mapping[str, _RecursiveMetadata] | datetime
-    ]
+    ],
 ):
     pass
 
@@ -47,6 +47,6 @@ class _RecursiveContainer(
         | list[_RecursiveContainer]
         | Mapping[str, _RecursiveContainer]
         | datetime
-    ]
+    ],
 ):
     pass

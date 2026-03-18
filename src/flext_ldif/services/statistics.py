@@ -22,7 +22,8 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
         super().__init__()
 
     def calculate_for_entries(
-        self, entries: Sequence[m.Ldif.Entry]
+        self,
+        entries: Sequence[m.Ldif.Entry],
     ) -> r[m.Ldif.EntriesStatistics]:
         """Calculate general-purpose statistics for a list of Entry models."""
         object_class_distribution: Counter[str] = Counter()
@@ -62,7 +63,7 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
                     "analyze_rejections",
                 ],
                 version="1.0.0",
-            )
+            ),
         )
 
     def generate_statistics(
@@ -81,7 +82,7 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
             category: u.count(entries) for category, entries in categorized.items()
         }
         categorized_counts_model = m.Ldif.DynamicCounts.model_validate(
-            categorized_counts_dict
+            categorized_counts_dict,
         )
         rejected_entries: list[m.Ldif.Entry] = [
             m.Ldif.Entry.model_validate(entry)
@@ -101,7 +102,9 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
                 filename if isinstance(filename, str) else f"{category}.ldif"
             )
             setattr(
-                output_files_model, category, str(output_dir.joinpath(output_filename))
+                output_files_model,
+                category,
+                str(output_dir.joinpath(output_filename)),
             )
         return r[m.Ldif.StatisticsResult].ok(
             m.Ldif.StatisticsResult(
@@ -111,11 +114,12 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
                 rejection_count=rejection_count,
                 written_counts=written_counts_model,
                 output_files=output_files_model,
-            )
+            ),
         )
 
     def _extract_rejection_reasons(
-        self, rejected_entries: list[m.Ldif.Entry]
+        self,
+        rejected_entries: list[m.Ldif.Entry],
     ) -> list[str]:
         """Extract unique rejection reasons from rejected entries."""
         reasons: set[str] = set()

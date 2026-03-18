@@ -495,35 +495,39 @@ class FlextLdifFixtures:
         def __init__(self, fixtures_root: Path | None = None) -> None:
             """Initialize OUD fixture loader."""
             self._loader = FlextLdifFixtures.Loader(fixtures_root)
+            self._server_type = FlextLdifFixtures.ServerType.OUD
 
         def schema(self) -> str:
             """Load OUD schema fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.OUD, FlextLdifFixtures.FixtureType.SCHEMA
+                self._server_type,
+                FlextLdifFixtures.FixtureType.SCHEMA,
             )
 
         def acl(self) -> str:
             """Load OUD ACL fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.OUD, FlextLdifFixtures.FixtureType.ACL
+                self._server_type,
+                FlextLdifFixtures.FixtureType.ACL,
             )
 
         def entries(self) -> str:
             """Load OUD entry fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.OUD, FlextLdifFixtures.FixtureType.ENTRIES
+                self._server_type,
+                FlextLdifFixtures.FixtureType.ENTRIES,
             )
 
         def integration(self) -> str:
             """Load OUD integration fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.OUD,
+                self._server_type,
                 FlextLdifFixtures.FixtureType.INTEGRATION,
             )
 
         def all(self) -> dict[FlextLdifFixtures.FixtureType, str]:
             """Load all OUD fixtures."""
-            return self._loader.load_all(FlextLdifFixtures.ServerType.OUD)
+            return self._loader.load_all(self._server_type)
 
     class RFC:
         """RFC fixture loader.
@@ -534,35 +538,39 @@ class FlextLdifFixtures:
         def __init__(self, fixtures_root: Path | None = None) -> None:
             """Initialize RFC fixture loader."""
             self._loader = FlextLdifFixtures.Loader(fixtures_root)
+            self._server_type = FlextLdifFixtures.ServerType.RFC
 
         def schema(self) -> str:
             """Load RFC schema fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.RFC, FlextLdifFixtures.FixtureType.SCHEMA
+                self._server_type,
+                FlextLdifFixtures.FixtureType.SCHEMA,
             )
 
         def acl(self) -> str:
             """Load RFC ACL fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.RFC, FlextLdifFixtures.FixtureType.ACL
+                self._server_type,
+                FlextLdifFixtures.FixtureType.ACL,
             )
 
         def entries(self) -> str:
             """Load RFC entry fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.RFC, FlextLdifFixtures.FixtureType.ENTRIES
+                self._server_type,
+                FlextLdifFixtures.FixtureType.ENTRIES,
             )
 
         def integration(self) -> str:
             """Load RFC integration fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.RFC,
+                self._server_type,
                 FlextLdifFixtures.FixtureType.INTEGRATION,
             )
 
         def all(self) -> dict[FlextLdifFixtures.FixtureType, str]:
             """Load all RFC fixtures."""
-            return self._loader.load_all(FlextLdifFixtures.ServerType.RFC)
+            return self._loader.load_all(self._server_type)
 
     class OpenLDAP:
         """OpenLDAP fixture loader.
@@ -573,37 +581,39 @@ class FlextLdifFixtures:
         def __init__(self, fixtures_root: Path | None = None) -> None:
             """Initialize OpenLDAP fixture loader."""
             self._loader = FlextLdifFixtures.Loader(fixtures_root)
+            self._server_type = FlextLdifFixtures.ServerType.OPENLDAP
 
         def schema(self) -> str:
             """Load OpenLDAP schema fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.OPENLDAP,
+                self._server_type,
                 FlextLdifFixtures.FixtureType.SCHEMA,
             )
 
         def acl(self) -> str:
             """Load OpenLDAP ACL fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.OPENLDAP, FlextLdifFixtures.FixtureType.ACL
+                self._server_type,
+                FlextLdifFixtures.FixtureType.ACL,
             )
 
         def entries(self) -> str:
             """Load OpenLDAP entry fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.OPENLDAP,
+                self._server_type,
                 FlextLdifFixtures.FixtureType.ENTRIES,
             )
 
         def integration(self) -> str:
             """Load OpenLDAP integration fixtures."""
             return self._loader.load(
-                FlextLdifFixtures.ServerType.OPENLDAP,
+                self._server_type,
                 FlextLdifFixtures.FixtureType.INTEGRATION,
             )
 
         def all(self) -> dict[FlextLdifFixtures.FixtureType, str]:
             """Load all OpenLDAP fixtures."""
-            return self._loader.load_all(FlextLdifFixtures.ServerType.OPENLDAP)
+            return self._loader.load_all(self._server_type)
 
 
 FIXTURES_DIR: Final[Path] = Path(__file__).parent / "fixtures"

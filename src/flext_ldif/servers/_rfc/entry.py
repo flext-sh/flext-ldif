@@ -39,12 +39,14 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             return r[m.Ldif.Entry].fail(f"Invalid DN in entry: {entry.dn}")
         if not entry.attributes or not isinstance(entry.attributes.attributes, Mapping):
             return r[m.Ldif.Entry].fail(
-                f"Invalid attributes in entry: {entry.attributes}"
+                f"Invalid attributes in entry: {entry.attributes}",
             )
         return r[m.Ldif.Entry].ok(entry)
 
     def _create_entry(
-        self, dn: str, attributes: Mapping[str, list[str]]
+        self,
+        dn: str,
+        attributes: Mapping[str, list[str]],
     ) -> r[m.Ldif.Entry]:
         """Create Entry from DN and attributes."""
         if not dn or not u.is_type(dn, str):

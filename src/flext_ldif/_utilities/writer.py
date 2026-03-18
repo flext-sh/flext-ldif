@@ -31,7 +31,7 @@ class FlextLdifUtilitiesWriter:
         include_changetype = bool(u.get(changetype_config, "include_changetype"))
         changetype_value = u.get(changetype_config, "changetype_value")
         fold_long_lines = bool(
-            u.get(changetype_config, "fold_long_lines", default=True)
+            u.get(changetype_config, "fold_long_lines", default=True),
         )
         width_raw = u.get(changetype_config, "width", default=76)
         width = int(width_raw) if isinstance(width_raw, (str, int, float)) else 76
@@ -54,7 +54,11 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _add_line_with_folding(
-        ldif_lines: list[str], line: str, *, fold_long_lines: bool, width: int
+        ldif_lines: list[str],
+        line: str,
+        *,
+        fold_long_lines: bool,
+        width: int,
     ) -> None:
         """Add line with optional folding."""
         if fold_long_lines and (not line.startswith("dn:: ")):
@@ -64,7 +68,9 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _add_oc_must_may(
-        parts: list[str], attr_list: str | Sequence[str] | None, keyword: str
+        parts: list[str],
+        attr_list: str | Sequence[str] | None,
+        keyword: str,
     ) -> None:
         """Add MUST or MAY clause to objectClass definition parts."""
         if not attr_list:
@@ -90,7 +96,8 @@ class FlextLdifUtilitiesWriter:
         if attr_data.desc:
             parts.append(f"DESC '{attr_data.desc}'")
         if attr_data.metadata and u.get(
-            attr_data.metadata.extensions, c.Ldif.MetadataKeys.OBSOLETE
+            attr_data.metadata.extensions,
+            c.Ldif.MetadataKeys.OBSOLETE,
         ):
             parts.append("OBSOLETE")
         if attr_data.sup:
@@ -121,7 +128,8 @@ class FlextLdifUtilitiesWriter:
         if oc_data.desc:
             parts.append(f"DESC '{oc_data.desc}'")
         if oc_data.metadata and u.get(
-            oc_data.metadata.extensions, c.Ldif.MetadataKeys.OBSOLETE
+            oc_data.metadata.extensions,
+            c.Ldif.MetadataKeys.OBSOLETE,
         ):
             parts.append("OBSOLETE")
         if oc_data.sup:
@@ -208,10 +216,14 @@ class FlextLdifUtilitiesWriter:
                 continue
             for value in values:
                 attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(
-                    attr_name, value
+                    attr_name,
+                    value,
                 )
                 FlextLdifUtilitiesWriter._add_line_with_folding(
-                    lines, attr_line, fold_long_lines=fold_long_lines, width=width
+                    lines,
+                    attr_line,
+                    fold_long_lines=fold_long_lines,
+                    width=width,
                 )
         return lines
 
@@ -235,14 +247,21 @@ class FlextLdifUtilitiesWriter:
             first_attr = False
             op_line = f"{modify_operation}: {attr_name}"
             FlextLdifUtilitiesWriter._add_line_with_folding(
-                lines, op_line, fold_long_lines=fold_long_lines, width=width
+                lines,
+                op_line,
+                fold_long_lines=fold_long_lines,
+                width=width,
             )
             for value in values:
                 attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(
-                    attr_name, value
+                    attr_name,
+                    value,
                 )
                 FlextLdifUtilitiesWriter._add_line_with_folding(
-                    lines, attr_line, fold_long_lines=fold_long_lines, width=width
+                    lines,
+                    attr_line,
+                    fold_long_lines=fold_long_lines,
+                    width=width,
                 )
         if lines and lines[-1] != "-":
             lines.append("-")
@@ -250,13 +269,15 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_flags(
-        attr_data: m.Ldif.SchemaAttribute, parts: list[str]
+        attr_data: m.Ldif.SchemaAttribute,
+        parts: list[str],
     ) -> None:
         """Add flags to attribute parts list."""
         if attr_data.single_value:
             parts.append("SINGLE-VALUE")
         if attr_data.metadata and u.get(
-            attr_data.metadata.extensions, c.Ldif.MetadataKeys.COLLECTIVE
+            attr_data.metadata.extensions,
+            c.Ldif.MetadataKeys.COLLECTIVE,
         ):
             parts.append("COLLECTIVE")
         if attr_data.no_user_modification:
@@ -264,7 +285,8 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_matching_rules(
-        attr_data: m.Ldif.SchemaAttribute, parts: list[str]
+        attr_data: m.Ldif.SchemaAttribute,
+        parts: list[str],
     ) -> None:
         """Add matching rules to attribute parts list."""
         if attr_data.equality:
@@ -276,7 +298,8 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_syntax(
-        attr_data: m.Ldif.SchemaAttribute, parts: list[str]
+        attr_data: m.Ldif.SchemaAttribute,
+        parts: list[str],
     ) -> None:
         """Add syntax and length to attribute parts list."""
         if attr_data.syntax:
@@ -298,10 +321,11 @@ class FlextLdifUtilitiesWriter:
         if isinstance(metadata_extensions, Mapping):
             typed_extensions = t.ConfigMap(metadata_extensions).root
             raw_attr_order: builtins.object | None = typed_extensions.get(
-                "attribute_order"
+                "attribute_order",
             )
             if isinstance(raw_attr_order, Sequence) and not isinstance(
-                raw_attr_order, (str, bytes)
+                raw_attr_order,
+                (str, bytes),
             ):
                 attr_order_raw = [str(item) for item in raw_attr_order]
         elif isinstance(metadata, Mapping):
@@ -310,7 +334,8 @@ class FlextLdifUtilitiesWriter:
                 typed_extensions = t.ConfigMap(raw_extensions).root
                 raw_attr_order = typed_extensions.get("attribute_order")
                 if isinstance(raw_attr_order, Sequence) and not isinstance(
-                    raw_attr_order, (str, bytes)
+                    raw_attr_order,
+                    (str, bytes),
                 ):
                     attr_order_raw = [str(item) for item in raw_attr_order]
         if attr_order_raw is None:
@@ -335,7 +360,8 @@ class FlextLdifUtilitiesWriter:
             _ = str_value.encode("utf-8")
         except UnicodeEncodeError:
             str_value = str_value.encode("utf-8", errors="replace").decode(
-                "utf-8", errors="replace"
+                "utf-8",
+                errors="replace",
             )
             logger.debug(
                 "Corrected invalid UTF-8 in attribute: attribute_name=%s, value_length=%s",
@@ -346,7 +372,7 @@ class FlextLdifUtilitiesWriter:
             attr_name.lower() in c.Ldif.RfcBinaryAttributes.BINARY_ATTRIBUTE_NAMES
         )
         needs_base64 = is_binary_attr or FlextLdifUtilitiesWriter.needs_base64_encoding(
-            str_value
+            str_value,
         )
         if needs_base64:
             encoded_value = base64.b64encode(str_value.encode("utf-8")).decode("ascii")
@@ -445,7 +471,9 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def write_file(
-        content: str, file_path: Path, encoding: str = "utf-8"
+        content: str,
+        file_path: Path,
+        encoding: str = "utf-8",
     ) -> r[Mapping[str, str | int]]:
         """Write content to file (pure I/O operation)."""
         try:

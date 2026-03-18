@@ -33,7 +33,8 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _add_objectclass_must_may(
-        oc_data: FlextLdifModelsDomains.SchemaObjectClass, parts: list[str]
+        oc_data: FlextLdifModelsDomains.SchemaObjectClass,
+        parts: list[str],
     ) -> None:
         """Add MUST and MAY to objectclass parts list."""
         if oc_data.must:
@@ -59,7 +60,8 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _add_objectclass_sup(
-        oc_data: FlextLdifModelsDomains.SchemaObjectClass, parts: list[str]
+        oc_data: FlextLdifModelsDomains.SchemaObjectClass,
+        parts: list[str],
     ) -> None:
         """Add SUP to objectclass parts list."""
         if oc_data.sup:
@@ -96,7 +98,7 @@ class FlextLdifUtilitiesSchema:
                         FlextLdifModelsDomains.SchemaAttribute
                         | FlextLdifModelsDomains.SchemaObjectClass
                     ].fail(
-                        f"Transformation of '{field_name}' failed: {new_value.error}"
+                        f"Transformation of '{field_name}' failed: {new_value.error}",
                     )
                 resolved_value: t.Container = new_value.value
                 setattr(transformed, field_name, resolved_value)
@@ -114,7 +116,8 @@ class FlextLdifUtilitiesSchema:
             struct.error,
         ) as e:
             logger.exception(
-                "Schema field transformation failed", field_name=field_name
+                "Schema field transformation failed",
+                field_name=field_name,
             )
             return r[
                 FlextLdifModelsDomains.SchemaAttribute
@@ -156,7 +159,9 @@ class FlextLdifUtilitiesSchema:
             if not callable(transform_fn):
                 continue
             result = FlextLdifUtilitiesSchema._apply_field_transformation(
-                current, field_name, transform_fn
+                current,
+                field_name,
+                transform_fn,
             )
             if result.is_failure:
                 return r[
@@ -166,7 +171,8 @@ class FlextLdifUtilitiesSchema:
             unwrapped = result.value
             validation_result = (
                 FlextLdifUtilitiesSchema._validate_transformation_result(
-                    unwrapped, schema_obj
+                    unwrapped,
+                    schema_obj,
                 )
             )
             if validation_result.is_failure:
@@ -174,7 +180,7 @@ class FlextLdifUtilitiesSchema:
             unwrapped_validated = validation_result.value
             try:
                 current = FlextLdifModelsDomains.SchemaAttribute.model_validate(
-                    unwrapped_validated
+                    unwrapped_validated,
                 )
                 continue
             except (
@@ -184,12 +190,10 @@ class FlextLdifUtilitiesSchema:
                 UnicodeDecodeError,
                 struct.error,
             ) as exc:
-                logger.debug(
-                    "SchemaAttribute cast failed after transformation", error=str(exc)
-                )
+                logger.debug(f"SchemaAttribute cast failed after transformation: {exc}")
             try:
                 current = FlextLdifModelsDomains.SchemaObjectClass.model_validate(
-                    unwrapped_validated
+                    unwrapped_validated,
                 )
                 continue
             except (
@@ -203,7 +207,7 @@ class FlextLdifUtilitiesSchema:
                     FlextLdifModelsDomains.SchemaAttribute
                     | FlextLdifModelsDomains.SchemaObjectClass
                 ].fail(
-                    f"Unexpected type after transformation: {type(unwrapped_validated).__name__}"
+                    f"Unexpected type after transformation: {type(unwrapped_validated).__name__}",
                 )
         return r[
             FlextLdifModelsDomains.SchemaAttribute
@@ -220,7 +224,9 @@ class FlextLdifUtilitiesSchema:
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
             return
         trailing = getattr(
-            attr_data.metadata.schema_format_details, "trailing_spaces", ""
+            attr_data.metadata.schema_format_details,
+            "trailing_spaces",
+            "",
         )
         if trailing and parts:
             parts[-1] += str(trailing)
@@ -236,7 +242,7 @@ class FlextLdifUtilitiesSchema:
         if attr_data.desc:
             parts.append(f"DESC '{attr_data.desc}'")
         if attr_data.metadata and attr_data.metadata.extensions.get(
-            c.Ldif.ObsoleteField.OBSOLETE
+            c.Ldif.ObsoleteField.OBSOLETE,
         ):
             parts.append("OBSOLETE")
         if attr_data.sup:
@@ -287,7 +293,7 @@ class FlextLdifUtilitiesSchema:
         if oc_data.desc:
             parts.append(f"DESC '{oc_data.desc}'")
         if oc_data.metadata and oc_data.metadata.extensions.get(
-            c.Ldif.ObsoleteField.OBSOLETE
+            c.Ldif.ObsoleteField.OBSOLETE,
         ):
             parts.append("OBSOLETE")
         FlextLdifUtilitiesSchema._add_objectclass_sup(oc_data, parts)
@@ -315,11 +321,11 @@ class FlextLdifUtilitiesSchema:
             has_obsolete = bool(
                 getattr(schema_details, "obsolete_presence", False)
                 if schema_details
-                else False
+                else False,
             )
             if not has_obsolete:
                 has_obsolete = bool(
-                    attr_data.metadata.extensions.get(c.Ldif.ObsoleteField.OBSOLETE)
+                    attr_data.metadata.extensions.get(c.Ldif.ObsoleteField.OBSOLETE),
                 )
         if not has_obsolete:
             return
@@ -354,37 +360,73 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_metadata_extensions(
-        extensions_raw: Mapping[str, builtins.object],
+        extensions_raw: Mapping[str, t.RuntimeData],
     ) -> Mapping[str, t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]]]:
-        return {
-            key: FlextLdifUtilitiesSchema._convert_metadata_value(raw_value)
-            for key, raw_value in extensions_raw.items()
-        }
+        converted: dict[
+            str, t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]]
+        ] = {}
+        for key, raw_value in extensions_raw.items():
+            if u.is_primitive(raw_value) or isinstance(raw_value, datetime):
+                converted[key] = FlextLdifUtilitiesSchema._convert_metadata_value(
+                    raw_value
+                )
+                continue
+            if u.is_list_like(raw_value):
+                converted[key] = FlextLdifUtilitiesSchema._convert_metadata_value(
+                    raw_value
+                )
+                continue
+            if u.is_dict_like(raw_value):
+                converted[key] = FlextLdifUtilitiesSchema._convert_metadata_value(
+                    raw_value
+                )
+                continue
+            converted[key] = FlextLdifUtilitiesSchema._convert_metadata_value(
+                str(raw_value)
+            )
+        return converted
 
     @staticmethod
     def _convert_metadata_value(
-        value: builtins.object,
+        value: t.RuntimeData,
     ) -> t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]]:
         if u.is_primitive(value):
             return value
         if isinstance(value, datetime):
             return value.isoformat()
-        if isinstance(value, list):
-            return [str(item) for item in value]
-        if not isinstance(value, Mapping):
-            return str(value)
-        converted_nested: dict[str, t.Scalar | list[str]] = {}
-        for k_raw, v_raw in value.items():
-            k_str = str(k_raw)
-            if u.is_primitive(v_raw):
-                converted_nested[k_str] = v_raw
-            elif isinstance(v_raw, datetime):
-                converted_nested[k_str] = v_raw.isoformat()
-            elif isinstance(v_raw, Sequence) and not isinstance(v_raw, str):
-                converted_nested[k_str] = [str(nested_item) for nested_item in v_raw]
-            else:
-                converted_nested[k_str] = str(v_raw)
-        return converted_nested
+        if u.is_list_like(value):
+            converted_list: list[str] = []
+            for index in range(len(value)):
+                item_value: t.NormalizedValue = value[index]
+                converted_list.append(str(item_value))
+            return converted_list
+        if isinstance(value, Mapping):
+            converted_mapping: dict[str, t.Scalar | list[str]] = {}
+            for key_obj, nested_value_raw in value.items():
+                nested_value = FlextLdifUtilitiesSchema._convert_nested_metadata_value(
+                    nested_value_raw
+                )
+                converted_mapping[str(key_obj)] = nested_value
+            return converted_mapping
+        return {
+            "value": FlextLdifUtilitiesSchema._convert_nested_metadata_value(str(value))
+        }
+
+    @staticmethod
+    def _convert_nested_metadata_value(
+        value: t.RuntimeData,
+    ) -> t.Scalar | list[str]:
+        if u.is_primitive(value):
+            return value
+        if isinstance(value, datetime):
+            return value.isoformat()
+        if u.is_list_like(value):
+            converted_nested_list: list[str] = []
+            for index in range(len(value)):
+                nested_item_value: t.NormalizedValue = value[index]
+                converted_nested_list.append(str(nested_item_value))
+            return converted_nested_list
+        return str(value)
 
     @staticmethod
     def _convert_sequence_to_str_list(seq: Sequence[t.Scalar]) -> list[str]:
@@ -419,10 +461,12 @@ class FlextLdifUtilitiesSchema:
     def _extract_attribute_flags(attr_definition: str) -> tuple[bool, bool]:
         """Extract boolean flags (single_value, no_user_modification) from attribute definition."""
         single_value = FlextLdifUtilitiesParser.extract_boolean_flag(
-            attr_definition, c.Ldif.LdifPatterns.SCHEMA_SINGLE_VALUE
+            attr_definition,
+            c.Ldif.LdifPatterns.SCHEMA_SINGLE_VALUE,
         )
         no_user_modification = FlextLdifUtilitiesParser.extract_boolean_flag(
-            attr_definition, c.Ldif.LdifPatterns.SCHEMA_NO_USER_MODIFICATION
+            attr_definition,
+            c.Ldif.LdifPatterns.SCHEMA_NO_USER_MODIFICATION,
         )
         return (single_value, no_user_modification)
 
@@ -432,13 +476,16 @@ class FlextLdifUtilitiesSchema:
     ) -> tuple[str | None, str | None, str | None]:
         """Extract matching rules (equality, substr, ordering) from attribute definition."""
         equality = FlextLdifUtilitiesParser.extract_optional_field(
-            attr_definition, c.Ldif.LdifPatterns.SCHEMA_EQUALITY
+            attr_definition,
+            c.Ldif.LdifPatterns.SCHEMA_EQUALITY,
         )
         substr = FlextLdifUtilitiesParser.extract_optional_field(
-            attr_definition, c.Ldif.LdifPatterns.SCHEMA_SUBSTR
+            attr_definition,
+            c.Ldif.LdifPatterns.SCHEMA_SUBSTR,
         )
         ordering = FlextLdifUtilitiesParser.extract_optional_field(
-            attr_definition, c.Ldif.LdifPatterns.SCHEMA_ORDERING
+            attr_definition,
+            c.Ldif.LdifPatterns.SCHEMA_ORDERING,
         )
         return (equality, substr, ordering)
 
@@ -448,10 +495,12 @@ class FlextLdifUtilitiesSchema:
     ) -> tuple[str | None, str | None]:
         """Extract SUP and USAGE from attribute definition."""
         sup = FlextLdifUtilitiesParser.extract_optional_field(
-            attr_definition, c.Ldif.LdifPatterns.SCHEMA_SUP
+            attr_definition,
+            c.Ldif.LdifPatterns.SCHEMA_SUP,
         )
         usage = FlextLdifUtilitiesParser.extract_optional_field(
-            attr_definition, c.Ldif.LdifPatterns.SCHEMA_USAGE
+            attr_definition,
+            c.Ldif.LdifPatterns.SCHEMA_USAGE,
         )
         return (sup, usage)
 
@@ -461,7 +510,8 @@ class FlextLdifUtilitiesSchema:
     ) -> tuple[str | None, int | None]:
         """Extract SYNTAX and length from attribute definition."""
         syntax_match = re.search(
-            c.Ldif.LdifPatterns.SCHEMA_SYNTAX_LENGTH, attr_definition
+            c.Ldif.LdifPatterns.SCHEMA_SYNTAX_LENGTH,
+            attr_definition,
         )
         syntax = syntax_match.group(1) if syntax_match else None
         length = (
@@ -490,19 +540,22 @@ class FlextLdifUtilitiesSchema:
         if oid_result.is_failure:
             error = oid_result.error or "unknown OID extraction error"
             return r[tuple[str, str, str | None]].fail(
-                f"RFC {definition_label} parsing failed: {error}"
+                f"RFC {definition_label} parsing failed: {error}",
             )
         if not oid_result.is_success:
             return r[tuple[str, str, str | None]].fail(
-                f"RFC {definition_label} parsing failed: unknown result state"
+                f"RFC {definition_label} parsing failed: unknown result state",
             )
         oid = oid_result.value
         name_raw = FlextLdifUtilitiesParser.extract_optional_field(
-            definition, c.Ldif.LdifPatterns.SCHEMA_NAME, default=oid
+            definition,
+            c.Ldif.LdifPatterns.SCHEMA_NAME,
+            default=oid,
         )
         name: str = name_raw if name_raw is not None else oid
         desc = FlextLdifUtilitiesParser.extract_optional_field(
-            definition, c.Ldif.LdifPatterns.SCHEMA_DESC
+            definition,
+            c.Ldif.LdifPatterns.SCHEMA_DESC,
         )
         return r[tuple[str, str, str | None]].ok((oid, name, desc))
 
@@ -510,7 +563,9 @@ class FlextLdifUtilitiesSchema:
     def _extract_objectclass_kind(oc_definition: str) -> str:
         """Extract KIND from objectClass definition."""
         kind_match = re.search(
-            c.Ldif.LdifPatterns.SCHEMA_OBJECTCLASS_KIND, oc_definition, re.IGNORECASE
+            c.Ldif.LdifPatterns.SCHEMA_OBJECTCLASS_KIND,
+            oc_definition,
+            re.IGNORECASE,
         )
         return (
             kind_match.group(1).upper()
@@ -525,7 +580,8 @@ class FlextLdifUtilitiesSchema:
         """Extract MUST and MAY attributes from objectClass definition."""
         must = None
         must_match = re.search(
-            c.Ldif.LdifPatterns.SCHEMA_OBJECTCLASS_MUST, oc_definition
+            c.Ldif.LdifPatterns.SCHEMA_OBJECTCLASS_MUST,
+            oc_definition,
         )
         if must_match:
             must_value = (must_match.group(1) or must_match.group(2)).strip()
@@ -562,7 +618,7 @@ class FlextLdifUtilitiesSchema:
                 result = parse_callback(item_def)
                 if result.is_success:
                     try:
-                        items.append(model_type(result.value))
+                        items.append(model_type.model_validate(result.value))
                     except (
                         ValueError,
                         KeyError,
@@ -570,15 +626,14 @@ class FlextLdifUtilitiesSchema:
                         UnicodeDecodeError,
                         struct.error,
                     ) as exc:
-                        logger.debug(
-                            "Schema line item validation failed", error=str(exc)
-                        )
+                        logger.debug(f"Schema line item validation failed: {exc}")
                         continue
         return items
 
     @staticmethod
     def _format_attribute_list(
-        attr_list: str | Sequence[str] | None, prefix: str
+        attr_list: str | Sequence[str] | None,
+        prefix: str,
     ) -> str | None:
         """Format attribute list (MUST/MAY) for objectClass definition."""
         if not attr_list:
@@ -609,7 +664,9 @@ class FlextLdifUtilitiesSchema:
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
             return None
         field_order_ = getattr(
-            attr_data.metadata.schema_format_details, "field_order", None
+            attr_data.metadata.schema_format_details,
+            "field_order",
+            None,
         )
         if field_order_ and u.is_list_like(field_order_):
             return [str(item) for item in field_order_]
@@ -639,8 +696,7 @@ class FlextLdifUtilitiesSchema:
             struct.error,
         ) as exc:
             logger.debug(
-                "SchemaAttribute validation failed while returning result",
-                error=str(exc),
+                f"SchemaAttribute validation failed while returning result: {exc}"
             )
         try:
             return r[
@@ -694,8 +750,10 @@ class FlextLdifUtilitiesSchema:
             return None
         original = str(
             getattr(
-                attr_data.metadata.schema_format_details, "original_string_complete", ""
-            )
+                attr_data.metadata.schema_format_details,
+                "original_string_complete",
+                "",
+            ),
         )
         if not original:
             return None
@@ -745,7 +803,7 @@ class FlextLdifUtilitiesSchema:
         try:
             _ = FlextLdifModelsDomains.SchemaAttribute.model_validate(schema_obj)
             validated_attr = FlextLdifModelsDomains.SchemaAttribute.model_validate(
-                unwrapped
+                unwrapped,
             )
             return r[
                 FlextLdifModelsDomains.SchemaAttribute
@@ -759,12 +817,12 @@ class FlextLdifUtilitiesSchema:
             struct.error,
         ) as exc:
             logger.debug(
-                "SchemaAttribute validation failed after transformation", error=str(exc)
+                f"SchemaAttribute validation failed after transformation: {exc}"
             )
         try:
             _ = FlextLdifModelsDomains.SchemaObjectClass.model_validate(schema_obj)
             validated_oc = FlextLdifModelsDomains.SchemaObjectClass.model_validate(
-                unwrapped
+                unwrapped,
             )
             return r[
                 FlextLdifModelsDomains.SchemaAttribute
@@ -824,7 +882,9 @@ class FlextLdifUtilitiesSchema:
             transformed = FlextLdifUtilitiesSchema._create_schema_copy(schema_obj)
             if field_transforms:
                 transform_result = FlextLdifUtilitiesSchema._apply_field_transforms(
-                    transformed, field_transforms, schema_obj
+                    transformed,
+                    field_transforms,
+                    schema_obj,
                 )
                 if transform_result.is_failure:
                     return transform_result
@@ -852,14 +912,15 @@ class FlextLdifUtilitiesSchema:
         """Build RFC 4512 attribute parts with full metadata restoration."""
         if restore_original:
             original_parts = FlextLdifUtilitiesSchema._try_restore_original_format(
-                attr_data
+                attr_data,
             )
             if original_parts:
                 return original_parts
         parts: list[str] = [f"( {attr_data.oid}"]
         field_order = FlextLdifUtilitiesSchema._get_field_order(attr_data)
         name_part = FlextLdifUtilitiesSchema._build_name_part(
-            attr_data, restore_format=True
+            attr_data,
+            restore_format=True,
         )
         if name_part:
             parts.append(name_part)
@@ -870,13 +931,17 @@ class FlextLdifUtilitiesSchema:
         if attr_data.usage:
             parts.append(f"USAGE {attr_data.usage}")
         FlextLdifUtilitiesSchema._build_obsolete_part(
-            attr_data, parts, field_order, restore_position=True
+            attr_data,
+            parts,
+            field_order,
+            restore_position=True,
         )
         FlextLdifUtilitiesWriter.add_attribute_matching_rules(attr_data, parts)
         FlextLdifUtilitiesWriter.add_attribute_syntax(attr_data, parts)
         FlextLdifUtilitiesWriter.add_attribute_flags(attr_data, parts)
         x_origin_part = FlextLdifUtilitiesSchema._build_x_origin_part(
-            attr_data, restore_format=True
+            attr_data,
+            restore_format=True,
         )
         if x_origin_part:
             parts.append(x_origin_part)
@@ -920,14 +985,16 @@ class FlextLdifUtilitiesSchema:
         """Build RFC 4512 objectClass parts with full metadata restoration."""
         original_parts = (
             FlextLdifUtilitiesSchema._try_restore_objectclass_original_format(
-                oc_data, restore_original=restore_original
+                oc_data,
+                restore_original=restore_original,
             )
         )
         if original_parts:
             return original_parts
         parts: list[str] = [f"( {oc_data.oid}"]
         name_part = FlextLdifUtilitiesSchema._build_name_part(
-            oc_data, restore_format=True
+            oc_data,
+            restore_format=True,
         )
         if name_part:
             parts.append(name_part)
@@ -936,12 +1003,17 @@ class FlextLdifUtilitiesSchema:
         field_order = None
         if oc_data.metadata and oc_data.metadata.schema_format_details:
             field_order_ = getattr(
-                oc_data.metadata.schema_format_details, "field_order", None
+                oc_data.metadata.schema_format_details,
+                "field_order",
+                None,
             )
             if field_order_ and u.is_list_like(field_order_):
                 field_order = [str(item) for item in field_order_]
         FlextLdifUtilitiesSchema._build_obsolete_part(
-            oc_data, parts, field_order, restore_position=True
+            oc_data,
+            parts,
+            field_order,
+            restore_position=True,
         )
         sup_part = FlextLdifUtilitiesSchema._format_sup_list(oc_data.sup)
         if sup_part:
@@ -949,7 +1021,8 @@ class FlextLdifUtilitiesSchema:
         kind = oc_data.kind or c.Ldif.SchemaKind.STRUCTURAL.value
         parts.append(str(kind))
         must_part = FlextLdifUtilitiesSchema._format_attribute_list(
-            oc_data.must, "MUST"
+            oc_data.must,
+            "MUST",
         )
         if must_part:
             parts.append(must_part)
@@ -957,7 +1030,8 @@ class FlextLdifUtilitiesSchema:
         if may_part:
             parts.append(may_part)
         x_origin_part = FlextLdifUtilitiesSchema._build_x_origin_part(
-            oc_data, restore_format=True
+            oc_data,
+            restore_format=True,
         )
         if x_origin_part:
             parts.append(x_origin_part)
@@ -994,9 +1068,7 @@ class FlextLdifUtilitiesSchema:
             UnicodeDecodeError,
             struct.error,
         ) as exc:
-            logger.debug(
-                "SchemaAttribute model validation did not match", error=str(exc)
-            )
+            logger.debug(f"SchemaAttribute model validation did not match: {exc}")
         try:
             _ = FlextLdifModelsDomains.SchemaObjectClass.model_validate(definition)
             return "objectclass"
@@ -1007,9 +1079,7 @@ class FlextLdifUtilitiesSchema:
             UnicodeDecodeError,
             struct.error,
         ) as exc:
-            logger.debug(
-                "SchemaObjectClass model validation did not match", error=str(exc)
-            )
+            logger.debug(f"SchemaObjectClass model validation did not match: {exc}")
         definition_str = str(definition)
         definition_lower = definition_str.lower()
         objectclass_only_keywords = [
@@ -1066,7 +1136,8 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def find_missing_attributes(
-        attr_list: list[str] | str | None, available_attributes: set[str]
+        attr_list: list[str] | str | None,
+        available_attributes: set[str],
     ) -> list[str]:
         """Find attributes missing from available set."""
         if not attr_list:
@@ -1079,19 +1150,21 @@ class FlextLdifUtilitiesSchema:
             a
             for a in attrs
             if not FlextLdifUtilitiesSchema.is_attribute_in_list(
-                a, available_attributes
+                a,
+                available_attributes,
             )
         ]
 
     @staticmethod
     def is_attribute_in_list(
-        attribute_name: str | None, attribute_list: list[str] | set[str] | None
+        attribute_name: str | None,
+        attribute_list: list[str] | set[str] | None,
     ) -> bool:
         """Check if attribute exists in list or set (case-insensitive)."""
         if not attribute_name or not attribute_list:
             return False
         normalized_input = FlextLdifUtilitiesSchema.normalize_attribute_name(
-            attribute_name
+            attribute_name,
         )
         return any(
             FlextLdifUtilitiesSchema.normalize_attribute_name(attr) == normalized_input
@@ -1100,13 +1173,14 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def is_boolean_attribute(
-        attribute_name: str | None, boolean_attributes: set[str]
+        attribute_name: str | None,
+        boolean_attributes: set[str],
     ) -> bool:
         """Check if attribute is in boolean attributes set (case-insensitive)."""
         if not attribute_name or not boolean_attributes:
             return False
         normalized_input = FlextLdifUtilitiesSchema.normalize_attribute_name(
-            attribute_name
+            attribute_name,
         )
         normalized_set = {
             FlextLdifUtilitiesSchema.normalize_attribute_name(attr)
@@ -1116,7 +1190,9 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def normalize_attribute_name(
-        attribute_name: str | None, *, case_sensitive: bool = False
+        attribute_name: str | None,
+        *,
+        case_sensitive: bool = False,
     ) -> str | None:
         """Normalize attribute name for case-insensitive comparisons."""
         if not attribute_name:
@@ -1176,7 +1252,9 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def normalize_syntax_oid(
-        syntax: str | None, *, replacements: Mapping[str, str] | None = None
+        syntax: str | None,
+        *,
+        replacements: Mapping[str, str] | None = None,
     ) -> str | None:
         """Normalize SYNTAX OID field."""
         if not syntax:
@@ -1190,17 +1268,19 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def parse_attribute(
-        attr_definition: str, *, validate_syntax: bool = True
+        attr_definition: str,
+        *,
+        validate_syntax: bool = True,
     ) -> r[dict[str, builtins.object]]:
         """Parse RFC 4512 attribute definition into structured data."""
         basic_fields_result = FlextLdifUtilitiesSchema._extract_attribute_basic_fields(
-            attr_definition
+            attr_definition,
         )
         if basic_fields_result.is_failure:
             return r[dict[str, builtins.object]].fail(basic_fields_result.error)
         oid, name, desc = basic_fields_result.value
         syntax, length = FlextLdifUtilitiesSchema._extract_attribute_syntax(
-            attr_definition
+            attr_definition,
         )
         syntax_validation_result: Mapping[str, builtins.object] | None = None
         if validate_syntax:
@@ -1214,16 +1294,17 @@ class FlextLdifUtilitiesSchema:
             FlextLdifUtilitiesSchema._extract_attribute_flags(attr_definition)
         )
         sup, usage = FlextLdifUtilitiesSchema._extract_attribute_sup_usage(
-            attr_definition
+            attr_definition,
         )
         additional_extensions_converted: Mapping[str, builtins.object] | None = (
             syntax_validation_result
         )
         extensions_raw = FlextLdifUtilitiesSchema.build_metadata(
-            attr_definition, additional_extensions=additional_extensions_converted
+            attr_definition,
+            additional_extensions=additional_extensions_converted,
         )
         extensions_converted = FlextLdifUtilitiesSchema._convert_metadata_extensions(
-            extensions_raw
+            extensions_raw,
         )
         syntax_validation_converted: (
             Mapping[str, t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]]]
@@ -1232,7 +1313,7 @@ class FlextLdifUtilitiesSchema:
         if syntax_validation_result is not None:
             syntax_validation_converted = (
                 FlextLdifUtilitiesSchema._convert_metadata_extensions(
-                    syntax_validation_result
+                    syntax_validation_result,
                 )
             )
         parsed_dict: dict[str, builtins.object] = {
@@ -1268,11 +1349,11 @@ class FlextLdifUtilitiesSchema:
         sup = FlextLdifUtilitiesSchema._extract_objectclass_sup(oc_definition)
         kind = FlextLdifUtilitiesSchema._extract_objectclass_kind(oc_definition)
         must, may = FlextLdifUtilitiesSchema._extract_objectclass_must_may(
-            oc_definition
+            oc_definition,
         )
         extensions_raw = FlextLdifUtilitiesSchema.build_metadata(oc_definition)
         extensions_converted = FlextLdifUtilitiesSchema._convert_metadata_extensions(
-            extensions_raw
+            extensions_raw,
         )
         parsed_dict: dict[str, builtins.object] = {
             "oid": oid,
@@ -1288,7 +1369,8 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def replace_invalid_substr_rule(
-        substr: str | None, invalid_rules: Mapping[str, str | None]
+        substr: str | None,
+        invalid_rules: Mapping[str, str | None],
     ) -> str | None:
         """Replace invalid SUBSTR rule with valid replacement."""
         if not substr or not invalid_rules:

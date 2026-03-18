@@ -68,11 +68,11 @@ class FlextLdifUtilitiesDecorators:
         metadata = FlextLdifModelsDomains.QuirkMetadata.create_for(
             quirk_type=normalized_quirk_type,
             extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                extensions_dict
+                extensions_dict,
             ),
         )
         try:
-            setattr(result_value, "metadata", metadata)
+            result_value.metadata = metadata
         except (
             ValueError,
             KeyError,
@@ -106,7 +106,8 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: builtins.object, arg: t.Ldif.Decorators.ParseMethodArg
+                self: builtins.object,
+                arg: t.Ldif.Decorators.ParseMethodArg,
             ) -> t.Ldif.Decorators.ParseMethodReturn:
                 def _parse_error(message: str) -> t.Ldif.Decorators.ParseMethodReturn:
                     return r[t.Scalar | list[str] | None].fail(message)
@@ -136,7 +137,8 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: builtins.object, arg: str
+                self: builtins.object,
+                arg: str,
             ) -> t.Ldif.Decorators.ParseMethodReturn:
                 """Call original function and attach metadata to result."""
                 result = func(self, arg)
@@ -145,11 +147,13 @@ class FlextLdifUtilitiesDecorators:
                     if _is_metadata_attachable(unwrapped):
                         server_type = (
                             FlextLdifUtilitiesDecorators._get_server_type_from_class(
-                                unwrapped
+                                unwrapped,
                             )
                         )
                         FlextLdifUtilitiesDecorators._attach_metadata_if_present(
-                            unwrapped, quirk_type, server_type
+                            unwrapped,
+                            quirk_type,
+                            server_type,
                         )
                 return result
 
@@ -169,7 +173,8 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: builtins.object, arg: t.Ldif.Decorators.WriteMethodArg
+                self: builtins.object,
+                arg: t.Ldif.Decorators.WriteMethodArg,
             ) -> t.Ldif.Decorators.WriteMethodReturn:
                 return func(self, arg)
 
@@ -192,7 +197,8 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: builtins.object, arg: t.Ldif.Decorators.WriteMethodArg
+                self: builtins.object,
+                arg: t.Ldif.Decorators.WriteMethodArg,
             ) -> t.Ldif.Decorators.WriteMethodReturn:
                 def _write_error(message: str) -> t.Ldif.Decorators.WriteMethodReturn:
                     return r[t.Scalar | list[str] | None].fail(message)

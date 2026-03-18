@@ -31,15 +31,15 @@ class FlextLdifUtilitiesParser:
     ) -> m.Ldif.QuirkMetadata | None:
         """Build metadata for attribute including extensions."""
         metadata_extensions = FlextLdifUtilitiesParser.extract_extensions(
-            attr_definition
+            attr_definition,
         )
         if syntax:
             metadata_extensions["syntax_oid_valid"] = [
-                str(syntax_validation_error is None)
+                str(syntax_validation_error is None),
             ]
             if syntax_validation_error:
                 metadata_extensions["syntax_validation_error"] = [
-                    syntax_validation_error
+                    syntax_validation_error,
                 ]
         metadata_extensions["original_format"] = [attr_definition.strip()]
         metadata_extensions["schema_original_string_complete"] = [attr_definition]
@@ -55,7 +55,7 @@ class FlextLdifUtilitiesParser:
             return m.Ldif.QuirkMetadata(
                 quirk_type=quirk_type,
                 extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                    extensions_typed
+                    extensions_typed,
                 ),
             )
         return None
@@ -124,7 +124,8 @@ class FlextLdifUtilitiesParser:
             value: builtins.object,
         ) -> TypeIs[t.Ldif.MetadataValue]:
             return value is None or isinstance(
-                value, (str, int, float, bool, list, Mapping)
+                value,
+                (str, int, float, bool, list, Mapping),
             )
 
         def _as_str_list(value: t.Ldif.MetadataValue) -> list[str] | None:
@@ -207,7 +208,9 @@ class FlextLdifUtilitiesParser:
 
     @staticmethod
     def extract_optional_field(
-        definition: str, pattern: re.Pattern[str] | str, default: str | None = None
+        definition: str,
+        pattern: re.Pattern[str] | str,
+        default: str | None = None,
     ) -> str | None:
         """Extract optional field via regex pattern."""
         if not definition:
@@ -219,7 +222,9 @@ class FlextLdifUtilitiesParser:
 
     @staticmethod
     def extract_regex_field(
-        definition: str, pattern: str, default: str | None = None
+        definition: str,
+        pattern: str,
+        default: str | None = None,
     ) -> str | None:
         """Extract field from definition using regex pattern."""
         match = re.search(pattern, definition)
@@ -253,7 +258,9 @@ class FlextLdifUtilitiesParser:
 
     @staticmethod
     def handle_multivalued_attribute(
-        attr_name: str, attr_value: str, entry_dict: m.Ldif.RawEntryDict
+        attr_name: str,
+        attr_value: str,
+        entry_dict: m.Ldif.RawEntryDict,
     ) -> bool:
         """Handle multi-valued attribute accumulation."""
         if attr_name not in entry_dict or attr_name == "_base64_attrs":
@@ -279,7 +286,7 @@ class FlextLdifUtilitiesParser:
         """Parse LDIF attribute line into name, value, and base64 flag."""
         if ":" not in line:
             return r[tuple[str, str, bool]].fail(
-                f"No colon separator in line: {line!r}"
+                f"No colon separator in line: {line!r}",
             )
         attr_name, attr_value = line.split(":", 1)
         attr_name = attr_name.strip()
@@ -322,7 +329,10 @@ class FlextLdifUtilitiesParser:
         for raw_line in unfolded_lines:
             line = raw_line.rstrip("\r\n").strip()
             current_dn, current_attrs = FlextLdifUtilitiesParser._process_ldif_line(
-                line, current_dn, current_attrs, entries
+                line,
+                current_dn,
+                current_attrs,
+                entries,
             )
         if current_dn is not None:
             entries.append((current_dn, current_attrs))

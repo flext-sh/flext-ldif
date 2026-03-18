@@ -125,7 +125,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(
-            self, attr_definition: str | m.Ldif.SchemaAttribute
+            self,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect 389 DS attribute definitions using centralized constants."""
             if isinstance(attr_definition, m.Ldif.SchemaAttribute):
@@ -136,7 +137,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     use_prefix_match=True,
                 )
             if re.search(
-                FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN, attr_definition
+                FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
+                attr_definition,
             ):
                 return True
             name_match = re.search(
@@ -154,7 +156,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(
-            self, oc_definition: str | m.Ldif.SchemaObjectClass
+            self,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect 389 DS objectClass definitions using centralized constants."""
             if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
@@ -164,7 +167,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     detection_names=FlextLdifServersDs389.Constants.DETECTION_OBJECTCLASS_NAMES,
                 )
             if re.search(
-                FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN, oc_definition
+                FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
+                oc_definition,
             ):
                 return True
             name_match = re.search(
@@ -188,7 +192,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
                 return r[m.Ldif.SchemaAttribute].ok(
-                    attr_data.model_copy(update={"metadata": metadata})
+                    attr_data.model_copy(update={"metadata": metadata}),
                 )
             return result
 
@@ -202,7 +206,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 FlextLdifUtilitiesObjectClass.fix_kind_mismatch(oc_data)
                 metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
                 return r[m.Ldif.SchemaObjectClass].ok(
-                    oc_data.model_copy(update={"metadata": metadata})
+                    oc_data.model_copy(update={"metadata": metadata}),
                 )
             return result
 
@@ -264,24 +268,28 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return normalized.lower().startswith("(version")
 
         def _build_acl_string(
-            self, acl_name: str, permissions: list[str], targetattr: str, userdn: str
+            self,
+            acl_name: str,
+            permissions: list[str],
+            targetattr: str,
+            userdn: str,
         ) -> r[str]:
             """Build ACI string from components."""
             version_prefix = FlextLdifServersDs389.Constants.ACL_VERSION_PREFIX
             parts = [version_prefix, f'acl "{acl_name}"']
             if permissions:
                 perms = FlextLdifServersDs389.Constants.ACL_TARGETATTR_SEPARATOR.join(
-                    permissions
+                    permissions,
                 )
                 parts.append(
-                    f"{FlextLdifServersDs389.Constants.ACL_ALLOW_PREFIX} ({perms})"
+                    f"{FlextLdifServersDs389.Constants.ACL_ALLOW_PREFIX} ({perms})",
                 )
             if targetattr:
                 prefix = FlextLdifServersDs389.Constants.ACL_TARGETATTR_PREFIX
                 parts.append(f'{prefix} = "{targetattr}"')
             if userdn:
                 parts.append(
-                    f'{FlextLdifServersDs389.Constants.ACL_USERDN_PREFIX} = "{userdn}"'
+                    f'{FlextLdifServersDs389.Constants.ACL_USERDN_PREFIX} = "{userdn}"',
                 )
             acl_separator = FlextLdifServersDs389.Constants.ACL_TARGETATTR_SEPARATOR
             acl_content = f"{acl_separator} ".join(parts) if parts else ""
@@ -336,7 +344,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     [
                         perm.strip()
                         for perm in permissions_match.group(1).split(
-                            FlextLdifServersDs389.Constants.ACL_TARGETATTR_SEPARATOR
+                            FlextLdifServersDs389.Constants.ACL_TARGETATTR_SEPARATOR,
                         )
                     ]
                     if permissions_match
@@ -398,7 +406,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 acl = m.Ldif.Acl(
                     name=acl_name,
                     target=m.Ldif.AclTarget(
-                        target_dn=target_dn, attributes=target_attributes
+                        target_dn=target_dn,
+                        attributes=target_attributes,
                     ),
                     subject=m.Ldif.AclSubject(
                         subject_type="user",
@@ -414,8 +423,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             except (ValueError, TypeError, AttributeError) as exc:
                 return r[m.Ldif.Acl].fail(
                     FlextLdifServersDs389.Constants.ERROR_ACL_PARSING_FAILED.format(
-                        exc=exc
-                    )
+                        exc=exc,
+                    ),
                 )
 
         @override
@@ -438,8 +447,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             except (ValueError, TypeError, AttributeError) as exc:
                 return r[str].fail(
                     FlextLdifServersDs389.Constants.ERROR_ACL_WRITE_FAILED.format(
-                        exc=exc
-                    )
+                        exc=exc,
+                    ),
                 )
 
     class Entry(FlextLdifServersRfc.Entry):
@@ -447,7 +456,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @override
         def can_handle(
-            self, entry_dn: str, attributes: Mapping[str, list[str]]
+            self,
+            entry_dn: str,
+            attributes: Mapping[str, list[str]],
         ) -> bool:
             """Detect 389 DS-specific entries."""
             if not entry_dn:
@@ -463,7 +474,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             }
             if any(
                 attr.startswith(
-                    tuple(FlextLdifServersDs389.Constants.DETECTION_ATTRIBUTE_PREFIXES)
+                    tuple(FlextLdifServersDs389.Constants.DETECTION_ATTRIBUTE_PREFIXES),
                 )
                 for attr in normalized_attrs
             ):
@@ -476,7 +487,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     str(oc).lower()
                     in FlextLdifServersDs389.Constants.DETECTION_OBJECTCLASS_NAMES
                     for oc in object_classes
-                )
+                ),
             )
 
         def process_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
@@ -488,7 +499,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 entry_dn = entry.dn.value
                 dn_lower = entry_dn.lower()
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(
-                    quirk_type=c.Ldif.ServerTypes.DS389
+                    quirk_type=c.Ldif.ServerTypes.DS389,
                 )
                 metadata.extensions[c.Ldif.Domain.QuirkMetadataKeys.IS_CONFIG_ENTRY] = (
                     any(
@@ -505,8 +516,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             except (ValueError, TypeError, AttributeError) as exc:
                 return r[m.Ldif.Entry].fail(
                     FlextLdifServersDs389.Constants.ERROR_ENTRY_PROCESSING_FAILED.format(
-                        exc=exc
-                    )
+                        exc=exc,
+                    ),
                 )
 
 

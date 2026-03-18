@@ -43,7 +43,9 @@ class AndFilter[T](FlextLdifUtilitiesFilters[T]):
     __slots__ = ("_left", "_right")
 
     def __init__(
-        self, left: FlextLdifUtilitiesFilters[T], right: FlextLdifUtilitiesFilters[T]
+        self,
+        left: FlextLdifUtilitiesFilters[T],
+        right: FlextLdifUtilitiesFilters[T],
     ) -> None:
         """Initialize AND filter."""
         super().__init__()
@@ -62,7 +64,9 @@ class OrFilter[T](FlextLdifUtilitiesFilters[T]):
     __slots__ = ("_left", "_right")
 
     def __init__(
-        self, left: FlextLdifUtilitiesFilters[T], right: FlextLdifUtilitiesFilters[T]
+        self,
+        left: FlextLdifUtilitiesFilters[T],
+        right: FlextLdifUtilitiesFilters[T],
     ) -> None:
         """Initialize OR filter."""
         super().__init__()
@@ -97,7 +101,10 @@ class ByDnFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
     __slots__ = ("_case_insensitive", "_pattern")
 
     def __init__(
-        self, pattern: str | Pattern[str], *, case_insensitive: bool = True
+        self,
+        pattern: str | Pattern[str],
+        *,
+        case_insensitive: bool = True,
     ) -> None:
         """Initialize DN filter."""
         super().__init__()
@@ -233,7 +240,11 @@ class ByAttrValueFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
     __slots__ = ("_attr", "_case_insensitive", "_pattern")
 
     def __init__(
-        self, attr: str, pattern: str | Pattern[str], *, case_insensitive: bool = True
+        self,
+        attr: str,
+        pattern: str | Pattern[str],
+        *,
+        case_insensitive: bool = True,
     ) -> None:
         """Initialize attribute value filter."""
         super().__init__()
@@ -332,21 +343,27 @@ class Filter:
 
     @staticmethod
     def by_attrs(
-        *attrs: str, mode: Literal["any", "all"] = "any", case_insensitive: bool = True
+        *attrs: str,
+        mode: Literal["any", "all"] = "any",
+        case_insensitive: bool = True,
     ) -> ByAttrsFilter:
         """Create an attribute presence filter."""
         return ByAttrsFilter(*attrs, mode=mode, case_insensitive=case_insensitive)
 
     @staticmethod
     def by_dn(
-        pattern: str | Pattern[str], *, case_insensitive: bool = True
+        pattern: str | Pattern[str],
+        *,
+        case_insensitive: bool = True,
     ) -> ByDnFilter:
         """Create a DN pattern filter."""
         return ByDnFilter(pattern, case_insensitive=case_insensitive)
 
     @staticmethod
     def by_dn_under(
-        base_dn: str, *, case_insensitive: bool = True
+        base_dn: str,
+        *,
+        case_insensitive: bool = True,
     ) -> ByDnUnderBaseFilter:
         """Create a base DN filter."""
         return ByDnUnderBaseFilter(base_dn, case_insensitive=case_insensitive)
@@ -359,7 +376,9 @@ class Filter:
     ) -> ByObjectClassFilter:
         """Create an objectClass filter."""
         return ByObjectClassFilter(
-            *classes, mode=mode, case_insensitive=case_insensitive
+            *classes,
+            mode=mode,
+            case_insensitive=case_insensitive,
         )
 
     @staticmethod

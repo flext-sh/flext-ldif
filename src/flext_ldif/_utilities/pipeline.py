@@ -118,7 +118,7 @@ class Pipeline:
             if process_result.is_failure:
                 if self._fail_fast:
                     return r[list[m.Ldif.Entry]].fail(
-                        process_result.error or "Pipeline execution failed"
+                        process_result.error or "Pipeline execution failed",
                     )
                 continue
             results.append(process_result.value)
@@ -133,7 +133,7 @@ class Pipeline:
             result = step_func(current)
             if result.is_failure:
                 return r[m.Ldif.Entry | _Filtered].fail(
-                    f"Step '{step_name}' failed: {result.error}"
+                    f"Step '{step_name}' failed: {result.error}",
                 )
             unwrapped = result.value
             current = unwrapped
@@ -163,7 +163,11 @@ class ValidationPipeline:
     __slots__ = ("_collect_all", "_max_errors", "_strict")
 
     def __init__(
-        self, *, strict: bool = True, collect_all: bool = True, max_errors: int = 0
+        self,
+        *,
+        strict: bool = True,
+        collect_all: bool = True,
+        max_errors: int = 0,
     ) -> None:
         """Initialize validation pipeline."""
         super().__init__()
@@ -225,8 +229,10 @@ class ValidationPipeline:
                     warnings.append("Entry has no objectClass attribute")
         return r[str].ok(
             ValidationResult(
-                is_valid=len(errors) == 0, errors=errors, warnings=warnings
-            )
+                is_valid=len(errors) == 0,
+                errors=errors,
+                warnings=warnings,
+            ),
         )
 
 

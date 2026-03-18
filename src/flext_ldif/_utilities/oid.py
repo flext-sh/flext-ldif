@@ -69,7 +69,7 @@ class FlextLdifUtilitiesOID:
         oid = definition_or_oid
         if definition_or_oid.startswith("("):
             extracted_result = FlextLdifUtilitiesOID.extract_from_definition(
-                definition_or_oid
+                definition_or_oid,
             )
             if extracted_result.is_failure:
                 return r[str].fail(f"Cannot extract OID: {extracted_result.error}")
@@ -91,7 +91,8 @@ class FlextLdifUtilitiesOID:
             return False
         if definition_or_oid.startswith("("):
             return FlextLdifUtilitiesOID.matches_pattern(
-                definition_or_oid, FlextLdifUtilitiesOID.MICROSOFT_AD_PATTERN
+                definition_or_oid,
+                FlextLdifUtilitiesOID.MICROSOFT_AD_PATTERN,
             )
         return bool(FlextLdifUtilitiesOID.MICROSOFT_AD_PATTERN.match(definition_or_oid))
 
@@ -102,7 +103,8 @@ class FlextLdifUtilitiesOID:
             return False
         if definition_or_oid.startswith("("):
             return FlextLdifUtilitiesOID.matches_pattern(
-                definition_or_oid, FlextLdifUtilitiesOID.OPENLDAP_PATTERN
+                definition_or_oid,
+                FlextLdifUtilitiesOID.OPENLDAP_PATTERN,
             )
         return bool(FlextLdifUtilitiesOID.OPENLDAP_PATTERN.match(definition_or_oid))
 
@@ -113,7 +115,8 @@ class FlextLdifUtilitiesOID:
             return False
         if definition_or_oid.startswith("("):
             return FlextLdifUtilitiesOID.matches_pattern(
-                definition_or_oid, FlextLdifUtilitiesOID.ORACLE_OID_PATTERN
+                definition_or_oid,
+                FlextLdifUtilitiesOID.ORACLE_OID_PATTERN,
             )
         return bool(FlextLdifUtilitiesOID.ORACLE_OID_PATTERN.match(definition_or_oid))
 
@@ -171,7 +174,7 @@ class FlextLdifUtilitiesOID:
     MICROSOFT_AD_PATTERN: re.Pattern[str] = re.compile(r"1\\.2\\.840\\.113556\\..*")
     OPENLDAP_PATTERN: re.Pattern[str] = re.compile(r"1\\.3\\.6\\.1\\.4\\.1\\.4203\\..*")
     REDHAT_389DS_PATTERN: re.Pattern[str] = re.compile(
-        r"2\\.16\\.840\\.1\\.113730\\..*"
+        r"2\\.16\\.840\\.1\\.113730\\..*",
     )
     NOVELL_PATTERN: re.Pattern[str] = re.compile(r"2\\.16\\.840\\.1\\.113719\\..*")
     IBM_TIVOLI_PATTERN: re.Pattern[str] = re.compile(r"1\\.3\\.18\\.0\\.2\\..*")

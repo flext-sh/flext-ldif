@@ -93,7 +93,9 @@ class FlextFunctional:
 
     @staticmethod
     def pick[T](
-        data: Mapping[str, T], *keys: str, as_dict: bool = True
+        data: Mapping[str, T],
+        *keys: str,
+        as_dict: bool = True,
     ) -> Mapping[str, T] | list[T]:
         """Pick keys from dict (DSL helper, mnemonic: pc)."""
         if as_dict:
@@ -104,7 +106,8 @@ class FlextFunctional:
 
     @staticmethod
     def map_dict[T, U](
-        data: Mapping[str, T], mapper: Callable[[str, T], tuple[str, U]]
+        data: Mapping[str, T],
+        mapper: Callable[[str, T], tuple[str, U]],
     ) -> Mapping[str, U]:
         """Map dict with transformations (mnemonic: md)."""
         result: dict[str, U] = {}
@@ -329,7 +332,10 @@ class FlextFunctional:
 
     @staticmethod
     def when[T](
-        *, condition: bool = False, then: T | None = None, else_: T | None = None
+        *,
+        condition: bool = False,
+        then: T | None = None,
+        else_: T | None = None,
     ) -> T | None:
         """Functional conditional (DSL pattern, mnemonic: wh)."""
         if not condition:
@@ -340,7 +346,8 @@ class FlextFunctional:
 
     @staticmethod
     def cond[T, U](
-        *cases: tuple[Callable[[T], bool], Callable[[T], U]], default: U | None = None
+        *cases: tuple[Callable[[T], bool], Callable[[T], U]],
+        default: U | None = None,
     ) -> Callable[[T], U | None]:
         """Conditional expression returning curried function (mnemonic: cd)."""
 
@@ -390,7 +397,10 @@ class FlextFunctional:
 
     @classmethod
     def switch[T, U](
-        cls, value: T, cases: Mapping[T, U], default: U | None = None
+        cls,
+        value: T,
+        cases: Mapping[T, U],
+        default: U | None = None,
     ) -> U | None:
         """Switch using dict lookup (mnemonic: sw)."""
         return cases.get(value, default)
@@ -541,7 +551,9 @@ class FlextFunctional:
 
     @staticmethod
     def _convert_with_target(
-        value: builtins.object, target_type: type, default: builtins.object | None
+        value: builtins.object,
+        target_type: type,
+        default: builtins.object | None,
     ) -> builtins.object | None:
         """Execute type conversion using centralized Pydantic v2 models.
 
@@ -568,7 +580,8 @@ class FlextFunctional:
                 for key, item in value.items()
             }
         elif isinstance(value, Sequence) and not isinstance(
-            value, (str, bytes, bytearray)
+            value,
+            (str, bytes, bytearray),
         ):
             normalized_value = [
                 item if isinstance(item, t.CONTAINER_TYPES) else str(item)
@@ -589,7 +602,8 @@ class FlextFunctional:
                 for key, item in default.items()
             }
         elif isinstance(default, Sequence) and not isinstance(
-            default, (str, bytes, bytearray)
+            default,
+            (str, bytes, bytearray),
         ):
             normalized_default = [
                 item if isinstance(item, t.CONTAINER_TYPES) else str(item)
@@ -610,31 +624,38 @@ class FlextFunctional:
         ) = None
         if target_type is str:
             conversion_model = ConvertToStr(
-                value=normalized_value, default=normalized_default
+                value=normalized_value,
+                default=normalized_default,
             )
         elif target_type is int:
             conversion_model = ConvertToInt(
-                value=normalized_value, default=normalized_default
+                value=normalized_value,
+                default=normalized_default,
             )
         elif target_type is float:
             conversion_model = ConvertToFloat(
-                value=normalized_value, default=normalized_default
+                value=normalized_value,
+                default=normalized_default,
             )
         elif target_type is bool:
             conversion_model = ConvertToBool(
-                value=normalized_value, default=normalized_default
+                value=normalized_value,
+                default=normalized_default,
             )
         elif target_type is list:
             conversion_model = ConvertToList(
-                value=normalized_value, default=normalized_default
+                value=normalized_value,
+                default=normalized_default,
             )
         elif target_type is tuple:
             conversion_model = ConvertToTuple(
-                value=normalized_value, default=normalized_default
+                value=normalized_value,
+                default=normalized_default,
             )
         elif target_type is dict:
             conversion_model = ConvertToDict(
-                value=normalized_value, default=normalized_default
+                value=normalized_value,
+                default=normalized_default,
             )
         if conversion_model is None:
             return default

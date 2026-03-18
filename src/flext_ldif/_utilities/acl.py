@@ -60,7 +60,10 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def _build_extensions(
-        aci_content: str, version: str, acl_line: str, extra_patterns: Mapping[str, str]
+        aci_content: str,
+        version: str,
+        acl_line: str,
+        extra_patterns: Mapping[str, str],
     ) -> Mapping[str, builtins.object]:
         """Build metadata extensions dict."""
         extensions: dict[str, builtins.object] = {
@@ -71,7 +74,9 @@ class FlextLdifUtilitiesACL:
         def extract_extra(_pattern_name: str, pattern: str) -> str | None:
             """Extract extra field from pattern."""
             return FlextLdifUtilitiesACL.extract_component(
-                aci_content, pattern, group=1
+                aci_content,
+                pattern,
+                group=1,
             )
 
         extra_dict: dict[str, str | None] = {}
@@ -90,7 +95,8 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def _build_subject_and_permissions(
-        aci_content: str, config: FlextLdifModelsSettings.AciParserConfig
+        aci_content: str,
+        config: FlextLdifModelsSettings.AciParserConfig,
     ) -> tuple[str, str, Mapping[str, bool]]:
         """Build subject and permissions from ACI content."""
         permissions_list = FlextLdifUtilitiesACL.extract_permissions(
@@ -100,14 +106,18 @@ class FlextLdifUtilitiesACL:
             config.action_filter,
         )
         bind_rules_data = FlextLdifUtilitiesACL.extract_bind_rules(
-            aci_content, config.bind_patterns
+            aci_content,
+            config.bind_patterns,
         )
         subject_type_map = {"userdn": "user", "groupdn": "group", "roledn": "role"}
         subject_type, subject_value = FlextLdifUtilitiesACL.build_aci_subject(
-            bind_rules_data, subject_type_map, config.special_subjects
+            bind_rules_data,
+            subject_type_map,
+            config.special_subjects,
         )
         permissions_dict_raw = FlextLdifUtilitiesACL.build_permissions_dict(
-            permissions_list, config.permission_map
+            permissions_list,
+            config.permission_map,
         )
         permissions_dict: dict[str, bool] = {
             k: bool(v) for k, v in dict(permissions_dict_raw).items()
@@ -116,7 +126,8 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def _check_special_value(
-        rule_value: str, special_values: Mapping[str, tuple[str, str]]
+        rule_value: str,
+        special_values: Mapping[str, tuple[str, str]],
     ) -> tuple[str, str] | None:
         """Check if rule value matches any special value."""
         for key, value_tuple in dict(special_values).items():
@@ -141,21 +152,26 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def _extract_target_info(
-        aci_content: str, config: FlextLdifModelsSettings.AciParserConfig
+        aci_content: str,
+        config: FlextLdifModelsSettings.AciParserConfig,
     ) -> tuple[list[str], str]:
         """Extract target attributes and DN from ACI content."""
         targetattr_extracted = FlextLdifUtilitiesACL.extract_component(
-            aci_content, config.targetattr_pattern, group=2
+            aci_content,
+            config.targetattr_pattern,
+            group=2,
         )
         targetattr: str = targetattr_extracted or config.default_targetattr
         target_attributes, target_dn = FlextLdifUtilitiesACL.parse_targetattr(
-            targetattr
+            targetattr,
         )
         return (target_attributes, target_dn)
 
     @staticmethod
     def _extract_version_and_name(
-        aci_content: str, version_pattern: str, default_name: str
+        aci_content: str,
+        version_pattern: str,
+        default_name: str,
     ) -> tuple[str, str]:
         """Extract version and ACL name from content."""
         version_match = re.search(version_pattern, aci_content)
@@ -187,7 +203,8 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def _normalize_permission(
-        perm: str, permission_map: Mapping[str, str] | None
+        perm: str,
+        permission_map: Mapping[str, str] | None,
     ) -> str:
         """Normalize permission name using map if available."""
         if not permission_map:
@@ -231,7 +248,8 @@ class FlextLdifUtilitiesACL:
         for perm in perm_list:
             if perm:
                 normalized = FlextLdifUtilitiesACL._normalize_permission(
-                    perm, permission_map
+                    perm,
+                    permission_map,
                 )
                 result[normalized] = is_allow
         return result
@@ -274,7 +292,8 @@ class FlextLdifUtilitiesACL:
         """Build ACI permissions clause."""
         if supported_permissions:
             filtered: list[str] = FlextLdifUtilitiesACL.filter_supported_permissions(
-                permissions, supported_permissions
+                permissions,
+                supported_permissions,
             )
         else:
             filtered = permissions
@@ -297,7 +316,8 @@ class FlextLdifUtilitiesACL:
             rule_value_raw = u.get(rule, "value", default="")
             rule_value = rule_value_raw if isinstance(rule_value_raw, str) else ""
             special_match = FlextLdifUtilitiesACL._check_special_value(
-                rule_value, special_values
+                rule_value,
+                special_values,
             )
             if special_match:
                 return special_match
@@ -365,18 +385,23 @@ class FlextLdifUtilitiesACL:
         allow_dict: dict[str, bool] = {}
         if allow_permissions:
             allow_dict = FlextLdifUtilitiesACL._process_permission_list(
-                allow_permissions, permission_map, is_allow=True
+                allow_permissions,
+                permission_map,
+                is_allow=True,
             )
         deny_dict: dict[str, bool] = {}
         if deny_permissions:
             deny_dict = FlextLdifUtilitiesACL._process_permission_list(
-                deny_permissions, permission_map, is_allow=False
+                deny_permissions,
+                permission_map,
+                is_allow=False,
             )
         return f.merge(allow_dict, deny_dict)
 
     @staticmethod
     def extract_bind_rules(
-        content: str, bind_patterns: Mapping[str, str] | None = None
+        content: str,
+        bind_patterns: Mapping[str, str] | None = None,
     ) -> list[dict[str, str]]:
         """Extract bind rules from ACL content.
 
@@ -434,12 +459,14 @@ class FlextLdifUtilitiesACL:
                     value_val = str(tuple_items[1])
                     if operator_placeholder in format_template:
                         return format_template.format(
-                            operator=operator_val, value=value_val
+                            operator=operator_val,
+                            value=value_val,
                         )
                     return format_template.format(value=value_val)
             if operator_placeholder in format_template and operator_default is not None:
                 return format_template.format(
-                    operator=operator_default, value=str(value_raw)
+                    operator=operator_default,
+                    value=str(value_raw),
                 )
             return format_template.format(value=str(value_raw))
 
@@ -543,7 +570,8 @@ class FlextLdifUtilitiesACL:
         effective_defaults = defaults or {}
 
         def extract_component_batch(
-            name: str, pattern_spec: str | tuple[str, int]
+            name: str,
+            pattern_spec: str | tuple[str, int],
         ) -> tuple[str, builtins.object | None]:
             """Extract component from pattern spec."""
             if isinstance(pattern_spec, tuple):
@@ -644,7 +672,9 @@ class FlextLdifUtilitiesACL:
             if ops:
                 split_ops = ops.split(ops_separator)
                 filtered_perms_list = f.map_filter(
-                    split_ops, mapper=str.strip, predicate=bool
+                    split_ops,
+                    mapper=str.strip,
+                    predicate=bool,
                 )
                 permissions.extend(filtered_perms_list)
         return permissions
@@ -694,7 +724,8 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def filter_supported_permissions(
-        permissions: list[str], supported: set[str] | frozenset[str]
+        permissions: list[str],
+        supported: set[str] | frozenset[str],
     ) -> list[str]:
         """Filter permissions to only include supported ones."""
         supported_lower = {s.lower() for s in supported}
@@ -725,7 +756,9 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def format_aci_subject(
-        _subject_type: str, subject_value: str, bind_operator: str = "userdn"
+        _subject_type: str,
+        subject_value: str,
+        bind_operator: str = "userdn",
     ) -> str:
         """Format ACL subject into ACI bind rule format."""
         cleaned_value = subject_value.replace(", ", ",")
@@ -862,25 +895,33 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def parse_aci(
-        acl_line: str, config: FlextLdifModelsSettings.AciParserConfig
+        acl_line: str,
+        config: FlextLdifModelsSettings.AciParserConfig,
     ) -> r[m.Ldif.Acl]:
         """Parse ACI line using server-specific config Model."""
         is_valid, aci_content = FlextLdifUtilitiesACL.validate_aci_format(
-            acl_line, config.aci_prefix
+            acl_line,
+            config.aci_prefix,
         )
         if not is_valid:
             return r[m.Ldif.Acl].fail(f"Not a valid ACI format: {config.aci_prefix}")
         version, acl_name = FlextLdifUtilitiesACL._extract_version_and_name(
-            aci_content, config.version_acl_pattern, config.default_name
+            aci_content,
+            config.version_acl_pattern,
+            config.default_name,
         )
         target_attributes, target_dn = FlextLdifUtilitiesACL._extract_target_info(
-            aci_content, config
+            aci_content,
+            config,
         )
         subject_type, subject_value, permissions_dict = (
             FlextLdifUtilitiesACL._build_subject_and_permissions(aci_content, config)
         )
         extensions = FlextLdifUtilitiesACL._build_extensions(
-            aci_content, version, acl_line, config.extra_patterns
+            aci_content,
+            version,
+            acl_line,
+            config.extra_patterns,
         )
         acl_model = m.Ldif.Acl(
             name=acl_name,
@@ -905,7 +946,8 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def parse_targetattr(
-        targetattr_str: str | None, separator: str = "||"
+        targetattr_str: str | None,
+        separator: str = "||",
     ) -> tuple[list[str], str]:
         """Parse targetattr string to attributes list and target DN."""
         if not targetattr_str:
@@ -985,7 +1027,8 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def validate_aci_format(
-        acl_line: str, aci_prefix: str = "aci:"
+        acl_line: str,
+        aci_prefix: str = "aci:",
     ) -> tuple[bool, str]:
         """Validate and extract ACI content from line."""
         if not acl_line or not acl_line.strip():
@@ -1004,7 +1047,9 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def validate_batch(
-        acl_lines: Sequence[str], *, collect_errors: bool = True
+        acl_lines: Sequence[str],
+        *,
+        collect_errors: bool = True,
     ) -> r[list[tuple[str, bool, str | None]]]:
         """Validate multiple ACL lines."""
 

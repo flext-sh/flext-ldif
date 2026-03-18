@@ -71,7 +71,9 @@ class FlextLdifUtilitiesWriters:
                 dn_error_raw = dn_for_error or ""
                 dn_error: str = dn_error_raw[:50] if dn_error_raw else ""
                 logger.exception(
-                    "Failed to write entry", server_type=config.server_type, dn=dn_error
+                    "Failed to write entry",
+                    server_type=config.server_type,
+                    dn=dn_error,
                 )
                 return r[str].fail(f"Failed to write entry: {e}")
 
@@ -131,7 +133,8 @@ class FlextLdifUtilitiesWriters:
             objectclass: FlextLdifModelsDomains.SchemaObjectClass,
             server_type: str,
             build_parts_hook: Callable[
-                [FlextLdifModelsDomains.SchemaObjectClass], list[str]
+                [FlextLdifModelsDomains.SchemaObjectClass],
+                list[str],
             ],
             *,
             transform_hook: Callable[
@@ -152,7 +155,7 @@ class FlextLdifUtilitiesWriters:
                         sup_list = [str(item) for item in sup_value]
                     else:
                         sup_list = [sup_value]
-                    setattr(objectclass, "sup", transform_sup_hook(sup_list))
+                    objectclass.sup = transform_sup_hook(sup_list)
                 parts = build_parts_hook(objectclass)
                 definition = "( " + " ".join(parts) + " )"
                 return r[str].ok(definition)
@@ -203,13 +206,15 @@ class FlextLdifUtilitiesWriters:
                     if header:
                         parts.append(header)
                 stats = FlextLdifUtilitiesWriters.Content.Stats(
-                    total_entries=len(config.entries)
+                    total_entries=len(config.entries),
                 )
                 entries_typed: list[FlextLdifModelsDomains.Entry] = list(config.entries)
                 for entry in entries_typed:
                     result = (
                         FlextLdifUtilitiesWriters.Content.write_single_entry_with_stats(
-                            entry, config.write_entry_hook, stats
+                            entry,
+                            config.write_entry_hook,
+                            stats,
                         )
                     )
                     if result is not None:
@@ -224,7 +229,8 @@ class FlextLdifUtilitiesWriters:
                 struct.error,
             ) as e:
                 logger.exception(
-                    "Failed to write content", server_type=config.server_type
+                    "Failed to write content",
+                    server_type=config.server_type,
                 )
                 return r[str].fail(f"Failed to write content: {e}")
 

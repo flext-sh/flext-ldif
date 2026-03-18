@@ -90,7 +90,9 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         return False
 
     def convert_rfc_acl_to_aci(
-        self, rfc_acl_attrs: Mapping[str, list[str]], target_server: str
+        self,
+        rfc_acl_attrs: Mapping[str, list[str]],
+        target_server: str,
     ) -> r[Mapping[str, list[str]]]:
         """Convert RFC ACL format to server-specific ACI format."""
         _ = target_server
@@ -103,15 +105,16 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
     ) -> m.Ldif.QuirkMetadata:
         """Create ACL quirk metadata."""
         all_extensions: dict[str, builtins.object] = {
-            "original_format": original_format
+            "original_format": original_format,
         }
         if extensions:
             all_extensions.update(extensions)
         extensions_model = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-            all_extensions
+            all_extensions,
         )
         return m.Ldif.QuirkMetadata(
-            quirk_type=self._get_server_type(), extensions=extensions_model
+            quirk_type=self._get_server_type(),
+            extensions=extensions_model,
         )
 
     @override
@@ -147,7 +150,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         if not original_format:
             return r[str].ok(acl_value)
         sanitize_result_raw: tuple[str, bool] = FlextLdifUtilitiesACL.sanitize_acl_name(
-            original_format
+            original_format,
         )
         sanitized_name, _was_sanitized = sanitize_result_raw
         if not sanitized_name:
@@ -157,7 +160,8 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
             return r[str].ok(acl_value)
         pattern, replacement_template = pattern_result.value
         formatted_value = pattern.sub(
-            replacement_template.format(sanitized_name), acl_value
+            replacement_template.format(sanitized_name),
+            acl_value,
         )
         return r[str].ok(formatted_value)
 
@@ -170,7 +174,8 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         return self._write_acl(acl_data)
 
     def _coerce_acl_data(
-        self, value: str | m.Ldif.Acl | object
+        self,
+        value: str | m.Ldif.Acl | object,
     ) -> str | m.Ldif.Acl | None:
         """Coerce generic value to ACL payload union."""
         if value is None:
@@ -216,19 +221,22 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         return r[m.Ldif.Acl | str].fail(write_result.error or "Write failed")
 
     def _execute_detected_operation(
-        self, *, detected_op: str, data: str | m.Ldif.Acl
+        self,
+        *,
+        detected_op: str,
+        data: str | m.Ldif.Acl,
     ) -> r[m.Ldif.Acl | str]:
         """Execute parse/write with strongly typed dispatch."""
         if detected_op == "parse":
             if not isinstance(data, str):
                 return r[m.Ldif.Acl | str].fail(
-                    f"parse requires str, got {type(data).__name__}"
+                    f"parse requires str, got {type(data).__name__}",
                 )
             return self._execute_acl_parse(data)
         parsed_acl = self._coerce_acl_data(data)
         if parsed_acl is None or isinstance(parsed_acl, str):
             return r[m.Ldif.Acl | str].fail(
-                f"write requires Acl, got {type(data).__name__}"
+                f"write requires Acl, got {type(data).__name__}",
             )
         return self._execute_acl_write(parsed_acl)
 
@@ -268,7 +276,9 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         return r[m.Ldif.Acl].fail("Must be implemented by subclass")
 
     def _resolve_data(
-        self, data: str | m.Ldif.Acl | None, kwargs: Mapping[str, builtins.object]
+        self,
+        data: str | m.Ldif.Acl | None,
+        kwargs: Mapping[str, builtins.object],
     ) -> str | m.Ldif.Acl | None:
         """Resolve data from parameter or kwargs."""
         if data is not None:
@@ -277,7 +287,9 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         return self._coerce_acl_data(data_raw)
 
     def _resolve_operation(
-        self, operation: str | None, kwargs: Mapping[str, builtins.object]
+        self,
+        operation: str | None,
+        kwargs: Mapping[str, builtins.object],
     ) -> str | None:
         """Resolve operation from parameter or kwargs."""
         if operation is not None:

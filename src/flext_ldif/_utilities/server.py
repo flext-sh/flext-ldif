@@ -70,7 +70,7 @@ class FlextLdifUtilitiesServer:
             return None
         name_without_prefix = class_name[len("FlextLdifServers") :]
         server_name_result = FlextLdifUtilitiesServer._extract_server_name(
-            name_without_prefix
+            name_without_prefix,
         )
         if server_name_result.is_failure:
             return None
@@ -89,18 +89,18 @@ class FlextLdifUtilitiesServer:
             parent_module = sys.modules.get(target_cls.__module__)
             if parent_module:
                 parent_server_cls_obj: type | None = vars(parent_module).get(
-                    parent_class_name
+                    parent_class_name,
                 )
                 if isinstance(parent_server_cls_obj, type):
                     srv = FlextLdifUtilitiesServer
                     result = srv.extract_server_type_from_constants(
-                        parent_server_cls_obj
+                        parent_server_cls_obj,
                     )
                     if result is not None:
                         return result
         for mro_cls in target_cls.__mro__:
             result = FlextLdifUtilitiesServer.extract_server_type_from_constants(
-                mro_cls
+                mro_cls,
             )
             if result is not None:
                 return result
@@ -265,7 +265,7 @@ class FlextLdifUtilitiesServer:
 
         if isinstance(value, str):
             return check_oid_pattern(
-                value
+                value,
             ) or FlextLdifUtilitiesServer._check_name_patterns(
                 value.lower(),
                 detection_names,

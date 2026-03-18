@@ -86,7 +86,9 @@ class DnOps:
         return FlextLdifUtilitiesDN.is_under_base(self._dn, base)
 
     def normalize(
-        self, *, case: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.LOWER
+        self,
+        *,
+        case: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.LOWER,
     ) -> Self:
         """Normalize the DN."""
         if self._error:
@@ -110,7 +112,9 @@ class DnOps:
             return self
         try:
             self._dn = FlextLdifUtilitiesDN.transform_dn_attribute(
-                self._dn, old_base, new_base
+                self._dn,
+                old_base,
+                new_base,
             )
         except (
             ValueError,
@@ -142,7 +146,8 @@ class DnOps:
                 continue
             _, _, value = comp.partition("=")
             is_valid, errors = FlextLdifUtilitiesDN.is_valid_dn_string(
-                value.strip(), strict=strict
+                value.strip(),
+                strict=strict,
             )
             if not is_valid:
                 all_errors.extend([f"RDN value '{value}': {e}" for e in errors])
@@ -205,7 +210,7 @@ class EntryOps:
         extensions_map["fluent_metadata_method"] = "EntryOps.attach_metadata"
         updated_extensions = m.Ldif.DynamicMetadata.from_dict(extensions_map)
         updated_metadata = metadata.model_copy(
-            update={"extensions": updated_extensions}
+            update={"extensions": updated_extensions},
         )
         self._entry = self._entry.model_copy(update={"metadata": updated_metadata})
         return self
@@ -249,7 +254,9 @@ class EntryOps:
         return self
 
     def has_objectclass(
-        self, *classes: str, mode: Literal["any", "all"] = "any"
+        self,
+        *classes: str,
+        mode: Literal["any", "all"] = "any",
     ) -> bool:
         """Check if entry has objectClasses."""
         if self._error or not classes:
@@ -330,7 +337,8 @@ class EntryOps:
                 continue
             _, _, value = comp.partition("=")
             is_valid, errors = FlextLdifUtilitiesDN.is_valid_dn_string(
-                value.strip(), strict=strict
+                value.strip(),
+                strict=strict,
             )
             if not is_valid:
                 all_errors.extend([f"RDN value '{value}': {e}" for e in errors])

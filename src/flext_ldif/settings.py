@@ -29,7 +29,8 @@ class FlextLdifSettings(FlextSettings):
         ),
     ]
     ldif_strict_validation: Annotated[
-        bool, Field(default=True, description="Enable strict LDIF validation rules")
+        bool,
+        Field(default=True, description="Enable strict LDIF validation rules"),
     ]
 
 

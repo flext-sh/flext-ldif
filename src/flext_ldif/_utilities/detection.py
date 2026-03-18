@@ -17,7 +17,8 @@ class FlextLdifUtilitiesDetection:
 
     @staticmethod
     def _is_server_constants_class(
-        value: type, required_attr: str | None = None
+        value: type,
+        required_attr: str | None = None,
     ) -> TypeIs[type[p.Ldif.ServerConstants]]:
         if required_attr is not None:
             return getattr(value, required_attr, None) is not None
@@ -36,7 +37,8 @@ class FlextLdifUtilitiesDetection:
         """Base mixin with shared _get_constants method."""
 
         def _get_constants(
-            self, required_attr: str | None = None
+            self,
+            required_attr: str | None = None,
         ) -> type[p.Ldif.ServerConstants] | None:
             """Get Constants class from server class via MRO traversal."""
             for cls in type(self).__mro__:
@@ -46,12 +48,15 @@ class FlextLdifUtilitiesDetection:
                     and (not u.is_dict_like(getattr(cls, "Constants", None)))
                 ):
                     constants_obj: builtins.object | None = getattr(
-                        cls, "Constants", None
+                        cls,
+                        "Constants",
+                        None,
                     )
                     if not isinstance(constants_obj, type):
                         continue
                     if FlextLdifUtilitiesDetection._is_server_constants_class(
-                        constants_obj, required_attr
+                        constants_obj,
+                        required_attr,
                     ):
                         return constants_obj
             return None
@@ -111,19 +116,22 @@ class FlextLdifUtilitiesDetection:
         """Mixin for OID-based pattern detection in Schema."""
 
         def can_handle_attribute(
-            self, attr_definition: str | m.Ldif.SchemaAttribute
+            self,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Check if attribute matches OID detection pattern."""
             return self._can_handle_schema_item_by_pattern(attr_definition)
 
         def can_handle_objectclass(
-            self, oc_definition: str | m.Ldif.SchemaObjectClass
+            self,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Check if objectClass matches OID detection pattern."""
             return self._can_handle_schema_item_by_pattern(oc_definition)
 
         def _can_handle_schema_item_by_pattern(
-            self, schema_item: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
+            self,
+            schema_item: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Generic method to check if schema item matches OID detection pattern."""
             constants = self._get_constants()
@@ -138,7 +146,8 @@ class FlextLdifUtilitiesDetection:
         """Mixin for attribute name prefix-based detection in Schema."""
 
         def can_handle_attribute(
-            self, attr_definition: str | m.Ldif.SchemaAttribute
+            self,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Check if attribute name matches detection prefixes."""
             constants = self._get_constants()
@@ -178,7 +187,7 @@ class FlextLdifUtilitiesDetection:
                 objectclasses = list(attributes.get_objectclass_names())
             else:
                 obj_class = attributes.get("objectClass") or attributes.get(
-                    "objectclass"
+                    "objectclass",
                 )
                 if obj_class is not None:
                     objectclasses = obj_class

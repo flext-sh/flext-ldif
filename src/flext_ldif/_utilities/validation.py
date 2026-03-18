@@ -47,7 +47,7 @@ class FlextLdifUtilitiesValidation(FlextUtilities):
         def is_valid_rfc4514_dn_component(cls, attribute_name: str, value: str) -> bool:
             try:
                 _ = cls._DN_COMPONENT_ADAPTER.validate_python(
-                    f"{attribute_name}={value}"
+                    f"{attribute_name}={value}",
                 )
                 return True
             except ValidationError:

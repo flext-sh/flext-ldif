@@ -115,7 +115,7 @@ class FlextLdifUtilitiesEvents:
         """Create ConversionEvent with standardized fields from config Model."""
         aggregate_id = f"{config.source_format}_to_{config.target_format}_{config.conversion_operation}"
         error_details_list = FlextLdifUtilitiesEvents._to_error_details_list(
-            list(config.error_details) if config.error_details is not None else None
+            list(config.error_details) if config.error_details is not None else None,
         )
         return FlextLdifModelsEvents.ConversionEvent(
             event_type="ldif.conversion",
@@ -151,7 +151,7 @@ class FlextLdifUtilitiesEvents:
         """Create MigrationEvent with standardized fields from config Model."""
         aggregate_id = f"{config.source_server}_to_{config.target_server}_{config.migration_operation}"
         error_details_list = FlextLdifUtilitiesEvents._to_error_details_list(
-            list(config.error_details) if config.error_details is not None else None
+            list(config.error_details) if config.error_details is not None else None,
         )
         return FlextLdifModelsEvents.MigrationEvent(
             event_type="ldif.migration",
@@ -194,7 +194,11 @@ class FlextLdifUtilitiesEvents:
             FlextLdifUtilitiesEvents._build_conversion_event_logging(event, config)
         )
         FlextLdifUtilitiesEvents._log_and_emit_generic_event(
-            logger, log_context, log_message, log_level, extras
+            logger,
+            log_context,
+            log_message,
+            log_level,
+            extras,
         )
         return event
 

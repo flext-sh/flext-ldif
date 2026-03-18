@@ -38,15 +38,15 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
         """Build syntax validator map from constants."""
         return {
             "boolean": lambda v: r[bool].ok(
-                v.upper() in c.Ldif.RfcSyntaxOids.SYNTAX_VALID_BOOLEAN_VALUES
+                v.upper() in c.Ldif.RfcSyntaxOids.SYNTAX_VALID_BOOLEAN_VALUES,
             ),
             "integer": lambda v: r[bool].ok(
                 v != "not_a_number"
-                and (v.isdigit() or (v.startswith("-") and v[1:].isdigit()))
+                and (v.isdigit() or (v.startswith("-") and v[1:].isdigit())),
             ),
             "dn": lambda v: r[bool].ok("=" in v),
             "time": lambda v: r[bool].ok(
-                bool(re.match(c.Ldif.RfcSyntaxOids.SYNTAX_TIME_PATTERN, v))
+                bool(re.match(c.Ldif.RfcSyntaxOids.SYNTAX_TIME_PATTERN, v)),
             ),
             "binary": lambda _: r[bool].ok(value=True),
         }
@@ -63,14 +63,14 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
                 rfc_compliance="RFC 4517",
                 total_syntaxes=len(self._oid_to_name),
                 common_syntaxes=len(self._common_syntaxes),
-            )
+            ),
         )
 
     def get_syntax_category(self, oid: str) -> r[str]:
         """Get type category for a syntax OID."""
         return self.resolve_syntax(oid).fold(
             on_failure=lambda _: r[str].fail(
-                f"Cannot determine category - unknown syntax OID: {oid}"
+                f"Cannot determine category - unknown syntax OID: {oid}",
             ),
             on_success=lambda v: r[str].ok(v.type_category),
         )
@@ -134,7 +134,8 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
                 u.Ldif.normalize_server_type(server_type)
             )
             syntax = m.Ldif.Syntax.resolve_syntax_oid(
-                oid=oid, server_type=normalized_server_type
+                oid=oid,
+                server_type=normalized_server_type,
             )
             if syntax is None:
                 return r[m.Ldif.Syntax].fail(f"Failed to resolve syntax OID: {oid}")
@@ -163,7 +164,10 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
 
     @d.track_operation()
     def validate_value(
-        self, value: str, syntax_oid: str, _server_type: str = "rfc"
+        self,
+        value: str,
+        syntax_oid: str,
+        _server_type: str = "rfc",
     ) -> r[bool]:
         """Validate a value against its syntax type."""
         if not value or not syntax_oid:
@@ -173,12 +177,13 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
         resolve_result = self.resolve_syntax(syntax_oid)
         if resolve_result.is_failure:
             return r[bool].fail(
-                f"Cannot validate - failed to resolve syntax OID: {syntax_oid}"
+                f"Cannot validate - failed to resolve syntax OID: {syntax_oid}",
             )
         type_category = resolve_result.value.type_category
         validator_map = self._build_validator_map()
         validator_raw = validator_map.get(
-            type_category, lambda _: r[bool].ok(value=True)
+            type_category,
+            lambda _: r[bool].ok(value=True),
         )
         if callable(validator_raw):
             validator: Callable[[str], r[bool]] = validator_raw

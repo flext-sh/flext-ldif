@@ -109,7 +109,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(
-            self, attr_definition: str | m.Ldif.SchemaAttribute
+            self,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect eDirectory attribute definitions using Constants."""
             if isinstance(attr_definition, m.Ldif.SchemaAttribute):
@@ -121,7 +122,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 )
             attr_lower = attr_definition.lower()
             if re.search(
-                FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN, attr_definition
+                FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
+                attr_definition,
             ):
                 return True
             name_matches = re.findall(
@@ -131,7 +133,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             )
             if any(
                 name.lower().startswith(
-                    tuple(FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES)
+                    tuple(
+                        FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES
+                    ),
                 )
                 for name in name_matches
             ):
@@ -143,7 +147,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(
-            self, oc_definition: str | m.Ldif.SchemaObjectClass
+            self,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect eDirectory objectClass definitions using Constants."""
             if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
@@ -153,7 +158,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     detection_names=FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES,
                 )
             if re.search(
-                FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN, oc_definition
+                FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
+                oc_definition,
             ):
                 return True
             name_matches = re.findall(
@@ -175,7 +181,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
                 return r[m.Ldif.SchemaAttribute].ok(
-                    attr_data.model_copy(update={"metadata": metadata})
+                    attr_data.model_copy(update={"metadata": metadata}),
                 )
             return result
 
@@ -187,7 +193,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 oc_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
                 return r[m.Ldif.SchemaObjectClass].ok(
-                    oc_data.model_copy(update={"metadata": metadata})
+                    oc_data.model_copy(update={"metadata": metadata}),
                 )
             return result
 
@@ -230,7 +236,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             )
 
         def _build_novell_permissions_from_rights(
-            self, rights: list[str], permission_name_map: Mapping[str, str]
+            self,
+            rights: list[str],
+            permission_name_map: Mapping[str, str],
         ) -> Mapping[str, bool]:
             """Build AclPermissions dict from parsed rights list."""
             reverse_map: dict[str, str] = {v: k for k, v in permission_name_map.items()}
@@ -259,7 +267,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 segments = [
                     segment
                     for segment in content.split(
-                        FlextLdifServersNovell.Constants.ACL_SEGMENT_SEPARATOR
+                        FlextLdifServersNovell.Constants.ACL_SEGMENT_SEPARATOR,
                     )
                     if segment
                 ]
@@ -303,13 +311,14 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                         if parts[0].strip():
                             attr_name = parts[0].strip()
                             if attr_name.lower() not in u.values(
-                                c.Ldif.RfcAclPermission
+                                c.Ldif.RfcAclPermission,
                             ):
                                 attributes.append(attr_name)
                 acl = m.Ldif.Acl(
                     name=FlextLdifServersNovell.Constants.ACL_DEFAULT_NAME,
                     target=m.Ldif.AclTarget(
-                        target_dn=scope or "", attributes=attributes
+                        target_dn=scope or "",
+                        attributes=attributes,
                     ),
                     subject=m.Ldif.AclSubject(
                         subject_type="user",
@@ -327,7 +336,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                                 "search": c.Ldif.RfcAclPermission.SEARCH,
                                 "compare": c.Ldif.RfcAclPermission.COMPARE,
                             },
-                        )
+                        ),
                     ),
                     metadata=m.Ldif.QuirkMetadata.create_for(
                         self._get_server_type(),
@@ -338,7 +347,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 return r[m.Ldif.Acl].ok(acl)
             except (ValueError, TypeError, AttributeError) as exc:
                 return r[m.Ldif.Acl].fail(
-                    f"Novell eDirectory ACL parsing failed: {exc}"
+                    f"Novell eDirectory ACL parsing failed: {exc}",
                 )
 
         @override
@@ -388,7 +397,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         @override
         def can_handle(
-            self, entry_dn: str, attributes: Mapping[str, list[str]]
+            self,
+            entry_dn: str,
+            attributes: Mapping[str, list[str]],
         ) -> bool:
             """Detect eDirectory-specific entries."""
             if not entry_dn:
@@ -413,7 +424,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     str(oc).lower()
                     in FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES
                     for oc in object_classes
-                )
+                ),
             )
 
         @override
@@ -440,7 +451,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                         processed_values.append(str_value)
                     processed_attributes[attr_name] = processed_values
                 processed_attributes[c.Ldif.Domain.QuirkMetadataKeys.SERVER_TYPE] = [
-                    self._get_server_type()
+                    self._get_server_type(),
                 ]
                 processed_attributes[c.Ldif.DictKeys.OBJECTCLASS] = object_classes
                 new_attrs = m.Ldif.Attributes(attributes=processed_attributes)
@@ -448,5 +459,5 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 return r[m.Ldif.Entry].ok(new_entry)
             except (ValueError, TypeError, AttributeError) as exc:
                 return r[m.Ldif.Entry].fail(
-                    f"Novell eDirectory entry processing failed: {exc}"
+                    f"Novell eDirectory entry processing failed: {exc}",
                 )
