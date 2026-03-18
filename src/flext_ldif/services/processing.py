@@ -17,12 +17,8 @@ class FlextLdifProcessing(FlextLdifServiceBase[list[m.Ldif.ProcessingResult]]):
     """Service for batch and parallel entry processing."""
 
     @staticmethod
-    def _create_transform_processor() -> Callable[
-        [m.Ldif.Entry], m.Ldif.ProcessingResult
-    ]:
-        """Create transform processor function."""
-
-        def _transform_func(entry: m.Ldif.Entry) -> m.Ldif.ProcessingResult:
+    def _create_entry_processor() -> Callable[[m.Ldif.Entry], m.Ldif.ProcessingResult]:
+        def _entry_processor(entry: m.Ldif.Entry) -> m.Ldif.ProcessingResult:
             if entry.dn is None:
                 msg = "Entry DN cannot be None"
                 raise ValueError(msg)
@@ -37,30 +33,21 @@ class FlextLdifProcessing(FlextLdifServiceBase[list[m.Ldif.ProcessingResult]]):
             attrs_dict = entry.attributes.attributes
             return m.Ldif.ProcessingResult(dn=dn_str, attributes=attrs_dict)
 
-        return _transform_func
+        return _entry_processor
+
+    @staticmethod
+    def _create_transform_processor() -> Callable[
+        [m.Ldif.Entry], m.Ldif.ProcessingResult
+    ]:
+        """Create transform processor function."""
+        return FlextLdifProcessing._create_entry_processor()
 
     @staticmethod
     def _create_validate_processor() -> Callable[
         [m.Ldif.Entry], m.Ldif.ProcessingResult
     ]:
         """Create validate processor function."""
-
-        def _validate_func(entry: m.Ldif.Entry) -> m.Ldif.ProcessingResult:
-            if entry.dn is None:
-                msg = "Entry DN cannot be None"
-                raise ValueError(msg)
-            dn_str = (
-                entry.dn.value
-                if getattr(entry.dn, "value", None) is not None
-                else str(entry.dn)
-            )
-            if entry.attributes is None:
-                msg = "Entry attributes cannot be None"
-                raise ValueError(msg)
-            attrs_dict = entry.attributes.attributes
-            return m.Ldif.ProcessingResult(dn=dn_str, attributes=attrs_dict)
-
-        return _validate_func
+        return FlextLdifProcessing._create_entry_processor()
 
     @staticmethod
     def _execute_batch_processing(

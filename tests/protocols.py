@@ -1,6 +1,6 @@
 """Protocol definitions for flext-ldif tests.
 
-Provides TestsFlextLdifProtocols, extending FlextTestsProtocols with flext-ldif-specific
+Provides TestsFlextLdifProtocols, extending p with flext-ldif-specific
 protocols. All generic test protocols come from flext_tests.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -14,15 +14,15 @@ from flext_tests import p
 from flext_ldif import FlextLdifProtocols
 
 
-class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
+class TestsFlextLdifProtocols(p, FlextLdifProtocols):
     """Protocol definitions for flext-ldif tests.
 
-    Extends both FlextTestsProtocols and FlextLdifProtocols with flext-ldif-specific
+    Extends both p and FlextLdifProtocols with flext-ldif-specific
     protocol definitions.
 
     Provides access to:
-    - p.Tests.Docker.* (from FlextTestsProtocols)
-    - p.Tests.Factory.* (from FlextTestsProtocols)
+    - p.Tests.Docker.* (from p)
+    - p.Tests.Factory.* (from p)
     - p.Ldif.* (from FlextLdifProtocols)
 
     Rules:
@@ -33,7 +33,7 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
     class LdifTests:
         """Project-specific test protocols for flext-ldif.
 
-        Separated from FlextTestsProtocols.Tests to avoid bad-override.
+        Separated from p.Tests to avoid bad-override.
         Access via p.LdifTests.* for flext-ldif-specific protocols.
         """
 

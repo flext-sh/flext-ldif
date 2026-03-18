@@ -36,7 +36,7 @@ from .real_services import FlextLdifTestFactory
 from .test_files import FileManager
 from .validators import TestValidators
 
-tt = FlextTestsTypes
+tt = t
 
 
 class FlextLdifTestConftest:
@@ -82,14 +82,14 @@ class FlextLdifTestConftest:
         }
     ]
 
-    def docker_control(self) -> FlextTestsDocker:
-        """Provide FlextTestsDocker instance for container management.
+    def docker_control(self) -> tk:
+        """Provide tk instance for container management.
 
         Uses the FLEXT workspace root to ensure compose file paths
         are resolved correctly regardless of which project runs the tests.
         """
         workspace_root = Path(__file__).resolve().parents[4]
-        return FlextTestsDocker(workspace_root=workspace_root)
+        return tk(workspace_root=workspace_root)
 
     def worker_id(self, request: pytest.FixtureRequest) -> str:
         """Get pytest-xdist worker ID for DN namespacing."""
@@ -187,9 +187,7 @@ class FlextLdifTestConftest:
             ),
         )
 
-    def ldap_container(
-        self, docker_control: FlextTestsDocker, worker_id: str
-    ) -> dict[str, object]:
+    def ldap_container(self, docker_control: tk, worker_id: str) -> dict[str, object]:
         """Session-scoped LDAP container configuration.
 
         Uses direct container configuration for flext-openldap-test.
@@ -775,4 +773,4 @@ class FlextLdifTestConftest:
         return cast("p.Ldif.SchemaQuirk", quirk.schema_quirk)
 
 
-__all__ = ["FlextLdifTestConftest", "FlextTestsDocker"]
+__all__ = ["FlextLdifTestConftest", "tk"]

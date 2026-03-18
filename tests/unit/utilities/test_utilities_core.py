@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
+from flext_tests import tm
 
 from tests import c, m, s, u
 
@@ -21,43 +22,48 @@ class TestsFlextLdifDnOperationsPure(s):
     def test_norm_component_basic(self) -> None:
         """Test basic DN component normalization."""
         result = u.Ldif.norm_component("cn = John Doe")
-        assert result == "cn=John Doe"
+        tm.that(result == "cn=John Doe", eq=True)
 
     def test_norm_component_no_spaces(self) -> None:
         """Test component without spaces."""
         result = u.Ldif.norm_component("cn=Jane Smith")
-        assert result == "cn=Jane Smith"
+        tm.that(result == "cn=Jane Smith", eq=True)
 
     def test_norm_string_full_dn(self) -> None:
         """Test full DN normalization."""
         dn = "cn = John Doe , ou = Users , dc = example , dc = com"
         result = u.Ldif.norm_string(dn)
-        assert result == "cn=John Doe,ou=Users,dc=example,dc=com"
+        tm.that(result == "cn=John Doe,ou=Users,dc=example,dc=com", eq=True)
 
     def test_norm_string_empty(self) -> None:
         """Test empty DN."""
         result = u.Ldif.norm_string("")
-        assert not result
+        tm.that(not result, eq=True)
 
     def test_split_dn_components(self) -> None:
         """Test splitting DN into components."""
         dn = "cn=John,ou=Users,dc=example,dc=com"
         result = u.Ldif.split(dn)
-        assert result == ["cn=John", "ou=Users", "dc=example", "dc=com"]
+        tm.that(result == ["cn=John", "ou=Users", "dc=example", "dc=com"], eq=True)
 
     def test_split_dn_with_escaped_commas(self) -> None:
         """Test splitting DN with escaped commas."""
         dn = "cn=Test\\, User,ou=Users,dc=example,dc=com"
         result = u.Ldif.split(dn)
-        assert result == ["cn=Test\\, User", "ou=Users", "dc=example", "dc=com"]
+        tm.that(
+            result == ["cn=Test\\, User", "ou=Users", "dc=example", "dc=com"], eq=True
+        )
 
     def test_split_dn_edge_cases(self) -> None:
         """Test splitting DN edge cases."""
-        assert u.Ldif.split("") == []
-        assert u.Ldif.split("cn=test") == ["cn=test"]
+        tm.that(u.Ldif.split("") == [], eq=True)
+        tm.that(u.Ldif.split("cn=test") == ["cn=test"], eq=True)
         dn = "cn=Test\\, User\\\\More,ou=Users\\, Group,dc=example"
         result = u.Ldif.split(dn)
-        assert result == ["cn=Test\\, User\\\\More", "ou=Users\\, Group", "dc=example"]
+        tm.that(
+            result == ["cn=Test\\, User\\\\More", "ou=Users\\, Group", "dc=example"],
+            eq=True,
+        )
 
     def test_validate_dn_format_valid(self) -> None:
         """Test valid DN validation."""
@@ -72,7 +78,7 @@ class TestsFlextLdifDnOperationsPure(s):
             "cn=Test\\3DUser,dc=example,dc=com",
         ]
         for dn in valid_dns:
-            assert u.Ldif.validate(dn), f"DN should be valid: {dn}"
+            tm.that(u.Ldif.validate(dn), eq=True), f"DN should be valid: {dn}"
 
     def test_validate_dn_format_invalid(self) -> None:
         """Test invalid DN validation."""
@@ -89,43 +95,43 @@ class TestsFlextLdifDnOperationsPure(s):
             "cn=test\\XY",
         ]
         for dn in invalid_dns:
-            assert not u.Ldif.validate(dn), f"DN should be invalid: {dn}"
+            tm.that(not u.Ldif.validate(dn), eq=True), f"DN should be invalid: {dn}"
 
     def test_parse_components(self) -> None:
         """Test DN component parsing."""
         dn = "cn=John,ou=Users,dc=example"
         result = u.Ldif.parse(dn)
-        assert result.is_success
+        tm.that(result.is_success, eq=True)
         parsed = cast("list[tuple[str, str]]", result.value)
-        assert len(parsed) >= 2
+        tm.that(len(parsed) >= 2, eq=True)
 
     def test_compare_dns(self) -> None:
         """Test DN comparison."""
         dn1 = "cn=John,dc=example,dc=com"
         dn2 = "cn=jane,dc=example,dc=com"
         result = u.Ldif.compare_dns(dn1, dn2)
-        assert result.is_success
+        tm.that(result.is_success, eq=True)
         comparison = cast("int", result.value)
-        assert isinstance(comparison, int)
+        tm.that(isinstance(comparison, int), eq=True)
 
     def test_escape_dn_value(self) -> None:
         """Test escaping special DN value characters."""
         value = "Test, Value"
         result = u.Ldif.esc(value)
-        assert isinstance(result, str)
+        tm.that(isinstance(result, str), eq=True)
 
     def test_unescape_dn_value(self) -> None:
         """Test unescaping DN value characters."""
         value = "Test\\,Value"
         result = u.Ldif.unesc(value)
-        assert isinstance(result, str)
+        tm.that(isinstance(result, str), eq=True)
 
     def test_clean_dn(self) -> None:
         """Test DN cleaning."""
         dn = "  cn = John  ,  ou = Users  ,  dc = example  "
         result = u.Ldif.clean_dn(dn)
-        assert isinstance(result, str)
-        assert "  " not in result or result == dn
+        tm.that(isinstance(result, str), eq=True)
+        tm.that("  " not in result or result == dn, eq=True)
 
 
 @pytest.mark.unit
@@ -138,7 +144,7 @@ class TestDnObjectClassMethods:
             oid="1.2.3.4", name="orcldasattrcategory", kind="AUXILIARY", sup=None
         )
         u.Ldif.fix_missing_sup(obj)
-        assert obj.sup == "top"
+        tm.that(obj.sup == "top", eq=True)
 
     def test_fix_kind_mismatch(self) -> None:
         """Test fixing kind mismatches."""
@@ -146,7 +152,7 @@ class TestDnObjectClassMethods:
             oid="1.2.3.4", name="testOC", sup="orclpwdverifierprofile", kind="AUXILIARY"
         )
         u.Ldif.fix_kind_mismatch(obj)
-        assert obj.kind == "STRUCTURAL"
+        tm.that(obj.kind == "STRUCTURAL", eq=True)
 
     def test_ensure_sup_for_auxiliary(self) -> None:
         """Test ensuring AUXILIARY classes have SUP."""
@@ -154,7 +160,7 @@ class TestDnObjectClassMethods:
             oid="1.2.3.4", name="testOC", kind="AUXILIARY", sup=None
         )
         u.Ldif.ensure_sup_for_auxiliary(obj)
-        assert obj.sup == "top"
+        tm.that(obj.sup == "top", eq=True)
 
 
 @pytest.mark.unit
@@ -164,34 +170,34 @@ class TestAttributeFixer:
     def test_normalize_name_basic(self) -> None:
         """Test basic attribute name normalization."""
         result = u.Ldif.normalize_name("testAttr_name;binary")
-        assert result == "testAttr-name"
+        tm.that(result == "testAttr-name", eq=True)
 
     def test_normalize_name_with_custom_replacements(self) -> None:
         """Test name normalization with custom replacements."""
         result = u.Ldif.normalize_name("test_attr_name", char_replacements={"_": "-"})
-        assert result == "test-attr-name"
+        tm.that(result == "test-attr-name", eq=True)
 
     def test_normalize_name_none(self) -> None:
         """Test normalizing None."""
         result = u.Ldif.normalize_name(None)
-        assert result is None
+        tm.that(result is None, eq=True)
 
     def test_normalize_matching_rules_empty(self) -> None:
         """Test normalizing empty matching rules."""
         result = u.Ldif.normalize_matching_rules(None)
-        assert result == (None, None)
+        tm.that(result == (None, None), eq=True)
 
     def test_normalize_matching_rules_equality_only(self) -> None:
         """Test normalizing matching rules with equality rule only."""
         result = u.Ldif.normalize_matching_rules("caseIgnoreMatch")
-        assert result == ("caseIgnoreMatch", None)
+        tm.that(result == ("caseIgnoreMatch", None), eq=True)
 
     def test_normalize_matching_rules_both(self) -> None:
         """Test normalizing matching rules with both equality and substr."""
         result = u.Ldif.normalize_matching_rules(
             "caseIgnoreMatch", "caseIgnoreSubstringsMatch"
         )
-        assert result == ("caseIgnoreMatch", "caseIgnoreSubstringsMatch")
+        tm.that(result == ("caseIgnoreMatch", "caseIgnoreSubstringsMatch"), eq=True)
 
 
 @pytest.mark.unit
@@ -202,56 +208,59 @@ class TestLdifParser:
         """Test extracting extensions from empty schema definition."""
         definition = ""
         result = u.Ldif.extract_extensions(definition)
-        assert result == {}
+        tm.that(result == {}, eq=True)
 
     def test_extract_extensions_with_x_extension(self) -> None:
         """Test extracting X- extensions from schema definition."""
         definition = "( 1.2.3 NAME 'test' X-CUSTOM 'value' X-OTHER 'data' )"
         result = u.Ldif.extract_extensions(definition)
-        assert result.get("X-CUSTOM") == ["value"]
-        assert result.get("X-OTHER") == ["data"]
+        tm.that(result.get("X-CUSTOM") == ["value"], eq=True)
+        tm.that(result.get("X-OTHER") == ["data"], eq=True)
 
     def test_extract_extensions_with_desc(self) -> None:
         """Test extracting DESC from schema definition."""
         definition = "( 1.2.3 NAME 'test' DESC 'Test attribute' )"
         result = u.Ldif.extract_extensions(definition)
-        assert result.get("DESC") == ["Test attribute"]
+        tm.that(result.get("DESC") == ["Test attribute"], eq=True)
 
     def test_parse_ldif_lines_empty(self) -> None:
         """Test parsing empty LDIF content."""
         content = ""
         result = u.Ldif.parse_ldif_lines(content)
-        assert result == []
+        tm.that(result == [], eq=True)
 
     def test_parse_ldif_lines_single_entry(self) -> None:
         """Test parsing single LDIF entry."""
         content = "dn: cn=test,dc=example,dc=com\ncn: test\nobjectClass: person\n"
         result = u.Ldif.parse_ldif_lines(content)
-        assert len(result) == 1
+        tm.that(len(result) == 1, eq=True)
         dn, attrs = result[0]
-        assert dn == "cn=test,dc=example,dc=com"
-        assert attrs.get("cn") == ["test"]
-        assert attrs.get("objectClass") == ["person"]
+        tm.that(dn == "cn=test,dc=example,dc=com", eq=True)
+        tm.that(attrs.get("cn") == ["test"], eq=True)
+        tm.that(attrs.get("objectClass") == ["person"], eq=True)
 
     def test_parse_ldif_lines_multiple_entries(self) -> None:
         """Test parsing multiple LDIF entries separated by empty line."""
         content = "dn: cn=test1,dc=example,dc=com\ncn: test1\nobjectClass: person\n\ndn: cn=test2,dc=example,dc=com\ncn: test2\nobjectClass: person\n"
         result = u.Ldif.parse_ldif_lines(content)
-        assert len(result) == 2, f"Expected 2 entries but got {len(result)}: {result}"
+        (
+            tm.that(len(result) == 2, eq=True),
+            f"Expected 2 entries but got {len(result)}: {result}",
+        )
         dn1, attrs1 = result[0]
-        assert dn1 == "cn=test1,dc=example,dc=com"
-        assert attrs1.get("cn") == ["test1"]
-        assert attrs1.get("objectClass") == ["person"]
+        tm.that(dn1 == "cn=test1,dc=example,dc=com", eq=True)
+        tm.that(attrs1.get("cn") == ["test1"], eq=True)
+        tm.that(attrs1.get("objectClass") == ["person"], eq=True)
         dn2, attrs2 = result[1]
-        assert dn2 == "cn=test2,dc=example,dc=com"
-        assert attrs2.get("cn") == ["test2"]
-        assert attrs2.get("objectClass") == ["person"]
+        tm.that(dn2 == "cn=test2,dc=example,dc=com", eq=True)
+        tm.that(attrs2.get("cn") == ["test2"], eq=True)
+        tm.that(attrs2.get("objectClass") == ["person"], eq=True)
 
     def test_unfold_lines_basic(self) -> None:
         """Test unfolding RFC 2849 folded lines."""
         content = "dn: cn=verylongname\n withfoldedcontinuation,dc=example,dc=com\n"
         result = u.Ldif.unfold_lines(content)
-        assert any("withfoldedcontinuation" in line for line in result)
+        tm.that(any("withfoldedcontinuation" in line for line in result), eq=True)
 
 
 @pytest.mark.unit
@@ -262,20 +271,20 @@ class TestAclParser:
         """Test parsing OID ACL format."""
         acl_line = 'orclaci: ( VERSION 3.0; ACETYPE ALLOW; (USERDN="ldap:///cn=*,ou=users,o=test");(ACITYPE ALLOW))'
         result = u.Ldif.parser(acl_line)
-        assert result is not None
-        assert result.get("format") == "oid"
+        tm.that(result is not None, eq=True)
+        tm.that(result.get("format") == "oid", eq=True)
 
     def test_parse_oud_format(self) -> None:
         """Test parsing OUD ACL format."""
         acl_line = "aci: targetattr=*"
         result = u.Ldif.parser(acl_line)
-        assert result is not None
-        assert result.get("format") == "oud"
+        tm.that(result is not None, eq=True)
+        tm.that(result.get("format") == "oud", eq=True)
 
     def test_parse_empty_acl(self) -> None:
         """Test parsing empty ACL."""
         result = u.Ldif.parser("")
-        assert result is None
+        tm.that(result is None, eq=True)
 
 
 @pytest.mark.unit
@@ -284,13 +293,13 @@ class TestServerTypes:
 
     def test_normalize_server_type(self) -> None:
         """Test server type normalization."""
-        assert u.Ldif.normalize_server_type("oracle_oid") == "oid"
-        assert u.Ldif.normalize_server_type("rfc") == "rfc"
+        tm.that(u.Ldif.normalize_server_type("oracle_oid") == "oid", eq=True)
+        tm.that(u.Ldif.normalize_server_type("rfc") == "rfc", eq=True)
 
     def test_matches_server_type(self) -> None:
         """Test server type matching."""
-        assert u.Ldif.matches("oid", "oid", "oud")
-        assert not u.Ldif.matches("ad", "oid", "oud")
+        tm.that(u.Ldif.matches("oid", "oid", "oud"), eq=True)
+        tm.that(not u.Ldif.matches("ad", "oid", "oud"), eq=True)
 
 
 @pytest.mark.unit
@@ -305,9 +314,9 @@ class TestObjectClassUtilities:
             kind=c.Ldif.SchemaKind.AUXILIARY,
             sup=None,
         )
-        assert oc.sup is None
+        tm.that(oc.sup is None, eq=True)
         u.Ldif.fix_missing_sup(oc)
-        assert oc.sup == "top"
+        tm.that(oc.sup == "top", eq=True)
 
     def test_fix_missing_sup_auxiliary_with_sup(self) -> None:
         """Test that AUXILIARY with SUP is not modified."""
@@ -319,7 +328,7 @@ class TestObjectClassUtilities:
         )
         original_sup = oc.sup
         u.Ldif.fix_missing_sup(oc)
-        assert oc.sup == original_sup
+        tm.that(oc.sup == original_sup, eq=True)
 
     def test_fix_missing_sup_structural_ignored(self) -> None:
         """Test that STRUCTURAL classes are ignored."""
@@ -331,7 +340,7 @@ class TestObjectClassUtilities:
         )
         original_sup = oc.sup
         u.Ldif.fix_missing_sup(oc)
-        assert oc.sup == original_sup
+        tm.that(oc.sup == original_sup, eq=True)
 
     def test_ensure_sup_for_auxiliary_adds_sup(self) -> None:
         """Test ensure_sup_for_auxiliary adds SUP when missing."""
@@ -342,7 +351,7 @@ class TestObjectClassUtilities:
             sup=None,
         )
         u.Ldif.ensure_sup_for_auxiliary(oc)
-        assert oc.sup == "top"
+        tm.that(oc.sup == "top", eq=True)
 
     def test_ensure_sup_for_auxiliary_custom_default(self) -> None:
         """Test ensure_sup_for_auxiliary with custom default SUP."""
@@ -353,7 +362,7 @@ class TestObjectClassUtilities:
             sup=None,
         )
         u.Ldif.ensure_sup_for_auxiliary(oc, default_sup="custom")
-        assert oc.sup == "custom"
+        tm.that(oc.sup == "custom", eq=True)
 
     def test_fix_kind_mismatch_structural_superior(self) -> None:
         """Test fixing kind mismatch with STRUCTURAL superior."""
@@ -364,7 +373,7 @@ class TestObjectClassUtilities:
             sup="orclpwdverifierprofile",
         )
         u.Ldif.fix_kind_mismatch(oc)
-        assert oc.kind == c.Ldif.SchemaKind.STRUCTURAL
+        tm.that(oc.kind == c.Ldif.SchemaKind.STRUCTURAL, eq=True)
 
     def test_fix_kind_mismatch_auxiliary_superior(self) -> None:
         """Test fixing kind mismatch with AUXILIARY superior."""
@@ -375,7 +384,7 @@ class TestObjectClassUtilities:
             sup="javanamingref",
         )
         u.Ldif.fix_kind_mismatch(oc)
-        assert oc.kind == c.Ldif.SchemaKind.AUXILIARY
+        tm.that(oc.kind == c.Ldif.SchemaKind.AUXILIARY, eq=True)
 
     def test_align_kind_with_superior_structural(self) -> None:
         """Test aligning kind with STRUCTURAL superior."""
@@ -386,7 +395,7 @@ class TestObjectClassUtilities:
             sup="someSuperior",
         )
         u.Ldif.align_kind_with_superior(oc, c.Ldif.SchemaKind.STRUCTURAL)
-        assert oc.kind == c.Ldif.SchemaKind.STRUCTURAL
+        tm.that(oc.kind == c.Ldif.SchemaKind.STRUCTURAL, eq=True)
 
     def test_align_kind_with_superior_auxiliary(self) -> None:
         """Test aligning kind with AUXILIARY superior."""
@@ -397,7 +406,7 @@ class TestObjectClassUtilities:
             sup="someSuperior",
         )
         u.Ldif.align_kind_with_superior(oc, c.Ldif.SchemaKind.AUXILIARY)
-        assert oc.kind == c.Ldif.SchemaKind.AUXILIARY
+        tm.that(oc.kind == c.Ldif.SchemaKind.AUXILIARY, eq=True)
 
     def test_align_kind_with_superior_no_conflict(self) -> None:
         """Test that matching kinds are not changed."""
@@ -409,4 +418,4 @@ class TestObjectClassUtilities:
         )
         original_kind = oc.kind
         u.Ldif.align_kind_with_superior(oc, c.Ldif.SchemaKind.STRUCTURAL)
-        assert oc.kind == original_kind
+        tm.that(oc.kind == original_kind, eq=True)

@@ -9,6 +9,7 @@ from __future__ import annotations
 from enum import StrEnum, unique
 
 import pytest
+from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 from tests import RfcTestHelpers, TestDeduplicationHelpers, m, s
 
@@ -205,7 +206,7 @@ def schema_quirk(
 ) -> FlextLdifServersNovell.Schema:
     """Get schema quirk from Novell server."""
     quirk = novell_server.schema_quirk
-    assert isinstance(quirk, FlextLdifServersNovell.Schema)
+    tm.that(isinstance(quirk, FlextLdifServersNovell.Schema), eq=True)
     return quirk
 
 
@@ -213,7 +214,7 @@ def schema_quirk(
 def entry_quirk(novell_server: FlextLdifServersNovell) -> FlextLdifServersNovell.Entry:
     """Get entry quirk from Novell server."""
     quirk = novell_server.entry_quirk
-    assert isinstance(quirk, FlextLdifServersNovell.Entry)
+    tm.that(isinstance(quirk, FlextLdifServersNovell.Entry), eq=True)
     return quirk
 
 
@@ -223,14 +224,14 @@ class TestsFlextLdifNovellInitialization(s):
     def test_server_initialization(self) -> None:
         """Test Novell eDirectory server initialization."""
         server = FlextLdifServersNovell()
-        assert server.server_type == "novell"
-        assert server.priority == 20
+        tm.that(server.server_type == "novell", eq=True)
+        tm.that(server.priority == 20, eq=True)
 
     def test_schema_quirk_initialization(
         self, schema_quirk: FlextLdifServersNovell.Schema
     ) -> None:
         """Test schema quirk is initialized."""
-        assert schema_quirk is not None
+        tm.that(schema_quirk is not None, eq=True)
 
 
 class TestNovellSchemaAttributeDetection:
@@ -242,7 +243,7 @@ class TestNovellSchemaAttributeDetection:
     ) -> None:
         """Test attribute detection for various scenarios."""
         result = schema_quirk.can_handle_attribute(test_case.attr_definition)
-        assert result is test_case.expected_can_handle
+        tm.that(result is test_case.expected_can_handle, eq=True)
 
 
 class TestNovellSchemaAttributeParsing:
@@ -281,9 +282,9 @@ class TestNovellSchemaAttributeParsing:
         """Test parsing attribute without OID fails."""
         attr_def = "NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15"
         result = schema_quirk.parse_attribute(attr_def)
-        assert result.is_failure
-        assert result.error is not None
-        assert "missing an OID" in result.error
+        tm.that(result.is_failure, eq=True)
+        tm.that(result.error is not None, eq=True)
+        tm.that("missing an OID" in result.error, eq=True)
 
 
 class TestNovellSchemaObjectClassDetection:
@@ -297,7 +298,7 @@ class TestNovellSchemaObjectClassDetection:
     ) -> None:
         """Test objectClass detection for various scenarios."""
         result = schema_quirk.can_handle_objectclass(test_case.oc_definition)
-        assert result is test_case.expected_can_handle
+        tm.that(result is test_case.expected_can_handle, eq=True)
 
 
 class TestNovellSchemaObjectClassParsing:
@@ -344,9 +345,9 @@ class TestNovellSchemaObjectClassParsing:
         oc_def = "NAME 'ndsPerson' SUP top STRUCTURAL"
         quirk_schema = schema_quirk
         result = quirk_schema.parse_objectclass(oc_def)
-        assert result.is_failure
-        assert result.error is not None
-        assert "missing an OID" in result.error
+        tm.that(result.is_failure, eq=True)
+        tm.that(result.error is not None, eq=True)
+        tm.that("missing an OID" in result.error, eq=True)
 
     def test_write_attribute_to_rfc(
         self, schema_quirk: FlextLdifServersNovell.Schema
@@ -405,7 +406,7 @@ class TestNovellEntryDetection:
         self, entry_quirk: FlextLdifServersNovell.Entry
     ) -> None:
         """Test entry quirk is initialized."""
-        assert entry_quirk is not None
+        tm.that(entry_quirk is not None, eq=True)
 
     @pytest.mark.parametrize("test_case", ENTRY_TEST_CASES)
     def test_can_handle_entry(
@@ -414,4 +415,4 @@ class TestNovellEntryDetection:
         """Test entry detection for various scenarios."""
         quirk_entry = entry_quirk
         result = quirk_entry.can_handle(test_case.entry_dn, test_case.attributes)
-        assert result is test_case.expected_can_handle
+        tm.that(result is test_case.expected_can_handle, eq=True)

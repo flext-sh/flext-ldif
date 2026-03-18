@@ -2162,14 +2162,8 @@ class FlextLdifModelsSettings:
             list[str] | None, Field(default=None, description="ACL attributes to sort")
         ]
 
-    class SchemaAttributeConversionPipelineConfig(FlextModels.Value):
-        """Config for schema attribute conversion pipeline (discriminated union)."""
-
+    class _SchemaConversionPipelineBaseConfig(FlextModels.Value):
         model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
-        item_type: Annotated[
-            Literal["attribute"],
-            Field(default="attribute", description="Discriminator"),
-        ]
         source_schema: Annotated[
             p.Ldif.SchemaQuirk,
             Field(..., description="Source schema quirk"),
@@ -2177,6 +2171,15 @@ class FlextLdifModelsSettings:
         target_schema: Annotated[
             p.Ldif.SchemaQuirk,
             Field(..., description="Target schema quirk"),
+        ]
+        item_name: Annotated[str, Field(..., description="Item name for errors")]
+
+    class SchemaAttributeConversionPipelineConfig(_SchemaConversionPipelineBaseConfig):
+        """Config for schema attribute conversion pipeline (discriminated union)."""
+
+        item_type: Annotated[
+            Literal["attribute"],
+            Field(default="attribute", description="Discriminator"),
         ]
         item: Annotated[
             FlextLdifModelsDomains.SchemaAttribute,
@@ -2186,21 +2189,14 @@ class FlextLdifModelsSettings:
             str, Field(default="attribute", description="Item name for errors")
         ]
 
-    class SchemaObjectClassConversionPipelineConfig(FlextModels.Value):
+    class SchemaObjectClassConversionPipelineConfig(
+        _SchemaConversionPipelineBaseConfig
+    ):
         """Config for schema objectclass conversion pipeline (discriminated union)."""
 
-        model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
         item_type: Annotated[
             Literal["objectclass"],
             Field(default="objectclass", description="Discriminator"),
-        ]
-        source_schema: Annotated[
-            p.Ldif.SchemaQuirk,
-            Field(..., description="Source schema quirk"),
-        ]
-        target_schema: Annotated[
-            p.Ldif.SchemaQuirk,
-            Field(..., description="Target schema quirk"),
         ]
         item: Annotated[
             FlextLdifModelsDomains.SchemaObjectClass,

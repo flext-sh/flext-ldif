@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import struct
 from collections.abc import Mapping
-from typing import ClassVar, override
+from typing import ClassVar, TypeVar, override
 
 from flext_core import FlextLogger, r
 
@@ -14,6 +14,8 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 logger = FlextLogger(__name__)
+
+_SchemaItemT = TypeVar("_SchemaItemT", m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass)
 
 
 class FlextLdifServersRelaxed(FlextLdifServersRfc):
@@ -52,6 +54,30 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """Relaxed schema quirk - main class for lenient LDIF processing."""
 
+        def _enhance_schema_item_metadata(
+            self,
+            schema_item: _SchemaItemT,
+            original_definition: str,
+        ) -> _SchemaItemT:
+            if not schema_item.metadata:
+                schema_item.metadata = m.Ldif.QuirkMetadata(
+                    quirk_type=self._get_server_type(),
+                    extensions=m.Ldif.DynamicMetadata(
+                        original_format=original_definition.strip(),
+                        schema_source_server="relaxed",
+                    ),
+                )
+                return schema_item
+            if not schema_item.metadata.extensions:
+                schema_item.metadata.extensions = m.Ldif.DynamicMetadata()
+            schema_item.metadata.quirk_type = self._get_server_type()
+            if not schema_item.metadata.extensions.get("original_format"):
+                schema_item.metadata.extensions["original_format"] = (
+                    original_definition.strip()
+                )
+            schema_item.metadata.extensions["schema_source_server"] = "relaxed"
+            return schema_item
+
         @override
         def can_handle_attribute(
             self, attr_definition: str | m.Ldif.SchemaAttribute
@@ -74,24 +100,10 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             self, objectclass: m.Ldif.SchemaObjectClass, original_definition: str
         ) -> m.Ldif.SchemaObjectClass:
             """Enhance objectClass metadata to indicate relaxed mode parsing."""
-            if not objectclass.metadata:
-                objectclass.metadata = m.Ldif.QuirkMetadata(
-                    quirk_type=self._get_server_type(),
-                    extensions=m.Ldif.DynamicMetadata(
-                        original_format=original_definition.strip(),
-                        schema_source_server="relaxed",
-                    ),
-                )
-            else:
-                if not objectclass.metadata.extensions:
-                    objectclass.metadata.extensions = m.Ldif.DynamicMetadata()
-                objectclass.metadata.quirk_type = self._get_server_type()
-                if not objectclass.metadata.extensions.get("original_format"):
-                    objectclass.metadata.extensions["original_format"] = (
-                        original_definition.strip()
-                    )
-                objectclass.metadata.extensions["schema_source_server"] = "relaxed"
-            return objectclass
+            return self._enhance_schema_item_metadata(
+                schema_item=objectclass,
+                original_definition=original_definition,
+            )
 
         def _extract_must_may_from_objectclass(
             self, oc_definition: str
@@ -211,23 +223,10 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             parent_result = super()._parse_attribute(attr_definition)
             if parent_result.is_success:
                 attribute = parent_result.value
-                if not attribute.metadata:
-                    attribute.metadata = m.Ldif.QuirkMetadata(
-                        quirk_type=self._get_server_type(),
-                        extensions=m.Ldif.DynamicMetadata(
-                            original_format=attr_definition.strip(),
-                            schema_source_server="relaxed",
-                        ),
-                    )
-                else:
-                    if not attribute.metadata.extensions:
-                        attribute.metadata.extensions = m.Ldif.DynamicMetadata()
-                    attribute.metadata.quirk_type = self._get_server_type()
-                    if not attribute.metadata.extensions.get("original_format"):
-                        attribute.metadata.extensions["original_format"] = (
-                            attr_definition.strip()
-                        )
-                    attribute.metadata.extensions["schema_source_server"] = "relaxed"
+                self._enhance_schema_item_metadata(
+                    schema_item=attribute,
+                    original_definition=attr_definition,
+                )
                 return r[m.Ldif.SchemaAttribute].ok(attribute)
             logger.debug(
                 "RFC parser failed, using best-effort parsing",

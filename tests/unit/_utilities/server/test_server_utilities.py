@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 from tests import s
 
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
@@ -44,7 +45,7 @@ class TestFlextLdifUtilitiesServer(s):
         result = FlextLdifUtilitiesServer._extract_server_name("OidSchema")
         value = self.assert_success(result)
 
-        assert value == "Oid"
+        tm.that(value == "Oid", eq=True)
 
     def test_get_type_from_independent_class_success(self) -> None:
         class FlextLdifServersOidSchema:
@@ -54,7 +55,7 @@ class TestFlextLdifUtilitiesServer(s):
             FlextLdifServersOidSchema
         )
 
-        assert result == "oid"
+        tm.that(result == "oid", eq=True)
 
     def test_get_type_from_independent_class_failure_unknown_server(self) -> None:
         class FlextLdifServersUnknownSchema:
@@ -64,17 +65,17 @@ class TestFlextLdifUtilitiesServer(s):
             FlextLdifServersUnknownSchema
         )
 
-        assert result is None
+        tm.that(result is None, eq=True)
 
     def test_get_type_from_nested_class_success_from_parent_constants(self) -> None:
         result = FlextLdifUtilitiesServer._get_type_from_nested_class(OidServer.Entry)
 
-        assert result == "oid"
+        tm.that(result == "oid", eq=True)
 
     def test_extract_server_type_from_constants_success(self) -> None:
         result = FlextLdifUtilitiesServer.extract_server_type_from_constants(OudServer)
 
-        assert result == "oud"
+        tm.that(result == "oud", eq=True)
 
     def test_get_parent_server_type_failure_raises_attribute_error(self) -> None:
         class Unknown:

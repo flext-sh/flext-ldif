@@ -1448,32 +1448,35 @@ class FlextLdifConstants(FlextConstants):
         class ServerTypesMappings:
             """Server type mappings and aliases (separate from enum to avoid conflicts)."""
 
+            _CANONICAL_SERVER_NAMES: ClassVar[tuple[str, ...]] = (
+                "oid",
+                "oud",
+                "openldap",
+                "openldap1",
+                "openldap2",
+                "ad",
+                "apache",
+                "generic",
+                "rfc",
+                "ds389",
+                "relaxed",
+                "novell",
+                "ibm_tivoli",
+            )
             _LONG_NAMES_DICT: ClassVar[Mapping[str, str]] = {
-                "oid": "oid",
-                "oud": "oud",
-                "openldap": "openldap",
-                "openldap1": "openldap1",
-                "openldap2": "openldap2",
-                "ad": "ad",
-                "apache": "apache",
-                "generic": "generic",
-                "rfc": "rfc",
-                "ds389": "ds389",
-                "relaxed": "relaxed",
-                "novell": "novell",
-                "ibm_tivoli": "ibm_tivoli",
+                name: name for name in _CANONICAL_SERVER_NAMES
             }
             LONG_NAMES: Final[Mapping[str, str]] = MappingProxyType(_LONG_NAMES_DICT)
             _FROM_LONG_DICT: ClassVar[Mapping[str, str]] = {
                 v: k for k, v in _LONG_NAMES_DICT.items()
             }
             FROM_LONG: Final[Mapping[str, str]] = MappingProxyType(_FROM_LONG_DICT)
+            _SELF_ALIASES: ClassVar[tuple[str, ...]] = ("ad", "apache", "novell")
             _ALIASES_DICT: ClassVar[Mapping[str, str]] = {
-                "ad": "ad",
+                name: name for name in _SELF_ALIASES
+            } | {
                 "389": "ds389",
                 "389ds": "ds389",
-                "apache": "apache",
-                "novell": "novell",
                 "tivoli": "ibm_tivoli",
                 "openldap": "openldap2",
                 "active_directory": "ad",

@@ -38,7 +38,7 @@ from flext_ldif import (
 )
 
 
-class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
+class TestsFlextLdifConstants(c, FlextLdifConstants):
     """Constants for flext-ldif tests using COMPOSITION INHERITANCE."""
 
     class Schema:
@@ -463,1610 +463,1645 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
         )
 
+    class Filters:
+        """Test filter constants and server types for categorization tests."""
 
-class Filters:
-    """Test filter constants and server types for categorization tests."""
+        SERVER_RFC: Final[str] = FlextLdifConstants.Ldif.ServerTypes.RFC.value
+        SERVER_OID: Final[str] = FlextLdifConstants.Ldif.ServerTypes.OID.value
+        SERVER_OUD: Final[str] = FlextLdifConstants.Ldif.ServerTypes.OUD.value
+        DN_USER_JOHN: Final[str] = "cn=john.doe,ou=users,dc=example,dc=com"
+        DN_USER_JANE: Final[str] = "cn=jane.doe,ou=users,dc=example,dc=com"
+        DN_USER_ADMIN: Final[str] = (
+            "cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com"
+        )
+        DN_OU_USERS: Final[str] = "ou=users,dc=example,dc=com"
+        DN_OU_GROUPS: Final[str] = "ou=groups,dc=example,dc=com"
+        DN_ACL_POLICY: Final[str] = "cn=acl-policy,dc=example,dc=com"
+        DN_REJECTED: Final[str] = "cn=rejected,dc=example,dc=com"
+        DN_PATTERN_USERS: Final[str] = "ou=users,*"
+        DN_PATTERN_GROUPS: Final[str] = "ou=groups,*"
+        DN_PATTERN_OU: Final[str] = "ou=*,*"
+        OC_GROUP_OF_NAMES: Final[str] = "groupOfNames"
+        OC_ORGANIZATIONAL_UNIT: Final[str] = "organizationalUnit"
+        OC_INET_ORG_PERSON: Final[str] = "inetOrgPerson"
+        OC_PERSON: Final[str] = "person"
+        OC_DOMAIN: Final[str] = "domain"
+        ATTR_MAIL: Final[str] = "mail"
+        ATTR_SN: Final[str] = "sn"
+        ATTR_CN: Final[str] = "cn"
+        ATTR_OBJECTCLASS: Final[str] = "objectClass"
 
-    SERVER_RFC: Final[str] = FlextLdifConstants.Ldif.ServerTypes.RFC.value
-    SERVER_OID: Final[str] = FlextLdifConstants.Ldif.ServerTypes.OID.value
-    SERVER_OUD: Final[str] = FlextLdifConstants.Ldif.ServerTypes.OUD.value
-    DN_USER_JOHN: Final[str] = "cn=john.doe,ou=users,dc=example,dc=com"
-    DN_USER_JANE: Final[str] = "cn=jane.doe,ou=users,dc=example,dc=com"
-    DN_USER_ADMIN: Final[str] = (
-        "cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com"
-    )
-    DN_OU_USERS: Final[str] = "ou=users,dc=example,dc=com"
-    DN_OU_GROUPS: Final[str] = "ou=groups,dc=example,dc=com"
-    DN_ACL_POLICY: Final[str] = "cn=acl-policy,dc=example,dc=com"
-    DN_REJECTED: Final[str] = "cn=rejected,dc=example,dc=com"
-    DN_PATTERN_USERS: Final[str] = "ou=users,*"
-    DN_PATTERN_GROUPS: Final[str] = "ou=groups,*"
-    DN_PATTERN_OU: Final[str] = "ou=*,*"
-    OC_GROUP_OF_NAMES: Final[str] = "groupOfNames"
-    OC_ORGANIZATIONAL_UNIT: Final[str] = "organizationalUnit"
-    OC_INET_ORG_PERSON: Final[str] = "inetOrgPerson"
-    OC_PERSON: Final[str] = "person"
-    OC_DOMAIN: Final[str] = "domain"
-    ATTR_MAIL: Final[str] = "mail"
-    ATTR_SN: Final[str] = "sn"
-    ATTR_CN: Final[str] = "cn"
-    ATTR_OBJECTCLASS: Final[str] = "objectClass"
+        class DNs:
+            """DN constants for testing."""
 
-    class DNs:
-        """DN constants for testing."""
+            EXAMPLE: Final[str] = "dc=example,dc=com"
+            TEST_USER: Final[str] = "cn=testuser,dc=example,dc=com"
+            TEST_GROUP: Final[str] = "cn=testgroup,dc=example,dc=com"
+            SCHEMA: Final[str] = "cn=schema"
+            BASE: Final[str] = "dc=example,dc=com"
 
-        EXAMPLE: Final[str] = "dc=example,dc=com"
-        TEST_USER: Final[str] = "cn=testuser,dc=example,dc=com"
-        TEST_GROUP: Final[str] = "cn=testgroup,dc=example,dc=com"
-        SCHEMA: Final[str] = "cn=schema"
-        BASE: Final[str] = "dc=example,dc=com"
+        class Values:
+            """Value constants for testing."""
 
-    class Values:
-        """Value constants for testing."""
+            TEST: Final[str] = "test"
+            USER: Final[str] = "user"
+            USER1: Final[str] = "user1"
+            USER2: Final[str] = "user2"
+            ADMIN: Final[str] = "REDACTED_LDAP_BIND_PASSWORD"
+            EXAMPLE: Final[str] = "example"
 
-        TEST: Final[str] = "test"
-        USER: Final[str] = "user"
-        USER1: Final[str] = "user1"
-        USER2: Final[str] = "user2"
-        ADMIN: Final[str] = "REDACTED_LDAP_BIND_PASSWORD"
-        EXAMPLE: Final[str] = "example"
+    class OIDs:
+        """OID constant namespace for cleaner test access.
 
-
-class OIDs:
-    """OID constant namespace for cleaner test access.
-
-    Aliases constants from TestsFlextLdifConstants.Rfc for convenient access.
-    Used by test files to reference OID constants with short names.
-    """
-
-    CN: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_CN
-    SN: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_SN
-    ST: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_ST
-    MAIL: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_MAIL
-    MODIFY_TIMESTAMP: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_MODIFY_TIMESTAMP
-    OID_O: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_O
-    OBJECTCLASS: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_OBJECTCLASS
-    PERSON: Final[str] = TestsFlextLdifConstants.Rfc.OC_OID_PERSON
-    DIRECTORY_STRING: Final[str] = (
-        TestsFlextLdifConstants.Rfc.SYNTAX_OID_DIRECTORY_STRING
-    )
-    BOOLEAN: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_BOOLEAN
-    INTEGER: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_INTEGER
-    IA5_STRING: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_IA5_STRING
-    GENERALIZED_TIME: Final[str] = (
-        TestsFlextLdifConstants.Rfc.SYNTAX_OID_GENERALIZED_TIME
-    )
-    OID: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_OID
-
-
-class Syntax:
-    """Syntax OID constant namespace for cleaner test access.
-
-    Aliases syntax constants from TestsFlextLdifConstants.Rfc for convenient access.
-    Used by test files to reference syntax OIDs with short names.
-    """
-
-    DIRECTORY_STRING: Final[str] = (
-        TestsFlextLdifConstants.Rfc.SYNTAX_OID_DIRECTORY_STRING
-    )
-    BOOLEAN: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_BOOLEAN
-    INTEGER: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_INTEGER
-    IA5_STRING: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_IA5_STRING
-    GENERALIZED_TIME: Final[str] = (
-        TestsFlextLdifConstants.Rfc.SYNTAX_OID_GENERALIZED_TIME
-    )
-    OID: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_OID
-
-
-class RfcTestHelpers:
-    """RFC test helper utilities for LDIF testing."""
-
-    @staticmethod
-    def test_parse_ldif_content(
-        parser_service: FlextLdifParser,
-        content: str,
-        expected_count: int,
-        server_type: str = "rfc",
-    ) -> list[m.Ldif.Entry]:
-        """Parse LDIF content and return entries.
-
-        Args:
-            parser_service: The parser service instance
-            content: LDIF content to parse
-            expected_count: Expected number of entries (for validation)
-            server_type: Server type for parsing
-
-        Returns:
-            List of parsed entries
-
+        Aliases constants from TestsFlextLdifConstants.Rfc for convenient access.
+        Used by test files to reference OID constants with short names.
         """
-        if not isinstance(parser_service, FlextLdifParser):
-            raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-        result = parser_service.parse_string(content=content, server_type=server_type)
-        if result.is_failure:
-            raise AssertionError(f"Parsing failed: {result.error}")
-        entries = result.value.entries
-        if len(entries) != expected_count:
-            raise AssertionError(
-                f"Expected {expected_count} entries, got {len(entries)}"
+
+        CN: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_CN
+        SN: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_SN
+        ST: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_ST
+        MAIL: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_MAIL
+        MODIFY_TIMESTAMP: Final[str] = (
+            TestsFlextLdifConstants.Rfc.ATTR_OID_MODIFY_TIMESTAMP
+        )
+        OID_O: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_O
+        OBJECTCLASS: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_OBJECTCLASS
+        PERSON: Final[str] = TestsFlextLdifConstants.Rfc.OC_OID_PERSON
+        DIRECTORY_STRING: Final[str] = (
+            TestsFlextLdifConstants.Rfc.SYNTAX_OID_DIRECTORY_STRING
+        )
+        BOOLEAN: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_BOOLEAN
+        INTEGER: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_INTEGER
+        IA5_STRING: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_IA5_STRING
+        GENERALIZED_TIME: Final[str] = (
+            TestsFlextLdifConstants.Rfc.SYNTAX_OID_GENERALIZED_TIME
+        )
+        OID: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_OID
+
+    class Syntax:
+        """Syntax OID constant namespace for cleaner test access.
+
+        Aliases syntax constants from TestsFlextLdifConstants.Rfc for convenient access.
+        Used by test files to reference syntax OIDs with short names.
+        """
+
+        DIRECTORY_STRING: Final[str] = (
+            TestsFlextLdifConstants.Rfc.SYNTAX_OID_DIRECTORY_STRING
+        )
+        BOOLEAN: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_BOOLEAN
+        INTEGER: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_INTEGER
+        IA5_STRING: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_IA5_STRING
+        GENERALIZED_TIME: Final[str] = (
+            TestsFlextLdifConstants.Rfc.SYNTAX_OID_GENERALIZED_TIME
+        )
+        OID: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_OID
+
+    class RfcTestHelpers:
+        """RFC test helper utilities for LDIF testing."""
+
+        @staticmethod
+        def test_parse_ldif_content(
+            parser_service: FlextLdifParser,
+            content: str,
+            expected_count: int,
+            server_type: str = "rfc",
+        ) -> list[m.Ldif.Entry]:
+            """Parse LDIF content and return entries.
+
+            Args:
+                parser_service: The parser service instance
+                content: LDIF content to parse
+                expected_count: Expected number of entries (for validation)
+                server_type: Server type for parsing
+
+            Returns:
+                List of parsed entries
+
+            """
+            if not isinstance(parser_service, FlextLdifParser):
+                raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
+            result = parser_service.parse_string(
+                content=content, server_type=server_type
             )
-        return [m.Ldif.Entry.model_validate(entry) for entry in entries]
+            if result.is_failure:
+                raise AssertionError(f"Parsing failed: {result.error}")
+            entries = result.value.entries
+            if len(entries) != expected_count:
+                raise AssertionError(
+                    f"Expected {expected_count} entries, got {len(entries)}"
+                )
+            return [m.Ldif.Entry.model_validate(entry) for entry in entries]
 
-    @staticmethod
-    def test_entry_create_and_unwrap(
-        dn: str, attributes: dict[str, str | list[str]]
-    ) -> m.Ldif.Entry:
-        """Create an entry and unwrap the result.
+        @staticmethod
+        def test_entry_create_and_unwrap(
+            dn: str, attributes: dict[str, str | list[str]]
+        ) -> m.Ldif.Entry:
+            """Create an entry and unwrap the result.
 
-        Args:
-            dn: Distinguished Name for the entry
-            attributes: Dictionary of attributes for the entry
+            Args:
+                dn: Distinguished Name for the entry
+                attributes: Dictionary of attributes for the entry
 
-        Returns:
-            The unwrapped Entry instance
+            Returns:
+                The unwrapped Entry instance
 
-        Raises:
-            AssertionError: If entry creation fails
+            Raises:
+                AssertionError: If entry creation fails
 
-        """
-        result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
-        if result.is_failure:
-            raise AssertionError(f"Entry creation failed: {result.error}")
-        return result.value
+            """
+            result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
+            if result.is_failure:
+                raise AssertionError(f"Entry creation failed: {result.error}")
+            return result.value
 
-    @staticmethod
-    def test_quirk_schema_parse_and_assert_properties(
-        quirk: p.Ldif.SchemaQuirk,
-        schema_def: str,
-        *,
-        expected_oid: str | None = None,
-        expected_name: str | None = None,
-        expected_desc: str | None = None,
-        expected_syntax: str | None = None,
-        expected_single_value: bool | None = None,
-        expected_length: int | None = None,
-        expected_kind: str | None = None,
-        expected_sup: str | None = None,
-        expected_must: list[str] | None = None,
-        expected_may: list[str] | None = None,
-    ) -> p.Ldif.SchemaAttribute | None:
-        """Parse schema definition and assert properties.
+        @staticmethod
+        def test_quirk_schema_parse_and_assert_properties(
+            quirk: p.Ldif.SchemaQuirk,
+            schema_def: str,
+            *,
+            expected_oid: str | None = None,
+            expected_name: str | None = None,
+            expected_desc: str | None = None,
+            expected_syntax: str | None = None,
+            expected_single_value: bool | None = None,
+            expected_length: int | None = None,
+            expected_kind: str | None = None,
+            expected_sup: str | None = None,
+            expected_must: list[str] | None = None,
+            expected_may: list[str] | None = None,
+        ) -> p.Ldif.SchemaAttribute | None:
+            """Parse schema definition and assert properties.
 
-        Args:
-            quirk: Schema quirk instance
-            schema_def: Schema definition string (attribute or objectClass)
-            expected_oid: Expected OID
-            expected_name: Expected NAME
-            expected_desc: Expected DESC
-            expected_syntax: Expected SYNTAX (without length)
-            expected_single_value: Expected SINGLE-VALUE flag
-            expected_length: Expected syntax length (e.g., 256 from {256})
-            expected_kind: Expected KIND (STRUCTURAL, AUXILIARY, ABSTRACT)
-            expected_sup: Expected SUP (superior class)
-            expected_must: Expected MUST attributes
-            expected_may: Expected MAY attributes
+            Args:
+                quirk: Schema quirk instance
+                schema_def: Schema definition string (attribute or objectClass)
+                expected_oid: Expected OID
+                expected_name: Expected NAME
+                expected_desc: Expected DESC
+                expected_syntax: Expected SYNTAX (without length)
+                expected_single_value: Expected SINGLE-VALUE flag
+                expected_length: Expected syntax length (e.g., 256 from {256})
+                expected_kind: Expected KIND (STRUCTURAL, AUXILIARY, ABSTRACT)
+                expected_sup: Expected SUP (superior class)
+                expected_must: Expected MUST attributes
+                expected_may: Expected MAY attributes
 
-        Returns:
-            The parsed schema object
+            Returns:
+                The parsed schema object
 
-        Raises:
-            AssertionError: If parsing fails or properties don't match
+            Raises:
+                AssertionError: If parsing fails or properties don't match
 
-        """
-        if (
-            "STRUCTURAL" in schema_def
-            or "AUXILIARY" in schema_def
-            or "ABSTRACT" in schema_def
+            """
+            if (
+                "STRUCTURAL" in schema_def
+                or "AUXILIARY" in schema_def
+                or "ABSTRACT" in schema_def
+            ):
+                parse_method = getattr(quirk, "parse_objectclass", None)
+            else:
+                parse_method = getattr(quirk, "parse_attribute", None)
+            if parse_method is None:
+                parse_method = getattr(quirk, "parse", None)
+            if parse_method is None:
+                msg = "Quirk has no suitable parse method"
+                raise AssertionError(msg)
+            result = parse_method(schema_def)
+            if hasattr(result, "is_failure") and result.is_failure:
+                raise AssertionError(f"Parsing failed: {result.error}")
+            value = result.value if hasattr(result, "value") else result
+            if expected_oid is not None:
+                actual_oid = getattr(value, "oid", None)
+                if actual_oid != expected_oid:
+                    raise AssertionError(
+                        f"Expected OID '{expected_oid}', got '{actual_oid}'"
+                    )
+            if expected_name is not None:
+                actual_name = getattr(value, "name", None)
+                if actual_name != expected_name:
+                    raise AssertionError(
+                        f"Expected NAME '{expected_name}', got '{actual_name}'"
+                    )
+            if expected_desc is not None:
+                actual_desc = getattr(value, "desc", None)
+                if actual_desc != expected_desc:
+                    raise AssertionError(
+                        f"Expected DESC '{expected_desc}', got '{actual_desc}'"
+                    )
+            if expected_syntax is not None:
+                actual_syntax = getattr(value, "syntax", None)
+                if actual_syntax != expected_syntax:
+                    raise AssertionError(
+                        f"Expected SYNTAX '{expected_syntax}', got '{actual_syntax}'"
+                    )
+            if expected_single_value is not None:
+                actual_sv = getattr(value, "single_value", None)
+                if actual_sv != expected_single_value:
+                    raise AssertionError(
+                        f"Expected SINGLE-VALUE {expected_single_value}, got {actual_sv}"
+                    )
+            if expected_length is not None:
+                actual_length = getattr(value, "length", None)
+                if actual_length != expected_length:
+                    raise AssertionError(
+                        f"Expected length {expected_length}, got {actual_length}"
+                    )
+            if expected_kind is not None:
+                actual_kind = getattr(value, "kind", None)
+                if actual_kind != expected_kind:
+                    raise AssertionError(
+                        f"Expected KIND '{expected_kind}', got '{actual_kind}'"
+                    )
+            if expected_sup is not None:
+                actual_sup = getattr(value, "sup", None)
+                if actual_sup != expected_sup:
+                    raise AssertionError(
+                        f"Expected SUP '{expected_sup}', got '{actual_sup}'"
+                    )
+            if expected_must is not None:
+                actual_must = getattr(value, "must", None) or []
+                if list(actual_must) != expected_must:
+                    raise AssertionError(
+                        f"Expected MUST {expected_must}, got {list(actual_must)}"
+                    )
+            if expected_may is not None:
+                actual_may = getattr(value, "may", None) or []
+                if list(actual_may) != expected_may:
+                    raise AssertionError(
+                        f"Expected MAY {expected_may}, got {list(actual_may)}"
+                    )
+            return value
+
+        @staticmethod
+        def test_result_success_and_unwrap[TResult: t.Ldif.object](
+            result: r[TResult],
+            expected_type: type | None = None,
+            expected_count: int | None = None,
+        ) -> TResult | None:
+            """Assert result is successful and unwrap its value.
+
+            Args:
+                result: r instance to check
+                expected_type: Optional expected type for the unwrapped value
+                expected_count: Optional expected count if value is a sequence
+
+            Returns:
+                The unwrapped value from the result
+
+            Raises:
+                AssertionError: If result is failure or type mismatch
+
+            """
+            is_failure = getattr(result, "is_failure", None)
+            if not isinstance(is_failure, bool):
+                raise TypeError(f"Expected r-like object, got {type(result)}")
+            if is_failure:
+                error = getattr(result, "error", "Unknown error")
+                raise AssertionError(f"Result is failure: {error}")
+            value = getattr(result, "value", None)
+            if expected_type is not None and (not isinstance(value, expected_type)):
+                raise AssertionError(
+                    f"Expected {expected_type.__name__}, got {type(value).__name__}"
+                )
+            if expected_count is not None:
+                if not isinstance(value, Sized):
+                    raise AssertionError(
+                        f"Cannot check count on {type(value).__name__} - not a sequence"
+                    )
+                sized_value: Sized = value
+                if len(sized_value) != expected_count:
+                    raise AssertionError(
+                        f"Expected count {expected_count}, got {len(sized_value)}"
+                    )
+            return value
+
+        @staticmethod
+        def test_create_entry_and_unwrap(
+            dn: str, attributes: dict[str, str | list[str]] | None = None
+        ) -> m.Ldif.Entry:
+            """Create an entry and unwrap the result.
+
+            Alias for test_entry_create_and_unwrap for naming consistency.
+
+            Args:
+                dn: Distinguished Name for the entry
+                attributes: Dictionary of attributes for the entry
+
+            Returns:
+                The unwrapped Entry instance
+
+            Raises:
+                AssertionError: If entry creation fails
+
+            """
+            if attributes is None:
+                attributes = {}
+            result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
+            if result.is_failure:
+                raise AssertionError(f"Entry creation failed: {result.error}")
+            return result.value
+
+        @staticmethod
+        def test_create_schema_attribute_and_unwrap(
+            oid: str,
+            name: str,
+            desc: str | None = None,
+            syntax: str | None = None,
+            *,
+            single_value: bool = False,
+        ) -> m.Ldif.SchemaAttribute:
+            """Create a schema attribute and unwrap the result.
+
+            Args:
+                oid: Object Identifier
+                name: Attribute name
+                desc: Description
+                syntax: Syntax OID
+                single_value: Single value flag
+
+            Returns:
+                The unwrapped SchemaAttribute instance
+
+            Raises:
+                AssertionError: If creation fails
+
+            """
+            return m.Ldif.SchemaAttribute(
+                oid=oid, name=name, desc=desc, syntax=syntax, single_value=single_value
+            )
+
+        @staticmethod
+        def test_create_schema_objectclass_and_unwrap(
+            oid: str,
+            name: str,
+            desc: str | None = None,
+            kind: str = "STRUCTURAL",
+            sup: str | None = None,
+            must: list[str] | None = None,
+            may: list[str] | None = None,
+        ) -> m.Ldif.SchemaObjectClass:
+            """Create a schema objectClass and unwrap the result.
+
+            Args:
+                oid: Object Identifier
+                name: ObjectClass name
+                desc: Description
+                kind: Kind (STRUCTURAL, AUXILIARY, ABSTRACT)
+                sup: Superior class
+                must: Required attributes
+                may: Optional attributes
+
+            Returns:
+                The unwrapped SchemaObjectClass instance
+
+            Raises:
+                AssertionError: If creation fails
+
+            """
+            return m.Ldif.SchemaObjectClass(
+                oid=oid,
+                name=name,
+                desc=desc,
+                kind=kind,
+                sup=sup,
+                must=must or [],
+                may=may or [],
+            )
+
+        @staticmethod
+        def test_quirk_parse_success_and_unwrap(
+            quirk: (p.Ldif.SchemaQuirk | p.Ldif.AclQuirk | p.Ldif.EntryQuirk),
+            content: str,
+            parse_method: str | None = None,
+        ) -> (
+            p.Ldif.SchemaAttribute
+            | p.Ldif.SchemaObjectClass
+            | p.Ldif.Acl
+            | p.Ldif.Entry
+            | None
         ):
-            parse_method = getattr(quirk, "parse_objectclass", None)
-        else:
-            parse_method = getattr(quirk, "parse_attribute", None)
-        if parse_method is None:
-            parse_method = getattr(quirk, "parse", None)
-        if parse_method is None:
-            msg = "Quirk has no suitable parse method"
-            raise AssertionError(msg)
-        result = parse_method(schema_def)
-        if hasattr(result, "is_failure") and result.is_failure:
-            raise AssertionError(f"Parsing failed: {result.error}")
-        value = result.value if hasattr(result, "value") else result
-        if expected_oid is not None:
-            actual_oid = getattr(value, "oid", None)
-            if actual_oid != expected_oid:
-                raise AssertionError(
-                    f"Expected OID '{expected_oid}', got '{actual_oid}'"
-                )
-        if expected_name is not None:
-            actual_name = getattr(value, "name", None)
-            if actual_name != expected_name:
-                raise AssertionError(
-                    f"Expected NAME '{expected_name}', got '{actual_name}'"
-                )
-        if expected_desc is not None:
-            actual_desc = getattr(value, "desc", None)
-            if actual_desc != expected_desc:
-                raise AssertionError(
-                    f"Expected DESC '{expected_desc}', got '{actual_desc}'"
-                )
-        if expected_syntax is not None:
-            actual_syntax = getattr(value, "syntax", None)
-            if actual_syntax != expected_syntax:
-                raise AssertionError(
-                    f"Expected SYNTAX '{expected_syntax}', got '{actual_syntax}'"
-                )
-        if expected_single_value is not None:
-            actual_sv = getattr(value, "single_value", None)
-            if actual_sv != expected_single_value:
-                raise AssertionError(
-                    f"Expected SINGLE-VALUE {expected_single_value}, got {actual_sv}"
-                )
-        if expected_length is not None:
-            actual_length = getattr(value, "length", None)
-            if actual_length != expected_length:
-                raise AssertionError(
-                    f"Expected length {expected_length}, got {actual_length}"
-                )
-        if expected_kind is not None:
-            actual_kind = getattr(value, "kind", None)
-            if actual_kind != expected_kind:
-                raise AssertionError(
-                    f"Expected KIND '{expected_kind}', got '{actual_kind}'"
-                )
-        if expected_sup is not None:
-            actual_sup = getattr(value, "sup", None)
-            if actual_sup != expected_sup:
-                raise AssertionError(
-                    f"Expected SUP '{expected_sup}', got '{actual_sup}'"
-                )
-        if expected_must is not None:
-            actual_must = getattr(value, "must", None) or []
-            if list(actual_must) != expected_must:
-                raise AssertionError(
-                    f"Expected MUST {expected_must}, got {list(actual_must)}"
-                )
-        if expected_may is not None:
-            actual_may = getattr(value, "may", None) or []
-            if list(actual_may) != expected_may:
-                raise AssertionError(
-                    f"Expected MAY {expected_may}, got {list(actual_may)}"
-                )
-        return value
+            """Parse using quirk and assert success.
 
-    @staticmethod
-    def test_result_success_and_unwrap[TResult: t.Ldif.object](
-        result: r[TResult],
-        expected_type: type | None = None,
-        expected_count: int | None = None,
-    ) -> TResult | None:
-        """Assert result is successful and unwrap its value.
+            Args:
+                quirk: Schema quirk instance
+                content: Content to parse
+                parse_method: Optional specific parse method name
 
-        Args:
-            result: r instance to check
-            expected_type: Optional expected type for the unwrapped value
-            expected_count: Optional expected count if value is a sequence
+            Returns:
+                The parsed value
 
-        Returns:
-            The unwrapped value from the result
+            Raises:
+                AssertionError: If parsing fails
 
-        Raises:
-            AssertionError: If result is failure or type mismatch
-
-        """
-        is_failure = getattr(result, "is_failure", None)
-        if not isinstance(is_failure, bool):
-            raise TypeError(f"Expected r-like object, got {type(result)}")
-        if is_failure:
-            error = getattr(result, "error", "Unknown error")
-            raise AssertionError(f"Result is failure: {error}")
-        value = getattr(result, "value", None)
-        if expected_type is not None and (not isinstance(value, expected_type)):
-            raise AssertionError(
-                f"Expected {expected_type.__name__}, got {type(value).__name__}"
+            """
+            method_name = parse_method or "parse"
+            method = getattr(quirk, method_name, None)
+            if not callable(method):
+                raise AssertionError(f"Quirk has no method '{method_name}'")
+            result = method(content)
+            is_failure = getattr(result, "is_failure", None)
+            if isinstance(is_failure, bool) and is_failure:
+                error = getattr(result, "error", "Unknown error")
+                raise AssertionError(f"Parsing failed: {error}")
+            return cast(
+                "p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | p.Ldif.Acl | p.Ldif.Entry | None",
+                getattr(result, "value", result),
             )
-        if expected_count is not None:
-            if not isinstance(value, Sized):
-                raise AssertionError(
-                    f"Cannot check count on {type(value).__name__} - not a sequence"
-                )
-            sized_value: Sized = value
-            if len(sized_value) != expected_count:
-                raise AssertionError(
-                    f"Expected count {expected_count}, got {len(sized_value)}"
-                )
-        return value
 
-    @staticmethod
-    def test_create_entry_and_unwrap(
-        dn: str, attributes: dict[str, str | list[str]] | None = None
-    ) -> m.Ldif.Entry:
-        """Create an entry and unwrap the result.
+        @staticmethod
+        def test_schema_quirk_parse_and_assert(
+            quirk: p.Ldif.SchemaQuirk,
+            content: str,
+            expected_oid: str | None = None,
+            expected_name: str | None = None,
+            expected_desc: str | None = None,
+            expected_sup: str | None = None,
+            expected_kind: str | None = None,
+            expected_must: list[str] | None = None,
+            expected_may: list[str] | None = None,
+            expected_syntax: str | None = None,
+            expected_equality: str | None = None,
+            expected_single_value: bool | None = None,
+        ) -> p.Ldif.SchemaAttribute | None:
+            """Parse schema content and assert properties.
 
-        Alias for test_entry_create_and_unwrap for naming consistency.
+            Args:
+                quirk: Schema quirk instance
+                content: Schema definition content
+                expected_oid: Expected OID
+                expected_name: Expected name
 
-        Args:
-            dn: Distinguished Name for the entry
-            attributes: Dictionary of attributes for the entry
+            Returns:
+                The parsed schema object
 
-        Returns:
-            The unwrapped Entry instance
+            Raises:
+                AssertionError: If parsing fails or properties don't match
 
-        Raises:
-            AssertionError: If entry creation fails
+            """
+            if (
+                "STRUCTURAL" in content
+                or "AUXILIARY" in content
+                or "ABSTRACT" in content
+            ):
+                parse_method = getattr(quirk, "parse_objectclass", None)
+            else:
+                parse_method = getattr(quirk, "parse_attribute", None)
+            if parse_method is None:
+                parse_method = getattr(quirk, "parse", None)
+            if parse_method is None:
+                msg = "Quirk has no suitable parse method"
+                raise AssertionError(msg)
+            result = parse_method(content)
+            if hasattr(result, "is_failure") and result.is_failure:
+                raise AssertionError(f"Parsing failed: {result.error}")
+            value = result.value if hasattr(result, "value") else result
+            if expected_oid is not None:
+                actual_oid = getattr(value, "oid", None)
+                if actual_oid != expected_oid:
+                    raise AssertionError(
+                        f"Expected OID '{expected_oid}', got '{actual_oid}'"
+                    )
+            if expected_name is not None:
+                actual_name = getattr(value, "name", None)
+                if actual_name != expected_name:
+                    raise AssertionError(
+                        f"Expected name '{expected_name}', got '{actual_name}'"
+                    )
+            if expected_desc is not None:
+                actual_desc = getattr(value, "desc", None)
+                if actual_desc != expected_desc:
+                    raise AssertionError(
+                        f"Expected desc '{expected_desc}', got '{actual_desc}'"
+                    )
+            if expected_sup is not None:
+                actual_sup = getattr(value, "sup", None)
+                if actual_sup != expected_sup:
+                    raise AssertionError(
+                        f"Expected sup '{expected_sup}', got '{actual_sup}'"
+                    )
+            if expected_kind is not None:
+                actual_kind = getattr(value, "kind", None)
+                if actual_kind != expected_kind:
+                    raise AssertionError(
+                        f"Expected kind '{expected_kind}', got '{actual_kind}'"
+                    )
+            if expected_must is not None:
+                actual_must = getattr(value, "must", None)
+                if actual_must != expected_must:
+                    raise AssertionError(
+                        f"Expected must '{expected_must}', got '{actual_must}'"
+                    )
+            if expected_may is not None:
+                actual_may = getattr(value, "may", None)
+                if actual_may != expected_may:
+                    raise AssertionError(
+                        f"Expected may '{expected_may}', got '{actual_may}'"
+                    )
+            if expected_syntax is not None:
+                actual_syntax = getattr(value, "syntax", None)
+                if actual_syntax != expected_syntax:
+                    raise AssertionError(
+                        f"Expected syntax '{expected_syntax}', got '{actual_syntax}'"
+                    )
+            if expected_equality is not None:
+                actual_equality = getattr(value, "equality", None)
+                if actual_equality != expected_equality:
+                    raise AssertionError(
+                        f"Expected equality '{expected_equality}', got '{actual_equality}'"
+                    )
+            if expected_single_value is not None:
+                actual_single_value = getattr(value, "single_value", None)
+                if actual_single_value != expected_single_value:
+                    raise AssertionError(
+                        f"Expected single_value '{expected_single_value}', got '{actual_single_value}'"
+                    )
+            return value
 
-        """
-        if attributes is None:
-            attributes = {}
-        result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
-        if result.is_failure:
-            raise AssertionError(f"Entry creation failed: {result.error}")
-        return result.value
+        @staticmethod
+        def test_create_schema_attribute_from_dict(
+            data: dict[str, object],
+        ) -> m.Ldif.SchemaAttribute:
+            """Create a schema attribute from dictionary.
 
-    @staticmethod
-    def test_create_schema_attribute_and_unwrap(
-        oid: str,
-        name: str,
-        desc: str | None = None,
-        syntax: str | None = None,
-        *,
-        single_value: bool = False,
-    ) -> m.Ldif.SchemaAttribute:
-        """Create a schema attribute and unwrap the result.
+            Args:
+                data: Dictionary with attribute properties
 
-        Args:
-            oid: Object Identifier
-            name: Attribute name
-            desc: Description
-            syntax: Syntax OID
-            single_value: Single value flag
+            Returns:
+                The SchemaAttribute instance
 
-        Returns:
-            The unwrapped SchemaAttribute instance
+            """
+            desc_value = data.get("desc")
+            syntax_value = data.get("syntax")
+            return m.Ldif.SchemaAttribute(
+                oid=str(data.get("oid", "")),
+                name=str(data.get("name", "")),
+                desc=desc_value if isinstance(desc_value, str) else None,
+                syntax=syntax_value if isinstance(syntax_value, str) else None,
+                single_value=bool(data.get("single_value")),
+            )
 
-        Raises:
-            AssertionError: If creation fails
+        @staticmethod
+        def test_create_schema_objectclass_from_dict(
+            data: dict[str, object],
+        ) -> m.Ldif.SchemaObjectClass:
+            """Create a schema objectClass from dictionary.
 
-        """
-        return m.Ldif.SchemaAttribute(
-            oid=oid, name=name, desc=desc, syntax=syntax, single_value=single_value
-        )
+            Args:
+                data: Dictionary with objectClass properties
 
-    @staticmethod
-    def test_create_schema_objectclass_and_unwrap(
-        oid: str,
-        name: str,
-        desc: str | None = None,
-        kind: str = "STRUCTURAL",
-        sup: str | None = None,
-        must: list[str] | None = None,
-        may: list[str] | None = None,
-    ) -> m.Ldif.SchemaObjectClass:
-        """Create a schema objectClass and unwrap the result.
+            Returns:
+                The SchemaObjectClass instance
 
-        Args:
-            oid: Object Identifier
-            name: ObjectClass name
-            desc: Description
-            kind: Kind (STRUCTURAL, AUXILIARY, ABSTRACT)
-            sup: Superior class
-            must: Required attributes
-            may: Optional attributes
+            """
+            must = data.get("must", [])
+            may = data.get("may", [])
+            desc_value = data.get("desc")
+            sup_value = data.get("sup")
+            must_list = (
+                [item for item in must if isinstance(item, str)]
+                if isinstance(must, list)
+                else []
+            )
+            may_list = (
+                [item for item in may if isinstance(item, str)]
+                if isinstance(may, list)
+                else []
+            )
+            return m.Ldif.SchemaObjectClass(
+                oid=str(data.get("oid", "")),
+                name=str(data.get("name", "")),
+                desc=desc_value if isinstance(desc_value, str) else None,
+                kind=str(data.get("kind", "STRUCTURAL")),
+                sup=sup_value if isinstance(sup_value, (str, list)) else None,
+                must=must_list,
+                may=may_list,
+            )
 
-        Returns:
-            The unwrapped SchemaObjectClass instance
+        @staticmethod
+        def test_schema_parse_attribute(
+            schema_quirk: p.Ldif.SchemaQuirk,
+            attr_def: str,
+            expected_oid: str,
+            expected_name: str,
+        ) -> m.Ldif.SchemaAttribute:
+            """Parse attribute definition and validate expected properties.
 
-        Raises:
-            AssertionError: If creation fails
+            Args:
+                schema_quirk: Schema quirk instance
+                attr_def: Attribute definition string
+                expected_oid: Expected OID
+                expected_name: Expected name
 
-        """
-        return m.Ldif.SchemaObjectClass(
-            oid=oid,
-            name=name,
-            desc=desc,
-            kind=kind,
-            sup=sup,
-            must=must or [],
-            may=may or [],
-        )
+            Returns:
+                The parsed SchemaAttribute instance
 
-    @staticmethod
-    def test_quirk_parse_success_and_unwrap(
-        quirk: (p.Ldif.SchemaQuirk | p.Ldif.AclQuirk | p.Ldif.EntryQuirk),
-        content: str,
-        parse_method: str | None = None,
-    ) -> (
-        p.Ldif.SchemaAttribute
-        | p.Ldif.SchemaObjectClass
-        | p.Ldif.Acl
-        | p.Ldif.Entry
-        | None
-    ):
-        """Parse using quirk and assert success.
+            Raises:
+                AssertionError: If parsing fails or properties don't match
 
-        Args:
-            quirk: Schema quirk instance
-            content: Content to parse
-            parse_method: Optional specific parse method name
-
-        Returns:
-            The parsed value
-
-        Raises:
-            AssertionError: If parsing fails
-
-        """
-        method_name = parse_method or "parse"
-        method = getattr(quirk, method_name, None)
-        if not callable(method):
-            raise AssertionError(f"Quirk has no method '{method_name}'")
-        result = method(content)
-        is_failure = getattr(result, "is_failure", None)
-        if isinstance(is_failure, bool) and is_failure:
-            error = getattr(result, "error", "Unknown error")
-            raise AssertionError(f"Parsing failed: {error}")
-        return cast(
-            "p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | p.Ldif.Acl | p.Ldif.Entry | None",
-            getattr(result, "value", result),
-        )
-
-    @staticmethod
-    def test_schema_quirk_parse_and_assert(
-        quirk: p.Ldif.SchemaQuirk,
-        content: str,
-        expected_oid: str | None = None,
-        expected_name: str | None = None,
-        expected_desc: str | None = None,
-        expected_sup: str | None = None,
-        expected_kind: str | None = None,
-        expected_must: list[str] | None = None,
-        expected_may: list[str] | None = None,
-        expected_syntax: str | None = None,
-        expected_equality: str | None = None,
-        expected_single_value: bool | None = None,
-    ) -> p.Ldif.SchemaAttribute | None:
-        """Parse schema content and assert properties.
-
-        Args:
-            quirk: Schema quirk instance
-            content: Schema definition content
-            expected_oid: Expected OID
-            expected_name: Expected name
-
-        Returns:
-            The parsed schema object
-
-        Raises:
-            AssertionError: If parsing fails or properties don't match
-
-        """
-        if "STRUCTURAL" in content or "AUXILIARY" in content or "ABSTRACT" in content:
-            parse_method = getattr(quirk, "parse_objectclass", None)
-        else:
-            parse_method = getattr(quirk, "parse_attribute", None)
-        if parse_method is None:
-            parse_method = getattr(quirk, "parse", None)
-        if parse_method is None:
-            msg = "Quirk has no suitable parse method"
-            raise AssertionError(msg)
-        result = parse_method(content)
-        if hasattr(result, "is_failure") and result.is_failure:
-            raise AssertionError(f"Parsing failed: {result.error}")
-        value = result.value if hasattr(result, "value") else result
-        if expected_oid is not None:
+            """
+            parse_method = getattr(schema_quirk, "_parse_attribute", None)
+            if parse_method is None:
+                parse_method = getattr(schema_quirk, "parse_attribute", None)
+            if parse_method is None:
+                msg = "Schema quirk has no attribute parse method"
+                raise AssertionError(msg)
+            result = parse_method(attr_def)
+            if hasattr(result, "is_failure") and result.is_failure:
+                raise AssertionError(f"Attribute parsing failed: {result.error}")
+            value = result.value if hasattr(result, "value") else result
             actual_oid = getattr(value, "oid", None)
             if actual_oid != expected_oid:
                 raise AssertionError(
                     f"Expected OID '{expected_oid}', got '{actual_oid}'"
                 )
-        if expected_name is not None:
             actual_name = getattr(value, "name", None)
             if actual_name != expected_name:
                 raise AssertionError(
                     f"Expected name '{expected_name}', got '{actual_name}'"
                 )
-        if expected_desc is not None:
-            actual_desc = getattr(value, "desc", None)
-            if actual_desc != expected_desc:
+            return value
+
+        @staticmethod
+        def test_schema_parse_objectclass(
+            schema_quirk: p.Ldif.SchemaQuirk,
+            oc_def: str,
+            expected_oid: str,
+            expected_name: str,
+        ) -> m.Ldif.SchemaObjectClass:
+            """Parse objectClass definition and validate expected properties.
+
+            Args:
+                schema_quirk: Schema quirk instance
+                oc_def: ObjectClass definition string
+                expected_oid: Expected OID
+                expected_name: Expected name
+
+            Returns:
+                The parsed SchemaObjectClass instance
+
+            Raises:
+                AssertionError: If parsing fails or properties don't match
+
+            """
+            parse_method = getattr(schema_quirk, "_parse_objectclass", None)
+            if parse_method is None:
+                parse_method = getattr(schema_quirk, "parse_objectclass", None)
+            if parse_method is None:
+                msg = "Schema quirk has no objectClass parse method"
+                raise AssertionError(msg)
+            result = parse_method(oc_def)
+            if hasattr(result, "is_failure") and result.is_failure:
+                raise AssertionError(f"ObjectClass parsing failed: {result.error}")
+            value = result.value if hasattr(result, "value") else result
+            actual_oid = getattr(value, "oid", None)
+            if actual_oid != expected_oid:
                 raise AssertionError(
-                    f"Expected desc '{expected_desc}', got '{actual_desc}'"
+                    f"Expected OID '{expected_oid}', got '{actual_oid}'"
                 )
-        if expected_sup is not None:
-            actual_sup = getattr(value, "sup", None)
-            if actual_sup != expected_sup:
+            actual_name = getattr(value, "name", None)
+            if actual_name != expected_name:
                 raise AssertionError(
-                    f"Expected sup '{expected_sup}', got '{actual_sup}'"
+                    f"Expected name '{expected_name}', got '{actual_name}'"
                 )
-        if expected_kind is not None:
-            actual_kind = getattr(value, "kind", None)
-            if actual_kind != expected_kind:
-                raise AssertionError(
-                    f"Expected kind '{expected_kind}', got '{actual_kind}'"
-                )
-        if expected_must is not None:
-            actual_must = getattr(value, "must", None)
-            if actual_must != expected_must:
-                raise AssertionError(
-                    f"Expected must '{expected_must}', got '{actual_must}'"
-                )
-        if expected_may is not None:
-            actual_may = getattr(value, "may", None)
-            if actual_may != expected_may:
-                raise AssertionError(
-                    f"Expected may '{expected_may}', got '{actual_may}'"
-                )
-        if expected_syntax is not None:
-            actual_syntax = getattr(value, "syntax", None)
-            if actual_syntax != expected_syntax:
-                raise AssertionError(
-                    f"Expected syntax '{expected_syntax}', got '{actual_syntax}'"
-                )
-        if expected_equality is not None:
-            actual_equality = getattr(value, "equality", None)
-            if actual_equality != expected_equality:
-                raise AssertionError(
-                    f"Expected equality '{expected_equality}', got '{actual_equality}'"
-                )
-        if expected_single_value is not None:
-            actual_single_value = getattr(value, "single_value", None)
-            if actual_single_value != expected_single_value:
-                raise AssertionError(
-                    f"Expected single_value '{expected_single_value}', got '{actual_single_value}'"
-                )
-        return value
+            return value
 
-    @staticmethod
-    def test_create_schema_attribute_from_dict(
-        data: dict[str, object],
-    ) -> m.Ldif.SchemaAttribute:
-        """Create a schema attribute from dictionary.
+        @staticmethod
+        def test_schema_write_attribute_with_metadata(
+            schema_quirk: p.Ldif.SchemaQuirk,
+            attr_def: str,
+            expected_oid: str,
+            expected_name: str,
+            must_contain: list[str] | None = None,
+        ) -> tuple[object, str]:
+            """Parse attribute definition, write it back, and validate output.
 
-        Args:
-            data: Dictionary with attribute properties
+            Args:
+                schema_quirk: Schema quirk instance
+                attr_def: Attribute definition string to parse
+                expected_oid: Expected OID in the parsed attribute
+                expected_name: Expected name in the parsed attribute
+                must_contain: List of strings that must appear in written output
 
-        Returns:
-            The SchemaAttribute instance
+            Returns:
+                Tuple of (parsed attribute, written string)
 
-        """
-        desc_value = data.get("desc")
-        syntax_value = data.get("syntax")
-        return m.Ldif.SchemaAttribute(
-            oid=str(data.get("oid", "")),
-            name=str(data.get("name", "")),
-            desc=desc_value if isinstance(desc_value, str) else None,
-            syntax=syntax_value if isinstance(syntax_value, str) else None,
-            single_value=bool(data.get("single_value")),
-        )
+            Raises:
+                AssertionError: If parsing/writing fails or validations don't pass
 
-    @staticmethod
-    def test_create_schema_objectclass_from_dict(
-        data: dict[str, object],
-    ) -> m.Ldif.SchemaObjectClass:
-        """Create a schema objectClass from dictionary.
-
-        Args:
-            data: Dictionary with objectClass properties
-
-        Returns:
-            The SchemaObjectClass instance
-
-        """
-        must = data.get("must", [])
-        may = data.get("may", [])
-        desc_value = data.get("desc")
-        sup_value = data.get("sup")
-        must_list = (
-            [item for item in must if isinstance(item, str)]
-            if isinstance(must, list)
-            else []
-        )
-        may_list = (
-            [item for item in may if isinstance(item, str)]
-            if isinstance(may, list)
-            else []
-        )
-        return m.Ldif.SchemaObjectClass(
-            oid=str(data.get("oid", "")),
-            name=str(data.get("name", "")),
-            desc=desc_value if isinstance(desc_value, str) else None,
-            kind=str(data.get("kind", "STRUCTURAL")),
-            sup=sup_value if isinstance(sup_value, (str, list)) else None,
-            must=must_list,
-            may=may_list,
-        )
-
-    @staticmethod
-    def test_schema_parse_attribute(
-        schema_quirk: p.Ldif.SchemaQuirk,
-        attr_def: str,
-        expected_oid: str,
-        expected_name: str,
-    ) -> m.Ldif.SchemaAttribute:
-        """Parse attribute definition and validate expected properties.
-
-        Args:
-            schema_quirk: Schema quirk instance
-            attr_def: Attribute definition string
-            expected_oid: Expected OID
-            expected_name: Expected name
-
-        Returns:
-            The parsed SchemaAttribute instance
-
-        Raises:
-            AssertionError: If parsing fails or properties don't match
-
-        """
-        parse_method = getattr(schema_quirk, "_parse_attribute", None)
-        if parse_method is None:
-            parse_method = getattr(schema_quirk, "parse_attribute", None)
-        if parse_method is None:
-            msg = "Schema quirk has no attribute parse method"
-            raise AssertionError(msg)
-        result = parse_method(attr_def)
-        if hasattr(result, "is_failure") and result.is_failure:
-            raise AssertionError(f"Attribute parsing failed: {result.error}")
-        value = result.value if hasattr(result, "value") else result
-        actual_oid = getattr(value, "oid", None)
-        if actual_oid != expected_oid:
-            raise AssertionError(f"Expected OID '{expected_oid}', got '{actual_oid}'")
-        actual_name = getattr(value, "name", None)
-        if actual_name != expected_name:
-            raise AssertionError(
-                f"Expected name '{expected_name}', got '{actual_name}'"
+            """
+            attr = RfcTestHelpers.test_schema_parse_attribute(
+                schema_quirk, attr_def, expected_oid, expected_name
             )
-        return value
+            write_method = getattr(schema_quirk, "write_attribute", None)
+            if write_method is None:
+                msg = "Schema quirk has no write_attribute method"
+                raise AssertionError(msg)
+            result = write_method(attr)
+            if hasattr(result, "is_failure") and result.is_failure:
+                raise AssertionError(f"Attribute writing failed: {result.error}")
+            written = result.value if hasattr(result, "value") else result
+            if must_contain:
+                for element in must_contain:
+                    if element not in written:
+                        raise AssertionError(
+                            f"Expected '{element}' in written output: {written}"
+                        )
+            return (attr, written)
 
-    @staticmethod
-    def test_schema_parse_objectclass(
-        schema_quirk: p.Ldif.SchemaQuirk,
-        oc_def: str,
-        expected_oid: str,
-        expected_name: str,
-    ) -> m.Ldif.SchemaObjectClass:
-        """Parse objectClass definition and validate expected properties.
+        @staticmethod
+        def test_parse_and_assert_entry_structure(
+            parser_service: FlextLdifParser,
+            content: str,
+            expected_dn: str,
+            expected_attributes: list[str],
+            expected_count: int = 1,
+        ) -> list[m.Ldif.Entry]:
+            """Parse LDIF content and assert entry structure.
 
-        Args:
-            schema_quirk: Schema quirk instance
-            oc_def: ObjectClass definition string
-            expected_oid: Expected OID
-            expected_name: Expected name
+            Args:
+                parser_service: The parser service instance
+                content: LDIF content to parse
+                expected_dn: Expected DN of first entry
+                expected_attributes: Expected attribute names
+                expected_count: Expected number of entries
 
-        Returns:
-            The parsed SchemaObjectClass instance
+            Returns:
+                List of parsed entries
 
-        Raises:
-            AssertionError: If parsing fails or properties don't match
+            Raises:
+                AssertionError: If parsing fails or structure doesn't match
 
-        """
-        parse_method = getattr(schema_quirk, "_parse_objectclass", None)
-        if parse_method is None:
-            parse_method = getattr(schema_quirk, "parse_objectclass", None)
-        if parse_method is None:
-            msg = "Schema quirk has no objectClass parse method"
-            raise AssertionError(msg)
-        result = parse_method(oc_def)
-        if hasattr(result, "is_failure") and result.is_failure:
-            raise AssertionError(f"ObjectClass parsing failed: {result.error}")
-        value = result.value if hasattr(result, "value") else result
-        actual_oid = getattr(value, "oid", None)
-        if actual_oid != expected_oid:
-            raise AssertionError(f"Expected OID '{expected_oid}', got '{actual_oid}'")
-        actual_name = getattr(value, "name", None)
-        if actual_name != expected_name:
-            raise AssertionError(
-                f"Expected name '{expected_name}', got '{actual_name}'"
-            )
-        return value
-
-    @staticmethod
-    def test_schema_write_attribute_with_metadata(
-        schema_quirk: p.Ldif.SchemaQuirk,
-        attr_def: str,
-        expected_oid: str,
-        expected_name: str,
-        must_contain: list[str] | None = None,
-    ) -> tuple[object, str]:
-        """Parse attribute definition, write it back, and validate output.
-
-        Args:
-            schema_quirk: Schema quirk instance
-            attr_def: Attribute definition string to parse
-            expected_oid: Expected OID in the parsed attribute
-            expected_name: Expected name in the parsed attribute
-            must_contain: List of strings that must appear in written output
-
-        Returns:
-            Tuple of (parsed attribute, written string)
-
-        Raises:
-            AssertionError: If parsing/writing fails or validations don't pass
-
-        """
-        attr = RfcTestHelpers.test_schema_parse_attribute(
-            schema_quirk, attr_def, expected_oid, expected_name
-        )
-        write_method = getattr(schema_quirk, "write_attribute", None)
-        if write_method is None:
-            msg = "Schema quirk has no write_attribute method"
-            raise AssertionError(msg)
-        result = write_method(attr)
-        if hasattr(result, "is_failure") and result.is_failure:
-            raise AssertionError(f"Attribute writing failed: {result.error}")
-        written = result.value if hasattr(result, "value") else result
-        if must_contain:
-            for element in must_contain:
-                if element not in written:
-                    raise AssertionError(
-                        f"Expected '{element}' in written output: {written}"
-                    )
-        return (attr, written)
-
-    @staticmethod
-    def test_parse_and_assert_entry_structure(
-        parser_service: FlextLdifParser,
-        content: str,
-        expected_dn: str,
-        expected_attributes: list[str],
-        expected_count: int = 1,
-    ) -> list[m.Ldif.Entry]:
-        """Parse LDIF content and assert entry structure.
-
-        Args:
-            parser_service: The parser service instance
-            content: LDIF content to parse
-            expected_dn: Expected DN of first entry
-            expected_attributes: Expected attribute names
-            expected_count: Expected number of entries
-
-        Returns:
-            List of parsed entries
-
-        Raises:
-            AssertionError: If parsing fails or structure doesn't match
-
-        """
-        if not isinstance(parser_service, FlextLdifParser):
-            raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-        result = parser_service.parse_string(content=content, server_type="rfc")
-        if result.is_failure:
-            raise AssertionError(f"Parsing failed: {result.error}")
-        entries = [m.Ldif.Entry.model_validate(entry) for entry in result.value.entries]
-        if len(entries) != expected_count:
-            raise AssertionError(
-                f"Expected {expected_count} entries, got {len(entries)}"
-            )
-        if entries and expected_dn:
-            actual_dn = getattr(entries[0], "dn", None)
-            if str(actual_dn) != expected_dn:
-                raise AssertionError(f"Expected DN '{expected_dn}', got '{actual_dn}'")
-        if entries and expected_attributes:
-            entry = entries[0]
-            attrs = getattr(entry, "attributes", {})
-            for attr_name in expected_attributes:
-                if attr_name not in attrs:
-                    raise AssertionError(
-                        f"Expected attribute '{attr_name}' not found in entry"
-                    )
-        return entries
-
-    @staticmethod
-    def test_parse_and_assert_multiple_entries(
-        parser_service: FlextLdifParser,
-        content: str,
-        expected_dns: list[str],
-        expected_count: int,
-    ) -> list[m.Ldif.Entry]:
-        """Parse LDIF content with multiple entries and assert structure.
-
-        Args:
-            parser_service: The parser service instance
-            content: LDIF content to parse
-            expected_dns: Expected DNs of entries (in order)
-            expected_count: Expected number of entries
-
-        Returns:
-            List of parsed entries
-
-        Raises:
-            AssertionError: If parsing fails or structure doesn't match
-
-        """
-        if not isinstance(parser_service, FlextLdifParser):
-            raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-        result = parser_service.parse_string(content=content, server_type="rfc")
-        if result.is_failure:
-            raise AssertionError(f"Parsing failed: {result.error}")
-        entries = [m.Ldif.Entry.model_validate(entry) for entry in result.value.entries]
-        if len(entries) != expected_count:
-            raise AssertionError(
-                f"Expected {expected_count} entries, got {len(entries)}"
-            )
-        for i, expected_dn in enumerate(expected_dns):
-            if i < len(entries):
-                actual_dn = getattr(entries[i], "dn", None)
+            """
+            if not isinstance(parser_service, FlextLdifParser):
+                raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
+            result = parser_service.parse_string(content=content, server_type="rfc")
+            if result.is_failure:
+                raise AssertionError(f"Parsing failed: {result.error}")
+            entries = [
+                m.Ldif.Entry.model_validate(entry) for entry in result.value.entries
+            ]
+            if len(entries) != expected_count:
+                raise AssertionError(
+                    f"Expected {expected_count} entries, got {len(entries)}"
+                )
+            if entries and expected_dn:
+                actual_dn = getattr(entries[0], "dn", None)
                 if str(actual_dn) != expected_dn:
                     raise AssertionError(
-                        f"Entry {i}: Expected DN '{expected_dn}', got '{actual_dn}'"
+                        f"Expected DN '{expected_dn}', got '{actual_dn}'"
                     )
-        return entries
+            if entries and expected_attributes:
+                entry = entries[0]
+                attrs = getattr(entry, "attributes", {})
+                for attr_name in expected_attributes:
+                    if attr_name not in attrs:
+                        raise AssertionError(
+                            f"Expected attribute '{attr_name}' not found in entry"
+                        )
+            return entries
 
-    @staticmethod
-    def test_create_entry(
-        dn: str, attributes: dict[str, str | list[str]]
-    ) -> m.Ldif.Entry:
-        """Create an entry for testing.
+        @staticmethod
+        def test_parse_and_assert_multiple_entries(
+            parser_service: FlextLdifParser,
+            content: str,
+            expected_dns: list[str],
+            expected_count: int,
+        ) -> list[m.Ldif.Entry]:
+            """Parse LDIF content with multiple entries and assert structure.
 
-        Args:
-            dn: Distinguished Name for the entry
-            attributes: Dictionary of attributes for the entry
+            Args:
+                parser_service: The parser service instance
+                content: LDIF content to parse
+                expected_dns: Expected DNs of entries (in order)
+                expected_count: Expected number of entries
 
-        Returns:
-            Entry instance
+            Returns:
+                List of parsed entries
 
-        Raises:
-            AssertionError: If entry creation fails
+            Raises:
+                AssertionError: If parsing fails or structure doesn't match
 
-        """
-        result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
-        if result.is_failure:
-            raise AssertionError(f"Entry creation failed: {result.error}")
-        return result.value
-
-    @staticmethod
-    def test_write_entries_to_string(
-        writer_service: FlextLdifWriter,
-        entries: list[m.Ldif.Entry],
-        expected_content: list[str] | None = None,
-    ) -> str:
-        """Write entries to LDIF string.
-
-        Args:
-            writer_service: The writer service instance
-            entries: List of entries to write
-            expected_content: Optional list of strings that must appear in output
-
-        Returns:
-            LDIF string
-
-        Raises:
-            AssertionError: If writing fails or expected content not found
-
-        """
-        if not isinstance(writer_service, FlextLdifWriter):
-            raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
-        result = writer_service.write_to_string(entries=entries)
-        if result.is_failure:
-            raise AssertionError(f"Writing failed: {result.error}")
-        ldif_string = result.value
-        if not isinstance(ldif_string, str):
-            raise AssertionError(f"Expected string, got {type(ldif_string)}")
-        if expected_content:
-            for substring in expected_content:
-                if substring not in ldif_string:
-                    raise AssertionError(f"'{substring}' not found in LDIF output")
-        return ldif_string
-
-    @staticmethod
-    def test_write_entries_to_file(
-        writer_service: FlextLdifWriter,
-        entries: list[m.Ldif.Entry],
-        file_path: str | Path,
-        expected_content: list[str] | None = None,
-    ) -> None:
-        """Write entries to LDIF file.
-
-        Args:
-            writer_service: The writer service instance
-            entries: List of entries to write
-            file_path: Path to write to
-            expected_content: Optional list of strings that must appear in output
-
-        Raises:
-            AssertionError: If writing fails or expected content not found
-
-        """
-        if not isinstance(writer_service, FlextLdifWriter):
-            raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
-        if not isinstance(file_path, Path):
-            raise TypeError(f"Expected Path, got {type(file_path)}")
-        result = writer_service.write_to_file(entries=entries, path=file_path)
-        if result.is_failure:
-            raise AssertionError(f"Writing to file failed: {result.error}")
-        if not file_path.exists():
-            raise AssertionError(f"Output file {file_path} was not created")
-        if expected_content:
-            content = file_path.read_text()
-            for substring in expected_content:
-                if substring not in content:
-                    raise AssertionError(f"'{substring}' not found in file content")
-
-    @staticmethod
-    def test_parse_edge_case(
-        parser_service: FlextLdifParser,
-        content: str,
-        should_succeed: bool | None = None,
-    ) -> list[m.Ldif.Entry] | None:
-        """Parse edge case LDIF content.
-
-        Args:
-            parser_service: The parser service instance
-            content: LDIF content to parse
-            should_succeed: Expected success state (None = either outcome acceptable)
-
-        Returns:
-            Parse result value if successful, None otherwise
-
-        Raises:
-            AssertionError: If should_succeed specified and result doesn't match
-
-        """
-        if not isinstance(parser_service, FlextLdifParser):
-            raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-        result = parser_service.parse_string(content=content, server_type="rfc")
-        if should_succeed is True and result.is_failure:
-            raise AssertionError(f"Expected success but got failure: {result.error}")
-        if should_succeed is False and result.is_success:
-            msg = "Expected failure but got success"
-            raise AssertionError(msg)
-        return result.map(lambda r: list(r.entries)).map_or(None)
-
-    @staticmethod
-    def test_write_entry_variations(
-        writer_service: FlextLdifWriter,
-        entry_data: dict[str, dict[str, str | dict[str, list[str]]]],
-    ) -> None:
-        """Test writing entries with various data types.
-
-        Args:
-            writer_service: The writer service instance
-            entry_data: Dict mapping test case names to entry data
-
-        Raises:
-            AssertionError: If any write operation fails
-
-        """
-        if not isinstance(writer_service, FlextLdifWriter):
-            raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
-        for test_name, data in entry_data.items():
-            dn = str(data.get("dn", ""))
-            raw_attributes = data.get("attributes", {})
-            if not isinstance(raw_attributes, dict):
-                attributes: dict[str, list[str]] = {}
-            else:
-                attributes = {
-                    str(k): [str(i) for i in v] if isinstance(v, list) else [str(v)]
-                    for k, v in raw_attributes.items()
-                }
-            entry_result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
-            if entry_result.is_failure:
+            """
+            if not isinstance(parser_service, FlextLdifParser):
+                raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
+            result = parser_service.parse_string(content=content, server_type="rfc")
+            if result.is_failure:
+                raise AssertionError(f"Parsing failed: {result.error}")
+            entries = [
+                m.Ldif.Entry.model_validate(entry) for entry in result.value.entries
+            ]
+            if len(entries) != expected_count:
                 raise AssertionError(
-                    f"Entry creation failed for {test_name}: {entry_result.error}"
+                    f"Expected {expected_count} entries, got {len(entries)}"
                 )
-            write_result = writer_service.write_to_string(entries=[entry_result.value])
-            if write_result.is_failure:
-                raise AssertionError(
-                    f"Write failed for {test_name}: {write_result.error}"
-                )
-            if dn and dn not in write_result.value:
-                raise AssertionError(f"DN '{dn}' not found in output for {test_name}")
+            for i, expected_dn in enumerate(expected_dns):
+                if i < len(entries):
+                    actual_dn = getattr(entries[i], "dn", None)
+                    if str(actual_dn) != expected_dn:
+                        raise AssertionError(
+                            f"Entry {i}: Expected DN '{expected_dn}', got '{actual_dn}'"
+                        )
+            return entries
 
-    @staticmethod
-    def test_entry_quirk_can_handle(
-        entry_quirk: p.Ldif.EntryQuirk, entry: m.Ldif.Entry, expected: bool
-    ) -> None:
-        """Test Entry quirk can_handle method.
+        @staticmethod
+        def test_create_entry(
+            dn: str, attributes: dict[str, str | list[str]]
+        ) -> m.Ldif.Entry:
+            """Create an entry for testing.
 
-        Args:
-            entry_quirk: Entry quirk instance
-            entry: Entry to test
-            expected: Expected result from can_handle
+            Args:
+                dn: Distinguished Name for the entry
+                attributes: Dictionary of attributes for the entry
 
-        Raises:
-            AssertionError: If can_handle returns unexpected result
+            Returns:
+                Entry instance
 
-        """
-        can_handle_method = getattr(entry_quirk, "can_handle", None)
-        if can_handle_method is None:
-            msg = "Entry quirk has no can_handle method"
-            raise AssertionError(msg)
-        dn = str(getattr(entry, "dn", ""))
-        attributes = getattr(entry, "attributes", {})
-        result = can_handle_method(dn, attributes)
-        if result != expected:
-            raise AssertionError(
-                f"Expected can_handle to return {expected}, got {result}"
-            )
+            Raises:
+                AssertionError: If entry creation fails
 
-    @staticmethod
-    def test_acl_quirk_parse_and_verify(
-        acl_quirk: p.Ldif.AclQuirk, acl_line: str, expected_raw_acl: str | None = None
-    ) -> m.Ldif.Acl | None:
-        """Parse ACL and verify result.
+            """
+            result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
+            if result.is_failure:
+                raise AssertionError(f"Entry creation failed: {result.error}")
+            return result.value
 
-        Args:
-            acl_quirk: ACL quirk instance
-            acl_line: ACL line to parse
-            expected_raw_acl: Expected raw ACL value
+        @staticmethod
+        def test_write_entries_to_string(
+            writer_service: FlextLdifWriter,
+            entries: list[m.Ldif.Entry],
+            expected_content: list[str] | None = None,
+        ) -> str:
+            """Write entries to LDIF string.
 
-        Returns:
-            Parsed ACL object
+            Args:
+                writer_service: The writer service instance
+                entries: List of entries to write
+                expected_content: Optional list of strings that must appear in output
 
-        Raises:
-            AssertionError: If parsing fails or verification fails
+            Returns:
+                LDIF string
 
-        """
-        parse_method = getattr(acl_quirk, "parse", None)
-        if parse_method is None:
-            msg = "ACL quirk has no parse method"
-            raise AssertionError(msg)
-        result = parse_method(acl_line)
-        if hasattr(result, "is_failure") and result.is_failure:
-            raise AssertionError(f"ACL parsing failed: {result.error}")
-        value = result.value if hasattr(result, "value") else result
-        if expected_raw_acl is not None:
-            raw_acl = getattr(value, "raw_acl", None)
-            if raw_acl != expected_raw_acl:
-                raise AssertionError(
-                    f"Expected raw_acl '{expected_raw_acl}', got '{raw_acl}'"
-                )
-        return value
+            Raises:
+                AssertionError: If writing fails or expected content not found
 
-    @staticmethod
-    def test_acl_quirk_write_and_verify(
-        acl_quirk: p.Ldif.AclQuirk, acl: m.Ldif.Acl, expected_content: str | None = None
-    ) -> str:
-        """Write ACL and verify result.
+            """
+            if not isinstance(writer_service, FlextLdifWriter):
+                raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
+            result = writer_service.write_to_string(entries=entries)
+            if result.is_failure:
+                raise AssertionError(f"Writing failed: {result.error}")
+            ldif_string = result.value
+            if not isinstance(ldif_string, str):
+                raise AssertionError(f"Expected string, got {type(ldif_string)}")
+            if expected_content:
+                for substring in expected_content:
+                    if substring not in ldif_string:
+                        raise AssertionError(f"'{substring}' not found in LDIF output")
+            return ldif_string
 
-        Args:
-            acl_quirk: ACL quirk instance
-            acl: ACL object to write
-            expected_content: Expected content in output
+        @staticmethod
+        def test_write_entries_to_file(
+            writer_service: FlextLdifWriter,
+            entries: list[m.Ldif.Entry],
+            file_path: str | Path,
+            expected_content: list[str] | None = None,
+        ) -> None:
+            """Write entries to LDIF file.
 
-        Returns:
-            Written ACL string
+            Args:
+                writer_service: The writer service instance
+                entries: List of entries to write
+                file_path: Path to write to
+                expected_content: Optional list of strings that must appear in output
 
-        Raises:
-            AssertionError: If writing fails or verification fails
+            Raises:
+                AssertionError: If writing fails or expected content not found
 
-        """
-        write_method = getattr(acl_quirk, "write", None)
-        if write_method is None:
-            msg = "ACL quirk has no write method"
-            raise AssertionError(msg)
-        result = write_method(acl)
-        if hasattr(result, "is_failure") and result.is_failure:
-            raise AssertionError(f"ACL writing failed: {result.error}")
-        output = result.value if hasattr(result, "value") else result
-        if not isinstance(output, str):
-            raise AssertionError(f"Expected string output, got {type(output)}")
-        if expected_content is not None and expected_content not in output:
-            raise AssertionError(f"Expected '{expected_content}' not found in output")
-        return output
+            """
+            if not isinstance(writer_service, FlextLdifWriter):
+                raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
+            if not isinstance(file_path, Path):
+                raise TypeError(f"Expected Path, got {type(file_path)}")
+            result = writer_service.write_to_file(entries=entries, path=file_path)
+            if result.is_failure:
+                raise AssertionError(f"Writing to file failed: {result.error}")
+            if not file_path.exists():
+                raise AssertionError(f"Output file {file_path} was not created")
+            if expected_content:
+                content = file_path.read_text()
+                for substring in expected_content:
+                    if substring not in content:
+                        raise AssertionError(f"'{substring}' not found in file content")
 
-    @staticmethod
-    def test_parse_error_handling(
-        schema_quirk: p.Ldif.SchemaQuirk, invalid_def: str, *, should_fail: bool = True
-    ) -> m.Ldif.SchemaAttribute | None:
-        """Test parsing error handling for invalid definitions.
+        @staticmethod
+        def test_parse_edge_case(
+            parser_service: FlextLdifParser,
+            content: str,
+            should_succeed: bool | None = None,
+        ) -> list[m.Ldif.Entry] | None:
+            """Parse edge case LDIF content.
 
-        Args:
-            schema_quirk: Schema quirk instance
-            invalid_def: Invalid attribute/objectClass definition string
-            should_fail: Whether parsing should fail (default True)
+            Args:
+                parser_service: The parser service instance
+                content: LDIF content to parse
+                should_succeed: Expected success state (None = either outcome acceptable)
 
-        Returns:
-            Parse result value if successful, None otherwise
+            Returns:
+                Parse result value if successful, None otherwise
 
-        Raises:
-            AssertionError: If should_fail and parsing succeeds,
-                           or if not should_fail and parsing fails
+            Raises:
+                AssertionError: If should_succeed specified and result doesn't match
 
-        """
-        parse_method = getattr(schema_quirk, "_parse_attribute", None)
-        if parse_method is None:
-            parse_method = getattr(schema_quirk, "parse_attribute", None)
-        if parse_method is None:
-            msg = "Schema quirk has no attribute parse method"
-            raise AssertionError(msg)
-        result = parse_method(invalid_def)
-        if hasattr(result, "is_failure"):
-            is_failure = result.is_failure
-        else:
-            is_failure = result is None
-        if should_fail and (not is_failure):
-            msg = "Expected parsing to fail but it succeeded"
-            raise AssertionError(msg)
-        if not should_fail and is_failure:
-            error_msg = result.error if hasattr(result, "error") else "Unknown error"
-            raise AssertionError(f"Expected parsing to succeed but got: {error_msg}")
-        if is_failure:
-            return None
-        return result.value if hasattr(result, "value") else result
-
-
-class TestDeduplicationHelpers:
-    """Test helpers for deduplication functionality."""
-
-    @staticmethod
-    def create_entries_batch(
-        entries_data: list[dict[str, object]], *, validate_all: bool = True
-    ) -> list[m.Ldif.Entry]:
-        """Create multiple entries from data dictionaries.
-
-        Args:
-            entries_data: List of dicts with 'dn' and 'attributes' keys
-            validate_all: Whether to validate all entries (currently unused)
-
-        Returns:
-            List of created Entry instances
-
-        """
-        service = FlextLdifEntries()
-        entries: list[m.Ldif.Entry] = []
-        for entry_data in entries_data:
-            dn_raw = entry_data.get("dn")
-            attrs_raw = entry_data.get("attributes")
-            if not isinstance(dn_raw, str):
-                msg = "Entry data must include string 'dn'"
-                raise AssertionError(msg)
-            if not isinstance(attrs_raw, dict):
-                msg = "Entry data must include dict 'attributes'"
-                raise AssertionError(msg)
-            normalized_attrs: dict[str, str | list[str]] = {}
-            for attr_name_raw, attr_value_raw in attrs_raw.items():
-                if not isinstance(attr_name_raw, str):
-                    continue
-                if isinstance(attr_value_raw, str):
-                    normalized_attrs[attr_name_raw] = attr_value_raw
-                    continue
-                if isinstance(attr_value_raw, list):
-                    string_values = [
-                        item for item in attr_value_raw if isinstance(item, str)
-                    ]
-                    if len(string_values) == len(attr_value_raw):
-                        normalized_attrs[attr_name_raw] = string_values
-            result = service.create_entry(dn=dn_raw, attributes=normalized_attrs)
-            if result.is_success:
-                entries.append(result.value)
-        return entries
-
-    @staticmethod
-    def batch_parse_and_assert(
-        parser_service: FlextLdifParser,
-        test_cases: list[dict[str, object]],
-        *,
-        validate_all: bool = True,
-    ) -> list[r[m.Ldif.LdifResults.ParseResponse]]:
-        """Batch parse LDIF content and assert results.
-
-        Args:
-            parser_service: The parser service instance
-            test_cases: List of dicts with 'ldif_content', 'should_succeed',
-                       and optionally 'server_type' keys
-            validate_all: Whether to validate all results strictly
-
-        Returns:
-            List of parse results
-
-        Raises:
-            AssertionError: If validation fails when validate_all is True
-
-        """
-        if not isinstance(parser_service, FlextLdifParser):
-            raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-        results: list[r[m.Ldif.ParseResponse]] = []
-        for test_case in test_cases:
-            ldif_content = str(test_case.get("ldif_content", ""))
-            should_succeed = test_case.get("should_succeed")
-            server_type = str(test_case.get("server_type", "rfc"))
-            result = parser_service.parse_string(
-                content=ldif_content, server_type=server_type
-            )
-            if validate_all and should_succeed is True and result.is_failure:
+            """
+            if not isinstance(parser_service, FlextLdifParser):
+                raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
+            result = parser_service.parse_string(content=content, server_type="rfc")
+            if should_succeed is True and result.is_failure:
                 raise AssertionError(
                     f"Expected success but got failure: {result.error}"
                 )
-            if validate_all and should_succeed is False and result.is_success:
+            if should_succeed is False and result.is_success:
                 msg = "Expected failure but got success"
                 raise AssertionError(msg)
-            results.append(result)
-        return results
+            return result.map(lambda r: list(r.entries)).map_or(None)
 
-    @staticmethod
-    def helper_api_write_and_unwrap(
-        api: FlextLdif,
-        entries: list[m.Ldif.Entry],
-        must_contain: list[str] | None = None,
-    ) -> str:
-        """Write entries to string and unwrap result.
+        @staticmethod
+        def test_write_entry_variations(
+            writer_service: FlextLdifWriter,
+            entry_data: dict[str, dict[str, str | dict[str, list[str]]]],
+        ) -> None:
+            """Test writing entries with various data types.
 
-        Args:
-            api: FlextLdif instance
-            entries: List of entries to write
-            must_contain: List of strings that must appear in output
+            Args:
+                writer_service: The writer service instance
+                entry_data: Dict mapping test case names to entry data
 
-        Returns:
-            LDIF string
+            Raises:
+                AssertionError: If any write operation fails
 
-        """
-        assert isinstance(api, FlextLdif)
-        result = api.write(entries)
-        assert result.is_success, f"write() failed: {result.error}"
-        ldif_string = result.value
-        assert isinstance(ldif_string, str)
-        if must_contain:
-            for substring in must_contain:
-                assert substring in ldif_string, (
-                    f"'{substring}' not found in LDIF output"
-                )
-        return ldif_string
-
-    @staticmethod
-    def api_parse_write_file_and_assert(
-        api: FlextLdif,
-        entries: list[m.Ldif.Entry],
-        output_file: str | Path,
-        must_contain: list[str] | None = None,
-    ) -> None:
-        """Write entries to file and assert content.
-
-        Args:
-            api: FlextLdif instance
-            entries: List of entries to write
-            output_file: Path to output file
-            must_contain: List of strings that must appear in output
-
-        """
-        assert isinstance(api, FlextLdif)
-        assert isinstance(output_file, Path)
-        ldif_string = TestDeduplicationHelpers.helper_api_write_and_unwrap(
-            api, entries, must_contain=must_contain
-        )
-        output_file.write_text(ldif_string)
-        assert output_file.exists(), f"Output file {output_file} was not created"
-
-    @staticmethod
-    def api_parse_write_string_and_assert(
-        api: FlextLdif,
-        entries: list[m.Ldif.Entry],
-        must_contain: list[str] | None = None,
-    ) -> None:
-        """Write entries to string and assert content.
-
-        Args:
-            api: FlextLdif instance
-            entries: List of entries to write
-            must_contain: List of strings that must appear in output
-
-        """
-        TestDeduplicationHelpers.helper_api_write_and_unwrap(
-            api, entries, must_contain=must_contain
-        )
-
-    @staticmethod
-    def quirk_parse_and_unwrap(
-        quirk: (p.Ldif.SchemaQuirk | p.Ldif.AclQuirk | p.Ldif.EntryQuirk),
-        content: str,
-        msg: str | None = None,
-        parse_method: str | None = None,
-        expected_type: type | None = None,
-        should_succeed: bool | None = None,
-    ) -> (
-        p.Ldif.SchemaAttribute
-        | p.Ldif.SchemaObjectClass
-        | p.Ldif.Entry
-        | p.Ldif.Acl
-        | Sequence[p.Ldif.Entry]
-        | None
-    ):
-        """Parse using quirk and unwrap result.
-
-        Args:
-            quirk: Schema quirk instance with parse method
-            content: Content to parse
-            msg: Optional message for assertion
-            parse_method: Optional specific parse method name (e.g., 'parse_attribute')
-            expected_type: Optional expected type for validation
-            should_succeed: Expected outcome (True=must succeed, False=must fail,
-                None=any outcome acceptable)
-
-        Returns:
-            Parsed result value if successful, None if expected failure
-
-        Raises:
-            AssertionError: If should_succeed specified and result doesn't match,
-                or if type doesn't match
-
-        """
-        if parse_method:
-            method = getattr(quirk, parse_method, None)
-            if method is None or not callable(method):
-                raise AssertionError(f"Quirk has no method '{parse_method}'")
-            result = method(content)
-        else:
-            parse_callable = getattr(quirk, "parse", None)
-            if parse_callable is None or not isinstance(parse_callable, Callable):
-                msg = "Quirk has no callable parse method"
-                raise AssertionError(msg)
-            result = parse_callable(content)
-        is_success = getattr(result, "is_success", None)
-        is_failure = getattr(result, "is_failure", None)
-        if not isinstance(is_success, bool) or not isinstance(is_failure, bool):
-            msg = "Parse method must return r-like object"
-            raise AssertionError(msg)
-        error = getattr(result, "error", None)
-        error_message = str(error) if error is not None else "Unknown parse error"
-        if should_succeed is False:
-            if is_success:
-                raise AssertionError(msg or "Expected failure but parse succeeded")
-            return None
-        if should_succeed is True and is_failure:
-            raise AssertionError(
-                msg or f"Expected success but parse failed: {error_message}"
-            )
-        if should_succeed is None:
-            assert is_success, msg or f"quirk.parse() failed: {error_message}"
-        if is_failure:
-            return None
-        value = getattr(result, "value", None)
-        if expected_type is not None:
-            if hasattr(expected_type, "__protocol_attrs__"):
-                pass
-            elif not isinstance(value, expected_type):
-                raise AssertionError(
-                    f"Expected {expected_type.__name__}, got {type(value).__name__}"
-                )
-        return value
-
-    @staticmethod
-    def quirk_write_and_unwrap(
-        quirk: p.Ldif.SchemaQuirk | p.Ldif.AclQuirk,
-        data: m.Ldif.Entry
-        | m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass
-        | m.Ldif.Acl,
-        msg: str | None = None,
-        write_method: str | None = None,
-        must_contain: list[str] | None = None,
-    ) -> str:
-        """Write using quirk and unwrap result.
-
-        Args:
-            quirk: Schema quirk instance with write method
-            data: Data to write (Entry, SchemaAttribute, SchemaObjectClass, etc.)
-            msg: Optional message for assertion
-            write_method: Optional specific write method name (e.g., '_write_attribute')
-            must_contain: Optional list of strings that must appear in output
-
-        Returns:
-            Written string result
-
-        Raises:
-            AssertionError: If writing fails or must_contain strings not found
-
-        """
-        if write_method:
-            method = getattr(quirk, write_method, None)
-            if method is None:
-                raise AssertionError(f"Quirk has no method '{write_method}'")
-            result = method(data)
-        else:
-            method = getattr(quirk, "write", None)
-            if method is None:
-                msg = "Quirk has no write method"
-                raise AssertionError(msg)
-            result = method(data)
-        if hasattr(result, "is_success"):
-            assert result.is_success, msg or f"quirk.write() failed: {result.error}"
-            output = result.value
-        else:
-            output = result
-        assert isinstance(output, str), f"Expected str, got {type(output).__name__}"
-        if must_contain:
-            for substring in must_contain:
-                if substring not in output:
+            """
+            if not isinstance(writer_service, FlextLdifWriter):
+                raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
+            for test_name, data in entry_data.items():
+                dn = str(data.get("dn", ""))
+                raw_attributes = data.get("attributes", {})
+                if not isinstance(raw_attributes, dict):
+                    attributes: dict[str, list[str]] = {}
+                else:
+                    attributes = {
+                        str(k): [str(i) for i in v] if isinstance(v, list) else [str(v)]
+                        for k, v in raw_attributes.items()
+                    }
+                entry_result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
+                if entry_result.is_failure:
                     raise AssertionError(
-                        f"'{substring}' not found in output: {output[:200]}..."
+                        f"Entry creation failed for {test_name}: {entry_result.error}"
                     )
-        return output
-
-    @staticmethod
-    def helper_convert_and_assert_strings(
-        conversion_matrix: FlextLdifConversion,
-        source_quirk: p.Ldif.SchemaQuirk,
-        target_quirk: p.Ldif.SchemaQuirk,
-        conversion_type: str,
-        data: str,
-        must_contain: list[str] | None = None,
-        expected_type: type | None = None,
-    ) -> str:
-        """Convert data between quirks and assert result.
-
-        Args:
-            conversion_matrix: FlextLdifConversion instance
-            source_quirk: Source server quirk
-            target_quirk: Target server quirk
-            conversion_type: Type of conversion ('attribute', 'objectClass', etc.)
-            data: Data to convert (string)
-            must_contain: List of strings that must appear in output
-            expected_type: Expected type for validation (default: str)
-
-        Returns:
-            Converted string result
-
-        Raises:
-            AssertionError: If conversion fails or validation fails
-
-        """
-        convert_method = getattr(conversion_matrix, "convert", None)
-        if convert_method is None:
-            msg = "conversion_matrix has no convert method"
-            raise AssertionError(msg)
-        conversion_type_lower = conversion_type.lower()
-        if conversion_type_lower == "attribute":
-            schema_service = FlextLdifSchema()
-            parse_result = schema_service.parse_attribute(data)
-            if not parse_result.is_success:
-                raise AssertionError(f"Failed to parse attribute: {parse_result.error}")
-            model_instance = parse_result.value
-        elif conversion_type_lower in {"objectclass", "objectclasses"}:
-            schema_service = FlextLdifSchema()
-            parse_result = schema_service.parse_objectclass(data)
-            if not parse_result.is_success:
-                raise AssertionError(
-                    f"Failed to parse objectclass: {parse_result.error}"
+                write_result = writer_service.write_to_string(
+                    entries=[entry_result.value]
                 )
-            model_instance = parse_result.value
-        else:
-            raise AssertionError(f"Unknown conversion_type: {conversion_type}")
-        result = convert_method(
-            source=source_quirk, target=target_quirk, model_instance=model_instance
-        )
-        if hasattr(result, "is_success"):
-            assert result.is_success, f"convert() failed: {result.error}"
-            output = result.value
-        else:
-            output = result
-        if expected_type is str and (not isinstance(output, str)):
-            output = str(output)
-        if expected_type is not None and (not isinstance(output, expected_type)):
-            raise AssertionError(
-                f"Expected {expected_type.__name__}, got {type(output).__name__}"
-            )
-        if must_contain and isinstance(output, str):
-            for substring in must_contain:
-                if substring not in output:
+                if write_result.is_failure:
                     raise AssertionError(
-                        f"'{substring}' not found in output: {output[:200]}..."
+                        f"Write failed for {test_name}: {write_result.error}"
                     )
-        return output
+                if dn and dn not in write_result.value:
+                    raise AssertionError(
+                        f"DN '{dn}' not found in output for {test_name}"
+                    )
 
-    @staticmethod
-    def helper_get_supported_conversions_and_assert(
-        conversion_matrix: FlextLdifConversion,
-        quirk: p.Ldif.SchemaQuirk,
-        must_have_keys: list[str] | None = None,
-        expected_support: dict[str, bool] | None = None,
-    ) -> dict[str, bool]:
-        """Get supported conversions and assert result.
+        @staticmethod
+        def test_entry_quirk_can_handle(
+            entry_quirk: p.Ldif.EntryQuirk, entry: m.Ldif.Entry, expected: bool
+        ) -> None:
+            """Test Entry quirk can_handle method.
 
-        Args:
-            conversion_matrix: FlextLdifConversion instance
-            quirk: Server quirk to check support for
-            must_have_keys: List of keys that must appear in result
-            expected_support: Dict of expected key:bool values
+            Args:
+                entry_quirk: Entry quirk instance
+                entry: Entry to test
+                expected: Expected result from can_handle
 
-        Returns:
-            Dict of supported conversion types
+            Raises:
+                AssertionError: If can_handle returns unexpected result
 
-        Raises:
-            AssertionError: If result doesn't have expected keys or values
+            """
+            can_handle_method = getattr(entry_quirk, "can_handle", None)
+            if can_handle_method is None:
+                msg = "Entry quirk has no can_handle method"
+                raise AssertionError(msg)
+            dn = str(getattr(entry, "dn", ""))
+            attributes = getattr(entry, "attributes", {})
+            result = can_handle_method(dn, attributes)
+            if result != expected:
+                raise AssertionError(
+                    f"Expected can_handle to return {expected}, got {result}"
+                )
 
-        """
-        get_support_method = getattr(
-            conversion_matrix, "get_supported_conversions", None
-        )
-        if get_support_method is None:
-            msg = "conversion_matrix has no get_supported_conversions"
-            raise AssertionError(msg)
-        result = get_support_method(quirk)
-        if hasattr(result, "is_success"):
-            assert result.is_success, (
-                f"get_supported_conversions failed: {result.error}"
+        @staticmethod
+        def test_acl_quirk_parse_and_verify(
+            acl_quirk: p.Ldif.AclQuirk,
+            acl_line: str,
+            expected_raw_acl: str | None = None,
+        ) -> m.Ldif.Acl | None:
+            """Parse ACL and verify result.
+
+            Args:
+                acl_quirk: ACL quirk instance
+                acl_line: ACL line to parse
+                expected_raw_acl: Expected raw ACL value
+
+            Returns:
+                Parsed ACL object
+
+            Raises:
+                AssertionError: If parsing fails or verification fails
+
+            """
+            parse_method = getattr(acl_quirk, "parse", None)
+            if parse_method is None:
+                msg = "ACL quirk has no parse method"
+                raise AssertionError(msg)
+            result = parse_method(acl_line)
+            if hasattr(result, "is_failure") and result.is_failure:
+                raise AssertionError(f"ACL parsing failed: {result.error}")
+            value = result.value if hasattr(result, "value") else result
+            if expected_raw_acl is not None:
+                raw_acl = getattr(value, "raw_acl", None)
+                if raw_acl != expected_raw_acl:
+                    raise AssertionError(
+                        f"Expected raw_acl '{expected_raw_acl}', got '{raw_acl}'"
+                    )
+            return value
+
+        @staticmethod
+        def test_acl_quirk_write_and_verify(
+            acl_quirk: p.Ldif.AclQuirk,
+            acl: m.Ldif.Acl,
+            expected_content: str | None = None,
+        ) -> str:
+            """Write ACL and verify result.
+
+            Args:
+                acl_quirk: ACL quirk instance
+                acl: ACL object to write
+                expected_content: Expected content in output
+
+            Returns:
+                Written ACL string
+
+            Raises:
+                AssertionError: If writing fails or verification fails
+
+            """
+            write_method = getattr(acl_quirk, "write", None)
+            if write_method is None:
+                msg = "ACL quirk has no write method"
+                raise AssertionError(msg)
+            result = write_method(acl)
+            if hasattr(result, "is_failure") and result.is_failure:
+                raise AssertionError(f"ACL writing failed: {result.error}")
+            output = result.value if hasattr(result, "value") else result
+            if not isinstance(output, str):
+                raise AssertionError(f"Expected string output, got {type(output)}")
+            if expected_content is not None and expected_content not in output:
+                raise AssertionError(
+                    f"Expected '{expected_content}' not found in output"
+                )
+            return output
+
+        @staticmethod
+        def test_parse_error_handling(
+            schema_quirk: p.Ldif.SchemaQuirk,
+            invalid_def: str,
+            *,
+            should_fail: bool = True,
+        ) -> m.Ldif.SchemaAttribute | None:
+            """Test parsing error handling for invalid definitions.
+
+            Args:
+                schema_quirk: Schema quirk instance
+                invalid_def: Invalid attribute/objectClass definition string
+                should_fail: Whether parsing should fail (default True)
+
+            Returns:
+                Parse result value if successful, None otherwise
+
+            Raises:
+                AssertionError: If should_fail and parsing succeeds,
+                               or if not should_fail and parsing fails
+
+            """
+            parse_method = getattr(schema_quirk, "_parse_attribute", None)
+            if parse_method is None:
+                parse_method = getattr(schema_quirk, "parse_attribute", None)
+            if parse_method is None:
+                msg = "Schema quirk has no attribute parse method"
+                raise AssertionError(msg)
+            result = parse_method(invalid_def)
+            if hasattr(result, "is_failure"):
+                is_failure = result.is_failure
+            else:
+                is_failure = result is None
+            if should_fail and (not is_failure):
+                msg = "Expected parsing to fail but it succeeded"
+                raise AssertionError(msg)
+            if not should_fail and is_failure:
+                error_msg = (
+                    result.error if hasattr(result, "error") else "Unknown error"
+                )
+                raise AssertionError(
+                    f"Expected parsing to succeed but got: {error_msg}"
+                )
+            if is_failure:
+                return None
+            return result.value if hasattr(result, "value") else result
+
+    class TestDeduplicationHelpers:
+        """Test helpers for deduplication functionality."""
+
+        @staticmethod
+        def create_entries_batch(
+            entries_data: list[dict[str, object]], *, validate_all: bool = True
+        ) -> list[m.Ldif.Entry]:
+            """Create multiple entries from data dictionaries.
+
+            Args:
+                entries_data: List of dicts with 'dn' and 'attributes' keys
+                validate_all: Whether to validate all entries (currently unused)
+
+            Returns:
+                List of created Entry instances
+
+            """
+            service = FlextLdifEntries()
+            entries: list[m.Ldif.Entry] = []
+            for entry_data in entries_data:
+                dn_raw = entry_data.get("dn")
+                attrs_raw = entry_data.get("attributes")
+                if not isinstance(dn_raw, str):
+                    msg = "Entry data must include string 'dn'"
+                    raise AssertionError(msg)
+                if not isinstance(attrs_raw, dict):
+                    msg = "Entry data must include dict 'attributes'"
+                    raise AssertionError(msg)
+                normalized_attrs: dict[str, str | list[str]] = {}
+                for attr_name_raw, attr_value_raw in attrs_raw.items():
+                    if not isinstance(attr_name_raw, str):
+                        continue
+                    if isinstance(attr_value_raw, str):
+                        normalized_attrs[attr_name_raw] = attr_value_raw
+                        continue
+                    if isinstance(attr_value_raw, list):
+                        string_values = [
+                            item for item in attr_value_raw if isinstance(item, str)
+                        ]
+                        if len(string_values) == len(attr_value_raw):
+                            normalized_attrs[attr_name_raw] = string_values
+                result = service.create_entry(dn=dn_raw, attributes=normalized_attrs)
+                if result.is_success:
+                    entries.append(result.value)
+            return entries
+
+        @staticmethod
+        def batch_parse_and_assert(
+            parser_service: FlextLdifParser,
+            test_cases: list[dict[str, object]],
+            *,
+            validate_all: bool = True,
+        ) -> list[r[m.Ldif.LdifResults.ParseResponse]]:
+            """Batch parse LDIF content and assert results.
+
+            Args:
+                parser_service: The parser service instance
+                test_cases: List of dicts with 'ldif_content', 'should_succeed',
+                           and optionally 'server_type' keys
+                validate_all: Whether to validate all results strictly
+
+            Returns:
+                List of parse results
+
+            Raises:
+                AssertionError: If validation fails when validate_all is True
+
+            """
+            if not isinstance(parser_service, FlextLdifParser):
+                raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
+            results: list[r[m.Ldif.ParseResponse]] = []
+            for test_case in test_cases:
+                ldif_content = str(test_case.get("ldif_content", ""))
+                should_succeed = test_case.get("should_succeed")
+                server_type = str(test_case.get("server_type", "rfc"))
+                result = parser_service.parse_string(
+                    content=ldif_content, server_type=server_type
+                )
+                if validate_all and should_succeed is True and result.is_failure:
+                    raise AssertionError(
+                        f"Expected success but got failure: {result.error}"
+                    )
+                if validate_all and should_succeed is False and result.is_success:
+                    msg = "Expected failure but got success"
+                    raise AssertionError(msg)
+                results.append(result)
+            return results
+
+        @staticmethod
+        def helper_api_write_and_unwrap(
+            api: FlextLdif,
+            entries: list[m.Ldif.Entry],
+            must_contain: list[str] | None = None,
+        ) -> str:
+            """Write entries to string and unwrap result.
+
+            Args:
+                api: FlextLdif instance
+                entries: List of entries to write
+                must_contain: List of strings that must appear in output
+
+            Returns:
+                LDIF string
+
+            """
+            assert isinstance(api, FlextLdif)
+            result = api.write(entries)
+            assert result.is_success, f"write() failed: {result.error}"
+            ldif_string = result.value
+            assert isinstance(ldif_string, str)
+            if must_contain:
+                for substring in must_contain:
+                    assert substring in ldif_string, (
+                        f"'{substring}' not found in LDIF output"
+                    )
+            return ldif_string
+
+        @staticmethod
+        def api_parse_write_file_and_assert(
+            api: FlextLdif,
+            entries: list[m.Ldif.Entry],
+            output_file: str | Path,
+            must_contain: list[str] | None = None,
+        ) -> None:
+            """Write entries to file and assert content.
+
+            Args:
+                api: FlextLdif instance
+                entries: List of entries to write
+                output_file: Path to output file
+                must_contain: List of strings that must appear in output
+
+            """
+            assert isinstance(api, FlextLdif)
+            assert isinstance(output_file, Path)
+            ldif_string = TestDeduplicationHelpers.helper_api_write_and_unwrap(
+                api, entries, must_contain=must_contain
             )
-            support_dict = result.value
-        else:
-            support_dict = result
-        assert isinstance(support_dict, dict), (
-            f"Expected dict, got {type(support_dict).__name__}"
-        )
-        if must_have_keys:
-            for key in must_have_keys:
-                assert key in support_dict, f"Missing key '{key}' in support dict"
-        if expected_support:
-            for key, expected_value in expected_support.items():
-                if key in support_dict:
-                    assert support_dict[key] == expected_value, (
-                        f"Expected {key}={expected_value}, got {support_dict[key]}"
+            output_file.write_text(ldif_string)
+            assert output_file.exists(), f"Output file {output_file} was not created"
+
+        @staticmethod
+        def api_parse_write_string_and_assert(
+            api: FlextLdif,
+            entries: list[m.Ldif.Entry],
+            must_contain: list[str] | None = None,
+        ) -> None:
+            """Write entries to string and assert content.
+
+            Args:
+                api: FlextLdif instance
+                entries: List of entries to write
+                must_contain: List of strings that must appear in output
+
+            """
+            TestDeduplicationHelpers.helper_api_write_and_unwrap(
+                api, entries, must_contain=must_contain
+            )
+
+        @staticmethod
+        def quirk_parse_and_unwrap(
+            quirk: (p.Ldif.SchemaQuirk | p.Ldif.AclQuirk | p.Ldif.EntryQuirk),
+            content: str,
+            msg: str | None = None,
+            parse_method: str | None = None,
+            expected_type: type | None = None,
+            should_succeed: bool | None = None,
+        ) -> (
+            p.Ldif.SchemaAttribute
+            | p.Ldif.SchemaObjectClass
+            | p.Ldif.Entry
+            | p.Ldif.Acl
+            | Sequence[p.Ldif.Entry]
+            | None
+        ):
+            """Parse using quirk and unwrap result.
+
+            Args:
+                quirk: Schema quirk instance with parse method
+                content: Content to parse
+                msg: Optional message for assertion
+                parse_method: Optional specific parse method name (e.g., 'parse_attribute')
+                expected_type: Optional expected type for validation
+                should_succeed: Expected outcome (True=must succeed, False=must fail,
+                    None=any outcome acceptable)
+
+            Returns:
+                Parsed result value if successful, None if expected failure
+
+            Raises:
+                AssertionError: If should_succeed specified and result doesn't match,
+                    or if type doesn't match
+
+            """
+            if parse_method:
+                method = getattr(quirk, parse_method, None)
+                if method is None or not callable(method):
+                    raise AssertionError(f"Quirk has no method '{parse_method}'")
+                result = method(content)
+            else:
+                parse_callable = getattr(quirk, "parse", None)
+                if parse_callable is None or not isinstance(parse_callable, Callable):
+                    msg = "Quirk has no callable parse method"
+                    raise AssertionError(msg)
+                result = parse_callable(content)
+            is_success = getattr(result, "is_success", None)
+            is_failure = getattr(result, "is_failure", None)
+            if not isinstance(is_success, bool) or not isinstance(is_failure, bool):
+                msg = "Parse method must return r-like object"
+                raise AssertionError(msg)
+            error = getattr(result, "error", None)
+            error_message = str(error) if error is not None else "Unknown parse error"
+            if should_succeed is False:
+                if is_success:
+                    raise AssertionError(msg or "Expected failure but parse succeeded")
+                return None
+            if should_succeed is True and is_failure:
+                raise AssertionError(
+                    msg or f"Expected success but parse failed: {error_message}"
+                )
+            if should_succeed is None:
+                assert is_success, msg or f"quirk.parse() failed: {error_message}"
+            if is_failure:
+                return None
+            value = getattr(result, "value", None)
+            if expected_type is not None:
+                if hasattr(expected_type, "__protocol_attrs__"):
+                    pass
+                elif not isinstance(value, expected_type):
+                    raise AssertionError(
+                        f"Expected {expected_type.__name__}, got {type(value).__name__}"
                     )
-        return support_dict
+            return value
 
-    @staticmethod
-    def helper_batch_convert_and_assert(
-        conversion_matrix: FlextLdifConversion,
-        source_quirk: p.Ldif.SchemaQuirk,
-        target_quirk: p.Ldif.SchemaQuirk,
-        conversion_type: str,
-        items: list[str],
-        expected_count: int | None = None,
-    ) -> list[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-    ]:
-        """Batch convert items and assert result.
-
-        Args:
-            conversion_matrix: FlextLdifConversion instance
-            source_quirk: Source server quirk
-            target_quirk: Target server quirk
-            conversion_type: Type of conversion ('attribute', 'objectClass', etc.)
-            items: List of items to convert
-            expected_count: Expected number of results (default: len(items))
-
-        Returns:
-            List of converted items
-
-        Raises:
-            AssertionError: If conversion fails or count doesn't match
-
-        """
-        batch_convert_method = getattr(conversion_matrix, "batch_convert", None)
-        if batch_convert_method is None:
-            msg = "conversion_matrix has no batch_convert method"
-            raise AssertionError(msg)
-        model_list: list[
-            m.Ldif.Entry
+        @staticmethod
+        def quirk_write_and_unwrap(
+            quirk: p.Ldif.SchemaQuirk | p.Ldif.AclQuirk,
+            data: m.Ldif.Entry
             | m.Ldif.SchemaAttribute
             | m.Ldif.SchemaObjectClass
-            | m.Ldif.Acl
-        ] = []
-        conversion_type_lower = conversion_type.lower()
-        if conversion_type_lower == "attribute":
-            schema_service = FlextLdifSchema()
-            for item in items:
-                parse_result = schema_service.parse_attribute(str(item))
+            | m.Ldif.Acl,
+            msg: str | None = None,
+            write_method: str | None = None,
+            must_contain: list[str] | None = None,
+        ) -> str:
+            """Write using quirk and unwrap result.
+
+            Args:
+                quirk: Schema quirk instance with write method
+                data: Data to write (Entry, SchemaAttribute, SchemaObjectClass, etc.)
+                msg: Optional message for assertion
+                write_method: Optional specific write method name (e.g., '_write_attribute')
+                must_contain: Optional list of strings that must appear in output
+
+            Returns:
+                Written string result
+
+            Raises:
+                AssertionError: If writing fails or must_contain strings not found
+
+            """
+            if write_method:
+                method = getattr(quirk, write_method, None)
+                if method is None:
+                    raise AssertionError(f"Quirk has no method '{write_method}'")
+                result = method(data)
+            else:
+                method = getattr(quirk, "write", None)
+                if method is None:
+                    msg = "Quirk has no write method"
+                    raise AssertionError(msg)
+                result = method(data)
+            if hasattr(result, "is_success"):
+                assert result.is_success, msg or f"quirk.write() failed: {result.error}"
+                output = result.value
+            else:
+                output = result
+            assert isinstance(output, str), f"Expected str, got {type(output).__name__}"
+            if must_contain:
+                for substring in must_contain:
+                    if substring not in output:
+                        raise AssertionError(
+                            f"'{substring}' not found in output: {output[:200]}..."
+                        )
+            return output
+
+        @staticmethod
+        def helper_convert_and_assert_strings(
+            conversion_matrix: FlextLdifConversion,
+            source_quirk: p.Ldif.SchemaQuirk,
+            target_quirk: p.Ldif.SchemaQuirk,
+            conversion_type: str,
+            data: str,
+            must_contain: list[str] | None = None,
+            expected_type: type | None = None,
+        ) -> str:
+            """Convert data between quirks and assert result.
+
+            Args:
+                conversion_matrix: FlextLdifConversion instance
+                source_quirk: Source server quirk
+                target_quirk: Target server quirk
+                conversion_type: Type of conversion ('attribute', 'objectClass', etc.)
+                data: Data to convert (string)
+                must_contain: List of strings that must appear in output
+                expected_type: Expected type for validation (default: str)
+
+            Returns:
+                Converted string result
+
+            Raises:
+                AssertionError: If conversion fails or validation fails
+
+            """
+            convert_method = getattr(conversion_matrix, "convert", None)
+            if convert_method is None:
+                msg = "conversion_matrix has no convert method"
+                raise AssertionError(msg)
+            conversion_type_lower = conversion_type.lower()
+            if conversion_type_lower == "attribute":
+                schema_service = FlextLdifSchema()
+                parse_result = schema_service.parse_attribute(data)
                 if not parse_result.is_success:
                     raise AssertionError(
                         f"Failed to parse attribute: {parse_result.error}"
                     )
-                model_list.append(parse_result.value)
-        elif conversion_type_lower in {"objectclass", "objectclasses"}:
-            schema_service = FlextLdifSchema()
-            for item in items:
-                parse_result = schema_service.parse_objectclass(str(item))
+                model_instance = parse_result.value
+            elif conversion_type_lower in {"objectclass", "objectclasses"}:
+                schema_service = FlextLdifSchema()
+                parse_result = schema_service.parse_objectclass(data)
                 if not parse_result.is_success:
                     raise AssertionError(
                         f"Failed to parse objectclass: {parse_result.error}"
                     )
-                model_list.append(parse_result.value)
-        else:
-            raise AssertionError(f"Unknown conversion_type: {conversion_type}")
-        result = batch_convert_method(
-            source=source_quirk, target=target_quirk, model_list=model_list
-        )
-        if hasattr(result, "is_success"):
-            assert result.is_success, f"batch_convert() failed: {result.error}"
-            converted_items = result.value
-        else:
-            converted_items = result
-        assert isinstance(converted_items, list), (
-            f"Expected list, got {type(converted_items).__name__}"
-        )
-        if expected_count is not None:
-            assert len(converted_items) == expected_count, (
-                f"Expected {expected_count} items, got {len(converted_items)}"
+                model_instance = parse_result.value
+            else:
+                raise AssertionError(f"Unknown conversion_type: {conversion_type}")
+            result = convert_method(
+                source=source_quirk, target=target_quirk, model_instance=model_instance
             )
-        return converted_items
+            if hasattr(result, "is_success"):
+                assert result.is_success, f"convert() failed: {result.error}"
+                output = result.value
+            else:
+                output = result
+            if expected_type is str and (not isinstance(output, str)):
+                output = str(output)
+            if expected_type is not None and (not isinstance(output, expected_type)):
+                raise AssertionError(
+                    f"Expected {expected_type.__name__}, got {type(output).__name__}"
+                )
+            if must_contain and isinstance(output, str):
+                for substring in must_contain:
+                    if substring not in output:
+                        raise AssertionError(
+                            f"'{substring}' not found in output: {output[:200]}..."
+                        )
+            return output
 
+        @staticmethod
+        def helper_get_supported_conversions_and_assert(
+            conversion_matrix: FlextLdifConversion,
+            quirk: p.Ldif.SchemaQuirk,
+            must_have_keys: list[str] | None = None,
+            expected_support: dict[str, bool] | None = None,
+        ) -> dict[str, bool]:
+            """Get supported conversions and assert result.
 
-__all__ = ["RfcTestHelpers", "TestDeduplicationHelpers", "TestsFlextLdifConstants", "c"]
+            Args:
+                conversion_matrix: FlextLdifConversion instance
+                quirk: Server quirk to check support for
+                must_have_keys: List of keys that must appear in result
+                expected_support: Dict of expected key:bool values
+
+            Returns:
+                Dict of supported conversion types
+
+            Raises:
+                AssertionError: If result doesn't have expected keys or values
+
+            """
+            get_support_method = getattr(
+                conversion_matrix, "get_supported_conversions", None
+            )
+            if get_support_method is None:
+                msg = "conversion_matrix has no get_supported_conversions"
+                raise AssertionError(msg)
+            result = get_support_method(quirk)
+            if hasattr(result, "is_success"):
+                assert result.is_success, (
+                    f"get_supported_conversions failed: {result.error}"
+                )
+                support_dict = result.value
+            else:
+                support_dict = result
+            assert isinstance(support_dict, dict), (
+                f"Expected dict, got {type(support_dict).__name__}"
+            )
+            if must_have_keys:
+                for key in must_have_keys:
+                    assert key in support_dict, f"Missing key '{key}' in support dict"
+            if expected_support:
+                for key, expected_value in expected_support.items():
+                    if key in support_dict:
+                        assert support_dict[key] == expected_value, (
+                            f"Expected {key}={expected_value}, got {support_dict[key]}"
+                        )
+            return support_dict
+
+        @staticmethod
+        def helper_batch_convert_and_assert(
+            conversion_matrix: FlextLdifConversion,
+            source_quirk: p.Ldif.SchemaQuirk,
+            target_quirk: p.Ldif.SchemaQuirk,
+            conversion_type: str,
+            items: list[str],
+            expected_count: int | None = None,
+        ) -> list[
+            m.Ldif.Entry
+            | m.Ldif.SchemaAttribute
+            | m.Ldif.SchemaObjectClass
+            | m.Ldif.Acl
+        ]:
+            """Batch convert items and assert result.
+
+            Args:
+                conversion_matrix: FlextLdifConversion instance
+                source_quirk: Source server quirk
+                target_quirk: Target server quirk
+                conversion_type: Type of conversion ('attribute', 'objectClass', etc.)
+                items: List of items to convert
+                expected_count: Expected number of results (default: len(items))
+
+            Returns:
+                List of converted items
+
+            Raises:
+                AssertionError: If conversion fails or count doesn't match
+
+            """
+            batch_convert_method = getattr(conversion_matrix, "batch_convert", None)
+            if batch_convert_method is None:
+                msg = "conversion_matrix has no batch_convert method"
+                raise AssertionError(msg)
+            model_list: list[
+                m.Ldif.Entry
+                | m.Ldif.SchemaAttribute
+                | m.Ldif.SchemaObjectClass
+                | m.Ldif.Acl
+            ] = []
+            conversion_type_lower = conversion_type.lower()
+            if conversion_type_lower == "attribute":
+                schema_service = FlextLdifSchema()
+                for item in items:
+                    parse_result = schema_service.parse_attribute(str(item))
+                    if not parse_result.is_success:
+                        raise AssertionError(
+                            f"Failed to parse attribute: {parse_result.error}"
+                        )
+                    model_list.append(parse_result.value)
+            elif conversion_type_lower in {"objectclass", "objectclasses"}:
+                schema_service = FlextLdifSchema()
+                for item in items:
+                    parse_result = schema_service.parse_objectclass(str(item))
+                    if not parse_result.is_success:
+                        raise AssertionError(
+                            f"Failed to parse objectclass: {parse_result.error}"
+                        )
+                    model_list.append(parse_result.value)
+            else:
+                raise AssertionError(f"Unknown conversion_type: {conversion_type}")
+            result = batch_convert_method(
+                source=source_quirk, target=target_quirk, model_list=model_list
+            )
+            if hasattr(result, "is_success"):
+                assert result.is_success, f"batch_convert() failed: {result.error}"
+                converted_items = result.value
+            else:
+                converted_items = result
+            assert isinstance(converted_items, list), (
+                f"Expected list, got {type(converted_items).__name__}"
+            )
+            if expected_count is not None:
+                assert len(converted_items) == expected_count, (
+                    f"Expected {expected_count} items, got {len(converted_items)}"
+                )
+            return converted_items
+
 
 c = TestsFlextLdifConstants

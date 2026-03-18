@@ -10,6 +10,7 @@ from enum import StrEnum, unique
 from typing import ClassVar
 
 import pytest
+from flext_tests import tm
 
 from tests import s, u
 
@@ -167,9 +168,12 @@ class TestsTestFlextLdifAclAttributeRegistry(s):
         """Parametrized test for get_acl_attributes."""
         attrs = u.Ldif.get_acl_attributes(param_server_type)
         for required in required_attrs:
-            assert required in attrs, f"{required} not in {scenario}"
+            tm.that(required in attrs, eq=True), f"{required} not in {scenario}"
         for forbidden in forbidden_attrs:
-            assert forbidden not in attrs, f"{forbidden} should not be in {scenario}"
+            (
+                tm.that(forbidden not in attrs, eq=True),
+                f"{forbidden} should not be in {scenario}",
+            )
 
     @pytest.mark.parametrize(
         ("scenario", "test_type", "attr_name", "server_type", "expected_result"),
@@ -188,13 +192,13 @@ class TestsTestFlextLdifAclAttributeRegistry(s):
     ) -> None:
         """Parametrized test for is_acl_attribute."""
         result = u.Ldif.is_acl_attribute(attr_name, server_type)
-        assert result == expected_result, f"{scenario} failed"
+        tm.that(result == expected_result, eq=True), f"{scenario} failed"
 
     def test_acl_registry_no_mutation(self) -> None:
         """get_acl_attributes should return new list each time."""
         attrs1 = list(u.Ldif.get_acl_attributes("oid"))
         attrs2 = list(u.Ldif.get_acl_attributes("oid"))
-        assert attrs1 == attrs2
-        assert attrs1 is not attrs2
+        tm.that(attrs1 == attrs2, eq=True)
+        tm.that(attrs1 is not attrs2, eq=True)
         attrs1.append("test_attribute")
-        assert "test_attribute" not in attrs2
+        tm.that("test_attribute" not in attrs2, eq=True)

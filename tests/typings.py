@@ -15,14 +15,14 @@ from flext_tests import t
 from flext_ldif import FlextLdifTypes
 
 
-class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
-    """Test types extending FlextTestsTypes and FlextLdifTypes.
+class TestsFlextLdifTypes(t, FlextLdifTypes):
+    """Test types extending t and FlextLdifTypes.
 
     Provides test-specific type extensions without duplicating parent functionality.
     All parent types are accessible via inheritance hierarchy.
 
     Hierarchy:
-    - FlextTestsTypes.Tests.* (generic test types from flext_tests)
+    - t.Tests.* (generic test types from flext_tests)
     - FlextLdifTypes.Ldif.* (source types from flext_ldif)
     - TestsFlextLdifTypes.Tests.* (flext-ldif-specific test types)
 
@@ -30,11 +30,11 @@ class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
     Short name 't' for convenient access in tests, 'tt' as test-specific alias.
     """
 
-    class Tests(FlextTestsTypes.Tests):
+    class Tests(t.Tests):
         """flext-ldif-specific test type definitions namespace.
 
         Use tt.LdifTests.* for flext-ldif-specific test types.
-        Use t.Tests.* for generic test types from FlextTestsTypes.
+        Use t.Tests.* for generic test types from t.
         """
 
         class Fixtures:

@@ -410,25 +410,10 @@ class FlextLdifUtilitiesSchema:
         attr_definition: str,
     ) -> r[tuple[str, str, str | None]]:
         """Extract OID, NAME, and DESC from attribute definition."""
-        oid_result = FlextLdifUtilitiesParser.extract_oid(attr_definition)
-        if oid_result.is_failure:
-            error = oid_result.error or "unknown OID extraction error"
-            return r[tuple[str, str, str | None]].fail(
-                f"RFC attribute parsing failed: {error}"
-            )
-        if not oid_result.is_success:
-            return r[tuple[str, str, str | None]].fail(
-                "RFC attribute parsing failed: unknown result state"
-            )
-        oid = oid_result.value
-        name_raw = FlextLdifUtilitiesParser.extract_optional_field(
-            attr_definition, c.Ldif.LdifPatterns.SCHEMA_NAME, default=oid
+        return FlextLdifUtilitiesSchema._extract_schema_basic_fields(
+            definition=attr_definition,
+            definition_label="attribute",
         )
-        name: str = name_raw if name_raw is not None else oid
-        desc = FlextLdifUtilitiesParser.extract_optional_field(
-            attr_definition, c.Ldif.LdifPatterns.SCHEMA_DESC
-        )
-        return r[tuple[str, str, str | None]].ok((oid, name, desc))
 
     @staticmethod
     def _extract_attribute_flags(attr_definition: str) -> tuple[bool, bool]:
@@ -491,23 +476,33 @@ class FlextLdifUtilitiesSchema:
         oc_definition: str,
     ) -> r[tuple[str, str, str | None]]:
         """Extract OID, NAME, and DESC from objectClass definition."""
-        oid_result = FlextLdifUtilitiesParser.extract_oid(oc_definition)
+        return FlextLdifUtilitiesSchema._extract_schema_basic_fields(
+            definition=oc_definition,
+            definition_label="objectClass",
+        )
+
+    @staticmethod
+    def _extract_schema_basic_fields(
+        definition: str,
+        definition_label: str,
+    ) -> r[tuple[str, str, str | None]]:
+        oid_result = FlextLdifUtilitiesParser.extract_oid(definition)
         if oid_result.is_failure:
             error = oid_result.error or "unknown OID extraction error"
             return r[tuple[str, str, str | None]].fail(
-                f"RFC objectClass parsing failed: {error}"
+                f"RFC {definition_label} parsing failed: {error}"
             )
         if not oid_result.is_success:
             return r[tuple[str, str, str | None]].fail(
-                "RFC objectClass parsing failed: unknown result state"
+                f"RFC {definition_label} parsing failed: unknown result state"
             )
         oid = oid_result.value
         name_raw = FlextLdifUtilitiesParser.extract_optional_field(
-            oc_definition, c.Ldif.LdifPatterns.SCHEMA_NAME, default=oid
+            definition, c.Ldif.LdifPatterns.SCHEMA_NAME, default=oid
         )
         name: str = name_raw if name_raw is not None else oid
         desc = FlextLdifUtilitiesParser.extract_optional_field(
-            oc_definition, c.Ldif.LdifPatterns.SCHEMA_DESC
+            definition, c.Ldif.LdifPatterns.SCHEMA_DESC
         )
         return r[tuple[str, str, str | None]].ok((oid, name, desc))
 

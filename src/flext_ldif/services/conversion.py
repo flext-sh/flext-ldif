@@ -89,6 +89,18 @@ class FlextLdifConversion(
         )
 
     @staticmethod
+    def _is_object_mapping(
+        value: builtins.object,
+    ) -> TypeIs[Mapping[builtins.object, builtins.object]]:
+        return isinstance(value, Mapping)
+
+    @staticmethod
+    def _is_object_sequence(
+        value: builtins.object,
+    ) -> TypeIs[Sequence[builtins.object]]:
+        return isinstance(value, Sequence) and not isinstance(value, str | bytes)
+
+    @staticmethod
     def _validate_schema_quirk(
         quirk: FlextLdifServersBase,
     ) -> p.Ldif.SchemaQuirk:
@@ -159,17 +171,20 @@ class FlextLdifConversion(
         boolean_conversions: builtins.object, target_server_type: str
     ) -> Mapping[str, Mapping[str, str]]:
         """Analyze boolean conversions for target compatibility."""
-        if not boolean_conversions or not isinstance(boolean_conversions, dict):
+        if not boolean_conversions or not FlextLdifConversion._is_object_mapping(
+            boolean_conversions
+        ):
             return {}
-        result: dict[str, dict[str, str]] = {}
+        typed_boolean_conversions: dict[str, builtins.object] = {}
         for raw_attr_name, raw_conv_info in boolean_conversions.items():
-            attr_name = str(raw_attr_name)
-            conv_info: builtins.object = raw_conv_info
+            typed_boolean_conversions[str(raw_attr_name)] = raw_conv_info
+        result: dict[str, dict[str, str]] = {}
+        for attr_name, conv_info in typed_boolean_conversions.items():
             source_format = ""
-            if isinstance(conv_info, dict):
-                conv_info_dict: Mapping[str, builtins.object] = {
-                    str(key): value for key, value in conv_info.items()
-                }
+            if FlextLdifConversion._is_object_mapping(conv_info):
+                conv_info_dict: dict[str, builtins.object] = {}
+                for raw_key, raw_value in conv_info.items():
+                    conv_info_dict[str(raw_key)] = raw_value
                 source_format = str(conv_info_dict.get("format", "") or "")
             result[f"boolean_{attr_name}"] = {
                 "source_format": source_format,
@@ -183,10 +198,10 @@ class FlextLdifConversion(
         original_format_details: builtins.object, target_server_type: str
     ) -> Mapping[str, Mapping[str, builtins.object]]:
         """Analyze DN spacing for target compatibility."""
-        if isinstance(original_format_details, dict):
-            format_details: Mapping[str, builtins.object] = {
-                str(key): value for key, value in original_format_details.items()
-            }
+        if FlextLdifConversion._is_object_mapping(original_format_details):
+            format_details: dict[str, builtins.object] = {}
+            for raw_key, raw_value in original_format_details.items():
+                format_details[str(raw_key)] = raw_value
             spacing: builtins.object | None = format_details.get("dn_spacing")
             if spacing:
                 return {
@@ -440,13 +455,11 @@ class FlextLdifConversion(
             return ""
         if u.is_primitive(value):
             return value
-        if isinstance(value, (list, tuple)):
-            normalized_items: list[t.Scalar | str] = []
-            for raw_item in value:
-                item: builtins.object = raw_item
-                normalized_items.append(
-                    item if isinstance(item, t.SCALAR_TYPES) else str(item)
-                )
+        if FlextLdifConversion._is_object_sequence(value):
+            normalized_items: list[t.Scalar | str] = [
+                item if isinstance(item, t.SCALAR_TYPES) else str(item)
+                for item in value
+            ]
             return normalized_items
         return str(value)
 
@@ -563,11 +576,11 @@ class FlextLdifConversion(
     ) -> r[_TSchemaConversionValue] | None:
         if isinstance(value, str):
             return FlextLdifConversion._schema_conversion_ok(value)
-        if isinstance(value, dict):
+        if FlextLdifConversion._is_object_mapping(value):
             # Convert dict to str for LDIF representation if passthrough
-            typed_value: Mapping[str, builtins.object] = {
-                str(key): item for key, item in value.items()
-            }
+            typed_value: dict[str, builtins.object] = {}
+            for raw_key, raw_item in value.items():
+                typed_value[str(raw_key)] = raw_item
             return FlextLdifConversion._schema_conversion_ok(str(typed_value))
         return None
 
@@ -1570,19 +1583,18 @@ class FlextLdifConversion(
             return ""
         if u.is_primitive(value):
             return value
-        if isinstance(value, (list, tuple)):
+        if FlextLdifConversion._is_object_sequence(value):
             converted_list: list[t.Scalar] = []
-            for raw_item in value:
-                item: builtins.object = raw_item
+            for item in value:
                 if isinstance(item, t.SCALAR_TYPES):
                     converted_list.append(item)
                 else:
                     converted_list.append(str(item))
             return converted_list
-        if isinstance(value, dict):
-            typed_value: Mapping[str, builtins.object] = {
-                str(key): item for key, item in value.items()
-            }
+        if FlextLdifConversion._is_object_mapping(value):
+            typed_value: dict[str, builtins.object] = {}
+            for raw_key, raw_item in value.items():
+                typed_value[str(raw_key)] = raw_item
             return str(typed_value)
         return str(value)
 
@@ -1602,18 +1614,17 @@ class FlextLdifConversion(
                 return value
             if isinstance(value, datetime):
                 return value.isoformat()
-            if isinstance(value, Mapping):
+            if FlextLdifConversion._is_object_mapping(value):
                 normalized_mapping: dict[str, builtins.object] = {}
                 for raw_key, raw_item in value.items():
                     key = str(raw_key)
                     item: builtins.object = raw_item
                     normalized_mapping[key] = to_general_value(item)
                 return normalized_mapping
-            if isinstance(value, Sequence) and (not isinstance(value, str | bytes)):
-                normalized_sequence: list[builtins.object] = []
-                for raw_item in value:
-                    item: builtins.object = raw_item
-                    normalized_sequence.append(to_general_value(item))
+            if FlextLdifConversion._is_object_sequence(value):
+                normalized_sequence: list[builtins.object] = [
+                    to_general_value(item) for item in value
+                ]
                 return normalized_sequence
             return str(value)
 
@@ -1717,16 +1728,17 @@ class FlextLdifConversion(
                     value
                 )
                 continue
-            if isinstance(value, Mapping):
-                normalized_mapping: dict[str, builtins.object] = {
-                    str(raw_k): FlextLdifConversion._normalize_metadata_value(raw_v)
-                    for raw_k, raw_v in value.items()
-                }
+            if FlextLdifConversion._is_object_mapping(value):
+                normalized_mapping: dict[str, builtins.object] = {}
+                for raw_k, raw_v in value.items():
+                    normalized_mapping[str(raw_k)] = (
+                        FlextLdifConversion._normalize_metadata_value(raw_v)
+                    )
                 dynamic_metadata_dict[key] = self._convert_to_metadata_attribute_value(
                     normalized_mapping
                 )
                 continue
-            if isinstance(value, Sequence) and (not isinstance(value, str | bytes)):
+            if FlextLdifConversion._is_object_sequence(value):
                 normalized_sequence: list[builtins.object] = [
                     FlextLdifConversion._normalize_metadata_value(raw_item)
                     for raw_item in value

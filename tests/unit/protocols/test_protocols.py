@@ -11,6 +11,7 @@ from typing import ClassVar
 
 import pytest
 from flext_core import r
+from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif import FlextLdifProtocols, FlextLdifServer, p
@@ -99,32 +100,57 @@ class TestsTestFlextLdifProtocols(s):
         @staticmethod
         def verify_protocol_methods(schema: p.Ldif.SchemaQuirk) -> None:
             """Verify schema has all required protocol methods."""
-            assert hasattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_PARSE)
-            assert callable(
-                getattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_PARSE)
+            tm.that(
+                hasattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_PARSE),
+                eq=True,
             )
-            assert hasattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_WRITE)
-            assert callable(
-                getattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_WRITE)
+            tm.that(
+                callable(
+                    getattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_PARSE)
+                ),
+                eq=True,
             )
-            assert hasattr(
-                schema, TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_ATTRIBUTE
+            tm.that(
+                hasattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_WRITE),
+                eq=True,
             )
-            assert callable(
-                getattr(
+            tm.that(
+                callable(
+                    getattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_WRITE)
+                ),
+                eq=True,
+            )
+            tm.that(
+                hasattr(
                     schema,
                     TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_ATTRIBUTE,
-                )
+                ),
+                eq=True,
             )
-            assert hasattr(
-                schema,
-                TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_OBJECTCLASS,
+            tm.that(
+                callable(
+                    getattr(
+                        schema,
+                        TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_ATTRIBUTE,
+                    )
+                ),
+                eq=True,
             )
-            assert callable(
-                getattr(
+            tm.that(
+                hasattr(
                     schema,
                     TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_OBJECTCLASS,
-                )
+                ),
+                eq=True,
+            )
+            tm.that(
+                callable(
+                    getattr(
+                        schema,
+                        TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_OBJECTCLASS,
+                    )
+                ),
+                eq=True,
             )
 
         @staticmethod
@@ -134,14 +160,16 @@ class TestsTestFlextLdifProtocols(s):
             Server implementations store SERVER_TYPE and PRIORITY in nested Constants class,
             not as direct instance attributes.
             """
-            assert hasattr(server, "Constants")
+            tm.that(hasattr(server, "Constants"), eq=True)
             constants_cls = server.Constants
-            assert hasattr(constants_cls, "SERVER_TYPE")
+            tm.that(hasattr(constants_cls, "SERVER_TYPE"), eq=True)
             server_type = constants_cls.SERVER_TYPE
-            assert isinstance(server_type, str) or hasattr(server_type, "value")
-            assert hasattr(constants_cls, "PRIORITY")
+            tm.that(
+                isinstance(server_type, str) or hasattr(server_type, "value"), eq=True
+            )
+            tm.that(hasattr(constants_cls, "PRIORITY"), eq=True)
             priority = constants_cls.PRIORITY
-            assert isinstance(priority, int)
+            tm.that(isinstance(priority, int), eq=True)
 
         @staticmethod
         def verify_registry_methods(registry: p.Ldif.QuirkRegistry) -> None:
@@ -152,8 +180,8 @@ class TestsTestFlextLdifProtocols(s):
                 TestsTestFlextLdifProtocols.Constants.ATTR_ENTRY,
             ]
             for method in methods:
-                assert hasattr(registry, method)
-                assert callable(getattr(registry, method))
+                tm.that(hasattr(registry, method), eq=True)
+                tm.that(callable(getattr(registry, method)), eq=True)
 
     @classmethod
     def get_server_implementations(cls) -> list[ProtocolServer]:
@@ -168,13 +196,15 @@ class TestsTestFlextLdifProtocols(s):
     @pytest.mark.parametrize("protocol_name", _PROTOCOL_NAMES)
     def test_protocol_is_defined(self, protocol_name: str) -> None:
         """Test that protocol is defined and accessible."""
-        assert hasattr(FlextLdifProtocols.Ldif, protocol_name)
+        tm.that(hasattr(FlextLdifProtocols.Ldif, protocol_name), eq=True)
         protocol = getattr(FlextLdifProtocols.Ldif, protocol_name)
-        assert protocol is not None
+        tm.that(protocol is not None, eq=True)
 
     def test_quirks_namespace_exists(self) -> None:
         """Test that Quirks namespace exists in Ldif namespace."""
-        assert hasattr(FlextLdifProtocols.Ldif, self.Constants.NAMESPACE_QUIRKS)
+        tm.that(
+            hasattr(FlextLdifProtocols.Ldif, self.Constants.NAMESPACE_QUIRKS), eq=True
+        )
 
     def test_schema_satisfies_protocol_oid(self) -> None:
         """Test that OID schema satisfies Schema."""
@@ -230,7 +260,7 @@ class TestsTestFlextLdifProtocols(s):
     ) -> None:
         """Test parse method returns r."""
         result = oid_schema.parse(self.Constants.SAMPLE_ATTR_DEF)
-        assert isinstance(result, r)
+        tm.that(isinstance(result, r), eq=True)
 
     def test_can_handle_returns_bool(
         self, oid_schema: FlextLdifServersOid.Schema
@@ -239,9 +269,9 @@ class TestsTestFlextLdifProtocols(s):
         attr_result = oid_schema.can_handle_attribute(
             self.Constants.SAMPLE_ATTR_DEF_SIMPLE
         )
-        assert isinstance(attr_result, bool)
+        tm.that(isinstance(attr_result, bool), eq=True)
         oc_result = oid_schema.can_handle_objectclass(self.Constants.SAMPLE_OC_DEF)
-        assert isinstance(oc_result, bool)
+        tm.that(isinstance(oc_result, bool), eq=True)
 
     registry: ClassVar[FlextLdifServer]
 
@@ -257,12 +287,12 @@ class TestsTestFlextLdifProtocols(s):
     def test_registry_schema_retrieval(self, registry: FlextLdifServer) -> None:
         """Test registry can retrieve schema quirks."""
         result = registry.get_schema_quirk(self.ServerTypes.OID)
-        assert result is None or hasattr(result, self.Constants.ATTR_PARSE)
+        tm.that(result is None or hasattr(result, self.Constants.ATTR_PARSE), eq=True)
 
     def test_registry_global_instance(self) -> None:
         """Test registry global instance is accessible."""
         instance = FlextLdifServer.get_global_instance()
-        assert instance is not None
+        tm.that(instance is not None, eq=True)
 
     def test_protocol_type_checking(self) -> None:
         """Test protocol can be used for type checking."""
@@ -270,7 +300,7 @@ class TestsTestFlextLdifProtocols(s):
         is_schema = hasattr(oid_schema, self.Constants.ATTR_PARSE) and hasattr(
             oid_schema, self.Constants.ATTR_WRITE
         )
-        assert is_schema
+        tm.that(is_schema, eq=True)
 
     def test_protocol_filtering(self) -> None:
         """Test filtering implementations by protocol."""
@@ -285,12 +315,12 @@ class TestsTestFlextLdifProtocols(s):
             if hasattr(s, self.Constants.ATTR_PARSE)
             and hasattr(s, self.Constants.ATTR_WRITE)
         ]
-        assert len(schemas) == 3
+        tm.that(len(schemas) == 3, eq=True)
 
     def test_protocol_method_calls(self) -> None:
         """Test calling protocol methods on implementations."""
         schema = FlextLdifServersOid.Schema()
         result = schema.can_handle_attribute(self.Constants.SAMPLE_ATTR_DEF_SIMPLE)
-        assert isinstance(result, bool)
+        tm.that(isinstance(result, bool), eq=True)
         parse_result = schema.parse(self.Constants.SAMPLE_ATTR_DEF_SIMPLE)
-        assert hasattr(parse_result, self.Constants.ATTR_IS_SUCCESS)
+        tm.that(hasattr(parse_result, self.Constants.ATTR_IS_SUCCESS), eq=True)

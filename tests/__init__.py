@@ -34,12 +34,7 @@ if TYPE_CHECKING:
         real_entry,
         real_ldif_content,
     )
-    from .constants import (
-        RfcTestHelpers,
-        TestDeduplicationHelpers,
-        TestsFlextLdifConstants,
-        c,
-    )
+    from .constants import TestsFlextLdifConstants, c
     from .integration.conftest import (
         all_acl_fixtures,
         all_entries_fixtures,
@@ -198,7 +193,7 @@ if TYPE_CHECKING:
     )
     from .models import TestsFlextLdifModels, m
     from .protocols import TestsFlextLdifProtocols, p
-    from .support.conftest_factory import FlextLdifTestConftest, FlextTestsDocker
+    from .support.conftest_factory import FlextLdifTestConftest, tk
     from .support.ldif_data import LdifSample, LdifTestData
     from .support.test_files import FileManager
     from .support.validators import (
@@ -311,7 +306,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextLdifTestFactory": ("tests.test_factory", "FlextLdifTestFactory"),
     "FlextLdifTestsServiceBase": ("tests.base", "FlextLdifTestsServiceBase"),
-    "FlextTestsDocker": ("tests.support.conftest_factory", "FlextTestsDocker"),
     "GenericFieldsDict": ("tests.typings", "GenericFieldsDict"),
     "GetAclAttributesServerType": (
         "tests.unit.constants.test_acl_registry",
@@ -341,7 +335,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_migration_pipeline_quirks",
         "OidTestConstants",
     ),
-    "RfcTestHelpers": ("tests.constants", "RfcTestHelpers"),
     "TestAclAttributes": ("tests.unit.test_filters", "TestAclAttributes"),
     "TestAclParser": ("tests.unit.utilities.test_utilities_core", "TestAclParser"),
     "TestAclRoundTripPreservation": (
@@ -362,7 +355,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestCategorizationRealData",
     ),
     "TestData": ("tests.integration.test_api_integration", "TestData"),
-    "TestDeduplicationHelpers": ("tests.constants", "TestDeduplicationHelpers"),
     "TestDnCaseNormalizationScenarios": (
         "tests.integration.test_dn_case_handling",
         "TestDnCaseNormalizationScenarios",
@@ -878,6 +870,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "test_simple_ldap_search",
     ),
     "tf": ("tests.test_helpers", "tf"),
+    "tk": ("tests.support.conftest_factory", "tk"),
     "tm": ("tests.test_helpers", "tm"),
     "tmp_ldif_path": ("tests.integration.conftest", "tmp_ldif_path"),
     "tt": ("tests.test_helpers", "tt"),
@@ -900,7 +893,6 @@ __all__ = [
     "FlextLdifTestConftest",
     "FlextLdifTestFactory",
     "FlextLdifTestsServiceBase",
-    "FlextTestsDocker",
     "GenericFieldsDict",
     "GetAclAttributesServerType",
     "GetValidValuesType",
@@ -911,7 +903,6 @@ __all__ = [
     "MockFlextUtilitiesResultHelpers",
     "MockMatchers",
     "OidTestConstants",
-    "RfcTestHelpers",
     "TestAclAttributes",
     "TestAclParser",
     "TestAclRoundTripPreservation",
@@ -920,7 +911,6 @@ __all__ = [
     "TestBoundaryValues",
     "TestCategorizationRealData",
     "TestData",
-    "TestDeduplicationHelpers",
     "TestDnCaseNormalizationScenarios",
     "TestDnCaseRegistry",
     "TestDnObjectClassMethods",
@@ -1106,6 +1096,7 @@ __all__ = [
     "test_ldap_connection",
     "test_simple_ldap_search",
     "tf",
+    "tk",
     "tm",
     "tmp_ldif_path",
     "tt",

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 import pytest
+from flext_tests import tm
 
 import flext_ldif
 from tests import c, s, t
@@ -19,14 +20,14 @@ class TestFlextLdifTypesStructure:
 
     def test_namespace_exists(self) -> None:
         """T class must be accessible."""
-        assert t is not None
-        assert hasattr(t, "__name__")
+        tm.that(t is not None, eq=True)
+        tm.that(hasattr(t, "__name__"), eq=True)
 
     def test_has_required_namespaces(self) -> None:
         """T must have required namespaces."""
-        assert hasattr(t, "Ldif")
-        assert not hasattr(t.Ldif, "Entry")
-        assert hasattr(t.Ldif, "CommonDict")
+        tm.that(hasattr(t, "Ldif"), eq=True)
+        tm.that(not hasattr(t.Ldif, "Entry"), eq=True)
+        tm.that(hasattr(t.Ldif, "CommonDict"), eq=True)
 
     def test_srp_compliance_no_functions(self) -> None:
         """typings.py must not contain functions (SRP violation)."""
@@ -38,7 +39,10 @@ class TestFlextLdifTypesStructure:
             and (not m[0].startswith("__"))
             and (m[1].__module__ not in {"typing", "builtins"})
         ]
-        assert len(user_functions) == 0, "typings.py must not contain functions"
+        (
+            tm.that(len(user_functions) == 0, eq=True),
+            "typings.py must not contain functions",
+        )
 
     def test_only_required_imports(self) -> None:
         """typings.py must only import from flext_core (Tier 0 architecture rule)."""
@@ -57,14 +61,16 @@ class TestFlextLdifTypesStructure:
             for imp in flext_ldif_imports
             if imp.startswith("flext_ldif.") and "_" in imp.split(".")[-1]
         ]
-        assert len(internal_imports) == 0, (
-            f"typings.py must not import from internal modules: {internal_imports}"
+        (
+            tm.that(len(internal_imports) == 0, eq=True),
+            (f"typings.py must not import from internal modules: {internal_imports}"),
         )
         service_imports = [
             imp for imp in flext_ldif_imports if "services" in imp or "api" in imp
         ]
-        assert len(service_imports) == 0, (
-            f"typings.py must not import from services/api: {service_imports}"
+        (
+            tm.that(len(service_imports) == 0, eq=True),
+            (f"typings.py must not import from services/api: {service_imports}"),
         )
 
 
@@ -89,20 +95,20 @@ class TestsFlextLdifCommonDictionaryTypes(s):
     def test_attribute_dict_with_ldif_entry(self) -> None:
         """AttributeDict must work with real LDIF entry attributes."""
         attr_dict: t.Ldif.CommonDict.AttributeDict = self.SAMPLE_ATTR_DICT
-        assert isinstance(attr_dict, dict)
-        assert attr_dict[c.Names.CN] == ["John Doe"]
-        assert len(attr_dict[c.Names.MAIL]) == 2
+        tm.that(isinstance(attr_dict, dict), eq=True)
+        tm.that(attr_dict[c.Names.CN] == ["John Doe"], eq=True)
+        tm.that(len(attr_dict[c.Names.MAIL]) == 2, eq=True)
 
     def test_attribute_dict_empty(self) -> None:
         """AttributeDict must handle empty attributes."""
         attr_dict: t.Ldif.CommonDict.AttributeDict = {}
-        assert len(attr_dict) == 0
+        tm.that(len(attr_dict) == 0, eq=True)
 
     def test_distribution_dict_with_entry_counts(self) -> None:
         """DistributionDict must work with entry type statistics."""
         dist: t.Ldif.CommonDict.DistributionDict = self.SAMPLE_DISTRIBUTION
-        assert dist[c.Names.INETORGPERSON] == 1245
-        assert sum(dist.values()) == 1371
+        tm.that(dist[c.Names.INETORGPERSON] == 1245, eq=True)
+        tm.that(sum(dist.values()) == 1371, eq=True)
 
     def test_distribution_dict_from_schema_stats(self) -> None:
         """DistributionDict works for schema statistics."""
@@ -111,7 +117,7 @@ class TestsFlextLdifCommonDictionaryTypes(s):
             "objectClasses": 78,
             "dITContentRules": 23,
         }
-        assert all(isinstance(v, int) for v in dist.values())
+        tm.that(all(isinstance(v, int) for v in dist.values()), eq=True)
 
 
 class TestModelsNamespace:
@@ -129,11 +135,11 @@ class TestModelsNamespace:
         cn_value: str | list[str] | None = cast(
             "str | list[str] | None", attrs.get(c.Names.CN)
         )
-        assert cn_value == ["John Doe"]
+        tm.that(cn_value == ["John Doe"], eq=True)
         objectclass_value: str | list[str] | None = cast(
             "str | list[str] | None", attrs.get(c.Names.OBJECTCLASS)
         )
-        assert isinstance(objectclass_value, list)
+        tm.that(isinstance(objectclass_value, list), eq=True)
 
     def test_attributes_data_with_real_schema(self) -> None:
         """AttributesData must support real schema attribute patterns."""
@@ -151,9 +157,9 @@ class TestModelsNamespace:
             },
         }
         cn_oid: str | None = data[c.Names.CN].get("oid")
-        assert cn_oid == OIDs.CN
+        tm.that(cn_oid == OIDs.CN, eq=True)
         uid_single_valued: bool | None = data[c.Names.UID].get("single_valued")
-        assert uid_single_valued is True
+        tm.that(uid_single_valued is True, eq=True)
 
     def test_objectclasses_data_with_real_schema(self) -> None:
         """ObjectClassesData must support real objectClass patterns."""
@@ -167,10 +173,10 @@ class TestModelsNamespace:
             }
         }
         oid_value: str | None = data[c.Names.INETORGPERSON].get("oid")
-        assert oid_value == "2.16.840.1.113730.3.2.2"
+        tm.that(oid_value == "2.16.840.1.113730.3.2.2", eq=True)
         may_values: list[str] | None = data[c.Names.INETORGPERSON].get("may")
-        assert may_values is not None
-        assert c.Names.MAIL in may_values
+        tm.that(may_values is not None, eq=True)
+        tm.that(c.Names.MAIL in may_values, eq=True)
 
     def test_extensions_with_reals(self) -> None:
         """QuirkExtensions must support real quirk metadata."""
@@ -180,7 +186,7 @@ class TestModelsNamespace:
             "server_type": "oud",
         }
         supports_dn_case: bool | None = extensions.get("supports_dn_case_registry")
-        assert supports_dn_case is True
+        tm.that(supports_dn_case is True, eq=True)
 
 
 class TestRemovalOfOverEngineering:
@@ -216,17 +222,17 @@ class TestRemovalOfOverEngineering:
     @pytest.mark.parametrize("namespace", REMOVED_NAMESPACES)
     def test_removed_namespaces(self, namespace: str) -> None:
         """Over-engineered namespaces must be removed."""
-        assert not hasattr(t, namespace)
+        tm.that(not hasattr(t, namespace), eq=True)
 
     @pytest.mark.parametrize("type_name", REMOVED_COMMON_DICT)
     def test_removed_common_dict_types(self, type_name: str) -> None:
         """Unused CommonDict types must be removed."""
-        assert not hasattr(t.Ldif.CommonDict, type_name)
+        tm.that(not hasattr(t.Ldif.CommonDict, type_name), eq=True)
 
     @pytest.mark.parametrize("type_name", REMOVED_ENTRY)
     def test_removed_entry_types(self, type_name: str) -> None:
         """Unused Entry types must be removed."""
-        assert not hasattr(t.Ldif, "Entry")
+        tm.that(not hasattr(t.Ldif, "Entry"), eq=True)
 
 
 class TestPhase1StandardizationResults:
@@ -239,13 +245,13 @@ class TestPhase1StandardizationResults:
             for m in inspect.getmembers(t)
             if inspect.isclass(m[1]) and (not m[0].startswith("_"))
         ]
-        assert len(classes) >= 1
+        tm.that(len(classes) >= 1, eq=True)
 
     @pytest.mark.parametrize("attr", ["AttributeDict", "DistributionDict"])
     def test_common_dict_simple_patterns(self, attr: str) -> None:
         """Simple patterns should be kept in CommonDict."""
         if hasattr(t.Ldif, "CommonDict"):
-            assert hasattr(t.Ldif.CommonDict, "AttributeDict")
+            tm.that(hasattr(t.Ldif.CommonDict, "AttributeDict"), eq=True)
 
     def test_types_work_with_real_data(self) -> None:
         """Verify types work with real data."""
@@ -257,10 +263,10 @@ class TestPhase1StandardizationResults:
             c.Names.INETORGPERSON: 2,
             c.Names.PERSON: 1,
         }
-        assert attr_dict[c.Names.CN] == ["Jane Doe"]
-        assert c.Names.INETORGPERSON in attr_dict[c.Names.OBJECTCLASS]
-        assert sum(distribution.values()) == 3
-        assert distribution[c.Names.PERSON] == 1
+        tm.that(attr_dict[c.Names.CN] == ["Jane Doe"], eq=True)
+        tm.that(c.Names.INETORGPERSON in attr_dict[c.Names.OBJECTCLASS], eq=True)
+        tm.that(sum(distribution.values()) == 3, eq=True)
+        tm.that(distribution[c.Names.PERSON] == 1, eq=True)
 
 
 class TestIntegrationWithLdifFixtures:
@@ -276,12 +282,12 @@ class TestIntegrationWithLdifFixtures:
 
     def test_types_work_with_ldif_fixtures(self, oid_ldif_path: Path) -> None:
         """Verify types work with real LDIF fixture files."""
-        assert oid_ldif_path.exists()
+        tm.that(oid_ldif_path.exists(), eq=True)
         entry_attrs: t.Ldif.CommonDict.AttributeDict = {
             c.Names.CN: ["Test Entry"],
             c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INETORGPERSON],
         }
-        assert c.Names.CN in entry_attrs
+        tm.that(c.Names.CN in entry_attrs, eq=True)
 
     def test_models_namespace_with_schema_data(self) -> None:
         """Verify Models namespace types work with schema data."""
@@ -289,4 +295,4 @@ class TestIntegrationWithLdifFixtures:
             c.Names.CN: {"oid": OIDs.CN, "syntax": "Directory String"}
         }
         cn_oid: str | None = schema_attrs[c.Names.CN].get("oid")
-        assert cn_oid == OIDs.CN
+        tm.that(cn_oid == OIDs.CN, eq=True)

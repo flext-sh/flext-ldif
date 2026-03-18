@@ -17,7 +17,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-    from .conftest_factory import FlextLdifTestConftest, FlextTestsDocker
+    from .conftest_factory import FlextLdifTestConftest, tk
     from .ldif_data import LdifSample, LdifTestData
     from .real_services import FlextLdifTestFactory
     from .test_files import FileManager
@@ -34,7 +34,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextLdifTestConftest",
     ),
     "FlextLdifTestFactory": ("tests.support.real_services", "FlextLdifTestFactory"),
-    "FlextTestsDocker": ("tests.support.conftest_factory", "FlextTestsDocker"),
     "LdifSample": ("tests.support.ldif_data", "LdifSample"),
     "LdifTestData": ("tests.support.ldif_data", "LdifTestData"),
     "MockFlextUtilitiesResultHelpers": (
@@ -43,18 +42,19 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "MockMatchers": ("tests.support.validators", "MockMatchers"),
     "TestValidators": ("tests.support.validators", "TestValidators"),
+    "tk": ("tests.support.conftest_factory", "tk"),
 }
 
 __all__ = [
     "FileManager",
     "FlextLdifTestConftest",
     "FlextLdifTestFactory",
-    "FlextTestsDocker",
     "LdifSample",
     "LdifTestData",
     "MockFlextUtilitiesResultHelpers",
     "MockMatchers",
     "TestValidators",
+    "tk",
 ]
 
 

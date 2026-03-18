@@ -6,6 +6,7 @@ Tests all 830 uncovered lines in utilities.py with real data and automation.
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 
 from tests import FlextLdifTestFactory, m, u
 
@@ -21,8 +22,8 @@ class TestFlextLdifUtilitiesComprehensive:
         if test_data.dn:
             dn = test_data.dn
             result = u.Ldif.norm_string(dn)
-            assert isinstance(result, str)
-            assert len(result) > 0
+            tm.that(isinstance(result, str), eq=True)
+            tm.that(len(result) > 0, eq=True)
 
     def test_real_ldif_processing_pipeline(self) -> None:
         """Test complete LDIF processing pipeline with real data."""
@@ -52,19 +53,19 @@ class TestFlextLdifUtilitiesComprehensive:
                 if key not in entries[-1].attributes:
                     entries[-1].attributes[key] = []
                 entries[-1].attributes[key].append(value)
-        assert len(entries) >= 5
+        tm.that(len(entries) >= 5, eq=True)
         for entry in entries:
-            assert entry.dn
-            assert entry.attributes
-            assert isinstance(entry.attributes, dict)
+            tm.that(entry.dn, eq=True)
+            tm.that(entry.attributes, eq=True)
+            tm.that(isinstance(entry.attributes, dict), eq=True)
 
     @pytest.mark.parametrize("server_type", ["generic", "openldap", "ad", "oid", "oud"])
     def test_server_specific_utilities(self, server_type: str) -> None:
         """Test server-specific utility functions."""
         entry = FlextLdifTestFactory.create_real_entry(server_type=server_type)
-        assert entry is not None
-        assert hasattr(entry, "dn")
-        assert hasattr(entry, "attributes")
+        tm.that(entry is not None, eq=True)
+        tm.that(hasattr(entry, "dn"), eq=True)
+        tm.that(hasattr(entry, "attributes"), eq=True)
         normalized = u.Ldif.normalize_server_type(server_type)
-        assert isinstance(normalized, str)
-        assert len(normalized) > 0
+        tm.that(isinstance(normalized, str), eq=True)
+        tm.that(len(normalized) > 0, eq=True)

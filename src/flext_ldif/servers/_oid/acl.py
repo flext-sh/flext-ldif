@@ -97,28 +97,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         permissions: FlextLdifModelsMetadata.DynamicMetadata | m.Ldif.DynamicMetadata,
     ) -> str:
         """Format OID ACL permissions clause."""
-        permission_names = {
-            "read": "read",
-            "write": "write",
-            "add": "add",
-            "delete": "delete",
-            "search": "search",
-            "compare": "compare",
-            "self_write": "selfwrite",
-            "proxy": "proxy",
-            "browse": "browse",
-            "auth": "auth",
-            "all": "all",
-            "no_write": "nowrite",
-            "no_add": "noadd",
-            "no_delete": "nodelete",
-            "no_browse": "nobrowse",
-            "no_self_write": "noselfwrite",
-        }
         allowed_perms: list[str] = []
         for perm, allowed in permissions.items():
             if allowed:
-                oid_perm_name = permission_names.get(perm, perm)
+                oid_perm_name = _OidConstants.ACL_PERMISSION_NAMES.get(perm, perm)
                 allowed_perms.append(oid_perm_name)
         if allowed_perms:
             return f"({','.join(allowed_perms)})"
@@ -570,22 +552,25 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             extensions_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
                 extensions
             )
-            acl_model = m.Ldif.Acl(
-                name=FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME,
-                target=m.Ldif.AclTarget(
+            acl_model = m.Ldif.Acl.model_validate({
+                "name": FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME,
+                "target": m.Ldif.AclTarget(
                     target_dn=target_dn, attributes=target_attrs or []
                 ),
-                subject=m.Ldif.AclSubject.model_validate({
+                "subject": m.Ldif.AclSubject.model_validate({
                     "subject_type": str(rfc_subject_type),
                     "subject_value": rfc_subject_value,
                 }),
-                permissions=m.Ldif.AclPermissions(**rfc_compliant_perms),
-                server_type=server_type,
-                metadata=m.Ldif.QuirkMetadata(
-                    quirk_type=server_type, extensions=extensions_metadata
-                ),
-                raw_acl=acl_line,
-            )
+                "permissions": m.Ldif.AclPermissions(**rfc_compliant_perms),
+                "server_type": server_type,
+                "metadata": m.Ldif.QuirkMetadata.model_validate({
+                    "quirk_type": server_type,
+                    "extensions": extensions_metadata,
+                }),
+                "raw_acl": acl_line,
+                "raw_line": acl_line,
+                "validation_violations": [],
+            })
             return r[m.Ldif.Acl].ok(acl_model)
         except (
             ValueError,
@@ -598,7 +583,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             acl_preview = acl_line[:max_len] if len(acl_line) > max_len else acl_line
             logger.debug(
                 "OID ACL parse failed",
-                error=str(e),
+                error=e,
                 error_type=type(e).__name__,
                 acl_line=acl_preview,
                 acl_line_length=len(acl_line),

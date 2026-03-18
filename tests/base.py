@@ -1,6 +1,6 @@
 """Test service base class for flext-ldif tests.
 
-Extends FlextTestsServiceBase from flext_tests with LDIF-specific test utilities.
+Extends s from flext_tests with LDIF-specific test utilities.
 
 All test classes should inherit from FlextLdifTestsServiceBase to leverage
 unified entry creation, assertions, and fixture management from flext_tests
@@ -24,10 +24,10 @@ from flext_ldif import FlextLdifEntries
 from tests import m
 
 
-class FlextLdifTestsServiceBase(FlextTestsServiceBase[m.Ldif.Entry]):
+class FlextLdifTestsServiceBase(s[m.Ldif.Entry]):
     """Base class for all test services in flext-ldif.
 
-    Extends FlextTestsServiceBase from flext_tests with LDIF-specific utilities:
+    Extends s from flext_tests with LDIF-specific utilities:
     1. Unified entry creation via create_entry()
     2. Multiple entry creation via create_entries()
     3. Real implementations (NO mocks)

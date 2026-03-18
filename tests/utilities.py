@@ -11,7 +11,7 @@ from flext_ldif._utilities import FlextLdifUtilitiesOID
 from tests import RfcTestHelpers as _RfcTestHelpers, TestDeduplicationHelpers, m
 
 
-class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
+class TestsFlextLdifUtilities(u, FlextLdifUtilities):
     """Project test utility namespace extension."""
 
     OID = FlextLdifUtilitiesOID

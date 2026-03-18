@@ -11,6 +11,7 @@ from enum import StrEnum, unique
 from typing import ClassVar
 
 import pytest
+from flext_tests import tm
 
 from tests import s, u
 
@@ -168,9 +169,10 @@ class TestsTestFlextLdifConstants(s):
                 u.Ldif.Constants.get_valid_values(category)
         else:
             values = u.Ldif.Constants.get_valid_values(category)
-            assert isinstance(values, set)
-            assert values == expected_values, (
-                f"Expected {expected_values}, got {values}"
+            tm.that(isinstance(values, set), eq=True)
+            (
+                tm.that(values == expected_values, eq=True),
+                (f"Expected {expected_values}, got {values}"),
             )
 
     @pytest.mark.parametrize(
@@ -201,7 +203,7 @@ class TestsTestFlextLdifConstants(s):
             pytest.skip("is_valid does not raise for unknown category")
         else:
             result = u.Ldif.Constants.is_valid(value, category)
-            assert result == expected_result
+            tm.that(result == expected_result, eq=True)
 
     @pytest.mark.parametrize(
         (
@@ -232,16 +234,16 @@ class TestsTestFlextLdifConstants(s):
                 u.Ldif.Constants.validate_many(values, category)
         else:
             is_valid, invalid = u.Ldif.Constants.validate_many(values, category)
-            assert is_valid == expected_valid
+            tm.that(is_valid == expected_valid, eq=True)
             if not expected_valid:
-                assert len(invalid) > 0
+                tm.that(len(invalid) > 0, eq=True)
 
     def test_constants_are_accessible(self) -> None:
         """Test that constants are properly defined and accessible."""
-        assert hasattr(u.Ldif.Constants, "_CATEGORY_MAP")
+        tm.that(hasattr(u.Ldif.Constants, "_CATEGORY_MAP"), eq=True)
         category_map = u.Ldif.Constants._CATEGORY_MAP
-        assert "server_type" in category_map
-        assert "encoding" in category_map
-        assert hasattr(u.Ldif.Constants, "get_valid_values")
-        assert hasattr(u.Ldif.Constants, "is_valid")
-        assert hasattr(u.Ldif.Constants, "validate_many")
+        tm.that("server_type" in category_map, eq=True)
+        tm.that("encoding" in category_map, eq=True)
+        tm.that(hasattr(u.Ldif.Constants, "get_valid_values"), eq=True)
+        tm.that(hasattr(u.Ldif.Constants, "is_valid"), eq=True)
+        tm.that(hasattr(u.Ldif.Constants, "validate_many"), eq=True)

@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import builtins
 import struct
+from collections.abc import Callable
 from datetime import UTC, datetime
 from functools import wraps
-from typing import TypeIs
+from typing import TypeIs, TypeVar
 
 from flext_core import FlextLogger, r
 
@@ -15,6 +16,17 @@ from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 
 logger = FlextLogger(__name__)
+
+_TDecoratorArg = TypeVar(
+    "_TDecoratorArg",
+    t.Ldif.Decorators.ParseMethodArg,
+    t.Ldif.Decorators.WriteMethodArg,
+)
+_TDecoratorReturn = TypeVar(
+    "_TDecoratorReturn",
+    t.Ldif.Decorators.ParseMethodReturn,
+    t.Ldif.Decorators.WriteMethodReturn,
+)
 
 
 def _is_metadata_attachable(
@@ -96,18 +108,16 @@ class FlextLdifUtilitiesDecorators:
             def wrapper(
                 self: builtins.object, arg: t.Ldif.Decorators.ParseMethodArg
             ) -> t.Ldif.Decorators.ParseMethodReturn:
-                try:
-                    return func(self, arg)
-                except (
-                    ValueError,
-                    KeyError,
-                    AttributeError,
-                    UnicodeDecodeError,
-                    struct.error,
-                ) as e:
-                    error_msg = f"{operation_name} failed: {e}"
-                    logger.exception(error_msg, operation_name=operation_name)
-                    return r[t.Scalar | list[str] | None].fail(error_msg)
+                def _parse_error(message: str) -> t.Ldif.Decorators.ParseMethodReturn:
+                    return r[t.Scalar | list[str] | None].fail(message)
+
+                return FlextLdifUtilitiesDecorators._execute_safe_operation(
+                    operation_name=operation_name,
+                    func=func,
+                    self_obj=self,
+                    arg=arg,
+                    on_error=_parse_error,
+                )
 
             return wrapper
 
@@ -184,22 +194,41 @@ class FlextLdifUtilitiesDecorators:
             def wrapper(
                 self: builtins.object, arg: t.Ldif.Decorators.WriteMethodArg
             ) -> t.Ldif.Decorators.WriteMethodReturn:
-                try:
-                    return func(self, arg)
-                except (
-                    ValueError,
-                    KeyError,
-                    AttributeError,
-                    UnicodeDecodeError,
-                    struct.error,
-                ) as e:
-                    error_msg = f"{operation_name} failed: {e}"
-                    logger.exception(error_msg, operation_name=operation_name)
-                    return r[t.Scalar | list[str] | None].fail(error_msg)
+                def _write_error(message: str) -> t.Ldif.Decorators.WriteMethodReturn:
+                    return r[t.Scalar | list[str] | None].fail(message)
+
+                return FlextLdifUtilitiesDecorators._execute_safe_operation(
+                    operation_name=operation_name,
+                    func=func,
+                    self_obj=self,
+                    arg=arg,
+                    on_error=_write_error,
+                )
 
             return wrapper
 
         return decorator
+
+    @staticmethod
+    def _execute_safe_operation(
+        operation_name: str,
+        func: Callable[[builtins.object, _TDecoratorArg], _TDecoratorReturn],
+        self_obj: builtins.object,
+        arg: _TDecoratorArg,
+        on_error: Callable[[str], _TDecoratorReturn],
+    ) -> _TDecoratorReturn:
+        try:
+            return func(self_obj, arg)
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ) as e:
+            error_msg = f"{operation_name} failed: {e}"
+            logger.exception(error_msg, operation_name=operation_name)
+            return on_error(error_msg)
 
 
 __all__ = ["FlextLdifUtilitiesDecorators"]

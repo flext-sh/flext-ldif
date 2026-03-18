@@ -2335,26 +2335,53 @@ class FlextLdifModelsDomains:
                 )
             return metadata
 
+        class _CreateEntryParams(m.Value):
+            model_config = ConfigDict(extra="forbid", validate_assignment=True)
+            dn: Annotated[str | FlextLdifModelsDomains.DN, Field(...)]
+            attributes: Annotated[
+                Mapping[str, str | list[str]] | FlextLdifModelsDomains.Attributes,
+                Field(...),
+            ]
+            metadata: Annotated[
+                FlextLdifModelsDomains.QuirkMetadata | None,
+                Field(default=None),
+            ]
+            acls: Annotated[
+                list[FlextLdifModelsDomains.Acl] | None,
+                Field(default=None),
+            ]
+            objectclasses: Annotated[
+                list[FlextLdifModelsDomains.SchemaObjectClass] | None,
+                Field(default=None),
+            ]
+            attributes_schema: Annotated[
+                list[FlextLdifModelsDomains.SchemaAttribute] | None,
+                Field(default=None),
+            ]
+            entry_metadata: Annotated[
+                FlextLdifModelsMetadata.EntryMetadata | None,
+                Field(default=None),
+            ]
+            validation_metadata: Annotated[
+                FlextLdifModelsDomains.ValidationMetadata | None,
+                Field(default=None),
+            ]
+            server_type: Annotated[
+                c.Ldif.LiteralTypes.ServerTypeLiteral | None,
+                Field(default=None),
+            ]
+            source_entry: Annotated[str | None, Field(default=None)]
+            unconverted_attributes: Annotated[
+                FlextLdifModelsMetadata.DynamicMetadata | None,
+                Field(default=None),
+            ]
+            statistics: Annotated[
+                FlextLdifModelsDomains.EntryStatistics | None,
+                Field(default=None),
+            ]
+
         @classmethod
-        def _create_entry(
-            cls,
-            dn: str | FlextLdifModelsDomains.DN,
-            attributes: Mapping[str, str | list[str]]
-            | FlextLdifModelsDomains.Attributes,
-            metadata: FlextLdifModelsDomains.QuirkMetadata | None = None,
-            acls: list[FlextLdifModelsDomains.Acl] | None = None,
-            objectclasses: list[FlextLdifModelsDomains.SchemaObjectClass] | None = None,
-            attributes_schema: list[FlextLdifModelsDomains.SchemaAttribute]
-            | None = None,
-            entry_metadata: FlextLdifModelsMetadata.EntryMetadata | None = None,
-            validation_metadata: FlextLdifModelsDomains.ValidationMetadata
-            | None = None,
-            server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
-            source_entry: str | None = None,
-            unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata
-            | None = None,
-            statistics: FlextLdifModelsDomains.EntryStatistics | None = None,
-        ) -> r[Self]:
+        def _create_entry(cls, params: _CreateEntryParams) -> r[Self]:
             """Internal method for Entry creation with composition fields.
 
             Args:
@@ -2376,10 +2403,13 @@ class FlextLdifModelsDomains:
 
             """
             try:
-                dn_obj = FlextLdifModelsDomains.DN.from_value(dn)
-                attrs_obj = cls._normalize_attributes(attributes)
+                dn_obj = FlextLdifModelsDomains.DN.from_value(params.dn)
+                attrs_obj = cls._normalize_attributes(params.attributes)
                 metadata = cls._build_metadata(
-                    metadata, server_type, source_entry, unconverted_attributes
+                    params.metadata,
+                    params.server_type,
+                    params.source_entry,
+                    params.unconverted_attributes,
                 )
                 entry_data: dict[
                     str,
@@ -2396,18 +2426,18 @@ class FlextLdifModelsDomains:
                 ] = {c.Ldif.DictKeys.DN: dn_obj, c.Ldif.DictKeys.ATTRIBUTES: attrs_obj}
                 if metadata is not None:
                     entry_data["metadata"] = metadata
-                if acls is not None:
-                    entry_data["acls"] = acls
-                if objectclasses is not None:
-                    entry_data["objectclasses"] = objectclasses
-                if attributes_schema is not None:
-                    entry_data["attributes_schema"] = attributes_schema
-                if entry_metadata is not None:
-                    entry_data["entry_metadata"] = entry_metadata
-                if validation_metadata is not None:
-                    entry_data["validation_metadata"] = validation_metadata
-                if statistics is not None:
-                    entry_data["statistics"] = statistics
+                if params.acls is not None:
+                    entry_data["acls"] = params.acls
+                if params.objectclasses is not None:
+                    entry_data["objectclasses"] = params.objectclasses
+                if params.attributes_schema is not None:
+                    entry_data["attributes_schema"] = params.attributes_schema
+                if params.entry_metadata is not None:
+                    entry_data["entry_metadata"] = params.entry_metadata
+                if params.validation_metadata is not None:
+                    entry_data["validation_metadata"] = params.validation_metadata
+                if params.statistics is not None:
+                    entry_data["statistics"] = params.statistics
                 entry_instance = cls.model_validate(entry_data)
                 return r[Self].ok(entry_instance)
             except (ValueError, TypeError, AttributeError) as e:
@@ -2489,7 +2519,7 @@ class FlextLdifModelsDomains:
             | None = None,
             statistics: FlextLdifModelsDomains.EntryStatistics | None = None,
         ) -> r[Self]:
-            return cls._create_entry(
+            params = cls._CreateEntryParams(
                 dn=dn,
                 attributes=attributes,
                 metadata=metadata,
@@ -2503,6 +2533,7 @@ class FlextLdifModelsDomains:
                 unconverted_attributes=unconverted_attributes,
                 statistics=statistics,
             )
+            return cls._create_entry(params=params)
 
         @classmethod
         def from_ldap3(cls, ldap3_entry: Mapping[str, builtins.object]) -> r[Self]:

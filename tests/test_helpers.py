@@ -20,9 +20,9 @@ from typing import TypeVar
 
 from flext_core import r
 from flext_tests import (
-    FlextTestsFactories,
-    FlextTestsMatchers,
-    FlextTestsValidator,
+    tm,
+    tt,
+    tv,
 )
 
 from flext_ldif import FlextLdif, FlextLdifEntries, m
@@ -48,7 +48,7 @@ def _unwrap_result[TResult](
     return value
 
 
-class TestsFlextLdifMatchers(FlextTestsMatchers):
+class TestsFlextLdifMatchers(tm):
     """Enhanced matchers for flext-ldif tests.
 
     Consolidates entry and entries validation into unified, highly parameterized methods.
@@ -558,10 +558,10 @@ class TestsFlextLdifMatchers(FlextTestsMatchers):
         )
 
 
-class TestsFlextLdifValidators(FlextTestsValidator):
+class TestsFlextLdifValidators(tv):
     """Enhanced validators for flext-ldif tests.
 
-    Extends FlextTestsValidator with flext-ldif specific validation methods.
+    Extends tv with flext-ldif specific validation methods.
     """
 
     __test__ = False
@@ -608,10 +608,10 @@ class TestsFlextLdifValidators(FlextTestsValidator):
         return True
 
 
-class TestsFlextLdifTypes(FlextTestsFactories):
+class TestsFlextLdifTypes(tt):
     """Enhanced type helpers for flext-ldif tests.
 
-    Extends FlextTestsTypes with flext-ldif specific type operations.
+    Extends t with flext-ldif specific type operations.
     """
 
     __test__ = False
@@ -622,10 +622,10 @@ class TestsFlextLdifTypes(FlextTestsFactories):
         return m.Ldif.Entry
 
 
-class TestsFlextLdifFixtures(FlextTestsFactories):
+class TestsFlextLdifFixtures(tt):
     """Enhanced fixtures for flext-ldif tests.
 
-    Extends FlextTestsFactories with flext-ldif specific factory methods.
+    Extends tt with flext-ldif specific factory methods.
     Provides parameterized entry creation with common patterns.
     """
 

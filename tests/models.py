@@ -18,11 +18,11 @@ from flext_ldif import FlextLdifModels
 from flext_ldif._models.settings import FlextLdifModelsSettings
 
 
-class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
-    """Test models - composition of FlextTestsModels + FlextLdifModels.
+class TestsFlextLdifModels(m, FlextLdifModels):
+    """Test models - composition of m + FlextLdifModels.
 
     Uses composition instead of inheritance to avoid deprecation warnings
-    from FlextTestsModels.__init_subclass__ and FlextLdifModels.__init_subclass__.
+    from m.__init_subclass__ and FlextLdifModels.__init_subclass__.
 
     Access patterns:
     - m.Ldif.* - Production domain models (delegated from FlextLdifModels.Ldif)

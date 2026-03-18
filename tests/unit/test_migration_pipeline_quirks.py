@@ -52,14 +52,17 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         result = pipeline.execute()
         tm.ok(result)
         output_file = output_dir / "migrated.ldif"
-        assert output_file.exists(), f"Expected output file to exist: {output_file}"
+        (
+            tm.that(output_file.exists(), eq=True),
+            f"Expected output file to exist: {output_file}",
+        )
         content = output_file.read_text(encoding="utf-8")
         val_true_rfc = OidTestConstants.OID_TO_RFC_BOOLEAN[val_true_oid]
         val_false_rfc = OidTestConstants.OID_TO_RFC_BOOLEAN[val_false_oid]
-        assert f"{attr_enabled.lower()}: {val_true_rfc}" in content
-        assert f"{attr_locked.lower()}: {val_false_rfc}" in content
-        assert f"{attr_enabled.lower()}: {val_true_oid}" not in content
-        assert f"{attr_locked.lower()}: {val_false_oid}" not in content
+        tm.that(f"{attr_enabled.lower()}: {val_true_rfc}" in content, eq=True)
+        tm.that(f"{attr_locked.lower()}: {val_false_rfc}" in content, eq=True)
+        tm.that(f"{attr_enabled.lower()}: {val_true_oid}" not in content, eq=True)
+        tm.that(f"{attr_locked.lower()}: {val_false_oid}" not in content, eq=True)
 
     def test_oid_boolean_conversion_rfc_to_oid(self, tmp_path: Path) -> None:
         """Test OID boolean conversion (TRUE/FALSE -> 0/1) during RFC -> OID migration."""
@@ -84,14 +87,17 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         result = pipeline.execute()
         tm.ok(result)
         output_file = output_dir / "migrated.ldif"
-        assert output_file.exists(), f"Expected output file to exist: {output_file}"
+        (
+            tm.that(output_file.exists(), eq=True),
+            f"Expected output file to exist: {output_file}",
+        )
         content = output_file.read_text(encoding="utf-8")
         val_true_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_true_rfc]
         val_false_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_false_rfc]
-        assert f"{attr_enabled.lower()}: {val_true_oid}" in content
-        assert f"{attr_locked.lower()}: {val_false_oid}" in content
-        assert f"{attr_enabled.lower()}: {val_true_rfc}" not in content
-        assert f"{attr_locked.lower()}: {val_false_rfc}" not in content
+        tm.that(f"{attr_enabled.lower()}: {val_true_oid}" in content, eq=True)
+        tm.that(f"{attr_locked.lower()}: {val_false_oid}" in content, eq=True)
+        tm.that(f"{attr_enabled.lower()}: {val_true_rfc}" not in content, eq=True)
+        tm.that(f"{attr_locked.lower()}: {val_false_rfc}" not in content, eq=True)
 
     def test_oid_acl_conversion_oid_to_rfc(self, tmp_path: Path) -> None:
         """Test OID ACL conversion (orclaci -> aci) during OID -> RFC migration."""
@@ -113,12 +119,19 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         result = pipeline.execute()
         tm.ok(result)
         output_file = output_dir / "migrated.ldif"
-        assert output_file.exists(), f"Expected output file to exist: {output_file}"
-        content = output_file.read_text(encoding="utf-8")
-        assert (
-            f"{FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME}: {acl_val}" in content
+        (
+            tm.that(output_file.exists(), eq=True),
+            f"Expected output file to exist: {output_file}",
         )
-        assert f"{FlextLdifServersOidConstants.ORCLACI}:" not in content
+        content = output_file.read_text(encoding="utf-8")
+        tm.that(
+            (
+                f"{FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME}: {acl_val}"
+                in content
+            ),
+            eq=True,
+        )
+        tm.that(f"{FlextLdifServersOidConstants.ORCLACI}:" not in content, eq=True)
 
     def test_oid_acl_conversion_rfc_to_oid(self, tmp_path: Path) -> None:
         """Test OID ACL conversion (aci -> orclaci) during RFC -> OID migration."""
@@ -140,11 +153,17 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         result = pipeline.execute()
         tm.ok(result)
         output_file = output_dir / "migrated.ldif"
-        assert output_file.exists(), f"Expected output file to exist: {output_file}"
+        (
+            tm.that(output_file.exists(), eq=True),
+            f"Expected output file to exist: {output_file}",
+        )
         content = output_file.read_text(encoding="utf-8")
-        assert f"{FlextLdifServersOidConstants.ORCLACI}: {acl_val}" in content
-        assert not re.search(r"(^|\\n)aci:", content), (
-            "Should not have standalone 'aci:' attribute"
+        tm.that(
+            f"{FlextLdifServersOidConstants.ORCLACI}: {acl_val}" in content, eq=True
+        )
+        (
+            tm.that(not re.search(r"(^|\\n)aci:", content), eq=True),
+            ("Should not have standalone 'aci:' attribute"),
         )
 
     def test_oid_schema_dn_conversion(self, tmp_path: Path) -> None:
@@ -166,10 +185,16 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         result = pipeline.execute()
         tm.ok(result)
         output_file = output_dir / "migrated.ldif"
-        assert output_file.exists(), f"Expected output file to exist: {output_file}"
+        (
+            tm.that(output_file.exists(), eq=True),
+            f"Expected output file to exist: {output_file}",
+        )
         content = output_file.read_text(encoding="utf-8")
-        assert f"dn: {FlextLdifServersRfc.Constants.SCHEMA_DN}" in content
-        assert f"dn: {FlextLdifServersOidConstants.SCHEMA_DN_QUIRK}" not in content
+        tm.that(f"dn: {FlextLdifServersRfc.Constants.SCHEMA_DN}" in content, eq=True)
+        tm.that(
+            f"dn: {FlextLdifServersOidConstants.SCHEMA_DN_QUIRK}" not in content,
+            eq=True,
+        )
 
     def test_pipeline_enforces_quirks(self, tmp_path: Path) -> None:
         """Test that pipeline enforces quirks even if input looks like c.RFC."""
@@ -194,4 +219,4 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         output_file = output_dir / "migrated.ldif"
         content = output_file.read_text(encoding="utf-8")
         val_true_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_true_rfc]
-        assert f"{attr_enabled.lower()}: {val_true_oid}" in content
+        tm.that(f"{attr_enabled.lower()}: {val_true_oid}" in content, eq=True)
