@@ -1,0 +1,54 @@
+tests/unit/quirks/servers/test_edge_cases.py
+  c84aef84f02a030f 49,51-53
+tests/unit/utilities/test_utilities_core.py
+  c84aef84f02a030f 273,281
+tests/unit/quirks/servers/test_apache_quirks.py
+  c84aef84f02a030f 15,19
+tests/unit/__init__/test_version.py
+  c84aef84f02a030f 119,130
+tests/constants.py
+  c84aef84f02a030f 520-533,542-547
+tests/unit/quirks/servers/test_novell_quirks.py
+  c84aef84f02a030f 15,19-20,291,355
+tests/unit/quirks/servers/test_ds389_quirks.py
+  c84aef84f02a030f 336,399
+tests/utilities.py
+  c84aef84f02a030f 23-27,29-32
+tests/unit/quirks/servers/test_relaxed_quirks.py
+  c84aef84f02a030f 154-157,222,329
+tests/unit/test_typings.py
+  c84aef84f02a030f 147,159,294,297
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "545b5e4cc05b0da8882d6c7a2d3b91701c17dd3c",
+  "prompts": {
+    "0f46f83de0143d24": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fe4698a9ffezG8YgHzmRqaPsV",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 2,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "c84aef84f02a030f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fdf35525ffeWWkwzyNnVBmemY",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 106,
+      "total_deletions": 108,
+      "accepted_lines": 58,
+      "overriden_lines": 1
+    }
+  }
+}
