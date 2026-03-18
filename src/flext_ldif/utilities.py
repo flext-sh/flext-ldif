@@ -12,7 +12,7 @@ from collections.abc import (
     Sequence,
 )
 from enum import Enum
-from typing import ClassVar, Literal, Self, TypeIs, cast, overload, override
+from typing import ClassVar, Literal, Self, TypeIs, overload, override
 
 from flext_core import FlextLogger, FlextUtilities, r
 
@@ -731,10 +731,7 @@ class FlextLdifUtilities(FlextUtilities):
                 return FlextLdifUtilitiesResult[list[m.Ldif.Entry]].ok(list(entries))
             combined: FlextLdifUtilitiesFilters[m.Ldif.Entry] = filter_list[0]
             for f in filter_list[1:]:
-                combined = cast(
-                    "FlextLdifUtilitiesFilters[m.Ldif.Entry]",
-                    combined & f if mode == "all" else combined | f,
-                )
+                combined = combined & f if mode == "all" else combined | f
             filtered = [entry for entry in entries if combined.matches(entry)]
             return FlextLdifUtilitiesResult[list[m.Ldif.Entry]].ok(filtered)
 
