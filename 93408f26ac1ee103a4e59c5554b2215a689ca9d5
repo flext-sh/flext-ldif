@@ -1,0 +1,41 @@
+tests/unit/quirks/servers/test_apache_quirks.py
+  84167fe83c69e77d 438,453,468,498
+tests/unit/quirks/servers/test_ds389_quirks.py
+  0f46f83de0143d24 19
+  84167fe83c69e77d 389
+tests/unit/quirks/servers/test_novell_quirks.py
+  0f46f83de0143d24 213,221
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "93408f26ac1ee103a4e59c5554b2215a689ca9d5",
+  "prompts": {
+    "0f46f83de0143d24": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fe4698a9ffezG8YgHzmRqaPsV",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 6,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    },
+    "84167fe83c69e77d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fdabb536fferbuboyACs4UpMh",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 25,
+      "total_deletions": 18,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}
