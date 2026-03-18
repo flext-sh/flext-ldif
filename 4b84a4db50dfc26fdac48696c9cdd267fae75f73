@@ -1,0 +1,25 @@
+tests/unit/test_typings.py
+  c84aef84f02a030f 158,160
+tests/unit/quirks/servers/test_apache_quirks.py
+  c84aef84f02a030f 357,372
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "4b84a4db50dfc26fdac48696c9cdd267fae75f73",
+  "prompts": {
+    "c84aef84f02a030f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fdf35525ffeWWkwzyNnVBmemY",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 4,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}
