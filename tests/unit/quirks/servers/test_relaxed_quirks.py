@@ -151,13 +151,17 @@ class TestsTestFlextLdifRelaxedQuirks(s):
             if scenario in {ParseScenario.VALID, ParseScenario.MALFORMED}:
                 tm.that(parsed.oid is not None, eq=True)
                 tm.that(parsed.metadata, eq=True)
-                tm.that(
-                    (
-                        parsed.metadata.extensions.schema_source_server == "relaxed"
-                        or parsed.metadata.extensions.original_format is not None
-                    ),
-                    eq=True,
-                )
+                if (
+                    parsed.metadata is not None
+                    and parsed.metadata.extensions is not None
+                ):
+                    tm.that(
+                        (
+                            parsed.metadata.extensions.schema_source_server == "relaxed"
+                            or parsed.metadata.extensions.original_format is not None
+                        ),
+                        eq=True,
+                    )
         else:
             (
                 tm.that(result.is_failure, eq=True),
@@ -215,7 +219,8 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         tm.that(result.is_success, eq=True)
         parsed = result.value
         tm.that(parsed.metadata, eq=True)
-        tm.that(parsed.metadata.extensions.original_format == original, eq=True)
+        if parsed.metadata is not None and parsed.metadata.extensions is not None:
+            tm.that(parsed.metadata.extensions.original_format == original, eq=True)
 
     def test_write_attribute_to_rfc(
         self, schema_quirk: FlextLdifServersRelaxed.Schema
@@ -321,13 +326,14 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         tm.that(result.is_success, eq=True)
         parsed = result.value
         tm.that(parsed.metadata, eq=True)
-        tm.that(
-            (
-                parsed.metadata.extensions.original_format is not None
-                or parsed.metadata.extensions.schema_source_server is not None
-            ),
-            eq=True,
-        )
+        if parsed.metadata is not None and parsed.metadata.extensions is not None:
+            tm.that(
+                (
+                    parsed.metadata.extensions.original_format is not None
+                    or parsed.metadata.extensions.schema_source_server is not None
+                ),
+                eq=True,
+            )
 
     @pytest.mark.parametrize(
         ("parse_type", "input_without_oid"),

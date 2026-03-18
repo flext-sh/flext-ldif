@@ -333,7 +333,8 @@ class TestsTestFlextLdifDs389Quirks(s):
         result = schema_quirk.parse(attr_def)
         tm.that(result.is_failure, eq=True)
         tm.that(result.error is not None, eq=True)
-        tm.that("missing an OID" in result.error, eq=True)
+        if result.error is not None:
+            tm.that("missing an OID" in result.error, eq=True)
 
     @pytest.mark.parametrize("test_case", OBJECTCLASS_TEST_CASES)
     def test_schema_objectclass_can_handle(
@@ -395,7 +396,8 @@ class TestsTestFlextLdifDs389Quirks(s):
         result = schema_quirk.parse(oc_def)
         tm.that(result.is_failure, eq=True)
         tm.that(result.error is not None, eq=True)
-        tm.that("missing an OID" in result.error, eq=True)
+        if result.error is not None:
+            tm.that("missing an OID" in result.error, eq=True)
 
     def test_write_objectclass_to_rfc(self) -> None:
         """Test writing objectClass to RFC string format."""

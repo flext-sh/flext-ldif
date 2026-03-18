@@ -12,9 +12,11 @@ from typing import ClassVar
 import pytest
 from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
-from tests import TestDeduplicationHelpers, c, m, s
+from tests import c, m, s
 
 from flext_ldif.servers.apache import FlextLdifServersApache
+
+TestDeduplicationHelpers = c.TestDeduplicationHelpers
 
 
 @unique

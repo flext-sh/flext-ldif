@@ -517,26 +517,20 @@ class TestsFlextLdifConstants(c, FlextLdifConstants):
         Used by test files to reference OID constants with short names.
         """
 
-        CN: Final[str] = FlextLdifConstants.Ldif.Rfc.ATTR_OID_CN
-        SN: Final[str] = FlextLdifConstants.Ldif.Rfc.ATTR_OID_SN
-        ST: Final[str] = FlextLdifConstants.Ldif.Rfc.ATTR_OID_ST
-        MAIL: Final[str] = FlextLdifConstants.Ldif.Rfc.ATTR_OID_MAIL
-        MODIFY_TIMESTAMP: Final[str] = (
-            FlextLdifConstants.Ldif.Rfc.ATTR_OID_MODIFY_TIMESTAMP
-        )
-        OID_O: Final[str] = FlextLdifConstants.Ldif.Rfc.ATTR_OID_O
-        OBJECTCLASS: Final[str] = FlextLdifConstants.Ldif.Rfc.ATTR_OID_OBJECTCLASS
-        PERSON: Final[str] = FlextLdifConstants.Ldif.Rfc.OC_OID_PERSON
-        DIRECTORY_STRING: Final[str] = (
-            FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_DIRECTORY_STRING
-        )
-        BOOLEAN: Final[str] = FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_BOOLEAN
-        INTEGER: Final[str] = FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_INTEGER
-        IA5_STRING: Final[str] = FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_IA5_STRING
-        GENERALIZED_TIME: Final[str] = (
-            FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_GENERALIZED_TIME
-        )
-        OID: Final[str] = FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_OID
+        CN: Final[str] = "2.5.4.3"
+        SN: Final[str] = "2.5.4.4"
+        ST: Final[str] = "2.5.4.8"
+        MAIL: Final[str] = "0.9.2342.19200300.100.1.3"
+        MODIFY_TIMESTAMP: Final[str] = "2.5.18.2"
+        OID_O: Final[str] = "2.5.4.10"
+        OBJECTCLASS: Final[str] = "2.5.4.0"
+        PERSON: Final[str] = "2.5.6.6"
+        DIRECTORY_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.15"
+        BOOLEAN: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"
+        INTEGER: Final[str] = "1.3.6.1.4.1.1466.115.121.1.27"
+        IA5_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.26"
+        GENERALIZED_TIME: Final[str] = "1.3.6.1.4.1.1466.115.121.1.24"
+        OID: Final[str] = "1.3.6.1.4.1.1466.115.121.1.38"
 
     class Syntax:
         """Syntax OID constant namespace for cleaner test access.
@@ -545,16 +539,12 @@ class TestsFlextLdifConstants(c, FlextLdifConstants):
         Used by test files to reference syntax OIDs with short names.
         """
 
-        DIRECTORY_STRING: Final[str] = (
-            FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_DIRECTORY_STRING
-        )
-        BOOLEAN: Final[str] = FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_BOOLEAN
-        INTEGER: Final[str] = FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_INTEGER
-        IA5_STRING: Final[str] = FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_IA5_STRING
-        GENERALIZED_TIME: Final[str] = (
-            FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_GENERALIZED_TIME
-        )
-        OID: Final[str] = FlextLdifConstants.Ldif.Rfc.SYNTAX_OID_OID
+        DIRECTORY_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.15"
+        BOOLEAN: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"
+        INTEGER: Final[str] = "1.3.6.1.4.1.1466.115.121.1.27"
+        IA5_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.26"
+        GENERALIZED_TIME: Final[str] = "1.3.6.1.4.1.1466.115.121.1.24"
+        OID: Final[str] = "1.3.6.1.4.1.1466.115.121.1.38"
 
     class RfcTestHelpers:
         """RFC test helper utilities for LDIF testing."""

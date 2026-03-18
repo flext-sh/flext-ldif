@@ -7,8 +7,6 @@ splitting, component extraction, and handling of special characters and escaped 
 
 from __future__ import annotations
 
-from typing import cast
-
 import pytest
 from flext_tests import tm
 
@@ -102,7 +100,7 @@ class TestsFlextLdifDnOperationsPure(s):
         dn = "cn=John,ou=Users,dc=example"
         result = u.Ldif.parse(dn)
         tm.that(result.is_success, eq=True)
-        parsed = cast("list[tuple[str, str]]", result.value)
+        parsed = result.value
         tm.that(len(parsed) >= 2, eq=True)
 
     def test_compare_dns(self) -> None:
@@ -111,7 +109,7 @@ class TestsFlextLdifDnOperationsPure(s):
         dn2 = "cn=jane,dc=example,dc=com"
         result = u.Ldif.compare_dns(dn1, dn2)
         tm.that(result.is_success, eq=True)
-        comparison = cast("int", result.value)
+        comparison = result.value
         tm.that(isinstance(comparison, int), eq=True)
 
     def test_escape_dn_value(self) -> None:
@@ -272,14 +270,16 @@ class TestAclParser:
         acl_line = 'orclaci: ( VERSION 3.0; ACETYPE ALLOW; (USERDN="ldap:///cn=*,ou=users,o=test");(ACITYPE ALLOW))'
         result = u.Ldif.parser(acl_line)
         tm.that(result is not None, eq=True)
-        tm.that(result.get("format") == "oid", eq=True)
+        if result is not None:
+            tm.that(result.get("format") == "oid", eq=True)
 
     def test_parse_oud_format(self) -> None:
         """Test parsing OUD ACL format."""
         acl_line = "aci: targetattr=*"
         result = u.Ldif.parser(acl_line)
         tm.that(result is not None, eq=True)
-        tm.that(result.get("format") == "oud", eq=True)
+        if result is not None:
+            tm.that(result.get("format") == "oud", eq=True)
 
     def test_parse_empty_acl(self) -> None:
         """Test parsing empty ACL."""

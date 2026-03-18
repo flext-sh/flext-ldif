@@ -138,7 +138,8 @@ class TestSchemaServiceParseAttribute:
         result = schema_service.parse_attribute("")
         tm.that(result.is_failure, eq=True)
         tm.that(result.error is not None, eq=True)
-        tm.that("empty" in result.error.lower(), eq=True)
+        if result.error is not None:
+            tm.that("empty" in result.error.lower(), eq=True)
 
     def test_parse_attribute_whitespace_only(
         self, schema_service: FlextLdifSchema
@@ -147,7 +148,8 @@ class TestSchemaServiceParseAttribute:
         result = schema_service.parse_attribute("   ")
         tm.that(result.is_failure, eq=True)
         tm.that(result.error is not None, eq=True)
-        tm.that("empty" in result.error.lower(), eq=True)
+        if result.error is not None:
+            tm.that("empty" in result.error.lower(), eq=True)
 
     def test_parse_attribute_invalid_format(
         self, schema_service: FlextLdifSchema
@@ -191,7 +193,8 @@ class TestSchemaServiceParseObjectClass:
         result = schema_service.parse_objectclass("")
         tm.that(result.is_failure, eq=True)
         tm.that(result.error is not None, eq=True)
-        tm.that("empty" in result.error.lower(), eq=True)
+        if result.error is not None:
+            tm.that("empty" in result.error.lower(), eq=True)
 
     def test_parse_objectclass_whitespace_only(
         self, schema_service: FlextLdifSchema
@@ -200,7 +203,8 @@ class TestSchemaServiceParseObjectClass:
         result = schema_service.parse_objectclass("   ")
         tm.that(result.is_failure, eq=True)
         tm.that(result.error is not None, eq=True)
-        tm.that("empty" in result.error.lower(), eq=True)
+        if result.error is not None:
+            tm.that("empty" in result.error.lower(), eq=True)
 
     def test_parse_objectclass_invalid_format(
         self, schema_service: FlextLdifSchema
@@ -234,7 +238,8 @@ class TestSchemaServiceValidateAttribute:
         result = schema_service.validate_attribute(attr)
         tm.that(result.is_failure, eq=True)
         tm.that(result.error is not None, eq=True)
-        tm.that("name" in result.error.lower(), eq=True)
+        if result.error is not None:
+            tm.that("name" in result.error.lower(), eq=True)
 
     def test_validate_attribute_without_oid(
         self, schema_service: FlextLdifSchema
@@ -246,7 +251,8 @@ class TestSchemaServiceValidateAttribute:
         result = schema_service.validate_attribute(attr)
         tm.that(result.is_failure, eq=True)
         tm.that(result.error is not None, eq=True)
-        tm.that("oid" in result.error.lower(), eq=True)
+        if result.error is not None:
+            tm.that("oid" in result.error.lower(), eq=True)
 
     def test_validate_attribute_with_invalid_syntax_oid(
         self, schema_service: FlextLdifSchema
@@ -258,7 +264,8 @@ class TestSchemaServiceValidateAttribute:
         result = schema_service.validate_attribute(attr)
         tm.that(result.is_failure, eq=True)
         tm.that(result.error is not None, eq=True)
-        tm.that("syntax" in result.error.lower(), eq=True)
+        if result.error is not None:
+            tm.that("syntax" in result.error.lower(), eq=True)
 
     def test_validate_attribute_none(self, schema_service: FlextLdifSchema) -> None:
         """Test validating None attribute - skipped as method doesn't accept None."""
@@ -286,7 +293,8 @@ class TestSchemaServiceValidateObjectClass:
         result = schema_service.validate_objectclass(oc)
         tm.that(result.is_failure, eq=True)
         tm.that(result.error is not None, eq=True)
-        tm.that("name" in result.error.lower(), eq=True)
+        if result.error is not None:
+            tm.that("name" in result.error.lower(), eq=True)
 
     def test_validate_objectclass_without_oid(
         self, schema_service: FlextLdifSchema
@@ -296,7 +304,8 @@ class TestSchemaServiceValidateObjectClass:
         result = schema_service.validate_objectclass(oc)
         tm.that(result.is_failure, eq=True)
         tm.that(result.error is not None, eq=True)
-        tm.that("oid" in result.error.lower(), eq=True)
+        if result.error is not None:
+            tm.that("oid" in result.error.lower(), eq=True)
 
     def test_validate_objectclass_invalid_kind(
         self, schema_service: FlextLdifSchema
@@ -306,7 +315,8 @@ class TestSchemaServiceValidateObjectClass:
         result = schema_service.validate_objectclass(oc)
         tm.that(result.is_failure, eq=True)
         tm.that(result.error is not None, eq=True)
-        tm.that("kind" in result.error.lower(), eq=True)
+        if result.error is not None:
+            tm.that("kind" in result.error.lower(), eq=True)
 
     def test_validate_objectclass_valid_kinds(
         self, schema_service: FlextLdifSchema
@@ -361,7 +371,8 @@ class TestSchemaServiceWriteAttribute:
         result = schema_service.write_attribute(attr)
         tm.that(result.is_failure, eq=True)
         tm.that(result.error is not None, eq=True)
-        tm.that("oid" in result.error.lower(), eq=True)
+        if result.error is not None:
+            tm.that("oid" in result.error.lower(), eq=True)
 
 
 class TestSchemaServiceWriteObjectClass:
@@ -402,7 +413,8 @@ class TestSchemaServiceWriteObjectClass:
         result = schema_service.write_objectclass(oc)
         tm.that(result.is_failure, eq=True)
         tm.that(result.error is not None, eq=True)
-        tm.that("oid" in result.error.lower(), eq=True)
+        if result.error is not None:
+            tm.that("oid" in result.error.lower(), eq=True)
 
 
 class TestSchemaServiceCanHandleAttribute:

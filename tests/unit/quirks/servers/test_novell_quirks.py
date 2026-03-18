@@ -11,9 +11,13 @@ from enum import StrEnum, unique
 import pytest
 from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
-from tests import RfcTestHelpers, TestDeduplicationHelpers, m, s
+from tests import m, s
+from tests.constants import TestsFlextLdifConstants
 
 from flext_ldif import FlextLdifServersNovell
+
+RfcTestHelpers = TestsFlextLdifConstants.RfcTestHelpers
+TestDeduplicationHelpers = TestsFlextLdifConstants.TestDeduplicationHelpers
 
 
 @unique
@@ -284,7 +288,8 @@ class TestNovellSchemaAttributeParsing:
         result = schema_quirk.parse_attribute(attr_def)
         tm.that(result.is_failure, eq=True)
         tm.that(result.error is not None, eq=True)
-        tm.that("missing an OID" in result.error, eq=True)
+        if result.error is not None:
+            tm.that("missing an OID" in result.error, eq=True)
 
 
 class TestNovellSchemaObjectClassDetection:
@@ -347,7 +352,8 @@ class TestNovellSchemaObjectClassParsing:
         result = quirk_schema.parse_objectclass(oc_def)
         tm.that(result.is_failure, eq=True)
         tm.that(result.error is not None, eq=True)
-        tm.that("missing an OID" in result.error, eq=True)
+        if result.error is not None:
+            tm.that("missing an OID" in result.error, eq=True)
 
     def test_write_attribute_to_rfc(
         self, schema_quirk: FlextLdifServersNovell.Schema

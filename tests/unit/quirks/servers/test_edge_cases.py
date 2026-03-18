@@ -46,10 +46,11 @@ class TestsFlextLdifEdgeCases(s):
         tm.that(len(entries) > 0, eq=True)
         for entry in entries:
             tm.that(entry.dn is not None, eq=True)
-            tm.that(entry.dn.value, eq=True)
-            has_unicode = any(ord(c) > 127 for c in entry.dn.value)
-            if has_unicode:
+            if entry.dn is not None:
                 tm.that(entry.dn.value, eq=True)
+                has_unicode = any(ord(c) > 127 for c in entry.dn.value)
+                if has_unicode:
+                    tm.that(entry.dn.value, eq=True)
 
     def test_deep_dn(self, ldif_api: FlextLdif) -> None:
         """Test parsing of entries with very deep DN hierarchies."""

@@ -116,7 +116,8 @@ class TestsFlextLdifVersion(s):
         tm.that(version_info[0] == 1, eq=True)
         tm.that(version_info[1] == 2, eq=True)
         tm.that(isinstance(version_info[2], str), eq=True)
-        tm.that("alpha" in version_info[2], eq=True)
+        if isinstance(version_info[2], str):
+            tm.that("alpha" in version_info[2], eq=True)
 
     def test_version_info_with_build(self) -> None:
         """Test __version_info__ handles build metadata correctly."""
@@ -126,5 +127,6 @@ class TestsFlextLdifVersion(s):
         tm.that(version_info[0] == 1, eq=True)
         tm.that(version_info[1] == 2, eq=True)
         tm.that(isinstance(version_info[2], str), eq=True)
-        tm.that("+build" in version_info[2], eq=True)
+        if isinstance(version_info[2], str):
+            tm.that("+build" in version_info[2], eq=True)
         tm.that(version_info[3] == 123, eq=True)

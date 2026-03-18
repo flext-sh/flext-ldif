@@ -12,7 +12,6 @@ from flext_tests import tm
 
 import flext_ldif
 from tests import c, s, t
-from tests.constants import OIDs
 
 
 class TestFlextLdifTypesStructure:
@@ -145,7 +144,7 @@ class TestModelsNamespace:
         """AttributesData must support real schema attribute patterns."""
         data: dict[str, dict[str, t.Scalar | list[str]]] = {
             c.Names.CN: {
-                "oid": OIDs.CN,
+                "oid": c.OIDs.CN,
                 "syntax": "Directory String",
                 "equality": "caseIgnoreMatch",
                 "single_valued": False,
@@ -157,7 +156,7 @@ class TestModelsNamespace:
             },
         }
         cn_oid: str | None = data[c.Names.CN].get("oid")
-        tm.that(cn_oid == OIDs.CN, eq=True)
+        tm.that(cn_oid == c.OIDs.CN, eq=True)
         uid_single_valued: bool | None = data[c.Names.UID].get("single_valued")
         tm.that(uid_single_valued is True, eq=True)
 
@@ -292,7 +291,7 @@ class TestIntegrationWithLdifFixtures:
     def test_models_namespace_with_schema_data(self) -> None:
         """Verify Models namespace types work with schema data."""
         schema_attrs: dict[str, dict[str, t.Scalar | list[str]]] = {
-            c.Names.CN: {"oid": OIDs.CN, "syntax": "Directory String"}
+            c.Names.CN: {"oid": c.OIDs.CN, "syntax": "Directory String"}
         }
         cn_oid: str | None = schema_attrs[c.Names.CN].get("oid")
-        tm.that(cn_oid == OIDs.CN, eq=True)
+        tm.that(cn_oid == c.OIDs.CN, eq=True)

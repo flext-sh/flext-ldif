@@ -30,6 +30,8 @@ if TYPE_CHECKING:
         EntryTestCase,
         ObjectClassScenario,
         ObjectClassTestCase,
+        RfcTestHelpers,
+        TestDeduplicationHelpers,
         TestNovellAcls,
         TestNovellEntryDetection,
         TestNovellSchemaAttributeDetection,
@@ -91,6 +93,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "ObjectClassTestCase",
     ),
     "ParseScenario": ("tests.unit.quirks.servers.test_relaxed_quirks", "ParseScenario"),
+    "RfcTestHelpers": (
+        "tests.unit.quirks.servers.test_novell_quirks",
+        "RfcTestHelpers",
+    ),
+    "TestDeduplicationHelpers": (
+        "tests.unit.quirks.servers.test_novell_quirks",
+        "TestDeduplicationHelpers",
+    ),
     "TestNovellAcls": (
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestNovellAcls",
@@ -182,6 +192,8 @@ __all__ = [
     "ObjectClassScenario",
     "ObjectClassTestCase",
     "ParseScenario",
+    "RfcTestHelpers",
+    "TestDeduplicationHelpers",
     "TestNovellAcls",
     "TestNovellEntryDetection",
     "TestNovellSchemaAttributeDetection",
