@@ -16,7 +16,7 @@ import struct
 from collections.abc import Callable, KeysView, Mapping, Sequence, ValuesView
 from contextlib import suppress
 from datetime import datetime
-from typing import Annotated, ClassVar, Self, TypedDict, Unpack, override
+from typing import Annotated, ClassVar, Self, TypedDict, TypeIs, Unpack, override
 
 from flext_core import FlextLogger, m, r, u
 from pydantic import (
@@ -161,7 +161,10 @@ class FlextLdifModelsDomains:
             if dn is None:
                 msg = "dn cannot be None"
                 raise ValueError(msg)
-            return cls(value=str(dn))
+            return cls.model_validate({
+                "value": str(dn),
+                "metadata": FlextLdifModelsMetadata.EntryMetadata.model_validate({}),
+            })
 
         def create_statistics(
             self,
@@ -541,7 +544,9 @@ class FlextLdifModelsDomains:
                     else "string"
                 )
                 metadata = (
-                    FlextLdifModelsDomains.QuirkMetadata(quirk_type=server_type)
+                    FlextLdifModelsDomains.QuirkMetadata.model_validate({
+                        "quirk_type": server_type
+                    })
                     if server_type != c.Ldif.ServerTypes.RFC.value
                     else None
                 )
@@ -551,6 +556,10 @@ class FlextLdifModelsDomains:
                     desc=None,
                     type_category=type_category,
                     max_length=None,
+                    is_binary=False,
+                    case_insensitive=False,
+                    allows_multivalued=True,
+                    encoding="utf-8",
                     validation_pattern=None,
                     metadata=metadata,
                 )
@@ -752,7 +761,13 @@ class FlextLdifModelsDomains:
                         normalized_dict[key] = [val]
                     else:
                         normalized_dict[key] = [str(val)]
-                return r[Self].ok(cls(attributes=normalized_dict))
+                return r[Self].ok(
+                    cls.model_validate({
+                        "attributes": normalized_dict,
+                        "attribute_metadata": {},
+                        "metadata": None,
+                    })
+                )
             except (ValueError, TypeError, AttributeError) as e:
                 return r[Self].fail(f"Failed to create Attributes: {e}")
 
@@ -1496,9 +1511,7 @@ class FlextLdifModelsDomains:
                     "ACL is defined (has target/subject/permissions) but raw_acl is empty",
                 )
             if violations:
-                model_state = self.__dict__
-                model_state["validation_violations"] = violations
-                return self
+                return self.model_copy(update={"validation_violations": violations})
             return self
 
     class AclWriteMetadata(FlextLdifModelsBase):
@@ -1575,7 +1588,12 @@ class FlextLdifModelsDomains:
 
             """
             if not extensions:
-                return cls()
+                return cls.model_validate({
+                    "original_format": None,
+                    "source_server": None,
+                    "name_sanitized": False,
+                    "original_name_raw": None,
+                })
             keys = c.Ldif.MetadataKeys
             original_format = extensions.get(keys.ACL_ORIGINAL_FORMAT)
             source_server = extensions.get(keys.ACL_SOURCE_SERVER)
@@ -1668,7 +1686,10 @@ class FlextLdifModelsDomains:
                 return value
             if isinstance(value, Mapping):
                 return FlextLdifModelsDomains.DN.model_validate(value)
-            return FlextLdifModelsDomains.DN(value=str(value))
+            return FlextLdifModelsDomains.DN.model_validate({
+                "value": str(value),
+                "metadata": FlextLdifModelsMetadata.EntryMetadata.model_validate({}),
+            })
 
         changetype: Annotated[
             c.Ldif.LiteralTypes.ChangeTypeLiteral | None,
@@ -1715,8 +1736,23 @@ class FlextLdifModelsDomains:
             if extra is None:
                 return empty_attrs
             result = extra.get("unconverted_attributes")
-            if result is not None and isinstance(result, dict):
-                return result
+            if result is not None and self._is_string_key_mapping(result):
+                converted_unconverted_attributes: dict[
+                    str, str | list[str] | bytes
+                ] = {}
+                for key_candidate, raw_value in result.items():
+                    if not isinstance(key_candidate, str):
+                        continue
+                    key_str = key_candidate
+                    if self._is_object_list(raw_value):
+                        converted_unconverted_attributes[key_str] = [
+                            str(item) for item in raw_value
+                        ]
+                    elif isinstance(raw_value, str | bytes):
+                        converted_unconverted_attributes[key_str] = raw_value
+                    else:
+                        converted_unconverted_attributes[key_str] = str(raw_value)
+                return converted_unconverted_attributes
             return empty_attrs
 
         @model_validator(mode="before")
@@ -1764,9 +1800,9 @@ class FlextLdifModelsDomains:
                         final_quirk_type_val = c.Ldif.ServerTypes.RFC
                 else:
                     final_quirk_type_val = c.Ldif.ServerTypes.RFC
-                metadata_obj = FlextLdifModelsDomains.QuirkMetadata(
-                    quirk_type=final_quirk_type_val,
-                )
+                metadata_obj = FlextLdifModelsDomains.QuirkMetadata.model_validate({
+                    "quirk_type": final_quirk_type_val
+                })
                 data_dict["metadata"] = metadata_obj
             return data_dict
 
@@ -1787,26 +1823,40 @@ class FlextLdifModelsDomains:
                     )
                 except ValidationError as exc:
                     logger.warning(
-                        "Failed to validate server rules from JSON string",
-                        error=str(exc),
-                        error_type=type(exc).__name__,
+                        f"Failed to validate server rules from JSON string: {exc}"
                     )
                     return None
-            if isinstance(validation_rules, Mapping):
+            if FlextLdifModelsDomains.Entry._is_string_key_mapping(validation_rules):
                 try:
-                    validation_rules_payload: dict[str, builtins.object] = {
-                        str(key): value for key, value in validation_rules.items()
-                    }
+                    validation_rules_payload: dict[str, builtins.object] = {}
+                    for key_candidate, raw_value in validation_rules.items():
+                        if not isinstance(key_candidate, str):
+                            continue
+                        validation_rules_payload[key_candidate] = raw_value
                     return FlextLdifModelsSettings.ServerValidationRules.model_validate(
                         validation_rules_payload,
                     )
                 except ValidationError as exc:
                     logger.warning(
-                        "Failed to validate server rules from mapping",
-                        error=str(exc),
-                        error_type=type(exc).__name__,
+                        f"Failed to validate server rules from mapping: {exc}"
                     )
             return None
+
+        @staticmethod
+        def _is_string_key_mapping(
+            value: builtins.object,
+        ) -> TypeIs[Mapping[str, builtins.object]]:
+            return isinstance(value, Mapping)
+
+        @staticmethod
+        def _is_object_list(value: builtins.object) -> TypeIs[list[builtins.object]]:
+            return isinstance(value, list)
+
+        @staticmethod
+        def _is_object_sequence(
+            value: builtins.object,
+        ) -> TypeIs[Sequence[builtins.object]]:
+            return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
         @staticmethod
         def _validate_dn(dn_value: str) -> list[str]:
@@ -1906,16 +1956,20 @@ class FlextLdifModelsDomains:
                         for key, value in self.metadata.validation_results.context.items()
                     }
                 self.metadata.validation_results = (
-                    FlextLdifModelsDomains.ValidationMetadata(
-                        rfc_violations=violations,
-                        context={
+                    FlextLdifModelsDomains.ValidationMetadata.model_validate({
+                        "rfc_violations": violations,
+                        "errors": [],
+                        "warnings": [],
+                        "context": {
                             **old_context,
                             "validator": "validate_entry_rfc_compliance",
                             "dn": dn_value,
                             "attribute_count": str(attribute_count),
                             "total_violations": str(len(violations)),
                         },
-                    )
+                        "server_specific_violations": [],
+                        "validation_server_type": None,
+                    })
                 )
             return self
 
@@ -1944,7 +1998,14 @@ class FlextLdifModelsDomains:
             if server_violations and self.metadata:
                 if self.metadata.validation_results is None:
                     self.metadata.validation_results = (
-                        FlextLdifModelsDomains.ValidationMetadata()
+                        FlextLdifModelsDomains.ValidationMetadata.model_validate({
+                            "rfc_violations": [],
+                            "errors": [],
+                            "warnings": [],
+                            "context": {},
+                            "server_specific_violations": [],
+                            "validation_server_type": None,
+                        })
                     )
                 updated_validation_results = (
                     self.metadata.validation_results.model_copy(
@@ -2384,10 +2445,10 @@ class FlextLdifModelsDomains:
                 extensions = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
                     ext_kwargs,
                 )
-                return FlextLdifModelsDomains.QuirkMetadata(
-                    quirk_type=c.Ldif.ServerTypes.GENERIC,
-                    extensions=extensions,
-                )
+                return FlextLdifModelsDomains.QuirkMetadata.model_validate({
+                    "quirk_type": c.Ldif.ServerTypes.GENERIC,
+                    "extensions": extensions,
+                })
             if metadata is not None and has_new_metadata:
                 cls._update_existing_metadata(
                     metadata,
@@ -2447,18 +2508,7 @@ class FlextLdifModelsDomains:
             """Internal method for Entry creation with composition fields.
 
             Args:
-            dn: Distinguished Name for the entry
-            attributes: Entry attributes as FlextLdifModelsDomains.UnconvertedAttributes or Attributes
-            metadata: Optional quirk metadata for preserving original format
-            acls: Optional list of Access Control Lists for the entry
-            objectclasses: Optional list of ObjectClass definitions for schema validation
-            attributes_schema: Optional list of SchemaAttribute definitions for schema validation
-            entry_metadata: Optional entry-level metadata (changetype, modifyTimestamp, etc.)
-            validation_metadata: Optional validation results and metadata
-            server_type: Optional server type for the entry (for quirk metadata)
-            source_entry: Optional original source entry string (for quirk metadata)
-            unconverted_attributes: Optional dictionary of unconverted attributes (for quirk metadata)
-            statistics: Optional entry statistics tracking (transformations, validation, etc.)
+            params: Validated payload model containing entry fields and metadata
 
             Returns:
             r[Self] with Entry instance or validation error
@@ -2535,7 +2585,11 @@ class FlextLdifModelsDomains:
                 else:
                     values_list = [str(attr_values)]
                 attrs_dict[attr_name] = values_list
-            return FlextLdifModelsDomains.Attributes(attributes=attrs_dict)
+            return FlextLdifModelsDomains.Attributes.model_validate({
+                "attributes": attrs_dict,
+                "attribute_metadata": {},
+                "metadata": None,
+            })
 
         @classmethod
         def _update_existing_metadata(
@@ -2612,16 +2666,15 @@ class FlextLdifModelsDomains:
                 dn_str = str(ldap3_entry.get("entry_dn", ""))
                 entry_attrs_payload = ldap3_entry.get("entry_attributes_as_dict", {})
                 attrs_dict: dict[str, str | list[str]] = {}
-                if isinstance(entry_attrs_payload, Mapping):
-                    entry_attrs_payload_typed: Mapping[str, builtins.object] = {
-                        str(raw_key): raw_value
-                        for raw_key, raw_value in entry_attrs_payload.items()
-                    }
+                if FlextLdifModelsDomains.Entry._is_string_key_mapping(
+                    entry_attrs_payload
+                ):
+                    entry_attrs_payload_typed: dict[str, builtins.object] = dict(
+                        entry_attrs_payload.items()
+                    )
                     for attr_name, attr_value in entry_attrs_payload_typed.items():
-                        if isinstance(attr_value, Sequence) and (
-                            not isinstance(attr_value, str | bytes)
-                        ):
-                            attrs_dict[attr_name] = [str(v) for v in attr_value]
+                        if FlextLdifModelsDomains.Entry._is_object_sequence(attr_value):
+                            attrs_dict[attr_name] = [str(item) for item in attr_value]
                         elif isinstance(attr_value, str):
                             attrs_dict[attr_name] = [attr_value]
                         else:
@@ -2953,7 +3006,11 @@ class FlextLdifModelsDomains:
         @classmethod
         def create_minimal(cls, dn: str) -> Self:
             """Create minimal statistics for unchanged DN."""
-            return cls(original_dn=dn, cleaned_dn=dn, normalized_dn=dn)
+            return cls.model_validate({
+                "original_dn": dn,
+                "cleaned_dn": dn,
+                "normalized_dn": dn,
+            })
 
         @classmethod
         def create_with_transformation(
@@ -2974,13 +3031,15 @@ class FlextLdifModelsDomains:
                 **flags: Optional DNStatistics fields (type-safe via DNStatisticsFlags)
 
             """
-            return cls(
-                original_dn=original_dn,
-                cleaned_dn=cleaned_dn,
-                normalized_dn=normalized_dn,
-                transformations=transformations if transformations is not None else [],
+            return cls.model_validate({
+                "original_dn": original_dn,
+                "cleaned_dn": cleaned_dn,
+                "normalized_dn": normalized_dn,
+                "transformations": (
+                    transformations if transformations is not None else []
+                ),
                 **flags,
-            )
+            })
 
         @field_validator("transformations", mode="after")
         @classmethod
@@ -3177,7 +3236,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def create_minimal(cls) -> Self:
             """Create minimal statistics for newly parsed entry."""
-            return cls(was_parsed=True)
+            return cls.model_validate({"was_parsed": True})
 
         @classmethod
         def create_with_dn_stats(
@@ -3185,7 +3244,10 @@ class FlextLdifModelsDomains:
             dn_statistics: FlextLdifModelsDomains.DNStatistics,
         ) -> Self:
             """Create statistics with DN transformation details."""
-            return cls(was_parsed=True, dn_statistics=dn_statistics)
+            return cls.model_validate({
+                "was_parsed": True,
+                "dn_statistics": dn_statistics,
+            })
 
         @field_validator("filters_applied", mode="after")
         @classmethod
@@ -3706,7 +3768,10 @@ class FlextLdifModelsDomains:
                 extensions_model = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
                     extensions,
                 )
-            return cls(quirk_type=default_quirk_type, extensions=extensions_model)
+            return cls.model_validate({
+                "quirk_type": default_quirk_type,
+                "extensions": extensions_model,
+            })
 
         def add_conversion_note(self, operation: str, description: str) -> Self:
             """Add a conversion note to the audit trail.
@@ -3862,6 +3927,7 @@ class FlextLdifModelsDomains:
                 transformation_type=transformation_type,
                 original_values=list(original_values) if original_values else [],
                 target_values=new_values or [],
+                reason=reason or "",
             )
             updated_transformations = dict(self.attribute_transformations)
             updated_transformations[original_name] = transformation

@@ -60,13 +60,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             original_definition: str,
         ) -> _SchemaItemT:
             if not schema_item.metadata:
-                schema_item.metadata = m.Ldif.QuirkMetadata(
-                    quirk_type=self._get_server_type(),
-                    extensions=m.Ldif.DynamicMetadata(
-                        original_format=original_definition.strip(),
-                        schema_source_server="relaxed",
-                    ),
-                )
+                schema_item.metadata = m.Ldif.QuirkMetadata.model_validate({
+                    "quirk_type": self._get_server_type(),
+                    "extensions": m.Ldif.DynamicMetadata.model_validate({
+                        "original_format": original_definition.strip(),
+                        "schema_source_server": "relaxed",
+                    }),
+                })
                 return schema_item
             if not schema_item.metadata.extensions:
                 schema_item.metadata.extensions = m.Ldif.DynamicMetadata()
@@ -241,8 +241,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 )
                 return r[m.Ldif.SchemaAttribute].ok(attribute)
             logger.debug(
-                "RFC parser failed, using best-effort parsing",
-                error=str(parent_result.error),
+                f"RFC parser failed, using best-effort parsing: {parent_result.error}",
             )
             try:
                 oid = self._extract_oid_from_attribute(attr_definition)
@@ -256,13 +255,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     re.IGNORECASE,
                 )
                 name = name_match.group(1) if name_match else oid
-                metadata = m.Ldif.QuirkMetadata(
-                    quirk_type=self._get_server_type(),
-                    extensions=m.Ldif.DynamicMetadata(
-                        original_format=attr_definition.strip(),
-                        schema_source_server="relaxed",
-                    ),
-                )
+                metadata = m.Ldif.QuirkMetadata.model_validate({
+                    "quirk_type": self._get_server_type(),
+                    "extensions": m.Ldif.DynamicMetadata.model_validate({
+                        "original_format": attr_definition.strip(),
+                        "schema_source_server": "relaxed",
+                    }),
+                })
                 attr_domain = m.Ldif.SchemaAttribute(
                     name=name,
                     oid=oid,
@@ -275,7 +274,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     length=None,
                     usage=None,
                     single_value=False,
+                    collective=False,
                     no_user_modification=False,
+                    immutable=False,
+                    user_modification=True,
+                    obsolete=False,
                     metadata=metadata,
                     x_origin=None,
                     x_file_ref=None,
@@ -291,11 +294,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                logger.debug(
-                    "Relaxed attribute parse exception",
-                    error=str(e),
-                    error_type=type(e).__name__,
-                )
+                logger.debug(f"Relaxed attribute parse exception: {e}")
                 return r[m.Ldif.SchemaAttribute].fail(
                     f"Failed to parse attribute definition: {e}",
                 )
@@ -314,8 +313,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     self._enhance_objectclass_metadata(objectclass, oc_definition),
                 )
             logger.debug(
-                "RFC parser failed, using best-effort parsing",
-                error=str(parent_result.error),
+                f"RFC parser failed, using best-effort parsing: {parent_result.error}",
             )
             return self._parse_objectclass_relaxed(oc_definition)
 
@@ -350,13 +348,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 else c.Ldif.SchemaKind.STRUCTURAL.value
             )
             must, may = self._extract_must_may_from_objectclass(oc_definition)
-            metadata = m.Ldif.QuirkMetadata(
-                quirk_type=self._get_server_type(),
-                extensions=m.Ldif.DynamicMetadata(
-                    original_format=oc_definition.strip(),
-                    schema_source_server="relaxed",
-                ),
-            )
+            metadata = m.Ldif.QuirkMetadata.model_validate({
+                "quirk_type": self._get_server_type(),
+                "extensions": m.Ldif.DynamicMetadata.model_validate({
+                    "original_format": oc_definition.strip(),
+                    "schema_source_server": "relaxed",
+                }),
+            })
             objectclass_name = name or oid
             return r[m.Ldif.SchemaObjectClass].ok(
                 m.Ldif.SchemaObjectClass(
@@ -475,12 +473,12 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     if not acl.metadata:
                         updated_acl = acl.model_copy(
                             update={
-                                "metadata": m.Ldif.QuirkMetadata(
-                                    quirk_type=self._get_server_type(),
-                                    extensions=m.Ldif.DynamicMetadata(
-                                        original_format=acl_line.strip(),
-                                    ),
-                                ),
+                                "metadata": m.Ldif.QuirkMetadata.model_validate({
+                                    "quirk_type": self._get_server_type(),
+                                    "extensions": m.Ldif.DynamicMetadata.model_validate({
+                                        "original_format": acl_line.strip()
+                                    }),
+                                }),
                             },
                         )
                     else:
@@ -497,25 +495,28 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                             update={"metadata": updated_metadata},
                         )
                     return r[m.Ldif.Acl].ok(updated_acl)
-                relaxed_acl = m.Ldif.Acl(
-                    name=FlextLdifServersRelaxed.Constants.ACL_DEFAULT_NAME,
-                    target=m.Ldif.AclTarget(
-                        target_dn=FlextLdifServersRelaxed.Constants.ACL_DEFAULT_TARGET_DN,
-                        attributes=[],
-                    ),
-                    subject=m.Ldif.AclSubject(
-                        subject_type="all",
-                        subject_value=FlextLdifServersRelaxed.Constants.ACL_DEFAULT_SUBJECT_VALUE,
-                    ),
-                    permissions=m.Ldif.AclPermissions(),
-                    raw_acl=acl_line,
-                    metadata=m.Ldif.QuirkMetadata(
-                        quirk_type=self._get_server_type(),
-                        extensions=m.Ldif.DynamicMetadata.model_validate({
+                relaxed_acl = m.Ldif.Acl.model_validate({
+                    "name": FlextLdifServersRelaxed.Constants.ACL_DEFAULT_NAME,
+                    "target": m.Ldif.AclTarget.model_validate({
+                        "target_dn": FlextLdifServersRelaxed.Constants.ACL_DEFAULT_TARGET_DN,
+                        "attributes": [],
+                    }),
+                    "subject": m.Ldif.AclSubject.model_validate({
+                        "subject_type": "all",
+                        "subject_value": FlextLdifServersRelaxed.Constants.ACL_DEFAULT_SUBJECT_VALUE,
+                    }),
+                    "permissions": m.Ldif.AclPermissions.model_validate({}),
+                    "server_type": self._get_server_type(),
+                    "validation_violations": [],
+                    "raw_line": acl_line,
+                    "raw_acl": acl_line,
+                    "metadata": m.Ldif.QuirkMetadata.model_validate({
+                        "quirk_type": self._get_server_type(),
+                        "extensions": m.Ldif.DynamicMetadata.model_validate({
                             "original_format": acl_line.strip(),
                         }),
-                    ),
-                )
+                    }),
+                })
                 return r[m.Ldif.Acl].ok(relaxed_acl)
             except (
                 ValueError,
@@ -524,7 +525,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                logger.debug("Relaxed ACL parse failed", error=str(e))
+                logger.debug(f"Relaxed ACL parse failed: {e}")
                 return r[m.Ldif.Acl].fail(f"Failed to parse ACL: {e}")
 
         @override
@@ -586,11 +587,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                logger.debug(
-                    "DN normalization exception",
-                    error=str(e),
-                    error_type=type(e).__name__,
-                )
+                logger.debug(f"DN normalization exception: {e}")
                 return r[str].fail(f"DN normalization failed: {e}")
 
         def process_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
@@ -632,11 +629,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             if parent_result.is_success:
                 return parent_result
             logger.debug(
-                "RFC parser failed, using relaxed mode",
-                error=str(parent_result.error) if parent_result.error else "",
-                error_type=type(parent_result.error).__name__
-                if parent_result.error
-                else "",
+                f"RFC parser failed, using relaxed mode: {parent_result.error}",
             )
             return u.Ldif.Content.parse(
                 ldif_content=ldif_content,
@@ -653,7 +646,10 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             try:
                 if not entry_dn or not entry_dn.strip():
                     return r[m.Ldif.Entry].fail("Entry DN cannot be empty")
-                effective_dn = m.Ldif.DN(value=entry_dn.strip())
+                effective_dn = m.Ldif.DN.model_validate({
+                    "value": entry_dn.strip(),
+                    "metadata": m.Ldif.EntryMetadata.model_validate({}),
+                })
                 attr_dict: dict[str, list[str]] = {}
                 attr_key: str
                 attr_value: list[str | bytes]
@@ -670,7 +666,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                                 ),
                             )
                     attr_dict[str(attr_key)] = converted_list
-                ldif_attrs = m.Ldif.Attributes(attributes=attr_dict)
+                ldif_attrs = m.Ldif.Attributes.model_validate({
+                    "attributes": attr_dict,
+                    "attribute_metadata": {},
+                    "metadata": None,
+                })
                 original_attribute_case: dict[str, str] = {}
                 for attr_name in entry_attrs:
                     attr_str = str(attr_name)
@@ -679,22 +679,26 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 format_details = m.Ldif.FormatDetails(
                     dn_line=entry_dn,
                     spacing=entry_dn,
+                    syntax=None,
+                    encoding=None,
+                    trailing_info=None,
                 )
                 case_metadata = m.Ldif.DynamicMetadata.model_validate(
                     original_attribute_case,
                 )
-                metadata = m.Ldif.QuirkMetadata(
-                    quirk_type="relaxed",
-                    original_format_details=format_details,
-                    original_attribute_case=case_metadata,
-                    extensions=m.Ldif.DynamicMetadata(
-                        server_type="relaxed",
-                        relaxed_mode=True,
-                    ),
-                )
+                metadata = m.Ldif.QuirkMetadata.model_validate({
+                    "quirk_type": "relaxed",
+                    "original_format_details": format_details,
+                    "original_attribute_case": case_metadata,
+                    "extensions": m.Ldif.DynamicMetadata.model_validate({
+                        "server_type": "relaxed",
+                        "relaxed_mode": True,
+                    }),
+                })
                 entry = m.Ldif.Entry(
                     dn=effective_dn,
                     attributes=ldif_attrs,
+                    changetype=None,
                     metadata=metadata,
                 )
                 return r[m.Ldif.Entry].ok(entry)
@@ -705,11 +709,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                logger.debug(
-                    "Relaxed entry creation failed",
-                    error=str(e),
-                    error_type=type(e).__name__,
-                )
+                logger.debug(f"Relaxed entry creation failed: {e}")
                 return r[m.Ldif.Entry].fail(f"Failed to parse entry: {e}")
 
         @override
@@ -719,11 +719,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             if parent_result.is_success:
                 return parent_result
             logger.debug(
-                "RFC write failed, using relaxed mode",
-                error=str(parent_result.error) if parent_result.error else "",
-                error_type=type(parent_result.error).__name__
-                if parent_result.error
-                else "",
+                f"RFC write failed, using relaxed mode: {parent_result.error}",
             )
             try:
                 ldif_lines: list[str] = []
@@ -758,11 +754,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                logger.debug(
-                    "Write entry failed",
-                    error=str(e),
-                    error_type=type(e).__name__,
-                )
+                logger.debug(f"Write entry failed: {e}")
                 return r[str].fail(f"Failed to write entry: {e}")
 
 

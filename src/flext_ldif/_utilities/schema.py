@@ -8,7 +8,7 @@ import re
 import struct
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
-from typing import TypeVar
+from typing import TypeIs, TypeVar
 
 from flext_core import FlextLogger, r, u
 
@@ -360,7 +360,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_metadata_extensions(
-        extensions_raw: Mapping[str, t.RuntimeData],
+        extensions_raw: Mapping[str, builtins.object],
     ) -> Mapping[str, t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]]]:
         converted: dict[
             str, t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]]
@@ -371,12 +371,12 @@ class FlextLdifUtilitiesSchema:
                     raw_value
                 )
                 continue
-            if u.is_list_like(raw_value):
+            if FlextLdifUtilitiesSchema._is_object_list(raw_value):
                 converted[key] = FlextLdifUtilitiesSchema._convert_metadata_value(
                     raw_value
                 )
                 continue
-            if u.is_dict_like(raw_value):
+            if FlextLdifUtilitiesSchema._is_object_mapping(raw_value):
                 converted[key] = FlextLdifUtilitiesSchema._convert_metadata_value(
                     raw_value
                 )
@@ -388,16 +388,19 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_metadata_value(
-        value: t.RuntimeData,
+        value: t.Scalar
+        | datetime
+        | list[builtins.object]
+        | Mapping[builtins.object, builtins.object],
     ) -> t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]]:
         if u.is_primitive(value):
             return value
         if isinstance(value, datetime):
             return value.isoformat()
-        if u.is_list_like(value):
+        if isinstance(value, list):
             converted_list: list[str] = []
             for index in range(len(value)):
-                item_value: t.NormalizedValue = value[index]
+                item_value: builtins.object = value[index]
                 converted_list.append(str(item_value))
             return converted_list
         if isinstance(value, Mapping):
@@ -414,19 +417,35 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_nested_metadata_value(
-        value: t.RuntimeData,
+        value: t.Scalar | datetime | Sequence[builtins.object] | builtins.object,
     ) -> t.Scalar | list[str]:
         if u.is_primitive(value):
             return value
         if isinstance(value, datetime):
             return value.isoformat()
-        if u.is_list_like(value):
+        if FlextLdifUtilitiesSchema._is_object_sequence(value):
             converted_nested_list: list[str] = []
             for index in range(len(value)):
-                nested_item_value: t.NormalizedValue = value[index]
+                nested_item_value: builtins.object = value[index]
                 converted_nested_list.append(str(nested_item_value))
             return converted_nested_list
         return str(value)
+
+    @staticmethod
+    def _is_object_list(value: builtins.object) -> TypeIs[list[builtins.object]]:
+        return isinstance(value, list)
+
+    @staticmethod
+    def _is_object_mapping(
+        value: builtins.object,
+    ) -> TypeIs[Mapping[builtins.object, builtins.object]]:
+        return isinstance(value, Mapping)
+
+    @staticmethod
+    def _is_object_sequence(
+        value: builtins.object,
+    ) -> TypeIs[Sequence[builtins.object]]:
+        return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
     @staticmethod
     def _convert_sequence_to_str_list(seq: Sequence[t.Scalar]) -> list[str]:
