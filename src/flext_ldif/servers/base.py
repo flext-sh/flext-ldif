@@ -60,8 +60,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             msg = f"{cls.__name__}.Constants must define PRIORITY"
             raise AttributeError(msg)
         priority_number = int(priority_value)
-        type.__setattr__(cls, "server_type", _ServerTypeDescriptor(server_type_text))
-        type.__setattr__(cls, "priority", _PriorityDescriptor(priority_number))
+        type.__setattr__(cls, "server_type", server_type_text)
+        type.__setattr__(cls, "priority", priority_number)
 
     @property
     def acl(self) -> FlextLdifServersBaseSchemaAcl:
@@ -520,6 +520,6 @@ class _PriorityDescriptor:
         return self.value
 
 
-FlextLdifServersBase.server_type = _ServerTypeDescriptor("unknown")
-FlextLdifServersBase.priority = _PriorityDescriptor(0)
+FlextLdifServersBase.server_type = "unknown"
+FlextLdifServersBase.priority = 0
 __all__ = ["FlextLdifServersBase"]

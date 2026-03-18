@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from datetime import datetime
+
 from pydantic import BaseModel, RootModel
+
+from flext_ldif.typings import t as ldif_t
 
 
 class FlextAutoConstants:
@@ -34,7 +39,7 @@ m = FlextAutoModels
 
 class _RecursiveMetadata(
     RootModel[
-        _Scalar | list[_RecursiveMetadata] | Mapping[str, _RecursiveMetadata] | datetime
+        ldif_t.Scalar | list[ldif_t.Scalar] | Mapping[str, ldif_t.Scalar] | datetime
     ],
 ):
     pass
@@ -42,10 +47,10 @@ class _RecursiveMetadata(
 
 class _RecursiveContainer(
     RootModel[
-        _Scalar
+        ldif_t.Scalar
         | BaseModel
-        | list[_RecursiveContainer]
-        | Mapping[str, _RecursiveContainer]
+        | list[ldif_t.Scalar]
+        | Mapping[str, ldif_t.Scalar]
         | datetime
     ],
 ):

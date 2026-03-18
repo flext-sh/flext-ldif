@@ -1705,6 +1705,13 @@ class FlextLdifModelsDomains:
                 description="Quirk-specific metadata for processing data, ACLs, statistics, validation (non-RFC data)",
             ),
         ]
+        validation_metadata: Annotated[
+            t.ConfigMap | None,
+            Field(
+                default=None,
+                description="Validation metadata captured during parsing and transformation.",
+            ),
+        ]
 
         @computed_field
         def attributes_dict(self) -> Mapping[str, list[str]]:
@@ -1736,7 +1743,7 @@ class FlextLdifModelsDomains:
             if extra is None:
                 return empty_attrs
             result = extra.get("unconverted_attributes")
-            if result is not None and self._is_string_key_mapping(result):
+            if result is not None and self.is_string_key_mapping(result):
                 converted_unconverted_attributes: dict[
                     str, str | list[str] | bytes
                 ] = {}
@@ -1826,7 +1833,7 @@ class FlextLdifModelsDomains:
                         f"Failed to validate server rules from JSON string: {exc}"
                     )
                     return None
-            if FlextLdifModelsDomains.Entry._is_string_key_mapping(validation_rules):
+            if FlextLdifModelsDomains.Entry.is_string_key_mapping(validation_rules):
                 try:
                     validation_rules_payload: dict[str, builtins.object] = {}
                     for key_candidate, raw_value in validation_rules.items():
@@ -1843,7 +1850,7 @@ class FlextLdifModelsDomains:
             return None
 
         @staticmethod
-        def _is_string_key_mapping(
+        def is_string_key_mapping(
             value: builtins.object,
         ) -> TypeIs[Mapping[str, builtins.object]]:
             return isinstance(value, Mapping)
@@ -1853,7 +1860,7 @@ class FlextLdifModelsDomains:
             return isinstance(value, list)
 
         @staticmethod
-        def _is_object_sequence(
+        def is_object_sequence(
             value: builtins.object,
         ) -> TypeIs[Sequence[builtins.object]]:
             return isinstance(value, Sequence) and not isinstance(value, str | bytes)
@@ -2666,14 +2673,14 @@ class FlextLdifModelsDomains:
                 dn_str = str(ldap3_entry.get("entry_dn", ""))
                 entry_attrs_payload = ldap3_entry.get("entry_attributes_as_dict", {})
                 attrs_dict: dict[str, str | list[str]] = {}
-                if FlextLdifModelsDomains.Entry._is_string_key_mapping(
+                if FlextLdifModelsDomains.Entry.is_string_key_mapping(
                     entry_attrs_payload
                 ):
                     entry_attrs_payload_typed: dict[str, builtins.object] = dict(
                         entry_attrs_payload.items()
                     )
                     for attr_name, attr_value in entry_attrs_payload_typed.items():
-                        if FlextLdifModelsDomains.Entry._is_object_sequence(attr_value):
+                        if FlextLdifModelsDomains.Entry.is_object_sequence(attr_value):
                             attrs_dict[attr_name] = [str(item) for item in attr_value]
                         elif isinstance(attr_value, str):
                             attrs_dict[attr_name] = [attr_value]

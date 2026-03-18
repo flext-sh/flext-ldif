@@ -8,6 +8,7 @@ from flext_core import m
 from pydantic import ConfigDict, Field, computed_field
 
 from flext_ldif import FlextLdifShared, c
+from flext_ldif.typings import t as ldif_t
 
 
 class FlextLdifModelsBase(m.ArbitraryTypesModel):
@@ -25,6 +26,14 @@ class FlextLdifModelsBase(m.ArbitraryTypesModel):
 
 class SchemaElement(FlextLdifModelsBase):
     """Base class for all LDAP schema elements (attributes, objectClasses, syntaxes)."""
+
+    validation_metadata: Annotated[
+        ldif_t.ConfigMap | None,
+        Field(
+            default=None,
+            description="Validation metadata captured during schema processing.",
+        ),
+    ]
 
     @computed_field
     def has_metadata(self) -> bool:
@@ -96,6 +105,13 @@ class AclElement(m.ArbitraryTypesModel):
         Field(
             default_factory=list,
             description="Validation violations captured during parsing/processing",
+        ),
+    ]
+    validation_metadata: Annotated[
+        ldif_t.ConfigMap | None,
+        Field(
+            default=None,
+            description="Validation metadata captured during ACL processing.",
         ),
     ]
 

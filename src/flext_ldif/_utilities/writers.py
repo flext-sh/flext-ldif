@@ -155,7 +155,7 @@ class FlextLdifUtilitiesWriters:
                         sup_list = [str(item) for item in sup_value]
                     else:
                         sup_list = [sup_value]
-                    objectclass.sup = transform_sup_hook(sup_list)
+                    setattr(objectclass, "sup", transform_sup_hook(sup_list))
                 parts = build_parts_hook(objectclass)
                 definition = "( " + " ".join(parts) + " )"
                 return r[str].ok(definition)
