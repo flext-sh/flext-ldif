@@ -274,11 +274,12 @@ class TestsTestFlextLdifApacheQuirks(s):
             expected_type=m.Ldif.SchemaAttribute,
         )
         tm.that(isinstance(attr_data, m.Ldif.SchemaAttribute), eq=True)
-        tm.that(attr_data.oid == "1.3.6.1.4.1.18060.0.4.1.2.100", eq=True)
-        tm.that(attr_data.name == "ads-enabled", eq=True)
-        tm.that(attr_data.desc == "Enable flag", eq=True)
-        tm.that(attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.7", eq=True)
-        tm.that(attr_data.single_value is True, eq=True)
+        if isinstance(attr_data, m.Ldif.SchemaAttribute):
+            tm.that(attr_data.oid == "1.3.6.1.4.1.18060.0.4.1.2.100", eq=True)
+            tm.that(attr_data.name == "ads-enabled", eq=True)
+            tm.that(attr_data.desc == "Enable flag", eq=True)
+            tm.that(attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.7", eq=True)
+            tm.that(attr_data.single_value is True, eq=True)
 
     def test_schema_attribute_parse_with_syntax_length(self) -> None:
         """Test parsing attribute with syntax length specification."""
@@ -292,8 +293,9 @@ class TestsTestFlextLdifApacheQuirks(s):
             expected_type=m.Ldif.SchemaAttribute,
         )
         tm.that(isinstance(attr_data, m.Ldif.SchemaAttribute), eq=True)
-        tm.that(attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.15", eq=True)
-        tm.that(attr_data.length == 256, eq=True)
+        if isinstance(attr_data, m.Ldif.SchemaAttribute):
+            tm.that(attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.15", eq=True)
+            tm.that(attr_data.length == 256, eq=True)
 
     def test_schema_attribute_parse_missing_oid(self) -> None:
         """Test parsing attribute without OID fails."""

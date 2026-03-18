@@ -171,11 +171,12 @@ class TestModelsNamespace:
                 "may": [c.Names.MAIL, "mobile"],
             }
         }
-        oid_value: str | None = data[c.Names.INETORGPERSON].get("oid")
+        oid_value: t.Scalar | list[str] | None = data[c.Names.INETORGPERSON].get("oid")
         tm.that(oid_value == "2.16.840.1.113730.3.2.2", eq=True)
-        may_values: list[str] | None = data[c.Names.INETORGPERSON].get("may")
+        may_values: t.Scalar | list[str] | None = data[c.Names.INETORGPERSON].get("may")
         tm.that(may_values is not None, eq=True)
-        tm.that(c.Names.MAIL in may_values, eq=True)
+        if may_values is not None:
+            tm.that(c.Names.MAIL in may_values, eq=True)
 
     def test_extensions_with_reals(self) -> None:
         """QuirkExtensions must support real quirk metadata."""
@@ -184,7 +185,7 @@ class TestModelsNamespace:
             "priority": 10,
             "server_type": "oud",
         }
-        supports_dn_case: bool | None = extensions.get("supports_dn_case_registry")
+        supports_dn_case: t.Scalar | None = extensions.get("supports_dn_case_registry")
         tm.that(supports_dn_case is True, eq=True)
 
 
@@ -293,5 +294,5 @@ class TestIntegrationWithLdifFixtures:
         schema_attrs: dict[str, dict[str, t.Scalar | list[str]]] = {
             c.Names.CN: {"oid": c.OIDs.CN, "syntax": "Directory String"}
         }
-        cn_oid: str | None = schema_attrs[c.Names.CN].get("oid")
+        cn_oid: t.Scalar | list[str] | None = schema_attrs[c.Names.CN].get("oid")
         tm.that(cn_oid == c.OIDs.CN, eq=True)
