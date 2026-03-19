@@ -7,7 +7,7 @@ from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import ClassVar, Final, Literal
 
-from flext_core import FlextConstants, FlextLogger
+from flext_core import FlextConstants
 
 type ValidationLevelLiteral = Literal["strict", "moderate", "lenient"]
 
@@ -854,7 +854,7 @@ class FlextLdifConstants(FlextConstants):
         class AclFormats:
             """ACL format identifier constants."""
 
-            DEFAULT_ACL_FORMAT: Final[str] = ACI
+            DEFAULT_ACL_FORMAT: Final[str] = "aci"
 
         class ServerTypesMappings:
             """Server type mappings and aliases (separate from enum to avoid conflicts)."""
