@@ -2252,10 +2252,10 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def sum(
             items: Sequence[int | float | object] | Mapping[str, int | float | object],
-        ) -> int | float:
+        ) -> t.Numeric:
             """Sum of numeric items."""
             if isinstance(items, Mapping):
-                total_dict: int | float = 0
+                total_dict: t.Numeric = 0
                 for v in items.values():
                     match v:
                         case int() | float():
@@ -2266,7 +2266,7 @@ class FlextLdifUtilities(FlextUtilities):
             if not items:
                 return 0
             has_float = any(isinstance(v, float) for v in items)
-            total_seq: int | float = 0.0 if has_float else 0
+            total_seq: t.Numeric = 0.0 if has_float else 0
             for v in items:
                 match v:
                     case int() | float():
