@@ -10,6 +10,9 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
+    from flext_core.exceptions import e
+    from flext_core.handlers import h
+    from flext_core.mixins import x
     from flext_core.typings import FlextTypes
 
     from flext_ldif import _models, _utilities, servers, services
@@ -87,9 +90,11 @@ if TYPE_CHECKING:
         PipelineStep,
         ValidationPipeline,
         ValidationResult,
-        ValidationResult as r,
     )
-    from flext_ldif._utilities.result import FlextLdifUtilitiesResult
+    from flext_ldif._utilities.result import (
+        FlextLdifUtilitiesResult,
+        FlextLdifUtilitiesResult as r,
+    )
     from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
     from flext_ldif._utilities.server import FlextLdifUtilitiesServer
     from flext_ldif._utilities.transformers import (
@@ -496,16 +501,19 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "_utilities": ("flext_ldif._utilities", ""),
     "c": ("flext_ldif.constants", "c"),
     "d": ("flext_ldif._utilities.decorators", "FlextLdifUtilitiesDecorators"),
+    "e": ("flext_core.exceptions", "e"),
     "f": ("flext_ldif._utilities.functional", "f"),
+    "h": ("flext_core.handlers", "h"),
     "logger": ("flext_ldif._utilities.writers", "logger"),
     "m": ("flext_ldif.models", "m"),
     "p": ("flext_ldif.protocols", "p"),
-    "r": ("flext_ldif._utilities.pipeline", "ValidationResult"),
+    "r": ("flext_ldif._utilities.result", "FlextLdifUtilitiesResult"),
     "s": ("flext_ldif.base", "s"),
     "servers": ("flext_ldif.servers", ""),
     "services": ("flext_ldif.services", ""),
     "t": ("flext_ldif.typings", "t"),
     "u": ("flext_ldif.utilities", "u"),
+    "x": ("flext_core.mixins", "x"),
 }
 
 __all__ = [
@@ -657,7 +665,9 @@ __all__ = [
     "_utilities",
     "c",
     "d",
+    "e",
     "f",
+    "h",
     "logger",
     "m",
     "p",
@@ -667,6 +677,7 @@ __all__ = [
     "services",
     "t",
     "u",
+    "x",
 ]
 
 

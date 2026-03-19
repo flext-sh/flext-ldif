@@ -15,7 +15,6 @@ if TYPE_CHECKING:
     from flext_ldif.services import _services
     from flext_ldif.services._services.processing_pipeline_service import (
         FlextLdifProcessingPipelineService,
-        FlextLdifProcessingPipelineService as s,
     )
     from flext_ldif.services.acl import FlextLdifAcl
     from flext_ldif.services.analysis import FlextLdifAnalysis
@@ -75,10 +74,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ProcessingPipeline": ("flext_ldif.services.pipeline", "ProcessingPipeline"),
     "ServerTransformer": ("flext_ldif.services.transformers", "ServerTransformer"),
     "_services": ("flext_ldif.services._services", ""),
-    "s": (
-        "flext_ldif.services._services.processing_pipeline_service",
-        "FlextLdifProcessingPipelineService",
-    ),
 }
 
 __all__ = [
@@ -105,7 +100,6 @@ __all__ = [
     "ProcessingPipeline",
     "ServerTransformer",
     "_services",
-    "s",
 ]
 
 

@@ -170,7 +170,6 @@ if TYPE_CHECKING:
         TestSchemaDeviationsSpacing,
         TestSchemaDeviationsSyntaxQuotes,
         TestSchemaDeviationsUtilities,
-        TestSchemaDeviationsUtilities as u,
         TestSchemaDeviationsXOrigin,
     )
 
@@ -520,10 +519,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "test_simple_ldap_search",
     ),
     "tmp_ldif_path": ("tests.integration.conftest", "tmp_ldif_path"),
-    "u": (
-        "tests.integration.test_zero_data_loss_schema",
-        "TestSchemaDeviationsUtilities",
-    ),
     "unique_dn_suffix": ("tests.integration.conftest", "unique_dn_suffix"),
     "writer": ("tests.integration.conftest", "writer"),
 }
@@ -652,7 +647,6 @@ __all__ = [
     "test_ldap_connection",
     "test_simple_ldap_search",
     "tmp_ldif_path",
-    "u",
     "unique_dn_suffix",
     "writer",
 ]

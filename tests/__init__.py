@@ -12,6 +12,12 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
+    from flext_ldif.decorators import d
+    from flext_ldif.exceptions import e
+    from flext_ldif.handlers import h
+    from flext_ldif.mixins import x
+    from flext_ldif.result import r
+
     from . import integration as integration, support as support, unit as unit
     from .base import FlextLdifTestsServiceBase, s
     from .conftest import (
@@ -765,8 +771,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "constants": ("tests.unit.constants", ""),
     "conversion_matrix": ("tests.integration.conftest", "conversion_matrix"),
+    "d": ("flext_ldif.decorators", "d"),
+    "e": ("flext_ldif.exceptions", "e"),
     "fixtures_dir": ("tests.integration.test_quirks_transformations", "fixtures_dir"),
     "flext_ldif": ("tests.conftest", "flext_ldif"),
+    "h": ("flext_ldif.handlers", "h"),
     "integration": ("tests.integration", ""),
     "large_test_dataset": ("tests.conftest_shared", "large_test_dataset"),
     "ldap_connection": ("tests.integration.conftest", "ldap_connection"),
@@ -830,6 +839,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "parser": ("tests.integration.conftest", "parser"),
     "protocols": ("tests.unit.protocols", ""),
     "pytest_configure": ("tests.conftest", "pytest_configure"),
+    "r": ("flext_ldif.result", "r"),
     "real_entry": ("tests.conftest_shared", "real_entry"),
     "real_ldif_content": ("tests.conftest_shared", "real_ldif_content"),
     "real_ldif_group_entry": ("tests.conftest", "real_ldif_group_entry"),
@@ -881,6 +891,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "utilities": ("tests.unit.utilities", ""),
     "version_module": ("tests.unit.__init__.test_version", "version_module"),
     "writer": ("tests.integration.conftest", "writer"),
+    "x": ("flext_ldif.mixins", "x"),
 }
 
 __all__ = [
@@ -1030,8 +1041,11 @@ __all__ = [
     "complex_objectclass_definition",
     "constants",
     "conversion_matrix",
+    "d",
+    "e",
     "fixtures_dir",
     "flext_ldif",
+    "h",
     "integration",
     "large_test_dataset",
     "ldap_connection",
@@ -1074,6 +1088,7 @@ __all__ = [
     "parser",
     "protocols",
     "pytest_configure",
+    "r",
     "real_entry",
     "real_ldif_content",
     "real_ldif_group_entry",
@@ -1107,6 +1122,7 @@ __all__ = [
     "utilities",
     "version_module",
     "writer",
+    "x",
 ]
 
 

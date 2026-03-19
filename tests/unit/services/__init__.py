@@ -18,7 +18,6 @@ if TYPE_CHECKING:
         TestQuirksAutoInterchange,
         TestQuirksWithRealLdifFixtures,
         TestsFlextLdifQuirksStandardizedConstants,
-        TestsFlextLdifQuirksStandardizedConstants as c,
     )
     from .test_schema_service import (
         TestSchemaServiceBuilder,
@@ -112,10 +111,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.services.test_migration_pipeline",
         "TestsTestFlextLdifMigrationPipeline",
     ),
-    "c": (
-        "tests.unit.services.test_quirks_standardization",
-        "TestsFlextLdifQuirksStandardizedConstants",
-    ),
     "complex_attribute_definition": (
         "tests.unit.services.test_schema_service",
         "complex_attribute_definition",
@@ -157,7 +152,6 @@ __all__ = [
     "TestsFlextLdifSchemaServiceExecute",
     "TestsFlextLdifsFlextLdifWriterDnNormalization",
     "TestsTestFlextLdifMigrationPipeline",
-    "c",
     "complex_attribute_definition",
     "complex_objectclass_definition",
     "schema_service",

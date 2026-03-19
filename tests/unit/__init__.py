@@ -26,18 +26,14 @@ if TYPE_CHECKING:
         IsAclAttributeType,
         TestsTestFlextLdifAclAttributeRegistry,
     )
-    from .models.test_models import TestFlextLdifModels, TestFlextLdifModels as m
-    from .protocols.test_protocols import (
-        TestsTestFlextLdifProtocols,
-        TestsTestFlextLdifProtocols as p,
-    )
+    from .models.test_models import TestFlextLdifModels
+    from .protocols.test_protocols import TestsTestFlextLdifProtocols
     from .services.test_migration_pipeline import TestsTestFlextLdifMigrationPipeline
     from .services.test_quirks_standardization import (
         TestAliasDiscovery,
         TestQuirksAutoInterchange,
         TestQuirksWithRealLdifFixtures,
         TestsFlextLdifQuirksStandardizedConstants,
-        TestsFlextLdifQuirksStandardizedConstants as c,
     )
     from .services.test_schema_service import (
         TestSchemaServiceBuilder,
@@ -92,9 +88,7 @@ if TYPE_CHECKING:
         TestDnObjectClassMethods,
         TestLdifParser,
         TestObjectClassUtilities,
-        TestObjectClassUtilities as u,
         TestServerTypes,
-        TestServerTypes as t,
         TestsFlextLdifDnOperationsPure,
     )
 
@@ -270,10 +264,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "ValidateManyType",
     ),
     "__init__": ("tests.unit.__init__", ""),
-    "c": (
-        "tests.unit.services.test_quirks_standardization",
-        "TestsFlextLdifQuirksStandardizedConstants",
-    ),
     "complex_attribute_definition": (
         "tests.unit.services.test_schema_service",
         "complex_attribute_definition",
@@ -283,9 +273,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "complex_objectclass_definition",
     ),
     "constants": ("tests.unit.constants", ""),
-    "m": ("tests.unit.models.test_models", "TestFlextLdifModels"),
     "models": ("tests.unit.models", ""),
-    "p": ("tests.unit.protocols.test_protocols", "TestsTestFlextLdifProtocols"),
     "protocols": ("tests.unit.protocols", ""),
     "schema_service": ("tests.unit.services.test_schema_service", "schema_service"),
     "schema_service_oud": (
@@ -301,8 +289,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.services.test_schema_service",
         "simple_objectclass_definition",
     ),
-    "t": ("tests.unit.utilities.test_utilities_core", "TestServerTypes"),
-    "u": ("tests.unit.utilities.test_utilities_core", "TestObjectClassUtilities"),
     "utilities": ("tests.unit.utilities", ""),
     "version_module": ("tests.unit.__init__.test_version", "version_module"),
 }
@@ -356,21 +342,16 @@ __all__ = [
     "TestsTestFlextLdifServiceAPIs",
     "ValidateManyType",
     "__init__",
-    "c",
     "complex_attribute_definition",
     "complex_objectclass_definition",
     "constants",
-    "m",
     "models",
-    "p",
     "protocols",
     "schema_service",
     "schema_service_oud",
     "services",
     "simple_attribute_definition",
     "simple_objectclass_definition",
-    "t",
-    "u",
     "utilities",
     "version_module",
 ]
