@@ -10,9 +10,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_core.exceptions import e
-    from flext_core.handlers import h
-    from flext_core.mixins import x
+    from flext_core import e, h, x
     from flext_core.typings import FlextTypes
 
     from flext_ldif import _models, _utilities, servers, services
@@ -501,9 +499,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "_utilities": ("flext_ldif._utilities", ""),
     "c": ("flext_ldif.constants", "c"),
     "d": ("flext_ldif._utilities.decorators", "FlextLdifUtilitiesDecorators"),
-    "e": ("flext_core.exceptions", "e"),
+    "e": ("flext_core", "e"),
     "f": ("flext_ldif._utilities.functional", "f"),
-    "h": ("flext_core.handlers", "h"),
+    "h": ("flext_core", "h"),
     "logger": ("flext_ldif._utilities.writers", "logger"),
     "m": ("flext_ldif.models", "m"),
     "p": ("flext_ldif.protocols", "p"),
@@ -513,7 +511,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "services": ("flext_ldif.services", ""),
     "t": ("flext_ldif.typings", "t"),
     "u": ("flext_ldif.utilities", "u"),
-    "x": ("flext_core.mixins", "x"),
+    "x": ("flext_core", "x"),
 }
 
 __all__ = [
