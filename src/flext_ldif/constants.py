@@ -118,7 +118,6 @@ class FlextLdifConstants(FlextConstants):
 
         LDIF_BASE64_INDICATOR: Final[str] = LdifFormat.BASE64.value
         LDIF_REGULAR_INDICATOR: Final[str] = LdifFormat.REGULAR.value
-        LDIF_DEFAULT_ENCODING: Final[str] = FlextConstants.Utilities.DEFAULT_ENCODING
 
         @unique
         class AclSubjectType(StrEnum):
@@ -343,9 +342,6 @@ class FlextLdifConstants(FlextConstants):
         class ConfigDefaults:
             """Default values for FlextLdifSettings fields."""
 
-            LDIF_DEFAULT_ENCODING: Final[str] = (
-                FlextConstants.Utilities.DEFAULT_ENCODING
-            )
             DEBUG_MODE: Final[bool] = False
 
         class QualityAnalysis:

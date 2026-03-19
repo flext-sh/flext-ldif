@@ -84,7 +84,7 @@ class FlextLdifUtilitiesParser:
             value = value.strip()
             is_base64 = True
             with contextlib.suppress(ValueError, UnicodeDecodeError):
-                value = base64.b64decode(value).decode(c.Ldif.LDIF_DEFAULT_ENCODING)
+                value = base64.b64decode(value).decode(c.Utilities.DEFAULT_ENCODING)
         else:
             key, _, value = line.partition(c.Ldif.LDIF_REGULAR_INDICATOR)
             key = key.strip()
