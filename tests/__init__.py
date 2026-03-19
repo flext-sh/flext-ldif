@@ -207,13 +207,14 @@ if TYPE_CHECKING:
     from .test_helpers import (
         TestsFlextLdifFixtures,
         TestsFlextLdifMatchers,
+        TestsFlextLdifTypes,
         TestsFlextLdifValidators,
         tf,
         tm,
         tt,
         tv,
     )
-    from .typings import GenericFieldsDict, TestsFlextLdifTypes, t
+    from .typings import GenericFieldsDict, t
     from .unit import (
         constants as constants,
         models as models,
@@ -712,7 +713,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.services.test_schema_service",
         "TestsFlextLdifSchemaServiceExecute",
     ),
-    "TestsFlextLdifTypes": ("tests.typings", "TestsFlextLdifTypes"),
+    "TestsFlextLdifTypes": ("tests.test_helpers", "TestsFlextLdifTypes"),
     "TestsFlextLdifUtilities": ("tests.utilities", "TestsFlextLdifUtilities"),
     "TestsFlextLdifValidators": ("tests.test_helpers", "TestsFlextLdifValidators"),
     "TestsFlextLdifVersion": (

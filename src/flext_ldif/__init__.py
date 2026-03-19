@@ -36,8 +36,8 @@ if TYPE_CHECKING:
     )
     from flext_ldif._models.collections import FlextLdifModelsCollections
     from flext_ldif._models.conversion import FlextLdifModelsConversions
+    from flext_ldif._models.domain import FlextLdifModelsDomains
     from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
-    from flext_ldif._models.domain_entries import FlextLdifModelsDomains
     from flext_ldif._models.domain_operations import FlextLdifModelsDomainOperations
     from flext_ldif._models.domain_schema import SchemaDiscovery, SchemaLookup
     from flext_ldif._models.events import FlextLdifModelsEvents
@@ -166,13 +166,13 @@ if TYPE_CHECKING:
     from flext_ldif.services.pipeline import ProcessingPipeline
     from flext_ldif.services.processing import FlextLdifProcessing
     from flext_ldif.services.registry import FlextLdifServiceRegistry
+    from flext_ldif.services.rfc_validation import FlextLdifValidation
     from flext_ldif.services.schema import FlextLdifSchema
     from flext_ldif.services.server import FlextLdifServer
     from flext_ldif.services.sorting import FlextLdifSorting
     from flext_ldif.services.statistics import FlextLdifStatistics
     from flext_ldif.services.syntax import FlextLdifSyntax
     from flext_ldif.services.transformers import ServerTransformer
-    from flext_ldif.services.validation import FlextLdifValidation
     from flext_ldif.services.writer import FlextLdifWriter
     from flext_ldif.settings import FlextLdifSettings
     from flext_ldif.shared import FlextLdifShared
@@ -239,10 +239,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._models.domain_operations",
         "FlextLdifModelsDomainOperations",
     ),
-    "FlextLdifModelsDomains": (
-        "flext_ldif._models.domain_entries",
-        "FlextLdifModelsDomains",
-    ),
+    "FlextLdifModelsDomains": ("flext_ldif._models.domain", "FlextLdifModelsDomains"),
     "FlextLdifModelsEvents": ("flext_ldif._models.events", "FlextLdifModelsEvents"),
     "FlextLdifModelsMetadata": (
         "flext_ldif._models.metadata",
@@ -441,7 +438,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._utilities.writers",
         "FlextLdifUtilitiesWriters",
     ),
-    "FlextLdifValidation": ("flext_ldif.services.validation", "FlextLdifValidation"),
+    "FlextLdifValidation": (
+        "flext_ldif.services.rfc_validation",
+        "FlextLdifValidation",
+    ),
     "FlextLdifWriter": ("flext_ldif.services.writer", "FlextLdifWriter"),
     "FrozenIgnoreLdifModel": ("flext_ldif._models.base", "FrozenIgnoreLdifModel"),
     "FrozenLdifModel": ("flext_ldif._models.base", "FrozenLdifModel"),
