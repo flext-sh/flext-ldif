@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import Final
 
-from flext_core import FlextUtilities, r
+from flext_core import FlextUtilities
 from pydantic import TypeAdapter, ValidationError
 
-from flext_ldif import p, t
+from flext_ldif import p, r, t
 
 
 class FlextLdifUtilitiesValidation(FlextUtilities):

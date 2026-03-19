@@ -18,7 +18,7 @@ from contextlib import suppress
 from datetime import datetime
 from typing import Annotated, ClassVar, Self, TypedDict, TypeIs, Unpack, override
 
-from flext_core import FlextLogger, m, r, u
+from flext_core import FlextLogger
 from pydantic import (
     ConfigDict,
     Field,
@@ -28,7 +28,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_ldif import FlextLdifConstants as c, FlextLdifShared, t
+from flext_ldif import FlextLdifConstants as c, FlextLdifShared, m, r, t, u
 from flext_ldif._models import (
     AclElement,
     FlextLdifModelsBase,

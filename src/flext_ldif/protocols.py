@@ -7,9 +7,9 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import FlextProtocols, r
+from flext_core import FlextProtocols
 
-from flext_ldif import c, t
+from flext_ldif import c, r, t
 
 if TYPE_CHECKING:
     from flext_ldif import m

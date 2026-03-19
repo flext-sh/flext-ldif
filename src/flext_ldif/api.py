@@ -8,7 +8,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import ClassVar, override
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger
 from pydantic import BaseModel, computed_field
 
 from flext_ldif import (
@@ -29,6 +29,7 @@ from flext_ldif import (
     c,
     m,
     p,
+    r,
     u,
 )
 

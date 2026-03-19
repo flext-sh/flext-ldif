@@ -6,8 +6,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import override
 
-from flext_core import r
-
+from flext_ldif import r
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import FlextLdifModels as m
 from flext_ldif.utilities import FlextLdifUtilities as u

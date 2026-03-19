@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import re
 
-from flext_core import FlextLogger, FlextUtilities, r
+from flext_core import FlextLogger, FlextUtilities
 
+from flext_ldif import r
 from flext_ldif._models.domain import FlextLdifModelsDomains
 
 u = FlextUtilities

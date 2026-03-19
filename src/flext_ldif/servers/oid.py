@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger
 
-from flext_ldif import m
+from flext_ldif import m, r
 from flext_ldif.servers._oid import (
     FlextLdifServersOidAcl,
     FlextLdifServersOidConstants,

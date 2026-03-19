@@ -6,8 +6,7 @@ import builtins
 from collections.abc import Mapping
 from typing import Self, override
 
-from flext_core import r
-
+from flext_ldif import r
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import FlextLdifModels as m

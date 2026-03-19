@@ -8,9 +8,9 @@ import struct
 from collections.abc import Mapping
 from typing import ClassVar, override
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger
 
-from flext_ldif import c, m, p, u
+from flext_ldif import c, m, p, r, u
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL

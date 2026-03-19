@@ -7,9 +7,7 @@ import re
 from collections.abc import Callable
 from typing import Final
 
-from flext_core import r
-
-from flext_ldif import c
+from flext_ldif import c, r
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 
 

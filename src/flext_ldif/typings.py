@@ -10,10 +10,10 @@ from collections.abc import Callable, Mapping, MutableMapping
 from datetime import datetime
 from typing import Annotated, TypeVar
 
-from flext_core import FlextTypes, r
+from flext_core import FlextTypes
 from pydantic import BaseModel, StringConstraints
 
-from flext_ldif import c
+from flext_ldif import c, r
 
 # =========================================================================
 # RECURSIVE TYPES - Defined at module level for reliable scope resolution

@@ -6,8 +6,9 @@ import struct
 from collections.abc import Mapping
 from typing import Final
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger
 
+from flext_ldif import r
 from flext_ldif.models import FlextLdifModels as m
 
 logger: Final = FlextLogger(__name__)

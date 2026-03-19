@@ -7,10 +7,10 @@ import re
 from collections.abc import Mapping
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import FlextLogger, FlextService, r
+from flext_core import FlextLogger, FlextService
 from pydantic import Field, ValidationError
 
-from flext_ldif import m, p, t
+from flext_ldif import m, p, r, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL

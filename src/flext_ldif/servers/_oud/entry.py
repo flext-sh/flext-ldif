@@ -13,9 +13,9 @@ import re
 from collections.abc import Callable, Mapping
 from typing import override
 
-from flext_core import FlextLogger, r, u as core_u
+from flext_core import FlextLogger, u as core_u
 
-from flext_ldif import c, m, p, t, u
+from flext_ldif import c, m, p, r, t, u
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata

@@ -7,8 +7,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import override
 
-from flext_core import d, r
-
+from flext_ldif import d, r
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.models import FlextLdifModels as m
 from flext_ldif.utilities import FlextLdifUtilities as u

@@ -6,9 +6,7 @@ import struct
 from collections.abc import Sequence
 from typing import Literal, Self
 
-from flext_core import r
-
-from flext_ldif import c, m
+from flext_ldif import c, m, r
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif._utilities.transformers import Normalize, Transform

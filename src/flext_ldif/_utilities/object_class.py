@@ -6,9 +6,9 @@ import builtins
 import struct
 from collections.abc import Callable, Mapping
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger
 
-from flext_ldif import c, m
+from flext_ldif import c, m, r
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 

@@ -5,9 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from typing import Self, override
 
-from flext_core import r
-
-from flext_ldif import m
+from flext_ldif import m, r
 from flext_ldif._utilities.filters import FlextLdifUtilitiesFilters
 from flext_ldif._utilities.transformers import FlextLdifUtilitiesTransformer
 

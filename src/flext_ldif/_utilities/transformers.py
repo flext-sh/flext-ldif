@@ -6,9 +6,7 @@ import builtins
 from collections.abc import Callable, Sequence
 from typing import override
 
-from flext_core import r
-
-from flext_ldif import c, m
+from flext_ldif import c, m, r
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 

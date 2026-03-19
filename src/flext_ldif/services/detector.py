@@ -7,9 +7,7 @@ from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 from typing import Protocol, override
 
-from flext_core import r, s
-
-from flext_ldif import FlextLdifServer, FlextLdifSettings, m, u
+from flext_ldif import FlextLdifServer, FlextLdifSettings, m, r, s, u
 
 
 class _ServerDetectionConstants(Protocol):

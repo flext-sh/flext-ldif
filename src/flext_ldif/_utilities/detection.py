@@ -7,9 +7,7 @@ import re
 from collections.abc import Mapping, Sequence
 from typing import TypeIs
 
-from flext_core import u
-
-from flext_ldif import m, p
+from flext_ldif import m, p, u
 
 
 class FlextLdifUtilitiesDetection:

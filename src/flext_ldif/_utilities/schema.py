@@ -10,9 +10,9 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from typing import TypeIs, TypeVar
 
-from flext_core import FlextLogger, r, u
+from flext_core import FlextLogger
 
-from flext_ldif import c, p, t
+from flext_ldif import c, p, r, t, u
 from flext_ldif._models import FlextLdifModelsDomains
 from flext_ldif._utilities import (
     FlextLdifUtilitiesOID,

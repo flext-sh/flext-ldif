@@ -6,10 +6,10 @@ import struct
 from collections.abc import Callable
 from typing import Annotated
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_ldif import m, t
+from flext_ldif import m, r, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
 

@@ -7,9 +7,9 @@ import struct
 from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Final, override
 
-from flext_core import r, s
 from pydantic import BaseModel, ValidationError
 
+from flext_ldif import r, s
 from flext_ldif.constants import FlextLdifConstants as c, logger
 from flext_ldif.models import FlextLdifModels as m
 from flext_ldif.servers._base.constants import FlextLdifServersBaseConstants

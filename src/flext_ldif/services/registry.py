@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core import FlextRegistry, p
+from flext_core import FlextRegistry
 
-from flext_ldif import t
+from flext_ldif import p, t
 
 
 class FlextLdifServiceRegistry(FlextRegistry):

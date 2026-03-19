@@ -9,9 +9,9 @@ from datetime import UTC, datetime
 from functools import wraps
 from typing import TypeIs, TypeVar
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger
 
-from flext_ldif import FlextLdifShared, m, t
+from flext_ldif import FlextLdifShared, m, r, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 

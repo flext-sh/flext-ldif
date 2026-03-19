@@ -7,9 +7,9 @@ import struct
 from collections.abc import Callable, Mapping, Sequence
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import r
 from pydantic import Field, field_validator, model_validator
 
+from flext_ldif import r
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants as c
 from flext_ldif.models import FlextLdifModels as m

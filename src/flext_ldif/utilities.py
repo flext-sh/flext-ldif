@@ -14,7 +14,7 @@ from collections.abc import (
 from enum import Enum
 from typing import ClassVar, Literal, Self, TypeIs, overload, override
 
-from flext_core import FlextLogger, FlextUtilities, r
+from flext_core import FlextLogger, FlextUtilities
 
 from flext_ldif import (
     DnOps,
@@ -46,6 +46,7 @@ from flext_ldif import (
     c,
     m,
     p,
+    r,
     t,
 )
 

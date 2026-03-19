@@ -6,10 +6,10 @@ import builtins
 from collections.abc import Callable, Mapping, Sequence
 from typing import ClassVar, Self, overload, override
 
-from flext_core import FlextLogger, r, s
+from flext_core import FlextLogger
 from pydantic import ConfigDict
 
-from flext_ldif import FlextLdifModelsResults, m, p, t, u
+from flext_ldif import FlextLdifModelsResults, m, p, r, s, t, u
 from flext_ldif.servers._base import (
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,

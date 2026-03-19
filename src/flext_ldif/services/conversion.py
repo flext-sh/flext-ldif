@@ -9,9 +9,10 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from typing import Annotated, ClassVar, Final, Literal, Self, TypeIs, override
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger
 from pydantic import Field
 
+from flext_ldif import r
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants as c
 from flext_ldif.models import FlextLdifModels as m

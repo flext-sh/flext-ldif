@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger
 
-from flext_ldif import m
+from flext_ldif import m, r
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
     FlextLdifServersRfcConstants,

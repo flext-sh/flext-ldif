@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import override
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger
 
-from flext_ldif import c, m, p, u
+from flext_ldif import c, m, p, r, u
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants

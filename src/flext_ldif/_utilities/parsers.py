@@ -5,9 +5,9 @@ from __future__ import annotations
 import struct
 from collections.abc import Callable, Mapping
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger
 
-from flext_ldif import m
+from flext_ldif import m, r
 
 logger = FlextLogger.create_module_logger(__name__)
 

@@ -6,9 +6,9 @@ import builtins
 from collections.abc import Mapping
 from typing import Self, overload, override
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger
 
-from flext_ldif import m, p, t, u
+from flext_ldif import m, p, r, t, u
 from flext_ldif.servers import FlextLdifServersBase
 from flext_ldif.servers._base import FlextLdifServersBaseSchemaAcl
 

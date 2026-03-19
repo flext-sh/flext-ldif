@@ -8,9 +8,7 @@ import struct
 from collections.abc import Callable, Generator, Mapping, Sequence
 from typing import Literal, overload
 
-from flext_core import r, u
-
-from flext_ldif import c, m
+from flext_ldif import c, m, r, u
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
 

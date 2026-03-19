@@ -7,10 +7,10 @@ import struct
 from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import FlextLogger, r, s
+from flext_core import FlextLogger
 from pydantic import Field
 
-from flext_ldif import c, m, p, t
+from flext_ldif import c, m, p, r, s, t
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID

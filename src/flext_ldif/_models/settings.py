@@ -13,10 +13,10 @@ import builtins
 from collections.abc import Callable, Mapping, Sequence
 from typing import TYPE_CHECKING, Annotated, Literal
 
-from flext_core import FlextModels, r
+from flext_core import FlextModels
 from pydantic import ConfigDict, Field, StringConstraints
 
-from flext_ldif import c, p, t
+from flext_ldif import c, p, r, t
 from flext_ldif._models import FlextLdifModelsBase
 
 if TYPE_CHECKING:
