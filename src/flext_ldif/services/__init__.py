@@ -12,6 +12,11 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
+    from flext_ldif.services import _services
+    from flext_ldif.services._services.processing_pipeline_service import (
+        FlextLdifProcessingPipelineService,
+        FlextLdifProcessingPipelineService as s,
+    )
     from flext_ldif.services.acl import FlextLdifAcl
     from flext_ldif.services.analysis import FlextLdifAnalysis
     from flext_ldif.services.categorization import FlextLdifCategorization
@@ -52,6 +57,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextLdifParser": ("flext_ldif.services.parser", "FlextLdifParser"),
     "FlextLdifProcessing": ("flext_ldif.services.processing", "FlextLdifProcessing"),
+    "FlextLdifProcessingPipelineService": (
+        "flext_ldif.services._services.processing_pipeline_service",
+        "FlextLdifProcessingPipelineService",
+    ),
     "FlextLdifSchema": ("flext_ldif.services.schema", "FlextLdifSchema"),
     "FlextLdifServer": ("flext_ldif.services.server", "FlextLdifServer"),
     "FlextLdifServiceRegistry": (
@@ -65,6 +74,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifWriter": ("flext_ldif.services.writer", "FlextLdifWriter"),
     "ProcessingPipeline": ("flext_ldif.services.pipeline", "ProcessingPipeline"),
     "ServerTransformer": ("flext_ldif.services.transformers", "ServerTransformer"),
+    "_services": ("flext_ldif.services._services", ""),
+    "s": (
+        "flext_ldif.services._services.processing_pipeline_service",
+        "FlextLdifProcessingPipelineService",
+    ),
 }
 
 __all__ = [
@@ -79,6 +93,7 @@ __all__ = [
     "FlextLdifMigrationPipeline",
     "FlextLdifParser",
     "FlextLdifProcessing",
+    "FlextLdifProcessingPipelineService",
     "FlextLdifSchema",
     "FlextLdifServer",
     "FlextLdifServiceRegistry",
@@ -89,6 +104,8 @@ __all__ = [
     "FlextLdifWriter",
     "ProcessingPipeline",
     "ServerTransformer",
+    "_services",
+    "s",
 ]
 
 

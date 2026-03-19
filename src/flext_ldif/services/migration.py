@@ -15,6 +15,10 @@ from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.pipeline import ProcessingPipeline
 from flext_ldif.services.writer import FlextLdifWriter
 
+from ._services.processing_pipeline_service import (
+    FlextLdifProcessingPipelineService,
+)
+
 logger: Final = FlextLogger(__name__)
 
 
@@ -25,7 +29,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
     _output_dir: Path | None = PrivateAttr(default=None)
     _source_server: c.Ldif.ServerTypes = PrivateAttr(default=c.Ldif.ServerTypes.RFC)
     _target_server: c.Ldif.ServerTypes = PrivateAttr(default=c.Ldif.ServerTypes.RFC)
-    _processing_pipeline: ProcessingPipeline | None = PrivateAttr(default=None)
+    _processing_pipeline_service: FlextLdifProcessingPipelineService = PrivateAttr()
     _output_filename: str | None = PrivateAttr(default=None)
 
     def __init__(
@@ -48,7 +52,11 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         object.__setattr__(self, "_source_server", effective_source_server)
         object.__setattr__(self, "_target_server", effective_target_server)
         object.__setattr__(self, "_output_filename", output_filename)
-        object.__setattr__(self, "_processing_pipeline", None)
+        object.__setattr__(
+            self,
+            "_processing_pipeline_service",
+            FlextLdifProcessingPipelineService(),
+        )
 
     @property
     def input_dir(self) -> Path | None:
@@ -129,11 +137,30 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                     )
             converted_all_entries: list[m.Ldif.Entry] = list(all_entries)
             pipeline_result = m.Ldif.MigrationPipelineResult(
+                migrated_schema=m.Ldif.SchemaContent.model_validate({}),
                 entries=converted_all_entries,
                 output_files=output_files,
                 stats=m.Ldif.Statistics(
                     total_entries=total_processed,
                     processed_entries=total_migrated,
+                    failed_entries=0,
+                    schema_entries=0,
+                    data_entries=0,
+                    hierarchy_entries=0,
+                    user_entries=0,
+                    group_entries=0,
+                    acl_entries=0,
+                    rejected_entries=0,
+                    schema_attributes=0,
+                    schema_objectclasses=0,
+                    acls_extracted=0,
+                    acls_failed=0,
+                    parse_errors=0,
+                    entries_written=0,
+                    file_size_bytes=0,
+                    processing_duration=0.0,
+                    rejection_reasons=m.Ldif.DynamicCounts(),
+                    events=[],
                 ),
             )
             return r[m.Ldif.MigrationPipelineResult].ok(pipeline_result)
@@ -219,11 +246,30 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             logger.debug("Wrote migrated file to: %s", output_file)
             converted_entries: list[m.Ldif.Entry] = list(migrated)
             result = m.Ldif.MigrationPipelineResult(
+                migrated_schema=m.Ldif.SchemaContent.model_validate({}),
                 entries=converted_entries,
                 output_files=[str(output_file)],
                 stats=m.Ldif.Statistics(
                     total_entries=len(entries_list),
                     processed_entries=len(migrated),
+                    failed_entries=0,
+                    schema_entries=0,
+                    data_entries=0,
+                    hierarchy_entries=0,
+                    user_entries=0,
+                    group_entries=0,
+                    acl_entries=0,
+                    rejected_entries=0,
+                    schema_attributes=0,
+                    schema_objectclasses=0,
+                    acls_extracted=0,
+                    acls_failed=0,
+                    parse_errors=0,
+                    entries_written=0,
+                    file_size_bytes=0,
+                    processing_duration=0.0,
+                    rejection_reasons=m.Ldif.DynamicCounts(),
+                    events=[],
                 ),
             )
             return r[m.Ldif.MigrationPipelineResult].ok(result)
@@ -239,23 +285,11 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
 
     def _get_processing_pipeline(self) -> ProcessingPipeline:
         """Get or create processing pipeline instance."""
-        pipeline = getattr(self, "_processing_pipeline", None)
-        if pipeline is None:
-            source_type = m.Ldif.ServerType(self.source_server_type)
-            target_type = m.Ldif.ServerType(self.target_server_type)
-            logger.debug(
-                "Creating processing pipeline",
-                source=source_type,
-                target=target_type,
-            )
-            config_base = m.Ldif.ProcessConfig()
-            process_config = config_base.model_copy(
-                update={"source_server": source_type, "target_server": target_type},
-            )
-            config = m.Ldif.TransformConfig(process_config=process_config)
-            pipeline = ProcessingPipeline(config)
-            object.__setattr__(self, "_processing_pipeline", pipeline)
-        return pipeline
+        service = getattr(self, "_processing_pipeline_service")
+        return service.get_processing_pipeline(
+            source_server_type=self.source_server_type,
+            target_server_type=self.target_server_type,
+        )
 
 
 __all__ = ["FlextLdifMigrationPipeline"]

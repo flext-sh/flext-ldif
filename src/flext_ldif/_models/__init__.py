@@ -23,7 +23,10 @@ if TYPE_CHECKING:
     )
     from flext_ldif._models.collections import FlextLdifModelsCollections
     from flext_ldif._models.conversion import FlextLdifModelsConversions
-    from flext_ldif._models.domain import FlextLdifModelsDomains
+    from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
+    from flext_ldif._models.domain_entries import FlextLdifModelsDomains
+    from flext_ldif._models.domain_operations import FlextLdifModelsDomainOperations
+    from flext_ldif._models.domain_schema import SchemaDiscovery, SchemaLookup
     from flext_ldif._models.events import FlextLdifModelsEvents
     from flext_ldif._models.metadata import FlextLdifModelsMetadata
     from flext_ldif._models.processing import FlextLdifModelsProcessing
@@ -42,7 +45,18 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._models.conversion",
         "FlextLdifModelsConversions",
     ),
-    "FlextLdifModelsDomains": ("flext_ldif._models.domain", "FlextLdifModelsDomains"),
+    "FlextLdifModelsDomainAttributes": (
+        "flext_ldif._models.domain_attributes",
+        "FlextLdifModelsDomainAttributes",
+    ),
+    "FlextLdifModelsDomainOperations": (
+        "flext_ldif._models.domain_operations",
+        "FlextLdifModelsDomainOperations",
+    ),
+    "FlextLdifModelsDomains": (
+        "flext_ldif._models.domain_entries",
+        "FlextLdifModelsDomains",
+    ),
     "FlextLdifModelsEvents": ("flext_ldif._models.events", "FlextLdifModelsEvents"),
     "FlextLdifModelsMetadata": (
         "flext_ldif._models.metadata",
@@ -60,7 +74,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FrozenIgnoreLdifModel": ("flext_ldif._models.base", "FrozenIgnoreLdifModel"),
     "FrozenLdifModel": ("flext_ldif._models.base", "FrozenLdifModel"),
     "MutableIgnoreLdifModel": ("flext_ldif._models.base", "MutableIgnoreLdifModel"),
+    "SchemaDiscovery": ("flext_ldif._models.domain_schema", "SchemaDiscovery"),
     "SchemaElement": ("flext_ldif._models.base", "SchemaElement"),
+    "SchemaLookup": ("flext_ldif._models.domain_schema", "SchemaLookup"),
 }
 
 __all__ = [
@@ -69,6 +85,8 @@ __all__ = [
     "FlextLdifModelsBases",
     "FlextLdifModelsCollections",
     "FlextLdifModelsConversions",
+    "FlextLdifModelsDomainAttributes",
+    "FlextLdifModelsDomainOperations",
     "FlextLdifModelsDomains",
     "FlextLdifModelsEvents",
     "FlextLdifModelsMetadata",
@@ -78,7 +96,9 @@ __all__ = [
     "FrozenIgnoreLdifModel",
     "FrozenLdifModel",
     "MutableIgnoreLdifModel",
+    "SchemaDiscovery",
     "SchemaElement",
+    "SchemaLookup",
 ]
 
 

@@ -23,7 +23,7 @@ u = TestsFlextLdifUtilities
 
 
 # Lazy-load helpers to avoid circular imports
-def __getattr__(name: str) -> object:
+def __getattr__(name: str) -> type[object]:
     """Lazy-load test helpers from constants."""
     if name in {"TestDeduplicationHelpers", "RfcTestHelpers"}:
         from tests.constants import TestsFlextLdifConstants  # noqa: PLC0415
