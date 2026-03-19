@@ -1,0 +1,36 @@
+tests/utilities.py
+  4e6290ffdb37bad8 26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "803914602e26184712128767267a25af1bdf139b",
+  "prompts": {
+    "473ecd7bf9f636b8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2f9359946ffefJnNtBqklXkCm6",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 1,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "4e6290ffdb37bad8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fca8c1c6ffeDBKwqMTwldVCiD",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
