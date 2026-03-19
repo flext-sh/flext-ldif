@@ -6,7 +6,7 @@ from typing import ClassVar
 
 from flext_core import FlextRegistry, p
 
-from flext_ldif.typings import t
+from flext_ldif import t
 
 
 class FlextLdifServiceRegistry(FlextRegistry):

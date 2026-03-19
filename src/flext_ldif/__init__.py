@@ -42,6 +42,7 @@ if TYPE_CHECKING:
     from flext_ldif._models.events import FlextLdifModelsEvents
     from flext_ldif._models.metadata import FlextLdifModelsMetadata
     from flext_ldif._models.processing import FlextLdifModelsProcessing
+    from flext_ldif._models.results import FlextLdifModelsResults
     from flext_ldif._models.settings import FlextLdifModelsSettings
     from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
     from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
@@ -113,7 +114,6 @@ if TYPE_CHECKING:
     from flext_ldif.constants import FlextLdifConstants, c
     from flext_ldif.models import FlextLdifModels, m
     from flext_ldif.protocols import FlextLdifProtocols, p
-    from flext_ldif.results import DynamicCounts, FlextLdifModelsResults
     from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
     from flext_ldif.servers._base.constants import (
         FlextLdifServersBaseConstants,
@@ -191,7 +191,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "CustomFilter": ("flext_ldif._utilities.filters", "CustomFilter"),
     "CustomTransformer": ("flext_ldif._utilities.transformers", "CustomTransformer"),
     "DnOps": ("flext_ldif._utilities.fluent", "DnOps"),
-    "DynamicCounts": ("flext_ldif.results", "DynamicCounts"),
     "EntryOps": ("flext_ldif._utilities.fluent", "EntryOps"),
     "ExcludeAttrsFilter": ("flext_ldif._utilities.filters", "ExcludeAttrsFilter"),
     "Filter": ("flext_ldif._utilities.filters", "Filter"),
@@ -250,7 +249,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._models.processing",
         "FlextLdifModelsProcessing",
     ),
-    "FlextLdifModelsResults": ("flext_ldif.results", "FlextLdifModelsResults"),
+    "FlextLdifModelsResults": ("flext_ldif._models.results", "FlextLdifModelsResults"),
     "FlextLdifModelsSettings": (
         "flext_ldif._models.settings",
         "FlextLdifModelsSettings",
@@ -521,7 +520,6 @@ __all__ = [
     "CustomFilter",
     "CustomTransformer",
     "DnOps",
-    "DynamicCounts",
     "EntryOps",
     "ExcludeAttrsFilter",
     "Filter",

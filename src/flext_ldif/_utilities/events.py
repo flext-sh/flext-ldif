@@ -7,9 +7,9 @@ from collections.abc import Mapping
 
 from flext_core import p
 
+from flext_ldif import t
 from flext_ldif._models.events import FlextLdifModelsEvents
 from flext_ldif._models.settings import FlextLdifModelsSettings
-from flext_ldif.typings import t
 
 
 class FlextLdifUtilitiesEvents:

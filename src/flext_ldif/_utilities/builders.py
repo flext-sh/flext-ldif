@@ -4,20 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from enum import StrEnum
-from typing import Literal, Self, TypeAlias
+from typing import Literal, Self
 
 from flext_ldif import c
 from flext_ldif.models import FlextLdifModels
-
-AclConversionConfig: TypeAlias = FlextLdifModels.Ldif.AclConversionConfig
-AttrNormalizationConfig: TypeAlias = FlextLdifModels.Ldif.AttrNormalizationConfig
-DnNormalizationConfig: TypeAlias = FlextLdifModels.Ldif.DnNormalizationConfig
-FilterConfig: TypeAlias = FlextLdifModels.Ldif.FilterConfig
-MetadataConfig: TypeAlias = FlextLdifModels.Ldif.MetadataConfig
-ProcessConfig: TypeAlias = FlextLdifModels.Ldif.ProcessConfig
-TransformConfig: TypeAlias = FlextLdifModels.Ldif.TransformConfig
-ValidationConfig: TypeAlias = FlextLdifModels.Ldif.ValidationConfig
-WriteConfig: TypeAlias = FlextLdifModels.Ldif.WriteConfig
 
 
 class ProcessConfigBuilder:

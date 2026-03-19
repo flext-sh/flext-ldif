@@ -29,8 +29,8 @@ from flext_ldif import (
     c,
     m,
     p,
+    u,
 )
-from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 
 
 class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
@@ -272,7 +272,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                 dn_pattern=dn_pattern,
                 required_attrs=required_attrs,
             )
-            if not FlextLdifUtilitiesEntry.matches_criteria(entry, config=criteria):
+            if not u.Ldif.matches_criteria(entry, config=criteria):
                 continue
             if attributes and entry.attributes is not None:
                 attr_map = entry.attributes.attributes

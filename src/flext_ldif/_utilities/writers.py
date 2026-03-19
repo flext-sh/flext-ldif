@@ -9,10 +9,9 @@ from typing import Annotated
 from flext_core import FlextLogger, r
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_ldif import m
+from flext_ldif import m, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
-from flext_ldif.typings import t
 
 logger = FlextLogger.create_module_logger(__name__)
 

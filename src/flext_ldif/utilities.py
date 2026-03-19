@@ -16,8 +16,7 @@ from typing import ClassVar, Literal, Self, TypeIs, overload, override
 
 from flext_core import FlextLogger, FlextUtilities, r
 
-from flext_ldif import c, m, p, t
-from flext_ldif._utilities import (
+from flext_ldif import (
     DnOps,
     EntryOps,
     FlextLdifUtilitiesACL,
@@ -44,6 +43,10 @@ from flext_ldif._utilities import (
     Pipeline,
     ValidationPipeline,
     ValidationResult,
+    c,
+    m,
+    p,
+    t,
 )
 
 logger = FlextLogger(__name__)
@@ -2551,6 +2554,6 @@ class FlextLdifUtilities(FlextUtilities):
             return default
 
 
-__all__ = ["FlextLdifUtilities", "u"]
-
 u = FlextLdifUtilities
+
+__all__ = ["FlextLdifUtilities", "u"]

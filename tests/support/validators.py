@@ -7,8 +7,7 @@ from __future__ import annotations
 
 from flext_core import r
 
-from flext_ldif import m, p
-from flext_ldif.typings import t
+from flext_ldif import m, p, t
 from tests import u
 
 

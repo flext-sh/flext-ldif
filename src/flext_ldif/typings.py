@@ -14,7 +14,6 @@ from flext_core import FlextTypes, r
 from pydantic import BaseModel, StringConstraints
 
 from flext_ldif import c
-from flext_ldif.constants import FlextLdifConstants
 
 # =========================================================================
 # RECURSIVE TYPES - Defined at module level for reliable scope resolution
@@ -53,8 +52,8 @@ class FlextLdifTypes(FlextTypes):
         type RdnString = str
         type ServerType = str
         type MetadataKey = str
-        type ProcessingMode = FlextLdifConstants.ProcessingMode
-        type ValidationLevel = FlextLdifConstants.ValidationLevel
+        type ProcessingMode = c.ProcessingMode
+        type ValidationLevel = c.ValidationLevel
         type EntryAttributesDict = dict[str, list[str]]
         type RawEntryDict = dict[str, str | list[str] | set[str]]
 
@@ -145,7 +144,7 @@ class FlextLdifTypes(FlextTypes):
         TSchema = TypeVar("TSchema")
 
     class _Core:
-        type ConversionTargetType = FlextLdifConstants.ConversionTargetType
+        type ConversionTargetType = c.ConversionTargetType
         type ResultValue[T] = T
         type DN = str
 

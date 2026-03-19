@@ -6,9 +6,9 @@ import builtins
 from abc import ABC
 from typing import override
 
-from flext_core import FlextService, FlextSettings, m, s
+from flext_core import FlextService, FlextSettings
 
-from flext_ldif.settings import FlextLdifSettings
+from flext_ldif import FlextLdifSettings, m
 
 
 class FlextLdifServiceBase[TDomainResult: builtins.object](
@@ -29,4 +29,5 @@ class FlextLdifServiceBase[TDomainResult: builtins.object](
         return m.RuntimeBootstrapOptions(config_type=FlextLdifSettings)
 
 
+s = FlextLdifServiceBase
 __all__ = ["FlextLdifServiceBase", "s"]

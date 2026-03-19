@@ -12,6 +12,7 @@ from typing import ClassVar, Literal, overload
 from flext_core import u
 from pydantic import BaseModel
 
+from flext_ldif import t
 from flext_ldif._models._models import (
     ConvertToBool,
     ConvertToDict,
@@ -21,7 +22,6 @@ from flext_ldif._models._models import (
     ConvertToStr,
     ConvertToTuple,
 )
-from flext_ldif.typings import t
 
 
 class FlextFunctional:

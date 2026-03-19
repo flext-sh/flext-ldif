@@ -11,21 +11,23 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Annotated, Final, TypeAlias
+from typing import Annotated, Final
 
 from flext_core import FlextModels
 from pydantic import Field
 
-from flext_ldif import c, p, t
-from flext_ldif._models.collections import FlextLdifModelsCollections
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._models.events import FlextLdifModelsEvents
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif._models.processing import FlextLdifModelsProcessing
-from flext_ldif._models.results import FlextLdifModelsResults
-from flext_ldif._models.settings import FlextLdifModelsSettings
-
-ProcessingResult = FlextLdifModelsProcessing.ProcessingResult
+from flext_ldif import (
+    FlextLdifModelsCollections,
+    FlextLdifModelsDomains,
+    FlextLdifModelsEvents,
+    FlextLdifModelsMetadata,
+    FlextLdifModelsProcessing,
+    FlextLdifModelsResults,
+    FlextLdifModelsSettings,
+    c,
+    p,
+    t,
+)
 
 
 class FlextLdifModels(FlextModels):
@@ -54,16 +56,16 @@ class FlextLdifModels(FlextModels):
         # Class-level types moved to FlextLdifTypes.Ldif in typings.py
         # =================================================================
 
-        EntryAttributesDict: TypeAlias = t.Ldif.EntryAttributesDict
-        RawEntryDict: TypeAlias = t.Ldif.RawEntryDict
+        EntryAttributesDict = t.Ldif.EntryAttributesDict
+        RawEntryDict = t.Ldif.RawEntryDict
 
-        ServerType: TypeAlias = c.Ldif.ServerTypes
-        SpaceHandlingOption: TypeAlias = c.Ldif.SpaceHandlingOption
-        EscapeHandlingOption: TypeAlias = c.Ldif.EscapeHandlingOption
-        SortOption: TypeAlias = c.Ldif.SortOption
-        OutputFormat: TypeAlias = c.Ldif.Domain.OutputFormat
+        ServerType = c.Ldif.ServerTypes
+        SpaceHandlingOption = c.Ldif.SpaceHandlingOption
+        EscapeHandlingOption = c.Ldif.EscapeHandlingOption
+        SortOption = c.Ldif.SortOption
+        OutputFormat = c.Ldif.Domain.OutputFormat
 
-        class ProcessingResult(ProcessingResult):
+        class ProcessingResult(FlextLdifModelsProcessing.ProcessingResult):
             """Processing result with DN and attributes."""
 
         class FlexibleCategories(FlextLdifModelsCollections.FlexibleCategories):

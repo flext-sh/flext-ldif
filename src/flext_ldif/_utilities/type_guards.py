@@ -15,7 +15,7 @@ from typing import TypeIs
 
 from flext_core import FlextUtilities
 
-from flext_ldif.typings import t
+from flext_ldif import t
 
 
 class FlextLdifUtilitiesTypeGuards(FlextUtilities):
