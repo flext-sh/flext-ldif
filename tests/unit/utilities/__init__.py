@@ -31,49 +31,19 @@ if TYPE_CHECKING:
     )
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "GetValidValuesType": (
-        "tests.unit.utilities.test_utilities_constants",
-        "GetValidValuesType",
-    ),
-    "IsValidTestType": (
-        "tests.unit.utilities.test_utilities_constants",
-        "IsValidTestType",
-    ),
+    "GetValidValuesType": ("tests.unit.utilities.test_utilities_constants", "GetValidValuesType"),
+    "IsValidTestType": ("tests.unit.utilities.test_utilities_constants", "IsValidTestType"),
     "TestAclParser": ("tests.unit.utilities.test_utilities_core", "TestAclParser"),
-    "TestAttributeFixer": (
-        "tests.unit.utilities.test_utilities_core",
-        "TestAttributeFixer",
-    ),
-    "TestDnObjectClassMethods": (
-        "tests.unit.utilities.test_utilities_core",
-        "TestDnObjectClassMethods",
-    ),
-    "TestFlextLdifUtilitiesComprehensive": (
-        "tests.unit.utilities.test_utilities_comprehensive",
-        "TestFlextLdifUtilitiesComprehensive",
-    ),
+    "TestAttributeFixer": ("tests.unit.utilities.test_utilities_core", "TestAttributeFixer"),
+    "TestDnObjectClassMethods": ("tests.unit.utilities.test_utilities_core", "TestDnObjectClassMethods"),
+    "TestFlextLdifUtilitiesComprehensive": ("tests.unit.utilities.test_utilities_comprehensive", "TestFlextLdifUtilitiesComprehensive"),
     "TestLdifParser": ("tests.unit.utilities.test_utilities_core", "TestLdifParser"),
-    "TestObjectClassUtilities": (
-        "tests.unit.utilities.test_utilities_core",
-        "TestObjectClassUtilities",
-    ),
+    "TestObjectClassUtilities": ("tests.unit.utilities.test_utilities_core", "TestObjectClassUtilities"),
     "TestServerTypes": ("tests.unit.utilities.test_utilities_core", "TestServerTypes"),
-    "TestsFlextLdifDnOperationsPure": (
-        "tests.unit.utilities.test_utilities_core",
-        "TestsFlextLdifDnOperationsPure",
-    ),
-    "TestsTestFlextLdifConstants": (
-        "tests.unit.utilities.test_utilities_constants",
-        "TestsTestFlextLdifConstants",
-    ),
-    "TestsTestFlextLdifServiceAPIs": (
-        "tests.unit.utilities.test_utilities",
-        "TestsTestFlextLdifServiceAPIs",
-    ),
-    "ValidateManyType": (
-        "tests.unit.utilities.test_utilities_constants",
-        "ValidateManyType",
-    ),
+    "TestsFlextLdifDnOperationsPure": ("tests.unit.utilities.test_utilities_core", "TestsFlextLdifDnOperationsPure"),
+    "TestsTestFlextLdifConstants": ("tests.unit.utilities.test_utilities_constants", "TestsTestFlextLdifConstants"),
+    "TestsTestFlextLdifServiceAPIs": ("tests.unit.utilities.test_utilities", "TestsTestFlextLdifServiceAPIs"),
+    "ValidateManyType": ("tests.unit.utilities.test_utilities_constants", "ValidateManyType"),
 }
 
 __all__ = [

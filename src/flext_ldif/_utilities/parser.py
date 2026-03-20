@@ -10,8 +10,9 @@ from collections.abc import Mapping
 from typing import TypeIs
 
 from flext_core import FlextLogger
+from flext_core.utilities import FlextUtilities as u_core
 
-from flext_ldif import c, m, r, t, u
+from flext_ldif import c, m, r, t
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
@@ -269,7 +270,7 @@ class FlextLdifUtilitiesParser:
         if isinstance(existing, set):
             entry_dict[attr_name] = [*existing, attr_value]
             return True
-        if not u.is_list_like(existing):
+        if not u_core.is_list_like(existing):
             if isinstance(existing, str):
                 entry_dict[attr_name] = [existing, attr_value]
             else:

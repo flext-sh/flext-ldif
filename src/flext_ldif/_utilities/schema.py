@@ -11,8 +11,9 @@ from datetime import datetime
 from typing import TypeIs, TypeVar
 
 from flext_core import FlextLogger
+from flext_core.utilities import FlextUtilities as u_core
 
-from flext_ldif import c, p, r, t, u
+from flext_ldif import c, p, r, t
 from flext_ldif._models import FlextLdifModelsDomains
 from flext_ldif._utilities import (
     FlextLdifUtilitiesOID,
@@ -38,7 +39,7 @@ class FlextLdifUtilitiesSchema:
     ) -> None:
         """Add MUST and MAY to objectclass parts list."""
         if oc_data.must:
-            if u.is_list_like(oc_data.must):
+            if u_core.is_list_like(oc_data.must):
                 must_list_str: list[str] = [str(item) for item in oc_data.must]
                 if len(must_list_str) == 1:
                     parts.append(f"MUST {must_list_str[0]}")
@@ -48,7 +49,7 @@ class FlextLdifUtilitiesSchema:
             else:
                 parts.append(f"MUST {oc_data.must}")
         if oc_data.may:
-            if u.is_list_like(oc_data.may):
+            if u_core.is_list_like(oc_data.may):
                 may_list_str: list[str] = [str(item) for item in oc_data.may]
                 if len(may_list_str) == 1:
                     parts.append(f"MAY {may_list_str[0]}")
@@ -65,7 +66,7 @@ class FlextLdifUtilitiesSchema:
     ) -> None:
         """Add SUP to objectclass parts list."""
         if oc_data.sup:
-            if u.is_list_like(oc_data.sup):
+            if u_core.is_list_like(oc_data.sup):
                 sup_list_str: list[str] = [str(item) for item in oc_data.sup]
                 if len(sup_list_str) == 1:
                     parts.append(f"SUP {sup_list_str[0]}")
@@ -275,7 +276,7 @@ class FlextLdifUtilitiesSchema:
         name_format = getattr(schema_details, "name_format", "single")
         name_values_ = getattr(schema_details, "name_values", [])
         name_values: list[str] = (
-            [str(v) for v in name_values_] if u.is_list_like(name_values_) else []
+            [str(v) for v in name_values_] if u_core.is_list_like(name_values_) else []
         )
         if name_format == "multiple" and name_values:
             names_str = " ".join(f"'{n}'" for n in name_values)
@@ -366,7 +367,7 @@ class FlextLdifUtilitiesSchema:
             str, t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]]
         ] = {}
         for key, raw_value in extensions_raw.items():
-            if u.is_primitive(raw_value) or isinstance(raw_value, datetime):
+            if u_core.is_primitive(raw_value) or isinstance(raw_value, datetime):
                 converted[key] = FlextLdifUtilitiesSchema._convert_metadata_value(
                     raw_value
                 )
@@ -393,7 +394,7 @@ class FlextLdifUtilitiesSchema:
         | list[builtins.object]
         | Mapping[builtins.object, builtins.object],
     ) -> t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]]:
-        if u.is_primitive(value):
+        if u_core.is_primitive(value):
             return value
         if isinstance(value, datetime):
             return value.isoformat()
@@ -419,7 +420,7 @@ class FlextLdifUtilitiesSchema:
     def _convert_nested_metadata_value(
         value: t.Scalar | datetime | Sequence[builtins.object] | builtins.object,
     ) -> t.Scalar | list[str]:
-        if u.is_primitive(value):
+        if u_core.is_primitive(value):
             return value
         if isinstance(value, datetime):
             return value.isoformat()
@@ -657,7 +658,7 @@ class FlextLdifUtilitiesSchema:
         """Format attribute list (MUST/MAY) for objectClass definition."""
         if not attr_list:
             return None
-        if u.is_list_like(attr_list):
+        if u_core.is_list_like(attr_list):
             attr_strs = [str(item) for item in attr_list]
             if len(attr_strs) == 1:
                 return f"{prefix} {attr_strs[0]}"
@@ -669,7 +670,7 @@ class FlextLdifUtilitiesSchema:
         """Format SUP (superior) list for objectClass definition."""
         if not sup_value:
             return None
-        if u.is_list_like(sup_value):
+        if u_core.is_list_like(sup_value):
             sup_strs = [str(item) for item in sup_value]
             return f"SUP ( {' $ '.join(sup_strs)} )"
         return f"SUP {sup_value}"
@@ -687,7 +688,7 @@ class FlextLdifUtilitiesSchema:
             "field_order",
             None,
         )
-        if field_order_ and u.is_list_like(field_order_):
+        if field_order_ and u_core.is_list_like(field_order_):
             return [str(item) for item in field_order_]
         return None
 
@@ -1026,7 +1027,7 @@ class FlextLdifUtilitiesSchema:
                 "field_order",
                 None,
             )
-            if field_order_ and u.is_list_like(field_order_):
+            if field_order_ and u_core.is_list_like(field_order_):
                 field_order = [str(item) for item in field_order_]
         FlextLdifUtilitiesSchema._build_obsolete_part(
             oc_data,

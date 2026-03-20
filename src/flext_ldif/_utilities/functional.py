@@ -9,9 +9,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import ClassVar, Literal, overload
 
+from flext_core.utilities import FlextUtilities as u_core
 from pydantic import BaseModel
 
-from flext_ldif import t, u
+from flext_ldif import t
 from flext_ldif._models._models import (
     ConvertToBool,
     ConvertToDict,
@@ -29,7 +30,7 @@ class FlextFunctional:
     @staticmethod
     def _to_general(value: builtins.object) -> builtins.object:
         """Normalize arbitrary values into object-compatible shape."""
-        if value is None or u.is_primitive(value):
+        if value is None or u_core.is_primitive(value):
             return value
         if isinstance(value, datetime):
             return value.isoformat()

@@ -8,8 +8,9 @@ from collections.abc import Mapping, Sequence
 from typing import TypeIs
 
 from flext_core import FlextLogger
+from flext_core.utilities import FlextUtilities as u_core
 
-from flext_ldif import c, m, p, t, u
+from flext_ldif import c, m, p, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
@@ -588,7 +589,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _is_metadata_scalar(value: builtins.object) -> bool:
-        return value is None or u.is_scalar(value)
+        return value is None or u_core.is_scalar(value)
 
     @staticmethod
     def _is_metadata_scalar_typed(
@@ -631,7 +632,7 @@ class FlextLdifUtilitiesMetadata:
             metadata_obj = metadata.to_dict()
             normalized_metadata: dict[str, builtins.object] = {}
             for key, value in metadata_obj.items():
-                if u.is_primitive(value):
+                if u_core.is_primitive(value):
                     normalized_metadata[key] = value
                 elif isinstance(value, list):
                     normalized_metadata[key] = [str(item) for item in value]
@@ -677,7 +678,7 @@ class FlextLdifUtilitiesMetadata:
                 update_conversion_path,
             )
         metadata_typed = {
-            key: u.normalize_to_metadata(value) for key, value in metadata.items()
+            key: u_core.normalize_to_metadata(value) for key, value in metadata.items()
         }
         dynamic_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
             metadata_typed,
@@ -883,7 +884,7 @@ class FlextLdifUtilitiesMetadata:
         opt: builtins.object | None = None
         if isinstance(raw_extras, Mapping):
             extras = {
-                extra_key: u.normalize_to_metadata(extra_value)
+                extra_key: u_core.normalize_to_metadata(extra_value)
                 for extra_key, extra_value in t.ConfigMap(raw_extras).root.items()
             }
         opt = extras.get(key)

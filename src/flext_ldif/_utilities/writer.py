@@ -9,8 +9,9 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from flext_core import FlextLogger
+from flext_core.utilities import FlextUtilities as u_core
 
-from flext_ldif import c, m, r, t, u
+from flext_ldif import c, m, r, t
 from flext_ldif._models.settings import FlextLdifModelsSettings
 
 _TUPLE_LENGTH_TWO = 2
@@ -28,12 +29,12 @@ class FlextLdifUtilitiesWriter:
         changetype_config: Mapping[str, builtins.object],
     ) -> None:
         """Add changetype lines based on format."""
-        include_changetype = bool(u.get(changetype_config, "include_changetype"))
-        changetype_value = u.get(changetype_config, "changetype_value")
+        include_changetype = bool(u_core.get(changetype_config, "include_changetype"))
+        changetype_value = u_core.get(changetype_config, "changetype_value")
         fold_long_lines = bool(
-            u.get(changetype_config, "fold_long_lines", default=True),
+            u_core.get(changetype_config, "fold_long_lines", default=True),
         )
-        width_raw = u.get(changetype_config, "width", default=76)
+        width_raw = u_core.get(changetype_config, "width", default=76)
         width = int(width_raw) if isinstance(width_raw, (str, int, float)) else 76
         if format_type == "modify":
             changetype_line = "changetype: modify"
@@ -95,7 +96,7 @@ class FlextLdifUtilitiesWriter:
             parts.append(f"NAME '{attr_data.name}'")
         if attr_data.desc:
             parts.append(f"DESC '{attr_data.desc}'")
-        if attr_data.metadata and u.get(
+        if attr_data.metadata and u_core.get(
             attr_data.metadata.extensions,
             c.Ldif.MetadataKeys.OBSOLETE,
         ):
@@ -108,7 +109,7 @@ class FlextLdifUtilitiesWriter:
         if attr_data.usage:
             parts.append(f"USAGE {attr_data.usage}")
         x_origin = (
-            u.get(attr_data.metadata.extensions, "x_origin")
+            u_core.get(attr_data.metadata.extensions, "x_origin")
             if attr_data.metadata
             else None
         )
@@ -127,7 +128,7 @@ class FlextLdifUtilitiesWriter:
             parts.append(f"NAME '{oc_data.name}'")
         if oc_data.desc:
             parts.append(f"DESC '{oc_data.desc}'")
-        if oc_data.metadata and u.get(
+        if oc_data.metadata and u_core.get(
             oc_data.metadata.extensions,
             c.Ldif.MetadataKeys.OBSOLETE,
         ):
@@ -144,7 +145,7 @@ class FlextLdifUtilitiesWriter:
         FlextLdifUtilitiesWriter._add_oc_must_may(parts, oc_data.must, "MUST")
         FlextLdifUtilitiesWriter._add_oc_must_may(parts, oc_data.may, "MAY")
         oc_x_origin = (
-            u.get(oc_data.metadata.extensions, "x_origin") if oc_data.metadata else None
+            u_core.get(oc_data.metadata.extensions, "x_origin") if oc_data.metadata else None
         )
         if oc_x_origin:
             parts.append(f"X-ORIGIN '{oc_x_origin}'")
@@ -275,7 +276,7 @@ class FlextLdifUtilitiesWriter:
         """Add flags to attribute parts list."""
         if attr_data.single_value:
             parts.append("SINGLE-VALUE")
-        if attr_data.metadata and u.get(
+        if attr_data.metadata and u_core.get(
             attr_data.metadata.extensions,
             c.Ldif.MetadataKeys.COLLECTIVE,
         ):

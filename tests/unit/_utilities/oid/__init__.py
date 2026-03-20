@@ -15,10 +15,7 @@ if TYPE_CHECKING:
     from .test_oid_utilities import TestFlextLdifUtilitiesOID
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "TestFlextLdifUtilitiesOID": (
-        "tests.unit._utilities.oid.test_oid_utilities",
-        "TestFlextLdifUtilitiesOID",
-    ),
+    "TestFlextLdifUtilitiesOID": ("tests.unit._utilities.oid.test_oid_utilities", "TestFlextLdifUtilitiesOID"),
 }
 
 __all__ = [
