@@ -7,15 +7,16 @@ import struct
 from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, r, s
 from pydantic import Field
 
-from flext_ldif import c, m, p, r, s, t
+from flext_ldif import c, p, t
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
+from flext_ldif.models import m
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
 
 logger = FlextLogger(__name__)

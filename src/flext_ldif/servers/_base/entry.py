@@ -10,12 +10,13 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import FlextLogger, FlextService, u as core_u
+from flext_core import FlextLogger, FlextService, r, u as core_u
 from pydantic import Field, ValidationError
 
-from flext_ldif import c, m, p, r
+from flext_ldif import c, p
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
+from flext_ldif.models import m
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
 
 logger = FlextLogger(__name__)

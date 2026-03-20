@@ -7,13 +7,14 @@ import re
 from collections.abc import Mapping
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import FlextLogger, FlextService
+from flext_core import FlextLogger, FlextService, r
 from pydantic import Field, ValidationError
 
-from flext_ldif import m, p, r, t
+from flext_ldif import p, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
+from flext_ldif.models import m
 from flext_ldif.servers._base.constants import QuirkMethodsMixin
 
 logger = FlextLogger(__name__)

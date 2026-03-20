@@ -8,14 +8,15 @@ import struct
 from collections.abc import Mapping
 from typing import Annotated, ClassVar, Literal, override
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, r
 from pydantic import BaseModel, Field, RootModel
 
-from flext_ldif import c, m, r, t
+from flext_ldif import c, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
+from flext_ldif.models import m
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 

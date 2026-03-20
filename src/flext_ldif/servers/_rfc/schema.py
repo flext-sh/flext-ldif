@@ -9,11 +9,13 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Literal, Self, overload, override
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, r
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import c, p, t
+from flext_ldif.models import m
 from flext_ldif.servers import FlextLdifServersBase
 from flext_ldif.servers._base import FlextLdifServersBaseSchema
+from flext_ldif.utilities import u
 
 logger = FlextLogger(__name__)
 

@@ -8,17 +8,19 @@ import struct
 from collections.abc import Mapping
 from typing import ClassVar, override
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, r
 
-from flext_ldif import c, m, p, r, u
+from flext_ldif import c, p
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
+from flext_ldif.models import m
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.utilities import u
 
 logger = FlextLogger(__name__)
 

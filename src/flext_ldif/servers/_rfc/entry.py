@@ -6,10 +6,11 @@ import struct
 from collections.abc import Mapping
 from typing import override
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, r
 
-from flext_ldif import m, r, u
+from flext_ldif.models import m
 from flext_ldif.servers import FlextLdifServersBase
+from flext_ldif.utilities import u
 
 logger = FlextLogger(__name__)
 
