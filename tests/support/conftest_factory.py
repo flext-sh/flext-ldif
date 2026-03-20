@@ -418,12 +418,12 @@ class FlextLdifTestConftest:
         return self._assert_result_failure
 
     @staticmethod
-    def _assert_result_success(result: r[tt.Tests.object]) -> None:
+    def _assert_result_success(result: r[t.Tests.object]) -> None:
         """Assert success."""
         assert result.is_success, f"Expected success: {result.error}"
 
     @staticmethod
-    def _assert_result_failure(result: r[tt.Tests.object]) -> None:
+    def _assert_result_failure(result: r[t.Tests.object]) -> None:
         """Assert failure."""
         assert result.is_failure, f"Expected failure: {result.value}"
 
@@ -432,7 +432,7 @@ class FlextLdifTestConftest:
     ) -> Callable[..., dict[str, bool]]:
         """Validate success result."""
 
-        def validator(result: r[tt.Tests.object]) -> dict[str, bool]:
+        def validator(result: r[t.Tests.object]) -> dict[str, bool]:
             return {
                 "is_success": result.is_success,
                 "has_value": result.is_success and result.value is not None,
@@ -448,7 +448,7 @@ class FlextLdifTestConftest:
     ) -> Callable[..., dict[str, bool]]:
         """Validate failure result."""
 
-        def validator(result: r[tt.Tests.object]) -> dict[str, bool]:
+        def validator(result: r[t.Tests.object]) -> dict[str, bool]:
             return {
                 "is_failure": result.is_failure,
                 "has_error": result.error is not None,
@@ -461,10 +461,10 @@ class FlextLdifTestConftest:
 
     def flext_result_composition_helper(
         self,
-    ) -> Callable[[list[r[tt.Tests.object]]], dict[str, object]]:
+    ) -> Callable[[list[r[t.Tests.object]]], dict[str, object]]:
         """Result composition helper."""
 
-        def helper(results: list[r[tt.Tests.object]]) -> dict[str, object]:
+        def helper(results: list[r[t.Tests.object]]) -> dict[str, object]:
             successes = [res for res in results if res.is_success]
             failures = [res for res in results if res.is_failure]
             return {
@@ -563,12 +563,12 @@ class FlextLdifTestConftest:
         """Local test matchers."""
 
         @staticmethod
-        def assert_result_success(result: r[tt.Tests.object]) -> None:
+        def assert_result_success(result: r[t.Tests.object]) -> None:
             """Assert success."""
             assert result.is_success, f"Expected success: {result.error}"
 
         @staticmethod
-        def assert_result_failure(result: r[tt.Tests.object]) -> None:
+        def assert_result_failure(result: r[t.Tests.object]) -> None:
             """Assert failure."""
             assert result.is_failure, f"Expected failure: {result.value}"
 
