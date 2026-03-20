@@ -6,9 +6,9 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Annotated, Self
 
+from flext_core.models import FlextModels as m
 from pydantic import ConfigDict, Field
 
-from flext_ldif import m
 from flext_ldif._models.base import FlextLdifModelsBase
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif.constants import FlextLdifConstants as c

@@ -4,9 +4,10 @@ import builtins
 from collections.abc import Sequence
 from typing import Annotated, Self, overload
 
+from flext_core.models import FlextModels as m
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
-from flext_ldif import c, m, t
+from flext_ldif import c, t
 from flext_ldif._models import (
     FlextLdifModelsBase,
     FlextLdifModelsCollections,
