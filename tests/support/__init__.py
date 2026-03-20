@@ -29,11 +29,17 @@ if TYPE_CHECKING:
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FileManager": ("tests.support.test_files", "FileManager"),
-    "FlextLdifTestConftest": ("tests.support.conftest_factory", "FlextLdifTestConftest"),
+    "FlextLdifTestConftest": (
+        "tests.support.conftest_factory",
+        "FlextLdifTestConftest",
+    ),
     "FlextLdifTestFactory": ("tests.support.real_services", "FlextLdifTestFactory"),
     "LdifSample": ("tests.support.ldif_data", "LdifSample"),
     "LdifTestData": ("tests.support.ldif_data", "LdifTestData"),
-    "MockFlextUtilitiesResultHelpers": ("tests.support.validators", "MockFlextUtilitiesResultHelpers"),
+    "MockFlextUtilitiesResultHelpers": (
+        "tests.support.validators",
+        "MockFlextUtilitiesResultHelpers",
+    ),
     "MockMatchers": ("tests.support.validators", "MockMatchers"),
     "TestValidators": ("tests.support.validators", "TestValidators"),
     "tk": ("tests.support.conftest_factory", "tk"),

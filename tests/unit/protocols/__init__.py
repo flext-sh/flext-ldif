@@ -15,7 +15,10 @@ if TYPE_CHECKING:
     from .test_protocols import TestsTestFlextLdifProtocols
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "TestsTestFlextLdifProtocols": ("tests.unit.protocols.test_protocols", "TestsTestFlextLdifProtocols"),
+    "TestsTestFlextLdifProtocols": (
+        "tests.unit.protocols.test_protocols",
+        "TestsTestFlextLdifProtocols",
+    ),
 }
 
 __all__ = [

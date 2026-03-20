@@ -145,7 +145,9 @@ class FlextLdifUtilitiesWriter:
         FlextLdifUtilitiesWriter._add_oc_must_may(parts, oc_data.must, "MUST")
         FlextLdifUtilitiesWriter._add_oc_must_may(parts, oc_data.may, "MAY")
         oc_x_origin = (
-            u_core.get(oc_data.metadata.extensions, "x_origin") if oc_data.metadata else None
+            u_core.get(oc_data.metadata.extensions, "x_origin")
+            if oc_data.metadata
+            else None
         )
         if oc_x_origin:
             parts.append(f"X-ORIGIN '{oc_x_origin}'")

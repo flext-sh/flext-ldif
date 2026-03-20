@@ -93,64 +93,202 @@ if TYPE_CHECKING:
     )
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "GetAclAttributesServerType": ("tests.unit.constants.test_acl_registry", "GetAclAttributesServerType"),
-    "GetValidValuesType": ("tests.unit.utilities.test_utilities_constants", "GetValidValuesType"),
-    "IsAclAttributeType": ("tests.unit.constants.test_acl_registry", "IsAclAttributeType"),
-    "IsValidTestType": ("tests.unit.utilities.test_utilities_constants", "IsValidTestType"),
-    "OidTestConstants": ("tests.unit.test_migration_pipeline_quirks", "OidTestConstants"),
+    "GetAclAttributesServerType": (
+        "tests.unit.constants.test_acl_registry",
+        "GetAclAttributesServerType",
+    ),
+    "GetValidValuesType": (
+        "tests.unit.utilities.test_utilities_constants",
+        "GetValidValuesType",
+    ),
+    "IsAclAttributeType": (
+        "tests.unit.constants.test_acl_registry",
+        "IsAclAttributeType",
+    ),
+    "IsValidTestType": (
+        "tests.unit.utilities.test_utilities_constants",
+        "IsValidTestType",
+    ),
+    "OidTestConstants": (
+        "tests.unit.test_migration_pipeline_quirks",
+        "OidTestConstants",
+    ),
     "TestAclAttributes": ("tests.unit.test_filters", "TestAclAttributes"),
     "TestAclParser": ("tests.unit.utilities.test_utilities_core", "TestAclParser"),
-    "TestAliasDiscovery": ("tests.unit.services.test_quirks_standardization", "TestAliasDiscovery"),
-    "TestAttributeFixer": ("tests.unit.utilities.test_utilities_core", "TestAttributeFixer"),
-    "TestDnObjectClassMethods": ("tests.unit.utilities.test_utilities_core", "TestDnObjectClassMethods"),
-    "TestFlextLdifDeduplicationHelpers": ("tests.unit.test_helpers", "TestFlextLdifDeduplicationHelpers"),
+    "TestAliasDiscovery": (
+        "tests.unit.services.test_quirks_standardization",
+        "TestAliasDiscovery",
+    ),
+    "TestAttributeFixer": (
+        "tests.unit.utilities.test_utilities_core",
+        "TestAttributeFixer",
+    ),
+    "TestDnObjectClassMethods": (
+        "tests.unit.utilities.test_utilities_core",
+        "TestDnObjectClassMethods",
+    ),
+    "TestFlextLdifDeduplicationHelpers": (
+        "tests.unit.test_helpers",
+        "TestFlextLdifDeduplicationHelpers",
+    ),
     "TestFlextLdifModels": ("tests.unit.models.test_models", "TestFlextLdifModels"),
-    "TestFlextLdifTypesStructure": ("tests.unit.test_typings", "TestFlextLdifTypesStructure"),
-    "TestFlextLdifUtilitiesComprehensive": ("tests.unit.utilities.test_utilities_comprehensive", "TestFlextLdifUtilitiesComprehensive"),
-    "TestIntegrationWithLdifFixtures": ("tests.unit.test_typings", "TestIntegrationWithLdifFixtures"),
+    "TestFlextLdifTypesStructure": (
+        "tests.unit.test_typings",
+        "TestFlextLdifTypesStructure",
+    ),
+    "TestFlextLdifUtilitiesComprehensive": (
+        "tests.unit.utilities.test_utilities_comprehensive",
+        "TestFlextLdifUtilitiesComprehensive",
+    ),
+    "TestIntegrationWithLdifFixtures": (
+        "tests.unit.test_typings",
+        "TestIntegrationWithLdifFixtures",
+    ),
     "TestLdifParser": ("tests.unit.utilities.test_utilities_core", "TestLdifParser"),
     "TestModelsNamespace": ("tests.unit.test_typings", "TestModelsNamespace"),
-    "TestObjectClassUtilities": ("tests.unit.utilities.test_utilities_core", "TestObjectClassUtilities"),
-    "TestPhase1StandardizationResults": ("tests.unit.test_typings", "TestPhase1StandardizationResults"),
-    "TestQuirksAutoInterchange": ("tests.unit.services.test_quirks_standardization", "TestQuirksAutoInterchange"),
-    "TestQuirksWithRealLdifFixtures": ("tests.unit.services.test_quirks_standardization", "TestQuirksWithRealLdifFixtures"),
-    "TestRemovalOfOverEngineering": ("tests.unit.test_typings", "TestRemovalOfOverEngineering"),
-    "TestSchemaServiceBuilder": ("tests.unit.services.test_schema_service", "TestSchemaServiceBuilder"),
-    "TestSchemaServiceCanHandleAttribute": ("tests.unit.services.test_schema_service", "TestSchemaServiceCanHandleAttribute"),
-    "TestSchemaServiceIntegration": ("tests.unit.services.test_schema_service", "TestSchemaServiceIntegration"),
-    "TestSchemaServiceParseAttribute": ("tests.unit.services.test_schema_service", "TestSchemaServiceParseAttribute"),
-    "TestSchemaServiceParseObjectClass": ("tests.unit.services.test_schema_service", "TestSchemaServiceParseObjectClass"),
-    "TestSchemaServiceRepr": ("tests.unit.services.test_schema_service", "TestSchemaServiceRepr"),
-    "TestSchemaServiceValidateAttribute": ("tests.unit.services.test_schema_service", "TestSchemaServiceValidateAttribute"),
-    "TestSchemaServiceValidateObjectClass": ("tests.unit.services.test_schema_service", "TestSchemaServiceValidateObjectClass"),
-    "TestSchemaServiceWriteAttribute": ("tests.unit.services.test_schema_service", "TestSchemaServiceWriteAttribute"),
-    "TestSchemaServiceWriteObjectClass": ("tests.unit.services.test_schema_service", "TestSchemaServiceWriteObjectClass"),
+    "TestObjectClassUtilities": (
+        "tests.unit.utilities.test_utilities_core",
+        "TestObjectClassUtilities",
+    ),
+    "TestPhase1StandardizationResults": (
+        "tests.unit.test_typings",
+        "TestPhase1StandardizationResults",
+    ),
+    "TestQuirksAutoInterchange": (
+        "tests.unit.services.test_quirks_standardization",
+        "TestQuirksAutoInterchange",
+    ),
+    "TestQuirksWithRealLdifFixtures": (
+        "tests.unit.services.test_quirks_standardization",
+        "TestQuirksWithRealLdifFixtures",
+    ),
+    "TestRemovalOfOverEngineering": (
+        "tests.unit.test_typings",
+        "TestRemovalOfOverEngineering",
+    ),
+    "TestSchemaServiceBuilder": (
+        "tests.unit.services.test_schema_service",
+        "TestSchemaServiceBuilder",
+    ),
+    "TestSchemaServiceCanHandleAttribute": (
+        "tests.unit.services.test_schema_service",
+        "TestSchemaServiceCanHandleAttribute",
+    ),
+    "TestSchemaServiceIntegration": (
+        "tests.unit.services.test_schema_service",
+        "TestSchemaServiceIntegration",
+    ),
+    "TestSchemaServiceParseAttribute": (
+        "tests.unit.services.test_schema_service",
+        "TestSchemaServiceParseAttribute",
+    ),
+    "TestSchemaServiceParseObjectClass": (
+        "tests.unit.services.test_schema_service",
+        "TestSchemaServiceParseObjectClass",
+    ),
+    "TestSchemaServiceRepr": (
+        "tests.unit.services.test_schema_service",
+        "TestSchemaServiceRepr",
+    ),
+    "TestSchemaServiceValidateAttribute": (
+        "tests.unit.services.test_schema_service",
+        "TestSchemaServiceValidateAttribute",
+    ),
+    "TestSchemaServiceValidateObjectClass": (
+        "tests.unit.services.test_schema_service",
+        "TestSchemaServiceValidateObjectClass",
+    ),
+    "TestSchemaServiceWriteAttribute": (
+        "tests.unit.services.test_schema_service",
+        "TestSchemaServiceWriteAttribute",
+    ),
+    "TestSchemaServiceWriteObjectClass": (
+        "tests.unit.services.test_schema_service",
+        "TestSchemaServiceWriteObjectClass",
+    ),
     "TestServerTypes": ("tests.unit.utilities.test_utilities_core", "TestServerTypes"),
-    "TestsFlextLdifCommonDictionaryTypes": ("tests.unit.test_typings", "TestsFlextLdifCommonDictionaryTypes"),
-    "TestsFlextLdifDnOperationsPure": ("tests.unit.utilities.test_utilities_core", "TestsFlextLdifDnOperationsPure"),
-    "TestsFlextLdifMigrationPipeline": ("tests.unit.test_migration_pipeline", "TestsFlextLdifMigrationPipeline"),
-    "TestsFlextLdifMigrationPipelineQuirks": ("tests.unit.test_migration_pipeline_quirks", "TestsFlextLdifMigrationPipelineQuirks"),
-    "TestsFlextLdifQuirksStandardizedConstants": ("tests.unit.services.test_quirks_standardization", "TestsFlextLdifQuirksStandardizedConstants"),
-    "TestsFlextLdifSchemaServiceExecute": ("tests.unit.services.test_schema_service", "TestsFlextLdifSchemaServiceExecute"),
-    "TestsFlextLdifVersion": ("tests.unit.__init__.test_version", "TestsFlextLdifVersion"),
-    "TestsFlextLdifsFlextLdifWriterDnNormalization": ("tests.unit.services.test_writer_dn_normalization", "TestsFlextLdifsFlextLdifWriterDnNormalization"),
-    "TestsTestFlextLdifAclAttributeRegistry": ("tests.unit.constants.test_acl_registry", "TestsTestFlextLdifAclAttributeRegistry"),
-    "TestsTestFlextLdifConstants": ("tests.unit.utilities.test_utilities_constants", "TestsTestFlextLdifConstants"),
-    "TestsTestFlextLdifMigrationPipeline": ("tests.unit.services.test_migration_pipeline", "TestsTestFlextLdifMigrationPipeline"),
-    "TestsTestFlextLdifProtocols": ("tests.unit.protocols.test_protocols", "TestsTestFlextLdifProtocols"),
-    "TestsTestFlextLdifServiceAPIs": ("tests.unit.utilities.test_utilities", "TestsTestFlextLdifServiceAPIs"),
-    "ValidateManyType": ("tests.unit.utilities.test_utilities_constants", "ValidateManyType"),
+    "TestsFlextLdifCommonDictionaryTypes": (
+        "tests.unit.test_typings",
+        "TestsFlextLdifCommonDictionaryTypes",
+    ),
+    "TestsFlextLdifDnOperationsPure": (
+        "tests.unit.utilities.test_utilities_core",
+        "TestsFlextLdifDnOperationsPure",
+    ),
+    "TestsFlextLdifMigrationPipeline": (
+        "tests.unit.test_migration_pipeline",
+        "TestsFlextLdifMigrationPipeline",
+    ),
+    "TestsFlextLdifMigrationPipelineQuirks": (
+        "tests.unit.test_migration_pipeline_quirks",
+        "TestsFlextLdifMigrationPipelineQuirks",
+    ),
+    "TestsFlextLdifQuirksStandardizedConstants": (
+        "tests.unit.services.test_quirks_standardization",
+        "TestsFlextLdifQuirksStandardizedConstants",
+    ),
+    "TestsFlextLdifSchemaServiceExecute": (
+        "tests.unit.services.test_schema_service",
+        "TestsFlextLdifSchemaServiceExecute",
+    ),
+    "TestsFlextLdifVersion": (
+        "tests.unit.__init__.test_version",
+        "TestsFlextLdifVersion",
+    ),
+    "TestsFlextLdifsFlextLdifWriterDnNormalization": (
+        "tests.unit.services.test_writer_dn_normalization",
+        "TestsFlextLdifsFlextLdifWriterDnNormalization",
+    ),
+    "TestsTestFlextLdifAclAttributeRegistry": (
+        "tests.unit.constants.test_acl_registry",
+        "TestsTestFlextLdifAclAttributeRegistry",
+    ),
+    "TestsTestFlextLdifConstants": (
+        "tests.unit.utilities.test_utilities_constants",
+        "TestsTestFlextLdifConstants",
+    ),
+    "TestsTestFlextLdifMigrationPipeline": (
+        "tests.unit.services.test_migration_pipeline",
+        "TestsTestFlextLdifMigrationPipeline",
+    ),
+    "TestsTestFlextLdifProtocols": (
+        "tests.unit.protocols.test_protocols",
+        "TestsTestFlextLdifProtocols",
+    ),
+    "TestsTestFlextLdifServiceAPIs": (
+        "tests.unit.utilities.test_utilities",
+        "TestsTestFlextLdifServiceAPIs",
+    ),
+    "ValidateManyType": (
+        "tests.unit.utilities.test_utilities_constants",
+        "ValidateManyType",
+    ),
     "__init__": ("tests.unit.__init__", ""),
-    "complex_attribute_definition": ("tests.unit.services.test_schema_service", "complex_attribute_definition"),
-    "complex_objectclass_definition": ("tests.unit.services.test_schema_service", "complex_objectclass_definition"),
+    "complex_attribute_definition": (
+        "tests.unit.services.test_schema_service",
+        "complex_attribute_definition",
+    ),
+    "complex_objectclass_definition": (
+        "tests.unit.services.test_schema_service",
+        "complex_objectclass_definition",
+    ),
     "constants": ("tests.unit.constants", ""),
     "models": ("tests.unit.models", ""),
     "protocols": ("tests.unit.protocols", ""),
     "schema_service": ("tests.unit.services.test_schema_service", "schema_service"),
-    "schema_service_oud": ("tests.unit.services.test_schema_service", "schema_service_oud"),
+    "schema_service_oud": (
+        "tests.unit.services.test_schema_service",
+        "schema_service_oud",
+    ),
     "services": ("tests.unit.services", ""),
-    "simple_attribute_definition": ("tests.unit.services.test_schema_service", "simple_attribute_definition"),
-    "simple_objectclass_definition": ("tests.unit.services.test_schema_service", "simple_objectclass_definition"),
+    "simple_attribute_definition": (
+        "tests.unit.services.test_schema_service",
+        "simple_attribute_definition",
+    ),
+    "simple_objectclass_definition": (
+        "tests.unit.services.test_schema_service",
+        "simple_objectclass_definition",
+    ),
     "utilities": ("tests.unit.utilities", ""),
     "version_module": ("tests.unit.__init__.test_version", "version_module"),
 }
