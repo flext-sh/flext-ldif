@@ -12,10 +12,10 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-    from flext_ldif import d, e, h, r, x
+    from flext_ldif import c, d, e, h, m, p, r, s, t, u, x
 
     from . import integration as integration, support as support, unit as unit
-    from .base import FlextLdifTestsServiceBase, s
+    from .base import FlextLdifTestsServiceBase
     from .conftest import (
         FIXTURES_DIR,
         OID_FIXTURES_DIR,
@@ -36,7 +36,7 @@ if TYPE_CHECKING:
         real_entry,
         real_ldif_content,
     )
-    from .constants import TestsFlextLdifConstants, c
+    from .constants import TestsFlextLdifConstants
     from .integration.conftest import (
         all_acl_fixtures,
         all_entries_fixtures,
@@ -193,8 +193,8 @@ if TYPE_CHECKING:
         TestSchemaDeviationsUtilities,
         TestSchemaDeviationsXOrigin,
     )
-    from .models import TestsFlextLdifModels, m
-    from .protocols import TestsFlextLdifProtocols, p
+    from .models import TestsFlextLdifModels
+    from .protocols import TestsFlextLdifProtocols
     from .support.conftest_factory import FlextLdifTestConftest, tk
     from .support.ldif_data import LdifSample, LdifTestData
     from .support.test_files import FileManager
@@ -214,7 +214,7 @@ if TYPE_CHECKING:
         tt,
         tv,
     )
-    from .typings import GenericFieldsDict, t
+    from .typings import GenericFieldsDict
     from .unit import (
         constants as constants,
         models as models,
@@ -295,7 +295,7 @@ if TYPE_CHECKING:
         TestServerTypes,
         TestsFlextLdifDnOperationsPure,
     )
-    from .utilities import TestsFlextLdifUtilities, u
+    from .utilities import TestsFlextLdifUtilities
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "APIScenarios": ("tests.integration.test_api_integration", "APIScenarios"),
@@ -756,7 +756,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "all_schema_fixtures": ("tests.integration.conftest", "all_schema_fixtures"),
     "api": ("tests.integration.conftest", "api"),
-    "c": ("tests.constants", "c"),
+    "c": ("flext_ldif", "c"),
     "clean_test_ou": ("tests.integration.conftest", "clean_test_ou"),
     "complex_attribute_definition": (
         "tests.unit.services.test_schema_service",
@@ -781,7 +781,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ldif_parser": ("tests.conftest", "ldif_parser"),
     "ldif_writer": ("tests.conftest", "ldif_writer"),
     "logger": ("tests.integration.test_config_integration", "logger"),
-    "m": ("tests.models", "m"),
+    "m": ("flext_ldif", "m"),
     "make_test_base_dn": ("tests.integration.conftest", "make_test_base_dn"),
     "make_test_username": ("tests.integration.conftest", "make_test_username"),
     "migration_inputs": (
@@ -831,7 +831,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "oud_schema_entries": ("tests.integration.conftest", "oud_schema_entries"),
     "oud_schema_fixture": ("tests.integration.conftest", "oud_schema_fixture"),
     "oud_schema_quirk": ("tests.integration.conftest", "oud_schema_quirk"),
-    "p": ("tests.protocols", "p"),
+    "p": ("flext_ldif", "p"),
     "parametrized_real_data": ("tests.conftest_shared", "parametrized_real_data"),
     "parser": ("tests.integration.conftest", "parser"),
     "protocols": ("tests.unit.protocols", ""),
@@ -844,7 +844,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "real_ldif_user_entry": ("tests.conftest", "real_ldif_user_entry"),
     "rfc_schema_entries": ("tests.integration.conftest", "rfc_schema_entries"),
     "rfc_schema_fixture": ("tests.integration.conftest", "rfc_schema_fixture"),
-    "s": ("tests.base", "s"),
+    "s": ("flext_ldif", "s"),
     "sample_ldif_entries": ("tests.conftest", "sample_ldif_entries"),
     "schema_service": ("tests.unit.services.test_schema_service", "schema_service"),
     "schema_service_oud": (
@@ -862,7 +862,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "simple_objectclass_definition",
     ),
     "support": ("tests.support", ""),
-    "t": ("tests.typings", "t"),
+    "t": ("flext_ldif", "t"),
     "temp_file": ("tests.conftest", "temp_file"),
     "test_create_and_export_entry": (
         "tests.integration.test_simple_ldap",
@@ -882,7 +882,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "tmp_ldif_path": ("tests.integration.conftest", "tmp_ldif_path"),
     "tt": ("tests.test_helpers", "tt"),
     "tv": ("tests.test_helpers", "tv"),
-    "u": ("tests.utilities", "u"),
+    "u": ("flext_ldif", "u"),
     "unique_dn_suffix": ("tests.integration.conftest", "unique_dn_suffix"),
     "unit": ("tests.unit", ""),
     "utilities": ("tests.unit.utilities", ""),

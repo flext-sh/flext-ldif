@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_core import e, h, x
+    from flext_core import d, e, h, r, s, x
     from flext_core.typings import FlextTypes
 
     from flext_ldif import _models, _utilities, servers, services
@@ -53,10 +53,7 @@ if TYPE_CHECKING:
         TransformConfigBuilder,
         WriteConfigBuilder,
     )
-    from flext_ldif._utilities.decorators import (
-        FlextLdifUtilitiesDecorators,
-        FlextLdifUtilitiesDecorators as d,
-    )
+    from flext_ldif._utilities.decorators import FlextLdifUtilitiesDecorators
     from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
     from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
     from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
@@ -89,10 +86,7 @@ if TYPE_CHECKING:
         ValidationPipeline,
         ValidationResult,
     )
-    from flext_ldif._utilities.result import (
-        FlextLdifUtilitiesResult,
-        FlextLdifUtilitiesResult as r,
-    )
+    from flext_ldif._utilities.result import FlextLdifUtilitiesResult
     from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
     from flext_ldif._utilities.server import FlextLdifUtilitiesServer
     from flext_ldif._utilities.transformers import (
@@ -113,10 +107,10 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
     from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters, logger
     from flext_ldif.api import FlextLdif
-    from flext_ldif.base import FlextLdifServiceBase, s
-    from flext_ldif.constants import FlextLdifConstants, c
-    from flext_ldif.models import FlextLdifModels, m
-    from flext_ldif.protocols import FlextLdifProtocols, p
+    from flext_ldif.base import FlextLdifServiceBase
+    from flext_ldif.constants import FlextLdifConstants, FlextLdifConstants as c
+    from flext_ldif.models import FlextLdifModels, FlextLdifModels as m
+    from flext_ldif.protocols import FlextLdifProtocols, FlextLdifProtocols as p
     from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
     from flext_ldif.servers._base.constants import (
         FlextLdifServersBaseConstants,
@@ -176,8 +170,8 @@ if TYPE_CHECKING:
     from flext_ldif.services.writer import FlextLdifWriter
     from flext_ldif.settings import FlextLdifSettings
     from flext_ldif.shared import FlextLdifShared
-    from flext_ldif.typings import FlextLdifTypes, t
-    from flext_ldif.utilities import FlextLdifUtilities, u
+    from flext_ldif.typings import FlextLdifTypes, FlextLdifTypes as t
+    from flext_ldif.utilities import FlextLdifUtilities, FlextLdifUtilities as u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "AclElement": ("flext_ldif._models.base", "AclElement"),
@@ -497,20 +491,20 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "__version_info__": ("flext_ldif.__version__", "__version_info__"),
     "_models": ("flext_ldif._models", ""),
     "_utilities": ("flext_ldif._utilities", ""),
-    "c": ("flext_ldif.constants", "c"),
-    "d": ("flext_ldif._utilities.decorators", "FlextLdifUtilitiesDecorators"),
+    "c": ("flext_ldif.constants", "FlextLdifConstants"),
+    "d": ("flext_core", "d"),
     "e": ("flext_core", "e"),
     "f": ("flext_ldif._utilities.functional", "f"),
     "h": ("flext_core", "h"),
     "logger": ("flext_ldif._utilities.writers", "logger"),
-    "m": ("flext_ldif.models", "m"),
-    "p": ("flext_ldif.protocols", "p"),
-    "r": ("flext_ldif._utilities.result", "FlextLdifUtilitiesResult"),
-    "s": ("flext_ldif.base", "s"),
+    "m": ("flext_ldif.models", "FlextLdifModels"),
+    "p": ("flext_ldif.protocols", "FlextLdifProtocols"),
+    "r": ("flext_core", "r"),
+    "s": ("flext_core", "s"),
     "servers": ("flext_ldif.servers", ""),
     "services": ("flext_ldif.services", ""),
-    "t": ("flext_ldif.typings", "t"),
-    "u": ("flext_ldif.utilities", "u"),
+    "t": ("flext_ldif.typings", "FlextLdifTypes"),
+    "u": ("flext_ldif.utilities", "FlextLdifUtilities"),
     "x": ("flext_core", "x"),
 }
 

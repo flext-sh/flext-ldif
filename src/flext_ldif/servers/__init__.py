@@ -29,10 +29,7 @@ if TYPE_CHECKING:
     from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
     from flext_ldif.servers._oud.entry import FlextLdifServersOudEntry
     from flext_ldif.servers._oud.schema import FlextLdifServersOudSchema
-    from flext_ldif.servers._oud.utilities import (
-        FlextLdifServersOudUtilities,
-        FlextLdifServersOudUtilities as u,
-    )
+    from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
     from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
     from flext_ldif.servers._rfc.constants import FlextLdifServersRfcConstants
     from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
@@ -142,7 +139,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "_rfc": ("flext_ldif.servers._rfc", ""),
     "c": ("flext_ldif.servers._oid.constants", "c"),
     "logger": ("flext_ldif.servers.oid", "logger"),
-    "u": ("flext_ldif.servers._oud.utilities", "FlextLdifServersOudUtilities"),
 }
 
 __all__ = [
@@ -183,7 +179,6 @@ __all__ = [
     "_rfc",
     "c",
     "logger",
-    "u",
 ]
 
 
