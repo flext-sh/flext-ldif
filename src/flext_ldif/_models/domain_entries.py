@@ -20,6 +20,7 @@ from typing import Annotated, ClassVar, Self, TypedDict, TypeIs, Unpack, overrid
 
 from flext_core import FlextLogger
 from flext_core.models import FlextModels as m
+from flext_core.utilities import FlextUtilities as u_core
 from pydantic import (
     ConfigDict,
     Field,
@@ -29,7 +30,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_ldif import FlextLdifConstants as c, FlextLdifShared, r, t, u
+from flext_ldif import FlextLdifConstants as c, FlextLdifShared, r, t
 from flext_ldif._models import (
     AclElement,
     FlextLdifModelsBase,
@@ -942,7 +943,7 @@ class FlextLdifModelsDomains:
 
             self.attribute_metadata[str(attribute_name)] = {
                 "status": "deleted",
-                "deleted_at": u.generate_iso_timestamp(),
+                "deleted_at": u_core.generate_iso_timestamp(),
                 "deleted_reason": reason,
                 "deleted_by": deleted_by,
                 "original_values": [
@@ -1508,7 +1509,7 @@ class FlextLdifModelsDomains:
                 or self.subject is not None
                 or self.permissions is not None
             )
-            if acl_is_defined and (not u.is_string_non_empty(self.raw_acl)):
+            if acl_is_defined and (not u_core.is_string_non_empty(self.raw_acl)):
                 violations.append(
                     "ACL is defined (has target/subject/permissions) but raw_acl is empty",
                 )
