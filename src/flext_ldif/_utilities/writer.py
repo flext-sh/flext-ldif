@@ -7,12 +7,16 @@ import builtins
 import struct
 from collections.abc import Mapping, Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, r
 from flext_core.utilities import FlextUtilities as u_core
 
-from flext_ldif import c, m, r, t
+from flext_ldif import c, t
 from flext_ldif._models.settings import FlextLdifModelsSettings
+
+if TYPE_CHECKING:
+    from flext_ldif import m
 
 _TUPLE_LENGTH_TWO = 2
 logger = FlextLogger(__name__)

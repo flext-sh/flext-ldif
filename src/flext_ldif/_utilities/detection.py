@@ -9,7 +9,8 @@ from typing import TypeIs
 
 from flext_core.utilities import FlextUtilities as u_core
 
-from flext_ldif import m, p
+from flext_ldif import p
+from flext_ldif.models import m
 
 
 class FlextLdifUtilitiesDetection:

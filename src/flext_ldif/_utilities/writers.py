@@ -4,14 +4,17 @@ from __future__ import annotations
 
 import struct
 from collections.abc import Callable
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, r
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_ldif import m, r, t
+from flext_ldif import t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.settings import FlextLdifModelsSettings
+
+if TYPE_CHECKING:
+    from flext_ldif import m
 
 logger = FlextLogger.create_module_logger(__name__)
 

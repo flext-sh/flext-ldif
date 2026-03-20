@@ -9,13 +9,14 @@ import re
 from collections.abc import Mapping
 from typing import TypeIs
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, r
 from flext_core.utilities import FlextUtilities as u_core
 
-from flext_ldif import c, m, r, t
+from flext_ldif import c, t
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
+from flext_ldif.models import m
 
 logger = FlextLogger(__name__)
 

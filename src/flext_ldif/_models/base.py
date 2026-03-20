@@ -7,7 +7,7 @@ from typing import Annotated
 from flext_core.models import FlextModels as m
 from pydantic import ConfigDict, Field, computed_field
 
-from flext_ldif import FlextLdifShared, c
+from flext_ldif import c
 from flext_ldif.typings import t as ldif_t
 
 

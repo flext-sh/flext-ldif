@@ -10,11 +10,12 @@ from typing import TypeIs
 from flext_core import FlextLogger
 from flext_core.utilities import FlextUtilities as u_core
 
-from flext_ldif import c, m, p, t
+from flext_ldif import c, p, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
+from flext_ldif.models import m
 
 logger = FlextLogger(__name__)
 

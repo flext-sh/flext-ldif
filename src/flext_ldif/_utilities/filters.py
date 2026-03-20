@@ -5,10 +5,12 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Sequence
 from re import Pattern
-from typing import Literal, override
+from typing import TYPE_CHECKING, Literal, override
 
-from flext_ldif import m
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
+
+if TYPE_CHECKING:
+    from flext_ldif import m
 
 
 class FlextLdifUtilitiesFilters[T]:

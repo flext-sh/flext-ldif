@@ -6,8 +6,11 @@ import re
 import sys
 from typing import Literal, TypeIs
 
-from flext_ldif import FlextLdifShared, c, r, t
+from flext_core import r
+
+from flext_ldif import c, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif.shared import FlextLdifShared
 
 _VALID_SERVER_TYPES: frozenset[str] = frozenset({
     "oid",

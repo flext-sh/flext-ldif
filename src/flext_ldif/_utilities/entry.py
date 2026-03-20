@@ -8,12 +8,13 @@ import struct
 from collections.abc import Callable, Mapping, Sequence
 from typing import Literal
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, r
 
-from flext_ldif import m, r, t
+from flext_ldif import t
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
+from flext_ldif.models import m
 
 logger = FlextLogger(__name__)
 

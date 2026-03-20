@@ -6,9 +6,12 @@ import builtins
 from collections.abc import Callable, Sequence
 from typing import override
 
-from flext_ldif import c, m, r
+from flext_core import r
+
+from flext_ldif import c
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
+from flext_ldif.models import m
 
 
 class FlextLdifUtilitiesTransformer[T]:

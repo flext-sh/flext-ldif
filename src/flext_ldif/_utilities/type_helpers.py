@@ -7,11 +7,14 @@ from __future__ import annotations
 
 import builtins
 from collections.abc import Mapping as ABCMapping, Sequence as ABCSequence
-from typing import TypeIs
+from typing import TYPE_CHECKING, TypeIs
 
 from flext_core import FlextUtilities
 
-from flext_ldif import m, t
+from flext_ldif import t
+
+if TYPE_CHECKING:
+    from flext_ldif import m
 
 
 class FlextLdifTypeHelpers:
