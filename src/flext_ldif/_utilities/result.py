@@ -10,8 +10,9 @@ from typing import IO, Self, overload, override
 
 from flext_core import FlextRuntime, r
 
-from flext_ldif import m, t
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
+from flext_ldif.models import FlextLdifModels as m
+from flext_ldif.typings import FlextLdifTypes as t
 
 
 class FlextLdifUtilitiesResult[T: builtins.object]:
