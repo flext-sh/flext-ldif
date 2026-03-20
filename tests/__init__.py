@@ -12,7 +12,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-    from flext_ldif import d, e, h, r, s, x
+    from flext_ldif import d, e, h, r, s, t, x
 
     from . import integration as integration, support as support, unit as unit
     from .base import FlextLdifTestsServiceBase
@@ -208,7 +208,6 @@ if TYPE_CHECKING:
         TestsFlextLdifFixtures,
         TestsFlextLdifMatchers,
         TestsFlextLdifTypes,
-        TestsFlextLdifTypes as t,
         TestsFlextLdifValidators,
         tf,
         tm,
@@ -863,7 +862,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "simple_objectclass_definition",
     ),
     "support": ("tests.support", ""),
-    "t": ("tests.test_helpers", "TestsFlextLdifTypes"),
+    "t": ("flext_ldif", "t"),
     "temp_file": ("tests.conftest", "temp_file"),
     "test_create_and_export_entry": (
         "tests.integration.test_simple_ldap",
