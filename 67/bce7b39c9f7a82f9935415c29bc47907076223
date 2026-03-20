@@ -1,0 +1,23 @@
+src/flext_ldif/_utilities/result.py
+  6f36941021441c24 14-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "67bce7b39c9f7a82f9935415c29bc47907076223",
+  "prompts": {
+    "6f36941021441c24": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2f81e939effeHlZeiRl0NUuK2o",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 1,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
