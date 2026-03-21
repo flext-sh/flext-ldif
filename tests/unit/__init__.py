@@ -19,6 +19,133 @@ if TYPE_CHECKING:
         services as services,
         utilities as utilities,
     )
+    from .__init__.test_version import TestsFlextLdifVersion, version_module
+    from ._utilities.oid.test_oid_utilities import TestFlextLdifUtilitiesOID
+    from ._utilities.parser.test_parser_utilities import TestFlextLdifUtilitiesParser
+    from ._utilities.server.test_server_utilities import (
+        OidServer,
+        OudServer,
+        TestFlextLdifUtilitiesServer,
+    )
+    from .constants.test_acl_registry import (
+        GetAclAttributesServerType,
+        IsAclAttributeType,
+        TestsTestFlextLdifAclAttributeRegistry,
+    )
+    from .models.test_models import TestFlextLdifModels
+    from .protocols.test_protocols import TestsTestFlextLdifProtocols
+    from .quirks.servers.test_apache_quirks import TestsTestFlextLdifApacheQuirks
+    from .quirks.servers.test_ds389_quirks import (
+        ACL_TEST_CASES,
+        AclScenario,
+        AclTestCase,
+        TestsTestFlextLdifDs389Quirks,
+    )
+    from .quirks.servers.test_edge_cases import (
+        TestsFlextLdifEdgeCases,
+        cleanup_state,
+        ldif_api,
+    )
+    from .quirks.servers.test_novell_quirks import (
+        ATTRIBUTE_TEST_CASES,
+        ENTRY_TEST_CASES,
+        OBJECTCLASS_TEST_CASES,
+        AttributeScenario,
+        AttributeTestCase,
+        EntryScenario,
+        EntryTestCase,
+        ObjectClassScenario,
+        ObjectClassTestCase,
+        RfcTestHelpers,
+        TestDeduplicationHelpers,
+        TestNovellAcls,
+        TestNovellEntryDetection,
+        TestNovellSchemaAttributeDetection,
+        TestNovellSchemaAttributeParsing,
+        TestNovellSchemaObjectClassDetection,
+        TestNovellSchemaObjectClassParsing,
+        TestsFlextLdifNovellInitialization,
+        entry_quirk,
+        novell_server,
+        schema_quirk,
+    )
+    from .quirks.servers.test_oid_quirks import TestsTestFlextLdifOidQuirks
+    from .quirks.servers.test_relaxed_quirks import (
+        ParseScenario,
+        TestsTestFlextLdifRelaxedQuirks,
+        WriteScenario,
+        meta_keys,
+    )
+    from .quirks.servers.test_schema_transformer import (
+        TestSchemaTransformerApplyAttributeTransformations,
+        TestSchemaTransformerApplyObjectClassTransformations,
+        TestSchemaTransformerNormalizeMatchingRule,
+        TestSchemaTransformerNormalizeSyntaxOid,
+        TestsFlextLdifSchemaTransformerNormalizeAttributeName,
+    )
+    from .services.test_migration_pipeline import TestsTestFlextLdifMigrationPipeline
+    from .services.test_quirks_standardization import (
+        TestAliasDiscovery,
+        TestQuirksAutoInterchange,
+        TestQuirksWithRealLdifFixtures,
+        TestsFlextLdifQuirksStandardizedConstants,
+    )
+    from .services.test_schema_service import (
+        TestSchemaServiceBuilder,
+        TestSchemaServiceCanHandleAttribute,
+        TestSchemaServiceIntegration,
+        TestSchemaServiceParseAttribute,
+        TestSchemaServiceParseObjectClass,
+        TestSchemaServiceRepr,
+        TestSchemaServiceValidateAttribute,
+        TestSchemaServiceValidateObjectClass,
+        TestSchemaServiceWriteAttribute,
+        TestSchemaServiceWriteObjectClass,
+        TestsFlextLdifSchemaServiceExecute,
+        complex_attribute_definition,
+        complex_objectclass_definition,
+        schema_service,
+        schema_service_oud,
+        simple_attribute_definition,
+        simple_objectclass_definition,
+    )
+    from .services.test_writer_dn_normalization import (
+        TestsFlextLdifsFlextLdifWriterDnNormalization,
+    )
+    from .test_filters import TestAclAttributes
+    from .test_helpers import TestFlextLdifDeduplicationHelpers
+    from .test_migration_pipeline import TestsFlextLdifMigrationPipeline
+    from .test_migration_pipeline_quirks import (
+        OidTestConstants,
+        TestsFlextLdifMigrationPipelineQuirks,
+    )
+    from .test_typings import (
+        TestFlextLdifTypesStructure,
+        TestIntegrationWithLdifFixtures,
+        TestModelsNamespace,
+        TestPhase1StandardizationResults,
+        TestRemovalOfOverEngineering,
+        TestsFlextLdifCommonDictionaryTypes,
+    )
+    from .utilities.test_utilities import TestsTestFlextLdifServiceAPIs
+    from .utilities.test_utilities_comprehensive import (
+        TestFlextLdifUtilitiesComprehensive,
+    )
+    from .utilities.test_utilities_constants import (
+        GetValidValuesType,
+        IsValidTestType,
+        TestsTestFlextLdifConstants,
+        ValidateManyType,
+    )
+    from .utilities.test_utilities_core import (
+        TestAclParser,
+        TestAttributeFixer,
+        TestDnObjectClassMethods,
+        TestLdifParser,
+        TestObjectClassUtilities,
+        TestServerTypes,
+        TestsFlextLdifDnOperationsPure,
+    )
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ACL_TEST_CASES": ("tests.unit.quirks.servers.test_ds389_quirks", "ACL_TEST_CASES"),

@@ -12,6 +12,12 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
+    from .test_server_utilities import (
+        OidServer,
+        OudServer,
+        TestFlextLdifUtilitiesServer,
+    )
+
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "OidServer": ("tests.unit._utilities.server.test_server_utilities", "OidServer"),
     "OudServer": ("tests.unit._utilities.server.test_server_utilities", "OudServer"),

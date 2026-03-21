@@ -17,6 +17,16 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
+    from .conftest_factory import FlextLdifTestConftest, tk
+    from .ldif_data import LdifSample, LdifTestData
+    from .real_services import FlextLdifTestFactory
+    from .test_files import FileManager
+    from .validators import (
+        MockFlextUtilitiesResultHelpers,
+        MockMatchers,
+        TestValidators,
+    )
+
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FileManager": ("tests.support.test_files", "FileManager"),
     "FlextLdifTestConftest": (

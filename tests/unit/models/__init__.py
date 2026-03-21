@@ -12,6 +12,8 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
+    from .test_models import TestFlextLdifModels
+
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestFlextLdifModels": ("tests.unit.models.test_models", "TestFlextLdifModels"),
 }
