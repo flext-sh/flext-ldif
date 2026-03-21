@@ -17,7 +17,10 @@ if TYPE_CHECKING:
     )
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextLdifProcessingPipelineService": ("flext_ldif.services._services.processing_pipeline_service", "FlextLdifProcessingPipelineService"),
+    "FlextLdifProcessingPipelineService": (
+        "flext_ldif.services._services.processing_pipeline_service",
+        "FlextLdifProcessingPipelineService",
+    ),
 }
 
 __all__ = [
