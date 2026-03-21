@@ -13,27 +13,34 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
     from flext_ldif.servers import _base, _oid, _oud, _rfc
-    from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
-    from flext_ldif.servers._base.constants import (
+    from flext_ldif.servers._base import (
         FlextLdifServersBaseConstants,
+        FlextLdifServersBaseEntry,
         FlextLdifServersBaseQuirkHelpers,
+        FlextLdifServersBaseSchema,
+        FlextLdifServersBaseSchemaAcl,
         QuirkMethodsMixin,
     )
-    from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
-    from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
-    from flext_ldif.servers._oid.acl import FlextLdifServersOidAcl
-    from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants, c
-    from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
-    from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema
-    from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
-    from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
-    from flext_ldif.servers._oud.entry import FlextLdifServersOudEntry
-    from flext_ldif.servers._oud.schema import FlextLdifServersOudSchema
-    from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
-    from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
-    from flext_ldif.servers._rfc.constants import FlextLdifServersRfcConstants
-    from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
-    from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
+    from flext_ldif.servers._oid import (
+        FlextLdifServersOidAcl,
+        FlextLdifServersOidConstants,
+        FlextLdifServersOidEntry,
+        FlextLdifServersOidSchema,
+        c,
+    )
+    from flext_ldif.servers._oud import (
+        FlextLdifServersOudAcl,
+        FlextLdifServersOudConstants,
+        FlextLdifServersOudEntry,
+        FlextLdifServersOudSchema,
+        FlextLdifServersOudUtilities,
+    )
+    from flext_ldif.servers._rfc import (
+        FlextLdifServersRfcAcl,
+        FlextLdifServersRfcConstants,
+        FlextLdifServersRfcEntry,
+        FlextLdifServersRfcSchema,
+    )
     from flext_ldif.servers.ad import FlextLdifServersAd
     from flext_ldif.servers.apache import FlextLdifServersApache
     from flext_ldif.servers.base import FlextLdifServersBase
@@ -52,39 +59,36 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifServersApache": ("flext_ldif.servers.apache", "FlextLdifServersApache"),
     "FlextLdifServersBase": ("flext_ldif.servers.base", "FlextLdifServersBase"),
     "FlextLdifServersBaseConstants": (
-        "flext_ldif.servers._base.constants",
+        "flext_ldif.servers._base",
         "FlextLdifServersBaseConstants",
     ),
     "FlextLdifServersBaseEntry": (
-        "flext_ldif.servers._base.entry",
+        "flext_ldif.servers._base",
         "FlextLdifServersBaseEntry",
     ),
     "FlextLdifServersBaseQuirkHelpers": (
-        "flext_ldif.servers._base.constants",
+        "flext_ldif.servers._base",
         "FlextLdifServersBaseQuirkHelpers",
     ),
     "FlextLdifServersBaseSchema": (
-        "flext_ldif.servers._base.schema",
+        "flext_ldif.servers._base",
         "FlextLdifServersBaseSchema",
     ),
     "FlextLdifServersBaseSchemaAcl": (
-        "flext_ldif.servers._base.acl",
+        "flext_ldif.servers._base",
         "FlextLdifServersBaseSchemaAcl",
     ),
     "FlextLdifServersDs389": ("flext_ldif.servers.ds389", "FlextLdifServersDs389"),
     "FlextLdifServersNovell": ("flext_ldif.servers.novell", "FlextLdifServersNovell"),
     "FlextLdifServersOid": ("flext_ldif.servers.oid", "FlextLdifServersOid"),
-    "FlextLdifServersOidAcl": ("flext_ldif.servers._oid.acl", "FlextLdifServersOidAcl"),
+    "FlextLdifServersOidAcl": ("flext_ldif.servers._oid", "FlextLdifServersOidAcl"),
     "FlextLdifServersOidConstants": (
-        "flext_ldif.servers._oid.constants",
+        "flext_ldif.servers._oid",
         "FlextLdifServersOidConstants",
     ),
-    "FlextLdifServersOidEntry": (
-        "flext_ldif.servers._oid.entry",
-        "FlextLdifServersOidEntry",
-    ),
+    "FlextLdifServersOidEntry": ("flext_ldif.servers._oid", "FlextLdifServersOidEntry"),
     "FlextLdifServersOidSchema": (
-        "flext_ldif.servers._oid.schema",
+        "flext_ldif.servers._oid",
         "FlextLdifServersOidSchema",
     ),
     "FlextLdifServersOpenldap": (
@@ -96,21 +100,18 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextLdifServersOpenldap1",
     ),
     "FlextLdifServersOud": ("flext_ldif.servers.oud", "FlextLdifServersOud"),
-    "FlextLdifServersOudAcl": ("flext_ldif.servers._oud.acl", "FlextLdifServersOudAcl"),
+    "FlextLdifServersOudAcl": ("flext_ldif.servers._oud", "FlextLdifServersOudAcl"),
     "FlextLdifServersOudConstants": (
-        "flext_ldif.servers._oud.constants",
+        "flext_ldif.servers._oud",
         "FlextLdifServersOudConstants",
     ),
-    "FlextLdifServersOudEntry": (
-        "flext_ldif.servers._oud.entry",
-        "FlextLdifServersOudEntry",
-    ),
+    "FlextLdifServersOudEntry": ("flext_ldif.servers._oud", "FlextLdifServersOudEntry"),
     "FlextLdifServersOudSchema": (
-        "flext_ldif.servers._oud.schema",
+        "flext_ldif.servers._oud",
         "FlextLdifServersOudSchema",
     ),
     "FlextLdifServersOudUtilities": (
-        "flext_ldif.servers._oud.utilities",
+        "flext_ldif.servers._oud",
         "FlextLdifServersOudUtilities",
     ),
     "FlextLdifServersRelaxed": (
@@ -118,26 +119,23 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextLdifServersRelaxed",
     ),
     "FlextLdifServersRfc": ("flext_ldif.servers.rfc", "FlextLdifServersRfc"),
-    "FlextLdifServersRfcAcl": ("flext_ldif.servers._rfc.acl", "FlextLdifServersRfcAcl"),
+    "FlextLdifServersRfcAcl": ("flext_ldif.servers._rfc", "FlextLdifServersRfcAcl"),
     "FlextLdifServersRfcConstants": (
-        "flext_ldif.servers._rfc.constants",
+        "flext_ldif.servers._rfc",
         "FlextLdifServersRfcConstants",
     ),
-    "FlextLdifServersRfcEntry": (
-        "flext_ldif.servers._rfc.entry",
-        "FlextLdifServersRfcEntry",
-    ),
+    "FlextLdifServersRfcEntry": ("flext_ldif.servers._rfc", "FlextLdifServersRfcEntry"),
     "FlextLdifServersRfcSchema": (
-        "flext_ldif.servers._rfc.schema",
+        "flext_ldif.servers._rfc",
         "FlextLdifServersRfcSchema",
     ),
     "FlextLdifServersTivoli": ("flext_ldif.servers.tivoli", "FlextLdifServersTivoli"),
-    "QuirkMethodsMixin": ("flext_ldif.servers._base.constants", "QuirkMethodsMixin"),
+    "QuirkMethodsMixin": ("flext_ldif.servers._base", "QuirkMethodsMixin"),
     "_base": ("flext_ldif.servers._base", ""),
     "_oid": ("flext_ldif.servers._oid", ""),
     "_oud": ("flext_ldif.servers._oud", ""),
     "_rfc": ("flext_ldif.servers._rfc", ""),
-    "c": ("flext_ldif.servers._oid.constants", "c"),
+    "c": ("flext_ldif.servers._oid", "c"),
     "logger": ("flext_ldif.servers.oid", "logger"),
 }
 
