@@ -1,0 +1,21 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "ba43c2e9d9ac550667f37a838b04e82dd9cdccd3",
+  "prompts": {
+    "04ecc87941b94cd2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2f22a45d4ffeo7ihRbTHpfFhMN",
+        "model": "google/gemini-3-flash-preview"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 441,
+      "total_deletions": 448,
+      "accepted_lines": 152,
+      "overriden_lines": 0
+    }
+  }
+}
