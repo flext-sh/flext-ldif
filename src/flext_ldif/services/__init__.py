@@ -13,7 +13,9 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
     from flext_ldif.services import _services
-    from flext_ldif.services._services import FlextLdifProcessingPipelineService
+    from flext_ldif.services._services.processing_pipeline_service import (
+        FlextLdifProcessingPipelineService,
+    )
     from flext_ldif.services.acl import FlextLdifAcl
     from flext_ldif.services.analysis import FlextLdifAnalysis
     from flext_ldif.services.categorization import FlextLdifCategorization
@@ -55,7 +57,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifParser": ("flext_ldif.services.parser", "FlextLdifParser"),
     "FlextLdifProcessing": ("flext_ldif.services.processing", "FlextLdifProcessing"),
     "FlextLdifProcessingPipelineService": (
-        "flext_ldif.services._services",
+        "flext_ldif.services._services.processing_pipeline_service",
         "FlextLdifProcessingPipelineService",
     ),
     "FlextLdifSchema": ("flext_ldif.services.schema", "FlextLdifSchema"),
