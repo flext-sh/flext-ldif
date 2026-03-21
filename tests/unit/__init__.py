@@ -13,7 +13,6 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
     from . import (
-        __init__ as __init__,
         constants as constants,
         models as models,
         protocols as protocols,
@@ -444,7 +443,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "ValidateManyType",
     ),
     "WriteScenario": ("tests.unit.quirks.servers.test_relaxed_quirks", "WriteScenario"),
-    "__init__": ("tests.unit.__init__", ""),
     "cleanup_state": ("tests.unit.quirks.servers.test_edge_cases", "cleanup_state"),
     "complex_attribute_definition": (
         "tests.unit.services.test_schema_service",
@@ -566,7 +564,6 @@ __all__ = [
     "TestsTestFlextLdifServiceAPIs",
     "ValidateManyType",
     "WriteScenario",
-    "__init__",
     "cleanup_state",
     "complex_attribute_definition",
     "complex_objectclass_definition",

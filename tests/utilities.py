@@ -7,6 +7,8 @@ from flext_tests import u
 from flext_ldif import FlextLdifUtilities
 from flext_ldif._utilities import FlextLdifUtilitiesOID
 
+from .constants import TestsFlextLdifConstants
+
 
 class TestsFlextLdifUtilities(u, FlextLdifUtilities):
     """Project test utility namespace extension."""
@@ -26,7 +28,5 @@ u = TestsFlextLdifUtilities
 def __getattr__(name: str) -> type[object]:
     """Lazy-load test helpers from constants."""
     if name in {"TestDeduplicationHelpers", "RfcTestHelpers"}:
-        from tests.constants import TestsFlextLdifConstants
-
         return getattr(TestsFlextLdifConstants, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
