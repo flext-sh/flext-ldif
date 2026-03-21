@@ -717,8 +717,10 @@ class FlextLdifConstants(FlextConstants):
 
             OBJECTCLASS: Final[str] = "objectclass"
             ACTIVE: Final[str] = "active"
+            DEPRECATED: Final[str] = "deprecated"
             STRUCTURAL: Final[str] = "STRUCTURAL"
             AUXILIARY: Final[str] = "AUXILIARY"
+            ABSTRACT: Final[str] = "ABSTRACT"
 
         class OperationalAttributes:
             """Operational (server-generated) attributes by server type."""
