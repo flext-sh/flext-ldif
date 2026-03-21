@@ -13,7 +13,10 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "TestFlextLdifUtilitiesOID": ("tests.unit._utilities.oid.test_oid_utilities", "TestFlextLdifUtilitiesOID"),
+    "TestFlextLdifUtilitiesOID": (
+        "tests.unit._utilities.oid.test_oid_utilities",
+        "TestFlextLdifUtilitiesOID",
+    ),
 }
 
 __all__ = [

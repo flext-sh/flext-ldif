@@ -15,7 +15,10 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "OidServer": ("tests.unit._utilities.server.test_server_utilities", "OidServer"),
     "OudServer": ("tests.unit._utilities.server.test_server_utilities", "OudServer"),
-    "TestFlextLdifUtilitiesServer": ("tests.unit._utilities.server.test_server_utilities", "TestFlextLdifUtilitiesServer"),
+    "TestFlextLdifUtilitiesServer": (
+        "tests.unit._utilities.server.test_server_utilities",
+        "TestFlextLdifUtilitiesServer",
+    ),
 }
 
 __all__ = [

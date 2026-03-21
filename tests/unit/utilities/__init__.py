@@ -12,24 +12,6 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-    from .test_utilities import TestsTestFlextLdifServiceAPIs
-    from .test_utilities_comprehensive import TestFlextLdifUtilitiesComprehensive
-    from .test_utilities_constants import (
-        GetValidValuesType,
-        IsValidTestType,
-        TestsTestFlextLdifConstants,
-        ValidateManyType,
-    )
-    from .test_utilities_core import (
-        TestAclParser,
-        TestAttributeFixer,
-        TestDnObjectClassMethods,
-        TestLdifParser,
-        TestObjectClassUtilities,
-        TestServerTypes,
-        TestsFlextLdifDnOperationsPure,
-    )
-
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "GetValidValuesType": (
         "tests.unit.utilities.test_utilities_constants",

@@ -22,11 +22,26 @@ if TYPE_CHECKING:
     from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema, logger
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextLdifServersBaseConstants": ("flext_ldif.servers._base.constants", "FlextLdifServersBaseConstants"),
-    "FlextLdifServersBaseEntry": ("flext_ldif.servers._base.entry", "FlextLdifServersBaseEntry"),
-    "FlextLdifServersBaseQuirkHelpers": ("flext_ldif.servers._base.constants", "FlextLdifServersBaseQuirkHelpers"),
-    "FlextLdifServersBaseSchema": ("flext_ldif.servers._base.schema", "FlextLdifServersBaseSchema"),
-    "FlextLdifServersBaseSchemaAcl": ("flext_ldif.servers._base.acl", "FlextLdifServersBaseSchemaAcl"),
+    "FlextLdifServersBaseConstants": (
+        "flext_ldif.servers._base.constants",
+        "FlextLdifServersBaseConstants",
+    ),
+    "FlextLdifServersBaseEntry": (
+        "flext_ldif.servers._base.entry",
+        "FlextLdifServersBaseEntry",
+    ),
+    "FlextLdifServersBaseQuirkHelpers": (
+        "flext_ldif.servers._base.constants",
+        "FlextLdifServersBaseQuirkHelpers",
+    ),
+    "FlextLdifServersBaseSchema": (
+        "flext_ldif.servers._base.schema",
+        "FlextLdifServersBaseSchema",
+    ),
+    "FlextLdifServersBaseSchemaAcl": (
+        "flext_ldif.servers._base.acl",
+        "FlextLdifServersBaseSchemaAcl",
+    ),
     "QuirkMethodsMixin": ("flext_ldif.servers._base.constants", "QuirkMethodsMixin"),
     "logger": ("flext_ldif.servers._base.schema", "logger"),
 }
