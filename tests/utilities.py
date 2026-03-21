@@ -26,7 +26,7 @@ u = TestsFlextLdifUtilities
 def __getattr__(name: str) -> type[object]:
     """Lazy-load test helpers from constants."""
     if name in {"TestDeduplicationHelpers", "RfcTestHelpers"}:
-        from tests.constants import TestsFlextLdifConstants  # noqa: PLC0415
+        from tests.constants import TestsFlextLdifConstants
 
         return getattr(TestsFlextLdifConstants, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
