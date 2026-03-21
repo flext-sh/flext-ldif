@@ -10,8 +10,11 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_core import d, e, h, r, s, x
     from flext_core.typings import FlextTypes
+
+
+if TYPE_CHECKING:
+    from flext_core import d, e, h, r, s, x
 
     from flext_ldif import _models, _utilities, servers, services
     from flext_ldif.__version__ import (
@@ -696,7 +699,7 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: dict[str, object] = {}
+_LAZY_CACHE: dict[str, FlextTypes.ModuleExport] = {}
 
 
 def __getattr__(name: str) -> FlextTypes.ModuleExport:
