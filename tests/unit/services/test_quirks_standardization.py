@@ -18,7 +18,7 @@ from flext_ldif.servers import (
     FlextLdifServersOud,
     FlextLdifServersRfc,
 )
-from tests import c, s
+from tests import s
 
 
 @pytest.mark.unit

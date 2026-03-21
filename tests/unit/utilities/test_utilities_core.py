@@ -8,7 +8,6 @@ splitting, component extraction, and handling of special characters and escaped 
 from __future__ import annotations
 
 import pytest
-from flext_tests import c, m, u
 
 from tests import c, m, s, u
 

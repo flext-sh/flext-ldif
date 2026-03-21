@@ -20,7 +20,7 @@ from flext_ldif import (
     FlextLdifStatistics,
     services,
 )
-from tests import c, m, s
+from tests import s
 
 
 class TestsTestFlextLdifServiceAPIs(s):

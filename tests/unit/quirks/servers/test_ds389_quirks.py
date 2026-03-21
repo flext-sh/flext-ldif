@@ -12,7 +12,7 @@ from typing import ClassVar
 import pytest
 from flext_tests import c, m, u
 from pydantic import BaseModel, ConfigDict, Field
-from tests import c, m, s
+from tests import s
 
 from flext_ldif import FlextLdifServersDs389
 

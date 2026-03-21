@@ -21,6 +21,7 @@ from collections.abc import Callable, Generator
 from pathlib import Path
 
 import pytest
+from flext_tests import u
 from ldap3 import ALL, Connection, Server
 from ldap3.core.exceptions import LDAPException
 

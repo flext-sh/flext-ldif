@@ -13,7 +13,7 @@ import pytest
 from flext_tests import m, u
 
 from flext_ldif import FlextLdifMigrationPipeline
-from tests import m, s
+from tests import s
 
 
 class TestsTestFlextLdifMigrationPipeline(s):

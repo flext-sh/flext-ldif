@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from unittest.mock import patch
 
-from flext_tests import u
 from tests import s
 
 from flext_ldif.utilities import FlextLdifUtilities as u

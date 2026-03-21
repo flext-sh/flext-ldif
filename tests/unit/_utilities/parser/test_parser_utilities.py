@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from flext_tests import u
 from tests import s
 
 from flext_ldif.utilities import FlextLdifUtilities as u

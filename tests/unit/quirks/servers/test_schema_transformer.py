@@ -10,7 +10,7 @@ from collections.abc import Callable
 
 from flext_core import r
 from flext_tests import m, t, u
-from tests import m, s, t, u
+from tests import s
 
 
 class TestsFlextLdifSchemaTransformerNormalizeAttributeName(s):

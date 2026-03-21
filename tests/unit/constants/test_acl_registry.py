@@ -12,7 +12,7 @@ from typing import ClassVar
 import pytest
 from flext_tests import u
 
-from tests import s, u
+from tests import s
 
 
 @unique

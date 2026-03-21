@@ -11,7 +11,7 @@ import pytest
 from flext_tests import c, t, u
 
 import flext_ldif
-from tests import c, s, t
+from tests import s
 
 
 class TestFlextLdifTypesStructure:

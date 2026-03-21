@@ -11,7 +11,7 @@ from enum import StrEnum, unique
 import pytest
 from flext_tests import m, u
 from pydantic import BaseModel, ConfigDict, Field
-from tests import m, s
+from tests import s
 from tests.constants import TestsFlextLdifConstants
 
 from flext_ldif import FlextLdifServersNovell

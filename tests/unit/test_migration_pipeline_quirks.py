@@ -16,7 +16,7 @@ from flext_tests import c, u
 from flext_ldif import FlextLdifMigrationPipeline
 from flext_ldif.servers import FlextLdifServersRfc
 from flext_ldif.servers._oid import FlextLdifServersOidConstants
-from tests import c, s
+from tests import s
 
 
 class OidTestConstants:
