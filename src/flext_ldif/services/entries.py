@@ -251,6 +251,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
             results.append(result.value)
         return r[list[m.Ldif.Entry]].ok(results)
 
+    @override
     def build(self) -> list[m.Ldif.Entry]:
         """Execute and return processed entries or raise on failure."""
         result = self.execute()

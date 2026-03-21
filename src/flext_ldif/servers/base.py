@@ -362,14 +362,15 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             return r[m.Ldif.Entry].ok(first_entry)
         return r[m.Ldif.Entry].fail("No valid parameters")
 
-    def parse(self, ldif_text: str) -> r[FlextLdifModelsResults.ParseResponse]:
+    @override
+    def parse(self, value: str) -> r[FlextLdifModelsResults.ParseResponse]:
         """Parse LDIF text to Entry models."""
         entry_quirk = getattr(self, "entry_quirk", None)
         if entry_quirk is None:
             return r[FlextLdifModelsResults.ParseResponse].fail(
                 "Entry quirk not available",
             )
-        entries_result: r[list[m.Ldif.Entry]] = entry_quirk.parse(ldif_text)
+        entries_result: r[list[m.Ldif.Entry]] = entry_quirk.parse(value)
         if entries_result.is_failure:
             error_msg = entries_result.error or "Entry parsing failed"
             return r[FlextLdifModelsResults.ParseResponse].fail(error_msg)

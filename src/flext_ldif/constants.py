@@ -210,6 +210,9 @@ class FlextLdifConstants(FlextConstants):
 
             MAX_LINE_LENGTH: Final[int] = 78
 
+            ASCII_PRINTABLE_MIN: Final[int] = 32
+            ASCII_PRINTABLE_MAX: Final[int] = 126
+
             class Rfc:
                 """RFC 2849/4512/4514 Standard Constants."""
 
@@ -326,6 +329,11 @@ class FlextLdifConstants(FlextConstants):
 
             MIN_DN_LENGTH: Final[int] = 2
             META_TRANSFORMATION_TIMESTAMP: Final[str] = "_transform_ts"
+            META_TRANSFORMATION_SOURCE: Final[str] = "_transform_source"
+            META_TRANSFORMATION_TARGET: Final[str] = "_transform_target"
+            META_DN_ORIGINAL: Final[str] = "_dn_original"
+            META_DN_WAS_BASE64: Final[str] = "_dn_was_base64"
+            META_DN_ESCAPES_APPLIED: Final[str] = "_dn_escapes_applied"
 
         class FeatureCapabilities:
             """Feature capability definitions for cross-server translation."""
@@ -812,6 +820,7 @@ class FlextLdifConstants(FlextConstants):
             ACL_BINDMODE: Final[str] = "bindmode"
             ACL_DENY_GROUP_OVERRIDE: Final[str] = "deny_group_override"
             ACL_APPEND_TO_ALL: Final[str] = "append_to_all"
+            ACL_BIND_IP: Final[str] = "bind_ip"
             ACL_BIND_IP_FILTER: Final[str] = "bind_ip_filter"
             ACL_CONSTRAIN_TO_ADDED_OBJECT: Final[str] = "constrain_to_added_object"
             ACL_BIND_TIMEOFDAY: Final[str] = "bind_timeofday"
@@ -837,6 +846,26 @@ class FlextLdifConstants(FlextConstants):
             )
             CONVERSION_ORIGINAL_VALUE: Final[str] = "original"
             CONVERSION_CONVERTED_VALUE: Final[str] = "converted"
+            CONVERSION_CONVERTED_ATTRIBUTE_NAMES: Final[str] = (
+                "conversion_converted_attribute_names"
+            )
+            CONVERTED_ATTRIBUTES: Final[str] = "converted_attributes"
+            HAS_DIFFERENCES: Final[str] = "has_differences"
+            MINIMAL_DIFFERENCES_DN: Final[str] = "minimal_differences_dn"
+            ORIGINAL_DN_LINE_COMPLETE: Final[str] = "original_dn_line_complete"
+            ACL_SOURCE_SERVER: Final[str] = "acl_source_server"
+            ACL_NAME_SANITIZED: Final[str] = "acl_name_sanitized"
+            ACL_ORIGINAL_NAME_RAW: Final[str] = "acl_original_name_raw"
+            ACL_EXTOP: Final[str] = "extop"
+            ACL_BIND_DNS: Final[str] = "bind_dns"
+            ACL_BIND_DAYOFWEEK: Final[str] = "bind_dayofweek"
+            ACL_AUTHMETHOD: Final[str] = "authmethod"
+            ACL_TARGETATTR_FILTERS: Final[str] = "targattrfilters"
+            ACL_TARGET_CONTROL: Final[str] = "targetcontrol"
+            ACL_SOURCE_PERMISSIONS: Final[str] = "source_permissions"
+            ACL_SSFS: Final[str] = "ssfs"
+            ACL_TARGETSCOPE: Final[str] = "targetscope"
+            ACL_NUMBERING: Final[str] = "numbering"
 
         class DnPatterns:
             """Standard DN patterns used in LDAP/LDIF processing."""
@@ -1404,6 +1433,53 @@ class FlextLdifConstants(FlextConstants):
         LIST = "list"
         TUPLE = "tuple"
         DICT = "dict"
+
+    class ServerConstants:
+        """Server Constants namespace grouping server quirk constants."""
+
+        class Base:
+            """Base server constants."""
+
+            SERVER_TYPE: Final[str] = ""
+            PRIORITY: Final[int] = 100
+            CANONICAL_NAME: Final[str] = ""
+            ALIASES: Final[frozenset[str]] = frozenset()
+            CAN_NORMALIZE_FROM: Final[frozenset[str]] = frozenset()
+            CAN_DENORMALIZE_TO: Final[frozenset[str]] = frozenset()
+            ACL_FORMAT: Final[str] = ""
+            ACL_ATTRIBUTE_NAME: Final[str] = ""
+            SCHEMA_DN: Final[str] = ""
+            SCHEMA_SUP_SEPARATOR: Final[str] = "$"
+            ATTRIBUTE_FIELDS: Final[frozenset[str]] = frozenset()
+            ATTRIBUTE_ALIASES: Final[Mapping[str, list[str]]] = {}
+            OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset()
+            PRESERVE_ON_MIGRATION: Final[frozenset[str]] = frozenset()
+            OBJECTCLASS_REQUIREMENTS: Final[Mapping[str, bool]] = {}
+            CATEGORIZATION_PRIORITY: Final[list[str]] = []
+            CATEGORY_OBJECTCLASSES: Final[Mapping[str, frozenset[str]]] = {}
+            CATEGORIZATION_ACL_ATTRIBUTES: Final[frozenset[str]] = frozenset()
+            DETECTION_OID_PATTERN: Final[str] = ""
+            DETECTION_ATTRIBUTE_PREFIXES: Final[frozenset[str]] = frozenset()
+            DETECTION_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset()
+            DETECTION_DN_MARKERS: Final[frozenset[str]] = frozenset()
+
+        class OID:
+            """OID server constants."""
+
+            SERVER_TYPE: Final[str] = "oid"
+            PRIORITY: Final[int] = 30
+
+        class OUD:
+            """OUD server constants."""
+
+            SERVER_TYPE: Final[str] = "oud"
+            PRIORITY: Final[int] = 40
+
+        class RFC:
+            """RFC server constants."""
+
+            SERVER_TYPE: Final[str] = "rfc"
+            PRIORITY: Final[int] = 99
 
 
 __all__ = ["FlextLdifConstants", "c"]

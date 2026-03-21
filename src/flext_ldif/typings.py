@@ -8,12 +8,10 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping
 from datetime import datetime
-from typing import Annotated, TypeVar
+from typing import Annotated, Literal, TypeVar
 
-from flext_core import FlextTypes
+from flext_core import FlextTypes, r
 from pydantic import BaseModel, StringConstraints
-
-from flext_ldif import c, r
 
 # =========================================================================
 # RECURSIVE TYPES - Defined at module level for reliable scope resolution
@@ -52,8 +50,8 @@ class FlextLdifTypes(FlextTypes):
         type RdnString = str
         type ServerType = str
         type MetadataKey = str
-        type ProcessingMode = c.ProcessingMode
-        type ValidationLevel = c.ValidationLevel
+        type ProcessingMode = Literal["validate", "transform", "filter"]
+        type ValidationLevel = Literal["strict", "moderate", "lenient"]
         type EntryAttributesDict = dict[str, list[str]]
         type RawEntryDict = dict[str, str | list[str] | set[str]]
 
@@ -63,9 +61,9 @@ class FlextLdifTypes(FlextTypes):
             type Rfc4512Descriptor = Annotated[
                 str,
                 StringConstraints(
-                    min_length=c.Ldif.LdifValidation.MIN_ATTRIBUTE_NAME_LENGTH,
-                    max_length=c.Ldif.LdifValidation.MAX_ATTRIBUTE_NAME_LENGTH,
-                    pattern=c.Ldif.LdifValidation.RFC4512_DESCRIPTOR_PATTERN,
+                    min_length=1,
+                    max_length=64,
+                    pattern=r"^[a-zA-Z0-9-]+$",
                     strip_whitespace=True,
                 ),
             ]
@@ -74,13 +72,13 @@ class FlextLdifTypes(FlextTypes):
                 str,
                 StringConstraints(
                     min_length=2,
-                    pattern=c.Ldif.LdifValidation.RFC4514_DN_COMPONENT_PATTERN,
+                    pattern=r"^[a-zA-Z0-9-]+=[^,]+$",
                 ),
             ]
             type Rfc2849AttributeValue = Annotated[
                 str,
                 StringConstraints(
-                    max_length=c.Ldif.ValidationRules.DEFAULT_MAX_ATTR_VALUE_LENGTH,
+                    max_length=4096,
                 ),
             ]
 
@@ -144,7 +142,9 @@ class FlextLdifTypes(FlextTypes):
         TSchema = TypeVar("TSchema")
 
     class _Core:
-        type ConversionTargetType = c.ConversionTargetType
+        type ConversionTargetType = Literal[
+            "str", "int", "float", "bool", "list", "tuple", "dict"
+        ]
         type ResultValue[T] = T
         type DN = str
 

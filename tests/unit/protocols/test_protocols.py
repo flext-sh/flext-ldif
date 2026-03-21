@@ -11,7 +11,6 @@ from typing import ClassVar
 
 import pytest
 from flext_core import r
-from flext_tests import u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif import FlextLdifProtocols, FlextLdifServer, p
@@ -19,7 +18,7 @@ from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.openldap import FlextLdifServersOpenldap
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
-from tests import s
+from tests import s, u
 
 
 def _create_server_implementations() -> list[tuple[str, type, type]]:

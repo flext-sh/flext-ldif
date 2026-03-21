@@ -86,6 +86,7 @@ class FlextLdifProcessing(FlextLdifServiceBase[list[m.Ldif.ProcessingResult]]):
             "FlextLdifProcessing does not support generic execute(). Use specific methods instead.",
         )
 
+    @override
     def process(
         self,
         processor_name: str,

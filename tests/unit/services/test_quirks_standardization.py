@@ -11,14 +11,13 @@ from pathlib import Path
 from typing import Final
 
 import pytest
-from flext_tests import c, u
 
-from flext_ldif.servers import (
+from flext_ldif import (
     FlextLdifServersOid,
     FlextLdifServersOud,
     FlextLdifServersRfc,
 )
-from tests import s
+from tests import c, s, u
 
 
 @pytest.mark.unit

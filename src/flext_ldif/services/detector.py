@@ -5,17 +5,9 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
-from typing import Protocol, override
+from typing import override
 
-from flext_ldif import FlextLdifServer, FlextLdifSettings, m, r, s, u
-
-
-class _ServerDetectionConstants(Protocol):
-    DETECTION_PATTERN: str
-    DETECTION_WEIGHT: int
-    DETECTION_ATTRIBUTES: frozenset[str] | list[str]
-    DETECTION_OID_PATTERN: str | None
-    DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None
+from flext_ldif import FlextLdifServer, FlextLdifSettings, m, p, r, s, u
 
 
 class FlextLdifDetector(s[m.Ldif.ClientStatus]):
@@ -40,7 +32,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
     @staticmethod
     def _get_server_constants(
         server_type: str,
-    ) -> type[_ServerDetectionConstants] | None:
+    ) -> type[p.Ldif.ServerDetectionConstants] | None:
         """Get server Constants class dynamically via FlextLdifServer registry."""
         registry = FlextLdifDetector._get_server_registry()
         server_quirk_result = registry.quirk(server_type)
@@ -303,7 +295,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
 
     def _extract_oid_patterns(
         self,
-        _constants: type[_ServerDetectionConstants] | None,
+        _constants: type[p.Ldif.ServerDetectionConstants] | None,
         pattern: str | None,
         description: str,
         content: str,
@@ -324,7 +316,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
 
     def _extract_oid_specific_patterns(
         self,
-        constants: type[_ServerDetectionConstants] | None,
+        constants: type[p.Ldif.ServerDetectionConstants] | None,
         content: str,
         patterns: list[str],
     ) -> None:
@@ -471,7 +463,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
     def _process_server_with_oid_pattern(
         self,
         server_type: str,
-        constants: type[_ServerDetectionConstants] | None,
+        constants: type[p.Ldif.ServerDetectionConstants] | None,
         content: str,
         content_lower: str,
         scores: MutableMapping[str, int],
@@ -499,7 +491,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
     def _process_server_with_pattern(
         self,
         server_type: str,
-        constants: type[_ServerDetectionConstants] | None,
+        constants: type[p.Ldif.ServerDetectionConstants] | None,
         content_lower: str,
         scores: MutableMapping[str, int],
         *,

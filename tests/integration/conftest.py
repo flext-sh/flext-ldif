@@ -21,7 +21,6 @@ from collections.abc import Callable, Generator
 from pathlib import Path
 
 import pytest
-from flext_tests import u
 from ldap3 import ALL, Connection, Server
 from ldap3.core.exceptions import LDAPException
 
@@ -30,15 +29,13 @@ from flext_ldif import (
     FlextLdifConversion,
     FlextLdifParser,
     FlextLdifServer,
+    FlextLdifServersBase,
+    FlextLdifServersBaseSchema,
+    FlextLdifServersBaseSchemaAcl,
     FlextLdifWriter,
     m,
 )
-from flext_ldif.servers._base import (
-    FlextLdifServersBaseSchema,
-    FlextLdifServersBaseSchemaAcl,
-)
-from flext_ldif.servers.base import FlextLdifServersBase
-from tests.conftest import FlextLdifFixtures
+from tests import FlextLdifFixtures, u
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[3]
 LDAP_CONTAINER_NAME = "flext-openldap-test"

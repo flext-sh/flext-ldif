@@ -9,15 +9,13 @@ from __future__ import annotations
 from enum import StrEnum, unique
 
 import pytest
-from flext_tests import m, u
 from pydantic import BaseModel, ConfigDict, Field
-from tests import s
-from tests.constants import TestsFlextLdifConstants
+from tests import c, m, s, u
 
 from flext_ldif import FlextLdifServersNovell
 
-RfcTestHelpers = TestsFlextLdifConstants.RfcTestHelpers
-TestDeduplicationHelpers = TestsFlextLdifConstants.TestDeduplicationHelpers
+RfcTestHelpers = c.RfcTestHelpers
+TestDeduplicationHelpers = c.TestDeduplicationHelpers
 
 
 @unique

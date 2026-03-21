@@ -11,12 +11,12 @@ import re
 from pathlib import Path
 from typing import Final
 
-from flext_tests import c, u
-
-from flext_ldif import FlextLdifMigrationPipeline
-from flext_ldif.servers import FlextLdifServersRfc
-from flext_ldif.servers._oid import FlextLdifServersOidConstants
-from tests import s
+from flext_ldif import (
+    FlextLdifMigrationPipeline,
+    FlextLdifServersOidConstants,
+    FlextLdifServersRfc,
+)
+from tests import c, s, u
 
 
 class OidTestConstants:

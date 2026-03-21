@@ -66,9 +66,9 @@ class FlextLdifUtilitiesParser:
     def _process_ldif_line(
         line: str,
         current_dn: str | None,
-        current_attrs: m.Ldif.EntryAttributesDict,
-        entries: list[tuple[str, m.Ldif.EntryAttributesDict]],
-    ) -> tuple[str | None, m.Ldif.EntryAttributesDict]:
+        current_attrs: t.Ldif.EntryAttributesDict,
+        entries: list[tuple[str, t.Ldif.EntryAttributesDict]],
+    ) -> tuple[str | None, t.Ldif.EntryAttributesDict]:
         """Process single LDIF line with RFC 2849 base64 detection."""
         if not line:
             if current_dn is not None:
@@ -94,7 +94,7 @@ class FlextLdifUtilitiesParser:
         if key.lower() == "dn":
             if current_dn is not None:
                 entries.append((current_dn, current_attrs))
-            new_attrs: m.Ldif.EntryAttributesDict = {}
+            new_attrs: t.Ldif.EntryAttributesDict = {}
             if is_base64:
                 new_attrs["_base64_dn"] = ["true"]
             new_attrs["_original_dn_line"] = [original_line]
@@ -246,7 +246,7 @@ class FlextLdifUtilitiesParser:
     def finalize_pending_attribute(
         current_attr: str | None,
         current_values: list[str],
-        entry_dict: m.Ldif.RawEntryDict,
+        entry_dict: t.Ldif.RawEntryDict,
     ) -> None:
         """Finalize and save pending attribute to entry dictionary."""
         if not current_attr or not current_values:
@@ -262,7 +262,7 @@ class FlextLdifUtilitiesParser:
     def handle_multivalued_attribute(
         attr_name: str,
         attr_value: str,
-        entry_dict: m.Ldif.RawEntryDict,
+        entry_dict: t.Ldif.RawEntryDict,
     ) -> bool:
         """Handle multi-valued attribute accumulation."""
         if attr_name not in entry_dict or attr_name == "_base64_attrs":
@@ -300,10 +300,10 @@ class FlextLdifUtilitiesParser:
         return r[tuple[str, str, bool]].ok((attr_name, attr_value, is_base64))
 
     @staticmethod
-    def parse_ldif(ldif_lines: list[str]) -> list[m.Ldif.RawEntryDict]:
+    def parse_ldif(ldif_lines: list[str]) -> list[t.Ldif.RawEntryDict]:
         """Parse list of LDIF lines into entries (simple version)."""
-        entries: list[m.Ldif.RawEntryDict] = []
-        current_entry: m.Ldif.RawEntryDict = {}
+        entries: list[t.Ldif.RawEntryDict] = []
+        current_entry: t.Ldif.RawEntryDict = {}
         for line in ldif_lines:
             if not line.strip():
                 if current_entry:
@@ -320,13 +320,13 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def parse_ldif_lines(
         ldif_content: str,
-    ) -> list[tuple[str, m.Ldif.EntryAttributesDict]]:
+    ) -> list[tuple[str, t.Ldif.EntryAttributesDict]]:
         """Parse LDIF content into (dn, attributes_dict) tuples - RFC 2849 compliant."""
         if not ldif_content:
             return []
-        entries: list[tuple[str, m.Ldif.EntryAttributesDict]] = []
+        entries: list[tuple[str, t.Ldif.EntryAttributesDict]] = []
         current_dn: str | None = None
-        current_attrs: m.Ldif.EntryAttributesDict = {}
+        current_attrs: t.Ldif.EntryAttributesDict = {}
         unfolded_lines = FlextLdifUtilitiesParser.unfold_lines(ldif_content)
         for raw_line in unfolded_lines:
             line = raw_line.rstrip("\r\n").strip()
@@ -341,7 +341,7 @@ class FlextLdifUtilitiesParser:
         return entries
 
     @staticmethod
-    def track_base64_attribute(attr_name: str, entry_dict: m.Ldif.RawEntryDict) -> None:
+    def track_base64_attribute(attr_name: str, entry_dict: t.Ldif.RawEntryDict) -> None:
         """Track attribute that uses base64 encoding."""
         if "_base64_attrs" not in entry_dict:
             entry_dict["_base64_attrs"] = set()

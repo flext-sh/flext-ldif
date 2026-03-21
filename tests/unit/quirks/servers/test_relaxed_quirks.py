@@ -11,8 +11,7 @@ from typing import ClassVar
 
 import pytest
 from flext_core import r
-from flext_tests import c, m, u
-from tests import s
+from tests import c, m, s, u
 
 from flext_ldif import FlextLdifServersRelaxed
 

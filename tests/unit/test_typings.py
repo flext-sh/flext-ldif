@@ -8,10 +8,9 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 import pytest
-from flext_tests import c, t, u
 
 import flext_ldif
-from tests import s
+from tests import c, s, t, u
 
 
 class TestFlextLdifTypesStructure:

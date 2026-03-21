@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from flext_tests import u
-from tests import s
+from tests import s, u
 
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 

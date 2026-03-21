@@ -38,6 +38,7 @@ from flext_ldif._models import (
     FlextLdifModelsSettings,
     SchemaElement,
 )
+from flext_ldif.shared import FlextLdifShared
 
 logger = FlextLogger(__name__)
 

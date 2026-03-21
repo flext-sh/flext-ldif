@@ -253,6 +253,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                 entry_typed = m.Ldif.Entry.model_validate(entry)
         return self.acl_service.extract_acls_from_entry(entry_typed, server_type)
 
+    @override
     def filter(
         self,
         entries: list[m.Ldif.Entry],
@@ -426,17 +427,18 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         )
         return pipeline.execute()
 
+    @override
     def parse(
         self,
-        source: str | Path,
+        value: str | Path,
         *,
         server_type: str | None = None,
     ) -> r[list[m.Ldif.Entry]]:
         """Parse LDIF content from string or file."""
         effective_type = server_type or self._get_effective_server_type_value()
-        if isinstance(source, Path):
-            return self._parse_file(source, server_type=effective_type)
-        source_content = source
+        if isinstance(value, Path):
+            return self._parse_file(value, server_type=effective_type)
+        source_content = value
         parse_result = self.parser.parse_string(
             source_content,
             server_type=effective_type,
@@ -447,6 +449,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         entries_list: list[m.Ldif.Entry] = list(response.entries)
         return r[list[m.Ldif.Entry]].ok(entries_list)
 
+    @override
     def process(
         self,
         processor_name: str,
@@ -489,6 +492,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             format_options=format_options,
         )
 
+    @override
     def write_file(
         self,
         entries: list[m.Ldif.Entry],
@@ -539,7 +543,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             content = resolved_path.read_text(encoding="utf-8")
         except OSError as e:
             return r[list[m.Ldif.Entry]].fail(f"Failed to read file: {e}")
-        return self.parse(source=content, server_type=server_type)
+        return self.parse(value=content, server_type=server_type)
 
 
 __all__ = ["FlextLdif"]

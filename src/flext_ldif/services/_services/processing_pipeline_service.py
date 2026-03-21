@@ -24,19 +24,17 @@ class FlextLdifProcessingPipelineService:
     ) -> ProcessingPipeline:
         pipeline = self._processing_pipeline
         if pipeline is None:
-            source_type = m.Ldif.ServerType(source_server_type)
-            target_type = m.Ldif.ServerType(target_server_type)
             logger.debug(
                 "Creating processing pipeline",
-                source=source_type,
-                target=target_type,
+                source=source_server_type,
+                target=target_server_type,
             )
             process_config = m.Ldif.ProcessConfig(
                 batch_size=100,
                 timeout_seconds=300,
                 max_retries=3,
-                source_server=source_type,
-                target_server=target_type,
+                source_server=source_server_type,
+                target_server=target_server_type,
                 dn_config=None,
                 attr_config=None,
                 acl_config=None,

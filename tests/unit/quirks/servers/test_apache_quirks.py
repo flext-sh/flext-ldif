@@ -10,9 +10,8 @@ from enum import StrEnum, unique
 from typing import ClassVar
 
 import pytest
-from flext_tests import c, m, u
 from pydantic import BaseModel, ConfigDict, Field
-from tests import s
+from tests import c, m, s, u
 
 from flext_ldif.servers.apache import FlextLdifServersApache
 

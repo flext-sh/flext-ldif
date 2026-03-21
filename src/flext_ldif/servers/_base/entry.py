@@ -118,9 +118,10 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
             return r[m.Ldif.Entry | str].ok(str_result.map_or(""))
         return r[m.Ldif.Entry | str].ok("")
 
-    def parse(self, ldif_content: str) -> r[list[m.Ldif.Entry]]:
+    @override
+    def parse(self, value: str) -> r[list[m.Ldif.Entry]]:
         """Parse LDIF content string into Entry models."""
-        return self._parse_content(ldif_content)
+        return self._parse_content(value)
 
     def parse_entry(
         self,

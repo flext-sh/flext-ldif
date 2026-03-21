@@ -636,9 +636,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         return "\n".join(comment_lines) + "\n" if comment_lines else ""
 
     @override
-    def parse(self, ldif_content: str) -> r[list[m.Ldif.Entry]]:
+    def parse(self, value: str) -> r[list[m.Ldif.Entry]]:
         """Parse LDIF content and apply OUD post-processing hooks."""
-        parsed_result = super().parse(ldif_content)
+        parsed_result = super().parse(value)
         if parsed_result.is_failure:
             return parsed_result
         processed_entries: list[m.Ldif.Entry] = []

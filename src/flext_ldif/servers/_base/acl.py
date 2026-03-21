@@ -165,9 +165,10 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         )
         return r[str].ok(formatted_value)
 
-    def parse(self, acl_line: str) -> r[m.Ldif.Acl]:
+    @override
+    def parse(self, value: str) -> r[m.Ldif.Acl]:
         """Parse ACL line to Acl model."""
-        return self._parse_acl(acl_line)
+        return self._parse_acl(value)
 
     def write(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
         """Write Acl model to string format."""

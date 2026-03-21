@@ -41,7 +41,7 @@ class ProcessingPipeline:
             case_fold_value = dn_config.case_fold or "none"
             space_handling_value = dn_config.space_handling or "preserve"
             case_enum = c.Ldif.CaseFoldOption(case_fold_value)
-            spaces_enum = m.Ldif.SpaceHandlingOption(space_handling_value)
+            spaces_enum = c.Ldif.SpaceHandlingOption(space_handling_value)
             pipeline.add(
                 Normalize.dn(
                     case=case_enum,

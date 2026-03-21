@@ -210,7 +210,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _process_add_attributes(
-        attributes: m.Ldif.EntryAttributesDict,
+        attributes: t.Ldif.EntryAttributesDict,
         hidden: set[str],
         *,
         fold_long_lines: bool,
@@ -236,7 +236,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _process_modify_attributes(
-        attributes: m.Ldif.EntryAttributesDict,
+        attributes: t.Ldif.EntryAttributesDict,
         hidden: set[str],
         modify_operation: str,
         *,

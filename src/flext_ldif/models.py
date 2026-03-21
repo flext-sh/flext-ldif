@@ -26,7 +26,6 @@ from flext_ldif import (
     FlextLdifModelsSettings,
     c,
     p,
-    t,
 )
 
 
@@ -38,9 +37,6 @@ class FlextLdifModels(FlextModels):
     Types live in ``typings.py``, constants in ``constants.py``.
     """
 
-    WriteFormatOptions: Final = FlextLdifModelsSettings.WriteFormatOptions
-    StatisticsResult: Final = FlextLdifModelsResults.StatisticsResult
-
     class Ldif(
         FlextLdifModelsDomains,
         FlextLdifModelsMetadata,
@@ -51,19 +47,8 @@ class FlextLdifModels(FlextModels):
     ):
         """LDIF namespace for cross-project access."""
 
-        # =================================================================
-        # TYPE ALIASES — non-class types only (enums, unions, containers)
-        # Class-level types moved to FlextLdifTypes.Ldif in typings.py
-        # =================================================================
-
-        EntryAttributesDict = t.Ldif.EntryAttributesDict
-        RawEntryDict = t.Ldif.RawEntryDict
-
-        ServerType = c.Ldif.ServerTypes
-        SpaceHandlingOption = c.Ldif.SpaceHandlingOption
-        EscapeHandlingOption = c.Ldif.EscapeHandlingOption
-        SortOption = c.Ldif.SortOption
-        OutputFormat = c.Ldif.Domain.OutputFormat
+        WriteFormatOptions: Final = FlextLdifModelsSettings.WriteFormatOptions
+        StatisticsResult: Final = FlextLdifModelsResults.StatisticsResult
 
         class ProcessingResult(FlextLdifModelsProcessing.ProcessingResult):
             """Processing result with DN and attributes."""

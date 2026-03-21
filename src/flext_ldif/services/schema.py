@@ -66,6 +66,7 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
         entry_attrs = {attr.lower() for attr in entry.attributes.attributes}
         return bool(schema_attrs & entry_attrs)
 
+    @override
     def build(self) -> Self:
         """Build configured schema service instance."""
         return self

@@ -10,9 +10,8 @@ from enum import StrEnum, unique
 from typing import ClassVar
 
 import pytest
-from flext_tests import u
 
-from tests import s
+from tests import s, u
 
 
 @unique

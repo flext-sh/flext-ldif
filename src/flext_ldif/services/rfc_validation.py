@@ -28,6 +28,7 @@ class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
         return cls()
 
     @d.track_operation()
+    @override
     def build(self) -> m.Ldif.ValidationBatchResult:
         """Build method."""
         result: dict[str, bool] = {}

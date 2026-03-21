@@ -376,6 +376,16 @@ class FlextLdifProtocols(FlextProtocols):
             CATEGORY_OBJECTCLASSES: Mapping[str, frozenset[str]]
 
         @runtime_checkable
+        class ServerDetectionConstants(Protocol):
+            """Protocol for server detection constants extracted from quirk classes."""
+
+            DETECTION_PATTERN: str
+            DETECTION_WEIGHT: int
+            DETECTION_ATTRIBUTES: frozenset[str] | list[str]
+            DETECTION_OID_PATTERN: str | None
+            DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None
+
+        @runtime_checkable
         class ModelWithValidationMetadata(Protocol):
             """Protocol for models with validation_metadata attribute."""
 

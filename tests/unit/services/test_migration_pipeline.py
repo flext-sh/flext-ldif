@@ -10,10 +10,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_tests import m, u
 
 from flext_ldif import FlextLdifMigrationPipeline
-from tests import s
+from tests import m, s, u
 
 
 class TestsTestFlextLdifMigrationPipeline(s):

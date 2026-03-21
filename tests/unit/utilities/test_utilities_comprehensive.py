@@ -7,7 +7,8 @@ from __future__ import annotations
 
 import pytest
 
-from tests import FlextLdifTestFactory, m, u
+from tests import m, u
+from tests.test_factory import FlextLdifTestFactory
 
 
 class TestFlextLdifUtilitiesComprehensive:
@@ -54,8 +55,8 @@ class TestFlextLdifUtilitiesComprehensive:
                 entries[-1].attributes[key].append(value)
         u.Tests.Matchers.that(len(entries) >= 5, eq=True)
         for entry in entries:
-            u.Tests.Matchers.that(entry.dn, eq=True)
-            u.Tests.Matchers.that(entry.attributes, eq=True)
+            u.Tests.Matchers.that(entry.dn, none=False)
+            u.Tests.Matchers.that(len(entry.attributes) > 0, eq=True)
             u.Tests.Matchers.that(isinstance(entry.attributes, dict), eq=True)
 
     @pytest.mark.parametrize("server_type", ["generic", "openldap", "ad", "oid", "oud"])

@@ -366,12 +366,13 @@ class FlextLdifServersBaseSchema(
         detected_op = self._auto_detect_operation(data, operation_final)
         return self._route_operation(data, detected_op)
 
+    @override
     def parse(
         self,
-        definition: str,
+        value: str,
     ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
         """Parse schema definition (attribute or objectClass)."""
-        return self.route_parse(definition)
+        return self.route_parse(value)
 
     def parse_attribute(self, definition: str) -> r[m.Ldif.SchemaAttribute]:
         """Parse attribute definition (public API)."""

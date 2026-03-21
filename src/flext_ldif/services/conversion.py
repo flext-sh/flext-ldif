@@ -90,12 +90,14 @@ class FlextLdifConversion(
         )
 
     @staticmethod
+    @override
     def _is_object_mapping(
         value: builtins.object,
     ) -> TypeIs[Mapping[builtins.object, builtins.object]]:
         return isinstance(value, Mapping)
 
     @staticmethod
+    @override
     def _is_object_sequence(
         value: builtins.object,
     ) -> TypeIs[Sequence[builtins.object]]:
@@ -764,6 +766,7 @@ class FlextLdifConversion(
                 ]
             ].fail(f"Batch conversion failed: {e}")
 
+    @override
     def convert(
         self,
         source: str | FlextLdifServersBase,

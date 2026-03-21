@@ -21,11 +21,19 @@ from typing import TypeVar
 from flext_core import r
 from flext_tests import (
     tm,
-    tt,
     tv,
 )
 
 from flext_ldif import FlextLdif, FlextLdifEntries, m
+
+
+class _TestsBase:
+    """Base class for test helper types (replaces missing flext_tests.tt)."""
+
+    __test__ = False
+
+
+tt = _TestsBase
 
 TResult = TypeVar("TResult")
 

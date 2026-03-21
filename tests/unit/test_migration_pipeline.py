@@ -25,10 +25,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_tests import c, u
 
 from flext_ldif import FlextLdifMigrationPipeline
-from tests import s
+from tests import c, s, u
 
 
 class TestsFlextLdifMigrationPipeline(s):
