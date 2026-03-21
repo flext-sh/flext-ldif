@@ -105,7 +105,7 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.type_helpers import FlextLdifTypeHelpers
     from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
     from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
-    from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters, logger
+    from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
     from flext_ldif.api import FlextLdif
     from flext_ldif.base import FlextLdifServiceBase
     from flext_ldif.constants import FlextLdifConstants, FlextLdifConstants as c
@@ -137,7 +137,7 @@ if TYPE_CHECKING:
     from flext_ldif.servers.base import FlextLdifServersBase
     from flext_ldif.servers.ds389 import FlextLdifServersDs389
     from flext_ldif.servers.novell import FlextLdifServersNovell
-    from flext_ldif.servers.oid import FlextLdifServersOid
+    from flext_ldif.servers.oid import FlextLdifServersOid, logger
     from flext_ldif.servers.openldap import FlextLdifServersOpenldap
     from flext_ldif.servers.openldap1 import FlextLdifServersOpenldap1
     from flext_ldif.servers.oud import FlextLdifServersOud
@@ -496,7 +496,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "e": ("flext_core", "e"),
     "f": ("flext_ldif._utilities.functional", "f"),
     "h": ("flext_core", "h"),
-    "logger": ("flext_ldif._utilities.writers", "logger"),
+    "logger": ("flext_ldif.servers.oid", "logger"),
     "m": ("flext_ldif.models", "FlextLdifModels"),
     "p": ("flext_ldif.protocols", "FlextLdifProtocols"),
     "r": ("flext_core", "r"),

@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
     from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
     from flext_ldif.servers._oid.acl import FlextLdifServersOidAcl
-    from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants, c
+    from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
     from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
     from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema
     from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from flext_ldif.servers._oud.schema import FlextLdifServersOudSchema
     from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
     from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
-    from flext_ldif.servers._rfc.constants import FlextLdifServersRfcConstants
+    from flext_ldif.servers._rfc.constants import FlextLdifServersRfcConstants, c
     from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
     from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
     from flext_ldif.servers.ad import FlextLdifServersAd
@@ -137,7 +137,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "_oid": ("flext_ldif.servers._oid", ""),
     "_oud": ("flext_ldif.servers._oud", ""),
     "_rfc": ("flext_ldif.servers._rfc", ""),
-    "c": ("flext_ldif.servers._oid.constants", "c"),
+    "c": ("flext_ldif.servers._rfc.constants", "c"),
     "logger": ("flext_ldif.servers.oid", "logger"),
 }
 

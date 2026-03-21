@@ -38,6 +38,14 @@ if TYPE_CHECKING:
     )
     from .constants import TestsFlextLdifConstants, TestsFlextLdifConstants as c
     from .integration.conftest import (
+        LDAP_ADMIN_DN,
+        LDAP_ADMIN_PASSWORD,
+        LDAP_BASE_DN,
+        LDAP_COMPOSE_FILE,
+        LDAP_CONTAINER_NAME,
+        LDAP_PORT,
+        LDAP_SERVICE_NAME,
+        WORKSPACE_ROOT,
         all_acl_fixtures,
         all_entries_fixtures,
         all_integration_fixtures,
@@ -121,6 +129,7 @@ if TYPE_CHECKING:
         TestInvalidSchemaDefinitions,
         TestMalformedLdifHandling,
     )
+    from .integration.test_ldif_fixtures_integration import TestsFlextLdifFixtures
     from .integration.test_minimal_differences_metadata import (
         TestMinimalDifferencesOidOud,
     )
@@ -197,15 +206,14 @@ if TYPE_CHECKING:
     from .protocols import TestsFlextLdifProtocols, TestsFlextLdifProtocols as p
     from .support.conftest_factory import FlextLdifTestConftest, tk
     from .support.ldif_data import LdifSample, LdifTestData
+    from .support.real_services import FlextLdifTestFactory
     from .support.test_files import FileManager
     from .support.validators import (
         MockFlextUtilitiesResultHelpers,
         MockMatchers,
         TestValidators,
     )
-    from .test_factory import FlextLdifTestFactory
     from .test_helpers import (
-        TestsFlextLdifFixtures,
         TestsFlextLdifMatchers,
         TestsFlextLdifTypes,
         TestsFlextLdifValidators,
@@ -223,6 +231,15 @@ if TYPE_CHECKING:
         utilities as utilities,
     )
     from .unit.__init__.test_version import TestsFlextLdifVersion, version_module
+    from .unit._utilities.oid.test_oid_utilities import TestFlextLdifUtilitiesOID
+    from .unit._utilities.parser.test_parser_utilities import (
+        TestFlextLdifUtilitiesParser,
+    )
+    from .unit._utilities.server.test_server_utilities import (
+        OidServer,
+        OudServer,
+        TestFlextLdifUtilitiesServer,
+    )
     from .unit.constants.test_acl_registry import (
         GetAclAttributesServerType,
         IsAclAttributeType,
@@ -230,6 +247,55 @@ if TYPE_CHECKING:
     )
     from .unit.models.test_models import TestFlextLdifModels
     from .unit.protocols.test_protocols import TestsTestFlextLdifProtocols
+    from .unit.quirks.servers.test_apache_quirks import TestsTestFlextLdifApacheQuirks
+    from .unit.quirks.servers.test_ds389_quirks import (
+        ACL_TEST_CASES,
+        AclScenario,
+        AclTestCase,
+        TestsTestFlextLdifDs389Quirks,
+    )
+    from .unit.quirks.servers.test_edge_cases import (
+        TestsFlextLdifEdgeCases,
+        cleanup_state,
+        ldif_api,
+    )
+    from .unit.quirks.servers.test_novell_quirks import (
+        ATTRIBUTE_TEST_CASES,
+        ENTRY_TEST_CASES,
+        OBJECTCLASS_TEST_CASES,
+        AttributeScenario,
+        AttributeTestCase,
+        EntryScenario,
+        EntryTestCase,
+        ObjectClassScenario,
+        ObjectClassTestCase,
+        RfcTestHelpers,
+        TestDeduplicationHelpers,
+        TestNovellAcls,
+        TestNovellEntryDetection,
+        TestNovellSchemaAttributeDetection,
+        TestNovellSchemaAttributeParsing,
+        TestNovellSchemaObjectClassDetection,
+        TestNovellSchemaObjectClassParsing,
+        TestsFlextLdifNovellInitialization,
+        entry_quirk,
+        novell_server,
+        schema_quirk,
+    )
+    from .unit.quirks.servers.test_oid_quirks import TestsTestFlextLdifOidQuirks
+    from .unit.quirks.servers.test_relaxed_quirks import (
+        ParseScenario,
+        TestsTestFlextLdifRelaxedQuirks,
+        WriteScenario,
+        meta_keys,
+    )
+    from .unit.quirks.servers.test_schema_transformer import (
+        TestSchemaTransformerApplyAttributeTransformations,
+        TestSchemaTransformerApplyObjectClassTransformations,
+        TestSchemaTransformerNormalizeMatchingRule,
+        TestSchemaTransformerNormalizeSyntaxOid,
+        TestsFlextLdifSchemaTransformerNormalizeAttributeName,
+    )
     from .unit.services.test_migration_pipeline import (
         TestsTestFlextLdifMigrationPipeline,
     )
@@ -298,8 +364,29 @@ if TYPE_CHECKING:
     from .utilities import TestsFlextLdifUtilities, TestsFlextLdifUtilities as u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    "ACL_TEST_CASES": ("tests.unit.quirks.servers.test_ds389_quirks", "ACL_TEST_CASES"),
     "APIScenarios": ("tests.integration.test_api_integration", "APIScenarios"),
+    "ATTRIBUTE_TEST_CASES": (
+        "tests.unit.quirks.servers.test_novell_quirks",
+        "ATTRIBUTE_TEST_CASES",
+    ),
+    "AclScenario": ("tests.unit.quirks.servers.test_ds389_quirks", "AclScenario"),
+    "AclTestCase": ("tests.unit.quirks.servers.test_ds389_quirks", "AclTestCase"),
+    "AttributeScenario": (
+        "tests.unit.quirks.servers.test_novell_quirks",
+        "AttributeScenario",
+    ),
+    "AttributeTestCase": (
+        "tests.unit.quirks.servers.test_novell_quirks",
+        "AttributeTestCase",
+    ),
     "ConfigTestData": ("tests.integration.test_config_integration", "ConfigTestData"),
+    "ENTRY_TEST_CASES": (
+        "tests.unit.quirks.servers.test_novell_quirks",
+        "ENTRY_TEST_CASES",
+    ),
+    "EntryScenario": ("tests.unit.quirks.servers.test_novell_quirks", "EntryScenario"),
+    "EntryTestCase": ("tests.unit.quirks.servers.test_novell_quirks", "EntryTestCase"),
     "FIXTURES_DIR": ("tests.conftest", "FIXTURES_DIR"),
     "FileManager": ("tests.support.test_files", "FileManager"),
     "FlextLdifFixtures": ("tests.conftest", "FlextLdifFixtures"),
@@ -307,7 +394,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.support.conftest_factory",
         "FlextLdifTestConftest",
     ),
-    "FlextLdifTestFactory": ("tests.test_factory", "FlextLdifTestFactory"),
+    "FlextLdifTestFactory": ("tests.support.real_services", "FlextLdifTestFactory"),
     "FlextLdifTestsServiceBase": ("tests.base", "FlextLdifTestsServiceBase"),
     "GenericFieldsDict": ("tests.typings", "GenericFieldsDict"),
     "GetAclAttributesServerType": (
@@ -326,6 +413,13 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.utilities.test_utilities_constants",
         "IsValidTestType",
     ),
+    "LDAP_ADMIN_DN": ("tests.integration.conftest", "LDAP_ADMIN_DN"),
+    "LDAP_ADMIN_PASSWORD": ("tests.integration.conftest", "LDAP_ADMIN_PASSWORD"),
+    "LDAP_BASE_DN": ("tests.integration.conftest", "LDAP_BASE_DN"),
+    "LDAP_COMPOSE_FILE": ("tests.integration.conftest", "LDAP_COMPOSE_FILE"),
+    "LDAP_CONTAINER_NAME": ("tests.integration.conftest", "LDAP_CONTAINER_NAME"),
+    "LDAP_PORT": ("tests.integration.conftest", "LDAP_PORT"),
+    "LDAP_SERVICE_NAME": ("tests.integration.conftest", "LDAP_SERVICE_NAME"),
     "LdifSample": ("tests.support.ldif_data", "LdifSample"),
     "LdifTestData": ("tests.support.ldif_data", "LdifTestData"),
     "MockFlextUtilitiesResultHelpers": (
@@ -333,10 +427,29 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "MockFlextUtilitiesResultHelpers",
     ),
     "MockMatchers": ("tests.support.validators", "MockMatchers"),
+    "OBJECTCLASS_TEST_CASES": (
+        "tests.unit.quirks.servers.test_novell_quirks",
+        "OBJECTCLASS_TEST_CASES",
+    ),
     "OID_FIXTURES_DIR": ("tests.conftest", "OID_FIXTURES_DIR"),
+    "ObjectClassScenario": (
+        "tests.unit.quirks.servers.test_novell_quirks",
+        "ObjectClassScenario",
+    ),
+    "ObjectClassTestCase": (
+        "tests.unit.quirks.servers.test_novell_quirks",
+        "ObjectClassTestCase",
+    ),
+    "OidServer": ("tests.unit._utilities.server.test_server_utilities", "OidServer"),
     "OidTestConstants": (
         "tests.unit.test_migration_pipeline_quirks",
         "OidTestConstants",
+    ),
+    "OudServer": ("tests.unit._utilities.server.test_server_utilities", "OudServer"),
+    "ParseScenario": ("tests.unit.quirks.servers.test_relaxed_quirks", "ParseScenario"),
+    "RfcTestHelpers": (
+        "tests.unit.quirks.servers.test_novell_quirks",
+        "RfcTestHelpers",
     ),
     "TestAclAttributes": ("tests.unit.test_filters", "TestAclAttributes"),
     "TestAclParser": ("tests.unit.utilities.test_utilities_core", "TestAclParser"),
@@ -358,6 +471,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestCategorizationRealData",
     ),
     "TestData": ("tests.integration.test_api_integration", "TestData"),
+    "TestDeduplicationHelpers": (
+        "tests.unit.quirks.servers.test_novell_quirks",
+        "TestDeduplicationHelpers",
+    ),
     "TestDnCaseNormalizationScenarios": (
         "tests.integration.test_dn_case_handling",
         "TestDnCaseNormalizationScenarios",
@@ -403,6 +520,18 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.utilities.test_utilities_comprehensive",
         "TestFlextLdifUtilitiesComprehensive",
     ),
+    "TestFlextLdifUtilitiesOID": (
+        "tests.unit._utilities.oid.test_oid_utilities",
+        "TestFlextLdifUtilitiesOID",
+    ),
+    "TestFlextLdifUtilitiesParser": (
+        "tests.unit._utilities.parser.test_parser_utilities",
+        "TestFlextLdifUtilitiesParser",
+    ),
+    "TestFlextLdifUtilitiesServer": (
+        "tests.unit._utilities.server.test_server_utilities",
+        "TestFlextLdifUtilitiesServer",
+    ),
     "TestIncompleteEntries": (
         "tests.integration.test_error_recovery",
         "TestIncompleteEntries",
@@ -429,6 +558,30 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestMinimalDifferencesOidOud",
     ),
     "TestModelsNamespace": ("tests.unit.test_typings", "TestModelsNamespace"),
+    "TestNovellAcls": (
+        "tests.unit.quirks.servers.test_novell_quirks",
+        "TestNovellAcls",
+    ),
+    "TestNovellEntryDetection": (
+        "tests.unit.quirks.servers.test_novell_quirks",
+        "TestNovellEntryDetection",
+    ),
+    "TestNovellSchemaAttributeDetection": (
+        "tests.unit.quirks.servers.test_novell_quirks",
+        "TestNovellSchemaAttributeDetection",
+    ),
+    "TestNovellSchemaAttributeParsing": (
+        "tests.unit.quirks.servers.test_novell_quirks",
+        "TestNovellSchemaAttributeParsing",
+    ),
+    "TestNovellSchemaObjectClassDetection": (
+        "tests.unit.quirks.servers.test_novell_quirks",
+        "TestNovellSchemaObjectClassDetection",
+    ),
+    "TestNovellSchemaObjectClassParsing": (
+        "tests.unit.quirks.servers.test_novell_quirks",
+        "TestNovellSchemaObjectClassParsing",
+    ),
     "TestObjectClassUtilities": (
         "tests.unit.utilities.test_utilities_core",
         "TestObjectClassUtilities",
@@ -670,6 +823,22 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceWriteObjectClass",
     ),
+    "TestSchemaTransformerApplyAttributeTransformations": (
+        "tests.unit.quirks.servers.test_schema_transformer",
+        "TestSchemaTransformerApplyAttributeTransformations",
+    ),
+    "TestSchemaTransformerApplyObjectClassTransformations": (
+        "tests.unit.quirks.servers.test_schema_transformer",
+        "TestSchemaTransformerApplyObjectClassTransformations",
+    ),
+    "TestSchemaTransformerNormalizeMatchingRule": (
+        "tests.unit.quirks.servers.test_schema_transformer",
+        "TestSchemaTransformerNormalizeMatchingRule",
+    ),
+    "TestSchemaTransformerNormalizeSyntaxOid": (
+        "tests.unit.quirks.servers.test_schema_transformer",
+        "TestSchemaTransformerNormalizeSyntaxOid",
+    ),
     "TestServerTypes": ("tests.unit.utilities.test_utilities_core", "TestServerTypes"),
     "TestSystematicFixtureCoverage": (
         "tests.integration.test_systematic_fixture_coverage",
@@ -693,7 +862,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.utilities.test_utilities_core",
         "TestsFlextLdifDnOperationsPure",
     ),
-    "TestsFlextLdifFixtures": ("tests.test_helpers", "TestsFlextLdifFixtures"),
+    "TestsFlextLdifEdgeCases": (
+        "tests.unit.quirks.servers.test_edge_cases",
+        "TestsFlextLdifEdgeCases",
+    ),
+    "TestsFlextLdifFixtures": (
+        "tests.integration.test_ldif_fixtures_integration",
+        "TestsFlextLdifFixtures",
+    ),
     "TestsFlextLdifMatchers": ("tests.test_helpers", "TestsFlextLdifMatchers"),
     "TestsFlextLdifMigrationPipeline": (
         "tests.unit.test_migration_pipeline",
@@ -704,6 +880,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestsFlextLdifMigrationPipelineQuirks",
     ),
     "TestsFlextLdifModels": ("tests.models", "TestsFlextLdifModels"),
+    "TestsFlextLdifNovellInitialization": (
+        "tests.unit.quirks.servers.test_novell_quirks",
+        "TestsFlextLdifNovellInitialization",
+    ),
     "TestsFlextLdifProtocols": ("tests.protocols", "TestsFlextLdifProtocols"),
     "TestsFlextLdifQuirksStandardizedConstants": (
         "tests.unit.services.test_quirks_standardization",
@@ -712,6 +892,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestsFlextLdifSchemaServiceExecute": (
         "tests.unit.services.test_schema_service",
         "TestsFlextLdifSchemaServiceExecute",
+    ),
+    "TestsFlextLdifSchemaTransformerNormalizeAttributeName": (
+        "tests.unit.quirks.servers.test_schema_transformer",
+        "TestsFlextLdifSchemaTransformerNormalizeAttributeName",
     ),
     "TestsFlextLdifTypes": ("tests.test_helpers", "TestsFlextLdifTypes"),
     "TestsFlextLdifUtilities": ("tests.utilities", "TestsFlextLdifUtilities"),
@@ -728,17 +912,33 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.constants.test_acl_registry",
         "TestsTestFlextLdifAclAttributeRegistry",
     ),
+    "TestsTestFlextLdifApacheQuirks": (
+        "tests.unit.quirks.servers.test_apache_quirks",
+        "TestsTestFlextLdifApacheQuirks",
+    ),
     "TestsTestFlextLdifConstants": (
         "tests.unit.utilities.test_utilities_constants",
         "TestsTestFlextLdifConstants",
+    ),
+    "TestsTestFlextLdifDs389Quirks": (
+        "tests.unit.quirks.servers.test_ds389_quirks",
+        "TestsTestFlextLdifDs389Quirks",
     ),
     "TestsTestFlextLdifMigrationPipeline": (
         "tests.unit.services.test_migration_pipeline",
         "TestsTestFlextLdifMigrationPipeline",
     ),
+    "TestsTestFlextLdifOidQuirks": (
+        "tests.unit.quirks.servers.test_oid_quirks",
+        "TestsTestFlextLdifOidQuirks",
+    ),
     "TestsTestFlextLdifProtocols": (
         "tests.unit.protocols.test_protocols",
         "TestsTestFlextLdifProtocols",
+    ),
+    "TestsTestFlextLdifRelaxedQuirks": (
+        "tests.unit.quirks.servers.test_relaxed_quirks",
+        "TestsTestFlextLdifRelaxedQuirks",
     ),
     "TestsTestFlextLdifServiceAPIs": (
         "tests.unit.utilities.test_utilities",
@@ -748,6 +948,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.utilities.test_utilities_constants",
         "ValidateManyType",
     ),
+    "WORKSPACE_ROOT": ("tests.integration.conftest", "WORKSPACE_ROOT"),
+    "WriteScenario": ("tests.unit.quirks.servers.test_relaxed_quirks", "WriteScenario"),
     "all_acl_fixtures": ("tests.integration.conftest", "all_acl_fixtures"),
     "all_entries_fixtures": ("tests.integration.conftest", "all_entries_fixtures"),
     "all_integration_fixtures": (
@@ -758,6 +960,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "api": ("tests.integration.conftest", "api"),
     "c": ("tests.constants", "TestsFlextLdifConstants"),
     "clean_test_ou": ("tests.integration.conftest", "clean_test_ou"),
+    "cleanup_state": ("tests.unit.quirks.servers.test_edge_cases", "cleanup_state"),
     "complex_attribute_definition": (
         "tests.unit.services.test_schema_service",
         "complex_attribute_definition",
@@ -770,6 +973,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "conversion_matrix": ("tests.integration.conftest", "conversion_matrix"),
     "d": ("flext_ldif", "d"),
     "e": ("flext_ldif", "e"),
+    "entry_quirk": ("tests.unit.quirks.servers.test_novell_quirks", "entry_quirk"),
     "fixtures_dir": ("tests.integration.test_quirks_transformations", "fixtures_dir"),
     "flext_ldif": ("tests.conftest", "flext_ldif"),
     "h": ("flext_ldif", "h"),
@@ -778,17 +982,20 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ldap_connection": ("tests.integration.conftest", "ldap_connection"),
     "ldap_container": ("tests.integration.conftest", "ldap_container"),
     "ldap_container_shared": ("tests.integration.conftest", "ldap_container_shared"),
+    "ldif_api": ("tests.unit.quirks.servers.test_edge_cases", "ldif_api"),
     "ldif_parser": ("tests.conftest", "ldif_parser"),
     "ldif_writer": ("tests.conftest", "ldif_writer"),
     "logger": ("tests.integration.test_config_integration", "logger"),
     "m": ("tests.models", "TestsFlextLdifModels"),
     "make_test_base_dn": ("tests.integration.conftest", "make_test_base_dn"),
     "make_test_username": ("tests.integration.conftest", "make_test_username"),
+    "meta_keys": ("tests.unit.quirks.servers.test_relaxed_quirks", "meta_keys"),
     "migration_inputs": (
         "tests.integration.test_quirks_transformations",
         "migration_inputs",
     ),
     "models": ("tests.unit.models", ""),
+    "novell_server": ("tests.unit.quirks.servers.test_novell_quirks", "novell_server"),
     "oid_acl_fixture": ("tests.integration.conftest", "oid_acl_fixture"),
     "oid_acl_quirk": ("tests.integration.conftest", "oid_acl_quirk"),
     "oid_entries": ("tests.integration.conftest", "oid_entries"),
@@ -846,6 +1053,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "rfc_schema_fixture": ("tests.integration.conftest", "rfc_schema_fixture"),
     "s": ("flext_ldif", "s"),
     "sample_ldif_entries": ("tests.conftest", "sample_ldif_entries"),
+    "schema_quirk": ("tests.unit.quirks.servers.test_novell_quirks", "schema_quirk"),
     "schema_service": ("tests.unit.services.test_schema_service", "schema_service"),
     "schema_service_oud": (
         "tests.unit.services.test_schema_service",
@@ -892,10 +1100,28 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 }
 
 __all__ = [
+    "ACL_TEST_CASES",
+    "ATTRIBUTE_TEST_CASES",
+    "ENTRY_TEST_CASES",
     "FIXTURES_DIR",
+    "LDAP_ADMIN_DN",
+    "LDAP_ADMIN_PASSWORD",
+    "LDAP_BASE_DN",
+    "LDAP_COMPOSE_FILE",
+    "LDAP_CONTAINER_NAME",
+    "LDAP_PORT",
+    "LDAP_SERVICE_NAME",
+    "OBJECTCLASS_TEST_CASES",
     "OID_FIXTURES_DIR",
+    "WORKSPACE_ROOT",
     "APIScenarios",
+    "AclScenario",
+    "AclTestCase",
+    "AttributeScenario",
+    "AttributeTestCase",
     "ConfigTestData",
+    "EntryScenario",
+    "EntryTestCase",
     "FileManager",
     "FlextLdifFixtures",
     "FlextLdifTestConftest",
@@ -910,7 +1136,13 @@ __all__ = [
     "LdifTestData",
     "MockFlextUtilitiesResultHelpers",
     "MockMatchers",
+    "ObjectClassScenario",
+    "ObjectClassTestCase",
+    "OidServer",
     "OidTestConstants",
+    "OudServer",
+    "ParseScenario",
+    "RfcTestHelpers",
     "TestAclAttributes",
     "TestAclParser",
     "TestAclRoundTripPreservation",
@@ -919,6 +1151,7 @@ __all__ = [
     "TestBoundaryValues",
     "TestCategorizationRealData",
     "TestData",
+    "TestDeduplicationHelpers",
     "TestDnCaseNormalizationScenarios",
     "TestDnCaseRegistry",
     "TestDnObjectClassMethods",
@@ -931,6 +1164,9 @@ __all__ = [
     "TestFlextLdifSettingsIntegration",
     "TestFlextLdifTypesStructure",
     "TestFlextLdifUtilitiesComprehensive",
+    "TestFlextLdifUtilitiesOID",
+    "TestFlextLdifUtilitiesParser",
+    "TestFlextLdifUtilitiesServer",
     "TestIncompleteEntries",
     "TestIntegrationWithLdifFixtures",
     "TestInvalidSchemaDefinitions",
@@ -939,6 +1175,12 @@ __all__ = [
     "TestMalformedLdifHandling",
     "TestMinimalDifferencesOidOud",
     "TestModelsNamespace",
+    "TestNovellAcls",
+    "TestNovellEntryDetection",
+    "TestNovellSchemaAttributeDetection",
+    "TestNovellSchemaAttributeParsing",
+    "TestNovellSchemaObjectClassDetection",
+    "TestNovellSchemaObjectClassParsing",
     "TestObjectClassUtilities",
     "TestOidAclMetadataPreservation",
     "TestOidEntryIntegration",
@@ -1000,6 +1242,10 @@ __all__ = [
     "TestSchemaServiceValidateObjectClass",
     "TestSchemaServiceWriteAttribute",
     "TestSchemaServiceWriteObjectClass",
+    "TestSchemaTransformerApplyAttributeTransformations",
+    "TestSchemaTransformerApplyObjectClassTransformations",
+    "TestSchemaTransformerNormalizeMatchingRule",
+    "TestSchemaTransformerNormalizeSyntaxOid",
     "TestServerTypes",
     "TestSystematicFixtureCoverage",
     "TestUnicodeBoundaries",
@@ -1008,25 +1254,33 @@ __all__ = [
     "TestsFlextLdifCommonDictionaryTypes",
     "TestsFlextLdifConstants",
     "TestsFlextLdifDnOperationsPure",
+    "TestsFlextLdifEdgeCases",
     "TestsFlextLdifFixtures",
     "TestsFlextLdifMatchers",
     "TestsFlextLdifMigrationPipeline",
     "TestsFlextLdifMigrationPipelineQuirks",
     "TestsFlextLdifModels",
+    "TestsFlextLdifNovellInitialization",
     "TestsFlextLdifProtocols",
     "TestsFlextLdifQuirksStandardizedConstants",
     "TestsFlextLdifSchemaServiceExecute",
+    "TestsFlextLdifSchemaTransformerNormalizeAttributeName",
     "TestsFlextLdifTypes",
     "TestsFlextLdifUtilities",
     "TestsFlextLdifValidators",
     "TestsFlextLdifVersion",
     "TestsFlextLdifsFlextLdifWriterDnNormalization",
     "TestsTestFlextLdifAclAttributeRegistry",
+    "TestsTestFlextLdifApacheQuirks",
     "TestsTestFlextLdifConstants",
+    "TestsTestFlextLdifDs389Quirks",
     "TestsTestFlextLdifMigrationPipeline",
+    "TestsTestFlextLdifOidQuirks",
     "TestsTestFlextLdifProtocols",
+    "TestsTestFlextLdifRelaxedQuirks",
     "TestsTestFlextLdifServiceAPIs",
     "ValidateManyType",
+    "WriteScenario",
     "all_acl_fixtures",
     "all_entries_fixtures",
     "all_integration_fixtures",
@@ -1034,12 +1288,14 @@ __all__ = [
     "api",
     "c",
     "clean_test_ou",
+    "cleanup_state",
     "complex_attribute_definition",
     "complex_objectclass_definition",
     "constants",
     "conversion_matrix",
     "d",
     "e",
+    "entry_quirk",
     "fixtures_dir",
     "flext_ldif",
     "h",
@@ -1048,14 +1304,17 @@ __all__ = [
     "ldap_connection",
     "ldap_container",
     "ldap_container_shared",
+    "ldif_api",
     "ldif_parser",
     "ldif_writer",
     "logger",
     "m",
     "make_test_base_dn",
     "make_test_username",
+    "meta_keys",
     "migration_inputs",
     "models",
+    "novell_server",
     "oid_acl_fixture",
     "oid_acl_quirk",
     "oid_entries",
@@ -1095,6 +1354,7 @@ __all__ = [
     "rfc_schema_fixture",
     "s",
     "sample_ldif_entries",
+    "schema_quirk",
     "schema_service",
     "schema_service_oud",
     "server",
