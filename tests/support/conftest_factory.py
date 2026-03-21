@@ -28,7 +28,7 @@ from ldap3 import ALL, Connection, Server
 
 from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifServer, FlextLdifWriter, p
 from flext_ldif.servers.base import FlextLdifServersBase
-from tests import t
+from tests import p, t, u
 
 from ..conftest import FlextLdifFixtures
 from .ldif_data import LdifTestData
@@ -89,7 +89,7 @@ class FlextLdifTestConftest:
         are resolved correctly regardless of which project runs the tests.
         """
         workspace_root = Path(__file__).resolve().parents[4]
-        return tk(workspace_root=workspace_root)
+        return u.Tests.Docker(workspace_root=workspace_root)
 
     def worker_id(self, request: pytest.FixtureRequest) -> str:
         """Get pytest-xdist worker ID for DN namespacing."""

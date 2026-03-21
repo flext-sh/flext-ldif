@@ -11,7 +11,7 @@ import re
 from pathlib import Path
 from typing import Final
 
-from flext_tests import tm
+from flext_tests import c, u
 
 from flext_ldif import FlextLdifMigrationPipeline
 from flext_ldif.servers import FlextLdifServersRfc
@@ -50,19 +50,27 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             target_server=c.Ldif.ServerTypes.RFC,
         )
         result = pipeline.execute()
-        tm.ok(result)
+        u.Tests.Matchers.ok(result)
         output_file = output_dir / "migrated.ldif"
         (
-            tm.that(output_file.exists(), eq=True),
+            u.Tests.Matchers.that(output_file.exists(), eq=True),
             f"Expected output file to exist: {output_file}",
         )
         content = output_file.read_text(encoding="utf-8")
         val_true_rfc = OidTestConstants.OID_TO_RFC_BOOLEAN[val_true_oid]
         val_false_rfc = OidTestConstants.OID_TO_RFC_BOOLEAN[val_false_oid]
-        tm.that(f"{attr_enabled.lower()}: {val_true_rfc}" in content, eq=True)
-        tm.that(f"{attr_locked.lower()}: {val_false_rfc}" in content, eq=True)
-        tm.that(f"{attr_enabled.lower()}: {val_true_oid}" not in content, eq=True)
-        tm.that(f"{attr_locked.lower()}: {val_false_oid}" not in content, eq=True)
+        u.Tests.Matchers.that(
+            f"{attr_enabled.lower()}: {val_true_rfc}" in content, eq=True
+        )
+        u.Tests.Matchers.that(
+            f"{attr_locked.lower()}: {val_false_rfc}" in content, eq=True
+        )
+        u.Tests.Matchers.that(
+            f"{attr_enabled.lower()}: {val_true_oid}" not in content, eq=True
+        )
+        u.Tests.Matchers.that(
+            f"{attr_locked.lower()}: {val_false_oid}" not in content, eq=True
+        )
 
     def test_oid_boolean_conversion_rfc_to_oid(self, tmp_path: Path) -> None:
         """Test OID boolean conversion (TRUE/FALSE -> 0/1) during RFC -> OID migration."""
@@ -85,19 +93,27 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             target_server=c.Ldif.ServerTypes.OID,
         )
         result = pipeline.execute()
-        tm.ok(result)
+        u.Tests.Matchers.ok(result)
         output_file = output_dir / "migrated.ldif"
         (
-            tm.that(output_file.exists(), eq=True),
+            u.Tests.Matchers.that(output_file.exists(), eq=True),
             f"Expected output file to exist: {output_file}",
         )
         content = output_file.read_text(encoding="utf-8")
         val_true_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_true_rfc]
         val_false_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_false_rfc]
-        tm.that(f"{attr_enabled.lower()}: {val_true_oid}" in content, eq=True)
-        tm.that(f"{attr_locked.lower()}: {val_false_oid}" in content, eq=True)
-        tm.that(f"{attr_enabled.lower()}: {val_true_rfc}" not in content, eq=True)
-        tm.that(f"{attr_locked.lower()}: {val_false_rfc}" not in content, eq=True)
+        u.Tests.Matchers.that(
+            f"{attr_enabled.lower()}: {val_true_oid}" in content, eq=True
+        )
+        u.Tests.Matchers.that(
+            f"{attr_locked.lower()}: {val_false_oid}" in content, eq=True
+        )
+        u.Tests.Matchers.that(
+            f"{attr_enabled.lower()}: {val_true_rfc}" not in content, eq=True
+        )
+        u.Tests.Matchers.that(
+            f"{attr_locked.lower()}: {val_false_rfc}" not in content, eq=True
+        )
 
     def test_oid_acl_conversion_oid_to_rfc(self, tmp_path: Path) -> None:
         """Test OID ACL conversion (orclaci -> aci) during OID -> RFC migration."""
@@ -117,21 +133,23 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             target_server=c.Ldif.ServerTypes.RFC,
         )
         result = pipeline.execute()
-        tm.ok(result)
+        u.Tests.Matchers.ok(result)
         output_file = output_dir / "migrated.ldif"
         (
-            tm.that(output_file.exists(), eq=True),
+            u.Tests.Matchers.that(output_file.exists(), eq=True),
             f"Expected output file to exist: {output_file}",
         )
         content = output_file.read_text(encoding="utf-8")
-        tm.that(
+        u.Tests.Matchers.that(
             (
                 f"{FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME}: {acl_val}"
                 in content
             ),
             eq=True,
         )
-        tm.that(f"{FlextLdifServersOidConstants.ORCLACI}:" not in content, eq=True)
+        u.Tests.Matchers.that(
+            f"{FlextLdifServersOidConstants.ORCLACI}:" not in content, eq=True
+        )
 
     def test_oid_acl_conversion_rfc_to_oid(self, tmp_path: Path) -> None:
         """Test OID ACL conversion (aci -> orclaci) during RFC -> OID migration."""
@@ -151,18 +169,18 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             target_server=c.Ldif.ServerTypes.OID,
         )
         result = pipeline.execute()
-        tm.ok(result)
+        u.Tests.Matchers.ok(result)
         output_file = output_dir / "migrated.ldif"
         (
-            tm.that(output_file.exists(), eq=True),
+            u.Tests.Matchers.that(output_file.exists(), eq=True),
             f"Expected output file to exist: {output_file}",
         )
         content = output_file.read_text(encoding="utf-8")
-        tm.that(
+        u.Tests.Matchers.that(
             f"{FlextLdifServersOidConstants.ORCLACI}: {acl_val}" in content, eq=True
         )
         (
-            tm.that(not re.search(r"(^|\\n)aci:", content), eq=True),
+            u.Tests.Matchers.that(not re.search(r"(^|\\n)aci:", content), eq=True),
             ("Should not have standalone 'aci:' attribute"),
         )
 
@@ -183,15 +201,17 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             target_server=c.Ldif.ServerTypes.RFC,
         )
         result = pipeline.execute()
-        tm.ok(result)
+        u.Tests.Matchers.ok(result)
         output_file = output_dir / "migrated.ldif"
         (
-            tm.that(output_file.exists(), eq=True),
+            u.Tests.Matchers.that(output_file.exists(), eq=True),
             f"Expected output file to exist: {output_file}",
         )
         content = output_file.read_text(encoding="utf-8")
-        tm.that(f"dn: {FlextLdifServersRfc.Constants.SCHEMA_DN}" in content, eq=True)
-        tm.that(
+        u.Tests.Matchers.that(
+            f"dn: {FlextLdifServersRfc.Constants.SCHEMA_DN}" in content, eq=True
+        )
+        u.Tests.Matchers.that(
             f"dn: {FlextLdifServersOidConstants.SCHEMA_DN_QUIRK}" not in content,
             eq=True,
         )
@@ -215,8 +235,10 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             target_server=c.Ldif.ServerTypes.OID,
         )
         result = pipeline.execute()
-        tm.ok(result)
+        u.Tests.Matchers.ok(result)
         output_file = output_dir / "migrated.ldif"
         content = output_file.read_text(encoding="utf-8")
         val_true_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_true_rfc]
-        tm.that(f"{attr_enabled.lower()}: {val_true_oid}" in content, eq=True)
+        u.Tests.Matchers.that(
+            f"{attr_enabled.lower()}: {val_true_oid}" in content, eq=True
+        )

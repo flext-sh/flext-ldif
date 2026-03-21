@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from unittest.mock import patch
 
-from flext_tests import tm
+from flext_tests import u
 from tests import s
 
 from flext_ldif.utilities import FlextLdifUtilities as u
@@ -25,7 +25,7 @@ class TestFlextLdifUtilitiesOID(s):
         result = u.Ldif.extract_from_definition("( 1.2.840.113556.1.4.221 NAME 'x' )")
         value = self.assert_success(result)
 
-        tm.that(value == "1.2.840.113556.1.4.221", eq=True)
+        u.Tests.Matchers.that(value == "1.2.840.113556.1.4.221", eq=True)
 
     def test_get_server_type_from_oid_failure_unknown(self) -> None:
         result = u.Ldif.get_server_type_from_oid("1.2.3.4.5")
@@ -43,7 +43,7 @@ class TestFlextLdifUtilitiesOID(s):
         )
         value = self.assert_success(result)
 
-        tm.that(value == "oid", eq=True)
+        u.Tests.Matchers.that(value == "oid", eq=True)
 
     def test_parse_to_tuple_failure_not_integers(self) -> None:
         result = u.Ldif.parse_to_tuple("1.2.invalid")
@@ -54,4 +54,4 @@ class TestFlextLdifUtilitiesOID(s):
         result = u.Ldif.parse_to_tuple("1.2.840")
         value = self.assert_success(result)
 
-        tm.that(value == (1, 2, 840), eq=True)
+        u.Tests.Matchers.that(value == (1, 2, 840), eq=True)

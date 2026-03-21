@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdifParser, FlextLdifServer, FlextLdifWriter, m
-from tests import tm
+from tests import m, u
 
 
 class TestRfcParserRealFixtures:
@@ -42,7 +42,7 @@ class TestRfcParserRealFixtures:
             )
             for entry in parse_response.entries
         ]
-        tm.entries(typed_entries)
+        u.Tests.Matchers.entries(typed_entries)
 
     def test_parse_oud_entries_fixture(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing real OUD entries from fixtures."""

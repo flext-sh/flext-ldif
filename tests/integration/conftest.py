@@ -21,7 +21,6 @@ from collections.abc import Callable, Generator
 from pathlib import Path
 
 import pytest
-from flext_tests.docker import tk
 from ldap3 import ALL, Connection, Server
 from ldap3.core.exceptions import LDAPException
 
@@ -573,7 +572,7 @@ def oud_acl_quirk(oud_quirk: FlextLdifServersBase) -> FlextLdifServersBaseSchema
 @pytest.fixture(scope="session")
 def ldap_container(worker_id: str) -> dict[str, object]:
     """Ensure shared OpenLDAP container is available for integration tests."""
-    docker_control = tk(workspace_root=WORKSPACE_ROOT, worker_id=worker_id)
+    docker_control = u.Tests.Docker(workspace_root=WORKSPACE_ROOT, worker_id=worker_id)
     server_url = f"ldap://localhost:{LDAP_PORT}"
     with _lock_file(worker_id):
         start_result = docker_control.start_existing_container(LDAP_CONTAINER_NAME)
