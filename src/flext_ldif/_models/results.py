@@ -187,28 +187,28 @@ class FlextLdifModelsResults:
             validate_default=True,
             str_strip_whitespace=True,
         )
-        total_entries: Annotated[int, Field(default=0, ge=0)]
-        processed_entries: Annotated[int, Field(default=0, ge=0)]
-        failed_entries: Annotated[int, Field(default=0, ge=0)]
-        schema_entries: Annotated[int, Field(default=0, ge=0)]
-        data_entries: Annotated[int, Field(default=0, ge=0)]
-        hierarchy_entries: Annotated[int, Field(default=0, ge=0)]
-        user_entries: Annotated[int, Field(default=0, ge=0)]
-        group_entries: Annotated[int, Field(default=0, ge=0)]
-        acl_entries: Annotated[int, Field(default=0, ge=0)]
-        rejected_entries: Annotated[int, Field(default=0, ge=0)]
-        schema_attributes: Annotated[int, Field(default=0, ge=0)]
-        schema_objectclasses: Annotated[int, Field(default=0, ge=0)]
-        acls_extracted: Annotated[int, Field(default=0, ge=0)]
-        acls_failed: Annotated[int, Field(default=0, ge=0)]
+        total_entries: t.NonNegativeInt = 0
+        processed_entries: t.NonNegativeInt = 0
+        failed_entries: t.NonNegativeInt = 0
+        schema_entries: t.NonNegativeInt = 0
+        data_entries: t.NonNegativeInt = 0
+        hierarchy_entries: t.NonNegativeInt = 0
+        user_entries: t.NonNegativeInt = 0
+        group_entries: t.NonNegativeInt = 0
+        acl_entries: t.NonNegativeInt = 0
+        rejected_entries: t.NonNegativeInt = 0
+        schema_attributes: t.NonNegativeInt = 0
+        schema_objectclasses: t.NonNegativeInt = 0
+        acls_extracted: t.NonNegativeInt = 0
+        acls_failed: t.NonNegativeInt = 0
         acl_attribute_name: str | None = None
-        parse_errors: Annotated[int, Field(default=0, ge=0)]
+        parse_errors: t.NonNegativeInt = 0
         detected_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None = None
-        entries_written: Annotated[int, Field(default=0, ge=0)]
+        entries_written: t.NonNegativeInt = 0
         output_file: str | None = None
-        file_size_bytes: Annotated[int, Field(default=0, ge=0)]
+        file_size_bytes: t.NonNegativeInt = 0
         encoding: c.Ldif.LiteralTypes.EncodingLiteral = "utf-8"
-        processing_duration: Annotated[float, Field(default=0.0, ge=0.0)]
+        processing_duration: t.NonNegativeFloat = 0.0
         rejection_reasons: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
             Field(default_factory=FlextLdifModelsCollections.DynamicCounts),
@@ -387,8 +387,8 @@ class FlextLdifModelsResults:
         """Result of a migration comparison between source and target."""
 
         model_config = ConfigDict(frozen=True, validate_default=True)
-        total_oid: Annotated[int, Field(ge=0)]
-        total_target: Annotated[int, Field(ge=0)]
+        total_oid: t.NonNegativeInt
+        total_target: t.NonNegativeInt
         status: Annotated[str, Field()]
         details: Annotated[str, Field()]
         id: Annotated[str, Field()]
@@ -401,12 +401,12 @@ class FlextLdifModelsResults:
         model_config = ConfigDict(frozen=True, validate_default=True)
         intermediate_migration: Annotated[str, Field()]
         final_migration: Annotated[str, Field()]
-        final_entry_count: Annotated[int, Field(ge=0)]
+        final_entry_count: t.NonNegativeInt
         source_server_detected: Annotated[str, Field()]
         migration_pipeline: Annotated[str, Field()]
         parallel_processing: Annotated[bool, Field()]
         validation_performed: Annotated[bool, Field()]
-        detection_confidence: Annotated[float, Field(ge=0.0, le=1.0)]
+        detection_confidence: t.DecimalFraction
         detected_server: Annotated[str, Field()]
 
     class AutoDetectionResult(FlextLdifModelsBase):
@@ -414,18 +414,18 @@ class FlextLdifModelsResults:
 
         model_config = ConfigDict(frozen=True, validate_default=True)
         detected_server: Annotated[str, Field()]
-        confidence: Annotated[float, Field(ge=0.0, le=1.0)]
+        confidence: t.DecimalFraction
         patterns_found: Annotated[list[str], Field(default_factory=list)]
-        total_entries: Annotated[int, Field(ge=0)]
+        total_entries: t.NonNegativeInt
         migration_success: Annotated[bool, Field()]
 
     class ServerComparisonSummary(FlextLdifModelsBase):
         """Summary of batch server comparisons."""
 
         model_config = ConfigDict(frozen=True, validate_default=True)
-        servers_tested: Annotated[int, Field(ge=0)]
-        successful_parses: Annotated[int, Field(ge=0)]
-        success_rate: Annotated[float, Field(ge=0.0)]
+        servers_tested: t.NonNegativeInt
+        successful_parses: t.NonNegativeInt
+        success_rate: t.NonNegativeFloat
         server_results: Annotated[
             dict[str, t.Ldif.MetadataDict],
             Field(default_factory=dict),
@@ -443,9 +443,9 @@ class FlextLdifModelsResults:
     class ValidationResult(FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True, validate_default=True)
         is_valid: Annotated[bool, Field()]
-        total_entries: Annotated[int, Field(ge=0)]
-        valid_entries: Annotated[int, Field(ge=0)]
-        invalid_entries: Annotated[int, Field(ge=0)]
+        total_entries: t.NonNegativeInt
+        valid_entries: t.NonNegativeInt
+        invalid_entries: t.NonNegativeInt
         errors: Annotated[list[str], Field(default_factory=list)]
 
         @computed_field
@@ -456,7 +456,7 @@ class FlextLdifModelsResults:
 
     class EntryAnalysisResult(FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True, validate_default=True)
-        total_entries: Annotated[int, Field(ge=0)]
+        total_entries: t.NonNegativeInt
         objectclass_distribution: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
             Field(default_factory=FlextLdifModelsCollections.DynamicCounts),
@@ -470,7 +470,7 @@ class FlextLdifModelsResults:
     class ServerDetectionResult(FlextLdifModelsBase):
         model_config = ConfigDict(frozen=True, validate_default=True)
         detected_server_type: Annotated[c.Ldif.LiteralTypes.ServerTypeLiteral, Field()]
-        confidence: Annotated[float, Field(ge=0.0, le=1.0)]
+        confidence: t.DecimalFraction
         scores: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
             Field(default_factory=FlextLdifModelsCollections.DynamicCounts),
