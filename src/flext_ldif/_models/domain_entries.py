@@ -840,7 +840,7 @@ class FlextLdifModelsDomains:
                 for name, values in self.attributes.items()
                 if self.attribute_metadata.get(str(name), {}).get(
                     "status",
-                    c.Cqrs.CommonStatus.ACTIVE,
+                    c.CommonStatus.ACTIVE,
                 )
                 not in {"deleted", "hidden"}
             }

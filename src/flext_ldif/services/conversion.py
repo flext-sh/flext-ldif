@@ -640,7 +640,7 @@ class FlextLdifConversion(
             source_format = (
                 source_name_result
                 if isinstance(source_name_result, str)
-                else c.Mixins.IDENTIFIER_UNKNOWN
+                else c.IDENTIFIER_UNKNOWN
             )
         if isinstance(target, str):
             target_format: str = target
@@ -649,7 +649,7 @@ class FlextLdifConversion(
             target_format = (
                 target_name_result
                 if isinstance(target_name_result, str)
-                else c.Mixins.IDENTIFIER_UNKNOWN
+                else c.IDENTIFIER_UNKNOWN
             )
         if not model_list:
             return r[
@@ -781,13 +781,13 @@ class FlextLdifConversion(
             source_format = source
         else:
             source_format = str(
-                getattr(source, "server_type", c.Mixins.IDENTIFIER_UNKNOWN),
+                getattr(source, "server_type", c.IDENTIFIER_UNKNOWN),
             )
         if isinstance(target, str):
             target_format = target
         else:
             target_format = str(
-                getattr(target, "server_type", c.Mixins.IDENTIFIER_UNKNOWN),
+                getattr(target, "server_type", c.IDENTIFIER_UNKNOWN),
             )
         model_type = type(model_instance).__name__
         conversion_operation = f"convert_{model_type}"
@@ -1201,12 +1201,12 @@ class FlextLdifConversion(
             target_server_type_raw = (
                 target_server_raw
                 if isinstance(target_server_raw, str)
-                else c.Mixins.IDENTIFIER_UNKNOWN
+                else c.IDENTIFIER_UNKNOWN
             )
             target_server_type: str | None = u.try_(
                 lambda: (
                     u.Ldif.normalize_server_type(target_server_type_raw)
-                    if target_server_type_raw != c.Mixins.IDENTIFIER_UNKNOWN
+                    if target_server_type_raw != c.IDENTIFIER_UNKNOWN
                     else None
                 ),
                 default=None,
@@ -1394,9 +1394,9 @@ class FlextLdifConversion(
             target_server_type_raw = (
                 target_server_type_obj
                 if isinstance(target_server_type_obj, str)
-                else c.Mixins.IDENTIFIER_UNKNOWN
+                else c.IDENTIFIER_UNKNOWN
             )
-            if target_server_type_raw != c.Mixins.IDENTIFIER_UNKNOWN:
+            if target_server_type_raw != c.IDENTIFIER_UNKNOWN:
                 target_server_type_str = u.Ldif.normalize_server_type(
                     target_server_type_raw,
                 )
@@ -1423,7 +1423,7 @@ class FlextLdifConversion(
             source_quirk_name = (
                 source_server_type_obj
                 if isinstance(source_server_type_obj, str)
-                else c.Mixins.IDENTIFIER_UNKNOWN
+                else c.IDENTIFIER_UNKNOWN
             )
             source_type_norm = str(source_quirk_name).lower()
             target_type_norm = str(target_server_type_str).lower()

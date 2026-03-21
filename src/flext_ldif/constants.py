@@ -106,7 +106,7 @@ class FlextLdifConstants(FlextConstants):
             CP1252 = "cp1252"
             ISO8859_1 = "iso-8859-1"
 
-        DEFAULT_ENCODING: Final[str] = FlextConstants.Utilities.DEFAULT_ENCODING
+        DEFAULT_ENCODING: Final[str] = FlextConstants.DEFAULT_ENCODING
 
         @unique
         class LdifFormat(StrEnum):
@@ -144,8 +144,8 @@ class FlextLdifConstants(FlextConstants):
             CN = "cn"
             OID = "oid"
 
-        class Domain(FlextConstants.Domain):
-            """Domain constants extending FlextConstants.Domain."""
+        class Domain(FlextConstants):
+            """Domain constants extending FlextConstants."""
 
             @unique
             class ServerType(StrEnum):
@@ -333,9 +333,7 @@ class FlextLdifConstants(FlextConstants):
         class LdifProcessing:
             """LDIF processing-related constants."""
 
-            MAX_BATCH_SIZE: Final[int] = (
-                FlextConstants.Performance.BatchProcessing.MAX_ITEMS
-            )
+            MAX_BATCH_SIZE: Final[int] = FlextConstants.MAX_ITEMS
             ASCII_SPACE_CHAR: Final[int] = 32
             ASCII_TILDE_CHAR: Final[int] = 126
 
