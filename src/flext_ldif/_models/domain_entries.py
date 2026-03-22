@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import builtins
 import re
 import struct
 from collections.abc import Callable, KeysView, Mapping, Sequence, ValuesView
@@ -76,9 +75,9 @@ class FlextLdifModelsDomains:
     """
 
     class DN(m.Value):
-        """Distinguished Name value object."""
+        """Distinguished Name value t.NormalizedValue."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             strict=True,
             frozen=True,
             extra="forbid",
@@ -152,11 +151,11 @@ class FlextLdifModelsDomains:
         def from_value(cls, dn: str | Self | None) -> Self:
             """Create DN from string or existing instance.
 
-            Factory method that normalizes DN input to DN object.
+            Factory method that normalizes DN input to DN t.NormalizedValue.
             Uses Self for proper facade compatibility (models.py exposure).
 
             Args:
-                dn: DN as string or DN object
+                dn: DN as string or DN t.NormalizedValue
 
             Returns:
                 DN instance (new or existing)
@@ -594,9 +593,9 @@ class FlextLdifModelsDomains:
             return v
 
     class SchemaObjectClass(SchemaElement):
-        """LDAP schema object class definition model (RFC 4512 compliant).
+        """LDAP schema t.NormalizedValue class definition model (RFC 4512 compliant).
 
-        Represents an LDAP object class definition from schema with full
+        Represents an LDAP t.NormalizedValue class definition from schema with full
         RFC 4512 support.
 
         Inherits from SchemaElement:
@@ -614,7 +613,10 @@ class FlextLdifModelsDomains:
         ]
         sup: Annotated[
             str | list[str] | None,
-            Field(default=None, description="Superior object class(es) (RFC 4512 SUP)"),
+            Field(
+                default=None,
+                description="Superior t.NormalizedValue class(es) (RFC 4512 SUP)",
+            ),
         ]
         kind: Annotated[
             str,
@@ -649,17 +651,17 @@ class FlextLdifModelsDomains:
 
         @computed_field
         def is_abstract(self) -> bool:
-            """Check if this is an abstract object class."""
+            """Check if this is an abstract t.NormalizedValue class."""
             return self.kind.upper() == "ABSTRACT"
 
         @computed_field
         def is_auxiliary(self) -> bool:
-            """Check if this is an auxiliary object class."""
+            """Check if this is an auxiliary t.NormalizedValue class."""
             return self.kind.upper() == "AUXILIARY"
 
         @computed_field
         def is_structural(self) -> bool:
-            """Check if this is a structural object class."""
+            """Check if this is a structural t.NormalizedValue class."""
             return self.kind.upper() == "STRUCTURAL"
 
         @computed_field
@@ -676,7 +678,7 @@ class FlextLdifModelsDomains:
         parsed dict before creating SchemaObjectClass model.
         """
 
-        model_config = ConfigDict(extra="ignore")
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore")
         oid: str
         kind: str
         name: Annotated[str, Field(default="")]
@@ -688,7 +690,7 @@ class FlextLdifModelsDomains:
     class Attributes(m.ArbitraryTypesModel):
         """LDIF attributes container - simplified dict-like interface."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=True,
             extra="forbid",
             use_enum_values=True,
@@ -997,7 +999,7 @@ class FlextLdifModelsDomains:
     class ErrorDetail(m.FrozenStrictModel):
         """Error detail information for failed operations."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             strict=True,
             frozen=True,
             extra="forbid",
@@ -1024,7 +1026,7 @@ class FlextLdifModelsDomains:
         Allows arbitrary additional fields via extra="allow".
         """
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             frozen=True,
             extra="forbid",
             use_enum_values=True,
@@ -1045,7 +1047,7 @@ class FlextLdifModelsDomains:
 
         """
 
-        model_config = ConfigDict(frozen=False)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
         def __init__(self) -> None:
             """Initialize empty DN case registry."""
@@ -1144,7 +1146,7 @@ class FlextLdifModelsDomains:
             data: Mapping[str, str | list[str] | Mapping[str, str]],
             dn_fields: list[str] | None = None,
         ) -> r[dict[str, str | list[str] | Mapping[str, str]]]:
-            """Normalize DN references in data object to canonical case.
+            """Normalize DN references in data t.NormalizedValue to canonical case.
 
             Args:
                 data: Dictionary containing DN references
@@ -1268,7 +1270,7 @@ class FlextLdifModelsDomains:
         Stores all three quirk types together for unified access and management.
         """
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             arbitrary_types_allowed=True,
             frozen=True,
             validate_default=True,
@@ -1552,7 +1554,7 @@ class FlextLdifModelsDomains:
 
         """
 
-        model_config = ConfigDict(frozen=True, strict=True, validate_default=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, strict=True, validate_default=True)
         original_format: Annotated[
             str | None,
             Field(
@@ -1579,7 +1581,7 @@ class FlextLdifModelsDomains:
         @classmethod
         def from_extensions(
             cls,
-            extensions: Mapping[str, builtins.object] | None,
+            extensions: Mapping[str, t.NormalizedValue] | None,
         ) -> Self:
             """Extract ACL write metadata from QuirkMetadata extensions.
 
@@ -1637,7 +1639,7 @@ class FlextLdifModelsDomains:
         - attributes field (Attributes) which has .attributes property returning FlextLdifModelsDomains.UnconvertedAttributes
         """
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             strict=True,
             validate_default=True,
             validate_assignment=True,
@@ -1663,7 +1665,7 @@ class FlextLdifModelsDomains:
         def coerce_attributes_from_dict(
             cls,
             value: FlextLdifModelsDomains.Attributes
-            | Mapping[str, builtins.object]
+            | Mapping[str, t.NormalizedValue]
             | None,
         ) -> FlextLdifModelsDomains.Attributes | None:
             """Convert dict to Attributes instance.
@@ -1675,7 +1677,7 @@ class FlextLdifModelsDomains:
                 return None
             if isinstance(value, FlextLdifModelsDomains.Attributes):
                 return value
-            wrapped_value: Mapping[str, builtins.object] = value
+            wrapped_value: Mapping[str, t.NormalizedValue] = value
             if "attributes" not in value:
                 wrapped_value = {"attributes": value}
             return FlextLdifModelsDomains.Attributes.model_validate(wrapped_value)
@@ -1685,7 +1687,7 @@ class FlextLdifModelsDomains:
         def coerce_dn_from_string(
             cls,
             value: FlextLdifModelsDomains.DN
-            | Mapping[str, builtins.object]
+            | Mapping[str, t.NormalizedValue]
             | str
             | None,
         ) -> FlextLdifModelsDomains.DN | None:
@@ -1778,10 +1780,10 @@ class FlextLdifModelsDomains:
         @classmethod
         def ensure_metadata_initialized(
             cls,
-            data: Mapping[str, builtins.object],
+            data: Mapping[str, t.NormalizedValue],
         ) -> Mapping[
             str,
-            builtins.object | datetime | FlextLdifModelsDomains.QuirkMetadata,
+            t.NormalizedValue | datetime | FlextLdifModelsDomains.QuirkMetadata,
         ]:
             """Ensure metadata field is always initialized to a QuirkMetadata instance.
 
@@ -1802,7 +1804,7 @@ class FlextLdifModelsDomains:
             """
             data_dict: dict[
                 str,
-                builtins.object | datetime | FlextLdifModelsDomains.QuirkMetadata,
+                t.NormalizedValue | datetime | FlextLdifModelsDomains.QuirkMetadata,
             ] = dict(data)
             for dt_field in ("created_at", "updated_at"):
                 field_value = data_dict.get(dt_field)
@@ -1827,7 +1829,7 @@ class FlextLdifModelsDomains:
 
         @staticmethod
         def _parse_validation_rules(
-            validation_rules: builtins.object,
+            validation_rules: t.NormalizedValue,
         ) -> FlextLdifModelsSettings.ServerValidationRules | None:
             """Normalize dynamic validation_rules payload to ServerValidationRules."""
             if isinstance(
@@ -1847,7 +1849,7 @@ class FlextLdifModelsDomains:
                     return None
             if FlextLdifModelsDomains.Entry.is_string_key_mapping(validation_rules):
                 try:
-                    validation_rules_payload: dict[str, builtins.object] = dict(
+                    validation_rules_payload: dict[str, t.NormalizedValue] = dict(
                         validation_rules.items()
                     )
                     return FlextLdifModelsSettings.ServerValidationRules.model_validate(
@@ -1861,18 +1863,20 @@ class FlextLdifModelsDomains:
 
         @staticmethod
         def is_string_key_mapping(
-            value: builtins.object,
-        ) -> TypeIs[Mapping[str, builtins.object]]:
+            value: t.NormalizedValue,
+        ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
             return isinstance(value, Mapping)
 
         @staticmethod
-        def _is_object_list(value: builtins.object) -> TypeIs[list[builtins.object]]:
+        def _is_object_list(
+            value: t.NormalizedValue,
+        ) -> TypeIs[list[t.NormalizedValue]]:
             return isinstance(value, list)
 
         @staticmethod
         def is_object_sequence(
-            value: builtins.object,
-        ) -> TypeIs[Sequence[builtins.object]]:
+            value: t.NormalizedValue,
+        ) -> TypeIs[Sequence[t.NormalizedValue]]:
             return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
         @staticmethod
@@ -2430,16 +2434,16 @@ class FlextLdifModelsDomains:
             server_type: c.Ldif.LiteralTypes.ServerTypeLiteral | None,
             source_entry: str | None,
             unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None,
-        ) -> Mapping[str, builtins.object]:
+        ) -> Mapping[str, t.NormalizedValue]:
             """Build extension kwargs for DynamicMetadata."""
-            ext_kwargs: dict[str, builtins.object] = {}
+            ext_kwargs: dict[str, t.NormalizedValue] = {}
             if server_type:
                 ext_kwargs["server_type"] = server_type
             if source_entry:
                 ext_kwargs["source_entry"] = source_entry
             if unconverted_attributes:
                 unconverted_dump = unconverted_attributes.model_dump()
-                unconverted_typed: builtins.object = unconverted_dump
+                unconverted_typed: t.NormalizedValue = unconverted_dump
                 ext_kwargs["unconverted_attributes"] = unconverted_typed
             return ext_kwargs
 
@@ -2476,7 +2480,7 @@ class FlextLdifModelsDomains:
             return metadata
 
         class _CreateEntryParams(m.Value):
-            model_config = ConfigDict(extra="forbid", validate_assignment=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", validate_assignment=True)
             dn: Annotated[str | FlextLdifModelsDomains.DN, Field(...)]
             attributes: Annotated[
                 Mapping[str, str | list[str]] | FlextLdifModelsDomains.Attributes,
@@ -2578,13 +2582,13 @@ class FlextLdifModelsDomains:
             attributes: Mapping[str, str | list[str]]
             | FlextLdifModelsDomains.Attributes,
         ) -> FlextLdifModelsDomains.Attributes:
-            """Normalize attributes to Attributes object.
+            """Normalize attributes to Attributes t.NormalizedValue.
 
             Args:
-                attributes: Attributes as dict or Attributes object
+                attributes: Attributes as dict or Attributes t.NormalizedValue
 
             Returns:
-                Attributes object with normalized values
+                Attributes t.NormalizedValue with normalized values
 
             Note:
                 Lenient processing: Empty attributes dict is accepted and will be captured
@@ -2669,11 +2673,11 @@ class FlextLdifModelsDomains:
             return cls._create_entry(params=params)
 
         @classmethod
-        def from_ldap3(cls, ldap3_entry: Mapping[str, builtins.object]) -> r[Self]:
-            """Create Entry from ldap3 Entry object.
+        def from_ldap3(cls, ldap3_entry: Mapping[str, t.NormalizedValue]) -> r[Self]:
+            """Create Entry from ldap3 Entry t.NormalizedValue.
 
             Args:
-                ldap3_entry: ldap3 Entry object with entry_dn and entry_attributes_as_dict
+                ldap3_entry: ldap3 Entry t.NormalizedValue with entry_dn and entry_attributes_as_dict
 
             Returns:
                 r[Self] with Entry instance or error
@@ -2686,7 +2690,7 @@ class FlextLdifModelsDomains:
                 if FlextLdifModelsDomains.Entry.is_string_key_mapping(
                     entry_attrs_payload
                 ):
-                    entry_attrs_payload_typed: dict[str, builtins.object] = dict(
+                    entry_attrs_payload_typed: dict[str, t.NormalizedValue] = dict(
                         entry_attrs_payload.items()
                     )
                     for attr_name, attr_value in entry_attrs_payload_typed.items():
@@ -2813,13 +2817,13 @@ class FlextLdifModelsDomains:
             return len(self.get_attribute_values(attribute_name)) > 0
 
         def has_object_class(self, object_class: str) -> bool:
-            """Check if entry has specified object class.
+            """Check if entry has specified t.NormalizedValue class.
 
             Args:
-            object_class: Name of the object class to check
+            object_class: Name of the t.NormalizedValue class to check
 
             Returns:
-            True if entry has the object class, False otherwise
+            True if entry has the t.NormalizedValue class, False otherwise
 
             """
             return object_class in self.get_attribute_values(
@@ -2882,7 +2886,7 @@ class FlextLdifModelsDomains:
 
         """
 
-        model_config = ConfigDict(frozen=True, strict=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, strict=True)
         original_name: Annotated[
             str,
             Field(..., description="Original attribute name from source server"),
@@ -2919,7 +2923,7 @@ class FlextLdifModelsDomains:
     class DNStatistics(FlextLdifModelsBase):
         """Statistics tracking for DN transformations and validation.
 
-        Immutable value object capturing complete DN transformation history
+        Immutable value t.NormalizedValue capturing complete DN transformation history
         from original to normalized form. Preserves all metadata for
         round-trip server conversions and diagnostic purposes.
 
@@ -2931,7 +2935,7 @@ class FlextLdifModelsDomains:
         - aggregate() classmethod (automatic statistics aggregation)
         """
 
-        model_config = ConfigDict(frozen=True, extra="ignore")
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="ignore")
         original_dn: Annotated[
             str,
             Field(..., description="Original DN as received from input"),
@@ -3085,7 +3089,7 @@ class FlextLdifModelsDomains:
         - aggregate() classmethod (automatic statistics aggregation)
         """
 
-        model_config = ConfigDict(frozen=True, extra="ignore")
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="ignore")
         was_parsed: Annotated[
             bool,
             Field(default=True, description="Entry was successfully parsed from LDIF"),
@@ -3393,7 +3397,7 @@ class FlextLdifModelsDomains:
         Composed model for QuirkMetadata.validation_results field.
         """
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             frozen=True,
             extra="forbid",
             use_enum_values=True,
@@ -3436,7 +3440,7 @@ class FlextLdifModelsDomains:
         Composed model for QuirkMetadata.write_options field.
         """
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             frozen=True,
             extra="forbid",
             use_enum_values=True,
@@ -3482,7 +3486,7 @@ class FlextLdifModelsDomains:
         Composed model for QuirkMetadata.original_format_details field.
         """
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             frozen=True,
             extra="forbid",
             use_enum_values=True,
@@ -3515,7 +3519,7 @@ class FlextLdifModelsDomains:
         Composed model for QuirkMetadata.schema_format_details field.
         """
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             frozen=True,
             extra="forbid",
             use_enum_values=True,
@@ -3584,7 +3588,7 @@ class FlextLdifModelsDomains:
 
         """
 
-        model_config = ConfigDict(extra="allow", frozen=False)
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow", frozen=False)
         quirk_type: Annotated[
             c.Ldif.ServerTypes | c.Ldif.LiteralTypes.ServerTypeLiteral,
             Field(
@@ -3758,7 +3762,7 @@ class FlextLdifModelsDomains:
             cls,
             quirk_type: str | c.Ldif.LiteralTypes.ServerTypeLiteral | None = None,
             extensions: FlextLdifModelsMetadata.DynamicMetadata
-            | Mapping[str, builtins.object]
+            | Mapping[str, t.NormalizedValue]
             | None = None,
         ) -> Self:
             """Factory method to create QuirkMetadata with extensions.

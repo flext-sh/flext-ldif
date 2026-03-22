@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import builtins
 from collections.abc import Mapping
 from typing import Self, overload, override
 
@@ -121,7 +120,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         self,
         permission: str,
         _feature_id: str | None,
-        _metadata: Mapping[str, builtins.object],
+        _metadata: Mapping[str, t.NormalizedValue],
     ) -> str:
         """Convert RFC permission back to server-specific format."""
         return permission
@@ -134,7 +133,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
     def _normalize_permission(
         self,
         permission: str,
-        _metadata: Mapping[str, builtins.object],
+        _metadata: Mapping[str, t.NormalizedValue],
     ) -> tuple[str, str | None]:
         """Normalize a server-specific permission to RFC standard."""
         return (permission, None)

@@ -640,7 +640,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 expected_may: Expected MAY attributes
 
             Returns:
-                The parsed schema object
+                The parsed schema t.NormalizedValue
 
             Raises:
                 AssertionError: If parsing fails or properties don't match
@@ -726,7 +726,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             return value
 
         @staticmethod
-        def test_result_success_and_unwrap[TResult: t.Ldif.object](
+        def test_result_success_and_unwrap[TResult: t.Ldif.t.NormalizedValue](
             result: r[TResult],
             expected_type: type | None = None,
             expected_count: int | None = None,
@@ -747,7 +747,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
             """
             is_failure = getattr(result, "is_failure", None)
             if not isinstance(is_failure, bool):
-                raise TypeError(f"Expected r-like object, got {type(result)}")
+                raise TypeError(
+                    f"Expected r-like t.NormalizedValue, got {type(result)}"
+                )
             if is_failure:
                 error = getattr(result, "error", "Unknown error")
                 raise AssertionError(f"Result is failure: {error}")
@@ -925,7 +927,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 expected_name: Expected name
 
             Returns:
-                The parsed schema object
+                The parsed schema t.NormalizedValue
 
             Raises:
                 AssertionError: If parsing fails or properties don't match
@@ -1012,7 +1014,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
         @staticmethod
         def test_create_schema_attribute_from_dict(
-            data: dict[str, object],
+            data: dict[str, t.NormalizedValue],
         ) -> m.Ldif.SchemaAttribute:
             """Create a schema attribute from dictionary.
 
@@ -1035,7 +1037,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
         @staticmethod
         def test_create_schema_objectclass_from_dict(
-            data: dict[str, object],
+            data: dict[str, t.NormalizedValue],
         ) -> m.Ldif.SchemaObjectClass:
             """Create a schema objectClass from dictionary.
 
@@ -1165,7 +1167,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             expected_oid: str,
             expected_name: str,
             must_contain: list[str] | None = None,
-        ) -> tuple[object, str]:
+        ) -> tuple[t.NormalizedValue, str]:
             """Parse attribute definition, write it back, and validate output.
 
             Args:
@@ -1503,7 +1505,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 expected_raw_acl: Expected raw ACL value
 
             Returns:
-                Parsed ACL object
+                Parsed ACL t.NormalizedValue
 
             Raises:
                 AssertionError: If parsing fails or verification fails
@@ -1535,7 +1537,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
             Args:
                 acl_quirk: ACL quirk instance
-                acl: ACL object to write
+                acl: ACL t.NormalizedValue to write
                 expected_content: Expected content in output
 
             Returns:
@@ -1613,7 +1615,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
         @staticmethod
         def create_entries_batch(
-            entries_data: list[dict[str, object]], *, validate_all: bool = True
+            entries_data: list[dict[str, t.NormalizedValue]],
+            *,
+            validate_all: bool = True,
         ) -> list[m.Ldif.Entry]:
             """Create multiple entries from data dictionaries.
 
@@ -1657,7 +1661,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
         @staticmethod
         def batch_parse_and_assert(
             parser_service: FlextLdifParser,
-            test_cases: list[dict[str, object]],
+            test_cases: list[dict[str, t.NormalizedValue]],
             *,
             validate_all: bool = True,
         ) -> list[r[m.Ldif.LdifResults.ParseResponse]]:
@@ -1816,7 +1820,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             is_success = getattr(result, "is_success", None)
             is_failure = getattr(result, "is_failure", None)
             if not isinstance(is_success, bool) or not isinstance(is_failure, bool):
-                msg = "Parse method must return r-like object"
+                msg = "Parse method must return r-like t.NormalizedValue"
                 raise AssertionError(msg)
             error = getattr(result, "error", None)
             error_message = str(error) if error is not None else "Unknown parse error"

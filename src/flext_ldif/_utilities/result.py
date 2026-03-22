@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import base64
-import builtins
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import IO, Self, overload, override
@@ -13,7 +12,7 @@ from flext_core import FlextRuntime, r
 from flext_ldif import FlextLdifUtilitiesWriter, m, t
 
 
-class FlextLdifUtilitiesResult[T: builtins.object]:
+class FlextLdifUtilitiesResult[T: t.NormalizedValue]:
     """Extended r with LDIF-specific DSL operators."""
 
     __slots__ = ("_inner",)
@@ -176,14 +175,14 @@ class FlextLdifUtilitiesResult[T: builtins.object]:
         return cls(r[T].fail(error_msg))
 
     @staticmethod
-    def from_result[TResult: builtins.object](
+    def from_result[TResult: t.NormalizedValue](
         result: r[TResult],
     ) -> FlextLdifUtilitiesResult[TResult]:
         """Wrap an existing r[T] in FlextLdifUtilitiesResult."""
         return FlextLdifUtilitiesResult(result)
 
     @staticmethod
-    def ok[TResult: builtins.object](
+    def ok[TResult: t.NormalizedValue](
         value: TResult,
     ) -> FlextLdifUtilitiesResult[TResult]:
         """Create a successful result with the given value."""
@@ -247,7 +246,7 @@ class FlextLdifUtilitiesResult[T: builtins.object]:
             return FlextLdifUtilitiesResult.ok(value)
         return FlextLdifUtilitiesResult[T].fail("Value did not match filter predicate")
 
-    def flat_map[U: builtins.object](
+    def flat_map[U: t.NormalizedValue](
         self,
         func: Callable[[T], r[U]],
     ) -> FlextLdifUtilitiesResult[U]:
@@ -255,7 +254,7 @@ class FlextLdifUtilitiesResult[T: builtins.object]:
         mapped_result = self._inner.flat_map(func)
         return FlextLdifUtilitiesResult(mapped_result)
 
-    def map[U: builtins.object](
+    def map[U: t.NormalizedValue](
         self,
         func: Callable[[T], U],
     ) -> FlextLdifUtilitiesResult[U]:

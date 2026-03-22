@@ -1,7 +1,7 @@
 """Tests for Apache Directory Server (ApacheDS) LDIF quirks handling.
 
 This module tests the FlextLdifServersApache implementation for handling Apache
-Directory Server-specific attributes, object classes, entries, and ACLs in LDIF format.
+Directory Server-specific attributes, t.NormalizedValue classes, entries, and ACLs in LDIF format.
 """
 
 from __future__ import annotations
@@ -69,7 +69,7 @@ class AclScenario(StrEnum):
 class AttributeTestCase(BaseModel):
     """Test case for attribute detection and parsing."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     scenario: AttributeScenario = Field(description="Attribute scenario identifier")
     attr_definition: str = Field(description="Schema attribute definition string")
@@ -83,7 +83,7 @@ class AttributeTestCase(BaseModel):
 class ObjectClassTestCase(BaseModel):
     """Test case for objectClass detection and parsing."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     scenario: ObjectClassScenario = Field(description="ObjectClass scenario identifier")
     oc_definition: str = Field(description="Schema objectClass definition string")
@@ -97,7 +97,7 @@ class ObjectClassTestCase(BaseModel):
 class EntryTestCase(BaseModel):
     """Test case for entry detection."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     scenario: EntryScenario = Field(description="Entry detection scenario identifier")
     entry_dn: str = Field(description="Entry distinguished name")
@@ -110,7 +110,7 @@ class EntryTestCase(BaseModel):
 class AclTestCase(BaseModel):
     """Test case for ACL handling."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     scenario: AclScenario = Field(description="ACL scenario identifier")
     acl_line: str | None = Field(

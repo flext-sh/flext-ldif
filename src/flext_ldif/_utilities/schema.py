@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import builtins
 import copy
 import re
 import struct
@@ -332,7 +331,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_metadata_extensions(
-        extensions_raw: Mapping[str, builtins.object],
+        extensions_raw: Mapping[str, t.NormalizedValue],
     ) -> Mapping[str, t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]]]:
         converted: dict[
             str, t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]]
@@ -362,8 +361,8 @@ class FlextLdifUtilitiesSchema:
     def _convert_metadata_value(
         value: t.Scalar
         | datetime
-        | list[builtins.object]
-        | Mapping[builtins.object, builtins.object],
+        | list[t.NormalizedValue]
+        | Mapping[t.NormalizedValue, t.NormalizedValue],
     ) -> t.Scalar | list[str] | Mapping[str, t.Scalar | list[str]]:
         if u.is_primitive(value):
             return value
@@ -372,7 +371,7 @@ class FlextLdifUtilitiesSchema:
         if isinstance(value, list):
             converted_list: list[str] = []
             for index in range(len(value)):
-                item_value: builtins.object = value[index]
+                item_value: t.NormalizedValue = value[index]
                 converted_list.append(str(item_value))
             return converted_list
         if isinstance(value, Mapping):
@@ -389,7 +388,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_nested_metadata_value(
-        value: t.Scalar | datetime | Sequence[builtins.object] | builtins.object,
+        value: t.Scalar | datetime | Sequence[t.NormalizedValue] | t.NormalizedValue,
     ) -> t.Scalar | list[str]:
         if u.is_primitive(value):
             return value
@@ -398,25 +397,25 @@ class FlextLdifUtilitiesSchema:
         if FlextLdifUtilitiesSchema._is_object_sequence(value):
             converted_nested_list: list[str] = []
             for index in range(len(value)):
-                nested_item_value: builtins.object = value[index]
+                nested_item_value: t.NormalizedValue = value[index]
                 converted_nested_list.append(str(nested_item_value))
             return converted_nested_list
         return str(value)
 
     @staticmethod
-    def _is_object_list(value: builtins.object) -> TypeIs[list[builtins.object]]:
+    def _is_object_list(value: t.NormalizedValue) -> TypeIs[list[t.NormalizedValue]]:
         return isinstance(value, list)
 
     @staticmethod
     def _is_object_mapping(
-        value: builtins.object,
-    ) -> TypeIs[Mapping[builtins.object, builtins.object]]:
+        value: t.NormalizedValue,
+    ) -> TypeIs[Mapping[t.NormalizedValue, t.NormalizedValue]]:
         return isinstance(value, Mapping)
 
     @staticmethod
     def _is_object_sequence(
-        value: builtins.object,
-    ) -> TypeIs[Sequence[builtins.object]]:
+        value: t.NormalizedValue,
+    ) -> TypeIs[Sequence[t.NormalizedValue]]:
         return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
     @staticmethod
@@ -428,7 +427,7 @@ class FlextLdifUtilitiesSchema:
     def _create_schema_copy(
         schema_obj: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
-        """Create a copy of the schema object."""
+        """Create a copy of the schema t.NormalizedValue."""
         try:
             return schema_obj.model_copy()
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
@@ -684,7 +683,7 @@ class FlextLdifUtilitiesSchema:
             )
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
-                f"Unknown schema object type: {type(transformed).__name__}"
+                f"Unknown schema t.NormalizedValue type: {type(transformed).__name__}"
             )
 
     @staticmethod
@@ -741,7 +740,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _validate_attribute_syntax(
         syntax: str | None,
-    ) -> dict[str, builtins.object] | None:
+    ) -> dict[str, t.NormalizedValue] | None:
         """Validate syntax OID and return validation result."""
         if not syntax or not syntax.strip():
             return None
@@ -758,10 +757,10 @@ class FlextLdifUtilitiesSchema:
         syntax_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = (
             c.Ldif.MetadataKeys.SYNTAX_VALIDATION_ERROR not in syntax_extensions
         )
-        result_dict: dict[str, builtins.object] = {}
+        result_dict: dict[str, t.NormalizedValue] = {}
         for key, val in syntax_extensions.items():
             if isinstance(val, list):
-                list_typed: builtins.object = list(val)
+                list_typed: t.NormalizedValue = list(val)
                 result_dict[key] = list_typed
             elif val is not None:
                 result_dict[key] = val
@@ -799,7 +798,7 @@ class FlextLdifUtilitiesSchema:
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(validated_oc)
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
-                f"Unknown schema object type: {type(schema_obj).__name__}"
+                f"Unknown schema t.NormalizedValue type: {type(schema_obj).__name__}"
             )
 
     @staticmethod
@@ -836,7 +835,7 @@ class FlextLdifUtilitiesSchema:
         ]
         | None = None,
     ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
-        """Apply transformation pipeline to schema object."""
+        """Apply transformation pipeline to schema t.NormalizedValue."""
         try:
             transformed = FlextLdifUtilitiesSchema._create_schema_copy(schema_obj)
             if field_transforms:
@@ -921,13 +920,13 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def build_metadata(
         definition: str,
-        additional_extensions: Mapping[str, builtins.object] | None = None,
-    ) -> Mapping[str, builtins.object]:
+        additional_extensions: Mapping[str, t.NormalizedValue] | None = None,
+    ) -> Mapping[str, t.NormalizedValue]:
         """Build metadata extensions dictionary for schema definitions."""
         extensions_raw = FlextLdifUtilitiesParser.extract_extensions(definition)
-        extensions: dict[str, builtins.object] = {}
+        extensions: dict[str, t.NormalizedValue] = {}
         for key, val in extensions_raw.items():
-            typed_val: builtins.object = list(val)
+            typed_val: t.NormalizedValue = list(val)
             extensions[key] = typed_val
         extensions[c.Ldif.MetadataKeys.ORIGINAL_FORMAT] = definition.strip()
         if additional_extensions:
@@ -1227,18 +1226,18 @@ class FlextLdifUtilitiesSchema:
         attr_definition: str,
         *,
         validate_syntax: bool = True,
-    ) -> r[dict[str, builtins.object]]:
+    ) -> r[dict[str, t.NormalizedValue]]:
         """Parse RFC 4512 attribute definition into structured data."""
         basic_fields_result = FlextLdifUtilitiesSchema._extract_attribute_basic_fields(
             attr_definition,
         )
         if basic_fields_result.is_failure:
-            return r[dict[str, builtins.object]].fail(basic_fields_result.error)
+            return r[dict[str, t.NormalizedValue]].fail(basic_fields_result.error)
         oid, name, desc = basic_fields_result.value
         syntax, length = FlextLdifUtilitiesSchema._extract_attribute_syntax(
             attr_definition,
         )
-        syntax_validation_result: Mapping[str, builtins.object] | None = None
+        syntax_validation_result: Mapping[str, t.NormalizedValue] | None = None
         if validate_syntax:
             syntax_validation_result = (
                 FlextLdifUtilitiesSchema._validate_attribute_syntax(syntax)
@@ -1252,7 +1251,7 @@ class FlextLdifUtilitiesSchema:
         sup, usage = FlextLdifUtilitiesSchema._extract_attribute_sup_usage(
             attr_definition,
         )
-        additional_extensions_converted: Mapping[str, builtins.object] | None = (
+        additional_extensions_converted: Mapping[str, t.NormalizedValue] | None = (
             syntax_validation_result
         )
         extensions_raw = FlextLdifUtilitiesSchema.build_metadata(
@@ -1272,7 +1271,7 @@ class FlextLdifUtilitiesSchema:
                     syntax_validation_result,
                 )
             )
-        parsed_dict: dict[str, builtins.object] = {
+        parsed_dict: dict[str, t.NormalizedValue] = {
             "oid": oid,
             "name": name,
             "desc": desc,
@@ -1288,12 +1287,12 @@ class FlextLdifUtilitiesSchema:
             "metadata_extensions": extensions_converted,
             "syntax_validation": syntax_validation_converted,
         }
-        return r[dict[str, builtins.object]].ok(parsed_dict)
+        return r[dict[str, t.NormalizedValue]].ok(parsed_dict)
 
     @staticmethod
     def parse_objectclass(
         oc_definition: str,
-    ) -> Mapping[str, builtins.object]:
+    ) -> Mapping[str, t.NormalizedValue]:
         """Parse RFC 4512 objectClass definition into structured data."""
         basic_fields_result = (
             FlextLdifUtilitiesSchema._extract_objectclass_basic_fields(oc_definition)
@@ -1311,7 +1310,7 @@ class FlextLdifUtilitiesSchema:
         extensions_converted = FlextLdifUtilitiesSchema._convert_metadata_extensions(
             extensions_raw,
         )
-        parsed_dict: dict[str, builtins.object] = {
+        parsed_dict: dict[str, t.NormalizedValue] = {
             "oid": oid,
             "name": name,
             "desc": desc,

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import builtins
 import re
 import struct
 from collections.abc import Mapping, Sequence
@@ -203,7 +202,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     @classmethod
     def _extract_syntax_validation_error(
         cls,
-        value: builtins.object | None,
+        value: t.NormalizedValue | None,
     ) -> str | None:
         syntax_validation = cls._coerce_dynamic_metadata(value)
         syntax_error = syntax_validation.get("syntax_validation_error")
@@ -214,7 +213,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     @classmethod
     def _to_optional_str_or_list(
         cls,
-        value: builtins.object | None,
+        value: t.NormalizedValue | None,
     ) -> str | list[str] | None:
         if isinstance(value, str):
             return value
@@ -248,7 +247,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     @staticmethod
     def _coerce_dynamic_metadata(
-        value: builtins.object | None,
+        value: t.NormalizedValue | None,
     ) -> m.Ldif.DynamicMetadata:
         if isinstance(value, m.Ldif.DynamicMetadata):
             return value
@@ -281,7 +280,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return extensions
 
     @staticmethod
-    def _to_optional_int(value: builtins.object) -> int | None:
+    def _to_optional_int(value: t.NormalizedValue) -> int | None:
         match value:
             case int() as int_value:
                 return int_value
@@ -291,7 +290,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 return None
 
     @staticmethod
-    def _to_optional_str(value: builtins.object) -> str | None:
+    def _to_optional_str(value: t.NormalizedValue) -> str | None:
         match value:
             case str() as str_value:
                 return str_value
@@ -301,7 +300,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 return None
 
     @staticmethod
-    def _to_required_str(value: builtins.object, default: str = "") -> str:
+    def _to_required_str(value: t.NormalizedValue, default: str = "") -> str:
         match value:
             case str() as str_value:
                 return str_value
@@ -311,7 +310,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 return default
 
     @staticmethod
-    def _to_string_list(value: builtins.object | None) -> list[str] | None:
+    def _to_string_list(value: t.NormalizedValue | None) -> list[str] | None:
         if isinstance(value, Sequence) and (
             not isinstance(value, str | bytes | bytearray)
         ):
@@ -504,7 +503,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
         def parse_parts_hook(
             definition: str,
-        ) -> r[dict[str, builtins.object]]:
+        ) -> r[dict[str, t.NormalizedValue]]:
             return u.Ldif.parse_attribute(definition)
 
         parse_result_raw = u.Ldif.parse(

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import builtins
 import contextlib
 import inspect
 import struct
@@ -177,30 +176,30 @@ class FlextLdifUtilities(FlextUtilities):
         def parse(
             definition: str | m.Ldif.DN,
             server_type: str | None = None,
-            parse_parts_hook: Callable[[str], Mapping[str, builtins.object]]
-            | Callable[[str], r[dict[str, builtins.object]]]
+            parse_parts_hook: Callable[[str], Mapping[str, t.NormalizedValue]]
+            | Callable[[str], r[dict[str, t.NormalizedValue]]]
             | None = None,
-        ) -> r[dict[str, builtins.object]]: ...
+        ) -> r[dict[str, t.NormalizedValue]]: ...
 
         @staticmethod
         @overload
         def parse(
             definition: str,
             server_type: str | None = None,
-            parse_parts_hook: Callable[[str], Mapping[str, builtins.object]]
-            | Callable[[str], r[dict[str, builtins.object]]]
+            parse_parts_hook: Callable[[str], Mapping[str, t.NormalizedValue]]
+            | Callable[[str], r[dict[str, t.NormalizedValue]]]
             | None = None,
-        ) -> r[dict[str, builtins.object]]: ...
+        ) -> r[dict[str, t.NormalizedValue]]: ...
 
         @staticmethod
         @override
         def parse(
             definition: str | m.Ldif.DN | None,
             server_type: str | None = None,
-            parse_parts_hook: Callable[[str], Mapping[str, builtins.object]]
-            | Callable[[str], r[dict[str, builtins.object]]]
+            parse_parts_hook: Callable[[str], Mapping[str, t.NormalizedValue]]
+            | Callable[[str], r[dict[str, t.NormalizedValue]]]
             | None = None,
-        ) -> r[list[tuple[str, str]]] | r[dict[str, builtins.object]]:
+        ) -> r[list[tuple[str, str]]] | r[dict[str, t.NormalizedValue]]:
             if definition is None:
                 return r[list[tuple[str, str]]].fail("DN cannot be None")
             if isinstance(definition, m.Ldif.DN):
@@ -208,13 +207,13 @@ class FlextLdifUtilities(FlextUtilities):
             if parse_parts_hook is None and server_type is None:
                 return FlextLdifUtilitiesDN.parse(definition)
 
-            def attr_hook(value: str) -> r[dict[str, builtins.object]]:
+            def attr_hook(value: str) -> r[dict[str, t.NormalizedValue]]:
                 if parse_parts_hook is None:
-                    return r[dict[str, builtins.object]].ok({})
+                    return r[dict[str, t.NormalizedValue]].ok({})
                 parsed_value = parse_parts_hook(value)
                 if isinstance(parsed_value, r):
                     return parsed_value
-                return r[dict[str, builtins.object]].ok(dict(parsed_value))
+                return r[dict[str, t.NormalizedValue]].ok(dict(parsed_value))
 
             return FlextLdifUtilitiesAttribute.parse(
                 definition=definition,
@@ -226,8 +225,8 @@ class FlextLdifUtilities(FlextUtilities):
         @override
         def matches_server_patterns(
             value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-            oid_pattern: Mapping[str, builtins.object] | str,
-            detection_names: builtins.object | frozenset[str],
+            oid_pattern: Mapping[str, t.NormalizedValue] | str,
+            detection_names: t.NormalizedValue | frozenset[str],
             detection_string: str | None = None,
             *,
             use_prefix_match: bool = False,
@@ -278,25 +277,25 @@ class FlextLdifUtilities(FlextUtilities):
             return FlextLdifUtilitiesServer.matches(server_type, *allowed_types)
 
         @staticmethod
-        def to_config_map_value(value: builtins.object) -> builtins.object:
-            """Convert value to object (general value or str)."""
+        def to_config_map_value(value: t.NormalizedValue) -> t.NormalizedValue:
+            """Convert value to t.NormalizedValue (general value or str)."""
             if FlextUtilities.is_general_value_type(value):
                 return value
             return str(value)
 
         @staticmethod
-        def normalize_container(value: builtins.object) -> builtins.object:
-            """Normalize a object to a canonical form."""
+        def normalize_container(value: t.NormalizedValue) -> t.NormalizedValue:
+            """Normalize a t.NormalizedValue to a canonical form."""
             if FlextUtilities.is_general_value_type(value):
                 return value
             return str(value)
 
         @staticmethod
         def normalize_mapping(
-            mapping: Mapping[str, builtins.object],
-        ) -> dict[str, builtins.object]:
+            mapping: Mapping[str, t.NormalizedValue],
+        ) -> dict[str, t.NormalizedValue]:
             """Normalize a mapping of objects to a standard dict form."""
-            normalized: dict[str, builtins.object] = {}
+            normalized: dict[str, t.NormalizedValue] = {}
             for key, value in mapping.items():
                 normalized[str(key)] = FlextLdifUtilities.Ldif.normalize_container(
                     value,
@@ -306,15 +305,15 @@ class FlextLdifUtilities(FlextUtilities):
         class ConvBuilder:
             """Conversion builder for type-safe value conversion (DSL pattern)."""
 
-            def __init__(self, *, value: builtins.object | None) -> None:
+            def __init__(self, *, value: t.NormalizedValue | None) -> None:
                 """Initialize conversion builder with a value."""
                 super().__init__()
-                self._value: builtins.object | None = value
-                self._default: builtins.object | None = None
+                self._value: t.NormalizedValue | None = value
+                self._default: t.NormalizedValue | None = None
                 self._target_type: str | None = None
                 self._safe_mode = False
 
-            def build(self) -> builtins.object | None:
+            def build(self) -> t.NormalizedValue | None:
                 """Build and return the converted value using parent utilities."""
                 if self._value is None:
                     return self._default
@@ -403,10 +402,10 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         @override
         def find(
-            items: Sequence[builtins.object],
+            items: Sequence[t.NormalizedValue],
             *,
             predicate: Callable[..., bool],
-        ) -> builtins.object | None:
+        ) -> t.NormalizedValue | None:
             """Find first item matching predicate."""
             for elem in items:
                 if predicate(elem):
@@ -465,7 +464,7 @@ class FlextLdifUtilities(FlextUtilities):
         def evaluate_predicate(
             predicate: Callable[..., bool],
             key: str,
-            value: builtins.object,
+            value: t.NormalizedValue,
         ) -> bool:
             """Evaluate predicate with automatic 1-arg or 2-arg detection."""
             if FlextLdifUtilities.Ldif.is_two_arg_processor(predicate):
@@ -488,12 +487,12 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def is_ldif_process_call(
             items: Sequence[m.Ldif.Entry]
-            | Mapping[str, builtins.object]
+            | Mapping[str, t.NormalizedValue]
             | str
             | bytes
             | None,
             processor_normalized: m.Ldif.ProcessConfig | None,
-            processor: Callable[..., object] | None,
+            processor: Callable[..., t.NormalizedValue] | None,
             config: m.Ldif.ProcessConfig | None,
             _source_server: c.Ldif.ServerTypes,
             target_server: c.Ldif.ServerTypes | None,
@@ -546,12 +545,12 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def normalize_list(
             cls,
-            value: builtins.object | r[builtins.object],
+            value: t.NormalizedValue | r[t.NormalizedValue],
             *,
-            default: list[builtins.object] | None = None,
-        ) -> list[builtins.object]:
+            default: list[t.NormalizedValue] | None = None,
+        ) -> list[t.NormalizedValue]:
             """Normalize to list using FlextUtilities.build() DSL (mnemonic: nl)."""
-            extracted_value: builtins.object | None
+            extracted_value: t.NormalizedValue | None
             match value:
                 case r() as result_value:
                     extracted_value = (
@@ -559,11 +558,13 @@ class FlextLdifUtilities(FlextUtilities):
                     )
                 case _:
                     extracted_value = value
-            default_list: list[builtins.object] = default if default is not None else []
-            extracted: builtins.object = (
+            default_list: list[t.NormalizedValue] = (
+                default if default is not None else []
+            )
+            extracted: t.NormalizedValue = (
                 extracted_value if extracted_value is not None else default_list
             )
-            ops: dict[str, builtins.object] = {
+            ops: dict[str, t.NormalizedValue] = {
                 "ensure": "list",
                 "ensure_default": default_list,
             }
@@ -599,7 +600,7 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def call_single_item_processor[R](
             processor_func: Callable[..., R],
-            item: builtins.object,
+            item: t.NormalizedValue,
         ) -> r[list[R]]:
             """Call processor with single item, handling signature detection."""
             try:
@@ -631,7 +632,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         @override
-        def filter[T: builtins.object, R: builtins.object](
+        def filter[T: t.NormalizedValue, R: t.NormalizedValue](
             items_or_entries: T
             | list[T]
             | tuple[T, ...]
@@ -643,9 +644,8 @@ class FlextLdifUtilities(FlextUtilities):
             _mapper: FlextLdifUtilities.Ldif.VariadicCallable[R] | None = None,
             mode: Literal["all", "any"] = "all",
         ) -> (
-            list[builtins.object]
-            | Mapping[str, builtins.object]
-            | object
+            list[t.NormalizedValue]
+            | Mapping[str, t.NormalizedValue]
             | FlextLdifUtilitiesResult[list[m.Ldif.Entry]]
         ):
             """Filter entries using composable filter predicates."""
@@ -657,7 +657,7 @@ class FlextLdifUtilities(FlextUtilities):
                         predicate_or_filter1
                     )
 
-                    def predicate_callable(item: builtins.object) -> bool:
+                    def predicate_callable(item: t.NormalizedValue) -> bool:
                         return predicate(item)
 
                     return FlextLdifUtilities.Ldif.filter_base_class(
@@ -684,7 +684,7 @@ class FlextLdifUtilities(FlextUtilities):
                 return []
             entry_filter: FlextLdifUtilitiesFilters[m.Ldif.Entry] = predicate_or_filter1
 
-            def predicate_wrapper(item: t.Ldif.object) -> bool:
+            def predicate_wrapper(item: t.Ldif.NormalizedValue) -> bool:
                 """Wrap FlextLdifUtilitiesFilters as VariadicCallable for base class compatibility."""
                 match item:
                     case m.Ldif.Entry() as entry_item:
@@ -699,24 +699,22 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def filter_base_class(
-            items_or_entries: Sequence[builtins.object]
-            | Mapping[str, builtins.object]
-            | object,
+            items_or_entries: t.NormalizedValue,
             predicate: Callable[..., bool],
-            _mapper: Callable[..., object] | None = None,
-        ) -> list[builtins.object] | Mapping[str, builtins.object]:
+            _mapper: Callable[..., t.NormalizedValue] | None = None,
+        ) -> list[t.NormalizedValue] | Mapping[str, t.NormalizedValue]:
             """Filter using base class Collection.filter (internal helper)."""
             if isinstance(items_or_entries, (list, tuple)):
-                items_list: list[builtins.object] = list(items_or_entries)
+                items_list: list[t.NormalizedValue] = list(items_or_entries)
                 list_filter_result = FlextUtilities.filter(items_list, predicate)
                 return list(list_filter_result) if list_filter_result else []
             if isinstance(items_or_entries, dict):
-                items_dict: dict[str, builtins.object] = {}
+                items_dict: dict[str, t.NormalizedValue] = {}
                 for k, v in items_or_entries.items():
                     items_dict[k] = FlextLdifUtilities.Ldif.to_config_map_value(v)
                 dict_filter_result = FlextUtilities.filter(items_dict, predicate)
                 return dict_filter_result or {}
-            items_single_list: list[builtins.object] = [items_or_entries]
+            items_single_list: list[t.NormalizedValue] = [items_or_entries]
             single_filter_result = FlextUtilities.filter(items_single_list, predicate)
             return list(single_filter_result) if single_filter_result else []
 
@@ -742,7 +740,7 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         @override
         def is_entry_sequence(
-            obj: builtins.object,
+            obj: t.NormalizedValue,
         ) -> TypeIs[Sequence[m.Ldif.Entry]]:
             """Check if value is a Sequence of Entry objects."""
             match obj:
@@ -761,7 +759,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def is_no_arg_callable[R](
-            func: Callable[..., R] | object,
+            func: Callable[..., R] | t.NormalizedValue,
         ) -> TypeIs[Callable[[], R]]:
             """Check if callable accepts 0 arguments."""
             if not callable(func):
@@ -774,9 +772,9 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def is_object_arg_callable[R](
-            func: Callable[..., R] | object,
+            func: Callable[..., R] | t.NormalizedValue,
         ) -> TypeIs[Callable[..., R]]:
-            """Check if callable accepts 1 object argument."""
+            """Check if callable accepts 1 t.NormalizedValue argument."""
             if not callable(func):
                 return False
             try:
@@ -799,20 +797,20 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         @overload
         def process(
-            items_or_entries: builtins.object
-            | list[builtins.object]
-            | tuple[builtins.object, ...]
-            | Mapping[str, builtins.object],
-            processor_or_config: Callable[..., object]
-            | Callable[[str, object], object]
+            items_or_entries: t.NormalizedValue
+            | list[t.NormalizedValue]
+            | tuple[t.NormalizedValue, ...]
+            | Mapping[str, t.NormalizedValue],
+            processor_or_config: Callable[..., t.NormalizedValue]
+            | Callable[[str, t.NormalizedValue], t.NormalizedValue]
             | None = None,
             *,
-            processor: Callable[..., object]
-            | Callable[[str, object], object]
+            processor: Callable[..., t.NormalizedValue]
+            | Callable[[str, t.NormalizedValue], t.NormalizedValue]
             | None = None,
             on_error: str = "collect",
             predicate: Callable[..., bool]
-            | Callable[[str, object], bool]
+            | Callable[[str, t.NormalizedValue], bool]
             | None = None,
             filter_keys: set[str] | None = None,
             exclude_keys: set[str] | None = None,
@@ -821,7 +819,7 @@ class FlextLdifUtilities(FlextUtilities):
             target_server: c.Ldif.ServerTypes | None = None,
             normalize_dns: bool = True,
             normalize_attrs: bool = True,
-        ) -> r[list[builtins.object]]: ...
+        ) -> r[list[t.NormalizedValue]]: ...
 
         @staticmethod
         @overload
@@ -829,7 +827,7 @@ class FlextLdifUtilities(FlextUtilities):
             items_or_entries: Sequence[m.Ldif.Entry],
             processor_or_config: m.Ldif.ProcessConfig | None = None,
             *,
-            processor: Callable[[m.Ldif.Entry], object] | None = None,
+            processor: Callable[[m.Ldif.Entry], t.NormalizedValue] | None = None,
             on_error: str = "collect",
             predicate: Callable[[m.Ldif.Entry], bool] | None = None,
             filter_keys: set[str] | None = None,
@@ -844,23 +842,23 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         @override
         def process(
-            items_or_entries: builtins.object
-            | list[builtins.object]
-            | tuple[builtins.object, ...]
-            | Mapping[str, builtins.object]
+            items_or_entries: t.NormalizedValue
+            | list[t.NormalizedValue]
+            | tuple[t.NormalizedValue, ...]
+            | Mapping[str, t.NormalizedValue]
             | Sequence[m.Ldif.Entry],
-            processor_or_config: Callable[..., object]
-            | Callable[[str, object], object]
+            processor_or_config: Callable[..., t.NormalizedValue]
+            | Callable[[str, t.NormalizedValue], t.NormalizedValue]
             | m.Ldif.ProcessConfig
             | None = None,
             *,
-            processor: Callable[..., object]
-            | Callable[[str, object], object]
-            | Callable[[m.Ldif.Entry], object]
+            processor: Callable[..., t.NormalizedValue]
+            | Callable[[str, t.NormalizedValue], t.NormalizedValue]
+            | Callable[[m.Ldif.Entry], t.NormalizedValue]
             | None = None,
             on_error: str = "collect",
             predicate: Callable[..., bool]
-            | Callable[[str, object], bool]
+            | Callable[[str, t.NormalizedValue], bool]
             | Callable[[m.Ldif.Entry], bool]
             | None = None,
             filter_keys: set[str] | None = None,
@@ -870,7 +868,7 @@ class FlextLdifUtilities(FlextUtilities):
             target_server: c.Ldif.ServerTypes | None = None,
             normalize_dns: bool = True,
             normalize_attrs: bool = True,
-        ) -> r[list[builtins.object]] | FlextLdifUtilitiesResult[list[m.Ldif.Entry]]:
+        ) -> r[list[t.NormalizedValue]] | FlextLdifUtilitiesResult[list[m.Ldif.Entry]]:
             """Universal entry processor."""
             processor_normalized = (
                 processor_or_config if processor_or_config is not None else processor
@@ -903,10 +901,10 @@ class FlextLdifUtilities(FlextUtilities):
                 return FlextLdifUtilitiesResult.from_result(
                     r[list[m.Ldif.Entry]].fail(msg),
                 )
-            processor_func: Callable[..., object] = processor_normalized
+            processor_func: Callable[..., t.NormalizedValue] = processor_normalized
             match items_or_entries:
                 case dict() | Mapping():
-                    dict_items: dict[str, builtins.object] = {}
+                    dict_items: dict[str, t.NormalizedValue] = {}
                     for key, value in items_or_entries.items():
                         dict_items[str(key)] = (
                             FlextLdifUtilities.Ldif.normalize_container(value)
@@ -918,9 +916,9 @@ class FlextLdifUtilities(FlextUtilities):
                         filter_keys,
                         exclude_keys,
                     )
-                    return r[list[builtins.object]].ok(results)
+                    return r[list[t.NormalizedValue]].ok(results)
                 case list() | tuple():
-                    items_list: list[builtins.object] = [
+                    items_list: list[t.NormalizedValue] = [
                         FlextLdifUtilities.Ldif.normalize_container(item)
                         for item in items_or_entries
                     ]
@@ -935,13 +933,13 @@ class FlextLdifUtilities(FlextUtilities):
                         not isinstance(items_or_entries, (str, bytes))
                     ):
                         msg = "Unsupported non-list sequence for single-item processing"
-                        return r[list[builtins.object]].fail(msg)
+                        return r[list[t.NormalizedValue]].fail(msg)
                     result_item = processor_func(items_or_entries)
-                    return r[list[builtins.object]].ok([result_item])
+                    return r[list[t.NormalizedValue]].ok([result_item])
 
         @staticmethod
         def process_dict_items[R](
-            items: Mapping[str, builtins.object],
+            items: Mapping[str, t.NormalizedValue],
             processor_func: Callable[..., R],
             predicate: Callable[..., bool] | None,
             filter_keys: set[str] | None,
@@ -973,7 +971,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def process_list_items[R](
-            items: Sequence[builtins.object],
+            items: Sequence[t.NormalizedValue],
             processor_func: Callable[..., R],
             predicate: Callable[..., bool] | None,
             on_error: str,
@@ -1124,17 +1122,19 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def zip_with(
             cls,
-            *sequences: Sequence[builtins.object],
-            combiner: FlextLdifUtilities.Ldif.VariadicCallable[tuple[object, ...]]
+            *sequences: Sequence[t.NormalizedValue],
+            combiner: FlextLdifUtilities.Ldif.VariadicCallable[
+                tuple[t.NormalizedValue, ...]
+            ]
             | None = None,
-        ) -> list[builtins.object]:
+        ) -> list[t.NormalizedValue]:
             """Zip with combiner (generalized: uses zip from base, mnemonic: zw)."""
             if not sequences:
                 return []
             zipped = zip(*sequences, strict=False)
             if combiner is None:
                 return [tuple(items) for items in zipped]
-            result: list[builtins.object] = []
+            result: list[t.NormalizedValue] = []
             for items_tuple in zipped:
                 items_list = list(items_tuple)
                 combined = combiner(*items_list)
@@ -1143,15 +1143,15 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def pipe_ldif(
-            value: builtins.object,
-            *ops: Mapping[str, builtins.object] | Callable[..., object],
-        ) -> builtins.object:
+            value: t.NormalizedValue,
+            *ops: Mapping[str, t.NormalizedValue] | Callable[..., t.NormalizedValue],
+        ) -> t.NormalizedValue:
             """LDIF-specific pipe - supports dict operations via flow()."""
-            result: builtins.object = value
+            result: t.NormalizedValue = value
             for op in ops:
                 match op:
                     case dict() as op_dict:
-                        current: builtins.object = result
+                        current: t.NormalizedValue = result
                         match current:
                             case dict() as current_dict:
                                 result = {**current_dict, **op_dict}
@@ -1165,9 +1165,9 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def pp(
-            value: builtins.object,
-            *ops: Mapping[str, builtins.object] | Callable[..., object],
-        ) -> builtins.object:
+            value: t.NormalizedValue,
+            *ops: Mapping[str, t.NormalizedValue] | Callable[..., t.NormalizedValue],
+        ) -> t.NormalizedValue:
             """Alias for pipe_ldif (mnemonic: pp)."""
             return FlextLdifUtilities.Ldif.pipe_ldif(value, *ops)
 
@@ -1177,13 +1177,13 @@ class FlextLdifUtilities(FlextUtilities):
         @override
         def group_by(
             cls,
-            items: Sequence[builtins.object],
+            items: Sequence[t.NormalizedValue],
             *,
-            key: Callable[..., object],
-        ) -> Mapping[object, list[builtins.object]]:
+            key: Callable[..., t.NormalizedValue],
+        ) -> Mapping[t.NormalizedValue, list[t.NormalizedValue]]:
             """Group by key function (generalized, mnemonic: gb)."""
             items_list = list(items)
-            result: dict[object, list[builtins.object]] = {}
+            result: dict[t.NormalizedValue, list[t.NormalizedValue]] = {}
             for item in items_list:
                 k = key(item)
                 if k not in result:
@@ -1197,13 +1197,13 @@ class FlextLdifUtilities(FlextUtilities):
         @override
         def partition(
             cls,
-            items: Sequence[builtins.object],
+            items: Sequence[t.NormalizedValue],
             *,
             predicate: Callable[..., bool],
-        ) -> tuple[list[builtins.object], list[builtins.object]]:
+        ) -> tuple[list[t.NormalizedValue], list[t.NormalizedValue]]:
             """Partition items by predicate into (matches, non-matches) (mnemonic: pt)."""
-            matches: list[builtins.object] = []
-            non_matches: list[builtins.object] = []
+            matches: list[t.NormalizedValue] = []
+            non_matches: list[t.NormalizedValue] = []
             for item in items:
                 if predicate(item):
                     matches.append(item)
@@ -1217,7 +1217,7 @@ class FlextLdifUtilities(FlextUtilities):
         @overload
         def get_ldif(
             cls,
-            data: Mapping[str, builtins.object],
+            data: Mapping[str, t.NormalizedValue],
             key: str,
             *,
             default: str = "",
@@ -1227,7 +1227,7 @@ class FlextLdifUtilities(FlextUtilities):
         @overload
         def get_ldif[T](
             cls,
-            data: Mapping[str, builtins.object] | object,
+            data: t.NormalizedValue,
             key: str,
             *,
             default: list[T],
@@ -1237,7 +1237,7 @@ class FlextLdifUtilities(FlextUtilities):
         @overload
         def get_ldif[T](
             cls,
-            data: Mapping[str, builtins.object] | object,
+            data: t.NormalizedValue,
             key: str,
             *,
             default: T | None = None,
@@ -1246,11 +1246,11 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def get_ldif[T](
             cls,
-            data: Mapping[str, builtins.object] | object,
+            data: t.NormalizedValue,
             key: str,
             *,
-            default: builtins.object | T | None = None,
-        ) -> builtins.object | T | None:
+            default: t.NormalizedValue | T | None = None,
+        ) -> t.NormalizedValue | T | None:
             """Safe get with optional mapping (DSL pattern)."""
             match data:
                 case Mapping() as data_mapping:
@@ -1263,12 +1263,12 @@ class FlextLdifUtilities(FlextUtilities):
         @override
         def pluck(
             cls,
-            items: Sequence[builtins.object],
+            items: Sequence[t.NormalizedValue],
             *,
-            key: str | int | Callable[..., object],
-        ) -> list[builtins.object]:
+            key: str | int | Callable[..., t.NormalizedValue],
+        ) -> list[t.NormalizedValue]:
             """Extract values from sequence by key/index/function (mnemonic: pk)."""
-            result: list[builtins.object] = []
+            result: list[t.NormalizedValue] = []
             for item in items:
                 if callable(key):
                     result.append(key(item))
@@ -1340,7 +1340,9 @@ class FlextLdifUtilities(FlextUtilities):
         nz = normalize_ldif
 
         @classmethod
-        def pairs(cls, d: Mapping[str, builtins.object]) -> list[tuple[str, object]]:
+        def pairs(
+            cls, d: Mapping[str, t.NormalizedValue]
+        ) -> list[tuple[str, t.NormalizedValue]]:
             """Convert dict/mapping to list of (key, value) tuples (mnemonic: pr)."""
             return list(d.items())
 
@@ -1364,9 +1366,9 @@ class FlextLdifUtilities(FlextUtilities):
         @override
         def omit(
             cls,
-            data: Mapping[str, builtins.object],
+            data: Mapping[str, t.NormalizedValue],
             *keys: str,
-        ) -> Mapping[str, builtins.object]:
+        ) -> Mapping[str, t.NormalizedValue]:
             """Omit keys using FlextUtilities.map_dict() DSL (mnemonic: om)."""
             if not data or not keys:
                 return dict(data) if data else {}
@@ -1376,7 +1378,7 @@ class FlextLdifUtilities(FlextUtilities):
         om = omit
 
         @staticmethod
-        def is_empty_value(value: builtins.object) -> bool:
+        def is_empty_value(value: t.NormalizedValue) -> bool:
             """Check if value is empty (empty string, list, or dict)."""
             match value:
                 case str() as value_str if not value_str:
@@ -1390,52 +1392,52 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def merge_dicts(
-            *dicts: Mapping[str, builtins.object],
+            *dicts: Mapping[str, t.NormalizedValue],
             strategy: str = "deep",
             filter_none: bool = False,
             filter_empty: bool = False,
-        ) -> r[Mapping[str, builtins.object]]:
+        ) -> r[Mapping[str, t.NormalizedValue]]:
             """Merge multiple dicts with filtering options (mnemonic: mg)."""
-            dicts_typed: tuple[Mapping[str, builtins.object], ...] = dicts
+            dicts_typed: tuple[Mapping[str, t.NormalizedValue], ...] = dicts
             if not dicts_typed:
-                return r[Mapping[str, builtins.object]].ok({})
-            merged: dict[str, builtins.object] = {}
+                return r[Mapping[str, t.NormalizedValue]].ok({})
+            merged: dict[str, t.NormalizedValue] = {}
             for dict_item in dicts_typed:
-                dict_item_dict: dict[str, builtins.object] = dict(dict_item)
+                dict_item_dict: dict[str, t.NormalizedValue] = dict(dict_item)
                 merge_result = FlextUtilities.merge(
                     merged,
                     dict_item_dict,
                     strategy=strategy,
                 )
                 if merge_result.is_failure:
-                    return r[Mapping[str, builtins.object]].fail(
+                    return r[Mapping[str, t.NormalizedValue]].fail(
                         merge_result.error or "Merge failed",
                     )
                 merged = merge_result.value
             if filter_none or filter_empty:
-                filtered: dict[str, builtins.object] = {}
+                filtered: dict[str, t.NormalizedValue] = {}
                 for key, value in merged.items():
                     if filter_empty and FlextLdifUtilities.Ldif.is_empty_value(value):
                         continue
                     filtered[key] = value
                 merged = filtered
-            return r[Mapping[str, builtins.object]].ok(merged)
+            return r[Mapping[str, t.NormalizedValue]].ok(merged)
 
         mg = merge_dicts
 
         @classmethod
         def smart_convert(
             cls,
-            value: builtins.object | r[builtins.object],
+            value: t.NormalizedValue | r[t.NormalizedValue],
             *,
             target_type: str,
             predicate: Callable[..., bool] | None = None,
-            default: builtins.object = None,
-        ) -> builtins.object:
+            default: t.NormalizedValue = None,
+        ) -> t.NormalizedValue:
             """Smart convert using FlextUtilities.build() DSL (mnemonic: sc)."""
             match value:
                 case r() as result_value:
-                    extracted: builtins.object = (
+                    extracted: t.NormalizedValue = (
                         result_value.value if not result_value.is_failure else default
                     )
                 case _:
@@ -1443,7 +1445,7 @@ class FlextLdifUtilities(FlextUtilities):
             if extracted is None:
                 return default
             conv_builder = cls.conv(extracted)
-            conv_result: builtins.object = None
+            conv_result: t.NormalizedValue = None
             if target_type == "str":
                 str_default = default if isinstance(default, str) else ""
                 conv_result = conv_builder.to_str(default=str_default).build()
@@ -1465,7 +1467,7 @@ class FlextLdifUtilities(FlextUtilities):
                     filtered = [item for item in conv_result if predicate(item)]
                     return filtered or conv_result
             else:
-                ops: dict[str, builtins.object] = {
+                ops: dict[str, t.NormalizedValue] = {
                     "ensure": target_type,
                     "ensure_default": default,
                 }
@@ -1482,11 +1484,11 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def as_type(
             cls,
-            value: builtins.object,
+            value: t.NormalizedValue,
             *,
             target: type | str,
-            default: builtins.object | None = None,
-        ) -> builtins.object:
+            default: t.NormalizedValue | None = None,
+        ) -> t.NormalizedValue:
             """Safe cast using FlextUtilities.convert() or FlextUtilities.ensure() (mnemonic: at)."""
             type_map = {
                 "list": list,
@@ -1516,7 +1518,7 @@ class FlextLdifUtilities(FlextUtilities):
                     case _:
                         pass
                 return cls.conv(value).str_list(default=list_default).safe().build()
-            ops: dict[str, builtins.object] = {}
+            ops: dict[str, t.NormalizedValue] = {}
             result = cls.build(
                 value,
                 ops=ops,
@@ -1539,7 +1541,7 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         @override
         def is_type(
-            value: builtins.object,
+            value: t.NormalizedValue,
             type_spec: str | type | tuple[type, ...],
         ) -> bool:
             """Type check using FlextUtilities.build() DSL (mnemonic: it)."""
@@ -1570,17 +1572,19 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def thru(
             cls,
-            value: builtins.object,
+            value: t.NormalizedValue,
             *,
-            fn: Callable[..., object],
-        ) -> builtins.object:
+            fn: Callable[..., t.NormalizedValue],
+        ) -> t.NormalizedValue:
             """Thru using direct call (mnemonic: th)."""
             return fn(value)
 
         th = thru
 
         @classmethod
-        def comp(cls, *fns: Callable[..., object]) -> Callable[..., object]:
+        def comp(
+            cls, *fns: Callable[..., t.NormalizedValue]
+        ) -> Callable[..., t.NormalizedValue]:
             """Compose using FlextUtilities.chain() (mnemonic: cp)."""
             if not fns:
                 return lambda x: x
@@ -1591,8 +1595,8 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def juxt(
             cls,
-            *fns: Callable[..., object],
-        ) -> Callable[..., tuple[builtins.object, ...]]:
+            *fns: Callable[..., t.NormalizedValue],
+        ) -> Callable[..., tuple[t.NormalizedValue, ...]]:
             """Juxtapose functions (mnemonic: jx)."""
             if not fns:
                 return lambda _x: ()
@@ -1603,17 +1607,17 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def curry(
             cls,
-            fn: Callable[..., object],
-            *args: builtins.object,
-        ) -> Callable[..., object]:
+            fn: Callable[..., t.NormalizedValue],
+            *args: t.NormalizedValue,
+        ) -> Callable[..., t.NormalizedValue]:
             """Curry function (mnemonic: cy)."""
 
             def curried(
-                *more_args: builtins.object,
+                *more_args: t.NormalizedValue,
                 **_kwargs: t.Scalar,
-            ) -> builtins.object:
-                combined_args: tuple[builtins.object, ...] = args + more_args
-                converted_args: list[builtins.object] = []
+            ) -> t.NormalizedValue:
+                combined_args: tuple[t.NormalizedValue, ...] = args + more_args
+                converted_args: list[t.NormalizedValue] = []
                 for arg in combined_args:
                     match arg:
                         case None:
@@ -1640,7 +1644,7 @@ class FlextLdifUtilities(FlextUtilities):
             pairs: tuple[
                 tuple[
                     Callable[[], bool] | Callable[..., bool] | bool,
-                    object,
+                    t.NormalizedValue,
                 ],
                 ...,
             ],
@@ -1660,8 +1664,8 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def _evaluate_no_arg_result(
             cls,
-            result_val: builtins.object,
-        ) -> builtins.object:
+            result_val: t.NormalizedValue,
+        ) -> t.NormalizedValue:
             """Evaluate a no-arg result value."""
             return result_val
 
@@ -1670,7 +1674,7 @@ class FlextLdifUtilities(FlextUtilities):
             cls,
             *,
             pred: Callable[[], bool] | Callable[..., bool] | bool,
-            value: builtins.object,
+            value: t.NormalizedValue,
         ) -> bool:
             """Evaluate a value-arg predicate."""
             if callable(pred):
@@ -1684,9 +1688,9 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def _evaluate_value_arg_result(
             cls,
-            result_val: builtins.object,
-            value: builtins.object,
-        ) -> builtins.object:
+            result_val: t.NormalizedValue,
+            value: t.NormalizedValue,
+        ) -> t.NormalizedValue:
             """Evaluate a value-arg result value."""
             _ = value
             return result_val
@@ -1696,15 +1700,15 @@ class FlextLdifUtilities(FlextUtilities):
             cls,
             *pairs: tuple[
                 Callable[[], bool] | Callable[..., bool] | bool,
-                object,
+                t.NormalizedValue,
             ],
-            default: builtins.object | None = None,
-        ) -> Callable[[], object] | Callable[..., object]:
+            default: t.NormalizedValue | None = None,
+        ) -> Callable[[], t.NormalizedValue] | Callable[..., t.NormalizedValue]:
             """Cond pattern (mnemonic: cd)."""
             is_no_arg = cls._detect_predicate_type(pairs)
             if is_no_arg:
 
-                def conditional_no_arg() -> builtins.object:
+                def conditional_no_arg() -> t.NormalizedValue:
                     for pred, result_val in pairs:
                         evaluated = False
                         if FlextLdifUtilities.Ldif.is_no_arg_callable(pred):
@@ -1718,7 +1722,7 @@ class FlextLdifUtilities(FlextUtilities):
 
                 return conditional_no_arg
 
-            def conditional(value: builtins.object) -> builtins.object:
+            def conditional(value: t.NormalizedValue) -> t.NormalizedValue:
                 for pred, result_val in pairs:
                     if cls._evaluate_value_arg_predicate(pred=pred, value=value):
                         return cls._evaluate_value_arg_result(result_val, value)
@@ -1731,10 +1735,10 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def switch(
             cls,
-            value: builtins.object,
-            cases: Mapping[object, object],
-            default: builtins.object | None = None,
-        ) -> builtins.object:
+            value: t.NormalizedValue,
+            cases: Mapping[t.NormalizedValue, t.NormalizedValue],
+            default: t.NormalizedValue | None = None,
+        ) -> t.NormalizedValue:
             """Switch using dict lookup (mnemonic: sw)."""
             return cases.get(value, default)
 
@@ -1743,16 +1747,16 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def defaults(
             cls,
-            *dicts: Mapping[str, builtins.object] | None,
-        ) -> Mapping[str, builtins.object]:
+            *dicts: Mapping[str, t.NormalizedValue] | None,
+        ) -> Mapping[str, t.NormalizedValue]:
             """Defaults merge - first wins using FlextUtilities.flow() DSL (mnemonic: df)."""
             if not dicts:
                 return {}
 
             def apply_defaults(
-                acc: builtins.object,
-                d: builtins.object,
-            ) -> builtins.object:
+                acc: t.NormalizedValue,
+                d: t.NormalizedValue,
+            ) -> t.NormalizedValue:
                 """Apply defaults using fold() pattern: first wins, later fill missing/None."""
                 match (acc, d):
                     case [dict() as acc_dict, dict() as d_dict]:
@@ -1781,22 +1785,22 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def deep_merge(
             cls,
-            *dicts: Mapping[str, builtins.object] | None,
-        ) -> Mapping[str, builtins.object]:
+            *dicts: Mapping[str, t.NormalizedValue] | None,
+        ) -> Mapping[str, t.NormalizedValue]:
             """Deep merge using FlextUtilities.merge() with deep strategy (mnemonic: dm)."""
             if not dicts:
                 return {}
-            mapping_list: list[dict[str, builtins.object]] = [
+            mapping_list: list[dict[str, t.NormalizedValue]] = [
                 dict_item for dict_item in dicts if isinstance(dict_item, dict)
             ]
             if not mapping_list:
                 return {}
-            merged: dict[str, builtins.object] = {
+            merged: dict[str, t.NormalizedValue] = {
                 key: FlextLdifUtilities.Ldif.to_config_map_value(value)
                 for key, value in dict(mapping_list[0]).items()
             }
             for mapping in mapping_list[1:]:
-                mapping_dict: dict[str, builtins.object] = {
+                mapping_dict: dict[str, t.NormalizedValue] = {
                     key: FlextLdifUtilities.Ldif.to_config_map_value(value)
                     for key, value in dict(mapping).items()
                 }
@@ -1814,9 +1818,9 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def update_inplace(
             cls,
-            obj: dict[str, builtins.object],
-            *updates: Mapping[str, builtins.object] | None,
-        ) -> dict[str, builtins.object]:
+            obj: dict[str, t.NormalizedValue],
+            *updates: Mapping[str, t.NormalizedValue] | None,
+        ) -> dict[str, t.NormalizedValue]:
             """Update in-place using FlextUtilities.flow() pattern (mnemonic: ui)."""
             for update in updates:
                 if update is not None:
@@ -1828,9 +1832,9 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def _apply_deep_defaults_recursive(
             cls,
-            acc: builtins.object,
-            d: builtins.object,
-        ) -> builtins.object:
+            acc: t.NormalizedValue,
+            d: t.NormalizedValue,
+        ) -> t.NormalizedValue:
             """Apply deep defaults recursively: first wins, recurse nested."""
             match (acc, d):
                 case [dict() as acc_dict, dict() as d_dict]:
@@ -1852,8 +1856,8 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def defaults_deep(
             cls,
-            *dicts: Mapping[str, builtins.object] | None,
-        ) -> Mapping[str, builtins.object]:
+            *dicts: Mapping[str, t.NormalizedValue] | None,
+        ) -> Mapping[str, t.NormalizedValue]:
             """Deep defaults using FlextUtilities.merge() deep strategy + first wins (mnemonic: dd)."""
             if not dicts:
                 return {}
@@ -1876,23 +1880,21 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         @override
         def take(
-            data_or_items: Mapping[str, builtins.object]
-            | Sequence[builtins.object]
-            | object,
+            data_or_items: t.NormalizedValue,
             key_or_n: str | int,
             *,
             as_type: type | None = None,
-            default: builtins.object | None = None,
+            default: t.NormalizedValue | None = None,
             from_start: bool = True,
         ) -> (
-            Mapping[str, builtins.object]
-            | list[builtins.object]
-            | builtins.object
+            Mapping[str, t.NormalizedValue]
+            | list[t.NormalizedValue]
+            | t.NormalizedValue
             | None
         ):
             """Take value from data with type guard (mnemonic: tk)."""
             if isinstance(key_or_n, str):
-                value: builtins.object = None
+                value: t.NormalizedValue = None
                 match data_or_items:
                     case Mapping() as mapping_items:
                         raw_value = mapping_items.get(key_or_n, default)
@@ -1912,7 +1914,7 @@ class FlextLdifUtilities(FlextUtilities):
                 case dict() as dict_items:
                     items = list(dict_items.items())
                     sliced = items[:n] if from_start else items[-n:]
-                    sliced_dict: dict[str, builtins.object] = {
+                    sliced_dict: dict[str, t.NormalizedValue] = {
                         key: FlextLdifUtilities.Ldif.to_config_map_value(value)
                         for key, value in sliced
                     }
@@ -1949,10 +1951,10 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def let(
             cls,
-            value: builtins.object,
+            value: t.NormalizedValue,
             *,
-            fn: Callable[..., object],
-        ) -> builtins.object:
+            fn: Callable[..., t.NormalizedValue],
+        ) -> t.NormalizedValue:
             """Let using chain() (mnemonic: lt)."""
             return FlextLdifUtilities.Ldif.chain(value, fn)
 
@@ -1962,10 +1964,11 @@ class FlextLdifUtilities(FlextUtilities):
         @override
         def apply(
             cls,
-            fn: FlextLdifUtilities.Ldif.VariadicCallable[object] | object,
-            *args: builtins.object,
+            fn: FlextLdifUtilities.Ldif.VariadicCallable[t.NormalizedValue]
+            | t.NormalizedValue,
+            *args: t.NormalizedValue,
             **kwargs: t.Scalar,
-        ) -> builtins.object:
+        ) -> t.NormalizedValue:
             """Apply function (mnemonic: ap)."""
             if callable(fn):
                 return fn(*args, **kwargs)
@@ -1976,9 +1979,9 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def bind(
             cls,
-            value: builtins.object,
-            *fns: Callable[..., object],
-        ) -> builtins.object:
+            value: t.NormalizedValue,
+            *fns: Callable[..., t.NormalizedValue],
+        ) -> t.NormalizedValue:
             """Bind using chain() (mnemonic: bd)."""
             return FlextLdifUtilities.Ldif.chain(value, *fns)
 
@@ -1987,11 +1990,11 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def lift(
             cls,
-            fn: Callable[..., object],
-        ) -> Callable[..., builtins.object | None]:
+            fn: Callable[..., t.NormalizedValue],
+        ) -> Callable[..., t.NormalizedValue | None]:
             """Lift function for optionals (mnemonic: lf)."""
 
-            def lifted_fn(v: builtins.object) -> builtins.object | None:
+            def lifted_fn(v: t.NormalizedValue) -> t.NormalizedValue | None:
                 """Lifted function with safe None handling using DSL."""
                 return FlextLdifUtilities.Ldif.maybe(
                     cls.tr(lambda: fn(v), default=None),
@@ -2003,7 +2006,7 @@ class FlextLdifUtilities(FlextUtilities):
         lf = lift
 
         @classmethod
-        def seq(cls, *values: builtins.object) -> list[builtins.object]:
+        def seq(cls, *values: t.NormalizedValue) -> list[t.NormalizedValue]:
             """Sequence constructor (mnemonic: sq)."""
             return list(values)
 
@@ -2012,10 +2015,10 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def assoc(
             cls,
-            data: Mapping[str, builtins.object],
+            data: Mapping[str, t.NormalizedValue],
             key: str,
-            value: builtins.object,
-        ) -> Mapping[str, builtins.object]:
+            value: t.NormalizedValue,
+        ) -> Mapping[str, t.NormalizedValue]:
             """Associate key-value using FlextUtilities.merge() DSL (mnemonic: ac)."""
             updated = dict(data)
             updated[key] = value
@@ -2026,9 +2029,9 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def dissoc(
             cls,
-            data: Mapping[str, builtins.object],
+            data: Mapping[str, t.NormalizedValue],
             *keys: str,
-        ) -> Mapping[str, builtins.object]:
+        ) -> Mapping[str, t.NormalizedValue]:
             """Dissociate keys using omit DSL (mnemonic: ds)."""
             return {k: v for k, v in data.items() if k not in keys}
 
@@ -2038,9 +2041,9 @@ class FlextLdifUtilities(FlextUtilities):
         @override
         def update(
             cls,
-            data: Mapping[str, builtins.object],
-            updates: Mapping[str, builtins.object],
-        ) -> Mapping[str, builtins.object]:
+            data: Mapping[str, t.NormalizedValue],
+            updates: Mapping[str, t.NormalizedValue],
+        ) -> Mapping[str, t.NormalizedValue]:
             """Update dict using FlextUtilities.merge() (mnemonic: ud)."""
             updated = dict(data)
             updated.update(updates)
@@ -2051,12 +2054,12 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def evolve(
             cls,
-            obj: Mapping[str, builtins.object],
-            *transforms: Mapping[str, builtins.object]
-            | Callable[[dict[str, builtins.object]], Mapping[str, builtins.object]],
-        ) -> Mapping[str, builtins.object]:
+            obj: Mapping[str, t.NormalizedValue],
+            *transforms: Mapping[str, t.NormalizedValue]
+            | Callable[[dict[str, t.NormalizedValue]], Mapping[str, t.NormalizedValue]],
+        ) -> Mapping[str, t.NormalizedValue]:
             """Evolve using FlextUtilities.flow() pattern (mnemonic: ev)."""
-            result: dict[str, builtins.object] = dict(obj)
+            result: dict[str, t.NormalizedValue] = dict(obj)
             for transform in transforms:
                 if callable(transform) and (not isinstance(transform, Mapping)):
                     transformed = transform(result)
@@ -2104,7 +2107,7 @@ class FlextLdifUtilities(FlextUtilities):
         vl = dict_vals
 
         @classmethod
-        def invert(cls, obj: Mapping[str, builtins.object]) -> Mapping[str, str]:
+        def invert(cls, obj: Mapping[str, t.NormalizedValue]) -> Mapping[str, str]:
             """Invert dict using FlextUtilities.map_dict() pattern (mnemonic: iv)."""
             str_dict: Mapping[str, str] = {k: str(v) for k, v in obj.items()}
             inverted = FlextUtilities.invert_dict(str_dict)
@@ -2115,10 +2118,10 @@ class FlextLdifUtilities(FlextUtilities):
         @classmethod
         def where(
             cls,
-            obj: Mapping[str, builtins.object],
+            obj: Mapping[str, t.NormalizedValue],
             *,
-            predicate: Callable[[str, object], bool] | None = None,
-        ) -> Mapping[str, builtins.object]:
+            predicate: Callable[[str, t.NormalizedValue], bool] | None = None,
+        ) -> Mapping[str, t.NormalizedValue]:
             """Where using FlextUtilities.filter() (mnemonic: wh)."""
             if predicate is None:
                 return dict(obj)
@@ -2128,11 +2131,11 @@ class FlextLdifUtilities(FlextUtilities):
 
         @classmethod
         @override
-        def prop(cls, key: str) -> Callable[..., object]:
+        def prop(cls, key: str) -> Callable[..., t.NormalizedValue]:
             """Property accessor using FlextUtilities.get() (mnemonic: pp)."""
 
-            def getter(obj: builtins.object) -> builtins.object:
-                """Get value from object by key."""
+            def getter(obj: t.NormalizedValue) -> t.NormalizedValue:
+                """Get value from t.NormalizedValue by key."""
                 match obj:
                     case Mapping() as obj_mapping:
                         return FlextLdifUtilities.Ldif.to_config_map_value(
@@ -2149,10 +2152,10 @@ class FlextLdifUtilities(FlextUtilities):
         prop_get = prop
 
         @classmethod
-        def props(cls, *keys: str) -> Callable[..., Mapping[str, builtins.object]]:
+        def props(cls, *keys: str) -> Callable[..., Mapping[str, t.NormalizedValue]]:
             """Props accessor using FlextUtilities.pick() directly (mnemonic: ps)."""
 
-            def accessor(obj: builtins.object) -> Mapping[str, builtins.object]:
+            def accessor(obj: t.NormalizedValue) -> Mapping[str, t.NormalizedValue]:
                 match obj:
                     case Mapping() as obj_mapping:
                         return {
@@ -2163,7 +2166,7 @@ class FlextLdifUtilities(FlextUtilities):
                         }
                     case _:
                         pass
-                result_dict: dict[str, builtins.object] = {}
+                result_dict: dict[str, t.NormalizedValue] = {}
                 for k in keys:
                     if getattr(obj, k, None) is not None:
                         result_dict[k] = FlextLdifUtilities.Ldif.to_config_map_value(
@@ -2178,15 +2181,15 @@ class FlextLdifUtilities(FlextUtilities):
         ps = props
 
         @classmethod
-        def path(cls, *keys: str) -> Callable[..., object]:
+        def path(cls, *keys: str) -> Callable[..., t.NormalizedValue]:
             """Path accessor using FlextUtilities.chain() DSL (mnemonic: ph)."""
 
             def make_getter(
                 key: str,
-            ) -> Callable[..., object]:
+            ) -> Callable[..., t.NormalizedValue]:
 
-                def getter_fn(obj: builtins.object) -> builtins.object:
-                    """Get value from object by key."""
+                def getter_fn(obj: t.NormalizedValue) -> t.NormalizedValue:
+                    """Get value from t.NormalizedValue by key."""
                     match obj:
                         case Mapping() as obj_mapping:
                             return FlextLdifUtilities.Ldif.to_config_map_value(
@@ -2202,30 +2205,32 @@ class FlextLdifUtilities(FlextUtilities):
 
                 return getter_fn
 
-            getters: list[Callable[..., object]] = [make_getter(k) for k in keys]
+            getters: list[Callable[..., t.NormalizedValue]] = [
+                make_getter(k) for k in keys
+            ]
             return lambda obj: cls.chain(obj, *getters)
 
         ph = path
 
         @staticmethod
-        def all_(*args: builtins.object) -> bool:
+        def all_(*args: t.NormalizedValue) -> bool:
             """Check if all values are truthy."""
             return all(args)
 
         @staticmethod
         @override
-        def any_(*args: builtins.object) -> bool:
+        def any_(*args: t.NormalizedValue) -> bool:
             """Check if any value is truthy."""
             return any(args)
 
         @staticmethod
-        def conv(value: builtins.object) -> FlextLdifUtilities.Ldif.ConvBuilder:
+        def conv(value: t.NormalizedValue) -> FlextLdifUtilities.Ldif.ConvBuilder:
             """Create conversion builder (DSL entry point)."""
             return FlextLdifUtilities.Ldif.ConvBuilder(value=value)
 
         @staticmethod
         @override
-        def empty(items: builtins.object) -> bool:
+        def empty(items: t.NormalizedValue) -> bool:
             """Check if value is empty."""
             if items is None:
                 return True
@@ -2239,7 +2244,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         @override
-        def or_[T: builtins.object](
+        def or_[T: t.NormalizedValue](
             *values: T | None,
             default: T | None = None,
         ) -> T | None:
@@ -2251,7 +2256,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def sum(
-            items: Sequence[int | float | object] | Mapping[str, int | float | object],
+            items: Sequence[t.NormalizedValue] | Mapping[str, t.NormalizedValue],
         ) -> t.Numeric:
             """Sum of numeric items."""
             if isinstance(items, Mapping):
@@ -2279,11 +2284,11 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def maybe(
-            value: builtins.object | None,
+            value: t.NormalizedValue | None,
             *,
-            default: builtins.object | None = None,
-            mapper: Callable[..., object] | None = None,
-        ) -> builtins.object | None:
+            default: t.NormalizedValue | None = None,
+            mapper: Callable[..., t.NormalizedValue] | None = None,
+        ) -> t.NormalizedValue | None:
             """Maybe monad pattern (mnemonic: mb)."""
             if value is None:
                 return default
@@ -2296,9 +2301,9 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         @override
         def chain(
-            value: builtins.object,
-            *funcs: Callable[..., object],
-        ) -> builtins.object:
+            value: t.NormalizedValue,
+            *funcs: Callable[..., t.NormalizedValue],
+        ) -> t.NormalizedValue:
             """Chain function calls (DSL helper, mnemonic: ch)."""
             result = value
             for func in funcs:
@@ -2310,15 +2315,15 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         @override
         def pick(
-            data: Mapping[str, builtins.object] | object,
+            data: t.NormalizedValue,
             *keys: str,
             as_dict: bool = True,
-        ) -> Mapping[str, builtins.object] | list[builtins.object]:
+        ) -> Mapping[str, t.NormalizedValue] | list[t.NormalizedValue]:
             """Pick keys from dict (DSL helper, mnemonic: pc)."""
             if not isinstance(data, Mapping):
                 return {} if as_dict else []
 
-            data_mapping: dict[str, builtins.object] = {
+            data_mapping: dict[str, t.NormalizedValue] = {
                 str(key): FlextLdifUtilities.Ldif.to_config_map_value(value)
                 for key, value in data.items()
             }
@@ -2330,19 +2335,19 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def map_dict(
-            obj: Mapping[str, builtins.object],
+            obj: Mapping[str, t.NormalizedValue],
             *,
-            mapper: Callable[[str, object], object] | None = None,
+            mapper: Callable[[str, t.NormalizedValue], t.NormalizedValue] | None = None,
             key_mapper: Callable[[str], str] | None = None,
-            predicate: Callable[[str, object], bool] | None = None,
-        ) -> Mapping[str, builtins.object]:
+            predicate: Callable[[str, t.NormalizedValue], bool] | None = None,
+        ) -> Mapping[str, t.NormalizedValue]:
             """Map dict with optional transformations (mnemonic: md)."""
-            result: dict[str, builtins.object] = {}
+            result: dict[str, t.NormalizedValue] = {}
             for k, v in obj.items():
                 if predicate and (not predicate(k, v)):
                     continue
                 new_k = key_mapper(k) if key_mapper else k
-                new_v: builtins.object = mapper(k, v) if mapper else v
+                new_v: t.NormalizedValue = mapper(k, v) if mapper else v
                 result[new_k] = new_v
             return result
 
@@ -2350,18 +2355,17 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def reduce_dict(
-            items: Sequence[Mapping[str, builtins.object]]
-            | Mapping[str, builtins.object]
-            | object,
+            items: t.NormalizedValue,
             *,
-            processor: Callable[[str, object], tuple[str, object]] | None = None,
-            predicate: Callable[[str, object], bool] | None = None,
-            default: Mapping[str, builtins.object] | None = None,
-        ) -> Mapping[str, builtins.object]:
+            processor: Callable[[str, t.NormalizedValue], tuple[str, t.NormalizedValue]]
+            | None = None,
+            predicate: Callable[[str, t.NormalizedValue], bool] | None = None,
+            default: Mapping[str, t.NormalizedValue] | None = None,
+        ) -> Mapping[str, t.NormalizedValue]:
             """Reduce dicts (mnemonic: rd)."""
             if not items:
                 return default or {}
-            items_list: list[dict[str, builtins.object]] = []
+            items_list: list[dict[str, t.NormalizedValue]] = []
             if isinstance(items, Mapping):
                 items_list = [
                     {
@@ -2376,7 +2380,7 @@ class FlextLdifUtilities(FlextUtilities):
                             str(key): FlextLdifUtilities.Ldif.to_config_map_value(value)
                             for key, value in item.items()
                         })
-            result: dict[str, builtins.object] = dict(default) if default else {}
+            result: dict[str, t.NormalizedValue] = dict(default) if default else {}
             for d_item in items_list:
                 for key, val in d_item.items():
                     if predicate and (not predicate(key, val)):
@@ -2393,16 +2397,17 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         @override
         def fold(
-            items: Sequence[builtins.object] | object,
+            items: t.NormalizedValue,
             *,
-            initial: builtins.object,
-            folder: Callable[[object, object], object] | None = None,
+            initial: t.NormalizedValue,
+            folder: Callable[[t.NormalizedValue, t.NormalizedValue], t.NormalizedValue]
+            | None = None,
             predicate: Callable[..., bool] | None = None,
-        ) -> builtins.object:
+        ) -> t.NormalizedValue:
             """Fold items using folder function (mnemonic: fd)."""
             if not folder:
                 return initial
-            items_list: list[builtins.object]
+            items_list: list[t.NormalizedValue]
             if isinstance(items, Sequence) and not isinstance(items, (str, bytes)):
                 items_list = [
                     FlextLdifUtilities.Ldif.to_config_map_value(item) for item in items
@@ -2411,7 +2416,7 @@ class FlextLdifUtilities(FlextUtilities):
                 items_list = [FlextLdifUtilities.Ldif.to_config_map_value(items)]
             if predicate:
                 items_list = [item for item in items_list if predicate(item)]
-            result: builtins.object = initial
+            result: t.NormalizedValue = initial
             for item in items_list:
                 result = folder(result, item)
             return result
@@ -2420,13 +2425,13 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def map_filter(
-            items: Sequence[builtins.object] | object,
+            items: t.NormalizedValue,
             *,
-            mapper: Callable[..., object] | None = None,
+            mapper: Callable[..., t.NormalizedValue] | None = None,
             predicate: Callable[..., bool] | None = None,
-        ) -> list[builtins.object]:
+        ) -> list[t.NormalizedValue]:
             """Map then filter items (mnemonic: mf)."""
-            items_list: list[builtins.object]
+            items_list: list[t.NormalizedValue]
             if isinstance(items, Sequence) and not isinstance(items, (str, bytes)):
                 items_list = [
                     FlextLdifUtilities.Ldif.to_config_map_value(item) for item in items
@@ -2443,19 +2448,14 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def process_flatten(
-            items: Mapping[str, builtins.object]
-            | list[builtins.object]
-            | tuple[builtins.object, ...]
-            | set[builtins.object]
-            | frozenset[object]
-            | object,
+            items: t.NormalizedValue,
             *,
-            processor: Callable[..., object] | None = None,
+            processor: Callable[..., t.NormalizedValue] | None = None,
             on_error: str = "skip",
-        ) -> list[builtins.object]:
+        ) -> list[t.NormalizedValue]:
             """Process and flatten items (mnemonic: pf)."""
             if isinstance(items, Mapping):
-                items_list: list[builtins.object] = list(
+                items_list: list[t.NormalizedValue] = list(
                     FlextLdifUtilities.Ldif.normalize_mapping(items).values(),
                 )
             elif isinstance(items, (list, tuple, set, frozenset)):
@@ -2464,7 +2464,7 @@ class FlextLdifUtilities(FlextUtilities):
                 ]
             else:
                 items_list = [FlextLdifUtilities.Ldif.normalize_container(items)]
-            result: list[builtins.object] = []
+            result: list[t.NormalizedValue] = []
             for item in items_list:
                 try:
                     processed = processor(item) if processor else item
@@ -2498,10 +2498,10 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         @override
         def build(
-            value: builtins.object,
+            value: t.NormalizedValue,
             *,
-            ops: Mapping[str, builtins.object] | None = None,
-        ) -> builtins.object:
+            ops: Mapping[str, t.NormalizedValue] | None = None,
+        ) -> t.NormalizedValue:
             """Build value using operations dict (DSL helper)."""
             if ops is None:
                 return value
@@ -2509,9 +2509,9 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def find_key(
-            obj: Mapping[str, builtins.object],
+            obj: Mapping[str, t.NormalizedValue],
             *,
-            predicate: Callable[[str, object], bool] | None = None,
+            predicate: Callable[[str, t.NormalizedValue], bool] | None = None,
         ) -> str | None:
             """Find first key matching predicate (mnemonic: fk)."""
             if not predicate:
@@ -2525,10 +2525,10 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def find_val(
-            obj: Mapping[str, builtins.object],
+            obj: Mapping[str, t.NormalizedValue],
             *,
-            predicate: Callable[[str, object], bool] | None = None,
-        ) -> builtins.object | None:
+            predicate: Callable[[str, t.NormalizedValue], bool] | None = None,
+        ) -> t.NormalizedValue | None:
             """Find first value matching predicate (mnemonic: fv)."""
             if not predicate:
                 return next(iter(obj.values()), None)

@@ -214,7 +214,7 @@ def write(self, entries: list[FlextLdifModels.Entry]) -> r[str]:
 
 ##### filter_persons(entries)
 
-Filter entries with person object class.
+Filter entries with person t.NormalizedValue class.
 
 ```python
 def filter_persons(
@@ -238,7 +238,7 @@ def filter_persons(
 
 ##### filter_groups(entries)
 
-Filter entries with group object classes.
+Filter entries with group t.NormalizedValue classes.
 
 ```python
 def filter_groups(
@@ -260,13 +260,13 @@ def filter_groups(
 
 ##### filter_by_objectclass(entries, object_class)
 
-Filter entries by specific object class.
+Filter entries by specific t.NormalizedValue class.
 
 ```python
 def filter_by_objectclass(
     self, entries: list[FlextLdifModels.Entry], object_class: str
 ) -> r[list[FlextLdifModels.Entry]]:
-    """Filter entries by object class.
+    """Filter entries by t.NormalizedValue class.
 
     Args:
         entries: List of entries to filter
@@ -353,8 +353,8 @@ class QuirksConversionMatrix:
         source,
         target,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
-        data: str | dict[str, object],
-    ) -> r[str | dict[str, object]]:
+        data: str | dict[str, t.NormalizedValue],
+    ) -> r[str | dict[str, t.NormalizedValue]]:
         """Convert data from source quirk format to target quirk format via RFC.
 
         Args:
@@ -373,8 +373,8 @@ class QuirksConversionMatrix:
         source,
         target,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
-        data_batch: Sequence[str | dict[str, object]],
-    ) -> r[Sequence[str | dict[str, object]]]:
+        data_batch: Sequence[str | dict[str, t.NormalizedValue]],
+    ) -> r[Sequence[str | dict[str, t.NormalizedValue]]]:
         """Convert batch of data from source to target quirk format via RFC.
 
         Args:
@@ -397,7 +397,7 @@ class QuirksConversionMatrix:
         """
 
     def validate_oud_conversion(
-        self, converted_data: Sequence[str | dict[str, object]]
+        self, converted_data: Sequence[str | dict[str, t.NormalizedValue]]
     ) -> r[bool]:
         """Validate converted data for OUD compatibility.
 
@@ -504,13 +504,13 @@ class Entry(BaseModel):
     )
 
     def get_object_classes(self) -> t.StringList:
-        """Get object class values for this entry."""
+        """Get t.NormalizedValue class values for this entry."""
 
     def get_attribute_values(self, attr_name: str) -> t.StringList:
         """Get values for specific attribute."""
 
     def has_object_class(self, object_class: str) -> bool:
-        """Check if entry has specific object class."""
+        """Check if entry has specific t.NormalizedValue class."""
 
     def is_person(self) -> bool:
         """Check if entry represents a person."""

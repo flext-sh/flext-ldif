@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from flext_core import r
 
-from flext_ldif import FlextLdif, m
+from flext_ldif import FlextLdif, m, t
 
 
 class DRYEntryOperations:
@@ -54,7 +54,7 @@ class DRYEntryOperations:
         )
 
     @staticmethod
-    def batch_processing() -> r[list[dict[str, object]]]:
+    def batch_processing() -> r[list[dict[str, t.NormalizedValue]]]:
         """DRY batch processing: parallel transformation pipeline."""
         api = FlextLdif.get_instance()
         return DRYEntryOperations.advanced_filtering().flat_map(

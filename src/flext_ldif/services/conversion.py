@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import builtins
 import struct
 import time
 from collections.abc import Callable, Mapping, Sequence
@@ -21,7 +20,7 @@ from typing import (
 from flext_core import FlextLogger
 from pydantic import Field
 
-from flext_ldif import r
+from flext_ldif import r, t
 from flext_ldif.base import FlextLdifServiceBase
 from flext_ldif.constants import FlextLdifConstants as c
 from flext_ldif.models import FlextLdifModels as m
@@ -30,7 +29,6 @@ from flext_ldif.servers._base import FlextLdifServersBaseSchema
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.typings import FlextLdifTypes as t
 from flext_ldif.utilities import FlextLdifUtilities as u
 
 TUPLE_LENGTH_PAIR = 2
@@ -78,7 +76,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _has_attr(
-        obj: builtins.object
+        obj: t.NormalizedValue
         | FlextLdifServersBase
         | FlextLogger
         | p.Ldif.SchemaQuirk
@@ -90,7 +88,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _is_schema_quirk_protocol(
-        obj: builtins.object | FlextLdifServersBase | p.Ldif.SchemaQuirk,
+        obj: t.NormalizedValue | FlextLdifServersBase | p.Ldif.SchemaQuirk,
     ) -> TypeIs[p.Ldif.SchemaQuirk]:
         return (
             FlextLdifConversion._has_attr(obj, "parse")
@@ -101,15 +99,15 @@ class FlextLdifConversion(
     @staticmethod
     @override
     def _is_object_mapping(
-        value: builtins.object,
-    ) -> TypeIs[Mapping[builtins.object, builtins.object]]:
+        value: t.NormalizedValue,
+    ) -> TypeIs[Mapping[t.NormalizedValue, t.NormalizedValue]]:
         return isinstance(value, Mapping)
 
     @staticmethod
     @override
     def _is_object_sequence(
-        value: builtins.object,
-    ) -> TypeIs[Sequence[builtins.object]]:
+        value: t.NormalizedValue,
+    ) -> TypeIs[Sequence[t.NormalizedValue]]:
         return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
     @staticmethod
@@ -165,9 +163,9 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_attribute_case(
-        original_attribute_case: builtins.object,
+        original_attribute_case: t.NormalizedValue,
         target_server_type: str,
-    ) -> Mapping[str, Mapping[str, builtins.object]]:
+    ) -> Mapping[str, Mapping[str, t.NormalizedValue]]:
         """Analyze attribute case for target compatibility."""
         if bool(original_attribute_case):
             return {
@@ -183,7 +181,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_boolean_conversions(
-        boolean_conversions: builtins.object,
+        boolean_conversions: t.NormalizedValue,
         target_server_type: str,
     ) -> Mapping[str, Mapping[str, str]]:
         """Analyze boolean conversions for target compatibility."""
@@ -191,14 +189,14 @@ class FlextLdifConversion(
             boolean_conversions,
         ):
             return {}
-        typed_boolean_conversions: dict[str, builtins.object] = {}
+        typed_boolean_conversions: dict[str, t.NormalizedValue] = {}
         for raw_attr_name, raw_conv_info in boolean_conversions.items():
             typed_boolean_conversions[str(raw_attr_name)] = raw_conv_info
         result: dict[str, dict[str, str]] = {}
         for attr_name, conv_info in typed_boolean_conversions.items():
             source_format = ""
             if FlextLdifConversion._is_object_mapping(conv_info):
-                conv_info_dict: dict[str, builtins.object] = {}
+                conv_info_dict: dict[str, t.NormalizedValue] = {}
                 for raw_key, raw_value in conv_info.items():
                     conv_info_dict[str(raw_key)] = raw_value
                 source_format = str(conv_info_dict.get("format", "") or "")
@@ -211,15 +209,15 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_dn_format(
-        original_format_details: builtins.object,
+        original_format_details: t.NormalizedValue,
         target_server_type: str,
-    ) -> Mapping[str, Mapping[str, builtins.object]]:
+    ) -> Mapping[str, Mapping[str, t.NormalizedValue]]:
         """Analyze DN spacing for target compatibility."""
         if FlextLdifConversion._is_object_mapping(original_format_details):
-            format_details: dict[str, builtins.object] = {}
+            format_details: dict[str, t.NormalizedValue] = {}
             for raw_key, raw_value in original_format_details.items():
                 format_details[str(raw_key)] = raw_value
-            spacing: builtins.object | None = format_details.get("dn_spacing")
+            spacing: t.NormalizedValue | None = format_details.get("dn_spacing")
             if spacing:
                 return {
                     "dn_format": {
@@ -236,9 +234,9 @@ class FlextLdifConversion(
     def _analyze_metadata_for_conversion(
         source_metadata: m.Ldif.QuirkMetadata | m.Ldif.DynamicMetadata | None,
         target_server_type: str,
-    ) -> Mapping[str, str | Mapping[str, str | object]]:
+    ) -> Mapping[str, str | Mapping[str, str | t.NormalizedValue]]:
         """Analyze source metadata for intelligent conversion to target server."""
-        conversion_analysis: dict[str, str | dict[str, str | object]] = {}
+        conversion_analysis: dict[str, str | dict[str, str | t.NormalizedValue]] = {}
         if not source_metadata or not FlextLdifConversion._has_attr(
             source_metadata,
             "boolean_conversions",
@@ -249,14 +247,14 @@ class FlextLdifConversion(
         get_attr_case = u.prop("original_attribute_case")
         get_format_details = u.prop("original_format_details")
         boolean_raw = get_boolean(source_metadata)
-        boolean_conversions: builtins.object = (
+        boolean_conversions: t.NormalizedValue = (
             boolean_raw if isinstance(boolean_raw, dict) else {}
         )
         boolean_analysis = FlextLdifConversion._analyze_boolean_conversions(
             boolean_conversions,
             target_server_str,
         )
-        acc_typed: dict[str, str | dict[str, str | object]] = {}
+        acc_typed: dict[str, str | dict[str, str | t.NormalizedValue]] = {}
         for key, value in boolean_analysis.items():
             if isinstance(value, str):
                 acc_typed[key] = value
@@ -474,7 +472,7 @@ class FlextLdifConversion(
         return r[p.Ldif.SchemaQuirk].ok(final_quirk)
 
     @staticmethod
-    def _normalize_metadata_value(value: builtins.object) -> builtins.object:
+    def _normalize_metadata_value(value: t.NormalizedValue) -> t.NormalizedValue:
         """Normalize metadata value to proper type."""
         if value is None:
             return ""
@@ -611,7 +609,7 @@ class FlextLdifConversion(
             return FlextLdifConversion._schema_conversion_ok(value)
         if FlextLdifConversion._is_object_mapping(value):
             # Convert dict to str for LDIF representation if passthrough
-            typed_value: dict[str, builtins.object] = {}
+            typed_value: dict[str, t.NormalizedValue] = {}
             for raw_key, raw_item in value.items():
                 typed_value[str(raw_key)] = raw_item
             return FlextLdifConversion._schema_conversion_ok(str(typed_value))
@@ -692,8 +690,8 @@ class FlextLdifConversion(
                     errors.append(f"Item {idx}: {error_msg}")
                     error_details.append(f"batch_item_{idx}: {error_msg}")
             duration_ms = (time.perf_counter() - start_time) * 1000.0
-            model_list_typed: list[builtins.object] = list(model_list)
-            converted_typed: list[builtins.object] = list(converted)
+            model_list_typed: list[t.NormalizedValue] = list(model_list)
+            converted_typed: list[t.NormalizedValue] = list(converted)
             errors_typed: list[str] = errors
             items_processed = u.count(model_list_typed)
             items_converted = u.count(converted_typed)
@@ -744,7 +742,7 @@ class FlextLdifConversion(
             ].ok(converted)
         except (ValueError, TypeError, AttributeError, RuntimeError, Exception) as e:
             duration_ms = (time.perf_counter() - start_time) * 1000.0
-            model_list_as_list: list[builtins.object] = (
+            model_list_as_list: list[t.NormalizedValue] = (
                 list(model_list) if model_list else []
             )
             items_count = u.count(model_list_as_list)
@@ -1011,7 +1009,7 @@ class FlextLdifConversion(
 
     def _check_attribute_support(
         self,
-        quirk_schema: builtins.object,
+        quirk_schema: t.NormalizedValue,
         test_attr_def: str,
         support: t.Ldif.CommonDict.DistributionDict,
     ) -> t.Ldif.CommonDict.DistributionDict:
@@ -1077,7 +1075,7 @@ class FlextLdifConversion(
 
     def _check_objectclass_support(
         self,
-        quirk_schema: builtins.object,
+        quirk_schema: t.NormalizedValue,
         test_oc_def: str,
         support: t.Ldif.CommonDict.DistributionDict,
     ) -> t.Ldif.CommonDict.DistributionDict:
@@ -1642,11 +1640,11 @@ class FlextLdifConversion(
 
     def _convert_to_metadata_attribute_value(
         self,
-        value: builtins.object
-        | Mapping[str, builtins.object]
-        | Sequence[builtins.object]
+        value: t.NormalizedValue
+        | Mapping[str, t.NormalizedValue]
+        | Sequence[t.NormalizedValue]
         | None,
-    ) -> builtins.object:
+    ) -> t.NormalizedValue:
         """Convert value to MetadataAttributeValue type."""
         if value is None:
             return ""
@@ -1661,16 +1659,16 @@ class FlextLdifConversion(
                     converted_list.append(str(item))
             return converted_list
         if FlextLdifConversion._is_object_mapping(value):
-            typed_value: dict[str, builtins.object] = {}
+            typed_value: dict[str, t.NormalizedValue] = {}
             for raw_key, raw_item in value.items():
                 typed_value[str(raw_key)] = raw_item
             return str(typed_value)
         return str(value)
 
-    def _get_extensions_dict(self, acl: m.Ldif.Acl) -> Mapping[str, builtins.object]:
+    def _get_extensions_dict(self, acl: m.Ldif.Acl) -> Mapping[str, t.NormalizedValue]:
         """Extract extensions dict from ACL metadata."""
 
-        def to_general_value(value: builtins.object) -> builtins.object:
+        def to_general_value(value: t.NormalizedValue) -> t.NormalizedValue:
             if value is None:
                 return None
             if isinstance(value, str):
@@ -1684,14 +1682,14 @@ class FlextLdifConversion(
             if isinstance(value, datetime):
                 return value.isoformat()
             if FlextLdifConversion._is_object_mapping(value):
-                normalized_mapping: dict[str, builtins.object] = {}
+                normalized_mapping: dict[str, t.NormalizedValue] = {}
                 for raw_key, raw_item in value.items():
                     key = str(raw_key)
-                    item: builtins.object = raw_item
+                    item: t.NormalizedValue = raw_item
                     normalized_mapping[key] = to_general_value(item)
                 return normalized_mapping
             if FlextLdifConversion._is_object_sequence(value):
-                normalized_sequence: list[builtins.object] = [
+                normalized_sequence: list[t.NormalizedValue] = [
                     to_general_value(item) for item in value
                 ]
                 return normalized_sequence
@@ -1717,7 +1715,7 @@ class FlextLdifConversion(
     def _get_schema_quirk_for_support_check(
         self,
         quirk: FlextLdifServersBase,
-    ) -> builtins.object | None:
+    ) -> t.NormalizedValue | None:
         """Get schema quirk from base quirk for support checking."""
         if FlextLdifConversion._has_attr(
             quirk,
@@ -1731,7 +1729,9 @@ class FlextLdifConversion(
             ):
                 return quirk
             return None
-        schema_quirk_raw: builtins.object | None = getattr(quirk, "schema_quirk", None)
+        schema_quirk_raw: t.NormalizedValue | None = getattr(
+            quirk, "schema_quirk", None
+        )
         if schema_quirk_raw is not None:
             required_methods = ("parse", "write")
             if all(
@@ -1782,14 +1782,14 @@ class FlextLdifConversion(
             return acl_step1
         conv_ext = self._get_extensions_dict(acl_step1)
         orig_ext = self._get_extensions_dict(original_acl)
-        merged_ext_raw: dict[str, builtins.object] = {**orig_ext, **conv_ext}
+        merged_ext_raw: dict[str, t.NormalizedValue] = {**orig_ext, **conv_ext}
         if (
             not merged_ext_raw
             or not get_metadata(acl_step1)
             or (not acl_step1.metadata)
         ):
             return acl_step1
-        dynamic_metadata_dict: dict[str, builtins.object] = {}
+        dynamic_metadata_dict: dict[str, t.NormalizedValue] = {}
         for key, value in merged_ext_raw.items():
             if value is None:
                 dynamic_metadata_dict[key] = ""
@@ -1800,7 +1800,7 @@ class FlextLdifConversion(
                 )
                 continue
             if FlextLdifConversion._is_object_mapping(value):
-                normalized_mapping: dict[str, builtins.object] = {}
+                normalized_mapping: dict[str, t.NormalizedValue] = {}
                 for raw_k, raw_v in value.items():
                     normalized_mapping[str(raw_k)] = (
                         FlextLdifConversion._normalize_metadata_value(raw_v)
@@ -1810,7 +1810,7 @@ class FlextLdifConversion(
                 )
                 continue
             if FlextLdifConversion._is_object_sequence(value):
-                normalized_sequence: list[builtins.object] = [
+                normalized_sequence: list[t.NormalizedValue] = [
                     FlextLdifConversion._normalize_metadata_value(raw_item)
                     for raw_item in value
                 ]
@@ -1822,7 +1822,7 @@ class FlextLdifConversion(
                 str(value),
             )
         if acl_step1.metadata:
-            metadata_kwargs: dict[str, builtins.object] = dynamic_metadata_dict
+            metadata_kwargs: dict[str, t.NormalizedValue] = dynamic_metadata_dict
             updated_metadata = acl_step1.metadata.model_copy(
                 update={
                     "extensions": m.Ldif.DynamicMetadata.from_dict(metadata_kwargs),
@@ -1917,7 +1917,7 @@ class FlextLdifConversion(
             )
         entry_metadata = current_entry.metadata
         if entry_metadata and get_metadata(current_entry):
-            extensions_update: dict[str, builtins.object] = {
+            extensions_update: dict[str, t.NormalizedValue] = {
                 "converted_from_server": source_quirk_name,
             }
             if conversion_analysis:

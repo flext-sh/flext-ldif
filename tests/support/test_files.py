@@ -1,6 +1,6 @@
 """Test file utilities for flext-ldif tests.
 
-Extends object with LDIF-specific file operations.
+Extends t.NormalizedValue with LDIF-specific file operations.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -22,9 +22,9 @@ from .ldif_data import LdifSample, LdifTestData
 class FileManager:
     """Manages test files for LDIF testing.
 
-    Extends object with LDIF-specific file operations.
+    Extends t.NormalizedValue with LDIF-specific file operations.
     Generic file operations (create_text_file, create_binary_file, etc.)
-    are inherited from object.
+    are inherited from t.NormalizedValue.
 
     """
 

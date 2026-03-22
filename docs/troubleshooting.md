@@ -244,10 +244,10 @@ def analyze_entry_issues(entries: list) -> None:
         if not entry.dn or "=" not in entry.dn:
             print("  ❌ Invalid DN format")
 
-        # Check object classes
+        # Check t.NormalizedValue classes
         object_classes = entry.get_object_classes()
         if not object_classes:
-            print("  ❌ Missing object class")
+            print("  ❌ Missing t.NormalizedValue class")
 
         # Check required attributes for person entries
         if "person" in object_classes:
@@ -473,7 +473,7 @@ def debug_railway_chain(file_path: str) -> r[list]:
 ### Health Check Utility
 
 ```python
-def run_health_check() -> dict[str, object]:
+def run_health_check() -> dict[str, t.NormalizedValue]:
     """Run comprehensive health check for FLEXT-LDIF."""
     results = {"status": "healthy", "checks": {}, "warnings": [], "errors": []}
 
@@ -601,7 +601,7 @@ def enable_debug_mode() -> FlextLdif:
 When creating support requests, include:
 
 ```python
-def generate_support_info() -> dict[str, object]:
+def generate_support_info() -> dict[str, t.NormalizedValue]:
     """Generate information for support requests."""
     import sys
     import platform

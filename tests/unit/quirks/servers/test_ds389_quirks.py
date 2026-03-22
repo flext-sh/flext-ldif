@@ -1,7 +1,7 @@
 """Tests for 389 Directory Server (DS389) LDIF quirks handling.
 
 This module tests the FlextLdifServersDs389 implementation for handling 389
-Directory Server-specific attributes, object classes, and entries in LDIF format.
+Directory Server-specific attributes, t.NormalizedValue classes, and entries in LDIF format.
 """
 
 from __future__ import annotations
@@ -66,7 +66,7 @@ class EntryScenario(StrEnum):
 class AttributeTestCase(BaseModel):
     """Test case for attribute detection and parsing."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     scenario: AttributeScenario = Field(description="Attribute scenario identifier")
     attr_definition: str = Field(description="Schema attribute definition string")
@@ -81,7 +81,7 @@ class AttributeTestCase(BaseModel):
 class ObjectClassTestCase(BaseModel):
     """Test case for objectClass detection and parsing."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     scenario: ObjectClassScenario = Field(description="ObjectClass scenario identifier")
     oc_definition: str = Field(description="Schema objectClass definition string")
@@ -100,7 +100,7 @@ class ObjectClassTestCase(BaseModel):
 class AclTestCase(BaseModel):
     """Test case for ACL handling."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     scenario: AclScenario = Field(description="ACL scenario identifier")
     acl_line: str = Field(description="ACL line under test")
@@ -114,7 +114,7 @@ class AclTestCase(BaseModel):
 class EntryTestCase(BaseModel):
     """Test case for entry detection."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     scenario: EntryScenario = Field(description="Entry detection scenario identifier")
     entry_dn: str = Field(description="Entry distinguished name")

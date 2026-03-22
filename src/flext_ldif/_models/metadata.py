@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import builtins
 from collections.abc import (
     ItemsView,
     KeysView,
@@ -23,7 +22,7 @@ class FlextLdifModelsMetadata:
     class DynamicMetadata(FlextModels.ArbitraryTypesModel):
         """Model with extra='allow' for dynamic field storage."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             extra="allow",
             arbitrary_types_allowed=True,
             frozen=False,
@@ -35,7 +34,7 @@ class FlextLdifModelsMetadata:
         relaxed_mode: bool | None = None
 
         @override
-        def __eq__(self, other: builtins.object) -> bool:
+        def __eq__(self, other: t.NormalizedValue) -> bool:
             if isinstance(other, dict):
                 return dict(self.items()) == other
             if isinstance(other, type(self)):
@@ -61,7 +60,7 @@ class FlextLdifModelsMetadata:
             return key in self._extra()
 
         @classmethod
-        def from_dict(cls, data: Mapping[str, builtins.object] | None = None) -> Self:
+        def from_dict(cls, data: Mapping[str, t.NormalizedValue] | None = None) -> Self:
             """Create DynamicMetadata from a dictionary."""
             if data is None:
                 return cls()
@@ -119,7 +118,7 @@ class FlextLdifModelsMetadata:
     class EntryMetadata(FlextModels.ArbitraryTypesModel):
         """Entry metadata for tracking processing details."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             frozen=True,
             extra="allow",
             use_enum_values=True,
@@ -145,7 +144,7 @@ class FlextLdifModelsMetadata:
     class TransformationInfo(FlextModels.ArbitraryTypesModel):
         """Transformation step information stored in metadata."""
 
-        model_config = ConfigDict(extra="forbid", validate_assignment=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", validate_assignment=True)
         step: str | None = None
         server: str | None = None
         changes: ClassVar[list[str]] = []

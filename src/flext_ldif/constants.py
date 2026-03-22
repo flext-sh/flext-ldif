@@ -366,7 +366,7 @@ class FlextLdifConstants(FlextConstants):
             )
 
         class ObjectClasses:
-            """LDAP object class name constants (RFC 4512 standard classes)."""
+            """LDAP t.NormalizedValue class name constants (RFC 4512 standard classes)."""
 
         class RfcBinaryAttributes:
             """RFC 4517 Binary attribute names that typically require ;binary option."""

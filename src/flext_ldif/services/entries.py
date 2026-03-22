@@ -2,14 +2,10 @@
 
 from __future__ import annotations
 
-import builtins
 from collections.abc import Mapping
 from typing import Self, override
 
-from flext_ldif import r
-from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.models import FlextLdifModels as m
+from flext_ldif import FlextLdifServiceBase, FlextLdifUtilitiesDN, m, r, t
 
 
 class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
@@ -45,7 +41,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         return r[str].fail("Dict entry has unsupported 'dn' value type")
 
     @staticmethod
-    def _extract_dn_from_object(entry: builtins.object) -> r[str]:
+    def _extract_dn_from_object(entry: t.NormalizedValue) -> r[str]:
         dn_value = getattr(entry, "dn", None)
         if dn_value is None:
             return r[str].fail("Entry missing DN (dn is None)")

@@ -9,10 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import builtins
 from typing import Final
 
-from flext_ldif import c
+from flext_ldif import c, t
 
 
 class _MissingSentinel:
@@ -26,10 +25,10 @@ class FlextLdifShared:
     """Shared LDIF helpers — single class per module (no loose functions)."""
 
     @staticmethod
-    def _has_attr(obj: builtins.object, attr_name: str) -> bool:
-        """Check if an object has a non-None attribute (canonical implementation).
+    def _has_attr(obj: t.NormalizedValue, attr_name: str) -> bool:
+        """Check if an t.NormalizedValue has a non-None attribute (canonical implementation).
 
-        Uses a sentinel object to distinguish between attributes that are None
+        Uses a sentinel t.NormalizedValue to distinguish between attributes that are None
         and attributes that don't exist at all.
         """
         return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR

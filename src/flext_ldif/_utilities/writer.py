@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import base64
-import builtins
 import struct
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -24,7 +23,7 @@ class FlextLdifUtilitiesWriter:
         ldif_lines: list[str],
         *,
         format_type: str,
-        changetype_config: Mapping[str, builtins.object],
+        changetype_config: Mapping[str, t.NormalizedValue],
     ) -> None:
         """Add changetype lines based on format."""
         include_changetype = bool(u.get(changetype_config, "include_changetype"))
@@ -309,8 +308,8 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def determine_attribute_order(
-        entry_data: Mapping[str, builtins.object],
-    ) -> list[tuple[str, object]] | None:
+        entry_data: Mapping[str, t.NormalizedValue],
+    ) -> list[tuple[str, t.NormalizedValue]] | None:
         """Determine attribute processing order from entry metadata."""
         metadata = entry_data.get("_metadata")
         if metadata is None:
@@ -319,7 +318,7 @@ class FlextLdifUtilitiesWriter:
         metadata_extensions = getattr(metadata, "extensions", None)
         if isinstance(metadata_extensions, Mapping):
             typed_extensions = t.ConfigMap(metadata_extensions).root
-            raw_attr_order: builtins.object | None = typed_extensions.get(
+            raw_attr_order: t.NormalizedValue | None = typed_extensions.get(
                 "attribute_order",
             )
             if isinstance(raw_attr_order, Sequence) and not isinstance(
@@ -341,7 +340,7 @@ class FlextLdifUtilitiesWriter:
             return None
         attr_order = attr_order_raw
         skip_keys = {c.Ldif.DictKeys.DN, "_metadata", "server_type", "_acl_attributes"}
-        result: list[tuple[str, object]] = [
+        result: list[tuple[str, t.NormalizedValue]] = [
             (key, entry_data[key])
             for key in attr_order
             if key in entry_data and key not in skip_keys

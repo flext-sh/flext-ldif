@@ -35,7 +35,7 @@ from flext_ldif import (
     FlextLdifWriter,
     m,
 )
-from tests import FlextLdifFixtures, u
+from tests import FlextLdifFixtures, t, u
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[3]
 LDAP_CONTAINER_NAME = "flext-openldap-test"
@@ -568,7 +568,7 @@ def oud_acl_quirk(oud_quirk: FlextLdifServersBase) -> FlextLdifServersBaseSchema
 
 
 @pytest.fixture(scope="session")
-def ldap_container(worker_id: str) -> dict[str, object]:
+def ldap_container(worker_id: str) -> dict[str, t.NormalizedValue]:
     """Ensure shared OpenLDAP container is available for integration tests."""
     docker_control = u.Tests.Docker(workspace_root=WORKSPACE_ROOT, worker_id=worker_id)
     server_url = f"ldap://localhost:{LDAP_PORT}"
@@ -602,7 +602,7 @@ def ldap_container(worker_id: str) -> dict[str, object]:
 
 
 @pytest.fixture(scope="session")
-def ldap_container_shared(ldap_container: dict[str, object]) -> str:
+def ldap_container_shared(ldap_container: dict[str, t.NormalizedValue]) -> str:
     """Provide LDAP connection URL for tests requiring Docker container."""
     default_url = f"ldap://localhost:{LDAP_PORT}"
     return str(ldap_container.get("server_url", default_url))
@@ -640,7 +640,9 @@ def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
 
 
 @pytest.fixture
-def ldap_connection(ldap_container: dict[str, object]) -> Generator[Connection]:
+def ldap_connection(
+    ldap_container: dict[str, t.NormalizedValue],
+) -> Generator[Connection]:
     """Provide a bound LDAP connection or skip when unavailable."""
     server_url = str(ldap_container.get("server_url", f"ldap://localhost:{LDAP_PORT}"))
     bind_dn = str(ldap_container.get("bind_dn", LDAP_ADMIN_DN))

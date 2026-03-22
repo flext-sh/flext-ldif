@@ -41,7 +41,7 @@ class FlextLdifTypes(FlextTypes):
         type Scalar = _Scalar
         type MetadataValue = _RecursiveMetadata
         type MetadataDict = Mapping[str, MetadataValue]
-        type object = _RecursiveContainer
+        type NormalizedValue = _RecursiveContainer
 
         type ValueType = Scalar | list[str]
         type ValueList = list[ValueType]
@@ -91,19 +91,19 @@ class FlextLdifTypes(FlextTypes):
         class Factories:
             """Factory callable type aliases for LDIF processing.
 
-            These factory types use `object` return/parameter types because they are
+            These factory types use `t.NormalizedValue` return/parameter types because they are
             callables that dynamically create or process instances of diverse,
             unrelated classes (e.g., different filter/categorization implementations).
             This is a permitted exception per AGENTS.md §3.2 exception #1.
             """
 
-            type FilterFactory = Callable[[], object]
-            type CategorizationFactory = Callable[[str], object]
+            type FilterFactory = Callable[[], t.NormalizedValue]
+            type CategorizationFactory = Callable[[str], t.NormalizedValue]
 
         class Decorators:
             """Decorator-related type aliases for quirk server decorators.
 
-            The `self` parameter in wrapped methods is typed as `object` because
+            The `self` parameter in wrapped methods is typed as `t.NormalizedValue` because
             these decorators apply to methods across diverse server classes
             (OID, OUD, RFC, etc.) with no shared base in the type system.
             Runtime isinstance checks narrow types inside the decorator bodies.
@@ -111,7 +111,7 @@ class FlextLdifTypes(FlextTypes):
 
             type ParseMethodArg = str
             type ParseMethodReturn = r[FlextTypes.Scalar | list[str] | None]
-            type ParseMethod = Callable[[object, str], ParseMethodReturn]
+            type ParseMethod = Callable[[t.NormalizedValue, str], ParseMethodReturn]
             type ParseMethodDecorator = Callable[[ParseMethod], ParseMethod]
             type WriteMethodArg = FlextTypes.Scalar | list[str] | None
             type WriteMethodReturn = (
@@ -120,10 +120,12 @@ class FlextLdifTypes(FlextTypes):
                 | None
                 | r[FlextTypes.Scalar | list[str] | None]
             )
-            type WriteMethod = Callable[[object, WriteMethodArg], WriteMethodReturn]
+            type WriteMethod = Callable[
+                [t.NormalizedValue, WriteMethodArg], WriteMethodReturn
+            ]
             type WriteMethodDecorator = Callable[[WriteMethod], WriteMethod]
             type SafeMethod = Callable[
-                [object, ParseMethodArg],
+                [t.NormalizedValue, ParseMethodArg],
                 FlextTypes.Scalar | list[str] | None,
             ]
             type SafeMethodDecorator = Callable[[SafeMethod], SafeMethod]

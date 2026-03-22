@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import builtins
 import struct
 from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar, Self, override
@@ -233,10 +232,10 @@ class FlextLdifServersBaseSchema(
         metadata_extensions["original_format"] = attr_definition.strip()
         metadata_extensions["schema_original_string_complete"] = attr_definition
         quirk_type = FlextLdifServersBaseSchema._resolve_quirk_type(server_type)
-        extensions_typed: dict[str, builtins.object] = {}
+        extensions_typed: dict[str, t.NormalizedValue] = {}
         for key, val in metadata_extensions.items():
             if isinstance(val, list):
-                list_typed: builtins.object = list(val)
+                list_typed: t.NormalizedValue = list(val)
                 extensions_typed[key] = list_typed
             elif val is not None:
                 extensions_typed[key] = val

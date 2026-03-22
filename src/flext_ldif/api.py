@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import builtins
 import struct
 from collections.abc import Mapping
 from pathlib import Path
@@ -30,6 +29,7 @@ from flext_ldif import (
     m,
     p,
     r,
+    t,
     u,
 )
 
@@ -38,7 +38,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     """Main API facade for LDIF operations using composition pattern."""
 
     _instance: ClassVar[FlextLdif | None] = None
-    _init_config_overrides: ClassVar[Mapping[str, builtins.object] | None] = None
+    _init_config_overrides: ClassVar[Mapping[str, t.NormalizedValue] | None] = None
     _processing_service: FlextLdifProcessing | None
     _acl_service: FlextLdifAcl | None
     _parser_service: FlextLdifParser | None
@@ -240,7 +240,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
 
     def extract_acls(
         self,
-        entry: m.Ldif.Entry | BaseModel | Mapping[str, builtins.object],
+        entry: m.Ldif.Entry | BaseModel | Mapping[str, t.NormalizedValue],
     ) -> r[m.Ldif.AclResponse]:
         """Extract ACLs from entry."""
         server_type: str = "rfc"
@@ -280,7 +280,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                 attr_map = entry.attributes.attributes
                 matches_values = True
                 for attr_name, expected in attributes.items():
-                    expected_raw: builtins.object = expected
+                    expected_raw: t.NormalizedValue = expected
                     entry_values = attr_map.get(attr_name)
                     if entry_values is None:
                         matches_values = False
@@ -347,7 +347,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
 
     def get_entry_attributes(
         self,
-        entry: m.Ldif.Entry | BaseModel | Mapping[str, builtins.object],
+        entry: m.Ldif.Entry | BaseModel | Mapping[str, t.NormalizedValue],
     ) -> r[Mapping[str, list[str]]]:
         """Get entry attributes dictionary."""
         match entry:
@@ -368,7 +368,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
 
     def get_entry_objectclasses(
         self,
-        entry: m.Ldif.Entry | BaseModel | Mapping[str, builtins.object],
+        entry: m.Ldif.Entry | BaseModel | Mapping[str, t.NormalizedValue],
     ) -> r[list[str]]:
         """Get entry objectClass values."""
         match entry:

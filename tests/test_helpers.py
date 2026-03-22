@@ -25,6 +25,7 @@ from flext_tests import (
 )
 
 from flext_ldif import FlextLdif, FlextLdifEntries, m
+from tests import t
 
 
 class _TestsBase:
@@ -286,7 +287,7 @@ class TestsFlextLdifMatchers(tm):
         all_have_oc: str | Sequence[str] | None = None,
         any_has_attr: str | Sequence[str] | None = None,
         any_has_oc: str | Sequence[str] | None = None,
-        at_index: dict[int, dict[str, object]] | None = None,
+        at_index: dict[int, dict[str, t.NormalizedValue]] | None = None,
         msg: str | None = None,
     ) -> list[m.Ldif.Entry]:
         """Unified entries list validation - validates counts and entry properties.
@@ -369,7 +370,7 @@ class TestsFlextLdifMatchers(tm):
                         and attrs_obj.attributes is not None
                         else attrs_obj
                         if isinstance(attrs_obj, dict)
-                        else dict[str, object]()
+                        else dict[str, t.NormalizedValue]()
                     )
                     if isinstance(attrs, dict) and all(
                         attr in attrs for attr in attr_list
@@ -393,7 +394,7 @@ class TestsFlextLdifMatchers(tm):
                         and attrs_obj.attributes is not None
                         else attrs_obj
                         if isinstance(attrs_obj, dict)
-                        else dict[str, object]()
+                        else dict[str, t.NormalizedValue]()
                     )
                     if isinstance(attrs, dict):
                         objectclasses_raw = attrs.get(
@@ -535,7 +536,7 @@ class TestsFlextLdifMatchers(tm):
         all_have_oc: str | Sequence[str] | None = None,
         any_has_attr: str | Sequence[str] | None = None,
         any_has_oc: str | Sequence[str] | None = None,
-        at_index: dict[int, dict[str, object]] | None = None,
+        at_index: dict[int, dict[str, t.NormalizedValue]] | None = None,
     ) -> list[m.Ldif.Entry]:
         """Assert r success and validate entries list.
 
@@ -606,7 +607,7 @@ class TestsFlextLdifValidators(tv):
                 if hasattr(attrs_obj, "attributes") and attrs_obj.attributes is not None
                 else attrs_obj
                 if isinstance(attrs_obj, dict)
-                else dict[str, object]()
+                else dict[str, t.NormalizedValue]()
             )
             if not isinstance(attrs, dict):
                 return False

@@ -48,13 +48,13 @@ attributetype ( 1.3.6.1.4.1.42.2.27.4.1.13
  
 attributetype ( 1.3.6.1.4.1.42.2.27.4.1.8
 	NAME 'javaSerializedData'
-	DESC 'Serialized form of a Java object'
+	DESC 'Serialized form of a Java t.NormalizedValue'
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.40
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.4.1.42.2.27.4.1.10
 	NAME 'javaFactory'
-	DESC 'Fully qualified Java class name of a JNDI object factory'
+	DESC 'Fully qualified Java class name of a JNDI t.NormalizedValue factory'
 	EQUALITY caseExactMatch
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
 	SINGLE-VALUE )
@@ -73,14 +73,14 @@ attributetype ( 1.3.6.1.4.1.42.2.27.4.1.12
 
 objectclass ( 1.3.6.1.4.1.42.2.27.4.2.1
 	NAME 'javaContainer'
-	DESC 'Container for a Java object'
+	DESC 'Container for a Java t.NormalizedValue'
 	SUP top
 	STRUCTURAL
 	MUST cn )
 
 objectclass ( 1.3.6.1.4.1.42.2.27.4.2.4
 	NAME 'javaObject'
-	DESC 'Java object representation'
+	DESC 'Java t.NormalizedValue representation'
 	SUP top
 	ABSTRACT
 	MUST javaClassName
@@ -89,14 +89,14 @@ objectclass ( 1.3.6.1.4.1.42.2.27.4.2.4
 
 objectclass ( 1.3.6.1.4.1.42.2.27.4.2.5
 	NAME 'javaSerializedObject'
-	DESC 'Java serialized object'
+	DESC 'Java serialized t.NormalizedValue'
 	SUP javaObject
 	AUXILIARY
 	MUST javaSerializedData )
  
 objectclass ( 1.3.6.1.4.1.42.2.27.4.2.8
 	NAME 'javaMarshalledObject'
-	DESC 'Java marshalled object'
+	DESC 'Java marshalled t.NormalizedValue'
 	SUP javaObject
 	AUXILIARY
 	MUST javaSerializedData )

@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-import builtins
 from abc import ABC
 from typing import override
 
 from flext_core import FlextService, FlextSettings
 
-from flext_ldif import FlextLdifSettings, m
+from flext_ldif import FlextLdifSettings, m, t
 
 
-class FlextLdifServiceBase[TDomainResult: builtins.object](
+class FlextLdifServiceBase[TDomainResult: t.NormalizedValue](
     FlextService[TDomainResult],
     ABC,
 ):

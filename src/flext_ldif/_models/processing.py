@@ -15,7 +15,7 @@ class FlextLdifModelsProcessing:
     class ProcessingResult(FlextLdifModelsBase):
         """Result of entry processing (transform or validate operation)."""
 
-        model_config = ConfigDict(frozen=False, validate_assignment=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False, validate_assignment=True)
         dn: Annotated[
             str,
             Field(..., description="Distinguished name of the processed entry"),

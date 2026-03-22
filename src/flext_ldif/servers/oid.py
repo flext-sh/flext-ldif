@@ -17,7 +17,7 @@ logger = FlextLogger(__name__)
 
 
 class FlextLdifServersOid(FlextLdifServersRfc):
-    """Oracle OID server quirks - implements object."""
+    """Oracle OID server quirks - implements t.NormalizedValue."""
 
     @classmethod
     def get_schema_dn(cls) -> str:

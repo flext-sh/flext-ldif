@@ -17,6 +17,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
+from tests import t
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -109,7 +110,7 @@ class FlextLdifFixtures:
         metadata = loader.get_metadata(FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.SCHEMA)
     """
 
-    _instances: ClassVar[dict[str, object]] = {}
+    _instances: ClassVar[dict[str, t.NormalizedValue]] = {}
 
     @classmethod
     def get_oid(cls) -> FlextLdifFixtures.OID:
@@ -174,7 +175,7 @@ class FlextLdifFixtures:
     class Metadata(BaseModel):
         """Metadata about a loaded fixture."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         server_type: FlextLdifFixtures.ServerType = Field(
             description="LDAP server type for the fixture"
@@ -465,7 +466,7 @@ class FlextLdifFixtures:
             """Load all OID fixtures.
 
             Returns:
-                dict[str, object]: All available OID fixtures
+                dict[str, t.NormalizedValue]: All available OID fixtures
 
             """
             return self._loader.load_all(FlextLdifFixtures.ServerType.OID)

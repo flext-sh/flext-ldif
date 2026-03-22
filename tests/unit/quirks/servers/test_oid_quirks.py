@@ -12,7 +12,7 @@ class TestsTestFlextLdifOidQuirks(s):
         """Test Oracle GUID attribute detection."""
 
     def test_objectclass_parsing(self) -> None:
-        """Test object class parsing."""
+        """Test t.NormalizedValue class parsing."""
 
 
 __all__ = ["TestsTestFlextLdifOidQuirks"]

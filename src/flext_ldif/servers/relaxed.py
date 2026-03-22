@@ -9,7 +9,7 @@ from typing import ClassVar, TypeVar, override
 
 from flext_core import FlextLogger
 
-from flext_ldif import c, m, r, u
+from flext_ldif import c, m, r, t, u
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
@@ -444,7 +444,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return self.can_handle_acl(acl_line)
 
         @override
-        def can_handle_acl(self, acl_line: str | m.Ldif.Acl | object) -> bool:
+        def can_handle_acl(
+            self, acl_line: str | m.Ldif.Acl | t.NormalizedValue
+        ) -> bool:
             """Accept any ACL line in relaxed mode."""
             _ = acl_line
             return True

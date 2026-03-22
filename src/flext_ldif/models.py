@@ -99,7 +99,7 @@ class FlextLdifModels(FlextModels):
         class Stats(BaseModel):
             """Write statistics for batch content operations."""
 
-            model_config = ConfigDict(validate_default=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(validate_default=True)
             total_entries: Annotated[int, Field(default=0, ge=0)]
             successful: Annotated[int, Field(default=0, ge=0)]
             failed: Annotated[int, Field(default=0, ge=0)]

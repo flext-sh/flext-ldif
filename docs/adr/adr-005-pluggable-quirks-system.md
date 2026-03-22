@@ -18,7 +18,7 @@ Server-specific requirements include:
 - **OID**: Oracle-specific schema extensions and operational attributes
 - **OUD**: Case-sensitive DN handling and nested ACL/entry quirks
 - **OpenLDAP**: Custom OID ranges and operational attributes
-- **Active Directory**: Required object classes and attribute handling
+- **Active Directory**: Required t.NormalizedValue classes and attribute handling
 - **Apache DS**: Validation rules and schema extensions
 - **389 DS**: Red Hat specific operational attributes
 - **Novell eDirectory**: Legacy compatibility features

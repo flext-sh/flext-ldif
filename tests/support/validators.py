@@ -52,7 +52,7 @@ class TestValidators:
 
     @staticmethod
     def validate_ldif_entry(entry: p.Entry) -> dict[str, bool]:
-        """Validate a real LDIF entry object.
+        """Validate a real LDIF entry t.NormalizedValue.
 
         Args:
             entry: The LDIF entry to validate.
@@ -81,7 +81,7 @@ class TestValidators:
         }
 
     @staticmethod
-    def validate_result_success(result: r[t.Ldif.object]) -> dict[str, bool]:
+    def validate_result_success(result: r[t.Ldif.t.NormalizedValue]) -> dict[str, bool]:
         """Validate r success characteristics."""
         return {
             "is_success": result.is_success,

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import base64
-import builtins
 import re
 from collections.abc import Mapping
 from contextlib import suppress
@@ -13,11 +12,15 @@ from typing import Annotated, ClassVar, Self, override
 from flext_core import FlextLogger, FlextService, r, u as core_u
 from pydantic import Field, ValidationError
 
-from flext_ldif import c, p
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._models.settings import FlextLdifModelsSettings
-from flext_ldif.models import m
-from flext_ldif.servers._base.constants import QuirkMethodsMixin
+from flext_ldif import (
+    FlextLdifModelsDomains,
+    FlextLdifModelsSettings,
+    QuirkMethodsMixin,
+    c,
+    m,
+    p,
+    t,
+)
 
 logger = FlextLogger(__name__)
 
@@ -59,11 +62,11 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
     ) -> FlextLdifModelsSettings.WriteFormatOptions | None:
         if metadata is None:
             return None
-        format_options_raw: builtins.object | None = metadata.extensions.get(
+        format_options_raw: t.NormalizedValue | None = metadata.extensions.get(
             "write_format_options",
         )
         if isinstance(format_options_raw, Mapping):
-            format_options_map: dict[str, builtins.object] = {}
+            format_options_map: dict[str, t.NormalizedValue] = {}
             for raw_key, raw_value in format_options_raw.items():
                 key = str(raw_key)
                 format_options_map[key] = raw_value
@@ -102,9 +105,11 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         return False
 
     @override
-    def execute(self, **kwargs: Mapping[str, builtins.object]) -> r[m.Ldif.Entry | str]:
+    def execute(
+        self, **kwargs: Mapping[str, t.NormalizedValue]
+    ) -> r[m.Ldif.Entry | str]:
         """Execute entry operation (parse/write)."""
-        kwargs_map: Mapping[str, builtins.object] = kwargs
+        kwargs_map: Mapping[str, t.NormalizedValue] = kwargs
         ldif_content = kwargs_map.get("ldif_content")
         entry_model = kwargs_map.get("entry_model")
         if isinstance(ldif_content, str):
@@ -195,7 +200,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         self,
         write_options: FlextLdifModelsSettings.WriteFormatOptions
         | FlextLdifModelsDomains.WriteOptions
-        | object,
+        | t.NormalizedValue,
     ) -> FlextLdifModelsDomains.WriteOptions:
         if isinstance(write_options, FlextLdifModelsDomains.WriteOptions):
             return write_options
@@ -313,7 +318,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         use_original_acl_format_as_name = False
         hidden_attributes: set[str] = set()
         acl_original_format: str | None = None
-        extensions_data: Mapping[str, builtins.object] = {}
+        extensions_data: Mapping[str, t.NormalizedValue] = {}
         if entry_data.metadata:
             metadata_extensions = entry_data.metadata.extensions
             if core_u.is_type(metadata_extensions, Mapping):

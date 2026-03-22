@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import builtins
 from collections.abc import Sequence
 from typing import TypeIs
 
@@ -29,9 +28,9 @@ class FlextLdifUtilitiesTypeGuards(u):
 
     @staticmethod
     def is_entry_sequence(
-        obj: builtins.object,
+        obj: t.NormalizedValue,
     ) -> TypeIs[Sequence[t.Container]]:
-        """Check if object is a Sequence of Entry instances.
+        """Check if t.NormalizedValue is a Sequence of Entry instances.
 
         Uses duck typing to identify Entry sequences:
         - Must be a Sequence (list, tuple, etc.)
@@ -42,7 +41,7 @@ class FlextLdifUtilitiesTypeGuards(u):
             obj: Object to check
 
         Returns:
-            True if object is a Sequence of Entry-like objects
+            True if t.NormalizedValue is a Sequence of Entry-like objects
 
         """
         if (

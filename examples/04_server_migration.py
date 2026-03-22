@@ -20,7 +20,7 @@ from pathlib import Path
 
 from flext_core import r
 
-from flext_ldif import FlextLdif, m, u
+from flext_ldif import FlextLdif, m, t, u
 
 
 class ExampleServerMigration:
@@ -60,11 +60,11 @@ class ExampleServerMigration:
     @staticmethod
     def _detect_server_type(
         api: FlextLdif, source_dir: Path
-    ) -> tuple[str, dict[str, object]]:
+    ) -> tuple[str, dict[str, t.NormalizedValue]]:
         """Detect server type from source data."""
         sample_file = source_dir / "data_00.ldif"
         detect_result = api.detect_server_type(ldif_content=sample_file)
-        detection_data: dict[str, object] = {}
+        detection_data: dict[str, t.NormalizedValue] = {}
         if detect_result.is_success:
             detection = detect_result.value
             detection_data = {
@@ -91,20 +91,22 @@ class ExampleServerMigration:
         return (source_dir, intermediate_dir, final_dir)
 
     @staticmethod
-    def auto_detection_migration_pipeline() -> r[dict[str, object]]:
+    def auto_detection_migration_pipeline() -> r[dict[str, t.NormalizedValue]]:
         """Migration pipeline with automatic server detection."""
         api = FlextLdif.get_instance()
         mixed_ldif = 'dn: cn=Auto Detect Test,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Auto Detect Test\nsn: Test\nmail: auto@example.com\n# This could be from OID (has orclaci) or OUD (has aci)\norclaci: access to * by * read\naci: (target="ldap:///cn=Auto Detect Test")(version 3.0; acl "test"; allow (read) userdn="ldap:///anyone";)\n\ndn: cn=Auto Group,ou=Groups,dc=example,dc=com\nobjectClass: groupOfUniqueNames\nobjectClass: groupOfNames\ncn: Auto Group\nuniquemember: cn=Auto Detect Test,ou=People,dc=example,dc=com\nmember: cn=Auto Detect Test,ou=People,dc=example,dc=com\n'
         detect_result = api.detect_server_type(ldif_content=mixed_ldif)
         if detect_result.is_failure:
-            return r[dict[str, object]].fail(
+            return r[dict[str, t.NormalizedValue]].fail(
                 f"Server detection failed: {detect_result.error}"
             )
         detection = detect_result.value
         detected_server = detection.detected_server_type or "rfc"
         parse_result = api.parse(mixed_ldif, server_type=detected_server)
         if parse_result.is_failure:
-            return r[dict[str, object]].fail(f"Parse failed: {parse_result.error}")
+            return r[dict[str, t.NormalizedValue]].fail(
+                f"Parse failed: {parse_result.error}"
+            )
         entries = parse_result.value
         migration_dir = Path("examples/auto_migration")
         migration_dir.mkdir(exist_ok=True, parents=True)
@@ -116,10 +118,10 @@ class ExampleServerMigration:
             target_server="rfc",
         )
         if migration_result.is_failure:
-            return r[dict[str, object]].fail(
+            return r[dict[str, t.NormalizedValue]].fail(
                 f"Migration to RFC failed: {migration_result.error}"
             )
-        return r[dict[str, object]].ok({
+        return r[dict[str, t.NormalizedValue]].ok({
             "detected_server": detected_server,
             "confidence": detection.confidence,
             "patterns_found": detection.patterns_found,
@@ -128,7 +130,7 @@ class ExampleServerMigration:
         })
 
     @staticmethod
-    def batch_server_comparison() -> r[dict[str, object]]:
+    def batch_server_comparison() -> r[dict[str, t.NormalizedValue]]:
         """Batch comparison of parsing across multiple LDAP servers."""
         api = FlextLdif.get_instance()
         test_ldif = 'dn: cn=Server Comparison,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Server Comparison\nsn: Test\nmail: comparison@example.com\n# OID-specific attributes\norclguid: abc123def456\norclaci: access to attr=mail by * read\n# OUD-specific attributes\naci: (targetattr="mail")(version 3.0; acl "mail access"; allow (read,search) userdn="ldap:///anyone";)\n# OpenLDAP-specific attributes\nentryUUID: 12345678-1234-1234-1234-123456789012\nentryCSN: 20240101000000.000000Z#000000#000#000000\n'
@@ -180,7 +182,7 @@ class ExampleServerMigration:
         })
 
     @staticmethod
-    def comprehensive_migration_workflow() -> r[dict[str, object]]:
+    def comprehensive_migration_workflow() -> r[dict[str, t.NormalizedValue]]:
         """Comprehensive migration workflow with parallel processing and validation."""
         api = FlextLdif.get_instance()
         workflow_dir = Path("examples/comprehensive_migration")
@@ -204,7 +206,7 @@ class ExampleServerMigration:
             ),
         )
         if intermediate_migration.is_failure:
-            return r[dict[str, object]].fail(
+            return r[dict[str, t.NormalizedValue]].fail(
                 f"Intermediate migration failed: {intermediate_migration.error}"
             )
         final_migration = api.migrate(
@@ -214,7 +216,7 @@ class ExampleServerMigration:
             target_server="rfc",
         )
         if final_migration.is_failure:
-            return r[dict[str, object]].fail(
+            return r[dict[str, t.NormalizedValue]].fail(
                 f"Final migration failed: {final_migration.error}"
             )
         final_result = final_migration.value
@@ -229,7 +231,7 @@ class ExampleServerMigration:
             "parallel_processing": True,
             "validation_performed": True,
         }
-        return r[dict[str, object]].ok(workflow_results)
+        return r[dict[str, t.NormalizedValue]].ok(workflow_results)
 
     @staticmethod
     def parallel_server_migration() -> r[m.Ldif.LdifResults.MigrationPipelineResult]:

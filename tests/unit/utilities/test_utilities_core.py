@@ -10,11 +10,11 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from tests import c, m, s, u
+from tests import c, m, u
 
 
 @pytest.mark.unit
-class TestsFlextLdifDnOperationsPure(s):
+class TestsFlextLdifDnOperationsPure:
     """Test DN operations as pure functions returning primitives."""
 
     def test_norm_component_basic(self) -> None:

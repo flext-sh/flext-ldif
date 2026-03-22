@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-import builtins
 import re
 from collections.abc import Callable
 from typing import Final
 
 from flext_core import r
 
-from flext_ldif import c
-from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
+from flext_ldif import FlextLdifUtilitiesSchema, c, t
 
 
 class FlextLdifUtilitiesAttribute:
@@ -65,8 +63,9 @@ class FlextLdifUtilitiesAttribute:
         definition: str,
         *,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], r[dict[str, builtins.object]]] | None = None,
-    ) -> r[dict[str, builtins.object]]:
+        parse_parts_hook: Callable[[str], r[dict[str, t.NormalizedValue]]]
+        | None = None,
+    ) -> r[dict[str, t.NormalizedValue]]:
         """Parse RFC 4512 attribute definition into structured data."""
         _ = server_type
         if parse_parts_hook:

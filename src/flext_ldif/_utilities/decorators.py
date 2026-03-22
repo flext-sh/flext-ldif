@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import builtins
 import struct
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -32,11 +31,11 @@ _TDecoratorReturn = TypeVar(
 
 
 def _is_metadata_attachable(
-    obj: builtins.object,
+    obj: t.NormalizedValue,
 ) -> TypeIs[
     m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
 ]:
-    """Type guard to check if object supports metadata attachment."""
+    """Type guard to check if t.NormalizedValue supports metadata attachment."""
     return isinstance(
         obj,
         (m.Ldif.Entry, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl),
@@ -48,7 +47,7 @@ class FlextLdifUtilitiesDecorators:
 
     @staticmethod
     def _attach_metadata_if_present(
-        result_value: builtins.object | None,
+        result_value: t.NormalizedValue | None,
         quirk_type: str,
         server_type: str | None,
     ) -> None:
@@ -59,7 +58,7 @@ class FlextLdifUtilitiesDecorators:
             "server_type": server_type,
             "parsed_timestamp": datetime.now(UTC).replace(microsecond=0).isoformat(),
         }
-        extensions_dict: dict[str, builtins.object] = {
+        extensions_dict: dict[str, t.NormalizedValue] = {
             key: value
             for key, value in extensions_dict_raw.items()
             if value is not None
@@ -85,7 +84,7 @@ class FlextLdifUtilitiesDecorators:
             logger.debug(f"Failed to attach metadata: {e}")
 
     @staticmethod
-    def _get_server_type_from_class(obj: builtins.object) -> str | None:
+    def _get_server_type_from_class(obj: t.NormalizedValue) -> str | None:
         """Extract SERVER_TYPE from class Constants via MRO traversal."""
         if not getattr(obj, "__class__", None) is not None:
             return None
@@ -108,7 +107,7 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: builtins.object,
+                self: t.NormalizedValue,
                 arg: t.Ldif.Decorators.ParseMethodArg,
             ) -> t.Ldif.Decorators.ParseMethodReturn:
                 def _parse_error(message: str) -> t.Ldif.Decorators.ParseMethodReturn:
@@ -139,7 +138,7 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: builtins.object,
+                self: t.NormalizedValue,
                 arg: str,
             ) -> t.Ldif.Decorators.ParseMethodReturn:
                 """Call original function and attach metadata to result."""
@@ -175,7 +174,7 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: builtins.object,
+                self: t.NormalizedValue,
                 arg: t.Ldif.Decorators.WriteMethodArg,
             ) -> t.Ldif.Decorators.WriteMethodReturn:
                 return func(self, arg)
@@ -199,7 +198,7 @@ class FlextLdifUtilitiesDecorators:
 
             @wraps(func)
             def wrapper(
-                self: builtins.object,
+                self: t.NormalizedValue,
                 arg: t.Ldif.Decorators.WriteMethodArg,
             ) -> t.Ldif.Decorators.WriteMethodReturn:
                 def _write_error(message: str) -> t.Ldif.Decorators.WriteMethodReturn:
@@ -220,8 +219,8 @@ class FlextLdifUtilitiesDecorators:
     @staticmethod
     def _execute_safe_operation(
         operation_name: str,
-        func: Callable[[builtins.object, _TDecoratorArg], _TDecoratorReturn],
-        self_obj: builtins.object,
+        func: Callable[[t.NormalizedValue, _TDecoratorArg], _TDecoratorReturn],
+        self_obj: t.NormalizedValue,
         arg: _TDecoratorArg,
         on_error: Callable[[str], _TDecoratorReturn],
     ) -> _TDecoratorReturn:

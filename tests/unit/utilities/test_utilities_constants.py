@@ -13,7 +13,7 @@ from typing import ClassVar
 import pytest
 from flext_tests import tm
 
-from tests import s, u
+from tests import u
 
 
 @unique
@@ -44,7 +44,7 @@ class ValidateManyType(StrEnum):
 
 
 @pytest.mark.unit
-class TestsTestFlextLdifConstants(s):
+class TestsTestFlextLdifConstants:
     """Test constants utilities."""
 
     GET_VALID_VALUES_DATA: ClassVar[

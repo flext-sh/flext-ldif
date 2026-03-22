@@ -32,7 +32,7 @@ class FlextLdifUtilitiesOID:
         schema_obj: FlextLdifModelsDomains.SchemaAttribute
         | FlextLdifModelsDomains.SchemaObjectClass,
     ) -> str | None:
-        """Extract OID from schema object metadata or model."""
+        """Extract OID from schema t.NormalizedValue metadata or model."""
         if schema_obj.metadata and schema_obj.metadata.extensions:
             original_format = schema_obj.metadata.extensions.original_format
             if not isinstance(original_format, str):

@@ -15,7 +15,7 @@ from flext_ldif.typings import t as ldif_t
 class FlextLdifModelsBase(m.ArbitraryTypesModel):
     """Base class for all FLEXT-LDIF models (events, configs, processing results)."""
 
-    model_config = ConfigDict(
+    model_config: ClassVar[ConfigDict] = ConfigDict(
         strict=True,
         validate_assignment=True,
         extra="forbid",
@@ -68,25 +68,25 @@ class SchemaElement(FlextLdifModelsBase):
 class FrozenLdifModel(FlextLdifModelsBase):
     """Immutable LDIF model — FlextLdifModelsBase with frozen=True."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
 
 class FrozenIgnoreLdifModel(m.ArbitraryTypesModel):
     """Immutable LDIF model that silently ignores extra fields."""
 
-    model_config = ConfigDict(frozen=True, extra="ignore")
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="ignore")
 
 
 class MutableIgnoreLdifModel(FlextLdifModelsBase):
     """Mutable LDIF model that silently ignores extra fields."""
 
-    model_config = ConfigDict(frozen=False, extra="ignore")
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False, extra="ignore")
 
 
 class AclElement(m.ArbitraryTypesModel):
     """Base class for all ACL-related models."""
 
-    model_config = ConfigDict(
+    model_config: ClassVar[ConfigDict] = ConfigDict(
         strict=True,
         frozen=False,
         extra="forbid",

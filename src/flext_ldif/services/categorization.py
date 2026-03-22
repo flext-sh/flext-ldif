@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import builtins
 import struct
 from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Final, override
@@ -138,7 +137,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         return category
 
     @staticmethod
-    def _ensure_entry_model(value: builtins.object) -> m.Ldif.Entry | None:
+    def _ensure_entry_model(value: t.NormalizedValue) -> m.Ldif.Entry | None:
         if isinstance(value, m.Ldif.Entry):
             return value
         if isinstance(value, BaseModel):
@@ -170,7 +169,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         return (included, excluded)
 
     @staticmethod
-    def _has_attr(obj: builtins.object | type, attr_name: str) -> bool:
+    def _has_attr(obj: t.NormalizedValue | type, attr_name: str) -> bool:
         return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
 
     @staticmethod
@@ -262,7 +261,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 filtered[category] = passthrough_entries
         if excluded_entries:
             rejected_category = c.Ldif.Category.REJECTED
-            existing_rejected_raw: Sequence[builtins.object] = filtered.get(
+            existing_rejected_raw: Sequence[t.NormalizedValue] = filtered.get(
                 rejected_category,
                 [],
             )
@@ -460,7 +459,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 filtered[category] = passthrough_entries
         if all_excluded_entries:
             rejected_category = c.Ldif.Category.REJECTED
-            existing_rejected_raw: Sequence[builtins.object] = filtered.get(
+            existing_rejected_raw: Sequence[t.NormalizedValue] = filtered.get(
                 rejected_category,
                 [],
             )

@@ -68,7 +68,7 @@ class TestsTestFlextLdifProtocols(s):
         """Server implementation for schema protocol testing."""
 
         __test__ = False
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         name: str = Field(description="Protocol server implementation name")
         server_class: type = Field(description="Server implementation class")

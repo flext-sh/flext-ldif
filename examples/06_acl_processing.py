@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_ldif import FlextLdif, FlextLdifModels, m, u
+from flext_ldif import FlextLdif, FlextLdifModels, m, t, u
 
 
 def extract_acls_from_entry() -> None:
@@ -55,7 +55,7 @@ def parse_and_evaluate_acls() -> None:
         return
     acl_response = acl_result.value
     acls = acl_response.acls
-    eval_context: dict[str, object] = {
+    eval_context: dict[str, t.NormalizedValue] = {
         "subject_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
         "target_dn": "ou=People,dc=example,dc=com",
         "permissions": {"read": True, "write": True},
@@ -134,7 +134,7 @@ def acl_pipeline() -> None:
         return
     acl_response = acl_result.value
     acls = acl_response.acls
-    eval_context: dict[str, object] = {
+    eval_context: dict[str, t.NormalizedValue] = {
         "subject_dn": "cn=anonymous",
         "permissions": {"read": True},
     }

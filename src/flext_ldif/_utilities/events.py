@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import builtins
 from collections.abc import Mapping
 
 from flext_ldif import p, t
@@ -100,7 +99,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _to_error_details_list(
-        error_details: list[builtins.object] | tuple[builtins.object, ...] | None,
+        error_details: list[t.NormalizedValue] | tuple[t.NormalizedValue, ...] | None,
     ) -> list[str]:
         if error_details is None:
             return []

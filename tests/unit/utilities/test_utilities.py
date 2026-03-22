@@ -20,10 +20,10 @@ from flext_ldif import (
     FlextLdifStatistics,
     services,
 )
-from tests import c, m, s
+from tests import c, m
 
 
-class TestsTestFlextLdifServiceAPIs(s):
+class TestsTestFlextLdifServiceAPIs:
     """Test that newer service APIs are available and work correctly.
 
     Tests service instantiation and import availability using parametrized tests

@@ -24,7 +24,7 @@ _CONTAINER_TYPES: tuple[type[t.Container], ...] = (
 
 
 class ConvertToStr(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["str"] = "str"
     value: Annotated[_ConvertValue, Field(...)]
     default: _ConvertValue | None = None
@@ -37,7 +37,7 @@ class ConvertToStr(BaseModel):
 
 
 class ConvertToInt(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["int"] = "int"
     value: Annotated[_ConvertValue, Field(...)]
     default: _ConvertValue | None = None
@@ -50,7 +50,7 @@ class ConvertToInt(BaseModel):
 
 
 class ConvertToFloat(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["float"] = "float"
     value: Annotated[_ConvertValue, Field(...)]
     default: _ConvertValue | None = None
@@ -63,7 +63,7 @@ class ConvertToFloat(BaseModel):
 
 
 class ConvertToBool(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["bool"] = "bool"
     value: Annotated[_ConvertValue, Field(...)]
     default: _ConvertValue | None = None
@@ -79,7 +79,7 @@ class ConvertToBool(BaseModel):
 
 
 class ConvertToList(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["list"] = "list"
     value: Annotated[_ConvertValue, Field(...)]
     default: _ConvertValue | None = None
@@ -95,7 +95,7 @@ class ConvertToList(BaseModel):
 
 
 class ConvertToTuple(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["tuple"] = "tuple"
     value: Annotated[_ConvertValue, Field(...)]
     default: _ConvertValue | None = None
@@ -111,7 +111,7 @@ class ConvertToTuple(BaseModel):
 
 
 class ConvertToDict(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="forbid")
     target_type: Literal["dict"] = "dict"
     value: Annotated[_ConvertValue, Field(...)]
     default: _ConvertValue | None = None

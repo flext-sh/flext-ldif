@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import builtins
 from collections.abc import Sequence
 from typing import Annotated, Self, overload
 
@@ -36,7 +35,7 @@ class FlextLdifModelsResults:
     )
 
     class StatisticsSummary(FlextLdifModelsBase):
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         total_entries: int = 0
         processed_entries: int = 0
         failed_entries: int = 0
@@ -56,14 +55,14 @@ class FlextLdifModelsResults:
         entries_written: int = 0
 
     class MigrationSummary(FlextLdifModelsBase):
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         statistics: FlextLdifModelsResults.StatisticsSummary | None = None
         entry_count: int = 0
         output_files: int = 0
         is_empty: bool = True
 
     class EntryResult(FlextLdifModelsBase):
-        model_config = ConfigDict(frozen=True, validate_default=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, validate_default=True)
         entries_by_category: Annotated[
             FlextLdifModelsCollections.FlexibleCategories,
             Field(default_factory=FlextLdifModelsCollections.FlexibleCategories),
@@ -179,7 +178,7 @@ class FlextLdifModelsResults:
             )
 
     class Statistics(m.Statistics):
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             frozen=True,
             extra="forbid",
             validate_default=True,
@@ -338,7 +337,7 @@ class FlextLdifModelsResults:
             )
 
     class MigrationPipelineResult(FlextLdifModelsBase):
-        model_config = ConfigDict(frozen=True, validate_default=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, validate_default=True)
         migrated_schema: Annotated[
             FlextLdifModelsCollections.SchemaContent,
             Field(default_factory=FlextLdifModelsCollections.SchemaContent),
@@ -384,7 +383,7 @@ class FlextLdifModelsResults:
     class MigrationComparisonResult(FlextLdifModelsBase):
         """Result of a migration comparison between source and target."""
 
-        model_config = ConfigDict(frozen=True, validate_default=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, validate_default=True)
         total_oid: t.NonNegativeInt
         total_target: t.NonNegativeInt
         status: Annotated[str, Field()]
@@ -396,7 +395,7 @@ class FlextLdifModelsResults:
     class MigrationWorkflowResult(FlextLdifModelsBase):
         """Result of a comprehensive migration workflow."""
 
-        model_config = ConfigDict(frozen=True, validate_default=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, validate_default=True)
         intermediate_migration: Annotated[str, Field()]
         final_migration: Annotated[str, Field()]
         final_entry_count: t.NonNegativeInt
@@ -410,7 +409,7 @@ class FlextLdifModelsResults:
     class AutoDetectionResult(FlextLdifModelsBase):
         """Result of an auto-detection migration pipeline."""
 
-        model_config = ConfigDict(frozen=True, validate_default=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, validate_default=True)
         detected_server: Annotated[str, Field()]
         confidence: t.DecimalFraction
         patterns_found: Annotated[list[str], Field(default_factory=list)]
@@ -420,7 +419,7 @@ class FlextLdifModelsResults:
     class ServerComparisonSummary(FlextLdifModelsBase):
         """Summary of batch server comparisons."""
 
-        model_config = ConfigDict(frozen=True, validate_default=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, validate_default=True)
         servers_tested: t.NonNegativeInt
         successful_parses: t.NonNegativeInt
         success_rate: t.NonNegativeFloat
@@ -430,7 +429,7 @@ class FlextLdifModelsResults:
         ]
 
     class ClientStatus(m.Value):
-        model_config = ConfigDict(frozen=True, validate_default=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, validate_default=True)
         status: Annotated[str, Field()]
         services: Annotated[list[str], Field(default_factory=list)]
         config: Annotated[
@@ -439,7 +438,7 @@ class FlextLdifModelsResults:
         ]
 
     class ValidationResult(FlextLdifModelsBase):
-        model_config = ConfigDict(frozen=True, validate_default=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, validate_default=True)
         is_valid: Annotated[bool, Field()]
         total_entries: t.NonNegativeInt
         valid_entries: t.NonNegativeInt
@@ -453,7 +452,7 @@ class FlextLdifModelsResults:
             return self.valid_entries / self.total_entries * 100.0
 
     class EntryAnalysisResult(FlextLdifModelsBase):
-        model_config = ConfigDict(frozen=True, validate_default=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, validate_default=True)
         total_entries: t.NonNegativeInt
         objectclass_distribution: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
@@ -466,7 +465,7 @@ class FlextLdifModelsResults:
             return len(self.objectclass_distribution)
 
     class ServerDetectionResult(FlextLdifModelsBase):
-        model_config = ConfigDict(frozen=True, validate_default=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, validate_default=True)
         detected_server_type: Annotated[c.Ldif.LiteralTypes.ServerTypeLiteral, Field()]
         confidence: t.DecimalFraction
         scores: Annotated[
@@ -544,7 +543,7 @@ class FlextLdifModelsResults:
         def keys(self) -> list[str]:
             return list(self.model_fields_set)
 
-        def _resolve_key(self, key: str) -> builtins.object:
+        def _resolve_key(self, key: str) -> t.NormalizedValue:
             if key in type(self).model_fields:
                 return getattr(self, key)
             extra = self.__pydantic_extra__
@@ -618,7 +617,7 @@ class FlextLdifModelsResults:
         ]
 
     class ParseResponse(m.Value):
-        model_config = ConfigDict(frozen=True, validate_default=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, validate_default=True)
         entries: Annotated[
             Sequence[FlextLdifModelsDomains.Entry],
             Field(default_factory=tuple),
@@ -634,7 +633,7 @@ class FlextLdifModelsResults:
             ]
 
     class AclResponse(m.Value):
-        model_config = ConfigDict(frozen=True, validate_default=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, validate_default=True)
         acls: Annotated[
             Sequence[FlextLdifModelsDomains.Acl],
             Field(default_factory=tuple),
@@ -642,13 +641,13 @@ class FlextLdifModelsResults:
         statistics: Annotated[FlextLdifModelsResults.Statistics, Field()]
 
     class AclEvaluationResult(m.Value):
-        model_config = ConfigDict(frozen=True, validate_default=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, validate_default=True)
         granted: bool = False
         matched_acl: FlextLdifModelsDomains.Acl | None = None
         message: str = ""
 
     class WriteResponse(m.Value):
-        model_config = ConfigDict(frozen=True, validate_default=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, validate_default=True)
         content: str | None = None
         statistics: Annotated[FlextLdifModelsResults.Statistics, Field()]
 

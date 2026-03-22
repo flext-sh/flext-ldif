@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import builtins
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
@@ -55,7 +54,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             @property
-            def extensions(self) -> Mapping[str, builtins.object]:
+            def extensions(self) -> Mapping[str, t.NormalizedValue]:
                 """Get server-specific extensions."""
                 ...
 
@@ -147,7 +146,7 @@ class FlextLdifProtocols(FlextProtocols):
 
         @runtime_checkable
         class SchemaObjectClass(Protocol):
-            """Protocol for LDIF schema object classes."""
+            """Protocol for LDIF schema t.NormalizedValue classes."""
 
             @property
             def oid(self) -> str:
@@ -228,7 +227,7 @@ class FlextLdifProtocols(FlextProtocols):
                     | FlextLdifProtocols.Ldif.SchemaObjectClass
                 ],
             ]:
-                """Method to parse LDIF into schema object."""
+                """Method to parse LDIF into schema t.NormalizedValue."""
                 ...
 
             @property
@@ -239,7 +238,7 @@ class FlextLdifProtocols(FlextProtocols):
                 | FlextLdifProtocols.Ldif.SchemaObjectClass
                 | FlextLdifProtocols.Ldif.SchemaQuirk
             ):
-                """Source schema object to convert."""
+                """Source schema t.NormalizedValue to convert."""
                 ...
 
             @property
@@ -250,12 +249,12 @@ class FlextLdifProtocols(FlextProtocols):
                 | FlextLdifProtocols.Ldif.SchemaObjectClass
                 | FlextLdifProtocols.Ldif.SchemaQuirk
             ):
-                """Target schema object template."""
+                """Target schema t.NormalizedValue template."""
                 ...
 
             @property
             def write_method(self) -> Callable[..., r[str]]:
-                """Method to write schema object to LDIF."""
+                """Method to write schema t.NormalizedValue to LDIF."""
                 ...
 
         @runtime_checkable
@@ -466,7 +465,7 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for fluent builders."""
 
             def build(self) -> TConfig:
-                """Build the final configuration object."""
+                """Build the final configuration t.NormalizedValue."""
                 ...
 
         @runtime_checkable
@@ -484,7 +483,7 @@ class FlextLdifProtocols(FlextProtocols):
             server_type: str
             priority: int
 
-            def parse(self, ldif_text: str) -> r[builtins.object]:
+            def parse(self, ldif_text: str) -> r[t.NormalizedValue]:
                 """Parse LDIF text to Entry models."""
                 ...
 
@@ -540,7 +539,7 @@ class FlextLdifProtocols(FlextProtocols):
         class ValuePredicate(Protocol):
             """Protocol for predicates that tesobject values."""
 
-            def __call__(self, value: builtins.object, /) -> bool:
+            def __call__(self, value: t.NormalizedValue, /) -> bool:
                 """Test if value matches predicate condition."""
                 ...
 

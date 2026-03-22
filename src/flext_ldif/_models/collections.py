@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import builtins
 from collections.abc import Iterator, Sequence
 from typing import TYPE_CHECKING, Annotated, override
 
@@ -43,7 +42,7 @@ def _schema_object_classes_factory() -> list[FlextLdifModelsDomains.SchemaObject
 
 class FlextLdifModelsCollections:
     class DynamicCounts(FlextLdifModelsBase):
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             frozen=False,
             extra="allow",
             use_enum_values=True,
@@ -51,7 +50,7 @@ class FlextLdifModelsCollections:
         )
 
         @override
-        def __eq__(self, other: builtins.object) -> bool:
+        def __eq__(self, other: t.NormalizedValue) -> bool:
             if isinstance(other, dict):
                 self_dict = {
                     key: value
@@ -119,7 +118,7 @@ class FlextLdifModelsCollections:
             return {str(k): v for k, v in extra.items()}
 
     class SchemaContent(FlextLdifModelsBase):
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         attributes: Annotated[
             list[FlextLdifModelsDomains.SchemaAttribute],
             Field(default_factory=_schema_attributes_factory),
@@ -137,7 +136,7 @@ class FlextLdifModelsCollections:
             self[key] = value
 
     class BooleanFlags(FlextLdifModelsBase):
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             frozen=True,
             extra="allow",
             use_enum_values=True,
@@ -145,7 +144,7 @@ class FlextLdifModelsCollections:
         )
 
         @override
-        def __eq__(self, other: builtins.object) -> bool:
+        def __eq__(self, other: t.NormalizedValue) -> bool:
             if isinstance(other, dict):
                 extra = self.model_extra
                 return (extra or {}) == other
@@ -167,14 +166,14 @@ class FlextLdifModelsCollections:
             return bool(extra[key])
 
     class FlexibleCategories(FlextLdifModelsBase):
-        model_config = ConfigDict(extra="allow", frozen=False)
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow", frozen=False)
         categories: Annotated[
             dict[str, list[FlextLdifModelsDomains.Entry]],
             Field(default_factory=dict),
         ]
 
         @override
-        def __eq__(self, other: builtins.object) -> bool:
+        def __eq__(self, other: t.NormalizedValue) -> bool:
             if isinstance(other, self.__class__):
                 return self.categories == other.categories
             if isinstance(other, dict):
@@ -203,7 +202,7 @@ class FlextLdifModelsCollections:
         def add_entries(
             self,
             category: str,
-            entries: Sequence[builtins.object],
+            entries: Sequence[t.NormalizedValue],
         ) -> None:
             domains = _get_domains()
             existing = self._entry_categories().get(category, [])

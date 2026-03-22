@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import builtins
 from collections.abc import Callable, Mapping, Sequence
 from typing import ClassVar, Self, overload, override
 
@@ -22,7 +21,7 @@ logger = FlextLogger(__name__)
 class FlextLdifServersBase(s[m.Ldif.Entry]):
     """Base class for LDIF/LDAP server quirks as FlextService V2."""
 
-    model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
+    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True, extra="allow")
     server_type: ClassVar[str]
     priority: ClassVar[int]
 
@@ -98,7 +97,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         """Override __new__ to support auto-execute and processor instantiation."""
         instance: Self = object.__new__(cls)
         filtered_kwargs: dict[str, str | float | bool] = {}
-        execute_kwargs: dict[str, builtins.object] = {}
+        execute_kwargs: dict[str, t.NormalizedValue] = {}
         for k, v in kwargs.items():
             value = v
             if isinstance(value, (str, float, bool)):
@@ -161,7 +160,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     @classmethod
     def _extract_execute_params(
         cls,
-        kwargs: Mapping[str, builtins.object],
+        kwargs: Mapping[str, t.NormalizedValue],
     ) -> tuple[str | None, list[m.Ldif.Entry] | None, str | None]:
         """Extract type-safe execution parameters from kwargs."""
         return (
@@ -171,10 +170,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         )
 
     @classmethod
-    def _get_priority_from_mro(cls, quirk_class: type[builtins.object]) -> int:
+    def _get_priority_from_mro(cls, quirk_class: type[t.NormalizedValue]) -> int:
         """Get priority from parent class Constants via MRO traversal."""
 
-        def is_valid_server_class(mro_cls: type[builtins.object]) -> bool:
+        def is_valid_server_class(mro_cls: type[t.NormalizedValue]) -> bool:
             """Check if MRO class is a valid server class with PRIORITY."""
             if not mro_cls.__name__.startswith("FlextLdifServers"):
                 return False
@@ -184,7 +183,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             priority = getattr(constants, "PRIORITY", None)
             return isinstance(priority, int)
 
-        def extract_priority(mro_cls: type[builtins.object]) -> int | None:
+        def extract_priority(mro_cls: type[t.NormalizedValue]) -> int | None:
             """Extract priority if it's a valid integer."""
             constants = getattr(mro_cls, "Constants", None)
             if constants is None:
@@ -214,10 +213,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         raise AttributeError(msg)
 
     @classmethod
-    def _get_server_type_from_mro(cls, quirk_class: type[builtins.object]) -> str:
+    def _get_server_type_from_mro(cls, quirk_class: type[t.NormalizedValue]) -> str:
         """Get server_type from parent class Constants via MRO traversal."""
 
-        def is_valid_server_class(mro_cls: type[builtins.object]) -> bool:
+        def is_valid_server_class(mro_cls: type[t.NormalizedValue]) -> bool:
             """Check if MRO class is a valid server class with SERVER_TYPE."""
             if not mro_cls.__name__.startswith("FlextLdifServers"):
                 return False
@@ -227,7 +226,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             server_type = getattr(constants, "SERVER_TYPE", None)
             return isinstance(server_type, str)
 
-        def extract_server_type(mro_cls: type[builtins.object]) -> str | None:
+        def extract_server_type(mro_cls: type[t.NormalizedValue]) -> str | None:
             """Extract server type if it's a valid string."""
             constants = getattr(mro_cls, "Constants", None)
             if constants is None:
@@ -258,13 +257,13 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     def _register_in_registry(
         cls,
         quirk_instance: p.Ldif.SchemaQuirk | FlextLdifServersBase,
-        registry: p.Ldif.QuirkRegistry | object,
+        registry: p.Ldif.QuirkRegistry | t.NormalizedValue,
     ) -> None:
         """Helper method to register a quirk instance in the registry."""
 
         def validate_registry(
-            registry_obj: p.Ldif.QuirkRegistry | object,
-        ) -> Callable[[str, p.Ldif.SchemaQuirk | object], None] | None:
+            registry_obj: p.Ldif.QuirkRegistry | t.NormalizedValue,
+        ) -> Callable[[str, p.Ldif.SchemaQuirk | t.NormalizedValue], None] | None:
             """Validate registry has register method."""
             method = getattr(registry_obj, "register_quirk", None)
             if method is not None and callable(method):
@@ -272,7 +271,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
                 def typed_register(
                     server_type: str,
-                    quirk: p.Ldif.SchemaQuirk | object,
+                    quirk: p.Ldif.SchemaQuirk | t.NormalizedValue,
                 ) -> None:
                     _ = captured(server_type, quirk)
 
@@ -280,8 +279,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             return None
 
         def perform_registration(
-            register_func: Callable[[str, object], None] | None,
-            instance: builtins.object | FlextLdifServersBase,
+            register_func: Callable[[str, t.NormalizedValue], None] | None,
+            instance: t.NormalizedValue | FlextLdifServersBase,
         ) -> None:
             """Execute registration if method is available."""
             if register_func is not None:
@@ -298,7 +297,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     @staticmethod
     def _extract_entries(
-        kwargs: Mapping[str, builtins.object],
+        kwargs: Mapping[str, t.NormalizedValue],
     ) -> list[m.Ldif.Entry] | None:
         """Extract and validate entries parameter."""
         if "entries" not in kwargs:
@@ -321,7 +320,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         return entries
 
     @staticmethod
-    def _extract_ldif_text(kwargs: Mapping[str, builtins.object]) -> str | None:
+    def _extract_ldif_text(kwargs: Mapping[str, t.NormalizedValue]) -> str | None:
         """Extract and validate ldif_text parameter."""
         if "ldif_text" not in kwargs:
             return None
@@ -332,7 +331,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         raise TypeError(msg)
 
     @staticmethod
-    def _extract_operation(kwargs: Mapping[str, builtins.object]) -> str | None:
+    def _extract_operation(kwargs: Mapping[str, t.NormalizedValue]) -> str | None:
         """Extract and validate operation parameter."""
         if "operation" not in kwargs:
             return None

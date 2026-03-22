@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import builtins
 from collections.abc import Mapping
 from contextlib import suppress
 from pathlib import Path
@@ -31,7 +30,10 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
 
     @staticmethod
     def _normalize_format_options(
-        format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | object | None,
+        format_options: m.Ldif.WriteFormatOptions
+        | m.Ldif.WriteOptions
+        | t.NormalizedValue
+        | None,
     ) -> m.Ldif.WriteFormatOptions:
         """Normalize format options to WriteFormatOptions."""
         result_raw: m.Ldif.WriteFormatOptions | None
@@ -49,9 +51,9 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
 
     @staticmethod
     def _normalize_write_format(
-        d: Mapping[str, builtins.object],
-    ) -> Mapping[str, builtins.object]:
-        mapped: dict[str, builtins.object] = {
+        d: Mapping[str, t.NormalizedValue],
+    ) -> Mapping[str, t.NormalizedValue]:
+        mapped: dict[str, t.NormalizedValue] = {
             "base64_encode_binary": d.get("base64_encode_binary"),
             "sort_attributes": d.get("sort_entries"),
             "include_dn_comments": d.get("include_comments"),
@@ -75,7 +77,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
         params_data = params_mapping
         entries_raw = u.take(params_data, "entries")
         entries: list[m.Ldif.Entry] = []
-        entry_candidates: tuple[builtins.object, ...] = ()
+        entry_candidates: tuple[t.NormalizedValue, ...] = ()
         with suppress(Exception):
             entry_candidates = tuple(t.ObjectList(entries_raw).root)
         for entry_candidate in entry_candidates:

@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-import builtins
 import struct
 from collections.abc import Callable, Mapping
 
 from flext_core import FlextLogger, r
 
-from flext_ldif import c
+from flext_ldif import c, m, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
-from flext_ldif.models import m
 
 
 class _SchemaConstants:
@@ -109,11 +107,12 @@ class FlextLdifUtilitiesObjectClass:
     def parse(
         definition: str,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], Mapping[str, builtins.object]] | None = None,
+        parse_parts_hook: Callable[[str], Mapping[str, t.NormalizedValue]]
+        | None = None,
     ) -> r[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition into SchemaObjectClass model."""
         try:
-            parsed_dict: Mapping[str, builtins.object] = (
+            parsed_dict: Mapping[str, t.NormalizedValue] = (
                 FlextLdifUtilitiesSchema.parse_objectclass(definition)
             )
             if parse_parts_hook is not None:

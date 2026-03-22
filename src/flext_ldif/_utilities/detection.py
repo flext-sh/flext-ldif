@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-import builtins
 import re
 from collections.abc import Mapping, Sequence
 from typing import TypeIs
 
 from flext_core.utilities import FlextUtilities as u_core
 
-from flext_ldif import p
-from flext_ldif.models import m
+from flext_ldif import m, p, t
 
 
 class FlextLdifUtilitiesDetection:
@@ -48,7 +46,7 @@ class FlextLdifUtilitiesDetection:
                     and getattr(cls, "Constants", None) is not None
                     and (not u_core.is_dict_like(getattr(cls, "Constants", None)))
                 ):
-                    constants_obj: builtins.object | None = getattr(
+                    constants_obj: t.NormalizedValue | None = getattr(
                         cls,
                         "Constants",
                         None,
