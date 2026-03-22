@@ -9,8 +9,6 @@ from typing import ClassVar, Final, Literal
 
 from flext_core import FlextConstants
 
-type ValidationLevelLiteral = Literal["strict", "moderate", "lenient"]
-
 
 class FlextLdifConstants(FlextConstants):
     """LDIF domain constants extending flext-core FlextConstants."""
