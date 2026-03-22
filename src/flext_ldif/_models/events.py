@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Annotated, Self
+from typing import Annotated, ClassVar, Self
 
 from flext_core.models import FlextModels as m
 from pydantic import ConfigDict, Field
@@ -30,7 +30,9 @@ class FlextLdifModelsEvents:
         parse_components: list[tuple[str, str]] | None = None
 
     class MigrationEventConfig(FlextLdifModelsBase):
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", validate_assignment=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            extra="forbid", validate_assignment=True
+        )
         migration_operation: str
         source_server: str
         target_server: str
@@ -41,7 +43,9 @@ class FlextLdifModelsEvents:
         error_details: Sequence[str] | None = None
 
     class ConversionEventConfig(FlextLdifModelsBase):
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", validate_assignment=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            extra="forbid", validate_assignment=True
+        )
         conversion_operation: str
         source_format: str
         target_format: str
@@ -52,7 +56,9 @@ class FlextLdifModelsEvents:
         error_details: Sequence[str] | None = None
 
     class FilterEvent(m.DomainEvent):
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", validate_assignment=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            extra="forbid", validate_assignment=True
+        )
         filter_operation: str
         entries_before: int
         entries_after: int
@@ -63,7 +69,9 @@ class FlextLdifModelsEvents:
         filter_duration_ms: float = 0.0
 
     class ParseEvent(m.DomainEvent):
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", validate_assignment=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            extra="forbid", validate_assignment=True
+        )
         parse_operation: str
         source_type: str
         entries_parsed: int = 0
@@ -132,7 +140,9 @@ class FlextLdifModelsEvents:
             )
 
     class WriteEvent(m.DomainEvent):
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", validate_assignment=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            extra="forbid", validate_assignment=True
+        )
         write_operation: str = "write_file"
         target_type: str = "file"
         entries_written: int = 0
@@ -141,14 +151,18 @@ class FlextLdifModelsEvents:
         error_details: Sequence[str] | None = None
 
     class CategoryEvent(m.DomainEvent):
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", validate_assignment=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            extra="forbid", validate_assignment=True
+        )
         category_operation: str
         entries_categorized: int = 0
         categories_created: Annotated[list[str], Field(default_factory=list)]
         categorization_duration_ms: float = 0.0
 
     class AclEvent(m.DomainEvent):
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", validate_assignment=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            extra="forbid", validate_assignment=True
+        )
         acl_operation: str
         acls_processed: int = 0
         acls_succeeded: int = 0
@@ -157,7 +171,9 @@ class FlextLdifModelsEvents:
         error_details: Sequence[str] | None = None
 
     class DnEvent(m.DomainEvent):
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", validate_assignment=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            extra="forbid", validate_assignment=True
+        )
         dn_operation: str
         input_dn: str
         output_dn: str | None = None
@@ -167,7 +183,9 @@ class FlextLdifModelsEvents:
         component_count: int = 0
 
     class MigrationEvent(m.DomainEvent):
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", validate_assignment=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            extra="forbid", validate_assignment=True
+        )
         migration_operation: str
         source_server: str
         target_server: str
@@ -179,7 +197,9 @@ class FlextLdifModelsEvents:
         throughput_entries_per_sec: float = 0.0
 
     class ConversionEvent(m.DomainEvent):
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", validate_assignment=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            extra="forbid", validate_assignment=True
+        )
         conversion_operation: str
         source_format: str
         target_format: str
@@ -191,7 +211,9 @@ class FlextLdifModelsEvents:
         throughput_items_per_sec: float = 0.0
 
     class SchemaEvent(m.DomainEvent):
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", validate_assignment=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            extra="forbid", validate_assignment=True
+        )
         schema_operation: str
         items_processed: int = 0
         items_succeeded: int = 0

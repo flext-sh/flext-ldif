@@ -18,9 +18,9 @@ from flext_ldif.models import FlextLdifModels as m
 class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
     """FlextLdifValidation class."""
 
-    attribute_names: Annotated[list[str], Field(default_factory=list)]
-    objectclass_names: Annotated[list[str], Field(default_factory=list)]
-    max_attr_value_length: Annotated[int | None, Field(default=None)]
+    attribute_names: Annotated[list[str], Field()] = Field(default_factory=list)
+    objectclass_names: Annotated[list[str], Field()] = Field(default_factory=list)
+    max_attr_value_length: Annotated[int | None, Field()] = None
 
     @classmethod
     def builder(cls) -> Self:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, ClassVar
 
 from flext_core.models import FlextModels as m
 from pydantic import ConfigDict, Field, computed_field

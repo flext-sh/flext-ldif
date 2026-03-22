@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
-from typing import TYPE_CHECKING, Annotated, override
+from typing import TYPE_CHECKING, Annotated, ClassVar, override
 
 from pydantic import ConfigDict, Field
 
@@ -121,12 +121,12 @@ class FlextLdifModelsCollections:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         attributes: Annotated[
             list[FlextLdifModelsDomains.SchemaAttribute],
-            Field(default_factory=_schema_attributes_factory),
-        ]
+            Field(),
+        ] = Field(default_factory=_schema_attributes_factory)
         object_classes: Annotated[
             list[FlextLdifModelsDomains.SchemaObjectClass],
-            Field(default_factory=_schema_object_classes_factory),
-        ]
+            Field(),
+        ] = Field(default_factory=_schema_object_classes_factory)
 
     class CategoryPaths(FlextLdifModelsMetadata.DynamicMetadata):
         """Category to file path mapping model."""
@@ -169,8 +169,8 @@ class FlextLdifModelsCollections:
         model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow", frozen=False)
         categories: Annotated[
             dict[str, list[FlextLdifModelsDomains.Entry]],
-            Field(default_factory=dict),
-        ]
+            Field(),
+        ] = Field(default_factory=dict)
 
         @override
         def __eq__(self, other: t.NormalizedValue) -> bool:

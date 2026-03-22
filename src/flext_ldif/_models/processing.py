@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, ClassVar
 
 from pydantic import ConfigDict, Field
 
@@ -15,7 +15,9 @@ class FlextLdifModelsProcessing:
     class ProcessingResult(FlextLdifModelsBase):
         """Result of entry processing (transform or validate operation)."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False, validate_assignment=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            frozen=False, validate_assignment=True
+        )
         dn: Annotated[
             str,
             Field(..., description="Distinguished name of the processed entry"),

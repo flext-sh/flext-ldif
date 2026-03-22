@@ -20,30 +20,28 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
 
     dn: Annotated[
         str,
-        Field(default="", description="Distinguished name to operate on."),
-    ]
+        Field(description="Distinguished name to operate on."),
+    ] = ""
     other_dn: Annotated[
         str | None,
-        Field(default=None, description="Second DN for comparison operations."),
-    ]
+        Field(description="Second DN for comparison operations."),
+    ] = None
     operation: Annotated[
         str,
         Field(
-            default="normalize",
             description="Operation: parse|validate|normalize|clean|escape|unescape|compare|parse_rdn",
         ),
-    ]
+    ] = "normalize"
     escape_mode: Annotated[
         str,
         Field(
-            default="standard",
             description="Escape mode: standard (backslash) or hex",
         ),
-    ]
+    ] = "standard"
     enable_events: Annotated[
         bool,
-        Field(default=False, description="Enable domain event emission for operations"),
-    ]
+        Field(description="Enable domain event emission for operations"),
+    ] = False
     _last_event: m.Ldif.DnEvent | None = PrivateAttr(default=None)
     _normalizer_instance: FlextLdifDn.Normalizer | None = PrivateAttr(default=None)
     _parser_instance: FlextLdifDn.Parser | None = PrivateAttr(default=None)

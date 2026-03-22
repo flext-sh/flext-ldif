@@ -144,7 +144,9 @@ class FlextLdifModelsMetadata:
     class TransformationInfo(FlextModels.ArbitraryTypesModel):
         """Transformation step information stored in metadata."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", validate_assignment=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            extra="forbid", validate_assignment=True
+        )
         step: str | None = None
         server: str | None = None
         changes: ClassVar[list[str]] = []

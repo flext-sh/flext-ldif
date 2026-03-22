@@ -30,23 +30,23 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         """Create a new sorting service instance for builder pattern."""
         return cls()
 
-    entries: Annotated[list[m.Ldif.Entry], Field(default_factory=_empty_entries)]
-    sort_target: Annotated[str, Field(default="entries")]
-    sort_by: Annotated[str, Field(default="hierarchy")]
+    entries: Annotated[list[m.Ldif.Entry], Field()] = Field(
+        default_factory=_empty_entries
+    )
+    sort_target: Annotated[str, Field()] = "entries"
+    sort_by: Annotated[str, Field()] = "hierarchy"
     custom_predicate: Annotated[
         Callable[[m.Ldif.Entry], str | int | float] | None,
-        Field(default=None),
-    ]
-    sort_attributes: Annotated[bool, Field(default=False)]
-    attribute_order: Annotated[list[str] | None, Field(default=None)]
-    sort_acl: Annotated[bool, Field(default=False)]
+        Field(),
+    ] = None
+    sort_attributes: Annotated[bool, Field()] = False
+    attribute_order: Annotated[list[str] | None, Field()] = None
+    sort_acl: Annotated[bool, Field()] = False
     acl_attributes: Annotated[
         list[str],
-        Field(
-            default_factory=lambda: list(c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES),
-        ),
-    ]
-    traversal: Annotated[str, Field(default="depth-first")]
+        Field(),
+    ] = Field(default_factory=lambda: list(c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES))
+    traversal: Annotated[str, Field()] = "depth-first"
 
     @classmethod
     def by_custom(

@@ -7,6 +7,7 @@ eDirectory-specific attributes, t.NormalizedValue classes, and entries in LDIF f
 from __future__ import annotations
 
 from enum import StrEnum, unique
+from typing import ClassVar
 
 import pytest
 from flext_tests import tm

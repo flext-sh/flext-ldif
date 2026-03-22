@@ -95,10 +95,9 @@ class FlextLdifModelsDomains:
         metadata: Annotated[
             FlextLdifModelsMetadata.EntryMetadata,
             Field(
-                default_factory=lambda: FlextLdifModelsMetadata.EntryMetadata(),
                 description="Quirk-specific metadata for preserving original format",
             ),
-        ]
+        ] = Field(default_factory=lambda: FlextLdifModelsMetadata.EntryMetadata())
         _DN_COMPONENT_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
             r"^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\\\,]|\\\\.)*$",
             re.IGNORECASE,
@@ -245,19 +244,18 @@ class FlextLdifModelsDomains:
 
         excluded: Annotated[
             bool,
-            Field(default=False, description="Whether the item is excluded"),
-        ]
+            Field(description="Whether the item is excluded"),
+        ] = False
         exclusion_reason: Annotated[
             str | None,
-            Field(default=None, description="Human-readable reason for exclusion"),
-        ]
+            Field(description="Human-readable reason for exclusion"),
+        ] = None
         filter_criteria: Annotated[
             str | None,
             Field(
-                default=None,
                 description="Filter criteria that caused the exclusion",
             ),
-        ]
+        ] = None
         timestamp: Annotated[
             str,
             Field(..., description="ISO 8601 timestamp when exclusion was marked"),
@@ -280,126 +278,112 @@ class FlextLdifModelsDomains:
         oid: Annotated[str, Field(..., description="Attribute OID")]
         desc: Annotated[
             str | None,
-            Field(default=None, description="Attribute description (RFC 4512 DESC)"),
-        ]
+            Field(description="Attribute description (RFC 4512 DESC)"),
+        ] = None
         sup: Annotated[
             str | None,
-            Field(default=None, description="Superior attribute type (RFC 4512 SUP)"),
-        ]
+            Field(description="Superior attribute type (RFC 4512 SUP)"),
+        ] = None
         equality: Annotated[
             str | None,
             Field(
-                default=None,
                 description="Equality matching rule (RFC 4512 EQUALITY)",
             ),
-        ]
+        ] = None
         ordering: Annotated[
             str | None,
             Field(
-                default=None,
                 description="Ordering matching rule (RFC 4512 ORDERING)",
             ),
-        ]
+        ] = None
         substr: Annotated[
             str | None,
             Field(
-                default=None,
                 description="Substring matching rule (RFC 4512 SUBSTR)",
             ),
-        ]
+        ] = None
         syntax: Annotated[
             str | None,
-            Field(default=None, description="Attribute syntax OID (RFC 4512 SYNTAX)"),
-        ]
+            Field(description="Attribute syntax OID (RFC 4512 SYNTAX)"),
+        ] = None
         length: Annotated[
             int | None,
-            Field(default=None, description="Maximum length constraint"),
-        ]
+            Field(description="Maximum length constraint"),
+        ] = None
         usage: Annotated[
             str | None,
-            Field(default=None, description="Attribute usage (RFC 4512 USAGE)"),
-        ]
+            Field(description="Attribute usage (RFC 4512 USAGE)"),
+        ] = None
         single_value: Annotated[
             bool,
             Field(
-                default=False,
                 description="Whether attribute is single-valued (RFC 4512 SINGLE-VALUE)",
             ),
-        ]
+        ] = False
         collective: Annotated[
             bool,
             Field(
-                default=False,
                 description="Whether attribute is collective (RFC 4512 COLLECTIVE)",
             ),
-        ]
+        ] = False
         no_user_modification: Annotated[
             bool,
             Field(
-                default=False,
                 description="Whether users can modify this attribute (RFC 4512 NO-USER-MODIFICATION)",
             ),
-        ]
+        ] = False
         immutable: Annotated[
             bool,
             Field(
-                default=False,
                 description="Whether attribute is immutable (OUD extension)",
             ),
-        ]
+        ] = False
         user_modification: Annotated[
             bool,
             Field(
-                default=True,
                 description="Whether users can modify this attribute (OUD extension)",
             ),
-        ]
+        ] = True
         obsolete: Annotated[
             bool,
             Field(
-                default=False,
                 description="Whether attribute is obsolete (OUD extension)",
             ),
-        ]
+        ] = False
         x_origin: Annotated[
             str | None,
             Field(
-                default=None,
                 description="Origin of attribute definition (server-specific X-ORIGIN extension)",
             ),
-        ]
+        ] = None
         x_file_ref: Annotated[
             str | None,
             Field(
-                default=None,
                 description="File reference for attribute definition (server-specific X-FILE-REF extension)",
             ),
-        ]
+        ] = None
         x_name: Annotated[
             str | None,
             Field(
-                default=None,
                 description="Extended name for attribute (server-specific X-NAME extension)",
             ),
-        ]
+        ] = None
         x_alias: Annotated[
             str | None,
             Field(
-                default=None,
                 description="Extended alias for attribute (server-specific X-ALIAS extension)",
             ),
-        ]
+        ] = None
         x_oid: Annotated[
             str | None,
             Field(
-                default=None,
                 description="Extended OID for attribute (server-specific X-OID extension)",
             ),
-        ]
+        ] = None
         metadata: Annotated[
             FlextLdifModelsDomains.QuirkMetadata | None,
-            Field(default=None, description="Quirk-specific metadata"),
-        ]
+            Field(description="Quirk-specific metadata"),
+        ] = None
 
         @computed_field
         def has_matching_rules(self) -> bool:
@@ -457,50 +441,45 @@ class FlextLdifModelsDomains:
         type_category: Annotated[
             str,
             Field(
-                default="string",
                 description="Syntax type category: string, integer, binary, dn, time, boolean",
             ),
-        ]
+        ] = "string"
         is_binary: Annotated[
             bool,
             Field(
-                default=False,
                 description="Whether this syntax uses binary encoding",
             ),
-        ]
+        ] = False
         max_length: Annotated[
             int | None,
-            Field(None, description="Maximum length in bytes (if applicable)"),
-        ]
+            Field(description="Maximum length in bytes (if applicable)"),
+        ] = None
         case_insensitive: Annotated[
             bool,
             Field(
-                default=False,
                 description="Whether comparisons are case-insensitive",
             ),
-        ]
+        ] = False
         allows_multivalued: Annotated[
             bool,
             Field(
-                default=True,
                 description="Whether attributes using this syntax can be multivalued",
             ),
-        ]
+        ] = True
         encoding: Annotated[
             c.Ldif.LiteralTypes.EncodingLiteral,
             Field(
-                default="utf-8",
                 description="Expected character encoding (utf-8, ascii, iso-8859-1, etc.)",
             ),
-        ]
+        ] = "utf-8"
         validation_pattern: Annotated[
             str | None,
-            Field(None, description="Optional regex pattern for value validation"),
-        ]
+            Field(description="Optional regex pattern for value validation"),
+        ] = None
         metadata: Annotated[
             FlextLdifModelsDomains.QuirkMetadata | None,
-            Field(default=None, description="Server-specific quirk metadata"),
-        ]
+            Field(description="Server-specific quirk metadata"),
+        ] = None
 
         @computed_field
         def is_rfc4517_standard(self) -> bool:
@@ -609,34 +588,32 @@ class FlextLdifModelsDomains:
         oid: Annotated[str, Field(..., description="Object class OID")]
         desc: Annotated[
             str | None,
-            Field(default=None, description="Object class description (RFC 4512 DESC)"),
-        ]
+            Field(description="Object class description (RFC 4512 DESC)"),
+        ] = None
         sup: Annotated[
             str | list[str] | None,
             Field(
-                default=None,
                 description="Superior t.NormalizedValue class(es) (RFC 4512 SUP)",
             ),
-        ]
+        ] = None
         kind: Annotated[
             str,
             Field(
-                default="STRUCTURAL",
                 description="Object class kind (RFC 4512: STRUCTURAL, AUXILIARY, ABSTRACT)",
             ),
-        ]
+        ] = "STRUCTURAL"
         must: Annotated[
             list[str] | None,
-            Field(default=None, description="Required attributes (RFC 4512 MUST)"),
-        ]
+            Field(description="Required attributes (RFC 4512 MUST)"),
+        ] = None
         may: Annotated[
             list[str] | None,
-            Field(default=None, description="Optional attributes (RFC 4512 MAY)"),
-        ]
+            Field(description="Optional attributes (RFC 4512 MAY)"),
+        ] = None
         metadata: Annotated[
             FlextLdifModelsDomains.QuirkMetadata | None,
-            Field(default=None, description="Quirk-specific metadata"),
-        ]
+            Field(description="Quirk-specific metadata"),
+        ] = None
 
         @computed_field
         def attribute_summary(self) -> Mapping[str, int]:
@@ -681,11 +658,11 @@ class FlextLdifModelsDomains:
         model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore")
         oid: str
         kind: str
-        name: Annotated[str, Field(default="")]
-        desc: Annotated[str | None, Field(default=None)]
-        sup: Annotated[str | list[str] | None, Field(default=None)]
-        must: Annotated[list[str] | None, Field(default=None)]
-        may: Annotated[list[str] | None, Field(default=None)]
+        name: Annotated[str, Field()] = ""
+        desc: Annotated[str | None, Field()] = None
+        sup: Annotated[str | list[str] | None, Field()] = None
+        must: Annotated[list[str] | None, Field()] = None
+        may: Annotated[list[str] | None, Field()] = None
 
     class Attributes(m.ArbitraryTypesModel):
         """LDIF attributes container - simplified dict-like interface."""
@@ -698,22 +675,20 @@ class FlextLdifModelsDomains:
         )
         attributes: Annotated[
             dict[str, list[str]],
-            Field(default_factory=dict, description="Attribute name to values list"),
-        ]
+            Field(description="Attribute name to values list"),
+        ] = Field(default_factory=dict)
         attribute_metadata: Annotated[
             dict[str, dict[str, str | list[str]]],
             Field(
-                default_factory=dict,
                 description="Metadata for each attribute, like category or hidden status.",
             ),
-        ]
+        ] = Field(default_factory=dict)
         metadata: Annotated[
             FlextLdifModelsMetadata.EntryMetadata | None,
             Field(
-                default=None,
                 description="Metadata for preserving ordering and formats",
             ),
-        ]
+        ] = None
 
         def __getitem__(self, key: str) -> list[str]:
             """Get attribute values by name (case-sensitive LDAP).
@@ -1009,14 +984,13 @@ class FlextLdifModelsDomains:
         )
         item: Annotated[str, Field(..., description="Item that failed")]
         error: Annotated[str, Field(..., description="Error message")]
-        error_code: Annotated[str | None, Field(default=None, description="Error code")]
+        error_code: Annotated[str | None, Field(description="Error code")] = None
         context: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
-                default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata(),
                 description="Context",
             ),
-        ]
+        ] = Field(default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata())
 
     class NormalizedEntryData(FlextLdifModelsBase):
         """BaseModel for entry data with normalized DN references.
@@ -1282,24 +1256,21 @@ class FlextLdifModelsDomains:
         schemas: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="List of Schema quirk model instances",
             ),
-        ]
+        ] = Field(default_factory=list)
         acls: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="List of ACL quirk model instances",
             ),
-        ]
+        ] = Field(default_factory=list)
         entrys: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="List of Entry quirk model instances",
             ),
-        ]
+        ] = Field(default_factory=list)
 
     class AclPermissions(m.ArbitraryTypesModel):
         """ACL permissions for LDAP operations.
@@ -1311,58 +1282,56 @@ class FlextLdifModelsDomains:
         - Compound permissions (all)
         """
 
-        read: Annotated[bool, Field(default=False, description="Read permission")]
-        write: Annotated[bool, Field(default=False, description="Write permission")]
-        add: Annotated[bool, Field(default=False, description="Add permission")]
-        delete: Annotated[bool, Field(default=False, description="Delete permission")]
-        search: Annotated[bool, Field(default=False, description="Search permission")]
-        compare: Annotated[bool, Field(default=False, description="Compare permission")]
+        read: Annotated[bool, Field(description="Read permission")] = False
+        write: Annotated[bool, Field(description="Write permission")] = False
+        add: Annotated[bool, Field(description="Add permission")] = False
+        delete: Annotated[bool, Field(description="Delete permission")] = False
+        search: Annotated[bool, Field(description="Search permission")] = False
+        compare: Annotated[bool, Field(description="Compare permission")] = False
         self_write: Annotated[
             bool,
-            Field(default=False, description="Self-write permission (OID, OUD)"),
-        ]
+            Field(description="Self-write permission (OID, OUD)"),
+        ] = False
         proxy: Annotated[
             bool,
-            Field(default=False, description="Proxy permission (OID, OUD, 389DS)"),
-        ]
+            Field(description="Proxy permission (OID, OUD, 389DS)"),
+        ] = False
         browse: Annotated[
             bool,
             Field(
-                default=False,
                 description="Browse permission (OID) - maps to read+search",
             ),
-        ]
+        ] = False
         auth: Annotated[
             bool,
             Field(
-                default=False,
                 description="Auth permission (OID) - authentication access",
             ),
-        ]
+        ] = False
         all: Annotated[
             bool,
-            Field(default=False, description="All permissions (compound permission)"),
-        ]
+            Field(description="All permissions (compound permission)"),
+        ] = False
         no_write: Annotated[
             bool,
-            Field(default=False, description="Deny write permission (OID)"),
-        ]
+            Field(description="Deny write permission (OID)"),
+        ] = False
         no_add: Annotated[
             bool,
-            Field(default=False, description="Deny add permission (OID)"),
-        ]
+            Field(description="Deny add permission (OID)"),
+        ] = False
         no_delete: Annotated[
             bool,
-            Field(default=False, description="Deny delete permission (OID)"),
-        ]
+            Field(description="Deny delete permission (OID)"),
+        ] = False
         no_browse: Annotated[
             bool,
-            Field(default=False, description="Deny browse permission (OID)"),
-        ]
+            Field(description="Deny browse permission (OID)"),
+        ] = False
         no_self_write: Annotated[
             bool,
-            Field(default=False, description="Deny self-write permission (OID)"),
-        ]
+            Field(description="Deny self-write permission (OID)"),
+        ] = False
 
         @staticmethod
         def get_rfc_compliant_permissions(
@@ -1411,8 +1380,8 @@ class FlextLdifModelsDomains:
         target_dn: Annotated[str, Field(..., description="Target DN pattern")]
         attributes: Annotated[
             list[str],
-            Field(default_factory=list, description="Target attributes"),
-        ]
+            Field(description="Target attributes"),
+        ] = Field(default_factory=list)
 
     class AclSubject(m.ArbitraryTypesModel):
         """ACL subject specification."""
@@ -1435,34 +1404,33 @@ class FlextLdifModelsDomains:
         - has_server_quirks computed field
         """
 
-        name: Annotated[str, Field(default="", description="ACL name")]
+        name: Annotated[str, Field(description="ACL name")] = ""
         target: Annotated[
             FlextLdifModelsDomains.AclTarget | None,
-            Field(default=None, description="ACL target"),
-        ]
+            Field(description="ACL target"),
+        ] = None
         subject: Annotated[
             FlextLdifModelsDomains.AclSubject | None,
-            Field(default=None, description="ACL subject"),
-        ]
+            Field(description="ACL subject"),
+        ] = None
         permissions: Annotated[
             FlextLdifModelsDomains.AclPermissions | None,
-            Field(default=None, description="ACL permissions"),
-        ]
+            Field(description="ACL permissions"),
+        ] = None
         raw_line: Annotated[
             str,
-            Field(default="", description="Original raw ACL line from LDIF"),
-        ]
+            Field(description="Original raw ACL line from LDIF"),
+        ] = ""
         raw_acl: Annotated[
             str,
-            Field(default="", description="Original ACL string from LDIF"),
-        ]
+            Field(description="Original ACL string from LDIF"),
+        ] = ""
         metadata: Annotated[
             FlextLdifModelsDomains.QuirkMetadata | None,
             Field(
-                default=None,
                 description="Quirk-specific metadata for ACL processing",
             ),
-        ]
+        ] = None
 
         @classmethod
         def get_acl_format(cls) -> str:
@@ -1554,29 +1522,29 @@ class FlextLdifModelsDomains:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, strict=True, validate_default=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            frozen=True, strict=True, validate_default=True
+        )
         original_format: Annotated[
             str | None,
             Field(
-                default=None,
                 description="Original ACL string format from source server",
             ),
-        ]
+        ] = None
         source_server: Annotated[
             str | None,
-            Field(default=None, description="Server type that parsed this ACL"),
-        ]
+            Field(description="Server type that parsed this ACL"),
+        ] = None
         name_sanitized: Annotated[
             bool,
             Field(
-                default=False,
                 description="True if ACL name was sanitized during processing",
             ),
-        ]
+        ] = False
         original_name_raw: Annotated[
             str | None,
-            Field(default=None, description="Original ACL name before sanitization"),
-        ]
+            Field(description="Original ACL name before sanitization"),
+        ] = None
 
         @classmethod
         def from_extensions(
@@ -1710,24 +1678,21 @@ class FlextLdifModelsDomains:
         changetype: Annotated[
             c.Ldif.LiteralTypes.ChangeTypeLiteral | None,
             Field(
-                default=None,
                 description="Change operation type per RFC 2849 § 5.7 (add/delete/modify/moddn/modrdn)",
             ),
-        ]
+        ] = None
         metadata: Annotated[
             FlextLdifModelsDomains.QuirkMetadata | None,
             Field(
-                default=None,
                 description="Quirk-specific metadata for processing data, ACLs, statistics, validation (non-RFC data)",
             ),
-        ]
+        ] = None
         validation_metadata: Annotated[
             t.ConfigMap | None,
             Field(
-                default=None,
                 description="Validation metadata captured during parsing and transformation.",
             ),
-        ]
+        ] = None
 
         @computed_field
         def attributes_dict(self) -> Mapping[str, list[str]]:
@@ -2480,7 +2445,9 @@ class FlextLdifModelsDomains:
             return metadata
 
         class _CreateEntryParams(m.Value):
-            model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", validate_assignment=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(
+                extra="forbid", validate_assignment=True
+            )
             dn: Annotated[str | FlextLdifModelsDomains.DN, Field(...)]
             attributes: Annotated[
                 Mapping[str, str | list[str]] | FlextLdifModelsDomains.Attributes,
@@ -2488,41 +2455,41 @@ class FlextLdifModelsDomains:
             ]
             metadata: Annotated[
                 FlextLdifModelsDomains.QuirkMetadata | None,
-                Field(default=None),
-            ]
+                Field(),
+            ] = None
             acls: Annotated[
                 list[FlextLdifModelsDomains.Acl] | None,
-                Field(default=None),
-            ]
+                Field(),
+            ] = None
             objectclasses: Annotated[
                 list[FlextLdifModelsDomains.SchemaObjectClass] | None,
-                Field(default=None),
-            ]
+                Field(),
+            ] = None
             attributes_schema: Annotated[
                 list[FlextLdifModelsDomains.SchemaAttribute] | None,
-                Field(default=None),
-            ]
+                Field(),
+            ] = None
             entry_metadata: Annotated[
                 FlextLdifModelsMetadata.EntryMetadata | None,
-                Field(default=None),
-            ]
+                Field(),
+            ] = None
             validation_metadata: Annotated[
                 FlextLdifModelsDomains.ValidationMetadata | None,
-                Field(default=None),
-            ]
+                Field(),
+            ] = None
             server_type: Annotated[
                 c.Ldif.LiteralTypes.ServerTypeLiteral | None,
-                Field(default=None),
-            ]
-            source_entry: Annotated[str | None, Field(default=None)]
+                Field(),
+            ] = None
+            source_entry: Annotated[str | None, Field()] = None
             unconverted_attributes: Annotated[
                 FlextLdifModelsMetadata.DynamicMetadata | None,
-                Field(default=None),
-            ]
+                Field(),
+            ] = None
             statistics: Annotated[
                 FlextLdifModelsDomains.EntryStatistics | None,
-                Field(default=None),
-            ]
+                Field(),
+            ] = None
 
         @classmethod
         def _create_entry(cls, params: _CreateEntryParams) -> r[Self]:
@@ -2894,29 +2861,27 @@ class FlextLdifModelsDomains:
         target_name: Annotated[
             str | None,
             Field(
-                default=None,
                 description="Transformed attribute name (None if removed)",
             ),
-        ]
+        ] = None
         original_values: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="Original attribute values from source",
             ),
-        ]
+        ] = Field(default_factory=list)
         target_values: Annotated[
             list[str] | None,
-            Field(default=None, description="Transformed values (None if removed)"),
-        ]
+            Field(description="Transformed values (None if removed)"),
+        ] = None
         transformation_type: Annotated[
             c.Ldif.LiteralTypes.TransformationTypeLiteral,
             Field(..., description="Type of transformation applied to the attribute"),
         ]
         reason: Annotated[
             str,
-            Field(default="", description="Human-readable reason for transformation"),
-        ]
+            Field(description="Human-readable reason for transformation"),
+        ] = ""
 
     DNStatisticsFlags = _DNStatisticsFlags
 
@@ -2951,56 +2916,53 @@ class FlextLdifModelsDomains:
         transformations: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="Ordered list of transformations applied (use TransformationType constants)",
             ),
-        ]
+        ] = Field(default_factory=list)
         had_tab_chars: Annotated[
             bool,
-            Field(default=False, description="DN contained TAB characters"),
-        ]
+            Field(description="DN contained TAB characters"),
+        ] = False
         had_trailing_spaces: Annotated[
             bool,
-            Field(default=False, description="DN had trailing spaces"),
-        ]
+            Field(description="DN had trailing spaces"),
+        ] = False
         had_leading_spaces: Annotated[
             bool,
-            Field(default=False, description="DN had leading spaces"),
-        ]
+            Field(description="DN had leading spaces"),
+        ] = False
         had_extra_spaces: Annotated[
             bool,
-            Field(default=False, description="DN had multiple consecutive spaces"),
-        ]
+            Field(description="DN had multiple consecutive spaces"),
+        ] = False
         was_base64_encoded: Annotated[
             bool,
-            Field(default=False, description="DN was base64 encoded in LDIF (dn::)"),
-        ]
+            Field(description="DN was base64 encoded in LDIF (dn::)"),
+        ] = False
         had_utf8_chars: Annotated[
             bool,
             Field(
-                default=False,
                 description="DN contained UTF-8 multi-byte characters",
             ),
-        ]
+        ] = False
         had_escape_sequences: Annotated[
             bool,
-            Field(default=False, description="DN contained LDAP escape sequences"),
-        ]
+            Field(description="DN contained LDAP escape sequences"),
+        ] = False
         validation_status: Annotated[
             str,
             Field(
-                default="valid",
                 description="Validation status (use ValidationStatus constants)",
             ),
-        ]
+        ] = "valid"
         validation_warnings: Annotated[
             list[str],
-            Field(default_factory=list, description="Non-fatal validation warnings"),
-        ]
+            Field(description="Non-fatal validation warnings"),
+        ] = Field(default_factory=list)
         validation_errors: Annotated[
             list[str],
-            Field(default_factory=list, description="Fatal validation errors"),
-        ]
+            Field(description="Fatal validation errors"),
+        ] = Field(default_factory=list)
 
         @computed_field
         def has_errors(self) -> bool:
@@ -3092,136 +3054,122 @@ class FlextLdifModelsDomains:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="ignore")
         was_parsed: Annotated[
             bool,
-            Field(default=True, description="Entry was successfully parsed from LDIF"),
-        ]
+            Field(description="Entry was successfully parsed from LDIF"),
+        ] = True
         was_validated: Annotated[
             bool,
-            Field(default=False, description="Entry passed validation checks"),
-        ]
+            Field(description="Entry passed validation checks"),
+        ] = False
         was_filtered: Annotated[
             bool,
             Field(
-                default=False,
                 description="Entry was filtered by rules (base DN, schema, etc.)",
             ),
-        ]
+        ] = False
         was_written: Annotated[
             bool,
-            Field(default=False, description="Entry was written to output LDIF"),
-        ]
+            Field(description="Entry was written to output LDIF"),
+        ] = False
         was_rejected: Annotated[
             bool,
-            Field(default=False, description="Entry was rejected during processing"),
-        ]
+            Field(description="Entry was rejected during processing"),
+        ] = False
         rejection_category: Annotated[
             str | None,
             Field(
-                default=None,
                 description="Rejection category (use RejectionCategory constants)",
             ),
-        ]
+        ] = None
         rejection_reason: Annotated[
             str | None,
-            Field(default=None, description="Human-readable rejection reason"),
-        ]
+            Field(description="Human-readable rejection reason"),
+        ] = None
         attributes_added: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="Attribute names added during processing",
             ),
-        ]
+        ] = Field(default_factory=list)
         attributes_removed: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="Attribute names removed during processing",
             ),
-        ]
+        ] = Field(default_factory=list)
         attributes_modified: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="Attribute names modified during processing",
             ),
-        ]
+        ] = Field(default_factory=list)
         attributes_filtered: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="Attribute names filtered by whitelist/blacklist",
             ),
-        ]
+        ] = Field(default_factory=list)
         objectclasses_original: Annotated[
             list[str],
-            Field(default_factory=list, description="Original objectClass values"),
-        ]
+            Field(description="Original objectClass values"),
+        ] = Field(default_factory=list)
         objectclasses_final: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="Final objectClass values after transformation",
             ),
-        ]
+        ] = Field(default_factory=list)
         quirks_applied: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="List of quirk types applied to this entry",
             ),
-        ]
+        ] = Field(default_factory=list)
         quirk_transformations: Annotated[
             int,
-            Field(default=0, description="Count of quirk transformations applied"),
-        ]
+            Field(description="Count of quirk transformations applied"),
+        ] = 0
         dn_statistics: Annotated[
             FlextLdifModelsDomains.DNStatistics | None,
             Field(
-                default=None,
                 description="DN transformation statistics (if applicable)",
             ),
-        ]
+        ] = None
         filters_applied: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="List of filters applied (use FilterType constants)",
             ),
-        ]
+        ] = Field(default_factory=list)
         filter_results: Annotated[
             dict[str, bool],
             Field(
-                default_factory=dict,
                 description="Filter results: {filter_name: passed}",
             ),
-        ]
+        ] = Field(default_factory=dict)
         errors: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="Error messages (use ErrorCategory constants for keys)",
             ),
-        ]
+        ] = Field(default_factory=list)
         warnings: Annotated[
             list[str],
-            Field(default_factory=list, description="Warning messages"),
-        ]
+            Field(description="Warning messages"),
+        ] = Field(default_factory=list)
         category_assigned: Annotated[
             str | None,
             Field(
-                default=None,
                 description="Category assigned (schema, hierarchy, users, groups, acl)",
             ),
-        ]
+        ] = None
         category_confidence: Annotated[
             float,
             Field(
-                default=1.0,
                 ge=0.0,
                 le=1.0,
                 description="Confidence score for category assignment",
             ),
-        ]
+        ] = 1.0
 
         @computed_field
         def dn_was_transformed(self) -> bool:
@@ -3406,33 +3354,31 @@ class FlextLdifModelsDomains:
         rfc_violations: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="RFC violations detected during validation",
             ),
-        ]
+        ] = Field(default_factory=list)
         errors: Annotated[
             list[str],
-            Field(default_factory=list, description="Validation errors that occurred"),
-        ]
+            Field(description="Validation errors that occurred"),
+        ] = Field(default_factory=list)
         warnings: Annotated[
             list[str],
-            Field(default_factory=list, description="Non-fatal validation warnings"),
-        ]
+            Field(description="Non-fatal validation warnings"),
+        ] = Field(default_factory=list)
         context: Annotated[
             dict[str, str],
-            Field(default_factory=dict, description="Validation context information"),
-        ]
+            Field(description="Validation context information"),
+        ] = Field(default_factory=dict)
         server_specific_violations: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="Server-specific validation violations",
             ),
-        ]
+        ] = Field(default_factory=list)
         validation_server_type: Annotated[
             c.Ldif.LiteralTypes.ServerTypeLiteral | None,
-            Field(default=None, description="Server type used for validation"),
-        ]
+            Field(description="Server type used for validation"),
+        ] = None
 
     class WriteOptions(FlextLdifModelsBase):
         """LDIF writing configuration options.
@@ -3449,36 +3395,33 @@ class FlextLdifModelsDomains:
         format: Annotated[
             str | None,
             Field(
-                default=None,
                 description="LDIF format variant (rfc2849, extended, etc.)",
             ),
-        ]
+        ] = None
         base_dn: Annotated[
             str | None,
-            Field(default=None, description="Base DN for relative DN conversions"),
-        ]
+            Field(description="Base DN for relative DN conversions"),
+        ] = None
         hidden_attrs: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="Attributes to exclude from output",
             ),
-        ]
+        ] = Field(default_factory=list)
         sort_entries: Annotated[
             bool,
-            Field(default=False, description="Whether to sort entries in output"),
-        ]
+            Field(description="Whether to sort entries in output"),
+        ] = False
         include_comments: Annotated[
             bool,
-            Field(default=False, description="Whether to include comment lines"),
-        ]
+            Field(description="Whether to include comment lines"),
+        ] = False
         base64_encode_binary: Annotated[
             bool,
             Field(
-                default=False,
                 description="Whether to base64 encode binary attributes",
             ),
-        ]
+        ] = False
 
     class FormatDetails(FlextLdifModelsBase):
         """Original formatting details for round-trip preservation.
@@ -3494,24 +3437,24 @@ class FlextLdifModelsDomains:
         )
         dn_line: Annotated[
             str | None,
-            Field(default=None, description="Original DN line formatting"),
-        ]
+            Field(description="Original DN line formatting"),
+        ] = None
         syntax: Annotated[
             str | None,
-            Field(default=None, description="Original attribute syntax information"),
-        ]
+            Field(description="Original attribute syntax information"),
+        ] = None
         encoding: Annotated[
             c.Ldif.LiteralTypes.EncodingLiteral | None,
-            Field(default=None, description="Original encoding (utf-8, etc.)"),
-        ]
+            Field(description="Original encoding (utf-8, etc.)"),
+        ] = None
         spacing: Annotated[
             str | None,
-            Field(default=None, description="Original spacing/indentation"),
-        ]
+            Field(description="Original spacing/indentation"),
+        ] = None
         trailing_info: Annotated[
             str | None,
-            Field(default=None, description="Trailing comments or metadata"),
-        ]
+            Field(description="Trailing comments or metadata"),
+        ] = None
 
     class SchemaFormatDetails(FlextLdifModelsBase):
         """Schema formatting details for perfect round-trip conversion.
@@ -3528,37 +3471,35 @@ class FlextLdifModelsDomains:
         original_string_complete: Annotated[
             str | None,
             Field(
-                default=None,
                 description="Complete original schema definition string for perfect round-trip",
             ),
-        ]
+        ] = None
         quotes: Annotated[
             str | None,
-            Field(default=None, description="Quoting style used in schema definition"),
-        ]
+            Field(description="Quoting style used in schema definition"),
+        ] = None
         spacing: Annotated[
             str | None,
-            Field(default=None, description="Spacing around schema fields"),
-        ]
+            Field(description="Spacing around schema fields"),
+        ] = None
         field_order: Annotated[
             list[str],
-            Field(default_factory=list, description="Original order of schema fields"),
-        ]
+            Field(description="Original order of schema fields"),
+        ] = Field(default_factory=list)
         x_origin: Annotated[
             str | None,
-            Field(default=None, description="X-ORIGIN value from schema"),
-        ]
+            Field(description="X-ORIGIN value from schema"),
+        ] = None
         x_ordered: Annotated[
             list[str],
-            Field(default_factory=list, description="X-ORDERED field values"),
-        ]
+            Field(description="X-ORDERED field values"),
+        ] = Field(default_factory=list)
         extensions: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
-                default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata(),
                 description="Non-standard schema extensions",
             ),
-        ]
+        ] = Field(default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata())
 
     class QuirkMetadata(FlextLdifModelsBase):
         """Universal metadata container for quirk-specific data preservation.
@@ -3599,163 +3540,136 @@ class FlextLdifModelsDomains:
         extensions: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
-                default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata(),
                 description="Extensible metadata storage for quirk-specific data (server-injected validation rules, unconverted attributes, etc.)",
             ),
-        ]
+        ] = Field(default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata())
         rfc_violations: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="RFC violations detected (e.g., 'RFC 2849 §2: DN required')",
             ),
-        ]
+        ] = Field(default_factory=list)
         rfc_warnings: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="Non-fatal RFC warnings (e.g., unusual but valid formatting)",
             ),
-        ]
+        ] = Field(default_factory=list)
         conversion_notes: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
-                default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata(),
                 description="Map of conversion operation name → human-readable description",
             ),
-        ]
+        ] = Field(default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata())
         attribute_transformations: Annotated[
             Mapping[str, FlextLdifModelsDomains.AttributeTransformation],
             Field(
-                default_factory=dict,
                 description="Detailed transformation records keyed by original attribute name",
             ),
-        ]
+        ] = Field(default_factory=dict)
         server_specific_data: Annotated[
             FlextLdifModelsMetadata.EntryMetadata,
             Field(
-                default_factory=lambda: FlextLdifModelsMetadata.EntryMetadata(),
                 description="Preservation of server-proprietary data for round-trip conversions",
             ),
-        ]
+        ] = Field(default_factory=lambda: FlextLdifModelsMetadata.EntryMetadata())
         original_server_type: Annotated[
             c.Ldif.LiteralTypes.ServerTypeLiteral | None,
             Field(
-                default=None,
                 description="Source LDAP server type (e.g., 'oid', 'oud', 'ad', 'openldap')",
             ),
-        ]
+        ] = None
         target_server_type: Annotated[
             c.Ldif.LiteralTypes.ServerTypeLiteral | None,
             Field(
-                default=None,
                 description="Target LDAP server type (e.g., 'oid', 'oud', 'ad', 'openldap')",
             ),
-        ]
+        ] = None
         acls: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="Access Control Lists extracted from entry attributes during parsing",
             ),
-        ]
+        ] = Field(default_factory=list)
         objectclasses: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="ObjectClass definitions for schema validation (not RFC LDIF data)",
             ),
-        ]
+        ] = Field(default_factory=list)
         validation_results: Annotated[
             FlextLdifModelsDomains.ValidationMetadata | None,
             Field(
-                default=None,
                 description="Validation results with RFC violations, errors, warnings, and context",
             ),
-        ]
+        ] = None
         processing_stats: Annotated[
             FlextLdifModelsDomains.EntryStatistics | None,
             Field(
-                default=None,
                 description="Complete statistics tracking for entry transformations",
             ),
-        ]
+        ] = None
         write_options: Annotated[
             FlextLdifModelsDomains.WriteOptions | None,
             Field(
-                default=None,
                 description="Writer configuration including format, base DN, hidden attributes, sorting, and comments",
             ),
-        ]
+        ] = None
         removed_attributes: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
-                default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata(),
                 description="Attributes removed during conversion (was entry_metadata.removed_attributes_with_values)",
             ),
-        ]
+        ] = Field(default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata())
         original_format_details: Annotated[
             FlextLdifModelsDomains.FormatDetails | None,
             Field(
-                default=None,
                 description="Original formatting details for round-trip preservation (DN line, syntax, encoding, spacing)",
             ),
-        ]
-        schema_format_details: FlextLdifModelsDomains.SchemaFormatDetails | None = (
-            Field(
-                default=None,
-                description="Schema formatting details for perfect round-trip conversion (quotes, spacing, field order, extensions)",
-            )
-        )
+        ] = None
+        schema_format_details: FlextLdifModelsDomains.SchemaFormatDetails | None = None
         soft_delete_markers: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="Attributes soft-deleted during conversion (can be restored). Different from removed_attributes: these are intentionally hidden for target server but preserved for reverse conversion.",
             ),
-        ]
+        ] = Field(default_factory=list)
         original_attribute_case: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
-                default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata(),
                 description="Original case of attribute names: {'objectclass': 'objectClass', 'cn': 'CN'}. Used to restore original case during reverse conversion.",
             ),
-        ]
+        ] = Field(default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata())
         schema_quirks_applied: Annotated[
             list[str],
             Field(
-                default_factory=list,
                 description="List of schema quirks applied during parsing: ['matching_rule_normalization', 'syntax_oid_conversion', 'schema_dn_quirk']",
             ),
-        ]
+        ] = Field(default_factory=list)
         boolean_conversions: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
-                default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata(),
                 description="Boolean conversion tracking: {'orcldasisenabled': {'original': '1', 'converted': 'TRUE', 'format': 'OID->RFC'}}",
             ),
-        ]
+        ] = Field(default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata())
         minimal_differences: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
-                default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata(),
                 description="Complete minimal differences tracking for zero data loss: {'dn': {'has_differences': True, 'original': 'cn=test, dc=example', 'converted': 'cn=test,dc=example', 'differences': [...], 'spacing_changes': {...}, 'case_changes': [...], 'punctuation_changes': [...], 'original_length': 20, 'converted_length': 19}, 'attribute_cn': {'has_differences': False, ...}, 'schema_attr_uid': {'has_differences': True, 'original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", 'converted': 'attributeTypes: ( 0.9.2342... NAME uid SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )', 'differences': [...], 'syntax_quotes_removed': True, 'trailing_spaces_removed': True, ...}}",
             ),
-        ]
+        ] = Field(default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata())
         original_strings: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
-                default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata(),
                 description="Complete preservation of original strings before ANY conversion: {'dn_original': 'cn=test, dc=example;', 'attribute_cn_original': 'CN', 'schema_attr_uid_original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", 'acl_original': 'orclaci: { ... }', 'entry_original_ldif': 'dn: cn=test\\ncn: test\\n'}",
             ),
-        ]
+        ] = Field(default_factory=lambda: FlextLdifModelsMetadata.DynamicMetadata())
         conversion_history: Annotated[
             list[dict[str, str]],
             Field(
-                default_factory=_conversion_history_factory,
                 description="Complete conversion history for audit trail: [{'step': 'parse_oid_entry', 'timestamp': '2025-01-01T00:00:00Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'oid', 'operation': 'parse'}, {'step': 'normalize_to_rfc', 'timestamp': '2025-01-01T00:00:01Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'rfc', 'operation': 'normalize'}, ...]",
             ),
-        ]
+        ] = Field(default_factory=_conversion_history_factory)
 
         @classmethod
         def create_for(
