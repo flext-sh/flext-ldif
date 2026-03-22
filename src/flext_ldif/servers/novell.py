@@ -3,14 +3,11 @@
 from __future__ import annotations
 
 import base64
-import builtins
 import re
 from collections.abc import Mapping
 from typing import ClassVar, override
 
-from flext_ldif import c, m, r, u
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif import FlextLdifServersRfc, c, m, r, t, u
 
 
 class FlextLdifServersNovell(FlextLdifServersRfc):
@@ -349,7 +346,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 )
 
         @override
-        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
                 acl_attribute = (
@@ -426,7 +423,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             )
 
         @override
-        def model_post_init(self, _context: builtins.object, /) -> None:
+        def model_post_init(self, _context: dict[str, t.Scalar] | None, /) -> None:
             """Initialize eDirectory entry quirk."""
 
         def process_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:

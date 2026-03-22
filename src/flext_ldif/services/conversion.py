@@ -34,8 +34,12 @@ from flext_ldif.typings import FlextLdifTypes as t
 from flext_ldif.utilities import FlextLdifUtilities as u
 
 TUPLE_LENGTH_PAIR = 2
-ConvertedModel: TypeAlias = m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-SchemaConversionValue: TypeAlias = m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+ConvertedModel: TypeAlias = (
+    m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+)
+SchemaConversionValue: TypeAlias = (
+    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+)
 logger = FlextLogger(__name__)
 
 
@@ -1934,7 +1938,7 @@ class FlextLdifConversion(
     def _write_attribute_to_rfc(
         self,
         source: str | FlextLdifServersBase,
-        source_attr: m.Ldif.SchemaAttribute | object | str,
+        source_attr: SchemaConversionValue,
     ) -> r[SchemaConversionValue]:
         """Write attribute to RFC string representation."""
         if isinstance(source_attr, str):
@@ -1958,7 +1962,7 @@ class FlextLdifConversion(
     def _write_objectclass_to_rfc(
         self,
         source: str | FlextLdifServersBase,
-        source_oc: m.Ldif.SchemaObjectClass | object | str,
+        source_oc: SchemaConversionValue,
     ) -> r[SchemaConversionValue]:
         """Write objectClass to RFC string representation."""
         passthrough = FlextLdifConversion._schema_passthrough_ok(source_oc)
@@ -1984,7 +1988,7 @@ class FlextLdifConversion(
 
     def _write_target_attribute(
         self,
-        parsed_attr: m.Ldif.SchemaAttribute | str | object,
+        parsed_attr: SchemaConversionValue,
     ) -> r[SchemaConversionValue]:
         """Write target attribute to final format."""
         passthrough = FlextLdifConversion._schema_passthrough_ok(parsed_attr)
@@ -1998,7 +2002,7 @@ class FlextLdifConversion(
     def _write_target_objectclass(
         self,
         target: str | FlextLdifServersBase,
-        parsed_oc: m.Ldif.SchemaObjectClass | str | object,
+        parsed_oc: SchemaConversionValue,
     ) -> r[SchemaConversionValue]:
         """Write target objectClass to final format."""
         passthrough = FlextLdifConversion._schema_passthrough_ok(parsed_oc)

@@ -19,8 +19,6 @@ from datetime import datetime
 from typing import Annotated, ClassVar, Self, TypedDict, TypeIs, Unpack, override
 
 from flext_core import FlextLogger, r
-from flext_core.models import FlextModels as m
-from flext_core.utilities import FlextUtilities as u_core
 from pydantic import (
     ConfigDict,
     Field,
@@ -30,7 +28,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_ldif import FlextLdifConstants as c, t
+from flext_ldif import FlextLdifShared, c, m, t, u
 from flext_ldif._models import (
     AclElement,
     FlextLdifModelsBase,
@@ -38,7 +36,6 @@ from flext_ldif._models import (
     FlextLdifModelsSettings,
     SchemaElement,
 )
-from flext_ldif.shared import FlextLdifShared
 
 logger = FlextLogger(__name__)
 
@@ -944,7 +941,7 @@ class FlextLdifModelsDomains:
 
             self.attribute_metadata[str(attribute_name)] = {
                 "status": "deleted",
-                "deleted_at": u_core.generate_iso_timestamp(),
+                "deleted_at": u.generate_iso_timestamp(),
                 "deleted_reason": reason,
                 "deleted_by": deleted_by,
                 "original_values": [
@@ -1510,7 +1507,7 @@ class FlextLdifModelsDomains:
                 or self.subject is not None
                 or self.permissions is not None
             )
-            if acl_is_defined and (not u_core.is_string_non_empty(self.raw_acl)):
+            if acl_is_defined and (not u.is_string_non_empty(self.raw_acl)):
                 violations.append(
                     "ACL is defined (has target/subject/permissions) but raw_acl is empty",
                 )
@@ -1903,7 +1900,7 @@ class FlextLdifModelsDomains:
             return violations
 
         @override
-        def model_post_init(self, _context: builtins.object, /) -> None:
+        def model_post_init(self, _context: dict[str, t.Scalar] | None, /) -> None:
             """Post-init hook to ensure metadata is always initialized.
 
             Properly initialized before any code tries to access it.
