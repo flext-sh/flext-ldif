@@ -6,10 +6,10 @@ import builtins
 import re
 import struct
 from collections.abc import Mapping
-from typing import Annotated, ClassVar, Literal, override
+from typing import ClassVar, Literal, override
 
 from flext_core import FlextLogger, r
-from pydantic import BaseModel, Field, RootModel
+from pydantic import RootModel
 
 from flext_ldif import c, t
 from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -31,21 +31,9 @@ class _OidAclTargetAttributesJson(RootModel[list[str]]):
 class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     """Oracle Internet Directory (OID) ACL implementation."""
 
-    class OidAclMetadataConfig(BaseModel):
-        acl_line: Annotated[str, Field(default="")]
-        oid_subject_type: Annotated[str, Field(default="")]
-        rfc_subject_type: Annotated[str, Field(default="")]
-        oid_subject_value: Annotated[str, Field(default="")]
-        perms_dict: Annotated[Mapping[str, bool], Field(default_factory=dict)]
-        target_dn: Annotated[str, Field(default="entry")]
-        target_attrs: Annotated[list[str], Field(default_factory=list)]
-        acl_filter: Annotated[str, Field(default="")]
-        acl_constraint: Annotated[str, Field(default="")]
-        bindmode: Annotated[str, Field(default="")]
-        deny_group_override: Annotated[bool, Field(default=False)]
-        append_to_all: Annotated[bool, Field(default=False)]
-        bind_ip_filter: Annotated[str, Field(default="")]
-        constrain_to_added_object: Annotated[str, Field(default="")]
+    OidAclMetadataConfig: ClassVar[type[m.Ldif.OidAclMetadataConfig]] = (
+        m.Ldif.OidAclMetadataConfig
+    )
 
     RFC_ACL_ATTRIBUTES: ClassVar[list[str]] = [
         "aci",

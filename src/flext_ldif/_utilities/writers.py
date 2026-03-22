@@ -4,17 +4,10 @@ from __future__ import annotations
 
 import struct
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Annotated
 
 from flext_core import FlextLogger, r
-from pydantic import BaseModel, ConfigDict, Field
 
-from flext_ldif import t
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._models.settings import FlextLdifModelsSettings
-
-if TYPE_CHECKING:
-    from flext_ldif import m
+from flext_ldif import m, t
 
 logger = FlextLogger.create_module_logger(__name__)
 
@@ -26,7 +19,7 @@ class FlextLdifUtilitiesWriters:
         """Generalized entry writer with hook-based customization."""
 
         @staticmethod
-        def get_dn_string(entry: FlextLdifModelsDomains.Entry) -> str:
+        def get_dn_string(entry: m.Ldif.Entry) -> str:
             """Extract DN string from entry."""
             dn = entry.dn
             if dn is None:
@@ -38,15 +31,15 @@ class FlextLdifUtilitiesWriters:
         @staticmethod
         def write(
             *,
-            config: FlextLdifModelsSettings.EntryWriteConfig | None = None,
+            config: m.Ldif.EntryWriteConfig | None = None,
             **kwargs: t.Scalar,
         ) -> r[str]:
             """Write entry to LDIF string using hooks."""
             if config is None:
-                config = FlextLdifModelsSettings.EntryWriteConfig.model_validate(kwargs)
+                config = m.Ldif.EntryWriteConfig.model_validate(kwargs)
             try:
                 lines: list[str] = []
-                entry: FlextLdifModelsDomains.Entry = config.entry
+                entry: m.Ldif.Entry = config.entry
                 if config.transform_entry_hook:
                     entry = config.transform_entry_hook(entry)
                 FlextLdifUtilitiesWriters.Entry.write_entry_parts(entry, config, lines)
@@ -59,7 +52,7 @@ class FlextLdifUtilitiesWriters:
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                entry_for_error: FlextLdifModelsDomains.Entry | None = config.entry
+                entry_for_error: m.Ldif.Entry | None = config.entry
                 dn_for_error: str | None = None
                 try:
                     entry_dn = entry_for_error.dn if entry_for_error else None
@@ -81,8 +74,8 @@ class FlextLdifUtilitiesWriters:
 
         @staticmethod
         def write_entry_parts(
-            entry: FlextLdifModelsDomains.Entry,
-            config: FlextLdifModelsSettings.EntryWriteConfig,
+            entry: m.Ldif.Entry,
+            config: m.Ldif.EntryWriteConfig,
             lines: list[str],
         ) -> None:
             """Write entry parts (comments, DN, attributes)."""
@@ -132,16 +125,16 @@ class FlextLdifUtilitiesWriters:
 
         @staticmethod
         def write(
-            objectclass: FlextLdifModelsDomains.SchemaObjectClass,
+            objectclass: m.Ldif.SchemaObjectClass,
             server_type: str,
             build_parts_hook: Callable[
-                [FlextLdifModelsDomains.SchemaObjectClass],
+                [m.Ldif.SchemaObjectClass],
                 list[str],
             ],
             *,
             transform_hook: Callable[
-                [FlextLdifModelsDomains.SchemaObjectClass],
-                FlextLdifModelsDomains.SchemaObjectClass,
+                [m.Ldif.SchemaObjectClass],
+                m.Ldif.SchemaObjectClass,
             ]
             | None = None,
             transform_sup_hook: Callable[[list[str]], list[str]] | None = None,
@@ -174,14 +167,10 @@ class FlextLdifUtilitiesWriters:
     class Content:
         """Generalized content writer for multiple entries."""
 
-        class Stats(BaseModel):
-            model_config = ConfigDict(validate_default=True)
-            total_entries: Annotated[int, Field(default=0, ge=0)]
-            successful: Annotated[int, Field(default=0, ge=0)]
-            failed: Annotated[int, Field(default=0, ge=0)]
+        Stats = m.Ldif.Stats
 
         @staticmethod
-        def get_entry_dn_for_error(entry: FlextLdifModelsDomains.Entry) -> str | None:
+        def get_entry_dn_for_error(entry: m.Ldif.Entry) -> str | None:
             """Get DN string for error logging."""
             dn_attr = entry.dn
             if dn_attr is None:
@@ -195,12 +184,12 @@ class FlextLdifUtilitiesWriters:
         @staticmethod
         def write(
             *,
-            config: FlextLdifModelsSettings.BatchWriteConfig | None = None,
+            config: m.Ldif.BatchWriteConfig | None = None,
             **kwargs: t.Scalar,
         ) -> r[str]:
             """Write multiple entries to LDIF string."""
             if config is None:
-                config = FlextLdifModelsSettings.BatchWriteConfig.model_validate(kwargs)
+                config = m.Ldif.BatchWriteConfig.model_validate(kwargs)
             try:
                 parts: list[str] = []
                 if config.include_header and config.write_header_hook:
@@ -210,7 +199,7 @@ class FlextLdifUtilitiesWriters:
                 stats = FlextLdifUtilitiesWriters.Content.Stats(
                     total_entries=len(config.entries),
                 )
-                entries_typed: list[FlextLdifModelsDomains.Entry] = list(config.entries)
+                entries_typed: list[m.Ldif.Entry] = list(config.entries)
                 for entry in entries_typed:
                     result = (
                         FlextLdifUtilitiesWriters.Content.write_single_entry_with_stats(
@@ -238,8 +227,8 @@ class FlextLdifUtilitiesWriters:
 
         @staticmethod
         def write_single_entry_with_stats(
-            entry: FlextLdifModelsDomains.Entry,
-            write_entry_hook: Callable[[FlextLdifModelsDomains.Entry], r[str]],
+            entry: m.Ldif.Entry,
+            write_entry_hook: Callable[[m.Ldif.Entry], r[str]],
             stats: FlextLdifUtilitiesWriters.Content.Stats,
         ) -> str | None:
             """Write single entry with stats tracking."""

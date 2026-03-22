@@ -14,7 +14,7 @@ from collections.abc import Mapping, Sequence
 from typing import Annotated, Final
 
 from flext_core import FlextModels
-from pydantic import Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif import (
     FlextLdifModelsCollections,
@@ -95,6 +95,32 @@ class FlextLdifModels(FlextModels):
         # =================================================================
         # COMPOSITE MODELS — defined here, not in _models
         # =================================================================
+
+        class Stats(BaseModel):
+            """Write statistics for batch content operations."""
+
+            model_config = ConfigDict(validate_default=True)
+            total_entries: Annotated[int, Field(default=0, ge=0)]
+            successful: Annotated[int, Field(default=0, ge=0)]
+            failed: Annotated[int, Field(default=0, ge=0)]
+
+        class OidAclMetadataConfig(BaseModel):
+            """Configuration model for OID ACL metadata parsing."""
+
+            acl_line: Annotated[str, Field(default="")]
+            oid_subject_type: Annotated[str, Field(default="")]
+            rfc_subject_type: Annotated[str, Field(default="")]
+            oid_subject_value: Annotated[str, Field(default="")]
+            perms_dict: Annotated[Mapping[str, bool], Field(default_factory=dict)]
+            target_dn: Annotated[str, Field(default="entry")]
+            target_attrs: Annotated[list[str], Field(default_factory=list)]
+            acl_filter: Annotated[str, Field(default="")]
+            acl_constraint: Annotated[str, Field(default="")]
+            bindmode: Annotated[str, Field(default="")]
+            deny_group_override: Annotated[bool, Field(default=False)]
+            append_to_all: Annotated[bool, Field(default=False)]
+            bind_ip_filter: Annotated[str, Field(default="")]
+            constrain_to_added_object: Annotated[str, Field(default="")]
 
         class QuirksByServerDict(FlextModels.ArbitraryTypesModel):
             """Quirks by server dictionary model."""

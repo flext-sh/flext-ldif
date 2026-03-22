@@ -7,7 +7,16 @@ import struct
 import time
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
-from typing import Annotated, ClassVar, Final, Literal, Self, TypeIs, override
+from typing import (
+    Annotated,
+    ClassVar,
+    Final,
+    Literal,
+    Self,
+    TypeAlias,
+    TypeIs,
+    override,
+)
 
 from flext_core import FlextLogger
 from pydantic import Field
@@ -25,12 +34,8 @@ from flext_ldif.typings import FlextLdifTypes as t
 from flext_ldif.utilities import FlextLdifUtilities as u
 
 TUPLE_LENGTH_PAIR = 2
-type ConvertedModel = (
-    m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-)
-type SchemaConversionValue = (
-    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str | object
-)
+ConvertedModel: TypeAlias = m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+SchemaConversionValue: TypeAlias = m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
 logger = FlextLogger(__name__)
 
 
