@@ -9,8 +9,9 @@ from __future__ import annotations
 from enum import StrEnum, unique
 
 import pytest
+from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
-from tests import c, m, s, u
+from tests import c, m, s
 
 from flext_ldif import FlextLdifServersNovell
 
@@ -226,14 +227,14 @@ class TestsFlextLdifNovellInitialization(s):
     def test_server_initialization(self) -> None:
         """Test Novell eDirectory server initialization."""
         server = FlextLdifServersNovell()
-        u.Tests.Matchers.that(server.server_type == "novell", eq=True)
-        u.Tests.Matchers.that(server.priority == 20, eq=True)
+        tm.that(server.server_type == "novell", eq=True)
+        tm.that(server.priority == 20, eq=True)
 
     def test_schema_quirk_initialization(
         self, schema_quirk: FlextLdifServersNovell.Schema
     ) -> None:
         """Test schema quirk is initialized."""
-        u.Tests.Matchers.that(schema_quirk is not None, eq=True)
+        tm.that(schema_quirk is not None, eq=True)
 
 
 class TestNovellSchemaAttributeDetection:
@@ -245,7 +246,7 @@ class TestNovellSchemaAttributeDetection:
     ) -> None:
         """Test attribute detection for various scenarios."""
         result = schema_quirk.can_handle_attribute(test_case.attr_definition)
-        u.Tests.Matchers.that(result is test_case.expected_can_handle, eq=True)
+        tm.that(result is test_case.expected_can_handle, eq=True)
 
 
 class TestNovellSchemaAttributeParsing:
@@ -284,10 +285,10 @@ class TestNovellSchemaAttributeParsing:
         """Test parsing attribute without OID fails."""
         attr_def = "NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15"
         result = schema_quirk.parse_attribute(attr_def)
-        u.Tests.Matchers.that(result.is_failure, eq=True)
-        u.Tests.Matchers.that(result.error is not None, eq=True)
+        tm.that(result.is_failure, eq=True)
+        tm.that(result.error is not None, eq=True)
         if result.error is not None:
-            u.Tests.Matchers.that("missing an OID" in result.error, eq=True)
+            tm.that("missing an OID" in result.error, eq=True)
 
 
 class TestNovellSchemaObjectClassDetection:
@@ -301,7 +302,7 @@ class TestNovellSchemaObjectClassDetection:
     ) -> None:
         """Test objectClass detection for various scenarios."""
         result = schema_quirk.can_handle_objectclass(test_case.oc_definition)
-        u.Tests.Matchers.that(result is test_case.expected_can_handle, eq=True)
+        tm.that(result is test_case.expected_can_handle, eq=True)
 
 
 class TestNovellSchemaObjectClassParsing:
@@ -348,10 +349,10 @@ class TestNovellSchemaObjectClassParsing:
         oc_def = "NAME 'ndsPerson' SUP top STRUCTURAL"
         quirk_schema = schema_quirk
         result = quirk_schema.parse_objectclass(oc_def)
-        u.Tests.Matchers.that(result.is_failure, eq=True)
-        u.Tests.Matchers.that(result.error is not None, eq=True)
+        tm.that(result.is_failure, eq=True)
+        tm.that(result.error is not None, eq=True)
         if result.error is not None:
-            u.Tests.Matchers.that("missing an OID" in result.error, eq=True)
+            tm.that("missing an OID" in result.error, eq=True)
 
     def test_write_attribute_to_rfc(
         self, schema_quirk: FlextLdifServersNovell.Schema
@@ -410,7 +411,7 @@ class TestNovellEntryDetection:
         self, entry_quirk: FlextLdifServersNovell.Entry
     ) -> None:
         """Test entry quirk is initialized."""
-        u.Tests.Matchers.that(entry_quirk is not None, eq=True)
+        tm.that(entry_quirk is not None, eq=True)
 
     @pytest.mark.parametrize("test_case", ENTRY_TEST_CASES)
     def test_can_handle_entry(
@@ -419,4 +420,4 @@ class TestNovellEntryDetection:
         """Test entry detection for various scenarios."""
         quirk_entry = entry_quirk
         result = quirk_entry.can_handle(test_case.entry_dn, test_case.attributes)
-        u.Tests.Matchers.that(result is test_case.expected_can_handle, eq=True)
+        tm.that(result is test_case.expected_can_handle, eq=True)

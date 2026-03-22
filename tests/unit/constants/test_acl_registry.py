@@ -10,6 +10,7 @@ from enum import StrEnum, unique
 from typing import ClassVar
 
 import pytest
+from flext_tests import tm
 
 from tests import s, u
 
@@ -168,12 +169,12 @@ class TestsTestFlextLdifAclAttributeRegistry(s):
         attrs = u.Ldif.get_acl_attributes(param_server_type)
         for required in required_attrs:
             (
-                u.Tests.Matchers.that(required in attrs, eq=True),
+                tm.that(required in attrs, eq=True),
                 f"{required} not in {scenario}",
             )
         for forbidden in forbidden_attrs:
             (
-                u.Tests.Matchers.that(forbidden not in attrs, eq=True),
+                tm.that(forbidden not in attrs, eq=True),
                 f"{forbidden} should not be in {scenario}",
             )
 
@@ -194,13 +195,13 @@ class TestsTestFlextLdifAclAttributeRegistry(s):
     ) -> None:
         """Parametrized test for is_acl_attribute."""
         result = u.Ldif.is_acl_attribute(attr_name, server_type)
-        u.Tests.Matchers.that(result == expected_result, eq=True), f"{scenario} failed"
+        tm.that(result == expected_result, eq=True), f"{scenario} failed"
 
     def test_acl_registry_no_mutation(self) -> None:
         """get_acl_attributes should return new list each time."""
         attrs1 = list(u.Ldif.get_acl_attributes("oid"))
         attrs2 = list(u.Ldif.get_acl_attributes("oid"))
-        u.Tests.Matchers.that(attrs1 == attrs2, eq=True)
-        u.Tests.Matchers.that(attrs1 is not attrs2, eq=True)
+        tm.that(attrs1 == attrs2, eq=True)
+        tm.that(attrs1 is not attrs2, eq=True)
         attrs1.append("test_attribute")
-        u.Tests.Matchers.that("test_attribute" not in attrs2, eq=True)
+        tm.that("test_attribute" not in attrs2, eq=True)

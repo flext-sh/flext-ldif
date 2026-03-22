@@ -11,6 +11,7 @@ from enum import StrEnum, unique
 from typing import ClassVar
 
 import pytest
+from flext_tests import tm
 
 from tests import s, u
 
@@ -168,9 +169,9 @@ class TestsTestFlextLdifConstants(s):
                 u.Ldif.Constants.get_valid_values(category)
         else:
             values = u.Ldif.Constants.get_valid_values(category)
-            u.Tests.Matchers.that(isinstance(values, set), eq=True)
+            tm.that(isinstance(values, set), eq=True)
             (
-                u.Tests.Matchers.that(values == expected_values, eq=True),
+                tm.that(values == expected_values, eq=True),
                 (f"Expected {expected_values}, got {values}"),
             )
 
@@ -202,7 +203,7 @@ class TestsTestFlextLdifConstants(s):
             pytest.skip("is_valid does not raise for unknown category")
         else:
             result = u.Ldif.Constants.is_valid(value, category)
-            u.Tests.Matchers.that(result == expected_result, eq=True)
+            tm.that(result == expected_result, eq=True)
 
     @pytest.mark.parametrize(
         (
@@ -233,16 +234,16 @@ class TestsTestFlextLdifConstants(s):
                 u.Ldif.Constants.validate_many(values, category)
         else:
             is_valid, invalid = u.Ldif.Constants.validate_many(values, category)
-            u.Tests.Matchers.that(is_valid == expected_valid, eq=True)
+            tm.that(is_valid == expected_valid, eq=True)
             if not expected_valid:
-                u.Tests.Matchers.that(len(invalid) > 0, eq=True)
+                tm.that(len(invalid) > 0, eq=True)
 
     def test_constants_are_accessible(self) -> None:
         """Test that constants are properly defined and accessible."""
-        u.Tests.Matchers.that(hasattr(u.Ldif.Constants, "_CATEGORY_MAP"), eq=True)
+        tm.that(hasattr(u.Ldif.Constants, "_CATEGORY_MAP"), eq=True)
         category_map = u.Ldif.Constants._CATEGORY_MAP
-        u.Tests.Matchers.that("server_type" in category_map, eq=True)
-        u.Tests.Matchers.that("encoding" in category_map, eq=True)
-        u.Tests.Matchers.that(hasattr(u.Ldif.Constants, "get_valid_values"), eq=True)
-        u.Tests.Matchers.that(hasattr(u.Ldif.Constants, "is_valid"), eq=True)
-        u.Tests.Matchers.that(hasattr(u.Ldif.Constants, "validate_many"), eq=True)
+        tm.that("server_type" in category_map, eq=True)
+        tm.that("encoding" in category_map, eq=True)
+        tm.that(hasattr(u.Ldif.Constants, "get_valid_values"), eq=True)
+        tm.that(hasattr(u.Ldif.Constants, "is_valid"), eq=True)
+        tm.that(hasattr(u.Ldif.Constants, "validate_many"), eq=True)

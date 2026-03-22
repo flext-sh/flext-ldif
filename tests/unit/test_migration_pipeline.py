@@ -25,9 +25,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import FlextLdifMigrationPipeline
-from tests import c, s, u
+from tests import c, s
 
 
 class TestsFlextLdifMigrationPipeline(s):
@@ -45,7 +46,7 @@ class TestsFlextLdifMigrationPipeline(s):
             source_server_type="oid",
             target_server_type="oud",
         )
-        u.Tests.Matchers.that(pipeline is not None, eq=True)
+        tm.that(pipeline is not None, eq=True)
 
     def test_initialization_with_defaults(self, tmp_path: Path) -> None:
         """Test pipeline initialization with default server types."""
@@ -56,9 +57,9 @@ class TestsFlextLdifMigrationPipeline(s):
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir, output_dir=output_dir
         )
-        u.Tests.Matchers.that(pipeline is not None, eq=True)
-        u.Tests.Matchers.that(pipeline.source_server_type == "rfc", eq=True)
-        u.Tests.Matchers.that(pipeline.target_server_type == "rfc", eq=True)
+        tm.that(pipeline is not None, eq=True)
+        tm.that(pipeline.source_server_type == "rfc", eq=True)
+        tm.that(pipeline.target_server_type == "rfc", eq=True)
 
     @pytest.mark.parametrize(
         ("source", "target"),
@@ -85,7 +86,7 @@ class TestsFlextLdifMigrationPipeline(s):
             source_server_type=source,
             target_server_type=target,
         )
-        u.Tests.Matchers.that(pipeline is not None, eq=True)
+        tm.that(pipeline is not None, eq=True)
 
     def test_execute_with_nonexistent_input_dir_returns_failure(
         self, tmp_path: Path
@@ -101,9 +102,9 @@ class TestsFlextLdifMigrationPipeline(s):
             target_server_type="oud",
         )
         result = pipeline.execute()
-        u.Tests.Matchers.that(result.is_failure, eq=True)
-        u.Tests.Matchers.that(result.error is not None, eq=True)
-        u.Tests.Matchers.that("not found" in str(result.error).lower(), eq=True)
+        tm.that(result.is_failure, eq=True)
+        tm.that(result.error is not None, eq=True)
+        tm.that("not found" in str(result.error).lower(), eq=True)
 
     def test_execution_with_empty_input(self, tmp_path: Path) -> None:
         """Test pipeline handles empty input directory gracefully."""
@@ -118,7 +119,7 @@ class TestsFlextLdifMigrationPipeline(s):
             target_server_type="rfc",
         )
         result = pipeline.execute()
-        u.Tests.Matchers.that(result.is_success or result.is_failure, eq=True)
+        tm.that(result.is_success or result.is_failure, eq=True)
 
     def test_basic_execution(self, tmp_path: Path) -> None:
         """Test pipeline executes successfully with sample LDIF."""
@@ -135,7 +136,7 @@ class TestsFlextLdifMigrationPipeline(s):
             target_server_type="rfc",
         )
         result = pipeline.execute()
-        u.Tests.Matchers.that(result.is_success or result.is_failure, eq=True)
+        tm.that(result.is_success or result.is_failure, eq=True)
 
     @pytest.mark.parametrize(
         ("source", "target"),
@@ -160,4 +161,4 @@ class TestsFlextLdifMigrationPipeline(s):
             target_server_type=target,
         )
         result = pipeline.execute()
-        u.Tests.Matchers.that(result.is_success or result.is_failure, eq=True)
+        tm.that(result.is_success or result.is_failure, eq=True)

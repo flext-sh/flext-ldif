@@ -12,6 +12,7 @@ from enum import StrEnum, unique
 from typing import ClassVar
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import (
     FlextLdifDn,
@@ -19,7 +20,7 @@ from flext_ldif import (
     FlextLdifStatistics,
     services,
 )
-from tests import c, m, s, u
+from tests import c, m, s
 
 
 class TestsTestFlextLdifServiceAPIs(s):
@@ -79,23 +80,23 @@ class TestsTestFlextLdifServiceAPIs(s):
             match check_type:
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.MODELS:
                     (
-                        u.Tests.Matchers.that(m is not None, eq=True),
+                        tm.that(m is not None, eq=True),
                         "m should be available",
                     )
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.CONSTANTS:
                     (
-                        u.Tests.Matchers.that(hasattr(c, check_target), eq=True),
+                        tm.that(hasattr(c, check_target), eq=True),
                         f"c should have {check_target}",
                     )
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.UTILITIES_MODULE:
                     spec = importlib.util.find_spec(check_target)
                     (
-                        u.Tests.Matchers.that(spec is not None, eq=True),
+                        tm.that(spec is not None, eq=True),
                         f"Module {check_target} should exist",
                     )
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.SERVICES_MODULE:
                     (
-                        u.Tests.Matchers.that(
+                        tm.that(
                             hasattr(
                                 services,
                                 TestsTestFlextLdifServiceAPIs.Constants.SERVICE_DN,
@@ -107,7 +108,7 @@ class TestsTestFlextLdifServiceAPIs(s):
                         ),
                     )
                     (
-                        u.Tests.Matchers.that(
+                        tm.that(
                             hasattr(
                                 services,
                                 TestsTestFlextLdifServiceAPIs.Constants.SERVICE_STATISTICS,
@@ -121,7 +122,7 @@ class TestsTestFlextLdifServiceAPIs(s):
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.CONFIGURATION:
                     config = FlextLdifSettings()
                     (
-                        u.Tests.Matchers.that(config is not None, eq=True),
+                        tm.that(config is not None, eq=True),
                         "FlextLdifSettings should instantiate",
                     )
 
@@ -147,7 +148,7 @@ class TestsTestFlextLdifServiceAPIs(s):
         """Test service instantiation with parametrized test cases."""
         service = self.Helpers.get_service(service_type, dn_service, statistics_service)
         (
-            u.Tests.Matchers.that(service is not None, eq=True),
+            tm.that(service is not None, eq=True),
             (f"Service {service_type.value} should be instantiated"),
         )
 

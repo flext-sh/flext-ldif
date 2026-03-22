@@ -11,13 +11,14 @@ from pathlib import Path
 from typing import Final
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import (
     FlextLdifServersOid,
     FlextLdifServersOud,
     FlextLdifServersRfc,
 )
-from tests import c, s, u
+from tests import c, s
 
 
 @pytest.mark.unit
@@ -26,50 +27,50 @@ class TestsFlextLdifQuirksStandardizedConstants(s):
 
     def test_rfc_schema_constants(self) -> None:
         """RFC Schema must have standardized Constants."""
-        u.Tests.Matchers.that(hasattr(FlextLdifServersRfc, "Constants"), eq=True)
+        tm.that(hasattr(FlextLdifServersRfc, "Constants"), eq=True)
         constants = FlextLdifServersRfc.Constants
-        u.Tests.Matchers.that(hasattr(constants, "CANONICAL_NAME"), eq=True)
-        u.Tests.Matchers.that(constants.CANONICAL_NAME == "rfc", eq=True)
-        u.Tests.Matchers.that("rfc" in constants.ALIASES, eq=True)
-        u.Tests.Matchers.that(constants.PRIORITY == 100, eq=True)
-        u.Tests.Matchers.that("rfc" in constants.CAN_NORMALIZE_FROM, eq=True)
-        u.Tests.Matchers.that("rfc" in constants.CAN_DENORMALIZE_TO, eq=True)
+        tm.that(hasattr(constants, "CANONICAL_NAME"), eq=True)
+        tm.that(constants.CANONICAL_NAME == "rfc", eq=True)
+        tm.that("rfc" in constants.ALIASES, eq=True)
+        tm.that(constants.PRIORITY == 100, eq=True)
+        tm.that("rfc" in constants.CAN_NORMALIZE_FROM, eq=True)
+        tm.that("rfc" in constants.CAN_DENORMALIZE_TO, eq=True)
 
     def test_rfc_acl_constants(self) -> None:
         """RFC Acl must have standardized Constants."""
-        u.Tests.Matchers.that(hasattr(FlextLdifServersRfc, "Constants"), eq=True)
+        tm.that(hasattr(FlextLdifServersRfc, "Constants"), eq=True)
         constants = FlextLdifServersRfc.Constants
-        u.Tests.Matchers.that(constants.CANONICAL_NAME == "rfc", eq=True)
-        u.Tests.Matchers.that("rfc" in constants.ALIASES, eq=True)
+        tm.that(constants.CANONICAL_NAME == "rfc", eq=True)
+        tm.that("rfc" in constants.ALIASES, eq=True)
 
     def test_rfc_entry_constants(self) -> None:
         """RFC Entry must have standardized Constants."""
-        u.Tests.Matchers.that(hasattr(FlextLdifServersRfc, "Constants"), eq=True)
+        tm.that(hasattr(FlextLdifServersRfc, "Constants"), eq=True)
         constants = FlextLdifServersRfc.Constants
-        u.Tests.Matchers.that(constants.CANONICAL_NAME == "rfc", eq=True)
-        u.Tests.Matchers.that("rfc" in constants.ALIASES, eq=True)
+        tm.that(constants.CANONICAL_NAME == "rfc", eq=True)
+        tm.that("rfc" in constants.ALIASES, eq=True)
 
     def test_oid_schema_constants(self) -> None:
         """OID Schema must have standardized Constants."""
-        u.Tests.Matchers.that(hasattr(FlextLdifServersOid, "Constants"), eq=True)
+        tm.that(hasattr(FlextLdifServersOid, "Constants"), eq=True)
         global_constants = FlextLdifServersOid.Constants
-        u.Tests.Matchers.that(global_constants.CANONICAL_NAME == "oid", eq=True)
-        u.Tests.Matchers.that("oid" in global_constants.ALIASES, eq=True)
-        u.Tests.Matchers.that("oracle_oid" in global_constants.ALIASES, eq=True)
-        u.Tests.Matchers.that(global_constants.PRIORITY == 10, eq=True)
-        u.Tests.Matchers.that("oid" in global_constants.CAN_NORMALIZE_FROM, eq=True)
-        u.Tests.Matchers.that("rfc" in global_constants.CAN_DENORMALIZE_TO, eq=True)
+        tm.that(global_constants.CANONICAL_NAME == "oid", eq=True)
+        tm.that("oid" in global_constants.ALIASES, eq=True)
+        tm.that("oracle_oid" in global_constants.ALIASES, eq=True)
+        tm.that(global_constants.PRIORITY == 10, eq=True)
+        tm.that("oid" in global_constants.CAN_NORMALIZE_FROM, eq=True)
+        tm.that("rfc" in global_constants.CAN_DENORMALIZE_TO, eq=True)
 
     def test_oud_schema_constants(self) -> None:
         """OUD must have standardized Constants."""
-        u.Tests.Matchers.that(hasattr(FlextLdifServersOud, "Constants"), eq=True)
+        tm.that(hasattr(FlextLdifServersOud, "Constants"), eq=True)
         global_constants = FlextLdifServersOud.Constants
-        u.Tests.Matchers.that(global_constants.CANONICAL_NAME == "oud", eq=True)
-        u.Tests.Matchers.that("oud" in global_constants.ALIASES, eq=True)
-        u.Tests.Matchers.that("oracle_oud" in global_constants.ALIASES, eq=True)
-        u.Tests.Matchers.that(global_constants.PRIORITY == 10, eq=True)
-        u.Tests.Matchers.that("oud" in global_constants.CAN_NORMALIZE_FROM, eq=True)
-        u.Tests.Matchers.that("rfc" in global_constants.CAN_DENORMALIZE_TO, eq=True)
+        tm.that(global_constants.CANONICAL_NAME == "oud", eq=True)
+        tm.that("oud" in global_constants.ALIASES, eq=True)
+        tm.that("oracle_oud" in global_constants.ALIASES, eq=True)
+        tm.that(global_constants.PRIORITY == 10, eq=True)
+        tm.that("oud" in global_constants.CAN_NORMALIZE_FROM, eq=True)
+        tm.that("rfc" in global_constants.CAN_DENORMALIZE_TO, eq=True)
 
     def test_constants_include_canonical_name(self) -> None:
         """Canonical name must be in aliases."""
@@ -89,10 +90,8 @@ class TestsFlextLdifQuirksStandardizedConstants(s):
         ]
         for quirk_class, expected_canonical in quirks:
             constants = quirk_class.Constants
-            u.Tests.Matchers.that(
-                expected_canonical == constants.CANONICAL_NAME, eq=True
-            )
-            u.Tests.Matchers.that(expected_canonical in constants.ALIASES, eq=True)
+            tm.that(expected_canonical == constants.CANONICAL_NAME, eq=True)
+            tm.that(expected_canonical in constants.ALIASES, eq=True)
 
     def test_conversion_capabilities_valid(self) -> None:
         """Server must be able to convert itself."""
@@ -104,15 +103,11 @@ class TestsFlextLdifQuirksStandardizedConstants(s):
         for constants in quirks:
             canonical = constants.CANONICAL_NAME
             (
-                u.Tests.Matchers.that(
-                    canonical in constants.CAN_NORMALIZE_FROM, eq=True
-                ),
+                tm.that(canonical in constants.CAN_NORMALIZE_FROM, eq=True),
                 (f"{canonical} must be in CAN_NORMALIZE_FROM"),
             )
             (
-                u.Tests.Matchers.that(
-                    canonical in constants.CAN_DENORMALIZE_TO, eq=True
-                ),
+                tm.that(canonical in constants.CAN_DENORMALIZE_TO, eq=True),
                 (f"{canonical} must be in CAN_DENORMALIZE_TO"),
             )
 
@@ -126,10 +121,10 @@ class TestQuirksAutoInterchange:
         oid_constants = FlextLdifServersOid.Constants
         rfc_constants = FlextLdifServersRfc.Constants
         oud_constants = FlextLdifServersOud.Constants
-        u.Tests.Matchers.that("rfc" in oid_constants.CAN_DENORMALIZE_TO, eq=True)
-        u.Tests.Matchers.that("rfc" in rfc_constants.CAN_NORMALIZE_FROM, eq=True)
-        u.Tests.Matchers.that("rfc" in oud_constants.CAN_NORMALIZE_FROM, eq=True)
-        u.Tests.Matchers.that("oud" in oud_constants.CAN_DENORMALIZE_TO, eq=True)
+        tm.that("rfc" in oid_constants.CAN_DENORMALIZE_TO, eq=True)
+        tm.that("rfc" in rfc_constants.CAN_NORMALIZE_FROM, eq=True)
+        tm.that("rfc" in oud_constants.CAN_NORMALIZE_FROM, eq=True)
+        tm.that("oud" in oud_constants.CAN_DENORMALIZE_TO, eq=True)
 
 
 @pytest.mark.unit
@@ -187,19 +182,19 @@ class TestQuirksWithRealLdifFixtures:
         """OID quirk must handle real OID LDIF data."""
         oid = FlextLdifServersOid.Entry()
         result = oid.parse(oid_schema_ldif)
-        u.Tests.Matchers.that(result is not None, eq=True)
+        tm.that(result is not None, eq=True)
 
     def test_rfc_handles_all_ldif(self, oid_schema_ldif: str) -> None:
         """RFC quirk must handle any valid LDIF (lowest priority fallback)."""
         rfc = FlextLdifServersRfc.Entry()
         result = rfc.parse(oid_schema_ldif)
-        u.Tests.Matchers.that(result is not None, eq=True)
+        tm.that(result is not None, eq=True)
 
     def test_oud_can_handle_oud_ldif(self, oud_schema_ldif: str) -> None:
         """OUD quirk must handle real OUD LDIF data."""
         oud = FlextLdifServersOud.Entry()
         result = oud.parse(oud_schema_ldif)
-        u.Tests.Matchers.that(result is not None, eq=True)
+        tm.that(result is not None, eq=True)
 
 
 @pytest.mark.unit
@@ -209,20 +204,20 @@ class TestAliasDiscovery:
     def test_oid_aliases_discoverable(self) -> None:
         """OID aliases must be discoverable for normalization."""
         constants = FlextLdifServersOid.Constants
-        u.Tests.Matchers.that("oid" in constants.ALIASES, eq=True)
-        u.Tests.Matchers.that("oracle_oid" in constants.ALIASES, eq=True)
-        u.Tests.Matchers.that(constants.CANONICAL_NAME in constants.ALIASES, eq=True)
+        tm.that("oid" in constants.ALIASES, eq=True)
+        tm.that("oracle_oid" in constants.ALIASES, eq=True)
+        tm.that(constants.CANONICAL_NAME in constants.ALIASES, eq=True)
 
     def test_oud_aliases_discoverable(self) -> None:
         """OUD aliases must be discoverable for normalization."""
         constants = FlextLdifServersOud.Constants
-        u.Tests.Matchers.that("oud" in constants.ALIASES, eq=True)
-        u.Tests.Matchers.that("oracle_oud" in constants.ALIASES, eq=True)
-        u.Tests.Matchers.that(constants.CANONICAL_NAME in constants.ALIASES, eq=True)
+        tm.that("oud" in constants.ALIASES, eq=True)
+        tm.that("oracle_oud" in constants.ALIASES, eq=True)
+        tm.that(constants.CANONICAL_NAME in constants.ALIASES, eq=True)
 
     def test_rfc_aliases_discoverable(self) -> None:
         """RFC aliases must be discoverable."""
         constants = FlextLdifServersRfc.Constants
-        u.Tests.Matchers.that("rfc" in constants.ALIASES, eq=True)
-        u.Tests.Matchers.that("generic" in constants.ALIASES, eq=True)
-        u.Tests.Matchers.that(constants.CANONICAL_NAME in constants.ALIASES, eq=True)
+        tm.that("rfc" in constants.ALIASES, eq=True)
+        tm.that("generic" in constants.ALIASES, eq=True)
+        tm.that(constants.CANONICAL_NAME in constants.ALIASES, eq=True)

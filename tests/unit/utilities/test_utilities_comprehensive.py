@@ -6,6 +6,7 @@ Tests all 830 uncovered lines in utilities.py with real data and automation.
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 
 from tests import m, u
 from tests.test_factory import FlextLdifTestFactory
@@ -22,8 +23,8 @@ class TestFlextLdifUtilitiesComprehensive:
         if test_data.dn:
             dn = test_data.dn
             result = u.Ldif.norm_string(dn)
-            u.Tests.Matchers.that(isinstance(result, str), eq=True)
-            u.Tests.Matchers.that(len(result) > 0, eq=True)
+            tm.that(isinstance(result, str), eq=True)
+            tm.that(len(result) > 0, eq=True)
 
     def test_real_ldif_processing_pipeline(self) -> None:
         """Test complete LDIF processing pipeline with real data."""
@@ -53,19 +54,19 @@ class TestFlextLdifUtilitiesComprehensive:
                 if key not in entries[-1].attributes:
                     entries[-1].attributes[key] = []
                 entries[-1].attributes[key].append(value)
-        u.Tests.Matchers.that(len(entries) >= 5, eq=True)
+        tm.that(len(entries) >= 5, eq=True)
         for entry in entries:
-            u.Tests.Matchers.that(entry.dn, none=False)
-            u.Tests.Matchers.that(len(entry.attributes) > 0, eq=True)
-            u.Tests.Matchers.that(isinstance(entry.attributes, dict), eq=True)
+            tm.that(entry.dn, none=False)
+            tm.that(len(entry.attributes) > 0, eq=True)
+            tm.that(isinstance(entry.attributes, dict), eq=True)
 
     @pytest.mark.parametrize("server_type", ["generic", "openldap", "ad", "oid", "oud"])
     def test_server_specific_utilities(self, server_type: str) -> None:
         """Test server-specific utility functions."""
         entry = FlextLdifTestFactory.create_real_entry(server_type=server_type)
-        u.Tests.Matchers.that(entry is not None, eq=True)
-        u.Tests.Matchers.that(hasattr(entry, "dn"), eq=True)
-        u.Tests.Matchers.that(hasattr(entry, "attributes"), eq=True)
+        tm.that(entry is not None, eq=True)
+        tm.that(hasattr(entry, "dn"), eq=True)
+        tm.that(hasattr(entry, "attributes"), eq=True)
         normalized = u.Ldif.normalize_server_type(server_type)
-        u.Tests.Matchers.that(isinstance(normalized, str), eq=True)
-        u.Tests.Matchers.that(len(normalized) > 0, eq=True)
+        tm.that(isinstance(normalized, str), eq=True)
+        tm.that(len(normalized) > 0, eq=True)
