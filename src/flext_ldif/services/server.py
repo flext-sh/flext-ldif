@@ -21,11 +21,6 @@ from flext_ldif.servers._base import (
 from flext_ldif.servers.base import FlextLdifServersBase
 
 logger = FlextLogger(__name__)
-type QuirkComponent = (
-    FlextLdifServersBaseSchema
-    | FlextLdifServersBaseSchemaAcl
-    | FlextLdifServersBaseEntry
-)
 
 
 class FlextLdifServer(FlextRegistry):
@@ -60,7 +55,17 @@ class FlextLdifServer(FlextRegistry):
             return None
         return base.entry_quirk
 
-    def get_all_quirks(self, server_type: str) -> r[Mapping[str, QuirkComponent]]:
+    def get_all_quirks(
+        self,
+        server_type: str,
+    ) -> r[
+        Mapping[
+            str,
+            FlextLdifServersBaseSchema
+            | FlextLdifServersBaseSchemaAcl
+            | FlextLdifServersBaseEntry,
+        ]
+    ]:
         """Get all quirk types for a server."""
         return self.quirk(server_type).map(
             lambda base: {
