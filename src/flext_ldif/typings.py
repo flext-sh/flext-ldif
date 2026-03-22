@@ -10,14 +10,14 @@ from collections.abc import Callable, Mapping, MutableMapping
 from datetime import datetime
 from typing import Annotated, Literal, TypeVar
 
-from flext_core import FlextTypes, r
+from flext_core import FlextTypes, r, t as _core_t
 from pydantic import BaseModel, StringConstraints
 
 # =========================================================================
 # RECURSIVE TYPES - Defined at module level for reliable scope resolution
 # =========================================================================
 
-type _Scalar = t.Primitives | None
+type _Scalar = _core_t.Primitives | None
 
 type _RecursiveMetadata = (
     _Scalar | list[_RecursiveMetadata] | Mapping[str, _RecursiveMetadata] | datetime

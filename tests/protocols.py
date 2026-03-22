@@ -1,6 +1,6 @@
 """Protocol definitions for flext-ldif tests.
 
-Provides TestsFlextLdifProtocols, extending p with flext-ldif-specific
+Provides FlextLdifTestProtocols, extending FlextTestsProtocols with flext-ldif-specific
 protocols. All generic test protocols come from flext_tests.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -9,21 +9,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_tests import p
+from flext_tests import FlextTestsProtocols
 
 from flext_ldif import FlextLdifProtocols
 
 
-class TestsFlextLdifProtocols(p, FlextLdifProtocols):
+class FlextLdifTestProtocols(FlextTestsProtocols, FlextLdifProtocols):
     """Protocol definitions for flext-ldif tests.
 
-    Extends both p and FlextLdifProtocols with flext-ldif-specific
+    Extends both FlextTestsProtocols and FlextLdifProtocols with flext-ldif-specific
     protocol definitions.
 
     Provides access to:
-    - p.Tests.Docker.* (from p)
-    - p.Tests.Factory.* (from p)
-    - p.Ldif.* (from FlextLdifProtocols)
+    - FlextTestsProtocols.Tests.Docker.* (from FlextTestsProtocols)
+    - FlextTestsProtocols.Tests.Factory.* (from FlextTestsProtocols)
+    - FlextLdifProtocols.Ldif.* (from FlextLdifProtocols)
 
     Rules:
     - NEVER redeclare protocols from parent classes
@@ -33,14 +33,14 @@ class TestsFlextLdifProtocols(p, FlextLdifProtocols):
     class LdifTests:
         """Project-specific test protocols for flext-ldif.
 
-        Separated from p.Tests to avoid bad-override.
-        Access via p.LdifTests.* for flext-ldif-specific protocols.
+        Separated from FlextTestsProtocols.Tests to avoid bad-override.
+        Access via FlextLdifTestProtocols.LdifTests.* for flext-ldif-specific protocols.
         """
 
         class Ldif:
             """Flext-ldif-specific test protocols."""
 
 
-__all__ = ["TestsFlextLdifProtocols", "p"]
+p = FlextLdifTestProtocols
 
-p = TestsFlextLdifProtocols
+__all__ = ["FlextLdifTestProtocols", "p"]

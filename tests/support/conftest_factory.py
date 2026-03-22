@@ -23,7 +23,7 @@ from typing import (
 
 import pytest
 from flext_core import FlextConstants, FlextLogger, FlextSettings, r
-from flext_tests.docker import tk
+from flext_tests import tk
 from ldap3 import ALL, Connection, Server
 
 from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifServer, FlextLdifWriter, p

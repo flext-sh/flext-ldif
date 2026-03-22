@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Final, cast
 
 from flext_core import r
-from flext_tests import c
+from flext_tests import FlextTestsConstants
 
 from flext_ldif import (
     FlextLdif,
@@ -38,8 +38,11 @@ from flext_ldif import (
 )
 
 
-class TestsFlextLdifConstants(c, FlextLdifConstants):
+class FlextLdifTestConstants(FlextTestsConstants):
     """Constants for flext-ldif tests using COMPOSITION INHERITANCE."""
+
+    class Ldif(FlextLdifConstants.Ldif):
+        """Domain namespace for flext-ldif test constants."""
 
     class Schema:
         """Schema constants wrapper for test convenience."""
@@ -513,7 +516,7 @@ class TestsFlextLdifConstants(c, FlextLdifConstants):
     class OIDs:
         """OID constant namespace for cleaner test access.
 
-        Aliases constants from TestsFlextLdifConstants.Rfc for convenient access.
+        Aliases constants from FlextLdifTestConstants.Rfc for convenient access.
         Used by test files to reference OID constants with short names.
         """
 
@@ -535,7 +538,7 @@ class TestsFlextLdifConstants(c, FlextLdifConstants):
     class Syntax:
         """Syntax OID constant namespace for cleaner test access.
 
-        Aliases syntax constants from TestsFlextLdifConstants.Rfc for convenient access.
+        Aliases syntax constants from FlextLdifTestConstants.Rfc for convenient access.
         Used by test files to reference syntax OIDs with short names.
         """
 
@@ -1179,7 +1182,7 @@ class TestsFlextLdifConstants(c, FlextLdifConstants):
                 AssertionError: If parsing/writing fails or validations don't pass
 
             """
-            attr = TestsFlextLdifConstants.RfcTestHelpers.test_schema_parse_attribute(
+            attr = FlextLdifTestConstants.RfcTestHelpers.test_schema_parse_attribute(
                 schema_quirk, attr_def, expected_oid, expected_name
             )
             write_method = getattr(schema_quirk, "write_attribute", None)
@@ -1740,7 +1743,7 @@ class TestsFlextLdifConstants(c, FlextLdifConstants):
             """
             assert isinstance(api, FlextLdif)
             assert isinstance(output_file, Path)
-            ldif_string = TestsFlextLdifConstants.TestDeduplicationHelpers.helper_api_write_and_unwrap(
+            ldif_string = FlextLdifTestConstants.TestDeduplicationHelpers.helper_api_write_and_unwrap(
                 api, entries, must_contain=must_contain
             )
             output_file.write_text(ldif_string)
@@ -1760,7 +1763,7 @@ class TestsFlextLdifConstants(c, FlextLdifConstants):
                 must_contain: List of strings that must appear in output
 
             """
-            TestsFlextLdifConstants.TestDeduplicationHelpers.helper_api_write_and_unwrap(
+            FlextLdifTestConstants.TestDeduplicationHelpers.helper_api_write_and_unwrap(
                 api, entries, must_contain=must_contain
             )
 
@@ -2094,4 +2097,6 @@ class TestsFlextLdifConstants(c, FlextLdifConstants):
             return converted_items
 
 
-c = TestsFlextLdifConstants
+c = FlextLdifTestConstants
+
+__all__ = ["FlextLdifTestConstants", "c"]

@@ -2595,8 +2595,10 @@ class FlextLdifModelsDomains:
                 return attributes
             attrs_dict: dict[str, list[str]] = {}
             for attr_name, attr_values in attributes.items():
-                if isinstance(attr_values, str):
-                    values_list: list[str] = [str(attr_values)]
+                if isinstance(attr_values, list):
+                    values_list: list[str] = [str(v) for v in attr_values]
+                elif isinstance(attr_values, str):
+                    values_list = [attr_values]
                 else:
                     values_list = [str(attr_values)]
                 attrs_dict[attr_name] = values_list

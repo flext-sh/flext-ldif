@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from flext_core import d, e, h, r, s, x
     from flext_core.typings import FlextTypes
 
-    from flext_ldif import _models, _utilities, servers, services
+    from flext_ldif import servers, services
     from flext_ldif.__version__ import (
         __all__,
         __author__,
@@ -83,7 +83,7 @@ if TYPE_CHECKING:
         OrFilter,
     )
     from flext_ldif._utilities.fluent import DnOps, EntryOps
-    from flext_ldif._utilities.functional import FlextFunctional, f
+    from flext_ldif._utilities.functional import FlextFunctional
     from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
     from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
     from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
@@ -146,7 +146,7 @@ if TYPE_CHECKING:
     from flext_ldif.servers.base import FlextLdifServersBase
     from flext_ldif.servers.ds389 import FlextLdifServersDs389
     from flext_ldif.servers.novell import FlextLdifServersNovell
-    from flext_ldif.servers.oid import FlextLdifServersOid, logger
+    from flext_ldif.servers.oid import FlextLdifServersOid
     from flext_ldif.servers.openldap import FlextLdifServersOpenldap
     from flext_ldif.servers.openldap1 import FlextLdifServersOpenldap1
     from flext_ldif.servers.oud import FlextLdifServersOud
@@ -676,14 +676,10 @@ __all__ = [
     "__url__",
     "__version__",
     "__version_info__",
-    "_models",
-    "_utilities",
     "c",
     "d",
     "e",
-    "f",
     "h",
-    "logger",
     "m",
     "p",
     "r",

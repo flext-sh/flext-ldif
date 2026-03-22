@@ -11,8 +11,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
-
-    from flext_ldif import d, e, h, r, s, t, x
+    from flext_tests import d, e, h, r, s, x
 
     from . import integration as integration, support as support, unit as unit
     from .base import FlextLdifTestsServiceBase
@@ -36,7 +35,7 @@ if TYPE_CHECKING:
         real_entry,
         real_ldif_content,
     )
-    from .constants import TestsFlextLdifConstants, TestsFlextLdifConstants as c
+    from .constants import FlextLdifTestConstants, FlextLdifTestConstants as c
     from .integration.conftest import (
         LDAP_ADMIN_DN,
         LDAP_ADMIN_PASSWORD,
@@ -202,8 +201,8 @@ if TYPE_CHECKING:
         TestSchemaDeviationsUtilities,
         TestSchemaDeviationsXOrigin,
     )
-    from .models import TestsFlextLdifModels, TestsFlextLdifModels as m
-    from .protocols import TestsFlextLdifProtocols, TestsFlextLdifProtocols as p
+    from .models import FlextLdifTestModels, FlextLdifTestModels as m
+    from .protocols import FlextLdifTestProtocols, FlextLdifTestProtocols as p
     from .support.conftest_factory import FlextLdifTestConftest, tk
     from .support.ldif_data import LdifSample, LdifTestData
     from .support.real_services import FlextLdifTestFactory
@@ -222,7 +221,7 @@ if TYPE_CHECKING:
         tt,
         tv,
     )
-    from .typings import GenericFieldsDict
+    from .typings import FlextLdifTestTypes, FlextLdifTestTypes as t, GenericFieldsDict
     from .unit import (
         constants as constants,
         models as models,
@@ -361,7 +360,7 @@ if TYPE_CHECKING:
         TestServerTypes,
         TestsFlextLdifDnOperationsPure,
     )
-    from .utilities import TestsFlextLdifUtilities, TestsFlextLdifUtilities as u
+    from .utilities import FlextLdifTestUtilities, FlextLdifTestUtilities as u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ACL_TEST_CASES": ("tests.unit.quirks.servers.test_ds389_quirks", "ACL_TEST_CASES"),
@@ -394,7 +393,12 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.support.conftest_factory",
         "FlextLdifTestConftest",
     ),
+    "FlextLdifTestConstants": ("tests.constants", "FlextLdifTestConstants"),
     "FlextLdifTestFactory": ("tests.support.real_services", "FlextLdifTestFactory"),
+    "FlextLdifTestModels": ("tests.models", "FlextLdifTestModels"),
+    "FlextLdifTestProtocols": ("tests.protocols", "FlextLdifTestProtocols"),
+    "FlextLdifTestTypes": ("tests.typings", "FlextLdifTestTypes"),
+    "FlextLdifTestUtilities": ("tests.utilities", "FlextLdifTestUtilities"),
     "FlextLdifTestsServiceBase": ("tests.base", "FlextLdifTestsServiceBase"),
     "GenericFieldsDict": ("tests.typings", "GenericFieldsDict"),
     "GetAclAttributesServerType": (
@@ -857,7 +861,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_typings",
         "TestsFlextLdifCommonDictionaryTypes",
     ),
-    "TestsFlextLdifConstants": ("tests.constants", "TestsFlextLdifConstants"),
     "TestsFlextLdifDnOperationsPure": (
         "tests.unit.utilities.test_utilities_core",
         "TestsFlextLdifDnOperationsPure",
@@ -879,12 +882,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_migration_pipeline_quirks",
         "TestsFlextLdifMigrationPipelineQuirks",
     ),
-    "TestsFlextLdifModels": ("tests.models", "TestsFlextLdifModels"),
     "TestsFlextLdifNovellInitialization": (
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestsFlextLdifNovellInitialization",
     ),
-    "TestsFlextLdifProtocols": ("tests.protocols", "TestsFlextLdifProtocols"),
     "TestsFlextLdifQuirksStandardizedConstants": (
         "tests.unit.services.test_quirks_standardization",
         "TestsFlextLdifQuirksStandardizedConstants",
@@ -898,7 +899,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestsFlextLdifSchemaTransformerNormalizeAttributeName",
     ),
     "TestsFlextLdifTypes": ("tests.test_helpers", "TestsFlextLdifTypes"),
-    "TestsFlextLdifUtilities": ("tests.utilities", "TestsFlextLdifUtilities"),
     "TestsFlextLdifValidators": ("tests.test_helpers", "TestsFlextLdifValidators"),
     "TestsFlextLdifVersion": (
         "tests.unit.__init__.test_version",
@@ -958,7 +958,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "all_schema_fixtures": ("tests.integration.conftest", "all_schema_fixtures"),
     "api": ("tests.integration.conftest", "api"),
-    "c": ("tests.constants", "TestsFlextLdifConstants"),
+    "c": ("tests.constants", "FlextLdifTestConstants"),
     "clean_test_ou": ("tests.integration.conftest", "clean_test_ou"),
     "cleanup_state": ("tests.unit.quirks.servers.test_edge_cases", "cleanup_state"),
     "complex_attribute_definition": (
@@ -971,12 +971,12 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "constants": ("tests.unit.constants", ""),
     "conversion_matrix": ("tests.integration.conftest", "conversion_matrix"),
-    "d": ("flext_ldif", "d"),
-    "e": ("flext_ldif", "e"),
+    "d": ("flext_tests", "d"),
+    "e": ("flext_tests", "e"),
     "entry_quirk": ("tests.unit.quirks.servers.test_novell_quirks", "entry_quirk"),
     "fixtures_dir": ("tests.integration.test_quirks_transformations", "fixtures_dir"),
     "flext_ldif": ("tests.conftest", "flext_ldif"),
-    "h": ("flext_ldif", "h"),
+    "h": ("flext_tests", "h"),
     "integration": ("tests.integration", ""),
     "large_test_dataset": ("tests.conftest_shared", "large_test_dataset"),
     "ldap_connection": ("tests.integration.conftest", "ldap_connection"),
@@ -986,7 +986,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ldif_parser": ("tests.conftest", "ldif_parser"),
     "ldif_writer": ("tests.conftest", "ldif_writer"),
     "logger": ("tests.integration.test_config_integration", "logger"),
-    "m": ("tests.models", "TestsFlextLdifModels"),
+    "m": ("tests.models", "FlextLdifTestModels"),
     "make_test_base_dn": ("tests.integration.conftest", "make_test_base_dn"),
     "make_test_username": ("tests.integration.conftest", "make_test_username"),
     "meta_keys": ("tests.unit.quirks.servers.test_relaxed_quirks", "meta_keys"),
@@ -1038,12 +1038,12 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "oud_schema_entries": ("tests.integration.conftest", "oud_schema_entries"),
     "oud_schema_fixture": ("tests.integration.conftest", "oud_schema_fixture"),
     "oud_schema_quirk": ("tests.integration.conftest", "oud_schema_quirk"),
-    "p": ("tests.protocols", "TestsFlextLdifProtocols"),
+    "p": ("tests.protocols", "FlextLdifTestProtocols"),
     "parametrized_real_data": ("tests.conftest_shared", "parametrized_real_data"),
     "parser": ("tests.integration.conftest", "parser"),
     "protocols": ("tests.unit.protocols", ""),
     "pytest_configure": ("tests.conftest", "pytest_configure"),
-    "r": ("flext_ldif", "r"),
+    "r": ("flext_tests", "r"),
     "real_entry": ("tests.conftest_shared", "real_entry"),
     "real_ldif_content": ("tests.conftest_shared", "real_ldif_content"),
     "real_ldif_group_entry": ("tests.conftest", "real_ldif_group_entry"),
@@ -1051,7 +1051,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "real_ldif_user_entry": ("tests.conftest", "real_ldif_user_entry"),
     "rfc_schema_entries": ("tests.integration.conftest", "rfc_schema_entries"),
     "rfc_schema_fixture": ("tests.integration.conftest", "rfc_schema_fixture"),
-    "s": ("flext_ldif", "s"),
+    "s": ("flext_tests", "s"),
     "sample_ldif_entries": ("tests.conftest", "sample_ldif_entries"),
     "schema_quirk": ("tests.unit.quirks.servers.test_novell_quirks", "schema_quirk"),
     "schema_service": ("tests.unit.services.test_schema_service", "schema_service"),
@@ -1070,7 +1070,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "simple_objectclass_definition",
     ),
     "support": ("tests.support", ""),
-    "t": ("flext_ldif", "t"),
+    "t": ("tests.typings", "FlextLdifTestTypes"),
     "temp_file": ("tests.conftest", "temp_file"),
     "test_create_and_export_entry": (
         "tests.integration.test_simple_ldap",
@@ -1090,13 +1090,13 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "tmp_ldif_path": ("tests.integration.conftest", "tmp_ldif_path"),
     "tt": ("tests.test_helpers", "tt"),
     "tv": ("tests.test_helpers", "tv"),
-    "u": ("tests.utilities", "TestsFlextLdifUtilities"),
+    "u": ("tests.utilities", "FlextLdifTestUtilities"),
     "unique_dn_suffix": ("tests.integration.conftest", "unique_dn_suffix"),
     "unit": ("tests.unit", ""),
     "utilities": ("tests.unit.utilities", ""),
     "version_module": ("tests.unit.__init__.test_version", "version_module"),
     "writer": ("tests.integration.conftest", "writer"),
-    "x": ("flext_ldif", "x"),
+    "x": ("flext_tests", "x"),
 }
 
 __all__ = [
@@ -1125,7 +1125,12 @@ __all__ = [
     "FileManager",
     "FlextLdifFixtures",
     "FlextLdifTestConftest",
+    "FlextLdifTestConstants",
     "FlextLdifTestFactory",
+    "FlextLdifTestModels",
+    "FlextLdifTestProtocols",
+    "FlextLdifTestTypes",
+    "FlextLdifTestUtilities",
     "FlextLdifTestsServiceBase",
     "GenericFieldsDict",
     "GetAclAttributesServerType",
@@ -1252,21 +1257,17 @@ __all__ = [
     "TestValidators",
     "TestZeroDataLossOidOud",
     "TestsFlextLdifCommonDictionaryTypes",
-    "TestsFlextLdifConstants",
     "TestsFlextLdifDnOperationsPure",
     "TestsFlextLdifEdgeCases",
     "TestsFlextLdifFixtures",
     "TestsFlextLdifMatchers",
     "TestsFlextLdifMigrationPipeline",
     "TestsFlextLdifMigrationPipelineQuirks",
-    "TestsFlextLdifModels",
     "TestsFlextLdifNovellInitialization",
-    "TestsFlextLdifProtocols",
     "TestsFlextLdifQuirksStandardizedConstants",
     "TestsFlextLdifSchemaServiceExecute",
     "TestsFlextLdifSchemaTransformerNormalizeAttributeName",
     "TestsFlextLdifTypes",
-    "TestsFlextLdifUtilities",
     "TestsFlextLdifValidators",
     "TestsFlextLdifVersion",
     "TestsFlextLdifsFlextLdifWriterDnNormalization",

@@ -12,23 +12,23 @@ from __future__ import annotations
 
 from typing import Final
 
-from flext_tests import m
+from flext_tests import FlextTestsModels
 
 from flext_ldif import FlextLdifModels
 from flext_ldif._models.settings import FlextLdifModelsSettings
 
 
-class TestsFlextLdifModels(m, FlextLdifModels):
-    """Test models - composition of m + FlextLdifModels.
+class FlextLdifTestModels(FlextTestsModels, FlextLdifModels):
+    """Test models - composition of FlextTestsModels + FlextLdifModels.
 
     Uses composition instead of inheritance to avoid deprecation warnings
-    from m.__init_subclass__ and FlextLdifModels.__init_subclass__.
+    from FlextTestsModels.__init_subclass__ and FlextLdifModels.__init_subclass__.
 
     Access patterns:
-    - m.Ldif.* - Production domain models (delegated from FlextLdifModels.Ldif)
-    - m.Ldif.Tests.* - Test fixtures (ACL, Schema, etc.)
-    - m.WriteFormatOptions - Root-level production models
-    - m.StatisticsResult - Root-level production models
+    - FlextLdifTestModels.Ldif.* - Production domain models (delegated from FlextLdifModels.Ldif)
+    - FlextLdifTestModels.Ldif.Tests.* - Test fixtures (ACL, Schema, etc.)
+    - FlextLdifTestModels.WriteFormatOptions - Root-level production models
+    - FlextLdifTestModels.StatisticsResult - Root-level production models
     """
 
     # Root-level test aliases for common domain models
@@ -86,9 +86,9 @@ class TestsFlextLdifModels(m, FlextLdifModels):
                 attributes: dict[str, list[str]]
 
 
-m = TestsFlextLdifModels
+m = FlextLdifTestModels
 
 __all__ = [
-    "TestsFlextLdifModels",
+    "FlextLdifTestModels",
     "m",
 ]
