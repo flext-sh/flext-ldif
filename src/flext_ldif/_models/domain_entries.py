@@ -19,6 +19,7 @@ from datetime import datetime
 from typing import Annotated, ClassVar, Self, TypedDict, TypeIs, Unpack, override
 
 from flext_core import FlextLogger, r
+from flext_core.models import FlextModels as m
 from pydantic import (
     ConfigDict,
     Field,
@@ -28,14 +29,24 @@ from pydantic import (
     model_validator,
 )
 
-from flext_ldif import FlextLdifShared, c, m, t, u
-from flext_ldif._models import (
+from flext_ldif._models.base import (
     AclElement,
     FlextLdifModelsBase,
-    FlextLdifModelsMetadata,
-    FlextLdifModelsSettings,
     SchemaElement,
 )
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif._models.settings import FlextLdifModelsSettings
+from flext_ldif.constants import FlextLdifConstants as c
+from flext_ldif.shared import FlextLdifShared
+from flext_ldif.typings import FlextLdifTypes as t
+
+
+def _get_utilities() -> type:
+    """Lazy import to avoid circular dependency at module load time."""
+    from flext_ldif.utilities import FlextLdifUtilities  # noqa: PLC0415
+
+    return FlextLdifUtilities
+
 
 logger = FlextLogger(__name__)
 
@@ -941,7 +952,7 @@ class FlextLdifModelsDomains:
 
             self.attribute_metadata[str(attribute_name)] = {
                 "status": "deleted",
-                "deleted_at": u.generate_iso_timestamp(),
+                "deleted_at": _get_utilities().generate_iso_timestamp(),
                 "deleted_reason": reason,
                 "deleted_by": deleted_by,
                 "original_values": [
@@ -1507,7 +1518,9 @@ class FlextLdifModelsDomains:
                 or self.subject is not None
                 or self.permissions is not None
             )
-            if acl_is_defined and (not u.is_string_non_empty(self.raw_acl)):
+            if acl_is_defined and (
+                not _get_utilities().is_string_non_empty(self.raw_acl)
+            ):
                 violations.append(
                     "ACL is defined (has target/subject/permissions) but raw_acl is empty",
                 )

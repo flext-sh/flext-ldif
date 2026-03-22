@@ -17,10 +17,10 @@ from flext_core import FlextModels, r
 from pydantic import ConfigDict, Field, StringConstraints
 
 from flext_ldif import c, p, t
-from flext_ldif._models import FlextLdifModelsBase
+from flext_ldif._models.base import FlextLdifModelsBase
 
 if TYPE_CHECKING:
-    from flext_ldif._models import FlextLdifModelsDomains
+    from flext_ldif._models.domain import FlextLdifModelsDomains
 
 
 def _rdn_pairs_factory() -> list[tuple[str, str]]:

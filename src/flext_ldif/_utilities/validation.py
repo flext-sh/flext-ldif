@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import Final
 
-from flext_core import FlextUtilities, r
+from flext_core import r, u
 from pydantic import TypeAdapter, ValidationError
 
 from flext_ldif import p, t
 
 
-class FlextLdifUtilitiesValidation(FlextUtilities):
+class FlextLdifUtilitiesValidation(u):
     @staticmethod
     def validate(value: t.Container, *validators: p.ValidatorSpec) -> r[t.Container]:
         del validators

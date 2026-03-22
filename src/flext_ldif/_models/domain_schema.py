@@ -5,7 +5,7 @@ from typing import Annotated
 from pydantic import Field
 
 from flext_ldif import FlextLdifConstants as c
-from flext_ldif._models import FlextLdifModelsBase
+from flext_ldif._models.base import FlextLdifModelsBase
 
 
 class SchemaDiscovery(FlextLdifModelsBase):

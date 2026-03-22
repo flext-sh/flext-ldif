@@ -1480,6 +1480,7 @@ class FlextLdifConstants(FlextConstants):
             PRIORITY: Final[int] = 99
 
 
-__all__ = ["FlextLdifConstants", "c"]
-
 c = FlextLdifConstants
+
+
+__all__ = ["FlextLdifConstants", "c"]

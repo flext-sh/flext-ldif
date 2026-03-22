@@ -8,12 +8,10 @@ from flext_core.models import FlextModels as m
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
 from flext_ldif import c, t
-from flext_ldif._models import (
-    FlextLdifModelsBase,
-    FlextLdifModelsCollections,
-    FlextLdifModelsDomains,
-    FlextLdifModelsEvents,
-)
+from flext_ldif._models.base import FlextLdifModelsBase
+from flext_ldif._models.collections import FlextLdifModelsCollections
+from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.events import FlextLdifModelsEvents
 
 
 def _events_factory() -> list[FlextLdifModelsResults.EventType]:

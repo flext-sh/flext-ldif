@@ -6,15 +6,12 @@ Single class per module: all helpers in FlextLdifTypeHelpers.
 from __future__ import annotations
 
 import builtins
-from collections.abc import Mapping as ABCMapping, Sequence as ABCSequence
-from typing import TYPE_CHECKING, TypeIs
+from collections.abc import Mapping, Sequence
+from typing import TypeIs
 
-from flext_core import FlextUtilities
+from flext_core import u
 
-from flext_ldif import t
-
-if TYPE_CHECKING:
-    from flext_ldif import m
+from flext_ldif import m, t
 
 
 class FlextLdifTypeHelpers:
@@ -23,37 +20,37 @@ class FlextLdifTypeHelpers:
     @staticmethod
     def is_entry_sequence(
         obj: builtins.object,
-    ) -> TypeIs[ABCSequence[m.Ldif.Entry]]:
+    ) -> TypeIs[Sequence[m.Ldif.Entry]]:
         """Check if object is a Sequence but not a string, bytes, or dict (for Entry sequences)."""
-        return isinstance(obj, ABCSequence) and (
-            not isinstance(obj, str | bytes) and not FlextUtilities.is_dict_like(obj)
+        return isinstance(obj, Sequence) and (
+            not isinstance(obj, str | bytes) and not u.is_dict_like(obj)
         )
 
     @staticmethod
     def is_mapping_of_scalars(
         obj: builtins.object,
-    ) -> TypeIs[ABCMapping[str, t.Scalar | None]]:
+    ) -> TypeIs[Mapping[str, t.Scalar | None]]:
         """Check if object is a Mapping of scalar values (for simple dicts)."""
-        if not isinstance(obj, ABCMapping):
+        if not isinstance(obj, Mapping):
             return False
         return all(isinstance(v, t.Primitives | None) for v in obj.values())
 
     @staticmethod
     def is_mapping_type(
         obj: builtins.object,
-    ) -> TypeIs[ABCMapping[str, builtins.object]]:
+    ) -> TypeIs[Mapping[str, builtins.object]]:
         """Check if object is a Mapping but not a string (for dict-like objects)."""
-        return isinstance(obj, ABCMapping) and (not isinstance(obj, str | bytes))
+        return isinstance(obj, Mapping) and (not isinstance(obj, str | bytes))
 
     @staticmethod
     def is_sequence_of_scalars(
         obj: builtins.object,
-    ) -> TypeIs[ABCSequence[t.Scalar | None]]:
+    ) -> TypeIs[Sequence[t.Scalar | None]]:
         """Check if object is a Sequence of scalar values (for simple sequences)."""
         if (
-            not isinstance(obj, ABCSequence)
+            not isinstance(obj, Sequence)
             or isinstance(obj, str | bytes)
-            or FlextUtilities.is_dict_like(obj)
+            or u.is_dict_like(obj)
         ):
             return False
         return all(isinstance(item, t.Primitives | None) for item in obj)

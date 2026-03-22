@@ -561,6 +561,6 @@ class FlextLdifProtocols(FlextProtocols):
             """Quirks namespace containing quirk protocol aliases."""
 
 
-__all__ = ["FlextLdifProtocols", "p"]
-
 p = FlextLdifProtocols
+
+__all__ = ["FlextLdifProtocols", "p"]

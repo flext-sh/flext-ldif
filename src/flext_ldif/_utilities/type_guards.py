@@ -10,15 +10,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import builtins
-from collections.abc import Sequence as ABCSequence
+from collections.abc import Sequence
 from typing import TypeIs
 
-from flext_core import FlextUtilities
+from flext_core import u
 
 from flext_ldif import t
 
 
-class FlextLdifUtilitiesTypeGuards(FlextUtilities):
+class FlextLdifUtilitiesTypeGuards(u):
     """Type guards for LDIF Model identification.
 
     Provides safe type narrowing for SchemaAttribute and SchemaObjectClass
@@ -30,7 +30,7 @@ class FlextLdifUtilitiesTypeGuards(FlextUtilities):
     @staticmethod
     def is_entry_sequence(
         obj: builtins.object,
-    ) -> TypeIs[ABCSequence[t.Container]]:
+    ) -> TypeIs[Sequence[t.Container]]:
         """Check if object is a Sequence of Entry instances.
 
         Uses duck typing to identify Entry sequences:
@@ -46,9 +46,9 @@ class FlextLdifUtilitiesTypeGuards(FlextUtilities):
 
         """
         if (
-            not isinstance(obj, ABCSequence)
+            not isinstance(obj, Sequence)
             or isinstance(obj, str | bytes)
-            or FlextUtilities.is_dict_like(obj)
+            or u.is_dict_like(obj)
         ):
             return False
         return all(

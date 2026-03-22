@@ -32,8 +32,8 @@ class TestsFlextLdifModels(m, FlextLdifModels):
     """
 
     # Root-level test aliases for common domain models
-    WriteFormatOptions: Final = FlextLdifModels.WriteFormatOptions
-    StatisticsResult: Final = FlextLdifModels.StatisticsResult
+    WriteFormatOptions: Final = FlextLdifModels.Ldif.WriteFormatOptions
+    StatisticsResult: Final = FlextLdifModels.Ldif.StatisticsResult
 
     # Production models namespace delegation
     class Ldif(FlextLdifModels.Ldif):
