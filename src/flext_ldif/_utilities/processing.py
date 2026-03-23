@@ -59,8 +59,8 @@ class FlextLdifUtilitiesProcessing:
 
     @staticmethod
     def is_ldif_process_call(
-        items: Sequence[m.Ldif.Entry]
-        | Mapping[str, t.NormalizedValue]
+        items: list[m.Ldif.Entry]
+        | dict[str, t.NormalizedValue]
         | str
         | bytes
         | None,
@@ -114,7 +114,7 @@ class FlextLdifUtilitiesProcessing:
     def call_single_item_processor[R](
         processor_func: Callable[..., R],
         item: t.NormalizedValue,
-    ) -> r[Sequence[R]]:
+    ) -> r[list[R]]:
         """Call processor with single item, handling signature detection."""
         try:
             sig = inspect.signature(processor_func)
@@ -130,8 +130,8 @@ class FlextLdifUtilitiesProcessing:
             ]
             if len(params) == 1:
                 result: R = processor_func(item)
-                return r[Sequence[R]].ok([result])
-            return r[Sequence[R]].fail(
+                return r[list[R]].ok([result])
+            return r[list[R]].fail(
                 "Processor requires 2 arguments but single item provided",
             )
         except (
@@ -141,7 +141,7 @@ class FlextLdifUtilitiesProcessing:
             UnicodeDecodeError,
             struct.error,
         ) as e:
-            return r[Sequence[R]].fail(f"Processing failed: {e}")
+            return r[list[R]].fail(f"Processing failed: {e}")
 
     @staticmethod
     def is_no_arg_callable[R](
@@ -184,9 +184,9 @@ class FlextLdifUtilitiesProcessing:
     @overload
     def process(
         items_or_entries: t.NormalizedValue
-        | Sequence[t.NormalizedValue]
+        | list[t.NormalizedValue]
         | tuple[t.NormalizedValue, ...]
-        | Mapping[str, t.NormalizedValue],
+        | dict[str, t.NormalizedValue],
         processor_or_config: Callable[..., t.NormalizedValue]
         | Callable[[str, t.NormalizedValue], t.NormalizedValue]
         | None = None,
@@ -205,12 +205,12 @@ class FlextLdifUtilitiesProcessing:
         target_server: c.Ldif.ServerTypes | None = None,
         normalize_dns: bool = True,
         normalize_attrs: bool = True,
-    ) -> r[Sequence[t.NormalizedValue]]: ...
+    ) -> r[list[t.NormalizedValue]]: ...
 
     @staticmethod
     @overload
     def process(
-        items_or_entries: Sequence[m.Ldif.Entry],
+        items_or_entries: list[m.Ldif.Entry],
         processor_or_config: m.Ldif.ProcessConfig | None = None,
         *,
         processor: Callable[[m.Ldif.Entry], t.NormalizedValue] | None = None,
@@ -223,16 +223,16 @@ class FlextLdifUtilitiesProcessing:
         target_server: c.Ldif.ServerTypes | None = None,
         normalize_dns: bool = True,
         normalize_attrs: bool = True,
-    ) -> FlextLdifUtilitiesResult[Sequence[m.Ldif.Entry]]: ...
+    ) -> FlextLdifUtilitiesResult[list[m.Ldif.Entry]]: ...
 
     @staticmethod
     @override
     def process(
         items_or_entries: t.NormalizedValue
-        | Sequence[t.NormalizedValue]
+        | list[t.NormalizedValue]
         | tuple[t.NormalizedValue, ...]
-        | Mapping[str, t.NormalizedValue]
-        | Sequence[m.Ldif.Entry],
+        | dict[str, t.NormalizedValue]
+        | list[m.Ldif.Entry],
         processor_or_config: Callable[..., t.NormalizedValue]
         | Callable[[str, t.NormalizedValue], t.NormalizedValue]
         | m.Ldif.ProcessConfig
@@ -255,8 +255,8 @@ class FlextLdifUtilitiesProcessing:
         normalize_dns: bool = True,
         normalize_attrs: bool = True,
     ) -> (
-        r[Sequence[t.NormalizedValue]]
-        | FlextLdifUtilitiesResult[Sequence[m.Ldif.Entry]]
+        r[list[t.NormalizedValue]]
+        | FlextLdifUtilitiesResult[list[m.Ldif.Entry]]
     ):
         """Universal entry processor."""
         processor_normalized = (
@@ -272,7 +272,7 @@ class FlextLdifUtilitiesProcessing:
                 and (not isinstance(items_or_entries, (str, bytes)))
                 and all(isinstance(x, m.Ldif.Entry) for x in items_or_entries)
             ):
-                entries: Sequence[m.Ldif.Entry] = [
+                entries: list[m.Ldif.Entry] = [
                     x for x in items_or_entries if isinstance(x, m.Ldif.Entry)
                 ]
                 result = FlextLdifUtilitiesEntry.transform_batch(
@@ -284,16 +284,16 @@ class FlextLdifUtilitiesProcessing:
             if processor_normalized is None:
                 msg = "processor is required for base class process"
                 return FlextLdifUtilitiesResult.from_result(
-                    r[Sequence[m.Ldif.Entry]].fail(msg),
+                    r[list[m.Ldif.Entry]].fail(msg),
                 )
             msg = "ProcessConfig requires LDIF entry sequence"
             return FlextLdifUtilitiesResult.from_result(
-                r[Sequence[m.Ldif.Entry]].fail(msg),
+                r[list[m.Ldif.Entry]].fail(msg),
             )
         processor_func: Callable[..., t.NormalizedValue] = processor_normalized
         match items_or_entries:
             case dict() | Mapping():
-                dict_items: Mapping[str, t.NormalizedValue] = {}
+                dict_items: dict[str, t.NormalizedValue] = {}
                 for key, value in items_or_entries.items():
                     dict_items[str(key)] = (
                         FlextLdifUtilitiesProcessing.normalize_container(value)
@@ -305,9 +305,9 @@ class FlextLdifUtilitiesProcessing:
                     filter_keys,
                     exclude_keys,
                 )
-                return r[Sequence[t.NormalizedValue]].ok(results)
+                return r[list[t.NormalizedValue]].ok(results)
             case list() | tuple():
-                items_list: Sequence[t.NormalizedValue] = [
+                items_list: list[t.NormalizedValue] = [
                     FlextLdifUtilitiesProcessing.normalize_container(item)
                     for item in items_or_entries
                 ]
@@ -322,20 +322,20 @@ class FlextLdifUtilitiesProcessing:
                     not isinstance(items_or_entries, (str, bytes))
                 ):
                     msg = "Unsupported non-list sequence for single-item processing"
-                    return r[Sequence[t.NormalizedValue]].fail(msg)
+                    return r[list[t.NormalizedValue]].fail(msg)
                 result_item = processor_func(items_or_entries)
-                return r[Sequence[t.NormalizedValue]].ok([result_item])
+                return r[list[t.NormalizedValue]].ok([result_item])
 
     @staticmethod
     def process_dict_items[R](
-        items: Mapping[str, t.NormalizedValue],
+        items: dict[str, t.NormalizedValue],
         processor_func: Callable[..., R],
         predicate: Callable[..., bool] | None,
         filter_keys: set[str] | None,
         exclude_keys: set[str] | None,
-    ) -> Sequence[R]:
+    ) -> list[R]:
         """Process dictionary items."""
-        results: Sequence[R] = []
+        results: list[R] = []
         for key, value in items.items():
             if FlextLdifUtilitiesProcessing.should_skip_key(
                 key,
@@ -360,14 +360,14 @@ class FlextLdifUtilitiesProcessing:
 
     @staticmethod
     def process_list_items[R](
-        items: Sequence[t.NormalizedValue],
+        items: list[t.NormalizedValue],
         processor_func: Callable[..., R],
         predicate: Callable[..., bool] | None,
         on_error: str,
-    ) -> r[Sequence[R]]:
+    ) -> r[list[R]]:
         """Process list/tuple items."""
-        results: Sequence[R] = []
-        errors: Sequence[str] = []
+        results: list[R] = []
+        errors: list[str] = []
         for item in items:
             if predicate is not None:
                 try:
@@ -386,57 +386,57 @@ class FlextLdifUtilitiesProcessing:
                 struct.error,
             ) as e:
                 if on_error == "fail":
-                    return r[Sequence[R]].fail(f"Processing failed: {e}")
+                    return r[list[R]].fail(f"Processing failed: {e}")
                 if on_error == "skip":
                     continue
                 errors.append(str(e))
-        return r[Sequence[R]].ok(results)
+        return r[list[R]].ok(results)
 
     @staticmethod
     def transform_entries(
-        entries: Sequence[m.Ldif.Entry],
+        entries: list[m.Ldif.Entry],
         *transformers: FlextLdifUtilitiesTransformer[m.Ldif.Entry],
         fail_fast: bool = True,
-    ) -> FlextLdifUtilitiesResult[Sequence[m.Ldif.Entry]]:
+    ) -> FlextLdifUtilitiesResult[list[m.Ldif.Entry]]:
         """Apply entry transformers to LDIF entries using pipeline semantics."""
         pipeline = Pipeline(fail_fast=fail_fast)
         for transformer in transformers:
             _ = pipeline.add(transformer)
-        return FlextLdifUtilitiesResult[Sequence[m.Ldif.Entry]].from_result(
+        return FlextLdifUtilitiesResult[list[m.Ldif.Entry]].from_result(
             pipeline.execute(entries),
         )
 
     @staticmethod
     def batch_process[T, U](
-        items: Sequence[T],
+        items: list[T],
         func: Callable[[T], r[U]],
-    ) -> r[Sequence[U]]:
+    ) -> r[list[U]]:
         """Execute batch of operations with r (simplified)."""
-        results: Sequence[U] = []
+        results: list[U] = []
         for item in items:
             result = func(item)
             if result.is_failure:
-                return r[Sequence[U]].fail(result.error or "Batch operation failed")
+                return r[list[U]].fail(result.error or "Batch operation failed")
             results.append(result.value)
-        return r[Sequence[U]].ok(results)
+        return r[list[U]].ok(results)
 
     @staticmethod
     @override
     def filter[T: t.NormalizedValue, R: t.NormalizedValue](
         items_or_entries: T
-        | Sequence[T]
+        | list[T]
         | tuple[T, ...]
-        | Mapping[str, T]
-        | Sequence[m.Ldif.Entry],
+        | dict[str, T]
+        | list[m.Ldif.Entry],
         predicate_or_filter1: FlextLdifUtilitiesProcessing.VariadicCallable[bool]
         | FlextLdifUtilitiesFilters[m.Ldif.Entry],
         *filters: FlextLdifUtilitiesFilters[m.Ldif.Entry],
         _mapper: FlextLdifUtilitiesProcessing.VariadicCallable[R] | None = None,
         mode: Literal["all", "any"] = "all",
     ) -> (
-        Sequence[t.NormalizedValue]
-        | Mapping[str, t.NormalizedValue]
-        | FlextLdifUtilitiesResult[Sequence[m.Ldif.Entry]]
+        list[t.NormalizedValue]
+        | dict[str, t.NormalizedValue]
+        | FlextLdifUtilitiesResult[list[m.Ldif.Entry]]
     ):
         """Filter entries using composable filter predicates."""
         match predicate_or_filter1:
@@ -459,7 +459,7 @@ class FlextLdifUtilitiesProcessing:
         ):
             seq_items = items_or_entries
             if seq_items and isinstance(seq_items[0], m.Ldif.Entry):
-                entries_list: Sequence[m.Ldif.Entry] = [
+                entries_list: list[m.Ldif.Entry] = [
                     e for e in seq_items if isinstance(e, m.Ldif.Entry)
                 ]
                 filter_entry = predicate_or_filter1
@@ -492,46 +492,46 @@ class FlextLdifUtilitiesProcessing:
         items_or_entries: t.NormalizedValue,
         predicate: Callable[..., bool],
         _mapper: Callable[..., t.NormalizedValue] | None = None,
-    ) -> Sequence[t.NormalizedValue] | Mapping[str, t.NormalizedValue]:
+    ) -> list[t.NormalizedValue] | dict[str, t.NormalizedValue]:
         """Filter using base class Collection.filter (internal helper)."""
         if isinstance(items_or_entries, (list, tuple)):
-            items_list: Sequence[t.NormalizedValue] = list(items_or_entries)
+            items_list: list[t.NormalizedValue] = list(items_or_entries)
             list_filter_result = FlextUtilities.filter(items_list, predicate)
             return list(list_filter_result) if list_filter_result else []
         if isinstance(items_or_entries, dict):
-            items_dict: Mapping[str, t.NormalizedValue] = {}
+            items_dict: dict[str, t.NormalizedValue] = {}
             for k, v in items_or_entries.items():
                 items_dict[k] = FlextLdifUtilitiesProcessing.to_config_map_value(v)
             dict_filter_result = FlextUtilities.filter(items_dict, predicate)
             return dict_filter_result or {}
-        items_single_list: Sequence[t.NormalizedValue] = [items_or_entries]
+        items_single_list: list[t.NormalizedValue] = [items_or_entries]
         single_filter_result = FlextUtilities.filter(items_single_list, predicate)
         return list(single_filter_result) if single_filter_result else []
 
     @staticmethod
     def filter_ldif_entries(
-        entries: Sequence[m.Ldif.Entry],
+        entries: list[m.Ldif.Entry],
         predicate_or_filter1: FlextLdifUtilitiesFilters[m.Ldif.Entry],
         filters: tuple[FlextLdifUtilitiesFilters[m.Ldif.Entry], ...],
         mode: Literal["all", "any"],
-    ) -> FlextLdifUtilitiesResult[Sequence[m.Ldif.Entry]]:
+    ) -> FlextLdifUtilitiesResult[list[m.Ldif.Entry]]:
         """Filter LDIF entries using FlextLdifUtilitiesFilters (internal helper)."""
-        filter_list: Sequence[FlextLdifUtilitiesFilters[m.Ldif.Entry]] = [
+        filter_list: list[FlextLdifUtilitiesFilters[m.Ldif.Entry]] = [
             predicate_or_filter1,
         ] + list(filters)
         if not filter_list:
-            return FlextLdifUtilitiesResult[Sequence[m.Ldif.Entry]].ok(list(entries))
+            return FlextLdifUtilitiesResult[list[m.Ldif.Entry]].ok(list(entries))
         combined: FlextLdifUtilitiesFilters[m.Ldif.Entry] = filter_list[0]
         for f in filter_list[1:]:
             combined = combined & f if mode == "all" else combined | f
         filtered = [entry for entry in entries if combined.matches(entry)]
-        return FlextLdifUtilitiesResult[Sequence[m.Ldif.Entry]].ok(filtered)
+        return FlextLdifUtilitiesResult[list[m.Ldif.Entry]].ok(filtered)
 
     @staticmethod
     @override
     def is_entry_sequence(
         obj: t.NormalizedValue,
-    ) -> TypeIs[Sequence[m.Ldif.Entry]]:
+    ) -> TypeIs[list[m.Ldif.Entry]]:
         """Check if value is a Sequence of Entry objects."""
         match obj:
             case str() | bytes():

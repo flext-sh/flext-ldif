@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
 from typing import ClassVar
 
 from flext_core import FlextLogger
@@ -22,21 +21,21 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     ORCLENTRYLEVELACI: ClassVar[str] = "orclentrylevelaci"
     ACL_FORMAT: ClassVar[str] = "orclaci"
     ACL_ATTRIBUTE_NAME: ClassVar[str] = "orclaci"
-    MATCHING_RULE_TO_RFC: ClassVar[Mapping[str, str]] = {
+    MATCHING_RULE_TO_RFC: ClassVar[dict[str, str]] = {
         "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch",
         "accessDirectiveMatch": "caseIgnoreMatch",
     }
-    MATCHING_RULE_RFC_TO_OID: ClassVar[Mapping[str, str]] = {
+    MATCHING_RULE_RFC_TO_OID: ClassVar[dict[str, str]] = {
         "caseIgnoreSubstringsMatch": "caseIgnoreSubStringsMatch",
         "caseIgnoreMatch": "accessDirectiveMatch",
     }
-    SYNTAX_OID_TO_RFC: ClassVar[Mapping[str, str]] = {
+    SYNTAX_OID_TO_RFC: ClassVar[dict[str, str]] = {
         "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15",
     }
-    SYNTAX_RFC_TO_OID: ClassVar[Mapping[str, str]] = {
+    SYNTAX_RFC_TO_OID: ClassVar[dict[str, str]] = {
         "1.3.6.1.4.1.1466.115.121.1.15": "1.3.6.1.4.1.1466.115.121.1.1",
     }
-    ATTR_NAME_CASE_MAP: ClassVar[Mapping[str, str]] = {"middlename": "middleName"}
+    ATTR_NAME_CASE_MAP: ClassVar[dict[str, str]] = {"middlename": "middleName"}
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = (
         FlextLdifServersRfc.Constants.OPERATIONAL_ATTRIBUTES
         | frozenset([
@@ -95,7 +94,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "pwdallowuserchange",
     ])
     ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["usage", "x_origin"])
-    OBJECTCLASS_REQUIREMENTS: ClassVar[Mapping[str, bool]] = {
+    OBJECTCLASS_REQUIREMENTS: ClassVar[dict[str, bool]] = {
         "requires_sup_for_auxiliary": True,
         "allows_multiple_sup": True,
         "requires_explicit_structural": False,
@@ -136,13 +135,13 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         ORIGINAL_OID_PERMS,
         OID_ACL_SOURCE_TARGET,
     ])
-    CATEGORIZATION_PRIORITY: ClassVar[Sequence[str]] = [
+    CATEGORIZATION_PRIORITY: ClassVar[list[str]] = [
         "acl",
         "users",
         "hierarchy",
         "groups",
     ]
-    CATEGORY_OBJECTCLASSES: ClassVar[Mapping[str, frozenset[str]]] = {
+    CATEGORY_OBJECTCLASSES: ClassVar[dict[str, frozenset[str]]] = {
         "users": frozenset(["person", "inetOrgPerson", "orclUser", "orclUserV2"]),
         "hierarchy": frozenset([
             "organizationalUnit",
@@ -224,13 +223,13 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     ACL_PATTERN_KEY_CONSTRAINT: ClassVar[str] = "constraint"
     ONE_OID: ClassVar[str] = "1"
     ZERO_OID: ClassVar[str] = "0"
-    OID_TO_RFC: ClassVar[Mapping[str, str]] = {
+    OID_TO_RFC: ClassVar[dict[str, str]] = {
         ONE_OID: "TRUE",
         ZERO_OID: "FALSE",
         "true": "TRUE",
         "false": "FALSE",
     }
-    RFC_TO_OID: ClassVar[Mapping[str, str]] = {
+    RFC_TO_OID: ClassVar[dict[str, str]] = {
         "TRUE": ONE_OID,
         "FALSE": ZERO_OID,
         "true": ONE_OID,
@@ -248,7 +247,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "False",
         "FALSE",
     ])
-    INVALID_SUBSTR_RULES: ClassVar[Mapping[str, str | None]] = {
+    INVALID_SUBSTR_RULES: ClassVar[dict[str, str | None]] = {
         "caseIgnoreMatch": "caseIgnoreSubstringsMatch",
         "caseExactMatch": "caseExactSubstringsMatch",
         "distinguishedNameMatch": None,
@@ -260,7 +259,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     ACL_FORMAT_DEFAULT: ClassVar[str] = "default"
     ACL_FORMAT_ONELINE: ClassVar[str] = "oneline"
     ACL_NAME: ClassVar[str] = "OID ACL"
-    ACL_SUBJECT_PATTERNS: ClassVar[Mapping[str, tuple[str | None, str, str]]] = {
+    ACL_SUBJECT_PATTERNS: ClassVar[dict[str, tuple[str | None, str, str]]] = {
         " by self ": (None, "self", "ldap:///self"),
         " by self)": (None, "self", "ldap:///self"),
         " by * ": (None, "*", "*"),
@@ -279,7 +278,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
             "{0}#GROUPDN",
         ),
     }
-    ACL_SUBJECT_FORMATTERS: ClassVar[Mapping[str, tuple[str, bool]]] = {
+    ACL_SUBJECT_FORMATTERS: ClassVar[dict[str, tuple[str, bool]]] = {
         "self": ("self", False),
         "user_dn": ('"{0}"', True),
         "group_dn": ('group="{0}"', True),
@@ -288,7 +287,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "guid_attr": ("guidattr=({0})", False),
         "group_attr": ("groupattr=({0})", False),
     }
-    ACL_PERMISSION_MAPPING: ClassVar[Mapping[str, Sequence[str]]] = {
+    ACL_PERMISSION_MAPPING: ClassVar[dict[str, list[str]]] = {
         "all": ["read", "write", "add", "delete", "search", "compare", "proxy"],
         "browse": ["read", "search"],
         "read": ["read"],
@@ -306,7 +305,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "nobrowse": ["no_browse"],
         "noselfwrite": ["no_self_write"],
     }
-    ACL_PERMISSION_NAMES: ClassVar[Mapping[str, str]] = {
+    ACL_PERMISSION_NAMES: ClassVar[dict[str, str]] = {
         "read": "read",
         "write": "write",
         "add": "add",
@@ -343,12 +342,12 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "no_browse",
         "no_self_write",
     ])
-    ATTRIBUTE_TRANSFORMATION_OID_TO_RFC: ClassVar[Mapping[str, str]] = {
+    ATTRIBUTE_TRANSFORMATION_OID_TO_RFC: ClassVar[dict[str, str]] = {
         "orclguid": "entryUUID",
         "orclaci": "aci",
         "orclentrylevelaci": "aci",
     }
-    ATTRIBUTE_TRANSFORMATION_RFC_TO_OID: ClassVar[Mapping[str, str]] = {
+    ATTRIBUTE_TRANSFORMATION_RFC_TO_OID: ClassVar[dict[str, str]] = {
         "entryUUID": "orclguid",
         "aci": "orclaci",
     }

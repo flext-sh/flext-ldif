@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import Final
 
 from flext_ldif import c, t
@@ -48,7 +47,7 @@ class FlextLdifShared:
         Raises ValueError if server_type is not recognized.
         """
         server_type_lower = server_type.lower().strip()
-        alias_map: Mapping[str, c.Ldif.ServerTypes] = {
+        alias_map: dict[str, c.Ldif.ServerTypes] = {
             "active_directory": c.Ldif.ServerTypes.AD,
             "activedirectory": c.Ldif.ServerTypes.AD,
             "oracle_oid": c.Ldif.ServerTypes.OID,

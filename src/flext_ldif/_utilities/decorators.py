@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable
 from datetime import UTC, datetime
 from functools import wraps
 from typing import TypeIs, TypeVar
@@ -56,11 +56,11 @@ class FlextLdifUtilitiesDecorators:
         """Attach metadata to result value if it has metadata attribute."""
         if result_value is None or not _is_metadata_attachable(result_value):
             return
-        extensions_dict_raw: Mapping[str, str | None] = {
+        extensions_dict_raw: dict[str, str | None] = {
             "server_type": server_type,
             "parsed_timestamp": datetime.now(UTC).replace(microsecond=0).isoformat(),
         }
-        extensions_dict: Mapping[str, t.NormalizedValue] = {
+        extensions_dict: dict[str, t.NormalizedValue] = {
             key: value
             for key, value in extensions_dict_raw.items()
             if value is not None
@@ -113,7 +113,7 @@ class FlextLdifUtilitiesDecorators:
                 arg: t.Ldif.ParseMethodArg,
             ) -> t.Ldif.ParseMethodReturn:
                 def _parse_error(message: str) -> t.Ldif.ParseMethodReturn:
-                    return r[t.Scalar | Sequence[str] | None].fail(message)
+                    return r[t.Scalar | list[str] | None].fail(message)
 
                 return FlextLdifUtilitiesDecorators._execute_safe_operation(
                     operation_name=operation_name,
@@ -204,7 +204,7 @@ class FlextLdifUtilitiesDecorators:
                 arg: t.Ldif.WriteMethodArg,
             ) -> t.Ldif.WriteMethodReturn:
                 def _write_error(message: str) -> t.Ldif.WriteMethodReturn:
-                    return r[t.Scalar | Sequence[str] | None].fail(message)
+                    return r[t.Scalar | list[str] | None].fail(message)
 
                 return FlextLdifUtilitiesDecorators._execute_safe_operation(
                     operation_name=operation_name,

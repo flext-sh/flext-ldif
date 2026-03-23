@@ -29,7 +29,7 @@ class FlextLdifUtilitiesFunctional:
         if isinstance(value, Path):
             return str(value)
         if isinstance(value, BaseModel):
-            model_mapping: Mapping[str, t.NormalizedValue] = {
+            model_mapping: dict[str, t.NormalizedValue] = {
                 key: FlextLdifUtilitiesFunctional._to_general(getattr(value, key))
                 for key in type(value).model_fields
             }
@@ -39,7 +39,7 @@ class FlextLdifUtilitiesFunctional:
                     model_mapping[key] = FlextLdifUtilitiesFunctional._to_general(item)
             return model_mapping
         if isinstance(value, Mapping):
-            normalized_mapping: Mapping[str, t.NormalizedValue] = {}
+            normalized_mapping: dict[str, t.NormalizedValue] = {}
             for key, item in value.items():
                 normalized_mapping[key] = FlextLdifUtilitiesFunctional._to_general(item)
             return normalized_mapping
@@ -85,10 +85,10 @@ class FlextLdifUtilitiesFunctional:
 
     @staticmethod
     def pick[T](
-        data: Mapping[str, T],
+        data: dict[str, T],
         *keys: str,
         as_dict: bool = True,
-    ) -> Mapping[str, T] | Sequence[T]:
+    ) -> dict[str, T] | list[T]:
         """Pick keys from dict (DSL helper, mnemonic: pc)."""
         if as_dict:
             return {k: data[k] for k in keys if k in data}
@@ -98,11 +98,11 @@ class FlextLdifUtilitiesFunctional:
 
     @staticmethod
     def map_dict[T, U](
-        data: Mapping[str, T],
+        data: dict[str, T],
         mapper: Callable[[str, T], tuple[str, U]],
-    ) -> Mapping[str, U]:
+    ) -> dict[str, U]:
         """Map dict with transformations (mnemonic: md)."""
-        result: Mapping[str, U] = {}
+        result: dict[str, U] = {}
         for key, value in data.items():
             new_key, new_value = mapper(key, value)
             result[new_key] = new_value
@@ -113,40 +113,40 @@ class FlextLdifUtilitiesFunctional:
     @overload
     @staticmethod
     def reduce_dict[T](
-        data: Mapping[str, T],
+        data: dict[str, T],
         *,
         processor: None = None,
         predicate: Callable[[str, T], bool] = lambda _k, _v: True,
         key_mapper: Callable[[str], str] = lambda k: k,
-    ) -> Mapping[str, T]: ...
+    ) -> dict[str, T]: ...
 
     @overload
     @staticmethod
     def reduce_dict[T, U](
-        data: Mapping[str, T],
+        data: dict[str, T],
         *,
         processor: Callable[[str, T], U],
         predicate: Callable[[str, T], bool] = lambda _k, _v: True,
         key_mapper: Callable[[str], str] = lambda k: k,
-    ) -> Mapping[str, U]: ...
+    ) -> dict[str, U]: ...
 
     @staticmethod
     def reduce_dict[T, U](
-        data: Mapping[str, T],
+        data: dict[str, T],
         *,
         processor: Callable[[str, T], U] | None = None,
         predicate: Callable[[str, T], bool] = lambda _k, _v: True,
         key_mapper: Callable[[str], str] = lambda k: k,
-    ) -> Mapping[str, T] | Mapping[str, U]:
+    ) -> dict[str, T] | dict[str, U]:
         """Reduce dicts with processor/predicate (mnemonic: rd)."""
         if processor is not None:
-            result: Mapping[str, U] = {}
+            result: dict[str, U] = {}
             for key, value in data.items():
                 if predicate(key, value):
                     new_key = key_mapper(key)
                     result[new_key] = processor(key, value)
             return result
-        result_no_proc: Mapping[str, T] = {}
+        result_no_proc: dict[str, T] = {}
         for key, value in data.items():
             if predicate(key, value):
                 new_key = key_mapper(key)
@@ -157,7 +157,7 @@ class FlextLdifUtilitiesFunctional:
 
     @staticmethod
     def find_key[T](
-        data: Mapping[str, T],
+        data: dict[str, T],
         predicate: Callable[[str, T], bool],
         *,
         default: str | None = None,
@@ -172,7 +172,7 @@ class FlextLdifUtilitiesFunctional:
 
     @staticmethod
     def find_val[T](
-        data: Mapping[str, T],
+        data: dict[str, T],
         predicate: Callable[[str, T], bool],
         *,
         default: T | None = None,
@@ -186,14 +186,14 @@ class FlextLdifUtilitiesFunctional:
     fv = find_val
 
     @staticmethod
-    def pairs[T](d: Mapping[str, T]) -> Sequence[tuple[str, T]]:
+    def pairs[T](d: dict[str, T]) -> list[tuple[str, T]]:
         """Convert dict/mapping to list of (key, value) tuples (mnemonic: pr)."""
         return list(d.items())
 
     pr = pairs
 
     @staticmethod
-    def fold[T, U](items: Sequence[T], folder: Callable[[U, T], U], initial: U) -> U:
+    def fold[T, U](items: list[T], folder: Callable[[U, T], U], initial: U) -> U:
         """Fold items using folder function (mnemonic: fd)."""
         result = initial
         for item in items:
@@ -204,12 +204,12 @@ class FlextLdifUtilitiesFunctional:
 
     @staticmethod
     def map_filter[T](
-        items: Sequence[T],
+        items: list[T],
         mapper: Callable[[T], T] | None = None,
         predicate: Callable[[T], bool] = lambda x: x is not None,
-    ) -> Sequence[T]:
+    ) -> list[T]:
         """Map then filter items (mnemonic: mf)."""
-        result: Sequence[T] = []
+        result: list[T] = []
         for item in items:
             mapped = mapper(item) if mapper is not None else item
             if predicate(mapped):
@@ -220,29 +220,29 @@ class FlextLdifUtilitiesFunctional:
 
     @staticmethod
     def process_flatten(
-        items: Sequence[t.NormalizedValue],
+        items: list[t.NormalizedValue],
         processor: Callable[
             ...,
-            Sequence[t.NormalizedValue]
+            list[t.NormalizedValue]
             | tuple[t.NormalizedValue, ...]
             | t.NormalizedValue,
         ],
         *,
         predicate: Callable[..., bool] = lambda x: x is not None,
         on_error: Literal["skip", "stop", "collect"] = "skip",
-    ) -> Sequence[t.NormalizedValue]:
+    ) -> list[t.NormalizedValue]:
         """Process and flatten items (mnemonic: pf)."""
-        result: Sequence[t.NormalizedValue] = []
+        result: list[t.NormalizedValue] = []
         for item in items:
             try:
                 processed = processor(item)
                 if isinstance(processed, list):
-                    processed_values: Sequence[t.NormalizedValue] = processed
+                    processed_values: list[t.NormalizedValue] = processed
                     result.extend(
                         sub_item for sub_item in processed_values if predicate(sub_item)
                     )
                 elif isinstance(processed, tuple):
-                    processed_tuple_values: Sequence[t.NormalizedValue] = list(
+                    processed_tuple_values: list[t.NormalizedValue] = list(
                         processed
                     )
                     result.extend(
@@ -268,23 +268,23 @@ class FlextLdifUtilitiesFunctional:
     @classmethod
     def normalize_list(
         cls,
-        value: t.NormalizedValue | Sequence[t.NormalizedValue] | None,
+        value: t.NormalizedValue | list[t.NormalizedValue] | None,
         *,
         mapper: Callable[..., t.NormalizedValue] | None = None,
         predicate: Callable[..., bool] | None = None,
-        default: Sequence[t.NormalizedValue] | None = None,
-    ) -> Sequence[t.NormalizedValue]:
+        default: list[t.NormalizedValue] | None = None,
+    ) -> list[t.NormalizedValue]:
         """Normalize to list (mnemonic: nl)."""
         if value is None:
             if default is not None:
                 return list(default)
             return []
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            items: Sequence[t.NormalizedValue] = list(value)
+            items: list[t.NormalizedValue] = list(value)
         else:
             items = [value]
         if mapper is not None:
-            items_mapped: Sequence[t.NormalizedValue] = [mapper(item) for item in items]
+            items_mapped: list[t.NormalizedValue] = [mapper(item) for item in items]
             if predicate is not None:
                 return [item for item in items_mapped if predicate(item)]
             return items_mapped
@@ -293,7 +293,7 @@ class FlextLdifUtilitiesFunctional:
         return items
 
     @staticmethod
-    def build[T](value: T, ops: Mapping[str, Callable[[T], T]]) -> T:
+    def build[T](value: T, ops: dict[str, Callable[[T], T]]) -> T:
         """Build value using operations dict."""
         result = value
         for op in ops.values():
@@ -303,16 +303,16 @@ class FlextLdifUtilitiesFunctional:
     nl = normalize_list
 
     @staticmethod
-    def get[T](data: Mapping[str, T], key: str, default: T | None = None) -> T | None:
+    def get[T](data: dict[str, T], key: str, default: T | None = None) -> T | None:
         """Get value from dict with default (mnemonic: gt)."""
         return data.get(key, default)
 
     gt = get
 
     @staticmethod
-    def merge[T](*dicts: Mapping[str, T]) -> Mapping[str, T]:
+    def merge[T](*dicts: dict[str, T]) -> dict[str, T]:
         """Merge multiple dicts (mnemonic: mg)."""
-        result: Mapping[str, T] = {}
+        result: dict[str, T] = {}
         for d in dicts:
             result.update(d)
         return result
@@ -320,7 +320,7 @@ class FlextLdifUtilitiesFunctional:
     mg = merge
 
     @staticmethod
-    def evolve[T](data: Mapping[str, T], updates: Mapping[str, T]) -> Mapping[str, T]:
+    def evolve[T](data: dict[str, T], updates: dict[str, T]) -> dict[str, T]:
         """Update dict with changes (mnemonic: ev)."""
         return {**data, **updates}
 
@@ -395,7 +395,7 @@ class FlextLdifUtilitiesFunctional:
     def switch[T, U](
         cls,
         value: T,
-        cases: Mapping[T, U],
+        cases: dict[T, U],
         default: U | None = None,
     ) -> U | None:
         """Switch using dict lookup (mnemonic: sw)."""
@@ -406,7 +406,7 @@ class FlextLdifUtilitiesFunctional:
     @classmethod
     def is_type[T](cls, value: T, *types: type[T] | str) -> bool:
         """Type check (mnemonic: it)."""
-        type_map: Mapping[str, type] = {
+        type_map: dict[str, type] = {
             "list": list,
             "dict": dict,
             "str": str,
@@ -427,12 +427,12 @@ class FlextLdifUtilitiesFunctional:
     it = is_type
     _ConvertibleType = (
         t.Scalar
-        | Sequence[t.NormalizedValue]
+        | list[t.NormalizedValue]
         | tuple[t.NormalizedValue, ...]
         | set[t.NormalizedValue]
         | t.NormalizedValue
     )
-    _TYPE_MAP: ClassVar[Mapping[str, type]] = {
+    _TYPE_MAP: ClassVar[dict[str, type]] = {
         "list": list,
         "dict": dict,
         "str": str,
@@ -488,9 +488,9 @@ class FlextLdifUtilitiesFunctional:
         cls,
         value: t.NormalizedValue,
         *,
-        target: type[Sequence[t.NormalizedValue]] | Literal["list"],
-        default: Sequence[t.NormalizedValue] | None = None,
-    ) -> Sequence[t.NormalizedValue] | None: ...
+        target: type[list[t.NormalizedValue]] | Literal["list"],
+        default: list[t.NormalizedValue] | None = None,
+    ) -> list[t.NormalizedValue] | None: ...
 
     @overload
     @classmethod
@@ -508,9 +508,9 @@ class FlextLdifUtilitiesFunctional:
         cls,
         value: t.NormalizedValue,
         *,
-        target: type[Mapping[str, t.NormalizedValue]] | Literal["dict"],
-        default: Mapping[str, t.NormalizedValue] | None = None,
-    ) -> Mapping[str, t.NormalizedValue] | None: ...
+        target: type[dict[str, t.NormalizedValue]] | Literal["dict"],
+        default: dict[str, t.NormalizedValue] | None = None,
+    ) -> dict[str, t.NormalizedValue] | None: ...
 
     @classmethod
     def as_type(
@@ -566,7 +566,7 @@ class FlextLdifUtilitiesFunctional:
 
         """
         normalized_value: (
-            t.Container | Sequence[t.Container] | Mapping[str, t.Container]
+            t.Container | list[t.Container] | dict[str, t.Container]
         )
         if isinstance(value, t.CONTAINER_TYPES):
             normalized_value = value
@@ -586,7 +586,7 @@ class FlextLdifUtilitiesFunctional:
         else:
             normalized_value = str(value)
         normalized_default: (
-            t.Container | Sequence[t.Container] | Mapping[str, t.Container] | None
+            t.Container | list[t.Container] | dict[str, t.Container] | None
         )
         if default is None:
             normalized_default = None
@@ -672,12 +672,12 @@ class FlextLdifUtilitiesFunctional:
     prop_get = prop
 
     @classmethod
-    def props(cls, *keys: str) -> Callable[..., Mapping[str, t.NormalizedValue]]:
+    def props(cls, *keys: str) -> Callable[..., dict[str, t.NormalizedValue]]:
         """Multiple property accessor (mnemonic: ps)."""
 
-        def accessor(obj: t.NormalizedValue) -> Mapping[str, t.NormalizedValue]:
+        def accessor(obj: t.NormalizedValue) -> dict[str, t.NormalizedValue]:
             """Get multiple values from t.NormalizedValue by keys."""
-            result_dict: Mapping[str, t.NormalizedValue] = {}
+            result_dict: dict[str, t.NormalizedValue] = {}
             normalized_obj: t.NormalizedValue = (
                 FlextLdifUtilitiesFunctional._to_general(obj)
             )
@@ -715,7 +715,7 @@ class FlextLdifUtilitiesFunctional:
 
             return getter_fn
 
-        getters: Sequence[Callable[..., t.NormalizedValue]] = [
+        getters: list[Callable[..., t.NormalizedValue]] = [
             make_getter(k) for k in keys
         ]
 

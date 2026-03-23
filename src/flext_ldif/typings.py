@@ -6,7 +6,7 @@ All model-based unions belong in consuming modules, NOT here.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Literal, TypeVar
@@ -29,33 +29,33 @@ class FlextLdifTypes(FlextTypes):
         type _MetadataLeaf = FlextTypes.Primitives | None | datetime
         type MetadataValue = (
             _MetadataLeaf
-            | Sequence[
-                _MetadataLeaf | Sequence[_MetadataLeaf] | Mapping[str, _MetadataLeaf]
+            | list[
+                _MetadataLeaf | list[_MetadataLeaf] | dict[str, _MetadataLeaf]
             ]
-            | Mapping[
+            | dict[
                 str,
-                _MetadataLeaf | Sequence[_MetadataLeaf] | Mapping[str, _MetadataLeaf],
+                _MetadataLeaf | list[_MetadataLeaf] | dict[str, _MetadataLeaf],
             ]
         )
 
         type _ContainerLeaf = FlextTypes.Primitives | None | BaseModel | datetime
         type RecursiveContainer = (
             _ContainerLeaf
-            | Sequence[
-                _ContainerLeaf | Sequence[_ContainerLeaf] | Mapping[str, _ContainerLeaf]
+            | list[
+                _ContainerLeaf | list[_ContainerLeaf] | dict[str, _ContainerLeaf]
             ]
-            | Mapping[
+            | dict[
                 str,
                 _ContainerLeaf
-                | Sequence[_ContainerLeaf]
-                | Mapping[str, _ContainerLeaf],
+                | list[_ContainerLeaf]
+                | dict[str, _ContainerLeaf],
             ]
         )
 
         type NormalizedValue = RecursiveContainer
 
-        type ValueType = Scalar | Sequence[str]
-        type ValueList = Sequence[ValueType]
+        type ValueType = Scalar | list[str]
+        type ValueList = list[ValueType]
         type AttributeValue = str | bytes
         type DnString = str
         type RdnString = str
@@ -63,8 +63,8 @@ class FlextLdifTypes(FlextTypes):
         type MetadataKey = str
         type ProcessingMode = Literal["validate", "transform", "filter"]
         type ValidationLevel = Literal["strict", "moderate", "lenient"]
-        type EntryAttributesDict = Mapping[str, Sequence[str]]
-        type RawEntryDict = Mapping[str, str | Sequence[str] | set[str]]
+        type EntryAttributesDict = dict[str, list[str]]
+        type RawEntryDict = dict[str, str | list[str] | set[str]]
 
         type Rfc4512Descriptor = Annotated[
             str,
@@ -91,15 +91,15 @@ class FlextLdifTypes(FlextTypes):
         ]
 
         type ParseMethodArg = str
-        type ParseMethodReturn = r[FlextTypes.Scalar | Sequence[str] | None]
+        type ParseMethodReturn = r[FlextTypes.Scalar | list[str] | None]
         type ParseMethod = Callable[[t.NormalizedValue, str], ParseMethodReturn]
         type ParseMethodDecorator = Callable[[ParseMethod], ParseMethod]
-        type WriteMethodArg = FlextTypes.Scalar | Sequence[str] | None
+        type WriteMethodArg = FlextTypes.Scalar | list[str] | None
         type WriteMethodReturn = (
             FlextTypes.Scalar
-            | Sequence[str]
+            | list[str]
             | None
-            | r[FlextTypes.Scalar | Sequence[str] | None]
+            | r[FlextTypes.Scalar | list[str] | None]
         )
         type WriteMethod = Callable[
             [t.NormalizedValue, WriteMethodArg], WriteMethodReturn
@@ -107,13 +107,13 @@ class FlextLdifTypes(FlextTypes):
         type WriteMethodDecorator = Callable[[WriteMethod], WriteMethod]
         type SafeMethod = Callable[
             [t.NormalizedValue, ParseMethodArg],
-            FlextTypes.Scalar | Sequence[str] | None,
+            FlextTypes.Scalar | list[str] | None,
         ]
         type SafeMethodDecorator = Callable[[SafeMethod], SafeMethod]
 
-        type DistributionDict = MutableMapping[str, int]
-        type AttributeDict = Mapping[str, Sequence[str]]
-        type AttributeDictGeneric = Mapping[str, Sequence[str] | str]
+        type DistributionDict = dict[str, int]
+        type AttributeDict = dict[str, list[str]]
+        type AttributeDictGeneric = dict[str, list[str] | str]
 
         type TemplateValue = FlextTypes.Scalar | None
         T = TypeVar("T")
@@ -123,7 +123,7 @@ class FlextLdifTypes(FlextTypes):
 
         TRUE_STRINGS: frozenset[str] = frozenset({"true", "1", "yes", "on"})
         type ConvertValue = (
-            t.Container | Sequence[t.Container] | Mapping[str, t.Container]
+            t.Container | list[t.Container] | dict[str, t.Container]
         )
         CONTAINER_TYPES: tuple[type[t.Container], ...] = (
             str,

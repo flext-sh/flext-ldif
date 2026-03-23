@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import Self, override
 
 from flext_ldif import FlextLdifServiceBase, FlextLdifUtilitiesDN, m, r, t
 
 
-class FlextLdifEntries(FlextLdifServiceBase[Sequence[m.Ldif.Entry]]):
+class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
     """Entry operations with strict contracts."""
 
     def __init__(
         self,
-        entries: Sequence[m.Ldif.Entry] | None = None,
+        entries: list[m.Ldif.Entry] | None = None,
         operation: str | None = None,
-        attributes_to_remove: Sequence[str] | None = None,
+        attributes_to_remove: list[str] | None = None,
     ) -> None:
         """Initialize entry operation builder state."""
         super().__init__()
@@ -29,7 +29,7 @@ class FlextLdifEntries(FlextLdifServiceBase[Sequence[m.Ldif.Entry]]):
         return cls()
 
     @staticmethod
-    def _extract_dn_from_dict(entry: Mapping[str, str | Sequence[str]]) -> r[str]:
+    def _extract_dn_from_dict(entry: dict[str, str | list[str]]) -> r[str]:
         dn_value = entry.get("dn")
         if dn_value is None:
             return r[str].fail("Dict entry missing 'dn' key")
@@ -58,7 +58,7 @@ class FlextLdifEntries(FlextLdifServiceBase[Sequence[m.Ldif.Entry]]):
         return r[str].fail("Invalid DN value type")
 
     @staticmethod
-    def _normalize_list_value(value: Sequence[str]) -> r[str]:
+    def _normalize_list_value(value: list[str]) -> r[str]:
         if not value:
             return r[str].fail("Cannot normalize empty list")
         return FlextLdifEntries._normalize_string_value(value[0])
@@ -73,8 +73,8 @@ class FlextLdifEntries(FlextLdifServiceBase[Sequence[m.Ldif.Entry]]):
     @staticmethod
     def create_entry(
         dn: str,
-        attributes: Mapping[str, str | Sequence[str]],
-        objectclasses: Sequence[str] | None = None,
+        attributes: dict[str, str | list[str]],
+        objectclasses: list[str] | None = None,
     ) -> r[m.Ldif.Entry]:
         """Create a validated entry from DN and attributes."""
         if not FlextLdifUtilitiesDN.validate_dn(dn):
@@ -86,61 +86,61 @@ class FlextLdifEntries(FlextLdifServiceBase[Sequence[m.Ldif.Entry]]):
 
     @staticmethod
     def get_attribute_values(
-        attribute: str | Sequence[str] | tuple[str, ...] | set[str] | frozenset[str],
-    ) -> r[Sequence[str]]:
+        attribute: str | list[str] | tuple[str, ...] | set[str] | frozenset[str],
+    ) -> r[list[str]]:
         """Normalize attribute input into a list of strings."""
         match attribute:
             case str() as value:
-                return r[Sequence[str]].ok([value])
+                return r[list[str]].ok([value])
             case list() as values:
-                return r[Sequence[str]].ok(values)
+                return r[list[str]].ok(values)
             case tuple() | set() | frozenset() as values:
-                return r[Sequence[str]].ok(list(values))
-        return r[Sequence[str]].fail("Unsupported attribute input type")
+                return r[list[str]].ok(list(values))
+        return r[list[str]].fail("Unsupported attribute input type")
 
     @staticmethod
     def get_entry_attribute(
         entry: m.Ldif.Entry, attribute_name: str
-    ) -> r[Sequence[str]]:
+    ) -> r[list[str]]:
         """Read one attribute from entry."""
         if entry.attributes is None:
-            return r[Sequence[str]].fail(f"Attribute '{attribute_name}' not found")
+            return r[list[str]].fail(f"Attribute '{attribute_name}' not found")
         value = entry.attributes.attributes.get(attribute_name)
         if value is None or not value:
-            return r[Sequence[str]].fail(f"Attribute '{attribute_name}' not found")
-        return r[Sequence[str]].ok(list(value))
+            return r[list[str]].fail(f"Attribute '{attribute_name}' not found")
+        return r[list[str]].ok(list(value))
 
     @staticmethod
-    def get_entry_attributes(entry: m.Ldif.Entry) -> r[Mapping[str, Sequence[str]]]:
+    def get_entry_attributes(entry: m.Ldif.Entry) -> r[dict[str, list[str]]]:
         """Get entry attributes mapping."""
         if entry.attributes is None:
-            return r[Mapping[str, Sequence[str]]].fail("Entry has no attributes")
-        attrs: Mapping[str, Sequence[str]] = dict(entry.attributes.attributes)
-        return r[Mapping[str, Sequence[str]]].ok(attrs)
+            return r[dict[str, list[str]]].fail("Entry has no attributes")
+        attrs: dict[str, list[str]] = dict(entry.attributes.attributes)
+        return r[dict[str, list[str]]].ok(attrs)
 
     @staticmethod
-    def get_entry_dn(entry: m.Ldif.Entry | Mapping[str, str | Sequence[str]]) -> r[str]:
+    def get_entry_dn(entry: m.Ldif.Entry | dict[str, str | list[str]]) -> r[str]:
         """Read DN from model or dictionary entry."""
         if isinstance(entry, Mapping):
             return FlextLdifEntries._extract_dn_from_dict(entry)
         return FlextLdifEntries._extract_dn_from_object(entry)
 
     @staticmethod
-    def get_entry_objectclasses(entry: m.Ldif.Entry) -> r[Sequence[str]]:
+    def get_entry_objectclasses(entry: m.Ldif.Entry) -> r[list[str]]:
         """Get objectClass values from entry attributes."""
         attributes_result = FlextLdifEntries.get_entry_attributes(entry)
         if attributes_result.is_failure:
-            return r[Sequence[str]].fail(
+            return r[list[str]].fail(
                 f"Failed to get entry attributes: {attributes_result.error}",
             )
         attributes = attributes_result.value
         for attr_name, attr_values in attributes.items():
             if attr_name.lower() == "objectclass":
-                return r[Sequence[str]].ok(list(attr_values))
-        return r[Sequence[str]].fail("Entry is missing objectClass attribute")
+                return r[list[str]].ok(list(attr_values))
+        return r[list[str]].fail("Entry is missing objectClass attribute")
 
     @staticmethod
-    def normalize_attribute_value(value: str | Sequence[str] | None) -> r[str]:
+    def normalize_attribute_value(value: str | list[str] | None) -> r[str]:
         """Normalize supported attribute value shapes to one string."""
         match value:
             case None:
@@ -154,7 +154,7 @@ class FlextLdifEntries(FlextLdifServiceBase[Sequence[m.Ldif.Entry]]):
     @staticmethod
     def remove_attributes(
         entry: m.Ldif.Entry,
-        attributes_to_remove: Sequence[str],
+        attributes_to_remove: list[str],
     ) -> r[m.Ldif.Entry]:
         """Remove selected attributes from a single entry."""
         if entry.attributes is None:
@@ -175,7 +175,7 @@ class FlextLdifEntries(FlextLdifServiceBase[Sequence[m.Ldif.Entry]]):
     @staticmethod
     def remove_objectclasses(
         entry: m.Ldif.Entry,
-        objectclasses_to_remove: Sequence[str],
+        objectclasses_to_remove: list[str],
     ) -> r[m.Ldif.Entry]:
         """Remove objectClass values from a single entry."""
         if entry.attributes is None:
@@ -236,21 +236,21 @@ class FlextLdifEntries(FlextLdifServiceBase[Sequence[m.Ldif.Entry]]):
 
     @staticmethod
     def remove_operational_attributes_batch(
-        entries: Sequence[m.Ldif.Entry],
-    ) -> r[Sequence[m.Ldif.Entry]]:
+        entries: list[m.Ldif.Entry],
+    ) -> r[list[m.Ldif.Entry]]:
         """Remove operational attributes for all entries."""
-        results: Sequence[m.Ldif.Entry] = []
+        results: list[m.Ldif.Entry] = []
         for entry in entries:
             result = FlextLdifEntries.remove_operational_attributes(entry)
             if result.is_failure:
-                return r[Sequence[m.Ldif.Entry]].fail(
+                return r[list[m.Ldif.Entry]].fail(
                     result.error or "Failed to process entry",
                 )
             results.append(result.value)
-        return r[Sequence[m.Ldif.Entry]].ok(results)
+        return r[list[m.Ldif.Entry]].ok(results)
 
     @override
-    def build(self) -> Sequence[m.Ldif.Entry]:
+    def build(self) -> list[m.Ldif.Entry]:
         """Execute and return processed entries or raise on failure."""
         result = self.execute()
         if result.is_failure:
@@ -259,22 +259,22 @@ class FlextLdifEntries(FlextLdifServiceBase[Sequence[m.Ldif.Entry]]):
         return result.value
 
     @override
-    def execute(self) -> r[Sequence[m.Ldif.Entry]]:
+    def execute(self) -> r[list[m.Ldif.Entry]]:
         """Run configured entry operation."""
         if not self._operation:
-            return r[Sequence[m.Ldif.Entry]].fail("No operation specified")
+            return r[list[m.Ldif.Entry]].fail("No operation specified")
         if self._operation == "remove_operational_attributes":
             return self.remove_operational_attributes_batch(self._entries)
         if self._operation == "remove_attributes":
             if not self._attributes_to_remove:
-                return r[Sequence[m.Ldif.Entry]].fail(
+                return r[list[m.Ldif.Entry]].fail(
                     "No attributes_to_remove specified for remove_attributes operation",
                 )
             return self.remove_attributes_batch(
                 self._entries,
                 self._attributes_to_remove,
             )
-        return r[Sequence[m.Ldif.Entry]].fail(f"Unknown operation: {self._operation}")
+        return r[list[m.Ldif.Entry]].fail(f"Unknown operation: {self._operation}")
 
     def get_normalized_attribute(
         self,
@@ -288,26 +288,26 @@ class FlextLdifEntries(FlextLdifServiceBase[Sequence[m.Ldif.Entry]]):
 
     def remove_attributes_batch(
         self,
-        entries: Sequence[m.Ldif.Entry],
-        attributes: Sequence[str],
-    ) -> r[Sequence[m.Ldif.Entry]]:
+        entries: list[m.Ldif.Entry],
+        attributes: list[str],
+    ) -> r[list[m.Ldif.Entry]]:
         """Remove selected attributes for all entries."""
-        results: Sequence[m.Ldif.Entry] = []
+        results: list[m.Ldif.Entry] = []
         for entry in entries:
             result = FlextLdifEntries.remove_attributes(entry, attributes)
             if result.is_failure:
-                return r[Sequence[m.Ldif.Entry]].fail(
+                return r[list[m.Ldif.Entry]].fail(
                     result.error or "Failed to process entry",
                 )
             results.append(result.value)
-        return r[Sequence[m.Ldif.Entry]].ok(results)
+        return r[list[m.Ldif.Entry]].ok(results)
 
-    def with_attributes_to_remove(self, attributes_to_remove: Sequence[str]) -> Self:
+    def with_attributes_to_remove(self, attributes_to_remove: list[str]) -> Self:
         """Set attributes targeted by remove operation."""
         self._attributes_to_remove = attributes_to_remove
         return self
 
-    def with_entries(self, entries: Sequence[m.Ldif.Entry]) -> Self:
+    def with_entries(self, entries: list[m.Ldif.Entry]) -> Self:
         """Set entries to process."""
         self._entries = entries
         return self

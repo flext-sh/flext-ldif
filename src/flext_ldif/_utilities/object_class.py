@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable
 
 from flext_core import FlextLogger, r
 
@@ -105,12 +105,12 @@ class FlextLdifUtilitiesObjectClass:
     def resolve_objectclass(
         definition: str,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], Mapping[str, t.NormalizedValue]]
+        parse_parts_hook: Callable[[str], dict[str, t.NormalizedValue]]
         | None = None,
     ) -> r[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition into SchemaObjectClass model."""
         try:
-            parsed_dict: Mapping[str, t.NormalizedValue] = (
+            parsed_dict: dict[str, t.NormalizedValue] = (
                 FlextLdifUtilitiesSchema.parse_objectclass(definition)
             )
             if parse_parts_hook is not None:
@@ -125,7 +125,7 @@ class FlextLdifUtilitiesObjectClass:
             desc_raw = parsed_dict.get("desc")
             desc_value = desc_raw if isinstance(desc_raw, str) else None
             sup_raw = parsed_dict.get("sup")
-            sup_value: str | Sequence[str] | None
+            sup_value: str | list[str] | None
             if isinstance(sup_raw, str):
                 sup_value = sup_raw
             elif isinstance(sup_raw, list):
@@ -135,11 +135,11 @@ class FlextLdifUtilitiesObjectClass:
             kind_raw = parsed_dict.get("kind")
             kind_value = kind_raw if isinstance(kind_raw, str) else ""
             must_raw = parsed_dict.get("must")
-            must_value: Sequence[str] = []
+            must_value: list[str] = []
             if isinstance(must_raw, list):
                 must_value = [str(item) for item in must_raw]
             may_raw = parsed_dict.get("may")
-            may_value: Sequence[str] = []
+            may_value: list[str] = []
             if isinstance(may_raw, list):
                 may_value = [str(item) for item in may_raw]
             schema_oc = m.Ldif.SchemaObjectClass(

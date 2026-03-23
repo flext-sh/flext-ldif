@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar, Self, override
 
 from flext_core import FlextLogger, FlextService, r
@@ -51,7 +50,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         if _parent_quirk is not None:
             object.__setattr__(self, "_parent_quirk", _parent_quirk)
 
-    RFC_ACL_ATTRIBUTES: ClassVar[Sequence[str]] = [
+    RFC_ACL_ATTRIBUTES: ClassVar[list[str]] = [
         "aci",
         "acl",
         "olcAccess",
@@ -59,7 +58,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         "aclEntry",
     ]
 
-    def get_acl_attributes(self) -> Sequence[str]:
+    def get_acl_attributes(self) -> list[str]:
         """Get ACL attributes for this server."""
         return self.RFC_ACL_ATTRIBUTES
 
@@ -92,20 +91,20 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
 
     def convert_rfc_acl_to_aci(
         self,
-        rfc_acl_attrs: Mapping[str, Sequence[str]],
+        rfc_acl_attrs: dict[str, list[str]],
         target_server: str,
-    ) -> r[Mapping[str, Sequence[str]]]:
+    ) -> r[dict[str, list[str]]]:
         """Convert RFC ACL format to server-specific ACI format."""
         _ = target_server
-        return r[Mapping[str, Sequence[str]]].ok(rfc_acl_attrs)
+        return r[dict[str, list[str]]].ok(rfc_acl_attrs)
 
     def create_metadata(
         self,
         original_format: str,
-        extensions: Mapping[str, t.NormalizedValue] | None = None,
+        extensions: dict[str, t.NormalizedValue] | None = None,
     ) -> m.Ldif.QuirkMetadata:
         """Create ACL quirk metadata."""
-        all_extensions: Mapping[str, t.NormalizedValue] = {
+        all_extensions: dict[str, t.NormalizedValue] = {
             "original_format": original_format,
         }
         if extensions:
@@ -244,7 +243,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
 
     def _extract_acl_parameters(
         self,
-        kwargs: Mapping[str, t.NormalizedValue],
+        kwargs: dict[str, t.NormalizedValue],
     ) -> tuple[str | m.Ldif.Acl | None, str | None]:
         """Extract and validate ACL operation parameters from kwargs."""
         data_raw = kwargs.get("data")
@@ -280,7 +279,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
     def _resolve_data(
         self,
         data: str | m.Ldif.Acl | None,
-        kwargs: Mapping[str, t.NormalizedValue],
+        kwargs: dict[str, t.NormalizedValue],
     ) -> str | m.Ldif.Acl | None:
         """Resolve data from parameter or kwargs."""
         if data is not None:
@@ -291,7 +290,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
     def _resolve_operation(
         self,
         operation: str | None,
-        kwargs: Mapping[str, t.NormalizedValue],
+        kwargs: dict[str, t.NormalizedValue],
     ) -> str | None:
         """Resolve operation from parameter or kwargs."""
         if operation is not None:

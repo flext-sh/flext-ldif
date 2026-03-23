@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping, MutableMapping, Sequence
 from pathlib import Path
 from typing import override
 
@@ -18,14 +17,14 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         *,
         condition: bool,
         description: str,
-        patterns: Sequence[str],
+        patterns: list[str],
     ) -> None:
         """Add pattern description if condition is met."""
         if condition:
             patterns.append(description)
 
     @staticmethod
-    def _get_all_server_types() -> Sequence[str]:
+    def _get_all_server_types() -> list[str]:
         """Get all supported server types from constants."""
         return u.Ldif.get_all_server_types()
 
@@ -164,9 +163,9 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
                 return r[str].ok(detection_result.value.detected_server_type)
         return r[str].ok("rfc")
 
-    def _calculate_scores(self, content: str) -> Mapping[str, int]:
+    def _calculate_scores(self, content: str) -> dict[str, int]:
         """Calculate detection scores for each server type."""
-        scores: Mapping[str, int] = dict.fromkeys(self._get_all_server_types(), 0)
+        scores: dict[str, int] = dict.fromkeys(self._get_all_server_types(), 0)
         scores[u.Ldif.get_server_type_value("GENERIC")] = 1
         content_lower = content.lower()
         oid_server_type = u.Ldif.normalize_server_type(
@@ -260,12 +259,12 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
                 )
         return scores
 
-    def _determine_server_type(self, scores: Mapping[str, int]) -> tuple[str, float]:
+    def _determine_server_type(self, scores: dict[str, int]) -> tuple[str, float]:
         """Determine the most likely server type from scores."""
         if not scores:
             return ("rfc", 0.0)
         max_score: int = max(scores.values()) if scores else 0
-        scores_values: Sequence[int] = list(scores.values()) if scores else []
+        scores_values: list[int] = list(scores.values()) if scores else []
         total_score: int = sum(scores_values)
         if max_score == 0:
             return ("rfc", 0.0)
@@ -275,7 +274,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
             return ("rfc", confidence)
         if detected_key == "generic":
             return ("rfc", confidence)
-        server_type_map: Mapping[str, str] = {
+        server_type_map: dict[str, str] = {
             "oid": "oid",
             "oud": "oud",
             "openldap": "openldap",
@@ -300,7 +299,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         description: str,
         content: str,
         content_lower: str,
-        patterns: Sequence[str],
+        patterns: list[str],
         *,
         case_sensitive: bool = False,
     ) -> None:
@@ -318,7 +317,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         self,
         constants: type[p.Ldif.ServerDetectionConstants] | None,
         content: str,
-        patterns: Sequence[str],
+        patterns: list[str],
     ) -> None:
         """Extract OID-specific patterns (ACLs, etc.)."""
         if not constants:
@@ -340,7 +339,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         pattern_attr: str,
         description: str,
         content_lower: str,
-        patterns: Sequence[str],
+        patterns: list[str],
     ) -> None:
         """Extract pattern using pattern attribute from constants."""
         constants = self._get_server_constants(server_type)
@@ -352,9 +351,9 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
                 patterns=patterns,
             )
 
-    def _extract_patterns(self, content: str) -> Sequence[str]:
+    def _extract_patterns(self, content: str) -> list[str]:
         """Extract detected patterns from content."""
-        patterns: Sequence[str] = []
+        patterns: list[str] = []
         content_lower = content.lower()
         oid_server_type = u.Ldif.normalize_server_type(
             u.Ldif.get_server_type_value("OID"),
@@ -466,7 +465,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         constants: type[p.Ldif.ServerDetectionConstants] | None,
         content: str,
         content_lower: str,
-        scores: MutableMapping[str, int],
+        scores: dict[str, int],
         *,
         case_sensitive: bool = False,
     ) -> None:
@@ -493,7 +492,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         server_type: str,
         constants: type[p.Ldif.ServerDetectionConstants] | None,
         content_lower: str,
-        scores: MutableMapping[str, int],
+        scores: dict[str, int],
         *,
         pattern_attr: str = "DETECTION_PATTERN",
     ) -> None:
@@ -510,13 +509,13 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         server_type: str,
         pattern: str,
         weight: int,
-        attributes: Sequence[str] | frozenset[str],
+        attributes: list[str] | frozenset[str],
         content: str,
         content_lower: str,
-        scores: MutableMapping[str, int],
+        scores: dict[str, int],
         *,
         case_sensitive: bool = False,
-        objectclasses: Sequence[str] | frozenset[str] | None = None,
+        objectclasses: list[str] | frozenset[str] | None = None,
     ) -> None:
         """Update scores for a server type based on pattern, attribute, and objectClass matches."""
         search_content = content if case_sensitive else content_lower

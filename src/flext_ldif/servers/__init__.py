@@ -48,7 +48,7 @@ if TYPE_CHECKING:
     from flext_ldif.servers.rfc import FlextLdifServersRfc
     from flext_ldif.servers.tivoli import FlextLdifServersTivoli
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
+_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifServersAd": ("flext_ldif.servers.ad", "FlextLdifServersAd"),
     "FlextLdifServersApache": ("flext_ldif.servers.apache", "FlextLdifServersApache"),
     "FlextLdifServersBase": ("flext_ldif.servers.base", "FlextLdifServersBase"),
@@ -183,7 +183,7 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: MutableMapping[str, FlextTypes.ModuleExport] = {}
+_LAZY_CACHE: dict[str, FlextTypes.ModuleExport] = {}
 
 
 def __getattr__(name: str) -> FlextTypes.ModuleExport:
@@ -210,7 +210,7 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
     return value
 
 
-def __dir__() -> Sequence[str]:
+def __dir__() -> list[str]:
     """Return list of available attributes for dir() and autocomplete.
 
     Returns:

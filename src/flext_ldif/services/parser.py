@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable
 from pathlib import Path
 from typing import override
 
@@ -45,20 +45,20 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
 
     def parse_ldap3_results(
         self,
-        results: Sequence[tuple[str, Mapping[str, Sequence[str]]]],
+        results: list[tuple[str, dict[str, list[str]]]],
         server_type: str | None = None,
     ) -> r[m.Ldif.ParseResponse]:
         """Parse ldap3 search results by converting them to LDIF text first."""
-        ldif_lines: Sequence[str] = []
+        ldif_lines: list[str] = []
 
         def convert_entry(
-            dn_attrs: tuple[str, Mapping[str, Sequence[str]]],
-        ) -> Sequence[str]:
+            dn_attrs: tuple[str, dict[str, list[str]]],
+        ) -> list[str]:
             """Convert single entry to LDIF lines."""
             dn, attrs = dn_attrs
-            entry_lines: Sequence[str] = [f"dn: {dn}"]
+            entry_lines: list[str] = [f"dn: {dn}"]
             for attr_name, values in attrs.items():
-                attr_lines: Sequence[str] = [
+                attr_lines: list[str] = [
                     f"{attr_name}: {value}" for value in values
                 ]
                 entry_lines.extend(attr_lines)
@@ -111,7 +111,7 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
             return r[m.Ldif.ParseResponse].fail(
                 f"Entry quirk for server type {effective_server_type} does not have parse method",
             )
-        parse_attr: Callable[[str], r[Sequence[m.Ldif.Entry]]] | None = getattr(
+        parse_attr: Callable[[str], r[list[m.Ldif.Entry]]] | None = getattr(
             entry_quirk_raw,
             "parse",
             None,

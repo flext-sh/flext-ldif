@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 
 from flext_core import FlextLogger, r
 
@@ -37,7 +37,7 @@ class FlextLdifUtilitiesWriters:
         if config is None:
             config = m.Ldif.EntryWriteConfig.model_validate(kwargs)
         try:
-            lines: Sequence[str] = []
+            lines: list[str] = []
             entry: m.Ldif.Entry = config.entry
             if config.transform_entry_hook:
                 entry = config.transform_entry_hook(entry)
@@ -75,7 +75,7 @@ class FlextLdifUtilitiesWriters:
     def write_entry_parts(
         entry: m.Ldif.Entry,
         config: m.Ldif.EntryWriteConfig,
-        lines: Sequence[str],
+        lines: list[str],
     ) -> None:
         """Write entry parts (comments, DN, attributes)."""
         if config.include_comments and config.write_comments_hook:
@@ -91,7 +91,7 @@ class FlextLdifUtilitiesWriters:
     def write_attribute_definition(
         attribute: m.Ldif.SchemaAttribute,
         server_type: str,
-        build_parts_hook: Callable[[m.Ldif.SchemaAttribute], Sequence[str]],
+        build_parts_hook: Callable[[m.Ldif.SchemaAttribute], list[str]],
         *,
         transform_hook: Callable[[m.Ldif.SchemaAttribute], m.Ldif.SchemaAttribute]
         | None = None,
@@ -122,7 +122,7 @@ class FlextLdifUtilitiesWriters:
         server_type: str,
         build_parts_hook: Callable[
             [m.Ldif.SchemaObjectClass],
-            Sequence[str],
+            list[str],
         ],
         *,
         transform_hook: Callable[
@@ -130,7 +130,7 @@ class FlextLdifUtilitiesWriters:
             m.Ldif.SchemaObjectClass,
         ]
         | None = None,
-        transform_sup_hook: Callable[[Sequence[str]], Sequence[str]] | None = None,
+        transform_sup_hook: Callable[[list[str]], list[str]] | None = None,
     ) -> r[str]:
         """Write objectClass definition using hooks."""
         try:
@@ -138,7 +138,7 @@ class FlextLdifUtilitiesWriters:
                 objectclass = transform_hook(objectclass)
             if transform_sup_hook and objectclass.sup:
                 sup_value = objectclass.sup
-                sup_list: Sequence[str]
+                sup_list: list[str]
                 if isinstance(sup_value, (list, tuple)):
                     sup_list = [str(item) for item in sup_value]
                 else:
@@ -179,7 +179,7 @@ class FlextLdifUtilitiesWriters:
         if config is None:
             config = m.Ldif.BatchWriteConfig.model_validate(kwargs)
         try:
-            parts: Sequence[str] = []
+            parts: list[str] = []
             if config.include_header and config.write_header_hook:
                 header = config.write_header_hook()
                 if header:
@@ -187,7 +187,7 @@ class FlextLdifUtilitiesWriters:
             stats = FlextLdifUtilitiesWriters.WriteStats(
                 total_entries=len(config.entries),
             )
-            entries_typed: Sequence[m.Ldif.Entry] = list(config.entries)
+            entries_typed: list[m.Ldif.Entry] = list(config.entries)
             for entry in entries_typed:
                 result = FlextLdifUtilitiesWriters.write_single_entry_with_stats(
                     entry,

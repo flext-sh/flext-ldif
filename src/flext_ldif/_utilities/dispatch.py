@@ -35,15 +35,15 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     @overload
-    def split(dn: str) -> Sequence[str]: ...
+    def split(dn: str) -> list[str]: ...
 
     @staticmethod
     @overload
-    def split(dn: m.Ldif.DN) -> Sequence[str]: ...
+    def split(dn: m.Ldif.DN) -> list[str]: ...
 
     @staticmethod
     @override
-    def split(dn: str | m.Ldif.DN) -> Sequence[str]:
+    def split(dn: str | m.Ldif.DN) -> list[str]:
         return FlextLdifUtilitiesDN.split(dn)
 
     @staticmethod
@@ -57,28 +57,28 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     @overload
     def validate_batch(
-        values: Sequence[str],
+        values: list[str],
         *,
         collect_errors: bool = True,
-    ) -> r[Sequence[tuple[str, bool, Sequence[str]]]]: ...
+    ) -> r[list[tuple[str, bool, list[str]]]]: ...
 
     @staticmethod
     @overload
     def validate_batch(
-        values: Sequence[str],
+        values: list[str],
         *,
         collect_errors: bool = True,
-    ) -> r[Sequence[tuple[str, bool, str | None]]]: ...
+    ) -> r[list[tuple[str, bool, str | None]]]: ...
 
     @staticmethod
     @override
     def validate_batch(
-        values: Sequence[str],
+        values: list[str],
         *,
         collect_errors: bool = True,
     ) -> (
-        r[Sequence[tuple[str, bool, Sequence[str]]]]
-        | r[Sequence[tuple[str, bool, str | None]]]
+        r[list[tuple[str, bool, list[str]]]]
+        | r[list[tuple[str, bool, str | None]]]
     ):
         return FlextLdifUtilitiesDN.validate_dn_batch(
             values,
@@ -89,57 +89,57 @@ class FlextLdifUtilitiesDispatch:
     @overload
     def parse(
         definition: str,
-    ) -> r[Sequence[tuple[str, str]]]: ...
+    ) -> r[list[tuple[str, str]]]: ...
 
     @staticmethod
     @overload
     def parse(
         definition: m.Ldif.DN,
-    ) -> r[Sequence[tuple[str, str]]]: ...
+    ) -> r[list[tuple[str, str]]]: ...
 
     @staticmethod
     @overload
     def parse(
         definition: str | m.Ldif.DN,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], Mapping[str, t.NormalizedValue]]
-        | Callable[[str], r[Mapping[str, t.NormalizedValue]]]
+        parse_parts_hook: Callable[[str], dict[str, t.NormalizedValue]]
+        | Callable[[str], r[dict[str, t.NormalizedValue]]]
         | None = None,
-    ) -> r[Mapping[str, t.NormalizedValue]]: ...
+    ) -> r[dict[str, t.NormalizedValue]]: ...
 
     @staticmethod
     @overload
     def parse(
         definition: str,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], Mapping[str, t.NormalizedValue]]
-        | Callable[[str], r[Mapping[str, t.NormalizedValue]]]
+        parse_parts_hook: Callable[[str], dict[str, t.NormalizedValue]]
+        | Callable[[str], r[dict[str, t.NormalizedValue]]]
         | None = None,
-    ) -> r[Mapping[str, t.NormalizedValue]]: ...
+    ) -> r[dict[str, t.NormalizedValue]]: ...
 
     @staticmethod
     @override
     def parse(
         definition: str | m.Ldif.DN | None,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], Mapping[str, t.NormalizedValue]]
-        | Callable[[str], r[Mapping[str, t.NormalizedValue]]]
+        parse_parts_hook: Callable[[str], dict[str, t.NormalizedValue]]
+        | Callable[[str], r[dict[str, t.NormalizedValue]]]
         | None = None,
-    ) -> r[Sequence[tuple[str, str]]] | r[Mapping[str, t.NormalizedValue]]:
+    ) -> r[list[tuple[str, str]]] | r[dict[str, t.NormalizedValue]]:
         if definition is None:
-            return r[Sequence[tuple[str, str]]].fail("DN cannot be None")
+            return r[list[tuple[str, str]]].fail("DN cannot be None")
         if isinstance(definition, m.Ldif.DN):
             return FlextLdifUtilitiesDN.parse_dn(definition)
         if parse_parts_hook is None and server_type is None:
             return FlextLdifUtilitiesDN.parse_dn(definition)
 
-        def attr_hook(value: str) -> r[Mapping[str, t.NormalizedValue]]:
+        def attr_hook(value: str) -> r[dict[str, t.NormalizedValue]]:
             if parse_parts_hook is None:
-                return r[Mapping[str, t.NormalizedValue]].ok({})
+                return r[dict[str, t.NormalizedValue]].ok({})
             parsed_value = parse_parts_hook(value)
             if isinstance(parsed_value, r):
                 return parsed_value
-            return r[Mapping[str, t.NormalizedValue]].ok(dict(parsed_value))
+            return r[dict[str, t.NormalizedValue]].ok(dict(parsed_value))
 
         return FlextLdifUtilitiesAttribute.resolve_attribute(
             definition=definition,
@@ -151,7 +151,7 @@ class FlextLdifUtilitiesDispatch:
     @override
     def matches_server_patterns(
         value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        oid_pattern: Mapping[str, t.NormalizedValue] | str,
+        oid_pattern: dict[str, t.NormalizedValue] | str,
         detection_names: t.NormalizedValue | frozenset[str],
         detection_string: str | None = None,
         *,
@@ -205,12 +205,12 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     @overload
     def validate(
-        value_or_entries: Sequence[m.Ldif.Entry],
+        value_or_entries: list[m.Ldif.Entry],
         *,
         strict: bool = True,
         collect_all: bool = True,
         max_errors: int = 0,
-    ) -> r[Sequence[ValidationResult]]: ...
+    ) -> r[list[ValidationResult]]: ...
 
     @staticmethod
     @overload
@@ -236,13 +236,13 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     @override
     def validate(
-        value_or_entries: Sequence[m.Ldif.Entry] | t.Container | str | m.Ldif.DN,
+        value_or_entries: list[m.Ldif.Entry] | t.Container | str | m.Ldif.DN,
         validator_first: p.ValidatorSpec | None = None,
         *validators_rest: p.ValidatorSpec,
         strict: bool = True,
         collect_all: bool = True,
         max_errors: int = 0,
-    ) -> r[Sequence[ValidationResult]] | r[t.Container] | bool:
+    ) -> r[list[ValidationResult]] | r[t.Container] | bool:
         """Validate entries against rules."""
         if isinstance(value_or_entries, str | m.Ldif.DN) and validator_first is None:
             return FlextLdifUtilitiesDN.validate_dn(value_or_entries)
@@ -278,12 +278,12 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def validate_entries(
-        entries: Sequence[m.Ldif.Entry],
+        entries: list[m.Ldif.Entry],
         *,
         strict: bool,
         collect_all: bool,
         max_errors: int,
-    ) -> r[Sequence[ValidationResult]]:
+    ) -> r[list[ValidationResult]]:
         """Internal: Validate LDIF entries."""
         pipeline = ValidationPipeline(
             strict=strict,
@@ -317,19 +317,19 @@ class FlextLdifUtilitiesDispatch:
     @override
     def filter[T: t.NormalizedValue, R: t.NormalizedValue](
         items_or_entries: T
-        | Sequence[T]
+        | list[T]
         | tuple[T, ...]
-        | Mapping[str, T]
-        | Sequence[m.Ldif.Entry],
+        | dict[str, T]
+        | list[m.Ldif.Entry],
         predicate_or_filter1: Callable[..., bool]
         | FlextLdifUtilitiesFilters[m.Ldif.Entry],
         *filters: FlextLdifUtilitiesFilters[m.Ldif.Entry],
         _mapper: Callable[..., R] | None = None,
         mode: Literal["all", "any"] = "all",
     ) -> (
-        Sequence[t.NormalizedValue]
-        | Mapping[str, t.NormalizedValue]
-        | FlextLdifUtilitiesResult[Sequence[m.Ldif.Entry]]
+        list[t.NormalizedValue]
+        | dict[str, t.NormalizedValue]
+        | FlextLdifUtilitiesResult[list[m.Ldif.Entry]]
     ):
         """Route to Processing.filter (resolves Processing vs Filters vs Result)."""
         return FlextLdifUtilitiesProcessing.filter(
@@ -366,7 +366,7 @@ class FlextLdifUtilitiesDispatch:
     @override
     def is_entry_sequence(
         obj: t.NormalizedValue,
-    ) -> TypeIs[Sequence[m.Ldif.Entry]]:
+    ) -> TypeIs[list[m.Ldif.Entry]]:
         """Route to Processing.is_entry_sequence (resolves Processing vs TypeGuards)."""
         return FlextLdifUtilitiesProcessing.is_entry_sequence(obj)
 

@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
     from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema, logger
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
+_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifServersOidAcl": ("flext_ldif.servers._oid.acl", "FlextLdifServersOidAcl"),
     "FlextLdifServersOidConstants": (
         "flext_ldif.servers._oid.constants",
@@ -46,7 +46,7 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: MutableMapping[str, FlextTypes.ModuleExport] = {}
+_LAZY_CACHE: dict[str, FlextTypes.ModuleExport] = {}
 
 
 def __getattr__(name: str) -> FlextTypes.ModuleExport:
@@ -73,7 +73,7 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
     return value
 
 
-def __dir__() -> Sequence[str]:
+def __dir__() -> list[str]:
     """Return list of available attributes for dir() and autocomplete.
 
     Returns:

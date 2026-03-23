@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping, Sequence
 from typing import ClassVar, override
 
 from flext_ldif import (
@@ -272,7 +271,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def _build_acl_string(
             self,
             acl_name: str,
-            permissions: Sequence[str],
+            permissions: list[str],
             targetattr: str,
             userdn: str,
         ) -> r[str]:
@@ -307,9 +306,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             permissions_data: m.Ldif.AclPermissions
             | FlextLdifModelsDomains.AclPermissions
             | None,
-        ) -> Sequence[str]:
+        ) -> list[str]:
             """Extract permission names from Permissions model flags."""
-            permissions: Sequence[str] = []
+            permissions: list[str] = []
             if not permissions_data:
                 return permissions
             if permissions_data.read:
@@ -342,7 +341,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     content,
                     re.IGNORECASE,
                 )
-                permissions: Sequence[str] = (
+                permissions: list[str] = (
                     [
                         perm.strip()
                         for perm in permissions_match.group(1).split(
@@ -362,7 +361,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     content,
                     re.IGNORECASE,
                 )
-                target_attributes: Sequence[str] = []
+                target_attributes: list[str] = []
                 if target_attr_match:
                     attr_string = target_attr_match.group(1).replace(
                         FlextLdifServersDs389.Constants.ACL_TARGETATTR_SEPARATOR,
@@ -460,7 +459,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: Mapping[str, Sequence[str]],
+            attributes: dict[str, list[str]],
         ) -> bool:
             """Detect 389 DS-specific entries."""
             if not entry_dn:
@@ -483,7 +482,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 return True
             objectclass_key = c.Ldif.DictKeys.OBJECTCLASS.lower()
             object_classes_raw = normalized_attrs.get(objectclass_key, [])
-            object_classes: Sequence[str] = object_classes_raw
+            object_classes: list[str] = object_classes_raw
             return bool(
                 any(
                     str(oc).lower()

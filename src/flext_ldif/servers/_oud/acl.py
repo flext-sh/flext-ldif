@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import ClassVar, override
 
 from flext_core import FlextLogger, r
@@ -31,14 +31,14 @@ logger = FlextLogger(__name__)
 class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     """Oracle OUD ACL Implementation (RFC 4876 ACI Format)."""
 
-    RFC_ACL_ATTRIBUTES: ClassVar[Sequence[str]] = [
+    RFC_ACL_ATTRIBUTES: ClassVar[list[str]] = [
         "aci",
         "acl",
         "olcAccess",
         "aclRights",
         "aclEntry",
     ]
-    OUD_ACL_ATTRIBUTES: ClassVar[Sequence[str]] = ["ds-privilege-name"]
+    OUD_ACL_ATTRIBUTES: ClassVar[list[str]] = ["ds-privilege-name"]
 
     def __init__(
         self,
@@ -47,7 +47,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize OUD ACL quirk."""
-        filtered_kwargs: Mapping[str, str | float | bool] = {
+        filtered_kwargs: dict[str, str | float | bool] = {
             k: v
             for k, v in kwargs.items()
             if k != "_parent_quirk" and isinstance(v, (str, float, bool))
@@ -145,14 +145,14 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         )
 
     @override
-    def get_acl_attributes(self) -> Sequence[str]:
+    def get_acl_attributes(self) -> list[str]:
         """Get RFC + OUD extensions."""
         return self.RFC_ACL_ATTRIBUTES + self.OUD_ACL_ATTRIBUTES
 
     def _build_aci_permissions(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
         """Build ACI permissions clause from ACL model."""
         perms = acl_data.permissions
-        target_perms_dict: Mapping[str, t.NormalizedValue] | None = None
+        target_perms_dict: dict[str, t.NormalizedValue] | None = None
         if not perms and acl_data.metadata:
             extensions = acl_data.metadata.extensions
             target_perms_dict_raw = (
@@ -165,7 +165,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             if isinstance(target_perms_dict_raw, Mapping):
                 target_perms_dict = target_perms_dict_raw
         if target_perms_dict:
-            perms_data: Mapping[str, t.NormalizedValue] = {}
+            perms_data: dict[str, t.NormalizedValue] = {}
             for key, val in target_perms_dict.items():
                 k = str(key)
                 if isinstance(val, Mapping):
@@ -192,7 +192,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 perms = None
         if not perms:
             return r[str].fail("ACL model has no permissions t.NormalizedValue")
-        ops: Sequence[str] = [
+        ops: list[str] = [
             field_name
             for field_name in (
                 "read",
@@ -263,7 +263,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if not target and acl_data.metadata:
             extensions = acl_data.metadata.extensions
             target_dict = extensions.get("acl_target_target") if extensions else None
-            target_data: Mapping[str, t.NormalizedValue] = {}
+            target_data: dict[str, t.NormalizedValue] = {}
             if isinstance(target_dict, Mapping):
                 for raw_key, raw_value in target_dict.items():
                     if isinstance(raw_value, Mapping):
@@ -273,7 +273,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             if target_data:
                 attrs_raw = target_data.get("attributes")
                 dn_raw = target_data.get("target_dn")
-                attrs: Sequence[str] = (
+                attrs: list[str] = (
                     [item for item in attrs_raw if isinstance(item, str)]
                     if isinstance(attrs_raw, list)
                     else []
@@ -335,7 +335,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         return (base_dn, subject_type, subject_value)
 
     def _finalize_aci(
-        self, current_aci: Sequence[str], acls: Sequence[m.Ldif.Acl]
+        self, current_aci: list[str], acls: list[m.Ldif.Acl]
     ) -> None:
         """Parse and add accumulated ACI to ACL list."""
         if current_aci:
@@ -371,7 +371,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             server_type_value,
             extensions=extensions,
         )
-        update_dict: Mapping[str, m.Ldif.QuirkMetadata] = {"metadata": new_metadata}
+        update_dict: dict[str, m.Ldif.QuirkMetadata] = {"metadata": new_metadata}
         acl_updated = acl.model_copy(update=update_dict)
         acl_result: m.Ldif.Acl = acl_updated
         return r[m.Ldif.Acl].ok(acl_result)
@@ -433,7 +433,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Write RFC-compliant ACL model to OUD ACI string format (protected internal method)."""
         try:
             sc = FlextLdifServersOudConstants
-            extensions: Mapping[str, t.NormalizedValue] | None = (
+            extensions: dict[str, t.NormalizedValue] | None = (
                 dict(acl_data.metadata.extensions.to_dict())
                 if acl_data.metadata and acl_data.metadata.extensions
                 else None

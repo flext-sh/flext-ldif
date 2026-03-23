@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import override
 
 from flext_core import FlextLogger, r
@@ -24,7 +24,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
 
     @override
     def can_handle(
-        self, entry_dn: str, attributes: Mapping[str, Sequence[str]]
+        self, entry_dn: str, attributes: dict[str, list[str]]
     ) -> bool:
         """Check if this RFC quirk can handle the entry."""
         if not entry_dn or not entry_dn.strip():
@@ -47,14 +47,14 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
     def _create_entry(
         self,
         dn: str,
-        attributes: Mapping[str, Sequence[str]],
+        attributes: dict[str, list[str]],
     ) -> r[m.Ldif.Entry]:
         """Create Entry from DN and attributes."""
         if not dn or not u.is_type(dn, str):
             return r[m.Ldif.Entry].fail(f"Invalid DN: {dn}")
         if not isinstance(attributes, dict):
             return r[m.Ldif.Entry].fail(f"Invalid attributes: {attributes}")
-        attributes_dict: Mapping[str, Sequence[str]] = attributes
+        attributes_dict: dict[str, list[str]] = attributes
         try:
             entry = m.Ldif.Entry(
                 dn=m.Ldif.DN(value=dn.strip()),
@@ -71,12 +71,12 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             return r[m.Ldif.Entry].fail(f"Failed to create entry {dn}: {e}")
 
     @override
-    def _parse_content(self, ldif_content: str) -> r[Sequence[m.Ldif.Entry]]:
+    def _parse_content(self, ldif_content: str) -> r[list[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal)."""
         if not ldif_content or not ldif_content.strip():
-            return r[Sequence[m.Ldif.Entry]].ok([])
+            return r[list[m.Ldif.Entry]].ok([])
         try:
-            entries: Sequence[m.Ldif.Entry] = []
+            entries: list[m.Ldif.Entry] = []
             raw_entries = ldif_content.strip().split("\n\n")
             for raw_entry in raw_entries:
                 if not raw_entry.strip():
@@ -94,7 +94,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
                         "Skipping invalid entry block",
                         error=str(result.error) if result.error else "",
                     )
-            return r[Sequence[m.Ldif.Entry]].ok(entries)
+            return r[list[m.Ldif.Entry]].ok(entries)
         except (
             ValueError,
             KeyError,
@@ -103,13 +103,13 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             struct.error,
         ) as e:
             logger.exception("Failed to parse LDIF content")
-            return r[Sequence[m.Ldif.Entry]].fail(f"Processing failed: {e}")
+            return r[list[m.Ldif.Entry]].fail(f"Processing failed: {e}")
 
-    def _parse_entry_from_lines(self, lines: Sequence[str]) -> r[m.Ldif.Entry]:
+    def _parse_entry_from_lines(self, lines: list[str]) -> r[m.Ldif.Entry]:
         """Parse entry from LDIF lines."""
         dn: str = ""
-        attrs: Mapping[str, Sequence[str]] = {}
-        original_content_lines: Sequence[str] = []
+        attrs: dict[str, list[str]] = {}
+        original_content_lines: list[str] = []
         for raw_line in lines:
             line = raw_line.rstrip()
             if not line or line.startswith("#"):

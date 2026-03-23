@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Sequence
 from pathlib import Path
 from typing import Final, override
 
@@ -119,8 +118,8 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         try:
             total_processed = 0
             total_migrated = 0
-            all_entries: Sequence[m.Ldif.Entry] = []
-            output_files: Sequence[str] = []
+            all_entries: list[m.Ldif.Entry] = []
+            output_files: list[str] = []
             for input_file in in_dir.glob("*.ldif"):
                 logger.debug("Processing input file: %s", input_file)
                 result = self.migrate_file(input_file)
@@ -128,7 +127,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                     res = result.value
                     total_processed += res.stats.total_entries
                     total_migrated += res.stats.processed_entries
-                    converted_res_entries: Sequence[m.Ldif.Entry] = list(res.entries)
+                    converted_res_entries: list[m.Ldif.Entry] = list(res.entries)
                     all_entries.extend(converted_res_entries)
                     output_files.extend(res.output_files)
                 else:
@@ -137,7 +136,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                         file=str(input_file),
                         error=str(result.error),
                     )
-            converted_all_entries: Sequence[m.Ldif.Entry] = list(all_entries)
+            converted_all_entries: list[m.Ldif.Entry] = list(all_entries)
             pipeline_result = m.Ldif.MigrationPipelineResult(
                 migrated_schema=m.Ldif.SchemaContent.model_validate({}),
                 entries=converted_all_entries,
@@ -179,8 +178,8 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             )
 
     def migrate_entries(
-        self, entries: Sequence[m.Ldif.Entry]
-    ) -> r[Sequence[m.Ldif.Entry]]:
+        self, entries: list[m.Ldif.Entry]
+    ) -> r[list[m.Ldif.Entry]]:
         """Migrate entries from source to target server format."""
         try:
             pipeline = self._get_processing_pipeline()
@@ -197,7 +196,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                 source=self.source_server_type,
                 target=self.target_server_type,
             )
-            return r[Sequence[m.Ldif.Entry]].fail(f"Migration failed: {e}")
+            return r[list[m.Ldif.Entry]].fail(f"Migration failed: {e}")
 
     def migrate_file(
         self,
@@ -221,7 +220,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                     f"Parse failed: {parse_result.error}",
                 )
             response = parse_result.value
-            entries_list: Sequence[m.Ldif.Entry] = list(response.entries)
+            entries_list: list[m.Ldif.Entry] = list(response.entries)
             migrate_result = self.migrate_entries(entries_list)
             if migrate_result.is_failure:
                 return r[m.Ldif.MigrationPipelineResult].fail(
@@ -248,7 +247,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             output_file.parent.mkdir(parents=True, exist_ok=True)
             output_file.write_text(write_result.value, encoding="utf-8")
             logger.debug("Wrote migrated file to: %s", output_file)
-            converted_entries: Sequence[m.Ldif.Entry] = list(migrated)
+            converted_entries: list[m.Ldif.Entry] = list(migrated)
             result = m.Ldif.MigrationPipelineResult(
                 migrated_schema=m.Ldif.SchemaContent.model_validate({}),
                 entries=converted_entries,

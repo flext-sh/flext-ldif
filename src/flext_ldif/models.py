@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar
 
 from flext_core import FlextModels
@@ -56,7 +55,7 @@ class FlextLdifModels(FlextModels):
             def get_entries(
                 self,
                 category: str,
-            ) -> Sequence[FlextLdifModelsDomains.Entry]:
+            ) -> list[FlextLdifModelsDomains.Entry]:
                 """Backward-compatible accessor for category entries."""
                 return [
                     FlextLdifModelsDomains.Entry.model_validate(value)
@@ -66,7 +65,7 @@ class FlextLdifModels(FlextModels):
             def set_entries(
                 self,
                 category: str,
-                entries: Sequence[FlextLdifModelsDomains.Entry],
+                entries: list[FlextLdifModelsDomains.Entry],
             ) -> None:
                 """Backward-compatible setter for full category replacement."""
                 self.categories[category] = list(entries)
@@ -90,9 +89,9 @@ class FlextLdifModels(FlextModels):
             oid_subject_type: Annotated[str, Field(default="")]
             rfc_subject_type: Annotated[str, Field(default="")]
             oid_subject_value: Annotated[str, Field(default="")]
-            perms_dict: Annotated[Mapping[str, bool], Field(default_factory=dict)]
+            perms_dict: Annotated[dict[str, bool], Field(default_factory=dict)]
             target_dn: Annotated[str, Field(default="entry")]
-            target_attrs: Annotated[Sequence[str], Field(default_factory=list)]
+            target_attrs: Annotated[list[str], Field(default_factory=list)]
             acl_filter: Annotated[str, Field(default="")]
             acl_constraint: Annotated[str, Field(default="")]
             bindmode: Annotated[str, Field(default="")]
@@ -134,10 +133,10 @@ class FlextLdifModels(FlextModels):
 
             total_servers: Annotated[int, Field(default=0)]
             quirks_by_server: Annotated[
-                Mapping[str, FlextLdifModels.Ldif.QuirksByServerDict],
+                dict[str, FlextLdifModels.Ldif.QuirksByServerDict],
                 Field(default_factory=dict),
             ]
-            server_priorities: Annotated[Mapping[str, int], Field(default_factory=dict)]
+            server_priorities: Annotated[dict[str, int], Field(default_factory=dict)]
 
 
 __all__ = ["FlextLdifModels", "m"]

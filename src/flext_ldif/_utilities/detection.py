@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping, Sequence
 from typing import TypeIs
 
 from flext_core import u
@@ -170,7 +169,7 @@ class FlextLdifUtilitiesDetection:
         def can_handle(
             self,
             _entry_dn: str,
-            attributes: Mapping[str, Sequence[str] | str] | m.Ldif.Entry,
+            attributes: dict[str, list[str] | str] | m.Ldif.Entry,
         ) -> bool:
             """Check if entry objectClasses match detection list."""
             if not attributes:
@@ -181,7 +180,7 @@ class FlextLdifUtilitiesDetection:
             detection_classes = getattr(constants, "DETECTION_OBJECTCLASS_NAMES", None)
             if not detection_classes:
                 return True
-            objectclasses: Sequence[str] | str | None = None
+            objectclasses: list[str] | str | None = None
             if isinstance(attributes, m.Ldif.Entry):
                 objectclasses = list(attributes.get_objectclass_names())
             else:
@@ -206,7 +205,7 @@ class FlextLdifUtilitiesDetection:
         def can_handle(
             self,
             entry_dn: str,
-            _attributes: Mapping[str, Sequence[str] | str] | m.Ldif.Entry | None,
+            _attributes: dict[str, list[str] | str] | m.Ldif.Entry | None,
         ) -> bool:
             """Check if entry DN matches detection markers."""
             constants = self._get_constants()

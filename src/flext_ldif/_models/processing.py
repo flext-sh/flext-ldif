@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar
 
 from pydantic import ConfigDict, Field
@@ -24,6 +23,6 @@ class FlextLdifModelsProcessing:
             Field(..., description="Distinguished name of the processed entry"),
         ]
         attributes: Annotated[
-            Mapping[str, Sequence[str]],
+            dict[str, list[str]],
             Field(..., description="LDAP attributes as name -> list of values"),
         ]

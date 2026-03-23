@@ -5,7 +5,6 @@ from __future__ import annotations
 import base64
 import binascii
 import re
-from collections.abc import Mapping, Sequence
 from typing import ClassVar, override
 
 from flext_ldif import (
@@ -340,7 +339,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: Mapping[str, Sequence[str]],
+            attributes: dict[str, list[str]],
         ) -> bool:
             """Detect Active Directory entries based on DN, attributes, or classes."""
             if not entry_dn:
@@ -366,7 +365,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 return True
             raw_object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
             object_classes = list(raw_object_classes)
-            normalized_object_classes: Sequence[str] = []
+            normalized_object_classes: list[str] = []
             for oc in object_classes:
                 if isinstance(oc, list):
                     normalized_object_classes.extend(str(item) for item in oc)

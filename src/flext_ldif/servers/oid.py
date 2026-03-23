@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-
 from flext_core import FlextLogger
 
 from flext_ldif import (
@@ -36,19 +34,19 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         self,
         ldif_content: str,
     ) -> r[
-        Mapping[
+        dict[
             str,
-            Sequence[m.Ldif.SchemaAttribute] | Sequence[m.Ldif.SchemaObjectClass] | int,
+            list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass] | int,
         ]
     ]:
         """Extract and parse all schema definitions from LDIF content."""
         schema_class = getattr(type(self), "Schema", None)
         if not schema_class:
             return r[
-                Mapping[
+                dict[
                     str,
-                    Sequence[m.Ldif.SchemaAttribute]
-                    | Sequence[m.Ldif.SchemaObjectClass]
+                    list[m.Ldif.SchemaAttribute]
+                    | list[m.Ldif.SchemaObjectClass]
                     | int,
                 ]
             ].fail("Schema nested class not available")
@@ -56,10 +54,10 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         result = schema_quirk.extract_schemas_from_ldif(ldif_content)
         if result.is_success:
             data = result.value
-            converted_data: Mapping[
+            converted_data: dict[
                 str,
-                Sequence[m.Ldif.SchemaAttribute]
-                | Sequence[m.Ldif.SchemaObjectClass]
+                list[m.Ldif.SchemaAttribute]
+                | list[m.Ldif.SchemaObjectClass]
                 | int,
             ] = {
                 "attributes": data.get("attributes", []),
@@ -68,18 +66,18 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 "total_objectclasses": len(data.get("objectclasses", [])),
             }
             return r[
-                Mapping[
+                dict[
                     str,
-                    Sequence[m.Ldif.SchemaAttribute]
-                    | Sequence[m.Ldif.SchemaObjectClass]
+                    list[m.Ldif.SchemaAttribute]
+                    | list[m.Ldif.SchemaObjectClass]
                     | int,
                 ]
             ].ok(converted_data)
         return r[
-            Mapping[
+            dict[
                 str,
-                Sequence[m.Ldif.SchemaAttribute]
-                | Sequence[m.Ldif.SchemaObjectClass]
+                list[m.Ldif.SchemaAttribute]
+                | list[m.Ldif.SchemaObjectClass]
                 | int,
             ]
         ].fail(result.error or "Failed to extract schemas")

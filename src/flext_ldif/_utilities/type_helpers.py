@@ -19,7 +19,7 @@ class FlextLdifUtilitiesTypeHelpers:
     @staticmethod
     def is_entry_sequence(
         obj: t.NormalizedValue,
-    ) -> TypeIs[Sequence[m.Ldif.Entry]]:
+    ) -> TypeIs[list[m.Ldif.Entry]]:
         """Check if t.NormalizedValue is a Sequence but not a string, bytes, or dict (for Entry sequences)."""
         return isinstance(obj, Sequence) and (
             not isinstance(obj, str | bytes) and not u.is_dict_like(obj)
@@ -28,7 +28,7 @@ class FlextLdifUtilitiesTypeHelpers:
     @staticmethod
     def is_mapping_of_scalars(
         obj: t.NormalizedValue,
-    ) -> TypeIs[Mapping[str, t.Scalar | None]]:
+    ) -> TypeIs[dict[str, t.Scalar | None]]:
         """Check if t.NormalizedValue is a Mapping of scalar values (for simple dicts)."""
         if not isinstance(obj, Mapping):
             return False
@@ -37,14 +37,14 @@ class FlextLdifUtilitiesTypeHelpers:
     @staticmethod
     def is_mapping_type(
         obj: t.NormalizedValue,
-    ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
+    ) -> TypeIs[dict[str, t.NormalizedValue]]:
         """Check if t.NormalizedValue is a Mapping but not a string (for dict-like objects)."""
         return isinstance(obj, Mapping) and (not isinstance(obj, str | bytes))
 
     @staticmethod
     def is_sequence_of_scalars(
         obj: t.NormalizedValue,
-    ) -> TypeIs[Sequence[t.Scalar | None]]:
+    ) -> TypeIs[list[t.Scalar | None]]:
         """Check if t.NormalizedValue is a Sequence of scalar values (for simple sequences)."""
         if (
             not isinstance(obj, Sequence)

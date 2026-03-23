@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from flext_ldif._models.results import FlextLdifModelsResults
     from flext_ldif._models.settings import FlextLdifModelsSettings
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
+_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifModelsBases": ("flext_ldif._models.base", "FlextLdifModelsBases"),
     "FlextLdifModelsCollections": (
         "flext_ldif._models.collections",
@@ -75,7 +75,7 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: MutableMapping[str, FlextTypes.ModuleExport] = {}
+_LAZY_CACHE: dict[str, FlextTypes.ModuleExport] = {}
 
 
 def __getattr__(name: str) -> FlextTypes.ModuleExport:
@@ -102,7 +102,7 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
     return value
 
 
-def __dir__() -> Sequence[str]:
+def __dir__() -> list[str]:
     """Return list of available attributes for dir() and autocomplete.
 
     Returns:

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from pathlib import Path
 from typing import Annotated, ClassVar, Self
 
@@ -16,7 +15,7 @@ class FlextLdifModelsEvents:
     """LDIF event and configuration models container class."""
 
     @staticmethod
-    def _filter_criteria_factory() -> Sequence[FlextLdifModelsSettings.FilterCriteria]:
+    def _filter_criteria_factory() -> list[FlextLdifModelsSettings.FilterCriteria]:
         return []
 
     class DnEventConfig(FlextLdifModelsBases.Base):
@@ -25,7 +24,7 @@ class FlextLdifModelsEvents:
         output_dn: str | None = None
         operation_duration_ms: float = 0.0
         validation_result: bool | None = None
-        parse_components: Sequence[tuple[str, str]] | None = None
+        parse_components: list[tuple[str, str]] | None = None
 
     class MigrationEventConfig(FlextLdifModelsBases.Base):
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -38,7 +37,7 @@ class FlextLdifModelsEvents:
         entries_migrated: int = 0
         entries_failed: int = 0
         migration_duration_ms: float = 0.0
-        error_details: Sequence[str] | None = None
+        error_details: list[str] | None = None
 
     class ConversionEventConfig(FlextLdifModelsBases.Base):
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -51,7 +50,7 @@ class FlextLdifModelsEvents:
         items_converted: int = 0
         items_failed: int = 0
         conversion_duration_ms: float = 0.0
-        error_details: Sequence[str] | None = None
+        error_details: list[str] | None = None
 
     class FilterEvent(m.DomainEvent):
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -61,7 +60,7 @@ class FlextLdifModelsEvents:
         entries_before: int
         entries_after: int
         filter_criteria: Annotated[
-            Sequence[FlextLdifModelsSettings.FilterCriteria],
+            list[FlextLdifModelsSettings.FilterCriteria],
             Field(default_factory=FlextLdifModelsEvents._filter_criteria_factory),
         ]
         filter_duration_ms: float = 0.0
@@ -75,7 +74,7 @@ class FlextLdifModelsEvents:
         entries_parsed: int = 0
         entries_failed: int = 0
         parse_duration_ms: float = 0.0
-        error_details: Sequence[str] | None = None
+        error_details: list[str] | None = None
 
         @classmethod
         def for_file(
@@ -84,7 +83,7 @@ class FlextLdifModelsEvents:
             entries_parsed: int = 0,
             entries_failed: int = 0,
             parse_duration_ms: float = 0.0,
-            error_details: Sequence[str] | None = None,
+            error_details: list[str] | None = None,
         ) -> Self:
             return cls(
                 event_type="ldif.parse",
@@ -104,7 +103,7 @@ class FlextLdifModelsEvents:
             entries_parsed: int = 0,
             entries_failed: int = 0,
             parse_duration_ms: float = 0.0,
-            error_details: Sequence[str] | None = None,
+            error_details: list[str] | None = None,
         ) -> Self:
             return cls(
                 event_type="ldif.parse",
@@ -124,7 +123,7 @@ class FlextLdifModelsEvents:
             entries_parsed: int = 0,
             entries_failed: int = 0,
             parse_duration_ms: float = 0.0,
-            error_details: Sequence[str] | None = None,
+            error_details: list[str] | None = None,
         ) -> Self:
             return cls(
                 event_type="ldif.parse",
@@ -146,7 +145,7 @@ class FlextLdifModelsEvents:
         entries_written: int = 0
         entries_failed: int = 0
         write_duration_ms: float = 0.0
-        error_details: Sequence[str] | None = None
+        error_details: list[str] | None = None
 
     class CategoryEvent(m.DomainEvent):
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -154,7 +153,7 @@ class FlextLdifModelsEvents:
         )
         category_operation: str
         entries_categorized: int = 0
-        categories_created: Annotated[Sequence[str], Field(default_factory=list)]
+        categories_created: Annotated[list[str], Field(default_factory=list)]
         categorization_duration_ms: float = 0.0
 
     class AclEvent(m.DomainEvent):
@@ -166,7 +165,7 @@ class FlextLdifModelsEvents:
         acls_succeeded: int = 0
         acls_failed: int = 0
         acl_duration_ms: float = 0.0
-        error_details: Sequence[str] | None = None
+        error_details: list[str] | None = None
 
     class DnEvent(m.DomainEvent):
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -190,7 +189,7 @@ class FlextLdifModelsEvents:
         entries_migrated: int = 0
         entries_failed: int = 0
         migration_duration_ms: float = 0.0
-        error_details: Sequence[str] | None = None
+        error_details: list[str] | None = None
         migration_success_rate: float = 0.0
         throughput_entries_per_sec: float = 0.0
 
@@ -204,7 +203,7 @@ class FlextLdifModelsEvents:
         items_converted: int = 0
         items_failed: int = 0
         conversion_duration_ms: float = 0.0
-        error_details: Sequence[str] | None = None
+        error_details: list[str] | None = None
         conversion_success_rate: float = 0.0
         throughput_items_per_sec: float = 0.0
 
@@ -217,7 +216,7 @@ class FlextLdifModelsEvents:
         items_succeeded: int = 0
         items_failed: int = 0
         schema_duration_ms: float = 0.0
-        error_details: Sequence[str] | None = None
+        error_details: list[str] | None = None
         schema_success_rate: float = 0.0
         throughput_items_per_sec: float = 0.0
 

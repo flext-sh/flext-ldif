@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable
 from typing import Final
 
 from flext_core import r
@@ -25,9 +25,9 @@ class FlextLdifUtilitiesAttribute:
     def validate_attribute_description(
         cls,
         attribute_description: str,
-    ) -> tuple[bool, Sequence[str]]:
+    ) -> tuple[bool, list[str]]:
         """Validate complete attribute description (base + options)."""
-        violations: Sequence[str] = []
+        violations: list[str] = []
         base_attr, options = cls.split_attribute_description(attribute_description)
         if not cls.validate_attribute_name(base_attr):
             violations.append(
@@ -63,9 +63,9 @@ class FlextLdifUtilitiesAttribute:
         definition: str,
         *,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], r[Mapping[str, t.NormalizedValue]]]
+        parse_parts_hook: Callable[[str], r[dict[str, t.NormalizedValue]]]
         | None = None,
-    ) -> r[Mapping[str, t.NormalizedValue]]:
+    ) -> r[dict[str, t.NormalizedValue]]:
         """Parse RFC 4512 attribute definition into structured data."""
         _ = server_type
         if parse_parts_hook:
@@ -75,7 +75,7 @@ class FlextLdifUtilitiesAttribute:
     @staticmethod
     def split_attribute_description(
         attribute_description: str,
-    ) -> tuple[str, Sequence[str]]:
+    ) -> tuple[str, list[str]]:
         """Split attribute description into base name and options."""
         if not attribute_description:
             msg = "attribute_description cannot be empty or None"

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import Mapping, Sequence
 from typing import ClassVar, override
 
 from flext_ldif import FlextLdifModelsDomains, FlextLdifServersRfc, c, m, r
@@ -196,9 +195,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 sup = oc_data.sup
                 kind: str
                 kind = oc_data.kind or "STRUCTURAL"
-                must: Sequence[str]
+                must: list[str]
                 must = oc_data.must if oc_data.must is not None else []
-                may: Sequence[str]
+                may: list[str]
                 may = oc_data.may if oc_data.may is not None else []
                 oc_str = f"objectclass ( {oid}"
                 if name:
@@ -209,11 +208,11 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     oc_str += f" SUP {sup}"
                 oc_str += f" {kind}"
                 if must:
-                    must_list_str: Sequence[str] = [str(item) for item in must]
+                    must_list_str: list[str] = [str(item) for item in must]
                     must_attrs = " $ ".join(must_list_str)
                     oc_str += f" MUST ( {must_attrs} )"
                 if may:
-                    may_list_str: Sequence[str] = [str(item) for item in may]
+                    may_list_str: list[str] = [str(item) for item in may]
                     may_attrs = " $ ".join(may_list_str)
                     oc_str += f" MAY ( {may_attrs} )"
                 oc_str += " )"
@@ -288,7 +287,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 first_who = by_matches[0].group(1) if by_matches else "*"
                 first_access = by_matches[0].group(2).lower() if by_matches else "none"
                 target_dn = ""
-                target_attrs: Sequence[str] = []
+                target_attrs: list[str] = []
                 dn_prefix = FlextLdifServersOpenldap1.Constants.ACL_TARGET_DN_PREFIX
                 attrs_prefix = (
                     FlextLdifServersOpenldap1.Constants.ACL_TARGET_ATTRS_PREFIX
@@ -367,7 +366,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 who = acl_data.subject.subject_value if acl_data.subject else "*"
                 acl_str = f"access to {what} by {who}"
                 if acl_data.permissions:
-                    perms: Sequence[str] = []
+                    perms: list[str] = []
                     if acl_data.permissions.read:
                         perms.append(
                             FlextLdifServersOpenldap1.Constants.PERMISSION_READ,
@@ -395,7 +394,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: Mapping[str, Sequence[str]],
+            attributes: dict[str, list[str]],
         ) -> bool:
             """Check if this quirk should handle the entry."""
             if not entry_dn:

@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
     from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema, logger
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
+_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifServersBaseConstants": (
         "flext_ldif.servers._base.constants",
         "FlextLdifServersBaseConstants",
@@ -58,7 +58,7 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: MutableMapping[str, FlextTypes.ModuleExport] = {}
+_LAZY_CACHE: dict[str, FlextTypes.ModuleExport] = {}
 
 
 def __getattr__(name: str) -> FlextTypes.ModuleExport:
@@ -85,7 +85,7 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
     return value
 
 
-def __dir__() -> Sequence[str]:
+def __dir__() -> list[str]:
     """Return list of available attributes for dir() and autocomplete.
 
     Returns:

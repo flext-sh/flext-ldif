@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from enum import Enum
 from typing import ClassVar, override
 
@@ -77,7 +77,7 @@ class FlextLdifUtilities(FlextUtilities):
             attr_definition: str,
             *,
             validate_syntax: bool = True,
-        ) -> r[Mapping[str, t.Ldif.NormalizedValue]]:
+        ) -> r[dict[str, t.Ldif.NormalizedValue]]:
             """Route to Schema.parse_attribute (resolves Attribute vs Schema)."""
             return FlextLdifUtilitiesSchema.parse_attribute(
                 attr_definition,
@@ -88,13 +88,13 @@ class FlextLdifUtilities(FlextUtilities):
         @override
         def parse_objectclass(
             oc_definition: str,
-        ) -> Mapping[str, t.Ldif.NormalizedValue]:
+        ) -> dict[str, t.Ldif.NormalizedValue]:
             """Route to Schema.parse_objectclass (resolves ObjectClass vs Schema)."""
             return FlextLdifUtilitiesSchema.parse_objectclass(oc_definition)
 
         type VariadicCallable[T] = Callable[..., T]
 
-        CATEGORY_MAP: ClassVar[Mapping[str, type[Enum]]] = {
+        CATEGORY_MAP: ClassVar[dict[str, type[Enum]]] = {
             "server_type": c.Ldif.ServerTypes,
             "encoding": c.Ldif.Encoding,
         }

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from typing import Literal, Self
 
@@ -91,7 +90,7 @@ class ProcessConfigBuilder:
         escapes: c.Ldif.EscapeHandlingOption | None = None,
     ) -> Self:
         """Configure DN normalization."""
-        config_kwargs: Mapping[str, StrEnum] = {}
+        config_kwargs: dict[str, StrEnum] = {}
         if case is not None:
             config_kwargs["case_fold"] = case
         if spaces is not None:
@@ -236,18 +235,18 @@ class WriteConfigBuilder:
         self._format: c.Ldif.OutputFormat = c.Ldif.OutputFormat.LDIF
         self._line_width: int = 76
         self._fold_lines: bool = True
-        self._base64_attrs: Sequence[str] | Literal["auto"] = "auto"
+        self._base64_attrs: list[str] | Literal["auto"] = "auto"
         self._sort_by: c.Ldif.SortOption = c.Ldif.SortOption.ALPHABETICAL
-        self._attr_order: Sequence[str] | None = None
+        self._attr_order: list[str] | None = None
         self._include_metadata: bool = False
         self._server: c.Ldif.ServerTypes | None = None
 
-    def attr_order(self, order: Sequence[str]) -> Self:
+    def attr_order(self, order: list[str]) -> Self:
         """Set preferred attribute order."""
         self._attr_order = order
         return self
 
-    def base64_attrs(self, attrs: Sequence[str] | Literal["auto"]) -> Self:
+    def base64_attrs(self, attrs: list[str] | Literal["auto"]) -> Self:
         """Set attributes to base64 encode."""
         self._base64_attrs = attrs
         return self

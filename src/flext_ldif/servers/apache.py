@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping, Sequence
 from typing import ClassVar, override
 
 from flext_ldif import FlextLdifModelsDomains, FlextLdifServersRfc, c, m, r, u
@@ -213,7 +212,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: Mapping[str, Sequence[str]],
+            attributes: dict[str, list[str]],
         ) -> bool:
             """Check if this quirk can handle the entry."""
             _ = entry_dn
@@ -223,10 +222,10 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def _parse_entry(
             self,
             entry_dn: str,
-            entry_attrs: Mapping[str, Sequence[str | bytes]],
+            entry_attrs: dict[str, list[str | bytes]],
         ) -> r[m.Ldif.Entry]:
             """Parse raw LDIF entry data into Entry model."""
-            str_attrs: Mapping[str, Sequence[str]] = {
+            str_attrs: dict[str, list[str]] = {
                 k: [v.decode() if isinstance(v, bytes) else v for v in vals]
                 for k, vals in entry_attrs.items()
             }

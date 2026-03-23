@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import override
 
 from flext_ldif import FlextLdifServiceBase, m, r, u
 
 
-class FlextLdifProcessing(FlextLdifServiceBase[Sequence[m.Ldif.ProcessingResult]]):
+class FlextLdifProcessing(FlextLdifServiceBase[list[m.Ldif.ProcessingResult]]):
     """Service for batch and parallel entry processing."""
 
     @staticmethod
@@ -49,24 +49,24 @@ class FlextLdifProcessing(FlextLdifServiceBase[Sequence[m.Ldif.ProcessingResult]
 
     @staticmethod
     def _execute_batch_processing(
-        entries: Sequence[m.Ldif.Entry],
+        entries: list[m.Ldif.Entry],
         processor_func: Callable[[m.Ldif.Entry], m.Ldif.ProcessingResult],
         _batch_size: int,
-    ) -> r[Sequence[m.Ldif.ProcessingResult]]:
+    ) -> r[list[m.Ldif.ProcessingResult]]:
         """Execute batch processing sequentially."""
         return u.process(entries, processor_func, on_error="collect").fold(
-            on_failure=lambda e: r[Sequence[m.Ldif.ProcessingResult]].fail(
+            on_failure=lambda e: r[list[m.Ldif.ProcessingResult]].fail(
                 e or "Batch processing failed",
             ),
-            on_success=lambda v: r[Sequence[m.Ldif.ProcessingResult]].ok(v),
+            on_success=lambda v: r[list[m.Ldif.ProcessingResult]].ok(v),
         )
 
     @staticmethod
     def _execute_parallel_processing(
-        entries: Sequence[m.Ldif.Entry],
+        entries: list[m.Ldif.Entry],
         processor_func: Callable[[m.Ldif.Entry], m.Ldif.ProcessingResult],
         max_workers: int,
-    ) -> r[Sequence[m.Ldif.ProcessingResult]]:
+    ) -> r[list[m.Ldif.ProcessingResult]]:
         """Execute parallel processing using ThreadPoolExecutor."""
         max_workers_actual = min(len(entries), max_workers)
         with ThreadPoolExecutor(max_workers=max_workers_actual) as executor:
@@ -74,12 +74,12 @@ class FlextLdifProcessing(FlextLdifServiceBase[Sequence[m.Ldif.ProcessingResult]
                 executor.submit(processor_func, entry): entry for entry in entries
             }
             results = [future.result() for future in as_completed(future_to_entry)]
-        return r[Sequence[m.Ldif.ProcessingResult]].ok(results)
+        return r[list[m.Ldif.ProcessingResult]].ok(results)
 
     @override
-    def execute(self) -> r[Sequence[m.Ldif.ProcessingResult]]:
+    def execute(self) -> r[list[m.Ldif.ProcessingResult]]:
         """Execute method required by FlextService abstract base class."""
-        return r[Sequence[m.Ldif.ProcessingResult]].fail(
+        return r[list[m.Ldif.ProcessingResult]].fail(
             "FlextLdifProcessing does not support generic execute(). Use specific methods instead.",
         )
 
@@ -87,16 +87,16 @@ class FlextLdifProcessing(FlextLdifServiceBase[Sequence[m.Ldif.ProcessingResult]
     def process(
         self,
         processor_name: str,
-        entries: Sequence[m.Ldif.Entry],
+        entries: list[m.Ldif.Entry],
         *,
         parallel: bool = False,
         batch_size: int = 100,
         max_workers: int = 4,
-    ) -> r[Sequence[m.Ldif.ProcessingResult]]:
+    ) -> r[list[m.Ldif.ProcessingResult]]:
         """Unified processing method supporting batch and parallel modes."""
         processor_result = self._get_processor_function(processor_name)
         if processor_result.is_failure:
-            return r[Sequence[m.Ldif.ProcessingResult]].fail(
+            return r[list[m.Ldif.ProcessingResult]].fail(
                 processor_result.error or "Processor function not found",
             )
         processor_func = processor_result.value
@@ -113,7 +113,7 @@ class FlextLdifProcessing(FlextLdifServiceBase[Sequence[m.Ldif.ProcessingResult]
         processor_name: str,
     ) -> r[Callable[[m.Ldif.Entry], m.Ldif.ProcessingResult]]:
         """Get processor function by name."""
-        processor_map: Mapping[
+        processor_map: dict[
             str,
             Callable[[], Callable[[m.Ldif.Entry], m.Ldif.ProcessingResult]],
         ] = {

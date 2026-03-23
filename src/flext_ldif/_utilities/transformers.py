@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable
 from typing import override
 
 from flext_core import r
@@ -19,7 +19,7 @@ class FlextLdifUtilitiesTransformer[T]:
         """Apply the transformation to an item."""
         raise NotImplementedError
 
-    def apply_batch(self, items: Sequence[T]) -> r[Sequence[T]]:
+    def apply_batch(self, items: list[T]) -> r[list[T]]:
         """Apply transformation to a batch of items."""
         return r.traverse(items, self.apply)
 
@@ -46,7 +46,7 @@ class NormalizeDnTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
     def _validate_dn_components(dn_str: str) -> r[bool]:
         """Helper: Validate DN components."""
         components = FlextLdifUtilitiesDN.split(dn_str)
-        all_errors: Sequence[str] = []
+        all_errors: list[str] = []
         for comp in components:
             if "=" not in comp:
                 all_errors.append(f"Invalid RDN (missing '='): {comp}")
@@ -83,7 +83,7 @@ class NormalizeDnTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
             return r[m.Ldif.Entry].fail(norm_result.error)
         normalized_dn = norm_result.value
         normalized_dn = self._normalize_dn_case_and_spaces(normalized_dn)
-        update_dict: Mapping[str, t.NormalizedValue] = {"dn": normalized_dn}
+        update_dict: dict[str, t.NormalizedValue] = {"dn": normalized_dn}
         updated_entry = item.model_copy(update=update_dict)
         return r[m.Ldif.Entry].ok(updated_entry)
 
@@ -124,7 +124,7 @@ class NormalizeAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
         """Apply attribute normalization to an entry."""
         if item.attributes is None:
             return r[m.Ldif.Entry].fail("Entry has no attributes")
-        attrs: Mapping[str, Sequence[str]] = (
+        attrs: dict[str, list[str]] = (
             item.attributes.attributes
             if getattr(item.attributes, "attributes", None) is not None
             else {}
@@ -132,9 +132,9 @@ class NormalizeAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
         if self._case_fold_names:
             attrs = {k.lower(): v for k, v in attrs.items()}
 
-        def process_value_list(values: Sequence[str]) -> Sequence[str]:
+        def process_value_list(values: list[str]) -> list[str]:
             """Process a single attribute's values."""
-            processed: Sequence[str] = []
+            processed: list[str] = []
             for value_item in values:
                 trimmed_value = value_item.strip() if self._trim_values else value_item
                 if self._remove_empty and (not trimmed_value):
@@ -142,7 +142,7 @@ class NormalizeAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
                 processed.append(trimmed_value)
             return processed
 
-        def map_process_value(_key: str, value: Sequence[str]) -> Sequence[str]:
+        def map_process_value(_key: str, value: list[str]) -> list[str]:
             """Process value list for attribute."""
             return process_value_list(value)
 
@@ -154,7 +154,7 @@ class NormalizeAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
             or (new_attrs != attrs)
         )
         if needs_update:
-            update_dict: Mapping[str, t.NormalizedValue] = {
+            update_dict: dict[str, t.NormalizedValue] = {
                 "attributes": m.Ldif.Attributes(attributes=new_attrs),
             }
             item = item.model_copy(update=update_dict)
@@ -224,7 +224,7 @@ class ReplaceBaseDnTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
             self._old_base,
             self._new_base,
         )
-        update_dict: Mapping[str, t.NormalizedValue] = {
+        update_dict: dict[str, t.NormalizedValue] = {
             "dn": m.Ldif.DN(value=new_dn_str)
         }
         updated_entry = item.model_copy(update=update_dict)
@@ -240,7 +240,7 @@ class ConvertBooleansTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
         self,
         boolean_format: str = "TRUE/FALSE",
         *,
-        attributes: Sequence[str] | None = None,
+        attributes: list[str] | None = None,
     ) -> None:
         """Initialize boolean conversion transformer."""
         super().__init__()
@@ -268,7 +268,7 @@ class ConvertBooleansTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
             boolean_attr_names=boolean_attrs,
             target_format=self._format,
         )
-        update_dict: Mapping[str, t.NormalizedValue] = {
+        update_dict: dict[str, t.NormalizedValue] = {
             "attributes": m.Ldif.Attributes(attributes=dict(converted_attrs)),
         }
         updated_entry = item.model_copy(update=update_dict)
@@ -285,8 +285,8 @@ class FilterAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
     def __init__(
         self,
         *,
-        include: Sequence[str] | None = None,
-        exclude: Sequence[str] | None = None,
+        include: list[str] | None = None,
+        exclude: list[str] | None = None,
     ) -> None:
         """Initialize attribute filter transformer."""
         super().__init__()
@@ -298,7 +298,7 @@ class FilterAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
         """Filter attributes in an entry."""
         if item.attributes is None:
             return r[m.Ldif.Entry].fail("Entry has no attributes")
-        attrs: Mapping[str, Sequence[str]] = (
+        attrs: dict[str, list[str]] = (
             item.attributes.attributes
             if getattr(item.attributes, "attributes", None) is not None
             else {}
@@ -319,7 +319,7 @@ class FilterAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
                 return key.lower() not in exclude_lower
 
             attrs = {k: v for k, v in attrs.items() if key_not_in_exclude(k, v)}
-        update_dict: Mapping[str, t.NormalizedValue] = {
+        update_dict: dict[str, t.NormalizedValue] = {
             "attributes": m.Ldif.Attributes(attributes=dict(attrs)),
         }
         updated_entry = item.model_copy(update=update_dict)
@@ -377,7 +377,7 @@ class Transform:
     def convert_booleans(
         boolean_format: str = "TRUE/FALSE",
         *,
-        attributes: Sequence[str] | None = None,
+        attributes: list[str] | None = None,
     ) -> ConvertBooleansTransformer:
         """Create a boolean conversion transformer."""
         return ConvertBooleansTransformer(boolean_format, attributes=attributes)
@@ -392,8 +392,8 @@ class Transform:
     @staticmethod
     def filter_attrs(
         *,
-        include: Sequence[str] | None = None,
-        exclude: Sequence[str] | None = None,
+        include: list[str] | None = None,
+        exclude: list[str] | None = None,
     ) -> FilterAttrsTransformer:
         """Create an attribute filter transformer."""
         return FilterAttrsTransformer(include=include, exclude=exclude)
