@@ -80,7 +80,7 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
         categorized_counts_model = m.Ldif.DynamicCounts.model_validate(
             categorized_counts_dict,
         )
-        rejected_entries: list[m.Ldif.Entry] = [
+        rejected_entries: Sequence[m.Ldif.Entry] = [
             m.Ldif.Entry.model_validate(entry)
             for entry in categorized.get("rejected", [])
         ]
@@ -115,8 +115,8 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
 
     def _extract_rejection_reasons(
         self,
-        rejected_entries: list[m.Ldif.Entry],
-    ) -> list[str]:
+        rejected_entries: Sequence[m.Ldif.Entry],
+    ) -> Sequence[str]:
         """Extract unique rejection reasons from rejected entries."""
         reasons: set[str] = set()
         for entry in rejected_entries:

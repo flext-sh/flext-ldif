@@ -111,7 +111,7 @@ ______________________________________________________________________
 ### Service Design
 
 ```python
-class FlextLdifParser(Flext[dict[str, t.NormalizedValue]]):
+class FlextLdifParser(Flext[Mapping[str, t.NormalizedValue]]):
     """LDIF parsing service following FLEXT patterns."""
 
     _logger: FlextLogger  # Structured logging
@@ -142,7 +142,7 @@ ______________________________________________________________________
 Replace existing parse methods in `FlextLdif` class:
 
 ```python
-class FlextLdif(Flext[dict[str, t.NormalizedValue]]):
+class FlextLdif(Flext[Mapping[str, t.NormalizedValue]]):
     _parser: FlextLdifParser  # Add new service
 
     def __init__(self, config: FlextLdifSettings | None = None) -> None:
@@ -225,7 +225,9 @@ ______________________________________________________________________
 ### Type Safety
 
 - ✅ All methods have complete type annotations
-- ✅ Uses Python 3.13+ syntax (`from __future__ import annotations`)
+- ✅ Uses Python 3.13+ syntax (`from **future** import annotations
+
+from collections.abc import Mapping, Sequence`)
 - ✅ Complex union types properly handled with `cast()`
 - ✅ r[T] return types for all operations
 
@@ -246,7 +248,7 @@ ______________________________________________________________________
 
 ### FLEXT Compliance
 
-- ✅ Inherits from FlextService\[dict[str, t.NormalizedValue]\]
+- ✅ Inherits from FlextService\[Mapping[str, t.NormalizedValue]\]
 - ✅ Implements execute() method for health checks
 - ✅ Uses r for all operations
 - ✅ Uses FlextLogger for structured logging

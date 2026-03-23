@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence, Sized
+from collections.abc import Callable, Mapping, Sequence, Sized
 from pathlib import Path
 from typing import Final, cast
 
@@ -187,7 +187,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
         SAMPLE_USER_DN: Final[str] = "cn=testuser,dc=test,dc=local"
         SAMPLE_GROUP_DN: Final[str] = "cn=testgroup,dc=test,dc=local"
         SAMPLE_OU_DN: Final[str] = "ou=testou,dc=test,dc=local"
-        SAMPLE_ATTRIBUTES: Final[dict[str, list[str]]] = {
+        SAMPLE_ATTRIBUTES: Final[Mapping[str, Sequence[str]]] = {
             "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
             "cn": ["Test User"],
             "sn": ["User"],
@@ -560,7 +560,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             content: str,
             expected_count: int,
             server_type: str = "rfc",
-        ) -> list[m.Ldif.Entry]:
+        ) -> Sequence[m.Ldif.Entry]:
             """Parse LDIF content and return entries.
 
             Args:
@@ -589,7 +589,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
         @staticmethod
         def test_entry_create_and_unwrap(
-            dn: str, attributes: dict[str, str | list[str]]
+            dn: str, attributes: Mapping[str, str | Sequence[str]]
         ) -> m.Ldif.Entry:
             """Create an entry and unwrap the result.
 
@@ -622,8 +622,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
             expected_length: int | None = None,
             expected_kind: str | None = None,
             expected_sup: str | None = None,
-            expected_must: list[str] | None = None,
-            expected_may: list[str] | None = None,
+            expected_must: Sequence[str] | None = None,
+            expected_may: Sequence[str] | None = None,
         ) -> p.Ldif.SchemaAttribute | None:
             """Parse schema definition and assert properties.
 
@@ -774,7 +774,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
         @staticmethod
         def test_create_entry_and_unwrap(
-            dn: str, attributes: dict[str, str | list[str]] | None = None
+            dn: str, attributes: Mapping[str, str | Sequence[str]] | None = None
         ) -> m.Ldif.Entry:
             """Create an entry and unwrap the result.
 
@@ -834,8 +834,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
             desc: str | None = None,
             kind: str = "STRUCTURAL",
             sup: str | None = None,
-            must: list[str] | None = None,
-            may: list[str] | None = None,
+            must: Sequence[str] | None = None,
+            may: Sequence[str] | None = None,
         ) -> m.Ldif.SchemaObjectClass:
             """Create a schema objectClass and unwrap the result.
 
@@ -914,8 +914,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
             expected_desc: str | None = None,
             expected_sup: str | None = None,
             expected_kind: str | None = None,
-            expected_must: list[str] | None = None,
-            expected_may: list[str] | None = None,
+            expected_must: Sequence[str] | None = None,
+            expected_may: Sequence[str] | None = None,
             expected_syntax: str | None = None,
             expected_equality: str | None = None,
             expected_single_value: bool | None = None,
@@ -1016,7 +1016,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
         @staticmethod
         def test_create_schema_attribute_from_dict(
-            data: dict[str, t.NormalizedValue],
+            data: Mapping[str, t.NormalizedValue],
         ) -> m.Ldif.SchemaAttribute:
             """Create a schema attribute from dictionary.
 
@@ -1039,7 +1039,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
         @staticmethod
         def test_create_schema_objectclass_from_dict(
-            data: dict[str, t.NormalizedValue],
+            data: Mapping[str, t.NormalizedValue],
         ) -> m.Ldif.SchemaObjectClass:
             """Create a schema objectClass from dictionary.
 
@@ -1168,7 +1168,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             attr_def: str,
             expected_oid: str,
             expected_name: str,
-            must_contain: list[str] | None = None,
+            must_contain: Sequence[str] | None = None,
         ) -> tuple[t.NormalizedValue, str]:
             """Parse attribute definition, write it back, and validate output.
 
@@ -1210,9 +1210,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
             parser_service: FlextLdifParser,
             content: str,
             expected_dn: str,
-            expected_attributes: list[str],
+            expected_attributes: Sequence[str],
             expected_count: int = 1,
-        ) -> list[m.Ldif.Entry]:
+        ) -> Sequence[m.Ldif.Entry]:
             """Parse LDIF content and assert entry structure.
 
             Args:
@@ -1261,9 +1261,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
         def test_parse_and_assert_multiple_entries(
             parser_service: FlextLdifParser,
             content: str,
-            expected_dns: list[str],
+            expected_dns: Sequence[str],
             expected_count: int,
-        ) -> list[m.Ldif.Entry]:
+        ) -> Sequence[m.Ldif.Entry]:
             """Parse LDIF content with multiple entries and assert structure.
 
             Args:
@@ -1302,7 +1302,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
         @staticmethod
         def test_create_entry(
-            dn: str, attributes: dict[str, str | list[str]]
+            dn: str, attributes: Mapping[str, str | Sequence[str]]
         ) -> m.Ldif.Entry:
             """Create an entry for testing.
 
@@ -1325,8 +1325,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
         @staticmethod
         def test_write_entries_to_string(
             writer_service: FlextLdifWriter,
-            entries: list[m.Ldif.Entry],
-            expected_content: list[str] | None = None,
+            entries: Sequence[m.Ldif.Entry],
+            expected_content: Sequence[str] | None = None,
         ) -> str:
             """Write entries to LDIF string.
 
@@ -1359,9 +1359,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
         @staticmethod
         def test_write_entries_to_file(
             writer_service: FlextLdifWriter,
-            entries: list[m.Ldif.Entry],
+            entries: Sequence[m.Ldif.Entry],
             file_path: str | Path,
-            expected_content: list[str] | None = None,
+            expected_content: Sequence[str] | None = None,
         ) -> None:
             """Write entries to LDIF file.
 
@@ -1395,7 +1395,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             parser_service: FlextLdifParser,
             content: str,
             should_succeed: bool | None = None,
-        ) -> list[m.Ldif.Entry] | None:
+        ) -> Sequence[m.Ldif.Entry] | None:
             """Parse edge case LDIF content.
 
             Args:
@@ -1425,7 +1425,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
         @staticmethod
         def test_write_entry_variations(
             writer_service: FlextLdifWriter,
-            entry_data: dict[str, dict[str, str | dict[str, list[str]]]],
+            entry_data: Mapping[str, Mapping[str, str | Mapping[str, Sequence[str]]]],
         ) -> None:
             """Test writing entries with various data types.
 
@@ -1443,7 +1443,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 dn = str(data.get("dn", ""))
                 raw_attributes = data.get("attributes", {})
                 if not isinstance(raw_attributes, dict):
-                    attributes: dict[str, list[str]] = {}
+                    attributes: Mapping[str, Sequence[str]] = {}
                 else:
                     attributes = {
                         str(k): [str(i) for i in v] if isinstance(v, list) else [str(v)]
@@ -1617,10 +1617,10 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
         @staticmethod
         def create_entries_batch(
-            entries_data: list[dict[str, t.NormalizedValue]],
+            entries_data: Sequence[Mapping[str, t.NormalizedValue]],
             *,
             validate_all: bool = True,
-        ) -> list[m.Ldif.Entry]:
+        ) -> Sequence[m.Ldif.Entry]:
             """Create multiple entries from data dictionaries.
 
             Args:
@@ -1632,7 +1632,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
             """
             service = FlextLdifEntries()
-            entries: list[m.Ldif.Entry] = []
+            entries: Sequence[m.Ldif.Entry] = []
             for entry_data in entries_data:
                 dn_raw = entry_data.get("dn")
                 attrs_raw = entry_data.get("attributes")
@@ -1642,7 +1642,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 if not isinstance(attrs_raw, dict):
                     msg = "Entry data must include dict 'attributes'"
                     raise AssertionError(msg)
-                normalized_attrs: dict[str, str | list[str]] = {}
+                normalized_attrs: Mapping[str, str | Sequence[str]] = {}
                 for attr_name_raw, attr_value_raw in attrs_raw.items():
                     if not isinstance(attr_name_raw, str):
                         continue
@@ -1663,10 +1663,10 @@ class FlextLdifTestConstants(FlextTestsConstants):
         @staticmethod
         def batch_parse_and_assert(
             parser_service: FlextLdifParser,
-            test_cases: list[dict[str, t.NormalizedValue]],
+            test_cases: Sequence[Mapping[str, t.NormalizedValue]],
             *,
             validate_all: bool = True,
-        ) -> list[r[m.Ldif.ParseResponse]]:
+        ) -> Sequence[r[m.Ldif.ParseResponse]]:
             """Batch parse LDIF content and assert results.
 
             Args:
@@ -1684,7 +1684,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             """
             if not isinstance(parser_service, FlextLdifParser):
                 raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-            results: list[r[m.Ldif.ParseResponse]] = []
+            results: Sequence[r[m.Ldif.ParseResponse]] = []
             for test_case in test_cases:
                 ldif_content = str(test_case.get("ldif_content", ""))
                 should_succeed = test_case.get("should_succeed")
@@ -1705,8 +1705,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
         @staticmethod
         def helper_api_write_and_unwrap(
             api: FlextLdif,
-            entries: list[m.Ldif.Entry],
-            must_contain: list[str] | None = None,
+            entries: Sequence[m.Ldif.Entry],
+            must_contain: Sequence[str] | None = None,
         ) -> str:
             """Write entries to string and unwrap result.
 
@@ -1734,9 +1734,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
         @staticmethod
         def api_parse_write_file_and_assert(
             api: FlextLdif,
-            entries: list[m.Ldif.Entry],
+            entries: Sequence[m.Ldif.Entry],
             output_file: str | Path,
-            must_contain: list[str] | None = None,
+            must_contain: Sequence[str] | None = None,
         ) -> None:
             """Write entries to file and assert content.
 
@@ -1758,8 +1758,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
         @staticmethod
         def api_parse_write_string_and_assert(
             api: FlextLdif,
-            entries: list[m.Ldif.Entry],
-            must_contain: list[str] | None = None,
+            entries: Sequence[m.Ldif.Entry],
+            must_contain: Sequence[str] | None = None,
         ) -> None:
             """Write entries to string and assert content.
 
@@ -1868,7 +1868,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             | m.Ldif.Acl,
             msg: str | None = None,
             write_method: str | None = None,
-            must_contain: list[str] | None = None,
+            must_contain: Sequence[str] | None = None,
         ) -> str:
             """Write using quirk and unwrap result.
 
@@ -1918,7 +1918,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             target_quirk: p.Ldif.SchemaQuirk,
             conversion_type: str,
             data: str,
-            must_contain: list[str] | None = None,
+            must_contain: Sequence[str] | None = None,
             expected_type: type | None = None,
         ) -> str:
             """Convert data between quirks and assert result.
@@ -1988,9 +1988,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
         def helper_get_supported_conversions_and_assert(
             conversion_matrix: FlextLdifConversion,
             quirk: p.Ldif.SchemaQuirk,
-            must_have_keys: list[str] | None = None,
-            expected_support: dict[str, bool] | None = None,
-        ) -> dict[str, bool]:
+            must_have_keys: Sequence[str] | None = None,
+            expected_support: Mapping[str, bool] | None = None,
+        ) -> Mapping[str, bool]:
             """Get supported conversions and assert result.
 
             Args:
@@ -2040,9 +2040,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
             source_quirk: p.Ldif.SchemaQuirk,
             target_quirk: p.Ldif.SchemaQuirk,
             conversion_type: str,
-            items: list[str],
+            items: Sequence[str],
             expected_count: int | None = None,
-        ) -> list[
+        ) -> Sequence[
             m.Ldif.Entry
             | m.Ldif.SchemaAttribute
             | m.Ldif.SchemaObjectClass
@@ -2069,7 +2069,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             if batch_convert_method is None:
                 msg = "conversion_matrix has no batch_convert method"
                 raise AssertionError(msg)
-            model_list: list[
+            model_list: Sequence[
                 m.Ldif.Entry
                 | m.Ldif.SchemaAttribute
                 | m.Ldif.SchemaObjectClass

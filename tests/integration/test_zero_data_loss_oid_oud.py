@@ -13,6 +13,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import pytest
 
 from flext_ldif import FlextLdif
@@ -169,9 +171,9 @@ class TestZeroDataLossOidOud:
 
             def check_no_data_loss(
                 original: m.Ldif.Entry, converted: m.Ldif.Entry
-            ) -> tuple[bool, list[str]]:
+            ) -> tuple[bool, Sequence[str]]:
                 """Check for data loss between original and converted entries."""
-                lost_attrs: list[str] = []
+                lost_attrs: Sequence[str] = []
                 if original.attributes is None or converted.attributes is None:
                     pytest.fail("Entry attributes is None")
                 original_attrs = set(original.attributes.attributes.keys())

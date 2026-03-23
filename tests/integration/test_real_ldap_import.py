@@ -19,7 +19,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
 import pytest
@@ -57,11 +57,11 @@ class TestRealLdapImport:
         entry = entries[0]
         object_classes = entry.get_attribute_values("objectclass")
         if not isinstance(object_classes, list):
-            object_classes_typed: list[str] = (
+            object_classes_typed: Sequence[str] = (
                 list(object_classes) if object_classes else []
             )
             object_classes = object_classes_typed
-        attrs_dict: dict[str, list[str]] = {}
+        attrs_dict: Mapping[str, Sequence[str]] = {}
         assert entry.attributes is not None
         for attr_name, attr_values in entry.attributes.attributes.items():
             if attr_name.lower() == "objectclass":
@@ -99,7 +99,7 @@ class TestRealLdapImport:
         entries = parse_result.value
         entry = entries[0]
         assert entry.attributes is not None
-        attrs_dict: dict[str, list[str] | bytes] = {
+        attrs_dict: Mapping[str, Sequence[str] | bytes] = {
             attr_name: attr_values
             for attr_name, attr_values in entry.attributes.attributes.items()
             if attr_name.lower() != "objectclass"
@@ -138,11 +138,11 @@ class TestRealLdapImport:
         entry = entries[0]
         object_classes = entry.get_attribute_values("objectclass")
         if not isinstance(object_classes, list):
-            object_classes_typed: list[str] = (
+            object_classes_typed: Sequence[str] = (
                 list(object_classes) if object_classes else []
             )
             object_classes = object_classes_typed
-        attrs_dict: dict[str, list[str]] = {}
+        attrs_dict: Mapping[str, Sequence[str]] = {}
         assert entry.attributes is not None
         for attr_name, attr_values in entry.attributes.attributes.items():
             if attr_name.lower() == "objectclass":

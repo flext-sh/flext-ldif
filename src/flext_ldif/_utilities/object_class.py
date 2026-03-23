@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 
 from flext_core import FlextLogger, r
 
@@ -125,7 +125,7 @@ class FlextLdifUtilitiesObjectClass:
             desc_raw = parsed_dict.get("desc")
             desc_value = desc_raw if isinstance(desc_raw, str) else None
             sup_raw = parsed_dict.get("sup")
-            sup_value: str | list[str] | None
+            sup_value: str | Sequence[str] | None
             if isinstance(sup_raw, str):
                 sup_value = sup_raw
             elif isinstance(sup_raw, list):
@@ -135,11 +135,11 @@ class FlextLdifUtilitiesObjectClass:
             kind_raw = parsed_dict.get("kind")
             kind_value = kind_raw if isinstance(kind_raw, str) else ""
             must_raw = parsed_dict.get("must")
-            must_value: list[str] = []
+            must_value: Sequence[str] = []
             if isinstance(must_raw, list):
                 must_value = [str(item) for item in must_raw]
             may_raw = parsed_dict.get("may")
-            may_value: list[str] = []
+            may_value: Sequence[str] = []
             if isinstance(may_raw, list):
                 may_value = [str(item) for item in may_raw]
             schema_oc = m.Ldif.SchemaObjectClass(

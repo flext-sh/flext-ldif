@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import types
-from collections.abc import Generator
+from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -69,7 +69,7 @@ class FileManager:
             filename = f"{safe_name}.ldif"
         return self.create_ldif_file(sample.content, filename, directory)
 
-    def create_all_samples(self, directory: Path | None = None) -> dict[str, Path]:
+    def create_all_samples(self, directory: Path | None = None) -> Mapping[str, Path]:
         """Create files for all test samples.
 
         Args:
@@ -80,7 +80,7 @@ class FileManager:
 
         """
         target_dir = self._resolve_directory(directory)
-        files: dict[str, Path] = {}
+        files: Mapping[str, Path] = {}
         for name, sample in LdifTestData.all_samples().items():
             file_path = self.create_sample_file(sample, f"{name}.ldif", target_dir)
             files[name] = file_path
@@ -124,7 +124,7 @@ class FileManager:
 
     @classmethod
     @contextmanager
-    def sample_files(cls) -> Generator[dict[str, Path]]:
+    def sample_files(cls) -> Generator[Mapping[str, Path]]:
         """Context manager for all sample files.
 
         Yields:
@@ -136,7 +136,7 @@ class FileManager:
 
     @classmethod
     @contextmanager
-    def ldif_files(cls, files: dict[str, str]) -> Generator[dict[str, Path]]:
+    def ldif_files(cls, files: Mapping[str, str]) -> Generator[Mapping[str, Path]]:
         """Context manager for LDIF files.
 
         Args:
@@ -188,10 +188,10 @@ class FileManager:
         return file_path
 
     def create_file_set(
-        self, files: dict[str, str], extension: str = ""
-    ) -> dict[str, Path]:
+        self, files: Mapping[str, str], extension: str = ""
+    ) -> Mapping[str, Path]:
         """Create set of files."""
-        created: dict[str, Path] = {}
+        created: Mapping[str, Path] = {}
         for name, content in files.items():
             filename = f"{name}{extension}"
             created[name] = self.create_text_file(content, filename)

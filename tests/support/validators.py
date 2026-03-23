@@ -5,6 +5,8 @@ This module provides validation utilities for testing flext-ldif functionality.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+
 from flext_core import r
 
 from flext_ldif import m, p, t
@@ -51,7 +53,7 @@ class TestValidators:
     Validation = u
 
     @staticmethod
-    def validate_ldif_entry(entry: p.Entry) -> dict[str, bool]:
+    def validate_ldif_entry(entry: p.Entry) -> Mapping[str, bool]:
         """Validate a real LDIF entry t.NormalizedValue.
 
         Args:
@@ -64,7 +66,9 @@ class TestValidators:
         dn_value = entry.dn if entry.dn is not None else ""
         if entry.attributes is not None:
             if isinstance(entry.attributes, m.Ldif.Attributes):
-                attributes_dict: dict[str, list[str]] = entry.attributes.attributes
+                attributes_dict: Mapping[str, Sequence[str]] = (
+                    entry.attributes.attributes
+                )
             else:
                 attributes_dict = {}
         else:
@@ -81,7 +85,9 @@ class TestValidators:
         }
 
     @staticmethod
-    def validate_result_success(result: r[t.Ldif.NormalizedValue]) -> dict[str, bool]:
+    def validate_result_success(
+        result: r[t.Ldif.NormalizedValue],
+    ) -> Mapping[str, bool]:
         """Validate r success characteristics."""
         return {
             "is_success": result.is_success,

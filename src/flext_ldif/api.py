@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import ClassVar, override
 
@@ -189,8 +189,8 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     def create_entry(
         self,
         dn: str,
-        attributes: Mapping[str, str | list[str]],
-        objectclasses: list[str] | None = None,
+        attributes: Mapping[str, str | Sequence[str]],
+        objectclasses: Sequence[str] | None = None,
     ) -> r[m.Ldif.Entry]:
         """Create a new Entry model."""
         return FlextLdifEntries.create_entry(
@@ -256,17 +256,17 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     @override
     def filter(
         self,
-        entries: list[m.Ldif.Entry],
+        entries: Sequence[m.Ldif.Entry],
         *,
         objectclass: str | None = None,
         dn_pattern: str | None = None,
-        attributes: Mapping[str, str | list[str]] | None = None,
-    ) -> r[list[m.Ldif.Entry]]:
+        attributes: Mapping[str, str | Sequence[str]] | None = None,
+    ) -> r[Sequence[m.Ldif.Entry]]:
         """Filter entries by objectClass, DN pattern and attribute criteria."""
         if not objectclass and (not dn_pattern) and (not attributes):
-            return r[list[m.Ldif.Entry]].ok(list(entries))
-        required_attrs: list[str] = list(attributes.keys()) if attributes else []
-        filtered: list[m.Ldif.Entry] = []
+            return r[Sequence[m.Ldif.Entry]].ok(list(entries))
+        required_attrs: Sequence[str] = list(attributes.keys()) if attributes else []
+        filtered: Sequence[m.Ldif.Entry] = []
         for entry in entries:
             criteria = m.Ldif.EntryCriteriaConfig(
                 objectclasses=[objectclass] if objectclass else [],
@@ -299,17 +299,17 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                 if not matches_values:
                     continue
             filtered.append(entry)
-        return r[list[m.Ldif.Entry]].ok(filtered)
+        return r[Sequence[m.Ldif.Entry]].ok(filtered)
 
     def filter_entries(
         self,
-        entries: list[m.Ldif.Entry],
+        entries: Sequence[m.Ldif.Entry],
         filter_func: p.Ldif.Predicate[m.Ldif.Entry],
-    ) -> r[list[m.Ldif.Entry]]:
+    ) -> r[Sequence[m.Ldif.Entry]]:
         """Filter entries using predicate function."""
         try:
             filtered = [entry for entry in entries if filter_func(entry)]
-            return r[list[m.Ldif.Entry]].ok(filtered)
+            return r[Sequence[m.Ldif.Entry]].ok(filtered)
         except (
             ValueError,
             KeyError,
@@ -317,9 +317,11 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             UnicodeDecodeError,
             struct.error,
         ) as e:
-            return r[list[m.Ldif.Entry]].fail(f"Filter error: {e}")
+            return r[Sequence[m.Ldif.Entry]].fail(f"Filter error: {e}")
 
-    def filter_persons(self, entries: list[m.Ldif.Entry]) -> r[list[m.Ldif.Entry]]:
+    def filter_persons(
+        self, entries: Sequence[m.Ldif.Entry]
+    ) -> r[Sequence[m.Ldif.Entry]]:
         """Filter entries to only person entries."""
         person_classes = {"person", "inetorgperson", "organizationalperson"}
 
@@ -332,12 +334,12 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                 if attrs is None:
                     return False
                 objectclasses = attrs.attributes.get("objectClass", [])
-                objectclasses_list: list[str] = [str(oc) for oc in objectclasses]
+                objectclasses_list: Sequence[str] = [str(oc) for oc in objectclasses]
                 return any(oc.lower() in person_classes for oc in objectclasses_list)
 
         return self.filter_entries(entries, IsPersonPredicate())
 
-    def get_attribute_values(self, attribute: str | list[str]) -> r[list[str]]:
+    def get_attribute_values(self, attribute: str | Sequence[str]) -> r[Sequence[str]]:
         """Get values from attribute value container."""
         return FlextLdifEntries.get_attribute_values(attribute)
 
@@ -348,7 +350,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     def get_entry_attributes(
         self,
         entry: m.Ldif.Entry | BaseModel | Mapping[str, t.NormalizedValue],
-    ) -> r[Mapping[str, list[str]]]:
+    ) -> r[Mapping[str, Sequence[str]]]:
         """Get entry attributes dictionary."""
         match entry:
             case m.Ldif.Entry() as ldif_entry:
@@ -361,7 +363,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
 
     def get_entry_dn(
         self,
-        entry: m.Ldif.Entry | Mapping[str, str | list[str]],
+        entry: m.Ldif.Entry | Mapping[str, str | Sequence[str]],
     ) -> r[str]:
         """Get entry DN string."""
         return FlextLdifEntries.get_entry_dn(entry)
@@ -369,7 +371,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     def get_entry_objectclasses(
         self,
         entry: m.Ldif.Entry | BaseModel | Mapping[str, t.NormalizedValue],
-    ) -> r[list[str]]:
+    ) -> r[Sequence[str]]:
         """Get entry objectClass values."""
         match entry:
             case m.Ldif.Entry() as ldif_entry:
@@ -382,7 +384,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
 
     def get_entry_statistics(
         self,
-        _entries: list[m.Ldif.Entry],
+        _entries: Sequence[m.Ldif.Entry],
     ) -> r[m.Ldif.EntriesStatistics]:
         """Get statistics for list of entries."""
         stats_service = FlextLdifStatistics()
@@ -433,7 +435,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         value: str | Path,
         *,
         server_type: str | None = None,
-    ) -> r[list[m.Ldif.Entry]]:
+    ) -> r[Sequence[m.Ldif.Entry]]:
         """Parse LDIF content from string or file."""
         effective_type = server_type or self._get_effective_server_type_value()
         if isinstance(value, Path):
@@ -444,21 +446,21 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             server_type=effective_type,
         )
         if parse_result.is_failure:
-            return r[list[m.Ldif.Entry]].fail(str(parse_result.error))
+            return r[Sequence[m.Ldif.Entry]].fail(str(parse_result.error))
         response = parse_result.value
-        entries_list: list[m.Ldif.Entry] = list(response.entries)
-        return r[list[m.Ldif.Entry]].ok(entries_list)
+        entries_list: Sequence[m.Ldif.Entry] = list(response.entries)
+        return r[Sequence[m.Ldif.Entry]].ok(entries_list)
 
     @override
     def process(
         self,
         processor_name: str,
-        entries: list[m.Ldif.Entry],
+        entries: Sequence[m.Ldif.Entry],
         *,
         parallel: bool = False,
         batch_size: int = 100,
         max_workers: int = 4,
-    ) -> r[list[m.Ldif.ProcessingResult]]:
+    ) -> r[Sequence[m.Ldif.ProcessingResult]]:
         """Process entries using processing service."""
         return self.processing_service.process(
             processor_name,
@@ -470,7 +472,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
 
     def validate_entries(
         self,
-        entries: list[m.Ldif.Entry],
+        entries: Sequence[m.Ldif.Entry],
     ) -> r[m.Ldif.ValidationResult]:
         """Validate list of entries."""
         validation_service = FlextLdifValidation()
@@ -478,7 +480,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
 
     def write(
         self,
-        entries: list[m.Ldif.Entry],
+        entries: Sequence[m.Ldif.Entry],
         *,
         server_type: str | None = None,
         format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
@@ -495,7 +497,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     @override
     def write_file(
         self,
-        entries: list[m.Ldif.Entry],
+        entries: Sequence[m.Ldif.Entry],
         path: Path,
         *,
         server_type: str | None = None,
@@ -529,7 +531,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         path: Path,
         *,
         server_type: str | None = None,
-    ) -> r[list[m.Ldif.Entry]]:
+    ) -> r[Sequence[m.Ldif.Entry]]:
         """Parse LDIF file (internal helper)."""
         resolved_path = path
         if not resolved_path.exists() and (not resolved_path.is_absolute()):
@@ -538,11 +540,11 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             if candidate_path.exists():
                 resolved_path = candidate_path
         if not resolved_path.exists():
-            return r[list[m.Ldif.Entry]].fail(f"File not found: {path}")
+            return r[Sequence[m.Ldif.Entry]].fail(f"File not found: {path}")
         try:
             content = resolved_path.read_text(encoding="utf-8")
         except OSError as e:
-            return r[list[m.Ldif.Entry]].fail(f"Failed to read file: {e}")
+            return r[Sequence[m.Ldif.Entry]].fail(f"Failed to read file: {e}")
         return self.parse(value=content, server_type=server_type)
 
 

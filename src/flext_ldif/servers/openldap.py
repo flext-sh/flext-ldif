@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import ClassVar, override
 
 from flext_core import FlextLogger
@@ -243,7 +243,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         def _build_openldap_acl_model(
             self,
             what: str,
-            attributes: list[str],
+            attributes: Sequence[str],
             subject_value: str,
             access: str,
             acl_line: str,
@@ -334,7 +334,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             )
             return (subject_value, access)
 
-        def _parse_what_clause(self, acl_content: str) -> tuple[str | None, list[str]]:
+        def _parse_what_clause(
+            self, acl_content: str
+        ) -> tuple[str | None, Sequence[str]]:
             """Parse "to <what>" clause and extract attributes."""
             to_match = re.match(
                 FlextLdifServersOpenldap.Constants.ACL_TO_BY_PATTERN,
@@ -344,7 +346,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             if not to_match:
                 return (None, [])
             what = to_match.group(1).strip()
-            attributes: list[str] = []
+            attributes: Sequence[str] = []
             attrs_match = re.search(
                 FlextLdifServersOpenldap.Constants.ACL_ATTRS_PATTERN,
                 what,
@@ -397,7 +399,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 acl_parts = [f"{constants.ACL_PREFIX_TO}{what}"]
                 acl_parts.append(f"{constants.ACL_PREFIX_BY}{who}")
                 if acl_data.permissions:
-                    perms: list[str] = []
+                    perms: Sequence[str] = []
                     if acl_data.permissions.read:
                         perms.append("read")
                     if acl_data.permissions.write:
@@ -422,7 +424,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: Mapping[str, list[str]],
+            attributes: Mapping[str, Sequence[str]],
         ) -> bool:
             """Check if this quirk should handle the entry (PRIVATE)."""
             if not entry_dn:
@@ -433,7 +435,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             )
             has_olc_attrs = any(attr.startswith("olc") for attr in attributes)
             object_classes_raw = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
-            object_classes_list: list[str] = [str(item) for item in object_classes_raw]
+            object_classes_list: Sequence[str] = [
+                str(item) for item in object_classes_raw
+            ]
             has_olc_classes = any(
                 oc in FlextLdifServersOpenldap.Constants.OPENLDAP_2_OBJECTCLASSES
                 for oc in object_classes_list
@@ -443,9 +447,12 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         def _inject_validation_rules(self, entry: m.Ldif.Entry) -> m.Ldif.Entry:
             """Inject OpenLDAP-specific validation rules into Entry metadata via DI."""
             server_type = c.Ldif.ServerTypes.OPENLDAP.value
-            validation_rules: dict[
+            validation_rules: Mapping[
                 str,
-                t.Scalar | dict[str, t.Scalar | list[str] | None] | list[str] | None,
+                t.Scalar
+                | Mapping[str, t.Scalar | Sequence[str] | None]
+                | Sequence[str]
+                | None,
             ] = {
                 "requires_objectclass": server_type
                 in c.Ldif.OBJECTCLASS_REQUIRED_SERVERS,

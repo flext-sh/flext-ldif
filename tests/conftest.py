@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from enum import StrEnum, unique
 from pathlib import Path
 from typing import ClassVar, Final
@@ -110,7 +111,7 @@ class FlextLdifFixtures:
         metadata = loader.get_metadata(FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.SCHEMA)
     """
 
-    _instances: ClassVar[dict[str, t.NormalizedValue]] = {}
+    _instances: ClassVar[Mapping[str, t.NormalizedValue]] = {}
 
     @classmethod
     def get_oid(cls) -> FlextLdifFixtures.OID:
@@ -201,11 +202,11 @@ class FlextLdifFixtures:
         """
 
         _content_cache: ClassVar[
-            dict[
+            Mapping[
                 tuple[FlextLdifFixtures.ServerType, FlextLdifFixtures.FixtureType], str
             ]
         ] = {}
-        _metadata_cache: ClassVar[dict[Path, FlextLdifFixtures.Metadata]] = {}
+        _metadata_cache: ClassVar[Mapping[Path, FlextLdifFixtures.Metadata]] = {}
 
         def __init__(self, fixtures_root: Path | None = None) -> None:
             """Initialize fixture loader.
@@ -271,7 +272,7 @@ class FlextLdifFixtures:
 
         def load_all(
             self, server_type: FlextLdifFixtures.ServerType
-        ) -> dict[FlextLdifFixtures.FixtureType, str]:
+        ) -> Mapping[FlextLdifFixtures.FixtureType, str]:
             """Load all fixtures for a server type.
 
             Args:
@@ -281,7 +282,7 @@ class FlextLdifFixtures:
                 Dict mapping fixture types to their content strings
 
             """
-            fixtures: dict[FlextLdifFixtures.FixtureType, str] = {}
+            fixtures: Mapping[FlextLdifFixtures.FixtureType, str] = {}
             fixture_types = [
                 FlextLdifFixtures.FixtureType.SCHEMA,
                 FlextLdifFixtures.FixtureType.ACL,
@@ -295,14 +296,14 @@ class FlextLdifFixtures:
                     continue
             return fixtures
 
-        def get_available_servers(self) -> list[FlextLdifFixtures.ServerType]:
+        def get_available_servers(self) -> Sequence[FlextLdifFixtures.ServerType]:
             """Get list of servers that have fixtures available.
 
             Returns:
                 list: List of server types with fixture directories
 
             """
-            available: list[FlextLdifFixtures.ServerType] = []
+            available: Sequence[FlextLdifFixtures.ServerType] = []
             server_types = [
                 FlextLdifFixtures.ServerType.OID,
                 FlextLdifFixtures.ServerType.OUD,
@@ -322,7 +323,7 @@ class FlextLdifFixtures:
 
         def get_available_fixtures(
             self, server_type: FlextLdifFixtures.ServerType
-        ) -> list[FlextLdifFixtures.FixtureType]:
+        ) -> Sequence[FlextLdifFixtures.FixtureType]:
             """Get list of available fixture types for a server.
 
             Args:
@@ -332,7 +333,7 @@ class FlextLdifFixtures:
                 list: List of available fixture types for this server
 
             """
-            available: list[FlextLdifFixtures.FixtureType] = []
+            available: Sequence[FlextLdifFixtures.FixtureType] = []
             for fixture_type in FlextLdifFixtures.FixtureType.__members__.values():
                 try:
                     self._get_fixture_path(server_type, fixture_type)
@@ -462,11 +463,11 @@ class FlextLdifFixtures:
                 FlextLdifFixtures.FixtureType.INTEGRATION,
             )
 
-        def all(self) -> dict[FlextLdifFixtures.FixtureType, str]:
+        def all(self) -> Mapping[FlextLdifFixtures.FixtureType, str]:
             """Load all OID fixtures.
 
             Returns:
-                dict[str, t.NormalizedValue]: All available OID fixtures
+                Mapping[str, t.NormalizedValue]: All available OID fixtures
 
             """
             return self._loader.load_all(FlextLdifFixtures.ServerType.OID)
@@ -526,7 +527,7 @@ class FlextLdifFixtures:
                 FlextLdifFixtures.FixtureType.INTEGRATION,
             )
 
-        def all(self) -> dict[FlextLdifFixtures.FixtureType, str]:
+        def all(self) -> Mapping[FlextLdifFixtures.FixtureType, str]:
             """Load all OUD fixtures."""
             return self._loader.load_all(self._server_type)
 
@@ -569,7 +570,7 @@ class FlextLdifFixtures:
                 FlextLdifFixtures.FixtureType.INTEGRATION,
             )
 
-        def all(self) -> dict[FlextLdifFixtures.FixtureType, str]:
+        def all(self) -> Mapping[FlextLdifFixtures.FixtureType, str]:
             """Load all RFC fixtures."""
             return self._loader.load_all(self._server_type)
 
@@ -612,7 +613,7 @@ class FlextLdifFixtures:
                 FlextLdifFixtures.FixtureType.INTEGRATION,
             )
 
-        def all(self) -> dict[FlextLdifFixtures.FixtureType, str]:
+        def all(self) -> Mapping[FlextLdifFixtures.FixtureType, str]:
             """Load all OpenLDAP fixtures."""
             return self._loader.load_all(self._server_type)
 

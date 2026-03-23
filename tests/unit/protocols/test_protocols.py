@@ -6,6 +6,7 @@ server implementations, ACL handling, and service contracts.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from enum import StrEnum, unique
 from typing import ClassVar
 
@@ -27,7 +28,7 @@ from flext_ldif import (
 from tests import s
 
 
-def _create_server_implementations() -> list[tuple[str, type, type]]:
+def _create_server_implementations() -> Sequence[tuple[str, type, type]]:
     """Create server implementations for testing."""
     return [
         ("OID", FlextLdifServersOid, FlextLdifServersOid.Schema),
@@ -53,7 +54,7 @@ class TestsTestFlextLdifProtocols(s):
         ACL = "AclQuirk"
         ENTRY = "EntryQuirk"
 
-    _PROTOCOL_NAMES: ClassVar[list[str]] = [
+    _PROTOCOL_NAMES: ClassVar[Sequence[str]] = [
         ProtocolNames.SCHEMA.value,
         ProtocolNames.ACL.value,
         ProtocolNames.ENTRY.value,
@@ -193,7 +194,7 @@ class TestsTestFlextLdifProtocols(s):
                 tm.that(callable(getattr(registry, method)), eq=True)
 
     @classmethod
-    def get_server_implementations(cls) -> list[ProtocolServer]:
+    def get_server_implementations(cls) -> Sequence[ProtocolServer]:
         """Get all server implementations for testing."""
         return [
             cls.ProtocolServer(
@@ -313,7 +314,7 @@ class TestsTestFlextLdifProtocols(s):
 
     def test_protocol_filtering(self) -> None:
         """Test filtering implementations by protocol."""
-        schemas_list: list[p.Ldif.SchemaQuirk] = [
+        schemas_list: Sequence[p.Ldif.SchemaQuirk] = [
             FlextLdifServersOid.Schema(),
             FlextLdifServersOud.Schema(),
             FlextLdifServersOpenldap.Schema(),

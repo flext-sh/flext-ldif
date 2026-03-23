@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 from collections import Counter
+from collections.abc import Sequence
 from typing import override
 
 from flext_ldif import FlextLdifValidation, m, r, s, u
@@ -17,9 +18,9 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
         entry: m.Ldif.Entry,
         dn_str: str,
         validation_service: FlextLdifValidation,
-    ) -> tuple[bool, list[str]]:
+    ) -> tuple[bool, Sequence[str]]:
         """Validate entry attributes."""
-        errors: list[str] = []
+        errors: Sequence[str] = []
         is_valid = True
         if entry.attributes is None:
             errors.append(f"Entry {dn_str}: Attributes cannot be None")
@@ -32,9 +33,9 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
         return (is_valid, errors)
 
     @staticmethod
-    def _validate_entry_dn(entry: m.Ldif.Entry) -> tuple[bool, str, list[str]]:
+    def _validate_entry_dn(entry: m.Ldif.Entry) -> tuple[bool, str, Sequence[str]]:
         """Validate entry DN."""
-        errors: list[str] = []
+        errors: Sequence[str] = []
         if entry.dn is None:
             errors.append("Entry has None DN")
             return (False, "", errors)
@@ -53,9 +54,9 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
         entry: m.Ldif.Entry,
         dn_str: str,
         validation_service: FlextLdifValidation,
-    ) -> tuple[bool, list[str]]:
+    ) -> tuple[bool, Sequence[str]]:
         """Validate entry objectClass values."""
-        errors: list[str] = []
+        errors: Sequence[str] = []
         is_valid = True
         oc_values_raw = u.get(
             entry.attributes.attributes if entry.attributes else {},
@@ -63,7 +64,7 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
             default=[],
         )
         if isinstance(oc_values_raw, str):
-            oc_values: list[str] = [oc_values_raw]
+            oc_values: Sequence[str] = [oc_values_raw]
         elif isinstance(oc_values_raw, list):
             oc_values = [str(oc) for oc in oc_values_raw]
         else:
@@ -79,9 +80,9 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
     def _validate_single_entry(
         entry: m.Ldif.Entry,
         validation_service: FlextLdifValidation,
-    ) -> tuple[bool, list[str]]:
+    ) -> tuple[bool, Sequence[str]]:
         """Validate a single LDIF entry."""
-        errors: list[str] = []
+        errors: Sequence[str] = []
         is_entry_valid = True
         dn_valid, dn_str, dn_errors = FlextLdifAnalysis._validate_entry_dn(entry)
         errors.extend(dn_errors)
@@ -107,7 +108,7 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
         return (is_entry_valid, errors)
 
     @staticmethod
-    def analyze(entries: list[m.Ldif.Entry]) -> r[m.Ldif.EntryAnalysisResult]:
+    def analyze(entries: Sequence[m.Ldif.Entry]) -> r[m.Ldif.EntryAnalysisResult]:
         """Analyze LDIF entries and generate statistics."""
         total_entries = len(entries)
         objectclass_distribution: Counter[str] = Counter()
@@ -138,11 +139,11 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
 
     @staticmethod
     def validate_entries(
-        entries: list[m.Ldif.Entry],
+        entries: Sequence[m.Ldif.Entry],
         validation_service: FlextLdifValidation,
     ) -> r[m.Ldif.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards."""
-        errors: list[str] = []
+        errors: Sequence[str] = []
         valid_count = 0
 
         def validate_entry(entry: m.Ldif.Entry) -> bool:

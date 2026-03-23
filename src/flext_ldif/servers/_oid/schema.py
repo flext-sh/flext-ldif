@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import override
 
 from flext_core import FlextLogger, r
@@ -33,10 +33,10 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize OID schema quirk."""
-        filtered_kwargs: dict[str, str | float | bool] = {
+        filtered_kwargs: Mapping[str, str | float | bool] = {
             k: v
             for k, v in kwargs.items()
-            if k not in ("_parent_quirk", "_schema_service")
+            if k not in {"_parent_quirk", "_schema_service"}
             and isinstance(v, (str, float, bool))
         }
         schema_service_typed: p.Ldif.SchemaQuirk | None = (
@@ -57,7 +57,11 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         ldif_content: str,
         *,
         validate_dependencies: bool = False,
-    ) -> r[Mapping[str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass]]]:
+    ) -> r[
+        Mapping[
+            str, Sequence[m.Ldif.SchemaAttribute] | Sequence[m.Ldif.SchemaObjectClass]
+        ]
+    ]:
         """Extract and parse all schema definitions from LDIF content."""
         return super().extract_schemas_from_ldif(
             ldif_content,
@@ -80,7 +84,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             attr_data.metadata.extensions[c.Ldif.SCHEMA_TARGET_ATTRIBUTE_NAME] = (
                 target_values["name"]
             )
-        target_rules: dict[str, str] = {}
+        target_rules: Mapping[str, str] = {}
         if target_values["equality"]:
             target_rules["equality"] = target_values["equality"]
         if target_values["substr"]:
@@ -173,7 +177,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             updated_kind = self._normalize_auxiliary_typo(oc, original_format_str)
             normalized_must = self._normalize_attribute_names(oc.must)
             normalized_may = self._normalize_attribute_names(oc.may)
-            update_dict: dict[str, str | list[str] | None] = {
+            update_dict: Mapping[str, str | Sequence[str] | None] = {
                 k: v
                 for k, v in {
                     "sup": updated_sup,
@@ -200,8 +204,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     def _normalize_attribute_names(
         self,
-        attr_list: list[str] | None,
-    ) -> list[str] | None:
+        attr_list: Sequence[str] | None,
+    ) -> Sequence[str] | None:
         """Normalize attribute names using OID case mappings."""
         if not attr_list:
             return attr_list
@@ -239,7 +243,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 return None
 
     def _normalize_sup_from_model(self, oc_data: m.Ldif.SchemaObjectClass) -> str | (
-        list[str] | None
+        Sequence[str] | None
     ):
         """Normalize SUP from objectClass model."""
         if not oc_data.sup:

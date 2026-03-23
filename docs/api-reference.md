@@ -98,7 +98,7 @@ class FlextLdif:
 Parse LDIF file into structured entries.
 
 ```python
-def parse_file(self, file_path: Path | str) -> r[list[FlextLdifModels.Entry]]:
+def parse_file(self, file_path: Path | str) -> r[Sequence[FlextLdifModels.Entry]]:
     """Parse LDIF file using railway-oriented programming.
 
     Args:
@@ -121,7 +121,7 @@ def parse_file(self, file_path: Path | str) -> r[list[FlextLdifModels.Entry]]:
 Parse LDIF string content into structured entries.
 
 ```python
-def parse_string(self, content: str) -> r[list[FlextLdifModels.Entry]]:
+def parse_string(self, content: str) -> r[Sequence[FlextLdifModels.Entry]]:
     """Parse LDIF string content.
 
     Args:
@@ -146,7 +146,7 @@ def parse_string(self, content: str) -> r[list[FlextLdifModels.Entry]]:
 Validate LDIF entries against RFC 2849 and business rules.
 
 ```python
-def validate_entries(self, entries: list[FlextLdifModels.Entry]) -> r[bool]:
+def validate_entries(self, entries: Sequence[FlextLdifModels.Entry]) -> r[bool]:
     """Validate LDIF entries.
 
     Args:
@@ -169,7 +169,7 @@ Write LDIF entries to file.
 
 ```python
 def write_file(
-    self, entries: list[FlextLdifModels.Entry], file_path: Path | str
+    self, entries: Sequence[FlextLdifModels.Entry], file_path: Path | str
 ) -> r[bool]:
     """Write LDIF entries to file.
 
@@ -193,7 +193,7 @@ def write_file(
 Convert entries to LDIF string format.
 
 ```python
-def write(self, entries: list[FlextLdifModels.Entry]) -> r[str]:
+def write(self, entries: Sequence[FlextLdifModels.Entry]) -> r[str]:
     """Convert entries to LDIF string.
 
     Args:
@@ -218,8 +218,8 @@ Filter entries with person t.NormalizedValue class.
 
 ```python
 def filter_persons(
-    self, entries: list[FlextLdifModels.Entry]
-) -> r[list[FlextLdifModels.Entry]]:
+    self, entries: Sequence[FlextLdifModels.Entry]
+) -> r[Sequence[FlextLdifModels.Entry]]:
     """Filter person entries from entry list.
 
     Args:
@@ -242,8 +242,8 @@ Filter entries with group t.NormalizedValue classes.
 
 ```python
 def filter_groups(
-    self, entries: list[FlextLdifModels.Entry]
-) -> r[list[FlextLdifModels.Entry]]:
+    self, entries: Sequence[FlextLdifModels.Entry]
+) -> r[Sequence[FlextLdifModels.Entry]]:
     """Filter group entries from entry list.
 
     Args:
@@ -264,8 +264,8 @@ Filter entries by specific t.NormalizedValue class.
 
 ```python
 def filter_by_objectclass(
-    self, entries: list[FlextLdifModels.Entry], object_class: str
-) -> r[list[FlextLdifModels.Entry]]:
+    self, entries: Sequence[FlextLdifModels.Entry], object_class: str
+) -> r[Sequence[FlextLdifModels.Entry]]:
     """Filter entries by t.NormalizedValue class.
 
     Args:
@@ -289,8 +289,8 @@ Generate statistics about LDIF entries.
 
 ```python
 def get_entry_statistics(
-    self, entries: list[FlextLdifModels.Entry]
-) -> r[dict[str, int]]:
+    self, entries: Sequence[FlextLdifModels.Entry]
+) -> r[Mapping[str, int]]:
     """Get statistics about LDIF entries.
 
     Args:
@@ -312,7 +312,7 @@ def get_entry_statistics(
 Perform comprehensive analysis of LDIF entries.
 
 ```python
-def analyze_entries(self, entries: list[FlextLdifModels.Entry]) -> r[t.Dict]:
+def analyze_entries(self, entries: Sequence[FlextLdifModels.Entry]) -> r[t.Dict]:
     """Perform comprehensive entry analysis.
 
     Args:
@@ -353,8 +353,8 @@ class QuirksConversionMatrix:
         source,
         target,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
-        data: str | dict[str, t.NormalizedValue],
-    ) -> r[str | dict[str, t.NormalizedValue]]:
+        data: str | Mapping[str, t.NormalizedValue],
+    ) -> r[str | Mapping[str, t.NormalizedValue]]:
         """Convert data from source quirk format to target quirk format via RFC.
 
         Args:
@@ -373,8 +373,8 @@ class QuirksConversionMatrix:
         source,
         target,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
-        data_batch: Sequence[str | dict[str, t.NormalizedValue]],
-    ) -> r[Sequence[str | dict[str, t.NormalizedValue]]]:
+        data_batch: Sequence[str | Mapping[str, t.NormalizedValue]],
+    ) -> r[Sequence[str | Mapping[str, t.NormalizedValue]]]:
         """Convert batch of data from source to target quirk format via RFC.
 
         Args:
@@ -388,7 +388,7 @@ class QuirksConversionMatrix:
 
         """
 
-    def get_supported_conversions(self) -> dict[str, t.StringList]:
+    def get_supported_conversions(self) -> Mapping[str, t.StringList]:
         """Get matrix of supported source→target conversions.
 
         Returns:
@@ -397,7 +397,7 @@ class QuirksConversionMatrix:
         """
 
     def validate_oud_conversion(
-        self, converted_data: Sequence[str | dict[str, t.NormalizedValue]]
+        self, converted_data: Sequence[str | Mapping[str, t.NormalizedValue]]
     ) -> r[bool]:
         """Validate converted data for OUD compatibility.
 
@@ -452,7 +452,7 @@ class DnCaseRegistry:
 
         """
 
-    def get_stats(self) -> dict[str, int]:
+    def get_stats(self) -> Mapping[str, int]:
         """Get registry statistics.
 
         Returns:
@@ -499,7 +499,7 @@ class Entry(BaseModel):
     """LDIF entry domain model."""
 
     dn: str = Field(..., description="Distinguished Name")
-    attributes: dict[str, t.StringList] = Field(
+    attributes: Mapping[str, t.StringList] = Field(
         default_factory=dict, description="Entry attributes as key-value pairs"
     )
 
@@ -582,7 +582,7 @@ class Factory:
 
     @staticmethod
     def create(
-        data: t.Dict | str, attributes: dict[str, t.StringList] | None = None
+        data: t.Dict | str, attributes: Mapping[str, t.StringList] | None = None
     ) -> Entry:
         """Create LDIF entry with validation."""
 
@@ -802,7 +802,7 @@ def process_enterprise_directory(input_file: Path, output_file: Path) -> r[t.Dic
 ### Batch Processing
 
 ```python
-def process_multiple_files(file_paths: list[Path]) -> r[t.Dict]:
+def process_multiple_files(file_paths: Sequence[Path]) -> r[t.Dict]:
     """Process multiple LDIF files in batch."""
     api = FlextLdif()
     all_entries = []
@@ -828,8 +828,8 @@ def process_multiple_files(file_paths: list[Path]) -> r[t.Dict]:
 
 ```python
 def filter_by_custom_criteria(
-    api: FlextLdif, entries: list[FlextLdifModels.Entry]
-) -> r[list[FlextLdifModels.Entry]]:
+    api: FlextLdif, entries: Sequence[FlextLdifModels.Entry]
+) -> r[Sequence[FlextLdifModels.Entry]]:
     """Apply custom filtering logic."""
 
     def matches_criteria(entry: FlextLdifModels.Entry) -> bool:
@@ -842,9 +842,9 @@ def filter_by_custom_criteria(
 
     try:
         filtered = [entry for entry in entries if matches_criteria(entry)]
-        return r[list[FlextLdifModels.Entry]].ok(filtered)
+        return r[Sequence[FlextLdifModels.Entry]].ok(filtered)
     except Exception as e:
-        return r[list[FlextLdifModels.Entry]].fail(f"Filtering failed: {e}")
+        return r[Sequence[FlextLdifModels.Entry]].fail(f"Filtering failed: {e}")
 ```
 
 ## RFC Schema Parser API
@@ -1019,7 +1019,7 @@ from flext_ldif import QuirkRegistryService
 class QuirkRegistryService:
     """Registry for managing LDAP server quirks."""
 
-    def get_schemas(self, server_type: str) -> list[Schema]:
+    def get_schemas(self, server_type: str) -> Sequence[Schema]:
         """Get schema quirks for server type.
 
         Args:
@@ -1029,7 +1029,7 @@ class QuirkRegistryService:
             List of schema quirks sorted by priority
         """
 
-    def get_entrys(self, server_type: str) -> list[Entry]:
+    def get_entrys(self, server_type: str) -> Sequence[Entry]:
         """Get entry quirks for server type.
 
         Args:
@@ -1039,7 +1039,7 @@ class QuirkRegistryService:
             List of entry quirks sorted by priority
         """
 
-    def get_acls(self, server_type: str) -> list[Acl]:
+    def get_acls(self, server_type: str) -> Sequence[Acl]:
         """Get ACL quirks for server type.
 
         Args:

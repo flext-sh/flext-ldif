@@ -16,7 +16,7 @@ class FlextLdifModelsEvents:
     """LDIF event and configuration models container class."""
 
     @staticmethod
-    def _filter_criteria_factory() -> list[FlextLdifModelsSettings.FilterCriteria]:
+    def _filter_criteria_factory() -> Sequence[FlextLdifModelsSettings.FilterCriteria]:
         return []
 
     class DnEventConfig(FlextLdifModelsBases.Base):
@@ -25,7 +25,7 @@ class FlextLdifModelsEvents:
         output_dn: str | None = None
         operation_duration_ms: float = 0.0
         validation_result: bool | None = None
-        parse_components: list[tuple[str, str]] | None = None
+        parse_components: Sequence[tuple[str, str]] | None = None
 
     class MigrationEventConfig(FlextLdifModelsBases.Base):
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -61,7 +61,7 @@ class FlextLdifModelsEvents:
         entries_before: int
         entries_after: int
         filter_criteria: Annotated[
-            list[FlextLdifModelsSettings.FilterCriteria],
+            Sequence[FlextLdifModelsSettings.FilterCriteria],
             Field(default_factory=FlextLdifModelsEvents._filter_criteria_factory),
         ]
         filter_duration_ms: float = 0.0
@@ -154,7 +154,7 @@ class FlextLdifModelsEvents:
         )
         category_operation: str
         entries_categorized: int = 0
-        categories_created: Annotated[list[str], Field(default_factory=list)]
+        categories_created: Annotated[Sequence[str], Field(default_factory=list)]
         categorization_duration_ms: float = 0.0
 
     class AclEvent(m.DomainEvent):

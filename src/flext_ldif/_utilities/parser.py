@@ -5,7 +5,7 @@ from __future__ import annotations
 import base64
 import contextlib
 import re
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import TypeIs
 
 from flext_core import FlextLogger, r, u
@@ -52,7 +52,7 @@ class FlextLdifUtilitiesParser:
             else FlextLdifUtilitiesServer.normalize_server_type("rfc")
         )
         if metadata_extensions:
-            extensions_typed: dict[str, list[str]] = {}
+            extensions_typed: Mapping[str, Sequence[str]] = {}
             for key, val in metadata_extensions.items():
                 extensions_typed[key] = list(val)
             return m.Ldif.QuirkMetadata(
@@ -68,7 +68,7 @@ class FlextLdifUtilitiesParser:
         line: str,
         current_dn: str | None,
         current_attrs: t.Ldif.EntryAttributesDict,
-        entries: list[tuple[str, t.Ldif.EntryAttributesDict]],
+        entries: Sequence[tuple[str, t.Ldif.EntryAttributesDict]],
     ) -> tuple[str | None, t.Ldif.EntryAttributesDict]:
         """Process single LDIF line with RFC 2849 base64 detection."""
         if not line:
@@ -101,7 +101,7 @@ class FlextLdifUtilitiesParser:
             new_attrs["_original_dn_line"] = [original_line]
             return (value, new_attrs)
         if "_original_lines" not in current_attrs:
-            original_lines_list: list[str] = []
+            original_lines_list: Sequence[str] = []
             current_attrs["_original_lines"] = original_lines_list
         current_attrs["_original_lines"].append(original_line)
         current_attrs.setdefault(key, []).append(value)
@@ -120,7 +120,7 @@ class FlextLdifUtilitiesParser:
         return None
 
     @staticmethod
-    def ext(metadata: m.Ldif.DynamicMetadata) -> Mapping[str, list[str]]:
+    def ext(metadata: m.Ldif.DynamicMetadata) -> Mapping[str, Sequence[str]]:
         """Extract extension information from parsed metadata."""
 
         def _is_metadata_value(
@@ -131,9 +131,9 @@ class FlextLdifUtilitiesParser:
                 (str, int, float, bool, list, Mapping),
             )
 
-        def _as_str_list(value: t.Ldif.MetadataValue) -> list[str] | None:
+        def _as_str_list(value: t.Ldif.MetadataValue) -> Sequence[str] | None:
             if isinstance(value, list):
-                normalized: list[str] = []
+                normalized: Sequence[str] = []
                 for item in value:
                     if not isinstance(item, str):
                         return None
@@ -143,7 +143,7 @@ class FlextLdifUtilitiesParser:
 
         result = metadata.get("extensions")
         if not isinstance(result, Mapping):
-            extensions: dict[str, list[str]] = {}
+            extensions: Mapping[str, Sequence[str]] = {}
             for key, value in metadata.items():
                 if not _is_metadata_value(value):
                     continue
@@ -152,7 +152,7 @@ class FlextLdifUtilitiesParser:
                     extensions[key] = str_list
             return extensions
         extensions_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(result)
-        strict_result: dict[str, list[str]] = {}
+        strict_result: Mapping[str, Sequence[str]] = {}
         for key, value in extensions_metadata.items():
             if not _is_metadata_value(value):
                 continue
@@ -171,11 +171,11 @@ class FlextLdifUtilitiesParser:
         return re.search(pattern, definition) is not None
 
     @staticmethod
-    def extract_extensions(definition: str) -> dict[str, list[str]]:
+    def extract_extensions(definition: str) -> Mapping[str, Sequence[str]]:
         """Extract extension information from schema definition string."""
         if not definition:
             return {}
-        extensions: dict[str, list[str]] = {}
+        extensions: Mapping[str, Sequence[str]] = {}
         x_pattern = re.compile(
             r"X-([A-Z0-9_-]+)\s+[\"']?([^\"']*)[\"']?(?:\s|$)",
             re.IGNORECASE,
@@ -246,7 +246,7 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def finalize_pending_attribute(
         current_attr: str | None,
-        current_values: list[str],
+        current_values: Sequence[str],
         entry_dict: t.Ldif.RawEntryDict,
     ) -> None:
         """Finalize and save pending attribute to entry dictionary."""
@@ -278,7 +278,7 @@ class FlextLdifUtilitiesParser:
             else:
                 entry_dict[attr_name] = [str(existing), attr_value]
         else:
-            existing_list: list[str]
+            existing_list: Sequence[str]
             existing_list = [str(item) for item in existing]
             existing_list.append(attr_value)
             entry_dict[attr_name] = existing_list
@@ -301,9 +301,9 @@ class FlextLdifUtilitiesParser:
         return r[tuple[str, str, bool]].ok((attr_name, attr_value, is_base64))
 
     @staticmethod
-    def parse_ldif(ldif_lines: list[str]) -> list[t.Ldif.RawEntryDict]:
+    def parse_ldif(ldif_lines: Sequence[str]) -> Sequence[t.Ldif.RawEntryDict]:
         """Parse list of LDIF lines into entries (simple version)."""
-        entries: list[t.Ldif.RawEntryDict] = []
+        entries: Sequence[t.Ldif.RawEntryDict] = []
         current_entry: t.Ldif.RawEntryDict = {}
         for line in ldif_lines:
             if not line.strip():
@@ -321,11 +321,11 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def parse_ldif_lines(
         ldif_content: str,
-    ) -> list[tuple[str, t.Ldif.EntryAttributesDict]]:
+    ) -> Sequence[tuple[str, t.Ldif.EntryAttributesDict]]:
         """Parse LDIF content into (dn, attributes_dict) tuples - RFC 2849 compliant."""
         if not ldif_content:
             return []
-        entries: list[tuple[str, t.Ldif.EntryAttributesDict]] = []
+        entries: Sequence[tuple[str, t.Ldif.EntryAttributesDict]] = []
         current_dn: str | None = None
         current_attrs: t.Ldif.EntryAttributesDict = {}
         unfolded_lines = FlextLdifUtilitiesParser.unfold_lines(ldif_content)
@@ -350,9 +350,9 @@ class FlextLdifUtilitiesParser:
             entry_dict["_base64_attrs"].add(attr_name)
 
     @staticmethod
-    def unfold_lines(ldif_content: str) -> list[str]:
+    def unfold_lines(ldif_content: str) -> Sequence[str]:
         """Unfold LDIF lines folded across multiple lines per RFC 2849 §3."""
-        lines: list[str] = []
+        lines: Sequence[str] = []
         current_line = ""
         continuation_space = c.Ldif.LINE_CONTINUATION_SPACE
         for raw_line in ldif_content.split(c.Ldif.LINE_SEPARATOR):

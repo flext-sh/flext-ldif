@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from flext_tests import FlextTestsTypes
 
 from flext_ldif import FlextLdifTypes
@@ -41,5 +43,5 @@ class FlextLdifTestTypes(FlextTestsTypes, FlextLdifTypes):
 
 
 t = FlextLdifTestTypes
-type GenericFieldsDict = dict[str, str]
+type GenericFieldsDict = Mapping[str, str]
 __all__ = ["FlextLdifTestTypes", "GenericFieldsDict", "t"]

@@ -21,6 +21,7 @@ SRP: Each method does ONE thing, composition handles complexity
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Final
 
@@ -37,10 +38,10 @@ class BasicUsageDry:
     SAMPLE_LDIF = "dn: cn=John Doe,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: John Doe\nsn: Doe\nmail: john.doe@example.com\n\ndn: cn=Jane Smith,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Jane Smith\nsn: Smith\nmail: jane.smith@example.com\n"
 
     @staticmethod
-    def batch_transform() -> r[list[m.Ldif.Entry]]:
+    def batch_transform() -> r[Sequence[m.Ldif.Entry]]:
         """DRY batch transformation - returns created entries."""
         api = FlextLdif.get_instance()
-        entries: list[m.Ldif.Entry] = []
+        entries: Sequence[m.Ldif.Entry] = []
         for i in range(10):
             result = api.create_entry(
                 dn=f"cn=User{i},ou=People,dc=example,dc=com",
@@ -54,15 +55,15 @@ class BasicUsageDry:
             if result.is_success:
                 entries.append(result.value)
         if not entries:
-            return r[list[m.Ldif.Entry]].fail("Failed to create entries")
+            return r[Sequence[m.Ldif.Entry]].fail("Failed to create entries")
         transform_result = api.process(
             "transform", entries, parallel=True, max_workers=6
         )
         if transform_result.is_failure:
-            return r[list[m.Ldif.Entry]].fail(
+            return r[Sequence[m.Ldif.Entry]].fail(
                 transform_result.error or "Transform failed"
             )
-        return r[list[m.Ldif.Entry]].ok(entries)
+        return r[Sequence[m.Ldif.Entry]].ok(entries)
 
     @staticmethod
     def file_pipeline() -> r[str]:
@@ -99,7 +100,7 @@ class BasicUsageDry:
             return r[str].fail(write_result.error or "Write failed")
         return r[str].ok("File processing complete")
 
-    def context_pipeline(self) -> r[list[m.Ldif.Entry]]:
+    def context_pipeline(self) -> r[Sequence[m.Ldif.Entry]]:
         """Context-aware processing with correlation tracking.
 
         Returns:
@@ -110,7 +111,7 @@ class BasicUsageDry:
         with FlextContext.Correlation.new_correlation("req-123-dry"):
             server_result = api.get_effective_server_type()
             if server_result.is_failure:
-                return r[list[m.Ldif.Entry]].fail(
+                return r[Sequence[m.Ldif.Entry]].fail(
                     server_result.error or "Server detection failed"
                 )
             parse_result = api.parse(
@@ -120,12 +121,12 @@ class BasicUsageDry:
                 return parse_result
             validate_result = api.validate_entries(parse_result.value)
             if validate_result.is_failure:
-                return r[list[m.Ldif.Entry]].fail(
+                return r[Sequence[m.Ldif.Entry]].fail(
                     validate_result.error or "Validation failed"
                 )
-            return r[list[m.Ldif.Entry]].ok(parse_result.value)
+            return r[Sequence[m.Ldif.Entry]].ok(parse_result.value)
 
-    def process_pipeline(self) -> r[list[m.Ldif.Entry]]:
+    def process_pipeline(self) -> r[Sequence[m.Ldif.Entry]]:
         """DRY railway: detect → parse → validate → parallel process.
 
         Python 3.13+ Features:
@@ -143,17 +144,19 @@ class BasicUsageDry:
         if detect_result.is_success and detect_result.value.detected_server_type:
             server_type = detect_result.value.detected_server_type
         elif detect_result.is_failure:
-            return r[list[m.Ldif.Entry]].fail(detect_result.error or "Detection failed")
+            return r[Sequence[m.Ldif.Entry]].fail(
+                detect_result.error or "Detection failed"
+            )
         parse_result = api.parse(self.SAMPLE_LDIF, server_type=server_type)
         if parse_result.is_failure:
-            return r[list[m.Ldif.Entry]].fail(parse_result.error or "Parse failed")
+            return r[Sequence[m.Ldif.Entry]].fail(parse_result.error or "Parse failed")
         entries = parse_result.value
         validate_result = api.validate_entries(entries)
         if validate_result.is_failure:
-            return r[list[m.Ldif.Entry]].fail(
+            return r[Sequence[m.Ldif.Entry]].fail(
                 validate_result.error or "Validation failed"
             )
         process_result = api.process("transform", entries, parallel=True, max_workers=4)
         if process_result.is_success:
-            return r[list[m.Ldif.Entry]].ok(entries)
-        return r[list[m.Ldif.Entry]].fail(process_result.error or "Process failed")
+            return r[Sequence[m.Ldif.Entry]].ok(entries)
+        return r[Sequence[m.Ldif.Entry]].fail(process_result.error or "Process failed")

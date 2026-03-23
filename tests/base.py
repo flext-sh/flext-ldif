@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from itertools import starmap
 from typing import override
 
@@ -86,7 +86,7 @@ class FlextLdifTestsServiceBase(s[m.Ldif.Entry]):
 
     @classmethod
     def create_entry(
-        cls, dn: str, attributes: dict[str, str | list[str]] | None = None
+        cls, dn: str, attributes: Mapping[str, str | Sequence[str]] | None = None
     ) -> m.Ldif.Entry:
         """Create test entry using real FlextLdifEntries service.
 
@@ -112,15 +112,15 @@ class FlextLdifTestsServiceBase(s[m.Ldif.Entry]):
 
     @classmethod
     def create_entries(
-        cls, entries_data: Sequence[tuple[str, dict[str, str | list[str]]]]
-    ) -> list[m.Ldif.Entry]:
+        cls, entries_data: Sequence[tuple[str, Mapping[str, str | Sequence[str]]]]
+    ) -> Sequence[m.Ldif.Entry]:
         """Create multiple test entries.
 
         Args:
             entries_data: Sequence of (dn, attributes) tuples
 
         Returns:
-            list[p.Entry]: List of real Entry instances
+            Sequence[p.Entry]: List of real Entry instances
 
         """
         return list(starmap(cls.create_entry, entries_data))

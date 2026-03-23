@@ -35,15 +35,15 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     @overload
-    def split(dn: str) -> list[str]: ...
+    def split(dn: str) -> Sequence[str]: ...
 
     @staticmethod
     @overload
-    def split(dn: m.Ldif.DN) -> list[str]: ...
+    def split(dn: m.Ldif.DN) -> Sequence[str]: ...
 
     @staticmethod
     @override
-    def split(dn: str | m.Ldif.DN) -> list[str]:
+    def split(dn: str | m.Ldif.DN) -> Sequence[str]:
         return FlextLdifUtilitiesDN.split(dn)
 
     @staticmethod
@@ -60,7 +60,7 @@ class FlextLdifUtilitiesDispatch:
         values: Sequence[str],
         *,
         collect_errors: bool = True,
-    ) -> r[list[tuple[str, bool, list[str]]]]: ...
+    ) -> r[Sequence[tuple[str, bool, Sequence[str]]]]: ...
 
     @staticmethod
     @overload
@@ -68,7 +68,7 @@ class FlextLdifUtilitiesDispatch:
         values: Sequence[str],
         *,
         collect_errors: bool = True,
-    ) -> r[list[tuple[str, bool, str | None]]]: ...
+    ) -> r[Sequence[tuple[str, bool, str | None]]]: ...
 
     @staticmethod
     @override
@@ -76,7 +76,10 @@ class FlextLdifUtilitiesDispatch:
         values: Sequence[str],
         *,
         collect_errors: bool = True,
-    ) -> r[list[tuple[str, bool, list[str]]]] | r[list[tuple[str, bool, str | None]]]:
+    ) -> (
+        r[Sequence[tuple[str, bool, Sequence[str]]]]
+        | r[Sequence[tuple[str, bool, str | None]]]
+    ):
         return FlextLdifUtilitiesDN.validate_dn_batch(
             values,
             collect_errors=collect_errors,
@@ -86,13 +89,13 @@ class FlextLdifUtilitiesDispatch:
     @overload
     def parse(
         definition: str,
-    ) -> r[list[tuple[str, str]]]: ...
+    ) -> r[Sequence[tuple[str, str]]]: ...
 
     @staticmethod
     @overload
     def parse(
         definition: m.Ldif.DN,
-    ) -> r[list[tuple[str, str]]]: ...
+    ) -> r[Sequence[tuple[str, str]]]: ...
 
     @staticmethod
     @overload
@@ -100,9 +103,9 @@ class FlextLdifUtilitiesDispatch:
         definition: str | m.Ldif.DN,
         server_type: str | None = None,
         parse_parts_hook: Callable[[str], Mapping[str, t.NormalizedValue]]
-        | Callable[[str], r[dict[str, t.NormalizedValue]]]
+        | Callable[[str], r[Mapping[str, t.NormalizedValue]]]
         | None = None,
-    ) -> r[dict[str, t.NormalizedValue]]: ...
+    ) -> r[Mapping[str, t.NormalizedValue]]: ...
 
     @staticmethod
     @overload
@@ -110,9 +113,9 @@ class FlextLdifUtilitiesDispatch:
         definition: str,
         server_type: str | None = None,
         parse_parts_hook: Callable[[str], Mapping[str, t.NormalizedValue]]
-        | Callable[[str], r[dict[str, t.NormalizedValue]]]
+        | Callable[[str], r[Mapping[str, t.NormalizedValue]]]
         | None = None,
-    ) -> r[dict[str, t.NormalizedValue]]: ...
+    ) -> r[Mapping[str, t.NormalizedValue]]: ...
 
     @staticmethod
     @override
@@ -120,23 +123,23 @@ class FlextLdifUtilitiesDispatch:
         definition: str | m.Ldif.DN | None,
         server_type: str | None = None,
         parse_parts_hook: Callable[[str], Mapping[str, t.NormalizedValue]]
-        | Callable[[str], r[dict[str, t.NormalizedValue]]]
+        | Callable[[str], r[Mapping[str, t.NormalizedValue]]]
         | None = None,
-    ) -> r[list[tuple[str, str]]] | r[dict[str, t.NormalizedValue]]:
+    ) -> r[Sequence[tuple[str, str]]] | r[Mapping[str, t.NormalizedValue]]:
         if definition is None:
-            return r[list[tuple[str, str]]].fail("DN cannot be None")
+            return r[Sequence[tuple[str, str]]].fail("DN cannot be None")
         if isinstance(definition, m.Ldif.DN):
             return FlextLdifUtilitiesDN.parse_dn(definition)
         if parse_parts_hook is None and server_type is None:
             return FlextLdifUtilitiesDN.parse_dn(definition)
 
-        def attr_hook(value: str) -> r[dict[str, t.NormalizedValue]]:
+        def attr_hook(value: str) -> r[Mapping[str, t.NormalizedValue]]:
             if parse_parts_hook is None:
-                return r[dict[str, t.NormalizedValue]].ok({})
+                return r[Mapping[str, t.NormalizedValue]].ok({})
             parsed_value = parse_parts_hook(value)
             if isinstance(parsed_value, r):
                 return parsed_value
-            return r[dict[str, t.NormalizedValue]].ok(dict(parsed_value))
+            return r[Mapping[str, t.NormalizedValue]].ok(dict(parsed_value))
 
         return FlextLdifUtilitiesAttribute.resolve_attribute(
             definition=definition,
@@ -207,7 +210,7 @@ class FlextLdifUtilitiesDispatch:
         strict: bool = True,
         collect_all: bool = True,
         max_errors: int = 0,
-    ) -> r[list[ValidationResult]]: ...
+    ) -> r[Sequence[ValidationResult]]: ...
 
     @staticmethod
     @overload
@@ -239,7 +242,7 @@ class FlextLdifUtilitiesDispatch:
         strict: bool = True,
         collect_all: bool = True,
         max_errors: int = 0,
-    ) -> r[list[ValidationResult]] | r[t.Container] | bool:
+    ) -> r[Sequence[ValidationResult]] | r[t.Container] | bool:
         """Validate entries against rules."""
         if isinstance(value_or_entries, str | m.Ldif.DN) and validator_first is None:
             return FlextLdifUtilitiesDN.validate_dn(value_or_entries)
@@ -280,7 +283,7 @@ class FlextLdifUtilitiesDispatch:
         strict: bool,
         collect_all: bool,
         max_errors: int,
-    ) -> r[list[ValidationResult]]:
+    ) -> r[Sequence[ValidationResult]]:
         """Internal: Validate LDIF entries."""
         pipeline = ValidationPipeline(
             strict=strict,
@@ -314,7 +317,7 @@ class FlextLdifUtilitiesDispatch:
     @override
     def filter[T: t.NormalizedValue, R: t.NormalizedValue](
         items_or_entries: T
-        | list[T]
+        | Sequence[T]
         | tuple[T, ...]
         | Mapping[str, T]
         | Sequence[m.Ldif.Entry],
@@ -324,9 +327,9 @@ class FlextLdifUtilitiesDispatch:
         _mapper: Callable[..., R] | None = None,
         mode: Literal["all", "any"] = "all",
     ) -> (
-        list[t.NormalizedValue]
+        Sequence[t.NormalizedValue]
         | Mapping[str, t.NormalizedValue]
-        | FlextLdifUtilitiesResult[list[m.Ldif.Entry]]
+        | FlextLdifUtilitiesResult[Sequence[m.Ldif.Entry]]
     ):
         """Route to Processing.filter (resolves Processing vs Filters vs Result)."""
         return FlextLdifUtilitiesProcessing.filter(

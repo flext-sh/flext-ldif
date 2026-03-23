@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -120,7 +121,7 @@ class LdifTestData:
     @staticmethod
     def large_dataset(num_entries: int = 100) -> LdifSample:
         """Generate large LDIF dataset for performance testing."""
-        entries: list[str] = []
+        entries: Sequence[str] = []
         for i in range(num_entries):
             entry = f"dn: uid=user{i:04d},ou=people,dc=example,dc=com\nobjectClass: inetOrgPerson\nobjectClass: organizationalPerson\nobjectClass: person\nobjectClass: top\nuid: user{i:04d}\ncn: User {i:04d}\nsn: User\ngivenName: Test\nmail: user{i:04d}@example.com\nemployeeNumber: E{i:06d}\n\n"
             entries.append(entry)
@@ -132,7 +133,7 @@ class LdifTestData:
         )
 
     @classmethod
-    def all_samples(cls) -> dict[str, LdifSample]:
+    def all_samples(cls) -> Mapping[str, LdifSample]:
         """Get all available LDIF samples."""
         return {
             "basic_entries": cls.basic_entries(),
@@ -146,10 +147,10 @@ class LdifTestData:
         }
 
     @classmethod
-    def write_sample_files(cls, directory: Path) -> dict[str, Path]:
+    def write_sample_files(cls, directory: Path) -> Mapping[str, Path]:
         """Write all samples to files in the given directory."""
         directory.mkdir(exist_ok=True)
-        files: dict[str, Path] = {}
+        files: Mapping[str, Path] = {}
         for name, sample in cls.all_samples().items():
             file_path = directory / f"{name}.ldif"
             _ = file_path.write_text(sample.content, encoding="utf-8")

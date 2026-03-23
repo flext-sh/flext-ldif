@@ -77,7 +77,7 @@ class FlextLdifServersBase.Acl(ABC, QuirkRegistrationMixin):
 class Acl(Protocol):
     """Protocol for ACL quirks."""
 
-    def parse(self, acl_line: str) -> r[dict[str, t.NormalizedValue]]:
+    def parse(self, acl_line: str) -> r[Mapping[str, t.NormalizedValue]]:
         """Parse ACL - returns r with dict or Acl model."""
 ```
 
@@ -150,8 +150,8 @@ def parse(
 
 ```python
 def _transform_categories(
-    self, categorized: dict[str, list[t.Dict]]
-) -> r[dict[str, list[t.Dict]]]:
+    self, categorized: Mapping[str, Sequence[t.Dict]]
+) -> r[Mapping[str, Sequence[t.Dict]]]:
     """Transform ACL entries using OID→OUD pipeline.
 
     Uses parse()

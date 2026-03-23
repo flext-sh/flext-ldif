@@ -5,6 +5,7 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -56,7 +57,7 @@ def server_migration_workflow() -> None:
 def entry_building_and_processing_workflow() -> None:
     """Run an entry building and processing workflow."""
     api = FlextLdif.get_instance()
-    created: list[m.Ldif.Entry] = []
+    created: Sequence[m.Ldif.Entry] = []
     for idx in range(2):
         create_result = api.create_entry(
             dn=f"cn=User{idx},ou=People,dc=example,dc=com",
@@ -81,7 +82,7 @@ def entry_building_and_processing_workflow() -> None:
 def schema_driven_workflow() -> None:
     """Run a schema driven workflow."""
     api = FlextLdif.get_instance()
-    entries: list[m.Ldif.Entry] = []
+    entries: Sequence[m.Ldif.Entry] = []
     for idx in range(5):
         created = api.create_entry(
             dn=f"cn=Schema User {idx},ou=People,dc=example,dc=com",
@@ -112,7 +113,7 @@ def acl_processing_workflow() -> None:
 def batch_processing_workflow() -> None:
     """Run a batch processing workflow."""
     api = FlextLdif.get_instance()
-    entries: list[m.Ldif.Entry] = []
+    entries: Sequence[m.Ldif.Entry] = []
     for idx in range(10):
         result = api.create_entry(
             dn=f"cn=BatchUser{idx},ou=People,dc=example,dc=com",

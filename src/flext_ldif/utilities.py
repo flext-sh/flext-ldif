@@ -77,7 +77,7 @@ class FlextLdifUtilities(FlextUtilities):
             attr_definition: str,
             *,
             validate_syntax: bool = True,
-        ) -> r[dict[str, t.Ldif.NormalizedValue]]:
+        ) -> r[Mapping[str, t.Ldif.NormalizedValue]]:
             """Route to Schema.parse_attribute (resolves Attribute vs Schema)."""
             return FlextLdifUtilitiesSchema.parse_attribute(
                 attr_definition,

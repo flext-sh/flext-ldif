@@ -29,26 +29,33 @@ class FlextLdifTypes(FlextTypes):
         type _MetadataLeaf = FlextTypes.Primitives | None | datetime
         type MetadataValue = (
             _MetadataLeaf
-            | list[_MetadataLeaf | list[_MetadataLeaf] | Mapping[str, _MetadataLeaf]]
+            | Sequence[
+                _MetadataLeaf | Sequence[_MetadataLeaf] | Mapping[str, _MetadataLeaf]
+            ]
             | Mapping[
-                str, _MetadataLeaf | list[_MetadataLeaf] | Mapping[str, _MetadataLeaf]
+                str,
+                _MetadataLeaf | Sequence[_MetadataLeaf] | Mapping[str, _MetadataLeaf],
             ]
         )
 
         type _ContainerLeaf = FlextTypes.Primitives | None | BaseModel | datetime
         type RecursiveContainer = (
             _ContainerLeaf
-            | list[_ContainerLeaf | list[_ContainerLeaf] | Mapping[str, _ContainerLeaf]]
+            | Sequence[
+                _ContainerLeaf | Sequence[_ContainerLeaf] | Mapping[str, _ContainerLeaf]
+            ]
             | Mapping[
                 str,
-                _ContainerLeaf | list[_ContainerLeaf] | Mapping[str, _ContainerLeaf],
+                _ContainerLeaf
+                | Sequence[_ContainerLeaf]
+                | Mapping[str, _ContainerLeaf],
             ]
         )
 
         type NormalizedValue = RecursiveContainer
 
-        type ValueType = Scalar | list[str]
-        type ValueList = list[ValueType]
+        type ValueType = Scalar | Sequence[str]
+        type ValueList = Sequence[ValueType]
         type AttributeValue = str | bytes
         type DnString = str
         type RdnString = str
@@ -56,8 +63,8 @@ class FlextLdifTypes(FlextTypes):
         type MetadataKey = str
         type ProcessingMode = Literal["validate", "transform", "filter"]
         type ValidationLevel = Literal["strict", "moderate", "lenient"]
-        type EntryAttributesDict = dict[str, list[str]]
-        type RawEntryDict = dict[str, str | list[str] | set[str]]
+        type EntryAttributesDict = Mapping[str, Sequence[str]]
+        type RawEntryDict = Mapping[str, str | Sequence[str] | set[str]]
 
         type Rfc4512Descriptor = Annotated[
             str,
@@ -84,15 +91,15 @@ class FlextLdifTypes(FlextTypes):
         ]
 
         type ParseMethodArg = str
-        type ParseMethodReturn = r[FlextTypes.Scalar | list[str] | None]
+        type ParseMethodReturn = r[FlextTypes.Scalar | Sequence[str] | None]
         type ParseMethod = Callable[[t.NormalizedValue, str], ParseMethodReturn]
         type ParseMethodDecorator = Callable[[ParseMethod], ParseMethod]
-        type WriteMethodArg = FlextTypes.Scalar | list[str] | None
+        type WriteMethodArg = FlextTypes.Scalar | Sequence[str] | None
         type WriteMethodReturn = (
             FlextTypes.Scalar
-            | list[str]
+            | Sequence[str]
             | None
-            | r[FlextTypes.Scalar | list[str] | None]
+            | r[FlextTypes.Scalar | Sequence[str] | None]
         )
         type WriteMethod = Callable[
             [t.NormalizedValue, WriteMethodArg], WriteMethodReturn
@@ -100,13 +107,13 @@ class FlextLdifTypes(FlextTypes):
         type WriteMethodDecorator = Callable[[WriteMethod], WriteMethod]
         type SafeMethod = Callable[
             [t.NormalizedValue, ParseMethodArg],
-            FlextTypes.Scalar | list[str] | None,
+            FlextTypes.Scalar | Sequence[str] | None,
         ]
         type SafeMethodDecorator = Callable[[SafeMethod], SafeMethod]
 
         type DistributionDict = MutableMapping[str, int]
-        type AttributeDict = Mapping[str, list[str]]
-        type AttributeDictGeneric = Mapping[str, list[str] | str]
+        type AttributeDict = Mapping[str, Sequence[str]]
+        type AttributeDictGeneric = Mapping[str, Sequence[str] | str]
 
         type TemplateValue = FlextTypes.Scalar | None
         T = TypeVar("T")

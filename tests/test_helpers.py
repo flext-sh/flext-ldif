@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TypeVar
 
@@ -76,8 +76,8 @@ class TestsFlextLdifMatchers(tm):
         dn_ends: str | None = None,
         has_attr: str | Sequence[str] | None = None,
         not_has_attr: str | Sequence[str] | None = None,
-        attr_equals: dict[str, str | list[str]] | None = None,
-        attr_contains: dict[str, str | list[str]] | None = None,
+        attr_equals: Mapping[str, str | Sequence[str]] | None = None,
+        attr_contains: Mapping[str, str | Sequence[str]] | None = None,
         has_oc: str | Sequence[str] | None = None,
         not_has_oc: str | Sequence[str] | None = None,
         attr_count: int | None = None,
@@ -149,7 +149,7 @@ class TestsFlextLdifMatchers(tm):
             raise AssertionError(msg or "Entry has no 'attributes' attribute")
         attrs_obj = entry.attributes
         if attrs_obj is None:
-            attrs: dict[str, list[str]] = {}
+            attrs: Mapping[str, Sequence[str]] = {}
         elif hasattr(attrs_obj, "attributes") and attrs_obj.attributes is not None:
             attrs = attrs_obj.attributes
         elif isinstance(attrs_obj, dict):
@@ -287,9 +287,9 @@ class TestsFlextLdifMatchers(tm):
         all_have_oc: str | Sequence[str] | None = None,
         any_has_attr: str | Sequence[str] | None = None,
         any_has_oc: str | Sequence[str] | None = None,
-        at_index: dict[int, dict[str, t.NormalizedValue]] | None = None,
+        at_index: Mapping[int, Mapping[str, t.NormalizedValue]] | None = None,
         msg: str | None = None,
-    ) -> list[m.Ldif.Entry]:
+    ) -> Sequence[m.Ldif.Entry]:
         """Unified entries list validation - validates counts and entry properties.
 
         Consolidates multiple entry list validation patterns into one method.
@@ -320,7 +320,7 @@ class TestsFlextLdifMatchers(tm):
             tm.entries(entries, at_index={0: {"dn": "cn=first"}, 1: {"has_attr": "mail"}})
 
         """
-        entries_list: list[m.Ldif.Entry]
+        entries_list: Sequence[m.Ldif.Entry]
         if isinstance(entries, r):
             if entries.is_failure:
                 error_msg = msg or str(entries.error)
@@ -370,7 +370,7 @@ class TestsFlextLdifMatchers(tm):
                         and attrs_obj.attributes is not None
                         else attrs_obj
                         if isinstance(attrs_obj, dict)
-                        else dict[str, t.NormalizedValue]()
+                        else Mapping[str, t.NormalizedValue]()
                     )
                     if isinstance(attrs, dict) and all(
                         attr in attrs for attr in attr_list
@@ -394,7 +394,7 @@ class TestsFlextLdifMatchers(tm):
                         and attrs_obj.attributes is not None
                         else attrs_obj
                         if isinstance(attrs_obj, dict)
-                        else dict[str, t.NormalizedValue]()
+                        else Mapping[str, t.NormalizedValue]()
                     )
                     if isinstance(attrs, dict):
                         objectclasses_raw = attrs.get(
@@ -409,7 +409,7 @@ class TestsFlextLdifMatchers(tm):
                                 if isinstance(item, str)
                             ]
                         else:
-                            objectclasses: list[str] = []
+                            objectclasses: Sequence[str] = []
                         if all(oc in objectclasses for oc in oc_list):
                             found = True
                             break
@@ -469,8 +469,8 @@ class TestsFlextLdifMatchers(tm):
         dn_ends: str | None = None,
         has_attr: str | Sequence[str] | None = None,
         not_has_attr: str | Sequence[str] | None = None,
-        attr_equals: dict[str, str | list[str]] | None = None,
-        attr_contains: dict[str, str | list[str]] | None = None,
+        attr_equals: Mapping[str, str | Sequence[str]] | None = None,
+        attr_contains: Mapping[str, str | Sequence[str]] | None = None,
         has_oc: str | Sequence[str] | None = None,
         not_has_oc: str | Sequence[str] | None = None,
         attr_count: int | None = None,
@@ -536,12 +536,12 @@ class TestsFlextLdifMatchers(tm):
         all_have_oc: str | Sequence[str] | None = None,
         any_has_attr: str | Sequence[str] | None = None,
         any_has_oc: str | Sequence[str] | None = None,
-        at_index: dict[int, dict[str, t.NormalizedValue]] | None = None,
-    ) -> list[m.Ldif.Entry]:
+        at_index: Mapping[int, Mapping[str, t.NormalizedValue]] | None = None,
+    ) -> Sequence[m.Ldif.Entry]:
         """Assert r success and validate entries list.
 
         Args:
-            result: r[Sequence[Entry]] or r[list[Entry]] to validate
+            result: r[Sequence[Entry]] or r[Sequence[Entry]] to validate
             msg: Custom error message
             See entries() method for parameter documentation
 
@@ -549,7 +549,7 @@ class TestsFlextLdifMatchers(tm):
             The validated list of entries
 
         """
-        entries: list[m.Ldif.Entry] = list(_unwrap_result(result, msg=msg))
+        entries: Sequence[m.Ldif.Entry] = list(_unwrap_result(result, msg=msg))
         return TestsFlextLdifMatchers.entries(
             entries,
             msg=msg,
@@ -607,7 +607,7 @@ class TestsFlextLdifValidators(tv):
                 if hasattr(attrs_obj, "attributes") and attrs_obj.attributes is not None
                 else attrs_obj
                 if isinstance(attrs_obj, dict)
-                else dict[str, t.NormalizedValue]()
+                else Mapping[str, t.NormalizedValue]()
             )
             if not isinstance(attrs, dict):
                 return False
@@ -641,7 +641,7 @@ class TestsFlextLdifFixtures(tt):
     __test__ = False
 
     @classmethod
-    def create_entry(cls, dn: str, **attributes: str | list[str]) -> m.Ldif.Entry:
+    def create_entry(cls, dn: str, **attributes: str | Sequence[str]) -> m.Ldif.Entry:
         """Create test entry from DN and attributes.
 
         Args:
@@ -653,7 +653,7 @@ class TestsFlextLdifFixtures(tt):
 
         """
         service = FlextLdifEntries()
-        attrs_dict: dict[str, str | list[str]] = {
+        attrs_dict: Mapping[str, str | Sequence[str]] = {
             k: [v] if isinstance(v, str) else v for k, v in attributes.items()
         }
         result = service.create_entry(dn=dn, attributes=attrs_dict)
@@ -664,8 +664,8 @@ class TestsFlextLdifFixtures(tt):
 
     @classmethod
     def create_entries(
-        cls, entries_data: Sequence[tuple[str, dict[str, str | list[str]]]]
-    ) -> list[m.Ldif.Entry]:
+        cls, entries_data: Sequence[tuple[str, Mapping[str, str | Sequence[str]]]]
+    ) -> Sequence[m.Ldif.Entry]:
         """Create multiple test entries.
 
         Args:
@@ -675,7 +675,7 @@ class TestsFlextLdifFixtures(tt):
             List of created entries
 
         """
-        result: list[m.Ldif.Entry] = []
+        result: Sequence[m.Ldif.Entry] = []
         for dn, attrs in entries_data:
             entry = cls.create_entry(dn, **attrs)
             result.append(entry)
@@ -684,7 +684,7 @@ class TestsFlextLdifFixtures(tt):
     @staticmethod
     def run_fixture_roundtrip(
         fixture_path: Path, msg: str | None = None
-    ) -> list[m.Ldif.Entry]:
+    ) -> Sequence[m.Ldif.Entry]:
         """Run fixture roundtrip - parse, write, parse again.
 
         Args:
@@ -706,7 +706,7 @@ class TestsFlextLdifFixtures(tt):
     @staticmethod
     def load_fixture_entries(
         fixture_path: Path, msg: str | None = None
-    ) -> list[m.Ldif.Entry]:
+    ) -> Sequence[m.Ldif.Entry]:
         """Load fixture entries from LDIF file.
 
         Args:
@@ -724,7 +724,7 @@ class TestsFlextLdifFixtures(tt):
     @staticmethod
     def load_fixture_and_validate_structure(
         fixture_path: Path, msg: str | None = None
-    ) -> list[m.Ldif.Entry]:
+    ) -> Sequence[m.Ldif.Entry]:
         """Load fixture and validate structure.
 
         Args:

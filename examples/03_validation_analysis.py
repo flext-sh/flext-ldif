@@ -15,6 +15,8 @@ SRP: Dataset generation, validation, analysis - each isolated, composition handl
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+
 from flext_core import r
 
 from flext_ldif import FlextLdif, m
@@ -29,7 +31,7 @@ class DRYValidationAnalysis:
     ) -> r[m.Ldif.ValidationResult]:
         """DRY validation analysis: categorize errors and detect patterns."""
         if not validation_result.is_valid:
-            error_groups: dict[str, list[str]] = {}
+            error_groups: Mapping[str, Sequence[str]] = {}
             for error in validation_result.errors:
                 category = getattr(error, "category", "unknown")
                 if category not in error_groups:
@@ -40,7 +42,7 @@ class DRYValidationAnalysis:
     @staticmethod
     def _generate_test_dataset(
         count: int, error_rate: float = 0.0
-    ) -> list[m.Ldif.Entry]:
+    ) -> Sequence[m.Ldif.Entry]:
         """DRY test dataset generation with configurable errors."""
         api = FlextLdif.get_instance()
         return [
@@ -102,18 +104,18 @@ class DRYValidationAnalysis:
         return DRYValidationAnalysis._analyze_validation_results(validation_result)
 
     @staticmethod
-    def statistical_analysis() -> r[dict[str, int | float]]:
+    def statistical_analysis() -> r[Mapping[str, int | float]]:
         """DRY statistical analysis: comprehensive metrics in one pipeline."""
         api = FlextLdif.get_instance()
         entries = DRYValidationAnalysis._generate_test_dataset(500, error_rate=0.05)
         validate_result = api.validate_entries(entries)
         if validate_result.is_failure:
-            return r[dict[str, int | float]].fail(validate_result.error)
+            return r[Mapping[str, int | float]].fail(validate_result.error)
         total_entries = len(entries)
         valid_result = validate_result.value
         valid_entries = valid_result.valid_entries
         invalid_entries = valid_result.invalid_entries
-        return r[dict[str, int | float]].ok({
+        return r[Mapping[str, int | float]].ok({
             "total_entries": total_entries,
             "valid_entries": valid_entries,
             "invalid_entries": invalid_entries,

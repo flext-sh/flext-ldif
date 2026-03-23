@@ -7,6 +7,7 @@ attributes like CANONICAL_NAME, ALIASES, and PRIORITY values.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Final
 
@@ -75,7 +76,7 @@ class TestsFlextLdifQuirksStandardizedConstants(s):
     def test_constants_include_canonical_name(self) -> None:
         """Canonical name must be in aliases."""
         quirks: Final[
-            list[
+            Sequence[
                 tuple[
                     type[
                         FlextLdifServersRfc | FlextLdifServersOid | FlextLdifServersOud
@@ -136,8 +137,8 @@ class TestQuirksWithRealLdifFixtures:
     def _sample_ldif_records(ldif_content: str, max_records: int = 25) -> str:
         """Return first LDIF records to keep fixture parsing lightweight."""
         lines = ldif_content.splitlines()
-        sampled: list[str] = []
-        current_record: list[str] = []
+        sampled: Sequence[str] = []
+        current_record: Sequence[str] = []
         record_count = 0
 
         def flush_record() -> None:

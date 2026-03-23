@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from typing import Self, override
 
 from flext_core import FlextUtilities, r
@@ -31,9 +31,9 @@ class FlextLdifUtilitiesNormalization:
     @staticmethod
     def normalize_mapping(
         mapping: Mapping[str, t.NormalizedValue],
-    ) -> dict[str, t.NormalizedValue]:
+    ) -> Mapping[str, t.NormalizedValue]:
         """Normalize a mapping of objects to a standard dict form."""
-        normalized: dict[str, t.NormalizedValue] = {}
+        normalized: Mapping[str, t.NormalizedValue] = {}
         for key, value in mapping.items():
             normalized[str(key)] = FlextLdifUtilitiesNormalization.normalize_container(
                 value,
@@ -63,7 +63,7 @@ class FlextLdifUtilitiesNormalization:
                 value_str = str(self._value)
                 return value_str or str_default
             if self._target_type == "to_str_list":
-                list_default: list[str] = []
+                list_default: Sequence[str] = []
                 if self._default is not None:
                     if isinstance(self._default, list):
                         list_default = [str(x) for x in self._default]
@@ -99,9 +99,9 @@ class FlextLdifUtilitiesNormalization:
             self._safe_mode = True
             return self
 
-        def str_list(self, default: list[str] | None = None) -> Self:
+        def str_list(self, default: Sequence[str] | None = None) -> Self:
             """Convert to string list using parent Conversion utilities."""
-            self._default = default if default is not None else list[str]()
+            self._default = default if default is not None else Sequence[str]()
             self._target_type = "to_str_list"
             return self
 
@@ -128,8 +128,8 @@ class FlextLdifUtilitiesNormalization:
         cls,
         value: t.NormalizedValue | r[t.NormalizedValue],
         *,
-        default: list[t.NormalizedValue] | None = None,
-    ) -> list[t.NormalizedValue]:
+        default: Sequence[t.NormalizedValue] | None = None,
+    ) -> Sequence[t.NormalizedValue]:
         """Normalize to list using FlextUtilities.build() DSL (mnemonic: nl)."""
         extracted_value: t.NormalizedValue | None
         match value:
@@ -139,11 +139,13 @@ class FlextLdifUtilitiesNormalization:
                 )
             case _:
                 extracted_value = value
-        default_list: list[t.NormalizedValue] = default if default is not None else []
+        default_list: Sequence[t.NormalizedValue] = (
+            default if default is not None else []
+        )
         extracted: t.NormalizedValue = (
             extracted_value if extracted_value is not None else default_list
         )
-        ops: dict[str, t.NormalizedValue] = {
+        ops: Mapping[str, t.NormalizedValue] = {
             "ensure": "list",
             "ensure_default": default_list,
         }
@@ -164,16 +166,16 @@ class FlextLdifUtilitiesNormalization:
     @classmethod
     def normalize_ldif(
         cls,
-        value: str | list[str] | tuple[str, ...] | set[str] | frozenset[str],
+        value: str | Sequence[str] | tuple[str, ...] | set[str] | frozenset[str],
         other: str
-        | list[str]
+        | Sequence[str]
         | tuple[str, ...]
         | set[str]
         | frozenset[str]
         | None = None,
         *,
         case: str = "lower",
-    ) -> str | list[str] | set[str] | bool:
+    ) -> str | Sequence[str] | set[str] | bool:
         """Normalize for LDIF comparison (mnemonic: nz)."""
 
         def normalize_single(v: str) -> str:
@@ -233,7 +235,7 @@ class FlextLdifUtilitiesNormalization:
             bool_default = default if isinstance(default, bool) else False
             conv_result = conv_builder.to_bool(default=bool_default).build()
         elif target_type == "list":
-            list_default: list[str] = []
+            list_default: Sequence[str] = []
             match default:
                 case list() | tuple() as default_seq:
                     list_default = [str(item) for item in default_seq]
@@ -244,7 +246,7 @@ class FlextLdifUtilitiesNormalization:
                 filtered = [item for item in conv_result if predicate(item)]
                 return filtered or conv_result
         else:
-            ops: dict[str, t.NormalizedValue] = {
+            ops: Mapping[str, t.NormalizedValue] = {
                 "ensure": target_type,
                 "ensure_default": default,
             }
@@ -305,14 +307,14 @@ class FlextLdifUtilitiesNormalization:
             bool_default = default if isinstance(default, bool) else False
             return cls.conv(value).to_bool(default=bool_default).safe().build()
         if target_type is list:
-            list_default: list[str] = []
+            list_default: Sequence[str] = []
             match default:
                 case list() | tuple() as default_seq:
                     list_default = [str(item) for item in default_seq]
                 case _:
                     pass
             return cls.conv(value).str_list(default=list_default).safe().build()
-        ops: dict[str, t.NormalizedValue] = {}
+        ops: Mapping[str, t.NormalizedValue] = {}
         result = cls.build(
             value,
             ops=ops,

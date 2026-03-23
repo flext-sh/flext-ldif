@@ -5,6 +5,8 @@ Tests all 830 uncovered lines in utilities.py with real data and automation.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+
 import pytest
 from flext_tests import tm
 
@@ -31,11 +33,11 @@ class TestFlextLdifUtilitiesComprehensive:
             entries_count=5, include_schema=True
         )
         lines = ldif_content.split("\n")
-        entries: list[m.Ldif.Tests.LdifTestData] = []
+        entries: Sequence[m.Ldif.Tests.LdifTestData] = []
         for line in lines:
             if line.startswith("dn:"):
                 current_dn = line[4:].strip()
-                current_attrs: dict[str, list[str]] = {}
+                current_attrs: Mapping[str, Sequence[str]] = {}
                 entries.append(
                     m.Ldif.Tests.LdifTestData(
                         id=f"entry_{len(entries)}",

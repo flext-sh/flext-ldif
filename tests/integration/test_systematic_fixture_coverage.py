@@ -19,6 +19,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import pytest
 
 from flext_ldif import FlextLdif, u
@@ -46,7 +48,7 @@ class TestSystematicFixtureCoverage:
             (line for line in lines if line.startswith("dn:")), "dn: cn=schema"
         )
         selected_lines = [first_dn]
-        current_chunk: list[str] = []
+        current_chunk: Sequence[str] = []
         definitions_count = 0
 
         def flush_chunk() -> None:

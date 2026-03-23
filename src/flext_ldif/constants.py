@@ -651,7 +651,7 @@ class FlextLdifConstants(FlextConstants):
         ATTRIBUTE_TYPES: Final[str] = "attributeTypes"
         OBJECT_CLASSES: Final[str] = "objectClasses"
 
-        DEFAULT_ACL_ATTRIBUTES: Final[list[str]] = ["acl", "aci", "olcAccess"]
+        DEFAULT_ACL_ATTRIBUTES: Final[Sequence[str]] = ["acl", "aci", "olcAccess"]
 
         MANAGER: Final[str] = "manager"
         GROUPS: Final[str] = "groups"

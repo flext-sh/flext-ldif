@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import ClassVar
 
 from flext_core import FlextLogger
@@ -84,7 +84,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     ACL_AUTHMETHOD_PATTERN: ClassVar[str] = 'authmethod\\s*=\\s*"?(\\w+)"?'
     ACL_SSF_PATTERN: ClassVar[str] = 'ssf\\s*([<>=!]+)\\s*"?(\\d+)"?'
     ACL_BIND_RULE_TUPLE_LENGTH: ClassVar[int] = 2
-    ACL_BIND_RULES_CONFIG: ClassVar[list[tuple[str, str, str | None]]] = [
+    ACL_BIND_RULES_CONFIG: ClassVar[Sequence[tuple[str, str, str | None]]] = [
         ("bind_ip", 'ip="{value}"', None),
         ("bind_dns", 'dns="{value}"', None),
         ("bind_dayofweek", 'dayofweek="{value}"', None),
@@ -92,7 +92,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         ("authmethod", 'authmethod = "{value}"', None),
         ("ssf", 'ssf {operator} "{value}"', ">="),
     ]
-    ACL_TARGET_EXTENSIONS_CONFIG: ClassVar[list[tuple[str, str]]] = [
+    ACL_TARGET_EXTENSIONS_CONFIG: ClassVar[Sequence[tuple[str, str]]] = [
         ("targattrfilters", '(targattrfilters="{value}")'),
         ("targetcontrol", '(targetcontrol="{value}")'),
         ("extop", '(extop="{value}")'),
@@ -193,7 +193,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "accountDisabled": "ds-pwp-account-disabled",
         "entryUUID": "entryUUID",
     }
-    ATTRIBUTE_ALIASES: ClassVar[Mapping[str, list[str]]] = {
+    ATTRIBUTE_ALIASES: ClassVar[Mapping[str, Sequence[str]]] = {
         "cn": ["commonName"],
         "sn": ["surname"],
         "givenName": ["gn"],
@@ -236,7 +236,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "domain",
     ])
     CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(["aci"])
-    CATEGORIZATION_PRIORITY: ClassVar[list[str]] = [
+    CATEGORIZATION_PRIORITY: ClassVar[Sequence[str]] = [
         "schema",
         "acl",
         "users",

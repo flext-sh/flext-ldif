@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 import re
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self, override
@@ -65,7 +65,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
             "write_format_options",
         )
         if isinstance(format_options_raw, Mapping):
-            format_options_map: dict[str, t.NormalizedValue] = {}
+            format_options_map: Mapping[str, t.NormalizedValue] = {}
             for raw_key, raw_value in format_options_raw.items():
                 key = str(raw_key)
                 format_options_map[key] = raw_value
@@ -87,7 +87,9 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
             )
             return None
 
-    def can_handle(self, entry_dn: str, attributes: Mapping[str, list[str]]) -> bool:
+    def can_handle(
+        self, entry_dn: str, attributes: Mapping[str, Sequence[str]]
+    ) -> bool:
         """Check if this quirk can handle the entry."""
         _ = entry_dn
         _ = attributes
@@ -123,14 +125,14 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         return r[m.Ldif.Entry | str].ok("")
 
     @override
-    def parse(self, value: str) -> r[list[m.Ldif.Entry]]:
+    def parse(self, value: str) -> r[Sequence[m.Ldif.Entry]]:
         """Parse LDIF content string into Entry models."""
         return self._parse_content(value)
 
     def parse_entry(
         self,
         entry_dn: str,
-        entry_attrs: Mapping[str, list[str]],
+        entry_attrs: Mapping[str, Sequence[str]],
     ) -> r[m.Ldif.Entry]:
         """Parse a single entry from DN and attributes."""
         attrs_dict = dict(entry_attrs)
@@ -148,7 +150,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
 
     def write(
         self,
-        entry_data: m.Ldif.Entry | list[m.Ldif.Entry],
+        entry_data: m.Ldif.Entry | Sequence[m.Ldif.Entry],
         write_options: FlextLdifModelsSettings.WriteFormatOptions | None = None,
     ) -> r[str]:
         """Write Entry model(s) to LDIF string format."""
@@ -160,9 +162,9 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         self,
         write_options: FlextLdifModelsSettings.WriteFormatOptions | None,
         entry_count: int,
-    ) -> list[str]:
+    ) -> Sequence[str]:
         """Build header lines based on write options."""
-        lines: list[str] = []
+        lines: Sequence[str] = []
         if write_options is None:
             return lines
         if write_options.include_version_header:
@@ -177,10 +179,10 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
 
     def _convert_raw_attributes(
         self,
-        entry_attrs: Mapping[str, list[str | bytes]],
-    ) -> Mapping[str, list[str]]:
-        """Convert raw LDIF attributes to dict[str, list[str]] format."""
-        converted_attrs: dict[str, list[str]] = {}
+        entry_attrs: Mapping[str, Sequence[str | bytes]],
+    ) -> Mapping[str, Sequence[str]]:
+        """Convert raw LDIF attributes to Mapping[str, Sequence[str]] format."""
+        converted_attrs: Mapping[str, Sequence[str]] = {}
         for attr_name, attr_values in entry_attrs.items():
             canonical_attr_name = self._normalize_attribute_name(attr_name)
             string_values = [
@@ -240,7 +242,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
     def _hook_validate_entry_raw(
         self,
         dn: str,
-        attrs: Mapping[str, list[str | bytes]],
+        attrs: Mapping[str, Sequence[str | bytes]],
     ) -> r[bool]:
         """Hook to validate raw entry before parsing."""
         _ = attrs
@@ -289,10 +291,10 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         """Normalize entry to RFC format with metadata tracking."""
         return entry
 
-    def _parse_content(self, ldif_content: str) -> r[list[m.Ldif.Entry]]:
+    def _parse_content(self, ldif_content: str) -> r[Sequence[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal)."""
         _ = ldif_content
-        return r[list[m.Ldif.Entry]].fail("Must be implemented by subclass")
+        return r[Sequence[m.Ldif.Entry]].fail("Must be implemented by subclass")
 
     def _resolve_write_options_for_header(
         self,
@@ -306,7 +308,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
     def _write_entry(self, entry_data: m.Ldif.Entry) -> r[str]:
         """Write Entry model to RFC-compliant LDIF string (internal)."""
         ascii_printable_limit = 127
-        output_lines: list[str] = []
+        output_lines: Sequence[str] = []
         fold_long_lines = True
         line_width = c.Ldif.LINE_FOLD_WIDTH
         include_dn_comments = False
@@ -324,7 +326,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
                 extensions_data = dict(metadata_extensions)
         hidden_raw = extensions_data.get(c.Ldif.HIDDEN_ATTRIBUTES)
         if isinstance(hidden_raw, list):
-            hidden_text: list[str] = [str(value) for value in hidden_raw]
+            hidden_text: Sequence[str] = [str(value) for value in hidden_raw]
             hidden_attributes = {attr.lower() for attr in hidden_text}
         acl_original_raw = extensions_data.get(c.Ldif.ACL_ORIGINAL_FORMAT)
         if isinstance(acl_original_raw, str):
@@ -344,12 +346,12 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
                 format_options.use_original_acl_format_as_name,
             )
 
-        def fold_line(line: str) -> list[str]:
+        def fold_line(line: str) -> Sequence[str]:
             """Fold a line per RFC 2849 if fold_long_lines is enabled."""
             effective_width = line_width if fold_long_lines else c.Ldif.LINE_FOLD_WIDTH
             if len(line.encode("utf-8")) <= effective_width:
                 return [line]
-            folded: list[str] = []
+            folded: Sequence[str] = []
             line_bytes = line.encode("utf-8")
             pos = 0
             while pos < len(line_bytes):
@@ -456,14 +458,14 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
 
     def _write_entry_list(
         self,
-        entries: list[m.Ldif.Entry],
+        entries: Sequence[m.Ldif.Entry],
         write_options: FlextLdifModelsSettings.WriteFormatOptions | None,
     ) -> r[str]:
         """Write list of entries to LDIF."""
         opts = self._resolve_write_options_for_header(write_options)
         header_lines = self._build_header_lines(opts, len(entries))
 
-        def format_output(results: list[str]) -> str:
+        def format_output(results: Sequence[str]) -> str:
             all_lines = header_lines + results
             ldif_output = "\n".join(all_lines) if all_lines else ""
             if header_lines and (not ldif_output.endswith("\n")):

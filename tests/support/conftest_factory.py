@@ -14,7 +14,7 @@ import contextlib
 import copy
 import tempfile
 import time
-from collections.abc import Callable, Collection, Generator
+from collections.abc import Callable, Collection, Generator, Mapping, Sequence
 from pathlib import Path
 from typing import (
     ClassVar,
@@ -52,12 +52,14 @@ class FlextLdifTestConftest:
     Reduces conftest.py from 1400+ lines to ~20 lines using DRY principles.
     """
 
-    _TEST_USERS: ClassVar[list[dict[str, str]]] = [
+    _TEST_USERS: ClassVar[Sequence[Mapping[str, str]]] = [
         {"name": "Test User 1", "email": "user1@example.com"},
         {"name": "Test User 2", "email": "user2@example.com"},
         {"name": "Test User 3", "email": "user3@example.com"},
     ]
-    _LDIF_TEST_ENTRIES: ClassVar[list[dict[str, dict[str, Collection[str]] | str]]] = [
+    _LDIF_TEST_ENTRIES: ClassVar[
+        Sequence[Mapping[str, Mapping[str, Collection[str]] | str]]
+    ] = [
         {
             "dn": f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com",
             "attributes": {
@@ -119,7 +121,7 @@ class FlextLdifTestConftest:
         return f"{worker_id}-{session_id}-{test_name_clean}-{test_id}"
 
     def make_user_dn(
-        self, unique_dn_suffix: str, ldap_container: dict[str, t.NormalizedValue]
+        self, unique_dn_suffix: str, ldap_container: Mapping[str, t.NormalizedValue]
     ) -> Callable[[str], str]:
         """Factory for unique user DNs."""
         base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -130,7 +132,7 @@ class FlextLdifTestConftest:
         return _make
 
     def make_group_dn(
-        self, unique_dn_suffix: str, ldap_container: dict[str, t.NormalizedValue]
+        self, unique_dn_suffix: str, ldap_container: Mapping[str, t.NormalizedValue]
     ) -> Callable[[str], str]:
         """Factory for unique group DNs."""
         base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -141,7 +143,7 @@ class FlextLdifTestConftest:
         return _make
 
     def make_test_base_dn(
-        self, unique_dn_suffix: str, ldap_container: dict[str, t.NormalizedValue]
+        self, unique_dn_suffix: str, ldap_container: Mapping[str, t.NormalizedValue]
     ) -> Callable[[str], str]:
         """Factory for unique base DNs."""
         base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -195,7 +197,7 @@ class FlextLdifTestConftest:
 
     def ldap_container(
         self, docker_control: tk, worker_id: str
-    ) -> dict[str, t.NormalizedValue]:
+    ) -> Mapping[str, t.NormalizedValue]:
         """Session-scoped LDAP container configuration.
 
         Uses direct container configuration for flext-openldap-test.
@@ -265,14 +267,14 @@ class FlextLdifTestConftest:
         }
 
     def ldap_container_shared(
-        self, ldap_container: dict[str, t.NormalizedValue]
+        self, ldap_container: Mapping[str, t.NormalizedValue]
     ) -> str:
         """Provide LDAP connection string."""
         default_url = f"ldap://localhost:{self.LDAP_PORT}"
         return str(ldap_container.get("server_url", default_url))
 
     def ldap_connection(
-        self, ldap_container: dict[str, t.NormalizedValue]
+        self, ldap_container: Mapping[str, t.NormalizedValue]
     ) -> Generator[Connection]:
         """Create LDAP connection."""
         host = str(ldap_container.get("host", "localhost"))
@@ -323,7 +325,7 @@ class FlextLdifTestConftest:
         except Exception:
             pass
 
-    def ldif_processor_config(self) -> dict[str, t.NormalizedValue]:
+    def ldif_processor_config(self) -> Mapping[str, t.NormalizedValue]:
         """LDIF processor configuration."""
         return {
             "encoding": FlextConstants.DEFAULT_ENCODING,
@@ -333,15 +335,15 @@ class FlextLdifTestConftest:
             "normalize_attributes": True,
         }
 
-    def real_ldif_api(self) -> dict[str, t.NormalizedValue]:
+    def real_ldif_api(self) -> Mapping[str, t.NormalizedValue]:
         """Real LDIF API services."""
         return FlextLdifTestServiceFactory.create_api()
 
-    def strict_ldif_api(self) -> dict[str, t.NormalizedValue]:
+    def strict_ldif_api(self) -> Mapping[str, t.NormalizedValue]:
         """Strict LDIF API services."""
         return FlextLdifTestServiceFactory.create_strict_api()
 
-    def lenient_ldif_api(self) -> dict[str, t.NormalizedValue]:
+    def lenient_ldif_api(self) -> Mapping[str, t.NormalizedValue]:
         """Lenient LDIF API services."""
         return FlextLdifTestServiceFactory.create_lenient_api()
 
@@ -415,7 +417,7 @@ class FlextLdifTestConftest:
         """Real writer service."""
         return FlextLdifTestServiceFactory.create_writer(quirk_registry=quirk_registry)
 
-    def integration_services(self) -> dict[str, t.NormalizedValue]:
+    def integration_services(self) -> Mapping[str, t.NormalizedValue]:
         """Integration services."""
         return FlextLdifTestServiceFactory.services_for_integration_test()
 
@@ -439,10 +441,10 @@ class FlextLdifTestConftest:
 
     def validate_flext_result_success(
         self,
-    ) -> Callable[..., dict[str, bool]]:
+    ) -> Callable[..., Mapping[str, bool]]:
         """Validate success result."""
 
-        def validator(result: r[t.NormalizedValue]) -> dict[str, bool]:
+        def validator(result: r[t.NormalizedValue]) -> Mapping[str, bool]:
             return {
                 "is_success": result.is_success,
                 "has_value": result.is_success and result.value is not None,
@@ -455,10 +457,10 @@ class FlextLdifTestConftest:
 
     def validate_flext_result_failure(
         self,
-    ) -> Callable[..., dict[str, bool]]:
+    ) -> Callable[..., Mapping[str, bool]]:
         """Validate failure result."""
 
-        def validator(result: r[t.NormalizedValue]) -> dict[str, bool]:
+        def validator(result: r[t.NormalizedValue]) -> Mapping[str, bool]:
             return {
                 "is_failure": result.is_failure,
                 "has_error": result.error is not None,
@@ -471,12 +473,12 @@ class FlextLdifTestConftest:
 
     def flext_result_composition_helper(
         self,
-    ) -> Callable[[list[r[t.NormalizedValue]]], dict[str, t.NormalizedValue]]:
+    ) -> Callable[[Sequence[r[t.NormalizedValue]]], Mapping[str, t.NormalizedValue]]:
         """Result composition helper."""
 
         def helper(
-            results: list[r[t.NormalizedValue]],
-        ) -> dict[str, t.NormalizedValue]:
+            results: Sequence[r[t.NormalizedValue]],
+        ) -> Mapping[str, t.NormalizedValue]:
             successes = [res for res in results if res.is_success]
             failures = [res for res in results if res.is_failure]
             return {
@@ -491,7 +493,7 @@ class FlextLdifTestConftest:
 
         return helper
 
-    def ldap_schema_config(self) -> dict[str, t.NormalizedValue]:
+    def ldap_schema_config(self) -> Mapping[str, t.NormalizedValue]:
         """LDAP schema config."""
         return {
             "validate_object_classes": True,
@@ -513,7 +515,7 @@ class FlextLdifTestConftest:
             },
         }
 
-    def transformation_rules(self) -> dict[str, t.NormalizedValue]:
+    def transformation_rules(self) -> Mapping[str, t.NormalizedValue]:
         """Transformation rules."""
 
         def _transform_mail(x: str | float | None) -> str:
@@ -535,7 +537,7 @@ class FlextLdifTestConftest:
             },
         }
 
-    def ldif_filters(self) -> dict[str, t.NormalizedValue]:
+    def ldif_filters(self) -> Mapping[str, t.NormalizedValue]:
         """LDIF filters."""
         return {
             "include_object_classes": ["inetOrgPerson", "groupOfNames"],
@@ -547,7 +549,7 @@ class FlextLdifTestConftest:
             },
         }
 
-    def expected_ldif_stats(self) -> dict[str, t.NormalizedValue]:
+    def expected_ldif_stats(self) -> Mapping[str, t.NormalizedValue]:
         """Expected LDIF stats."""
         return {
             "total_entries": 4,
@@ -561,7 +563,7 @@ class FlextLdifTestConftest:
         """Invalid LDIF data."""
         return "dn: invalid-dn-format\nobjectClass: nonExistentClass\ninvalidAttribute: value without proper formatting\n# Missing required attributes\n\ndn:\nobjectClass: person\n# Empty DN\n\ndn: uid=test,ou=people,dc=example,dc=com\nobjectClass: person\n# Missing required attributes for person class"
 
-    def large_ldif_config(self) -> dict[str, t.NormalizedValue]:
+    def large_ldif_config(self) -> Mapping[str, t.NormalizedValue]:
         """Large LDIF config."""
         return {
             "batch_size": 1000,
@@ -589,7 +591,7 @@ class FlextLdifTestConftest:
 
         def create_configuration(
             self, **kwargs: t.Scalar
-        ) -> dict[str, t.NormalizedValue]:
+        ) -> Mapping[str, t.NormalizedValue]:
             """Create config."""
             return dict(kwargs)
 
@@ -601,7 +603,9 @@ class FlextLdifTestConftest:
         """Local matchers."""
         return self.LocalTestMatchers()
 
-    def ldif_test_entries(self) -> list[dict[str, dict[str, list[str]] | str]]:
+    def ldif_test_entries(
+        self,
+    ) -> Sequence[Mapping[str, Mapping[str, Sequence[str]] | str]]:
         """LDIF test entries."""
         entries = copy.deepcopy(self._LDIF_TEST_ENTRIES)
         return [
@@ -618,10 +622,10 @@ class FlextLdifTestConftest:
         ]
 
     def ldif_test_content(
-        self, ldif_test_entries: list[dict[str, t.NormalizedValue]]
+        self, ldif_test_entries: Sequence[Mapping[str, t.NormalizedValue]]
     ) -> str:
         """Generate LDIF content."""
-        content_lines: list[str] = []
+        content_lines: Sequence[str] = []
         for entry in ldif_test_entries:
             dn = entry.get("dn", "")
             content_lines.append(f"dn: {dn}")
@@ -635,7 +639,7 @@ class FlextLdifTestConftest:
             content_lines.append("")
         return "\n".join(content_lines)
 
-    def ldif_error_scenarios(self) -> dict[str, str]:
+    def ldif_error_scenarios(self) -> Mapping[str, str]:
         """Error scenarios."""
         return {
             "invalid_dn": "dn: invalid-dn-format\nobjectClass: person\n",
@@ -647,7 +651,7 @@ class FlextLdifTestConftest:
 
     def ldif_performance_config(
         self, flext_domains: LocalTestDomains
-    ) -> dict[str, t.NormalizedValue]:
+    ) -> Mapping[str, t.NormalizedValue]:
         """Performance config."""
         config = flext_domains.create_configuration(
             batch_size=1000, memory_limit="50MB", timeout=30, max_workers=2
@@ -680,10 +684,10 @@ class FlextLdifTestConftest:
         )
 
     def pytest_collection_modifyitems(
-        self, config: pytest.Config, items: list[pytest.Item]
+        self, config: pytest.Config, items: Sequence[pytest.Item]
     ) -> None:
         """Filter test items."""
-        filtered_items: list[pytest.Item] = []
+        filtered_items: Sequence[pytest.Item] = []
         for item in items:
             if hasattr(item, "parent") and item.parent is not None:
                 parent = item.parent

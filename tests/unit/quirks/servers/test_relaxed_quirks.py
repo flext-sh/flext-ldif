@@ -6,6 +6,7 @@ accepting entries that don't conform strictly to RFC standards while preserving 
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from enum import StrEnum, unique
 from typing import ClassVar
 
@@ -57,7 +58,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
     acl_quirk: ClassVar[FlextLdifServersRelaxed.Acl]
     entry_quirk: ClassVar[FlextLdifServersRelaxed.Entry]
     relaxed_instance: ClassVar[FlextLdifServersRelaxed]
-    ATTRIBUTE_DEFINITIONS: ClassVar[dict[ParseScenario, tuple[str, bool]]] = {
+    ATTRIBUTE_DEFINITIONS: ClassVar[Mapping[ParseScenario, tuple[str, bool]]] = {
         ParseScenario.VALID: (
             "( 1.2.3.4 NAME 'testAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
             True,
@@ -77,7 +78,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
             True,
         ),
     }
-    OBJECTCLASS_DEFINITIONS: ClassVar[dict[ParseScenario, tuple[str, bool]]] = {
+    OBJECTCLASS_DEFINITIONS: ClassVar[Mapping[ParseScenario, tuple[str, bool]]] = {
         ParseScenario.VALID: ("( 1.2.3 NAME 'testOc' STRUCTURAL )", True),
         ParseScenario.MALFORMED: ("( 2.5.6.0 NAME 'broken'", True),
         ParseScenario.MISSING_NAME: ("( 1.2.3.4 STRUCTURAL )", True),
@@ -86,12 +87,12 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         ParseScenario.WHITESPACE: ("   ", False),
         ParseScenario.UNICODE: ("( 1.2.3.4 NAME 'тест' 😀 )", True),
     }
-    NAME_FORMAT_VARIATIONS: ClassVar[list[tuple[str, bool]]] = [
+    NAME_FORMAT_VARIATIONS: ClassVar[Sequence[tuple[str, bool]]] = [
         ("( 1.2.3.4 NAME 'quoted' )", True),
         ("( 1.2.3.4 NAME unquoted )", True),
         ('( 1.2.3.4 NAME "doublequoted" )', True),
     ]
-    ACL_DEFINITIONS: ClassVar[dict[str, tuple[str, bool]]] = {
+    ACL_DEFINITIONS: ClassVar[Mapping[str, tuple[str, bool]]] = {
         "valid": (
             '(targetentry="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")(version 3.0;acl "REDACTED_LDAP_BIND_PASSWORD";allow(all)',
             True,

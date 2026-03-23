@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
@@ -161,10 +162,10 @@ class TestMinimalDifferencesOidOud:
             boolean_conversions = (
                 dict(raw_boolean_conversions)
                 if isinstance(raw_boolean_conversions, dict)
-                else dict[str, t.Ldif.MetadataValue]()
+                else Mapping[str, t.Ldif.MetadataValue]()
             )
         else:
-            boolean_conversions = dict[str, t.Ldif.MetadataValue]()
+            boolean_conversions = Mapping[str, t.Ldif.MetadataValue]()
         if (
             u.is_dict_non_empty(boolean_conversions)
             and "orcldasisenabled" in boolean_conversions

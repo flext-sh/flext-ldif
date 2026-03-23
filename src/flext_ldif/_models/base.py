@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Annotated, ClassVar
 
 from flext_core import m
@@ -105,7 +106,7 @@ class FlextLdifModelsBases:
             ),
         ] = "rfc"
         validation_violations: Annotated[
-            list[str],
+            Sequence[str],
             Field(
                 description="Validation violations captured during parsing/processing",
             ),

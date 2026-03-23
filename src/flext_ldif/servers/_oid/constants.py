@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import ClassVar
 
 from flext_core import FlextLogger
@@ -136,7 +136,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         ORIGINAL_OID_PERMS,
         OID_ACL_SOURCE_TARGET,
     ])
-    CATEGORIZATION_PRIORITY: ClassVar[list[str]] = [
+    CATEGORIZATION_PRIORITY: ClassVar[Sequence[str]] = [
         "acl",
         "users",
         "hierarchy",
@@ -288,7 +288,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "guid_attr": ("guidattr=({0})", False),
         "group_attr": ("groupattr=({0})", False),
     }
-    ACL_PERMISSION_MAPPING: ClassVar[Mapping[str, list[str]]] = {
+    ACL_PERMISSION_MAPPING: ClassVar[Mapping[str, Sequence[str]]] = {
         "all": ["read", "write", "add", "delete", "search", "compare", "proxy"],
         "browse": ["read", "search"],
         "read": ["read"],

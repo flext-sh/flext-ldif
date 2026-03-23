@@ -81,7 +81,7 @@ sorted_entries = (
     .with_entries(my_entries)
     .with_strategy("hierarchy")
     .with_attribute_sorting(order=["cn", "sn", "mail"])
-    .build()  # Returns list[Entry] directly
+    .build()  # Returns Sequence[Entry] directly
 )
 ```
 
@@ -171,13 +171,13 @@ result = FlextLdifSorting.by_custom(
 
 | Method                                             | Returns                    | Description                          |
 | -------------------------------------------------- | -------------------------- | ------------------------------------ |
-| `sort(entries, target=..., by=..., predicate=...)` | `r[list[Entry]]` | For chaining                         |
-| `by_hierarchy(entries)`                            | `r[list[Entry]]` | Depth-first + alphabetical           |
-| `by_dn(entries)`                                   | `r[list[Entry]]` | Alphabetical by full DN              |
-| `by_schema(entries)`                               | `r[list[Entry]]` | Schema entries by OID                |
-| `by_custom(entries, predicate)`                    | `r[list[Entry]]` | Custom sort function                 |
-| `sort_attributes_in_entries(entries, order=None)`  | `r[list[Entry]]` | Sort attrs within entries            |
-| `sort_acl_in_entries(entries, acl_attrs=None)`     | `r[list[Entry]]` | Sort ACL values                      |
+| `sort(entries, target=..., by=..., predicate=...)` | `r[Sequence[Entry]]` | For chaining                         |
+| `by_hierarchy(entries)`                            | `r[Sequence[Entry]]` | Depth-first + alphabetical           |
+| `by_dn(entries)`                                   | `r[Sequence[Entry]]` | Alphabetical by full DN              |
+| `by_schema(entries)`                               | `r[Sequence[Entry]]` | Schema entries by OID                |
+| `by_custom(entries, predicate)`                    | `r[Sequence[Entry]]` | Custom sort function                 |
+| `sort_attributes_in_entries(entries, order=None)`  | `r[Sequence[Entry]]` | Sort attrs within entries            |
+| `sort_acl_in_entries(entries, acl_attrs=None)`     | `r[Sequence[Entry]]` | Sort ACL values                      |
 | `builder()`                                        | `FlextLdifSorting`         | Fluent builder, terminal: `.build()` |
 
 ## Quick Reference

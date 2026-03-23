@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import ClassVar
 
 from flext_core import FlextLogger
@@ -51,7 +51,7 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
         "allows_multiple_sup": False,
         "requires_explicit_structural": False,
     }
-    ATTRIBUTE_ALIASES: ClassVar[Mapping[str, list[str]]] = {}
+    ATTRIBUTE_ALIASES: ClassVar[Mapping[str, Sequence[str]]] = {}
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
         "createTimestamp",
         "modifyTimestamp",
@@ -64,7 +64,7 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
         "createTimestamp",
         "modifyTimestamp",
     ])
-    CATEGORIZATION_PRIORITY: ClassVar[list[str]] = [
+    CATEGORIZATION_PRIORITY: ClassVar[Sequence[str]] = [
         "users",
         "hierarchy",
         "groups",

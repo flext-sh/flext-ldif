@@ -7,6 +7,7 @@ following the strict type system architecture rules.
 from __future__ import annotations
 
 import uuid
+from collections.abc import Mapping, Sequence
 
 from tests import m
 
@@ -17,7 +18,7 @@ class FlextLdifTestFactory:
     @staticmethod
     def create_real_entry(
         dn: str | None = None,
-        attributes: dict[str, list[str]] | None = None,
+        attributes: Mapping[str, Sequence[str]] | None = None,
         server_type: str = "generic",
     ) -> m.Ldif.Entry:
         """Create a real Entry model with valid data."""
@@ -45,7 +46,7 @@ class FlextLdifTestFactory:
         entries_count: int = 3, *, include_schema: bool = False
     ) -> str:
         """Create real LDIF content for testing."""
-        lines: list[str] = []
+        lines: Sequence[str] = []
         if include_schema:
             lines.extend([
                 "dn: cn=schema",
@@ -71,7 +72,7 @@ class FlextLdifTestFactory:
         return "\n".join(lines)
 
     @staticmethod
-    def parametrize_real_data() -> list[m.Ldif.Tests.LdifTestData]:
+    def parametrize_real_data() -> Sequence[m.Ldif.Tests.LdifTestData]:
         """Generate parametrized test data for comprehensive coverage."""
         return [
             m.Ldif.Tests.LdifTestData(

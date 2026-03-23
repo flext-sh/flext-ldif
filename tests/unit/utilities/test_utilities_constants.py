@@ -7,6 +7,7 @@ multiple constant values using parametrized test scenarios.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from enum import StrEnum, unique
 from typing import ClassVar
 
@@ -48,7 +49,7 @@ class TestsTestFlextLdifConstants:
     """Test constants utilities."""
 
     GET_VALID_VALUES_DATA: ClassVar[
-        dict[str, tuple[GetValidValuesType, str, set[str], bool]]
+        Mapping[str, tuple[GetValidValuesType, str, set[str], bool]]
     ] = {
         "get_valid_values_server_type": (
             GetValidValuesType.SERVER_TYPE,
@@ -92,7 +93,9 @@ class TestsTestFlextLdifConstants:
             True,
         ),
     }
-    IS_VALID_DATA: ClassVar[dict[str, tuple[IsValidTestType, str, str, bool, bool]]] = {
+    IS_VALID_DATA: ClassVar[
+        Mapping[str, tuple[IsValidTestType, str, str, bool, bool]]
+    ] = {
         "is_valid_known_value": (
             IsValidTestType.KNOWN_VALUE,
             "rfc",
@@ -123,7 +126,7 @@ class TestsTestFlextLdifConstants:
         ),
     }
     VALIDATE_MANY_DATA: ClassVar[
-        dict[str, tuple[ValidateManyType, set[str], str, bool, bool]]
+        Mapping[str, tuple[ValidateManyType, set[str], str, bool, bool]]
     ] = {
         "validate_many_all_valid": (
             ValidateManyType.ALL_VALID,

@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
 import pytest
@@ -103,7 +103,7 @@ class TestRealLdapBatchOperations:
         make_test_username: Callable[[str], str],
     ) -> None:
         """Create batch of entries using FlextLdif API and write to LDAP."""
-        entries: list[m.Ldif.Entry] = []
+        entries: Sequence[m.Ldif.Entry] = []
         for i in range(20):
             unique_username = make_test_username(f"BatchUser{i}")
             person_dn = f"cn={unique_username},{clean_test_ou}"
@@ -127,15 +127,15 @@ class TestRealLdapBatchOperations:
                     facade_entry = m.Ldif.Entry.model_validate(entry_dict)
                     entries.append(facade_entry)
         assert len(entries) == 20
-        ldap_entries: list[m.Ldif.DN | None] = []
+        ldap_entries: Sequence[m.Ldif.DN | None] = []
         for entry in entries:
             object_classes = entry.get_attribute_values("objectclass")
             if not isinstance(object_classes, list):
-                object_classes_typed: list[str] = (
+                object_classes_typed: Sequence[str] = (
                     list(object_classes) if object_classes else []
                 )
                 object_classes = object_classes_typed
-            attrs_dict: dict[str, list[str]] = {}
+            attrs_dict: Mapping[str, Sequence[str]] = {}
             assert entry.attributes is not None
             for attr_name, attr_values in entry.attributes.attributes.items():
                 if attr_name.lower() == "objectclass":
@@ -180,7 +180,7 @@ class TestRealLdapBatchOperations:
         )
         actual_count = len(ldap_connection.entries)
         assert actual_count > 0, "No entries found in LDAP"
-        entries: list[m.Ldif.Entry] = []
+        entries: Sequence[m.Ldif.Entry] = []
         for entry in ldap_connection.entries:
             attrs_dict = {}
             for attr_name in entry.entry_attributes:

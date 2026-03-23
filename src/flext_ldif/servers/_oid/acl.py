@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import ClassVar, Literal, override
 
 from flext_core import FlextLogger, r
@@ -26,7 +26,7 @@ logger = FlextLogger(__name__)
 _OidConstants = FlextLdifServersOidConstants
 
 
-class _OidAclTargetAttributesJson(RootModel[list[str]]):
+class _OidAclTargetAttributesJson(RootModel[Sequence[str]]):
     pass
 
 
@@ -37,21 +37,21 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         m.Ldif.OidAclMetadataConfig
     )
 
-    RFC_ACL_ATTRIBUTES: ClassVar[list[str]] = [
+    RFC_ACL_ATTRIBUTES: ClassVar[Sequence[str]] = [
         "aci",
         "acl",
         "olcAccess",
         "aclRights",
         "aclEntry",
     ]
-    OID_ACL_ATTRIBUTES: ClassVar[list[str]] = [
+    OID_ACL_ATTRIBUTES: ClassVar[Sequence[str]] = [
         "orclaci",
         "orclentrylevelaci",
         "orclContainerLevelACL",
     ]
 
     @override
-    def get_acl_attributes(self) -> list[str]:
+    def get_acl_attributes(self) -> Sequence[str]:
         """Get RFC + OID extensions."""
         return self.RFC_ACL_ATTRIBUTES + self.OID_ACL_ATTRIBUTES
 
@@ -67,10 +67,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         return None
 
     @staticmethod
-    def _extract_oid_target(content: str) -> tuple[str | None, list[str]]:
+    def _extract_oid_target(content: str) -> tuple[str | None, Sequence[str]]:
         """Extract target DN and attributes from OID ACL."""
         target_dn: str | None = None
-        attributes: list[str] = []
+        attributes: Sequence[str] = []
         patterns = _OidConstants
         target_match = re.search(patterns.ACL_TARGET_DN_EXTRACT, content, re.IGNORECASE)
         if target_match:
@@ -90,7 +90,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         permissions: FlextLdifModelsMetadata.DynamicMetadata | m.Ldif.DynamicMetadata,
     ) -> str:
         """Format OID ACL permissions clause."""
-        allowed_perms: list[str] = []
+        allowed_perms: Sequence[str] = []
         for perm, allowed in permissions.items():
             if allowed:
                 oid_perm_name = _OidConstants.ACL_PERMISSION_NAMES.get(perm, perm)
@@ -122,7 +122,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 return f'"{clean_value}"' if clean_value else "*"
 
     @staticmethod
-    def _format_oid_target(target_dn: str, attributes: list[str]) -> str:
+    def _format_oid_target(target_dn: str, attributes: Sequence[str]) -> str:
         """Format OID ACL target clause."""
         if not attributes or target_dn == "entry":
             return "entry"
@@ -161,7 +161,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _normalize_to_dict(
         value: m.Ldif.AclSubject
         | m.Ldif.QuirkMetadata
-        | Mapping[str, t.Scalar | list[str] | Mapping[str, str | list[str]] | None]
+        | Mapping[
+            str, t.Scalar | Sequence[str] | Mapping[str, str | Sequence[str]] | None
+        ]
         | str
         | None,
     ) -> Mapping[str, str | int | bool]:
@@ -184,9 +186,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         }
 
     @staticmethod
-    def _parse_oid_permissions(content: str) -> dict[str, bool]:
+    def _parse_oid_permissions(content: str) -> Mapping[str, bool]:
         """Parse OID ACL permissions clause."""
-        permissions: dict[str, bool] = {}
+        permissions: Mapping[str, bool] = {}
         const = _OidConstants
         perm_match = re.search(const.ACL_PERMS_EXTRACT_OID, content, re.IGNORECASE)
         if perm_match:
@@ -252,19 +254,21 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     @override
     def convert_rfc_acl_to_aci(
         self,
-        rfc_acl_attrs: Mapping[str, list[str]],
+        rfc_acl_attrs: Mapping[str, Sequence[str]],
         target_server: str = "oid",
-    ) -> r[Mapping[str, list[str]]]:
+    ) -> r[Mapping[str, Sequence[str]]]:
         """Convert RFC ACL format to Oracle OID orclaci format."""
         _ = target_server
-        return r[Mapping[str, list[str]]].ok(rfc_acl_attrs)
+        return r[Mapping[str, Sequence[str]]].ok(rfc_acl_attrs)
 
     def _build_metadata_extensions(
         self,
         metadata: m.Ldif.QuirkMetadata
-        | Mapping[str, t.Scalar | list[str] | Mapping[str, str | list[str]] | None]
+        | Mapping[
+            str, t.Scalar | Sequence[str] | Mapping[str, str | Sequence[str]] | None
+        ]
         | None,
-    ) -> list[str]:
+    ) -> Sequence[str]:
         """Build OID ACL extension clauses from metadata."""
         if not metadata:
             return []
@@ -288,7 +292,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             if config.perms_dict
             else ""
         )
-        metadata_dict: dict[str, str | int | bool] = dict(
+        metadata_dict: Mapping[str, str | int | bool] = dict(
             FlextLdifUtilitiesMetadata.build_acl_metadata_complete(
                 "oid",
                 acl_line=config.acl_line,
@@ -316,8 +320,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _extract_extensions_dict(
         self,
         metadata: m.Ldif.QuirkMetadata
-        | Mapping[str, t.Scalar | list[str] | Mapping[str, str | list[str]] | None],
-    ) -> Mapping[str, t.Scalar | list[str] | None]:
+        | Mapping[
+            str, t.Scalar | Sequence[str] | Mapping[str, str | Sequence[str]] | None
+        ],
+    ) -> Mapping[str, t.Scalar | Sequence[str] | None]:
         """Extract extensions dict from metadata, converting types if needed."""
         try:
             metadata = m.Ldif.QuirkMetadata.model_validate(metadata)
@@ -327,10 +333,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _format_extensions(
         self,
-        meta_extensions: Mapping[str, t.Scalar | list[str] | None],
-    ) -> list[str]:
+        meta_extensions: Mapping[str, t.Scalar | Sequence[str] | None],
+    ) -> Sequence[str]:
         """Format extension values based on metadata key type."""
-        extensions: list[str] = []
+        extensions: Sequence[str] = []
         acl_filter = meta_extensions.get(c.Ldif.ACL_FILTER)
         if isinstance(acl_filter, str) and acl_filter:
             extensions.append(f"filter={acl_filter}")
@@ -610,7 +616,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         acl_subject: m.Ldif.AclSubject | Mapping[str, str | int | bool],
         acl_permissions: m.Ldif.AclPermissions | Mapping[str, bool] | None,
         metadata: m.Ldif.QuirkMetadata
-        | Mapping[str, t.Scalar | list[str] | Mapping[str, str | list[str]] | None]
+        | Mapping[
+            str, t.Scalar | Sequence[str] | Mapping[str, str | Sequence[str]] | None
+        ]
         | None,
     ) -> tuple[str, str]:
         """Prepare OID subject and permissions clauses for ACL write."""
@@ -673,7 +681,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 extensions=FlextLdifModelsMetadata.DynamicMetadata(),
             )
         )
-        update_dict: dict[str, t.NormalizedValue] = {
+        update_dict: Mapping[str, t.NormalizedValue] = {
             "server_type": server_type,
             "metadata": updated_metadata,
         }

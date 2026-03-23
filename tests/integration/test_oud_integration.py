@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 
 import pytest
 
@@ -150,7 +151,7 @@ class TestOudAclIntegration:
                     else aci_attr_values
                 )
             else:
-                aci_values: list[str] = []
+                aci_values: Sequence[str] = []
             for aci in aci_values:
                 if isinstance(aci, str) and "\n" in aci:
                     has_multiline = True
@@ -205,7 +206,7 @@ class TestOudEntryIntegration:
                         oc_attr.values if hasattr(oc_attr, "values") else oc_attr
                     )
                 else:
-                    objectclasses: list[str] = []
+                    objectclasses: Sequence[str] = []
             else:
                 objectclasses = getattr(
                     attrs_dict, "objectclass", getattr(attrs_dict, "objectClass", [])

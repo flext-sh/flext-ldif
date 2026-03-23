@@ -192,14 +192,14 @@ class FlextLdifConversion(
             boolean_conversions,
         ):
             return {}
-        typed_boolean_conversions: dict[str, t.NormalizedValue] = {}
+        typed_boolean_conversions: Mapping[str, t.NormalizedValue] = {}
         for raw_attr_name, raw_conv_info in boolean_conversions.items():
             typed_boolean_conversions[str(raw_attr_name)] = raw_conv_info
-        result: dict[str, dict[str, str]] = {}
+        result: Mapping[str, Mapping[str, str]] = {}
         for attr_name, conv_info in typed_boolean_conversions.items():
             source_format = ""
             if FlextLdifConversion._is_object_mapping(conv_info):
-                conv_info_dict: dict[str, t.NormalizedValue] = {}
+                conv_info_dict: Mapping[str, t.NormalizedValue] = {}
                 for raw_key, raw_value in conv_info.items():
                     conv_info_dict[str(raw_key)] = raw_value
                 source_format = str(conv_info_dict.get("format", "") or "")
@@ -217,7 +217,7 @@ class FlextLdifConversion(
     ) -> Mapping[str, Mapping[str, t.NormalizedValue]]:
         """Analyze DN spacing for target compatibility."""
         if FlextLdifConversion._is_object_mapping(original_format_details):
-            format_details: dict[str, t.NormalizedValue] = {}
+            format_details: Mapping[str, t.NormalizedValue] = {}
             for raw_key, raw_value in original_format_details.items():
                 format_details[str(raw_key)] = raw_value
             spacing: t.NormalizedValue | None = format_details.get("dn_spacing")
@@ -239,7 +239,9 @@ class FlextLdifConversion(
         target_server_type: str,
     ) -> Mapping[str, str | Mapping[str, str | t.NormalizedValue]]:
         """Analyze source metadata for intelligent conversion to target server."""
-        conversion_analysis: dict[str, str | dict[str, str | t.NormalizedValue]] = {}
+        conversion_analysis: Mapping[
+            str, str | Mapping[str, str | t.NormalizedValue]
+        ] = {}
         if not source_metadata or not FlextLdifConversion._has_attr(
             source_metadata,
             "boolean_conversions",
@@ -257,7 +259,7 @@ class FlextLdifConversion(
             boolean_conversions,
             target_server_str,
         )
-        acc_typed: dict[str, str | dict[str, str | t.NormalizedValue]] = {}
+        acc_typed: Mapping[str, str | Mapping[str, str | t.NormalizedValue]] = {}
         for key, value in boolean_analysis.items():
             if isinstance(value, str):
                 acc_typed[key] = value
@@ -299,7 +301,7 @@ class FlextLdifConversion(
         perms_to_model: Callable[[Mapping[str, bool | None]], m.Ldif.AclPermissions],
     ) -> m.Ldif.Acl:
         """Apply OID to OUD permission mapping."""
-        normalized_orig_perms: dict[str, bool] = {
+        normalized_orig_perms: Mapping[str, bool] = {
             FlextLdifConversion._normalize_permission_key(k): v
             for k, v in orig_perms_dict.items()
         }
@@ -325,7 +327,7 @@ class FlextLdifConversion(
         mapped_perms: Mapping[str, bool],
     ) -> Mapping[str, bool | None]:
         """Build permissions dict with standard keys."""
-        result: dict[str, bool | None] = {}
+        result: Mapping[str, bool | None] = {}
         for (
             source_key,
             mapped_key,
@@ -482,7 +484,7 @@ class FlextLdifConversion(
         if u.is_primitive(value):
             return value
         if FlextLdifConversion._is_object_sequence(value):
-            normalized_items: list[t.Scalar | str] = [
+            normalized_items: Sequence[t.Scalar | str] = [
                 item if isinstance(item, t.SCALAR_TYPES) else str(item)
                 for item in value
             ]
@@ -527,7 +529,7 @@ class FlextLdifConversion(
         perms_dict: Mapping[str, bool | None],
     ) -> m.Ldif.AclPermissions:
         """Convert permissions dict to AclPermissions model."""
-        clean_dict: dict[str, bool] = {
+        clean_dict: Mapping[str, bool] = {
             k: v for k, v in perms_dict.items() if v is not None
         }
         return m.Ldif.AclPermissions.model_validate(clean_dict)
@@ -612,7 +614,7 @@ class FlextLdifConversion(
             return FlextLdifConversion._schema_conversion_ok(value)
         if FlextLdifConversion._is_object_mapping(value):
             # Convert dict to str for LDIF representation if passthrough
-            typed_value: dict[str, t.NormalizedValue] = {}
+            typed_value: Mapping[str, t.NormalizedValue] = {}
             for raw_key, raw_item in value.items():
                 typed_value[str(raw_key)] = raw_item
             return FlextLdifConversion._schema_conversion_ok(str(typed_value))
@@ -636,7 +638,7 @@ class FlextLdifConversion(
             | m.Ldif.Acl
         ],
     ) -> r[
-        list[
+        Sequence[
             m.Ldif.Entry
             | m.Ldif.SchemaAttribute
             | m.Ldif.SchemaObjectClass
@@ -665,7 +667,7 @@ class FlextLdifConversion(
             )
         if not model_list:
             return r[
-                list[
+                Sequence[
                     m.Ldif.Entry
                     | m.Ldif.SchemaAttribute
                     | m.Ldif.SchemaObjectClass
@@ -675,14 +677,14 @@ class FlextLdifConversion(
         model_type = type(model_list[0]).__name__
         conversion_operation = f"batch_convert_{model_type}"
         try:
-            converted: list[
+            converted: Sequence[
                 m.Ldif.Entry
                 | m.Ldif.SchemaAttribute
                 | m.Ldif.SchemaObjectClass
                 | m.Ldif.Acl
             ] = []
-            errors: list[str] = []
-            error_details: list[str] = []
+            errors: Sequence[str] = []
+            error_details: Sequence[str] = []
             for idx, model_item in enumerate(model_list):
                 result = self.convert(source, target, model_item)
                 unwrapped = result.map_or(None)
@@ -693,9 +695,9 @@ class FlextLdifConversion(
                     errors.append(f"Item {idx}: {error_msg}")
                     error_details.append(f"batch_item_{idx}: {error_msg}")
             duration_ms = (time.perf_counter() - start_time) * 1000.0
-            model_list_typed: list[t.NormalizedValue] = list(model_list)
-            converted_typed: list[t.NormalizedValue] = list(converted)
-            errors_typed: list[str] = errors
+            model_list_typed: Sequence[t.NormalizedValue] = list(model_list)
+            converted_typed: Sequence[t.NormalizedValue] = list(converted)
+            errors_typed: Sequence[str] = errors
             items_processed = u.count(model_list_typed)
             items_converted = u.count(converted_typed)
             items_failed = u.count(errors_typed)
@@ -728,7 +730,7 @@ class FlextLdifConversion(
                         f"\n... and {error_count - self.MAX_ERRORS_TO_SHOW} more errors"
                     )
                 return r[
-                    list[
+                    Sequence[
                         m.Ldif.Entry
                         | m.Ldif.SchemaAttribute
                         | m.Ldif.SchemaObjectClass
@@ -736,7 +738,7 @@ class FlextLdifConversion(
                     ]
                 ].fail(error_msg)
             return r[
-                list[
+                Sequence[
                     m.Ldif.Entry
                     | m.Ldif.SchemaAttribute
                     | m.Ldif.SchemaObjectClass
@@ -745,7 +747,7 @@ class FlextLdifConversion(
             ].ok(converted)
         except (ValueError, TypeError, AttributeError, RuntimeError, Exception) as e:
             duration_ms = (time.perf_counter() - start_time) * 1000.0
-            model_list_as_list: list[t.NormalizedValue] = (
+            model_list_as_list: Sequence[t.NormalizedValue] = (
                 list(model_list) if model_list else []
             )
             items_count = u.count(model_list_as_list)
@@ -768,7 +770,7 @@ class FlextLdifConversion(
                     log_level="error",
                 )
             return r[
-                list[
+                Sequence[
                     m.Ldif.Entry
                     | m.Ldif.SchemaAttribute
                     | m.Ldif.SchemaObjectClass
@@ -1190,7 +1192,7 @@ class FlextLdifConversion(
                 )
             converted_metadata: m.Ldif.QuirkMetadata | None = converted_metadata_raw
             acls_raw = get_acls(converted_metadata) if converted_metadata else None
-            acls: list[m.Ldif.Acl] | None = None
+            acls: Sequence[m.Ldif.Acl] | None = None
             if acls_raw is not None and isinstance(acls_raw, list):
                 acls = [item for item in acls_raw if isinstance(item, m.Ldif.Acl)]
             if not acls:
@@ -1461,13 +1463,13 @@ class FlextLdifConversion(
                 and converted_entry.attributes.attributes
             ):
                 current_attrs = dict(converted_entry.attributes.attributes)
-                updated_attrs: dict[str, list[str]] = {}
+                updated_attrs: Mapping[str, Sequence[str]] = {}
                 mapping = (
                     FlextLdifServersOidConstants.ATTRIBUTE_TRANSFORMATION_OID_TO_RFC
                 )
                 for k, v in current_attrs.items():
                     lower_k = k.lower()
-                    normalized_values: list[str] = [str(item) for item in v]
+                    normalized_values: Sequence[str] = [str(item) for item in v]
                     converted_values = (
                         [
                             FlextLdifServersOidConstants.OID_TO_RFC.get(value, value)
@@ -1496,7 +1498,7 @@ class FlextLdifConversion(
                 and converted_entry.attributes.attributes
             ):
                 current_attrs = dict(converted_entry.attributes.attributes)
-                updated_attrs_rfc_to_oid: dict[str, list[str]] = {}
+                updated_attrs_rfc_to_oid: Mapping[str, Sequence[str]] = {}
                 mapping = (
                     FlextLdifServersOidConstants.ATTRIBUTE_TRANSFORMATION_RFC_TO_OID
                 )
@@ -1654,7 +1656,7 @@ class FlextLdifConversion(
         if u.is_primitive(value):
             return value
         if FlextLdifConversion._is_object_sequence(value):
-            converted_list: list[t.Scalar] = []
+            converted_list: Sequence[t.Scalar] = []
             for item in value:
                 if isinstance(item, t.SCALAR_TYPES):
                     converted_list.append(item)
@@ -1662,7 +1664,7 @@ class FlextLdifConversion(
                     converted_list.append(str(item))
             return converted_list
         if FlextLdifConversion._is_object_mapping(value):
-            typed_value: dict[str, t.NormalizedValue] = {}
+            typed_value: Mapping[str, t.NormalizedValue] = {}
             for raw_key, raw_item in value.items():
                 typed_value[str(raw_key)] = raw_item
             return str(typed_value)
@@ -1685,14 +1687,14 @@ class FlextLdifConversion(
             if isinstance(value, datetime):
                 return value.isoformat()
             if FlextLdifConversion._is_object_mapping(value):
-                normalized_mapping: dict[str, t.NormalizedValue] = {}
+                normalized_mapping: Mapping[str, t.NormalizedValue] = {}
                 for raw_key, raw_item in value.items():
                     key = str(raw_key)
                     item: t.NormalizedValue = raw_item
                     normalized_mapping[key] = to_general_value(item)
                 return normalized_mapping
             if FlextLdifConversion._is_object_sequence(value):
-                normalized_sequence: list[t.NormalizedValue] = [
+                normalized_sequence: Sequence[t.NormalizedValue] = [
                     to_general_value(item) for item in value
                 ]
                 return normalized_sequence
@@ -1785,14 +1787,14 @@ class FlextLdifConversion(
             return acl_step1
         conv_ext = self._get_extensions_dict(acl_step1)
         orig_ext = self._get_extensions_dict(original_acl)
-        merged_ext_raw: dict[str, t.NormalizedValue] = {**orig_ext, **conv_ext}
+        merged_ext_raw: Mapping[str, t.NormalizedValue] = {**orig_ext, **conv_ext}
         if (
             not merged_ext_raw
             or not get_metadata(acl_step1)
             or (not acl_step1.metadata)
         ):
             return acl_step1
-        dynamic_metadata_dict: dict[str, t.NormalizedValue] = {}
+        dynamic_metadata_dict: Mapping[str, t.NormalizedValue] = {}
         for key, value in merged_ext_raw.items():
             if value is None:
                 dynamic_metadata_dict[key] = ""
@@ -1803,7 +1805,7 @@ class FlextLdifConversion(
                 )
                 continue
             if FlextLdifConversion._is_object_mapping(value):
-                normalized_mapping: dict[str, t.NormalizedValue] = {}
+                normalized_mapping: Mapping[str, t.NormalizedValue] = {}
                 for raw_k, raw_v in value.items():
                     normalized_mapping[str(raw_k)] = (
                         FlextLdifConversion._normalize_metadata_value(raw_v)
@@ -1813,7 +1815,7 @@ class FlextLdifConversion(
                 )
                 continue
             if FlextLdifConversion._is_object_sequence(value):
-                normalized_sequence: list[t.NormalizedValue] = [
+                normalized_sequence: Sequence[t.NormalizedValue] = [
                     FlextLdifConversion._normalize_metadata_value(raw_item)
                     for raw_item in value
                 ]
@@ -1825,7 +1827,7 @@ class FlextLdifConversion(
                 str(value),
             )
         if acl_step1.metadata:
-            metadata_kwargs: dict[str, t.NormalizedValue] = dynamic_metadata_dict
+            metadata_kwargs: Mapping[str, t.NormalizedValue] = dynamic_metadata_dict
             updated_metadata = acl_step1.metadata.model_copy(
                 update={
                     "extensions": m.Ldif.DynamicMetadata.from_dict(metadata_kwargs),
@@ -1851,7 +1853,7 @@ class FlextLdifConversion(
         if not original_acl.permissions:
             return converted_acl
         orig_perms_dict_raw = original_acl.permissions.model_dump(exclude_unset=True)
-        orig_perms_dict: dict[str, bool] = {
+        orig_perms_dict: Mapping[str, bool] = {
             k: v for k, v in orig_perms_dict_raw.items() if v is True
         }
         logger.debug(
@@ -1920,7 +1922,7 @@ class FlextLdifConversion(
             )
         entry_metadata = current_entry.metadata
         if entry_metadata and get_metadata(current_entry):
-            extensions_update: dict[str, t.NormalizedValue] = {
+            extensions_update: Mapping[str, t.NormalizedValue] = {
                 "converted_from_server": source_quirk_name,
             }
             if conversion_analysis:

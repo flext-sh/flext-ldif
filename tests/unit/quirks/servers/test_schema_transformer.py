@@ -6,7 +6,7 @@ utilities that enhance RFC schema parsing with server-specific transformations.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 
 from flext_core import r
 from flext_tests import tm
@@ -182,9 +182,12 @@ class TestSchemaTransformerApplyAttributeTransformations:
                 },
             )
 
-        field_transforms: dict[
+        field_transforms: Mapping[
             str,
-            Callable[..., t.Container | r[t.Container] | None] | str | list[str] | None,
+            Callable[..., t.Container | r[t.Container] | None]
+            | str
+            | Sequence[str]
+            | None,
         ] = {
             "name": transform_name,
             "equality": transform_equality,
@@ -215,9 +218,12 @@ class TestSchemaTransformerApplyAttributeTransformations:
                 n_str, suffixes_to_remove=[";binary"], char_replacements={"_": "-"}
             )
 
-        field_transforms: dict[
+        field_transforms: Mapping[
             str,
-            Callable[..., t.Container | r[t.Container] | None] | str | list[str] | None,
+            Callable[..., t.Container | r[t.Container] | None]
+            | str
+            | Sequence[str]
+            | None,
         ] = {"name": transform_name}
         result = u.Ldif.apply_transformations(attr, field_transforms=field_transforms)
         tm.that(result.is_success, eq=True)

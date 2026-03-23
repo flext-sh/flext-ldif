@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar, Self, override
 
 from flext_core import FlextLogger, FlextService, r
@@ -51,7 +51,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         if _parent_quirk is not None:
             object.__setattr__(self, "_parent_quirk", _parent_quirk)
 
-    RFC_ACL_ATTRIBUTES: ClassVar[list[str]] = [
+    RFC_ACL_ATTRIBUTES: ClassVar[Sequence[str]] = [
         "aci",
         "acl",
         "olcAccess",
@@ -59,7 +59,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         "aclEntry",
     ]
 
-    def get_acl_attributes(self) -> list[str]:
+    def get_acl_attributes(self) -> Sequence[str]:
         """Get ACL attributes for this server."""
         return self.RFC_ACL_ATTRIBUTES
 
@@ -92,12 +92,12 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
 
     def convert_rfc_acl_to_aci(
         self,
-        rfc_acl_attrs: Mapping[str, list[str]],
+        rfc_acl_attrs: Mapping[str, Sequence[str]],
         target_server: str,
-    ) -> r[Mapping[str, list[str]]]:
+    ) -> r[Mapping[str, Sequence[str]]]:
         """Convert RFC ACL format to server-specific ACI format."""
         _ = target_server
-        return r[dict[str, list[str]]].ok(rfc_acl_attrs)
+        return r[Mapping[str, Sequence[str]]].ok(rfc_acl_attrs)
 
     def create_metadata(
         self,
@@ -105,7 +105,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         extensions: Mapping[str, t.NormalizedValue] | None = None,
     ) -> m.Ldif.QuirkMetadata:
         """Create ACL quirk metadata."""
-        all_extensions: dict[str, t.NormalizedValue] = {
+        all_extensions: Mapping[str, t.NormalizedValue] = {
             "original_format": original_format,
         }
         if extensions:

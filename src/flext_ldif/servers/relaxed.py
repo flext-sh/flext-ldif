@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import ClassVar, TypeVar, override
 
 from flext_core import FlextLogger
@@ -110,7 +110,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _extract_must_may_from_objectclass(
             self,
             oc_definition: str,
-        ) -> tuple[list[str] | None, list[str] | None]:
+        ) -> tuple[Sequence[str] | None, Sequence[str] | None]:
             """Extract MUST and MAY fields from objectClass definition."""
             must = None
             must_match = re.search(
@@ -550,7 +550,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: Mapping[str, list[str]],
+            attributes: Mapping[str, Sequence[str]],
         ) -> bool:
             """Accept any entry in relaxed mode."""
             _ = entry_dn
@@ -597,7 +597,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _adapted_parse_entry_relaxed(self, entry_content: str) -> r[m.Ldif.Entry]:
             """Parse entry content in relaxed mode (extracted from _parse_content)."""
             dn: str = ""
-            attrs: dict[str, list[str | bytes]] = {}
+            attrs: Mapping[str, Sequence[str | bytes]] = {}
             for raw_line in entry_content.split("\n"):
                 line = raw_line.strip()
                 if not line or line.startswith("#"):
@@ -623,7 +623,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return self._parse_entry(dn, attrs)
 
         @override
-        def _parse_content(self, ldif_content: str) -> r[list[m.Ldif.Entry]]:
+        def _parse_content(self, ldif_content: str) -> r[Sequence[m.Ldif.Entry]]:
             """Parse raw LDIF content string into Entry models (internal)."""
             parent_result = super()._parse_content(ldif_content)
             if parent_result.is_success:
@@ -640,7 +640,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _parse_entry(
             self,
             entry_dn: str,
-            entry_attrs: Mapping[str, list[str | bytes]],
+            entry_attrs: Mapping[str, Sequence[str | bytes]],
         ) -> r[m.Ldif.Entry]:
             """Parse entry with best-effort approach."""
             try:
@@ -650,11 +650,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "value": entry_dn.strip(),
                     "metadata": m.Ldif.EntryMetadata.model_validate({}),
                 })
-                attr_dict: dict[str, list[str]] = {}
+                attr_dict: Mapping[str, Sequence[str]] = {}
                 attr_key: str
-                attr_value: list[str | bytes]
+                attr_value: Sequence[str | bytes]
                 for attr_key, attr_value in entry_attrs.items():
-                    converted_list: list[str] = []
+                    converted_list: Sequence[str] = []
                     for v in attr_value:
                         if isinstance(v, str):
                             converted_list.append(v)
@@ -671,7 +671,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "attribute_metadata": {},
                     "metadata": None,
                 })
-                original_attribute_case: dict[str, str] = {}
+                original_attribute_case: Mapping[str, str] = {}
                 for attr_name in entry_attrs:
                     attr_str = str(attr_name)
                     if attr_str.lower() == "objectclass":
@@ -722,7 +722,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 f"RFC write failed, using relaxed mode: {parent_result.error}",
             )
             try:
-                ldif_lines: list[str] = []
+                ldif_lines: Sequence[str] = []
                 if not entry_data.dn or not entry_data.dn.value:
                     return r[str].fail("Entry DN is required for LDIF output")
                 ldif_lines.append(

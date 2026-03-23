@@ -15,6 +15,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from flext_ldif import (
     FlextLdifConversion,
     FlextLdifServersOid,
@@ -284,13 +286,13 @@ class TestQuirksConversionMatrixFacade:
             CROSS_QUIRK_CONVERSION_CONSTANTS.OUD_ATTRIBUTE_ORCLGUID,
             "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
         ]
-        oud_attr_models: list[m.Ldif.SchemaAttribute] = []
+        oud_attr_models: Sequence[m.Ldif.SchemaAttribute] = []
         for attr_string in oud_attr_strings:
             parse_result = oud_quirk.schema_quirk.parse_attribute(attr_string)
             assert parse_result.is_success, f"Parse failed: {parse_result.error}"
             oud_attr_models.append(parse_result.value)
         assert len(oud_attr_models) == 2
-        oid_attr_strings: list[str] = []
+        oid_attr_strings: Sequence[str] = []
         for oud_model in oud_attr_models:
             write_result = oud_quirk.schema_quirk.write(oud_model)
             assert write_result.is_success, f"Write failed: {write_result.error}"

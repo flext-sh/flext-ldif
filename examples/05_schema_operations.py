@@ -16,7 +16,7 @@ Original: .bak file | Advanced: ~250 lines with parallel schema processing + int
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TypedDict
 
@@ -27,13 +27,13 @@ from flext_ldif import FlextLdif, FlextLdifModels, m, t, u
 
 class _InvalidScenario(TypedDict):
     dn: str
-    attributes: dict[str, list[str]]
+    attributes: Mapping[str, Sequence[str]]
 
 
-def intelligent_schema_building() -> r[list[m.Ldif.Entry]]:
+def intelligent_schema_building() -> r[Sequence[m.Ldif.Entry]]:
     """Intelligent schema building with automatic type detection and validation."""
     api = FlextLdif.get_instance()
-    schema_entries: list[FlextLdifModels.Ldif.Entry] = []
+    schema_entries: Sequence[FlextLdifModels.Ldif.Entry] = []
     schema_root_result = api.create_entry(
         dn="cn=schema",
         attributes={
@@ -76,7 +76,7 @@ def intelligent_schema_building() -> r[list[m.Ldif.Entry]]:
     ]
 
     def create_attr_entry(
-        attr_def: Mapping[str, str | bool | list[str]],
+        attr_def: Mapping[str, str | bool | Sequence[str]],
     ) -> m.Ldif.Entry | None:
         """Create attribute type entry."""
         attr_dn = f"cn={attr_def['name']},cn=schema"
@@ -121,10 +121,12 @@ def intelligent_schema_building() -> r[list[m.Ldif.Entry]]:
         },
     ]
 
-    def create_oc_entry(oc_def: Mapping[str, str | list[str]]) -> m.Ldif.Entry | None:
+    def create_oc_entry(
+        oc_def: Mapping[str, str | Sequence[str]],
+    ) -> m.Ldif.Entry | None:
         """Create t.NormalizedValue class entry."""
         oc_dn = f"cn={oc_def['name']},cn=schema"
-        attrs: dict[str, list[str]] = {
+        attrs: Mapping[str, Sequence[str]] = {
             "objectClass": ["top", "ldapSubentry", "objectClassDescription"],
             "cn": [str(oc_def["name"])],
             "description": [str(oc_def["description"])],
@@ -143,13 +145,13 @@ def intelligent_schema_building() -> r[list[m.Ldif.Entry]]:
         created_entry = create_oc_entry(oc_def)
         if created_entry is not None:
             schema_entries.append(created_entry)
-    return r[list[m.Ldif.Entry]].ok(schema_entries)
+    return r[Sequence[m.Ldif.Entry]].ok(schema_entries)
 
 
-def parallel_schema_validation() -> r[dict[str, t.NormalizedValue]]:
+def parallel_schema_validation() -> r[Mapping[str, t.NormalizedValue]]:
     """Parallel schema validation with comprehensive error analysis."""
     api = FlextLdif.get_instance()
-    test_entries: list[m.Ldif.Entry] = []
+    test_entries: Sequence[m.Ldif.Entry] = []
     for i in range(30):
         if i % 3 == 0:
             entry_result = api.create_entry(
@@ -184,7 +186,7 @@ def parallel_schema_validation() -> r[dict[str, t.NormalizedValue]]:
             )
         if entry_result.is_success:
             test_entries.append(entry_result.value)
-    invalid_scenarios: list[_InvalidScenario] = [
+    invalid_scenarios: Sequence[_InvalidScenario] = [
         {
             "dn": "cn=Invalid Person,ou=People,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["Invalid Person"]},
@@ -215,12 +217,12 @@ def parallel_schema_validation() -> r[dict[str, t.NormalizedValue]]:
             test_entries.append(entry_result.value)
     validation_result = api.validate_entries(test_entries)
     if validation_result.is_failure:
-        return r[dict[str, t.NormalizedValue]].fail(
+        return r[Mapping[str, t.NormalizedValue]].fail(
             f"Schema validation failed: {validation_result.error}"
         )
     validation_report = validation_result.value
-    error_analysis: dict[str, int] = {}
-    analysis: dict[str, t.NormalizedValue] = {
+    error_analysis: Mapping[str, int] = {}
+    analysis: Mapping[str, t.NormalizedValue] = {
         "total_entries": len(test_entries),
         "valid_entries": validation_report.valid_entries,
         "invalid_entries": validation_report.invalid_entries,
@@ -238,10 +240,10 @@ def parallel_schema_validation() -> r[dict[str, t.NormalizedValue]]:
     analysis["compliance_rate"] = (
         validation_report.valid_entries / len(test_entries) if test_entries else 0
     )
-    return r[dict[str, t.NormalizedValue]].ok(analysis)
+    return r[Mapping[str, t.NormalizedValue]].ok(analysis)
 
 
-def schema_migration_pipeline() -> r[dict[str, t.NormalizedValue]]:
+def schema_migration_pipeline() -> r[Mapping[str, t.NormalizedValue]]:
     """Schema-aware migration pipeline with validation."""
     api = FlextLdif.get_instance()
     migration_dir = Path("examples/schema_migration")
@@ -262,9 +264,9 @@ def schema_migration_pipeline() -> r[dict[str, t.NormalizedValue]]:
         (source_dir / f"legacy_{i}.ldif").write_text(entry)
 
     _ = u.process(list(enumerate(legacy_entries)), write_legacy_file, on_error="skip")
-    migration_results: dict[str, t.NormalizedValue] = {}
+    migration_results: Mapping[str, t.NormalizedValue] = {}
 
-    def parse_file(ldif_file: Path) -> list[m.Ldif.Entry]:
+    def parse_file(ldif_file: Path) -> Sequence[m.Ldif.Entry]:
         """Parse LDIF file."""
         parse_result = api.parse(ldif_file)
         return parse_result.map_or([])
@@ -272,7 +274,7 @@ def schema_migration_pipeline() -> r[dict[str, t.NormalizedValue]]:
     batch_result = u.process(
         list(source_dir.glob("*.ldif")), parse_file, on_error="skip"
     )
-    all_entries: list[m.Ldif.Entry]
+    all_entries: Sequence[m.Ldif.Entry]
     if batch_result.is_success:
         all_entries = [e for sub in batch_result.value for e in sub]
     else:
@@ -289,7 +291,7 @@ def schema_migration_pipeline() -> r[dict[str, t.NormalizedValue]]:
 
     def migrate_entry(ldif_entry: m.Ldif.Entry) -> m.Ldif.Entry | None:
         """Migrate legacy entry to modern schema."""
-        attrs_dict: dict[str, str | list[str]] = {}
+        attrs_dict: Mapping[str, str | Sequence[str]] = {}
         if (
             hasattr(ldif_entry, "attributes")
             and ldif_entry.attributes is not None
@@ -311,7 +313,7 @@ def schema_migration_pipeline() -> r[dict[str, t.NormalizedValue]]:
         return migrate_result.map_or(None)
 
     batch_result = u.process(all_entries, migrate_entry, on_error="skip")
-    migrated_entries: list[m.Ldif.Entry]
+    migrated_entries: Sequence[m.Ldif.Entry]
     if batch_result.is_success:
         migrated_entries = [x for x in batch_result.value if x is not None]
     else:
@@ -329,14 +331,14 @@ def schema_migration_pipeline() -> r[dict[str, t.NormalizedValue]]:
         output_file = migrated_dir / "migrated_schema_compliant.ldif"
         write_result = api.write_file(migrated_entries, output_file)
         migration_results["output_written"] = write_result.is_success
-    return r[dict[str, t.NormalizedValue]].ok(migration_results)
+    return r[Mapping[str, t.NormalizedValue]].ok(migration_results)
 
 
-def batch_schema_operations() -> r[dict[str, t.NormalizedValue]]:
+def batch_schema_operations() -> r[Mapping[str, t.NormalizedValue]]:
     """Batch schema operations with parallel processing."""
     api = FlextLdif.get_instance()
-    schema_batches: list[tuple[str, list[FlextLdifModels.Ldif.Entry]]] = []
-    core_attrs: list[FlextLdifModels.Ldif.Entry] = []
+    schema_batches: Sequence[tuple[str, Sequence[FlextLdifModels.Ldif.Entry]]] = []
+    core_attrs: Sequence[FlextLdifModels.Ldif.Entry] = []
     core_attribute_definitions = [
         ("cn", "Common Name", "1.3.6.1.4.1.1466.115.121.1.15", False),
         ("sn", "Surname", "1.3.6.1.4.1.1466.115.121.1.15", False),
@@ -365,7 +367,7 @@ def batch_schema_operations() -> r[dict[str, t.NormalizedValue]]:
     if batch_result.is_success:
         core_attrs.extend([x for x in batch_result.value if x is not None])
     schema_batches.append(("core_attributes", core_attrs))
-    object_classes: list[FlextLdifModels.Ldif.Entry] = []
+    object_classes: Sequence[FlextLdifModels.Ldif.Entry] = []
     oc_definitions = [
         ("person", "Person", "top", ["cn", "sn"], ["mail", "telephoneNumber"]),
         (
@@ -386,7 +388,7 @@ def batch_schema_operations() -> r[dict[str, t.NormalizedValue]]:
     ]
 
     def create_oc_def(
-        oc_def: tuple[str, str, str, list[str], list[str]],
+        oc_def: tuple[str, str, str, Sequence[str], Sequence[str]],
     ) -> m.Ldif.Entry | None:
         """Create t.NormalizedValue class definition entry."""
         name, desc, sup, must_attrs, may_attrs = oc_def
@@ -407,7 +409,7 @@ def batch_schema_operations() -> r[dict[str, t.NormalizedValue]]:
     if batch_result.is_success:
         object_classes.extend([x for x in batch_result.value if x is not None])
     schema_batches.append(("object_classes", object_classes))
-    batch_results: dict[str, t.NormalizedValue] = {}
+    batch_results: Mapping[str, t.NormalizedValue] = {}
     total_schema_entries = 0
     for batch_name, entries in schema_batches:
         if not entries:
@@ -431,26 +433,26 @@ def batch_schema_operations() -> r[dict[str, t.NormalizedValue]]:
             b for b in batch_results if not b.endswith("_error") and b != "summary"
         ]),
     }
-    return r[dict[str, t.NormalizedValue]].ok(batch_results)
+    return r[Mapping[str, t.NormalizedValue]].ok(batch_results)
 
 
-def railway_schema_pipeline() -> r[dict[str, t.NormalizedValue]]:
+def railway_schema_pipeline() -> r[Mapping[str, t.NormalizedValue]]:
     """Railway-oriented schema pipeline with integrated validation."""
     api = FlextLdif.get_instance()
     schema_build_result = intelligent_schema_building()
     if schema_build_result.is_failure:
-        return r[dict[str, t.NormalizedValue]].fail(
+        return r[Mapping[str, t.NormalizedValue]].fail(
             f"Schema building failed: {schema_build_result.error}"
         )
     schema_entries = schema_build_result.value
     schema_validation = api.validate_entries(schema_entries)
     if schema_validation.is_failure:
-        return r[dict[str, t.NormalizedValue]].fail(
+        return r[Mapping[str, t.NormalizedValue]].fail(
             f"Schema validation failed: {schema_validation.error}"
         )
     schema_report = schema_validation.value
     if not schema_report.is_valid:
-        return r[dict[str, t.NormalizedValue]].fail(
+        return r[Mapping[str, t.NormalizedValue]].fail(
             f"Schema entries invalid: {schema_report.errors}"
         )
 
@@ -490,19 +492,19 @@ def railway_schema_pipeline() -> r[dict[str, t.NormalizedValue]]:
     )
     entry_validation = api.validate_entries(test_entries)
     if entry_validation.is_failure:
-        return r[dict[str, t.NormalizedValue]].fail(
+        return r[Mapping[str, t.NormalizedValue]].fail(
             f"Entry validation failed: {entry_validation.error}"
         )
     entry_report = entry_validation.value
     if not entry_report.is_valid:
-        return r[dict[str, t.NormalizedValue]].fail(
+        return r[Mapping[str, t.NormalizedValue]].fail(
             f"Test entries invalid: {entry_report.errors}"
         )
     process_result = api.process(
         "transform", test_entries, parallel=True, max_workers=4
     )
     if process_result.is_failure:
-        return r[dict[str, t.NormalizedValue]].fail(
+        return r[Mapping[str, t.NormalizedValue]].fail(
             f"Processing failed: {process_result.error}"
         )
     transformed_count = len(process_result.value)
@@ -512,7 +514,7 @@ def railway_schema_pipeline() -> r[dict[str, t.NormalizedValue]]:
     schema_write = api.write_file(schema_entries, schema_file)
     entries_file = output_dir / "entries.ldif"
     entries_write = api.write_file(test_entries, entries_file)
-    return r[dict[str, t.NormalizedValue]].ok({
+    return r[Mapping[str, t.NormalizedValue]].ok({
         "schema_entries": len(schema_entries),
         "schema_valid": schema_report.valid_entries,
         "test_entries": len(test_entries),

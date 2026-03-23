@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from typing import Annotated, Self, override
 
 from pydantic import Field, PrivateAttr, field_validator
@@ -89,12 +89,12 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
         return cls.Normalizer.normalize(dn)
 
     @classmethod
-    def parse_components(cls, dn: str) -> r[list[tuple[str, str]]]:
+    def parse_components(cls, dn: str) -> r[Sequence[tuple[str, str]]]:
         """Parse DN into RFC 4514 compliant components."""
         return cls.Parser.parse_components(dn)
 
     @classmethod
-    def parse_rdn(cls, rdn: str) -> r[list[tuple[str, str]]]:
+    def parse_rdn(cls, rdn: str) -> r[Sequence[tuple[str, str]]]:
         """Parse a single RDN (Relative Distinguished Name) component."""
         return cls.Parser.parse_rdn(rdn)
 
@@ -187,10 +187,10 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
         return self.normalize(dn)
 
     @override
-    def parse(self, value: str | None) -> r[list[tuple[str, str]]]:
+    def parse(self, value: str | None) -> r[Sequence[tuple[str, str]]]:
         """Instance method shortcut for parse_components."""
         if value is None:
-            return r[list[tuple[str, str]]].fail("DN cannot be None")
+            return r[Sequence[tuple[str, str]]].fail("DN cannot be None")
         return self.parse_components(value)
 
     def unesc(self, value: str) -> str:
@@ -217,7 +217,7 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
 
     def _dispatch_operation(self) -> r[str]:
         """Dispatch operation to appropriate handler."""
-        handlers: dict[str, Callable[[], r[str]]] = {
+        handlers: Mapping[str, Callable[[], r[str]]] = {
             "parse": lambda: self._parser.parse_operation(self.dn),
             "validate": lambda: self._parser.validate_operation(self.dn),
             "normalize": lambda: self._normalizer.normalize_operation(self.dn),
@@ -255,7 +255,7 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
             return FlextLdifDn.Parser.compare_dns(dn1, dn2).map(str)
 
         @staticmethod
-        def parse_components(dn: str) -> r[list[tuple[str, str]]]:
+        def parse_components(dn: str) -> r[Sequence[tuple[str, str]]]:
             """Parse DN into RFC 4514 compliant components."""
             return FlextLdifUtilitiesDN.parse_dn(dn)
 
@@ -269,7 +269,7 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
             )
 
         @staticmethod
-        def parse_rdn(rdn: str) -> r[list[tuple[str, str]]]:
+        def parse_rdn(rdn: str) -> r[Sequence[tuple[str, str]]]:
             """Parse a single RDN component."""
             return FlextLdifUtilitiesDN.parse_rdn(rdn)
 

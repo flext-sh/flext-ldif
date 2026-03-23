@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from typing import Annotated, ClassVar, override
 
 from pydantic import ConfigDict, Field
@@ -77,7 +77,7 @@ class FlextLdifModelsCollections:
                 return self._to_count(extra[key])
             return default
 
-        def items(self) -> list[tuple[str, int]]:
+        def items(self) -> Sequence[tuple[str, int]]:
             extra = self._extra()
             return [(k, self._to_count(v)) for k, v in extra.items()]
 
@@ -90,7 +90,7 @@ class FlextLdifModelsCollections:
         def set_count(self, key: str, value: int) -> None:
             setattr(self, key, value)
 
-        def _extra(self) -> dict[str, t.MetadataValue]:
+        def _extra(self) -> Mapping[str, t.MetadataValue]:
             extra = self.__pydantic_extra__
             if extra is None:
                 return {}
@@ -99,11 +99,11 @@ class FlextLdifModelsCollections:
     class SchemaContent(FlextLdifModelsBases.Base):
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         attributes: Annotated[
-            list[FlextLdifModelsDomains.SchemaAttribute],
+            Sequence[FlextLdifModelsDomains.SchemaAttribute],
             Field(),
         ] = Field(default_factory=list)
         object_classes: Annotated[
-            list[FlextLdifModelsDomains.SchemaObjectClass],
+            Sequence[FlextLdifModelsDomains.SchemaObjectClass],
             Field(),
         ] = Field(default_factory=list)
 
@@ -147,7 +147,7 @@ class FlextLdifModelsCollections:
     class FlexibleCategories(FlextLdifModelsBases.Base):
         model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow", frozen=False)
         categories: Annotated[
-            dict[str, list[FlextLdifModelsDomains.Entry]],
+            Mapping[str, Sequence[FlextLdifModelsDomains.Entry]],
             Field(),
         ] = Field(default_factory=dict)
 
@@ -163,7 +163,7 @@ class FlextLdifModelsCollections:
             msg = f"{self.__class__.__name__} is unhashable"
             raise TypeError(msg)
 
-        def __getitem__(self, category: str) -> list[FlextLdifModelsDomains.Entry]:
+        def __getitem__(self, category: str) -> Sequence[FlextLdifModelsDomains.Entry]:
             return self._entry_categories()[category]
 
         def __setitem__(
@@ -193,7 +193,7 @@ class FlextLdifModelsCollections:
         def __contains__(self, category: str) -> bool:
             return category in self.categories
 
-        def items(self) -> Iterator[tuple[str, list[FlextLdifModelsDomains.Entry]]]:
+        def items(self) -> Iterator[tuple[str, Sequence[FlextLdifModelsDomains.Entry]]]:
             domains = FlextLdifModelsDomains
             for category, values in self.categories.items():
                 yield (
@@ -207,19 +207,21 @@ class FlextLdifModelsCollections:
         def get(
             self,
             category: str,
-            default: list[FlextLdifModelsDomains.Entry] | None = None,
-        ) -> list[FlextLdifModelsDomains.Entry]:
+            default: Sequence[FlextLdifModelsDomains.Entry] | None = None,
+        ) -> Sequence[FlextLdifModelsDomains.Entry]:
             entries = self._entry_categories().get(category)
             if entries is not None:
                 return entries
             return default if default is not None else []
 
-        def values(self) -> Iterator[list[FlextLdifModelsDomains.Entry]]:
+        def values(self) -> Iterator[Sequence[FlextLdifModelsDomains.Entry]]:
             domains = FlextLdifModelsDomains
             for values in self._entry_categories().values():
                 yield [domains.Entry.model_validate(v) for v in values]
 
-        def _entry_categories(self) -> dict[str, list[FlextLdifModelsDomains.Entry]]:
+        def _entry_categories(
+            self,
+        ) -> Mapping[str, Sequence[FlextLdifModelsDomains.Entry]]:
             domains = FlextLdifModelsDomains
             return {
                 str(category): [domains.Entry.model_validate(value) for value in values]

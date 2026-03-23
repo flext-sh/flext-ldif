@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import shutil
+from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
@@ -24,7 +25,7 @@ def fixtures_dir() -> Path:
 @pytest.fixture(scope="module")
 def migration_inputs(
     fixtures_dir: Path, tmp_path_factory: pytest.TempPathFactory
-) -> dict[str, Path]:
+) -> Mapping[str, Path]:
     base_dir = tmp_path_factory.mktemp("quirks-transform-inputs")
     oid_input_dir = base_dir / "oid_input"
     oid_input_dir.mkdir()
@@ -77,7 +78,7 @@ class TestOidQuirksTransformations:
             assert write_result.is_success or write_result.is_failure
 
     def test_oid_to_openldap_migration(
-        self, api: FlextLdif, migration_inputs: dict[str, Path], tmp_path: Path
+        self, api: FlextLdif, migration_inputs: Mapping[str, Path], tmp_path: Path
     ) -> None:
         """Test OID to OpenLDAP migration."""
         output_dir = tmp_path / "openldap_output"
@@ -129,7 +130,7 @@ class TestOudQuirksTransformations:
             assert write_result.is_success or write_result.is_failure
 
     def test_oid_to_oud_migration(
-        self, api: FlextLdif, migration_inputs: dict[str, Path], tmp_path: Path
+        self, api: FlextLdif, migration_inputs: Mapping[str, Path], tmp_path: Path
     ) -> None:
         """Test OID to OUD migration."""
         output_dir = tmp_path / "oud_output"
@@ -143,7 +144,7 @@ class TestOudQuirksTransformations:
         assert result.is_success or result.is_failure
 
     def test_oud_to_openldap_migration(
-        self, api: FlextLdif, migration_inputs: dict[str, Path], tmp_path: Path
+        self, api: FlextLdif, migration_inputs: Mapping[str, Path], tmp_path: Path
     ) -> None:
         """Test OUD to OpenLDAP migration."""
         output_dir = tmp_path / "openldap_oud_output"

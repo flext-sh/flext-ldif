@@ -17,7 +17,7 @@ from __future__ import annotations
 import contextlib
 import fcntl
 import time
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Mapping, Sequence
 from pathlib import Path
 
 import pytest
@@ -174,7 +174,9 @@ def oid_integration_fixture() -> str:
 
 
 @pytest.fixture
-def oid_schema_entries(api: FlextLdif, oid_schema_fixture: str) -> list[m.Ldif.Entry]:
+def oid_schema_entries(
+    api: FlextLdif, oid_schema_fixture: str
+) -> Sequence[m.Ldif.Entry]:
     """Parse OID schema fixture into Entry models.
 
     Args:
@@ -182,7 +184,7 @@ def oid_schema_entries(api: FlextLdif, oid_schema_fixture: str) -> list[m.Ldif.E
         oid_schema_fixture: OID schema fixture data.
 
     Returns:
-        list[FlextLdifEntry]: Parsed schema entries.
+        Sequence[FlextLdifEntry]: Parsed schema entries.
 
     Raises:
         AssertionError: If parsing fails.
@@ -194,7 +196,7 @@ def oid_schema_entries(api: FlextLdif, oid_schema_fixture: str) -> list[m.Ldif.E
 
 
 @pytest.fixture
-def oid_entries(api: FlextLdif, oid_entries_fixture: str) -> list[m.Ldif.Entry]:
+def oid_entries(api: FlextLdif, oid_entries_fixture: str) -> Sequence[m.Ldif.Entry]:
     """Parse OID entries fixture into Entry models.
 
     Args:
@@ -202,7 +204,7 @@ def oid_entries(api: FlextLdif, oid_entries_fixture: str) -> list[m.Ldif.Entry]:
         oid_entries_fixture: OID entries fixture data.
 
     Returns:
-        list[p.Entry]: Parsed entries.
+        Sequence[p.Entry]: Parsed entries.
 
     Raises:
         AssertionError: If parsing fails.
@@ -262,7 +264,9 @@ def oud_integration_fixture() -> str:
 
 
 @pytest.fixture
-def oud_schema_entries(api: FlextLdif, oud_schema_fixture: str) -> list[m.Ldif.Entry]:
+def oud_schema_entries(
+    api: FlextLdif, oud_schema_fixture: str
+) -> Sequence[m.Ldif.Entry]:
     """Parse OUD schema fixture into Entry models.
 
     Args:
@@ -270,7 +274,7 @@ def oud_schema_entries(api: FlextLdif, oud_schema_fixture: str) -> list[m.Ldif.E
         oud_schema_fixture: OUD schema fixture data.
 
     Returns:
-        list[FlextLdifEntry]: Parsed schema entries.
+        Sequence[FlextLdifEntry]: Parsed schema entries.
 
     Raises:
         AssertionError: If parsing fails.
@@ -282,7 +286,7 @@ def oud_schema_entries(api: FlextLdif, oud_schema_fixture: str) -> list[m.Ldif.E
 
 
 @pytest.fixture
-def oud_entries(api: FlextLdif, oud_entries_fixture: str) -> list[m.Ldif.Entry]:
+def oud_entries(api: FlextLdif, oud_entries_fixture: str) -> Sequence[m.Ldif.Entry]:
     """Parse OUD entries fixture into Entry models.
 
     Args:
@@ -290,7 +294,7 @@ def oud_entries(api: FlextLdif, oud_entries_fixture: str) -> list[m.Ldif.Entry]:
         oud_entries_fixture: OUD entries fixture data.
 
     Returns:
-        list[p.Entry]: Parsed entries.
+        Sequence[p.Entry]: Parsed entries.
 
     Raises:
         AssertionError: If parsing fails.
@@ -352,7 +356,7 @@ def openldap_integration_fixture() -> str:
 @pytest.fixture
 def openldap_schema_entries(
     api: FlextLdif, openldap_schema_fixture: str
-) -> list[m.Ldif.Entry]:
+) -> Sequence[m.Ldif.Entry]:
     """Parse OpenLDAP schema fixture into Entry models.
 
     Args:
@@ -360,7 +364,7 @@ def openldap_schema_entries(
         openldap_schema_fixture: OpenLDAP schema fixture data.
 
     Returns:
-        list[FlextLdifEntry]: Parsed schema entries.
+        Sequence[FlextLdifEntry]: Parsed schema entries.
 
     Raises:
         AssertionError: If parsing fails.
@@ -374,7 +378,7 @@ def openldap_schema_entries(
 @pytest.fixture
 def openldap_entries(
     api: FlextLdif, openldap_entries_fixture: str
-) -> list[m.Ldif.Entry]:
+) -> Sequence[m.Ldif.Entry]:
     """Parse OpenLDAP entries fixture into Entry models.
 
     Args:
@@ -382,7 +386,7 @@ def openldap_entries(
         openldap_entries_fixture: OpenLDAP entries fixture data.
 
     Returns:
-        list[p.Entry]: Parsed entries.
+        Sequence[p.Entry]: Parsed entries.
 
     Raises:
         AssertionError: If parsing fails.
@@ -406,7 +410,9 @@ def rfc_schema_fixture() -> str:
 
 
 @pytest.fixture
-def rfc_schema_entries(api: FlextLdif, rfc_schema_fixture: str) -> list[m.Ldif.Entry]:
+def rfc_schema_entries(
+    api: FlextLdif, rfc_schema_fixture: str
+) -> Sequence[m.Ldif.Entry]:
     """Parse RFC schema fixture into Entry models.
 
     Args:
@@ -414,7 +420,7 @@ def rfc_schema_entries(api: FlextLdif, rfc_schema_fixture: str) -> list[m.Ldif.E
         rfc_schema_fixture: RFC schema fixture data.
 
     Returns:
-        list[FlextLdifEntry]: Parsed schema entries.
+        Sequence[FlextLdifEntry]: Parsed schema entries.
 
     Raises:
         AssertionError: If parsing fails.
@@ -426,11 +432,11 @@ def rfc_schema_entries(api: FlextLdif, rfc_schema_fixture: str) -> list[m.Ldif.E
 
 
 @pytest.fixture
-def all_schema_fixtures() -> dict[str, str]:
+def all_schema_fixtures() -> Mapping[str, str]:
     """Provide all schema fixtures by server type.
 
     Returns:
-        dict[str, str]: Dictionary mapping server type to schema fixture.
+        Mapping[str, str]: Dictionary mapping server type to schema fixture.
 
     """
     return {
@@ -442,11 +448,11 @@ def all_schema_fixtures() -> dict[str, str]:
 
 
 @pytest.fixture
-def all_entries_fixtures() -> dict[str, str]:
+def all_entries_fixtures() -> Mapping[str, str]:
     """Provide all entries fixtures by server type.
 
     Returns:
-        dict[str, str]: Dictionary mapping server type to entries fixture.
+        Mapping[str, str]: Dictionary mapping server type to entries fixture.
 
     """
     return {
@@ -457,11 +463,11 @@ def all_entries_fixtures() -> dict[str, str]:
 
 
 @pytest.fixture
-def all_acl_fixtures() -> dict[str, str]:
+def all_acl_fixtures() -> Mapping[str, str]:
     """Provide all ACL fixtures by server type.
 
     Returns:
-        dict[str, str]: Dictionary mapping server type to ACL fixture.
+        Mapping[str, str]: Dictionary mapping server type to ACL fixture.
 
     """
     return {
@@ -472,11 +478,11 @@ def all_acl_fixtures() -> dict[str, str]:
 
 
 @pytest.fixture
-def all_integration_fixtures() -> dict[str, str]:
+def all_integration_fixtures() -> Mapping[str, str]:
     """Provide all integration fixtures by server type.
 
     Returns:
-        dict[str, str]: Dictionary mapping server type to integration fixture.
+        Mapping[str, str]: Dictionary mapping server type to integration fixture.
 
     """
     return {
@@ -568,7 +574,7 @@ def oud_acl_quirk(oud_quirk: FlextLdifServersBase) -> FlextLdifServersBaseSchema
 
 
 @pytest.fixture(scope="session")
-def ldap_container(worker_id: str) -> dict[str, t.NormalizedValue]:
+def ldap_container(worker_id: str) -> Mapping[str, t.NormalizedValue]:
     """Ensure shared OpenLDAP container is available for integration tests."""
     docker_control = u.Tests.Docker(workspace_root=WORKSPACE_ROOT, worker_id=worker_id)
     server_url = f"ldap://localhost:{LDAP_PORT}"
@@ -602,7 +608,7 @@ def ldap_container(worker_id: str) -> dict[str, t.NormalizedValue]:
 
 
 @pytest.fixture(scope="session")
-def ldap_container_shared(ldap_container: dict[str, t.NormalizedValue]) -> str:
+def ldap_container_shared(ldap_container: Mapping[str, t.NormalizedValue]) -> str:
     """Provide LDAP connection URL for tests requiring Docker container."""
     default_url = f"ldap://localhost:{LDAP_PORT}"
     return str(ldap_container.get("server_url", default_url))
@@ -641,7 +647,7 @@ def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
 
 @pytest.fixture
 def ldap_connection(
-    ldap_container: dict[str, t.NormalizedValue],
+    ldap_container: Mapping[str, t.NormalizedValue],
 ) -> Generator[Connection]:
     """Provide a bound LDAP connection or skip when unavailable."""
     server_url = str(ldap_container.get("server_url", f"ldap://localhost:{LDAP_PORT}"))

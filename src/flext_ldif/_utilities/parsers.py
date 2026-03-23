@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 
 from flext_core import FlextLogger, r
 
@@ -19,18 +19,18 @@ class FlextLdifUtilitiesParsers:
     def parse_entry(
         ldif_content: str,
         server_type: str,
-        parse_attributes_hook: Callable[[list[str]], Mapping[str, list[str]]],
+        parse_attributes_hook: Callable[[Sequence[str]], Mapping[str, Sequence[str]]],
         *,
         parse_dn_hook: Callable[[str], str | None] | None = None,
         transform_entry_hook: Callable[[m.Ldif.Entry], m.Ldif.Entry] | None = None,
-        parse_comments_hook: Callable[[list[str]], Mapping[str, list[str]]]
+        parse_comments_hook: Callable[[Sequence[str]], Mapping[str, Sequence[str]]]
         | None = None,
     ) -> r[m.Ldif.Entry]:
         """Parse LDIF entry from content using hooks."""
         try:
             lines = ldif_content.strip().split("\n")
             dn: str | None = None
-            attributes: dict[str, list[str]] = {}
+            attributes: Mapping[str, Sequence[str]] = {}
             for line in lines:
                 if line.lower().startswith("dn:"):
                     if parse_dn_hook:
@@ -108,7 +108,7 @@ class FlextLdifUtilitiesParsers:
     def parse_objectclass_definition(
         definition: str,
         server_type: str,
-        parse_parts_hook: Callable[[str], Mapping[str, str | list[str] | None]],
+        parse_parts_hook: Callable[[str], Mapping[str, str | Sequence[str] | None]],
         *,
         transform_hook: Callable[
             [m.Ldif.SchemaObjectClass],
@@ -120,7 +120,7 @@ class FlextLdifUtilitiesParsers:
         try:
             parts = parse_parts_hook(definition)
             must_raw = parts.get("must")
-            must: list[str] | None
+            must: Sequence[str] | None
             if isinstance(must_raw, list):
                 must = [str(item) for item in must_raw]
             elif must_raw is None:
@@ -128,7 +128,7 @@ class FlextLdifUtilitiesParsers:
             else:
                 must = [str(must_raw)]
             may_raw = parts.get("may")
-            may: list[str] | None
+            may: Sequence[str] | None
             if isinstance(may_raw, list):
                 may = [str(item) for item in may_raw]
             elif may_raw is None:
@@ -166,10 +166,10 @@ class FlextLdifUtilitiesParsers:
         parse_entry_hook: Callable[[str], r[m.Ldif.Entry]],
         *,
         _parse_header_hook: Callable[[str], Mapping[str, str]] | None = None,
-    ) -> r[list[m.Ldif.Entry]]:
+    ) -> r[Sequence[m.Ldif.Entry]]:
         """Parse multiple entries from LDIF content."""
         try:
-            entries: list[m.Ldif.Entry] = []
+            entries: Sequence[m.Ldif.Entry] = []
             raw_entries = ldif_content.strip().split("\n\n")
             successful = 0
             failed = 0
@@ -202,7 +202,7 @@ class FlextLdifUtilitiesParsers:
                 successful=successful,
                 failed=failed,
             )
-            return r[list[m.Ldif.Entry]].ok(entries)
+            return r[Sequence[m.Ldif.Entry]].ok(entries)
         except (
             ValueError,
             KeyError,
@@ -211,7 +211,7 @@ class FlextLdifUtilitiesParsers:
             struct.error,
         ) as e:
             logger.exception("Failed to parse content", server_type=server_type)
-            return r[list[m.Ldif.Entry]].fail(f"Failed to parse content: {e}")
+            return r[Sequence[m.Ldif.Entry]].fail(f"Failed to parse content: {e}")
 
 
 __all__ = ["FlextLdifUtilitiesParsers"]

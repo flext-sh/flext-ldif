@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import override
 
 from flext_core import FlextLogger
@@ -30,7 +31,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     @override
     def _handle_write_operation(
         self,
-        entries: list[m.Ldif.Entry],
+        entries: Sequence[m.Ldif.Entry],
     ) -> r[m.Ldif.Entry | str]:
         """Handle write operation for main quirk."""
         return super()._handle_write_operation(entries)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
 from flext_ldif import FlextLdifModelsEvents, FlextLdifModelsSettings, p, t
 
@@ -78,7 +78,7 @@ class FlextLdifUtilitiesEvents:
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
     ) -> Mapping[str, t.Scalar]:
         """Extract and filter extras into a dict of loggable context."""
-        filtered_extras: dict[str, t.Scalar] = {}
+        filtered_extras: Mapping[str, t.Scalar] = {}
         if not extras:
             return filtered_extras
         if extras.user_id is not None:
@@ -97,8 +97,10 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _to_error_details_list(
-        error_details: list[t.NormalizedValue] | tuple[t.NormalizedValue, ...] | None,
-    ) -> list[str]:
+        error_details: Sequence[t.NormalizedValue]
+        | tuple[t.NormalizedValue, ...]
+        | None,
+    ) -> Sequence[str]:
         if error_details is None:
             return []
         return [str(detail) for detail in error_details]
@@ -207,7 +209,7 @@ class FlextLdifUtilitiesEvents:
         """Create DnEvent, log with context, and attach to logger context."""
         event = FlextLdifUtilitiesEvents.create_dn_event(config)
         aggregate_id = event.aggregate_id or ""
-        log_context: dict[str, t.Scalar] = {
+        log_context: Mapping[str, t.Scalar] = {
             "aggregate_id": aggregate_id,
             "dn_operation": config.dn_operation,
             "input_dn": config.input_dn,

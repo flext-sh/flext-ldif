@@ -42,7 +42,7 @@ class FlextLdifUtilitiesEntry:
         mode: Literal["any", "all"],
     ) -> bool:
         """Check objectClass criteria."""
-        matching_ocs: list[str] = [
+        matching_ocs: Sequence[str] = [
             oc
             for oc in objectclasses
             if FlextLdifUtilitiesEntry.has_objectclass(entry, oc)
@@ -60,10 +60,10 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def _convert_attribute_values(
-        values: list[str],
+        values: Sequence[str],
         source_format: str,
         target_format: str,
-    ) -> list[str]:
+    ) -> Sequence[str]:
         """Convert all boolean values in an attribute's value list."""
         return [
             FlextLdifUtilitiesEntry._convert_single_boolean_value(
@@ -98,7 +98,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def analyze_differences(
         entry_attrs: Mapping[str, t.NormalizedValue],
-        converted_attrs: Mapping[str, list[t.Ldif.AttributeValue]],
+        converted_attrs: Mapping[str, Sequence[t.Ldif.AttributeValue]],
         original_dn: str,
         cleaned_dn: str,
         normalize_attr_fn: Callable[[str], str] | None = None,
@@ -126,7 +126,7 @@ class FlextLdifUtilitiesEntry:
             canonical = normalize(attr_str)
             return (canonical, attr_str) if canonical != attr_str else None
 
-        original_attribute_case: dict[str, str] = {}
+        original_attribute_case: Mapping[str, str] = {}
         for attr_name in entry_attrs:
             try:
                 result = extract_case_mapping(attr_name)
@@ -135,12 +135,12 @@ class FlextLdifUtilitiesEntry:
                     original_attribute_case[key] = value
             except (ValueError, TypeError, AttributeError):
                 continue
-        attribute_differences: dict[str, Mapping[str, t.NormalizedValue]] = {}
-        original_attributes_complete: dict[str, t.NormalizedValue] = {}
+        attribute_differences: Mapping[str, Mapping[str, t.NormalizedValue]] = {}
+        original_attributes_complete: Mapping[str, t.NormalizedValue] = {}
         for attr_name, attr_values in entry_attrs.items():
             original_attr_name = str(attr_name)
             canonical_name = normalize(original_attr_name)
-            original_values_list: list[str] = []
+            original_values_list: Sequence[str] = []
             if isinstance(attr_values, Sequence) and (
                 not isinstance(attr_values, str | bytes)
             ):
@@ -176,12 +176,12 @@ class FlextLdifUtilitiesEntry:
         *,
         source_format: str = "0/1",
         target_format: str = "TRUE/FALSE",
-    ) -> Mapping[str, list[str]]:
+    ) -> Mapping[str, Sequence[str]]:
         """Convert boolean attribute values between formats."""
         if not attributes or not boolean_attr_names:
             if not attributes:
                 return {}
-            normalized_result: dict[str, list[str]] = {}
+            normalized_result: Mapping[str, Sequence[str]] = {}
             for attr_name in attributes:
                 raw_values = attributes[attr_name]
                 if isinstance(raw_values, str | bytes):
@@ -194,10 +194,10 @@ class FlextLdifUtilitiesEntry:
                         for v in raw_values
                     ]
             return normalized_result
-        result: dict[str, list[str]] = {}
+        result: Mapping[str, Sequence[str]] = {}
         for attr_name in attributes:
             attr_raw_values = attributes[attr_name]
-            str_values: list[str]
+            str_values: Sequence[str]
             if isinstance(attr_raw_values, str | bytes):
                 str_values = [
                     FlextLdifUtilitiesEntry._stringify_attribute_value(attr_raw_values),
@@ -222,7 +222,7 @@ class FlextLdifUtilitiesEntry:
         entries: Sequence[m.Ldif.Entry],
         config: FlextLdifModelsSettings.FlextLdifUtilitiesFiltersConfig | None = None,
         **kwargs: str | float | bool | None,
-    ) -> r[list[m.Ldif.Entry]]:
+    ) -> r[Sequence[m.Ldif.Entry]]:
         """Filter entries based on criteria."""
         if config is None:
             effective_is_schema = kwargs.get("is_schema")
@@ -235,7 +235,7 @@ class FlextLdifUtilitiesEntry:
                     kwargs,
                 )
             )
-        filtered: list[m.Ldif.Entry] = [
+        filtered: Sequence[m.Ldif.Entry] = [
             entry
             for entry in entries
             if FlextLdifUtilitiesEntry.matches_criteria(
@@ -249,10 +249,10 @@ class FlextLdifUtilitiesEntry:
                 ),
             )
         ]
-        return r[list[m.Ldif.Entry]].ok(filtered)
+        return r[Sequence[m.Ldif.Entry]].ok(filtered)
 
     @staticmethod
-    def has_all_attributes(entry: m.Ldif.Entry, attributes: list[str]) -> bool:
+    def has_all_attributes(entry: m.Ldif.Entry, attributes: Sequence[str]) -> bool:
         """Check if entry has ALL specified attributes."""
         if not attributes:
             return True
@@ -262,7 +262,7 @@ class FlextLdifUtilitiesEntry:
         return all(attr.lower() in entry_attrs_lower for attr in attributes)
 
     @staticmethod
-    def has_any_attributes(entry: m.Ldif.Entry, attributes: list[str]) -> bool:
+    def has_any_attributes(entry: m.Ldif.Entry, attributes: Sequence[str]) -> bool:
         """Check if entry has ANY of the specified attributes."""
         if not attributes:
             return False
@@ -316,7 +316,7 @@ class FlextLdifUtilitiesEntry:
         """Check multiple entry criteria in one call."""
         if config is None:
             config = FlextLdifModelsSettings.EntryCriteriaConfig.model_validate(kwargs)
-        checks: list[bool] = []
+        checks: Sequence[bool] = []
         if config.is_schema is not None:
             checks.append(
                 FlextLdifUtilitiesEntry._check_schema_criteria(
@@ -388,9 +388,9 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def normalize_attribute_names(
-        attributes: Mapping[str, list[t.Ldif.AttributeValue]],
+        attributes: Mapping[str, Sequence[t.Ldif.AttributeValue]],
         case_map: Mapping[str, str],
-    ) -> Mapping[str, list[t.Ldif.AttributeValue]]:
+    ) -> Mapping[str, Sequence[t.Ldif.AttributeValue]]:
         """Normalize attribute names using case mapping."""
         if not attributes or not case_map:
             return dict(attributes)
@@ -399,7 +399,7 @@ class FlextLdifUtilitiesEntry:
             """Get normalized attribute name."""
             return case_map.get(attr_name.lower(), attr_name)
 
-        result: dict[str, list[t.Ldif.AttributeValue]] = {}
+        result: Mapping[str, Sequence[t.Ldif.AttributeValue]] = {}
         for attr_name, values in attributes.items():
             normalized_name = get_normalized_name(attr_name)
             result[normalized_name] = values
@@ -407,17 +407,17 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def normalize_attributes_batch(
-        attributes: Mapping[str, list[t.Ldif.AttributeValue]],
+        attributes: Mapping[str, Sequence[t.Ldif.AttributeValue]],
         *,
         config: FlextLdifModelsSettings.AttributeNormalizeConfig | None = None,
         **kwargs: str | float | bool | None,
-    ) -> Mapping[str, list[t.Ldif.AttributeValue]]:
+    ) -> Mapping[str, Sequence[t.Ldif.AttributeValue]]:
         """Batch normalize attributes from server format to RFC format."""
         if config is None:
             config = FlextLdifModelsSettings.AttributeNormalizeConfig.model_validate(
                 kwargs,
             )
-        result: dict[str, list[str | bytes]] = {}
+        result: Mapping[str, Sequence[str | bytes]] = {}
         operational_lower: set[str] = (
             {a.lower() for a in config.operational_attrs}
             if config.operational_attrs
@@ -444,19 +444,21 @@ class FlextLdifUtilitiesEntry:
                     return config.boolean_mappings[normalized_value]
                 return normalized_value
 
-            output_values: list[str | bytes] = [
+            output_values: Sequence[str | bytes] = [
                 normalize_value(value) for value in values
             ]
             result[output_name] = output_values
         return result
 
     @staticmethod
-    def remove_attributes(entry: m.Ldif.Entry, attributes: list[str]) -> m.Ldif.Entry:
+    def remove_attributes(
+        entry: m.Ldif.Entry, attributes: Sequence[str]
+    ) -> m.Ldif.Entry:
         """Remove specified attributes from entry."""
         if not attributes or entry.attributes is None or entry.dn is None:
             return entry
         attrs_to_remove = {attr.lower() for attr in attributes}
-        filtered: dict[str, list[str]] = {
+        filtered: Mapping[str, Sequence[str]] = {
             k: v
             for k, v in entry.attributes.attributes.items()
             if k.lower() not in attrs_to_remove
@@ -471,7 +473,7 @@ class FlextLdifUtilitiesEntry:
         entries: Sequence[m.Ldif.Entry],
         config: FlextLdifModelsSettings.EntryTransformConfig | None = None,
         **kwargs: str | float | bool | None,
-    ) -> r[list[m.Ldif.Entry]]:
+    ) -> r[Sequence[m.Ldif.Entry]]:
         """Transform multiple entries with common operations."""
         if config is None:
             config = FlextLdifModelsSettings.EntryTransformConfig.model_validate(kwargs)
@@ -532,8 +534,8 @@ class FlextLdifUtilitiesEntry:
                 )
             return current
 
-        transformed_list: list[m.Ldif.Entry] = []
-        errors: list[tuple[int, str]] = []
+        transformed_list: Sequence[m.Ldif.Entry] = []
+        errors: Sequence[tuple[int, str]] = []
         for i, entry in enumerate(entries):
             try:
                 result = transform_entry(entry)
@@ -546,14 +548,14 @@ class FlextLdifUtilitiesEntry:
                 struct.error,
             ) as exc:
                 if config.fail_fast:
-                    return r[list[m.Ldif.Entry]].fail(
+                    return r[Sequence[m.Ldif.Entry]].fail(
                         f"Transform failed at entry {i}: {exc}",
                     )
                 errors.append((i, f"Transform failed at entry {i}: {exc}"))
         if errors and config.fail_fast:
             error_msg = errors[0][1]
-            return r[list[m.Ldif.Entry]].fail(error_msg)
-        return r[list[m.Ldif.Entry]].ok(transformed_list)
+            return r[Sequence[m.Ldif.Entry]].fail(error_msg)
+        return r[Sequence[m.Ldif.Entry]].ok(transformed_list)
 
 
 __all__ = ["FlextLdifUtilitiesEntry"]

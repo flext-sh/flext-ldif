@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from typing import Literal, Self
 
@@ -91,7 +91,7 @@ class ProcessConfigBuilder:
         escapes: c.Ldif.EscapeHandlingOption | None = None,
     ) -> Self:
         """Configure DN normalization."""
-        config_kwargs: dict[str, StrEnum] = {}
+        config_kwargs: Mapping[str, StrEnum] = {}
         if case is not None:
             config_kwargs["case_fold"] = case
         if spaces is not None:

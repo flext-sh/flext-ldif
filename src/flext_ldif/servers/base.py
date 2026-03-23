@@ -35,7 +35,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     def __init__(self, **kwargs: t.Scalar) -> None:
         """Initialize base quirk and its nested quirks."""
-        init_kwargs: dict[str, t.Scalar | None] = {}
+        init_kwargs: Mapping[str, t.Scalar | None] = {}
         for key, value in kwargs.items():
             if value is None:
                 init_kwargs[key] = None
@@ -104,8 +104,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     def __new__(cls, **kwargs: t.Scalar) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         instance: Self = object.__new__(cls)
-        filtered_kwargs: dict[str, str | float | bool] = {}
-        execute_kwargs: dict[str, t.NormalizedValue] = {}
+        filtered_kwargs: Mapping[str, str | float | bool] = {}
+        execute_kwargs: Mapping[str, t.NormalizedValue] = {}
         for k, v in kwargs.items():
             value = v
             if isinstance(value, (str, float, bool)):
@@ -139,7 +139,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         self,
         *,
         ldif_text: None = None,
-        entries: list[m.Ldif.Entry],
+        entries: Sequence[m.Ldif.Entry],
         operation: str | None = None,
     ) -> str: ...
 
@@ -147,14 +147,14 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     def __call__(
         self,
         ldif_text: str | None = None,
-        entries: list[m.Ldif.Entry] | None = None,
+        entries: Sequence[m.Ldif.Entry] | None = None,
         operation: str | None = None,
     ) -> m.Ldif.Entry | str: ...
 
     def __call__(
         self,
         ldif_text: str | None = None,
-        entries: list[m.Ldif.Entry] | None = None,
+        entries: Sequence[m.Ldif.Entry] | None = None,
         operation: str | None = None,
     ) -> m.Ldif.Entry | str:
         """Callable interface - use as processor."""
@@ -169,7 +169,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     def _extract_execute_params(
         cls,
         kwargs: Mapping[str, t.NormalizedValue],
-    ) -> tuple[str | None, list[m.Ldif.Entry] | None, str | None]:
+    ) -> tuple[str | None, Sequence[m.Ldif.Entry] | None, str | None]:
         """Extract type-safe execution parameters from kwargs."""
         return (
             cls._extract_ldif_text(kwargs),
@@ -306,7 +306,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     @staticmethod
     def _extract_entries(
         kwargs: Mapping[str, t.NormalizedValue],
-    ) -> list[m.Ldif.Entry] | None:
+    ) -> Sequence[m.Ldif.Entry] | None:
         """Extract and validate entries parameter."""
         if "entries" not in kwargs:
             return None
@@ -314,16 +314,16 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         if raw is None:
             return None
         if not isinstance(raw, list):
-            msg = f"Expected list[Entry | None] for entries, got {type(raw)}"
+            msg = f"Expected Sequence[Entry | None] for entries, got {type(raw)}"
             raise TypeError(msg)
         if not raw:
             return []
-        entries: list[m.Ldif.Entry] = []
+        entries: Sequence[m.Ldif.Entry] = []
         for item in raw:
             if isinstance(item, m.Ldif.Entry):
                 entries.append(item)
             else:
-                msg = f"Expected list[Entry] for entries, got item of type {type(item)}"
+                msg = f"Expected Sequence[Entry] for entries, got item of type {type(item)}"
                 raise TypeError(msg)
         return entries
 
@@ -377,7 +377,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             return r[FlextLdifModelsResults.ParseResponse].fail(
                 "Entry quirk not available",
             )
-        entries_result: r[list[m.Ldif.Entry]] = entry_quirk.parse(value)
+        entries_result: r[Sequence[m.Ldif.Entry]] = entry_quirk.parse(value)
         if entries_result.is_failure:
             error_msg = entries_result.error or "Entry parsing failed"
             return r[FlextLdifModelsResults.ParseResponse].fail(error_msg)
@@ -398,7 +398,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         )
         return r[FlextLdifModelsResults.ParseResponse].ok(parse_response)
 
-    def write(self, entries: list[m.Ldif.Entry]) -> r[str]:
+    def write(self, entries: Sequence[m.Ldif.Entry]) -> r[str]:
         """Write Entry models to LDIF text."""
         entry_quirk = getattr(self, "entry_quirk", None)
         if not entry_quirk:
@@ -411,7 +411,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 return result
             return r[str].fail("No entry quirk found")
 
-        def format_ldif_output(ldif_lines: list[str]) -> str:
+        def format_ldif_output(ldif_lines: Sequence[str]) -> str:
             """Format LDIF output with proper newline handling."""
             ldif = "\n".join(ldif_lines)
             if ldif and (not ldif.endswith("\n")):
@@ -452,7 +452,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     def _handle_write_operation(
         self,
-        entries: list[m.Ldif.Entry],
+        entries: Sequence[m.Ldif.Entry],
     ) -> r[m.Ldif.Entry | str]:
         """Handle write operation for main quirk."""
         write_result = self.write(entries)

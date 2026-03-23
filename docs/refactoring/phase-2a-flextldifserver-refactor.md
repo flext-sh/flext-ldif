@@ -130,10 +130,10 @@ acl = registry.get_acl_quirk("rfc")  # → acl()
 
 ```python
 # Before
-self._base_quirks: dict[str, FlextLdifServersBase] = {}
+self._base_quirks: Mapping[str, FlextLdifServersBase] = {}
 
 # After
-self._bases: dict[str, FlextLdifServersBase] = {}
+self._bases: Mapping[str, FlextLdifServersBase] = {}
 ```
 
 More concise while maintaining clarity.

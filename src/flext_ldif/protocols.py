@@ -42,7 +42,7 @@ class FlextLdifProtocols(FlextProtocols):
         class AttributeValue(Protocol):
             """Protocol for objects that have attribute values."""
 
-            values: list[str] | str
+            values: Sequence[str] | str
 
         @runtime_checkable
         class SchemaMetadata(Protocol):
@@ -318,21 +318,21 @@ class FlextLdifProtocols(FlextProtocols):
         class EntryQuirk(Protocol):
             """Protocol for Entry quirk implementations."""
 
-            def parse(self, value: str) -> r[list[m.Ldif.Entry]]:
+            def parse(self, value: str) -> r[Sequence[m.Ldif.Entry]]:
                 """Parse entry definition."""
                 ...
 
             def parse_entry(
                 self,
                 entry_dn: str,
-                entry_attrs: Mapping[str, list[str]],
+                entry_attrs: Mapping[str, Sequence[str]],
             ) -> r[m.Ldif.Entry]:
                 """Parse single entry from DN and attributes."""
                 ...
 
             def write(
                 self,
-                entry_data: m.Ldif.Entry | list[m.Ldif.Entry],
+                entry_data: m.Ldif.Entry | Sequence[m.Ldif.Entry],
                 write_options: m.Ldif.WriteFormatOptions | None = None,
             ) -> r[str]:
                 """Write entries to LDIF."""
@@ -371,7 +371,7 @@ class FlextLdifProtocols(FlextProtocols):
             DETECTION_OBJECTCLASS_NAMES: frozenset[str] | None
             DETECTION_DN_MARKERS: frozenset[str] | None
             ACL_ATTRIBUTE_NAME: str | None
-            CATEGORIZATION_PRIORITY: list[str]
+            CATEGORIZATION_PRIORITY: Sequence[str]
             CATEGORY_OBJECTCLASSES: Mapping[str, frozenset[str]]
 
         @runtime_checkable
@@ -380,9 +380,9 @@ class FlextLdifProtocols(FlextProtocols):
 
             DETECTION_PATTERN: str
             DETECTION_WEIGHT: int
-            DETECTION_ATTRIBUTES: frozenset[str] | list[str]
+            DETECTION_ATTRIBUTES: frozenset[str] | Sequence[str]
             DETECTION_OID_PATTERN: str | None
-            DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None
+            DETECTION_OBJECTCLASS_NAMES: frozenset[str] | Sequence[str] | None
 
         @runtime_checkable
         class ModelWithValidationMetadata(Protocol):
@@ -402,7 +402,7 @@ class FlextLdifProtocols(FlextProtocols):
         class BatchTransformer[T](Protocol):
             """Protocol for batch transformers."""
 
-            def apply_batch(self, items: Sequence[T]) -> r[list[T]]:
+            def apply_batch(self, items: Sequence[T]) -> r[Sequence[T]]:
                 """Apply transformation to batch."""
                 ...
 
@@ -489,7 +489,7 @@ class FlextLdifProtocols(FlextProtocols):
 
             def write(
                 self,
-                entries: list[FlextLdifProtocols.Ldif.Entry],
+                entries: Sequence[FlextLdifProtocols.Ldif.Entry],
             ) -> r[str]:
                 """Write Entry models to LDIF text."""
                 ...
@@ -534,9 +534,9 @@ class FlextLdifProtocols(FlextProtocols):
 
             DETECTION_PATTERN: str
             DETECTION_WEIGHT: int
-            DETECTION_ATTRIBUTES: frozenset[str] | list[str]
+            DETECTION_ATTRIBUTES: frozenset[str] | Sequence[str]
             DETECTION_OID_PATTERN: str | None
-            DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None
+            DETECTION_OBJECTCLASS_NAMES: frozenset[str] | Sequence[str] | None
 
 
 p = FlextLdifProtocols

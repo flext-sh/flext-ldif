@@ -25,6 +25,7 @@ No manual processor creation or conversion loops required.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -53,7 +54,7 @@ def parallel_processing() -> None:
     Results may be in different order due to parallel execution.
     """
     api = FlextLdif.get_instance()
-    entries: list[FlextLdifModels.Ldif.Entry] = []
+    entries: Sequence[FlextLdifModels.Ldif.Entry] = []
     for i in range(10):
         result = api.create_entry(
             dn=f"cn=User{i},ou=People,dc=example,dc=com",

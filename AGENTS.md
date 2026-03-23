@@ -463,10 +463,14 @@ m = FlextLdifModels
 
 ### 3. Circular Import Avoidance Strategies
 
-**Strategy 1: Forward References with `from __future__ import annotations`**
+**Strategy 1: Forward References with `from **future** import annotations
+
+from collections.abc import Mapping, Sequence`**
 
 ```python
 from __future__ import annotations
+
+from collections.abc import Mapping, Sequence
 from typing import Self
 
 
@@ -486,7 +490,7 @@ from flext_core import FlextProtocols
 class FlextLdifProtocols(FlextProtocols):
     class Ldif:
         class Parser(Protocol):
-            def parse(self, content: str) -> list[Entry]: ...
+            def parse(self, content: str) -> Sequence[Entry]: ...
 
 
 # services/parser.py (Tier 3 - can import protocols)
@@ -494,7 +498,7 @@ from flext_ldif import p
 
 
 class ParserService:
-    def process(self, parser: p.Ldif.Parser) -> r[list[Entry]]:
+    def process(self, parser: p.Ldif.Parser) -> r[Sequence[Entry]]:
         """Use protocol types to avoid importing concrete classes."""
         pass
 ```

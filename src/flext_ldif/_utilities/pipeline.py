@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import Self, override
 
 from flext_core import r
@@ -48,7 +48,7 @@ class Pipeline:
     def __init__(self, *, fail_fast: bool = True) -> None:
         """Initialize pipeline."""
         super().__init__()
-        self._steps: list[
+        self._steps: Sequence[
             tuple[str, Callable[[m.Ldif.Entry], r[m.Ldif.Entry | _Filtered]]]
         ] = []
         self._fail_fast = fail_fast
@@ -95,7 +95,7 @@ class Pipeline:
         self._steps.append((name, wrapped_func))
         return self
 
-    def execute(self, entries: Sequence[m.Ldif.Entry]) -> r[list[m.Ldif.Entry]]:
+    def execute(self, entries: Sequence[m.Ldif.Entry]) -> r[Sequence[m.Ldif.Entry]]:
         """Execute pipeline on a sequence of entries."""
 
         def process_entry(entry: m.Ldif.Entry) -> r[m.Ldif.Entry] | None:
@@ -108,19 +108,19 @@ class Pipeline:
                 return None
             return r[m.Ldif.Entry].ok(processed)
 
-        results: list[m.Ldif.Entry] = []
+        results: Sequence[m.Ldif.Entry] = []
         for entry in entries:
             process_result = process_entry(entry)
             if process_result is None:
                 continue
             if process_result.is_failure:
                 if self._fail_fast:
-                    return r[list[m.Ldif.Entry]].fail(
+                    return r[Sequence[m.Ldif.Entry]].fail(
                         process_result.error or "Pipeline execution failed",
                     )
                 continue
             results.append(process_result.value)
-        return r[list[m.Ldif.Entry]].ok(results)
+        return r[Sequence[m.Ldif.Entry]].ok(results)
 
     def execute_one(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry | _Filtered]:
         """Execute pipeline on a single entry."""
@@ -173,14 +173,16 @@ class ValidationPipeline:
         self._collect_all = collect_all
         self._max_errors = max_errors
 
-    def validate(self, entries: Sequence[m.Ldif.Entry]) -> r[list[ValidationResult]]:
+    def validate(
+        self, entries: Sequence[m.Ldif.Entry]
+    ) -> r[Sequence[ValidationResult]]:
         """Validate a sequence of entries."""
-        results: list[ValidationResult] = []
+        results: Sequence[ValidationResult] = []
         total_errors = 0
         for entry in entries:
             validation_result = self.validate_one(entry)
             if validation_result.is_failure:
-                return r[list[ValidationResult]].fail(validation_result.error)
+                return r[Sequence[ValidationResult]].fail(validation_result.error)
             validation = validation_result.value
             results.append(validation)
             total_errors += len(validation.errors)
@@ -188,12 +190,12 @@ class ValidationPipeline:
                 break
             if not self._collect_all and (not validation.is_valid):
                 break
-        return r[list[ValidationResult]].ok(results)
+        return r[Sequence[ValidationResult]].ok(results)
 
     def validate_one(self, entry: m.Ldif.Entry) -> r[ValidationResult]:
         """Validate a single entry."""
-        errors: list[str] = []
-        warnings: list[str] = []
+        errors: Sequence[str] = []
+        warnings: Sequence[str] = []
         if entry.dn is None:
             errors.append("Entry has no DN (RFC 2849 violation)")
         else:
@@ -214,7 +216,7 @@ class ValidationPipeline:
         if entry.attributes is None:
             errors.append("Entry has no attributes (RFC 2849 violation)")
         else:
-            attrs: dict[str, list[str]] = (
+            attrs: Mapping[str, Sequence[str]] = (
                 entry.attributes.attributes
                 if getattr(entry.attributes, "attributes", None) is not None
                 else {}
@@ -243,8 +245,8 @@ class ValidationResult:
         self,
         *,
         is_valid: bool,
-        errors: list[str] | None = None,
-        warnings: list[str] | None = None,
+        errors: Sequence[str] | None = None,
+        warnings: Sequence[str] | None = None,
     ) -> None:
         """Initialize validation result."""
         super().__init__()
@@ -259,7 +261,7 @@ class ValidationResult:
         return f"ValidationResult({status}, errors={len(self._errors)}, warnings={len(self._warnings)})"
 
     @property
-    def errors(self) -> list[str]:
+    def errors(self) -> Sequence[str]:
         """Get list of error messages."""
         return self._errors
 
@@ -269,7 +271,7 @@ class ValidationResult:
         return self._is_valid
 
     @property
-    def warnings(self) -> list[str]:
+    def warnings(self) -> Sequence[str]:
         """Get list of warning messages."""
         return self._warnings
 

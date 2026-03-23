@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Final
 
 import pytest
@@ -32,7 +32,7 @@ logger = FlextLogger(__name__)
 class ConfigTestData:
     """Test data constants and mappings for config integration tests."""
 
-    SERVER_TYPES: Final[list[str]] = ["oid", "oud", "openldap", "rfc"]
+    SERVER_TYPES: Final[Sequence[str]] = ["oid", "oud", "openldap", "rfc"]
     BASIC_ENTRY: Final[str] = (
         "dn: cn=Test,dc=example,dc=com\ncn: Test\nobjectClass: person\n"
     )

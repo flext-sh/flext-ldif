@@ -224,7 +224,7 @@ from flext_core import FlextDecorators
 class RfcLdifParser:
     @FlextDecorators.log_operation(level="info")
     @FlextDecorators.track_performance()
-    def parse(self, file_path: Path) -> r[list[Entry]]:
+    def parse(self, file_path: Path) -> r[Sequence[Entry]]:
         """Parse LDIF with automatic logging and metrics."""
         # Implementation
 ```
@@ -306,12 +306,12 @@ from typing import Literal
 
 def parse(
     self,
-    source: str | Path | list[str | Path],
+    source: str | Path | Sequence[str | Path],
     *,
     mode: Literal["single", "batch", "paginate"] = "single",
     server_type: str = "rfc",
     page_size: int = 1000,
-) -> r[list[Entry] | Callable]:
+) -> r[Sequence[Entry] | Callable]:
     """Parse LDIF with pattern matching mode dispatch."""
     match mode:
         case "batch":

@@ -14,6 +14,7 @@ All functionality accessed through FlextLdif facade.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import cast
 
 from flext_ldif import FlextLdif, FlextLdifModels, m, t, u
@@ -55,14 +56,14 @@ def parse_and_evaluate_acls() -> None:
         return
     acl_response = acl_result.value
     acls = acl_response.acls
-    eval_context: dict[str, t.NormalizedValue] = {
+    eval_context: Mapping[str, t.NormalizedValue] = {
         "subject_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
         "target_dn": "ou=People,dc=example,dc=com",
         "permissions": {"read": True, "write": True},
     }
-    required_perms: dict[str, bool] = {}
+    required_perms: Mapping[str, bool] = {}
     if "permissions" in eval_context and isinstance(eval_context["permissions"], dict):
-        required_perms = cast("dict[str, bool]", eval_context["permissions"])
+        required_perms = cast("Mapping[str, bool]", eval_context["permissions"])
     acls_for_eval = [m.Ldif.Acl.model_validate(acl) for acl in acls]
     evaluation_result = api.acl_service.evaluate_acl_context(
         acls_for_eval, required_perms
@@ -134,14 +135,14 @@ def acl_pipeline() -> None:
         return
     acl_response = acl_result.value
     acls = acl_response.acls
-    eval_context: dict[str, t.NormalizedValue] = {
+    eval_context: Mapping[str, t.NormalizedValue] = {
         "subject_dn": "cn=anonymous",
         "permissions": {"read": True},
     }
     acls_typed = [m.Ldif.Acl.model_validate(acl) for acl in acls]
-    required_perms: dict[str, bool] = {}
+    required_perms: Mapping[str, bool] = {}
     if "permissions" in eval_context and isinstance(eval_context["permissions"], dict):
-        required_perms = cast("dict[str, bool]", eval_context["permissions"])
+        required_perms = cast("Mapping[str, bool]", eval_context["permissions"])
     eval_result = api.acl_service.evaluate_acl_context(acls_typed, required_perms)
     if eval_result.is_success:
         validation_result = api.validate_entries([entry])

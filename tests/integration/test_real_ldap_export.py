@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import pytest
@@ -119,7 +119,7 @@ class TestRealLdapExport:
             )
         ldap_connection.search(clean_test_ou, "(objectClass=person)", attributes=["*"])
         assert len(ldap_connection.entries) == 5
-        entries: list[FlextLdifModels.Ldif.Entry] = []
+        entries: Sequence[FlextLdifModels.Ldif.Entry] = []
         for entry in ldap_connection.entries:
             attrs_dict = {}
             for attr_name in entry.entry_attributes:
@@ -189,7 +189,7 @@ class TestRealLdapExport:
         ldap_connection.search(
             clean_test_ou, "(objectClass=*)", search_scope="SUBTREE", attributes=["*"]
         )
-        entries: list[FlextLdifModels.Ldif.Entry] = []
+        entries: Sequence[FlextLdifModels.Ldif.Entry] = []
         for entry in ldap_connection.entries:
             attrs_dict = {}
             for attr_name in entry.entry_attributes:

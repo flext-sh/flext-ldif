@@ -20,7 +20,7 @@ from flext_ldif import FlextLdif, c, m
 from tests import t
 
 
-def _entry_extensions(entry: m.Ldif.Entry) -> dict[str, t.NormalizedValue]:
+def _entry_extensions(entry: m.Ldif.Entry) -> Mapping[str, t.NormalizedValue]:
     metadata = entry.metadata
     assert metadata is not None
     extensions = metadata.extensions

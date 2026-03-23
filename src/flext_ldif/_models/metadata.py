@@ -6,6 +6,7 @@ from collections.abc import (
     ItemsView,
     KeysView,
     Mapping,
+    Sequence,
     ValuesView,
 )
 from typing import ClassVar, Self, override
@@ -27,7 +28,7 @@ class FlextLdifModelsMetadata:
             arbitrary_types_allowed=True,
             frozen=False,
         )
-        transformations: list[t.Scalar] | None = None
+        transformations: Sequence[t.Scalar] | None = None
         original_format: str | None = None
         schema_source_server: str | None = None
         server_type: str | None = None
@@ -112,7 +113,7 @@ class FlextLdifModelsMetadata:
         def values(self) -> ValuesView[t.Ldif.MetadataValue]:
             return self._extra().values()
 
-        def _extra(self) -> dict[str, t.Ldif.MetadataValue]:
+        def _extra(self) -> Mapping[str, t.Ldif.MetadataValue]:
             return self.__pydantic_extra__ or {}
 
     class EntryMetadata(FlextModels.ArbitraryTypesModel):
@@ -138,7 +139,7 @@ class FlextLdifModelsMetadata:
         ) -> t.Ldif.MetadataValue | None:
             return self._extra().get(key, default)
 
-        def _extra(self) -> dict[str, t.Ldif.MetadataValue]:
+        def _extra(self) -> Mapping[str, t.Ldif.MetadataValue]:
             return self.__pydantic_extra__ or {}
 
     class TransformationInfo(FlextModels.ArbitraryTypesModel):
@@ -149,7 +150,7 @@ class FlextLdifModelsMetadata:
         )
         step: str | None = None
         server: str | None = None
-        changes: ClassVar[list[str]] = []
+        changes: ClassVar[Sequence[str]] = []
 
 
 __all__ = ["FlextLdifModelsMetadata"]
