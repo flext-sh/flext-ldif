@@ -1,6 +1,6 @@
 """Type Helpers - Type utilities to break circular dependencies.
 
-Single class per module: all helpers in FlextLdifTypeHelpers.
+Single class per module: all helpers in FlextLdifUtilitiesTypeHelpers.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from flext_core import u
 from flext_ldif import m, t
 
 
-class FlextLdifTypeHelpers:
+class FlextLdifUtilitiesTypeHelpers:
     """Type guards and helpers for LDIF (single class per module)."""
 
     @staticmethod
@@ -55,4 +55,4 @@ class FlextLdifTypeHelpers:
         return all(isinstance(item, t.Primitives | None) for item in obj)
 
 
-__all__ = ["FlextLdifTypeHelpers"]
+__all__ = ["FlextLdifUtilitiesTypeHelpers"]

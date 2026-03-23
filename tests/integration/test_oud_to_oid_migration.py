@@ -18,7 +18,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import FlextLdifServersOid, FlextLdifServersOud
-from tests.conftest import FlextLdifFixtures
+from tests import FlextLdifFixtures
 
 
 class TestOudToOidSchemaMigration:

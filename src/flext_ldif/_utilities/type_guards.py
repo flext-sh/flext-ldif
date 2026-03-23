@@ -55,3 +55,6 @@ class FlextLdifUtilitiesTypeGuards(u):
             and getattr(item, "attributes", None) is not None
             for item in obj
         )
+
+
+__all__ = ["FlextLdifUtilitiesTypeGuards"]

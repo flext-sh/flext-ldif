@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes, d, e, h, r, s, x
@@ -96,7 +96,7 @@ if TYPE_CHECKING:
         Transform,
     )
     from flext_ldif._utilities.type_guards import FlextLdifUtilitiesTypeGuards
-    from flext_ldif._utilities.type_helpers import FlextLdifTypeHelpers
+    from flext_ldif._utilities.type_helpers import FlextLdifUtilitiesTypeHelpers
     from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
     from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
     from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
@@ -151,7 +151,7 @@ if TYPE_CHECKING:
     from flext_ldif.services.filters import FlextLdifFilters
     from flext_ldif.services.migration import FlextLdifMigrationPipeline
     from flext_ldif.services.parser import FlextLdifParser
-    from flext_ldif.services.pipeline import ProcessingPipeline
+    from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
     from flext_ldif.services.processing import FlextLdifProcessing
     from flext_ldif.services.registry import FlextLdifServiceRegistry
     from flext_ldif.services.rfc_validation import FlextLdifValidation
@@ -160,7 +160,7 @@ if TYPE_CHECKING:
     from flext_ldif.services.sorting import FlextLdifSorting
     from flext_ldif.services.statistics import FlextLdifStatistics
     from flext_ldif.services.syntax import FlextLdifSyntax
-    from flext_ldif.services.transformers import ServerTransformer
+    from flext_ldif.services.transformers import FlextLdifTransformer
     from flext_ldif.services.writer import FlextLdifWriter
     from flext_ldif.settings import FlextLdifSettings
     from flext_ldif.shared import FlextLdifShared
@@ -241,6 +241,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextLdifParser": ("flext_ldif.services.parser", "FlextLdifParser"),
     "FlextLdifProcessing": ("flext_ldif.services.processing", "FlextLdifProcessing"),
+    "FlextLdifProcessingPipeline": (
+        "flext_ldif.services.pipeline",
+        "FlextLdifProcessingPipeline",
+    ),
     "FlextLdifProcessingPipelineService": (
         "flext_ldif.services._services.processing_pipeline_service",
         "FlextLdifProcessingPipelineService",
@@ -342,9 +346,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifSorting": ("flext_ldif.services.sorting", "FlextLdifSorting"),
     "FlextLdifStatistics": ("flext_ldif.services.statistics", "FlextLdifStatistics"),
     "FlextLdifSyntax": ("flext_ldif.services.syntax", "FlextLdifSyntax"),
-    "FlextLdifTypeHelpers": (
-        "flext_ldif._utilities.type_helpers",
-        "FlextLdifTypeHelpers",
+    "FlextLdifTransformer": (
+        "flext_ldif.services.transformers",
+        "FlextLdifTransformer",
     ),
     "FlextLdifTypes": ("flext_ldif.typings", "FlextLdifTypes"),
     "FlextLdifUtilities": ("flext_ldif.utilities", "FlextLdifUtilities"),
@@ -431,6 +435,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._utilities.type_guards",
         "FlextLdifUtilitiesTypeGuards",
     ),
+    "FlextLdifUtilitiesTypeHelpers": (
+        "flext_ldif._utilities.type_helpers",
+        "FlextLdifUtilitiesTypeHelpers",
+    ),
     "FlextLdifUtilitiesValidation": (
         "flext_ldif._utilities.validation",
         "FlextLdifUtilitiesValidation",
@@ -466,7 +474,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "Pipeline": ("flext_ldif._utilities.pipeline", "Pipeline"),
     "PipelineStep": ("flext_ldif._utilities.pipeline", "PipelineStep"),
     "ProcessConfigBuilder": ("flext_ldif._utilities.builders", "ProcessConfigBuilder"),
-    "ProcessingPipeline": ("flext_ldif.services.pipeline", "ProcessingPipeline"),
     "QuirkMethodsMixin": ("flext_ldif.servers._base.constants", "QuirkMethodsMixin"),
     "RemoveAttrsTransformer": (
         "flext_ldif._utilities.transformers",
@@ -476,7 +483,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._utilities.transformers",
         "ReplaceBaseDnTransformer",
     ),
-    "ServerTransformer": ("flext_ldif.services.transformers", "ServerTransformer"),
     "Transform": ("flext_ldif._utilities.transformers", "Transform"),
     "TransformConfigBuilder": (
         "flext_ldif._utilities.builders",
@@ -554,6 +560,7 @@ __all__ = [
     "FlextLdifModelsSettings",
     "FlextLdifParser",
     "FlextLdifProcessing",
+    "FlextLdifProcessingPipeline",
     "FlextLdifProcessingPipelineService",
     "FlextLdifProtocols",
     "FlextLdifSchema",
@@ -595,7 +602,7 @@ __all__ = [
     "FlextLdifSorting",
     "FlextLdifStatistics",
     "FlextLdifSyntax",
-    "FlextLdifTypeHelpers",
+    "FlextLdifTransformer",
     "FlextLdifTypes",
     "FlextLdifUtilities",
     "FlextLdifUtilitiesACL",
@@ -621,6 +628,7 @@ __all__ = [
     "FlextLdifUtilitiesServer",
     "FlextLdifUtilitiesTransformer",
     "FlextLdifUtilitiesTypeGuards",
+    "FlextLdifUtilitiesTypeHelpers",
     "FlextLdifUtilitiesValidation",
     "FlextLdifUtilitiesWriter",
     "FlextLdifUtilitiesWriters",
@@ -635,11 +643,9 @@ __all__ = [
     "Pipeline",
     "PipelineStep",
     "ProcessConfigBuilder",
-    "ProcessingPipeline",
     "QuirkMethodsMixin",
     "RemoveAttrsTransformer",
     "ReplaceBaseDnTransformer",
-    "ServerTransformer",
     "Transform",
     "TransformConfigBuilder",
     "ValidationPipeline",

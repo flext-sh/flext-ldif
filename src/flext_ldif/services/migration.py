@@ -9,10 +9,15 @@ from typing import Final, override
 from flext_core import FlextLogger
 from pydantic import PrivateAttr
 
-from flext_ldif import FlextLdifParser, FlextLdifWriter, ProcessingPipeline, c, m, r, s
-
-from ._services.processing_pipeline_service import (
+from flext_ldif import (
+    FlextLdifParser,
+    FlextLdifProcessingPipeline,
     FlextLdifProcessingPipelineService,
+    FlextLdifWriter,
+    c,
+    m,
+    r,
+    s,
 )
 
 logger: Final = FlextLogger(__name__)
@@ -279,7 +284,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             logger.exception("File migration failed", input_file=str(input_file))
             return r[m.Ldif.MigrationPipelineResult].fail(f"File migration failed: {e}")
 
-    def _get_processing_pipeline(self) -> ProcessingPipeline:
+    def _get_processing_pipeline(self) -> FlextLdifProcessingPipeline:
         """Get or create processing pipeline instance."""
         service = getattr(self, "_processing_pipeline_service")
         return service.get_processing_pipeline(

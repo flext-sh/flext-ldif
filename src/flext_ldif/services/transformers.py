@@ -7,7 +7,7 @@ from typing import override
 from flext_ldif import FlextLdifConversion, FlextLdifUtilitiesTransformer, c, m, r
 
 
-class ServerTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
+class FlextLdifTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
     """Transformer for server-specific conversions."""
 
     __slots__ = ("_source_server", "_target_server")

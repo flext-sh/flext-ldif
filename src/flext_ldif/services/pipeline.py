@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from flext_ldif import Normalize, Pipeline, ServerTransformer, c, m, r
+from flext_ldif import FlextLdifTransformer, Normalize, Pipeline, c, m, r
 
 
-class ProcessingPipeline:
+class FlextLdifProcessingPipeline:
     """Full processing pipeline with configuration."""
 
     __slots__ = ("_config", "_pipeline")
@@ -70,7 +70,7 @@ class ProcessingPipeline:
                 self._config.process_config.target_server.upper()
             ]
             pipeline.add(
-                ServerTransformer(
+                FlextLdifTransformer(
                     source_server=source_server,
                     target_server=target_server,
                 ),

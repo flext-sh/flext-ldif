@@ -4,7 +4,7 @@ from typing import Final
 
 from flext_core import FlextLogger
 
-from flext_ldif import ProcessingPipeline, c, m
+from flext_ldif import FlextLdifProcessingPipeline, c, m
 
 logger: Final = FlextLogger(__name__)
 
@@ -13,13 +13,13 @@ class FlextLdifProcessingPipelineService:
     __slots__ = ("_processing_pipeline",)
 
     def __init__(self) -> None:
-        self._processing_pipeline: ProcessingPipeline | None = None
+        self._processing_pipeline: FlextLdifProcessingPipeline | None = None
 
     def get_processing_pipeline(
         self,
         source_server_type: c.Ldif.ServerTypes,
         target_server_type: c.Ldif.ServerTypes,
-    ) -> ProcessingPipeline:
+    ) -> FlextLdifProcessingPipeline:
         pipeline = self._processing_pipeline
         if pipeline is None:
             logger.debug(
@@ -47,7 +47,7 @@ class FlextLdifProcessingPipelineService:
                 normalize_attrs=False,
                 process_config=process_config,
             )
-            pipeline = ProcessingPipeline(config)
+            pipeline = FlextLdifProcessingPipeline(config)
             self._processing_pipeline = pipeline
         return pipeline
 

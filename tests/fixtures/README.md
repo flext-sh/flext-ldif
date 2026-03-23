@@ -61,7 +61,7 @@ Each server has 4 types of fixtures:
 ### Loading Fixtures
 
 ```python
-from tests.fixtures.loader import FlextLdifFixtures
+from tests import FlextLdifFixtures
 
 loader = FlextLdifFixtures.Loader()
 schema = loader.load(
@@ -98,7 +98,7 @@ Available markers:
 ### Extract Schema Elements
 
 ```python
-from tests.fixtures import helpers
+from tests import helpers
 
 attributes = helpers.extract_attributes(schema_content)
 objectclasses = helpers.extract_objectclasses(schema_content)
@@ -109,7 +109,7 @@ name = helpers.extract_name(attr_definition)
 ### Validate Fixtures
 
 ```python
-from tests.fixtures.validator import FixtureValidator
+from tests import FixtureValidator
 
 validator = FixtureValidator()
 result = validator.validate_schema_fixture(content)
@@ -154,7 +154,7 @@ Each includes realistic entry structures and ACL configurations.
 Run fixture coverage report:
 
 ```python
-from tests.fixtures.validator import FixtureCoverageReport
+from tests import FixtureCoverageReport
 
 coverage = FixtureCoverageReport.generate_summary(all_fixtures)
 FixtureCoverageReport.print_coverage_report(coverage)

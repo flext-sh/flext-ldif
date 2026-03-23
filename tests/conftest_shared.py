@@ -8,8 +8,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import FlextLdifParser, FlextLdifWriter
-from tests import c, m
-from tests.test_factory import FlextLdifTestFactory
+from tests import FlextLdifTestFactory, c, m
 
 
 def _create_sample_schema_attribute() -> m.Ldif.SchemaAttribute:

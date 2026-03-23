@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
@@ -73,7 +73,7 @@ if TYPE_CHECKING:
         Transform,
     )
     from flext_ldif._utilities.type_guards import FlextLdifUtilitiesTypeGuards
-    from flext_ldif._utilities.type_helpers import FlextLdifTypeHelpers
+    from flext_ldif._utilities.type_helpers import FlextLdifUtilitiesTypeHelpers
     from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
     from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
     from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters, logger
@@ -100,10 +100,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FilterAttrsTransformer",
     ),
     "FilterConfigBuilder": ("flext_ldif._utilities.builders", "FilterConfigBuilder"),
-    "FlextLdifTypeHelpers": (
-        "flext_ldif._utilities.type_helpers",
-        "FlextLdifTypeHelpers",
-    ),
     "FlextLdifUtilitiesACL": ("flext_ldif._utilities.acl", "FlextLdifUtilitiesACL"),
     "FlextLdifUtilitiesAttribute": (
         "flext_ldif._utilities.attribute",
@@ -187,6 +183,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._utilities.type_guards",
         "FlextLdifUtilitiesTypeGuards",
     ),
+    "FlextLdifUtilitiesTypeHelpers": (
+        "flext_ldif._utilities.type_helpers",
+        "FlextLdifUtilitiesTypeHelpers",
+    ),
     "FlextLdifUtilitiesValidation": (
         "flext_ldif._utilities.validation",
         "FlextLdifUtilitiesValidation",
@@ -253,7 +253,6 @@ __all__ = [
     "Filter",
     "FilterAttrsTransformer",
     "FilterConfigBuilder",
-    "FlextLdifTypeHelpers",
     "FlextLdifUtilitiesACL",
     "FlextLdifUtilitiesAttribute",
     "FlextLdifUtilitiesCollectionLdif",
@@ -277,6 +276,7 @@ __all__ = [
     "FlextLdifUtilitiesServer",
     "FlextLdifUtilitiesTransformer",
     "FlextLdifUtilitiesTypeGuards",
+    "FlextLdifUtilitiesTypeHelpers",
     "FlextLdifUtilitiesValidation",
     "FlextLdifUtilitiesWriter",
     "FlextLdifUtilitiesWriters",

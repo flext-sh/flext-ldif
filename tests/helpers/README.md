@@ -23,7 +23,7 @@ Este módulo fornece helpers reutilizáveis para reduzir duplicação massiva de
 Fornece asserções reutilizáveis para padrões comuns:
 
 ```python
-from tests.helpers import TestAssertions
+from tests import TestAssertions
 
 # Assert success e retorna valor unwrapped
 value = TestAssertions.assert_success(result)
@@ -58,7 +58,7 @@ TestAssertions.assert_roundtrip_preserves(original_entries, roundtripped_entries
 Fornece operações reutilizáveis para padrões comuns:
 
 ```python
-from tests.helpers import TestOperations
+from tests import TestOperations
 
 # Parse e validar
 entries = TestOperations.parse_and_validate(parser, ldif_content, expected_count=5)
@@ -113,7 +113,7 @@ def test_parse_another_attribute(self, schema_quirk):
 ### Depois (Usando Helpers)
 
 ```python
-from tests.helpers import TestOperations
+from tests import TestOperations
 
 
 def test_parse_attribute(self, schema_quirk):
@@ -148,7 +148,7 @@ def test_parse_another_attribute(self, schema_quirk):
 
 ```python
 import pytest
-from tests.helpers import TestOperations
+from tests import TestOperations
 
 
 @pytest.mark.parametrize(
@@ -168,7 +168,7 @@ def test_parse_multiple_attributes(schema_quirk, attr_def, expected_oid, expecte
 ## Integração com Fixtures
 
 ```python
-from tests.helpers import TestOperations, TestAssertions
+from tests import TestOperations, TestAssertions
 
 
 def test_roundtrip_with_fixture(ldif_api, tmp_path):
