@@ -79,9 +79,9 @@ class FlextLdifModels(FlextModels):
             """Write statistics for batch content operations."""
 
             model_config: ClassVar[ConfigDict] = ConfigDict(validate_default=True)
-            total_entries: Annotated[int, Field(default=0, ge=0)]
-            successful: Annotated[int, Field(default=0, ge=0)]
-            failed: Annotated[int, Field(default=0, ge=0)]
+            total_entries: Annotated[t.NonNegativeInt, Field(default=0)]
+            successful: Annotated[t.NonNegativeInt, Field(default=0)]
+            failed: Annotated[t.NonNegativeInt, Field(default=0)]
 
         class OidAclMetadataConfig(BaseModel):
             """Configuration model for OID ACL metadata parsing."""
