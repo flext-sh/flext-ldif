@@ -8,11 +8,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import ClassVar, Literal, overload
 
-from flext_core.utilities import FlextUtilities as u_core
+from flext_core import u
 from pydantic import BaseModel
 
-from flext_ldif import t
-from flext_ldif._models._models import (
+from flext_ldif import (
     ConvertToBool,
     ConvertToDict,
     ConvertToFloat,
@@ -20,6 +19,7 @@ from flext_ldif._models._models import (
     ConvertToList,
     ConvertToStr,
     ConvertToTuple,
+    t,
 )
 
 
@@ -29,7 +29,7 @@ class FlextFunctional:
     @staticmethod
     def _to_general(value: t.NormalizedValue) -> t.NormalizedValue:
         """Normalize arbitrary values into t.NormalizedValue-compatible shape."""
-        if value is None or u_core.is_primitive(value):
+        if value is None or u.is_primitive(value):
             return value
         if isinstance(value, datetime):
             return value.isoformat()
@@ -419,9 +419,9 @@ class FlextFunctional:
             "float": float,
             "set": set,
         }
-        for t_val in types:
+        for tuple_ in types:
             resolved_type: type | None = (
-                type_map.get(t_val) if isinstance(t_val, str) else t_val
+                type_map.get(tuple_) if isinstance(tuple_, str) else tuple_
             )
             if resolved_type is not None and isinstance(value, resolved_type):
                 return True

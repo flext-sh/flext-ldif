@@ -27,9 +27,9 @@ ______________________________________________________________________
 
 ```python
 # ERRADO - Instanciação direta de servers
-from flext_ldif.servers.oid import FlextLdifServersOid
-from flext_ldif.servers.oud import FlextLdifServersOud
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif import FlextLdifServersOid
+from flext_ldif import FlextLdifServersOud
+from flext_ldif import FlextLdifServersRfc
 
 oid = FlextLdifServersOid()  # ❌ NÃO FAÇA ISSO
 oud = FlextLdifServersOud()  # ❌ NÃO FAÇA ISSO
@@ -50,7 +50,7 @@ ______________________________________________________________________
 ```python
 # CORRETO - Via FlextLdifServer API
 from flext_ldif import FlextLdifServer
-from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif import FlextLdifServersBase
 
 server = FlextLdifServer()
 
@@ -77,7 +77,7 @@ ______________________________________________________________________
 ```python
 import pytest
 from flext_ldif import FlextLdifServer
-from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif import FlextLdifServersBase
 
 
 @pytest.fixture
@@ -131,12 +131,12 @@ ______________________________________________________________________
 
 ```python
 # ANTES
-from flext_ldif.servers.oid import FlextLdifServersOid
-from flext_ldif.servers.oud import FlextLdifServersOud
+from flext_ldif import FlextLdifServersOid
+from flext_ldif import FlextLdifServersOud
 
 # DEPOIS
 from flext_ldif import FlextLdifServer
-from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif import FlextLdifServersBase
 ```
 
 ### Passo 2: Atualizar Instanciação

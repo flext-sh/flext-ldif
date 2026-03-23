@@ -6,8 +6,7 @@ from collections.abc import Sequence
 from enum import StrEnum
 from typing import Literal, Self
 
-from flext_ldif import c
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels, c
 
 
 class ProcessConfigBuilder:

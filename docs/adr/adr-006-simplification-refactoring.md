@@ -44,7 +44,7 @@ flext-ldif has evolved through multiple phases achieving production-ready status
 ### **Structural Issues**
 
 1. **Subdirectory Overhead**: 11 subdirectories (`rfc/`, `services/`, `acl/`, `schema/`, `entry/`, `pipelines/`, `processors/`, `events/`) creating navigation friction
-1. **Deep Import Paths**: 4-5 level imports (`from flext_ldif.rfc.rfc_ldif_parser import ...`)
+1. **Deep Import Paths**: 4-5 level imports (`from flext_ldif import ...`)
 1. **Test Misalignment**: Test subdirectories mirror old structure, creating maintenance burden
 
 ### **Over-Engineering**

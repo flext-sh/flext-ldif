@@ -14,7 +14,7 @@ from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 from tests import c, m, s
 
-from flext_ldif.servers.apache import FlextLdifServersApache
+from flext_ldif import FlextLdifServersApache
 
 TestDeduplicationHelpers = c.TestDeduplicationHelpers
 

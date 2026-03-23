@@ -4,12 +4,10 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_core.models import FlextModels as m
+from flext_core import m
 from pydantic import ConfigDict, Field, computed_field
 
-from flext_ldif import c
-from flext_ldif.shared import FlextLdifShared
-from flext_ldif.typings import t as ldif_t
+from flext_ldif import FlextLdifShared, c, t as ldif_t
 
 
 class FlextLdifModelsBase(m.ArbitraryTypesModel):
@@ -130,7 +128,7 @@ class FlextLdifModelsBases:
     a single nested class hierarchy using MRO inheritance.
 
     Usage::
-        from flext_ldif._models.base import FlextLdifModelsBases
+        from flext_ldif import FlextLdifModelsBases
 
         FlextLdifModelsBase = FlextLdifModelsBases.FlextLdifModelsBase
     """

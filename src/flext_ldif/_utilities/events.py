@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_ldif import p, t
-from flext_ldif._models.events import FlextLdifModelsEvents
-from flext_ldif._models.settings import FlextLdifModelsSettings
+from flext_ldif import FlextLdifModelsEvents, FlextLdifModelsSettings, p, t
 
 
 class FlextLdifUtilitiesEvents:

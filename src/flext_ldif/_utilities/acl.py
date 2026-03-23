@@ -7,14 +7,16 @@ import struct
 from collections.abc import Mapping, Sequence
 from typing import TypeIs
 
-from flext_core import FlextLogger, r
-from flext_core.utilities import FlextUtilities as u_core
+from flext_core import FlextLogger, r, u
 
-from flext_ldif import c, t
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif._models.settings import FlextLdifModelsSettings
-from flext_ldif._utilities.functional import FlextFunctional
-from flext_ldif.models import m
+from flext_ldif import (
+    FlextFunctional,
+    FlextLdifModelsMetadata,
+    FlextLdifModelsSettings,
+    c,
+    m,
+    t,
+)
 
 f = FlextFunctional
 logger = FlextLogger(__name__)
@@ -200,7 +202,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _is_metadata_scalar_or_container(value: t.NormalizedValue) -> bool:
         """Check supported metadata extension value shape."""
-        return u_core.is_primitive(value) or isinstance(value, (list, dict))
+        return u.is_primitive(value) or isinstance(value, (list, dict))
 
     @staticmethod
     def _normalize_permission(
@@ -210,7 +212,7 @@ class FlextLdifUtilitiesACL:
         """Normalize permission name using map if available."""
         if not permission_map:
             return perm
-        mapped = u_core.get(permission_map, perm, default=perm)
+        mapped = u.get(permission_map, perm, default=perm)
         return mapped if isinstance(mapped, str) else perm
 
     @staticmethod
@@ -273,12 +275,12 @@ class FlextLdifUtilitiesACL:
         }
         operators = bind_operators or default_operators
         if subject_type == "self":
-            op = u_core.get(operators, "self", default="userdn")
+            op = u.get(operators, "self", default="userdn")
             return f'{op}="{self_value}"'
         if subject_type == "anonymous":
-            op = u_core.get(operators, "anonymous", default="userdn")
+            op = u.get(operators, "anonymous", default="userdn")
             return f'{op}="{anonymous_value}"'
-        op = u_core.get(operators, subject_type, default="userdn")
+        op = u.get(operators, subject_type, default="userdn")
         value = subject_value.replace(", ", ",")
         if not value.startswith("ldap:///"):
             value = f"ldap:///{value}"
@@ -312,9 +314,9 @@ class FlextLdifUtilitiesACL:
         if not bind_rules_data:
             return ("self", "ldap:///self")
         for rule in bind_rules_data:
-            rule_type_raw = u_core.get(rule, "type", default="")
+            rule_type_raw = u.get(rule, "type", default="")
             rule_type = rule_type_raw.lower() if isinstance(rule_type_raw, str) else ""
-            rule_value_raw = u_core.get(rule, "value", default="")
+            rule_value_raw = u.get(rule, "value", default="")
             rule_value = rule_value_raw if isinstance(rule_value_raw, str) else ""
             special_match = FlextLdifUtilitiesACL._check_special_value(
                 rule_value,
@@ -322,14 +324,14 @@ class FlextLdifUtilitiesACL:
             )
             if special_match:
                 return special_match
-            mapped_type_raw = u_core.get(subject_type_map, rule_type)
+            mapped_type_raw = u.get(subject_type_map, rule_type)
             mapped_type: str | None = (
                 mapped_type_raw if isinstance(mapped_type_raw, str) else None
             )
             if mapped_type:
                 return (mapped_type, rule_value)
         if bind_rules_data:
-            default_value_raw = u_core.get(bind_rules_data[0], "value", default="")
+            default_value_raw = u.get(bind_rules_data[0], "value", default="")
             default_value = (
                 default_value_raw if isinstance(default_value_raw, str) else ""
             )
@@ -587,7 +589,7 @@ class FlextLdifUtilitiesACL:
             default_value: t.NormalizedValue | None
             if raw_default is None:
                 default_value = None
-            elif u_core.is_primitive(raw_default):
+            elif u.is_primitive(raw_default):
                 default_value = raw_default
             elif isinstance(raw_default, list):
                 normalized_list: list[t.Scalar] = []

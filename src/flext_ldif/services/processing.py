@@ -6,10 +6,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import override
 
-from flext_ldif import r
-from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.models import FlextLdifModels as m
-from flext_ldif.utilities import FlextLdifUtilities as u
+from flext_ldif import FlextLdifServiceBase, m, r, u
 
 
 class FlextLdifProcessing(FlextLdifServiceBase[list[m.Ldif.ProcessingResult]]):

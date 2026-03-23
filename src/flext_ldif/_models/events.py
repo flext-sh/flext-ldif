@@ -6,12 +6,10 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Annotated, ClassVar, Self
 
-from flext_core.models import FlextModels as m
+from flext_core import m
 from pydantic import ConfigDict, Field
 
-from flext_ldif._models.base import FlextLdifModelsBase
-from flext_ldif._models.settings import FlextLdifModelsSettings
-from flext_ldif.constants import FlextLdifConstants as c
+from flext_ldif import FlextLdifModelsBase, FlextLdifModelsSettings, c
 
 
 def _filter_criteria_factory() -> list[FlextLdifModelsSettings.FilterCriteria]:

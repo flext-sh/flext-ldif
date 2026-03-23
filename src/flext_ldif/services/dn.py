@@ -8,11 +8,13 @@ from typing import Annotated, Self, override
 
 from pydantic import Field, PrivateAttr, field_validator
 
-from flext_ldif import r
-from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
-from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.models import FlextLdifModels as m
+from flext_ldif import (
+    FlextLdifServiceBase,
+    FlextLdifUtilitiesDN,
+    FlextLdifUtilitiesEvents,
+    m,
+    r,
+)
 
 
 class FlextLdifDn(FlextLdifServiceBase[str]):

@@ -10,11 +10,7 @@ from typing import Literal, Self, overload, override
 
 from flext_core import FlextLogger, r
 
-from flext_ldif import c, p, t
-from flext_ldif.models import m
-from flext_ldif.servers import FlextLdifServersBase
-from flext_ldif.servers._base import FlextLdifServersBaseSchema
-from flext_ldif.utilities import u
+from flext_ldif import FlextLdifServersBase, FlextLdifServersBaseSchema, c, m, p, t, u
 
 logger = FlextLogger(__name__)
 

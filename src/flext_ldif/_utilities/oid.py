@@ -6,7 +6,7 @@ import re
 
 from flext_core import FlextLogger, FlextUtilities, r
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif import FlextLdifModelsDomains
 
 u = FlextUtilities
 logger = FlextLogger(__name__)

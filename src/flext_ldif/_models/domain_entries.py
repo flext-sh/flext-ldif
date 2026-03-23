@@ -17,8 +17,7 @@ from contextlib import suppress
 from datetime import datetime
 from typing import Annotated, ClassVar, Self, TypedDict, TypeIs, Unpack, override
 
-from flext_core import FlextLogger, r
-from flext_core.models import FlextModels as m
+from flext_core import FlextLogger, m, r
 from pydantic import (
     ConfigDict,
     Field,
@@ -28,21 +27,21 @@ from pydantic import (
     model_validator,
 )
 
-from flext_ldif._models.base import (
+from flext_ldif import (
     AclElement,
     FlextLdifModelsBase,
+    FlextLdifModelsMetadata,
+    FlextLdifModelsSettings,
+    FlextLdifShared,
     SchemaElement,
+    c,
+    t,
 )
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif._models.settings import FlextLdifModelsSettings
-from flext_ldif.constants import FlextLdifConstants as c
-from flext_ldif.shared import FlextLdifShared
-from flext_ldif.typings import FlextLdifTypes as t
 
 
 def _get_utilities() -> type:
     """Lazy import to avoid circular dependency at module load time."""
-    from flext_ldif.utilities import FlextLdifUtilities  # noqa: PLC0415
+    from flext_ldif import FlextLdifUtilities  # noqa: PLC0415
 
     return FlextLdifUtilities
 

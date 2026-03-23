@@ -7,7 +7,7 @@ from collections.abc import Callable, Mapping
 
 from flext_core import FlextLogger, r
 
-from flext_ldif.models import m
+from flext_ldif import m
 
 logger = FlextLogger.create_module_logger(__name__)
 

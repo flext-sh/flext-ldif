@@ -9,11 +9,7 @@ from typing import Annotated, ClassVar, Self, override
 
 from pydantic import Field, field_validator, model_validator
 
-from flext_ldif import r
-from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.constants import FlextLdifConstants as c
-from flext_ldif.models import FlextLdifModels as m
-from flext_ldif.utilities import FlextLdifUtilities as u
+from flext_ldif import FlextLdifServiceBase, c, m, r, u
 
 
 class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):

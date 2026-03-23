@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from flext_ldif._models.settings import FlextLdifModelsSettings
-from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
+from flext_ldif import FlextLdifModelsSettings, FlextLdifServersOudConstants
 
 
 class FlextLdifServersOudUtilities:

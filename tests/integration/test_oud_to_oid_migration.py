@@ -17,8 +17,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.servers.oid import FlextLdifServersOid
-from flext_ldif.servers.oud import FlextLdifServersOud
+from flext_ldif import FlextLdifServersOid, FlextLdifServersOud
 from tests.conftest import FlextLdifFixtures
 
 

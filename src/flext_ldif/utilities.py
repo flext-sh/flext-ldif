@@ -1556,9 +1556,9 @@ class FlextLdifUtilities(FlextUtilities):
                 "bool": bool,
                 "tuple": tuple,
             }
-            for t_val in types_tuple:
+            for tuple_ in types_tuple:
                 resolved_type: type | None = (
-                    type_map.get(t_val) if isinstance(t_val, str) else t_val
+                    type_map.get(tuple_) if isinstance(tuple_, str) else tuple_
                 )
                 if resolved_type is not None and FlextUtilities.is_type(
                     value,

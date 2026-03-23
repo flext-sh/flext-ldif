@@ -7,9 +7,7 @@ from collections.abc import Callable, Mapping
 
 from flext_core import FlextLogger, r
 
-from flext_ldif import c, m, t
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
+from flext_ldif import FlextLdifModelsDomains, FlextLdifUtilitiesSchema, c, m, t
 
 
 class _SchemaConstants:

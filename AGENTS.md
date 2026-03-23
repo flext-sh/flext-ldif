@@ -186,7 +186,7 @@ except ImportError:
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flext_ldif.protocols import p
+    from flext_ldif import p
 ```
 
 from typing import ClassVar
@@ -394,11 +394,11 @@ This section defines **mandatory patterns** for imports, namespaces, and module 
 
 ```python
 # ✅ CORRECT - Runtime short aliases (src/ and tests/)
-from flext_ldif.typings import t  # FlextLdifTypes
-from flext_ldif.constants import c  # FlextLdifConstants
-from flext_ldif.models import m  # FlextLdifModels
-from flext_ldif.protocols import p  # FlextLdifProtocols
-from flext_ldif.utilities import u  # FlextLdifUtilities
+from flext_ldif import t  # FlextLdifTypes
+from flext_ldif import c  # FlextLdifConstants
+from flext_ldif import m  # FlextLdifModels
+from flext_ldif import p  # FlextLdifProtocols
+from flext_ldif import u  # FlextLdifUtilities
 
 # flext_core aliases (also available)
 from flext_core import r  # r
@@ -426,8 +426,8 @@ entry: m.Entry  # WRONG - must use m.Ldif.Entry
 # =========================================================
 # models.py (Facade) - Aggregates _models/*.py
 # =========================================================
-from flext_ldif._models.entry import LdifEntry
-from flext_ldif._models.config import ProcessConfig
+from flext_ldif import LdifEntry
+from flext_ldif import ProcessConfig
 
 
 class FlextLdifModels:
@@ -490,7 +490,7 @@ class FlextLdifProtocols(FlextProtocols):
 
 
 # services/parser.py (Tier 3 - can import protocols)
-from flext_ldif.protocols import p
+from flext_ldif import p
 
 
 class ParserService:
@@ -527,7 +527,7 @@ class MigrationHandler:
 # =========================================================
 
 # _utilities/builders.py
-from flext_ldif.models import FlextLdifModels  # ✅ ALLOWED
+from flext_ldif import FlextLdifModels  # ✅ ALLOWED
 
 m = FlextLdifModels
 
@@ -540,7 +540,7 @@ m = FlextLdifModels
 # =========================================================
 
 # quirks/servers/oid_quirks.py
-from flext_ldif.quirks.base import QuirkBase  # ✅ ALLOWED
+from flext_ldif import QuirkBase  # ✅ ALLOWED
 
 # WHY: Same tier, both quirks modules
 ```
@@ -550,14 +550,14 @@ from flext_ldif.quirks.base import QuirkBase  # ✅ ALLOWED
 ```python
 # ❌ FORBIDDEN PATTERN - Creates circular import
 # api.py
-from flext_ldif.services.parser import ParserService
+from flext_ldif import ParserService
 
 # services/parser.py
-from flext_ldif.api import FlextLdif  # CIRCULAR!
+from flext_ldif import FlextLdif  # CIRCULAR!
 
 # ✅ CORRECT - Services use protocols, not concrete api.py
 # services/parser.py
-from flext_ldif.protocols import p
+from flext_ldif import p
 # No import of api.py
 ```
 
@@ -568,14 +568,14 @@ from flext_ldif.protocols import p
 
 # ✅ CORRECT - Import from package root
 from flext_ldif import FlextLdif
-from flext_ldif.models import m
-from flext_ldif.constants import c
+from flext_ldif import m
+from flext_ldif import c
 
 # ✅ CORRECT - Import test helpers
 from tests import tm, tf  # TestsFlextLdifMatchers, TestsFlextLdifFixtures
 
 # ✅ ALLOWED - Tests can import internal modules for testing
-from flext_ldif._utilities.builders import ProcessConfigBuilder
+from flext_ldif import ProcessConfigBuilder
 
 
 # ✅ CORRECT - Use pytest fixtures
@@ -804,8 +804,8 @@ server_types = c.Ldif.ServerTypes  # ✅ CORRETO
 ### Generic Schema Parsing with Quirks
 
 ```python
-from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
-from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
+from flext_ldif import RfcSchemaParserService
+from flext_ldif import FlextLdifQuirksRegistry
 from pathlib import Path
 
 # MANDATORY: quirk_registry is REQUIRED for all RFC parsers/writers

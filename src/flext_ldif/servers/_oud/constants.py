@@ -7,7 +7,7 @@ from typing import ClassVar
 
 from flext_core import FlextLogger
 
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif import FlextLdifServersRfc
 
 logger = FlextLogger(__name__)
 

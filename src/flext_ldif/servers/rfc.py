@@ -6,14 +6,15 @@ from typing import override
 
 from flext_core import FlextLogger
 
-from flext_ldif import m, r
-from flext_ldif.servers._rfc import (
+from flext_ldif import (
+    FlextLdifServersBase,
     FlextLdifServersRfcAcl,
     FlextLdifServersRfcConstants,
     FlextLdifServersRfcEntry,
     FlextLdifServersRfcSchema,
+    m,
+    r,
 )
-from flext_ldif.servers.base import FlextLdifServersBase
 
 logger = FlextLogger(__name__)
 

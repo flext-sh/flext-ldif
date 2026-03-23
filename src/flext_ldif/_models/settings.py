@@ -15,11 +15,10 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, Literal
 from flext_core import FlextModels, r
 from pydantic import ConfigDict, Field, StringConstraints
 
-from flext_ldif import c, p, t
-from flext_ldif._models.base import FlextLdifModelsBase
+from flext_ldif import FlextLdifModelsBase, c, p, t
 
 if TYPE_CHECKING:
-    from flext_ldif._models.domain import FlextLdifModelsDomains
+    from flext_ldif import FlextLdifModelsDomains
 
 
 def _rdn_pairs_factory() -> list[tuple[str, str]]:
@@ -1229,7 +1228,7 @@ class FlextLdifModelsSettings:
                 result = ldif.write(entries, options=options)
 
                 # NEW (correct):
-                from flext_ldif.settings import FlextLdifSettings
+                from flext_ldif import FlextLdifSettings
 
                 config = FlextSettings.get_global().get_namespace(
                     "ldif", FlextLdifSettings
@@ -1623,7 +1622,7 @@ class FlextLdifModelsSettings:
             .. code-block:: python
 
                 # Config is source of truth
-                from flext_ldif.settings import FlextLdifSettings
+                from flext_ldif import FlextLdifSettings
 
                 config = FlextSettings.get_global().get_namespace(
                     "ldif", FlextLdifSettings

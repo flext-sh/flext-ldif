@@ -6,7 +6,7 @@ import re
 from collections.abc import Mapping, Sequence
 from typing import TypeIs
 
-from flext_core.utilities import FlextUtilities as u_core
+from flext_core import u
 
 from flext_ldif import m, p, t
 
@@ -44,7 +44,7 @@ class FlextLdifUtilitiesDetection:
                 if (
                     cls.__name__.startswith("FlextLdifServers")
                     and getattr(cls, "Constants", None) is not None
-                    and (not u_core.is_dict_like(getattr(cls, "Constants", None)))
+                    and (not u.is_dict_like(getattr(cls, "Constants", None)))
                 ):
                     constants_obj: t.NormalizedValue | None = getattr(
                         cls,

@@ -11,12 +11,10 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, override
 
 from pydantic import ConfigDict, Field
 
-from flext_ldif import t
-from flext_ldif._models.base import FlextLdifModelsBase
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif import FlextLdifModelsBase, FlextLdifModelsMetadata, t
 
 if TYPE_CHECKING:
-    from flext_ldif._models.domain import FlextLdifModelsDomains
+    from flext_ldif import FlextLdifModelsDomains
 
 
 def _get_domains() -> type[FlextLdifModelsDomains]:
@@ -27,7 +25,7 @@ def _get_domains() -> type[FlextLdifModelsDomains]:
     ``models`` → ``results`` → ``collections``.  Deferring to call-time
     breaks the cycle while preserving full runtime access.
     """
-    from flext_ldif._models.domain import FlextLdifModelsDomains  # noqa: PLC0415
+    from flext_ldif import FlextLdifModelsDomains  # noqa: PLC0415
 
     return FlextLdifModelsDomains
 

@@ -14,8 +14,7 @@ from typing import Final
 
 from flext_tests import FlextTestsModels
 
-from flext_ldif import FlextLdifModels
-from flext_ldif._models.settings import FlextLdifModelsSettings
+from flext_ldif import FlextLdifModels, FlextLdifModelsSettings
 
 
 class FlextLdifTestModels(FlextTestsModels, FlextLdifModels):

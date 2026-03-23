@@ -3,14 +3,17 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Annotated, ClassVar, Self, overload
 
-from flext_core.models import FlextModels as m
+from flext_core import m
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
-from flext_ldif import c, t
-from flext_ldif._models.base import FlextLdifModelsBase
-from flext_ldif._models.collections import FlextLdifModelsCollections
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._models.events import FlextLdifModelsEvents
+from flext_ldif import (
+    FlextLdifModelsBase,
+    FlextLdifModelsCollections,
+    FlextLdifModelsDomains,
+    FlextLdifModelsEvents,
+    c,
+    t,
+)
 
 
 def _events_factory() -> list[FlextLdifModelsResults.EventType]:

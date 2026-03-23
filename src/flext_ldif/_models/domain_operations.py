@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
+from flext_ldif import FlextLdifModelsDomainAttributes
 
 
 class FlextLdifModelsDomainOperations(FlextLdifModelsDomainAttributes):

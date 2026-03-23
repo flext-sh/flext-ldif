@@ -4,9 +4,7 @@ from typing import Final
 
 from flext_core import FlextLogger
 
-from flext_ldif.constants import FlextLdifConstants as c
-from flext_ldif.models import FlextLdifModels as m
-from flext_ldif.services.pipeline import ProcessingPipeline
+from flext_ldif import ProcessingPipeline, c, m
 
 logger: Final = FlextLogger(__name__)
 

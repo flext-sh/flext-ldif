@@ -9,9 +9,7 @@ from typing import ClassVar, override
 
 from flext_core import FlextLogger
 
-from flext_ldif import c, m, r, t
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif import FlextLdifModelsDomains, FlextLdifServersRfc, c, m, r, t
 
 logger = FlextLogger(__name__)
 

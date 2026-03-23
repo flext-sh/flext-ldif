@@ -7,11 +7,7 @@ import struct
 from collections.abc import Callable, Mapping
 from typing import override
 
-from flext_ldif import d, r
-from flext_ldif.base import FlextLdifServiceBase
-from flext_ldif.constants import FlextLdifConstants as c
-from flext_ldif.models import FlextLdifModels as m
-from flext_ldif.utilities import FlextLdifUtilities as u
+from flext_ldif import FlextLdifServiceBase, c, d, m, r, u
 
 
 class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):

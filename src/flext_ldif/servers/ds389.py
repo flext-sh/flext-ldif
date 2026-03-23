@@ -6,12 +6,16 @@ import re
 from collections.abc import Mapping
 from typing import ClassVar, override
 
-from flext_ldif import c, m, r
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
-from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif import (
+    FlextLdifModelsDomains,
+    FlextLdifServersRfc,
+    FlextLdifUtilitiesACL,
+    FlextLdifUtilitiesObjectClass,
+    FlextLdifUtilitiesServer,
+    c,
+    m,
+    r,
+)
 
 
 class FlextLdifServersDs389(FlextLdifServersRfc):

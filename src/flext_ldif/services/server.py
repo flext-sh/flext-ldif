@@ -9,15 +9,16 @@ from typing import ClassVar, override
 from flext_core import FlextLogger, FlextRegistry
 
 import flext_ldif.servers as servers_package
-from flext_ldif import r, t
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif.protocols import FlextLdifProtocols as p
-from flext_ldif.servers._base import (
+from flext_ldif import (
+    FlextLdifServersBase,
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,
     FlextLdifServersBaseSchemaAcl,
+    FlextLdifUtilitiesServer,
+    p,
+    r,
+    t,
 )
-from flext_ldif.servers.base import FlextLdifServersBase
 
 logger = FlextLogger(__name__)
 

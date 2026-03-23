@@ -6,10 +6,7 @@ import contextlib
 from collections import Counter
 from typing import override
 
-from flext_ldif import r, s
-from flext_ldif.models import FlextLdifModels as m
-from flext_ldif.services.rfc_validation import FlextLdifValidation
-from flext_ldif.utilities import FlextLdifUtilities as u
+from flext_ldif import FlextLdifValidation, m, r, s, u
 
 
 class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):

@@ -8,14 +8,16 @@ import re
 from collections.abc import Mapping
 from typing import TypeIs
 
-from flext_core import FlextLogger, r
-from flext_core.utilities import FlextUtilities as u_core
+from flext_core import FlextLogger, r, u
 
-from flext_ldif import c, t
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif.models import m
+from flext_ldif import (
+    FlextLdifModelsMetadata,
+    FlextLdifUtilitiesOID,
+    FlextLdifUtilitiesServer,
+    c,
+    m,
+    t,
+)
 
 logger = FlextLogger(__name__)
 
@@ -270,7 +272,7 @@ class FlextLdifUtilitiesParser:
         if isinstance(existing, set):
             entry_dict[attr_name] = [*existing, attr_value]
             return True
-        if not u_core.is_list_like(existing):
+        if not u.is_list_like(existing):
             if isinstance(existing, str):
                 entry_dict[attr_name] = [existing, attr_value]
             else:

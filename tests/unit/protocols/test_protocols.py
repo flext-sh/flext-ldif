@@ -14,11 +14,15 @@ from flext_core import r
 from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_ldif import FlextLdifProtocols, FlextLdifServer, p
-from flext_ldif.servers.oid import FlextLdifServersOid
-from flext_ldif.servers.openldap import FlextLdifServersOpenldap
-from flext_ldif.servers.oud import FlextLdifServersOud
-from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
+from flext_ldif import (
+    FlextLdifProtocols,
+    FlextLdifServer,
+    FlextLdifServersOid,
+    FlextLdifServersOpenldap,
+    FlextLdifServersOud,
+    FlextLdifServersRelaxed,
+    p,
+)
 from tests import s
 
 

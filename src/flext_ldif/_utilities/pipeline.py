@@ -7,9 +7,7 @@ from typing import Self, override
 
 from flext_core import r
 
-from flext_ldif._utilities.filters import FlextLdifUtilitiesFilters
-from flext_ldif._utilities.transformers import FlextLdifUtilitiesTransformer
-from flext_ldif.models import m
+from flext_ldif import FlextLdifUtilitiesFilters, FlextLdifUtilitiesTransformer, m
 
 
 class _Filtered:

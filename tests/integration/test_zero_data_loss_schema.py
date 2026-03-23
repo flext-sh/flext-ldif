@@ -18,10 +18,13 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import FlextLdif, FlextLdifUtilities
-from flext_ldif.servers.base import FlextLdifServersBaseSchema
-from flext_ldif.servers.oid import FlextLdifServersOid
-from flext_ldif.servers.oud import FlextLdifServersOud
+from flext_ldif import (
+    FlextLdif,
+    FlextLdifServersBaseSchema,
+    FlextLdifServersOid,
+    FlextLdifServersOud,
+    FlextLdifUtilities,
+)
 
 
 class TestSchemaDeviationsSyntaxQuotes:

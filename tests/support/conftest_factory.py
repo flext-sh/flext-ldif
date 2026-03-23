@@ -26,8 +26,14 @@ from flext_core import FlextConstants, FlextLogger, FlextSettings, r
 from flext_tests import tk
 from ldap3 import ALL, Connection, Server
 
-from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifServer, FlextLdifWriter, p
-from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif import (
+    FlextLdif,
+    FlextLdifParser,
+    FlextLdifServer,
+    FlextLdifServersBase,
+    FlextLdifWriter,
+    p,
+)
 from tests import t, u
 
 from ..conftest import FlextLdifFixtures

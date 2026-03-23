@@ -6,7 +6,7 @@ from unittest.mock import patch
 from flext_tests import tm
 from tests import s
 
-from flext_ldif.utilities import FlextLdifUtilities as u
+from flext_ldif import u
 
 
 class TestFlextLdifUtilitiesOID(s):

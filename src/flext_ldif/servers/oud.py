@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from flext_core import FlextLogger
 
-from flext_ldif.servers._oud import (
+from flext_ldif import (
     FlextLdifServersOudAcl,
     FlextLdifServersOudConstants,
     FlextLdifServersOudEntry,
     FlextLdifServersOudSchema,
+    FlextLdifServersRfc,
 )
-from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 logger = FlextLogger(__name__)
 

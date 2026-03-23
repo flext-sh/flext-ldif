@@ -7,10 +7,15 @@ import re
 from collections.abc import Mapping
 from typing import ClassVar, override
 
-from flext_ldif import c, m, r, u
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif import (
+    FlextLdifModelsDomains,
+    FlextLdifServersRfc,
+    FlextLdifUtilitiesACL,
+    c,
+    m,
+    r,
+    u,
+)
 
 
 class FlextLdifServersTivoli(FlextLdifServersRfc):
