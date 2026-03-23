@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import TypeIs
 
 from flext_core import FlextLogger, r, u
@@ -65,10 +65,10 @@ class FlextLdifUtilitiesACL:
         aci_content: str,
         version: str,
         acl_line: str,
-        extra_patterns: dict[str, str],
-    ) -> dict[str, t.NormalizedValue]:
+        extra_patterns: MutableMapping[str, str],
+    ) -> MutableMapping[str, t.NormalizedValue]:
         """Build metadata extensions dict."""
-        extensions: dict[str, t.NormalizedValue] = {
+        extensions: MutableMapping[str, t.NormalizedValue] = {
             "version": version,
             "original_format": acl_line,
         }
@@ -81,14 +81,14 @@ class FlextLdifUtilitiesACL:
                 group=1,
             )
 
-        extra_dict: dict[str, str | None] = {}
+        extra_dict: MutableMapping[str, str | None] = {}
         for k, v in extra_patterns.items():
             if bool(v):
                 result = extract_extra(k, v)
                 if result is not None:
                     extra_dict[k] = result
         if extra_dict:
-            filtered_extensions: dict[str, str] = {
+            filtered_extensions: MutableMapping[str, str] = {
                 k: v for k, v in extra_dict.items() if isinstance(v, str)
             }
             if filtered_extensions:
@@ -99,7 +99,7 @@ class FlextLdifUtilitiesACL:
     def _build_subject_and_permissions(
         aci_content: str,
         config: FlextLdifModelsSettings.AciParserConfig,
-    ) -> tuple[str, str, dict[str, bool]]:
+    ) -> tuple[str, str, MutableMapping[str, bool]]:
         """Build subject and permissions from ACI content."""
         permissions_list = FlextLdifUtilitiesACL.extract_permissions(
             aci_content,
@@ -121,7 +121,7 @@ class FlextLdifUtilitiesACL:
             permissions_list,
             config.permission_map,
         )
-        permissions_dict: dict[str, bool] = {
+        permissions_dict: MutableMapping[str, bool] = {
             k: bool(v) for k, v in dict(permissions_dict_raw).items()
         }
         return (subject_type, subject_value, permissions_dict)
@@ -129,7 +129,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _check_special_value(
         rule_value: str,
-        special_values: dict[str, tuple[str, str]],
+        special_values: MutableMapping[str, tuple[str, str]],
     ) -> tuple[str, str] | None:
         """Check if rule value matches any special value."""
         for key, value_tuple in dict(special_values).items():
@@ -156,7 +156,7 @@ class FlextLdifUtilitiesACL:
     def _extract_target_info(
         aci_content: str,
         config: FlextLdifModelsSettings.AciParserConfig,
-    ) -> tuple[list[str], str]:
+    ) -> tuple[MutableSequence[str], str]:
         """Extract target attributes and DN from ACI content."""
         targetattr_extracted = FlextLdifUtilitiesACL.extract_component(
             aci_content,
@@ -194,7 +194,9 @@ class FlextLdifUtilitiesACL:
         return (version, acl_name)
 
     @staticmethod
-    def _format_batch_errors(errors: list[tuple[int, str]]) -> list[str]:
+    def _format_batch_errors(
+        errors: MutableSequence[tuple[int, str]],
+    ) -> MutableSequence[str]:
         """Format batch error tuples to strings."""
         return [f"ACL {idx}: {msg}" for idx, msg in errors]
 
@@ -206,7 +208,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _normalize_permission(
         perm: str,
-        permission_map: dict[str, str] | None,
+        permission_map: MutableMapping[str, str] | None,
     ) -> str:
         """Normalize permission name using map if available."""
         if not permission_map:
@@ -240,13 +242,13 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def _process_permission_list(
-        perm_list: list[str],
-        permission_map: dict[str, str] | None,
+        perm_list: MutableSequence[str],
+        permission_map: MutableMapping[str, str] | None,
         *,
         is_allow: bool,
-    ) -> dict[str, bool]:
+    ) -> MutableMapping[str, bool]:
         """Process permission list into dictionary."""
-        result: dict[str, bool] = {}
+        result: MutableMapping[str, bool] = {}
         for perm in perm_list:
             if perm:
                 normalized = FlextLdifUtilitiesACL._normalize_permission(
@@ -260,7 +262,7 @@ class FlextLdifUtilitiesACL:
     def build_aci_bind_rule(
         subject_type: str,
         subject_value: str,
-        bind_operators: dict[str, str] | None = None,
+        bind_operators: MutableMapping[str, str] | None = None,
         self_value: str = "ldap:///self",
         anonymous_value: str = "ldap:///anyone",
     ) -> str:
@@ -287,13 +289,13 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def build_aci_permissions_clause(
-        permissions: list[str],
+        permissions: MutableSequence[str],
         allow_prefix: str = "(allow (",
         supported_permissions: set[str] | frozenset[str] | None = None,
     ) -> str | None:
         """Build ACI permissions clause."""
         if supported_permissions:
-            filtered: list[str] = (
+            filtered: MutableSequence[str] = (
                 FlextLdifUtilitiesACL.filter_supported_permissions(
                     permissions,
                     supported_permissions,
@@ -307,9 +309,9 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def build_aci_subject(
-        bind_rules_data: list[dict[str, str]],
-        subject_type_map: dict[str, str],
-        special_values: dict[str, tuple[str, str]],
+        bind_rules_data: MutableSequence[MutableMapping[str, str]],
+        subject_type_map: MutableMapping[str, str],
+        special_values: MutableMapping[str, tuple[str, str]],
     ) -> tuple[str, str]:
         """Build ACL subject from bind rules using configurable maps."""
         if not bind_rules_data:
@@ -342,7 +344,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def build_aci_target_clause(
-        target_attributes: list[str] | None,
+        target_attributes: MutableSequence[str] | None,
         target_dn: str | None = None,
         separator: str = " || ",
     ) -> str:
@@ -356,22 +358,22 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def build_metadata_extensions(
         config: FlextLdifModelsSettings.AclMetadataConfig,
-    ) -> dict[str, t.NormalizedValue]:
+    ) -> MutableMapping[str, t.NormalizedValue]:
         """Build QuirkMetadata extensions for ACL."""
-        normalized_line_breaks: list[t.Scalar] | None = None
+        normalized_line_breaks: MutableSequence[t.Scalar] | None = None
         if config.line_breaks is not None:
             normalized_line_breaks = [int(value) for value in config.line_breaks]
-        normalized_targetscope: list[t.Scalar] | None = None
+        normalized_targetscope: MutableSequence[t.Scalar] | None = None
         if config.targetscope is not None:
             normalized_targetscope = [int(value) for value in config.targetscope]
-        extension_items: list[tuple[str, t.NormalizedValue | None]] = [
+        extension_items: MutableSequence[tuple[str, t.NormalizedValue | None]] = [
             ("line_breaks", normalized_line_breaks),
             ("dn_spaces", config.dn_spaces),
             ("targetscope", normalized_targetscope),
             ("version", config.version),
             ("action_type", config.action_type),
         ]
-        result: dict[str, t.NormalizedValue] = {
+        result: MutableMapping[str, t.NormalizedValue] = {
             key: value
             for key, value in extension_items
             if value is not None
@@ -381,19 +383,19 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def build_permissions_dict(
-        allow_permissions: list[str],
-        permission_map: dict[str, str] | None = None,
-        deny_permissions: list[str] | None = None,
-    ) -> dict[str, bool]:
+        allow_permissions: MutableSequence[str],
+        permission_map: MutableMapping[str, str] | None = None,
+        deny_permissions: MutableSequence[str] | None = None,
+    ) -> MutableMapping[str, bool]:
         """Build permissions dictionary from allow/deny lists."""
-        allow_dict: dict[str, bool] = {}
+        allow_dict: MutableMapping[str, bool] = {}
         if allow_permissions:
             allow_dict = FlextLdifUtilitiesACL._process_permission_list(
                 allow_permissions,
                 permission_map,
                 is_allow=True,
             )
-        deny_dict: dict[str, bool] = {}
+        deny_dict: MutableMapping[str, bool] = {}
         if deny_permissions:
             deny_dict = FlextLdifUtilitiesACL._process_permission_list(
                 deny_permissions,
@@ -405,8 +407,8 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def extract_bind_rules(
         content: str,
-        bind_patterns: dict[str, str] | None = None,
-    ) -> list[dict[str, str]]:
+        bind_patterns: MutableMapping[str, str] | None = None,
+    ) -> MutableSequence[MutableMapping[str, str]]:
         """Extract bind rules from ACL content.
 
         Finds userdn, groupdn, or other bind rule specifications.
@@ -423,13 +425,13 @@ class FlextLdifUtilitiesACL:
         """
         if not content:
             return []
-        default_patterns: dict[str, str] = {
+        default_patterns: MutableMapping[str, str] = {
             "userdn": 'userdn\\s*=\\s*"([^"]*)"',
             "groupdn": 'groupdn\\s*=\\s*"([^"]*)"',
             "roledn": 'roledn\\s*=\\s*"([^"]*)"',
         }
         patterns = bind_patterns or default_patterns
-        all_bind_rules: list[dict[str, str]] = []
+        all_bind_rules: MutableSequence[MutableMapping[str, str]] = []
         for bind_type, pattern in dict(patterns).items():
             matches = re.findall(pattern, content, re.IGNORECASE)
             all_bind_rules.extend([
@@ -439,11 +441,11 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def extract_bind_rules_from_extensions(
-        extensions: dict[str, t.NormalizedValue] | None,
-        rule_config: list[tuple[str, str, str | None]],
+        extensions: MutableMapping[str, t.NormalizedValue] | None,
+        rule_config: MutableSequence[tuple[str, str, str | None]],
         *,
         tuple_length: int = 2,
-    ) -> list[str]:
+    ) -> MutableSequence[str]:
         """Extract and format bind rules from metadata extensions."""
         if not extensions:
             return []
@@ -480,7 +482,7 @@ class FlextLdifUtilitiesACL:
             """Filter rule config items based on extensions."""
             return bool(extensions.get(item[0]) if extensions else None)
 
-        result: list[str] = []
+        result: MutableSequence[str] = []
         for item in rule_config:
             try:
                 if rule_predicate(item):
@@ -526,10 +528,10 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def extract_components_batch(
         content: str,
-        patterns: dict[str, str | tuple[str, int]],
+        patterns: MutableMapping[str, str | tuple[str, int]],
         *,
-        defaults: dict[str, t.NormalizedValue] | None = None,
-    ) -> dict[str, t.NormalizedValue]:
+        defaults: MutableMapping[str, t.NormalizedValue] | None = None,
+    ) -> MutableMapping[str, t.NormalizedValue]:
         r"""Extract multiple ACL components in one call.
 
         Replaces repetitive extract_component() calls with a single batch call.
@@ -593,7 +595,7 @@ class FlextLdifUtilitiesACL:
             elif u.is_primitive(raw_default):
                 default_value = raw_default
             elif isinstance(raw_default, list):
-                normalized_list: list[t.Scalar] = []
+                normalized_list: MutableSequence[t.Scalar] = []
                 for item in raw_default:
                     if isinstance(item, t.SCALAR_TYPES):
                         normalized_list.append(item)
@@ -601,13 +603,15 @@ class FlextLdifUtilitiesACL:
                         normalized_list.append(str(item))
                 default_value = normalized_list
             elif isinstance(raw_default, Mapping):
-                normalized_mapping: dict[str, t.Scalar | list[t.Scalar]] = {}
+                normalized_mapping: MutableMapping[
+                    str, t.Scalar | MutableSequence[t.Scalar]
+                ] = {}
                 for key, item in raw_default.items():
                     if isinstance(item, t.SCALAR_TYPES):
                         normalized_mapping[key] = item
                         continue
                     if isinstance(item, list):
-                        nested_list: list[t.Scalar] = []
+                        nested_list: MutableSequence[t.Scalar] = []
                         for nested_item in item:
                             if isinstance(nested_item, t.SCALAR_TYPES):
                                 nested_list.append(nested_item)
@@ -624,14 +628,14 @@ class FlextLdifUtilitiesACL:
             )
             return (name, final_value)
 
-        result_dict: dict[str, tuple[str, t.NormalizedValue | None]] = {}
+        result_dict: MutableMapping[str, tuple[str, t.NormalizedValue | None]] = {}
         for key, pattern in patterns.items():
             try:
                 result = extract_component_batch(key, pattern)
                 result_dict[key] = result
             except (ValueError, TypeError, AttributeError):
                 continue
-        final_result: dict[str, t.NormalizedValue] = {}
+        final_result: MutableMapping[str, t.NormalizedValue] = {}
         for key, value_item in result_dict.items():
             if len(value_item) == TUPLE_LENGTH_PAIR and value_item[1] is not None:
                 final_result[key] = value_item[1]
@@ -643,7 +647,7 @@ class FlextLdifUtilitiesACL:
         allow_deny_pattern: str,
         ops_separator: str = ",",
         action_filter: str | None = None,
-    ) -> list[str]:
+    ) -> MutableSequence[str]:
         """Extract permissions from ACL content using configurable patterns.
 
         Args:
@@ -658,7 +662,7 @@ class FlextLdifUtilitiesACL:
         """
         if not content or not allow_deny_pattern:
             return []
-        permissions: list[str] = []
+        permissions: MutableSequence[str] = []
         matches = re.finditer(allow_deny_pattern, content, re.IGNORECASE)
         min_groups_for_action = 1
         min_groups_for_ops = 2
@@ -688,10 +692,10 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def extract_target_extensions(
         extensions: FlextLdifModelsMetadata.DynamicMetadata
-        | dict[str, t.NormalizedValue]
+        | MutableMapping[str, t.NormalizedValue]
         | None,
-        target_config: list[tuple[str, str]],
-    ) -> list[str]:
+        target_config: MutableSequence[tuple[str, str]],
+    ) -> MutableSequence[str]:
         """Extract and format target extensions from metadata extensions."""
         if not extensions:
             return []
@@ -712,7 +716,7 @@ class FlextLdifUtilitiesACL:
                 return bool(extensions.get(item[0]) if extensions else None)
             return False
 
-        result: list[str] = []
+        result: MutableSequence[str] = []
         for item in target_config:
             try:
                 if predicate_func(item):
@@ -732,9 +736,9 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def filter_supported_permissions(
-        permissions: list[str],
+        permissions: MutableSequence[str],
         supported: set[str] | frozenset[str],
-    ) -> list[str]:
+    ) -> MutableSequence[str]:
         """Filter permissions to only include supported ones."""
         supported_lower = {s.lower() for s in supported}
         return [p.lower() for p in permissions if p.lower() in supported_lower]
@@ -788,11 +792,11 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def format_conversion_comments(
         extensions: FlextLdifModelsMetadata.DynamicMetadata
-        | dict[str, t.NormalizedValue]
+        | MutableMapping[str, t.NormalizedValue]
         | None,
         converted_from_key: str,
         comments_key: str,
-    ) -> list[str]:
+    ) -> MutableSequence[str]:
         """Extract conversion comments from metadata extensions."""
         if not extensions:
             return []
@@ -806,7 +810,7 @@ class FlextLdifUtilitiesACL:
         )
         if comments_value is None:
             return []
-        normalized: list[str]
+        normalized: MutableSequence[str]
         if isinstance(comments_value, str):
             normalized = [comments_value]
         elif isinstance(comments_value, list):
@@ -816,7 +820,7 @@ class FlextLdifUtilitiesACL:
         return normalized + [""]
 
     @staticmethod
-    def get_acl_attributes(server_type: str | None = None) -> list[str]:
+    def get_acl_attributes(server_type: str | None = None) -> MutableSequence[str]:
         """Get ACL attributes for a server type."""
         if server_type is None:
             return list(FlextLdifUtilitiesACL._RFC_ACL_ATTRIBUTES)
@@ -840,8 +844,8 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def map_oid_to_oud_permissions(
-        oid_permissions: dict[str, bool],
-    ) -> dict[str, bool]:
+        oid_permissions: MutableMapping[str, bool],
+    ) -> MutableMapping[str, bool]:
         """Map OID-specific permissions to OUD-equivalent permissions."""
         pass_through_perms = {
             "read",
@@ -853,7 +857,7 @@ class FlextLdifUtilitiesACL:
             "all",
         }
 
-        def map_perm(perm_name: str, *, perm_value: bool) -> dict[str, bool]:
+        def map_perm(perm_name: str, *, perm_value: bool) -> MutableMapping[str, bool]:
             """Map single permission."""
             if perm_name == "browse":
                 return {"read": perm_value, "search": perm_value}
@@ -863,12 +867,14 @@ class FlextLdifUtilitiesACL:
                 return {perm_name: perm_value}
             return {}
 
-        mapped_dicts: list[dict[str, bool]] = [
+        mapped_dicts: MutableSequence[MutableMapping[str, bool]] = [
             map_perm(perm_name, perm_value=perm_value)
             for perm_name, perm_value in oid_permissions.items()
         ]
-        filtered_dicts: list[dict[str, bool]] = [d for d in mapped_dicts if d]
-        result: dict[str, bool] = {}
+        filtered_dicts: MutableSequence[MutableMapping[str, bool]] = [
+            d for d in mapped_dicts if d
+        ]
+        result: MutableMapping[str, bool] = {}
         for d in filtered_dicts:
             for k, v in d.items():
                 result[k] = result.get(k, False) or v
@@ -876,8 +882,8 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def map_oud_to_oid_permissions(
-        oud_permissions: dict[str, bool],
-    ) -> dict[str, bool]:
+        oud_permissions: MutableMapping[str, bool],
+    ) -> MutableMapping[str, bool]:
         """Map OUD-specific permissions to OID-equivalent permissions."""
         pass_through_perms = {
             "read",
@@ -890,15 +896,15 @@ class FlextLdifUtilitiesACL:
         }
         has_read = oud_permissions.get("read", False)
         has_search = oud_permissions.get("search", False)
-        browse_dict: dict[str, bool] = (
+        browse_dict: MutableMapping[str, bool] = (
             {"browse": has_read and has_search} if has_read or has_search else {}
         )
-        pass_through: dict[str, bool] = {
+        pass_through: MutableMapping[str, bool] = {
             k: v
             for k, v in oud_permissions.items()
             if k in pass_through_perms and k not in {"read", "search"}
         }
-        result: dict[str, bool] = {**browse_dict, **pass_through}
+        result: MutableMapping[str, bool] = {**browse_dict, **pass_through}
         return result
 
     @staticmethod
@@ -956,7 +962,7 @@ class FlextLdifUtilitiesACL:
     def parse_targetattr(
         targetattr_str: str | None,
         separator: str = "||",
-    ) -> tuple[list[str], str]:
+    ) -> tuple[MutableSequence[str], str]:
         """Parse targetattr string to attributes list and target DN."""
         if not targetattr_str:
             return ([], "*")
@@ -968,7 +974,7 @@ class FlextLdifUtilitiesACL:
         return ([], "*")
 
     @staticmethod
-    def parser(acl_string: str) -> dict[str, str] | None:
+    def parser(acl_string: str) -> MutableMapping[str, str] | None:
         """Detect ACL format and return format information."""
         if not acl_string or not acl_string.strip():
             return None
@@ -995,10 +1001,10 @@ class FlextLdifUtilitiesACL:
                 return " "
             return char
 
-        sanitized_chars: list[str] = [sanitize_char(c) for c in raw_name]
-        sanitized_chars_list: list[str] = sanitized_chars
+        sanitized_chars: MutableSequence[str] = [sanitize_char(c) for c in raw_name]
+        sanitized_chars_list: MutableSequence[str] = sanitized_chars
         was_sanitized = sanitized_chars_list != list(raw_name)
-        result_chars: list[str] = []
+        result_chars: MutableSequence[str] = []
         prev_char = ""
         for char in sanitized_chars_list:
             if not (char == " " and prev_char == " "):
@@ -1055,10 +1061,10 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def validate_acl_batch(
-        acl_lines: list[str],
+        acl_lines: MutableSequence[str],
         *,
         collect_errors: bool = True,
-    ) -> r[list[tuple[str, bool, str | None]]]:
+    ) -> r[MutableSequence[tuple[str, bool, str | None]]]:
         """Validate multiple ACL lines."""
 
         def validate_single_acl(acl_line: str) -> tuple[str, bool, str | None]:
@@ -1069,7 +1075,7 @@ class FlextLdifUtilitiesACL:
             error_msg = aci_content or "Invalid ACI format"
             return (acl_line, False, error_msg)
 
-        results: list[tuple[str, bool, str | None]] = []
+        results: MutableSequence[tuple[str, bool, str | None]] = []
         if collect_errors:
             for acl_line in acl_lines:
                 result_tuple = validate_single_acl(acl_line)
@@ -1080,7 +1086,7 @@ class FlextLdifUtilitiesACL:
                 results.append(result_tuple)
                 if not result_tuple[1]:
                     break
-        return r[list[tuple[str, bool, str | None]]].ok(results)
+        return r[MutableSequence[tuple[str, bool, str | None]]].ok(results)
 
 
 __all__ = ["FlextLdifUtilitiesACL"]

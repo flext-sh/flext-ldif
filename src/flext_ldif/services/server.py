@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar, override
 
 from flext_core import FlextLogger, FlextRegistry
@@ -58,7 +59,7 @@ class FlextLdifServer(FlextRegistry):
         self,
         server_type: str,
     ) -> r[
-        dict[
+        MutableMapping[
             str,
             FlextLdifServersBaseSchema
             | FlextLdifServersBaseSchemaAcl
@@ -93,11 +94,11 @@ class FlextLdifServer(FlextRegistry):
 
         return self.quirk(server_type).flat_map(validate_constants)
 
-    def get_registry_stats(self) -> dict[str, t.NormalizedValue]:
+    def get_registry_stats(self) -> MutableMapping[str, t.NormalizedValue]:
         """Get comprehensive registry statistics."""
         servers = self.list_registered_servers()
-        quirks_by_server: dict[str, dict[str, str | None]] = {}
-        priorities: dict[str, int] = {}
+        quirks_by_server: MutableMapping[str, MutableMapping[str, str | None]] = {}
+        priorities: MutableMapping[str, int] = {}
         for st in servers:
             base = self.quirk(st).map_or(None)
             if base is None:
@@ -132,7 +133,7 @@ class FlextLdifServer(FlextRegistry):
             return None
         return base.schema_quirk
 
-    def list_registered_servers(self) -> list[str]:
+    def list_registered_servers(self) -> MutableSequence[str]:
         """List all registered server types."""
         return sorted(self.list_plugins(self.SERVERS, scope="class").value or [])
 

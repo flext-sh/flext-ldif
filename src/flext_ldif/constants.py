@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import ClassVar, Final, Literal
@@ -384,7 +385,7 @@ class FlextLdifConstants(FlextConstants):
             "oid",
             "oud",
         ])
-        SCHEMA_ENTRY_PATTERNS: ClassVar[dict[str, list[str]]] = (
+        SCHEMA_ENTRY_PATTERNS: ClassVar[Mapping[str, Sequence[str]]] = (
             MappingProxyType({
                 "rfc": ("cn=schema",),
                 "oid": ("cn=schema", "cn=subschema"),
@@ -399,7 +400,7 @@ class FlextLdifConstants(FlextConstants):
                 "relaxed": ("cn=schema", "cn=subschema", "ou=schema"),
             })
         )
-        SERVER_BINARY_ATTRIBUTES: ClassVar[dict[str, frozenset[str]]] = (
+        SERVER_BINARY_ATTRIBUTES: ClassVar[Mapping[str, frozenset[str]]] = (
             MappingProxyType({
                 "oid": frozenset(["orclguid", "userpassword"]),
                 "oud": frozenset(["ds-sync-hist", "ds-sync-state"]),
@@ -650,7 +651,11 @@ class FlextLdifConstants(FlextConstants):
         ATTRIBUTE_TYPES: Final[str] = "attributeTypes"
         OBJECT_CLASSES: Final[str] = "objectClasses"
 
-        DEFAULT_ACL_ATTRIBUTES: Final[list[str]] = ["acl", "aci", "olcAccess"]
+        DEFAULT_ACL_ATTRIBUTES: Final[MutableSequence[str]] = [
+            "acl",
+            "aci",
+            "olcAccess",
+        ]
 
         MANAGER: Final[str] = "manager"
         GROUPS: Final[str] = "groups"
@@ -785,15 +790,15 @@ class FlextLdifConstants(FlextConstants):
             "novell",
             "ibm_tivoli",
         )
-        _LONG_NAMES_DICT: ClassVar[dict[str, str]] = {
+        _LONG_NAMES_DICT: ClassVar[MutableMapping[str, str]] = {
             name: name for name in _CANONICAL_SERVER_NAMES
         }
-        _FROM_LONG_DICT: ClassVar[dict[str, str]] = {
+        _FROM_LONG_DICT: ClassVar[MutableMapping[str, str]] = {
             v: k for k, v in _LONG_NAMES_DICT.items()
         }
-        FROM_LONG: Final[dict[str, str]] = MappingProxyType(_FROM_LONG_DICT)
+        FROM_LONG: Final[Mapping[str, str]] = MappingProxyType(_FROM_LONG_DICT)
         _SELF_ALIASES: ClassVar[tuple[str, ...]] = ("ad", "apache", "novell")
-        _ALIASES_DICT: ClassVar[dict[str, str]] = {
+        _ALIASES_DICT: ClassVar[MutableMapping[str, str]] = {
             name: name for name in _SELF_ALIASES
         } | {
             "389": "ds389",
@@ -903,7 +908,7 @@ class FlextLdifConstants(FlextConstants):
         BINARY: Final[str] = "1.3.6.1.4.1.1466.115.121.1.5"
         DN: Final[str] = "1.3.6.1.4.1.1466.115.121.1.12"
         OID: Final[str] = "1.3.6.1.4.1.1466.115.121.1.38"
-        OID_TO_NAME: ClassVar[dict[str, str]] = MappingProxyType({
+        OID_TO_NAME: ClassVar[Mapping[str, str]] = MappingProxyType({
             "2.5.5.5": "integer",
             "1.3.6.1.4.1.1466.115.121.1.1": "aci",
             "1.3.6.1.4.1.1466.115.121.1.2": "access_point",
@@ -959,8 +964,10 @@ class FlextLdifConstants(FlextConstants):
             "1.3.6.1.4.1.1466.115.121.1.57": "uui",
             "1.3.6.1.4.1.1466.115.121.1.58": "substring_assertion",
         })
-        NAME_TO_OID: Final[dict[str, str]] = {v: k for k, v in OID_TO_NAME.items()}
-        NAME_TO_TYPE_CATEGORY: Final[dict[str, str]] = {
+        NAME_TO_OID: Final[MutableMapping[str, str]] = {
+            v: k for k, v in OID_TO_NAME.items()
+        }
+        NAME_TO_TYPE_CATEGORY: Final[MutableMapping[str, str]] = {
             "integer": "integer",
             "boolean": "boolean",
             "distinguished_name": "dn",

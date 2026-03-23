@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, overload
 
 from flext_core import m
@@ -17,7 +18,7 @@ from flext_ldif import (
 
 class FlextLdifModelsResults:
     @staticmethod
-    def _events_factory() -> list[FlextLdifModelsResults.EventType]:
+    def _events_factory() -> MutableSequence[FlextLdifModelsResults.EventType]:
         return []
 
     @staticmethod
@@ -81,7 +82,9 @@ class FlextLdifModelsResults:
         ] = Field(default_factory=FlextLdifModelsCollections.CategoryPaths)
 
         @overload
-        def __getitem__(self, key: slice) -> list[FlextLdifModelsDomains.Entry]: ...
+        def __getitem__(
+            self, key: slice
+        ) -> MutableSequence[FlextLdifModelsDomains.Entry]: ...
 
         @overload
         def __getitem__(self, key: int) -> FlextLdifModelsDomains.Entry: ...
@@ -89,18 +92,20 @@ class FlextLdifModelsResults:
         def __getitem__(
             self,
             key: int | slice,
-        ) -> FlextLdifModelsDomains.Entry | list[FlextLdifModelsDomains.Entry]:
+        ) -> (
+            FlextLdifModelsDomains.Entry | MutableSequence[FlextLdifModelsDomains.Entry]
+        ):
             return self.get_all_entries()[key]
 
         def __len__(self) -> int:
             return len(self.get_all_entries())
 
         @property
-        def content(self) -> list[FlextLdifModelsDomains.Entry]:
+        def content(self) -> MutableSequence[FlextLdifModelsDomains.Entry]:
             return self.get_all_entries()
 
         @property
-        def entries(self) -> list[FlextLdifModelsDomains.Entry]:
+        def entries(self) -> MutableSequence[FlextLdifModelsDomains.Entry]:
             return self.get_all_entries()
 
         @field_validator("entries_by_category", mode="before")
@@ -108,7 +113,7 @@ class FlextLdifModelsResults:
         def _convert_dict_to_categories(
             cls,
             value: FlextLdifModelsCollections.FlexibleCategories
-            | dict[str, list[FlextLdifModelsDomains.Entry]],
+            | MutableMapping[str, MutableSequence[FlextLdifModelsDomains.Entry]],
         ) -> FlextLdifModelsCollections.FlexibleCategories:
             if isinstance(value, dict):
                 result = FlextLdifModelsCollections.FlexibleCategories()
@@ -127,7 +132,7 @@ class FlextLdifModelsResults:
         @classmethod
         def from_entries(
             cls,
-            entries: list[FlextLdifModelsDomains.Entry],
+            entries: MutableSequence[FlextLdifModelsDomains.Entry],
             category: str = "all",
             statistics: FlextLdifModelsResults.Statistics | None = None,
         ) -> Self:
@@ -139,8 +144,8 @@ class FlextLdifModelsResults:
             flex[category] = entry_list
             return cls(entries_by_category=flex, statistics=stats)
 
-        def get_all_entries(self) -> list[FlextLdifModelsDomains.Entry]:
-            all_entries: list[FlextLdifModelsDomains.Entry] = []
+        def get_all_entries(self) -> MutableSequence[FlextLdifModelsDomains.Entry]:
+            all_entries: MutableSequence[FlextLdifModelsDomains.Entry] = []
             for entries in self.entries_by_category.values():
                 all_entries.extend(entries)
             return all_entries
@@ -148,8 +153,8 @@ class FlextLdifModelsResults:
         def get_category(
             self,
             category: str,
-            default: list[FlextLdifModelsDomains.Entry] | None = None,
-        ) -> list[FlextLdifModelsDomains.Entry]:
+            default: MutableSequence[FlextLdifModelsDomains.Entry] | None = None,
+        ) -> MutableSequence[FlextLdifModelsDomains.Entry]:
             if category in self.entries_by_category:
                 return self.entries_by_category[category]
             return default if default is not None else []
@@ -215,7 +220,7 @@ class FlextLdifModelsResults:
             Field(),
         ] = Field(default_factory=FlextLdifModelsCollections.DynamicCounts)
         events: Annotated[
-            list[FlextLdifModelsResults.EventType],
+            MutableSequence[FlextLdifModelsResults.EventType],
             Field(),
         ] = Field(default_factory=list)
 
@@ -281,7 +286,9 @@ class FlextLdifModelsResults:
             self,
             other: FlextLdifModelsResults.Statistics,
         ) -> FlextLdifModelsResults.Statistics:
-            merged_reasons: dict[str, int] = dict(self.rejection_reasons.items())
+            merged_reasons: MutableMapping[str, int] = dict(
+                self.rejection_reasons.items()
+            )
             for reason, count in other.rejection_reasons.items():
                 merged_reasons[reason] = merged_reasons.get(reason, 0) + count
             sum_fields = {
@@ -319,7 +326,7 @@ class FlextLdifModelsResults:
                     **merged_reasons,
                 ),
             }
-            events_merged: list[FlextLdifModelsResults.EventType] = [
+            events_merged: MutableSequence[FlextLdifModelsResults.EventType] = [
                 *self.events,
                 *other.events,
             ]
@@ -349,14 +356,16 @@ class FlextLdifModelsResults:
             Field(),
         ] = Field(default_factory=FlextLdifModelsCollections.SchemaContent)
         entries: Annotated[
-            list[FlextLdifModelsDomains.Entry],
+            MutableSequence[FlextLdifModelsDomains.Entry],
             Field(),
-        ] = Field(default_factory=tuple)
+        ] = Field(default_factory=list)
         stats: Annotated[
             FlextLdifModelsResults.Statistics,
             Field(),
         ] = Field(default_factory=lambda: FlextLdifModelsResults._statistics_factory())
-        output_files: Annotated[list[str], Field()] = Field(default_factory=list)
+        output_files: Annotated[MutableSequence[str], Field()] = Field(
+            default_factory=list
+        )
 
         @computed_field
         def entry_count(self) -> int:
@@ -424,7 +433,9 @@ class FlextLdifModelsResults:
         )
         detected_server: Annotated[str, Field()]
         confidence: t.DecimalFraction
-        patterns_found: Annotated[list[str], Field()] = Field(default_factory=list)
+        patterns_found: Annotated[MutableSequence[str], Field()] = Field(
+            default_factory=list
+        )
         total_entries: t.NonNegativeInt
         migration_success: Annotated[bool, Field()]
 
@@ -438,7 +449,7 @@ class FlextLdifModelsResults:
         successful_parses: t.NonNegativeInt
         success_rate: t.NonNegativeFloat
         server_results: Annotated[
-            dict[str, t.Ldif.MetadataValue],
+            MutableMapping[str, t.Ldif.MetadataValue],
             Field(),
         ] = Field(default_factory=dict)
 
@@ -447,7 +458,7 @@ class FlextLdifModelsResults:
             frozen=True, validate_default=True
         )
         status: Annotated[str, Field()]
-        services: Annotated[list[str], Field()] = Field(default_factory=list)
+        services: Annotated[MutableSequence[str], Field()] = Field(default_factory=list)
         config: Annotated[
             FlextLdifModelsCollections.ConfigSettings,
             Field(),
@@ -461,7 +472,7 @@ class FlextLdifModelsResults:
         total_entries: t.NonNegativeInt
         valid_entries: t.NonNegativeInt
         invalid_entries: t.NonNegativeInt
-        errors: Annotated[list[str], Field()] = Field(default_factory=list)
+        errors: Annotated[MutableSequence[str], Field()] = Field(default_factory=list)
 
         @computed_field
         def success_rate(self) -> float:
@@ -478,7 +489,7 @@ class FlextLdifModelsResults:
             FlextLdifModelsCollections.DynamicCounts,
             Field(),
         ] = Field(default_factory=FlextLdifModelsCollections.DynamicCounts)
-        patterns_detected: Annotated[list[str], Field()] = Field(
+        patterns_detected: Annotated[MutableSequence[str], Field()] = Field(
             default_factory=list
         )
 
@@ -496,7 +507,9 @@ class FlextLdifModelsResults:
             FlextLdifModelsCollections.DynamicCounts,
             Field(),
         ] = Field(default_factory=FlextLdifModelsCollections.DynamicCounts)
-        patterns_found: Annotated[list[str], Field()] = Field(default_factory=list)
+        patterns_found: Annotated[MutableSequence[str], Field()] = Field(
+            default_factory=list
+        )
         is_confident: Annotated[bool, Field()]
         detection_error: str | None = None
         fallback_reason: str | None = None
@@ -552,8 +565,8 @@ class FlextLdifModelsResults:
             except KeyError:
                 return default
 
-        def items(self) -> list[tuple[str, t.Scalar]]:
-            results: list[tuple[str, t.Scalar]] = []
+        def items(self) -> MutableSequence[tuple[str, t.Scalar]]:
+            results: MutableSequence[tuple[str, t.Scalar]] = []
             for key in self.model_fields_set:
                 val = getattr(self, key)
                 if isinstance(val, t.PRIMITIVES_TYPES):
@@ -564,7 +577,7 @@ class FlextLdifModelsResults:
                     results.append((key, str(val)))
             return results
 
-        def keys(self) -> list[str]:
+        def keys(self) -> MutableSequence[str]:
             return list(self.model_fields_set)
 
         def _resolve_key(self, key: str) -> t.NormalizedValue:
@@ -585,7 +598,7 @@ class FlextLdifModelsResults:
         server_type: Annotated[c.Ldif.ServerTypeLiteral, Field()]
         status: Annotated[str, Field()]
         rfc_compliance: Annotated[str, Field()]
-        operations: Annotated[list[str], Field()]
+        operations: Annotated[MutableSequence[str], Field()]
 
     class SyntaxServiceStatus(DictAccessibleValue):
         service: Annotated[str, Field()]
@@ -597,18 +610,18 @@ class FlextLdifModelsResults:
     class StatisticsServiceStatus(DictAccessibleValue):
         service: Annotated[str, Field()]
         status: Annotated[str, Field()]
-        capabilities: Annotated[list[str], Field()]
+        capabilities: Annotated[MutableSequence[str], Field()]
         version: Annotated[str, Field()]
 
     class ValidationServiceStatus(DictAccessibleValue):
         service: Annotated[str, Field()]
         status: Annotated[str, Field()]
         rfc_compliance: Annotated[str, Field()]
-        validation_types: Annotated[list[str], Field()]
+        validation_types: Annotated[MutableSequence[str], Field()]
 
     class BatchValidationResult(FlextLdifModelsBases.Base):
         valid: Annotated[bool, Field()]
-        errors: Annotated[list[str], Field()]
+        errors: Annotated[MutableSequence[str], Field()]
         failed_entries: Annotated[int, Field()]
 
     class ParsingSummary(FlextLdifModelsBases.Base):
@@ -622,17 +635,17 @@ class FlextLdifModelsResults:
     class RdbmsTableSummary(FlextLdifModelsBases.Base):
         table_name: Annotated[str, Field()]
         row_count: Annotated[int, Field()]
-        columns: Annotated[list[str], Field()]
+        columns: Annotated[MutableSequence[str], Field()]
 
     class LdapConversionResult(FlextLdifModelsBases.Base):
         success: Annotated[bool, Field()]
-        errors: Annotated[list[str], Field()]
+        errors: Annotated[MutableSequence[str], Field()]
         converted_count: Annotated[int, Field()]
 
     class RfcValidationResult(FlextLdifModelsBases.Base):
         is_valid: Annotated[bool, Field()]
-        violations: Annotated[list[str], Field()]
-        validation_types: Annotated[list[str], Field()]
+        violations: Annotated[MutableSequence[str], Field()]
+        validation_types: Annotated[MutableSequence[str], Field()]
 
     class ValidationBatchResult(FlextLdifModelsBases.Base):
         results: Annotated[
@@ -645,13 +658,13 @@ class FlextLdifModelsResults:
             frozen=True, validate_default=True
         )
         entries: Annotated[
-            list[FlextLdifModelsDomains.Entry],
+            MutableSequence[FlextLdifModelsDomains.Entry],
             Field(),
-        ] = Field(default_factory=tuple)
+        ] = Field(default_factory=list)
         statistics: Annotated[FlextLdifModelsResults.Statistics, Field()]
         detected_server_type: c.Ldif.ServerTypeLiteral | None = None
 
-        def get_entries(self) -> list[FlextLdifModelsDomains.Entry]:
+        def get_entries(self) -> MutableSequence[FlextLdifModelsDomains.Entry]:
             return [
                 entry
                 for entry in self.entries
@@ -663,9 +676,9 @@ class FlextLdifModelsResults:
             frozen=True, validate_default=True
         )
         acls: Annotated[
-            list[FlextLdifModelsDomains.Acl],
+            MutableSequence[FlextLdifModelsDomains.Acl],
             Field(),
-        ] = Field(default_factory=tuple)
+        ] = Field(default_factory=list)
         statistics: Annotated[FlextLdifModelsResults.Statistics, Field()]
 
     class AclEvaluationResult(m.Value):

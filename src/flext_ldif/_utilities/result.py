@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import base64
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
 from pathlib import Path
 from typing import IO, Self, overload, override
 
@@ -51,17 +51,17 @@ class FlextLdifUtilitiesResult[T: t.NormalizedValue]:
     def __and__(
         self,
         other: FlextLdifUtilitiesResult[T],
-    ) -> FlextLdifUtilitiesResult[list[T]]:
+    ) -> FlextLdifUtilitiesResult[MutableSequence[T]]:
         """Combine operator: result1 & result2."""
         if self.is_failure:
-            return FlextLdifUtilitiesResult[list[T]].fail(self.error)
+            return FlextLdifUtilitiesResult[MutableSequence[T]].fail(self.error)
         if other.is_failure:
-            return FlextLdifUtilitiesResult[list[T]].fail(other.error)
+            return FlextLdifUtilitiesResult[MutableSequence[T]].fail(other.error)
         return FlextLdifUtilitiesResult.ok([self.value, other.value])
 
     def __matmul__(
         self,
-        metadata: dict[str, t.Scalar | list[str] | None],
+        metadata: MutableMapping[str, t.Scalar | MutableSequence[str] | None],
     ) -> FlextLdifUtilitiesResult[T]:
         """Metadata operator: result @ metadata."""
         if self.is_failure:
@@ -101,11 +101,11 @@ class FlextLdifUtilitiesResult[T: t.NormalizedValue]:
         if self.is_failure:
             return FlextLdifUtilitiesResult[str].fail(self.error)
         raw_value = self.value
-        entry_payload: m.Ldif.Entry | list[m.Ldif.Entry]
+        entry_payload: m.Ldif.Entry | MutableSequence[m.Ldif.Entry]
         if isinstance(raw_value, m.Ldif.Entry):
             entry_payload = raw_value
         elif isinstance(raw_value, Sequence) and (not isinstance(raw_value, str)):
-            entries: list[m.Ldif.Entry] = []
+            entries: MutableSequence[m.Ldif.Entry] = []
             for item in raw_value:
                 if not isinstance(item, m.Ldif.Entry):
                     return FlextLdifUtilitiesResult[str].fail(
@@ -197,12 +197,12 @@ class FlextLdifUtilitiesResult[T: t.NormalizedValue]:
 
     @staticmethod
     def _serialize_entries_to_ldif(
-        value: list[m.Ldif.Entry] | m.Ldif.Entry,
+        value: MutableSequence[m.Ldif.Entry] | m.Ldif.Entry,
     ) -> r[str]:
-        entries: list[m.Ldif.Entry] = (
+        entries: MutableSequence[m.Ldif.Entry] = (
             [value] if isinstance(value, m.Ldif.Entry) else list(value)
         )
-        all_lines: list[str] = []
+        all_lines: MutableSequence[str] = []
         for entry in entries:
             entry_lines_result = FlextLdifUtilitiesResult._serialize_single_entry(entry)
             if entry_lines_result.is_failure:
@@ -217,14 +217,18 @@ class FlextLdifUtilitiesResult[T: t.NormalizedValue]:
         return r[str].ok(ldif_text)
 
     @staticmethod
-    def _serialize_single_entry(entry: m.Ldif.Entry) -> r[list[str]]:
+    def _serialize_single_entry(entry: m.Ldif.Entry) -> r[MutableSequence[str]]:
         if entry.dn is None:
-            return r[list[str]].fail("Entry serialization failed: missing DN")
+            return r[MutableSequence[str]].fail(
+                "Entry serialization failed: missing DN"
+            )
         dn_value = entry.dn.value
         if not dn_value:
-            return r[list[str]].fail("Entry serialization failed: empty DN")
-        lines: list[str] = [FlextLdifUtilitiesResult._encode_dn_line(dn_value)]
-        entry_attributes: dict[str, list[str]] = (
+            return r[MutableSequence[str]].fail("Entry serialization failed: empty DN")
+        lines: MutableSequence[str] = [
+            FlextLdifUtilitiesResult._encode_dn_line(dn_value)
+        ]
+        entry_attributes: MutableMapping[str, MutableSequence[str]] = (
             entry.attributes.attributes if entry.attributes else {}
         )
         for attr_name, values in entry_attributes.items():
@@ -235,7 +239,7 @@ class FlextLdifUtilitiesResult[T: t.NormalizedValue]:
                 )
                 lines.extend(FlextLdifUtilitiesWriter.fold_line(attr_line))
         lines.append("")
-        return r[list[str]].ok(lines)
+        return r[MutableSequence[str]].ok(lines)
 
     def filter(self, predicate: Callable[[T], bool]) -> FlextLdifUtilitiesResult[T]:
         """Filter the result value using a predicate."""

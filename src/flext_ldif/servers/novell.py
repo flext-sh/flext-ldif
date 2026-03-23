@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import re
+from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import FlextLdifServersRfc, c, m, r, t, u
@@ -231,14 +232,14 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         def _build_novell_permissions_from_rights(
             self,
-            rights: list[str],
-            permission_name_map: dict[str, str],
-        ) -> dict[str, bool]:
+            rights: MutableSequence[str],
+            permission_name_map: MutableMapping[str, str],
+        ) -> MutableMapping[str, bool]:
             """Build AclPermissions dict from parsed rights list."""
-            reverse_map: dict[str, str] = {
+            reverse_map: MutableMapping[str, str] = {
                 v: k for k, v in permission_name_map.items()
             }
-            perms_dict: dict[str, bool] = {
+            perms_dict: MutableMapping[str, bool] = {
                 "read": False,
                 "write": False,
                 "add": False,
@@ -284,7 +285,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     > FlextLdifServersNovell.Constants.NOVELL_SEGMENT_INDEX_RIGHTS
                     else ""
                 )
-                char_mapping: dict[str, list[str]] = {
+                char_mapping: MutableMapping[str, MutableSequence[str]] = {
                     "B": [c.Ldif.RfcAclPermission.SEARCH],
                     "C": [c.Ldif.RfcAclPermission.COMPARE],
                     "D": [c.Ldif.RfcAclPermission.DELETE],
@@ -294,12 +295,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     "S": ["supervisor"],
                     "E": ["entry"],
                 }
-                rights: list[str] = []
+                rights: MutableSequence[str] = []
                 for char in rights_str:
                     char_upper = char.upper()
                     if char_upper in char_mapping:
                         rights.extend(char_mapping[char_upper])
-                attributes: list[str] = []
+                attributes: MutableSequence[str] = []
                 for right_segment in rights:
                     segment_str = str(right_segment).strip()
                     if segment_str and ":" in segment_str:
@@ -355,7 +356,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 )
                 if acl_data.raw_acl:
                     return r[str].ok(acl_data.raw_acl)
-                parts: list[str] = []
+                parts: MutableSequence[str] = []
                 if acl_data.target and acl_data.target.target_dn:
                     parts.append(acl_data.target.target_dn)
                 if acl_data.subject and acl_data.subject.subject_value:
@@ -368,7 +369,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     "search": c.Ldif.RfcAclPermission.SEARCH,
                     "compare": c.Ldif.RfcAclPermission.COMPARE,
                 }
-                active_perms: list[str] = []
+                active_perms: MutableSequence[str] = []
                 if acl_data.permissions:
                     perms_dict = {
                         key: getattr(acl_data.permissions, key)
@@ -395,7 +396,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: dict[str, list[str]],
+            attributes: MutableMapping[str, MutableSequence[str]],
         ) -> bool:
             """Detect eDirectory-specific entries."""
             if not entry_dn:
@@ -424,7 +425,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             )
 
         @override
-        def model_post_init(self, _context: dict[str, t.Scalar] | None, /) -> None:
+        def model_post_init(
+            self, _context: MutableMapping[str, t.Scalar] | None, /
+        ) -> None:
             """Initialize eDirectory entry quirk."""
 
         def process_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
@@ -434,9 +437,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             attributes = entry.attributes.attributes.copy()
             try:
                 object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
-                processed_attributes: dict[str, list[str]] = {}
+                processed_attributes: MutableMapping[str, MutableSequence[str]] = {}
                 for attr_name, attr_values in attributes.items():
-                    processed_values: list[str] = []
+                    processed_values: MutableSequence[str] = []
                     value: bytes | str
                     for value in attr_values:
                         str_value: str

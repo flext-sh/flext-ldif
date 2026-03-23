@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, MutableMapping, MutableSequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
@@ -25,10 +25,10 @@ class FlextLdifProtocols(FlextProtocols):
             """Protocol for LDIF Entry models."""
 
             dn: str | None
-            attributes: dict[str, list[str]] | None
+            attributes: MutableMapping[str, MutableSequence[str]] | None
             metadata: t.ConfigMap | None
 
-            def get_objectclass_names(self) -> list[str]:
+            def get_objectclass_names(self) -> MutableSequence[str]:
                 """Get list of objectClass values from entry."""
                 ...
 
@@ -42,7 +42,7 @@ class FlextLdifProtocols(FlextProtocols):
         class AttributeValue(Protocol):
             """Protocol for objects that have attribute values."""
 
-            values: list[str] | str
+            values: MutableSequence[str] | str
 
         @runtime_checkable
         class SchemaMetadata(Protocol):
@@ -54,7 +54,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             @property
-            def extensions(self) -> dict[str, t.NormalizedValue]:
+            def extensions(self) -> MutableMapping[str, t.NormalizedValue]:
                 """Get server-specific extensions."""
                 ...
 
@@ -164,7 +164,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             @property
-            def sup(self) -> str | list[str] | None:
+            def sup(self) -> str | MutableSequence[str] | None:
                 """Get the superior objectClass(es)."""
                 ...
 
@@ -174,12 +174,12 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             @property
-            def must(self) -> list[str] | None:
+            def must(self) -> MutableSequence[str] | None:
                 """Get the required attributes."""
                 ...
 
             @property
-            def may(self) -> list[str] | None:
+            def may(self) -> MutableSequence[str] | None:
                 """Get the optional attributes."""
                 ...
 
@@ -198,7 +198,7 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 ldif_input: str | Path,
                 server_type: str | None = None,
-            ) -> r[list[FlextLdifProtocols.Ldif.Entry]]:
+            ) -> r[MutableSequence[FlextLdifProtocols.Ldif.Entry]]:
                 """Parse LDIF content."""
                 ...
 
@@ -206,7 +206,7 @@ class FlextLdifProtocols(FlextProtocols):
         class HasEntries(Protocol):
             """Protocol for objects that have an entries attribute."""
 
-            entries: list[FlextLdifProtocols.Ldif.Entry]
+            entries: MutableSequence[FlextLdifProtocols.Ldif.Entry]
 
         @runtime_checkable
         class SchemaConversionPipelineConfig(Protocol):
@@ -261,8 +261,8 @@ class FlextLdifProtocols(FlextProtocols):
         class EntryResult(Protocol):
             """Protocol for EntryResult model."""
 
-            entries: list[FlextLdifProtocols.Ldif.Entry]
-            content: list[FlextLdifProtocols.Ldif.Entry]
+            entries: MutableSequence[FlextLdifProtocols.Ldif.Entry]
+            content: MutableSequence[FlextLdifProtocols.Ldif.Entry]
 
             def __len__(self) -> int:
                 """Return the number of entries."""
@@ -318,21 +318,21 @@ class FlextLdifProtocols(FlextProtocols):
         class EntryQuirk(Protocol):
             """Protocol for Entry quirk implementations."""
 
-            def parse(self, value: str) -> r[list[m.Ldif.Entry]]:
+            def parse(self, value: str) -> r[MutableSequence[m.Ldif.Entry]]:
                 """Parse entry definition."""
                 ...
 
             def parse_entry(
                 self,
                 entry_dn: str,
-                entry_attrs: dict[str, list[str]],
+                entry_attrs: MutableMapping[str, MutableSequence[str]],
             ) -> r[m.Ldif.Entry]:
                 """Parse single entry from DN and attributes."""
                 ...
 
             def write(
                 self,
-                entry_data: m.Ldif.Entry | list[m.Ldif.Entry],
+                entry_data: m.Ldif.Entry | MutableSequence[m.Ldif.Entry],
                 write_options: m.Ldif.WriteFormatOptions | None = None,
             ) -> r[str]:
                 """Write entries to LDIF."""
@@ -371,8 +371,8 @@ class FlextLdifProtocols(FlextProtocols):
             DETECTION_OBJECTCLASS_NAMES: frozenset[str] | None
             DETECTION_DN_MARKERS: frozenset[str] | None
             ACL_ATTRIBUTE_NAME: str | None
-            CATEGORIZATION_PRIORITY: list[str]
-            CATEGORY_OBJECTCLASSES: dict[str, frozenset[str]]
+            CATEGORIZATION_PRIORITY: MutableSequence[str]
+            CATEGORY_OBJECTCLASSES: MutableMapping[str, frozenset[str]]
 
         @runtime_checkable
         class ServerDetectionConstants(Protocol):
@@ -380,9 +380,9 @@ class FlextLdifProtocols(FlextProtocols):
 
             DETECTION_PATTERN: str
             DETECTION_WEIGHT: int
-            DETECTION_ATTRIBUTES: frozenset[str] | list[str]
+            DETECTION_ATTRIBUTES: frozenset[str] | MutableSequence[str]
             DETECTION_OID_PATTERN: str | None
-            DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None
+            DETECTION_OBJECTCLASS_NAMES: frozenset[str] | MutableSequence[str] | None
 
         @runtime_checkable
         class ModelWithValidationMetadata(Protocol):
@@ -402,7 +402,7 @@ class FlextLdifProtocols(FlextProtocols):
         class BatchTransformer[T](Protocol):
             """Protocol for batch transformers."""
 
-            def apply_batch(self, items: list[T]) -> r[list[T]]:
+            def apply_batch(self, items: MutableSequence[T]) -> r[MutableSequence[T]]:
                 """Apply transformation to batch."""
                 ...
 
@@ -489,7 +489,7 @@ class FlextLdifProtocols(FlextProtocols):
 
             def write(
                 self,
-                entries: list[FlextLdifProtocols.Ldif.Entry],
+                entries: MutableSequence[FlextLdifProtocols.Ldif.Entry],
             ) -> r[str]:
                 """Write Entry models to LDIF text."""
                 ...
@@ -498,7 +498,7 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 *,
                 ldif_text: str | None = None,
-                entries: (list[FlextLdifProtocols.Ldif.Entry] | None),
+                entries: (MutableSequence[FlextLdifProtocols.Ldif.Entry] | None),
                 _operation: str | None = None,
             ) -> r[FlextLdifProtocols.Ldif.Entry]:
                 """Execute quirk operation with auto-detection."""
@@ -534,9 +534,9 @@ class FlextLdifProtocols(FlextProtocols):
 
             DETECTION_PATTERN: str
             DETECTION_WEIGHT: int
-            DETECTION_ATTRIBUTES: frozenset[str] | list[str]
+            DETECTION_ATTRIBUTES: frozenset[str] | MutableSequence[str]
             DETECTION_OID_PATTERN: str | None
-            DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None
+            DETECTION_OBJECTCLASS_NAMES: frozenset[str] | MutableSequence[str] | None
 
 
 p = FlextLdifProtocols

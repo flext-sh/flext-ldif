@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
+from collections.abc import Callable, MutableMapping, MutableSequence
 from re import Pattern
 from typing import TYPE_CHECKING, Literal, override
 
@@ -30,7 +30,7 @@ class FlextLdifUtilitiesFilters[T]:
         """OR combination: filter1 | filter2."""
         return OrFilter(self, other)
 
-    def filter(self, items: list[T]) -> list[T]:
+    def filter(self, items: MutableSequence[T]) -> MutableSequence[T]:
         """Filter a sequence of items."""
         return [item for item in items if self.matches(item)]
 
@@ -182,7 +182,7 @@ class ByObjectClassFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
         """Check if entry has matching objectClasses."""
         if item.attributes is None:
             return False
-        attrs: dict[str, list[str]] = (
+        attrs: MutableMapping[str, MutableSequence[str]] = (
             item.attributes.attributes
             if getattr(item.attributes, "attributes", None) is not None
             else {}
@@ -223,7 +223,7 @@ class ByAttrsFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
         """Check if entry has matching attributes."""
         if item.attributes is None:
             return False
-        attrs: dict[str, list[str]] = (
+        attrs: MutableMapping[str, MutableSequence[str]] = (
             item.attributes.attributes
             if getattr(item.attributes, "attributes", None) is not None
             else {}
@@ -265,7 +265,7 @@ class ByAttrValueFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
         """Check if entry has attribute with matching value."""
         if item.attributes is None:
             return False
-        attrs: dict[str, list[str]] = (
+        attrs: MutableMapping[str, MutableSequence[str]] = (
             item.attributes.attributes
             if getattr(item.attributes, "attributes", None) is not None
             else {}
@@ -293,7 +293,7 @@ class ExcludeAttrsFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
         """Check if entry is missing any of the specified attributes."""
         if item.attributes is None:
             return True
-        attrs: dict[str, list[str]] = (
+        attrs: MutableMapping[str, MutableSequence[str]] = (
             item.attributes.attributes
             if getattr(item.attributes, "attributes", None) is not None
             else {}

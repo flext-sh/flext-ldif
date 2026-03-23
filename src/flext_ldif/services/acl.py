@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import override
 
 from flext_core import FlextLogger
@@ -36,7 +36,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
 
     @staticmethod
     def _build_acl_response(
-        acls: list[FlextLdifModelsDomains.Acl],
+        acls: MutableSequence[FlextLdifModelsDomains.Acl],
         *,
         processed_entries: int = 1,
         failed_entries: int = 0,
@@ -57,8 +57,8 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
 
     @staticmethod
     def evaluate_acl_context(
-        acls: list[m.Ldif.Acl],
-        required_permissions: m.Ldif.AclPermissions | dict[str, bool],
+        acls: MutableSequence[m.Ldif.Acl],
+        required_permissions: m.Ldif.AclPermissions | MutableMapping[str, bool],
     ) -> r[m.Ldif.AclEvaluationResult]:
         """Evaluate if ACLs grant required permissions."""
         if isinstance(required_permissions, Mapping):
@@ -119,12 +119,12 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
 
     @staticmethod
     def extract_acl_entries(
-        entries: list[m.Ldif.Entry],
-        acl_attributes: list[str] | None = None,
-    ) -> r[list[m.Ldif.Entry]]:
+        entries: MutableSequence[m.Ldif.Entry],
+        acl_attributes: MutableSequence[str] | None = None,
+    ) -> r[MutableSequence[m.Ldif.Entry]]:
         """Extract entries that contain ACL attributes."""
         if not entries:
-            return r[list[m.Ldif.Entry]].ok([])
+            return r[MutableSequence[m.Ldif.Entry]].ok([])
         if acl_attributes is None:
             acl_attributes = list(FlextLdifUtilitiesACL.get_acl_attributes())
 
@@ -138,10 +138,10 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
                     return True
             return False
 
-        acl_entries: list[m.Ldif.Entry] = [
+        acl_entries: MutableSequence[m.Ldif.Entry] = [
             entry for entry in entries if has_acl_attribute(entry)
         ]
-        return r[list[m.Ldif.Entry]].ok(acl_entries)
+        return r[MutableSequence[m.Ldif.Entry]].ok(acl_entries)
 
     @override
     def execute(self) -> r[m.Ldif.AclResponse]:
@@ -162,7 +162,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
         acl_values = entry.get_attribute_values(next(iter(acl_attr_name)))
         if not acl_values:
             return r[m.Ldif.AclResponse].ok(self._build_acl_response([]))
-        acls: list[FlextLdifModelsDomains.Acl] = []
+        acls: MutableSequence[FlextLdifModelsDomains.Acl] = []
         failed_count = 0
 
         for acl_value in acl_values:

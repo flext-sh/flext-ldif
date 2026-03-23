@@ -5,7 +5,7 @@ from __future__ import annotations
 import copy
 import re
 import struct
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 from typing import TypeIs, TypeVar
 
@@ -35,12 +35,14 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _add_objectclass_must_may(
         oc_data: m.Ldif.SchemaObjectClass,
-        parts: list[str],
+        parts: MutableSequence[str],
     ) -> None:
         """Add MUST and MAY to objectclass parts list."""
         if oc_data.must:
             if u.is_list_like(oc_data.must):
-                must_list_str: list[str] = [str(item) for item in oc_data.must]
+                must_list_str: MutableSequence[str] = [
+                    str(item) for item in oc_data.must
+                ]
                 if len(must_list_str) == 1:
                     parts.append(f"MUST {must_list_str[0]}")
                 else:
@@ -50,7 +52,7 @@ class FlextLdifUtilitiesSchema:
                 parts.append(f"MUST {oc_data.must}")
         if oc_data.may:
             if u.is_list_like(oc_data.may):
-                may_list_str: list[str] = [str(item) for item in oc_data.may]
+                may_list_str: MutableSequence[str] = [str(item) for item in oc_data.may]
                 if len(may_list_str) == 1:
                     parts.append(f"MAY {may_list_str[0]}")
                 else:
@@ -62,12 +64,12 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _add_objectclass_sup(
         oc_data: m.Ldif.SchemaObjectClass,
-        parts: list[str],
+        parts: MutableSequence[str],
     ) -> None:
         """Add SUP to objectclass parts list."""
         if oc_data.sup:
             if u.is_list_like(oc_data.sup):
-                sup_list_str: list[str] = [str(item) for item in oc_data.sup]
+                sup_list_str: MutableSequence[str] = [str(item) for item in oc_data.sup]
                 if len(sup_list_str) == 1:
                     parts.append(f"SUP {sup_list_str[0]}")
                 else:
@@ -117,14 +119,14 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _apply_field_transforms(
         transformed: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        field_transforms: dict[
+        field_transforms: MutableMapping[
             str,
             Callable[
                 ...,
                 t.Container | r[t.Container] | None,
             ]
             | str
-            | list[str]
+            | MutableSequence[str]
             | None,
         ],
         schema_obj: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
@@ -192,7 +194,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _apply_trailing_spaces(
         attr_data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        parts: list[str],
+        parts: MutableSequence[str],
     ) -> None:
         """Apply trailing spaces from metadata if available."""
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
@@ -208,9 +210,9 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _build_attribute_parts_from_model(
         attr_data: m.Ldif.SchemaAttribute,
-    ) -> list[str]:
+    ) -> MutableSequence[str]:
         """Build RFC 4512 attribute definition parts (simple version)."""
-        parts: list[str] = [f"( {attr_data.oid}"]
+        parts: MutableSequence[str] = [f"( {attr_data.oid}"]
         if attr_data.name:
             parts.append(f"NAME '{attr_data.name}'")
         if attr_data.desc:
@@ -247,7 +249,7 @@ class FlextLdifUtilitiesSchema:
             return f"NAME '{attr_data.name}'"
         name_format = getattr(schema_details, "name_format", "single")
         name_values_ = getattr(schema_details, "name_values", [])
-        name_values: list[str] = (
+        name_values: MutableSequence[str] = (
             [str(v) for v in name_values_] if u.is_list_like(name_values_) else []
         )
         if name_format == "multiple" and name_values:
@@ -258,9 +260,9 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _build_objectclass_parts_from_model(
         oc_data: m.Ldif.SchemaObjectClass,
-    ) -> list[str]:
+    ) -> MutableSequence[str]:
         """Build RFC 4512 objectClass definition parts (extracted to reduce complexity)."""
-        parts: list[str] = [f"( {oc_data.oid}"]
+        parts: MutableSequence[str] = [f"( {oc_data.oid}"]
         if oc_data.name:
             parts.append(f"NAME '{oc_data.name}'")
         if oc_data.desc:
@@ -281,8 +283,8 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _build_obsolete_part(
         attr_data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        parts: list[str],
-        field_order: list[str] | None,
+        parts: MutableSequence[str],
+        field_order: MutableSequence[str] | None,
         *,
         restore_position: bool = False,
     ) -> None:
@@ -331,12 +333,18 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_metadata_extensions(
-        extensions_raw: dict[str, t.NormalizedValue],
-    ) -> dict[
-        str, t.Scalar | list[str] | dict[str, t.Scalar | list[str]]
+        extensions_raw: MutableMapping[str, t.NormalizedValue],
+    ) -> MutableMapping[
+        str,
+        t.Scalar
+        | MutableSequence[str]
+        | MutableMapping[str, t.Scalar | MutableSequence[str]],
     ]:
-        converted: dict[
-            str, t.Scalar | list[str] | dict[str, t.Scalar | list[str]]
+        converted: MutableMapping[
+            str,
+            t.Scalar
+            | MutableSequence[str]
+            | MutableMapping[str, t.Scalar | MutableSequence[str]],
         ] = {}
         for key, raw_value in extensions_raw.items():
             if u.is_primitive(raw_value) or isinstance(raw_value, datetime):
@@ -363,21 +371,25 @@ class FlextLdifUtilitiesSchema:
     def _convert_metadata_value(
         value: t.Scalar
         | datetime
-        | list[t.NormalizedValue]
-        | dict[t.NormalizedValue, t.NormalizedValue],
-    ) -> t.Scalar | list[str] | dict[str, t.Scalar | list[str]]:
+        | MutableSequence[t.NormalizedValue]
+        | MutableMapping[t.NormalizedValue, t.NormalizedValue],
+    ) -> (
+        t.Scalar
+        | MutableSequence[str]
+        | MutableMapping[str, t.Scalar | MutableSequence[str]]
+    ):
         if u.is_primitive(value):
             return value
         if isinstance(value, datetime):
             return value.isoformat()
         if isinstance(value, list):
-            converted_list: list[str] = []
+            converted_list: MutableSequence[str] = []
             for index in range(len(value)):
                 item_value: t.NormalizedValue = value[index]
                 converted_list.append(str(item_value))
             return converted_list
         if isinstance(value, Mapping):
-            converted_mapping: dict[str, t.Scalar | list[str]] = {}
+            converted_mapping: MutableMapping[str, t.Scalar | MutableSequence[str]] = {}
             for key_obj, nested_value_raw in value.items():
                 nested_value = FlextLdifUtilitiesSchema._convert_nested_metadata_value(
                     nested_value_raw
@@ -390,14 +402,17 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_nested_metadata_value(
-        value: t.Scalar | datetime | list[t.NormalizedValue] | t.NormalizedValue,
-    ) -> t.Scalar | list[str]:
+        value: t.Scalar
+        | datetime
+        | MutableSequence[t.NormalizedValue]
+        | t.NormalizedValue,
+    ) -> t.Scalar | MutableSequence[str]:
         if u.is_primitive(value):
             return value
         if isinstance(value, datetime):
             return value.isoformat()
         if FlextLdifUtilitiesSchema._is_object_sequence(value):
-            converted_nested_list: list[str] = []
+            converted_nested_list: MutableSequence[str] = []
             for index in range(len(value)):
                 nested_item_value: t.NormalizedValue = value[index]
                 converted_nested_list.append(str(nested_item_value))
@@ -407,24 +422,26 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _is_object_list(
         value: t.NormalizedValue,
-    ) -> TypeIs[list[t.NormalizedValue]]:
+    ) -> TypeIs[MutableSequence[t.NormalizedValue]]:
         return isinstance(value, list)
 
     @staticmethod
     def _is_object_mapping(
         value: t.NormalizedValue,
-    ) -> TypeIs[dict[t.NormalizedValue, t.NormalizedValue]]:
+    ) -> TypeIs[MutableMapping[t.NormalizedValue, t.NormalizedValue]]:
         return isinstance(value, Mapping)
 
     @staticmethod
     def _is_object_sequence(
         value: t.NormalizedValue,
-    ) -> TypeIs[list[t.NormalizedValue]]:
+    ) -> TypeIs[MutableSequence[t.NormalizedValue]]:
         return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
     @staticmethod
-    def _convert_sequence_to_str_list(seq: list[t.Scalar]) -> list[str]:
-        """Convert Sequence to list[str] (internal helper, no loose functions)."""
+    def _convert_sequence_to_str_list(
+        seq: MutableSequence[t.Scalar],
+    ) -> MutableSequence[str]:
+        """Convert Sequence to MutableSequence[str] (internal helper, no loose functions)."""
         return [str(item) for item in seq]
 
     @staticmethod
@@ -566,7 +583,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _extract_objectclass_must_may(
         oc_definition: str,
-    ) -> tuple[list[str] | None, list[str] | None]:
+    ) -> tuple[MutableSequence[str] | None, MutableSequence[str] | None]:
         """Extract MUST and MAY attributes from objectClass definition."""
         must = None
         must_match = re.search(
@@ -598,9 +615,9 @@ class FlextLdifUtilitiesSchema:
         parse_callback: Callable[[str], r[SchemaModelT]],
         line_prefix: str,
         model_type: type[SchemaModelT],
-    ) -> list[SchemaModelT]:
+    ) -> MutableSequence[SchemaModelT]:
         """Generic extraction of schema items from LDIF content lines."""
-        items: list[SchemaModelT] = []
+        items: MutableSequence[SchemaModelT] = []
         for raw_line in ldif_content.split("\n"):
             line = raw_line.strip()
             if line.lower().startswith(line_prefix.lower()):
@@ -622,7 +639,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _format_attribute_list(
-        attr_list: str | list[str] | None,
+        attr_list: str | MutableSequence[str] | None,
         prefix: str,
     ) -> str | None:
         """Format attribute list (MUST/MAY) for objectClass definition."""
@@ -636,7 +653,7 @@ class FlextLdifUtilitiesSchema:
         return f"{prefix} {attr_list}"
 
     @staticmethod
-    def _format_sup_list(sup_value: str | list[str] | None) -> str | None:
+    def _format_sup_list(sup_value: str | MutableSequence[str] | None) -> str | None:
         """Format SUP (superior) list for objectClass definition."""
         if not sup_value:
             return None
@@ -648,7 +665,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _get_field_order(
         attr_data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-    ) -> list[str] | None:
+    ) -> MutableSequence[str] | None:
         """Extract field order from metadata if available."""
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
             return None
@@ -691,7 +708,7 @@ class FlextLdifUtilitiesSchema:
             )
 
     @staticmethod
-    def _split_schema_values(value: str) -> list[str]:
+    def _split_schema_values(value: str) -> MutableSequence[str]:
         return [item.strip() for item in value.strip().split("$")]
 
     @staticmethod
@@ -699,7 +716,7 @@ class FlextLdifUtilitiesSchema:
         oc_data: m.Ldif.SchemaObjectClass,
         *,
         restore_original: bool = True,
-    ) -> list[str] | None:
+    ) -> MutableSequence[str] | None:
         """Try to restore original format from metadata for objectClass."""
         if not restore_original or not oc_data.metadata:
             return None
@@ -717,7 +734,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _try_restore_original_format(
         attr_data: m.Ldif.SchemaAttribute,
-    ) -> list[str] | None:
+    ) -> MutableSequence[str] | None:
         """Try to restore original format from metadata for perfect round-trip."""
         if not (
             attr_data.metadata
@@ -744,11 +761,13 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _validate_attribute_syntax(
         syntax: str | None,
-    ) -> dict[str, t.NormalizedValue] | None:
+    ) -> MutableMapping[str, t.NormalizedValue] | None:
         """Validate syntax OID and return validation result."""
         if not syntax or not syntax.strip():
             return None
-        syntax_extensions: dict[str, bool | list[str] | str | None] = {}
+        syntax_extensions: MutableMapping[
+            str, bool | MutableSequence[str] | str | None
+        ] = {}
         validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
         if validate_result.is_failure:
             syntax_extensions[c.Ldif.SYNTAX_VALIDATION_ERROR] = (
@@ -761,7 +780,7 @@ class FlextLdifUtilitiesSchema:
         syntax_extensions[c.Ldif.SYNTAX_OID_VALID] = (
             c.Ldif.SYNTAX_VALIDATION_ERROR not in syntax_extensions
         )
-        result_dict: dict[str, t.NormalizedValue] = {}
+        result_dict: MutableMapping[str, t.NormalizedValue] = {}
         for key, val in syntax_extensions.items():
             if isinstance(val, list):
                 list_typed: t.NormalizedValue = list(val)
@@ -810,7 +829,7 @@ class FlextLdifUtilitiesSchema:
         data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         expected_type: (type[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]),
         type_name: str,
-        parts_builder: Callable[..., list[str]],
+        parts_builder: Callable[..., MutableSequence[str]],
     ) -> str:
         """Generic helper for writing schema elements (DRY pattern)."""
         if not isinstance(data, expected_type):
@@ -827,14 +846,14 @@ class FlextLdifUtilitiesSchema:
     def apply_transformations(
         schema_obj: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         *,
-        field_transforms: dict[
+        field_transforms: MutableMapping[
             str,
             Callable[
                 ...,
                 t.Container | r[t.Container] | None,
             ]
             | str
-            | list[str]
+            | MutableSequence[str]
             | None,
         ]
         | None = None,
@@ -869,7 +888,7 @@ class FlextLdifUtilitiesSchema:
         attr_data: m.Ldif.SchemaAttribute,
         *,
         restore_original: bool = True,
-    ) -> list[str]:
+    ) -> MutableSequence[str]:
         """Build RFC 4512 attribute parts with full metadata restoration."""
         if restore_original:
             original_parts = FlextLdifUtilitiesSchema._try_restore_original_format(
@@ -877,7 +896,7 @@ class FlextLdifUtilitiesSchema:
             )
             if original_parts:
                 return original_parts
-        parts: list[str] = [f"( {attr_data.oid}"]
+        parts: MutableSequence[str] = [f"( {attr_data.oid}"]
         field_order = FlextLdifUtilitiesSchema._get_field_order(attr_data)
         name_part = FlextLdifUtilitiesSchema._build_name_part(
             attr_data,
@@ -912,7 +931,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def build_available_attributes_set(
-        attributes: list[m.Ldif.SchemaAttribute],
+        attributes: MutableSequence[m.Ldif.SchemaAttribute],
     ) -> set[str]:
         """Build set of available attribute names (lowercase) for dependency validation."""
         available: set[str] = set()
@@ -924,11 +943,11 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def build_metadata(
         definition: str,
-        additional_extensions: dict[str, t.NormalizedValue] | None = None,
-    ) -> dict[str, t.NormalizedValue]:
+        additional_extensions: MutableMapping[str, t.NormalizedValue] | None = None,
+    ) -> MutableMapping[str, t.NormalizedValue]:
         """Build metadata extensions dictionary for schema definitions."""
         extensions_raw = FlextLdifUtilitiesParser.extract_extensions(definition)
-        extensions: dict[str, t.NormalizedValue] = {}
+        extensions: MutableMapping[str, t.NormalizedValue] = {}
         for key, val in extensions_raw.items():
             typed_val: t.NormalizedValue = list(val)
             extensions[key] = typed_val
@@ -942,7 +961,7 @@ class FlextLdifUtilitiesSchema:
         oc_data: m.Ldif.SchemaObjectClass,
         *,
         restore_original: bool = True,
-    ) -> list[str]:
+    ) -> MutableSequence[str]:
         """Build RFC 4512 objectClass parts with full metadata restoration."""
         original_parts = (
             FlextLdifUtilitiesSchema._try_restore_objectclass_original_format(
@@ -952,7 +971,7 @@ class FlextLdifUtilitiesSchema:
         )
         if original_parts:
             return original_parts
-        parts: list[str] = [f"( {oc_data.oid}"]
+        parts: MutableSequence[str] = [f"( {oc_data.oid}"]
         name_part = FlextLdifUtilitiesSchema._build_name_part(
             oc_data,
             restore_format=True,
@@ -1071,7 +1090,7 @@ class FlextLdifUtilitiesSchema:
     def extract_attributes_from_lines(
         ldif_content: str,
         parse_callback: Callable[[str], r[m.Ldif.SchemaAttribute]],
-    ) -> list[m.Ldif.SchemaAttribute]:
+    ) -> MutableSequence[m.Ldif.SchemaAttribute]:
         """Extract and parse all attributeTypes from LDIF content lines."""
         return FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
             ldif_content,
@@ -1084,7 +1103,7 @@ class FlextLdifUtilitiesSchema:
     def extract_objectclasses_from_lines(
         ldif_content: str,
         parse_callback: Callable[[str], r[m.Ldif.SchemaObjectClass]],
-    ) -> list[m.Ldif.SchemaObjectClass]:
+    ) -> MutableSequence[m.Ldif.SchemaObjectClass]:
         """Extract and parse all objectClasses from LDIF content lines."""
         return FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
             ldif_content,
@@ -1095,9 +1114,9 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def find_missing_attributes(
-        attr_list: list[str] | str | None,
+        attr_list: MutableSequence[str] | str | None,
         available_attributes: set[str],
-    ) -> list[str]:
+    ) -> MutableSequence[str]:
         """Find attributes missing from available set."""
         if not attr_list:
             return []
@@ -1117,7 +1136,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def is_attribute_in_list(
         attribute_name: str | None,
-        attribute_list: list[str] | set[str] | None,
+        attribute_list: MutableSequence[str] | set[str] | None,
     ) -> bool:
         """Check if attribute exists in list or set (case-insensitive)."""
         if not attribute_name or not attribute_list:
@@ -1163,9 +1182,9 @@ class FlextLdifUtilitiesSchema:
         equality: str | None,
         substr: str | None = None,
         *,
-        replacements: dict[str, str] | None = None,
-        substr_rules_in_equality: dict[str, str] | None = None,
-        normalized_substr_values: dict[str, str] | None = None,
+        replacements: MutableMapping[str, str] | None = None,
+        substr_rules_in_equality: MutableMapping[str, str] | None = None,
+        normalized_substr_values: MutableMapping[str, str] | None = None,
     ) -> tuple[str | None, str | None]:
         """Normalize EQUALITY and SUBSTR matching rules."""
         result_equality = equality
@@ -1190,8 +1209,8 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def normalize_name(
         name_value: str | None,
-        suffixes_to_remove: list[str] | None = None,
-        char_replacements: dict[str, str] | None = None,
+        suffixes_to_remove: MutableSequence[str] | None = None,
+        char_replacements: MutableMapping[str, str] | None = None,
     ) -> str | None:
         """Normalize attribute NAME field."""
         if not name_value:
@@ -1213,7 +1232,7 @@ class FlextLdifUtilitiesSchema:
     def normalize_syntax_oid(
         syntax: str | None,
         *,
-        replacements: dict[str, str] | None = None,
+        replacements: MutableMapping[str, str] | None = None,
     ) -> str | None:
         """Normalize SYNTAX OID field."""
         if not syntax:
@@ -1230,18 +1249,20 @@ class FlextLdifUtilitiesSchema:
         attr_definition: str,
         *,
         validate_syntax: bool = True,
-    ) -> r[dict[str, t.NormalizedValue]]:
+    ) -> r[MutableMapping[str, t.NormalizedValue]]:
         """Parse RFC 4512 attribute definition into structured data."""
         basic_fields_result = FlextLdifUtilitiesSchema._extract_attribute_basic_fields(
             attr_definition,
         )
         if basic_fields_result.is_failure:
-            return r[dict[str, t.NormalizedValue]].fail(basic_fields_result.error)
+            return r[MutableMapping[str, t.NormalizedValue]].fail(
+                basic_fields_result.error
+            )
         oid, name, desc = basic_fields_result.value
         syntax, length = FlextLdifUtilitiesSchema._extract_attribute_syntax(
             attr_definition,
         )
-        syntax_validation_result: dict[str, t.NormalizedValue] | None = None
+        syntax_validation_result: MutableMapping[str, t.NormalizedValue] | None = None
         if validate_syntax:
             syntax_validation_result = (
                 FlextLdifUtilitiesSchema._validate_attribute_syntax(syntax)
@@ -1255,9 +1276,9 @@ class FlextLdifUtilitiesSchema:
         sup, usage = FlextLdifUtilitiesSchema._extract_attribute_sup_usage(
             attr_definition,
         )
-        additional_extensions_converted: dict[str, t.NormalizedValue] | None = (
-            syntax_validation_result
-        )
+        additional_extensions_converted: (
+            MutableMapping[str, t.NormalizedValue] | None
+        ) = syntax_validation_result
         extensions_raw = FlextLdifUtilitiesSchema.build_metadata(
             attr_definition,
             additional_extensions=additional_extensions_converted,
@@ -1266,8 +1287,11 @@ class FlextLdifUtilitiesSchema:
             extensions_raw,
         )
         syntax_validation_converted: (
-            dict[
-                str, t.Scalar | list[str] | dict[str, t.Scalar | list[str]]
+            MutableMapping[
+                str,
+                t.Scalar
+                | MutableSequence[str]
+                | MutableMapping[str, t.Scalar | MutableSequence[str]],
             ]
             | None
         ) = None
@@ -1277,7 +1301,7 @@ class FlextLdifUtilitiesSchema:
                     syntax_validation_result,
                 )
             )
-        parsed_dict: dict[str, t.NormalizedValue] = {
+        parsed_dict: MutableMapping[str, t.NormalizedValue] = {
             "oid": oid,
             "name": name,
             "desc": desc,
@@ -1293,12 +1317,12 @@ class FlextLdifUtilitiesSchema:
             "metadata_extensions": extensions_converted,
             "syntax_validation": syntax_validation_converted,
         }
-        return r[dict[str, t.NormalizedValue]].ok(parsed_dict)
+        return r[MutableMapping[str, t.NormalizedValue]].ok(parsed_dict)
 
     @staticmethod
     def parse_objectclass(
         oc_definition: str,
-    ) -> dict[str, t.NormalizedValue]:
+    ) -> MutableMapping[str, t.NormalizedValue]:
         """Parse RFC 4512 objectClass definition into structured data."""
         basic_fields_result = (
             FlextLdifUtilitiesSchema._extract_objectclass_basic_fields(oc_definition)
@@ -1316,7 +1340,7 @@ class FlextLdifUtilitiesSchema:
         extensions_converted = FlextLdifUtilitiesSchema._convert_metadata_extensions(
             extensions_raw,
         )
-        parsed_dict: dict[str, t.NormalizedValue] = {
+        parsed_dict: MutableMapping[str, t.NormalizedValue] = {
             "oid": oid,
             "name": name,
             "desc": desc,
@@ -1331,7 +1355,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def replace_invalid_substr_rule(
         substr: str | None,
-        invalid_rules: dict[str, str | None],
+        invalid_rules: MutableMapping[str, str | None],
     ) -> str | None:
         """Replace invalid SUBSTR rule with valid replacement."""
         if not substr or not invalid_rules:

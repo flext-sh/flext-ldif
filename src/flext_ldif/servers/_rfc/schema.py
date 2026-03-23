@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 from typing import Literal, Self, overload, override
 
@@ -94,7 +94,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         **kwargs: t.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize RFC schema quirk service."""
-        filtered_kwargs: dict[str, t.Scalar] = {}
+        filtered_kwargs: MutableMapping[str, t.Scalar] = {}
         excluded_keys = {
             "_parent_quirk",
             "parent_quirk",
@@ -210,7 +210,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     def _to_optional_str_or_list(
         cls,
         value: t.NormalizedValue | None,
-    ) -> str | list[str] | None:
+    ) -> str | MutableSequence[str] | None:
         if isinstance(value, str):
             return value
         return cls._to_string_list(value)
@@ -254,8 +254,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     @staticmethod
     def _convert_extensions_for_quirk(
         metadata: m.Ldif.DynamicMetadata,
-    ) -> dict[str, list[str] | str | bool | None]:
-        extensions: dict[str, list[str] | str | bool | None] = {}
+    ) -> MutableMapping[str, MutableSequence[str] | str | bool | None]:
+        extensions: MutableMapping[str, MutableSequence[str] | str | bool | None] = {}
         for key, value in metadata.items():
             if isinstance(value, bool):
                 extensions[key] = value
@@ -306,7 +306,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 return default
 
     @staticmethod
-    def _to_string_list(value: t.NormalizedValue | None) -> list[str] | None:
+    def _to_string_list(value: t.NormalizedValue | None) -> MutableSequence[str] | None:
         if isinstance(value, Sequence) and (
             not isinstance(value, str | bytes | bytearray)
         ):
@@ -353,8 +353,10 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         *,
         validate_dependencies: bool = False,
     ) -> r[
-        dict[
-            str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass]
+        MutableMapping[
+            str,
+            MutableSequence[m.Ldif.SchemaAttribute]
+            | MutableSequence[m.Ldif.SchemaObjectClass],
         ]
     ]:
         """Extract schema definitions from LDIF using u."""
@@ -373,7 +375,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 ldif_content,
                 parse_attribute_domain,
             )
-            attributes_parsed_model: list[m.Ldif.SchemaAttribute] = [
+            attributes_parsed_model: MutableSequence[m.Ldif.SchemaAttribute] = [
                 m.Ldif.SchemaAttribute.model_validate(attr.model_dump())
                 for attr in attributes_parsed
             ]
@@ -387,10 +389,10 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 )
                 if not validation_result.is_success:
                     return r[
-                        dict[
+                        MutableMapping[
                             str,
-                            list[m.Ldif.SchemaAttribute]
-                            | list[m.Ldif.SchemaObjectClass],
+                            MutableSequence[m.Ldif.SchemaAttribute]
+                            | MutableSequence[m.Ldif.SchemaObjectClass],
                         ]
                     ].fail(f"Attribute validation failed: {validation_result.error}")
 
@@ -405,22 +407,23 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 ldif_content,
                 parse_objectclass_domain,
             )
-            objectclasses_parsed_model: list[m.Ldif.SchemaObjectClass] = [
+            objectclasses_parsed_model: MutableSequence[m.Ldif.SchemaObjectClass] = [
                 m.Ldif.SchemaObjectClass.model_validate(oc.model_dump())
                 for oc in objectclasses_parsed
             ]
-            schema_dict: dict[
+            schema_dict: MutableMapping[
                 str,
-                list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
+                MutableSequence[m.Ldif.SchemaAttribute]
+                | MutableSequence[m.Ldif.SchemaObjectClass],
             ] = {
                 str(c.Ldif.DictKeys.ATTRIBUTES): attributes_parsed_model,
                 str(c.Ldif.DictKeys.OBJECTCLASS): objectclasses_parsed_model,
             }
             return r[
-                dict[
+                MutableMapping[
                     str,
-                    list[m.Ldif.SchemaAttribute]
-                    | list[m.Ldif.SchemaObjectClass],
+                    MutableSequence[m.Ldif.SchemaAttribute]
+                    | MutableSequence[m.Ldif.SchemaObjectClass],
                 ]
             ].ok(schema_dict)
         except (
@@ -432,10 +435,10 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         ) as e:
             logger.exception("Schema extraction failed")
             return r[
-                dict[
+                MutableMapping[
                     str,
-                    list[m.Ldif.SchemaAttribute]
-                    | list[m.Ldif.SchemaObjectClass],
+                    MutableSequence[m.Ldif.SchemaAttribute]
+                    | MutableSequence[m.Ldif.SchemaObjectClass],
                 ]
             ].fail(f"Schema extraction failed: {e}")
 
@@ -454,7 +457,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def _build_attribute_parts(
         self, attr_data: m.Ldif.SchemaAttribute
-    ) -> list[str]:
+    ) -> MutableSequence[str]:
         """Build RFC attribute definition parts."""
         return u.Ldif.build_attribute_parts_with_metadata(
             attr_data,
@@ -464,7 +467,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     def _build_objectclass_metadata(
         self,
         oc_definition: str,
-        metadata_extensions: dict[str, list[str] | str | bool | None],
+        metadata_extensions: MutableMapping[
+            str, MutableSequence[str] | str | bool | None
+        ],
     ) -> m.Ldif.QuirkMetadata:
         """Build objectClass metadata with extensions."""
         server_type: Literal["rfc"] = "rfc"
@@ -479,7 +484,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def _build_objectclass_parts(
         self, oc_data: m.Ldif.SchemaObjectClass
-    ) -> list[str]:
+    ) -> MutableSequence[str]:
         """Build RFC objectClass definition parts."""
         return u.Ldif.build_objectclass_parts_with_metadata(
             oc_data,
@@ -509,7 +514,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
         def parse_parts_hook(
             definition: str,
-        ) -> r[dict[str, t.NormalizedValue]]:
+        ) -> r[MutableMapping[str, t.NormalizedValue]]:
             return u.Ldif.parse_attribute(definition)
 
         parse_result_raw = u.Ldif.parse(
@@ -674,9 +679,11 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def _validate_oid_list(
         self,
-        oids: list[str] | None,
+        oids: MutableSequence[str] | None,
         oid_type: str,
-        metadata_extensions: dict[str, list[str] | str | bool | None],
+        metadata_extensions: MutableMapping[
+            str, MutableSequence[str] | str | bool | None
+        ],
     ) -> None:
         """Validate OID list and track in metadata."""
         if not oids:

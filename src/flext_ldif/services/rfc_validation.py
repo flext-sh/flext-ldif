@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import struct
+from collections.abc import MutableMapping, MutableSequence
 from typing import Annotated, Self, override
 
 from pydantic import Field
@@ -22,8 +23,12 @@ from flext_ldif import (
 class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
     """FlextLdifValidation class."""
 
-    attribute_names: Annotated[list[str], Field()] = Field(default_factory=list)
-    objectclass_names: Annotated[list[str], Field()] = Field(default_factory=list)
+    attribute_names: Annotated[MutableSequence[str], Field()] = Field(
+        default_factory=list
+    )
+    objectclass_names: Annotated[MutableSequence[str], Field()] = Field(
+        default_factory=list
+    )
     max_attr_value_length: Annotated[int | None, Field()] = None
 
     @classmethod
@@ -35,7 +40,7 @@ class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
     @override
     def build(self) -> m.Ldif.ValidationBatchResult:
         """Build method."""
-        result: dict[str, bool] = {}
+        result: MutableMapping[str, bool] = {}
         if self.attribute_names:
             attr_result = self.validate_attribute_names(self.attribute_names)
             if attr_result.is_success:
@@ -76,20 +81,22 @@ class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
             ),
         ).map_error(lambda e: f"Failed to validate attribute name: {e}")
 
-    def validate_attribute_names(self, names: list[str]) -> r[dict[str, bool]]:
+    def validate_attribute_names(
+        self, names: MutableSequence[str]
+    ) -> r[MutableMapping[str, bool]]:
         """Validate_attribute_names method."""
         try:
-            validated_names: dict[str, bool] = {}
+            validated_names: MutableMapping[str, bool] = {}
             for name in names:
                 result = self.validate_attribute_name(name)
                 if result.is_success:
                     validated_names[name] = result.value
                 else:
                     validated_names[name] = False
-            validated_mapping: dict[str, bool] = validated_names
-            return r[dict[str, bool]].ok(validated_mapping)
+            validated_mapping: MutableMapping[str, bool] = validated_names
+            return r[MutableMapping[str, bool]].ok(validated_mapping)
         except (ValueError, TypeError, AttributeError) as e:
-            return r[dict[str, bool]].fail(
+            return r[MutableMapping[str, bool]].fail(
                 f"Failed to batch validate attribute names: {e}",
             )
 
@@ -138,7 +145,7 @@ class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
         """Validate_objectclass_name method."""
         return self.validate_attribute_name(name)
 
-    def with_attribute_names(self, names: list[str]) -> Self:
+    def with_attribute_names(self, names: MutableSequence[str]) -> Self:
         """With_attribute_names method."""
         return self.model_copy(update={"attribute_names": names})
 
@@ -146,7 +153,7 @@ class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
         """With_max_attr_value_length method."""
         return self.model_copy(update={"max_attr_value_length": length})
 
-    def with_objectclass_names(self, names: list[str]) -> Self:
+    def with_objectclass_names(self, names: MutableSequence[str]) -> Self:
         """With_objectclass_names method."""
         return self.model_copy(update={"objectclass_names": names})
 

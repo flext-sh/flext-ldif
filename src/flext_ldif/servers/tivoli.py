@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import re
+from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import (
@@ -265,7 +266,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 )
                 if acl_data.raw_acl:
                     return r[str].ok(acl_data.raw_acl)
-                parts: list[str] = []
+                parts: MutableSequence[str] = []
                 if acl_data.target and acl_data.target.target_dn:
                     parts.append(acl_data.target.target_dn)
                 if acl_data.subject and acl_data.subject.subject_value:
@@ -278,7 +279,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     "search": FlextLdifServersTivoli.Constants.PERMISSION_SEARCH,
                     "compare": FlextLdifServersTivoli.Constants.PERMISSION_COMPARE,
                 }
-                active_perms: list[str] = []
+                active_perms: MutableSequence[str] = []
                 if acl_data.permissions:
                     perms_dict = {
                         key: getattr(acl_data.permissions, key)
@@ -309,7 +310,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: dict[str, list[str]],
+            attributes: MutableMapping[str, MutableSequence[str]],
         ) -> bool:
             """Detect Tivoli DS-specific entries."""
             if not entry_dn:
@@ -370,7 +371,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 ]
                 processed_attributes = attributes.copy()
                 for attr_name, attr_values in processed_attributes.items():
-                    processed_values: list[str] = []
+                    processed_values: MutableSequence[str] = []
                     for value in attr_values:
                         str_value: str
                         if isinstance(value, bytes):

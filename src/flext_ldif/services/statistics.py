@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import MutableMapping, MutableSequence
 from pathlib import Path
 from typing import override
 
@@ -18,7 +19,7 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
 
     def calculate_for_entries(
         self,
-        entries: list[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry],
     ) -> r[m.Ldif.EntriesStatistics]:
         """Calculate general-purpose statistics for a list of Entry models."""
         object_class_distribution: Counter[str] = Counter()
@@ -64,9 +65,9 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
     def generate_statistics(
         self,
         categorized: m.Ldif.FlexibleCategories,
-        written_counts: dict[str, int],
+        written_counts: MutableMapping[str, int],
         output_dir: Path,
-        output_files: dict[str, str],
+        output_files: MutableMapping[str, str],
     ) -> r[m.Ldif.StatisticsResult]:
         """Generate complete statistics for categorized migration."""
         total_entries = sum(
@@ -79,7 +80,7 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
         categorized_counts_model = m.Ldif.DynamicCounts.model_validate(
             categorized_counts_dict,
         )
-        rejected_entries: list[m.Ldif.Entry] = [
+        rejected_entries: MutableSequence[m.Ldif.Entry] = [
             m.Ldif.Entry.model_validate(entry)
             for entry in categorized.get("rejected", [])
         ]
@@ -114,8 +115,8 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
 
     def _extract_rejection_reasons(
         self,
-        rejected_entries: list[m.Ldif.Entry],
-    ) -> list[str]:
+        rejected_entries: MutableSequence[m.Ldif.Entry],
+    ) -> MutableSequence[str]:
         """Extract unique rejection reasons from rejected entries."""
         reasons: set[str] = set()
         for entry in rejected_entries:

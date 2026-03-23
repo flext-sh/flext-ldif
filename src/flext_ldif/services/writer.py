@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from contextlib import suppress
 from pathlib import Path
 from typing import override
@@ -47,9 +47,9 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
 
     @staticmethod
     def _normalize_write_format(
-        d: dict[str, t.NormalizedValue],
-    ) -> dict[str, t.NormalizedValue]:
-        mapped: dict[str, t.NormalizedValue] = {
+        d: MutableMapping[str, t.NormalizedValue],
+    ) -> MutableMapping[str, t.NormalizedValue]:
+        mapped: MutableMapping[str, t.NormalizedValue] = {
             "base64_encode_binary": d.get("base64_encode_binary"),
             "sort_attributes": d.get("sort_entries"),
             "include_dn_comments": d.get("include_comments"),
@@ -67,12 +67,12 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
     @override
     def execute(self, params: t.ValueOrModel | None = None) -> r[m.Ldif.WriteResponse]:
         """Execute write operation with parameters."""
-        params_mapping: dict[str, t.GeneralValueType] = {}
+        params_mapping: MutableMapping[str, t.GeneralValueType] = {}
         if isinstance(params, Mapping):
             params_mapping = params
         params_data = params_mapping
         entries_raw = u.take(params_data, "entries")
-        entries: list[m.Ldif.Entry] = []
+        entries: MutableSequence[m.Ldif.Entry] = []
         entry_candidates: tuple[t.NormalizedValue, ...] = ()
         with suppress(Exception):
             entry_candidates = tuple(t.ObjectList(entries_raw).root)
@@ -143,12 +143,12 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
 
     def write(
         self,
-        entries: list[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry],
         target_server_type: str | None = None,
         _output_target: str | None = None,
         output_path: Path | None = None,
         format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
-        _template_data: dict[str, t.Ldif.TemplateValue] | None = None,
+        _template_data: MutableMapping[str, t.Ldif.TemplateValue] | None = None,
     ) -> r[str | m.Ldif.WriteResponse]:
         """Write entries to LDIF format (string or file)."""
         if output_path is not None:
@@ -176,7 +176,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
 
     def write_to_file(
         self,
-        entries: list[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry],
         path: Path,
         server_type: str | None = None,
         format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
@@ -211,7 +211,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
 
     def write_to_string(
         self,
-        entries: list[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry],
         server_type: str | None = None,
         format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
     ) -> r[str]:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from typing import override
 
 from flext_core import FlextLogger, r
@@ -29,7 +30,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize OUD schema quirk."""
-        filtered_kwargs: dict[str, str | float | bool] = {
+        filtered_kwargs: MutableMapping[str, str | float | bool] = {
             k: v
             for k, v in kwargs.items()
             if k not in {"_parent_quirk", "_schema_service"}
@@ -49,8 +50,10 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         *,
         validate_dependencies: bool = True,
     ) -> r[
-        dict[
-            str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass]
+        MutableMapping[
+            str,
+            MutableSequence[m.Ldif.SchemaAttribute]
+            | MutableSequence[m.Ldif.SchemaObjectClass],
         ]
     ]:
         """Extract and parse all schema definitions from LDIF content."""
@@ -134,9 +137,9 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     def _collect_attribute_extensions(
         self, attr: m.Ldif.SchemaAttribute
-    ) -> list[str]:
+    ) -> MutableSequence[str]:
         """Collect OUD X-* extensions from attribute."""
-        extensions: list[str] = []
+        extensions: MutableSequence[str] = []
         if attr.x_origin:
             extensions.append("X-ORIGIN")
         if attr.x_file_ref:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
 from flext_core import FlextLogger
@@ -45,12 +46,12 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     SCHEMA_DN: ClassVar[str] = "cn=schema"
     SCHEMA_SUP_SEPARATOR: ClassVar[str] = "$"
     ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset([])
-    OBJECTCLASS_REQUIREMENTS: ClassVar[dict[str, bool]] = {
+    OBJECTCLASS_REQUIREMENTS: ClassVar[MutableMapping[str, bool]] = {
         "requires_sup_for_auxiliary": True,
         "allows_multiple_sup": False,
         "requires_explicit_structural": False,
     }
-    ATTRIBUTE_ALIASES: ClassVar[dict[str, list[str]]] = {}
+    ATTRIBUTE_ALIASES: ClassVar[MutableMapping[str, MutableSequence[str]]] = {}
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
         "createTimestamp",
         "modifyTimestamp",
@@ -63,13 +64,13 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
         "createTimestamp",
         "modifyTimestamp",
     ])
-    CATEGORIZATION_PRIORITY: ClassVar[list[str]] = [
+    CATEGORIZATION_PRIORITY: ClassVar[MutableSequence[str]] = [
         "users",
         "hierarchy",
         "groups",
         "acl",
     ]
-    CATEGORY_OBJECTCLASSES: ClassVar[dict[str, frozenset[str]]] = {
+    CATEGORY_OBJECTCLASSES: ClassVar[MutableMapping[str, frozenset[str]]] = {
         "users": frozenset([
             "person",
             "inetOrgPerson",
@@ -109,13 +110,13 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     CONTROL_CHAR_THRESHOLD: ClassVar[int] = 32
     ASCII_MAX_CHAR: ClassVar[int] = 127
     ALLOWED_CONTROL_CHARS: ClassVar[str] = "\t\n\r"
-    MATCHING_RULE_TO_RFC: ClassVar[dict[str, str]] = {}
-    SYNTAX_OID_TO_RFC: ClassVar[dict[str, str]] = {}
-    BOOLEAN_CONVERSION: ClassVar[dict[str, str]] = {}
-    BOOLEAN_DENORMALIZATION: ClassVar[dict[str, str]] = {}
-    ATTRIBUTE_CASE_MAP: ClassVar[dict[str, str]] = {}
-    ATTRIBUTE_NAME_TO_RFC: ClassVar[dict[str, str]] = {}
-    ATTRIBUTE_NAME_FROM_RFC: ClassVar[dict[str, str]] = {}
+    MATCHING_RULE_TO_RFC: ClassVar[MutableMapping[str, str]] = {}
+    SYNTAX_OID_TO_RFC: ClassVar[MutableMapping[str, str]] = {}
+    BOOLEAN_CONVERSION: ClassVar[MutableMapping[str, str]] = {}
+    BOOLEAN_DENORMALIZATION: ClassVar[MutableMapping[str, str]] = {}
+    ATTRIBUTE_CASE_MAP: ClassVar[MutableMapping[str, str]] = {}
+    ATTRIBUTE_NAME_TO_RFC: ClassVar[MutableMapping[str, str]] = {}
+    ATTRIBUTE_NAME_FROM_RFC: ClassVar[MutableMapping[str, str]] = {}
     BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()
     ACL_PREFIX_DN: ClassVar[str] = "dn:"
     ACL_PREFIX_VERSION: ClassVar[str] = "version 3.0"

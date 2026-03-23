@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
 from flext_core import FlextLogger
@@ -83,7 +84,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     ACL_AUTHMETHOD_PATTERN: ClassVar[str] = 'authmethod\\s*=\\s*"?(\\w+)"?'
     ACL_SSF_PATTERN: ClassVar[str] = 'ssf\\s*([<>=!]+)\\s*"?(\\d+)"?'
     ACL_BIND_RULE_TUPLE_LENGTH: ClassVar[int] = 2
-    ACL_BIND_RULES_CONFIG: ClassVar[list[tuple[str, str, str | None]]] = [
+    ACL_BIND_RULES_CONFIG: ClassVar[MutableSequence[tuple[str, str, str | None]]] = [
         ("bind_ip", 'ip="{value}"', None),
         ("bind_dns", 'dns="{value}"', None),
         ("bind_dayofweek", 'dayofweek="{value}"', None),
@@ -91,12 +92,12 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         ("authmethod", 'authmethod = "{value}"', None),
         ("ssf", 'ssf {operator} "{value}"', ">="),
     ]
-    ACL_TARGET_EXTENSIONS_CONFIG: ClassVar[list[tuple[str, str]]] = [
+    ACL_TARGET_EXTENSIONS_CONFIG: ClassVar[MutableSequence[tuple[str, str]]] = [
         ("targattrfilters", '(targattrfilters="{value}")'),
         ("targetcontrol", '(targetcontrol="{value}")'),
         ("extop", '(extop="{value}")'),
     ]
-    ACL_BIND_PATTERNS: ClassVar[dict[str, str]] = {
+    ACL_BIND_PATTERNS: ClassVar[MutableMapping[str, str]] = {
         ACL_BIND_RULE_TYPE_USERDN: ACL_USERDN_PATTERN,
         ACL_BIND_RULE_TYPE_GROUPDN: ACL_GROUPDN_PATTERN,
     }
@@ -116,7 +117,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         SCHEMA_FIELD_LDAP_SYNTAXES,
     ])
     ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["x_origin"])
-    OBJECTCLASS_REQUIREMENTS: ClassVar[dict[str, bool]] = {
+    OBJECTCLASS_REQUIREMENTS: ClassVar[MutableMapping[str, bool]] = {
         "requires_sup_for_auxiliary": True,
         "allows_multiple_sup": False,
         "requires_explicit_structural": True,
@@ -173,7 +174,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "pwdmaxlength",
         "pwdminlength",
     ])
-    ATTRIBUTE_CASE_MAP: ClassVar[dict[str, str]] = {
+    ATTRIBUTE_CASE_MAP: ClassVar[MutableMapping[str, str]] = {
         "uniquemember": "uniqueMember",
         "displayname": "displayName",
         "distinguishedname": "distinguishedName",
@@ -182,17 +183,17 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "seealsodescription": "seeAlsoDescription",
         "acl": "aci",
     }
-    ATTRIBUTE_TRANSFORMATION_OUD_TO_RFC: ClassVar[dict[str, str]] = {
+    ATTRIBUTE_TRANSFORMATION_OUD_TO_RFC: ClassVar[MutableMapping[str, str]] = {
         "ds-sync-hist": "dsyncHist",
         "ds-pwp-account-disabled": "accountDisabled",
         "entryUUID": "entryUUID",
     }
-    ATTRIBUTE_TRANSFORMATION_RFC_TO_OUD: ClassVar[dict[str, str]] = {
+    ATTRIBUTE_TRANSFORMATION_RFC_TO_OUD: ClassVar[MutableMapping[str, str]] = {
         "dsyncHist": "ds-sync-hist",
         "accountDisabled": "ds-pwp-account-disabled",
         "entryUUID": "entryUUID",
     }
-    ATTRIBUTE_ALIASES: ClassVar[dict[str, list[str]]] = {
+    ATTRIBUTE_ALIASES: ClassVar[MutableMapping[str, MutableSequence[str]]] = {
         "cn": ["commonName"],
         "sn": ["surname"],
         "givenName": ["gn"],
@@ -200,25 +201,25 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "telephoneNumber": ["phone"],
         "uid": ["userid", "username"],
     }
-    RFC_TO_OUD_SUBJECTS: ClassVar[dict[str, tuple[str, str]]] = {
+    RFC_TO_OUD_SUBJECTS: ClassVar[MutableMapping[str, tuple[str, str]]] = {
         "group_membership": ("bind_rules", 'userattr="{value}#LDAPURL"'),
         "user_attribute": ("bind_rules", 'userattr="{value}#USERDN"'),
         "group_attribute": ("bind_rules", 'userattr="{value}#GROUPDN"'),
     }
-    OUD_TO_RFC_SUBJECTS: ClassVar[dict[str, tuple[str, str]]] = {
+    OUD_TO_RFC_SUBJECTS: ClassVar[MutableMapping[str, tuple[str, str]]] = {
         "bind_rules": ("group_membership", "{value}"),
     }
-    INVALID_SUBSTR_RULES: ClassVar[dict[str, str | None]] = {
+    INVALID_SUBSTR_RULES: ClassVar[MutableMapping[str, str | None]] = {
         "caseIgnoreMatch": "caseIgnoreSubstringsMatch",
         "distinguishedNameMatch": None,
         "caseIgnoreOrderingMatch": None,
         "numericStringMatch": "numericStringSubstringsMatch",
     }
-    MATCHING_RULE_REPLACEMENTS: ClassVar[dict[str, str]] = {
+    MATCHING_RULE_REPLACEMENTS: ClassVar[MutableMapping[str, str]] = {
         "caseIgnoreMatch": "caseIgnoreMatch",
         "caseIgnoreSubstringsMatch": "caseIgnoreSubstringsMatch",
     }
-    CATEGORY_OBJECTCLASSES: ClassVar[dict[str, frozenset[str]]] = {
+    CATEGORY_OBJECTCLASSES: ClassVar[MutableMapping[str, frozenset[str]]] = {
         "users": frozenset(["person", "inetOrgPerson", "organizationalPerson"]),
         "hierarchy": frozenset([
             "organizationalUnit",
@@ -235,7 +236,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "domain",
     ])
     CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(["aci"])
-    CATEGORIZATION_PRIORITY: ClassVar[list[str]] = [
+    CATEGORIZATION_PRIORITY: ClassVar[MutableSequence[str]] = [
         "schema",
         "acl",
         "users",

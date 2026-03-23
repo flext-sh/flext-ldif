@@ -29,9 +29,7 @@ class FlextLdifTypes(FlextTypes):
         type _MetadataLeaf = FlextTypes.Primitives | None | datetime
         type MetadataValue = (
             _MetadataLeaf
-            | list[
-                _MetadataLeaf | list[_MetadataLeaf] | dict[str, _MetadataLeaf]
-            ]
+            | list[_MetadataLeaf | list[_MetadataLeaf] | dict[str, _MetadataLeaf]]
             | dict[
                 str,
                 _MetadataLeaf | list[_MetadataLeaf] | dict[str, _MetadataLeaf],
@@ -41,14 +39,10 @@ class FlextLdifTypes(FlextTypes):
         type _ContainerLeaf = FlextTypes.Primitives | None | BaseModel | datetime
         type RecursiveContainer = (
             _ContainerLeaf
-            | list[
-                _ContainerLeaf | list[_ContainerLeaf] | dict[str, _ContainerLeaf]
-            ]
+            | list[_ContainerLeaf | list[_ContainerLeaf] | dict[str, _ContainerLeaf]]
             | dict[
                 str,
-                _ContainerLeaf
-                | list[_ContainerLeaf]
-                | dict[str, _ContainerLeaf],
+                _ContainerLeaf | list[_ContainerLeaf] | dict[str, _ContainerLeaf],
             ]
         )
 
@@ -122,9 +116,7 @@ class FlextLdifTypes(FlextTypes):
         TSchema = TypeVar("TSchema")
 
         TRUE_STRINGS: frozenset[str] = frozenset({"true", "1", "yes", "on"})
-        type ConvertValue = (
-            t.Container | list[t.Container] | dict[str, t.Container]
-        )
+        type ConvertValue = t.Container | list[t.Container] | dict[str, t.Container]
         CONTAINER_TYPES: tuple[type[t.Container], ...] = (
             str,
             int,

@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
 from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr

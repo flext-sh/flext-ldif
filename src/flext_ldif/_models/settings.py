@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, MutableMapping, MutableSequence
 from typing import TYPE_CHECKING, Annotated, ClassVar, Literal
 
 from flext_core import FlextModels, r
@@ -29,7 +29,7 @@ class FlextLdifModelsSettings:
     """
 
     @staticmethod
-    def _rdn_pairs_factory() -> list[tuple[str, str]]:
+    def _rdn_pairs_factory() -> MutableSequence[tuple[str, str]]:
         return []
 
     class DnNormalizationConfig(FlextModels.Value):
@@ -130,9 +130,9 @@ class FlextLdifModelsSettings:
         format: Annotated[str, Field()] = "ldif"
         line_width: Annotated[int | None, Field()] = None
         fold_lines: Annotated[bool, Field()] = True
-        base64_attrs: Annotated[list[str] | None, Field()] = None
+        base64_attrs: Annotated[MutableSequence[str] | None, Field()] = None
         sort_by: Annotated[str | None, Field()] = None
-        attr_order: Annotated[list[str] | None, Field()] = None
+        attr_order: Annotated[MutableSequence[str] | None, Field()] = None
         include_metadata: Annotated[bool, Field()] = False
         server: Annotated[str | None, Field()] = None
 
@@ -198,7 +198,7 @@ class FlextLdifModelsSettings:
             extra="forbid", validate_assignment=True
         )
         line_breaks: Annotated[
-            list[int] | None,
+            MutableSequence[int] | None,
             Field(description="List of line break positions in ACL"),
         ] = None
         dn_spaces: Annotated[
@@ -265,7 +265,7 @@ class FlextLdifModelsSettings:
             Field(..., description="Regex pattern for allow/deny permissions"),
         ]
         bind_patterns: Annotated[
-            dict[str, str],
+            MutableMapping[str, str],
             Field(
                 description="Mapping of bind type to regex pattern",
             ),
@@ -287,13 +287,13 @@ class FlextLdifModelsSettings:
             Field(description="Action to filter (allow or deny)"),
         ] = "allow"
         extra_patterns: Annotated[
-            dict[str, str],
+            MutableMapping[str, str],
             Field(
                 description="Extra regex patterns for server-specific fields",
             ),
         ] = Field(default_factory=dict)
         permission_map: Annotated[
-            dict[str, str],
+            MutableMapping[str, str],
             Field(
                 description="Mapping of permission name to normalized name",
             ),
@@ -308,7 +308,7 @@ class FlextLdifModelsSettings:
             },
         )
         special_subjects: Annotated[
-            dict[str, tuple[str, str]],
+            MutableMapping[str, tuple[str, str]],
             Field(
                 description="Special subject DN to (type, value) mapping",
             ),
@@ -368,7 +368,7 @@ class FlextLdifModelsSettings:
             ),
         ] = " || "
         bind_operators: Annotated[
-            dict[str, str],
+            MutableMapping[str, str],
             Field(
                 description="Mapping of subject type to bind operator",
             ),
@@ -479,25 +479,25 @@ class FlextLdifModelsSettings:
             extra="forbid", validate_assignment=True
         )
         case_mappings: Annotated[
-            dict[str, str] | None,
+            MutableMapping[str, str] | None,
             Field(
                 description="Attribute case restoration {normalized: original}",
             ),
         ] = None
         boolean_mappings: Annotated[
-            dict[str, str] | None,
+            MutableMapping[str, str] | None,
             Field(
                 description='Boolean value mappings {TRUE: "1", FALSE: "0"}',
             ),
         ] = None
         attr_name_mappings: Annotated[
-            dict[str, str] | None,
+            MutableMapping[str, str] | None,
             Field(
                 description="Attribute name mappings {rfc_name: server_name}",
             ),
         ] = None
         value_transformations: Annotated[
-            dict[str, dict[str, str]] | None,
+            MutableMapping[str, MutableMapping[str, str]] | None,
             Field(description="Per-attribute value mappings"),
         ] = None
 
@@ -523,19 +523,19 @@ class FlextLdifModelsSettings:
             extra="forbid", validate_assignment=True
         )
         case_mappings: Annotated[
-            dict[str, str] | None,
+            MutableMapping[str, str] | None,
             Field(
                 description="Attribute case normalization {original: normalized}",
             ),
         ] = None
         boolean_mappings: Annotated[
-            dict[str, str] | None,
+            MutableMapping[str, str] | None,
             Field(
                 description='Boolean value mappings {"1": "TRUE", "0": "FALSE"}',
             ),
         ] = None
         attr_name_mappings: Annotated[
-            dict[str, str] | None,
+            MutableMapping[str, str] | None,
             Field(
                 description="Attribute name mappings {server_name: rfc_name}",
             ),
@@ -571,7 +571,7 @@ class FlextLdifModelsSettings:
             extra="forbid", validate_assignment=True
         )
         objectclasses: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(description="Required objectClasses"),
         ] = None
         objectclass_mode: Annotated[
@@ -579,11 +579,11 @@ class FlextLdifModelsSettings:
             Field(description='"any" (has any) or "all" (has all)'),
         ] = "any"
         required_attrs: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(description="All of these attributes must exist"),
         ] = None
         any_attrs: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(
                 description="At least one of these attributes must exist",
             ),
@@ -640,7 +640,7 @@ class FlextLdifModelsSettings:
             ),
         ] = None
         remove_attrs: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(description="List of attributes to remove"),
         ] = None
         fail_fast: Annotated[
@@ -667,7 +667,7 @@ class FlextLdifModelsSettings:
             extra="forbid", validate_assignment=True
         )
         objectclasses: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(description="Filter by objectClass"),
         ] = None
         objectclass_mode: Annotated[
@@ -675,7 +675,7 @@ class FlextLdifModelsSettings:
             Field(description='"any" or "all"'),
         ] = "any"
         required_attrs: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(
                 description="Only include entries with all these attrs",
             ),
@@ -728,14 +728,14 @@ class FlextLdifModelsSettings:
             Field(description="Target attribute name (None if removed)"),
         ] = None
         original_values: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 ...,
                 description="Original attribute values (PRESERVED EXACTLY as-is)",
             ),
         ]
         target_values: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(description="Converted values (None if removed)"),
         ] = None
         transformation_type: Annotated[
@@ -783,7 +783,7 @@ class FlextLdifModelsSettings:
             ),
         ] = None
         original_attr_lines: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(description="Original attribute lines from LDIF"),
         ] = None
         dn_was_base64: Annotated[
@@ -791,7 +791,7 @@ class FlextLdifModelsSettings:
             Field(description="Whether DN was base64 encoded"),
         ] = False
         original_attribute_case: Annotated[
-            dict[str, str] | None,
+            MutableMapping[str, str] | None,
             Field(
                 description="Mapping of attribute names to original case",
             ),
@@ -825,7 +825,7 @@ class FlextLdifModelsSettings:
             ),
         ] = False
         pairs: Annotated[
-            list[tuple[str, str]],
+            MutableSequence[tuple[str, str]],
             Field(
                 description="List of (attr, value) pairs parsed so far",
             ),
@@ -856,19 +856,19 @@ class FlextLdifModelsSettings:
         ]
         target_dn: Annotated[str, Field(..., description="Target base DN replacement")]
         transformed_attr_names: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 description="List of attribute names that were transformed",
             ),
         ] = Field(default_factory=list)
         original_attrs: Annotated[
-            dict[str, list[str]],
+            MutableMapping[str, MutableSequence[str]],
             Field(
                 description="Original attributes before transformation",
             ),
         ] = Field(default_factory=dict)
         transformed_attrs: Annotated[
-            dict[str, list[str]],
+            MutableMapping[str, MutableSequence[str]],
             Field(
                 description="Transformed attributes after transformation",
             ),
@@ -934,33 +934,33 @@ class FlextLdifModelsSettings:
         """
 
         user_dn_patterns: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 description="DN patterns for user entries (e.g., '*,ou=users,*')",
             ),
         ] = Field(default_factory=list)
         group_dn_patterns: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(description="DN patterns for group entries"),
         ] = Field(default_factory=list)
         hierarchy_dn_patterns: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 description="DN patterns for organizational hierarchy",
             ),
         ] = Field(default_factory=list)
         schema_dn_patterns: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(description="DN patterns for schema entries"),
         ] = Field(default_factory=list)
         user_objectclasses: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 description="ObjectClasses identifying user entries",
             ),
         ] = Field(default_factory=lambda: ["person", "inetOrgPerson", "orclUser"])
         group_objectclasses: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 description="ObjectClasses identifying group entries",
             ),
@@ -972,13 +972,13 @@ class FlextLdifModelsSettings:
             ],
         )
         hierarchy_objectclasses: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 description="ObjectClasses identifying organizational units",
             ),
         ] = Field(default_factory=lambda: ["organizationalUnit", "organization"])
         acl_attributes: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 description="Attribute names containing ACL information",
             ),
@@ -1002,7 +1002,7 @@ class FlextLdifModelsSettings:
         """
 
         migration_config: Annotated[
-            dict[str, str | int | bool] | None,
+            MutableMapping[str, str | int | bool] | None,
             Field(
                 description="Structured migration config with 6-file output and tracking",
             ),
@@ -1018,13 +1018,13 @@ class FlextLdifModelsSettings:
             ),
         ] = None
         input_files: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(
                 description="Ordered list of LDIF files to process (categorized mode)",
             ),
         ] = None
         output_files: Annotated[
-            dict[c.Ldif.Categories, str] | None,
+            MutableMapping[c.Ldif.Categories, str] | None,
             Field(
                 description="Category to filename mapping (categorized mode)",
             ),
@@ -1048,11 +1048,11 @@ class FlextLdifModelsSettings:
             ),
         ] = None
         forbidden_attributes: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(description="Attributes to remove from entries"),
         ] = None
         forbidden_objectclasses: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(description="ObjectClasses to remove from entries"),
         ] = None
         base_dn: Annotated[
@@ -1095,15 +1095,15 @@ class FlextLdifModelsSettings:
             Field(description="Pattern for matching (fnmatch wildcards)"),
         ] = None
         whitelist: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(description="Whitelist of patterns to include"),
         ] = None
         blacklist: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(description="Blacklist of patterns to exclude"),
         ] = None
         required_attributes: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(description="Required attributes for objectClass"),
         ] = None
         mode: Annotated[
@@ -1121,53 +1121,53 @@ class FlextLdifModelsSettings:
         """
 
         blocked_objectclasses: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 description="ObjectClasses that should be blocked/rejected",
             ),
         ] = Field(default_factory=list)
         allowed_objectclasses: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 description="ObjectClasses that are explicitly allowed",
             ),
         ] = Field(default_factory=list)
         required_attributes: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(description="Attributes that must be present"),
         ] = Field(default_factory=list)
         blocked_attributes: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 description="Attributes that should be blocked",
             ),
         ] = Field(default_factory=list)
         allowed_attribute_oids: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 description="OID patterns for allowed schema attributes",
             ),
         ] = Field(default_factory=list)
         allowed_objectclass_oids: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 description="OID patterns for allowed objectClasses",
             ),
         ] = Field(default_factory=list)
         allowed_matchingrule_oids: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 description="OID patterns for allowed matchingRules",
             ),
         ] = Field(default_factory=list)
         allowed_matchingruleuse_oids: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 description="OID patterns for allowed matchingRuleUse definitions",
             ),
         ] = Field(default_factory=list)
         allowed_ldapsyntax_oids: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 description="OID patterns for allowed ldapSyntaxes definitions",
             ),
@@ -1180,7 +1180,7 @@ class FlextLdifModelsSettings:
             str,
             StringConstraints(min_length=1, max_length=50, pattern="^[A-Za-z0-9._-]+$"),
         ]
-        allowed_encodings: Annotated[list[str], Field()] = Field(
+        allowed_encodings: Annotated[MutableSequence[str], Field()] = Field(
             default_factory=list
         )
 
@@ -1403,7 +1403,7 @@ class FlextLdifModelsSettings:
             ),
         ] = False
         rfc_order_priority_attributes: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 description="Attributes to write first after DN, in order. Default: ['objectClass']. Remaining attributes sorted alphabetically.",
             ),
@@ -1445,7 +1445,7 @@ class FlextLdifModelsSettings:
             ),
         ] = False
         statistics_categories: Annotated[
-            dict[str, int],
+            MutableMapping[str, int],
             Field(
                 description="Dictionary of category names to entry counts for statistics summary. Example: {'users': 150, 'groups': 25, 'acl': 42}.",
             ),
@@ -1526,7 +1526,7 @@ class FlextLdifModelsSettings:
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         output_file_mapping: Annotated[
-            dict[str, str],
+            MutableMapping[str, str],
             Field(
                 default_factory=lambda: {
                     "schema": "00-schema.ldif",
@@ -1541,49 +1541,49 @@ class FlextLdifModelsSettings:
             ),
         ]
         hierarchy_objectclasses: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 default_factory=list,
                 description="ObjectClasses for hierarchy entries (01-hierarchy.ldif)",
             ),
         ]
         user_objectclasses: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 default_factory=list,
                 description="ObjectClasses for user entries (02-users.ldif)",
             ),
         ]
         group_objectclasses: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 default_factory=list,
                 description="ObjectClasses for group entries (03-groups.ldif)",
             ),
         ]
         attribute_whitelist: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(
                 default=None,
                 description="If provided, only these attributes are kept",
             ),
         ]
         attribute_blacklist: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(
                 default=None,
                 description="If provided, these attributes are removed",
             ),
         ]
         objectclass_whitelist: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(
                 default=None,
                 description="If provided, only entries with these objectClasses are kept",
             ),
         ]
         objectclass_blacklist: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(
                 default=None,
                 description="If provided, entries with these objectClasses are removed",
@@ -1608,7 +1608,7 @@ class FlextLdifModelsSettings:
             Field(default=None, description="Jinja2 template for file headers"),
         ]
         header_data: Annotated[
-            dict[str, str | int | bool],
+            MutableMapping[str, str | int | bool],
             Field(default_factory=dict, description="Data to pass to header template"),
         ]
 
@@ -1931,14 +1931,15 @@ class FlextLdifModelsSettings:
         ]
         parse_entry_hook: Annotated[
             Callable[
-                [str, dict[str, list[str]]], r[FlextLdifModelsDomains.Entry]
+                [str, MutableMapping[str, MutableSequence[str]]],
+                r[FlextLdifModelsDomains.Entry],
             ],
             Field(..., description="Hook to parse (dn, attrs) into Entry"),
         ]
         transform_attrs_hook: Annotated[
             Callable[
-                [str, dict[str, list[str]]],
-                tuple[str, dict[str, list[str]]],
+                [str, MutableMapping[str, MutableSequence[str]]],
+                tuple[str, MutableMapping[str, MutableSequence[str]]],
             ]
             | None,
             Field(
@@ -1970,7 +1971,11 @@ class FlextLdifModelsSettings:
             ),
         ]
         ldif_parser: Annotated[
-            Callable[[str], list[tuple[str, dict[str, list[str]]]]] | None,
+            Callable[
+                [str],
+                MutableSequence[tuple[str, MutableMapping[str, MutableSequence[str]]]],
+            ]
+            | None,
             Field(default=None, description="Optional custom LDIF parser"),
         ]
 
@@ -1986,19 +1991,20 @@ class FlextLdifModelsSettings:
             extra="forbid", validate_assignment=True
         )
         parsed_entries: Annotated[
-            list[tuple[str, dict[str, list[str]]]],
+            MutableSequence[tuple[str, MutableMapping[str, MutableSequence[str]]]],
             Field(..., description="List of (dn, attrs) tuples from parser"),
         ]
         parse_entry_hook: Annotated[
             Callable[
-                [str, dict[str, list[str]]], r[FlextLdifModelsDomains.Entry]
+                [str, MutableMapping[str, MutableSequence[str]]],
+                r[FlextLdifModelsDomains.Entry],
             ],
             Field(..., description="Hook to parse (dn, attrs) into Entry"),
         ]
         transform_attrs_hook: Annotated[
             Callable[
-                [str, dict[str, list[str]]],
-                tuple[str, dict[str, list[str]]],
+                [str, MutableMapping[str, MutableSequence[str]]],
+                tuple[str, MutableMapping[str, MutableSequence[str]]],
             ]
             | None,
             Field(
@@ -2041,11 +2047,11 @@ class FlextLdifModelsSettings:
             Field(..., description="Core parsing logic"),
         ]
         validate_structural_hook: Annotated[
-            Callable[[str, list[str]], bool] | None,
+            Callable[[str, MutableSequence[str]], bool] | None,
             Field(default=None, description="Optional structural validation"),
         ]
         transform_sup_hook: Annotated[
-            Callable[[list[str]], list[str]] | None,
+            Callable[[MutableSequence[str]], MutableSequence[str]] | None,
             Field(default=None, description="Optional SUP transformation"),
         ]
         enrich_metadata_hook: Annotated[
@@ -2066,20 +2072,21 @@ class FlextLdifModelsSettings:
         )
         dn: Annotated[str, Field(..., description="Distinguished name")]
         attrs: Annotated[
-            dict[str, list[str]],
+            MutableMapping[str, MutableSequence[str]],
             Field(..., description="Entry attributes"),
         ]
         server_type: Annotated[str, Field(..., description="Server type identifier")]
         create_entry_hook: Annotated[
             Callable[
-                [str, dict[str, list[str]]], r[FlextLdifModelsDomains.Entry]
+                [str, MutableMapping[str, MutableSequence[str]]],
+                r[FlextLdifModelsDomains.Entry],
             ],
             Field(..., description="Entry creation logic"),
         ]
         build_metadata_hook: Annotated[
             Callable[
-                [str, dict[str, list[str]]],
-                dict[str, t.NormalizedValue] | None,
+                [str, MutableMapping[str, MutableSequence[str]]],
+                MutableMapping[str, t.NormalizedValue] | None,
             ]
             | None,
             Field(default=None, description="Optional metadata building"),
@@ -2090,8 +2097,8 @@ class FlextLdifModelsSettings:
         ]
         transform_attrs_hook: Annotated[
             Callable[
-                [str, dict[str, list[str]]],
-                tuple[str, dict[str, list[str]]],
+                [str, MutableMapping[str, MutableSequence[str]]],
+                tuple[str, MutableMapping[str, MutableSequence[str]]],
             ]
             | None,
             Field(default=None, description="Optional attribute transformation"),
@@ -2114,11 +2121,11 @@ class FlextLdifModelsSettings:
         ]
         server_type: Annotated[str, Field(..., description="Server type identifier")]
         write_attributes_hook: Annotated[
-            Callable[[FlextLdifModelsDomains.Entry, list[str]], None],
+            Callable[[FlextLdifModelsDomains.Entry, MutableSequence[str]], None],
             Field(..., description="Core attributes writing"),
         ]
         write_comments_hook: Annotated[
-            Callable[[FlextLdifModelsDomains.Entry, list[str]], None] | None,
+            Callable[[FlextLdifModelsDomains.Entry, MutableSequence[str]], None] | None,
             Field(default=None, description="Optional comments writing"),
         ]
         transform_entry_hook: Annotated[
@@ -2127,7 +2134,7 @@ class FlextLdifModelsSettings:
             Field(default=None, description="Optional entry transformation"),
         ]
         write_dn_hook: Annotated[
-            Callable[[str, list[str]], None] | None,
+            Callable[[str, MutableSequence[str]], None] | None,
             Field(default=None, description="Optional DN writing"),
         ]
         include_comments: Annotated[
@@ -2147,7 +2154,7 @@ class FlextLdifModelsSettings:
             extra="forbid", validate_assignment=True
         )
         entries: Annotated[
-            list[FlextLdifModelsDomains.Entry],
+            MutableSequence[FlextLdifModelsDomains.Entry],
             Field(..., description="List of entries to write"),
         ]
         server_type: Annotated[str, Field(..., description="Server type identifier")]
@@ -2180,7 +2187,7 @@ class FlextLdifModelsSettings:
             extra="forbid", validate_assignment=True
         )
         entries: Annotated[
-            list[FlextLdifModelsDomains.Entry],
+            MutableSequence[FlextLdifModelsDomains.Entry],
             Field(..., description="List of entries to sort"),
         ]
         target: Annotated[
@@ -2204,7 +2211,7 @@ class FlextLdifModelsSettings:
             Field(default=False, description="Sort attributes within entries"),
         ]
         attribute_order: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(default=None, description="Custom attribute order"),
         ]
         sort_acl: Annotated[
@@ -2212,7 +2219,7 @@ class FlextLdifModelsSettings:
             Field(default=False, description="Sort ACL attributes"),
         ]
         acl_attributes: Annotated[
-            list[str] | None,
+            MutableSequence[str] | None,
             Field(default=None, description="ACL attributes to sort"),
         ]
 
@@ -2285,7 +2292,7 @@ class FlextLdifModelsSettings:
             Field(..., description="Converted ACL model (modified in-place)"),
         ]
         orig_perms_dict: Annotated[
-            dict[str, bool],
+            MutableMapping[str, bool],
             Field(..., description="Original permissions dict"),
         ]
         source_server_type: Annotated[

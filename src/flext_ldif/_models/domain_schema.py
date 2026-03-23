@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import Annotated
 
 from pydantic import Field
@@ -22,7 +23,7 @@ class FlextLdifModelsDomainSchema:
             Field(default="rfc", description="LDAP server type for discovery"),
         ]
         naming_contexts: Annotated[
-            list[str],
+            MutableSequence[str],
             Field(
                 default_factory=list,
                 description="Naming contexts to discover schema from",

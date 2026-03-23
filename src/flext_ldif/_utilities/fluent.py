@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import struct
+from collections.abc import MutableSequence
 from typing import Literal, Self
 
 from flext_core import r
@@ -130,19 +131,19 @@ class DnOps:
             return self
         return self
 
-    def split(self) -> r[list[str]]:
+    def split(self) -> r[MutableSequence[str]]:
         """Split DN into RDN components."""
         if self._error:
-            return r[list[str]].fail(self._error)
+            return r[MutableSequence[str]].fail(self._error)
         rdn_components = FlextLdifUtilitiesDN.split(self._dn)
-        return r[list[str]].ok(rdn_components)
+        return r[MutableSequence[str]].ok(rdn_components)
 
     def validate(self, *, strict: bool = True) -> r[bool]:
         """Validate the DN."""
         if self._error:
             return r[bool].fail(self._error)
         components = FlextLdifUtilitiesDN.split(self._dn)
-        all_errors: list[str] = []
+        all_errors: MutableSequence[str] = []
         for comp in components:
             if "=" not in comp:
                 all_errors.append(f"Invalid RDN (missing '='): {comp}")
@@ -242,8 +243,8 @@ class EntryOps:
     def filter_attrs(
         self,
         *,
-        include: list[str] | None = None,
-        exclude: list[str] | None = None,
+        include: MutableSequence[str] | None = None,
+        exclude: MutableSequence[str] | None = None,
     ) -> Self:
         """Filter attributes."""
         if self._error:
@@ -333,7 +334,7 @@ class EntryOps:
             else str(self._entry.dn)
         )
         components = FlextLdifUtilitiesDN.split(dn_str)
-        all_errors: list[str] = []
+        all_errors: MutableSequence[str] = []
         for comp in components:
             if "=" not in comp:
                 all_errors.append(f"Invalid RDN (missing '='): {comp}")

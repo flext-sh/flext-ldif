@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import MutableSequence, Sequence
 from typing import TypeIs
 
 from flext_core import u
@@ -29,7 +29,7 @@ class FlextLdifUtilitiesTypeGuards(u):
     @staticmethod
     def is_container_sequence(
         obj: t.NormalizedValue,
-    ) -> TypeIs[list[t.Container]]:
+    ) -> TypeIs[MutableSequence[t.Container]]:
         """Check if t.NormalizedValue is a Sequence of Container instances.
 
         Uses duck typing to identify Entry sequences:

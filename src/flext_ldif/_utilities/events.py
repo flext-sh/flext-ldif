@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
+
 from flext_ldif import FlextLdifModelsEvents, FlextLdifModelsSettings, p, t
 
 
@@ -12,7 +14,7 @@ class FlextLdifUtilitiesEvents:
     def _build_conversion_event_logging(
         event: FlextLdifModelsEvents.ConversionEvent,
         config: FlextLdifModelsEvents.ConversionEventConfig,
-    ) -> tuple[dict[str, t.Scalar], str]:
+    ) -> tuple[MutableMapping[str, t.Scalar], str]:
         return (
             {
                 "aggregate_id": event.aggregate_id,
@@ -33,7 +35,7 @@ class FlextLdifUtilitiesEvents:
     def _build_operation_event_logging(
         event: FlextLdifModelsEvents.MigrationEvent,
         config: FlextLdifModelsEvents.MigrationEventConfig,
-    ) -> tuple[dict[str, t.Scalar], str]:
+    ) -> tuple[MutableMapping[str, t.Scalar], str]:
         return (
             {
                 "aggregate_id": event.aggregate_id,
@@ -53,7 +55,7 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def _log_and_emit_generic_event(
         logger: p.Logger,
-        log_context: dict[str, t.Scalar],
+        log_context: MutableMapping[str, t.Scalar],
         log_message: str,
         log_level: str = "info",
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
@@ -74,9 +76,9 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def _process_extras(
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
-    ) -> dict[str, t.Scalar]:
+    ) -> MutableMapping[str, t.Scalar]:
         """Extract and filter extras into a dict of loggable context."""
-        filtered_extras: dict[str, t.Scalar] = {}
+        filtered_extras: MutableMapping[str, t.Scalar] = {}
         if not extras:
             return filtered_extras
         if extras.user_id is not None:
@@ -95,10 +97,10 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _to_error_details_list(
-        error_details: list[t.NormalizedValue]
+        error_details: MutableSequence[t.NormalizedValue]
         | tuple[t.NormalizedValue, ...]
         | None,
-    ) -> list[str]:
+    ) -> MutableSequence[str]:
         if error_details is None:
             return []
         return [str(detail) for detail in error_details]
@@ -207,7 +209,7 @@ class FlextLdifUtilitiesEvents:
         """Create DnEvent, log with context, and attach to logger context."""
         event = FlextLdifUtilitiesEvents.create_dn_event(config)
         aggregate_id = event.aggregate_id or ""
-        log_context: dict[str, t.Scalar] = {
+        log_context: MutableMapping[str, t.Scalar] = {
             "aggregate_id": aggregate_id,
             "dn_operation": config.dn_operation,
             "input_dn": config.input_dn,

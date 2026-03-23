@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import (
     ItemsView,
     KeysView,
+    MutableMapping,
+    MutableSequence,
     ValuesView,
 )
 from typing import ClassVar, Self, override
@@ -26,7 +28,7 @@ class FlextLdifModelsMetadata:
             arbitrary_types_allowed=True,
             frozen=False,
         )
-        transformations: list[t.Scalar] | None = None
+        transformations: MutableSequence[t.Scalar] | None = None
         original_format: str | None = None
         schema_source_server: str | None = None
         server_type: str | None = None
@@ -59,7 +61,9 @@ class FlextLdifModelsMetadata:
             return key in self._extra()
 
         @classmethod
-        def from_dict(cls, data: dict[str, t.NormalizedValue] | None = None) -> Self:
+        def from_dict(
+            cls, data: MutableMapping[str, t.NormalizedValue] | None = None
+        ) -> Self:
             """Create DynamicMetadata from a dictionary."""
             if data is None:
                 return cls()
@@ -101,17 +105,17 @@ class FlextLdifModelsMetadata:
                 return extra.pop(key)
             return default
 
-        def to_dict(self) -> dict[str, t.Ldif.MetadataValue]:
+        def to_dict(self) -> MutableMapping[str, t.Ldif.MetadataValue]:
             return dict(self.items())
 
-        def update(self, other: dict[str, t.Ldif.MetadataValue]) -> None:
+        def update(self, other: MutableMapping[str, t.Ldif.MetadataValue]) -> None:
             for key, value in other.items():
                 setattr(self, key, value)
 
         def values(self) -> ValuesView[t.Ldif.MetadataValue]:
             return self._extra().values()
 
-        def _extra(self) -> dict[str, t.Ldif.MetadataValue]:
+        def _extra(self) -> MutableMapping[str, t.Ldif.MetadataValue]:
             return self.__pydantic_extra__ or {}
 
     class EntryMetadata(FlextModels.ArbitraryTypesModel):
@@ -137,7 +141,7 @@ class FlextLdifModelsMetadata:
         ) -> t.Ldif.MetadataValue | None:
             return self._extra().get(key, default)
 
-        def _extra(self) -> dict[str, t.Ldif.MetadataValue]:
+        def _extra(self) -> MutableMapping[str, t.Ldif.MetadataValue]:
             return self.__pydantic_extra__ or {}
 
     class TransformationInfo(FlextModels.ArbitraryTypesModel):
@@ -148,7 +152,7 @@ class FlextLdifModelsMetadata:
         )
         step: str | None = None
         server: str | None = None
-        changes: ClassVar[list[str]] = []
+        changes: ClassVar[MutableSequence[str]] = []
 
 
 __all__ = ["FlextLdifModelsMetadata"]

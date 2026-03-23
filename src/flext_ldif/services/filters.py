@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import struct
+from collections.abc import MutableMapping, MutableSequence
 from typing import Final
 
 from flext_core import FlextLogger
@@ -18,7 +19,7 @@ class FlextLdifFilters:
     @classmethod
     def _check_schema_oid(
         cls,
-        attrs: dict[str, list[str]],
+        attrs: MutableMapping[str, MutableSequence[str]],
         attr_keys: tuple[str, str],
         allowed_set: frozenset[str],
     ) -> tuple[bool, bool]:
@@ -34,7 +35,7 @@ class FlextLdifFilters:
     @classmethod
     def _extract_allowed_oids(
         cls,
-        allowed_oids: dict[str, frozenset[str]],
+        allowed_oids: MutableMapping[str, frozenset[str]],
     ) -> tuple[frozenset[str], frozenset[str], frozenset[str], frozenset[str]]:
         """Extract allowed OID sets from mapping."""
         return (
@@ -45,7 +46,7 @@ class FlextLdifFilters:
         )
 
     @classmethod
-    def _extract_oid_from_schema_attr(cls, values: list[str]) -> str | None:
+    def _extract_oid_from_schema_attr(cls, values: MutableSequence[str]) -> str | None:
         """Extract OID from schema attribute value."""
         if not values:
             return None
@@ -73,7 +74,7 @@ class FlextLdifFilters:
         if attrs is None:
             return True
         if getattr(attrs, "attributes", None) is not None:
-            attrs_dict: dict[str, list[str]] = attrs.attributes
+            attrs_dict: MutableMapping[str, MutableSequence[str]] = attrs.attributes
         else:
             return True
         is_attr, include_attr = cls._check_schema_oid(
@@ -103,17 +104,17 @@ class FlextLdifFilters:
     @classmethod
     def filter_schema_by_oids(
         cls,
-        entries: list[m.Ldif.Entry],
-        allowed_oids: dict[str, frozenset[str]],
-    ) -> r[list[m.Ldif.Entry]]:
+        entries: MutableSequence[m.Ldif.Entry],
+        allowed_oids: MutableMapping[str, frozenset[str]],
+    ) -> r[MutableSequence[m.Ldif.Entry]]:
         """Filter schema entries by allowed OIDs."""
         try:
             allowed_attr, allowed_oc, allowed_mr, allowed_mru = (
                 cls._extract_allowed_oids(allowed_oids)
             )
             if not any([allowed_attr, allowed_oc, allowed_mr, allowed_mru]):
-                return r[list[m.Ldif.Entry]].ok(entries)
-            filtered: list[m.Ldif.Entry] = [
+                return r[MutableSequence[m.Ldif.Entry]].ok(entries)
+            filtered: MutableSequence[m.Ldif.Entry] = [
                 entry
                 for entry in entries
                 if cls._should_include_entry(
@@ -129,7 +130,7 @@ class FlextLdifFilters:
                 total_entries=len(entries),
                 filtered_count=len(filtered),
             )
-            return r[list[m.Ldif.Entry]].ok(filtered)
+            return r[MutableSequence[m.Ldif.Entry]].ok(filtered)
         except (
             ValueError,
             KeyError,
@@ -138,7 +139,9 @@ class FlextLdifFilters:
             struct.error,
         ) as e:
             logger.exception("Failed to filter schema entries by OIDs")
-            return r[list[m.Ldif.Entry]].fail(f"Schema OID filter failed: {e}")
+            return r[MutableSequence[m.Ldif.Entry]].fail(
+                f"Schema OID filter failed: {e}"
+            )
 
 
 __all__ = ["FlextLdifFilters"]

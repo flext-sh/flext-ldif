@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import ClassVar, Literal, override
 
 from flext_core import FlextLogger, r
@@ -26,7 +26,7 @@ logger = FlextLogger(__name__)
 _OidConstants = FlextLdifServersOidConstants
 
 
-class _OidAclTargetAttributesJson(RootModel[list[str]]):
+class _OidAclTargetAttributesJson(RootModel[MutableSequence[str]]):
     pass
 
 
@@ -37,23 +37,23 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         m.Ldif.OidAclMetadataConfig
     )
 
-    RFC_ACL_ATTRIBUTES: ClassVar[list[str]] = [
+    RFC_ACL_ATTRIBUTES: ClassVar[MutableSequence[str]] = [
         "aci",
         "acl",
         "olcAccess",
         "aclRights",
         "aclEntry",
     ]
-    OID_ACL_ATTRIBUTES: ClassVar[list[str]] = [
+    OID_ACL_ATTRIBUTES: ClassVar[MutableSequence[str]] = [
         "orclaci",
         "orclentrylevelaci",
         "orclContainerLevelACL",
     ]
 
     @override
-    def get_acl_attributes(self) -> list[str]:
+    def get_acl_attributes(self) -> MutableSequence[str]:
         """Get RFC + OID extensions."""
-        return self.RFC_ACL_ATTRIBUTES + self.OID_ACL_ATTRIBUTES
+        return [*self.RFC_ACL_ATTRIBUTES, *self.OID_ACL_ATTRIBUTES]
 
     @staticmethod
     def _detect_oid_subject(content: str) -> str | None:
@@ -67,10 +67,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         return None
 
     @staticmethod
-    def _extract_oid_target(content: str) -> tuple[str | None, list[str]]:
+    def _extract_oid_target(content: str) -> tuple[str | None, MutableSequence[str]]:
         """Extract target DN and attributes from OID ACL."""
         target_dn: str | None = None
-        attributes: list[str] = []
+        attributes: MutableSequence[str] = []
         patterns = _OidConstants
         target_match = re.search(patterns.ACL_TARGET_DN_EXTRACT, content, re.IGNORECASE)
         if target_match:
@@ -90,7 +90,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         permissions: FlextLdifModelsMetadata.DynamicMetadata | m.Ldif.DynamicMetadata,
     ) -> str:
         """Format OID ACL permissions clause."""
-        allowed_perms: list[str] = []
+        allowed_perms: MutableSequence[str] = []
         for perm, allowed in permissions.items():
             if allowed:
                 oid_perm_name = _OidConstants.ACL_PERMISSION_NAMES.get(perm, perm)
@@ -122,7 +122,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 return f'"{clean_value}"' if clean_value else "*"
 
     @staticmethod
-    def _format_oid_target(target_dn: str, attributes: list[str]) -> str:
+    def _format_oid_target(target_dn: str, attributes: MutableSequence[str]) -> str:
         """Format OID ACL target clause."""
         if not attributes or target_dn == "entry":
             return "entry"
@@ -133,8 +133,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _normalize_permissions_to_dict(
-        permissions: m.Ldif.AclPermissions | dict[str, bool] | None,
-    ) -> dict[str, bool]:
+        permissions: m.Ldif.AclPermissions | MutableMapping[str, bool] | None,
+    ) -> MutableMapping[str, bool]:
         """Normalize permissions to dict for formatting."""
         if not permissions:
             return {}
@@ -161,12 +161,16 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _normalize_to_dict(
         value: m.Ldif.AclSubject
         | m.Ldif.QuirkMetadata
-        | dict[
-            str, t.Scalar | list[str] | dict[str, str | list[str]] | None
+        | MutableMapping[
+            str,
+            t.Scalar
+            | MutableSequence[str]
+            | MutableMapping[str, str | MutableSequence[str]]
+            | None,
         ]
         | str
         | None,
-    ) -> dict[str, str | int | bool]:
+    ) -> MutableMapping[str, str | int | bool]:
         """Normalize value to dict for model validation."""
         if isinstance(value, Mapping):
             return {
@@ -186,9 +190,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         }
 
     @staticmethod
-    def _parse_oid_permissions(content: str) -> dict[str, bool]:
+    def _parse_oid_permissions(content: str) -> MutableMapping[str, bool]:
         """Parse OID ACL permissions clause."""
-        permissions: dict[str, bool] = {}
+        permissions: MutableMapping[str, bool] = {}
         const = _OidConstants
         perm_match = re.search(const.ACL_PERMS_EXTRACT_OID, content, re.IGNORECASE)
         if perm_match:
@@ -254,21 +258,25 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     @override
     def convert_rfc_acl_to_aci(
         self,
-        rfc_acl_attrs: dict[str, list[str]],
+        rfc_acl_attrs: MutableMapping[str, MutableSequence[str]],
         target_server: str = "oid",
-    ) -> r[dict[str, list[str]]]:
+    ) -> r[MutableMapping[str, MutableSequence[str]]]:
         """Convert RFC ACL format to Oracle OID orclaci format."""
         _ = target_server
-        return r[dict[str, list[str]]].ok(rfc_acl_attrs)
+        return r[MutableMapping[str, MutableSequence[str]]].ok(rfc_acl_attrs)
 
     def _build_metadata_extensions(
         self,
         metadata: m.Ldif.QuirkMetadata
-        | dict[
-            str, t.Scalar | list[str] | dict[str, str | list[str]] | None
+        | MutableMapping[
+            str,
+            t.Scalar
+            | MutableSequence[str]
+            | MutableMapping[str, str | MutableSequence[str]]
+            | None,
         ]
         | None,
-    ) -> list[str]:
+    ) -> MutableSequence[str]:
         """Build OID ACL extension clauses from metadata."""
         if not metadata:
             return []
@@ -280,7 +288,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _build_oid_acl_metadata(
         self,
         config: FlextLdifServersOidAcl.OidAclMetadataConfig,
-    ) -> dict[str, str | int | bool]:
+    ) -> MutableMapping[str, str | int | bool]:
         """Build metadata extensions for OID ACL with Oracle-specific features."""
         target_attrs_str: str = (
             _OidAclTargetAttributesJson(root=config.target_attrs).model_dump_json()
@@ -292,7 +300,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             if config.perms_dict
             else ""
         )
-        metadata_dict: dict[str, str | int | bool] = dict(
+        metadata_dict: MutableMapping[str, str | int | bool] = dict(
             FlextLdifUtilitiesMetadata.build_acl_metadata_complete(
                 "oid",
                 acl_line=config.acl_line,
@@ -320,10 +328,14 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _extract_extensions_dict(
         self,
         metadata: m.Ldif.QuirkMetadata
-        | dict[
-            str, t.Scalar | list[str] | dict[str, str | list[str]] | None
+        | MutableMapping[
+            str,
+            t.Scalar
+            | MutableSequence[str]
+            | MutableMapping[str, str | MutableSequence[str]]
+            | None,
         ],
-    ) -> dict[str, t.Scalar | list[str] | None]:
+    ) -> MutableMapping[str, t.Scalar | MutableSequence[str] | None]:
         """Extract extensions dict from metadata, converting types if needed."""
         try:
             metadata = m.Ldif.QuirkMetadata.model_validate(metadata)
@@ -333,10 +345,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _format_extensions(
         self,
-        meta_extensions: dict[str, t.Scalar | list[str] | None],
-    ) -> list[str]:
+        meta_extensions: MutableMapping[str, t.Scalar | MutableSequence[str] | None],
+    ) -> MutableSequence[str]:
         """Format extension values based on metadata key type."""
-        extensions: list[str] = []
+        extensions: MutableSequence[str] = []
         acl_filter = meta_extensions.get(c.Ldif.ACL_FILTER)
         if isinstance(acl_filter, str) and acl_filter:
             extensions.append(f"filter={acl_filter}")
@@ -613,11 +625,15 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _prepare_subject_and_permissions_for_write(
         self,
-        acl_subject: m.Ldif.AclSubject | dict[str, str | int | bool],
-        acl_permissions: m.Ldif.AclPermissions | dict[str, bool] | None,
+        acl_subject: m.Ldif.AclSubject | MutableMapping[str, str | int | bool],
+        acl_permissions: m.Ldif.AclPermissions | MutableMapping[str, bool] | None,
         metadata: m.Ldif.QuirkMetadata
-        | dict[
-            str, t.Scalar | list[str] | dict[str, str | list[str]] | None
+        | MutableMapping[
+            str,
+            t.Scalar
+            | MutableSequence[str]
+            | MutableMapping[str, str | MutableSequence[str]]
+            | None,
         ]
         | None,
     ) -> tuple[str, str]:
@@ -681,7 +697,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 extensions=FlextLdifModelsMetadata.DynamicMetadata(),
             )
         )
-        update_dict: dict[str, t.NormalizedValue] = {
+        update_dict: MutableMapping[str, t.NormalizedValue] = {
             "server_type": server_type,
             "metadata": updated_metadata,
         }

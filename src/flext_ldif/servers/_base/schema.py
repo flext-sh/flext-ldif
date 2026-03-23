@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, Self, override
 
 from flext_core import FlextLogger, r, s
@@ -105,7 +105,9 @@ class FlextLdifServersBaseSchema(
     ) -> None:
         """Initialize schema quirk service with optional DI service injection."""
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
-        service_kwargs: dict[str, t.Scalar | t.ConfigMap | list[t.Scalar]] = {}
+        service_kwargs: MutableMapping[
+            str, t.Scalar | t.ConfigMap | MutableSequence[t.Scalar]
+        ] = {}
         for key, value in filtered_kwargs.items():
             if isinstance(value, t.SCALAR_TYPES):
                 service_kwargs[key] = value
@@ -116,7 +118,7 @@ class FlextLdifServersBaseSchema(
             if isinstance(value, Sequence) and (
                 not isinstance(value, (str, bytes, bytearray))
             ):
-                scalar_values: list[t.Scalar] = []
+                scalar_values: MutableSequence[t.Scalar] = []
                 for item in value:
                     if isinstance(item, t.SCALAR_TYPES):
                         scalar_values.append(item)
@@ -135,7 +137,7 @@ class FlextLdifServersBaseSchema(
     @staticmethod
     def _extract_metadata_extensions(
         attr_definition: str,
-    ) -> dict[str, list[str] | str | bool | None]:
+    ) -> MutableMapping[str, MutableSequence[str] | str | bool | None]:
         """Extract metadata extensions from attribute definition."""
         parser_util = FlextLdifUtilitiesParser
         extract_method = getattr(parser_util, "extract_extensions", None)
@@ -145,7 +147,7 @@ class FlextLdifServersBaseSchema(
         if not isinstance(extensions_raw, Mapping):
             return {}
         extensions_map = m.Ldif.DynamicMetadata.model_validate(extensions_raw)
-        extracted: dict[str, list[str] | str | bool | None] = {}
+        extracted: MutableMapping[str, MutableSequence[str] | str | bool | None] = {}
         for raw_key, raw_value in extensions_map.items():
             if isinstance(raw_value, str | bool):
                 extracted[raw_key] = raw_value
@@ -170,7 +172,7 @@ class FlextLdifServersBaseSchema(
         """Resolve server type to valid StrEnum, defaulting to GENERIC."""
         if not server_type:
             return c.Ldif.ServerTypes.RFC
-        type_map: dict[str, c.Ldif.ServerTypes] = {
+        type_map: MutableMapping[str, c.Ldif.ServerTypes] = {
             "rfc": c.Ldif.ServerTypes.RFC,
             "oid": c.Ldif.ServerTypes.OID,
             "oud": c.Ldif.ServerTypes.OUD,
@@ -230,7 +232,7 @@ class FlextLdifServersBaseSchema(
         metadata_extensions["original_format"] = attr_definition.strip()
         metadata_extensions["schema_original_string_complete"] = attr_definition
         quirk_type = FlextLdifServersBaseSchema._resolve_quirk_type(server_type)
-        extensions_typed: dict[str, t.NormalizedValue] = {}
+        extensions_typed: MutableMapping[str, t.NormalizedValue] = {}
         for key, val in metadata_extensions.items():
             if isinstance(val, list):
                 list_typed: t.NormalizedValue = list(val)
@@ -259,7 +261,9 @@ class FlextLdifServersBaseSchema(
 
     @staticmethod
     def validate_and_track_oid(
-        metadata_extensions: dict[str, list[str] | str | bool | None],
+        metadata_extensions: MutableMapping[
+            str, MutableSequence[str] | str | bool | None
+        ],
         oid_value: str | None,
         oid_name: str,
     ) -> None:
@@ -517,7 +521,7 @@ class FlextLdifServersBaseSchema(
 
     def _hook_validate_attributes(
         self,
-        attributes: list[m.Ldif.SchemaAttribute],
+        attributes: MutableSequence[m.Ldif.SchemaAttribute],
         available_attrs: set[str],
     ) -> r[bool]:
         """Hook for server-specific attribute validation during schema extraction."""

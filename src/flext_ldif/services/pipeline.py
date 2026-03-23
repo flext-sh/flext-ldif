@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
+
 from flext_ldif import FlextLdifTransformer, Normalize, Pipeline, c, m, r
 
 
@@ -20,7 +22,9 @@ class FlextLdifProcessingPipeline:
         """Get the processing configuration."""
         return self._config
 
-    def execute(self, entries: list[m.Ldif.Entry]) -> r[list[m.Ldif.Entry]]:
+    def execute(
+        self, entries: MutableSequence[m.Ldif.Entry]
+    ) -> r[MutableSequence[m.Ldif.Entry]]:
         """Execute the processing pipeline."""
         return self._pipeline.execute(entries)
 

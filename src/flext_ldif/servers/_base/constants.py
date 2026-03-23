@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
 from flext_core import FlextLogger
@@ -25,12 +26,12 @@ class FlextLdifServersBaseConstants:
     SCHEMA_DN: ClassVar[str] = ""
     SCHEMA_SUP_SEPARATOR: ClassVar[str] = "$"
     ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset()
-    ATTRIBUTE_ALIASES: ClassVar[dict[str, list[str]]] = {}
+    ATTRIBUTE_ALIASES: ClassVar[MutableMapping[str, MutableSequence[str]]] = {}
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()
     PRESERVE_ON_MIGRATION: ClassVar[frozenset[str]] = frozenset()
-    OBJECTCLASS_REQUIREMENTS: ClassVar[dict[str, bool]] = {}
-    CATEGORIZATION_PRIORITY: ClassVar[list[str]] = []
-    CATEGORY_OBJECTCLASSES: ClassVar[dict[str, frozenset[str]]] = {}
+    OBJECTCLASS_REQUIREMENTS: ClassVar[MutableMapping[str, bool]] = {}
+    CATEGORIZATION_PRIORITY: ClassVar[MutableSequence[str]] = []
+    CATEGORY_OBJECTCLASSES: ClassVar[MutableMapping[str, frozenset[str]]] = {}
     CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()
     DETECTION_OID_PATTERN: ClassVar[str] = ""
     DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset()
