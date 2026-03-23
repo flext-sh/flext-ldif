@@ -27,10 +27,10 @@ class FlextLdifUtilitiesTypeGuards(u):
     """
 
     @staticmethod
-    def is_entry_sequence(
+    def is_container_sequence(
         obj: t.NormalizedValue,
     ) -> TypeIs[Sequence[t.Container]]:
-        """Check if t.NormalizedValue is a Sequence of Entry instances.
+        """Check if t.NormalizedValue is a Sequence of Container instances.
 
         Uses duck typing to identify Entry sequences:
         - Must be a Sequence (list, tuple, etc.)

@@ -233,7 +233,7 @@ class FlextLdifUtilitiesResult[T: t.NormalizedValue]:
                     attr_name,
                     value,
                 )
-                lines.extend(FlextLdifUtilitiesWriter.fold(attr_line))
+                lines.extend(FlextLdifUtilitiesWriter.fold_line(attr_line))
         lines.append("")
         return r[list[str]].ok(lines)
 

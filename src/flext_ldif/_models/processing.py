@@ -6,13 +6,13 @@ from typing import Annotated, ClassVar
 
 from pydantic import ConfigDict, Field
 
-from flext_ldif import FlextLdifModelsBase
+from flext_ldif import FlextLdifModelsBases
 
 
 class FlextLdifModelsProcessing:
     """Processing model namespace."""
 
-    class ProcessingResult(FlextLdifModelsBase):
+    class ProcessingResult(FlextLdifModelsBases.Base):
         """Result of entry processing (transform or validate operation)."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(

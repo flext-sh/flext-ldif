@@ -81,7 +81,7 @@ class TestValidators:
         }
 
     @staticmethod
-    def validate_result_success(result: r[t.Ldif.t.NormalizedValue]) -> dict[str, bool]:
+    def validate_result_success(result: r[t.Ldif.NormalizedValue]) -> dict[str, bool]:
         """Validate r success characteristics."""
         return {
             "is_success": result.is_success,

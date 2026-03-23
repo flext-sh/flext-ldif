@@ -353,7 +353,7 @@ class FlextLdifUtilitiesEntry:
         return all(checks)
 
     @staticmethod
-    def matches_server_patterns(
+    def matches_entry_server_patterns(
         entry_dn: str,
         attributes: Mapping[str, t.NormalizedValue],
         config: FlextLdifModelsSettings.ServerPatternsConfig,

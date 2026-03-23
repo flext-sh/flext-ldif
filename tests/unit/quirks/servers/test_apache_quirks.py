@@ -496,10 +496,8 @@ class TestsTestFlextLdifApacheQuirks(s):
         )
         tm.that(isinstance(acl_data, m.Ldif.Tests.Acl), eq=True)
         if isinstance(acl_data, m.Ldif.Tests.Acl):
-            tm.that(acl_data.get_acl_format() == c.Ldif.AclFormats.ACI, eq=True)
-            tm.that(
-                acl_data.server_type == c.Ldif.LdapServers.APACHE_DIRECTORY, eq=True
-            )
+            tm.that(acl_data.get_acl_format() == c.Ldif.AclKeys.ACI, eq=True)
+            tm.that(acl_data.server_type == c.Ldif.ServerTypes.APACHE, eq=True)
 
     def test_acl_parse_with_aci_attribute(self) -> None:
         """Test parsing ACI with aci attribute."""

@@ -358,14 +358,12 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             aci_content,
         )
         if timeofday_match:
-            extensions[c.Ldif.MetadataKeys.ACL_BIND_TIMEOFDAY] = (
+            extensions[c.Ldif.ACL_BIND_TIMEOFDAY] = (
                 f"{timeofday_match.group(1)}{timeofday_match.group(2)}"
             )
         ssf_match = re.search(FlextLdifServersOudConstants.ACL_SSF_PATTERN, aci_content)
         if ssf_match:
-            extensions[c.Ldif.MetadataKeys.ACL_SSF] = (
-                f"{ssf_match.group(1)}{ssf_match.group(2)}"
-            )
+            extensions[c.Ldif.ACL_SSF] = f"{ssf_match.group(1)}{ssf_match.group(2)}"
         server_type_value = config.server_type if config else "oud"
         new_metadata = m.Ldif.QuirkMetadata.create_for(
             server_type_value,
@@ -392,7 +390,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     def _parse_ds_privilege_name(self, privilege_name: str) -> r[m.Ldif.Acl]:
         """Parse OUD ds-privilege-name format (simple privilege names)."""
         try:
-            server_type_oud: c.Ldif.LiteralTypes.ServerTypeLiteral = "oud"
+            server_type_oud: c.Ldif.ServerTypeLiteral = "oud"
             acl_model = m.Ldif.Acl(
                 name=privilege_name,
                 target=None,

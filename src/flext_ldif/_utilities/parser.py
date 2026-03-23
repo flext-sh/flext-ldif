@@ -236,7 +236,7 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def extract_syntax_and_length(definition: str) -> tuple[str | None, int | None]:
         """Extract syntax OID and optional length from definition."""
-        syntax_match = re.search(c.Ldif.LdifPatterns.SCHEMA_SYNTAX_LENGTH, definition)
+        syntax_match = re.search(c.Ldif.SCHEMA_SYNTAX_LENGTH, definition)
         if not syntax_match:
             return (None, None)
         syntax = syntax_match.group(1)
@@ -354,8 +354,8 @@ class FlextLdifUtilitiesParser:
         """Unfold LDIF lines folded across multiple lines per RFC 2849 §3."""
         lines: list[str] = []
         current_line = ""
-        continuation_space = c.Ldif.Format.LINE_CONTINUATION_SPACE
-        for raw_line in ldif_content.split(c.Ldif.Format.LINE_SEPARATOR):
+        continuation_space = c.Ldif.LINE_CONTINUATION_SPACE
+        for raw_line in ldif_content.split(c.Ldif.LINE_SEPARATOR):
             if (raw_line.startswith(continuation_space) and current_line) or (
                 raw_line.startswith("\t") and current_line
             ):

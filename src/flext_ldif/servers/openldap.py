@@ -120,9 +120,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         ACL_ATTRS_PATTERN: ClassVar[str] = (
             "attrs?\\s*=\\s*([^,\\s]+(?:\\s*,\\s*[^,\\s]+)*)"
         )
-        ACL_SUBJECT_TYPE_WHO: ClassVar[c.Ldif.LiteralTypes.AclSubjectTypeLiteral] = (
-            "all"
-        )
+        ACL_SUBJECT_TYPE_WHO: ClassVar[c.Ldif.AclSubjectTypeLiteral] = "all"
         ACL_INDEX_PREFIX_PATTERN: ClassVar[str] = "^(\\{\\d+\\})?\\s*to\\s+"
         ACL_START_PREFIX: ClassVar[str] = "to"
         ACL_ATTRS_SEPARATOR: ClassVar[str] = ","
@@ -450,11 +448,11 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 t.Scalar | dict[str, t.Scalar | list[str] | None] | list[str] | None,
             ] = {
                 "requires_objectclass": server_type
-                in c.Ldif.ServerValidationRules.OBJECTCLASS_REQUIRED_SERVERS,
+                in c.Ldif.OBJECTCLASS_REQUIRED_SERVERS,
                 "requires_naming_attr": server_type
-                in c.Ldif.ServerValidationRules.NAMING_ATTR_REQUIRED_SERVERS,
+                in c.Ldif.NAMING_ATTR_REQUIRED_SERVERS,
                 "requires_binary_option": server_type
-                in c.Ldif.ServerValidationRules.BINARY_OPTION_REQUIRED_SERVERS,
+                in c.Ldif.BINARY_OPTION_REQUIRED_SERVERS,
                 "encoding_rules": {
                     "default_encoding": "utf-8",
                     "allowed_encodings": ["utf-8", "latin-1", "iso-8859-1", "ascii"],

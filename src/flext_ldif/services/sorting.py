@@ -41,7 +41,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
     acl_attributes: Annotated[
         list[str],
         Field(),
-    ] = Field(default_factory=lambda: list(c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES))
+    ] = Field(default_factory=lambda: list(c.Ldif.DEFAULT_ACL_ATTRIBUTES))
     traversal: Annotated[str, Field()] = "depth-first"
 
     @classmethod
@@ -107,7 +107,7 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         """Sort entries with r for composable operations."""
         default_target = c.Ldif.SortTarget.ENTRIES.value
         default_by = c.Ldif.SortStrategy.HIERARCHY.value
-        default_acl_attrs = list(c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES)
+        default_acl_attrs = list(c.Ldif.DEFAULT_ACL_ATTRIBUTES)
         if config is not None:
             strategy = config.by
             entries_final = list(config.entries)
@@ -447,12 +447,12 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 dn_value = u.Ldif.get_dn_value(entry.dn) if entry.dn else ""
                 return (3, dn_value.lower())
             attrs = entry.attributes.attributes
-            if c.Ldif.SchemaFields.ATTRIBUTE_TYPES in attrs:
+            if c.Ldif.ATTRIBUTE_TYPES in attrs:
                 priority = 1
-                oid_values = attrs[c.Ldif.SchemaFields.ATTRIBUTE_TYPES]
-            elif c.Ldif.SchemaFields.OBJECT_CLASSES in attrs:
+                oid_values = attrs[c.Ldif.ATTRIBUTE_TYPES]
+            elif c.Ldif.OBJECT_CLASSES in attrs:
                 priority = 2
-                oid_values = attrs[c.Ldif.SchemaFields.OBJECT_CLASSES]
+                oid_values = attrs[c.Ldif.OBJECT_CLASSES]
             else:
                 dn_value = u.Ldif.get_dn_value(entry.dn) if entry.dn else ""
                 return (3, dn_value.lower())
@@ -647,13 +647,13 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                     if case_sensitive
                     else c.Ldif.SortingStrategyType.ALPHABETICAL_CASE_INSENSITIVE
                 )
-                extensions[c.Ldif.MetadataKeys.ATTRIBUTE_ORDER] = [
+                extensions[c.Ldif.ATTRIBUTE_ORDER] = [
                     str(item) for item in original_attr_order
                 ]
-                extensions[c.Ldif.MetadataKeys.SORTING_NEW_ATTRIBUTE_ORDER] = [
+                extensions[c.Ldif.SORTING_NEW_ATTRIBUTE_ORDER] = [
                     str(item) for item in new_attr_order
                 ]
-                extensions[c.Ldif.MetadataKeys.SORTING_STRATEGY] = strategy_type.value
+                extensions[c.Ldif.SORTING_STRATEGY] = strategy_type.value
                 self.logger.debug(
                     "Sorted entry attributes",
                     entry_dn=self._entry_dn_value(entry),
@@ -700,22 +700,20 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
                 extensions = new_entry.metadata.extensions
                 ordered_attrs = [k for k, _ in ordered]
                 remaining_attrs = [k for k, _ in remaining]
-                extensions[c.Ldif.MetadataKeys.ATTRIBUTE_ORDER] = [
+                extensions[c.Ldif.ATTRIBUTE_ORDER] = [
                     str(item) for item in original_attr_order
                 ]
-                extensions[c.Ldif.MetadataKeys.SORTING_NEW_ATTRIBUTE_ORDER] = [
+                extensions[c.Ldif.SORTING_NEW_ATTRIBUTE_ORDER] = [
                     str(item) for item in new_attr_order
                 ]
-                extensions[c.Ldif.MetadataKeys.SORTING_STRATEGY] = (
+                extensions[c.Ldif.SORTING_STRATEGY] = (
                     c.Ldif.SortingStrategyType.CUSTOM_ORDER.value
                 )
-                extensions[c.Ldif.MetadataKeys.SORTING_CUSTOM_ORDER] = [
-                    str(item) for item in order
-                ]
-                extensions[c.Ldif.MetadataKeys.SORTING_ORDERED_ATTRIBUTES] = [
+                extensions[c.Ldif.SORTING_CUSTOM_ORDER] = [str(item) for item in order]
+                extensions[c.Ldif.SORTING_ORDERED_ATTRIBUTES] = [
                     str(item) for item in ordered_attrs
                 ]
-                extensions[c.Ldif.MetadataKeys.SORTING_REMAINING_ATTRIBUTES] = [
+                extensions[c.Ldif.SORTING_REMAINING_ATTRIBUTES] = [
                     str(item) for item in remaining_attrs
                 ]
                 self.logger.debug(
@@ -744,8 +742,8 @@ class FlextLdifSorting(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         new_entry = FlextLdifSorting._ensure_metadata_extensions(entry)
         if new_entry.metadata is not None:
             extensions = new_entry.metadata.extensions
-            extensions[c.Ldif.MetadataKeys.SORTING_ACL_ATTRIBUTES] = [
+            extensions[c.Ldif.SORTING_ACL_ATTRIBUTES] = [
                 str(item) for item in self.acl_attributes
             ]
-            extensions[c.Ldif.MetadataKeys.SORTING_ACL_SORTED] = True
+            extensions[c.Ldif.SORTING_ACL_SORTED] = True
         return new_entry

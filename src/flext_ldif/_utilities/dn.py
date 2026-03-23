@@ -79,7 +79,7 @@ class FlextLdifUtilitiesDN:
 
     """
 
-    MIN_DN_LENGTH: int = c.Ldif.Format.MIN_DN_LENGTH
+    MIN_DN_LENGTH: int = c.Ldif.MIN_DN_LENGTH
 
     @staticmethod
     def _advance_rdn_position(
@@ -135,29 +135,29 @@ class FlextLdifUtilitiesDN:
                 "had_trailing_spaces",
             ),
             (
-                c.Ldif.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
-                c.Ldif.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
-                c.Ldif.DnPatterns.DN_COMMA,
+                c.Ldif.DN_TRAILING_BACKSLASH_SPACE,
+                c.Ldif.DN_TRAILING_BACKSLASH_SPACE,
+                c.Ldif.DN_COMMA,
                 c.Ldif.TransformationType.ESCAPE_NORMALIZED,
                 "had_escape_sequences",
             ),
             (
-                c.Ldif.DnPatterns.DN_SPACES_AROUND_COMMA,
-                c.Ldif.DnPatterns.DN_SPACES_AROUND_COMMA,
-                c.Ldif.DnPatterns.DN_COMMA,
+                c.Ldif.DN_SPACES_AROUND_COMMA,
+                c.Ldif.DN_SPACES_AROUND_COMMA,
+                c.Ldif.DN_COMMA,
                 c.Ldif.TransformationType.SPACE_CLEANED,
                 "",
             ),
             (
-                c.Ldif.DnPatterns.DN_UNNECESSARY_ESCAPES,
-                c.Ldif.DnPatterns.DN_UNNECESSARY_ESCAPES,
+                c.Ldif.DN_UNNECESSARY_ESCAPES,
+                c.Ldif.DN_UNNECESSARY_ESCAPES,
                 "\\1",
                 c.Ldif.TransformationType.ESCAPE_NORMALIZED,
                 "",
             ),
             (
-                c.Ldif.DnPatterns.DN_MULTIPLE_SPACES,
-                c.Ldif.DnPatterns.DN_MULTIPLE_SPACES,
+                c.Ldif.DN_MULTIPLE_SPACES,
+                c.Ldif.DN_MULTIPLE_SPACES,
                 " ",
                 c.Ldif.TransformationType.SPACE_CLEANED,
                 "had_extra_spaces",
@@ -325,12 +325,8 @@ class FlextLdifUtilitiesDN:
             operation="basedn_transform",
             description=f"Transformed BaseDN from {config.source_dn} to {config.target_dn}",
         )
-        metadata.extensions[c.Ldif.MetadataKeys.ENTRY_SOURCE_DN_CASE] = (
-            config.original_dn
-        )
-        metadata.extensions[c.Ldif.MetadataKeys.ENTRY_TARGET_DN_CASE] = (
-            config.transformed_dn
-        )
+        metadata.extensions[c.Ldif.ENTRY_SOURCE_DN_CASE] = config.original_dn
+        metadata.extensions[c.Ldif.ENTRY_TARGET_DN_CASE] = config.transformed_dn
 
     @staticmethod
     def _validate_basic_format(dn_str: str) -> bool:
@@ -428,11 +424,11 @@ class FlextLdifUtilitiesDN:
         patterns = [
             ("[\\t\\r\\n\\x0b\\x0c]", " "),
             ("\\s+=", "="),
-            (c.Ldif.DnPatterns.DN_TRAILING_BACKSLASH_SPACE, c.Ldif.DnPatterns.DN_COMMA),
+            (c.Ldif.DN_TRAILING_BACKSLASH_SPACE, c.Ldif.DN_COMMA),
             ("\\s+,", ","),
-            (c.Ldif.DnPatterns.DN_SPACES_AROUND_COMMA, c.Ldif.DnPatterns.DN_COMMA),
-            (c.Ldif.DnPatterns.DN_UNNECESSARY_ESCAPES, "\\1"),
-            (c.Ldif.DnPatterns.DN_MULTIPLE_SPACES, " "),
+            (c.Ldif.DN_SPACES_AROUND_COMMA, c.Ldif.DN_COMMA),
+            (c.Ldif.DN_UNNECESSARY_ESCAPES, "\\1"),
+            (c.Ldif.DN_MULTIPLE_SPACES, " "),
         ]
         try:
             result = dn_str
@@ -550,7 +546,7 @@ class FlextLdifUtilitiesDN:
         """
         if not value:
             return value
-        escape_chars = c.Ldif.Format.DN_ESCAPE_CHARS
+        escape_chars = c.Ldif.DN_ESCAPE_CHARS
 
         def escape_char(item: tuple[int, str]) -> str:
             """Escape single character if needed."""
@@ -629,12 +625,12 @@ class FlextLdifUtilitiesDN:
         if not char or len(char) != 1:
             return False
         code = ord(char)
-        rfc_format = c.Ldif.Format
+        rfc_format = c.Ldif
         safe_min = rfc_format.SAFE_CHAR_MIN
         safe_max = rfc_format.SAFE_CHAR_MAX
         if code < safe_min or code > safe_max:
             return False
-        return code not in c.Ldif.Format.DN_LUTF1_EXCLUDE
+        return code not in c.Ldif.DN_LUTF1_EXCLUDE
 
     @staticmethod
     def is_sutf1_char(char: str) -> bool:
@@ -642,12 +638,12 @@ class FlextLdifUtilitiesDN:
         if not char or len(char) != 1:
             return False
         code = ord(char)
-        rfc_format = c.Ldif.Format
+        rfc_format = c.Ldif
         safe_min = rfc_format.SAFE_CHAR_MIN
         safe_max = rfc_format.SAFE_CHAR_MAX
         if code < safe_min or code > safe_max:
             return False
-        return code not in c.Ldif.Format.DN_SUTF1_EXCLUDE
+        return code not in c.Ldif.DN_SUTF1_EXCLUDE
 
     @staticmethod
     def is_tutf1_char(char: str) -> bool:
@@ -655,12 +651,12 @@ class FlextLdifUtilitiesDN:
         if not char or len(char) != 1:
             return False
         code = ord(char)
-        rfc_format = c.Ldif.Format
+        rfc_format = c.Ldif
         safe_min = rfc_format.SAFE_CHAR_MIN
         safe_max = rfc_format.SAFE_CHAR_MAX
         if code < safe_min or code > safe_max:
             return False
-        return code not in c.Ldif.Format.DN_TUTF1_EXCLUDE
+        return code not in c.Ldif.DN_TUTF1_EXCLUDE
 
     @staticmethod
     def is_under_base(dn: str | None, base_dn: str | None) -> bool:
@@ -887,14 +883,14 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def parse(dn: str) -> r[list[tuple[str, str]]]: ...
+    def parse_dn(dn: str) -> r[list[tuple[str, str]]]: ...
 
     @overload
     @staticmethod
-    def parse(dn: m.Ldif.DN) -> r[list[tuple[str, str]]]: ...
+    def parse_dn(dn: m.Ldif.DN) -> r[list[tuple[str, str]]]: ...
 
     @staticmethod
-    def parse(dn: str | m.Ldif.DN | None) -> r[list[tuple[str, str]]]:
+    def parse_dn(dn: str | m.Ldif.DN | None) -> r[list[tuple[str, str]]]:
         """Parse DN into RFC 4514 components (attr, value pairs)."""
         if dn is None:
             return r[list[tuple[str, str]]].fail("DN cannot be None")
@@ -1031,7 +1027,7 @@ class FlextLdifUtilitiesDN:
                 )
             current_dn = norm_result.value
         if parse:
-            parse_result = FlextLdifUtilitiesDN.parse(current_dn)
+            parse_result = FlextLdifUtilitiesDN.parse_dn(current_dn)
             if parse_result.is_failure:
                 return r[str | list[tuple[str, str]]].fail(
                     f"Parse failed: {parse_result.error}",
@@ -1327,7 +1323,7 @@ class FlextLdifUtilitiesDN:
         return "".join(result)
 
     @staticmethod
-    def validate(dn: str | m.Ldif.DN) -> bool:
+    def validate_dn(dn: str | m.Ldif.DN) -> bool:
         r"""Validate DN format according to RFC 4514.
 
         Properly handles escaped characters. Checks for:
@@ -1350,7 +1346,7 @@ class FlextLdifUtilitiesDN:
             return False
 
     @staticmethod
-    def validate_batch(
+    def validate_dn_batch(
         dns: Sequence[str],
         *,
         collect_errors: bool = True,

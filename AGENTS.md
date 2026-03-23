@@ -212,7 +212,7 @@ model_config = ConfigDict(...)
 class _FlextLdifConstantsMeta(type):
     def __getattr__(cls, name: str) -> t.Container:
         if name == "LiteralTypes":
-            return cls.Ldif.LiteralTypes
+            return cls.Ldif
         ...
 
 
@@ -220,7 +220,7 @@ class FlextLdifConstants(metaclass=_FlextLdifConstantsMeta): ...
 
 
 # ✅ CORRETO - Sempre usar namespace completo
-c.Ldif.LiteralTypes  # Não c.LiteralTypes
+c.Ldif  # Não c.LiteralTypes
 ```
 
 #### Atribuições Dinâmicas

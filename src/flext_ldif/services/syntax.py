@@ -17,23 +17,23 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
         """Initialize Syntax service."""
         super().__init__()
         self._oid_to_name = (
-            dict(c.Ldif.RfcSyntaxOids.OID_TO_NAME)
-            if getattr(c.Ldif.RfcSyntaxOids.OID_TO_NAME, "items", None) is not None
+            dict(c.Ldif.OID_TO_NAME)
+            if getattr(c.Ldif.OID_TO_NAME, "items", None) is not None
             else {}
         )
         self._name_to_oid = (
-            dict(c.Ldif.RfcSyntaxOids.NAME_TO_OID)
-            if getattr(c.Ldif.RfcSyntaxOids.NAME_TO_OID, "items", None) is not None
+            dict(c.Ldif.NAME_TO_OID)
+            if getattr(c.Ldif.NAME_TO_OID, "items", None) is not None
             else {}
         )
-        self._common_syntaxes = c.Ldif.RfcSyntaxOids.COMMON_SYNTAXES
+        self._common_syntaxes = c.Ldif.COMMON_SYNTAXES
 
     @classmethod
     def _build_validator_map(cls) -> Mapping[str, Callable[[str], r[bool]]]:
         """Build syntax validator map from constants."""
         return {
             "boolean": lambda v: r[bool].ok(
-                v.upper() in c.Ldif.RfcSyntaxOids.SYNTAX_VALID_BOOLEAN_VALUES,
+                v.upper() in c.Ldif.SYNTAX_VALID_BOOLEAN_VALUES,
             ),
             "integer": lambda v: r[bool].ok(
                 v != "not_a_number"
@@ -41,7 +41,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
             ),
             "dn": lambda v: r[bool].ok("=" in v),
             "time": lambda v: r[bool].ok(
-                bool(re.match(c.Ldif.RfcSyntaxOids.SYNTAX_TIME_PATTERN, v)),
+                bool(re.match(c.Ldif.SYNTAX_TIME_PATTERN, v)),
             ),
             "binary": lambda _: r[bool].ok(value=True),
         }
@@ -125,7 +125,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
         if oid_valid.is_failure:
             return r[m.Ldif.Syntax].fail(f"Invalid OID format: {oid}")
         try:
-            normalized_server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = (
+            normalized_server_type: c.Ldif.ServerTypeLiteral = (
                 u.Ldif.normalize_server_type(server_type)
             )
             syntax = m.Ldif.Syntax.resolve_syntax_oid(
@@ -167,7 +167,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
         """Validate a value against its syntax type."""
         if not value or not syntax_oid:
             return r[bool].ok(value=True)
-        if syntax_oid not in c.Ldif.RfcSyntaxOids.OID_TO_NAME:
+        if syntax_oid not in c.Ldif.OID_TO_NAME:
             return r[bool].fail(f"Cannot validate - unknown syntax OID: {syntax_oid}")
         resolve_result = self.resolve_syntax(syntax_oid)
         if resolve_result.is_failure:

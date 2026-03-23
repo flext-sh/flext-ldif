@@ -11,19 +11,12 @@ from typing import ClassVar, Literal, overload
 from flext_core import u
 from pydantic import BaseModel
 
-from flext_ldif import (
-    ConvertToBool,
-    ConvertToDict,
-    ConvertToFloat,
-    ConvertToInt,
-    ConvertToList,
-    ConvertToStr,
-    ConvertToTuple,
-    t,
-)
+from flext_ldif import FlextLdifModelsConversions, t
+
+_conv = FlextLdifModelsConversions
 
 
-class FlextFunctional:
+class FlextLdifUtilitiesFunctional:
     """Pure functional utilities without circular dependencies."""
 
     @staticmethod
@@ -37,21 +30,21 @@ class FlextFunctional:
             return str(value)
         if isinstance(value, BaseModel):
             model_mapping: dict[str, t.NormalizedValue] = {
-                key: FlextFunctional._to_general(getattr(value, key))
+                key: FlextLdifUtilitiesFunctional._to_general(getattr(value, key))
                 for key in type(value).model_fields
             }
             extra = value.__pydantic_extra__
             if extra:
                 for key, item in extra.items():
-                    model_mapping[key] = FlextFunctional._to_general(item)
+                    model_mapping[key] = FlextLdifUtilitiesFunctional._to_general(item)
             return model_mapping
         if isinstance(value, Mapping):
             normalized_mapping: dict[str, t.NormalizedValue] = {}
             for key, item in value.items():
-                normalized_mapping[key] = FlextFunctional._to_general(item)
+                normalized_mapping[key] = FlextLdifUtilitiesFunctional._to_general(item)
             return normalized_mapping
         if isinstance(value, Iterable):
-            return [FlextFunctional._to_general(item) for item in value]
+            return [FlextLdifUtilitiesFunctional._to_general(item) for item in value]
         return value
 
     @staticmethod
@@ -611,48 +604,39 @@ class FlextFunctional:
         else:
             normalized_default = str(default)
 
-        conversion_model: (
-            ConvertToStr
-            | ConvertToInt
-            | ConvertToFloat
-            | ConvertToBool
-            | ConvertToList
-            | ConvertToTuple
-            | ConvertToDict
-            | None
-        ) = None
+        conversion_model: _conv.ConversionRequest | None = None
         if target_type is str:
-            conversion_model = ConvertToStr(
+            conversion_model = _conv.ConvertToStr(
                 value=normalized_value,
                 default=normalized_default,
             )
         elif target_type is int:
-            conversion_model = ConvertToInt(
+            conversion_model = _conv.ConvertToInt(
                 value=normalized_value,
                 default=normalized_default,
             )
         elif target_type is float:
-            conversion_model = ConvertToFloat(
+            conversion_model = _conv.ConvertToFloat(
                 value=normalized_value,
                 default=normalized_default,
             )
         elif target_type is bool:
-            conversion_model = ConvertToBool(
+            conversion_model = _conv.ConvertToBool(
                 value=normalized_value,
                 default=normalized_default,
             )
         elif target_type is list:
-            conversion_model = ConvertToList(
+            conversion_model = _conv.ConvertToList(
                 value=normalized_value,
                 default=normalized_default,
             )
         elif target_type is tuple:
-            conversion_model = ConvertToTuple(
+            conversion_model = _conv.ConvertToTuple(
                 value=normalized_value,
                 default=normalized_default,
             )
         elif target_type is dict:
-            conversion_model = ConvertToDict(
+            conversion_model = _conv.ConvertToDict(
                 value=normalized_value,
                 default=normalized_default,
             )
@@ -660,7 +644,7 @@ class FlextFunctional:
             return default
         try:
             converted = conversion_model.convert()
-            return FlextFunctional._to_general(converted)
+            return FlextLdifUtilitiesFunctional._to_general(converted)
         except (TypeError, ValueError):
             return default
 
@@ -672,9 +656,11 @@ class FlextFunctional:
 
         def getter(obj: t.NormalizedValue) -> t.NormalizedValue:
             """Get value from t.NormalizedValue by key."""
-            normalized_obj: t.NormalizedValue = FlextFunctional._to_general(obj)
+            normalized_obj: t.NormalizedValue = (
+                FlextLdifUtilitiesFunctional._to_general(obj)
+            )
             if isinstance(normalized_obj, dict):
-                return FlextFunctional._to_general(normalized_obj.get(key))
+                return FlextLdifUtilitiesFunctional._to_general(normalized_obj.get(key))
             return None
 
         return getter
@@ -688,11 +674,13 @@ class FlextFunctional:
         def accessor(obj: t.NormalizedValue) -> Mapping[str, t.NormalizedValue]:
             """Get multiple values from t.NormalizedValue by keys."""
             result_dict: dict[str, t.NormalizedValue] = {}
-            normalized_obj: t.NormalizedValue = FlextFunctional._to_general(obj)
+            normalized_obj: t.NormalizedValue = (
+                FlextLdifUtilitiesFunctional._to_general(obj)
+            )
             for k in keys:
                 if isinstance(normalized_obj, dict):
                     val: t.NormalizedValue | None = normalized_obj.get(k)
-                    result_dict[k] = FlextFunctional._to_general(val)
+                    result_dict[k] = FlextLdifUtilitiesFunctional._to_general(val)
                 else:
                     result_dict[k] = None
             return result_dict
@@ -712,9 +700,13 @@ class FlextFunctional:
                 """Get value from t.NormalizedValue by key."""
                 if obj is None:
                     return None
-                normalized_obj: t.NormalizedValue = FlextFunctional._to_general(obj)
+                normalized_obj: t.NormalizedValue = (
+                    FlextLdifUtilitiesFunctional._to_general(obj)
+                )
                 if isinstance(normalized_obj, dict):
-                    return FlextFunctional._to_general(normalized_obj.get(key))
+                    return FlextLdifUtilitiesFunctional._to_general(
+                        normalized_obj.get(key)
+                    )
                 return None
 
             return getter_fn
@@ -737,5 +729,5 @@ class FlextFunctional:
     ph = path
 
 
-f = FlextFunctional
-__all__ = ["FlextFunctional", "f"]
+f = FlextLdifUtilitiesFunctional
+__all__ = ["FlextLdifUtilitiesFunctional", "f"]

@@ -10,22 +10,21 @@ from typing import TypeIs
 from flext_core import FlextLogger, r, u
 
 from flext_ldif import (
-    FlextFunctional,
     FlextLdifModelsMetadata,
     FlextLdifModelsSettings,
+    FlextLdifUtilitiesFunctional,
     c,
     m,
     t,
 )
 
-f = FlextFunctional
 logger = FlextLogger(__name__)
 TUPLE_LENGTH_PAIR = 2
 
 
 def _is_acl_subject_type(
     value: str,
-) -> TypeIs[c.Ldif.LiteralTypes.AclSubjectTypeLiteral]:
+) -> TypeIs[c.Ldif.AclSubjectTypeLiteral]:
     """Type guard to check if string is a valid AclSubjectTypeLiteral."""
     return value in {
         "user",
@@ -399,7 +398,7 @@ class FlextLdifUtilitiesACL:
                 permission_map,
                 is_allow=False,
             )
-        return f.merge(allow_dict, deny_dict)
+        return FlextLdifUtilitiesFunctional.merge(allow_dict, deny_dict)
 
     @staticmethod
     def extract_bind_rules(
@@ -676,7 +675,7 @@ class FlextLdifUtilitiesACL:
                 continue
             if ops:
                 split_ops = ops.split(ops_separator)
-                filtered_perms_list = f.map_filter(
+                filtered_perms_list = FlextLdifUtilitiesFunctional.map_filter(
                     split_ops,
                     mapper=str.strip,
                     predicate=bool,
@@ -771,7 +770,7 @@ class FlextLdifUtilitiesACL:
         cleaned_value = subject_value.replace(", ", ",")
         default_value = f'by dn="{cleaned_value}"'
         result: str = (
-            f.switch(
+            FlextLdifUtilitiesFunctional.switch(
                 bind_operator,
                 {
                     "userdn": f'userdn="ldap:///{cleaned_value}"',
@@ -987,7 +986,7 @@ class FlextLdifUtilitiesACL:
         def sanitize_char(char: str) -> str:
             """Sanitize single character."""
             char_ord = ord(char)
-            rfc_format = c.Ldif.Format
+            rfc_format = c.Ldif
             ascii_min = rfc_format.ASCII_PRINTABLE_MIN
             ascii_max = rfc_format.ASCII_PRINTABLE_MAX
             if char_ord < ascii_min or char_ord > ascii_max or char == '"':
@@ -1053,7 +1052,7 @@ class FlextLdifUtilitiesACL:
         return (True, aci_content)
 
     @staticmethod
-    def validate_batch(
+    def validate_acl_batch(
         acl_lines: Sequence[str],
         *,
         collect_errors: bool = True,

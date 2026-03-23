@@ -153,17 +153,15 @@ class TestMinimalDifferencesOidOud:
         assert len(entries) == 1
         entry = entries[0]
         assert entry.metadata is not None
-        converted_attrs = entry.metadata.extensions.get(
-            c.Ldif.MetadataKeys.CONVERTED_ATTRIBUTES, {}
-        )
+        converted_attrs = entry.metadata.extensions.get(c.Ldif.CONVERTED_ATTRIBUTES, {})
         if isinstance(converted_attrs, dict):
             raw_boolean_conversions = converted_attrs.get(
-                c.Ldif.MetadataKeys.CONVERSION_BOOLEAN_CONVERSIONS, {}
+                c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS, {}
             )
-            boolean_conversions: t.Ldif.MetadataDict = (
-                raw_boolean_conversions
+            boolean_conversions = (
+                dict(raw_boolean_conversions)
                 if isinstance(raw_boolean_conversions, dict)
-                else {}
+                else dict[str, t.Ldif.MetadataValue]()
             )
         else:
             boolean_conversions = dict[str, t.Ldif.MetadataValue]()
@@ -173,8 +171,8 @@ class TestMinimalDifferencesOidOud:
         ):
             conv = boolean_conversions["orcldasisenabled"]
             assert isinstance(conv, dict)
-            original_key = c.Ldif.MetadataKeys.CONVERSION_ORIGINAL_VALUE
-            converted_key = c.Ldif.MetadataKeys.CONVERSION_CONVERTED_VALUE
+            original_key = c.Ldif.CONVERSION_ORIGINAL_VALUE
+            converted_key = c.Ldif.CONVERSION_CONVERTED_VALUE
             assert original_key in conv
             assert converted_key in conv
             assert conv[original_key] == ["1"]

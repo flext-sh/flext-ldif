@@ -62,7 +62,7 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def _get_type_from_independent_class(
         target_cls: type,
-    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
+    ) -> c.Ldif.ServerTypeLiteral | None:
         """Extract server type from independent class naming pattern."""
         class_name = target_cls.__name__
         if not class_name.startswith("FlextLdifServers"):
@@ -81,7 +81,7 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def _get_type_from_nested_class(
         target_cls: type,
-    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
+    ) -> c.Ldif.ServerTypeLiteral | None:
         """Extract server type from nested class via parent's Constants."""
         if "." in target_cls.__qualname__:
             parent_class_name = target_cls.__qualname__.split(".")[0]
@@ -108,13 +108,13 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def _is_valid_server_type_literal(
         value: str,
-    ) -> TypeIs[c.Ldif.LiteralTypes.ServerTypeLiteral]:
+    ) -> TypeIs[c.Ldif.ServerTypeLiteral]:
         return value in _VALID_SERVER_TYPES
 
     @staticmethod
     def extract_server_type_from_constants(
         cls_with_constants: type | None,
-    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
+    ) -> c.Ldif.ServerTypeLiteral | None:
         """Extract server type from a class's Constants.SERVER_TYPE."""
         if cls_with_constants is None:
             return None
@@ -137,7 +137,7 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def get_parent_server_type(
         nested_class_instance_or_type: type | t.Container,
-    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
+    ) -> c.Ldif.ServerTypeLiteral:
         """Get server_type from parent server class via __qualname__."""
         cls = (
             nested_class_instance_or_type
@@ -156,17 +156,17 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def get_server_detection_attribute_match_score() -> int:
         """Get attribute match score for server detection."""
-        return c.Ldif.ServerDetection.ATTRIBUTE_MATCH_SCORE
+        return c.Ldif.ATTRIBUTE_MATCH_SCORE
 
     @staticmethod
     def get_server_detection_confidence_threshold() -> float:
         """Get confidence threshold for server detection."""
-        return c.Ldif.ServerDetection.CONFIDENCE_THRESHOLD
+        return c.Ldif.CONFIDENCE_THRESHOLD
 
     @staticmethod
     def get_server_detection_default_max_lines() -> int:
         """Get default max lines for server detection."""
-        return c.Ldif.ServerDetection.DEFAULT_MAX_LINES
+        return c.Ldif.DEFAULT_MAX_LINES
 
     @staticmethod
     def get_server_type_value(server_type: str) -> str:

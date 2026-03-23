@@ -17,6 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_ldif import (
     FlextLdifProtocols,
     FlextLdifServer,
+    FlextLdifServersBaseSchema,
     FlextLdifServersOid,
     FlextLdifServersOpenldap,
     FlextLdifServersOud,
@@ -102,7 +103,9 @@ class TestsTestFlextLdifProtocols(s):
         """Helper methods organized as nested class."""
 
         @staticmethod
-        def verify_protocol_methods(schema: p.Ldif.SchemaQuirk) -> None:
+        def verify_protocol_methods(
+            schema: p.Ldif.SchemaQuirk | FlextLdifServersBaseSchema,
+        ) -> None:
             """Verify schema has all required protocol methods."""
             tm.that(
                 hasattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_PARSE),
@@ -176,7 +179,9 @@ class TestsTestFlextLdifProtocols(s):
             tm.that(isinstance(priority, int), eq=True)
 
         @staticmethod
-        def verify_registry_methods(registry: p.Ldif.QuirkRegistry) -> None:
+        def verify_registry_methods(
+            registry: p.Ldif.QuirkRegistry | FlextLdifServer,
+        ) -> None:
             """Verify registry has required retrieval methods."""
             methods = [
                 TestsTestFlextLdifProtocols.Constants.ATTR_SCHEMA,

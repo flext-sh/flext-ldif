@@ -71,7 +71,7 @@ class FlextLdifProtocols(FlextProtocols):
 
             name: str
             raw_acl: str
-            server_type: c.Ldif.LiteralTypes.ServerTypeLiteral
+            server_type: c.Ldif.ServerTypeLiteral
 
         @runtime_checkable
         class SchemaAttribute(Protocol):
@@ -274,7 +274,7 @@ class FlextLdifProtocols(FlextProtocols):
 
             def parse(
                 self,
-                definition: str,
+                value: str,
             ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
                 """Parse schema definition."""
                 ...
@@ -306,7 +306,7 @@ class FlextLdifProtocols(FlextProtocols):
         class AclQuirk(Protocol):
             """Protocol for ACL quirk implementations."""
 
-            def parse(self, acl_line: str) -> r[m.Ldif.Acl]:
+            def parse(self, value: str) -> r[m.Ldif.Acl]:
                 """Parse ACL definition."""
                 ...
 
@@ -318,7 +318,7 @@ class FlextLdifProtocols(FlextProtocols):
         class EntryQuirk(Protocol):
             """Protocol for Entry quirk implementations."""
 
-            def parse(self, ldif_content: str) -> r[list[m.Ldif.Entry]]:
+            def parse(self, value: str) -> r[list[m.Ldif.Entry]]:
                 """Parse entry definition."""
                 ...
 
@@ -504,21 +504,6 @@ class FlextLdifProtocols(FlextProtocols):
                 """Execute quirk operation with auto-detection."""
                 ...
 
-        # =================================================================
-        # PROTOCOL ALIASES — for backwards compatibility and shorter access
-        # =================================================================
-
-        Entry = Entry
-        SchemaAttribute = SchemaAttribute
-        SchemaObjectClass = SchemaObjectClass
-        SchemaQuirk = SchemaQuirk
-        AclQuirk = AclQuirk
-        EntryQuirk = EntryQuirk
-        Acl = Acl
-        Parser = SchemaQuirk  # Often referred to as Parser in tests
-        QuirkRegistry = QuirkRegistry
-        ServerBase = ServerBase
-
         @runtime_checkable
         class Loadable[T](Protocol):
             """Protocol for loadable data sources."""
@@ -543,21 +528,15 @@ class FlextLdifProtocols(FlextProtocols):
                 """Test if value matches predicate condition."""
                 ...
 
-        class Constants:
-            """Constants namespace for protocol access."""
+        @runtime_checkable
+        class Detection(Protocol):
+            """Protocol for server Constants classes with detection attributes."""
 
-            @runtime_checkable
-            class Detection(Protocol):
-                """Protocol for server Constants classes with detection attributes."""
-
-                DETECTION_PATTERN: str
-                DETECTION_WEIGHT: int
-                DETECTION_ATTRIBUTES: frozenset[str] | list[str]
-                DETECTION_OID_PATTERN: str | None
-                DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None
-
-        class Quirks:
-            """Quirks namespace containing quirk protocol aliases."""
+            DETECTION_PATTERN: str
+            DETECTION_WEIGHT: int
+            DETECTION_ATTRIBUTES: frozenset[str] | list[str]
+            DETECTION_OID_PATTERN: str | None
+            DETECTION_OBJECTCLASS_NAMES: frozenset[str] | list[str] | None
 
 
 p = FlextLdifProtocols

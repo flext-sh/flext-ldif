@@ -17,7 +17,9 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from itertools import starmap
+from typing import override
 
+from flext_core import r
 from flext_tests import s
 
 from flext_ldif import FlextLdifEntries
@@ -47,6 +49,40 @@ class FlextLdifTestsServiceBase(s[m.Ldif.Entry]):
                 unwrapped = self.assert_success(result)
 
     """
+
+    @override
+    def execute(self) -> r[m.Ldif.Entry]:
+        """No-op execute for test base — tests don't run as services."""
+        return r[m.Ldif.Entry].fail("Test base class: execute not applicable")
+
+    @staticmethod
+    def assert_failure[TResult](
+        result: r[TResult],
+        expected_error: str | None = None,
+    ) -> str:
+        """Assert result is failure and return error message."""
+        if result.is_success:
+            msg = f"Expected failure but got success: {result.value}"
+            raise AssertionError(msg)
+        error = result.error
+        if error is None:
+            msg = "Expected error but got None"
+            raise AssertionError(msg)
+        if expected_error and expected_error not in error:
+            msg = f"Expected error containing '{expected_error}' but got: {error}"
+            raise AssertionError(msg)
+        return error
+
+    @staticmethod
+    def assert_success[TResult](
+        result: r[TResult],
+        error_msg: str | None = None,
+    ) -> TResult:
+        """Assert result is success and return unwrapped value."""
+        if not result.is_success:
+            msg = error_msg or f"Expected success but got failure: {result.error}"
+            raise AssertionError(msg)
+        return result.value
 
     @classmethod
     def create_entry(

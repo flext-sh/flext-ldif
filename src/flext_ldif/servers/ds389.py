@@ -503,11 +503,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(
                     quirk_type=c.Ldif.ServerTypes.DS389,
                 )
-                metadata.extensions[c.Ldif.Domain.QuirkMetadataKeys.IS_CONFIG_ENTRY] = (
-                    any(
-                        marker in dn_lower
-                        for marker in FlextLdifServersDs389.Constants.DETECTION_DN_MARKERS
-                    )
+                metadata.extensions[c.Ldif.QuirkMetadataKeys.IS_CONFIG_ENTRY] = any(
+                    marker in dn_lower
+                    for marker in FlextLdifServersDs389.Constants.DETECTION_DN_MARKERS
                 )
                 processed_entry = m.Ldif.Entry(
                     dn=entry.dn,

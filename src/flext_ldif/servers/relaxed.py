@@ -376,7 +376,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             source_server = None
             if attr_data.metadata and attr_data.metadata.extensions:
                 source_server = attr_data.metadata.extensions.get(
-                    c.Ldif.MetadataKeys.SCHEMA_SOURCE_SERVER,
+                    c.Ldif.SCHEMA_SOURCE_SERVER,
                 )
             if (
                 source_server == "relaxed"
@@ -407,7 +407,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             source_server = None
             if oc_data.metadata and oc_data.metadata.extensions:
                 source_server = oc_data.metadata.extensions.get(
-                    c.Ldif.MetadataKeys.SCHEMA_SOURCE_SERVER,
+                    c.Ldif.SCHEMA_SOURCE_SERVER,
                 )
             if (
                 source_server == "relaxed"
@@ -631,7 +631,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             logger.debug(
                 f"RFC parser failed, using relaxed mode: {parent_result.error}",
             )
-            return u.Ldif.Content.parse(
+            return u.Ldif.parse_content(
                 ldif_content=ldif_content,
                 server_type=self._get_server_type(),
                 parse_entry_hook=self._adapted_parse_entry_relaxed,

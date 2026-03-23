@@ -25,7 +25,6 @@
 1. **TestLiterals Class Criada**:
 
    - Classe para centralizar type aliases de Literals de produção
-   - Reutiliza `FlextLdifConstants.LiteralTypes.*` sem duplicar
    - Type aliases para: `ServerTypeLiteral`, `ValidationLevelLiteral`, `CategoryLiteral`
 
 1. **TestServerTypes Melhorado**:

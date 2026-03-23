@@ -22,13 +22,13 @@ logger = FlextLogger(__name__)
 
 _TDecoratorArg = TypeVar(
     "_TDecoratorArg",
-    t.Ldif.Decorators.ParseMethodArg,
-    t.Ldif.Decorators.WriteMethodArg,
+    t.Ldif.ParseMethodArg,
+    t.Ldif.WriteMethodArg,
 )
 _TDecoratorReturn = TypeVar(
     "_TDecoratorReturn",
-    t.Ldif.Decorators.ParseMethodReturn,
-    t.Ldif.Decorators.WriteMethodReturn,
+    t.Ldif.ParseMethodReturn,
+    t.Ldif.WriteMethodReturn,
 )
 
 
@@ -100,19 +100,19 @@ class FlextLdifUtilitiesDecorators:
         return None
 
     @staticmethod
-    def _safe_operation(operation_name: str) -> t.Ldif.Decorators.ParseMethodDecorator:
+    def _safe_operation(operation_name: str) -> t.Ldif.ParseMethodDecorator:
         """Generic decorator to wrap methods with standardized error handling."""
 
         def decorator(
-            func: t.Ldif.Decorators.ParseMethod,
-        ) -> t.Ldif.Decorators.ParseMethod:
+            func: t.Ldif.ParseMethod,
+        ) -> t.Ldif.ParseMethod:
 
             @wraps(func)
             def wrapper(
                 self: t.NormalizedValue,
-                arg: t.Ldif.Decorators.ParseMethodArg,
-            ) -> t.Ldif.Decorators.ParseMethodReturn:
-                def _parse_error(message: str) -> t.Ldif.Decorators.ParseMethodReturn:
+                arg: t.Ldif.ParseMethodArg,
+            ) -> t.Ldif.ParseMethodReturn:
+                def _parse_error(message: str) -> t.Ldif.ParseMethodReturn:
                     return r[t.Scalar | list[str] | None].fail(message)
 
                 return FlextLdifUtilitiesDecorators._execute_safe_operation(
@@ -130,19 +130,19 @@ class FlextLdifUtilitiesDecorators:
     @staticmethod
     def attach_parse_metadata(
         quirk_type: str,
-    ) -> t.Ldif.Decorators.ParseMethodDecorator:
+    ) -> t.Ldif.ParseMethodDecorator:
         """Decorator to automatically attach metadata to parse method results."""
 
         def decorator(
-            func: t.Ldif.Decorators.ParseMethod,
-        ) -> t.Ldif.Decorators.ParseMethod:
+            func: t.Ldif.ParseMethod,
+        ) -> t.Ldif.ParseMethod:
             """Wrapper function for parse methods."""
 
             @wraps(func)
             def wrapper(
                 self: t.NormalizedValue,
                 arg: str,
-            ) -> t.Ldif.Decorators.ParseMethodReturn:
+            ) -> t.Ldif.ParseMethodReturn:
                 """Call original function and attach metadata to result."""
                 result = func(self, arg)
                 if result.is_success:
@@ -167,18 +167,18 @@ class FlextLdifUtilitiesDecorators:
     @staticmethod
     def attach_write_metadata(
         _quirk_type: str,
-    ) -> t.Ldif.Decorators.WriteMethodDecorator:
+    ) -> t.Ldif.WriteMethodDecorator:
         """Decorator to automatically attach metadata to write method results."""
 
         def decorator(
-            func: t.Ldif.Decorators.WriteMethod,
-        ) -> t.Ldif.Decorators.WriteMethod:
+            func: t.Ldif.WriteMethod,
+        ) -> t.Ldif.WriteMethod:
 
             @wraps(func)
             def wrapper(
                 self: t.NormalizedValue,
-                arg: t.Ldif.Decorators.WriteMethodArg,
-            ) -> t.Ldif.Decorators.WriteMethodReturn:
+                arg: t.Ldif.WriteMethodArg,
+            ) -> t.Ldif.WriteMethodReturn:
                 return func(self, arg)
 
             return wrapper
@@ -186,24 +186,24 @@ class FlextLdifUtilitiesDecorators:
         return decorator
 
     @staticmethod
-    def safe_parse(operation_name: str) -> t.Ldif.Decorators.ParseMethodDecorator:
+    def safe_parse(operation_name: str) -> t.Ldif.ParseMethodDecorator:
         """Decorator to wrap parse methods with standardized error handling."""
         return FlextLdifUtilitiesDecorators._safe_operation(operation_name)
 
     @staticmethod
-    def safe_write(operation_name: str) -> t.Ldif.Decorators.WriteMethodDecorator:
+    def safe_write(operation_name: str) -> t.Ldif.WriteMethodDecorator:
         """Decorator to wrap write methods with standardized error handling."""
 
         def decorator(
-            func: t.Ldif.Decorators.WriteMethod,
-        ) -> t.Ldif.Decorators.WriteMethod:
+            func: t.Ldif.WriteMethod,
+        ) -> t.Ldif.WriteMethod:
 
             @wraps(func)
             def wrapper(
                 self: t.NormalizedValue,
-                arg: t.Ldif.Decorators.WriteMethodArg,
-            ) -> t.Ldif.Decorators.WriteMethodReturn:
-                def _write_error(message: str) -> t.Ldif.Decorators.WriteMethodReturn:
+                arg: t.Ldif.WriteMethodArg,
+            ) -> t.Ldif.WriteMethodReturn:
+                def _write_error(message: str) -> t.Ldif.WriteMethodReturn:
                     return r[t.Scalar | list[str] | None].fail(message)
 
                 return FlextLdifUtilitiesDecorators._execute_safe_operation(

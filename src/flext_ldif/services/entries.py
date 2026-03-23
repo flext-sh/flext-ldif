@@ -77,7 +77,7 @@ class FlextLdifEntries(FlextLdifServiceBase[list[m.Ldif.Entry]]):
         objectclasses: list[str] | None = None,
     ) -> r[m.Ldif.Entry]:
         """Create a validated entry from DN and attributes."""
-        if not FlextLdifUtilitiesDN.validate(dn):
+        if not FlextLdifUtilitiesDN.validate_dn(dn):
             return r[m.Ldif.Entry].fail(f"Invalid DN: {dn}")
         final_attrs = dict(attributes)
         if objectclasses:

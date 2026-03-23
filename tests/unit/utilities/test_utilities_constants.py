@@ -166,9 +166,9 @@ class TestsTestFlextLdifConstants:
         """Parametrized test for get_valid_values."""
         if should_raise:
             with pytest.raises(KeyError):
-                u.Ldif.Constants.get_valid_values(category)
+                u.Ldif.get_valid_values(category)
         else:
-            values = u.Ldif.Constants.get_valid_values(category)
+            values = u.Ldif.get_valid_values(category)
             tm.that(isinstance(values, set), eq=True)
             (
                 tm.that(values == expected_values, eq=True),
@@ -202,7 +202,7 @@ class TestsTestFlextLdifConstants:
         if should_raise:
             pytest.skip("is_valid does not raise for unknown category")
         else:
-            result = u.Ldif.Constants.is_valid(value, category)
+            result = u.Ldif.is_valid(value, category)
             tm.that(result == expected_result, eq=True)
 
     @pytest.mark.parametrize(
@@ -231,19 +231,19 @@ class TestsTestFlextLdifConstants:
         """Parametrized test for validate_many."""
         if should_raise:
             with pytest.raises(KeyError):
-                u.Ldif.Constants.validate_many(values, category)
+                u.Ldif.validate_many(values, category)
         else:
-            is_valid, invalid = u.Ldif.Constants.validate_many(values, category)
+            is_valid, invalid = u.Ldif.validate_many(values, category)
             tm.that(is_valid == expected_valid, eq=True)
             if not expected_valid:
                 tm.that(len(invalid) > 0, eq=True)
 
     def test_constants_are_accessible(self) -> None:
         """Test that constants are properly defined and accessible."""
-        tm.that(hasattr(u.Ldif.Constants, "_CATEGORY_MAP"), eq=True)
-        category_map = u.Ldif.Constants._CATEGORY_MAP
+        tm.that(hasattr(u.Ldif, "CATEGORY_MAP"), eq=True)
+        category_map = u.Ldif.CATEGORY_MAP
         tm.that("server_type" in category_map, eq=True)
         tm.that("encoding" in category_map, eq=True)
-        tm.that(hasattr(u.Ldif.Constants, "get_valid_values"), eq=True)
-        tm.that(hasattr(u.Ldif.Constants, "is_valid"), eq=True)
-        tm.that(hasattr(u.Ldif.Constants, "validate_many"), eq=True)
+        tm.that(hasattr(u.Ldif, "get_valid_values"), eq=True)
+        tm.that(hasattr(u.Ldif, "is_valid"), eq=True)
+        tm.that(hasattr(u.Ldif, "validate_many"), eq=True)

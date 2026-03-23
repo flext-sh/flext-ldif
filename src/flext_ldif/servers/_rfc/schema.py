@@ -339,7 +339,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         """Create quirk metadata with consistent server-specific extensions."""
         server_type_value = self._get_server_type()
         all_extensions = m.Ldif.DynamicMetadata()
-        all_extensions[c.Ldif.MetadataKeys.ACL_ORIGINAL_FORMAT] = original_format
+        all_extensions[c.Ldif.ACL_ORIGINAL_FORMAT] = original_format
         if extensions:
             all_extensions.update(extensions.to_dict())
         return m.Ldif.QuirkMetadata(
@@ -484,7 +484,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         """Ensure X-ORIGIN extension is present if in metadata."""
         if not metadata or not metadata.extensions:
             return output_str
-        x_origin_raw = metadata.extensions.get(c.Ldif.MetadataKeys.X_ORIGIN)
+        x_origin_raw = metadata.extensions.get(c.Ldif.X_ORIGIN)
         if not isinstance(x_origin_raw, str):
             return output_str
         if ")" not in output_str or "X-ORIGIN" in output_str:
@@ -571,12 +571,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             metadata_extensions = self._convert_extensions_for_quirk(
                 self._coerce_dynamic_metadata(parsed.get("metadata_extensions")),
             )
-            metadata_extensions[c.Ldif.MetadataKeys.ORIGINAL_FORMAT] = (
-                oc_definition.strip()
-            )
-            metadata_extensions[c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_STRING_COMPLETE] = (
-                oc_definition
-            )
+            metadata_extensions[c.Ldif.ORIGINAL_FORMAT] = oc_definition.strip()
+            metadata_extensions[c.Ldif.SCHEMA_ORIGINAL_STRING_COMPLETE] = oc_definition
             objectclass_oid = parsed.get("oid")
             match objectclass_oid:
                 case None:
@@ -715,9 +711,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                         attr_case = getattr(
                             fmt,
                             "attribute_case",
-                            c.Ldif.SchemaFields.ATTRIBUTE_TYPES,
+                            c.Ldif.ATTRIBUTE_TYPES,
                         )
-                        attr_types_lower = c.Ldif.SchemaFields.ATTRIBUTE_TYPES.lower()
+                        attr_types_lower = c.Ldif.ATTRIBUTE_TYPES.lower()
                         if attr_types_lower in transformed_str.lower():
                             transformed_str = re.sub(
                                 f"{attr_types_lower}:",

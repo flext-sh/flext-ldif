@@ -16,13 +16,13 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
     _registry: FlextLdifServer = PrivateAttr(
         default_factory=FlextLdifServer.get_global_instance,
     )
-    _server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = PrivateAttr(default="rfc")
+    _server_type: c.Ldif.ServerTypeLiteral = PrivateAttr(default="rfc")
 
     def __init__(
         self,
         *,
         registry: FlextLdifServer | None = None,
-        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral = "rfc",
+        server_type: c.Ldif.ServerTypeLiteral = "rfc",
     ) -> None:
         """Initialize schema service with dependency injection."""
         super().__init__()
@@ -39,7 +39,7 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
         return f"FlextLdifSchema[{self._server_type}]"
 
     @property
-    def server_type(self) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
+    def server_type(self) -> c.Ldif.ServerTypeLiteral:
         """Get configured server type."""
         return self._server_type
 
@@ -228,7 +228,7 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
 
     def with_server_type(
         self,
-        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
+        server_type: c.Ldif.ServerTypeLiteral,
     ) -> Self:
         """Set server type for schema operations (fluent builder)."""
         object.__setattr__(self, "_server_type", server_type)

@@ -732,7 +732,7 @@ class FlextLdifUtilitiesMetadata:
         context: str = "entry",
     ) -> Mapping[str, t.NormalizedValue]:
         """Analyze minimal differences between original and converted strings."""
-        mk = c.Ldif.MetadataKeys
+        mk = c.Ldif
         differences: dict[str, t.NormalizedValue] = {
             mk.HAS_DIFFERENCES: False,
             "context": context,
@@ -751,7 +751,7 @@ class FlextLdifUtilitiesMetadata:
     def analyze_schema_formatting(definition: str) -> m.Ldif.SchemaFormatDetails:
         """Analyze schema definition to extract ALL formatting details."""
         combined = FlextLdifUtilitiesMetadata._extract_all_schema_details(definition)
-        preview_len = c.Ldif.LdifFormatting.DEFAULT_LINE_WIDTH
+        preview_len = c.Ldif.DEFAULT_LINE_WIDTH
         logger.debug(
             "Schema formatting analyzed",
             definition_preview=definition[:preview_len] + "..."
@@ -820,7 +820,7 @@ class FlextLdifUtilitiesMetadata:
             original_ldif_parts.extend(config.original_attr_lines)
         original_ldif = "\n".join(original_ldif_parts) if original_ldif_parts else ""
         extensions_dict: dict[str, t.NormalizedValue] = {}
-        mk = c.Ldif.MetadataKeys
+        mk = c.Ldif
         extensions_dict[mk.ORIGINAL_DN_COMPLETE] = config.original_entry_dn
         dynamic_extensions = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
             extensions_dict,
@@ -881,7 +881,7 @@ class FlextLdifUtilitiesMetadata:
         write_opts = getattr(entry_data.metadata, "write_options", None)
         if write_opts is None:
             return None
-        key = c.Ldif.MetadataKeys.WRITE_OPTIONS
+        key = c.Ldif.WRITE_OPTIONS
         raw_extras = getattr(write_opts, "model_extra", None)
         extras: dict[str, t.NormalizedValue] = {}
         opt: t.NormalizedValue | None = None

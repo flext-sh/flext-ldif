@@ -106,7 +106,7 @@ class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
             max_len = (
                 max_length
                 if max_length is not None
-                else c.Ldif.ValidationRules.DEFAULT_MAX_ATTR_VALUE_LENGTH
+                else c.Ldif.DEFAULT_MAX_ATTR_VALUE_LENGTH
             )
             if len(value) > max_len:
                 return r[bool].ok(False)

@@ -58,7 +58,7 @@ class TestsFlextLdifSchemaServiceExecute(s):
         result = schema_service.execute()
         tm.that(result.is_success, eq=True)
         status = result.value
-        tm.that(isinstance(status, m.Ldif.LdifResults.SchemaServiceStatus), eq=True)
+        tm.that(isinstance(status, m.Ldif.SchemaServiceStatus), eq=True)
         tm.that(status.service == "SchemaService", eq=True)
         tm.that(status.status == "operational", eq=True)
         tm.that(status.rfc_compliance == "RFC 4512", eq=True)
@@ -517,7 +517,7 @@ class TestSchemaServiceIntegration:
     def test_multiple_server_types(self) -> None:
         """Test service works with different server types."""
         server_registry = FlextLdifServer.get_global_instance()
-        server_types: tuple[c.Ldif.LiteralTypes.ServerTypeLiteral, ...] = (
+        server_types: tuple[c.Ldif.ServerTypeLiteral, ...] = (
             "rfc",
             "oud",
             "oid",

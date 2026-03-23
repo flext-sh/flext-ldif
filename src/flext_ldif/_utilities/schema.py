@@ -448,11 +448,11 @@ class FlextLdifUtilitiesSchema:
         """Extract boolean flags (single_value, no_user_modification) from attribute definition."""
         single_value = FlextLdifUtilitiesParser.extract_boolean_flag(
             attr_definition,
-            c.Ldif.LdifPatterns.SCHEMA_SINGLE_VALUE,
+            c.Ldif.SCHEMA_SINGLE_VALUE,
         )
         no_user_modification = FlextLdifUtilitiesParser.extract_boolean_flag(
             attr_definition,
-            c.Ldif.LdifPatterns.SCHEMA_NO_USER_MODIFICATION,
+            c.Ldif.SCHEMA_NO_USER_MODIFICATION,
         )
         return (single_value, no_user_modification)
 
@@ -463,15 +463,15 @@ class FlextLdifUtilitiesSchema:
         """Extract matching rules (equality, substr, ordering) from attribute definition."""
         equality = FlextLdifUtilitiesParser.extract_optional_field(
             attr_definition,
-            c.Ldif.LdifPatterns.SCHEMA_EQUALITY,
+            c.Ldif.SCHEMA_EQUALITY,
         )
         substr = FlextLdifUtilitiesParser.extract_optional_field(
             attr_definition,
-            c.Ldif.LdifPatterns.SCHEMA_SUBSTR,
+            c.Ldif.SCHEMA_SUBSTR,
         )
         ordering = FlextLdifUtilitiesParser.extract_optional_field(
             attr_definition,
-            c.Ldif.LdifPatterns.SCHEMA_ORDERING,
+            c.Ldif.SCHEMA_ORDERING,
         )
         return (equality, substr, ordering)
 
@@ -482,11 +482,11 @@ class FlextLdifUtilitiesSchema:
         """Extract SUP and USAGE from attribute definition."""
         sup = FlextLdifUtilitiesParser.extract_optional_field(
             attr_definition,
-            c.Ldif.LdifPatterns.SCHEMA_SUP,
+            c.Ldif.SCHEMA_SUP,
         )
         usage = FlextLdifUtilitiesParser.extract_optional_field(
             attr_definition,
-            c.Ldif.LdifPatterns.SCHEMA_USAGE,
+            c.Ldif.SCHEMA_USAGE,
         )
         return (sup, usage)
 
@@ -496,7 +496,7 @@ class FlextLdifUtilitiesSchema:
     ) -> tuple[str | None, int | None]:
         """Extract SYNTAX and length from attribute definition."""
         syntax_match = re.search(
-            c.Ldif.LdifPatterns.SCHEMA_SYNTAX_LENGTH,
+            c.Ldif.SCHEMA_SYNTAX_LENGTH,
             attr_definition,
         )
         syntax = syntax_match.group(1) if syntax_match else None
@@ -535,13 +535,13 @@ class FlextLdifUtilitiesSchema:
         oid = oid_result.value
         name_raw = FlextLdifUtilitiesParser.extract_optional_field(
             definition,
-            c.Ldif.LdifPatterns.SCHEMA_NAME,
+            c.Ldif.SCHEMA_NAME,
             default=oid,
         )
         name: str = name_raw if name_raw is not None else oid
         desc = FlextLdifUtilitiesParser.extract_optional_field(
             definition,
-            c.Ldif.LdifPatterns.SCHEMA_DESC,
+            c.Ldif.SCHEMA_DESC,
         )
         return r[tuple[str, str, str | None]].ok((oid, name, desc))
 
@@ -549,7 +549,7 @@ class FlextLdifUtilitiesSchema:
     def _extract_objectclass_kind(oc_definition: str) -> str:
         """Extract KIND from objectClass definition."""
         kind_match = re.search(
-            c.Ldif.LdifPatterns.SCHEMA_OBJECTCLASS_KIND,
+            c.Ldif.SCHEMA_OBJECTCLASS_KIND,
             oc_definition,
             re.IGNORECASE,
         )
@@ -566,14 +566,14 @@ class FlextLdifUtilitiesSchema:
         """Extract MUST and MAY attributes from objectClass definition."""
         must = None
         must_match = re.search(
-            c.Ldif.LdifPatterns.SCHEMA_OBJECTCLASS_MUST,
+            c.Ldif.SCHEMA_OBJECTCLASS_MUST,
             oc_definition,
         )
         if must_match:
             must_value = (must_match.group(1) or must_match.group(2)).strip()
             must = FlextLdifUtilitiesSchema._split_schema_values(must_value)
         may = None
-        may_match = re.search(c.Ldif.LdifPatterns.SCHEMA_OBJECTCLASS_MAY, oc_definition)
+        may_match = re.search(c.Ldif.SCHEMA_OBJECTCLASS_MAY, oc_definition)
         if may_match:
             may_value = (may_match.group(1) or may_match.group(2)).strip()
             may = FlextLdifUtilitiesSchema._split_schema_values(may_value)
@@ -582,7 +582,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _extract_objectclass_sup(oc_definition: str) -> str | None:
         """Extract SUP from objectClass definition."""
-        sup_match = re.search(c.Ldif.LdifPatterns.SCHEMA_OBJECTCLASS_SUP, oc_definition)
+        sup_match = re.search(c.Ldif.SCHEMA_OBJECTCLASS_SUP, oc_definition)
         if not sup_match:
             return None
         sup_value = sup_match.group(1) or sup_match.group(2)
@@ -747,15 +747,15 @@ class FlextLdifUtilitiesSchema:
         syntax_extensions: dict[str, bool | list[str] | str | None] = {}
         validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
         if validate_result.is_failure:
-            syntax_extensions[c.Ldif.MetadataKeys.SYNTAX_VALIDATION_ERROR] = (
+            syntax_extensions[c.Ldif.SYNTAX_VALIDATION_ERROR] = (
                 f"Syntax OID validation failed: {validate_result.error}"
             )
         elif not validate_result.value:
-            syntax_extensions[c.Ldif.MetadataKeys.SYNTAX_VALIDATION_ERROR] = (
+            syntax_extensions[c.Ldif.SYNTAX_VALIDATION_ERROR] = (
                 f"Invalid syntax OID format: {syntax} (must be numeric dot-separated format)"
             )
-        syntax_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = (
-            c.Ldif.MetadataKeys.SYNTAX_VALIDATION_ERROR not in syntax_extensions
+        syntax_extensions[c.Ldif.SYNTAX_OID_VALID] = (
+            c.Ldif.SYNTAX_VALIDATION_ERROR not in syntax_extensions
         )
         result_dict: dict[str, t.NormalizedValue] = {}
         for key, val in syntax_extensions.items():
@@ -928,7 +928,7 @@ class FlextLdifUtilitiesSchema:
         for key, val in extensions_raw.items():
             typed_val: t.NormalizedValue = list(val)
             extensions[key] = typed_val
-        extensions[c.Ldif.MetadataKeys.ORIGINAL_FORMAT] = definition.strip()
+        extensions[c.Ldif.ORIGINAL_FORMAT] = definition.strip()
         if additional_extensions:
             extensions.update(additional_extensions)
         return extensions

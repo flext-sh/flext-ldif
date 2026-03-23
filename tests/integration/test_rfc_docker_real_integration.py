@@ -14,9 +14,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_tests import tm
 
 from flext_ldif import FlextLdifParser, FlextLdifServer, FlextLdifWriter, m
+from tests.test_helpers import tm
 
 
 class TestRfcParserRealFixtures:

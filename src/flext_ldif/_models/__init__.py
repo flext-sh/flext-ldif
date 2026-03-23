@@ -12,21 +12,12 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from flext_ldif._models.base import (
-        AclElement,
-        FlextLdifModelsBase,
-        FlextLdifModelsBases,
-        FrozenIgnoreLdifModel,
-        FrozenLdifModel,
-        MutableIgnoreLdifModel,
-        SchemaElement,
-    )
+    from flext_ldif._models.base import FlextLdifModelsBases
     from flext_ldif._models.collections import FlextLdifModelsCollections
     from flext_ldif._models.conversion import FlextLdifModelsConversions
     from flext_ldif._models.domain import FlextLdifModelsDomains
-    from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
-    from flext_ldif._models.domain_operations import FlextLdifModelsDomainOperations
-    from flext_ldif._models.domain_schema import SchemaDiscovery, SchemaLookup
+    from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
+    from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema
     from flext_ldif._models.events import FlextLdifModelsEvents
     from flext_ldif._models.metadata import FlextLdifModelsMetadata
     from flext_ldif._models.processing import FlextLdifModelsProcessing
@@ -34,8 +25,6 @@ if TYPE_CHECKING:
     from flext_ldif._models.settings import FlextLdifModelsSettings
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "AclElement": ("flext_ldif._models.base", "AclElement"),
-    "FlextLdifModelsBase": ("flext_ldif._models.base", "FlextLdifModelsBase"),
     "FlextLdifModelsBases": ("flext_ldif._models.base", "FlextLdifModelsBases"),
     "FlextLdifModelsCollections": (
         "flext_ldif._models.collections",
@@ -45,15 +34,15 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._models.conversion",
         "FlextLdifModelsConversions",
     ),
-    "FlextLdifModelsDomainAttributes": (
-        "flext_ldif._models.domain_attributes",
-        "FlextLdifModelsDomainAttributes",
-    ),
-    "FlextLdifModelsDomainOperations": (
-        "flext_ldif._models.domain_operations",
-        "FlextLdifModelsDomainOperations",
+    "FlextLdifModelsDomainSchema": (
+        "flext_ldif._models.domain_schema",
+        "FlextLdifModelsDomainSchema",
     ),
     "FlextLdifModelsDomains": ("flext_ldif._models.domain", "FlextLdifModelsDomains"),
+    "FlextLdifModelsDomainsEntries": (
+        "flext_ldif._models.domain_entries",
+        "FlextLdifModelsDomainsEntries",
+    ),
     "FlextLdifModelsEvents": ("flext_ldif._models.events", "FlextLdifModelsEvents"),
     "FlextLdifModelsMetadata": (
         "flext_ldif._models.metadata",
@@ -68,34 +57,20 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._models.settings",
         "FlextLdifModelsSettings",
     ),
-    "FrozenIgnoreLdifModel": ("flext_ldif._models.base", "FrozenIgnoreLdifModel"),
-    "FrozenLdifModel": ("flext_ldif._models.base", "FrozenLdifModel"),
-    "MutableIgnoreLdifModel": ("flext_ldif._models.base", "MutableIgnoreLdifModel"),
-    "SchemaDiscovery": ("flext_ldif._models.domain_schema", "SchemaDiscovery"),
-    "SchemaElement": ("flext_ldif._models.base", "SchemaElement"),
-    "SchemaLookup": ("flext_ldif._models.domain_schema", "SchemaLookup"),
 }
 
 __all__ = [
-    "AclElement",
-    "FlextLdifModelsBase",
     "FlextLdifModelsBases",
     "FlextLdifModelsCollections",
     "FlextLdifModelsConversions",
-    "FlextLdifModelsDomainAttributes",
-    "FlextLdifModelsDomainOperations",
+    "FlextLdifModelsDomainSchema",
     "FlextLdifModelsDomains",
+    "FlextLdifModelsDomainsEntries",
     "FlextLdifModelsEvents",
     "FlextLdifModelsMetadata",
     "FlextLdifModelsProcessing",
     "FlextLdifModelsResults",
     "FlextLdifModelsSettings",
-    "FrozenIgnoreLdifModel",
-    "FrozenLdifModel",
-    "MutableIgnoreLdifModel",
-    "SchemaDiscovery",
-    "SchemaElement",
-    "SchemaLookup",
 ]
 
 

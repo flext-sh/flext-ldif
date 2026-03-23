@@ -876,7 +876,7 @@ class FlextLdifConversion(
         quirk: FlextLdifServersBase,
     ) -> Mapping[str, bool]:
         """Check which data types a quirk supports for conversion."""
-        support: t.Ldif.CommonDict.DistributionDict = {
+        support: t.Ldif.DistributionDict = {
             "attribute": 0,
             "objectclass": 0,
             "acl": 0,
@@ -997,8 +997,8 @@ class FlextLdifConversion(
     def _check_acl_support(
         self,
         quirk: FlextLdifServersBase,
-        support: t.Ldif.CommonDict.DistributionDict,
-    ) -> t.Ldif.CommonDict.DistributionDict:
+        support: t.Ldif.DistributionDict,
+    ) -> t.Ldif.DistributionDict:
         """Check ACL support."""
         acl = getattr(quirk, "acl_quirk", None)
         if acl is None:
@@ -1014,8 +1014,8 @@ class FlextLdifConversion(
         self,
         quirk_schema: t.NormalizedValue,
         test_attr_def: str,
-        support: t.Ldif.CommonDict.DistributionDict,
-    ) -> t.Ldif.CommonDict.DistributionDict:
+        support: t.Ldif.DistributionDict,
+    ) -> t.Ldif.DistributionDict:
         """Check attribute support for schema quirk."""
         if not FlextLdifConversion._has_attr(quirk_schema, "can_handle_attribute"):
             return support
@@ -1060,8 +1060,8 @@ class FlextLdifConversion(
     def _check_entry_support(
         self,
         quirk: FlextLdifServersBase,
-        support: t.Ldif.CommonDict.DistributionDict,
-    ) -> t.Ldif.CommonDict.DistributionDict:
+        support: t.Ldif.DistributionDict,
+    ) -> t.Ldif.DistributionDict:
         """Check Entry support."""
         entry = getattr(quirk, "entry_quirk", None)
         if entry is None:
@@ -1080,8 +1080,8 @@ class FlextLdifConversion(
         self,
         quirk_schema: t.NormalizedValue,
         test_oc_def: str,
-        support: t.Ldif.CommonDict.DistributionDict,
-    ) -> t.Ldif.CommonDict.DistributionDict:
+        support: t.Ldif.DistributionDict,
+    ) -> t.Ldif.DistributionDict:
         """Check objectClass support for schema quirk."""
         if not FlextLdifConversion._has_attr(quirk_schema, "can_handle_objectclass"):
             return support
@@ -1103,8 +1103,8 @@ class FlextLdifConversion(
     def _check_schema_support(
         self,
         quirk: FlextLdifServersBase,
-        support: t.Ldif.CommonDict.DistributionDict,
-    ) -> t.Ldif.CommonDict.DistributionDict:
+        support: t.Ldif.DistributionDict,
+    ) -> t.Ldif.DistributionDict:
         """Check schema (attribute and objectClass) support."""
         quirk_schema = self._get_schema_quirk_for_support_check(quirk)
         if quirk_schema is None:
@@ -1887,7 +1887,7 @@ class FlextLdifConversion(
     def _update_entry_metadata(
         self,
         entry: m.Ldif.Entry,
-        validated_quirk_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
+        validated_quirk_type: c.Ldif.ServerTypeLiteral,
         conversion_analysis: str | None,
         source_quirk_name: str,
     ) -> m.Ldif.Entry:

@@ -308,7 +308,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         ascii_printable_limit = 127
         output_lines: list[str] = []
         fold_long_lines = True
-        line_width = c.Ldif.Format.LINE_FOLD_WIDTH
+        line_width = c.Ldif.LINE_FOLD_WIDTH
         include_dn_comments = False
         normalize_attribute_names = False
         write_empty_values = True
@@ -322,11 +322,11 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
             metadata_extensions = entry_data.metadata.extensions
             if core_u.is_type(metadata_extensions, Mapping):
                 extensions_data = dict(metadata_extensions)
-        hidden_raw = extensions_data.get(c.Ldif.MetadataKeys.HIDDEN_ATTRIBUTES)
+        hidden_raw = extensions_data.get(c.Ldif.HIDDEN_ATTRIBUTES)
         if isinstance(hidden_raw, list):
             hidden_text: list[str] = [str(value) for value in hidden_raw]
             hidden_attributes = {attr.lower() for attr in hidden_text}
-        acl_original_raw = extensions_data.get(c.Ldif.MetadataKeys.ACL_ORIGINAL_FORMAT)
+        acl_original_raw = extensions_data.get(c.Ldif.ACL_ORIGINAL_FORMAT)
         if isinstance(acl_original_raw, str):
             acl_original_format = acl_original_raw
         format_options = self._extract_write_format_options(entry_data.metadata)
@@ -346,9 +346,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
 
         def fold_line(line: str) -> list[str]:
             """Fold a line per RFC 2849 if fold_long_lines is enabled."""
-            effective_width = (
-                line_width if fold_long_lines else c.Ldif.Format.LINE_FOLD_WIDTH
-            )
+            effective_width = line_width if fold_long_lines else c.Ldif.LINE_FOLD_WIDTH
             if len(line.encode("utf-8")) <= effective_width:
                 return [line]
             folded: list[str] = []
@@ -376,18 +374,18 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
             return folded
 
         def should_base64_encode(attr_name: str, value: str) -> bool:
-            if attr_name.lower() in c.Ldif.RfcBinaryAttributes.BINARY_ATTRIBUTE_NAMES:
+            if attr_name.lower() in c.Ldif.BINARY_ATTRIBUTE_NAMES:
                 return True
             if not value:
                 return False
-            if value[0] in c.Ldif.Format.BASE64_START_CHARS:
+            if value[0] in c.Ldif.BASE64_START_CHARS:
                 return True
             if value[-1] == " ":
                 return True
             for char in value:
                 char_ord = ord(char)
                 if (
-                    char_ord < c.Ldif.LdifProcessing.ASCII_SPACE_CHAR
+                    char_ord < c.Ldif.ASCII_SPACE_CHAR
                     or char_ord > ascii_printable_limit
                 ):
                     return True
@@ -414,7 +412,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
             return f"{effective_name}: {effective_value}"
 
         acl_attribute_names: set[str] = {
-            name.lower() for name in c.Ldif.AclAttributes.DEFAULT_ACL_ATTRIBUTES
+            name.lower() for name in c.Ldif.DEFAULT_ACL_ATTRIBUTES
         }
 
         def append_attribute_line(attr_name: str, line: str) -> None:

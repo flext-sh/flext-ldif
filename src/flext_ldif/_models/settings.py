@@ -15,14 +15,10 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, Literal
 from flext_core import FlextModels, r
 from pydantic import ConfigDict, Field, StringConstraints
 
-from flext_ldif import FlextLdifModelsBase, c, p, t
+from flext_ldif import FlextLdifModelsBases, c, p, t
 
 if TYPE_CHECKING:
     from flext_ldif import FlextLdifModelsDomains
-
-
-def _rdn_pairs_factory() -> list[tuple[str, str]]:
-    return []
 
 
 class FlextLdifModelsSettings:
@@ -31,6 +27,10 @@ class FlextLdifModelsSettings:
     This class acts as a namespace container for LDIF configuration models.
     All nested classes are accessed via FlextModels.* in the main models.py.
     """
+
+    @staticmethod
+    def _rdn_pairs_factory() -> list[tuple[str, str]]:
+        return []
 
     class DnNormalizationConfig(FlextModels.Value):
         """Configuration for DN normalization."""
@@ -245,7 +245,7 @@ class FlextLdifModelsSettings:
             extra="forbid", validate_assignment=True
         )
         server_type: Annotated[
-            c.Ldif.LiteralTypes.ServerTypeLiteral,
+            c.Ldif.ServerTypeLiteral,
             Field(..., description="Server type for metadata"),
         ]
         aci_prefix: Annotated[
@@ -428,7 +428,7 @@ class FlextLdifModelsSettings:
                 attr_names={"orclaci", "orclentrylevelaci"},
                 keyword_patterns=("orcl", "oracle"),
             )
-            matches = FlextLdifUtilities.Entry.matches_server_patterns(
+            matches = FlextLdifUtilitiesEntry.matches_entry_server_patterns(
                 entry_dn, attributes, config
             )
 
@@ -739,7 +739,7 @@ class FlextLdifModelsSettings:
             Field(description="Converted values (None if removed)"),
         ] = None
         transformation_type: Annotated[
-            c.Ldif.LiteralTypes.TransformationTypeLiteral,
+            c.Ldif.TransformationTypeLiteral,
             Field(..., description="Type: renamed/removed/modified/added/soft_deleted"),
         ]
         reason: Annotated[str, Field(..., description="Human-readable explanation")]
@@ -765,7 +765,7 @@ class FlextLdifModelsSettings:
             extra="forbid", validate_assignment=True
         )
         quirk_type: Annotated[
-            c.Ldif.LiteralTypes.ServerTypeLiteral,
+            c.Ldif.ServerTypeLiteral,
             Field(
                 ...,
                 description="Server type performing the parse (oid, oud, rfc, etc.)",
@@ -829,7 +829,7 @@ class FlextLdifModelsSettings:
             Field(
                 description="List of (attr, value) pairs parsed so far",
             ),
-        ] = Field(default_factory=_rdn_pairs_factory)
+        ] = Field(default_factory=list)
 
     class MetadataTransformationConfig(FlextModels.Value):
         """Configuration for metadata transformation tracking.
@@ -1192,7 +1192,7 @@ class FlextLdifModelsSettings:
         """Generic ACL format rules - server classes provide values."""
 
         format: str
-        attribute_name: t.Ldif.Rfc.Rfc4512Descriptor
+        attribute_name: t.Ldif.Rfc4512Descriptor
         requires_target: bool
         requires_subject: bool
 
@@ -1255,7 +1255,7 @@ class FlextLdifModelsSettings:
                 le=100000,
                 description="Maximum line width before folding (RFC 2849 recommends 76). Only used if fold_long_lines=True.",
             ),
-        ] = c.Ldif.LdifFormatting.DEFAULT_LINE_WIDTH
+        ] = c.Ldif.DEFAULT_LINE_WIDTH
         respect_attribute_order: Annotated[
             bool,
             Field(
@@ -1610,7 +1610,7 @@ class FlextLdifModelsSettings:
             Field(default_factory=dict, description="Data to pass to header template"),
         ]
 
-    class ParseFormatOptions(FlextLdifModelsBase):
+    class ParseFormatOptions(FlextLdifModelsBases.Base):
         """Formatting options for LDIF parsing (VIEW MODEL).
 
         **Architecture**: This is a Pydantic VIEW MODEL that represents
@@ -1776,7 +1776,7 @@ class FlextLdifModelsSettings:
         )
         file_path: Annotated[str, Field(description="Path to LDIF file to parse")]
         server_type: Annotated[
-            c.Ldif.LiteralTypes.ServerTypeLiteral,
+            c.Ldif.ServerTypeLiteral,
             Field(
                 default="rfc",
                 description="LDAP server type to use for parsing quirks",
@@ -1829,20 +1829,20 @@ class FlextLdifModelsSettings:
             Field(description="Path where LDIF file will be written"),
         ]
         server_type: Annotated[
-            c.Ldif.LiteralTypes.ServerTypeLiteral,
+            c.Ldif.ServerTypeLiteral,
             Field(
                 default="rfc",
                 description="LDAP server type to use for writing quirks",
             ),
         ]
         encoding: Annotated[
-            c.Ldif.LiteralTypes.EncodingLiteral,
+            c.Ldif.EncodingLiteral,
             Field(default="utf-8", description="Character encoding for output file"),
         ]
         max_line_length: Annotated[
             int,
             Field(
-                default=c.Ldif.LdifFormatting.MAX_LINE_WIDTH,
+                default=c.Ldif.MAX_LINE_WIDTH,
                 description="Maximum line length for LDIF output",
                 ge=50,
                 le=1000,
@@ -1878,7 +1878,7 @@ class FlextLdifModelsSettings:
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         ldif_encoding: Annotated[
-            c.Ldif.LiteralTypes.EncodingLiteral,
+            c.Ldif.EncodingLiteral,
             Field(description="LDIF encoding setting"),
         ]
         strict_rfc_compliance: Annotated[
@@ -1900,7 +1900,7 @@ class FlextLdifModelsSettings:
             Field(description="Server quirks detection mode (auto/manual/disabled)"),
         ]
         quirks_server_type: Annotated[
-            c.Ldif.LiteralTypes.ServerTypeLiteral | None,
+            c.Ldif.ServerTypeLiteral | None,
             Field(
                 default=None,
                 description="Configured server type for quirks (None if auto-detect)",

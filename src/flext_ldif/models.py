@@ -11,21 +11,21 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Annotated, ClassVar, Final
+from typing import Annotated, ClassVar
 
 from flext_core import FlextModels
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif import (
     FlextLdifModelsCollections,
+    FlextLdifModelsConversions,
     FlextLdifModelsDomains,
+    FlextLdifModelsDomainSchema,
     FlextLdifModelsEvents,
     FlextLdifModelsMetadata,
     FlextLdifModelsProcessing,
     FlextLdifModelsResults,
     FlextLdifModelsSettings,
-    c,
-    p,
 )
 
 
@@ -44,14 +44,11 @@ class FlextLdifModels(FlextModels):
         FlextLdifModelsEvents,
         FlextLdifModelsResults,
         FlextLdifModelsCollections,
+        FlextLdifModelsProcessing,
+        FlextLdifModelsConversions,
+        FlextLdifModelsDomainSchema,
     ):
         """LDIF namespace for cross-project access."""
-
-        WriteFormatOptions: Final = FlextLdifModelsSettings.WriteFormatOptions
-        StatisticsResult: Final = FlextLdifModelsResults.StatisticsResult
-
-        class ProcessingResult(FlextLdifModelsProcessing.ProcessingResult):
-            """Processing result with DN and attributes."""
 
         class FlexibleCategories(FlextLdifModelsCollections.FlexibleCategories):
             """Flexible categories."""
@@ -73,24 +70,6 @@ class FlextLdifModels(FlextModels):
             ) -> None:
                 """Backward-compatible setter for full category replacement."""
                 self.categories[category] = list(entries)
-
-        class LdifResults:
-            """Backward-compatible results/settings namespace alias."""
-
-            ParseResponse = FlextLdifModelsResults.ParseResponse
-            WriteResponse = FlextLdifModelsResults.WriteResponse
-            MigrationPipelineResult = FlextLdifModelsResults.MigrationPipelineResult
-            MigrationComparisonResult = FlextLdifModelsResults.MigrationComparisonResult
-            MigrationWorkflowResult = FlextLdifModelsResults.MigrationWorkflowResult
-            AutoDetectionResult = FlextLdifModelsResults.AutoDetectionResult
-            ServerComparisonSummary = FlextLdifModelsResults.ServerComparisonSummary
-            SchemaServiceStatus = FlextLdifModelsResults.SchemaServiceStatus
-            ValidationServiceStatus = FlextLdifModelsResults.ValidationServiceStatus
-            ValidationResult = FlextLdifModelsResults.ValidationResult
-            EntryResult = FlextLdifModelsResults.EntryResult
-            StatisticsResult = FlextLdifModelsResults.StatisticsResult
-            WhitelistRules = FlextLdifModelsSettings.WhitelistRules
-            WriteFormatOptions = FlextLdifModelsSettings.WriteFormatOptions
 
         # =================================================================
         # COMPOSITE MODELS — defined here, not in _models
@@ -159,45 +138,6 @@ class FlextLdifModels(FlextModels):
                 Field(default_factory=dict),
             ]
             server_priorities: Annotated[dict[str, int], Field(default_factory=dict)]
-
-        # =================================================================
-        # NON-CLASS TYPE ALIASES — type unions, protocol references
-        # =================================================================
-
-        class Schema:
-            """Schema element type with protocol references."""
-
-            type SchemaElement = (
-                FlextLdifModels.Ldif.SchemaAttribute
-                | FlextLdifModels.Ldif.SchemaObjectClass
-                | str
-                | int
-                | float
-                | bool
-                | None
-            )
-
-        class Registry:
-            """Registry-related type aliases using protocols."""
-
-            type QuirksDict = Mapping[
-                str,
-                p.Ldif.SchemaQuirk | p.Ldif.AclQuirk | p.Ldif.EntryQuirk | None,
-            ]
-
-        class ProcessingConfig:
-            """Processing configuration models namespace."""
-
-            EntryTransformConfig: Final = FlextLdifModelsSettings.EntryTransformConfig
-            FlextLdifUtilitiesFiltersConfig: Final = (
-                FlextLdifModelsSettings.FlextLdifUtilitiesFiltersConfig
-            )
-            CaseFoldOption: Final = c.Ldif.CaseFoldOption
-
-
-# =========================================================================
-# MODULE ALIASES - Runtime access patterns
-# =========================================================================
 
 
 __all__ = ["FlextLdifModels", "m"]

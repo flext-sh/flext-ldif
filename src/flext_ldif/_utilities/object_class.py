@@ -102,7 +102,7 @@ class FlextLdifUtilitiesObjectClass:
             setattr(schema_oc, "sup", "top")
 
     @staticmethod
-    def parse(
+    def resolve_objectclass(
         definition: str,
         server_type: str | None = None,
         parse_parts_hook: Callable[[str], Mapping[str, t.NormalizedValue]]

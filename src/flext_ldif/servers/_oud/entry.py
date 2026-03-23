@@ -289,8 +289,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         entry: m.Ldif.Entry,
         validate_aci_macros: Callable[[str], r[bool]],
         correct_rfc_syntax_in_attributes: Callable[
-            [t.Ldif.CommonDict.AttributeDict],
-            r[t.Ldif.CommonDict.AttributeDict],
+            [t.Ldif.AttributeDict],
+            r[t.Ldif.AttributeDict],
         ],
     ) -> r[m.Ldif.Entry]:
         """Hook: Validate and CORRECT RFC syntax issues before writing Entry - static helper.
@@ -309,7 +309,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         """
         attrs_dict_raw = entry.attributes.attributes if entry.attributes else {}
-        attrs_dict: t.Ldif.CommonDict.AttributeDict = dict(attrs_dict_raw.items())
+        attrs_dict: t.Ldif.AttributeDict = dict(attrs_dict_raw.items())
         aci_validation_error = FlextLdifServersOudEntry.validate_aci_macros_in_entry(
             attrs_dict,
             validate_aci_macros,
@@ -401,10 +401,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     @staticmethod
     def correct_syntax_and_return_entry(
         entry: m.Ldif.Entry,
-        attrs_dict: t.Ldif.CommonDict.AttributeDict,
+        attrs_dict: t.Ldif.AttributeDict,
         correct_rfc_syntax_in_attributes: Callable[
-            [t.Ldif.CommonDict.AttributeDict],
-            r[t.Ldif.CommonDict.AttributeDict],
+            [t.Ldif.AttributeDict],
+            r[t.Ldif.AttributeDict],
         ],
     ) -> r[m.Ldif.Entry]:
         """Correct RFC syntax issues and return entry."""
@@ -522,7 +522,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def validate_aci_macros_in_entry(
-        attrs_dict: t.Ldif.CommonDict.AttributeDict,
+        attrs_dict: t.Ldif.AttributeDict,
         validate_aci_macros: Callable[[str], r[bool]],
     ) -> str | None:
         """Validate ACI macros if present. Returns error message or None if valid."""
@@ -607,7 +607,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             keyword_patterns=oud_constants.KEYWORD_PATTERNS,
         )
         return (
-            u.Ldif.matches_server_patterns(entry_dn, attributes, patterns_config)
+            u.Ldif.matches_entry_server_patterns(entry_dn, attributes, patterns_config)
             or "objectclass" in attributes
         )
 
@@ -1199,7 +1199,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         acl_metadata_extensions: dict[str, t.NormalizedValue],
     ) -> None:
         """Extract ACL metadata from dict extensions."""
-        mk = c.Ldif.MetadataKeys
+        mk = c.Ldif
         key_mapping: dict[str, str] = {
             "extop": mk.ACL_EXTOP,
             "ip": mk.ACL_BIND_IP_FILTER,
@@ -1242,7 +1242,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         acl_metadata_extensions: dict[str, t.NormalizedValue],
     ) -> None:
         """Extract ACL metadata from DynamicMetadata extensions."""
-        mk = c.Ldif.MetadataKeys
+        mk = c.Ldif
         key_mapping: dict[str, str] = {
             "extop": mk.ACL_EXTOP,
             "ip": mk.ACL_BIND_IP_FILTER,
@@ -1398,7 +1398,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _find_aci_values(
         self,
         entry: m.Ldif.Entry,
-        original_attrs: t.Ldif.CommonDict.AttributeDictGeneric,
+        original_attrs: t.Ldif.AttributeDictGeneric,
     ) -> list[str] | str | None:
         """Find ACI values from entry or original_attrs."""
         aci_values: list[str] | str | None = None
@@ -1453,7 +1453,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         self,
         entry: m.Ldif.Entry,
         original_dn: str,
-        original_attrs: t.Ldif.CommonDict.AttributeDictGeneric,
+        original_attrs: t.Ldif.AttributeDictGeneric,
     ) -> r[m.Ldif.Entry]:
         """Hook: Process ACLs and propagate their extensions to entry metadata.
 
@@ -1786,7 +1786,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         current_extensions: dict[str, t.NormalizedValue],
     ) -> None:
         """Process parsed ACL extensions and add to current extensions."""
-        mk = c.Ldif.MetadataKeys
+        mk = c.Ldif
         key_mapping: dict[str, str] = {
             "targattrfilters": mk.ACL_TARGETATTR_FILTERS,
             "targetcontrol": mk.ACL_TARGET_CONTROL,
@@ -1940,7 +1940,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if not (entry_data.metadata and entry_data.metadata.extensions):
             return entry_data
         ext = entry_data.metadata.extensions
-        mk = c.Ldif.MetadataKeys
+        mk = c.Ldif
         original_dn_value = ext.get(mk.ORIGINAL_DN_COMPLETE)
         if isinstance(original_dn_value, str) and entry_data.dn:
             dn_diff_raw = ext.get(mk.MINIMAL_DIFFERENCES_DN, {})
@@ -1954,7 +1954,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entry_data.metadata.original_attribute_case if entry_data.metadata else None
         )
         original_attributes_raw = ext.get(
-            c.Ldif.MetadataKeys.ORIGINAL_ATTRIBUTES_COMPLETE,
+            c.Ldif.ORIGINAL_ATTRIBUTES_COMPLETE,
         )
         if (
             entry_data.attributes

@@ -26,7 +26,8 @@ class TestFlextLdifTypesStructure:
         """T must have required namespaces."""
         tm.that(hasattr(t, "Ldif"), eq=True)
         tm.that(not hasattr(t.Ldif, "Entry"), eq=True)
-        tm.that(hasattr(t.Ldif, "CommonDict"), eq=True)
+        tm.that(hasattr(t.Ldif, "AttributeDict"), eq=True)
+        tm.that(hasattr(t.Ldif, "DistributionDict"), eq=True)
 
     def test_srp_compliance_no_functions(self) -> None:
         """typings.py must not contain functions (SRP violation)."""
@@ -93,25 +94,25 @@ class TestsFlextLdifCommonDictionaryTypes(s):
 
     def test_attribute_dict_with_ldif_entry(self) -> None:
         """AttributeDict must work with real LDIF entry attributes."""
-        attr_dict: t.Ldif.CommonDict.AttributeDict = self.SAMPLE_ATTR_DICT
+        attr_dict: t.Ldif.AttributeDict = self.SAMPLE_ATTR_DICT
         tm.that(isinstance(attr_dict, dict), eq=True)
         tm.that(attr_dict[c.Names.CN] == ["John Doe"], eq=True)
         tm.that(len(attr_dict[c.Names.MAIL]) == 2, eq=True)
 
     def test_attribute_dict_empty(self) -> None:
         """AttributeDict must handle empty attributes."""
-        attr_dict: t.Ldif.CommonDict.AttributeDict = {}
+        attr_dict: t.Ldif.AttributeDict = {}
         tm.that(len(attr_dict) == 0, eq=True)
 
     def test_distribution_dict_with_entry_counts(self) -> None:
         """DistributionDict must work with entry type statistics."""
-        dist: t.Ldif.CommonDict.DistributionDict = self.SAMPLE_DISTRIBUTION
+        dist: t.Ldif.DistributionDict = self.SAMPLE_DISTRIBUTION
         tm.that(dist[c.Names.INETORGPERSON] == 1245, eq=True)
         tm.that(sum(dist.values()) == 1371, eq=True)
 
     def test_distribution_dict_from_schema_stats(self) -> None:
         """DistributionDict works for schema statistics."""
-        dist: t.Ldif.CommonDict.DistributionDict = {
+        dist: t.Ldif.DistributionDict = {
             "attributeTypes": 156,
             "objectClasses": 78,
             "dITContentRules": 23,
@@ -229,7 +230,7 @@ class TestRemovalOfOverEngineering:
     @pytest.mark.parametrize("type_name", REMOVED_COMMON_DICT)
     def test_removed_common_dict_types(self, type_name: str) -> None:
         """Unused CommonDict types must be removed."""
-        tm.that(not hasattr(t.Ldif.CommonDict, type_name), eq=True)
+        tm.that(not hasattr(t.Ldif, type_name), eq=True)
 
     @pytest.mark.parametrize("type_name", REMOVED_ENTRY)
     def test_removed_entry_types(self, type_name: str) -> None:
@@ -251,17 +252,16 @@ class TestPhase1StandardizationResults:
 
     @pytest.mark.parametrize("attr", ["AttributeDict", "DistributionDict"])
     def test_common_dict_simple_patterns(self, attr: str) -> None:
-        """Simple patterns should be kept in CommonDict."""
-        if hasattr(t.Ldif, "CommonDict"):
-            tm.that(hasattr(t.Ldif.CommonDict, "AttributeDict"), eq=True)
+        """Simple dict type aliases should exist on t.Ldif."""
+        tm.that(hasattr(t.Ldif, attr), eq=True)
 
     def test_types_work_with_real_data(self) -> None:
         """Verify types work with real data."""
-        attr_dict: t.Ldif.CommonDict.AttributeDict = {
+        attr_dict: t.Ldif.AttributeDict = {
             c.Names.CN: ["Jane Doe"],
             c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INETORGPERSON],
         }
-        distribution: t.Ldif.CommonDict.DistributionDict = {
+        distribution: t.Ldif.DistributionDict = {
             c.Names.INETORGPERSON: 2,
             c.Names.PERSON: 1,
         }
@@ -285,7 +285,7 @@ class TestIntegrationWithLdifFixtures:
     def test_types_work_with_ldif_fixtures(self, oid_ldif_path: Path) -> None:
         """Verify types work with real LDIF fixture files."""
         tm.that(oid_ldif_path.exists(), eq=True)
-        entry_attrs: t.Ldif.CommonDict.AttributeDict = {
+        entry_attrs: t.Ldif.AttributeDict = {
             c.Names.CN: ["Test Entry"],
             c.Names.OBJECTCLASS: [c.Names.PERSON, c.Names.INETORGPERSON],
         }

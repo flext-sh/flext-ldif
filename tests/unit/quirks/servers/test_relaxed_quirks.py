@@ -16,7 +16,7 @@ from tests import c, m, s
 
 from flext_ldif import FlextLdifServersRelaxed
 
-meta_keys = c.Ldif.MetadataKeys
+meta_keys = c.Ldif
 
 
 @unique

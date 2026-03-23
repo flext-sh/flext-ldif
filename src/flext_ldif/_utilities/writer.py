@@ -60,7 +60,7 @@ class FlextLdifUtilitiesWriter:
     ) -> None:
         """Add line with optional folding."""
         if fold_long_lines and (not line.startswith("dn:: ")):
-            ldif_lines.extend(FlextLdifUtilitiesWriter.fold(line, width=width))
+            ldif_lines.extend(FlextLdifUtilitiesWriter.fold_line(line, width=width))
         else:
             ldif_lines.append(line)
 
@@ -95,7 +95,7 @@ class FlextLdifUtilitiesWriter:
             parts.append(f"DESC '{attr_data.desc}'")
         if attr_data.metadata and u.get(
             attr_data.metadata.extensions,
-            c.Ldif.MetadataKeys.OBSOLETE,
+            c.Ldif.OBSOLETE,
         ):
             parts.append("OBSOLETE")
         if attr_data.sup:
@@ -127,7 +127,7 @@ class FlextLdifUtilitiesWriter:
             parts.append(f"DESC '{oc_data.desc}'")
         if oc_data.metadata and u.get(
             oc_data.metadata.extensions,
-            c.Ldif.MetadataKeys.OBSOLETE,
+            c.Ldif.OBSOLETE,
         ):
             parts.append("OBSOLETE")
         if oc_data.sup:
@@ -153,7 +153,7 @@ class FlextLdifUtilitiesWriter:
     def _handle_attribute_status(
         attr_name: str,
         attr_values: list[str],
-        status: c.Ldif.LiteralTypes.AttributeMarkerStatusLiteral,
+        status: c.Ldif.AttributeMarkerStatusLiteral,
         output_options: m.Ldif.WriteOutputOptions,
     ) -> tuple[str, list[str]] | None:
         """Handle attribute based on status (extracted to reduce complexity)."""
@@ -275,7 +275,7 @@ class FlextLdifUtilitiesWriter:
             parts.append("SINGLE-VALUE")
         if attr_data.metadata and u.get(
             attr_data.metadata.extensions,
-            c.Ldif.MetadataKeys.COLLECTIVE,
+            c.Ldif.COLLECTIVE,
         ):
             parts.append("COLLECTIVE")
         if attr_data.no_user_modification:
@@ -366,9 +366,7 @@ class FlextLdifUtilitiesWriter:
                 attr_name,
                 len(value),
             )
-        is_binary_attr = (
-            attr_name.lower() in c.Ldif.RfcBinaryAttributes.BINARY_ATTRIBUTE_NAMES
-        )
+        is_binary_attr = attr_name.lower() in c.Ldif.BINARY_ATTRIBUTE_NAMES
         needs_base64 = is_binary_attr or FlextLdifUtilitiesWriter.needs_base64_encoding(
             str_value,
         )
@@ -386,7 +384,7 @@ class FlextLdifUtilitiesWriter:
         return ldif_text
 
     @staticmethod
-    def fold(line: str, width: int = c.Ldif.Format.LINE_FOLD_WIDTH) -> list[str]:
+    def fold_line(line: str, width: int = c.Ldif.LINE_FOLD_WIDTH) -> list[str]:
         """Fold long LDIF line according to RFC 2849 §3."""
         if not line:
             return [line]
@@ -410,7 +408,7 @@ class FlextLdifUtilitiesWriter:
                 chunk_end = pos + 1
                 chunk = line_bytes[pos:chunk_end].decode("utf-8", errors="replace")
             if folded:
-                folded.append(c.Ldif.Format.LINE_CONTINUATION_SPACE + chunk)
+                folded.append(c.Ldif.LINE_CONTINUATION_SPACE + chunk)
             else:
                 folded.append(chunk)
             pos = chunk_end
@@ -422,9 +420,9 @@ class FlextLdifUtilitiesWriter:
         if not char or len(char) != 1:
             return False
         code = ord(char)
-        safe_min = c.Ldif.Format.SAFE_CHAR_MIN
-        safe_max = c.Ldif.Format.SAFE_CHAR_MAX
-        safe_exclude = c.Ldif.Format.SAFE_CHAR_EXCLUDE
+        safe_min = c.Ldif.SAFE_CHAR_MIN
+        safe_max = c.Ldif.SAFE_CHAR_MAX
+        safe_exclude = c.Ldif.SAFE_CHAR_EXCLUDE
         return safe_min <= code <= safe_max and code not in safe_exclude
 
     @staticmethod
@@ -435,7 +433,7 @@ class FlextLdifUtilitiesWriter:
         code = ord(char)
         if not FlextLdifUtilitiesWriter.is_safe_char(char):
             return False
-        return code not in c.Ldif.Format.SAFE_INIT_CHAR_EXCLUDE
+        return code not in c.Ldif.SAFE_INIT_CHAR_EXCLUDE
 
     @staticmethod
     def is_valid_safe_string(value: str) -> bool:
@@ -454,13 +452,13 @@ class FlextLdifUtilitiesWriter:
         """Check if value needs base64 encoding per RFC 2849 §2."""
         if not value:
             return False
-        if value[0] in c.Ldif.Format.BASE64_START_CHARS:
+        if value[0] in c.Ldif.BASE64_START_CHARS:
             return True
         if check_trailing_space and value[-1] == " ":
             return True
-        safe_min = c.Ldif.Format.SAFE_CHAR_MIN
-        safe_max = c.Ldif.Format.SAFE_CHAR_MAX
-        safe_exclude = c.Ldif.Format.SAFE_CHAR_EXCLUDE
+        safe_min = c.Ldif.SAFE_CHAR_MIN
+        safe_max = c.Ldif.SAFE_CHAR_MAX
+        safe_exclude = c.Ldif.SAFE_CHAR_EXCLUDE
         for char in value:
             byte_val = ord(char)
             if byte_val < safe_min or byte_val > safe_max or byte_val in safe_exclude:

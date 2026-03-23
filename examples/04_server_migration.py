@@ -234,7 +234,7 @@ class ExampleServerMigration:
         return r[dict[str, t.NormalizedValue]].ok(workflow_results)
 
     @staticmethod
-    def parallel_server_migration() -> r[m.Ldif.LdifResults.MigrationPipelineResult]:
+    def parallel_server_migration() -> r[m.Ldif.MigrationPipelineResult]:
         """Parallel migration between servers with comprehensive error handling."""
         api = FlextLdif.get_instance()
         input_dir = Path("examples/migration_input")
@@ -257,10 +257,10 @@ class ExampleServerMigration:
             ),
         )
         if migration_result.is_failure:
-            return r[m.Ldif.LdifResults.MigrationPipelineResult].fail(
+            return r[m.Ldif.MigrationPipelineResult].fail(
                 f"Migration failed: {migration_result.error}"
             )
         result = migration_result.value
         _ = len(result.entries)
         _ = result.stats.processed_entries if result.stats else 0
-        return r[m.Ldif.LdifResults.MigrationPipelineResult].ok(result)
+        return r[m.Ldif.MigrationPipelineResult].ok(result)

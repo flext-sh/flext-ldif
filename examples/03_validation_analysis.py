@@ -25,8 +25,8 @@ class DRYValidationAnalysis:
 
     @staticmethod
     def _analyze_validation_results(
-        validation_result: m.Ldif.LdifResults.ValidationResult,
-    ) -> r[m.Ldif.LdifResults.ValidationResult]:
+        validation_result: m.Ldif.ValidationResult,
+    ) -> r[m.Ldif.ValidationResult]:
         """DRY validation analysis: categorize errors and detect patterns."""
         if not validation_result.is_valid:
             error_groups: dict[str, list[str]] = {}
@@ -35,7 +35,7 @@ class DRYValidationAnalysis:
                 if category not in error_groups:
                     error_groups[category] = []
                 error_groups[category].append(str(error))
-        return r[m.Ldif.LdifResults.ValidationResult].ok(validation_result)
+        return r[m.Ldif.ValidationResult].ok(validation_result)
 
     @staticmethod
     def _generate_test_dataset(
@@ -76,23 +76,23 @@ class DRYValidationAnalysis:
         ]
 
     @staticmethod
-    def parallel_validation() -> r[m.Ldif.LdifResults.ValidationResult]:
+    def parallel_validation() -> r[m.Ldif.ValidationResult]:
         """DRY parallel validation: generate dataset → validate → analyze."""
         api = FlextLdif.get_instance()
         entries = DRYValidationAnalysis._generate_test_dataset(100, error_rate=0.1)
         validate_result = api.validate_entries(entries)
         total_entries = len(entries)
         if validate_result.is_failure:
-            validation_result = m.Ldif.LdifResults.ValidationResult(
+            validation_result = m.Ldif.ValidationResult(
                 is_valid=False,
                 total_entries=total_entries,
                 valid_entries=0,
                 invalid_entries=total_entries,
                 errors=[str(validate_result.error)],
             )
-            return r[m.Ldif.LdifResults.ValidationResult].ok(validation_result)
+            return r[m.Ldif.ValidationResult].ok(validation_result)
         vr = validate_result.value
-        validation_result = m.Ldif.LdifResults.ValidationResult(
+        validation_result = m.Ldif.ValidationResult(
             is_valid=vr.is_valid,
             total_entries=total_entries,
             valid_entries=total_entries if vr.is_valid else 0,

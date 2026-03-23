@@ -97,9 +97,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ACL_DEFAULT_NAME: ClassVar[str] = "Tivoli ACL"
         ACL_ACCESS_PATTERN: ClassVar[str] = 'access\\s+"(\\w+)"'
         ACL_DEFAULT_TARGET_DN: ClassVar[str] = ""
-        ACL_DEFAULT_SUBJECT_TYPE: ClassVar[
-            c.Ldif.LiteralTypes.AclSubjectTypeLiteral
-        ] = "all"
+        ACL_DEFAULT_SUBJECT_TYPE: ClassVar[c.Ldif.AclSubjectTypeLiteral] = "all"
         ACL_DEFAULT_SUBJECT_VALUE: ClassVar[str] = ""
         ACL_PRIMARY_ATTRIBUTE_NAME: ClassVar[str] = "ibm-slapdaccesscontrol"
         ACL_SEPARATOR: ClassVar[str] = "#"
@@ -382,16 +380,16 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                             str_value = str(value)
                         processed_values.append(str_value)
                     processed_attributes[attr_name] = processed_values
-                processed_attributes[c.Ldif.Domain.QuirkMetadataKeys.SERVER_TYPE] = [
+                processed_attributes[c.Ldif.QuirkMetadataKeys.SERVER_TYPE] = [
                     self._get_server_type(),
                 ]
                 is_config = any(
                     marker in dn_lower
                     for marker in FlextLdifServersTivoli.Constants.DETECTION_DN_MARKERS
                 )
-                processed_attributes[
-                    c.Ldif.Domain.QuirkMetadataKeys.IS_CONFIG_ENTRY
-                ] = [str(is_config)]
+                processed_attributes[c.Ldif.QuirkMetadataKeys.IS_CONFIG_ENTRY] = [
+                    str(is_config)
+                ]
                 processed_attributes[c.Ldif.DictKeys.OBJECTCLASS] = object_classes
                 new_attrs = m.Ldif.Attributes(attributes=processed_attributes)
                 processed_entry = entry.model_copy(update={"attributes": new_attrs})

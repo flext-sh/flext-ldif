@@ -315,7 +315,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     compare=read_perm in first_access or auth_perm in first_access,
                 )
                 first_who_lower = first_who.lower().strip()
-                subject_type: c.Ldif.LiteralTypes.AclSubjectTypeLiteral
+                subject_type: c.Ldif.AclSubjectTypeLiteral
                 if first_who_lower == "self":
                     subject_type = "self"
                 elif first_who_lower in {"*", "all"}:
@@ -413,9 +413,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(
                     quirk_type=c.Ldif.ServerTypes.OPENLDAP1,
                 )
-                metadata.extensions[
-                    c.Ldif.Domain.QuirkMetadataKeys.IS_TRADITIONAL_DIT
-                ] = True
+                metadata.extensions[c.Ldif.QuirkMetadataKeys.IS_TRADITIONAL_DIT] = True
                 processed_entry = m.Ldif.Entry(
                     dn=entry.dn,
                     attributes=entry.attributes,

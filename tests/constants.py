@@ -31,6 +31,8 @@ from flext_ldif import (
     FlextLdifEntries,
     FlextLdifParser,
     FlextLdifSchema,
+    FlextLdifServersBaseSchema,
+    FlextLdifServersBaseSchemaAcl,
     FlextLdifWriter,
     m,
     p,
@@ -47,11 +49,11 @@ class FlextLdifTestConstants(FlextTestsConstants):
     class Schema:
         """Schema constants wrapper for test convenience."""
 
-        STRUCTURAL: str = FlextLdifConstants.Ldif.AclSubjectTypes.STRUCTURAL
-        AUXILIARY: str = FlextLdifConstants.Ldif.AclSubjectTypes.AUXILIARY
-        ABSTRACT: str = FlextLdifConstants.Ldif.AclSubjectTypes.ABSTRACT
-        ACTIVE: str = FlextLdifConstants.Ldif.AclSubjectTypes.ACTIVE
-        DEPRECATED: str = FlextLdifConstants.Ldif.AclSubjectTypes.DEPRECATED
+        STRUCTURAL: str = FlextLdifConstants.Ldif.SchemaKind.STRUCTURAL
+        AUXILIARY: str = FlextLdifConstants.Ldif.SchemaKind.AUXILIARY
+        ABSTRACT: str = FlextLdifConstants.Ldif.SchemaKind.ABSTRACT
+        ACTIVE: str = "ACTIVE"
+        DEPRECATED: str = "DEPRECATED"
 
     class Names:
         """Standard LDAP attribute names for test fixtures."""
@@ -609,7 +611,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
         @staticmethod
         def test_quirk_schema_parse_and_assert_properties(
-            quirk: p.Ldif.SchemaQuirk,
+            quirk: p.Ldif.SchemaQuirk | FlextLdifServersBaseSchema,
             schema_def: str,
             *,
             expected_oid: str | None = None,
@@ -726,7 +728,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             return value
 
         @staticmethod
-        def test_result_success_and_unwrap[TResult: t.Ldif.t.NormalizedValue](
+        def test_result_success_and_unwrap[TResult: t.Ldif.NormalizedValue](
             result: r[TResult],
             expected_type: type | None = None,
             expected_count: int | None = None,
@@ -1664,7 +1666,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             test_cases: list[dict[str, t.NormalizedValue]],
             *,
             validate_all: bool = True,
-        ) -> list[r[m.Ldif.LdifResults.ParseResponse]]:
+        ) -> list[r[m.Ldif.ParseResponse]]:
             """Batch parse LDIF content and assert results.
 
             Args:
@@ -1773,7 +1775,13 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
         @staticmethod
         def quirk_parse_and_unwrap(
-            quirk: (p.Ldif.SchemaQuirk | p.Ldif.AclQuirk | p.Ldif.EntryQuirk),
+            quirk: (
+                p.Ldif.SchemaQuirk
+                | p.Ldif.AclQuirk
+                | p.Ldif.EntryQuirk
+                | FlextLdifServersBaseSchema
+                | FlextLdifServersBaseSchemaAcl
+            ),
             content: str,
             msg: str | None = None,
             parse_method: str | None = None,
@@ -1848,7 +1856,12 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
         @staticmethod
         def quirk_write_and_unwrap(
-            quirk: p.Ldif.SchemaQuirk | p.Ldif.AclQuirk,
+            quirk: (
+                p.Ldif.SchemaQuirk
+                | p.Ldif.AclQuirk
+                | FlextLdifServersBaseSchema
+                | FlextLdifServersBaseSchemaAcl
+            ),
             data: m.Ldif.Entry
             | m.Ldif.SchemaAttribute
             | m.Ldif.SchemaObjectClass

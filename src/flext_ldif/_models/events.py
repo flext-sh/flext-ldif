@@ -9,17 +9,17 @@ from typing import Annotated, ClassVar, Self
 from flext_core import m
 from pydantic import ConfigDict, Field
 
-from flext_ldif import FlextLdifModelsBase, FlextLdifModelsSettings, c
-
-
-def _filter_criteria_factory() -> list[FlextLdifModelsSettings.FilterCriteria]:
-    return []
+from flext_ldif import FlextLdifModelsBases, FlextLdifModelsSettings, c
 
 
 class FlextLdifModelsEvents:
     """LDIF event and configuration models container class."""
 
-    class DnEventConfig(FlextLdifModelsBase):
+    @staticmethod
+    def _filter_criteria_factory() -> list[FlextLdifModelsSettings.FilterCriteria]:
+        return []
+
+    class DnEventConfig(FlextLdifModelsBases.Base):
         dn_operation: str
         input_dn: str
         output_dn: str | None = None
@@ -27,7 +27,7 @@ class FlextLdifModelsEvents:
         validation_result: bool | None = None
         parse_components: list[tuple[str, str]] | None = None
 
-    class MigrationEventConfig(FlextLdifModelsBase):
+    class MigrationEventConfig(FlextLdifModelsBases.Base):
         model_config: ClassVar[ConfigDict] = ConfigDict(
             extra="forbid", validate_assignment=True
         )
@@ -40,7 +40,7 @@ class FlextLdifModelsEvents:
         migration_duration_ms: float = 0.0
         error_details: Sequence[str] | None = None
 
-    class ConversionEventConfig(FlextLdifModelsBase):
+    class ConversionEventConfig(FlextLdifModelsBases.Base):
         model_config: ClassVar[ConfigDict] = ConfigDict(
             extra="forbid", validate_assignment=True
         )
@@ -62,7 +62,7 @@ class FlextLdifModelsEvents:
         entries_after: int
         filter_criteria: Annotated[
             list[FlextLdifModelsSettings.FilterCriteria],
-            Field(default_factory=_filter_criteria_factory),
+            Field(default_factory=FlextLdifModelsEvents._filter_criteria_factory),
         ]
         filter_duration_ms: float = 0.0
 
@@ -221,11 +221,11 @@ class FlextLdifModelsEvents:
         schema_success_rate: float = 0.0
         throughput_items_per_sec: float = 0.0
 
-    class SchemaEventConfig(FlextLdifModelsBase):
+    class SchemaEventConfig(FlextLdifModelsBases.Base):
         schema_operation: str
         items_processed: int = 0
         items_succeeded: int = 0
         items_failed: int = 0
         operation_duration_ms: float = 0.0
-        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral
+        server_type: c.Ldif.ServerTypeLiteral
         schema_type: str = c.Ldif.ServerTypes.RFC.value

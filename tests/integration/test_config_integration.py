@@ -85,7 +85,7 @@ class TestFlextLdifSettingsIntegration:
 
     @pytest.mark.parametrize("server_type", ConfigTestData.SERVER_TYPES[:3])
     def test_config_affects_parsing_behavior(
-        self, server_type: c.Ldif.LiteralTypes.ServerTypeLiteral
+        self, server_type: c.Ldif.ServerTypeLiteral
     ) -> None:
         """Test that config settings affect parsing behavior."""
         config = FlextLdifSettings(server_type=server_type)
@@ -99,7 +99,7 @@ class TestFlextLdifSettingsIntegration:
     )
     def test_config_with_server_type(
         self,
-        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
+        server_type: c.Ldif.ServerTypeLiteral,
         expected_content_key: str,
     ) -> None:
         """Test config with specific server type using parametrization."""

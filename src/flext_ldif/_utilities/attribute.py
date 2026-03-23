@@ -15,10 +15,10 @@ class FlextLdifUtilitiesAttribute:
     """Attribute utilities for RFC-compliant attribute operations."""
 
     _ATTRIBUTE_NAME_PATTERN: Final[re.Pattern[str]] = re.compile(
-        c.Ldif.LdifPatterns.ATTRIBUTE_NAME,
+        c.Ldif.ATTRIBUTE_NAME,
     )
     _ATTRIBUTE_OPTION_PATTERN: Final[re.Pattern[str]] = re.compile(
-        c.Ldif.LdifPatterns.ATTRIBUTE_OPTION,
+        c.Ldif.ATTRIBUTE_OPTION,
     )
 
     @classmethod
@@ -45,7 +45,7 @@ class FlextLdifUtilitiesAttribute:
         """Validate base attribute name against RFC 4512 § 2.5."""
         if not attribute_name:
             return False
-        if len(attribute_name) > c.Ldif.LdifPatterns.MAX_ATTRIBUTE_NAME_LENGTH:
+        if len(attribute_name) > c.Ldif.MAX_ATTRIBUTE_NAME_LENGTH:
             return False
         return cls._ATTRIBUTE_NAME_PATTERN.match(attribute_name) is not None
 
@@ -59,7 +59,7 @@ class FlextLdifUtilitiesAttribute:
         return option_pattern.match(option_name) is not None
 
     @staticmethod
-    def parse(
+    def resolve_attribute(
         definition: str,
         *,
         server_type: str | None = None,

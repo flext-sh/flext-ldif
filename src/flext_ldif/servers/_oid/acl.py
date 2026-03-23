@@ -331,31 +331,31 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     ) -> list[str]:
         """Format extension values based on metadata key type."""
         extensions: list[str] = []
-        acl_filter = meta_extensions.get(c.Ldif.MetadataKeys.ACL_FILTER)
+        acl_filter = meta_extensions.get(c.Ldif.ACL_FILTER)
         if isinstance(acl_filter, str) and acl_filter:
             extensions.append(f"filter={acl_filter}")
-        acl_constraint = meta_extensions.get(c.Ldif.MetadataKeys.ACL_CONSTRAINT)
+        acl_constraint = meta_extensions.get(c.Ldif.ACL_CONSTRAINT)
         if isinstance(acl_constraint, str) and acl_constraint:
             extensions.append(f"added_object_constraint=({acl_constraint})")
-        bindmode = meta_extensions.get(c.Ldif.MetadataKeys.ACL_BINDMODE)
+        bindmode = meta_extensions.get(c.Ldif.ACL_BINDMODE)
         if isinstance(bindmode, str) and bindmode:
             extensions.append(f"bindmode=({bindmode})")
-        bind_ip_filter = meta_extensions.get(c.Ldif.MetadataKeys.ACL_BIND_IP_FILTER)
+        bind_ip_filter = meta_extensions.get(c.Ldif.ACL_BIND_IP_FILTER)
         if isinstance(bind_ip_filter, str) and bind_ip_filter:
             extensions.append(f"bindipfilter=({bind_ip_filter})")
         constrain_to_added = meta_extensions.get(
-            c.Ldif.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT,
+            c.Ldif.ACL_CONSTRAIN_TO_ADDED_OBJECT,
         )
         if isinstance(constrain_to_added, str) and constrain_to_added:
             extensions.append(f"constraintonaddedobject=({constrain_to_added})")
         deny_group_override = meta_extensions.get(
-            c.Ldif.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,
+            c.Ldif.ACL_DENY_GROUP_OVERRIDE,
         )
         if deny_group_override is True or (
             isinstance(deny_group_override, str) and deny_group_override
         ):
             extensions.append("DenyGroupOverride")
-        append_to_all = meta_extensions.get(c.Ldif.MetadataKeys.ACL_APPEND_TO_ALL)
+        append_to_all = meta_extensions.get(c.Ldif.ACL_APPEND_TO_ALL)
         if append_to_all is True or (isinstance(append_to_all, str) and append_to_all):
             extensions.append("AppendToAll")
         return extensions
@@ -368,7 +368,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         if not metadata or not metadata.extensions:
             return None
         source_subject_type_raw = metadata.extensions.get(
-            c.Ldif.MetadataKeys.ACL_SOURCE_SUBJECT_TYPE,
+            c.Ldif.ACL_SOURCE_SUBJECT_TYPE,
         )
         if isinstance(source_subject_type_raw, str):
             return source_subject_type_raw

@@ -102,11 +102,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 if converted_values != original_values:
                     converted_attrs.add(attr_name)
                     original_format_str = f"{FlextLdifServersOidConstants.ONE_OID}/{FlextLdifServersOidConstants.ZERO_OID}"
-                    converted_format_str = f"{c.Ldif.BooleanFormats.TRUE_RFC}/{c.Ldif.BooleanFormats.FALSE_RFC}"
+                    converted_format_str = f"{c.Ldif.TRUE_RFC}/{c.Ldif.FALSE_RFC}"
                     conversion_dict: dict[str, str | list[str]] = {}
-                    original_key: str = c.Ldif.MetadataKeys.CONVERSION_ORIGINAL_VALUE
-                    converted_key: str = c.Ldif.MetadataKeys.CONVERSION_CONVERTED_VALUE
-                    format_key: str = c.Ldif.MetadataKeys.ORIGINAL_FORMAT
+                    original_key: str = c.Ldif.CONVERSION_ORIGINAL_VALUE
+                    converted_key: str = c.Ldif.CONVERSION_CONVERTED_VALUE
+                    format_key: str = c.Ldif.ORIGINAL_FORMAT
                     conversion_dict[original_key] = original_values
                     conversion_dict[converted_key] = converted_values
                     conversion_dict["conversion_type"] = "boolean_oid_to_rfc"
@@ -189,13 +189,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         original_attrs: dict[str, list[str]] = (
             original_entry.attributes.attributes if original_entry.attributes else {}
         )
-        mk = c.Ldif.MetadataKeys
+        mk = c.Ldif
         conversion_metadata: dict[str, t.NormalizedValue] = (
             {mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: list(converted_attrs)}
             if converted_attrs
             else {}
         )
-        mk = c.Ldif.MetadataKeys
+        mk = c.Ldif
         dn_metadata: dict[str, t.NormalizedValue] = (
             {
                 mk.ORIGINAL_DN_COMPLETE: original_dn,
@@ -259,7 +259,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         )
         metadata_keys_dict = {
             k: v
-            for k, v in c.Ldif.MetadataKeys.__dict__.items()
+            for k, v in c.Ldif.__dict__.items()
             if not k.startswith("_") and core_u.is_type(v, str)
         }
         metadata_keys_str: str | None = (
@@ -287,7 +287,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             generic_metadata["metadata_keys"] = metadata_keys_str
         if operational_attributes_str:
             generic_metadata["operational_attributes"] = operational_attributes_str
-        mk = c.Ldif.MetadataKeys
+        mk = c.Ldif
         attr_name_conversions: dict[str, str] = (
             {
                 FlextLdifServersOidConstants.ORCLACI: FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME,
@@ -304,15 +304,15 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             str,
             dict[str, dict[str, str | list[str]]] | dict[str, str],
         ] = {
-            c.Ldif.MetadataKeys.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions_dict,
-            c.Ldif.MetadataKeys.CONVERSION_ATTRIBUTE_NAME_CONVERSIONS: attr_name_conversions,
+            c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions_dict,
+            c.Ldif.CONVERSION_ATTRIBUTE_NAME_CONVERSIONS: attr_name_conversions,
         }
         converted_attrs_data_str: str = m.Ldif.DynamicMetadata.from_dict(
             converted_attrs_data,
         ).model_dump_json()
         generic_metadata[mk.CONVERTED_ATTRIBUTES] = converted_attrs_data_str
-        generic_metadata[c.Ldif.MetadataKeys.ENTRY_TARGET_DN_CASE] = cleaned_dn
-        generic_metadata[c.Ldif.MetadataKeys.ENTRY_ORIGINAL_FORMAT] = (
+        generic_metadata[c.Ldif.ENTRY_TARGET_DN_CASE] = cleaned_dn
+        generic_metadata[c.Ldif.ENTRY_ORIGINAL_FORMAT] = (
             f"OID Entry with {len(converted_attrs)} boolean conversions"
         )
         original_extensions = self._extract_original_extensions(original_entry)
@@ -340,7 +340,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 extensions_data[ext_key] = [str(item) for item in ext_val]
             else:
                 extensions_data[ext_key] = ext_val
-        extensions_data[c.Ldif.MetadataKeys.ORIGINAL_DN_COMPLETE] = str(
+        extensions_data[c.Ldif.ORIGINAL_DN_COMPLETE] = str(
             original_entry.dn,
         )
         metadata = m.Ldif.QuirkMetadata.create_for(
@@ -472,7 +472,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             schema_transformations_typed: list[t.Ldif.MetadataValue] = [
                 str(item) for item in schema_transformations
             ]
-            metadata.extensions["schema_transformations"] = schema_transformations_typed
+            setattr(
+                metadata.extensions,
+                "schema_transformations",
+                schema_transformations_typed,
+            )
         if acl_transformations:
             metadata.attribute_transformations = {
                 **metadata.attribute_transformations,
@@ -493,7 +497,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         metadata: m.Ldif.QuirkMetadata | None,
     ) -> Mapping[str, list[str]]:
         """Denormalize RFC attributes to OID format."""
-        mk = c.Ldif.MetadataKeys
+        mk = c.Ldif
         original_attrs_raw = (
             metadata.extensions.get(mk.ORIGINAL_ATTRIBUTES_COMPLETE)
             if metadata and metadata.extensions
@@ -608,31 +612,31 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             group=1,
         )
         if bindmode:
-            current_extensions[c.Ldif.MetadataKeys.ACL_BINDMODE] = bindmode
+            current_extensions[c.Ldif.ACL_BINDMODE] = bindmode
         if FlextLdifUtilitiesACL.extract_component(
             acl_value,
             FlextLdifServersOidConstants.ACL_DENY_GROUP_OVERRIDE_PATTERN,
         ):
-            current_extensions[c.Ldif.MetadataKeys.ACL_DENY_GROUP_OVERRIDE] = True
+            current_extensions[c.Ldif.ACL_DENY_GROUP_OVERRIDE] = True
         if FlextLdifUtilitiesACL.extract_component(
             acl_value,
             FlextLdifServersOidConstants.ACL_APPEND_TO_ALL_PATTERN,
         ):
-            current_extensions[c.Ldif.MetadataKeys.ACL_APPEND_TO_ALL] = True
+            current_extensions[c.Ldif.ACL_APPEND_TO_ALL] = True
         bind_ip_filter = FlextLdifUtilitiesACL.extract_component(
             acl_value,
             FlextLdifServersOidConstants.ACL_BIND_IP_FILTER_PATTERN,
             group=1,
         )
         if bind_ip_filter:
-            current_extensions[c.Ldif.MetadataKeys.ACL_BIND_IP_FILTER] = bind_ip_filter
+            current_extensions[c.Ldif.ACL_BIND_IP_FILTER] = bind_ip_filter
         constrain_to_added = FlextLdifUtilitiesACL.extract_component(
             acl_value,
             FlextLdifServersOidConstants.ACL_CONSTRAIN_TO_ADDED_PATTERN,
             group=1,
         )
         if constrain_to_added:
-            current_extensions[c.Ldif.MetadataKeys.ACL_CONSTRAIN_TO_ADDED_OBJECT] = (
+            current_extensions[c.Ldif.ACL_CONSTRAIN_TO_ADDED_OBJECT] = (
                 constrain_to_added
             )
 
@@ -641,7 +645,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         entry_data: m.Ldif.Entry,
     ) -> Mapping[str, Mapping[str, str | list[str]]]:
         """Extract boolean conversions from entry metadata."""
-        mk = c.Ldif.MetadataKeys
+        mk = c.Ldif
         boolean_conversions: dict[str, dict[str, str | list[str]]] = {}
         if not (entry_data.metadata and entry_data.metadata.extensions):
             return boolean_conversions
@@ -729,7 +733,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         current_extensions: dict[str, t.NormalizedValue] = (
             dict(entry.metadata.extensions) if entry.metadata.extensions else {}
         )
-        mk = c.Ldif.MetadataKeys
+        mk = c.Ldif
         current_extensions[mk.ORIGINAL_DN_COMPLETE] = str(original_dn)
         orclaci_raw = original_attrs.get("orclaci") if original_attrs else None
         if not orclaci_raw:
@@ -801,7 +805,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 normalized_name = self._normalize_attribute_name(attr_name)
                 normalized_attributes[normalized_name] = attr_values
             entry.attributes.attributes = normalized_attributes
-            mk = c.Ldif.MetadataKeys
+            mk = c.Ldif
             if entry.metadata:
                 if not entry.metadata.extensions:
                     entry.metadata.extensions = (
@@ -826,10 +830,16 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     conv_data_str: str = m.Ldif.DynamicMetadata.from_dict(
                         conv_data,
                     ).model_dump_json()
-                    entry.metadata.extensions[mk.CONVERTED_ATTRIBUTES] = conv_data_str
+                    setattr(
+                        entry.metadata.extensions,
+                        mk.CONVERTED_ATTRIBUTES,
+                        conv_data_str,
+                    )
                 else:
-                    entry.metadata.extensions[mk.CONVERTED_ATTRIBUTES] = (
-                        converted_attrs_list
+                    setattr(
+                        entry.metadata.extensions,
+                        mk.CONVERTED_ATTRIBUTES,
+                        converted_attrs_list,
                     )
             return r[m.Ldif.Entry].ok(entry)
         except (
@@ -879,8 +889,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 else dict(acl_model.metadata.extensions)
             )
             key_mapping = {
-                "bindmode": c.Ldif.MetadataKeys.ACL_BINDMODE,
-                "deny_group_override": c.Ldif.MetadataKeys.ACL_DENY_GROUP_OVERRIDE,
+                "bindmode": c.Ldif.ACL_BINDMODE,
+                "deny_group_override": c.Ldif.ACL_DENY_GROUP_OVERRIDE,
             }
             for key, value in acl_extensions.items():
                 mapped_key = key_mapping.get(key)
@@ -945,7 +955,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         restored_attrs: dict[str, list[str]],
     ) -> bool:
         """Restore single boolean attribute from conversion metadata."""
-        mk = c.Ldif.MetadataKeys
+        mk = c.Ldif
         converted_val = conv_data.get(mk.CONVERSION_CONVERTED_VALUE)
         converted_val_list: list[str]
         if isinstance(converted_val, str):

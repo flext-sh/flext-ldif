@@ -73,13 +73,13 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         if not attr_data.metadata:
             return
         if target_values["syntax_oid"]:
-            attr_data.metadata.extensions[
-                c.Ldif.MetadataKeys.SCHEMA_TARGET_SYNTAX_OID
-            ] = target_values["syntax_oid"]
+            attr_data.metadata.extensions[c.Ldif.SCHEMA_TARGET_SYNTAX_OID] = (
+                target_values["syntax_oid"]
+            )
         if target_values["name"]:
-            attr_data.metadata.extensions[
-                c.Ldif.MetadataKeys.SCHEMA_TARGET_ATTRIBUTE_NAME
-            ] = target_values["name"]
+            attr_data.metadata.extensions[c.Ldif.SCHEMA_TARGET_ATTRIBUTE_NAME] = (
+                target_values["name"]
+            )
         target_rules: dict[str, str] = {}
         if target_values["equality"]:
             target_rules["equality"] = target_values["equality"]
@@ -88,10 +88,10 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         if target_values["ordering"]:
             target_rules["ordering"] = target_values["ordering"]
         if target_rules:
-            attr_data.metadata.extensions[
-                c.Ldif.MetadataKeys.SCHEMA_TARGET_MATCHING_RULES
-            ] = target_rules
-        attr_data.metadata.extensions[c.Ldif.Format.META_TRANSFORMATION_TIMESTAMP] = (
+            attr_data.metadata.extensions[c.Ldif.SCHEMA_TARGET_MATCHING_RULES] = (
+                target_rules
+            )
+        attr_data.metadata.extensions[c.Ldif.META_TRANSFORMATION_TIMESTAMP] = (
             u.generate_iso_timestamp()
         )
 
@@ -159,7 +159,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
     ) -> r[m.Ldif.SchemaObjectClass]:
         """Hook: Transform parsed objectClass using OID-specific normalizations."""
         try:
-            key = c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT
+            key = c.Ldif.SCHEMA_ORIGINAL_FORMAT
             original_format_str = (
                 str(oc.metadata.extensions.get(key, ""))
                 if oc.metadata and oc.metadata.extensions
@@ -299,15 +299,13 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             if not attr_data.metadata:
                 attr_data.metadata = self.create_metadata(attr_definition.strip())
             if attr_data.metadata:
+                attr_data.metadata.extensions[c.Ldif.SCHEMA_ORIGINAL_FORMAT] = (
+                    attr_definition.strip()
+                )
                 attr_data.metadata.extensions[
-                    c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT
-                ] = attr_definition.strip()
-                attr_data.metadata.extensions[
-                    c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_STRING_COMPLETE
+                    c.Ldif.SCHEMA_ORIGINAL_STRING_COMPLETE
                 ] = attr_definition
-                attr_data.metadata.extensions[
-                    c.Ldif.MetadataKeys.SCHEMA_SOURCE_SERVER
-                ] = "oid"
+                attr_data.metadata.extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = "oid"
                 metadata_public = m.Ldif.QuirkMetadata.model_validate(
                     attr_data.metadata.model_dump(),
                 )
@@ -332,15 +330,15 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             if not result.is_success:
                 return result
             oc_data = result.value
-            key = c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT
+            key = c.Ldif.SCHEMA_ORIGINAL_FORMAT
             if not oc_data.metadata:
                 oc_data.metadata = self.create_metadata(oc_definition.strip())
             elif not oc_data.metadata.extensions.get(key):
                 oc_data.metadata.extensions[key] = oc_definition.strip()
             if oc_data.metadata:
-                oc_data.metadata.extensions[
-                    c.Ldif.Format.META_TRANSFORMATION_TIMESTAMP
-                ] = u.generate_iso_timestamp()
+                oc_data.metadata.extensions[c.Ldif.META_TRANSFORMATION_TIMESTAMP] = (
+                    u.generate_iso_timestamp()
+                )
             return r[m.Ldif.SchemaObjectClass].ok(oc_data)
         except (
             ValueError,
@@ -444,14 +442,14 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 normalized_substr=normalized_substr or "",
             )
             original_format: str | None = None
-            key = c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT
+            key = c.Ldif.SCHEMA_ORIGINAL_FORMAT
             if (
                 attr_data.metadata
                 and attr_data.metadata.extensions
                 and (key in attr_data.metadata.extensions)
             ):
                 original_format_raw = attr_data.metadata.extensions.get(
-                    c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT,
+                    c.Ldif.SCHEMA_ORIGINAL_FORMAT,
                 )
                 if isinstance(original_format_raw, str):
                     original_format = original_format_raw
@@ -462,9 +460,9 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 update={"equality": normalized_equality, "substr": normalized_substr},
             )
             if original_format and transformed.metadata:
-                transformed.metadata.extensions[
-                    c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT
-                ] = original_format
+                transformed.metadata.extensions[c.Ldif.SCHEMA_ORIGINAL_FORMAT] = (
+                    original_format
+                )
             return transformed
         return attr_data
 
@@ -476,10 +474,10 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         source_syntax = None
         if attr_copy.metadata and attr_copy.metadata.extensions:
             source_rules = attr_copy.metadata.extensions.get(
-                c.Ldif.MetadataKeys.SCHEMA_SOURCE_MATCHING_RULES,
+                c.Ldif.SCHEMA_SOURCE_MATCHING_RULES,
             )
             source_syntax = attr_copy.metadata.extensions.get(
-                c.Ldif.MetadataKeys.SCHEMA_SOURCE_SYNTAX_OID,
+                c.Ldif.SCHEMA_SOURCE_SYNTAX_OID,
             )
         if isinstance(source_rules, Mapping):
             equality_raw = source_rules.get("equality", attr_copy.equality)
@@ -511,7 +509,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             oid_syntax = str(attr_copy.syntax) if attr_copy.syntax else None
         oid_metadata = attr_copy.metadata
         if attr_copy.metadata and attr_copy.metadata.extensions:
-            keys_to_remove = {c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_FORMAT}
+            keys_to_remove = {c.Ldif.SCHEMA_ORIGINAL_FORMAT}
             new_extensions = {
                 k: v
                 for k, v in attr_copy.metadata.extensions.items()

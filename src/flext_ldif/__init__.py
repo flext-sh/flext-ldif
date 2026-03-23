@@ -24,30 +24,12 @@ if TYPE_CHECKING:
         __version__,
         __version_info__,
     )
-    from flext_ldif._models._models import (
-        ConvertToBool,
-        ConvertToDict,
-        ConvertToFloat,
-        ConvertToInt,
-        ConvertToList,
-        ConvertToStr,
-        ConvertToTuple,
-    )
-    from flext_ldif._models.base import (
-        AclElement,
-        FlextLdifModelsBase,
-        FlextLdifModelsBases,
-        FrozenIgnoreLdifModel,
-        FrozenLdifModel,
-        MutableIgnoreLdifModel,
-        SchemaElement,
-    )
+    from flext_ldif._models.base import FlextLdifModelsBases
     from flext_ldif._models.collections import FlextLdifModelsCollections
     from flext_ldif._models.conversion import FlextLdifModelsConversions
     from flext_ldif._models.domain import FlextLdifModelsDomains
-    from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
-    from flext_ldif._models.domain_operations import FlextLdifModelsDomainOperations
-    from flext_ldif._models.domain_schema import SchemaDiscovery, SchemaLookup
+    from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
+    from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema
     from flext_ldif._models.events import FlextLdifModelsEvents
     from flext_ldif._models.metadata import FlextLdifModelsMetadata
     from flext_ldif._models.processing import FlextLdifModelsProcessing
@@ -61,8 +43,10 @@ if TYPE_CHECKING:
         TransformConfigBuilder,
         WriteConfigBuilder,
     )
+    from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
     from flext_ldif._utilities.decorators import FlextLdifUtilitiesDecorators
     from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
+    from flext_ldif._utilities.dispatch import FlextLdifUtilitiesDispatch
     from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
     from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
     from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
@@ -82,8 +66,9 @@ if TYPE_CHECKING:
         OrFilter,
     )
     from flext_ldif._utilities.fluent import DnOps, EntryOps
-    from flext_ldif._utilities.functional import FlextFunctional, f
+    from flext_ldif._utilities.functional import FlextLdifUtilitiesFunctional, f
     from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
+    from flext_ldif._utilities.normalization import FlextLdifUtilitiesNormalization
     from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
     from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
     from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
@@ -94,6 +79,7 @@ if TYPE_CHECKING:
         ValidationPipeline,
         ValidationResult,
     )
+    from flext_ldif._utilities.processing import FlextLdifUtilitiesProcessing
     from flext_ldif._utilities.result import FlextLdifUtilitiesResult
     from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
     from flext_ldif._utilities.server import FlextLdifUtilitiesServer
@@ -182,7 +168,6 @@ if TYPE_CHECKING:
     from flext_ldif.utilities import FlextLdifUtilities, FlextLdifUtilities as u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "AclElement": ("flext_ldif._models.base", "AclElement"),
     "AndFilter": ("flext_ldif._utilities.filters", "AndFilter"),
     "ByAttrValueFilter": ("flext_ldif._utilities.filters", "ByAttrValueFilter"),
     "ByAttrsFilter": ("flext_ldif._utilities.filters", "ByAttrsFilter"),
@@ -193,13 +178,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._utilities.transformers",
         "ConvertBooleansTransformer",
     ),
-    "ConvertToBool": ("flext_ldif._models._models", "ConvertToBool"),
-    "ConvertToDict": ("flext_ldif._models._models", "ConvertToDict"),
-    "ConvertToFloat": ("flext_ldif._models._models", "ConvertToFloat"),
-    "ConvertToInt": ("flext_ldif._models._models", "ConvertToInt"),
-    "ConvertToList": ("flext_ldif._models._models", "ConvertToList"),
-    "ConvertToStr": ("flext_ldif._models._models", "ConvertToStr"),
-    "ConvertToTuple": ("flext_ldif._models._models", "ConvertToTuple"),
     "CustomFilter": ("flext_ldif._utilities.filters", "CustomFilter"),
     "CustomTransformer": ("flext_ldif._utilities.transformers", "CustomTransformer"),
     "DnOps": ("flext_ldif._utilities.fluent", "DnOps"),
@@ -211,7 +189,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FilterAttrsTransformer",
     ),
     "FilterConfigBuilder": ("flext_ldif._utilities.builders", "FilterConfigBuilder"),
-    "FlextFunctional": ("flext_ldif._utilities.functional", "FlextFunctional"),
     "FlextLdif": ("flext_ldif.api", "FlextLdif"),
     "FlextLdifAcl": ("flext_ldif.services.acl", "FlextLdifAcl"),
     "FlextLdifAnalysis": ("flext_ldif.services.analysis", "FlextLdifAnalysis"),
@@ -230,7 +207,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextLdifMigrationPipeline",
     ),
     "FlextLdifModels": ("flext_ldif.models", "FlextLdifModels"),
-    "FlextLdifModelsBase": ("flext_ldif._models.base", "FlextLdifModelsBase"),
     "FlextLdifModelsBases": ("flext_ldif._models.base", "FlextLdifModelsBases"),
     "FlextLdifModelsCollections": (
         "flext_ldif._models.collections",
@@ -240,15 +216,15 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._models.conversion",
         "FlextLdifModelsConversions",
     ),
-    "FlextLdifModelsDomainAttributes": (
-        "flext_ldif._models.domain_attributes",
-        "FlextLdifModelsDomainAttributes",
-    ),
-    "FlextLdifModelsDomainOperations": (
-        "flext_ldif._models.domain_operations",
-        "FlextLdifModelsDomainOperations",
+    "FlextLdifModelsDomainSchema": (
+        "flext_ldif._models.domain_schema",
+        "FlextLdifModelsDomainSchema",
     ),
     "FlextLdifModelsDomains": ("flext_ldif._models.domain", "FlextLdifModelsDomains"),
+    "FlextLdifModelsDomainsEntries": (
+        "flext_ldif._models.domain_entries",
+        "FlextLdifModelsDomainsEntries",
+    ),
     "FlextLdifModelsEvents": ("flext_ldif._models.events", "FlextLdifModelsEvents"),
     "FlextLdifModelsMetadata": (
         "flext_ldif._models.metadata",
@@ -377,6 +353,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._utilities.attribute",
         "FlextLdifUtilitiesAttribute",
     ),
+    "FlextLdifUtilitiesCollectionLdif": (
+        "flext_ldif._utilities.collection_ldif",
+        "FlextLdifUtilitiesCollectionLdif",
+    ),
     "FlextLdifUtilitiesDN": ("flext_ldif._utilities.dn", "FlextLdifUtilitiesDN"),
     "FlextLdifUtilitiesDecorators": (
         "flext_ldif._utilities.decorators",
@@ -385,6 +365,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifUtilitiesDetection": (
         "flext_ldif._utilities.detection",
         "FlextLdifUtilitiesDetection",
+    ),
+    "FlextLdifUtilitiesDispatch": (
+        "flext_ldif._utilities.dispatch",
+        "FlextLdifUtilitiesDispatch",
     ),
     "FlextLdifUtilitiesEntry": (
         "flext_ldif._utilities.entry",
@@ -398,9 +382,17 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._utilities.filters",
         "FlextLdifUtilitiesFilters",
     ),
+    "FlextLdifUtilitiesFunctional": (
+        "flext_ldif._utilities.functional",
+        "FlextLdifUtilitiesFunctional",
+    ),
     "FlextLdifUtilitiesMetadata": (
         "flext_ldif._utilities.metadata",
         "FlextLdifUtilitiesMetadata",
+    ),
+    "FlextLdifUtilitiesNormalization": (
+        "flext_ldif._utilities.normalization",
+        "FlextLdifUtilitiesNormalization",
     ),
     "FlextLdifUtilitiesOID": ("flext_ldif._utilities.oid", "FlextLdifUtilitiesOID"),
     "FlextLdifUtilitiesObjectClass": (
@@ -414,6 +406,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifUtilitiesParsers": (
         "flext_ldif._utilities.parsers",
         "FlextLdifUtilitiesParsers",
+    ),
+    "FlextLdifUtilitiesProcessing": (
+        "flext_ldif._utilities.processing",
+        "FlextLdifUtilitiesProcessing",
     ),
     "FlextLdifUtilitiesResult": (
         "flext_ldif._utilities.result",
@@ -452,13 +448,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextLdifValidation",
     ),
     "FlextLdifWriter": ("flext_ldif.services.writer", "FlextLdifWriter"),
-    "FrozenIgnoreLdifModel": ("flext_ldif._models.base", "FrozenIgnoreLdifModel"),
-    "FrozenLdifModel": ("flext_ldif._models.base", "FrozenLdifModel"),
     "IsSchemaFlextLdifUtilitiesFilters": (
         "flext_ldif._utilities.filters",
         "IsSchemaFlextLdifUtilitiesFilters",
     ),
-    "MutableIgnoreLdifModel": ("flext_ldif._models.base", "MutableIgnoreLdifModel"),
     "Normalize": ("flext_ldif._utilities.transformers", "Normalize"),
     "NormalizeAttrsTransformer": (
         "flext_ldif._utilities.transformers",
@@ -483,9 +476,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._utilities.transformers",
         "ReplaceBaseDnTransformer",
     ),
-    "SchemaDiscovery": ("flext_ldif._models.domain_schema", "SchemaDiscovery"),
-    "SchemaElement": ("flext_ldif._models.base", "SchemaElement"),
-    "SchemaLookup": ("flext_ldif._models.domain_schema", "SchemaLookup"),
     "ServerTransformer": ("flext_ldif.services.transformers", "ServerTransformer"),
     "Transform": ("flext_ldif._utilities.transformers", "Transform"),
     "TransformConfigBuilder": (
@@ -524,7 +514,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 }
 
 __all__ = [
-    "AclElement",
     "AndFilter",
     "ByAttrValueFilter",
     "ByAttrsFilter",
@@ -532,13 +521,6 @@ __all__ = [
     "ByDnUnderBaseFilter",
     "ByObjectClassFilter",
     "ConvertBooleansTransformer",
-    "ConvertToBool",
-    "ConvertToDict",
-    "ConvertToFloat",
-    "ConvertToInt",
-    "ConvertToList",
-    "ConvertToStr",
-    "ConvertToTuple",
     "CustomFilter",
     "CustomTransformer",
     "DnOps",
@@ -547,7 +529,6 @@ __all__ = [
     "Filter",
     "FilterAttrsTransformer",
     "FilterConfigBuilder",
-    "FlextFunctional",
     "FlextLdif",
     "FlextLdifAcl",
     "FlextLdifAnalysis",
@@ -560,13 +541,12 @@ __all__ = [
     "FlextLdifFilters",
     "FlextLdifMigrationPipeline",
     "FlextLdifModels",
-    "FlextLdifModelsBase",
     "FlextLdifModelsBases",
     "FlextLdifModelsCollections",
     "FlextLdifModelsConversions",
-    "FlextLdifModelsDomainAttributes",
-    "FlextLdifModelsDomainOperations",
+    "FlextLdifModelsDomainSchema",
     "FlextLdifModelsDomains",
+    "FlextLdifModelsDomainsEntries",
     "FlextLdifModelsEvents",
     "FlextLdifModelsMetadata",
     "FlextLdifModelsProcessing",
@@ -620,17 +600,22 @@ __all__ = [
     "FlextLdifUtilities",
     "FlextLdifUtilitiesACL",
     "FlextLdifUtilitiesAttribute",
+    "FlextLdifUtilitiesCollectionLdif",
     "FlextLdifUtilitiesDN",
     "FlextLdifUtilitiesDecorators",
     "FlextLdifUtilitiesDetection",
+    "FlextLdifUtilitiesDispatch",
     "FlextLdifUtilitiesEntry",
     "FlextLdifUtilitiesEvents",
     "FlextLdifUtilitiesFilters",
+    "FlextLdifUtilitiesFunctional",
     "FlextLdifUtilitiesMetadata",
+    "FlextLdifUtilitiesNormalization",
     "FlextLdifUtilitiesOID",
     "FlextLdifUtilitiesObjectClass",
     "FlextLdifUtilitiesParser",
     "FlextLdifUtilitiesParsers",
+    "FlextLdifUtilitiesProcessing",
     "FlextLdifUtilitiesResult",
     "FlextLdifUtilitiesSchema",
     "FlextLdifUtilitiesServer",
@@ -641,10 +626,7 @@ __all__ = [
     "FlextLdifUtilitiesWriters",
     "FlextLdifValidation",
     "FlextLdifWriter",
-    "FrozenIgnoreLdifModel",
-    "FrozenLdifModel",
     "IsSchemaFlextLdifUtilitiesFilters",
-    "MutableIgnoreLdifModel",
     "Normalize",
     "NormalizeAttrsTransformer",
     "NormalizeDnTransformer",
@@ -657,9 +639,6 @@ __all__ = [
     "QuirkMethodsMixin",
     "RemoveAttrsTransformer",
     "ReplaceBaseDnTransformer",
-    "SchemaDiscovery",
-    "SchemaElement",
-    "SchemaLookup",
     "ServerTransformer",
     "Transform",
     "TransformConfigBuilder",

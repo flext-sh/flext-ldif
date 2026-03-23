@@ -257,7 +257,7 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
         @staticmethod
         def parse_components(dn: str) -> r[list[tuple[str, str]]]:
             """Parse DN into RFC 4514 compliant components."""
-            return FlextLdifUtilitiesDN.parse(dn)
+            return FlextLdifUtilitiesDN.parse_dn(dn)
 
         @staticmethod
         def parse_operation(dn: str) -> r[str]:
@@ -283,7 +283,7 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
         @staticmethod
         def validate_format(dn: str) -> r[bool]:
             """Validate DN format against RFC 4514."""
-            is_valid = FlextLdifUtilitiesDN.validate(dn)
+            is_valid = FlextLdifUtilitiesDN.validate_dn(dn)
             return r[bool].ok(is_valid)
 
         @staticmethod

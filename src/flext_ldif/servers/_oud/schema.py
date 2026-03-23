@@ -118,7 +118,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         current_extensions = (
             dict(existing_metadata.extensions) if existing_metadata.extensions else {}
         )
-        current_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = is_valid_oud_oid
+        current_extensions[c.Ldif.SYNTAX_OID_VALID] = is_valid_oud_oid
         if oid_str.endswith("-oid"):
             current_extensions["oid_format_extension"] = True
         return attr.model_copy(
@@ -165,7 +165,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         current_extensions = (
             dict(existing_metadata.extensions) if existing_metadata.extensions else {}
         )
-        current_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = is_valid_oud_oid
+        current_extensions[c.Ldif.SYNTAX_OID_VALID] = is_valid_oud_oid
         if oid.endswith("-oid"):
             current_extensions["oid_format_extension"] = True
         attr = attr.model_copy(
@@ -277,7 +277,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                 if existing_oc_metadata.extensions
                 else {}
             )
-            oc_extensions[c.Ldif.MetadataKeys.SYNTAX_OID_VALID] = is_valid_oud_oid
+            oc_extensions[c.Ldif.SYNTAX_OID_VALID] = is_valid_oud_oid
             if oid_str.endswith("-oid"):
                 oc_extensions["oid_format_extension"] = True
             oc = oc.model_copy(
