@@ -207,13 +207,14 @@ if TYPE_CHECKING:
     from tests.protocols import FlextLdifTestProtocols, FlextLdifTestProtocols as p
     from tests.support.conftest_factory import FlextLdifTestConftest, tk
     from tests.support.ldif_data import LdifSample, LdifTestData
-    from tests.support.real_services import FlextLdifTestFactory
+    from tests.support.real_services import FlextLdifTestServiceFactory
     from tests.support.test_files import FileManager
     from tests.support.validators import (
         MockFlextUtilitiesResultHelpers,
         MockMatchers,
         TestValidators,
     )
+    from tests.test_factory import FlextLdifTestFactory
     from tests.test_helpers import (
         TestsFlextLdifMatchers,
         TestsFlextLdifTypes,
@@ -396,7 +397,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextLdifTestConftest",
     ),
     "FlextLdifTestConstants": ("tests.constants", "FlextLdifTestConstants"),
-    "FlextLdifTestFactory": ("tests.support.real_services", "FlextLdifTestFactory"),
+    "FlextLdifTestFactory": ("tests.test_factory", "FlextLdifTestFactory"),
+    "FlextLdifTestServiceFactory": ("tests.support.real_services", "FlextLdifTestServiceFactory"),
     "FlextLdifTestModels": ("tests.models", "FlextLdifTestModels"),
     "FlextLdifTestProtocols": ("tests.protocols", "FlextLdifTestProtocols"),
     "FlextLdifTestTypes": ("tests.typings", "FlextLdifTestTypes"),
@@ -1131,6 +1133,7 @@ __all__ = [
     "FlextLdifTestFactory",
     "FlextLdifTestModels",
     "FlextLdifTestProtocols",
+    "FlextLdifTestServiceFactory",
     "FlextLdifTestTypes",
     "FlextLdifTestUtilities",
     "FlextLdifTestsServiceBase",

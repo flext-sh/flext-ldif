@@ -38,7 +38,7 @@ from tests import t, u
 
 from ..conftest import FlextLdifFixtures
 from .ldif_data import LdifTestData
-from .real_services import FlextLdifTestFactory
+from .real_services import FlextLdifTestServiceFactory
 from .test_files import FileManager
 from .validators import TestValidators
 
@@ -335,15 +335,15 @@ class FlextLdifTestConftest:
 
     def real_ldif_api(self) -> dict[str, t.NormalizedValue]:
         """Real LDIF API services."""
-        return FlextLdifTestFactory.create_api()
+        return FlextLdifTestServiceFactory.create_api()
 
     def strict_ldif_api(self) -> dict[str, t.NormalizedValue]:
         """Strict LDIF API services."""
-        return FlextLdifTestFactory.create_strict_api()
+        return FlextLdifTestServiceFactory.create_strict_api()
 
     def lenient_ldif_api(self) -> dict[str, t.NormalizedValue]:
         """Lenient LDIF API services."""
-        return FlextLdifTestFactory.create_lenient_api()
+        return FlextLdifTestServiceFactory.create_lenient_api()
 
     def ldif_test_data(self) -> LdifTestData:
         """LDIF test data provider."""
@@ -409,15 +409,15 @@ class FlextLdifTestConftest:
 
     def real_parser_service(self, quirk_registry: FlextLdifServer) -> FlextLdifParser:
         """Real parser service."""
-        return FlextLdifTestFactory.create_parser()
+        return FlextLdifTestServiceFactory.create_parser()
 
     def real_writer_service(self, quirk_registry: FlextLdifServer) -> FlextLdifWriter:
         """Real writer service."""
-        return FlextLdifTestFactory.create_writer(quirk_registry=quirk_registry)
+        return FlextLdifTestServiceFactory.create_writer(quirk_registry=quirk_registry)
 
     def integration_services(self) -> dict[str, t.NormalizedValue]:
         """Integration services."""
-        return FlextLdifTestFactory.services_for_integration_test()
+        return FlextLdifTestServiceFactory.services_for_integration_test()
 
     def assert_result_success(self) -> Callable[..., None]:
         """Result success assertion."""

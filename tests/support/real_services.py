@@ -19,7 +19,7 @@ from flext_ldif import (
 from tests import t
 
 
-class FlextLdifTestFactory:
+class FlextLdifTestServiceFactory:
     """RFC-first service factory for testing."""
 
     class _RfcParserFactory:
