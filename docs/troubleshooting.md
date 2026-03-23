@@ -1,7 +1,6 @@
 # FLEXT-LDIF Troubleshooting
 
 <!-- TOC START -->
-
 - [Common Issues and Solutions](#common-issues-and-solutions)
   - [Parse Errors](#parse-errors)
   - [Memory Issues](#memory-issues)
@@ -15,7 +14,6 @@
   - [Support Resources](#support-resources)
   - [Creating Support Requests](#creating-support-requests)
   - [Emergency Contacts](#emergency-contacts)
-
 <!-- TOC END -->
 
 **Version**: 0.9.9 RC | **Updated**: September 17, 2025

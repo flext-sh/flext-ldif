@@ -1,7 +1,6 @@
 # FLEXT-LDIF Development Guide
 
 <!-- TOC START -->
-
 - [Development Environment Setup](#development-environment-setup)
   - [Prerequisites](#prerequisites)
   - [Initial Setup](#initial-setup)
@@ -22,7 +21,6 @@
   - [LDIF Format Edge Cases](#ldif-format-edge-cases)
   - [Memory Debugging](#memory-debugging)
 - [Integration with FLEXT Ecosystem](#integration-with-flext-ecosystem)
-
 <!-- TOC END -->
 
 **Version**: 0.9.9 RC | **Updated**: September 17, 2025

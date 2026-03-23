@@ -1,7 +1,6 @@
 # Server API Usage Pattern - Padrão Correto
 
 <!-- TOC START -->
-
 - [❌ PADRÃO INCORRETO (Deprecado)](#padro-incorreto-deprecado)
 - [✅ PADRÃO CORRETO (Obrigatório)](#padro-correto-obrigatrio)
 - [📝 Uso em Testes (Fixtures)](#uso-em-testes-fixtures)
@@ -15,7 +14,6 @@
 - [🎯 Servers Disponíveis via API](#servers-disponveis-via-api)
 - [🔍 Verificação](#verificao)
 - [📚 Referências](#referncias)
-
 <!-- TOC END -->
 
 **Data**: 2025-11-18

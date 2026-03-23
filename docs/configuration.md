@@ -1,7 +1,6 @@
 # FLEXT-LDIF Configuration
 
 <!-- TOC START -->
-
 - [Configuration Overview](#configuration-overview)
 - [Configuration Models](#configuration-models)
   - [FlextLdifModels.Config](#flextldifmodelsconfig)
@@ -29,7 +28,6 @@
 - [Configuration Reference](#configuration-reference)
   - [Complete Configuration Options](#complete-configuration-options)
   - [Environment Variable Mapping](#environment-variable-mapping)
-
 <!-- TOC END -->
 
 **Version**: 0.9.9 RC | **Updated**: September 17, 2025

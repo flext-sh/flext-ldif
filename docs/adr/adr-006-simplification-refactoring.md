@@ -1,7 +1,6 @@
 # ADR-006: Library Simplification and Deduplication
 
 <!-- TOC START -->
-
 - [Context](#context)
   - [**Structural Issues**](#structural-issues)
   - [**Over-Engineering**](#over-engineering)
@@ -27,7 +26,6 @@
 - [Validation Criteria](#validation-criteria)
 - [References](#references)
 - [Notes](#notes)
-
 <!-- TOC END -->
 
 **Date**: 2025-01-24

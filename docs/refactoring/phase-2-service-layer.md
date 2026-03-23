@@ -1,7 +1,6 @@
 # Phase 2: Proper Service Layer Implementation
 
 <!-- TOC START -->
-
 - [Overview](#overview)
 - [Current Architecture Problem](#current-architecture-problem)
   - [As Is](#as-is)
@@ -22,7 +21,6 @@
   - [Step 4: Deprecate nested classes](#step-4-deprecate-nested-classes)
 - [Success Criteria](#success-criteria)
 - [Related Documentation](#related-documentation)
-
 <!-- TOC END -->
 
 ## Overview

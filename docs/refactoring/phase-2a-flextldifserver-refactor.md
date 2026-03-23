@@ -1,7 +1,6 @@
 # Phase 2.A: FlextLdifServer Refactoring to Thin & DRY
 
 <!-- TOC START -->
-
 - [Overview](#overview)
 - [Key Changes](#key-changes)
   - [1. Eliminated 100+ Lines of DRY Violations](#1-eliminated-100-lines-of-dry-violations)
@@ -25,7 +24,6 @@
 - [Why Not Create Separate Service Classes](#why-not-create-separate-service-classes)
 - [Next Steps (Phase 2.B+)](#next-steps-phase-2b)
 - [Success Criteria Met](#success-criteria-met)
-
 <!-- TOC END -->
 
 **Status**: COMPLETE ✓

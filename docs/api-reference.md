@@ -1,7 +1,6 @@
 # FLEXT-LDIF API Reference
 
 <!-- TOC START -->
-
 - [🎯 Library Overview](#library-overview)
   - [Generic RFC-Based Architecture with ZERO Bypass Paths](#generic-rfc-based-architecture-with-zero-bypass-paths)
 - [Core API Classes](#core-api-classes)
@@ -16,7 +15,7 @@
   - [Global Configuration](#global-configuration)
   - [Instance Configuration](#instance-configuration)
 - [Error Handling](#error-handling)
-  - [r Integration](#flextresult-integration)
+  - [r Integration](#r-integration)
   - [Exception Types](#exception-types)
 - [⚠️ Library-Only Usage](#library-only-usage)
 - [Advanced Usage Patterns](#advanced-usage-patterns)
@@ -39,7 +38,6 @@
   - [Railway-Oriented Pipeline](#railway-oriented-pipeline)
   - [Supported LDAP Servers](#supported-ldap-servers)
 - [Related Documentation](#related-documentation)
-
 <!-- TOC END -->
 
 **Version**: 0.9.9 | **Updated**: October 10, 2025

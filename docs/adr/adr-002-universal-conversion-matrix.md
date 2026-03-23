@@ -1,9 +1,7 @@
 # ADR-002: Universal Conversion Matrix Architecture
 
 <!-- TOC START -->
-
 - No sections found
-
 <!-- TOC END -->
 
 **Status**: Accepted

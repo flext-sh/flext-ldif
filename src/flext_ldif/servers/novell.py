@@ -307,8 +307,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                         parts = segment_str.split(":")
                         if parts[0].strip():
                             attr_name = parts[0].strip()
-                            if attr_name.lower() not in u.values(
-                                c.Ldif.RfcAclPermission,
+                            if attr_name.lower() not in u.enum_values(
+                                c.Ldif.RfcAclPermission
                             ):
                                 attributes.append(attr_name)
                 acl = m.Ldif.Acl(

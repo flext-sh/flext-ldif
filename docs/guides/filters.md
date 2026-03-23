@@ -1,7 +1,6 @@
 # FLEXT LDIF Filters Service - Universal Entry Filtering and Categorization Engine
 
 <!-- TOC START -->
-
 - [Features](#features)
 - [Usage Examples](#usage-examples)
   - [Pattern 1: Direct Classmethod API (Simplified)](#pattern-1-direct-classmethod-api-simplified)
@@ -12,7 +11,6 @@
   - [Pattern 6: Schema & Advanced Operations](#pattern-6-schema-advanced-operations)
 - [Quick Reference](#quick-reference)
 - [See Also](#see-also)
-
 <!-- TOC END -->
 
 ## Features

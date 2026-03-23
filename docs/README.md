@@ -1,7 +1,6 @@
 # FLEXT-LDIF Documentation
 
 <!-- TOC START -->
-
 - [🎯 Library Overview](#library-overview)
 - [Documentation Structure](#documentation-structure)
 - [📚 Documentation Categories](#documentation-categories)
@@ -36,7 +35,6 @@
   - [Usability Indicators](#usability-indicators)
   - [Technical Quality](#technical-quality)
 - [🤝 Contributing to Documentation](#contributing-to-documentation)
-
 <!-- TOC END -->
 
 **Version**: 0.9.9 RC | **Updated**: October 10, 2025 | **Status**: RFC-first LDIF Processing with Server Quirks · Production-Ready

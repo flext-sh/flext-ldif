@@ -1,7 +1,6 @@
 # Getting Started with FLEXT-LDIF
 
 <!-- TOC START -->
-
 - [Prerequisites](#prerequisites)
   - [System Requirements](#system-requirements)
   - [FLEXT Ecosystem Dependencies](#flext-ecosystem-dependencies)
@@ -28,7 +27,6 @@
   - [Getting Help](#getting-help)
 - [Next Steps](#next-steps)
 - [Related Documentation](#related-documentation)
-
 <!-- TOC END -->
 
 **Version**: 0.9.9 RC | **Updated**: October 10, 2025

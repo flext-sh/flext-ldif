@@ -1,7 +1,6 @@
 # Phase 2.1 - Parser Service Extraction
 
 <!-- TOC START -->
-
 - [Overview](#overview)
 - [Operations Extracted](#operations-extracted)
   - [1. `parse()` - Unified parsing with single/batch/pagination support](#1-parse-unified-parsing-with-singlebatchpagination-support)
@@ -34,7 +33,6 @@
 - [Next Steps](#next-steps)
 - [Related Phases](#related-phases)
 - [Success Criteria](#success-criteria)
-
 <!-- TOC END -->
 
 **Date**: 2025-01-29

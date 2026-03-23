@@ -1,11 +1,10 @@
 # flext-ldif: parse() and format_acl() Usage Locations
 
 <!-- TOC START -->
-
 - [SUMMARY](#summary)
 - [1. METHOD DEFINITIONS](#1-method-definitions)
   - [Base Class Definition](#base-class-definition)
-  - [Definition](#protocol-definition)
+  - [Protocol Definition](#protocol-definition)
 - [2. SERVER QUIRKS IMPLEMENTATIONS](#2-server-quirks-implementations)
   - [13 Server Quirks Classes Implementing parse()](#13-server-quirks-classes-implementing-parse)
   - [Implementation Pattern](#implementation-pattern)
@@ -30,7 +29,6 @@
 - [9. ECOSYSTEM IMPACT](#9-ecosystem-impact)
   - [Projects Using flext-ldif](#projects-using-flext-ldif)
 - [CONCLUSION](#conclusion)
-
 <!-- TOC END -->
 
 **Analysis Date**: 2025-10-28

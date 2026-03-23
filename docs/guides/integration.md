@@ -1,9 +1,8 @@
 # FLEXT-LDIF Ecosystem Integration
 
 <!-- TOC START -->
-
 - [LDIF Processing Integration](#ldif-processing-integration)
-  - [Core LDIF Operations with r](#core-ldif-operations-with-flextresult)
+  - [Core LDIF Operations with r](#core-ldif-operations-with-r)
   - [Memory-Aware LDIF Processing](#memory-aware-ldif-processing)
 - [Enterprise Directory Migration Integration](#enterprise-directory-migration-integration)
   - [FLEXT Oracle Unified Directory Migration](#flext-oracle-unified-directory-migration)
@@ -19,7 +18,6 @@
 - [Performance Considerations](#performance-considerations)
   - [Current Implementation Limitations](#current-implementation-limitations)
   - [Recommended Usage Patterns](#recommended-usage-patterns)
-
 <!-- TOC END -->
 
 **Version**: 0.9.9 RC | **Updated**: September 17, 2025
