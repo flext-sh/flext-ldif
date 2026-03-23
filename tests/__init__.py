@@ -398,7 +398,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextLdifTestConstants": ("tests.constants", "FlextLdifTestConstants"),
     "FlextLdifTestFactory": ("tests.test_factory", "FlextLdifTestFactory"),
-    "FlextLdifTestServiceFactory": ("tests.support.real_services", "FlextLdifTestServiceFactory"),
+    "FlextLdifTestServiceFactory": (
+        "tests.support.real_services",
+        "FlextLdifTestServiceFactory",
+    ),
     "FlextLdifTestModels": ("tests.models", "FlextLdifTestModels"),
     "FlextLdifTestProtocols": ("tests.protocols", "FlextLdifTestProtocols"),
     "FlextLdifTestTypes": ("tests.typings", "FlextLdifTestTypes"),

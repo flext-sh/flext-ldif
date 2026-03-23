@@ -33,7 +33,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.support.conftest_factory",
         "FlextLdifTestConftest",
     ),
-    "FlextLdifTestServiceFactory": ("tests.support.real_services", "FlextLdifTestServiceFactory"),
+    "FlextLdifTestServiceFactory": (
+        "tests.support.real_services",
+        "FlextLdifTestServiceFactory",
+    ),
     "LdifSample": ("tests.support.ldif_data", "LdifSample"),
     "LdifTestData": ("tests.support.ldif_data", "LdifTestData"),
     "MockFlextUtilitiesResultHelpers": (
