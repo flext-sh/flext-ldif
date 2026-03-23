@@ -11,10 +11,10 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
-    from flext_tests import d, e, h, r, x
+    from flext_tests import d, e, h, r, s, x
 
     from tests import integration, support, unit
-    from tests.base import FlextLdifTestsServiceBase, FlextLdifTestsServiceBase as s
+    from tests.base import FlextLdifTestsServiceBase
     from tests.conftest import (
         FIXTURES_DIR,
         OID_FIXTURES_DIR,
@@ -398,12 +398,12 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextLdifTestConstants": ("tests.constants", "FlextLdifTestConstants"),
     "FlextLdifTestFactory": ("tests.test_factory", "FlextLdifTestFactory"),
+    "FlextLdifTestModels": ("tests.models", "FlextLdifTestModels"),
+    "FlextLdifTestProtocols": ("tests.protocols", "FlextLdifTestProtocols"),
     "FlextLdifTestServiceFactory": (
         "tests.support.real_services",
         "FlextLdifTestServiceFactory",
     ),
-    "FlextLdifTestModels": ("tests.models", "FlextLdifTestModels"),
-    "FlextLdifTestProtocols": ("tests.protocols", "FlextLdifTestProtocols"),
     "FlextLdifTestTypes": ("tests.typings", "FlextLdifTestTypes"),
     "FlextLdifTestUtilities": ("tests.utilities", "FlextLdifTestUtilities"),
     "FlextLdifTestsServiceBase": ("tests.base", "FlextLdifTestsServiceBase"),
@@ -1058,7 +1058,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "real_ldif_user_entry": ("tests.conftest", "real_ldif_user_entry"),
     "rfc_schema_entries": ("tests.integration.conftest", "rfc_schema_entries"),
     "rfc_schema_fixture": ("tests.integration.conftest", "rfc_schema_fixture"),
-    "s": ("tests.base", "FlextLdifTestsServiceBase"),
+    "s": ("flext_tests", "s"),
     "sample_ldif_entries": ("tests.conftest", "sample_ldif_entries"),
     "schema_quirk": ("tests.unit.quirks.servers.test_novell_quirks", "schema_quirk"),
     "schema_service": ("tests.unit.services.test_schema_service", "schema_service"),

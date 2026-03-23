@@ -14,7 +14,7 @@ import re
 import struct
 from collections.abc import Callable, KeysView, Mapping, Sequence, ValuesView
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self, TypedDict, TypeIs, Unpack, override
 
 from flext_core import FlextLogger, m, r
@@ -45,13 +45,6 @@ class FlextLdifModelsDomainsEntries:
     """
 
     _logger = FlextLogger(__name__)
-
-    @staticmethod
-    def _get_u() -> type:
-        """Lazy import utilities to avoid circular dependency."""
-        from flext_ldif import u  # noqa: PLC0415
-
-        return u
 
     @staticmethod
     def _conversion_history_factory() -> list[dict[str, str]]:
@@ -930,7 +923,7 @@ class FlextLdifModelsDomainsEntries:
 
             self.attribute_metadata[str(attribute_name)] = {
                 "status": "deleted",
-                "deleted_at": FlextLdifModelsDomainsEntries._get_u().generate_iso_timestamp(),
+                "deleted_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
                 "deleted_reason": reason,
                 "deleted_by": deleted_by,
                 "original_values": [
@@ -1489,11 +1482,7 @@ class FlextLdifModelsDomainsEntries:
                 or self.subject is not None
                 or self.permissions is not None
             )
-            if acl_is_defined and (
-                not FlextLdifModelsDomainsEntries._get_u().is_string_non_empty(
-                    self.raw_acl
-                )
-            ):
+            if acl_is_defined and not (self.raw_acl and self.raw_acl.strip()):
                 violations.append(
                     "ACL is defined (has target/subject/permissions) but raw_acl is empty",
                 )

@@ -7,24 +7,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
-from typing import TYPE_CHECKING, Annotated, ClassVar, override
+from typing import Annotated, ClassVar, override
 
 from pydantic import ConfigDict, Field
 
-from flext_ldif import FlextLdifModelsBases, FlextLdifModelsMetadata, t
-
-if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModelsDomains
+from flext_ldif import (
+    FlextLdifModelsBases,
+    FlextLdifModelsDomains,
+    FlextLdifModelsMetadata,
+    t,
+)
 
 
 class FlextLdifModelsCollections:
-    @staticmethod
-    def _get_domains() -> type[FlextLdifModelsDomains]:
-        """Lazy import to avoid circular dependency at module load time."""
-        from flext_ldif import FlextLdifModelsDomains  # noqa: PLC0415
-
-        return FlextLdifModelsDomains
-
     class DynamicCounts(FlextLdifModelsBases.Base):
         model_config: ClassVar[ConfigDict] = ConfigDict(
             frozen=False,
@@ -176,7 +171,7 @@ class FlextLdifModelsCollections:
             category: str,
             entries: Sequence[FlextLdifModelsDomains.Entry],
         ) -> None:
-            domains = FlextLdifModelsCollections._get_domains()
+            domains = FlextLdifModelsDomains
             updated_categories = self._entry_categories()
             updated_categories[category] = [
                 domains.Entry.model_validate(entry) for entry in entries
@@ -188,7 +183,7 @@ class FlextLdifModelsCollections:
             category: str,
             entries: Sequence[t.NormalizedValue],
         ) -> None:
-            domains = FlextLdifModelsCollections._get_domains()
+            domains = FlextLdifModelsDomains
             existing = self._entry_categories().get(category, [])
             normalized_entries = [
                 domains.Entry.model_validate(entry) for entry in entries
@@ -199,7 +194,7 @@ class FlextLdifModelsCollections:
             return category in self.categories
 
         def items(self) -> Iterator[tuple[str, list[FlextLdifModelsDomains.Entry]]]:
-            domains = FlextLdifModelsCollections._get_domains()
+            domains = FlextLdifModelsDomains
             for category, values in self.categories.items():
                 yield (
                     category,
@@ -220,12 +215,12 @@ class FlextLdifModelsCollections:
             return default if default is not None else []
 
         def values(self) -> Iterator[list[FlextLdifModelsDomains.Entry]]:
-            domains = FlextLdifModelsCollections._get_domains()
+            domains = FlextLdifModelsDomains
             for values in self._entry_categories().values():
                 yield [domains.Entry.model_validate(v) for v in values]
 
         def _entry_categories(self) -> dict[str, list[FlextLdifModelsDomains.Entry]]:
-            domains = FlextLdifModelsCollections._get_domains()
+            domains = FlextLdifModelsDomains
             return {
                 str(category): [domains.Entry.model_validate(value) for value in values]
                 for category, values in self.categories.items()
