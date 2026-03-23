@@ -13,9 +13,9 @@ if TYPE_CHECKING:
     from flext_core import FlextTypes
     from flext_tests import d, e, h, r, s, x
 
-    from . import integration as integration, support as support, unit as unit
-    from .base import FlextLdifTestsServiceBase
-    from .conftest import (
+    from tests import integration, support, unit
+    from tests.base import FlextLdifTestsServiceBase
+    from tests.conftest import (
         FIXTURES_DIR,
         OID_FIXTURES_DIR,
         FlextLdifFixtures,
@@ -29,14 +29,14 @@ if TYPE_CHECKING:
         sample_ldif_entries,
         temp_file,
     )
-    from .conftest_shared import (
+    from tests.conftest_shared import (
         large_test_dataset,
         parametrized_real_data,
         real_entry,
         real_ldif_content,
     )
-    from .constants import FlextLdifTestConstants, FlextLdifTestConstants as c
-    from .integration.conftest import (
+    from tests.constants import FlextLdifTestConstants, FlextLdifTestConstants as c
+    from tests.integration.conftest import (
         LDAP_ADMIN_DN,
         LDAP_ADMIN_PASSWORD,
         LDAP_BASE_DN,
@@ -89,106 +89,108 @@ if TYPE_CHECKING:
         unique_dn_suffix,
         writer,
     )
-    from .integration.test_acl_metadata_preservation import (
+    from tests.integration.test_acl_metadata_preservation import (
         TestAclRoundTripPreservation,
         TestOidAclMetadataPreservation,
         TestOudAciMetadataPreservation,
     )
-    from .integration.test_api_integration import (
+    from tests.integration.test_api_integration import (
         APIScenarios,
         TestData,
         TestFlextLdifAPIIntegration,
     )
-    from .integration.test_categorization_real_data import TestCategorizationRealData
-    from .integration.test_config_integration import (
+    from tests.integration.test_categorization_real_data import (
+        TestCategorizationRealData,
+    )
+    from tests.integration.test_config_integration import (
         ConfigTestData,
         TestFlextLdifSettingsIntegration,
         logger,
     )
-    from .integration.test_cross_quirk_conversion import (
+    from tests.integration.test_cross_quirk_conversion import (
         TestOidToOudAclConversion,
         TestOidToOudIntegrationConversion,
         TestOidToOudSchemaConversion,
         TestQuirksConversionMatrixFacade,
     )
-    from .integration.test_dn_case_handling import (
+    from tests.integration.test_dn_case_handling import (
         TestDnCaseNormalizationScenarios,
         TestDnCaseRegistry,
     )
-    from .integration.test_edge_cases import (
+    from tests.integration.test_edge_cases import (
         TestBoundaryValues,
         TestEmptyAndMinimalCases,
         TestLargeAndComplexCases,
         TestRoundtripEdgeCases,
         TestUnicodeBoundaries,
     )
-    from .integration.test_error_recovery import (
+    from tests.integration.test_error_recovery import (
         TestEncodingErrors,
         TestIncompleteEntries,
         TestInvalidSchemaDefinitions,
         TestMalformedLdifHandling,
     )
-    from .integration.test_ldif_fixtures_integration import TestsFlextLdifFixtures
-    from .integration.test_minimal_differences_metadata import (
+    from tests.integration.test_ldif_fixtures_integration import TestsFlextLdifFixtures
+    from tests.integration.test_minimal_differences_metadata import (
         TestMinimalDifferencesOidOud,
     )
-    from .integration.test_oid_integration import (
+    from tests.integration.test_oid_integration import (
         TestOidEntryIntegration,
         TestOidRoundTripIntegration,
         TestOidSchemaIntegration,
     )
-    from .integration.test_oud_integration import (
+    from tests.integration.test_oud_integration import (
         TestOudAclIntegration,
         TestOudEntryIntegration,
         TestOudMetadataPreservation,
         TestOudRoundTripIntegration,
         TestOudSchemaIntegration,
     )
-    from .integration.test_oud_to_oid_migration import (
+    from tests.integration.test_oud_to_oid_migration import (
         TestOudToOidAclMigration,
         TestOudToOidEntryMigration,
         TestOudToOidFullMigration,
         TestOudToOidSchemaMigration,
     )
-    from .integration.test_pipeline_integration import TestFlextLdifFacadeWorkflows
-    from .integration.test_quirks_transformations import (
+    from tests.integration.test_pipeline_integration import TestFlextLdifFacadeWorkflows
+    from tests.integration.test_quirks_transformations import (
         TestOidQuirksTransformations,
         TestOudQuirksTransformations,
         TestQuirksPropertyValidation,
         fixtures_dir,
         migration_inputs,
     )
-    from .integration.test_real_ldap_config import (
+    from tests.integration.test_real_ldap_config import (
         TestRealLdapConfigurationFromEnv,
         TestRealLdapRailwayComposition,
     )
-    from .integration.test_real_ldap_crud import (
+    from tests.integration.test_real_ldap_crud import (
         TestRealLdapBatchOperations,
         TestRealLdapCRUD,
     )
-    from .integration.test_real_ldap_export import TestRealLdapExport
-    from .integration.test_real_ldap_import import TestRealLdapImport
-    from .integration.test_real_ldap_roundtrip import TestRealLdapRoundtrip
-    from .integration.test_rfc_docker_real import (
+    from tests.integration.test_real_ldap_export import TestRealLdapExport
+    from tests.integration.test_real_ldap_import import TestRealLdapImport
+    from tests.integration.test_real_ldap_roundtrip import TestRealLdapRoundtrip
+    from tests.integration.test_rfc_docker_real import (
         TestRfcDockerRealData,
         TestRfcIntegrationRealWorld,
     )
-    from .integration.test_rfc_docker_real_integration import (
+    from tests.integration.test_rfc_docker_real_integration import (
         TestRfcExceptionHandlingRealScenarios,
         TestRfcParserRealFixtures,
         TestRfcSchemaParserRealFixtures,
         TestRfcWriterRealFixtures,
     )
-    from .integration.test_simple_ldap import (
+    from tests.integration.test_simple_ldap import (
         test_create_and_export_entry,
         test_ldap_connection,
         test_simple_ldap_search,
     )
-    from .integration.test_systematic_fixture_coverage import (
+    from tests.integration.test_systematic_fixture_coverage import (
         TestSystematicFixtureCoverage,
     )
-    from .integration.test_zero_data_loss_oid_oud import TestZeroDataLossOidOud
-    from .integration.test_zero_data_loss_schema import (
+    from tests.integration.test_zero_data_loss_oid_oud import TestZeroDataLossOidOud
+    from tests.integration.test_zero_data_loss_schema import (
         TestSchemaDeviationsAttributeKeyCasing,
         TestSchemaDeviationsComplete,
         TestSchemaDeviationsMissingSpaces,
@@ -201,18 +203,18 @@ if TYPE_CHECKING:
         TestSchemaDeviationsUtilities,
         TestSchemaDeviationsXOrigin,
     )
-    from .models import FlextLdifTestModels, FlextLdifTestModels as m
-    from .protocols import FlextLdifTestProtocols, FlextLdifTestProtocols as p
-    from .support.conftest_factory import FlextLdifTestConftest, tk
-    from .support.ldif_data import LdifSample, LdifTestData
-    from .support.real_services import FlextLdifTestFactory
-    from .support.test_files import FileManager
-    from .support.validators import (
+    from tests.models import FlextLdifTestModels, FlextLdifTestModels as m
+    from tests.protocols import FlextLdifTestProtocols, FlextLdifTestProtocols as p
+    from tests.support.conftest_factory import FlextLdifTestConftest, tk
+    from tests.support.ldif_data import LdifSample, LdifTestData
+    from tests.support.real_services import FlextLdifTestFactory
+    from tests.support.test_files import FileManager
+    from tests.support.validators import (
         MockFlextUtilitiesResultHelpers,
         MockMatchers,
         TestValidators,
     )
-    from .test_helpers import (
+    from tests.test_helpers import (
         TestsFlextLdifMatchers,
         TestsFlextLdifTypes,
         TestsFlextLdifValidators,
@@ -221,44 +223,44 @@ if TYPE_CHECKING:
         tt,
         tv,
     )
-    from .typings import FlextLdifTestTypes, FlextLdifTestTypes as t, GenericFieldsDict
-    from .unit import (
-        constants as constants,
-        models as models,
-        protocols as protocols,
-        services as services,
-        utilities as utilities,
+    from tests.typings import (
+        FlextLdifTestTypes,
+        FlextLdifTestTypes as t,
+        GenericFieldsDict,
     )
-    from .unit.__init__.test_version import TestsFlextLdifVersion, version_module
-    from .unit._utilities.oid.test_oid_utilities import TestFlextLdifUtilitiesOID
-    from .unit._utilities.parser.test_parser_utilities import (
+    from tests.unit import constants, models, protocols, services, utilities
+    from tests.unit.__init__.test_version import TestsFlextLdifVersion, version_module
+    from tests.unit._utilities.oid.test_oid_utilities import TestFlextLdifUtilitiesOID
+    from tests.unit._utilities.parser.test_parser_utilities import (
         TestFlextLdifUtilitiesParser,
     )
-    from .unit._utilities.server.test_server_utilities import (
+    from tests.unit._utilities.server.test_server_utilities import (
         OidServer,
         OudServer,
         TestFlextLdifUtilitiesServer,
     )
-    from .unit.constants.test_acl_registry import (
+    from tests.unit.constants.test_acl_registry import (
         GetAclAttributesServerType,
         IsAclAttributeType,
         TestsTestFlextLdifAclAttributeRegistry,
     )
-    from .unit.models.test_models import TestFlextLdifModels
-    from .unit.protocols.test_protocols import TestsTestFlextLdifProtocols
-    from .unit.quirks.servers.test_apache_quirks import TestsTestFlextLdifApacheQuirks
-    from .unit.quirks.servers.test_ds389_quirks import (
+    from tests.unit.models.test_models import TestFlextLdifModels
+    from tests.unit.protocols.test_protocols import TestsTestFlextLdifProtocols
+    from tests.unit.quirks.servers.test_apache_quirks import (
+        TestsTestFlextLdifApacheQuirks,
+    )
+    from tests.unit.quirks.servers.test_ds389_quirks import (
         ACL_TEST_CASES,
         AclScenario,
         AclTestCase,
         TestsTestFlextLdifDs389Quirks,
     )
-    from .unit.quirks.servers.test_edge_cases import (
+    from tests.unit.quirks.servers.test_edge_cases import (
         TestsFlextLdifEdgeCases,
         cleanup_state,
         ldif_api,
     )
-    from .unit.quirks.servers.test_novell_quirks import (
+    from tests.unit.quirks.servers.test_novell_quirks import (
         ATTRIBUTE_TEST_CASES,
         ENTRY_TEST_CASES,
         OBJECTCLASS_TEST_CASES,
@@ -281,30 +283,30 @@ if TYPE_CHECKING:
         novell_server,
         schema_quirk,
     )
-    from .unit.quirks.servers.test_oid_quirks import TestsTestFlextLdifOidQuirks
-    from .unit.quirks.servers.test_relaxed_quirks import (
+    from tests.unit.quirks.servers.test_oid_quirks import TestsTestFlextLdifOidQuirks
+    from tests.unit.quirks.servers.test_relaxed_quirks import (
         ParseScenario,
         TestsTestFlextLdifRelaxedQuirks,
         WriteScenario,
         meta_keys,
     )
-    from .unit.quirks.servers.test_schema_transformer import (
+    from tests.unit.quirks.servers.test_schema_transformer import (
         TestSchemaTransformerApplyAttributeTransformations,
         TestSchemaTransformerApplyObjectClassTransformations,
         TestSchemaTransformerNormalizeMatchingRule,
         TestSchemaTransformerNormalizeSyntaxOid,
         TestsFlextLdifSchemaTransformerNormalizeAttributeName,
     )
-    from .unit.services.test_migration_pipeline import (
+    from tests.unit.services.test_migration_pipeline import (
         TestsTestFlextLdifMigrationPipeline,
     )
-    from .unit.services.test_quirks_standardization import (
+    from tests.unit.services.test_quirks_standardization import (
         TestAliasDiscovery,
         TestQuirksAutoInterchange,
         TestQuirksWithRealLdifFixtures,
         TestsFlextLdifQuirksStandardizedConstants,
     )
-    from .unit.services.test_schema_service import (
+    from tests.unit.services.test_schema_service import (
         TestSchemaServiceBuilder,
         TestSchemaServiceCanHandleAttribute,
         TestSchemaServiceIntegration,
@@ -323,17 +325,17 @@ if TYPE_CHECKING:
         simple_attribute_definition,
         simple_objectclass_definition,
     )
-    from .unit.services.test_writer_dn_normalization import (
+    from tests.unit.services.test_writer_dn_normalization import (
         TestsFlextLdifsFlextLdifWriterDnNormalization,
     )
-    from .unit.test_filters import TestAclAttributes
-    from .unit.test_helpers import TestFlextLdifDeduplicationHelpers
-    from .unit.test_migration_pipeline import TestsFlextLdifMigrationPipeline
-    from .unit.test_migration_pipeline_quirks import (
+    from tests.unit.test_filters import TestAclAttributes
+    from tests.unit.test_helpers import TestFlextLdifDeduplicationHelpers
+    from tests.unit.test_migration_pipeline import TestsFlextLdifMigrationPipeline
+    from tests.unit.test_migration_pipeline_quirks import (
         OidTestConstants,
         TestsFlextLdifMigrationPipelineQuirks,
     )
-    from .unit.test_typings import (
+    from tests.unit.test_typings import (
         TestFlextLdifTypesStructure,
         TestIntegrationWithLdifFixtures,
         TestModelsNamespace,
@@ -341,17 +343,17 @@ if TYPE_CHECKING:
         TestRemovalOfOverEngineering,
         TestsFlextLdifCommonDictionaryTypes,
     )
-    from .unit.utilities.test_utilities import TestsTestFlextLdifServiceAPIs
-    from .unit.utilities.test_utilities_comprehensive import (
+    from tests.unit.utilities.test_utilities import TestsTestFlextLdifServiceAPIs
+    from tests.unit.utilities.test_utilities_comprehensive import (
         TestFlextLdifUtilitiesComprehensive,
     )
-    from .unit.utilities.test_utilities_constants import (
+    from tests.unit.utilities.test_utilities_constants import (
         GetValidValuesType,
         IsValidTestType,
         TestsTestFlextLdifConstants,
         ValidateManyType,
     )
-    from .unit.utilities.test_utilities_core import (
+    from tests.unit.utilities.test_utilities_core import (
         TestAclParser,
         TestAttributeFixer,
         TestDnObjectClassMethods,
@@ -360,7 +362,7 @@ if TYPE_CHECKING:
         TestServerTypes,
         TestsFlextLdifDnOperationsPure,
     )
-    from .utilities import FlextLdifTestUtilities, FlextLdifTestUtilities as u
+    from tests.utilities import FlextLdifTestUtilities, FlextLdifTestUtilities as u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ACL_TEST_CASES": ("tests.unit.quirks.servers.test_ds389_quirks", "ACL_TEST_CASES"),

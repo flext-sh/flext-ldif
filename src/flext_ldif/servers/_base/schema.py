@@ -34,57 +34,51 @@ class FlextLdifServersBaseSchema(
     parent_quirk: Annotated[
         Self | None,
         Field(
-            default=None,
             exclude=True,
             repr=False,
             description="Reference to parent quirk instance for server-level access",
         ),
-    ]
+    ] = None
     attr_definition: Annotated[
         str | None,
         Field(
-            default=None,
             exclude=True,
             repr=False,
             description="Attribute definition for auto-execute pattern",
         ),
-    ]
+    ] = None
     oc_definition: Annotated[
         str | None,
         Field(
-            default=None,
             exclude=True,
             repr=False,
             description="ObjectClass definition for auto-execute pattern",
         ),
-    ]
+    ] = None
     attr_model: Annotated[
         m.Ldif.SchemaAttribute | None,
         Field(
-            default=None,
             exclude=True,
             repr=False,
             description="SchemaAttribute model for auto-execute pattern",
         ),
-    ]
+    ] = None
     oc_model: Annotated[
         m.Ldif.SchemaObjectClass | None,
         Field(
-            default=None,
             exclude=True,
             repr=False,
             description="SchemaObjectClass model for auto-execute pattern",
         ),
-    ]
+    ] = None
     operation: Annotated[
         str | None,
         Field(
-            default=None,
             exclude=True,
             repr=False,
             description="Operation type for auto-execute pattern",
         ),
-    ]
+    ] = None
 
     def __new__(
         cls,

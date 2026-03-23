@@ -31,10 +31,9 @@ class SchemaElement(FlextLdifModelsBase):
     validation_metadata: Annotated[
         ldif_t.ConfigMap | None,
         Field(
-            default=None,
             description="Validation metadata captured during schema processing.",
         ),
-    ]
+    ] = None
 
     @computed_field
     def has_metadata(self) -> bool:
@@ -97,24 +96,21 @@ class AclElement(m.ArbitraryTypesModel):
     server_type: Annotated[
         c.Ldif.LiteralTypes.ServerTypeLiteral,
         Field(
-            default="rfc",
             description="LDAP server type (oid, oud, openldap, rfc, etc.)",
         ),
-    ]
+    ] = "rfc"
     validation_violations: Annotated[
         list[str],
         Field(
-            default_factory=list,
             description="Validation violations captured during parsing/processing",
         ),
-    ]
+    ] = Field(default_factory=list)
     validation_metadata: Annotated[
         ldif_t.ConfigMap | None,
         Field(
-            default=None,
             description="Validation metadata captured during ACL processing.",
         ),
-    ]
+    ] = None
 
     @computed_field
     def has_server_quirks(self) -> bool:

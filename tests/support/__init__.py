@@ -17,11 +17,11 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from .conftest_factory import FlextLdifTestConftest, tk
-    from .ldif_data import LdifSample, LdifTestData
-    from .real_services import FlextLdifTestFactory
-    from .test_files import FileManager
-    from .validators import (
+    from tests.support.conftest_factory import FlextLdifTestConftest, tk
+    from tests.support.ldif_data import LdifSample, LdifTestData
+    from tests.support.real_services import FlextLdifTestFactory
+    from tests.support.test_files import FileManager
+    from tests.support.validators import (
         MockFlextUtilitiesResultHelpers,
         MockMatchers,
         TestValidators,

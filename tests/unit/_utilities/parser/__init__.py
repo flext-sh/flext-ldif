@@ -11,8 +11,9 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
-
-    from .test_parser_utilities import TestFlextLdifUtilitiesParser
+    from tests.unit._utilities.parser.test_parser_utilities import (
+        TestFlextLdifUtilitiesParser,
+    )
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestFlextLdifUtilitiesParser": (

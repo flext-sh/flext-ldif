@@ -12,14 +12,16 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from .test_migration_pipeline import TestsTestFlextLdifMigrationPipeline
-    from .test_quirks_standardization import (
+    from tests.unit.services.test_migration_pipeline import (
+        TestsTestFlextLdifMigrationPipeline,
+    )
+    from tests.unit.services.test_quirks_standardization import (
         TestAliasDiscovery,
         TestQuirksAutoInterchange,
         TestQuirksWithRealLdifFixtures,
         TestsFlextLdifQuirksStandardizedConstants,
     )
-    from .test_schema_service import (
+    from tests.unit.services.test_schema_service import (
         TestSchemaServiceBuilder,
         TestSchemaServiceCanHandleAttribute,
         TestSchemaServiceIntegration,
@@ -38,7 +40,7 @@ if TYPE_CHECKING:
         simple_attribute_definition,
         simple_objectclass_definition,
     )
-    from .test_writer_dn_normalization import (
+    from tests.unit.services.test_writer_dn_normalization import (
         TestsFlextLdifsFlextLdifWriterDnNormalization,
     )
 

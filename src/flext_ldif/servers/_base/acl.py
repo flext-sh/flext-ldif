@@ -30,12 +30,11 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
     parent_quirk: Annotated[
         Self | None,
         Field(
-            default=None,
             exclude=True,
             repr=False,
             description="Reference to parent quirk instance for server-level access",
         ),
-    ]
+    ] = None
 
     def __init__(
         self,

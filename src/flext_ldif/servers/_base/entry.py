@@ -35,12 +35,11 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
     parent_quirk: Annotated[
         Self | None,
         Field(
-            default=None,
             exclude=True,
             repr=False,
             description="Reference to parent quirk instance for server-level access",
         ),
-    ]
+    ] = None
 
     def __init__(
         self,
