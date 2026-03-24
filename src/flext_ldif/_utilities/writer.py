@@ -314,7 +314,7 @@ class FlextLdifUtilitiesWriter:
         attr_order_raw: MutableSequence[str] | None = None
         metadata_extensions = getattr(metadata, "extensions", None)
         if isinstance(metadata_extensions, Mapping):
-            ext: dict[str, t.NormalizedValue | BaseModel] = dict(metadata_extensions)
+            ext: MutableMapping[str, t.NormalizedValue | BaseModel] = dict(metadata_extensions)
             typed_extensions = t.ConfigMap(root=ext).root
             raw_attr_order: t.NormalizedValue | BaseModel | None = typed_extensions.get(
                 "attribute_order",

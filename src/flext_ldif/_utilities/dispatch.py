@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from pathlib import Path
 from typing import Literal, TypeIs, overload
 
 from flext_core import r
@@ -470,15 +471,13 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     def write_file(
         content: str,
-        file_path: object,
+        file_path: str | Path,
         encoding: str = "utf-8",
     ) -> r[MutableMapping[str, str | int]]:
         """Route to Writer.write_file (resolves Writer vs core)."""
-        from pathlib import Path
-
         from flext_ldif import FlextLdifUtilitiesWriter
 
-        path = file_path if isinstance(file_path, Path) else Path(str(file_path))
+        path = file_path if isinstance(file_path, Path) else Path(file_path)
         return FlextLdifUtilitiesWriter.write_file(content, path, encoding)
 
     @staticmethod

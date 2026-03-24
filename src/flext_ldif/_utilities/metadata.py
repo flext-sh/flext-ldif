@@ -912,7 +912,7 @@ class FlextLdifUtilitiesMetadata:
         if write_opts is None:
             return None
         key = c.Ldif.WRITE_OPTIONS
-        raw_extras: dict[str, t.NormalizedValue] | None = None
+        raw_extras: MutableMapping[str, t.NormalizedValue] | None = None
         if isinstance(write_opts, BaseModel):
             model_extra_val = write_opts.model_extra
             if isinstance(model_extra_val, dict):
