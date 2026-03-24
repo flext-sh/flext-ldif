@@ -636,7 +636,7 @@ class FlextLdifUtilitiesSchema:
                         UnicodeDecodeError,
                         struct.error,
                     ) as exc:
-                        logger.debug("Schema line item validation failed: %s", str(exc))  # noqa: RUF065
+                        logger.debug("Schema line item validation failed: %s", str(exc))
                         continue
         return items
 
@@ -1052,7 +1052,7 @@ class FlextLdifUtilitiesSchema:
             UnicodeDecodeError,
             struct.error,
         ) as exc:
-            logger.debug("SchemaAttribute model validation did not match: %s", str(exc))  # noqa: RUF065
+            logger.debug("SchemaAttribute model validation did not match: %s", str(exc))
         try:
             _ = m.Ldif.SchemaObjectClass.model_validate(definition)
             return "objectclass"

@@ -463,7 +463,7 @@ class FlextLdifUtilitiesDispatch:
         ops: t.MutableContainerMapping | None = None,
     ) -> t.NormalizedValue:
         """Route to Normalization.build (resolves Normalization vs core)."""
-        from flext_ldif import FlextLdifUtilitiesNormalization  # noqa: PLC0415
+        from flext_ldif import FlextLdifUtilitiesNormalization
 
         return FlextLdifUtilitiesNormalization.build(value, ops=ops)
 
@@ -474,9 +474,9 @@ class FlextLdifUtilitiesDispatch:
         encoding: str = "utf-8",
     ) -> r[MutableMapping[str, str | int]]:
         """Route to Writer.write_file (resolves Writer vs core)."""
-        from pathlib import Path  # noqa: PLC0415
+        from pathlib import Path
 
-        from flext_ldif import FlextLdifUtilitiesWriter  # noqa: PLC0415
+        from flext_ldif import FlextLdifUtilitiesWriter
 
         path = file_path if isinstance(file_path, Path) else Path(str(file_path))
         return FlextLdifUtilitiesWriter.write_file(content, path, encoding)

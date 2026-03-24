@@ -89,7 +89,7 @@ class FlextLdifUtilitiesDecorators:
             UnicodeDecodeError,
             struct.error,
         ) as e:
-            logger.debug("Failed to attach metadata: %s", str(e))  # noqa: RUF065
+            logger.debug("Failed to attach metadata: %s", str(e))
 
     @staticmethod
     def _get_server_type_from_class(obj: t.NormalizedValue) -> str | None:

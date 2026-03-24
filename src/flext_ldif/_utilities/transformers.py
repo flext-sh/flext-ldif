@@ -75,7 +75,7 @@ class FlextLdifUtilitiesTransformers:
                 else str(item.dn)
             )
             if self._validate:
-                validation_result = FlextLdifUtilitiesTransformers.NormalizeDnTransformer._validate_dn_components(  # noqa: SLF001
+                validation_result = FlextLdifUtilitiesTransformers.NormalizeDnTransformer._validate_dn_components(
                     dn_str,
                 )
                 if validation_result.is_failure:

@@ -56,7 +56,7 @@ class TestFlextLdifUtilitiesComprehensive:
                 value = value.strip()
                 attrs: MutableMapping[str, MutableSequence[str]] = entries[
                     -1
-                ].attributes  # type: ignore[assignment]
+                ].attributes
                 if key not in attrs:
                     attrs[key] = []
                 attrs[key].append(value)
