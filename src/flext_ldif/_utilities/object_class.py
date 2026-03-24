@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Callable, MutableSequence
+from collections.abc import Callable, Sequence
 
 from flext_core import FlextLogger, r
 
@@ -124,23 +124,24 @@ class FlextLdifUtilitiesObjectClass:
             desc_raw = parsed_dict.get("desc")
             desc_value = desc_raw if isinstance(desc_raw, str) else None
             sup_raw = parsed_dict.get("sup")
-            sup_value: str | MutableSequence[str] | None
-            if isinstance(sup_raw, str):
-                sup_value = sup_raw
-            elif isinstance(sup_raw, list):
-                sup_value = [str(item) for item in sup_raw]
-            else:
-                sup_value = None
+            sup_value: str | Sequence[str] | None
+            match sup_raw:
+                case str() as s:
+                    sup_value = s
+                case list() as items:
+                    sup_value = [str(item) for item in items]
+                case _:
+                    sup_value = None
             kind_raw = parsed_dict.get("kind")
             kind_value = kind_raw if isinstance(kind_raw, str) else ""
             must_raw = parsed_dict.get("must")
-            must_value: MutableSequence[str] = []
-            if isinstance(must_raw, list):
-                must_value = [str(item) for item in must_raw]
+            must_value: Sequence[str] = (
+                [str(item) for item in must_raw] if isinstance(must_raw, list) else []
+            )
             may_raw = parsed_dict.get("may")
-            may_value: MutableSequence[str] = []
-            if isinstance(may_raw, list):
-                may_value = [str(item) for item in may_raw]
+            may_value: Sequence[str] = (
+                [str(item) for item in may_raw] if isinstance(may_raw, list) else []
+            )
             schema_oc = m.Ldif.SchemaObjectClass(
                 oid=oid_raw,
                 name=name_value,

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableMapping, MutableSequence, Sequence
 from typing import Final, override
 
 from flext_core import FlextLogger
@@ -236,14 +236,19 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         }
         for category, entries in categories.items():
             if not entries:
-                filtered[category] = list[m.Ldif.Entry]()
+                filtered[category] = []
                 continue
             if category in filterable_categories:
-                entries_list: MutableSequence[m.Ldif.Entry] = []
-                for entry_raw in entries:
-                    entry_model = FlextLdifCategorization._ensure_entry_model(entry_raw)
-                    if entry_model is not None:
-                        entries_list.append(entry_model)
+                entries_list: MutableSequence[m.Ldif.Entry] = [
+                    entry_model
+                    for entry_raw in entries
+                    if (
+                        entry_model := FlextLdifCategorization._ensure_entry_model(
+                            entry_raw
+                        )
+                    )
+                    is not None
+                ]
                 included, excluded = FlextLdifCategorization._filter_entries_by_base_dn(
                     entries_list,
                     base_dn,
@@ -259,26 +264,32 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 ]
                 excluded_entries.extend(excluded_updated)
             else:
-                passthrough_entries: MutableSequence[m.Ldif.Entry] = []
-                for entry_raw in entries:
-                    entry_model = FlextLdifCategorization._ensure_entry_model(entry_raw)
-                    if entry_model is not None:
-                        passthrough_entries.append(entry_model)
-                filtered[category] = passthrough_entries
+                filtered[category] = [
+                    entry_model
+                    for entry_raw in entries
+                    if (
+                        entry_model := FlextLdifCategorization._ensure_entry_model(
+                            entry_raw
+                        )
+                    )
+                    is not None
+                ]
         if excluded_entries:
             rejected_category = c.Ldif.Category.REJECTED
             existing_rejected_raw: MutableSequence[m.Ldif.Entry] = filtered.get(
                 rejected_category,
                 [],
             )
-            merged_rejected: MutableSequence[m.Ldif.Entry] = []
-            for rejected_raw_item in [*existing_rejected_raw, *excluded_entries]:
-                rejected_entry_model = FlextLdifCategorization._ensure_entry_model(
-                    rejected_raw_item,
+            filtered[c.Ldif.Category.REJECTED] = [
+                entry_model
+                for rejected_raw_item in [*existing_rejected_raw, *excluded_entries]
+                if (
+                    entry_model := FlextLdifCategorization._ensure_entry_model(
+                        rejected_raw_item
+                    )
                 )
-                if rejected_entry_model is not None:
-                    merged_rejected.append(rejected_entry_model)
-            filtered[c.Ldif.Category.REJECTED] = merged_rejected
+                is not None
+            ]
         return filtered
 
     def categorize_entries(
@@ -287,12 +298,15 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
     ) -> r[m.Ldif.FlexibleCategories]:
         """Categorize entries into 6 categories."""
         categories = m.Ldif.FlexibleCategories()
-        categories[c.Ldif.Category.SCHEMA] = list[m.Ldif.Entry]()
-        categories[c.Ldif.Category.HIERARCHY] = list[m.Ldif.Entry]()
-        categories[c.Ldif.Category.USERS] = list[m.Ldif.Entry]()
-        categories[c.Ldif.Category.GROUPS] = list[m.Ldif.Entry]()
-        categories[c.Ldif.Category.ACL] = list[m.Ldif.Entry]()
-        categories[c.Ldif.Category.REJECTED] = list[m.Ldif.Entry]()
+        for cat_ in (
+            c.Ldif.Category.SCHEMA,
+            c.Ldif.Category.HIERARCHY,
+            c.Ldif.Category.USERS,
+            c.Ldif.Category.GROUPS,
+            c.Ldif.Category.ACL,
+            c.Ldif.Category.REJECTED,
+        ):
+            categories[cat_] = []
 
         def categorize_single_entry(entry: m.Ldif.Entry) -> tuple[str, m.Ldif.Entry]:
             """Categorize single entry."""
@@ -397,12 +411,15 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
     def execute(self) -> r[m.Ldif.FlexibleCategories]:
         """Execute categorization pass (use individual methods for specific operations)."""
         categories = m.Ldif.FlexibleCategories()
-        categories[c.Ldif.Category.SCHEMA] = list[m.Ldif.Entry]()
-        categories[c.Ldif.Category.HIERARCHY] = list[m.Ldif.Entry]()
-        categories[c.Ldif.Category.USERS] = list[m.Ldif.Entry]()
-        categories[c.Ldif.Category.GROUPS] = list[m.Ldif.Entry]()
-        categories[c.Ldif.Category.ACL] = list[m.Ldif.Entry]()
-        categories[c.Ldif.Category.REJECTED] = list[m.Ldif.Entry]()
+        for cat in (
+            c.Ldif.Category.SCHEMA,
+            c.Ldif.Category.HIERARCHY,
+            c.Ldif.Category.USERS,
+            c.Ldif.Category.GROUPS,
+            c.Ldif.Category.ACL,
+            c.Ldif.Category.REJECTED,
+        ):
+            categories[cat] = []
         return r[m.Ldif.FlexibleCategories].ok(categories)
 
     def filter_by_base_dn(
@@ -413,12 +430,15 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         if not self._base_dn:
             return categories
         filtered = m.Ldif.FlexibleCategories()
-        filtered[c.Ldif.Category.SCHEMA] = list[m.Ldif.Entry]()
-        filtered[c.Ldif.Category.HIERARCHY] = list[m.Ldif.Entry]()
-        filtered[c.Ldif.Category.USERS] = list[m.Ldif.Entry]()
-        filtered[c.Ldif.Category.GROUPS] = list[m.Ldif.Entry]()
-        filtered[c.Ldif.Category.ACL] = list[m.Ldif.Entry]()
-        filtered[c.Ldif.Category.REJECTED] = list[m.Ldif.Entry]()
+        for cat in (
+            c.Ldif.Category.SCHEMA,
+            c.Ldif.Category.HIERARCHY,
+            c.Ldif.Category.USERS,
+            c.Ldif.Category.GROUPS,
+            c.Ldif.Category.ACL,
+            c.Ldif.Category.REJECTED,
+        ):
+            filtered[cat] = []
         all_excluded_entries: MutableSequence[m.Ldif.Entry] = []
         for category, entries in categories.items():
             if not entries:
@@ -429,11 +449,16 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 c.Ldif.Category.GROUPS,
                 c.Ldif.Category.ACL,
             }:
-                entries_list: MutableSequence[m.Ldif.Entry] = []
-                for entry_raw in entries:
-                    entry_model = FlextLdifCategorization._ensure_entry_model(entry_raw)
-                    if entry_model is not None:
-                        entries_list.append(entry_model)
+                entries_list: MutableSequence[m.Ldif.Entry] = [
+                    entry_model
+                    for entry_raw in entries
+                    if (
+                        entry_model := FlextLdifCategorization._ensure_entry_model(
+                            entry_raw
+                        )
+                    )
+                    is not None
+                ]
                 included, excluded = FlextLdifCategorization._filter_entries_by_base_dn(
                     entries_list,
                     self._base_dn,
@@ -459,26 +484,32 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                         rejected_entries=u.count(excluded_updated),
                     )
             else:
-                passthrough_entries: MutableSequence[m.Ldif.Entry] = []
-                for entry_raw in entries:
-                    entry_model = FlextLdifCategorization._ensure_entry_model(entry_raw)
-                    if entry_model is not None:
-                        passthrough_entries.append(entry_model)
-                filtered[category] = passthrough_entries
+                filtered[category] = [
+                    entry_model
+                    for entry_raw in entries
+                    if (
+                        entry_model := FlextLdifCategorization._ensure_entry_model(
+                            entry_raw
+                        )
+                    )
+                    is not None
+                ]
         if all_excluded_entries:
             rejected_category = c.Ldif.Category.REJECTED
             existing_rejected_raw: MutableSequence[m.Ldif.Entry] = filtered.get(
                 rejected_category,
                 [],
             )
-            merged_rejected: MutableSequence[m.Ldif.Entry] = []
-            for rejected_raw_item in [*existing_rejected_raw, *all_excluded_entries]:
-                rejected_entry_model = FlextLdifCategorization._ensure_entry_model(
-                    rejected_raw_item,
+            filtered[c.Ldif.Category.REJECTED] = [
+                entry_model
+                for rejected_raw_item in [*existing_rejected_raw, *all_excluded_entries]
+                if (
+                    entry_model := FlextLdifCategorization._ensure_entry_model(
+                        rejected_raw_item
+                    )
                 )
-                if rejected_entry_model is not None:
-                    merged_rejected.append(rejected_entry_model)
-            filtered[c.Ldif.Category.REJECTED] = merged_rejected
+                is not None
+            ]
         return filtered
 
     def filter_schema_by_oids(
@@ -574,11 +605,11 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
             dn_obj = m.Ldif.DN(value=normalized_dn)
             return r[m.Ldif.Entry].ok(entry.model_copy(update={"dn": dn_obj}))
 
-        validated: MutableSequence[m.Ldif.Entry] = []
-        for entry in entries:
-            validation_result = validate_entry(entry)
-            if validation_result.is_success:
-                validated.append(validation_result.value)
+        validated: Sequence[m.Ldif.Entry] = [
+            validation_result.value
+            for entry in entries
+            if (validation_result := validate_entry(entry)).is_success
+        ]
         logger.info(
             "Validated entries",
             validated_count=len(validated),
@@ -784,19 +815,18 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         *,
         passed: bool,
         rejection_reason: str | None = None,
-    ) -> MutableSequence[m.Ldif.Entry]:
+    ) -> Sequence[m.Ldif.Entry]:
         """Update metadata for filtered entries using u."""
-        updated_entries: MutableSequence[m.Ldif.Entry] = []
-        for entry in entries:
-            updated_entry = u.Ldif.update_entry_statistics(
+        return [
+            u.Ldif.update_entry_statistics(
                 entry,
                 mark_filtered=("base_dn_filter", passed),
                 mark_rejected=(c.Ldif.Category.REJECTED, rejection_reason)
                 if not passed and rejection_reason
                 else None,
             )
-            updated_entries.append(updated_entry)
-        return updated_entries
+            for entry in entries
+        ]
 
 
 __all__ = ["FlextLdifCategorization"]

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from functools import reduce
 from typing import override
 
@@ -996,14 +996,14 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         """Restore single boolean attribute from conversion metadata."""
         mk = c.Ldif
         converted_val = conv_data.get(mk.CONVERSION_CONVERTED_VALUE)
-        converted_val_list: MutableSequence[str] = []
-        if isinstance(converted_val, str):
-            converted_val_list = [converted_val]
-        elif isinstance(converted_val, list):
-            converted_val_list = [str(item) for item in converted_val]
-        if not converted_val_list:
-            return False
-        rfc_value = converted_val_list[0] if converted_val_list else ""
+        match converted_val:
+            case str() as s:
+                converted_val_list: Sequence[str] = [s]
+            case list() as items:
+                converted_val_list = [str(item) for item in items]
+            case _:
+                return False
+        rfc_value = converted_val_list[0]
         oid_value = FlextLdifServersOidConstants.RFC_TO_OID.get(rfc_value, rfc_value)
         restored_attrs[attr_name] = [oid_value]
         logger.debug(

@@ -157,7 +157,7 @@ class TestsFlextLdifMatchers(tm):
         oc_seq: t.StrSequence | None = attrs.get("objectClass") or attrs.get(
             "objectclass",
         )
-        objectclasses: list[str] = list(oc_seq) if oc_seq else []
+        objectclasses: Sequence[str] = list(oc_seq) if oc_seq else []
         if dn is not None:
             TestsFlextLdifMatchers.that(dn_value, msg=msg, eq=dn)
         if dn_contains is not None:
@@ -353,7 +353,7 @@ class TestsFlextLdifMatchers(tm):
                     attrs_obj = entry.attributes
                     if attrs_obj is None:
                         continue
-                    attrs_dict: dict[str, object] = (
+                    attrs_dict: Mapping[str, object] = (
                         dict(attrs_obj) if isinstance(attrs_obj, dict) else {}
                     )
                     if all(attr in attrs_dict for attr in attr_list):
@@ -370,14 +370,14 @@ class TestsFlextLdifMatchers(tm):
                     attrs_obj = entry.attributes
                     if attrs_obj is None:
                         continue
-                    oc_attrs: dict[str, MutableSequence[str]] = (
+                    oc_attrs: Mapping[str, MutableSequence[str]] = (
                         dict(attrs_obj) if isinstance(attrs_obj, dict) else {}
                     )
                     if oc_attrs:
                         oc_seq_raw: MutableSequence[str] | None = oc_attrs.get(
                             "objectClass",
                         ) or oc_attrs.get("objectclass")
-                        objectclasses_parsed: list[str] = (
+                        objectclasses_parsed: Sequence[str] = (
                             list(oc_seq_raw) if oc_seq_raw else []
                         )
                         if all(oc in objectclasses_parsed for oc in oc_list):

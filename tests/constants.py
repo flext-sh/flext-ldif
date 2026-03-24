@@ -730,7 +730,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                             f"Expected SUP '{expected_sup}', got '{actual_sup}'",
                         )
                 if expected_must is not None:
-                    actual_must: list[str] = (
+                    actual_must: Sequence[str] = (
                         list(value.must or [])
                         if isinstance(value, m.Ldif.SchemaObjectClass)
                         else []
@@ -740,7 +740,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                             f"Expected MUST {expected_must}, got {actual_must}",
                         )
                 if expected_may is not None:
-                    actual_may: list[str] = (
+                    actual_may: Sequence[str] = (
                         list(value.may or [])
                         if isinstance(value, m.Ldif.SchemaObjectClass)
                         else []
@@ -858,8 +858,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 desc: str | None = None,
                 kind: str = "STRUCTURAL",
                 sup: str | None = None,
-                must: list[str] | None = None,
-                may: list[str] | None = None,
+                must: Sequence[str] | None = None,
+                may: Sequence[str] | None = None,
             ) -> m.Ldif.SchemaObjectClass:
                 """Create a schema objectClass and unwrap the result.
 
@@ -2053,7 +2053,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     msg = "conversion_matrix has no get_supported_conversions"
                     raise AssertionError(msg)
                 support_result: Mapping[str, bool] = get_support_method(quirk)
-                support_dict: dict[str, bool] = dict(support_result)
+                support_dict: Mapping[str, bool] = dict(support_result)
                 if must_have_keys:
                     for key in must_have_keys:
                         assert key in support_dict, (
@@ -2140,7 +2140,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                         model_list.append(parse_result.value)
                 else:
                     raise AssertionError(f"Unknown conversion_type: {conversion_type}")
-                converted_items: list[
+                converted_items: Sequence[
                     m.Ldif.Entry
                     | m.Ldif.SchemaAttribute
                     | m.Ldif.SchemaObjectClass

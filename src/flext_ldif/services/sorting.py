@@ -242,13 +242,13 @@ class FlextLdifSorting(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
                 continue
             dn_key = FlextLdifSorting._normalized_dn_key(dn_value)
             if dn_key not in dn_to_entries:
-                dn_to_entries[dn_key] = list[m.Ldif.Entry]()
+                dn_to_entries[dn_key] = []
             dn_to_entries[dn_key].append(entry)
             if "," in dn_value:
                 parent_dn = dn_value.split(",", 1)[1]
                 parent_key = FlextLdifSorting._normalized_parent_dn_key(parent_dn)
                 if parent_key not in parent_to_children:
-                    parent_to_children[parent_key] = list[str]()
+                    parent_to_children[parent_key] = []
                 if dn_key not in parent_to_children[parent_key]:
                     parent_to_children[parent_key].append(dn_key)
         for parent_key in parent_to_children:

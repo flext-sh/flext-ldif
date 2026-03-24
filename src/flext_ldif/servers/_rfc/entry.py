@@ -133,7 +133,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
                 dn = value
             else:
                 if key not in attrs:
-                    attrs[key] = list[str]()
+                    attrs[key] = []
                 attrs[key].append(value)
         if not dn:
             return r[m.Ldif.Entry].fail("No DN found in entry")

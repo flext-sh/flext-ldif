@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from enum import StrEnum, unique
 from pathlib import Path
 from typing import Annotated, ClassVar, Final
@@ -315,7 +315,7 @@ class FlextLdifFixtures:
                 list: List of server types with fixture directories
 
             """
-            available: Sequence[FlextLdifFixtures.ServerType] = []
+            available: MutableSequence[FlextLdifFixtures.ServerType] = []
             server_types = [
                 FlextLdifFixtures.ServerType.OID,
                 FlextLdifFixtures.ServerType.OUD,
@@ -346,7 +346,7 @@ class FlextLdifFixtures:
                 list: List of available fixture types for this server
 
             """
-            available: Sequence[FlextLdifFixtures.FixtureType] = []
+            available: MutableSequence[FlextLdifFixtures.FixtureType] = []
             for fixture_type in FlextLdifFixtures.FixtureType.__members__.values():
                 try:
                     self._get_fixture_path(server_type, fixture_type)

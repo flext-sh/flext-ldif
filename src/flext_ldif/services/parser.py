@@ -57,7 +57,9 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
             dn, attrs = dn_attrs
             entry_lines: MutableSequence[str] = [f"dn: {dn}"]
             for attr_name, values in attrs.items():
-                attr_lines: MutableSequence[str] = [f"{attr_name}: {value}" for value in values]
+                attr_lines: MutableSequence[str] = [
+                    f"{attr_name}: {value}" for value in values
+                ]
                 entry_lines.extend(attr_lines)
             entry_lines.append("")
             return entry_lines
