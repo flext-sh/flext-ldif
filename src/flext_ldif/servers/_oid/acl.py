@@ -697,7 +697,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 extensions=FlextLdifModelsMetadata.DynamicMetadata(),
             )
         )
-        update_dict: MutableMapping[str, t.NormalizedValue] = {
+        update_dict: t.MutableContainerMapping = {
             "server_type": server_type,
             "metadata": updated_metadata,
         }

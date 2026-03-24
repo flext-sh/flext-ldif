@@ -287,7 +287,7 @@ class TestsFlextLdifMatchers(tm):
         all_have_oc: str | Sequence[str] | None = None,
         any_has_attr: str | Sequence[str] | None = None,
         any_has_oc: str | Sequence[str] | None = None,
-        at_index: Mapping[int, Mapping[str, t.NormalizedValue]] | None = None,
+        at_index: Mapping[int, t.ContainerMapping] | None = None,
         msg: str | None = None,
     ) -> Sequence[m.Ldif.Entry]:
         """Unified entries list validation - validates counts and entry properties.
@@ -370,7 +370,7 @@ class TestsFlextLdifMatchers(tm):
                         and attrs_obj.attributes is not None
                         else attrs_obj
                         if isinstance(attrs_obj, dict)
-                        else Mapping[str, t.NormalizedValue]()
+                        else t.ContainerMapping()
                     )
                     if isinstance(attrs, dict) and all(
                         attr in attrs for attr in attr_list
@@ -394,7 +394,7 @@ class TestsFlextLdifMatchers(tm):
                         and attrs_obj.attributes is not None
                         else attrs_obj
                         if isinstance(attrs_obj, dict)
-                        else Mapping[str, t.NormalizedValue]()
+                        else t.ContainerMapping()
                     )
                     if isinstance(attrs, dict):
                         objectclasses_raw = attrs.get(
@@ -536,7 +536,7 @@ class TestsFlextLdifMatchers(tm):
         all_have_oc: str | Sequence[str] | None = None,
         any_has_attr: str | Sequence[str] | None = None,
         any_has_oc: str | Sequence[str] | None = None,
-        at_index: Mapping[int, Mapping[str, t.NormalizedValue]] | None = None,
+        at_index: Mapping[int, t.ContainerMapping] | None = None,
     ) -> Sequence[m.Ldif.Entry]:
         """Assert r success and validate entries list.
 
@@ -607,7 +607,7 @@ class TestsFlextLdifValidators(tv):
                 if hasattr(attrs_obj, "attributes") and attrs_obj.attributes is not None
                 else attrs_obj
                 if isinstance(attrs_obj, dict)
-                else Mapping[str, t.NormalizedValue]()
+                else t.ContainerMapping()
             )
             if not isinstance(attrs, dict):
                 return False

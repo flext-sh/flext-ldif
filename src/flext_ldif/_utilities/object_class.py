@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Callable, MutableMapping, MutableSequence
+from collections.abc import Callable, MutableSequence
 
 from flext_core import FlextLogger, r
 
@@ -105,12 +105,11 @@ class FlextLdifUtilitiesObjectClass:
     def resolve_objectclass(
         definition: str,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], MutableMapping[str, t.NormalizedValue]]
-        | None = None,
+        parse_parts_hook: Callable[[str], t.MutableContainerMapping] | None = None,
     ) -> r[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition into SchemaObjectClass model."""
         try:
-            parsed_dict: MutableMapping[str, t.NormalizedValue] = (
+            parsed_dict: t.MutableContainerMapping = (
                 FlextLdifUtilitiesSchema.parse_objectclass(definition)
             )
             if parse_parts_hook is not None:

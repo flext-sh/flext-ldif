@@ -97,15 +97,15 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def analyze_differences(
-        entry_attrs: MutableMapping[str, t.NormalizedValue],
+        entry_attrs: t.MutableContainerMapping,
         converted_attrs: MutableMapping[str, MutableSequence[t.Ldif.AttributeValue]],
         original_dn: str,
         cleaned_dn: str,
         normalize_attr_fn: Callable[[str], str] | None = None,
     ) -> tuple[
-        MutableMapping[str, t.NormalizedValue],
-        MutableMapping[str, MutableMapping[str, t.NormalizedValue]],
-        MutableMapping[str, t.NormalizedValue],
+        t.MutableContainerMapping,
+        MutableMapping[str, t.MutableContainerMapping],
+        t.MutableContainerMapping,
         MutableMapping[str, str],
     ]:
         """Analyze DN and attribute differences for round-trip support (DRY utility)."""
@@ -135,10 +135,8 @@ class FlextLdifUtilitiesEntry:
                     original_attribute_case[key] = value
             except (ValueError, TypeError, AttributeError):
                 continue
-        attribute_differences: MutableMapping[
-            str, MutableMapping[str, t.NormalizedValue]
-        ] = {}
-        original_attributes_complete: MutableMapping[str, t.NormalizedValue] = {}
+        attribute_differences: MutableMapping[str, t.MutableContainerMapping] = {}
+        original_attributes_complete: t.MutableContainerMapping = {}
         for attr_name, attr_values in entry_attrs.items():
             original_attr_name = str(attr_name)
             canonical_name = normalize(original_attr_name)
@@ -363,7 +361,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def matches_entry_server_patterns(
         entry_dn: str,
-        attributes: MutableMapping[str, t.NormalizedValue],
+        attributes: t.MutableContainerMapping,
         config: FlextLdifModelsSettings.ServerPatternsConfig,
     ) -> bool:
         """Check if entry matches server-specific patterns."""

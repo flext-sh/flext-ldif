@@ -110,7 +110,7 @@ class FlextLdifConversion(
     @override
     def _is_object_sequence(
         value: t.NormalizedValue,
-    ) -> TypeIs[MutableSequence[t.NormalizedValue]]:
+    ) -> TypeIs[t.MutableContainerList]:
         return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
     @staticmethod
@@ -168,7 +168,7 @@ class FlextLdifConversion(
     def _analyze_attribute_case(
         original_attribute_case: t.NormalizedValue,
         target_server_type: str,
-    ) -> MutableMapping[str, MutableMapping[str, t.NormalizedValue]]:
+    ) -> MutableMapping[str, t.MutableContainerMapping]:
         """Analyze attribute case for target compatibility."""
         if bool(original_attribute_case):
             return {
@@ -192,14 +192,14 @@ class FlextLdifConversion(
             boolean_conversions,
         ):
             return {}
-        typed_boolean_conversions: MutableMapping[str, t.NormalizedValue] = {}
+        typed_boolean_conversions: t.MutableContainerMapping = {}
         for raw_attr_name, raw_conv_info in boolean_conversions.items():
             typed_boolean_conversions[str(raw_attr_name)] = raw_conv_info
         result: MutableMapping[str, MutableMapping[str, str]] = {}
         for attr_name, conv_info in typed_boolean_conversions.items():
             source_format = ""
             if FlextLdifConversion._is_object_mapping(conv_info):
-                conv_info_dict: MutableMapping[str, t.NormalizedValue] = {}
+                conv_info_dict: t.MutableContainerMapping = {}
                 for raw_key, raw_value in conv_info.items():
                     conv_info_dict[str(raw_key)] = raw_value
                 source_format = str(conv_info_dict.get("format", "") or "")
@@ -214,10 +214,10 @@ class FlextLdifConversion(
     def _analyze_dn_format(
         original_format_details: t.NormalizedValue,
         target_server_type: str,
-    ) -> MutableMapping[str, MutableMapping[str, t.NormalizedValue]]:
+    ) -> MutableMapping[str, t.MutableContainerMapping]:
         """Analyze DN spacing for target compatibility."""
         if FlextLdifConversion._is_object_mapping(original_format_details):
-            format_details: MutableMapping[str, t.NormalizedValue] = {}
+            format_details: t.MutableContainerMapping = {}
             for raw_key, raw_value in original_format_details.items():
                 format_details[str(raw_key)] = raw_value
             spacing: t.NormalizedValue | None = format_details.get("dn_spacing")
@@ -620,7 +620,7 @@ class FlextLdifConversion(
             return FlextLdifConversion._schema_conversion_ok(value)
         if FlextLdifConversion._is_object_mapping(value):
             # Convert dict to str for LDIF representation if passthrough
-            typed_value: MutableMapping[str, t.NormalizedValue] = {}
+            typed_value: t.MutableContainerMapping = {}
             for raw_key, raw_item in value.items():
                 typed_value[str(raw_key)] = raw_item
             return FlextLdifConversion._schema_conversion_ok(str(typed_value))
@@ -701,8 +701,8 @@ class FlextLdifConversion(
                     errors.append(f"Item {idx}: {error_msg}")
                     error_details.append(f"batch_item_{idx}: {error_msg}")
             duration_ms = (time.perf_counter() - start_time) * 1000.0
-            model_list_typed: MutableSequence[t.NormalizedValue] = list(model_list)
-            converted_typed: MutableSequence[t.NormalizedValue] = list(converted)
+            model_list_typed: t.MutableContainerList = list(model_list)
+            converted_typed: t.MutableContainerList = list(converted)
             errors_typed: MutableSequence[str] = errors
             items_processed = u.count(model_list_typed)
             items_converted = u.count(converted_typed)
@@ -753,7 +753,7 @@ class FlextLdifConversion(
             ].ok(converted)
         except (ValueError, TypeError, AttributeError, RuntimeError, Exception) as e:
             duration_ms = (time.perf_counter() - start_time) * 1000.0
-            model_list_as_list: MutableSequence[t.NormalizedValue] = (
+            model_list_as_list: t.MutableContainerList = (
                 list(model_list) if model_list else []
             )
             items_count = u.count(model_list_as_list)
@@ -1652,8 +1652,8 @@ class FlextLdifConversion(
     def _convert_to_metadata_attribute_value(
         self,
         value: t.NormalizedValue
-        | MutableMapping[str, t.NormalizedValue]
-        | MutableSequence[t.NormalizedValue]
+        | t.MutableContainerMapping
+        | t.MutableContainerList
         | None,
     ) -> t.NormalizedValue:
         """Convert value to MetadataAttributeValue type."""
@@ -1670,15 +1670,13 @@ class FlextLdifConversion(
                     converted_list.append(str(item))
             return converted_list
         if FlextLdifConversion._is_object_mapping(value):
-            typed_value: MutableMapping[str, t.NormalizedValue] = {}
+            typed_value: t.MutableContainerMapping = {}
             for raw_key, raw_item in value.items():
                 typed_value[str(raw_key)] = raw_item
             return str(typed_value)
         return str(value)
 
-    def _get_extensions_dict(
-        self, acl: m.Ldif.Acl
-    ) -> MutableMapping[str, t.NormalizedValue]:
+    def _get_extensions_dict(self, acl: m.Ldif.Acl) -> t.MutableContainerMapping:
         """Extract extensions dict from ACL metadata."""
 
         def to_general_value(value: t.NormalizedValue) -> t.NormalizedValue:
@@ -1695,14 +1693,14 @@ class FlextLdifConversion(
             if isinstance(value, datetime):
                 return value.isoformat()
             if FlextLdifConversion._is_object_mapping(value):
-                normalized_mapping: MutableMapping[str, t.NormalizedValue] = {}
+                normalized_mapping: t.MutableContainerMapping = {}
                 for raw_key, raw_item in value.items():
                     key = str(raw_key)
                     item: t.NormalizedValue = raw_item
                     normalized_mapping[key] = to_general_value(item)
                 return normalized_mapping
             if FlextLdifConversion._is_object_sequence(value):
-                normalized_sequence: MutableSequence[t.NormalizedValue] = [
+                normalized_sequence: t.MutableContainerList = [
                     to_general_value(item) for item in value
                 ]
                 return normalized_sequence
@@ -1795,7 +1793,7 @@ class FlextLdifConversion(
             return acl_step1
         conv_ext = self._get_extensions_dict(acl_step1)
         orig_ext = self._get_extensions_dict(original_acl)
-        merged_ext_raw: MutableMapping[str, t.NormalizedValue] = {
+        merged_ext_raw: t.MutableContainerMapping = {
             **orig_ext,
             **conv_ext,
         }
@@ -1805,7 +1803,7 @@ class FlextLdifConversion(
             or (not acl_step1.metadata)
         ):
             return acl_step1
-        dynamic_metadata_dict: MutableMapping[str, t.NormalizedValue] = {}
+        dynamic_metadata_dict: t.MutableContainerMapping = {}
         for key, value in merged_ext_raw.items():
             if value is None:
                 dynamic_metadata_dict[key] = ""
@@ -1816,7 +1814,7 @@ class FlextLdifConversion(
                 )
                 continue
             if FlextLdifConversion._is_object_mapping(value):
-                normalized_mapping: MutableMapping[str, t.NormalizedValue] = {}
+                normalized_mapping: t.MutableContainerMapping = {}
                 for raw_k, raw_v in value.items():
                     normalized_mapping[str(raw_k)] = (
                         FlextLdifConversion._normalize_metadata_value(raw_v)
@@ -1826,7 +1824,7 @@ class FlextLdifConversion(
                 )
                 continue
             if FlextLdifConversion._is_object_sequence(value):
-                normalized_sequence: MutableSequence[t.NormalizedValue] = [
+                normalized_sequence: t.MutableContainerList = [
                     FlextLdifConversion._normalize_metadata_value(raw_item)
                     for raw_item in value
                 ]
@@ -1838,9 +1836,7 @@ class FlextLdifConversion(
                 str(value),
             )
         if acl_step1.metadata:
-            metadata_kwargs: MutableMapping[str, t.NormalizedValue] = (
-                dynamic_metadata_dict
-            )
+            metadata_kwargs: t.MutableContainerMapping = dynamic_metadata_dict
             updated_metadata = acl_step1.metadata.model_copy(
                 update={
                     "extensions": m.Ldif.DynamicMetadata.from_dict(metadata_kwargs),
@@ -1935,7 +1931,7 @@ class FlextLdifConversion(
             )
         entry_metadata = current_entry.metadata
         if entry_metadata and get_metadata(current_entry):
-            extensions_update: MutableMapping[str, t.NormalizedValue] = {
+            extensions_update: t.MutableContainerMapping = {
                 "converted_from_server": source_quirk_name,
             }
             if conversion_analysis:

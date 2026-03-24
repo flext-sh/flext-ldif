@@ -60,7 +60,7 @@ class FlextLdifUtilitiesProcessing:
     @staticmethod
     def is_ldif_process_call(
         items: MutableSequence[m.Ldif.Entry]
-        | MutableMapping[str, t.NormalizedValue]
+        | t.MutableContainerMapping
         | str
         | bytes
         | None,
@@ -184,9 +184,9 @@ class FlextLdifUtilitiesProcessing:
     @overload
     def process(
         items_or_entries: t.NormalizedValue
-        | MutableSequence[t.NormalizedValue]
+        | t.MutableContainerList
         | tuple[t.NormalizedValue, ...]
-        | MutableMapping[str, t.NormalizedValue],
+        | t.MutableContainerMapping,
         processor_or_config: Callable[..., t.NormalizedValue]
         | Callable[[str, t.NormalizedValue], t.NormalizedValue]
         | None = None,
@@ -205,7 +205,7 @@ class FlextLdifUtilitiesProcessing:
         target_server: c.Ldif.ServerTypes | None = None,
         normalize_dns: bool = True,
         normalize_attrs: bool = True,
-    ) -> r[MutableSequence[t.NormalizedValue]]: ...
+    ) -> r[t.MutableContainerList]: ...
 
     @staticmethod
     @overload
@@ -229,9 +229,9 @@ class FlextLdifUtilitiesProcessing:
     @override
     def process(
         items_or_entries: t.NormalizedValue
-        | MutableSequence[t.NormalizedValue]
+        | t.MutableContainerList
         | tuple[t.NormalizedValue, ...]
-        | MutableMapping[str, t.NormalizedValue]
+        | t.MutableContainerMapping
         | MutableSequence[m.Ldif.Entry],
         processor_or_config: Callable[..., t.NormalizedValue]
         | Callable[[str, t.NormalizedValue], t.NormalizedValue]
@@ -255,7 +255,7 @@ class FlextLdifUtilitiesProcessing:
         normalize_dns: bool = True,
         normalize_attrs: bool = True,
     ) -> (
-        r[MutableSequence[t.NormalizedValue]]
+        r[t.MutableContainerList]
         | FlextLdifUtilitiesResult[MutableSequence[m.Ldif.Entry]]
     ):
         """Universal entry processor."""
@@ -293,7 +293,7 @@ class FlextLdifUtilitiesProcessing:
         processor_func: Callable[..., t.NormalizedValue] = processor_normalized
         match items_or_entries:
             case dict() | Mapping():
-                dict_items: MutableMapping[str, t.NormalizedValue] = {}
+                dict_items: t.MutableContainerMapping = {}
                 for key, value in items_or_entries.items():
                     dict_items[str(key)] = (
                         FlextLdifUtilitiesProcessing.normalize_container(value)
@@ -305,9 +305,9 @@ class FlextLdifUtilitiesProcessing:
                     filter_keys,
                     exclude_keys,
                 )
-                return r[MutableSequence[t.NormalizedValue]].ok(results)
+                return r[t.MutableContainerList].ok(results)
             case list() | tuple():
-                items_list: MutableSequence[t.NormalizedValue] = [
+                items_list: t.MutableContainerList = [
                     FlextLdifUtilitiesProcessing.normalize_container(item)
                     for item in items_or_entries
                 ]
@@ -322,13 +322,13 @@ class FlextLdifUtilitiesProcessing:
                     not isinstance(items_or_entries, (str, bytes))
                 ):
                     msg = "Unsupported non-list sequence for single-item processing"
-                    return r[MutableSequence[t.NormalizedValue]].fail(msg)
+                    return r[t.MutableContainerList].fail(msg)
                 result_item = processor_func(items_or_entries)
-                return r[MutableSequence[t.NormalizedValue]].ok([result_item])
+                return r[t.MutableContainerList].ok([result_item])
 
     @staticmethod
     def process_dict_items[R](
-        items: MutableMapping[str, t.NormalizedValue],
+        items: t.MutableContainerMapping,
         processor_func: Callable[..., R],
         predicate: Callable[..., bool] | None,
         filter_keys: set[str] | None,
@@ -360,7 +360,7 @@ class FlextLdifUtilitiesProcessing:
 
     @staticmethod
     def process_list_items[R](
-        items: MutableSequence[t.NormalizedValue],
+        items: t.MutableContainerList,
         processor_func: Callable[..., R],
         predicate: Callable[..., bool] | None,
         on_error: str,
@@ -436,8 +436,8 @@ class FlextLdifUtilitiesProcessing:
         _mapper: FlextLdifUtilitiesProcessing.VariadicCallable[R] | None = None,
         mode: Literal["all", "any"] = "all",
     ) -> (
-        MutableSequence[t.NormalizedValue]
-        | MutableMapping[str, t.NormalizedValue]
+        t.MutableContainerList
+        | t.MutableContainerMapping
         | FlextLdifUtilitiesResult[MutableSequence[m.Ldif.Entry]]
     ):
         """Filter entries using composable filter predicates."""
@@ -494,19 +494,19 @@ class FlextLdifUtilitiesProcessing:
         items_or_entries: t.NormalizedValue,
         predicate: Callable[..., bool],
         _mapper: Callable[..., t.NormalizedValue] | None = None,
-    ) -> MutableSequence[t.NormalizedValue] | MutableMapping[str, t.NormalizedValue]:
+    ) -> t.MutableContainerList | t.MutableContainerMapping:
         """Filter using base class Collection.filter (internal helper)."""
         if isinstance(items_or_entries, (list, tuple)):
-            items_list: MutableSequence[t.NormalizedValue] = list(items_or_entries)
+            items_list: t.MutableContainerList = list(items_or_entries)
             list_filter_result = FlextUtilities.filter(items_list, predicate)
             return list(list_filter_result) if list_filter_result else []
         if isinstance(items_or_entries, dict):
-            items_dict: MutableMapping[str, t.NormalizedValue] = {}
+            items_dict: t.MutableContainerMapping = {}
             for k, v in items_or_entries.items():
                 items_dict[k] = FlextLdifUtilitiesProcessing.to_config_map_value(v)
             dict_filter_result = FlextUtilities.filter(items_dict, predicate)
             return dict_filter_result or {}
-        items_single_list: MutableSequence[t.NormalizedValue] = [items_or_entries]
+        items_single_list: t.MutableContainerList = [items_or_entries]
         single_filter_result = FlextUtilities.filter(items_single_list, predicate)
         return list(single_filter_result) if single_filter_result else []
 

@@ -21,8 +21,8 @@ class FlextLdifUtilitiesCollectionLdif:
     @classmethod
     def defaults(
         cls,
-        *dicts: MutableMapping[str, t.NormalizedValue] | None,
-    ) -> MutableMapping[str, t.NormalizedValue]:
+        *dicts: t.MutableContainerMapping | None,
+    ) -> t.MutableContainerMapping:
         """Defaults merge - first wins using FlextUtilities.flow() DSL (mnemonic: df)."""
         if not dicts:
             return {}
@@ -55,22 +55,22 @@ class FlextLdifUtilitiesCollectionLdif:
     @classmethod
     def deep_merge(
         cls,
-        *dicts: MutableMapping[str, t.NormalizedValue] | None,
-    ) -> MutableMapping[str, t.NormalizedValue]:
+        *dicts: t.MutableContainerMapping | None,
+    ) -> t.MutableContainerMapping:
         """Deep merge using FlextUtilities.merge() with deep strategy (mnemonic: dm)."""
         if not dicts:
             return {}
-        mapping_list: MutableSequence[MutableMapping[str, t.NormalizedValue]] = [
+        mapping_list: MutableSequence[t.MutableContainerMapping] = [
             dict_item for dict_item in dicts if isinstance(dict_item, dict)
         ]
         if not mapping_list:
             return {}
-        merged: MutableMapping[str, t.NormalizedValue] = {
+        merged: t.MutableContainerMapping = {
             key: FlextLdifUtilitiesCollectionLdif.to_config_map_value(value)
             for key, value in dict(mapping_list[0]).items()
         }
         for mapping in mapping_list[1:]:
-            mapping_dict: MutableMapping[str, t.NormalizedValue] = {
+            mapping_dict: t.MutableContainerMapping = {
                 key: FlextLdifUtilitiesCollectionLdif.to_config_map_value(value)
                 for key, value in dict(mapping).items()
             }
@@ -88,9 +88,9 @@ class FlextLdifUtilitiesCollectionLdif:
     @classmethod
     def update_inplace(
         cls,
-        obj: MutableMapping[str, t.NormalizedValue],
-        *updates: MutableMapping[str, t.NormalizedValue] | None,
-    ) -> MutableMapping[str, t.NormalizedValue]:
+        obj: t.MutableContainerMapping,
+        *updates: t.MutableContainerMapping | None,
+    ) -> t.MutableContainerMapping:
         """Update in-place using FlextUtilities.flow() pattern (mnemonic: ui)."""
         for update in updates:
             if update is not None:
@@ -126,8 +126,8 @@ class FlextLdifUtilitiesCollectionLdif:
     @classmethod
     def defaults_deep(
         cls,
-        *dicts: MutableMapping[str, t.NormalizedValue] | None,
-    ) -> MutableMapping[str, t.NormalizedValue]:
+        *dicts: t.MutableContainerMapping | None,
+    ) -> t.MutableContainerMapping:
         """Deep defaults using FlextUtilities.merge() deep strategy + first wins (mnemonic: dd)."""
         if not dicts:
             return {}
@@ -147,30 +147,30 @@ class FlextLdifUtilitiesCollectionLdif:
 
     @staticmethod
     def merge_dicts(
-        *dicts: MutableMapping[str, t.NormalizedValue],
+        *dicts: t.MutableContainerMapping,
         strategy: str = "deep",
         filter_none: bool = False,
         filter_empty: bool = False,
-    ) -> r[MutableMapping[str, t.NormalizedValue]]:
+    ) -> r[t.MutableContainerMapping]:
         """Merge multiple dicts with filtering options (mnemonic: mg)."""
-        dicts_typed: tuple[MutableMapping[str, t.NormalizedValue], ...] = dicts
+        dicts_typed: tuple[t.MutableContainerMapping, ...] = dicts
         if not dicts_typed:
-            return r[MutableMapping[str, t.NormalizedValue]].ok({})
-        merged: MutableMapping[str, t.NormalizedValue] = {}
+            return r[t.MutableContainerMapping].ok({})
+        merged: t.MutableContainerMapping = {}
         for dict_item in dicts_typed:
-            dict_item_dict: MutableMapping[str, t.NormalizedValue] = dict(dict_item)
+            dict_item_dict: t.MutableContainerMapping = dict(dict_item)
             merge_result = FlextUtilities.merge(
                 merged,
                 dict_item_dict,
                 strategy=strategy,
             )
             if merge_result.is_failure:
-                return r[MutableMapping[str, t.NormalizedValue]].fail(
+                return r[t.MutableContainerMapping].fail(
                     merge_result.error or "Merge failed",
                 )
             merged = merge_result.value
         if filter_none or filter_empty:
-            filtered: MutableMapping[str, t.NormalizedValue] = {}
+            filtered: t.MutableContainerMapping = {}
             for key, value in merged.items():
                 if filter_empty and FlextLdifUtilitiesCollectionLdif.is_empty_value(
                     value
@@ -178,7 +178,7 @@ class FlextLdifUtilitiesCollectionLdif:
                     continue
                 filtered[key] = value
             merged = filtered
-        return r[MutableMapping[str, t.NormalizedValue]].ok(merged)
+        return r[t.MutableContainerMapping].ok(merged)
 
     mg = merge_dicts
 
@@ -186,15 +186,13 @@ class FlextLdifUtilitiesCollectionLdif:
     @override
     def group_by(
         cls,
-        items: MutableSequence[t.NormalizedValue],
+        items: t.MutableContainerList,
         *,
         key: Callable[..., t.NormalizedValue],
-    ) -> MutableMapping[t.NormalizedValue, MutableSequence[t.NormalizedValue]]:
+    ) -> MutableMapping[t.NormalizedValue, t.MutableContainerList]:
         """Group by key function (generalized, mnemonic: gb)."""
         items_list = list(items)
-        result: MutableMapping[
-            t.NormalizedValue, MutableSequence[t.NormalizedValue]
-        ] = {}
+        result: MutableMapping[t.NormalizedValue, t.MutableContainerList] = {}
         for item in items_list:
             k = key(item)
             if k not in result:
@@ -208,13 +206,13 @@ class FlextLdifUtilitiesCollectionLdif:
     @override
     def partition(
         cls,
-        items: MutableSequence[t.NormalizedValue],
+        items: t.MutableContainerList,
         *,
         predicate: Callable[..., bool],
-    ) -> tuple[MutableSequence[t.NormalizedValue], MutableSequence[t.NormalizedValue]]:
+    ) -> tuple[t.MutableContainerList, t.MutableContainerList]:
         """Partition items by predicate into (matches, non-matches) (mnemonic: pt)."""
-        matches: MutableSequence[t.NormalizedValue] = []
-        non_matches: MutableSequence[t.NormalizedValue] = []
+        matches: t.MutableContainerList = []
+        non_matches: t.MutableContainerList = []
         for item in items:
             if predicate(item):
                 matches.append(item)
@@ -244,12 +242,12 @@ class FlextLdifUtilitiesCollectionLdif:
     @override
     def pluck(
         cls,
-        items: MutableSequence[t.NormalizedValue],
+        items: t.MutableContainerList,
         *,
         key: str | int | Callable[..., t.NormalizedValue],
-    ) -> MutableSequence[t.NormalizedValue]:
+    ) -> t.MutableContainerList:
         """Extract values from sequence by key/index/function (mnemonic: pk)."""
-        result: MutableSequence[t.NormalizedValue] = []
+        result: t.MutableContainerList = []
         for item in items:
             if callable(key):
                 result.append(key(item))
@@ -295,9 +293,9 @@ class FlextLdifUtilitiesCollectionLdif:
     @override
     def omit(
         cls,
-        data: MutableMapping[str, t.NormalizedValue],
+        data: t.MutableContainerMapping,
         *keys: str,
-    ) -> MutableMapping[str, t.NormalizedValue]:
+    ) -> t.MutableContainerMapping:
         """Omit keys using FlextUtilities.map_dict() DSL (mnemonic: om)."""
         if not data or not keys:
             return dict(data) if data else {}
@@ -328,12 +326,7 @@ class FlextLdifUtilitiesCollectionLdif:
         as_type: type | None = None,
         default: t.NormalizedValue | None = None,
         from_start: bool = True,
-    ) -> (
-        MutableMapping[str, t.NormalizedValue]
-        | MutableSequence[t.NormalizedValue]
-        | t.NormalizedValue
-        | None
-    ):
+    ) -> t.MutableContainerMapping | t.MutableContainerList | t.NormalizedValue | None:
         """Take value from data with type guard (mnemonic: tk)."""
         if isinstance(key_or_n, str):
             value: t.NormalizedValue = None
@@ -360,7 +353,7 @@ class FlextLdifUtilitiesCollectionLdif:
             case dict() as dict_items:
                 items = list(dict_items.items())
                 sliced = items[:n] if from_start else items[-n:]
-                sliced_dict: MutableMapping[str, t.NormalizedValue] = {
+                sliced_dict: t.MutableContainerMapping = {
                     key: FlextLdifUtilitiesCollectionLdif.to_config_map_value(value)
                     for key, value in sliced
                 }
@@ -397,7 +390,7 @@ class FlextLdifUtilitiesCollectionLdif:
     @staticmethod
     @override
     def find(
-        items: MutableSequence[t.NormalizedValue],
+        items: t.MutableContainerList,
         *,
         predicate: Callable[..., bool],
     ) -> t.NormalizedValue | None:
@@ -432,19 +425,19 @@ class FlextLdifUtilitiesCollectionLdif:
     @classmethod
     def zip_with(
         cls,
-        *sequences: MutableSequence[t.NormalizedValue],
+        *sequences: t.MutableContainerList,
         combiner: FlextLdifUtilitiesCollectionLdif.VariadicCallable[
             tuple[t.NormalizedValue, ...]
         ]
         | None = None,
-    ) -> MutableSequence[t.NormalizedValue]:
+    ) -> t.MutableContainerList:
         """Zip with combiner (generalized: uses zip from base, mnemonic: zw)."""
         if not sequences:
             return []
         zipped = zip(*sequences, strict=False)
         if combiner is None:
             return [tuple(items) for items in zipped]
-        result: MutableSequence[t.NormalizedValue] = []
+        result: t.MutableContainerList = []
         for items_tuple in zipped:
             items_list = list(items_tuple)
             combined = combiner(*items_list)
@@ -456,7 +449,7 @@ class FlextLdifUtilitiesCollectionLdif:
     @staticmethod
     def pipe_ldif(
         value: t.NormalizedValue,
-        *ops: MutableMapping[str, t.NormalizedValue] | Callable[..., t.NormalizedValue],
+        *ops: t.MutableContainerMapping | Callable[..., t.NormalizedValue],
     ) -> t.NormalizedValue:
         """LDIF-specific pipe - supports dict operations via flow()."""
         result: t.NormalizedValue = value
@@ -478,7 +471,7 @@ class FlextLdifUtilitiesCollectionLdif:
     @staticmethod
     def pp(
         value: t.NormalizedValue,
-        *ops: MutableMapping[str, t.NormalizedValue] | Callable[..., t.NormalizedValue],
+        *ops: t.MutableContainerMapping | Callable[..., t.NormalizedValue],
     ) -> t.NormalizedValue:
         """Alias for pipe_ldif (mnemonic: pp)."""
         return FlextLdifUtilitiesCollectionLdif.pipe_ldif(value, *ops)
@@ -555,7 +548,7 @@ class FlextLdifUtilitiesCollectionLdif:
     lf = lift
 
     @classmethod
-    def seq(cls, *values: t.NormalizedValue) -> MutableSequence[t.NormalizedValue]:
+    def seq(cls, *values: t.NormalizedValue) -> t.MutableContainerList:
         """Sequence constructor (mnemonic: sq)."""
         return list(values)
 
@@ -564,10 +557,10 @@ class FlextLdifUtilitiesCollectionLdif:
     @classmethod
     def assoc(
         cls,
-        data: MutableMapping[str, t.NormalizedValue],
+        data: t.MutableContainerMapping,
         key: str,
         value: t.NormalizedValue,
-    ) -> MutableMapping[str, t.NormalizedValue]:
+    ) -> t.MutableContainerMapping:
         """Associate key-value using FlextUtilities.merge() DSL (mnemonic: ac)."""
         updated = dict(data)
         updated[key] = value
@@ -578,9 +571,9 @@ class FlextLdifUtilitiesCollectionLdif:
     @classmethod
     def dissoc(
         cls,
-        data: MutableMapping[str, t.NormalizedValue],
+        data: t.MutableContainerMapping,
         *keys: str,
-    ) -> MutableMapping[str, t.NormalizedValue]:
+    ) -> t.MutableContainerMapping:
         """Dissociate keys using omit DSL (mnemonic: ds)."""
         return {k: v for k, v in data.items() if k not in keys}
 
@@ -590,9 +583,9 @@ class FlextLdifUtilitiesCollectionLdif:
     @override
     def update(
         cls,
-        data: MutableMapping[str, t.NormalizedValue],
-        updates: MutableMapping[str, t.NormalizedValue],
-    ) -> MutableMapping[str, t.NormalizedValue]:
+        data: t.MutableContainerMapping,
+        updates: t.MutableContainerMapping,
+    ) -> t.MutableContainerMapping:
         """Update dict using FlextUtilities.merge() (mnemonic: ud)."""
         updated = dict(data)
         updated.update(updates)
@@ -637,9 +630,7 @@ class FlextLdifUtilitiesCollectionLdif:
     vl = dict_vals
 
     @classmethod
-    def invert(
-        cls, obj: MutableMapping[str, t.NormalizedValue]
-    ) -> MutableMapping[str, str]:
+    def invert(cls, obj: t.MutableContainerMapping) -> MutableMapping[str, str]:
         """Invert dict using FlextUtilities.map_dict() pattern (mnemonic: iv)."""
         str_dict: MutableMapping[str, str] = {k: str(v) for k, v in obj.items()}
         inverted = FlextUtilities.invert_dict(str_dict)
@@ -650,10 +641,10 @@ class FlextLdifUtilitiesCollectionLdif:
     @classmethod
     def where(
         cls,
-        obj: MutableMapping[str, t.NormalizedValue],
+        obj: t.MutableContainerMapping,
         *,
         predicate: Callable[[str, t.NormalizedValue], bool] | None = None,
-    ) -> MutableMapping[str, t.NormalizedValue]:
+    ) -> t.MutableContainerMapping:
         """Where using FlextUtilities.filter() (mnemonic: wh)."""
         if predicate is None:
             return dict(obj)
@@ -674,8 +665,7 @@ class FlextLdifUtilitiesCollectionLdif:
 
     @staticmethod
     def sum(
-        items: MutableSequence[t.NormalizedValue]
-        | MutableMapping[str, t.NormalizedValue],
+        items: t.MutableContainerList | t.MutableContainerMapping,
     ) -> t.Numeric:
         """Sum of numeric items."""
         if isinstance(items, Mapping):
@@ -884,7 +874,7 @@ class FlextLdifUtilitiesCollectionLdif:
             **_kwargs: t.Scalar,
         ) -> t.NormalizedValue:
             combined_args: tuple[t.NormalizedValue, ...] = args + more_args
-            converted_args: MutableSequence[t.NormalizedValue] = []
+            converted_args: t.MutableContainerList = []
             for arg in combined_args:
                 match arg:
                     case None:
@@ -908,15 +898,15 @@ class FlextLdifUtilitiesCollectionLdif:
     @classmethod
     def evolve(
         cls,
-        obj: MutableMapping[str, t.NormalizedValue],
-        *transforms: MutableMapping[str, t.NormalizedValue]
+        obj: t.MutableContainerMapping,
+        *transforms: t.MutableContainerMapping
         | Callable[
-            [MutableMapping[str, t.NormalizedValue]],
-            MutableMapping[str, t.NormalizedValue],
+            [t.MutableContainerMapping],
+            t.MutableContainerMapping,
         ],
-    ) -> MutableMapping[str, t.NormalizedValue]:
+    ) -> t.MutableContainerMapping:
         """Evolve using FlextUtilities.flow() pattern (mnemonic: ev)."""
-        result: MutableMapping[str, t.NormalizedValue] = dict(obj)
+        result: t.MutableContainerMapping = dict(obj)
         for transform in transforms:
             if callable(transform) and (not isinstance(transform, Mapping)):
                 transformed = transform(result)
@@ -977,12 +967,12 @@ class FlextLdifUtilitiesCollectionLdif:
         data: t.NormalizedValue,
         *keys: str,
         as_dict: bool = True,
-    ) -> MutableMapping[str, t.NormalizedValue] | MutableSequence[t.NormalizedValue]:
+    ) -> t.MutableContainerMapping | t.MutableContainerList:
         """Pick keys from dict (DSL helper, mnemonic: pc)."""
         if not isinstance(data, Mapping):
             return {} if as_dict else []
 
-        data_mapping: MutableMapping[str, t.NormalizedValue] = {
+        data_mapping: t.MutableContainerMapping = {
             str(key): FlextLdifUtilitiesCollectionLdif.to_config_map_value(value)
             for key, value in data.items()
         }
@@ -994,14 +984,14 @@ class FlextLdifUtilitiesCollectionLdif:
 
     @staticmethod
     def map_dict(
-        obj: MutableMapping[str, t.NormalizedValue],
+        obj: t.MutableContainerMapping,
         *,
         mapper: Callable[[str, t.NormalizedValue], t.NormalizedValue] | None = None,
         key_mapper: Callable[[str], str] | None = None,
         predicate: Callable[[str, t.NormalizedValue], bool] | None = None,
-    ) -> MutableMapping[str, t.NormalizedValue]:
+    ) -> t.MutableContainerMapping:
         """Map dict with optional transformations (mnemonic: md)."""
-        result: MutableMapping[str, t.NormalizedValue] = {}
+        result: t.MutableContainerMapping = {}
         for k, v in obj.items():
             if predicate and (not predicate(k, v)):
                 continue
@@ -1019,12 +1009,12 @@ class FlextLdifUtilitiesCollectionLdif:
         processor: Callable[[str, t.NormalizedValue], tuple[str, t.NormalizedValue]]
         | None = None,
         predicate: Callable[[str, t.NormalizedValue], bool] | None = None,
-        default: MutableMapping[str, t.NormalizedValue] | None = None,
-    ) -> MutableMapping[str, t.NormalizedValue]:
+        default: t.MutableContainerMapping | None = None,
+    ) -> t.MutableContainerMapping:
         """Reduce dicts (mnemonic: rd)."""
         if not items:
             return default or {}
-        items_list: MutableSequence[MutableMapping[str, t.NormalizedValue]] = []
+        items_list: MutableSequence[t.MutableContainerMapping] = []
         if isinstance(items, Mapping):
             items_list = [
                 {
@@ -1043,9 +1033,7 @@ class FlextLdifUtilitiesCollectionLdif:
                         )
                         for key, value in item.items()
                     })
-        result: MutableMapping[str, t.NormalizedValue] = (
-            dict(default) if default else {}
-        )
+        result: t.MutableContainerMapping = dict(default) if default else {}
         for d_item in items_list:
             for key, val in d_item.items():
                 if predicate and (not predicate(key, val)):
@@ -1072,7 +1060,7 @@ class FlextLdifUtilitiesCollectionLdif:
         """Fold items using folder function (mnemonic: fd)."""
         if not folder:
             return initial
-        items_list: MutableSequence[t.NormalizedValue]
+        items_list: t.MutableContainerList
         if isinstance(items, Sequence) and not isinstance(items, (str, bytes)):
             items_list = [
                 FlextLdifUtilitiesCollectionLdif.to_config_map_value(item)
@@ -1095,9 +1083,9 @@ class FlextLdifUtilitiesCollectionLdif:
         *,
         mapper: Callable[..., t.NormalizedValue] | None = None,
         predicate: Callable[..., bool] | None = None,
-    ) -> MutableSequence[t.NormalizedValue]:
+    ) -> t.MutableContainerList:
         """Map then filter items (mnemonic: mf)."""
-        items_list: MutableSequence[t.NormalizedValue]
+        items_list: t.MutableContainerList
         if isinstance(items, Sequence) and not isinstance(items, (str, bytes)):
             items_list = [
                 FlextLdifUtilitiesCollectionLdif.to_config_map_value(item)
@@ -1119,10 +1107,10 @@ class FlextLdifUtilitiesCollectionLdif:
         *,
         processor: Callable[..., t.NormalizedValue] | None = None,
         on_error: str = "skip",
-    ) -> MutableSequence[t.NormalizedValue]:
+    ) -> t.MutableContainerList:
         """Process and flatten items (mnemonic: pf)."""
         if isinstance(items, Mapping):
-            items_list: MutableSequence[t.NormalizedValue] = list(
+            items_list: t.MutableContainerList = list(
                 FlextLdifUtilitiesCollectionLdif.normalize_mapping(items).values(),
             )
         elif isinstance(items, (list, tuple, set, frozenset)):
@@ -1131,7 +1119,7 @@ class FlextLdifUtilitiesCollectionLdif:
             ]
         else:
             items_list = [FlextLdifUtilitiesCollectionLdif.normalize_container(items)]
-        result: MutableSequence[t.NormalizedValue] = []
+        result: t.MutableContainerList = []
         for item in items_list:
             try:
                 processed = processor(item) if processor else item
@@ -1164,7 +1152,7 @@ class FlextLdifUtilitiesCollectionLdif:
 
     @staticmethod
     def find_key(
-        obj: MutableMapping[str, t.NormalizedValue],
+        obj: t.MutableContainerMapping,
         *,
         predicate: Callable[[str, t.NormalizedValue], bool] | None = None,
     ) -> str | None:
@@ -1180,7 +1168,7 @@ class FlextLdifUtilitiesCollectionLdif:
 
     @staticmethod
     def find_val(
-        obj: MutableMapping[str, t.NormalizedValue],
+        obj: t.MutableContainerMapping,
         *,
         predicate: Callable[[str, t.NormalizedValue], bool] | None = None,
     ) -> t.NormalizedValue | None:
@@ -1196,7 +1184,7 @@ class FlextLdifUtilitiesCollectionLdif:
 
     @classmethod
     def pairs(
-        cls, d: MutableMapping[str, t.NormalizedValue]
+        cls, d: t.MutableContainerMapping
     ) -> MutableSequence[tuple[str, t.NormalizedValue]]:
         """Convert dict/mapping to list of (key, value) tuples (mnemonic: pr)."""
         return list(d.items())
@@ -1255,10 +1243,10 @@ class FlextLdifUtilitiesCollectionLdif:
     prop_get = prop
 
     @classmethod
-    def props(cls, *keys: str) -> Callable[..., MutableMapping[str, t.NormalizedValue]]:
+    def props(cls, *keys: str) -> Callable[..., t.MutableContainerMapping]:
         """Props accessor using FlextUtilities.pick() directly (mnemonic: ps)."""
 
-        def accessor(obj: t.NormalizedValue) -> MutableMapping[str, t.NormalizedValue]:
+        def accessor(obj: t.NormalizedValue) -> t.MutableContainerMapping:
             match obj:
                 case Mapping() as obj_mapping:
                     return {
@@ -1269,7 +1257,7 @@ class FlextLdifUtilitiesCollectionLdif:
                     }
                 case _:
                     pass
-            result_dict: MutableMapping[str, t.NormalizedValue] = {}
+            result_dict: t.MutableContainerMapping = {}
             for k in keys:
                 if getattr(obj, k, None) is not None:
                     result_dict[k] = (
@@ -1333,10 +1321,10 @@ class FlextLdifUtilitiesCollectionLdif:
 
     @staticmethod
     def normalize_mapping(
-        mapping: MutableMapping[str, t.NormalizedValue],
-    ) -> MutableMapping[str, t.NormalizedValue]:
+        mapping: t.MutableContainerMapping,
+    ) -> t.MutableContainerMapping:
         """Normalize a mapping of objects to a standard dict form."""
-        normalized: MutableMapping[str, t.NormalizedValue] = {}
+        normalized: t.MutableContainerMapping = {}
         for key, value in mapping.items():
             normalized[str(key)] = FlextLdifUtilitiesCollectionLdif.normalize_container(
                 value,

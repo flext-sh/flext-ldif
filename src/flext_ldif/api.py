@@ -38,9 +38,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
     """Main API facade for LDIF operations using composition pattern."""
 
     _instance: ClassVar[FlextLdif | None] = None
-    _init_config_overrides: ClassVar[MutableMapping[str, t.NormalizedValue] | None] = (
-        None
-    )
+    _init_config_overrides: ClassVar[t.MutableContainerMapping | None] = None
     _processing_service: FlextLdifProcessing | None
     _acl_service: FlextLdifAcl | None
     _parser_service: FlextLdifParser | None
@@ -242,7 +240,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
 
     def extract_acls(
         self,
-        entry: m.Ldif.Entry | BaseModel | MutableMapping[str, t.NormalizedValue],
+        entry: m.Ldif.Entry | BaseModel | t.MutableContainerMapping,
     ) -> r[m.Ldif.AclResponse]:
         """Extract ACLs from entry."""
         server_type: str = "rfc"
@@ -357,7 +355,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
 
     def get_entry_attributes(
         self,
-        entry: m.Ldif.Entry | BaseModel | MutableMapping[str, t.NormalizedValue],
+        entry: m.Ldif.Entry | BaseModel | t.MutableContainerMapping,
     ) -> r[MutableMapping[str, MutableSequence[str]]]:
         """Get entry attributes dictionary."""
         match entry:
@@ -378,7 +376,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
 
     def get_entry_objectclasses(
         self,
-        entry: m.Ldif.Entry | BaseModel | MutableMapping[str, t.NormalizedValue],
+        entry: m.Ldif.Entry | BaseModel | t.MutableContainerMapping,
     ) -> r[MutableSequence[str]]:
         """Get entry objectClass values."""
         match entry:

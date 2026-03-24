@@ -183,7 +183,7 @@ class FlextLdifModelsCollections:
         def add_entries(
             self,
             category: str,
-            entries: MutableSequence[t.NormalizedValue],
+            entries: t.MutableContainerList,
         ) -> None:
             domains = FlextLdifModelsDomains
             existing = self._entry_categories().get(category, [])

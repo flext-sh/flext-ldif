@@ -111,7 +111,7 @@ class FlextLdifFixtures:
         metadata = loader.get_metadata(FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.SCHEMA)
     """
 
-    _instances: ClassVar[Mapping[str, t.NormalizedValue]] = {}
+    _instances: ClassVar[t.ContainerMapping] = {}
 
     @classmethod
     def get_oid(cls) -> FlextLdifFixtures.OID:
@@ -467,7 +467,7 @@ class FlextLdifFixtures:
             """Load all OID fixtures.
 
             Returns:
-                Mapping[str, t.NormalizedValue]: All available OID fixtures
+                t.ContainerMapping: All available OID fixtures
 
             """
             return self._loader.load_all(FlextLdifFixtures.ServerType.OID)

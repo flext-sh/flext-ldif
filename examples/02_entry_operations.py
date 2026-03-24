@@ -15,7 +15,7 @@ SRP: Each method does ONE thing, composition handles complexity
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 
 from flext_core import r
 
@@ -56,7 +56,7 @@ class DRYEntryOperations:
         )
 
     @staticmethod
-    def batch_processing() -> r[Sequence[Mapping[str, t.NormalizedValue]]]:
+    def batch_processing() -> r[Sequence[t.ContainerMapping]]:
         """DRY batch processing: parallel transformation pipeline."""
         api = FlextLdif.get_instance()
         return DRYEntryOperations.advanced_filtering().flat_map(

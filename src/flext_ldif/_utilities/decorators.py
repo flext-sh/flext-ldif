@@ -60,7 +60,7 @@ class FlextLdifUtilitiesDecorators:
             "server_type": server_type,
             "parsed_timestamp": datetime.now(UTC).replace(microsecond=0).isoformat(),
         }
-        extensions_dict: MutableMapping[str, t.NormalizedValue] = {
+        extensions_dict: t.MutableContainerMapping = {
             key: value
             for key, value in extensions_dict_raw.items()
             if value is not None

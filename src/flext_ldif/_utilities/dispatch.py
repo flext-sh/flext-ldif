@@ -102,32 +102,30 @@ class FlextLdifUtilitiesDispatch:
     def parse(
         definition: str | m.Ldif.DN,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], MutableMapping[str, t.NormalizedValue]]
-        | Callable[[str], r[MutableMapping[str, t.NormalizedValue]]]
+        parse_parts_hook: Callable[[str], t.MutableContainerMapping]
+        | Callable[[str], r[t.MutableContainerMapping]]
         | None = None,
-    ) -> r[MutableMapping[str, t.NormalizedValue]]: ...
+    ) -> r[t.MutableContainerMapping]: ...
 
     @staticmethod
     @overload
     def parse(
         definition: str,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], MutableMapping[str, t.NormalizedValue]]
-        | Callable[[str], r[MutableMapping[str, t.NormalizedValue]]]
+        parse_parts_hook: Callable[[str], t.MutableContainerMapping]
+        | Callable[[str], r[t.MutableContainerMapping]]
         | None = None,
-    ) -> r[MutableMapping[str, t.NormalizedValue]]: ...
+    ) -> r[t.MutableContainerMapping]: ...
 
     @staticmethod
     @override
     def parse(
         definition: str | m.Ldif.DN | None,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], MutableMapping[str, t.NormalizedValue]]
-        | Callable[[str], r[MutableMapping[str, t.NormalizedValue]]]
+        parse_parts_hook: Callable[[str], t.MutableContainerMapping]
+        | Callable[[str], r[t.MutableContainerMapping]]
         | None = None,
-    ) -> (
-        r[MutableSequence[tuple[str, str]]] | r[MutableMapping[str, t.NormalizedValue]]
-    ):
+    ) -> r[MutableSequence[tuple[str, str]]] | r[t.MutableContainerMapping]:
         if definition is None:
             return r[MutableSequence[tuple[str, str]]].fail("DN cannot be None")
         if isinstance(definition, m.Ldif.DN):
@@ -135,13 +133,13 @@ class FlextLdifUtilitiesDispatch:
         if parse_parts_hook is None and server_type is None:
             return FlextLdifUtilitiesDN.parse_dn(definition)
 
-        def attr_hook(value: str) -> r[MutableMapping[str, t.NormalizedValue]]:
+        def attr_hook(value: str) -> r[t.MutableContainerMapping]:
             if parse_parts_hook is None:
-                return r[MutableMapping[str, t.NormalizedValue]].ok({})
+                return r[t.MutableContainerMapping].ok({})
             parsed_value = parse_parts_hook(value)
             if isinstance(parsed_value, r):
                 return parsed_value
-            return r[MutableMapping[str, t.NormalizedValue]].ok(dict(parsed_value))
+            return r[t.MutableContainerMapping].ok(dict(parsed_value))
 
         return FlextLdifUtilitiesAttribute.resolve_attribute(
             definition=definition,
@@ -153,7 +151,7 @@ class FlextLdifUtilitiesDispatch:
     @override
     def matches_server_patterns(
         value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        oid_pattern: MutableMapping[str, t.NormalizedValue] | str,
+        oid_pattern: t.MutableContainerMapping | str,
         detection_names: t.NormalizedValue | frozenset[str],
         detection_string: str | None = None,
         *,
@@ -329,8 +327,8 @@ class FlextLdifUtilitiesDispatch:
         _mapper: Callable[..., R] | None = None,
         mode: Literal["all", "any"] = "all",
     ) -> (
-        MutableSequence[t.NormalizedValue]
-        | MutableMapping[str, t.NormalizedValue]
+        t.MutableContainerList
+        | t.MutableContainerMapping
         | FlextLdifUtilitiesResult[MutableSequence[m.Ldif.Entry]]
     ):
         """Route to Processing.filter (resolves Processing vs Filters vs Result)."""

@@ -152,7 +152,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     def _build_aci_permissions(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
         """Build ACI permissions clause from ACL model."""
         perms = acl_data.permissions
-        target_perms_dict: MutableMapping[str, t.NormalizedValue] | None = None
+        target_perms_dict: t.MutableContainerMapping | None = None
         if not perms and acl_data.metadata:
             extensions = acl_data.metadata.extensions
             target_perms_dict_raw = (
@@ -165,7 +165,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             if isinstance(target_perms_dict_raw, Mapping):
                 target_perms_dict = target_perms_dict_raw
         if target_perms_dict:
-            perms_data: MutableMapping[str, t.NormalizedValue] = {}
+            perms_data: t.MutableContainerMapping = {}
             for key, val in target_perms_dict.items():
                 k = str(key)
                 if isinstance(val, Mapping):
@@ -263,7 +263,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if not target and acl_data.metadata:
             extensions = acl_data.metadata.extensions
             target_dict = extensions.get("acl_target_target") if extensions else None
-            target_data: MutableMapping[str, t.NormalizedValue] = {}
+            target_data: t.MutableContainerMapping = {}
             if isinstance(target_dict, Mapping):
                 for raw_key, raw_value in target_dict.items():
                     if isinstance(raw_value, Mapping):
@@ -435,7 +435,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Write RFC-compliant ACL model to OUD ACI string format (protected internal method)."""
         try:
             sc = FlextLdifServersOudConstants
-            extensions: MutableMapping[str, t.NormalizedValue] | None = (
+            extensions: t.MutableContainerMapping | None = (
                 dict(acl_data.metadata.extensions.to_dict())
                 if acl_data.metadata and acl_data.metadata.extensions
                 else None

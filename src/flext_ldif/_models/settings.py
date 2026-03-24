@@ -2086,7 +2086,7 @@ class FlextLdifModelsSettings:
         build_metadata_hook: Annotated[
             Callable[
                 [str, MutableMapping[str, MutableSequence[str]]],
-                MutableMapping[str, t.NormalizedValue] | None,
+                t.MutableContainerMapping | None,
             ]
             | None,
             Field(default=None, description="Optional metadata building"),

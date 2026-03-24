@@ -61,9 +61,7 @@ class FlextLdifModelsMetadata:
             return key in self._extra()
 
         @classmethod
-        def from_dict(
-            cls, data: MutableMapping[str, t.NormalizedValue] | None = None
-        ) -> Self:
+        def from_dict(cls, data: t.MutableContainerMapping | None = None) -> Self:
             """Create DynamicMetadata from a dictionary."""
             if data is None:
                 return cls()

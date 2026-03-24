@@ -97,9 +97,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _to_error_details_list(
-        error_details: MutableSequence[t.NormalizedValue]
-        | tuple[t.NormalizedValue, ...]
-        | None,
+        error_details: t.MutableContainerList | tuple[t.NormalizedValue, ...] | None,
     ) -> MutableSequence[str]:
         if error_details is None:
             return []

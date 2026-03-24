@@ -47,7 +47,7 @@ class TestsFlextLdifSchemaTransformerNormalizeAttributeName(s):
     def test_normalize_handles_empty_string(self) -> None:
         """Test that empty string is handled gracefully."""
         result = u.Ldif.normalize_name("")
-        tm.that(result, eq=False)
+        tm.that(not result, eq=True)
 
     def test_normalize_handles_none(self) -> None:
         """Test that None is handled gracefully."""

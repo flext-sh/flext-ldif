@@ -102,10 +102,10 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
     def create_metadata(
         self,
         original_format: str,
-        extensions: MutableMapping[str, t.NormalizedValue] | None = None,
+        extensions: t.MutableContainerMapping | None = None,
     ) -> m.Ldif.QuirkMetadata:
         """Create ACL quirk metadata."""
-        all_extensions: MutableMapping[str, t.NormalizedValue] = {
+        all_extensions: t.MutableContainerMapping = {
             "original_format": original_format,
         }
         if extensions:
@@ -244,7 +244,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
 
     def _extract_acl_parameters(
         self,
-        kwargs: MutableMapping[str, t.NormalizedValue],
+        kwargs: t.MutableContainerMapping,
     ) -> tuple[str | m.Ldif.Acl | None, str | None]:
         """Extract and validate ACL operation parameters from kwargs."""
         data_raw = kwargs.get("data")
@@ -280,7 +280,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
     def _resolve_data(
         self,
         data: str | m.Ldif.Acl | None,
-        kwargs: MutableMapping[str, t.NormalizedValue],
+        kwargs: t.MutableContainerMapping,
     ) -> str | m.Ldif.Acl | None:
         """Resolve data from parameter or kwargs."""
         if data is not None:
@@ -291,7 +291,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
     def _resolve_operation(
         self,
         operation: str | None,
-        kwargs: MutableMapping[str, t.NormalizedValue],
+        kwargs: t.MutableContainerMapping,
     ) -> str | None:
         """Resolve operation from parameter or kwargs."""
         if operation is not None:

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Callable, MutableMapping, MutableSequence
+from collections.abc import Callable, MutableSequence
 from typing import Self, override
 
 from flext_core import FlextUtilities, r
@@ -30,10 +30,10 @@ class FlextLdifUtilitiesNormalization:
 
     @staticmethod
     def normalize_mapping(
-        mapping: MutableMapping[str, t.NormalizedValue],
-    ) -> MutableMapping[str, t.NormalizedValue]:
+        mapping: t.MutableContainerMapping,
+    ) -> t.MutableContainerMapping:
         """Normalize a mapping of objects to a standard dict form."""
-        normalized: MutableMapping[str, t.NormalizedValue] = {}
+        normalized: t.MutableContainerMapping = {}
         for key, value in mapping.items():
             normalized[str(key)] = FlextLdifUtilitiesNormalization.normalize_container(
                 value,
@@ -128,8 +128,8 @@ class FlextLdifUtilitiesNormalization:
         cls,
         value: t.NormalizedValue | r[t.NormalizedValue],
         *,
-        default: MutableSequence[t.NormalizedValue] | None = None,
-    ) -> MutableSequence[t.NormalizedValue]:
+        default: t.MutableContainerList | None = None,
+    ) -> t.MutableContainerList:
         """Normalize to list using FlextUtilities.build() DSL (mnemonic: nl)."""
         extracted_value: t.NormalizedValue | None
         match value:
@@ -139,13 +139,11 @@ class FlextLdifUtilitiesNormalization:
                 )
             case _:
                 extracted_value = value
-        default_list: MutableSequence[t.NormalizedValue] = (
-            default if default is not None else []
-        )
+        default_list: t.MutableContainerList = default if default is not None else []
         extracted: t.NormalizedValue = (
             extracted_value if extracted_value is not None else default_list
         )
-        ops: MutableMapping[str, t.NormalizedValue] = {
+        ops: t.MutableContainerMapping = {
             "ensure": "list",
             "ensure_default": default_list,
         }
@@ -246,7 +244,7 @@ class FlextLdifUtilitiesNormalization:
                 filtered = [item for item in conv_result if predicate(item)]
                 return filtered or conv_result
         else:
-            ops: MutableMapping[str, t.NormalizedValue] = {
+            ops: t.MutableContainerMapping = {
                 "ensure": target_type,
                 "ensure_default": default,
             }
@@ -270,7 +268,7 @@ class FlextLdifUtilitiesNormalization:
     def build(
         value: t.NormalizedValue,
         *,
-        ops: MutableMapping[str, t.NormalizedValue] | None = None,
+        ops: t.MutableContainerMapping | None = None,
     ) -> t.NormalizedValue:
         """Build value using operations dict (DSL helper)."""
         if ops is None:
@@ -314,7 +312,7 @@ class FlextLdifUtilitiesNormalization:
                 case _:
                     pass
             return cls.conv(value).str_list(default=list_default).safe().build()
-        ops: MutableMapping[str, t.NormalizedValue] = {}
+        ops: t.MutableContainerMapping = {}
         result = cls.build(
             value,
             ops=ops,

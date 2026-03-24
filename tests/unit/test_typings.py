@@ -26,7 +26,7 @@ class TestFlextLdifTypesStructure:
     def test_has_required_namespaces(self) -> None:
         """T must have required namespaces."""
         tm.that(hasattr(t, "Ldif"), eq=True)
-        tm.that(hasattr(t.Ldif, "Entry"), eq=False)
+        tm.that(not hasattr(t.Ldif, "Entry"), eq=True)
         tm.that(hasattr(t.Ldif, "AttributeDict"), eq=True)
         tm.that(hasattr(t.Ldif, "DistributionDict"), eq=True)
 
@@ -41,7 +41,7 @@ class TestFlextLdifTypesStructure:
             and (m[1].__module__ not in {"typing", "builtins"})
         ]
         (
-            tm.that(user_functions, eq=False),
+            tm.that(not user_functions, eq=True),
             "typings.py must not contain functions",
         )
 
@@ -63,14 +63,14 @@ class TestFlextLdifTypesStructure:
             if imp.startswith("flext_ldif.") and "_" in imp.split(".")[-1]
         ]
         (
-            tm.that(internal_imports, eq=False),
+            tm.that(not internal_imports, eq=True),
             (f"typings.py must not import from internal modules: {internal_imports}"),
         )
         service_imports = [
             imp for imp in flext_ldif_imports if "services" in imp or "api" in imp
         ]
         (
-            tm.that(service_imports, eq=False),
+            tm.that(not service_imports, eq=True),
             (f"typings.py must not import from services/api: {service_imports}"),
         )
 
@@ -103,7 +103,7 @@ class TestsFlextLdifCommonDictionaryTypes(s):
     def test_attribute_dict_empty(self) -> None:
         """AttributeDict must handle empty attributes."""
         attr_dict: t.Ldif.AttributeDict = {}
-        tm.that(attr_dict, eq=False)
+        tm.that(not attr_dict, eq=True)
 
     def test_distribution_dict_with_entry_counts(self) -> None:
         """DistributionDict must work with entry type statistics."""
@@ -230,17 +230,17 @@ class TestRemovalOfOverEngineering:
     @pytest.mark.parametrize("namespace", REMOVED_NAMESPACES)
     def test_removed_namespaces(self, namespace: str) -> None:
         """Over-engineered namespaces must be removed."""
-        tm.that(hasattr(t, namespace), eq=False)
+        tm.that(not hasattr(t, namespace), eq=True)
 
     @pytest.mark.parametrize("type_name", REMOVED_COMMON_DICT)
     def test_removed_common_dict_types(self, type_name: str) -> None:
         """Unused CommonDict types must be removed."""
-        tm.that(hasattr(t.Ldif, type_name), eq=False)
+        tm.that(not hasattr(t.Ldif, type_name), eq=True)
 
     @pytest.mark.parametrize("type_name", REMOVED_ENTRY)
     def test_removed_entry_types(self, type_name: str) -> None:
         """Unused Entry types must be removed."""
-        tm.that(hasattr(t.Ldif, "Entry"), eq=False)
+        tm.that(not hasattr(t.Ldif, "Entry"), eq=True)
 
 
 class TestPhase1StandardizationResults:

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, MutableMapping, MutableSequence
+from collections.abc import Callable, MutableSequence
 from typing import Final
 
 from flext_core import r
@@ -63,9 +63,8 @@ class FlextLdifUtilitiesAttribute:
         definition: str,
         *,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], r[MutableMapping[str, t.NormalizedValue]]]
-        | None = None,
-    ) -> r[MutableMapping[str, t.NormalizedValue]]:
+        parse_parts_hook: Callable[[str], r[t.MutableContainerMapping]] | None = None,
+    ) -> r[t.MutableContainerMapping]:
         """Parse RFC 4512 attribute definition into structured data."""
         _ = server_type
         if parse_parts_hook:

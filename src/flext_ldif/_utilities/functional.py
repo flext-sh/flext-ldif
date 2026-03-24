@@ -36,7 +36,7 @@ class FlextLdifUtilitiesFunctional:
         if isinstance(value, Path):
             return str(value)
         if isinstance(value, BaseModel):
-            model_mapping: MutableMapping[str, t.NormalizedValue] = {
+            model_mapping: t.MutableContainerMapping = {
                 key: FlextLdifUtilitiesFunctional._to_general(getattr(value, key))
                 for key in type(value).model_fields
             }
@@ -46,7 +46,7 @@ class FlextLdifUtilitiesFunctional:
                     model_mapping[key] = FlextLdifUtilitiesFunctional._to_general(item)
             return model_mapping
         if isinstance(value, Mapping):
-            normalized_mapping: MutableMapping[str, t.NormalizedValue] = {}
+            normalized_mapping: t.MutableContainerMapping = {}
             for key, item in value.items():
                 normalized_mapping[key] = FlextLdifUtilitiesFunctional._to_general(item)
             return normalized_mapping
@@ -229,31 +229,27 @@ class FlextLdifUtilitiesFunctional:
 
     @staticmethod
     def process_flatten(
-        items: MutableSequence[t.NormalizedValue],
+        items: t.MutableContainerList,
         processor: Callable[
             ...,
-            MutableSequence[t.NormalizedValue]
-            | tuple[t.NormalizedValue, ...]
-            | t.NormalizedValue,
+            t.MutableContainerList | tuple[t.NormalizedValue, ...] | t.NormalizedValue,
         ],
         *,
         predicate: Callable[..., bool] = lambda x: x is not None,
         on_error: Literal["skip", "stop", "collect"] = "skip",
-    ) -> MutableSequence[t.NormalizedValue]:
+    ) -> t.MutableContainerList:
         """Process and flatten items (mnemonic: pf)."""
-        result: MutableSequence[t.NormalizedValue] = []
+        result: t.MutableContainerList = []
         for item in items:
             try:
                 processed = processor(item)
                 if isinstance(processed, list):
-                    processed_values: MutableSequence[t.NormalizedValue] = processed
+                    processed_values: t.MutableContainerList = processed
                     result.extend(
                         sub_item for sub_item in processed_values if predicate(sub_item)
                     )
                 elif isinstance(processed, tuple):
-                    processed_tuple_values: MutableSequence[t.NormalizedValue] = list(
-                        processed
-                    )
+                    processed_tuple_values: t.MutableContainerList = list(processed)
                     result.extend(
                         sub_item
                         for sub_item in processed_tuple_values
@@ -277,25 +273,23 @@ class FlextLdifUtilitiesFunctional:
     @classmethod
     def normalize_list(
         cls,
-        value: t.NormalizedValue | MutableSequence[t.NormalizedValue] | None,
+        value: t.NormalizedValue | t.MutableContainerList | None,
         *,
         mapper: Callable[..., t.NormalizedValue] | None = None,
         predicate: Callable[..., bool] | None = None,
-        default: MutableSequence[t.NormalizedValue] | None = None,
-    ) -> MutableSequence[t.NormalizedValue]:
+        default: t.MutableContainerList | None = None,
+    ) -> t.MutableContainerList:
         """Normalize to list (mnemonic: nl)."""
         if value is None:
             if default is not None:
                 return list(default)
             return []
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            items: MutableSequence[t.NormalizedValue] = list(value)
+            items: t.MutableContainerList = list(value)
         else:
             items = [value]
         if mapper is not None:
-            items_mapped: MutableSequence[t.NormalizedValue] = [
-                mapper(item) for item in items
-            ]
+            items_mapped: t.MutableContainerList = [mapper(item) for item in items]
             if predicate is not None:
                 return [item for item in items_mapped if predicate(item)]
             return items_mapped
@@ -442,7 +436,7 @@ class FlextLdifUtilitiesFunctional:
     it = is_type
     _ConvertibleType = (
         t.Scalar
-        | MutableSequence[t.NormalizedValue]
+        | t.MutableContainerList
         | tuple[t.NormalizedValue, ...]
         | set[t.NormalizedValue]
         | t.NormalizedValue
@@ -503,9 +497,9 @@ class FlextLdifUtilitiesFunctional:
         cls,
         value: t.NormalizedValue,
         *,
-        target: type[MutableSequence[t.NormalizedValue]] | Literal["list"],
-        default: MutableSequence[t.NormalizedValue] | None = None,
-    ) -> MutableSequence[t.NormalizedValue] | None: ...
+        target: type[t.MutableContainerList] | Literal["list"],
+        default: t.MutableContainerList | None = None,
+    ) -> t.MutableContainerList | None: ...
 
     @overload
     @classmethod
@@ -523,9 +517,9 @@ class FlextLdifUtilitiesFunctional:
         cls,
         value: t.NormalizedValue,
         *,
-        target: type[MutableMapping[str, t.NormalizedValue]] | Literal["dict"],
-        default: MutableMapping[str, t.NormalizedValue] | None = None,
-    ) -> MutableMapping[str, t.NormalizedValue] | None: ...
+        target: type[t.MutableContainerMapping] | Literal["dict"],
+        default: t.MutableContainerMapping | None = None,
+    ) -> t.MutableContainerMapping | None: ...
 
     @classmethod
     def as_type(
@@ -692,12 +686,12 @@ class FlextLdifUtilitiesFunctional:
     prop_get = prop
 
     @classmethod
-    def props(cls, *keys: str) -> Callable[..., MutableMapping[str, t.NormalizedValue]]:
+    def props(cls, *keys: str) -> Callable[..., t.MutableContainerMapping]:
         """Multiple property accessor (mnemonic: ps)."""
 
-        def accessor(obj: t.NormalizedValue) -> MutableMapping[str, t.NormalizedValue]:
+        def accessor(obj: t.NormalizedValue) -> t.MutableContainerMapping:
             """Get multiple values from t.NormalizedValue by keys."""
-            result_dict: MutableMapping[str, t.NormalizedValue] = {}
+            result_dict: t.MutableContainerMapping = {}
             normalized_obj: t.NormalizedValue = (
                 FlextLdifUtilitiesFunctional._to_general(obj)
             )

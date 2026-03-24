@@ -37,7 +37,7 @@ class FlextLdifUtilitiesTypeHelpers:
     @staticmethod
     def is_mapping_type(
         obj: t.NormalizedValue,
-    ) -> TypeIs[MutableMapping[str, t.NormalizedValue]]:
+    ) -> TypeIs[t.MutableContainerMapping]:
         """Check if t.NormalizedValue is a Mapping but not a string (for dict-like objects)."""
         return isinstance(obj, Mapping) and (not isinstance(obj, str | bytes))
 

@@ -23,7 +23,7 @@ class FlextLdifUtilitiesWriter:
         ldif_lines: MutableSequence[str],
         *,
         format_type: str,
-        changetype_config: MutableMapping[str, t.NormalizedValue],
+        changetype_config: t.MutableContainerMapping,
     ) -> None:
         """Add changetype lines based on format."""
         include_changetype = bool(u.get(changetype_config, "include_changetype"))
@@ -308,7 +308,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def determine_attribute_order(
-        entry_data: MutableMapping[str, t.NormalizedValue],
+        entry_data: t.MutableContainerMapping,
     ) -> MutableSequence[tuple[str, t.NormalizedValue]] | None:
         """Determine attribute processing order from entry metadata."""
         metadata = entry_data.get("_metadata")

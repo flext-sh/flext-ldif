@@ -33,7 +33,7 @@ class _OidStringListJson(RootModel[MutableSequence[str]]):
     pass
 
 
-class _OidObjectListJson(RootModel[MutableSequence[t.NormalizedValue]]):
+class _OidObjectListJson(RootModel[t.MutableContainerList]):
     pass
 
 
@@ -200,13 +200,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             original_entry.attributes.attributes if original_entry.attributes else {}
         )
         mk = c.Ldif
-        conversion_metadata: MutableMapping[str, t.NormalizedValue] = (
+        conversion_metadata: t.MutableContainerMapping = (
             {mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: list(converted_attrs)}
             if converted_attrs
             else {}
         )
         mk = c.Ldif
-        dn_metadata: MutableMapping[str, t.NormalizedValue] = (
+        dn_metadata: t.MutableContainerMapping = (
             {
                 mk.ORIGINAL_DN_COMPLETE: original_dn,
                 mk.ORIGINAL_DN_LINE_COMPLETE: cleaned_dn,
@@ -284,7 +284,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if FlextLdifServersOidConstants.OPERATIONAL_ATTRIBUTES
             else None
         )
-        generic_metadata: MutableMapping[str, t.NormalizedValue] = dict(
+        generic_metadata: t.MutableContainerMapping = dict(
             FlextLdifUtilitiesMetadata.build_entry_metadata_extensions("oid"),
         )
         generic_metadata["entry_dn"] = original_dn
@@ -329,7 +329,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             f"OID Entry with {len(converted_attrs)} boolean conversions"
         )
         original_extensions = self._extract_original_extensions(original_entry)
-        extensions_data: MutableMapping[str, t.NormalizedValue] = {
+        extensions_data: t.MutableContainerMapping = {
             **conversion_metadata,
             **dn_metadata,
             **generic_metadata,
@@ -623,7 +623,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     def _extract_acl_metadata_from_string(
         self,
         acl_value: str,
-        current_extensions: MutableMapping[str, t.NormalizedValue],
+        current_extensions: t.MutableContainerMapping,
     ) -> None:
         """Extract OID-specific ACL metadata from ACL string."""
         bindmode = FlextLdifUtilitiesACL.extract_component(
@@ -754,7 +754,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             )
         elif entry.metadata.quirk_type != "oid":
             entry.metadata = entry.metadata.model_copy(update={"quirk_type": "oid"})
-        current_extensions: MutableMapping[str, t.NormalizedValue] = (
+        current_extensions: t.MutableContainerMapping = (
             dict(entry.metadata.extensions) if entry.metadata.extensions else {}
         )
         mk = c.Ldif
@@ -904,7 +904,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         self,
         acl_quirk: p.Ldif.AclQuirk,
         acl_value: str,
-        current_extensions: MutableMapping[str, t.NormalizedValue],
+        current_extensions: t.MutableContainerMapping,
     ) -> None:
         """Parse ACL and merge additional extensions from parsed model."""
         try:
@@ -956,7 +956,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     def _process_orclaci_values(
         self,
         orclaci_values: MutableSequence[str] | str | None,
-        current_extensions: MutableMapping[str, t.NormalizedValue],
+        current_extensions: t.MutableContainerMapping,
     ) -> None:
         """Process orclaci values and extract ACL metadata."""
         if not orclaci_values:

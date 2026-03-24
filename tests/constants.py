@@ -1016,7 +1016,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
         @staticmethod
         def test_create_schema_attribute_from_dict(
-            data: Mapping[str, t.NormalizedValue],
+            data: t.ContainerMapping,
         ) -> m.Ldif.SchemaAttribute:
             """Create a schema attribute from dictionary.
 
@@ -1039,7 +1039,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
         @staticmethod
         def test_create_schema_objectclass_from_dict(
-            data: Mapping[str, t.NormalizedValue],
+            data: t.ContainerMapping,
         ) -> m.Ldif.SchemaObjectClass:
             """Create a schema objectClass from dictionary.
 
@@ -1617,7 +1617,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
         @staticmethod
         def create_entries_batch(
-            entries_data: Sequence[Mapping[str, t.NormalizedValue]],
+            entries_data: Sequence[t.ContainerMapping],
             *,
             validate_all: bool = True,
         ) -> Sequence[m.Ldif.Entry]:
@@ -1663,7 +1663,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
         @staticmethod
         def batch_parse_and_assert(
             parser_service: FlextLdifParser,
-            test_cases: Sequence[Mapping[str, t.NormalizedValue]],
+            test_cases: Sequence[t.ContainerMapping],
             *,
             validate_all: bool = True,
         ) -> Sequence[r[m.Ldif.ParseResponse]]:

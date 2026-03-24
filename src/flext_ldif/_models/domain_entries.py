@@ -1582,7 +1582,7 @@ class FlextLdifModelsDomainsEntries:
         @classmethod
         def from_extensions(
             cls,
-            extensions: MutableMapping[str, t.NormalizedValue] | None,
+            extensions: t.MutableContainerMapping | None,
         ) -> Self:
             """Extract ACL write metadata from QuirkMetadata extensions.
 
@@ -1666,7 +1666,7 @@ class FlextLdifModelsDomainsEntries:
         def coerce_attributes_from_dict(
             cls,
             value: FlextLdifModelsDomainsEntries.Attributes
-            | MutableMapping[str, t.NormalizedValue]
+            | t.MutableContainerMapping
             | None,
         ) -> FlextLdifModelsDomainsEntries.Attributes | None:
             """Convert dict to Attributes instance.
@@ -1678,7 +1678,7 @@ class FlextLdifModelsDomainsEntries:
                 return None
             if isinstance(value, FlextLdifModelsDomainsEntries.Attributes):
                 return value
-            wrapped_value: MutableMapping[str, t.NormalizedValue] = value
+            wrapped_value: t.MutableContainerMapping = value
             if "attributes" not in value:
                 wrapped_value = {"attributes": value}
             return FlextLdifModelsDomainsEntries.Attributes.model_validate(
@@ -1690,7 +1690,7 @@ class FlextLdifModelsDomainsEntries:
         def coerce_dn_from_string(
             cls,
             value: FlextLdifModelsDomainsEntries.DN
-            | MutableMapping[str, t.NormalizedValue]
+            | t.MutableContainerMapping
             | str
             | None,
         ) -> FlextLdifModelsDomainsEntries.DN | None:
@@ -1782,7 +1782,7 @@ class FlextLdifModelsDomainsEntries:
         @classmethod
         def ensure_metadata_initialized(
             cls,
-            data: MutableMapping[str, t.NormalizedValue],
+            data: t.MutableContainerMapping,
         ) -> MutableMapping[
             str,
             t.NormalizedValue | datetime | FlextLdifModelsDomainsEntries.QuirkMetadata,
@@ -1857,8 +1857,8 @@ class FlextLdifModelsDomainsEntries:
                 validation_rules
             ):
                 try:
-                    validation_rules_payload: MutableMapping[str, t.NormalizedValue] = (
-                        dict(validation_rules.items())
+                    validation_rules_payload: t.MutableContainerMapping = dict(
+                        validation_rules.items()
                     )
                     return FlextLdifModelsSettings.ServerValidationRules.model_validate(
                         validation_rules_payload,
@@ -1872,19 +1872,19 @@ class FlextLdifModelsDomainsEntries:
         @staticmethod
         def is_string_key_mapping(
             value: t.NormalizedValue,
-        ) -> TypeIs[MutableMapping[str, t.NormalizedValue]]:
+        ) -> TypeIs[t.MutableContainerMapping]:
             return isinstance(value, Mapping)
 
         @staticmethod
         def _is_object_list(
             value: t.NormalizedValue,
-        ) -> TypeIs[MutableSequence[t.NormalizedValue]]:
+        ) -> TypeIs[t.MutableContainerList]:
             return isinstance(value, list)
 
         @staticmethod
         def is_object_sequence(
             value: t.NormalizedValue,
-        ) -> TypeIs[MutableSequence[t.NormalizedValue]]:
+        ) -> TypeIs[t.MutableContainerList]:
             return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
         @staticmethod
@@ -2461,9 +2461,9 @@ class FlextLdifModelsDomainsEntries:
             server_type: c.Ldif.ServerTypeLiteral | None,
             source_entry: str | None,
             unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None,
-        ) -> MutableMapping[str, t.NormalizedValue]:
+        ) -> t.MutableContainerMapping:
             """Build extension kwargs for DynamicMetadata."""
-            ext_kwargs: MutableMapping[str, t.NormalizedValue] = {}
+            ext_kwargs: t.MutableContainerMapping = {}
             if server_type:
                 ext_kwargs["server_type"] = server_type
             if source_entry:
@@ -2708,9 +2708,7 @@ class FlextLdifModelsDomainsEntries:
             return cls._create_entry(params=params)
 
         @classmethod
-        def from_ldap3(
-            cls, ldap3_entry: MutableMapping[str, t.NormalizedValue]
-        ) -> r[Self]:
+        def from_ldap3(cls, ldap3_entry: t.MutableContainerMapping) -> r[Self]:
             """Create Entry from ldap3 Entry t.NormalizedValue.
 
             Args:
@@ -3751,7 +3749,7 @@ class FlextLdifModelsDomainsEntries:
             cls,
             quirk_type: str | c.Ldif.ServerTypeLiteral | None = None,
             extensions: FlextLdifModelsMetadata.DynamicMetadata
-            | MutableMapping[str, t.NormalizedValue]
+            | t.MutableContainerMapping
             | None = None,
         ) -> Self:
             """Factory method to create QuirkMetadata with extensions.

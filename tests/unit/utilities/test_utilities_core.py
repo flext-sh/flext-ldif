@@ -36,7 +36,7 @@ class TestsFlextLdifDnOperationsPure:
     def test_norm_string_empty(self) -> None:
         """Test empty DN."""
         result = u.Ldif.norm_string("")
-        tm.that(result, eq=False)
+        tm.that(not result, eq=True)
 
     def test_split_dn_components(self) -> None:
         """Test splitting DN into components."""
@@ -94,7 +94,7 @@ class TestsFlextLdifDnOperationsPure:
         ]
         for dn in invalid_dns:
             (
-                tm.that(u.Ldif.validate(dn), eq=False),
+                tm.that(not u.Ldif.validate(dn), eq=True),
                 f"DN should be invalid: {dn}",
             )
 
@@ -302,7 +302,7 @@ class TestServerTypes:
     def test_matches_server_type(self) -> None:
         """Test server type matching."""
         tm.that(u.Ldif.matches("oid", "oid", "oud"), eq=True)
-        tm.that(u.Ldif.matches("ad", "oid", "oud"), eq=False)
+        tm.that(not u.Ldif.matches("ad", "oid", "oud"), eq=True)
 
 
 @pytest.mark.unit

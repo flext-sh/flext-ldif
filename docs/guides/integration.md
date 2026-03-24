@@ -232,9 +232,7 @@ class FLEXTOUDMigrationService:
         # LDIF-specific group entry transformations
         return group_entries
 
-    def _generate_migration_report(
-        self, processed_data: dict
-    ) -> Mapping[str, t.NormalizedValue]:
+    def _generate_migration_report(self, processed_data: dict) -> t.ContainerMapping:
         """Generate LDIF migration processing report."""
         return {
             "ldif_migration_summary": {
@@ -248,7 +246,7 @@ class FLEXTOUDMigrationService:
             "processed_data": processed_data,
         }
 
-    def _log_ldif_completion(self, report: dict) -> Mapping[str, t.NormalizedValue]:
+    def _log_ldif_completion(self, report: dict) -> t.ContainerMapping:
         """Log LDIF migration processing completion."""
         self.logger.info(
             "OUD LDIF processing completed",
@@ -331,7 +329,7 @@ class LdifAPIService(FlextAPIService):
             )
         )
 
-    def _serialize_ldif_entry(self, entry) -> Mapping[str, t.NormalizedValue]:
+    def _serialize_ldif_entry(self, entry) -> t.ContainerMapping:
         """Serialize LDIF entry for API response."""
         return {
             "dn": entry.dn,
@@ -557,7 +555,7 @@ def robust_ldif_processing(content: str) -> r[t.Dict]:
 Use LDIF-specific entry type methods:
 
 ```python
-def categorize_ldif_entries(entries) -> Mapping[str, t.NormalizedValue]:
+def categorize_ldif_entries(entries) -> t.ContainerMapping:
     """Categorize LDIF entries by type."""
     categories = {
         "persons": [e for e in entries if e.is_person()],

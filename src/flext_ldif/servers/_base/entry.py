@@ -65,7 +65,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
             "write_format_options",
         )
         if isinstance(format_options_raw, Mapping):
-            format_options_map: MutableMapping[str, t.NormalizedValue] = {}
+            format_options_map: t.MutableContainerMapping = {}
             for raw_key, raw_value in format_options_raw.items():
                 key = str(raw_key)
                 format_options_map[key] = raw_value
@@ -106,11 +106,9 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         return False
 
     @override
-    def execute(
-        self, **kwargs: MutableMapping[str, t.NormalizedValue]
-    ) -> r[m.Ldif.Entry | str]:
+    def execute(self, **kwargs: t.MutableContainerMapping) -> r[m.Ldif.Entry | str]:
         """Execute entry operation (parse/write)."""
-        kwargs_map: MutableMapping[str, t.NormalizedValue] = kwargs
+        kwargs_map: t.MutableContainerMapping = kwargs
         ldif_content = kwargs_map.get("ldif_content")
         entry_model = kwargs_map.get("entry_model")
         if isinstance(ldif_content, str):
@@ -319,7 +317,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         use_original_acl_format_as_name = False
         hidden_attributes: set[str] = set()
         acl_original_format: str | None = None
-        extensions_data: MutableMapping[str, t.NormalizedValue] = {}
+        extensions_data: t.MutableContainerMapping = {}
         if entry_data.metadata:
             metadata_extensions = entry_data.metadata.extensions
             if core_u.is_type(metadata_extensions, Mapping):

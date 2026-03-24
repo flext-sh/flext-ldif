@@ -163,7 +163,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         content = output_file.read_text(encoding="utf-8")
         tm.that(content, has=f"{FlextLdifServersOidConstants.ORCLACI}: {acl_val}")
         (
-            tm.that(re.search(r"(^|\\n)aci:", content), eq=False),
+            tm.that(not re.search(r"(^|\\n)aci:", content), eq=True),
             ("Should not have standalone 'aci:' attribute"),
         )
 

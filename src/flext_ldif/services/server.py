@@ -94,7 +94,7 @@ class FlextLdifServer(FlextRegistry):
 
         return self.quirk(server_type).flat_map(validate_constants)
 
-    def get_registry_stats(self) -> MutableMapping[str, t.NormalizedValue]:
+    def get_registry_stats(self) -> t.MutableContainerMapping:
         """Get comprehensive registry statistics."""
         servers = self.list_registered_servers()
         quirks_by_server: MutableMapping[str, MutableMapping[str, str | None]] = {}

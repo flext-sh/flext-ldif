@@ -351,8 +351,8 @@ class QuirksConversionMatrix:
         source,
         target,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
-        data: str | Mapping[str, t.NormalizedValue],
-    ) -> r[str | Mapping[str, t.NormalizedValue]]:
+        data: str | t.ContainerMapping,
+    ) -> r[str | t.ContainerMapping]:
         """Convert data from source quirk format to target quirk format via RFC.
 
         Args:
@@ -371,8 +371,8 @@ class QuirksConversionMatrix:
         source,
         target,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
-        data_batch: Sequence[str | Mapping[str, t.NormalizedValue]],
-    ) -> r[Sequence[str | Mapping[str, t.NormalizedValue]]]:
+        data_batch: Sequence[str | t.ContainerMapping],
+    ) -> r[Sequence[str | t.ContainerMapping]]:
         """Convert batch of data from source to target quirk format via RFC.
 
         Args:
@@ -395,7 +395,7 @@ class QuirksConversionMatrix:
         """
 
     def validate_oud_conversion(
-        self, converted_data: Sequence[str | Mapping[str, t.NormalizedValue]]
+        self, converted_data: Sequence[str | t.ContainerMapping]
     ) -> r[bool]:
         """Validate converted data for OUD compatibility.
 

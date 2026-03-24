@@ -264,7 +264,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 filtered[category] = passthrough_entries
         if excluded_entries:
             rejected_category = c.Ldif.Category.REJECTED
-            existing_rejected_raw: MutableSequence[t.NormalizedValue] = filtered.get(
+            existing_rejected_raw: t.MutableContainerList = filtered.get(
                 rejected_category,
                 [],
             )
@@ -464,7 +464,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 filtered[category] = passthrough_entries
         if all_excluded_entries:
             rejected_category = c.Ldif.Category.REJECTED
-            existing_rejected_raw: MutableSequence[t.NormalizedValue] = filtered.get(
+            existing_rejected_raw: t.MutableContainerList = filtered.get(
                 rejected_category,
                 [],
             )

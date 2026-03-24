@@ -27,7 +27,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _add_to_dict_metadata(
-        metadata: MutableMapping[str, t.NormalizedValue],
+        metadata: t.MutableContainerMapping,
         metadata_key: str,
         item_data: t.NormalizedValue,
     ) -> None:
@@ -51,7 +51,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _add_to_list_metadata(
-        metadata: MutableMapping[str, t.NormalizedValue],
+        metadata: t.MutableContainerMapping,
         metadata_key: str,
         item_data: t.NormalizedValue,
     ) -> None:
@@ -98,7 +98,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _build_schema_format_model(
         definition: str,
-        combined: MutableMapping[str, t.NormalizedValue],
+        combined: t.MutableContainerMapping,
     ) -> m.Ldif.SchemaFormatDetails:
         """Build SchemaFormatDetails model from combined details."""
         known_fields = {
@@ -109,10 +109,10 @@ class FlextLdifUtilitiesMetadata:
             "x_origin",
             "x_ordered",
         }
-        known_field_values: MutableMapping[str, t.NormalizedValue] = {
+        known_field_values: t.MutableContainerMapping = {
             "original_string_complete": definition,
         }
-        extension_kwargs: MutableMapping[str, t.NormalizedValue] = {}
+        extension_kwargs: t.MutableContainerMapping = {}
         for key, value in combined.items():
             if key in known_fields:
                 known_field_values[key] = value
@@ -153,9 +153,9 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _extract_all_schema_details(
         definition: str,
-    ) -> MutableMapping[str, t.NormalizedValue]:
+    ) -> t.MutableContainerMapping:
         """Extract all schema formatting details into combined dict."""
-        combined: MutableMapping[str, t.NormalizedValue] = {}
+        combined: t.MutableContainerMapping = {}
         extractors = [
             FlextLdifUtilitiesMetadata._extract_prefix_details,
             FlextLdifUtilitiesMetadata._extract_oid_details,
@@ -580,7 +580,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _get_metadata_dict(
         model: p.Ldif.ModelWithValidationMetadata,
-    ) -> MutableMapping[str, t.NormalizedValue]:
+    ) -> t.MutableContainerMapping:
         """Get mutable metadata dict from model."""
         metadata_obj = getattr(model, "validation_metadata", None)
         if metadata_obj is None:
@@ -616,7 +616,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _normalize_dict_list(
-        values: MutableSequence[t.NormalizedValue],
+        values: t.MutableContainerList,
     ) -> MutableSequence[t.Scalar]:
         normalized: MutableSequence[t.Scalar] = []
         for item in values:
@@ -628,7 +628,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _normalize_mapping_list(
-        values: MutableSequence[t.NormalizedValue],
+        values: t.MutableContainerList,
     ) -> MutableSequence[t.Scalar]:
         normalized: MutableSequence[t.Scalar] = [
             item for item in values if isinstance(item, t.SCALAR_TYPES)
@@ -649,7 +649,7 @@ class FlextLdifUtilitiesMetadata:
         """Set validation_metadata on model (handles both mutable and frozen models)."""
         try:
             metadata_obj = metadata.to_dict()
-            normalized_metadata: MutableMapping[str, t.NormalizedValue] = {}
+            normalized_metadata: t.MutableContainerMapping = {}
             for key, value in metadata_obj.items():
                 if u.is_primitive(value):
                     normalized_metadata[key] = value
@@ -707,7 +707,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _update_conversion_path(
-        metadata: MutableMapping[str, t.NormalizedValue],
+        metadata: t.MutableContainerMapping,
         update_conversion_path: str,
     ) -> None:
         """Update conversion_path in metadata."""
@@ -737,9 +737,7 @@ class FlextLdifUtilitiesMetadata:
                 ),
             )
             setattr(entry, "metadata", entry_metadata)
-        update_dict: MutableMapping[str, t.NormalizedValue] = {
-            "processing_stats": updated_stats
-        }
+        update_dict: t.MutableContainerMapping = {"processing_stats": updated_stats}
         updated_metadata = entry_metadata.model_copy(update=update_dict)
         return entry.model_copy(update={"metadata": updated_metadata})
 
@@ -748,10 +746,10 @@ class FlextLdifUtilitiesMetadata:
         original: str,
         converted: str | None,
         context: str = "entry",
-    ) -> MutableMapping[str, t.NormalizedValue]:
+    ) -> t.MutableContainerMapping:
         """Analyze minimal differences between original and converted strings."""
         mk = c.Ldif
-        differences: MutableMapping[str, t.NormalizedValue] = {
+        differences: t.MutableContainerMapping = {
             mk.HAS_DIFFERENCES: False,
             "context": context,
             "original": original,
@@ -803,7 +801,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def build_entry_metadata_extensions(
         quirk_type: str,
-    ) -> MutableMapping[str, t.NormalizedValue]:
+    ) -> t.MutableContainerMapping:
         """Build metadata extensions for entry as a dictionary."""
         return {"quirk_type": quirk_type, "source_server": quirk_type}
 
@@ -812,7 +810,7 @@ class FlextLdifUtilitiesMetadata:
         config: FlextLdifModelsSettings.EntryParseMetadataConfig,
     ) -> m.Ldif.QuirkMetadata:
         """Build QuirkMetadata for entry parsing with format preservation."""
-        server_data_dict: MutableMapping[str, t.NormalizedValue] = {}
+        server_data_dict: t.MutableContainerMapping = {}
         dn_typed: t.NormalizedValue = config.original_entry_dn
         cleaned_typed: t.NormalizedValue = config.cleaned_dn
         base64_typed: t.NormalizedValue = config.dn_was_base64
@@ -837,7 +835,7 @@ class FlextLdifUtilitiesMetadata:
         if config.original_attr_lines:
             original_ldif_parts.extend(config.original_attr_lines)
         original_ldif = "\n".join(original_ldif_parts) if original_ldif_parts else ""
-        extensions_dict: MutableMapping[str, t.NormalizedValue] = {}
+        extensions_dict: t.MutableContainerMapping = {}
         mk = c.Ldif
         extensions_dict[mk.ORIGINAL_DN_COMPLETE] = config.original_entry_dn
         dynamic_extensions = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
@@ -913,7 +911,7 @@ class FlextLdifUtilitiesMetadata:
             return None
         key = c.Ldif.WRITE_OPTIONS
         raw_extras = getattr(write_opts, "model_extra", None)
-        extras: MutableMapping[str, t.NormalizedValue] = {}
+        extras: t.MutableContainerMapping = {}
         opt: t.NormalizedValue | None = None
         if isinstance(raw_extras, Mapping):
             extras = {

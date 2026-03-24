@@ -66,9 +66,9 @@ class FlextLdifUtilitiesACL:
         version: str,
         acl_line: str,
         extra_patterns: MutableMapping[str, str],
-    ) -> MutableMapping[str, t.NormalizedValue]:
+    ) -> t.MutableContainerMapping:
         """Build metadata extensions dict."""
-        extensions: MutableMapping[str, t.NormalizedValue] = {
+        extensions: t.MutableContainerMapping = {
             "version": version,
             "original_format": acl_line,
         }
@@ -358,7 +358,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def build_metadata_extensions(
         config: FlextLdifModelsSettings.AclMetadataConfig,
-    ) -> MutableMapping[str, t.NormalizedValue]:
+    ) -> t.MutableContainerMapping:
         """Build QuirkMetadata extensions for ACL."""
         normalized_line_breaks: MutableSequence[t.Scalar] | None = None
         if config.line_breaks is not None:
@@ -373,7 +373,7 @@ class FlextLdifUtilitiesACL:
             ("version", config.version),
             ("action_type", config.action_type),
         ]
-        result: MutableMapping[str, t.NormalizedValue] = {
+        result: t.MutableContainerMapping = {
             key: value
             for key, value in extension_items
             if value is not None
@@ -441,7 +441,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def extract_bind_rules_from_extensions(
-        extensions: MutableMapping[str, t.NormalizedValue] | None,
+        extensions: t.MutableContainerMapping | None,
         rule_config: MutableSequence[tuple[str, str, str | None]],
         *,
         tuple_length: int = 2,
@@ -530,8 +530,8 @@ class FlextLdifUtilitiesACL:
         content: str,
         patterns: MutableMapping[str, str | tuple[str, int]],
         *,
-        defaults: MutableMapping[str, t.NormalizedValue] | None = None,
-    ) -> MutableMapping[str, t.NormalizedValue]:
+        defaults: t.MutableContainerMapping | None = None,
+    ) -> t.MutableContainerMapping:
         r"""Extract multiple ACL components in one call.
 
         Replaces repetitive extract_component() calls with a single batch call.
@@ -635,7 +635,7 @@ class FlextLdifUtilitiesACL:
                 result_dict[key] = result
             except (ValueError, TypeError, AttributeError):
                 continue
-        final_result: MutableMapping[str, t.NormalizedValue] = {}
+        final_result: t.MutableContainerMapping = {}
         for key, value_item in result_dict.items():
             if len(value_item) == TUPLE_LENGTH_PAIR and value_item[1] is not None:
                 final_result[key] = value_item[1]
@@ -692,7 +692,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def extract_target_extensions(
         extensions: FlextLdifModelsMetadata.DynamicMetadata
-        | MutableMapping[str, t.NormalizedValue]
+        | t.MutableContainerMapping
         | None,
         target_config: MutableSequence[tuple[str, str]],
     ) -> MutableSequence[str]:
@@ -792,7 +792,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def format_conversion_comments(
         extensions: FlextLdifModelsMetadata.DynamicMetadata
-        | MutableMapping[str, t.NormalizedValue]
+        | t.MutableContainerMapping
         | None,
         converted_from_key: str,
         comments_key: str,

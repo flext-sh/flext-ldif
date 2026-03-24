@@ -514,7 +514,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
         def parse_parts_hook(
             definition: str,
-        ) -> r[MutableMapping[str, t.NormalizedValue]]:
+        ) -> r[t.MutableContainerMapping]:
             return u.Ldif.parse_attribute(definition)
 
         parse_result_raw = u.Ldif.parse(

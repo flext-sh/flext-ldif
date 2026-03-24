@@ -105,7 +105,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         """Override __new__ to support auto-execute and processor instantiation."""
         instance: Self = object.__new__(cls)
         filtered_kwargs: MutableMapping[str, str | float | bool] = {}
-        execute_kwargs: MutableMapping[str, t.NormalizedValue] = {}
+        execute_kwargs: t.MutableContainerMapping = {}
         for k, v in kwargs.items():
             value = v
             if isinstance(value, (str, float, bool)):
@@ -168,7 +168,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     @classmethod
     def _extract_execute_params(
         cls,
-        kwargs: MutableMapping[str, t.NormalizedValue],
+        kwargs: t.MutableContainerMapping,
     ) -> tuple[str | None, MutableSequence[m.Ldif.Entry] | None, str | None]:
         """Extract type-safe execution parameters from kwargs."""
         return (
@@ -305,7 +305,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     @staticmethod
     def _extract_entries(
-        kwargs: MutableMapping[str, t.NormalizedValue],
+        kwargs: t.MutableContainerMapping,
     ) -> MutableSequence[m.Ldif.Entry] | None:
         """Extract and validate entries parameter."""
         if "entries" not in kwargs:
@@ -329,7 +329,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     @staticmethod
     def _extract_ldif_text(
-        kwargs: MutableMapping[str, t.NormalizedValue],
+        kwargs: t.MutableContainerMapping,
     ) -> str | None:
         """Extract and validate ldif_text parameter."""
         if "ldif_text" not in kwargs:
@@ -342,7 +342,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     @staticmethod
     def _extract_operation(
-        kwargs: MutableMapping[str, t.NormalizedValue],
+        kwargs: t.MutableContainerMapping,
     ) -> str | None:
         """Extract and validate operation parameter."""
         if "operation" not in kwargs:

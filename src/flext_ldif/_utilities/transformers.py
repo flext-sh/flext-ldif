@@ -83,7 +83,7 @@ class NormalizeDnTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
             return r[m.Ldif.Entry].fail(norm_result.error)
         normalized_dn = norm_result.value
         normalized_dn = self._normalize_dn_case_and_spaces(normalized_dn)
-        update_dict: MutableMapping[str, t.NormalizedValue] = {"dn": normalized_dn}
+        update_dict: t.MutableContainerMapping = {"dn": normalized_dn}
         updated_entry = item.model_copy(update=update_dict)
         return r[m.Ldif.Entry].ok(updated_entry)
 
@@ -156,7 +156,7 @@ class NormalizeAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
             or (new_attrs != attrs)
         )
         if needs_update:
-            update_dict: MutableMapping[str, t.NormalizedValue] = {
+            update_dict: t.MutableContainerMapping = {
                 "attributes": m.Ldif.Attributes(attributes=new_attrs),
             }
             item = item.model_copy(update=update_dict)
@@ -226,9 +226,7 @@ class ReplaceBaseDnTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
             self._old_base,
             self._new_base,
         )
-        update_dict: MutableMapping[str, t.NormalizedValue] = {
-            "dn": m.Ldif.DN(value=new_dn_str)
-        }
+        update_dict: t.MutableContainerMapping = {"dn": m.Ldif.DN(value=new_dn_str)}
         updated_entry = item.model_copy(update=update_dict)
         return r[m.Ldif.Entry].ok(updated_entry)
 
@@ -270,7 +268,7 @@ class ConvertBooleansTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
             boolean_attr_names=boolean_attrs,
             target_format=self._format,
         )
-        update_dict: MutableMapping[str, t.NormalizedValue] = {
+        update_dict: t.MutableContainerMapping = {
             "attributes": m.Ldif.Attributes(attributes=dict(converted_attrs)),
         }
         updated_entry = item.model_copy(update=update_dict)
@@ -321,7 +319,7 @@ class FilterAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
                 return key.lower() not in exclude_lower
 
             attrs = {k: v for k, v in attrs.items() if key_not_in_exclude(k, v)}
-        update_dict: MutableMapping[str, t.NormalizedValue] = {
+        update_dict: t.MutableContainerMapping = {
             "attributes": m.Ldif.Attributes(attributes=dict(attrs)),
         }
         updated_entry = item.model_copy(update=update_dict)

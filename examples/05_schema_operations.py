@@ -148,7 +148,7 @@ def intelligent_schema_building() -> r[Sequence[m.Ldif.Entry]]:
     return r[Sequence[m.Ldif.Entry]].ok(schema_entries)
 
 
-def parallel_schema_validation() -> r[Mapping[str, t.NormalizedValue]]:
+def parallel_schema_validation() -> r[t.ContainerMapping]:
     """Parallel schema validation with comprehensive error analysis."""
     api = FlextLdif.get_instance()
     test_entries: Sequence[m.Ldif.Entry] = []
@@ -217,12 +217,12 @@ def parallel_schema_validation() -> r[Mapping[str, t.NormalizedValue]]:
             test_entries.append(entry_result.value)
     validation_result = api.validate_entries(test_entries)
     if validation_result.is_failure:
-        return r[Mapping[str, t.NormalizedValue]].fail(
+        return r[t.ContainerMapping].fail(
             f"Schema validation failed: {validation_result.error}"
         )
     validation_report = validation_result.value
     error_analysis: Mapping[str, int] = {}
-    analysis: Mapping[str, t.NormalizedValue] = {
+    analysis: t.ContainerMapping = {
         "total_entries": len(test_entries),
         "valid_entries": validation_report.valid_entries,
         "invalid_entries": validation_report.invalid_entries,
@@ -240,10 +240,10 @@ def parallel_schema_validation() -> r[Mapping[str, t.NormalizedValue]]:
     analysis["compliance_rate"] = (
         validation_report.valid_entries / len(test_entries) if test_entries else 0
     )
-    return r[Mapping[str, t.NormalizedValue]].ok(analysis)
+    return r[t.ContainerMapping].ok(analysis)
 
 
-def schema_migration_pipeline() -> r[Mapping[str, t.NormalizedValue]]:
+def schema_migration_pipeline() -> r[t.ContainerMapping]:
     """Schema-aware migration pipeline with validation."""
     api = FlextLdif.get_instance()
     migration_dir = Path("examples/schema_migration")
@@ -264,7 +264,7 @@ def schema_migration_pipeline() -> r[Mapping[str, t.NormalizedValue]]:
         (source_dir / f"legacy_{i}.ldif").write_text(entry)
 
     _ = u.process(list(enumerate(legacy_entries)), write_legacy_file, on_error="skip")
-    migration_results: Mapping[str, t.NormalizedValue] = {}
+    migration_results: t.ContainerMapping = {}
 
     def parse_file(ldif_file: Path) -> Sequence[m.Ldif.Entry]:
         """Parse LDIF file."""
@@ -331,10 +331,10 @@ def schema_migration_pipeline() -> r[Mapping[str, t.NormalizedValue]]:
         output_file = migrated_dir / "migrated_schema_compliant.ldif"
         write_result = api.write_file(migrated_entries, output_file)
         migration_results["output_written"] = write_result.is_success
-    return r[Mapping[str, t.NormalizedValue]].ok(migration_results)
+    return r[t.ContainerMapping].ok(migration_results)
 
 
-def batch_schema_operations() -> r[Mapping[str, t.NormalizedValue]]:
+def batch_schema_operations() -> r[t.ContainerMapping]:
     """Batch schema operations with parallel processing."""
     api = FlextLdif.get_instance()
     schema_batches: Sequence[tuple[str, Sequence[FlextLdifModels.Ldif.Entry]]] = []
@@ -409,7 +409,7 @@ def batch_schema_operations() -> r[Mapping[str, t.NormalizedValue]]:
     if batch_result.is_success:
         object_classes.extend([x for x in batch_result.value if x is not None])
     schema_batches.append(("object_classes", object_classes))
-    batch_results: Mapping[str, t.NormalizedValue] = {}
+    batch_results: t.ContainerMapping = {}
     total_schema_entries = 0
     for batch_name, entries in schema_batches:
         if not entries:
@@ -433,26 +433,26 @@ def batch_schema_operations() -> r[Mapping[str, t.NormalizedValue]]:
             b for b in batch_results if not b.endswith("_error") and b != "summary"
         ]),
     }
-    return r[Mapping[str, t.NormalizedValue]].ok(batch_results)
+    return r[t.ContainerMapping].ok(batch_results)
 
 
-def railway_schema_pipeline() -> r[Mapping[str, t.NormalizedValue]]:
+def railway_schema_pipeline() -> r[t.ContainerMapping]:
     """Railway-oriented schema pipeline with integrated validation."""
     api = FlextLdif.get_instance()
     schema_build_result = intelligent_schema_building()
     if schema_build_result.is_failure:
-        return r[Mapping[str, t.NormalizedValue]].fail(
+        return r[t.ContainerMapping].fail(
             f"Schema building failed: {schema_build_result.error}"
         )
     schema_entries = schema_build_result.value
     schema_validation = api.validate_entries(schema_entries)
     if schema_validation.is_failure:
-        return r[Mapping[str, t.NormalizedValue]].fail(
+        return r[t.ContainerMapping].fail(
             f"Schema validation failed: {schema_validation.error}"
         )
     schema_report = schema_validation.value
     if not schema_report.is_valid:
-        return r[Mapping[str, t.NormalizedValue]].fail(
+        return r[t.ContainerMapping].fail(
             f"Schema entries invalid: {schema_report.errors}"
         )
 
@@ -492,21 +492,19 @@ def railway_schema_pipeline() -> r[Mapping[str, t.NormalizedValue]]:
     )
     entry_validation = api.validate_entries(test_entries)
     if entry_validation.is_failure:
-        return r[Mapping[str, t.NormalizedValue]].fail(
+        return r[t.ContainerMapping].fail(
             f"Entry validation failed: {entry_validation.error}"
         )
     entry_report = entry_validation.value
     if not entry_report.is_valid:
-        return r[Mapping[str, t.NormalizedValue]].fail(
+        return r[t.ContainerMapping].fail(
             f"Test entries invalid: {entry_report.errors}"
         )
     process_result = api.process(
         "transform", test_entries, parallel=True, max_workers=4
     )
     if process_result.is_failure:
-        return r[Mapping[str, t.NormalizedValue]].fail(
-            f"Processing failed: {process_result.error}"
-        )
+        return r[t.ContainerMapping].fail(f"Processing failed: {process_result.error}")
     transformed_count = len(process_result.value)
     output_dir = Path("examples/schema_compliant_output")
     output_dir.mkdir(exist_ok=True)
@@ -514,7 +512,7 @@ def railway_schema_pipeline() -> r[Mapping[str, t.NormalizedValue]]:
     schema_write = api.write_file(schema_entries, schema_file)
     entries_file = output_dir / "entries.ldif"
     entries_write = api.write_file(test_entries, entries_file)
-    return r[Mapping[str, t.NormalizedValue]].ok({
+    return r[t.ContainerMapping].ok({
         "schema_entries": len(schema_entries),
         "schema_valid": schema_report.valid_entries,
         "test_entries": len(test_entries),

@@ -47,9 +47,9 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
 
     @staticmethod
     def _normalize_write_format(
-        d: MutableMapping[str, t.NormalizedValue],
-    ) -> MutableMapping[str, t.NormalizedValue]:
-        mapped: MutableMapping[str, t.NormalizedValue] = {
+        d: t.MutableContainerMapping,
+    ) -> t.MutableContainerMapping:
+        mapped: t.MutableContainerMapping = {
             "base64_encode_binary": d.get("base64_encode_binary"),
             "sort_attributes": d.get("sort_entries"),
             "include_dn_comments": d.get("include_comments"),

@@ -54,7 +54,7 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             @property
-            def extensions(self) -> MutableMapping[str, t.NormalizedValue]:
+            def extensions(self) -> t.MutableContainerMapping:
                 """Get server-specific extensions."""
                 ...
 
