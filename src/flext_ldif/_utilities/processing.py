@@ -152,7 +152,7 @@ class FlextLdifUtilitiesProcessing:
             return False
         try:
             sig = inspect.signature(func)
-            return len(sig.parameters) == 0
+            return not sig.parameters
         except (ValueError, TypeError):
             return False
 

@@ -75,7 +75,7 @@ class TestValidators:
             attributes_dict = {}
         return {
             "dn_format_valid": bool(entry.dn is not None and "=" in dn_value),
-            "has_attributes": len(attributes_dict) > 0,
+            "has_attributes": attributes_dict,
             "attributes_valid": all(
                 (
                     isinstance(k, str) and isinstance(v, list)

@@ -693,7 +693,7 @@ class FlextLdifUtilitiesDN:
         if len(value) == 1:
             if not FlextLdifUtilitiesDN.is_lutf1_char(value) and strict:
                 errors.append(f"Invalid lead character: {value!r}")
-            return (len(errors) == 0, errors)
+            return (not errors, errors)
         is_escaped_lead = value[0] == "\\" and len(value) > 1
         is_bad_lead = not FlextLdifUtilitiesDN.is_lutf1_char(value[0]) and (
             not is_escaped_lead
@@ -714,7 +714,7 @@ class FlextLdifUtilitiesDN:
             is_after_escape = i > 0 and value[i - 1] == "\\"
             if not is_escape_char and (not is_after_escape) and strict:
                 errors.append(f"Invalid character at position {i}: {char!r}")
-        return (len(errors) == 0, errors)
+        return (not errors, errors)
 
     @overload
     @staticmethod

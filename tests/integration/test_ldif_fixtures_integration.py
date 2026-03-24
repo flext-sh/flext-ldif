@@ -47,7 +47,7 @@ class TestsFlextLdifFixtures:
         assert isinstance(entries_raw, list)
         for entry in entries_raw:
             assert entry.dn is not None
-            assert len(entry.dn.value) > 0
+            assert entry.dn.value
 
     def test_oid_fixture_parsing(self, ldif: FlextLdif) -> None:
         """Test parsing OID fixture."""
@@ -105,7 +105,7 @@ class TestsFlextLdifFixtures:
         for entry in entries_raw:
             assert entry.dn is not None, "Entry must have DN"
             dn_str = entry.dn.value
-            assert len(dn_str) > 0
+            assert dn_str
             assert "=" in dn_str
 
     def test_all_fixtures_have_objectclass(self, ldif: FlextLdif) -> None:

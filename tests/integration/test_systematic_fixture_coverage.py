@@ -100,11 +100,11 @@ class TestSystematicFixtureCoverage:
         parse_result = api.parse(schema_sample)
         assert parse_result.is_success, f"Parse failed: {parse_result.error}"
         entries = parse_result.value
-        assert len(entries) > 0, "No entries parsed from schema fixture"
+        assert entries, "No entries parsed from schema fixture"
         write_result = api.write(entries)
         assert write_result.is_success, f"Write failed: {write_result.error}"
         written_content = write_result.value
-        assert len(written_content) > 0, "Write produced empty content"
+        assert written_content, "Write produced empty content"
         roundtrip_result = api.parse(written_content)
         assert roundtrip_result.is_success, (
             f"Roundtrip parse failed: {roundtrip_result.error}"
@@ -170,14 +170,14 @@ class TestSystematicFixtureCoverage:
         parse_result = api.parse(fixture_data)
         assert parse_result.is_success, f"Parse failed: {parse_result.error}"
         entries = parse_result.value
-        assert len(entries) > 0, "Entry fixture should parse to at least one entry"
+        assert entries, "Entry fixture should parse to at least one entry"
         for entry in entries:
             assert entry.dn, f"Entry missing DN: {entry}"
             assert entry.attributes, f"Entry {entry.dn} has no attributes"
         write_result = api.write(entries)
         assert write_result.is_success, f"Write failed: {write_result.error}"
         written_content = write_result.value
-        assert len(written_content) > 0, "Write produced empty content"
+        assert written_content, "Write produced empty content"
         roundtrip_result = api.parse(written_content)
         assert roundtrip_result.is_success, (
             f"Roundtrip parse failed: {roundtrip_result.error}"
@@ -217,7 +217,7 @@ class TestSystematicFixtureCoverage:
         parse_result = api.parse(fixture_data)
         assert parse_result.is_success, f"Parse failed: {parse_result.error}"
         entries = parse_result.value
-        assert len(entries) > 0, "Integration fixture should parse to multiple entries"
+        assert entries, "Integration fixture should parse to multiple entries"
         entry_count = len(entries)
         assert entry_count >= 5, (
             f"Integration fixture should have multiple entries, got {entry_count}"
@@ -268,7 +268,7 @@ class TestSystematicFixtureCoverage:
                     assert isinstance(fixture_data, str), (
                         f"{fixture_name} not a string: {type(fixture_data)}"
                     )
-                    assert len(fixture_data) > 0, f"{fixture_name} is empty"
+                    assert fixture_data, f"{fixture_name} is empty"
                 except Exception as e:
                     pytest.fail(
                         f"Fixture {fixture_name} ({fixture_type}) not available: {e}"

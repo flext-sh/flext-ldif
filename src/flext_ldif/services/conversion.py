@@ -1208,7 +1208,7 @@ class FlextLdifConversion(
                     | m.Ldif.SchemaObjectClass
                     | m.Ldif.Acl
                 ].fail("Converted entry has no ACLs in metadata.acls")
-            if not acls or len(acls) == 0:
+            if not acls or not acls:
                 return r[
                     m.Ldif.Entry
                     | m.Ldif.SchemaAttribute

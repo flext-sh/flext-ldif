@@ -39,7 +39,7 @@ class TestOidSchemaIntegration:
         result = api.parse(oid_schema_fixture)
         assert result.is_success, f"Schema parsing failed: {result.error}"
         entries = result.value
-        assert len(entries) > 0, "No schema entries parsed"
+        assert entries, "No schema entries parsed"
         schema_entry = entries[0]
         assert schema_entry.dn is not None
 

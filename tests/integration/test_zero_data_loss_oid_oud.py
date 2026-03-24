@@ -36,7 +36,7 @@ def _verify_soft_deleted_attributes(entry: m.Ldif.Entry) -> None:
         )
         removed_attr_value = entry.metadata.removed_attributes[attr_name]
         if isinstance(removed_attr_value, (str, list, tuple)):
-            assert len(removed_attr_value) > 0, (
+            assert removed_attr_value, (
                 f"Soft-deleted attribute {attr_name} has no preserved values"
             )
 
@@ -68,7 +68,7 @@ class TestZeroDataLossOidOud:
         result = api.parse(oid_fixture, server_type="oid")
         assert result.is_success, f"Parse failed: {result.error}"
         entries = result.value
-        assert len(entries) > 0, "No entries parsed"
+        assert entries, "No entries parsed"
         for entry in entries:
             assert entry.metadata is not None, "Entry missing metadata"
             assert entry.metadata.original_strings is not None, (
@@ -82,7 +82,7 @@ class TestZeroDataLossOidOud:
                 msg = f"Expected str for entry_original_ldif, got {type(original_ldif_raw)}"
                 raise TypeError(msg)
             original_ldif = original_ldif_raw
-            assert len(original_ldif) > 0, "Original LDIF is empty"
+            assert original_ldif, "Original LDIF is empty"
             assert "dn:" in original_ldif.lower(), "Original LDIF missing DN"
 
     def test_oud_parse_preserves_original_ldif(
@@ -92,7 +92,7 @@ class TestZeroDataLossOidOud:
         result = api.parse(oud_fixture, server_type="oud")
         assert result.is_success, f"Parse failed: {result.error}"
         entries = result.value
-        assert len(entries) > 0, "No entries parsed"
+        assert entries, "No entries parsed"
         for entry in entries:
             assert entry.metadata is not None, "Entry missing metadata"
             assert entry.metadata.original_strings is not None, (
@@ -114,7 +114,7 @@ class TestZeroDataLossOidOud:
             for e in entries
             if e.metadata
             and e.metadata.boolean_conversions
-            and (len(e.metadata.boolean_conversions) > 0)
+            and (e.metadata.boolean_conversions)
         ]
         if boolean_entries:
             entry = boolean_entries[0]
@@ -167,7 +167,7 @@ class TestZeroDataLossOidOud:
                 )
                 if isinstance(original_oid_ldif_raw, str):
                     original_oid_ldif = original_oid_ldif_raw
-                    assert len(original_oid_ldif) > 0, "Original OID LDIF lost"
+                    assert original_oid_ldif, "Original OID LDIF lost"
 
             def check_no_data_loss(
                 original: m.Ldif.Entry, converted: m.Ldif.Entry
@@ -188,7 +188,7 @@ class TestZeroDataLossOidOud:
                 lost_attrs = [
                     attr for attr in lost_attrs if attr.lower() not in operational_attrs
                 ]
-                return (len(lost_attrs) == 0, lost_attrs)
+                return (not lost_attrs, lost_attrs)
 
             no_loss, lost_attrs = check_no_data_loss(oid_entry, oud_entry)
             assert no_loss, f"Data loss detected: {lost_attrs}"
@@ -242,8 +242,8 @@ class TestZeroDataLossOidOud:
                         )
                         if isinstance(roundtrip_original_raw, str):
                             roundtrip_original = roundtrip_original_raw
-                            assert len(original_ldif) > 0
-                            assert len(roundtrip_original) > 0
+                            assert original_ldif
+                            assert roundtrip_original
 
     def test_minimal_differences_tracking(
         self, api: FlextLdif, oid_fixture: str
@@ -321,7 +321,7 @@ class TestZeroDataLossOidOud:
                 )
                 if isinstance(original_ldif_raw, str):
                     original_ldif = original_ldif_raw
-                    assert len(original_ldif) > 0, "Original LDIF is empty"
+                    assert original_ldif, "Original LDIF is empty"
             if isinstance(entry.metadata.minimal_differences, dict):
                 dn_diff_raw = entry.metadata.minimal_differences.get("dn")
                 if (

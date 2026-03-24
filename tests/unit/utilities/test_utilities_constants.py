@@ -239,7 +239,7 @@ class TestsTestFlextLdifConstants:
             is_valid, invalid = u.Ldif.validate_many(values, category)
             tm.that(is_valid == expected_valid, eq=True)
             if not expected_valid:
-                tm.that(len(invalid) > 0, eq=True)
+                tm.that(invalid, eq=True)
 
     def test_constants_are_accessible(self) -> None:
         """Test that constants are properly defined and accessible."""

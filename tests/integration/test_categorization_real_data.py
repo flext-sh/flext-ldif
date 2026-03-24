@@ -167,7 +167,7 @@ class TestCategorizationRealData:
             )
         assert output_file.exists(), "Output file should be created"
         output_content = output_file.read_text(encoding="utf-8")
-        assert len(output_content) > 0, "Output file should not be empty"
+        assert output_content, "Output file should not be empty"
         assert base_dn in output_content, f"Output should contain base DN: {base_dn}"
         hierarchy = filtered.get_entries(c.Ldif.Categories.HIERARCHY)
         users = filtered.get_entries(c.Ldif.Categories.USERS)
@@ -298,7 +298,7 @@ class TestCategorizationRealData:
                 output_content_lines.append(entry_line)
         assert output_file.exists(), "Output file should be created"
         output_content = output_file.read_text(encoding="utf-8")
-        assert len(output_content) > 0, "Output file should not be empty"
+        assert output_content, "Output file should not be empty"
         assert base_dn in output_content, f"Output should contain base DN: {base_dn}"
         assert "dc=example" in output_content, "Output should contain matching entries"
         assert "dc=example2" in output_content, (
@@ -359,7 +359,7 @@ class TestCategorizationRealData:
             )
         assert output_file.exists(), "Output file should be created"
         output_content = output_file.read_text(encoding="utf-8")
-        assert len(output_content) > 0, "Output file should not be empty"
+        assert output_content, "Output file should not be empty"
         assert base_dn in output_content, f"Output should contain base DN: {base_dn}"
         assert str(len(entries)) in output_content, "Output should contain entry count"
         assert "dc=example" in output_content, (

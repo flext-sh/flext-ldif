@@ -295,4 +295,4 @@ class TestsTestFlextLdifMigrationPipeline(s):
         result = pipeline.migrate_entries([])
         tm.that(result.is_success, eq=True)
         migrated = result.value
-        tm.that(len(migrated) == 0, eq=True)
+        tm.that(not migrated, eq=True)

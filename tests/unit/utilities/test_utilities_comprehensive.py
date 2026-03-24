@@ -25,7 +25,7 @@ class TestFlextLdifUtilitiesComprehensive:
             dn = test_data.dn
             result = u.Ldif.norm_string(dn)
             tm.that(isinstance(result, str), eq=True)
-            tm.that(len(result) > 0, eq=True)
+            tm.that(result, eq=True)
 
     def test_real_ldif_processing_pipeline(self) -> None:
         """Test complete LDIF processing pipeline with real data."""
@@ -58,7 +58,7 @@ class TestFlextLdifUtilitiesComprehensive:
         tm.that(len(entries) >= 5, eq=True)
         for entry in entries:
             tm.that(entry.dn, none=False)
-            tm.that(len(entry.attributes) > 0, eq=True)
+            tm.that(entry.attributes, eq=True)
             tm.that(isinstance(entry.attributes, dict), eq=True)
 
     @pytest.mark.parametrize("server_type", ["generic", "openldap", "ad", "oid", "oud"])
@@ -70,4 +70,4 @@ class TestFlextLdifUtilitiesComprehensive:
         tm.that(hasattr(entry, "attributes"), eq=True)
         normalized = u.Ldif.normalize_server_type(server_type)
         tm.that(isinstance(normalized, str), eq=True)
-        tm.that(len(normalized) > 0, eq=True)
+        tm.that(normalized, eq=True)

@@ -41,7 +41,7 @@ class TestFlextLdifTypesStructure:
             and (m[1].__module__ not in {"typing", "builtins"})
         ]
         (
-            tm.that(len(user_functions) == 0, eq=True),
+            tm.that(not user_functions, eq=True),
             "typings.py must not contain functions",
         )
 
@@ -63,14 +63,14 @@ class TestFlextLdifTypesStructure:
             if imp.startswith("flext_ldif.") and "_" in imp.split(".")[-1]
         ]
         (
-            tm.that(len(internal_imports) == 0, eq=True),
+            tm.that(not internal_imports, eq=True),
             (f"typings.py must not import from internal modules: {internal_imports}"),
         )
         service_imports = [
             imp for imp in flext_ldif_imports if "services" in imp or "api" in imp
         ]
         (
-            tm.that(len(service_imports) == 0, eq=True),
+            tm.that(not service_imports, eq=True),
             (f"typings.py must not import from services/api: {service_imports}"),
         )
 
@@ -103,7 +103,7 @@ class TestsFlextLdifCommonDictionaryTypes(s):
     def test_attribute_dict_empty(self) -> None:
         """AttributeDict must handle empty attributes."""
         attr_dict: t.Ldif.AttributeDict = {}
-        tm.that(len(attr_dict) == 0, eq=True)
+        tm.that(not attr_dict, eq=True)
 
     def test_distribution_dict_with_entry_counts(self) -> None:
         """DistributionDict must work with entry type statistics."""

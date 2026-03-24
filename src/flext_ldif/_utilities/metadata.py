@@ -898,7 +898,7 @@ class FlextLdifUtilitiesMetadata:
             if isinstance(conflicts, Sequence) and (
                 not isinstance(conflicts, (str, bytes))
             ):
-                result["has_attribute_conflicts"] = len(conflicts) > 0
+                result["has_attribute_conflicts"] = conflicts
         return result
 
     @staticmethod

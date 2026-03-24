@@ -43,7 +43,7 @@ class TestEmptyAndMinimalCases:
         result = api.parse(ldif_content)
         assert result.is_success
         entries = result.value
-        assert len(entries) == 0
+        assert not entries
 
     def test_only_whitespace(self, api: FlextLdif) -> None:
         """Test LDIF with only whitespace.
@@ -57,7 +57,7 @@ class TestEmptyAndMinimalCases:
         result = api.parse(ldif_content)
         assert result.is_success
         entries = result.value
-        assert len(entries) == 0
+        assert not entries
 
     def test_only_comments(self, api: FlextLdif) -> None:
         """Test LDIF with only comment lines.
@@ -71,7 +71,7 @@ class TestEmptyAndMinimalCases:
         result = api.parse(ldif_content)
         assert result.is_success
         entries = result.value
-        assert len(entries) == 0
+        assert not entries
 
     def test_single_entry_minimal(self, api: FlextLdif) -> None:
         """Test minimal single entry.
@@ -126,7 +126,7 @@ class TestLargeAndComplexCases:
         entries = result.value
         assert len(entries) == 1
         assert entries[0].attributes is not None
-        assert len(entries[0].attributes.attributes) > 0
+        assert entries[0].attributes.attributes
 
     def test_entry_with_many_values_per_attribute(self, api: FlextLdif) -> None:
         """Test single attribute with many values (100+).
@@ -320,11 +320,11 @@ class TestRoundtripEdgeCases:
         result = api.parse(ldif_content)
         assert result.is_success
         entries = result.value
-        assert len(entries) == 0
+        assert not entries
         write_result = api.write(entries)
         assert write_result.is_success
         written = write_result.value
-        assert len(written) == 0 or written.isspace() or written.strip() == "version: 1"
+        assert not written or written.isspace() or written.strip() == "version: 1"
 
     def test_roundtrip_single_minimal_entry(self, api: FlextLdif) -> None:
         """Test roundtrip of single minimal entry.

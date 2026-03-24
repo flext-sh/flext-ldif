@@ -287,7 +287,7 @@ class TestSchemaDeviationsSpacing:
             assert isinstance(field_name, str), (
                 f"Field name should be string, got {type(field_name)}"
             )
-            assert len(field_name) > 0, "Field name should not be empty"
+            assert field_name, "Field name should not be empty"
 
 
 class TestSchemaDeviationsOriginalString:
@@ -315,7 +315,7 @@ class TestSchemaDeviationsOriginalString:
         format_details = attr.metadata.schema_format_details
         assert format_details is not None, "Schema format details should be preserved"
         assert format_details.field_order is not None, "Field order should be preserved"
-        assert len(format_details.field_order) > 0, "Field order should contain fields"
+        assert format_details.field_order, "Field order should contain fields"
         assert "OID" in format_details.field_order, "Should track OID in field_order"
         assert "NAME" in format_details.field_order, "Should track NAME in field_order"
         assert "SYNTAX" in format_details.field_order, (
@@ -324,7 +324,7 @@ class TestSchemaDeviationsOriginalString:
         original = format_details.original_string_complete
         assert original is not None, "original_string_complete should exist"
         assert isinstance(original, str), "original_string_complete should be a string"
-        assert len(original) > 0, "original_string_complete should not be empty"
+        assert original, "original_string_complete should not be empty"
 
     def test_oud_original_string_preserved(
         self, oud_schema: FlextLdifServersBaseSchema
@@ -339,7 +339,7 @@ class TestSchemaDeviationsOriginalString:
         assert format_details is not None
         original_string = format_details.original_string_complete
         assert isinstance(original_string, str), "original_string should be a string"
-        assert len(original_string) > 0, "original_string should not be empty"
+        assert original_string, "original_string should not be empty"
         assert "0.9.2342.19200300.100.1.1" in original_string, "OID should be preserved"
         assert "uid" in original_string, "NAME should be preserved"
         assert "1.3.6.1.4.1.1466.115.121.1.15" in original_string, (
@@ -376,7 +376,7 @@ class TestSchemaDeviationsRoundTrip:
         assert "original_string_complete" in model_fields, (
             "original_string_complete should be a model field"
         )
-        assert len(model_fields) > 0, "Should have model fields"
+        assert model_fields, "Should have model fields"
 
     def test_oud_to_rfc_metadata_preserved(self) -> None:
         """Test OUD→RFC conversion preserves all metadata."""
@@ -402,7 +402,7 @@ class TestSchemaDeviationsRoundTrip:
         assert "original_string_complete" in model_fields, (
             "original_string_complete should be a model field"
         )
-        assert len(model_fields) > 0, "Should have model fields"
+        assert model_fields, "Should have model fields"
 
 
 class TestSchemaDeviationsUtilities:
@@ -458,7 +458,7 @@ class TestSchemaDeviationsUtilities:
         )
         x_origin_value = extensions_dict.get("x_origin_value")
         assert isinstance(x_origin_value, str), "x_origin_value should be a string"
-        assert len(x_origin_value) > 0, "x_origin_value should not be empty"
+        assert x_origin_value, "x_origin_value should not be empty"
 
 
 class TestSchemaDeviationsMissingSpaces:
@@ -551,7 +551,7 @@ class TestSchemaDeviationsComplete:
             elif f == "field_order":
                 if (
                     format_details.field_order is None
-                    or len(format_details.field_order) == 0
+                    or not format_details.field_order
                 ):
                     missing.append(f)
             elif f not in extensions_dict:
@@ -594,7 +594,7 @@ class TestSchemaDeviationsComplete:
             elif f == "field_order":
                 if (
                     format_details.field_order is None
-                    or len(format_details.field_order) == 0
+                    or not format_details.field_order
                 ):
                     missing.append(f)
             elif f not in extensions_dict:

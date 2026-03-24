@@ -123,7 +123,7 @@ class TestOudAclIntegration:
         result = api.parse(acl_fixture)
         assert result.is_success, f"ACL parsing failed: {result.error}"
         entries = result.value
-        assert len(entries) > 0, "No ACL entries parsed"
+        assert entries, "No ACL entries parsed"
 
     def test_multiline_acis_preserved(self, api: FlextLdif, acl_fixture: str) -> None:
         """Test that multi-line ACIs are preserved during parsing."""
@@ -242,11 +242,11 @@ class TestOudRoundTripIntegration:
         parse1_result = api.parse(oud_integration_fixture)
         assert parse1_result.is_success, f"Initial parse failed: {parse1_result.error}"
         entries1 = parse1_result.value
-        assert len(entries1) > 0, "No entries parsed from fixture"
+        assert entries1, "No entries parsed from fixture"
         write_result = api.write(entries1)
         assert write_result.is_success, f"Write failed: {write_result.error}"
         written_ldif = write_result.value
-        assert len(written_ldif) > 0, "Empty LDIF output"
+        assert written_ldif, "Empty LDIF output"
         parse2_result = api.parse(written_ldif)
         assert parse2_result.is_success, f"Second parse failed: {parse2_result.error}"
         entries2 = parse2_result.value

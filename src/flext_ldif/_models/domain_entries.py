@@ -1625,7 +1625,7 @@ class FlextLdifModelsDomainsEntries:
 
         def has_original_format(self) -> bool:
             """Check if original ACL format is available for name replacement."""
-            return self.original_format is not None and len(self.original_format) > 0
+            return self.original_format is not None and self.original_format
 
     class Entry(m.Entity):
         """LDIF entry domain model.
@@ -2853,7 +2853,7 @@ class FlextLdifModelsDomainsEntries:
             True if attribute exists with at least one value, False otherwise
 
             """
-            return len(self.get_attribute_values(attribute_name)) > 0
+            return self.get_attribute_values(attribute_name)
 
         def has_object_class(self, object_class: str) -> bool:
             """Check if entry has specified t.NormalizedValue class.
@@ -3040,12 +3040,12 @@ class FlextLdifModelsDomainsEntries:
         @computed_field
         def has_errors(self) -> bool:
             """Check if any validation errors exist."""
-            return len(self.validation_errors) > 0
+            return self.validation_errors
 
         @computed_field
         def has_warnings(self) -> bool:
             """Check if any validation warnings exist."""
-            return len(self.validation_warnings) > 0
+            return self.validation_warnings
 
         @computed_field
         def transformation_count(self) -> int:
@@ -3056,7 +3056,7 @@ class FlextLdifModelsDomainsEntries:
         def was_transformed(self) -> bool:
             """Check if any transformations were applied."""
             return (
-                self.original_dn != self.normalized_dn or len(self.transformations) > 0
+                self.original_dn != self.normalized_dn or self.transformations
             )
 
         @classmethod
@@ -3256,12 +3256,12 @@ class FlextLdifModelsDomainsEntries:
         @computed_field
         def had_errors(self) -> bool:
             """Check if any errors occurred."""
-            return len(self.errors) > 0
+            return self.errors
 
         @computed_field
         def had_warnings(self) -> bool:
             """Check if any warnings occurred."""
-            return len(self.warnings) > 0
+            return self.warnings
 
         @computed_field
         def objectclasses_changed(self) -> bool:

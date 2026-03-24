@@ -104,8 +104,6 @@ class FlextLdifConstants(FlextConstants):
             CP1252 = "cp1252"
             ISO8859_1 = "iso-8859-1"
 
-        DEFAULT_ENCODING: Final[str] = FlextConstants.DEFAULT_ENCODING
-
         @unique
         class LdifFormat(StrEnum):
             """RFC 2849 LDIF format indicators for attribute value encoding."""
@@ -319,7 +317,6 @@ class FlextLdifConstants(FlextConstants):
         META_DN_WAS_BASE64: Final[str] = "_dn_was_base64"
         META_DN_ESCAPES_APPLIED: Final[str] = "_dn_escapes_applied"
 
-        MAX_BATCH_SIZE: Final[int] = FlextConstants.MAX_ITEMS
         ASCII_SPACE_CHAR: Final[int] = 32
         ASCII_TILDE_CHAR: Final[int] = 126
 

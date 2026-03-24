@@ -422,11 +422,11 @@ class FlextLdifUtilitiesCollectionLdif:
         if items is None:
             return True
         if isinstance(items, (str, bytes)):
-            return len(items) == 0
+            return not items
         if isinstance(items, Mapping):
-            return len(items) == 0
+            return not items
         if isinstance(items, Sequence):
-            return len(items) == 0
+            return not items
         return False
 
     @classmethod
@@ -733,7 +733,7 @@ class FlextLdifUtilitiesCollectionLdif:
             return False
         try:
             sig = inspect.signature(first_pred)
-            return len(sig.parameters) == 0
+            return not sig.parameters
         except (ValueError, TypeError):
             return False
 
@@ -893,7 +893,7 @@ class FlextLdifUtilitiesCollectionLdif:
                         converted_args.append(arg)
                     case _:
                         converted_args.append(str(arg))
-            if len(converted_args) == 0:
+            if not converted_args:
                 result = fn()
             elif len(converted_args) == 1:
                 result = fn(converted_args[0])
@@ -1352,7 +1352,7 @@ class FlextLdifUtilitiesCollectionLdif:
             return False
         try:
             sig = inspect.signature(func)
-            return len(sig.parameters) == 0
+            return not sig.parameters
         except (ValueError, TypeError):
             return False
 

@@ -46,7 +46,7 @@ class TestMinimalDifferencesOidOud:
         assert parse_result.is_success, f"Parsing failed: {parse_result.error}"
         parse_response = parse_result.value
         entries = parse_response.entries
-        assert len(entries) > 0, "No entries parsed from OID fixture"
+        assert entries, "No entries parsed from OID fixture"
         for entry in entries:
             assert entry.metadata is not None, f"Entry {entry.dn} missing metadata"
             assert hasattr(entry.metadata, "extensions"), (
@@ -72,7 +72,7 @@ class TestMinimalDifferencesOidOud:
         assert parse_result.is_success, f"Parsing failed: {parse_result.error}"
         parse_response = parse_result.value
         entries = parse_response.entries
-        assert len(entries) > 0, "No entries parsed from OUD fixture"
+        assert entries, "No entries parsed from OUD fixture"
         for entry in entries:
             assert entry.metadata is not None, f"Entry {entry.dn} missing metadata"
             assert hasattr(entry.metadata, "extensions"), (
@@ -127,7 +127,7 @@ class TestMinimalDifferencesOidOud:
         )
         assert isinstance(original_attrs, dict)
         if entry.metadata.original_attribute_case:
-            assert len(entry.metadata.original_attribute_case) > 0
+            assert entry.metadata.original_attribute_case
 
     def test_punctuation_differences_captured(self, parser: FlextLdifParser) -> None:
         """Test that punctuation differences (e.g., trailing semicolons) are captured."""

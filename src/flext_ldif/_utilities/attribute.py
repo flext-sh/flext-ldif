@@ -38,7 +38,7 @@ class FlextLdifUtilitiesAttribute:
             for option in options
             if not cls.validate_attribute_option(option)
         )
-        return (len(violations) == 0, violations)
+        return (not violations, violations)
 
     @classmethod
     def validate_attribute_name(cls, attribute_name: str) -> bool:

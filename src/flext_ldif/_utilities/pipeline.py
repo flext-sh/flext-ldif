@@ -233,7 +233,7 @@ class ValidationPipeline:
                     warnings.append("Entry has no objectClass attribute")
         return r[str].ok(
             ValidationResult(
-                is_valid=len(errors) == 0,
+                is_valid=not errors,
                 errors=errors,
                 warnings=warnings,
             ),

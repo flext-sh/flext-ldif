@@ -129,7 +129,7 @@ class FlextLdifUtilities(FlextUtilities):
             valid_values = cls.get_valid_values(category)
             valid_lower = {v.lower() for v in valid_values}
             invalid = {v for v in values if v.lower() not in valid_lower}
-            return (len(invalid) == 0, invalid)
+            return (not invalid, invalid)
 
         TWO_ARG_THRESHOLD: int = 2
         """Minimum parameter count for 2-argument functions."""

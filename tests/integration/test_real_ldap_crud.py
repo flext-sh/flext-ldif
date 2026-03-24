@@ -86,7 +86,7 @@ class TestRealLdapCRUD:
         result = ldap_connection.search(
             str(person_entry.dn), "(objectClass=*)", search_scope="BASE"
         )
-        assert not result or len(ldap_connection.entries) == 0
+        assert not result or not ldap_connection.entries
 
 
 @pytest.mark.docker

@@ -126,7 +126,7 @@ class FlextLdifModelsBases:
         @computed_field
         def is_valid(self) -> bool:
             """Check if ACL element passed validation."""
-            return len(self.validation_violations) == 0
+            return not self.validation_violations
 
 
 __all__ = ["FlextLdifModelsBases"]

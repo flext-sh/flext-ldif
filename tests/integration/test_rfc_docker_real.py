@@ -53,7 +53,7 @@ class TestRfcDockerRealData:
         assert result.is_success, f"Failed to parse OID schema: {result.error}"
         parse_response = result.value
         entries = parse_response.entries
-        assert len(entries) > 0, "No schema entries parsed"
+        assert entries, "No schema entries parsed"
         assert any(
             any(
                 attr.lower() in {"attributetypes", "objectclasses"}
@@ -75,7 +75,7 @@ class TestRfcDockerRealData:
         assert result.is_success, f"Failed to parse OUD entries: {result.error}"
         parse_response = result.value
         entries = parse_response.entries
-        assert len(entries) > 0, "No entries parsed from OUD fixtures"
+        assert entries, "No entries parsed from OUD fixtures"
         assert all(hasattr(entry, "dn") for entry in entries)
 
     def test_parse_openldap_integration_data(
@@ -93,7 +93,7 @@ class TestRfcDockerRealData:
         if result.is_success:
             parse_response = result.value
             entries = parse_response.entries
-            assert len(entries) > 0
+            assert entries
 
     def test_roundtrip_oid_to_file(
         self, quirk_registry: FlextLdifServer, oid_fixtures_dir: Path, tmp_path: Path
@@ -145,7 +145,7 @@ class TestRfcDockerRealData:
             for e in entries
             if e.attributes is not None and "aci" in e.attributes.attributes
         ]
-        assert len(acl_entries) > 0, "No ACL entries found in OUD fixtures"
+        assert acl_entries, "No ACL entries found in OUD fixtures"
 
     def test_parse_edge_case_unicode(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing Unicode edge cases."""
@@ -216,7 +216,7 @@ class TestRfcDockerRealData:
         assert result.is_success, f"Failed to parse {schema_file.name}: {result.error}"
         parse_response = result.value
         entries = parse_response.entries
-        assert len(entries) > 0
+        assert entries
         assert any(
             any(
                 attr.lower() in {"attributetypes", "objectclasses"}
@@ -256,7 +256,7 @@ class TestRfcIntegrationRealWorld:
         if result.is_success:
             parse_response = result.value
             entries = parse_response.entries
-            assert len(entries) > 0, "Integration file should have entries"
+            assert entries, "Integration file should have entries"
 
     def test_write_large_dataset(
         self, quirk_registry: FlextLdifServer, tmp_path: Path

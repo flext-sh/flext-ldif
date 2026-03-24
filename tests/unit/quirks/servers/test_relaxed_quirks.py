@@ -248,7 +248,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         tm.that(result.is_success, eq=True)
         written = result.value
         tm.that(isinstance(written, str), eq=True)
-        tm.that(len(written) > 0, eq=True)
+        tm.that(written, eq=True)
 
     def test_acl_initialization(self, acl_quirk: FlextLdifServersRelaxed.Acl) -> None:
         """Test relaxed ACL quirk initialization."""

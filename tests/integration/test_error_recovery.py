@@ -91,7 +91,7 @@ class TestMalformedLdifHandling:
         result = api.parse(ldif_content)
         if result.is_success:
             entries = result.value
-            assert len(entries) > 0 or len(entries) == 0
+            assert entries or not entries
 
     def test_empty_attribute_values(self, api: FlextLdif) -> None:
         """Test handling of attributes with empty values.
@@ -117,7 +117,7 @@ class TestMalformedLdifHandling:
         result = api.parse(ldif_content)
         if result.is_success:
             entries = result.value
-            assert len(entries) > 0
+            assert entries
 
     def test_special_characters_in_values(self, api: FlextLdif) -> None:
         """Test handling of special characters in attribute values.

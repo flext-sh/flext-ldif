@@ -43,7 +43,7 @@ class TestsFlextLdifEdgeCases(s):
             f"Failed to parse unicode content: {result.error}",
         )
         entries = result.value
-        tm.that(len(entries) > 0, eq=True)
+        tm.that(entries, eq=True)
         for entry in entries:
             tm.that(entry.dn is not None, eq=True)
             if entry.dn is not None:
@@ -61,7 +61,7 @@ class TestsFlextLdifEdgeCases(s):
             f"Failed to parse deep DN content: {result.error}",
         )
         entries = result.value
-        tm.that(len(entries) > 0, eq=True)
+        tm.that(entries, eq=True)
         max_depth = 0
         for entry in entries:
             if entry.dn is not None:
@@ -88,7 +88,7 @@ class TestsFlextLdifEdgeCases(s):
             (f"Failed to parse large multivalue fixture: {result.error}"),
         )
         entries = result.value
-        tm.that(len(entries) > 0, eq=True)
+        tm.that(entries, eq=True)
         max_values = 0
         for entry in entries:
             if entry.attributes is None:

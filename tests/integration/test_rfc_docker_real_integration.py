@@ -53,7 +53,7 @@ class TestRfcParserRealFixtures:
         result = parser.parse_ldif_file(entries_file)
         assert result.is_success, f"Failed to parse: {result.error}"
         parse_response = result.value
-        assert len(parse_response.entries) > 0
+        assert parse_response.entries
 
     def test_parse_openldap_entries_fixture(
         self, quirk_registry: FlextLdifServer
@@ -66,7 +66,7 @@ class TestRfcParserRealFixtures:
         result = parser.parse_ldif_file(entries_file)
         assert result.is_success, f"Failed to parse: {result.error}"
         parse_response = result.value
-        assert len(parse_response.entries) > 0
+        assert parse_response.entries
 
 
 class TestRfcSchemaParserRealFixtures:
@@ -86,7 +86,7 @@ class TestRfcSchemaParserRealFixtures:
         result = parser.parse_ldif_file(schema_file)
         assert result.is_success, f"Failed to parse: {result.error}"
         parse_response = result.value
-        assert len(parse_response.entries) > 0
+        assert parse_response.entries
 
     def test_parse_oud_schema_fixture(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing real OUD schema from fixtures."""
@@ -218,4 +218,4 @@ class TestRfcExceptionHandlingRealScenarios:
         result = parser.parse_ldif_file(empty_file)
         assert result.is_success
         parse_response = result.value
-        assert len(parse_response.entries) == 0
+        assert not parse_response.entries
