@@ -996,13 +996,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         """Restore single boolean attribute from conversion metadata."""
         mk = c.Ldif
         converted_val = conv_data.get(mk.CONVERSION_CONVERTED_VALUE)
-        converted_val_list: MutableSequence[str]
+        converted_val_list: MutableSequence[str] = []
         if isinstance(converted_val, str):
             converted_val_list = [converted_val]
         elif isinstance(converted_val, list):
             converted_val_list = [str(item) for item in converted_val]
-        else:
-            converted_val_list = []
         if not converted_val_list:
             return False
         rfc_value = converted_val_list[0] if converted_val_list else ""

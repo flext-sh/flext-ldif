@@ -69,7 +69,7 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
         elif isinstance(oc_values_raw, list):
             oc_values = [str(oc) for oc in oc_values_raw]
         else:
-            oc_values = []
+            oc_values: MutableSequence[str] = []
         for oc_item in oc_values:
             oc_result = validation_service.validate_objectclass_name(oc_item)
             if oc_result.is_failure or not oc_result.value:

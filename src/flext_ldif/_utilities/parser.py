@@ -315,7 +315,7 @@ class FlextLdifUtilitiesParser:
             if not line.strip():
                 if current_entry:
                     entries.append(current_entry)
-                    current_entry = {}
+                    current_entry: t.Ldif.RawEntryDict = {}
                 continue
             if ":" in line:
                 key, value = line.split(":", 1)
