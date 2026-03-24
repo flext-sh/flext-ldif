@@ -858,8 +858,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 desc: str | None = None,
                 kind: str = "STRUCTURAL",
                 sup: str | None = None,
-                must: Sequence[str] | None = None,
-                may: Sequence[str] | None = None,
+                must: MutableSequence[str] | None = None,
+                may: MutableSequence[str] | None = None,
             ) -> m.Ldif.SchemaObjectClass:
                 """Create a schema objectClass and unwrap the result.
 

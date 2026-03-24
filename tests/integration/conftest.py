@@ -692,9 +692,9 @@ def clean_test_ou(
     test_ou_dn = make_test_base_dn("FlextLdifTests")
     with contextlib.suppress(Exception):
         ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
-        entries: list[LdapEntry] = list(ldap_connection.entries)
+        entries: Sequence[LdapEntry] = list(ldap_connection.entries)
         if entries:
-            dns_to_delete: list[str] = [str(entry.entry_dn) for entry in entries]
+            dns_to_delete: Sequence[str] = [str(entry.entry_dn) for entry in entries]
             for dn in reversed(dns_to_delete):
                 with contextlib.suppress(Exception):
                     ldap_connection.delete(dn)
@@ -707,9 +707,9 @@ def clean_test_ou(
     yield test_ou_dn
     with contextlib.suppress(Exception):
         ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
-        entries2: list[LdapEntry] = list(ldap_connection.entries)
+        entries2: Sequence[LdapEntry] = list(ldap_connection.entries)
         if entries2:
-            dns_to_delete2: list[str] = [str(entry.entry_dn) for entry in entries2]
+            dns_to_delete2: Sequence[str] = [str(entry.entry_dn) for entry in entries2]
             for dn in reversed(dns_to_delete2):
                 with contextlib.suppress(Exception):
                     ldap_connection.delete(dn)
