@@ -24,13 +24,13 @@ class TestsFlextLdifVersion(s):
     def test_version_exported(self) -> None:
         """Test __version__ is exported and accessible."""
         tm.that(hasattr(version_module, "__version__"), eq=True)
-        tm.that(isinstance(version_module.__version__, str), eq=True)
+        tm.that(version_module.__version__, is_=str)
         tm.that(version_module.__version__, ne="")
 
     def test_version_info_exported(self) -> None:
         """Test __version_info__ is exported and is a tuple."""
         tm.that(hasattr(version_module, "__version_info__"), eq=True)
-        tm.that(isinstance(version_module.__version_info__, tuple), eq=True)
+        tm.that(version_module.__version_info__, is_=tuple)
         tm.that(len(version_module.__version_info__), gte=2)
 
     def test_version_info_parsing(self) -> None:
@@ -40,43 +40,43 @@ class TestsFlextLdifVersion(s):
         tm.that(len(version_info), eq=len(version_parts))
         for part, info_part in zip(version_parts, version_info, strict=False):
             if part.isdigit():
-                tm.that(isinstance(info_part, int), eq=True)
+                tm.that(info_part, is_=int)
                 tm.that(info_part, eq=int(part))
             else:
-                tm.that(isinstance(info_part, str), eq=True)
+                tm.that(info_part, is_=str)
                 tm.that(info_part, eq=part)
 
     def test_title_exported(self) -> None:
         """Test __title__ is exported."""
         tm.that(hasattr(version_module, "__title__"), eq=True)
-        tm.that(isinstance(version_module.__title__, str), eq=True)
+        tm.that(version_module.__title__, is_=str)
         tm.that(version_module.__title__, ne="")
 
     def test_description_exported(self) -> None:
         """Test __description__ is exported."""
         tm.that(hasattr(version_module, "__description__"), eq=True)
-        tm.that(isinstance(version_module.__description__, str), eq=True)
+        tm.that(version_module.__description__, is_=str)
 
     def test_author_exported(self) -> None:
         """Test __author__ is exported."""
         tm.that(hasattr(version_module, "__author__"), eq=True)
-        tm.that(isinstance(version_module.__author__, str), eq=True)
+        tm.that(version_module.__author__, is_=str)
 
     def test_author_email_exported(self) -> None:
         """Test __author_email__ is exported."""
         tm.that(hasattr(version_module, "__author_email__"), eq=True)
-        tm.that(isinstance(version_module.__author_email__, str), eq=True)
+        tm.that(version_module.__author_email__, is_=str)
 
     def test_license_exported(self) -> None:
         """Test __license__ is exported."""
         tm.that(hasattr(version_module, "__license__"), eq=True)
-        tm.that(isinstance(version_module.__license__, str), eq=True)
+        tm.that(version_module.__license__, is_=str)
         tm.that(version_module.__license__, ne="")
 
     def test_url_exported(self) -> None:
         """Test __url__ is exported."""
         tm.that(hasattr(version_module, "__url__"), eq=True)
-        tm.that(isinstance(version_module.__url__, str), eq=True)
+        tm.that(version_module.__url__, is_=str)
 
     def test_all_exports(self) -> None:
         """Test __all__ contains all expected exports."""
@@ -91,7 +91,7 @@ class TestsFlextLdifVersion(s):
             "__version_info__",
         ]
         tm.that(hasattr(version_module, "__all__"), eq=True)
-        tm.that(isinstance(version_module.__all__, list), eq=True)
+        tm.that(version_module.__all__, is_=list)
         for export in expected_exports:
             (
                 tm.that(version_module.__all__, has=export),
@@ -115,7 +115,7 @@ class TestsFlextLdifVersion(s):
         version_info = tuple(int(part) if part.isdigit() else part for part in parts)
         tm.that(version_info[0], eq=1)
         tm.that(version_info[1], eq=2)
-        tm.that(isinstance(version_info[2], str), eq=True)
+        tm.that(version_info[2], is_=str)
         if isinstance(version_info[2], str):
             tm.that(version_info[2], has="alpha")
 
@@ -126,7 +126,7 @@ class TestsFlextLdifVersion(s):
         version_info = tuple(int(part) if part.isdigit() else part for part in parts)
         tm.that(version_info[0], eq=1)
         tm.that(version_info[1], eq=2)
-        tm.that(isinstance(version_info[2], str), eq=True)
+        tm.that(version_info[2], is_=str)
         if isinstance(version_info[2], str):
             tm.that(version_info[2], has="+build")
         tm.that(version_info[3], eq=123)

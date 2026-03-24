@@ -259,7 +259,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         """Test attribute detection for various scenarios."""
         server = FlextLdifServersApache()
         schema_quirk = server.schema_quirk
-        tm.that(isinstance(schema_quirk, FlextLdifServersApache.Schema), eq=True)
+        tm.that(schema_quirk, is_=FlextLdifServersApache.Schema)
         result = schema_quirk.can_handle_attribute(test_case.attr_definition)
         tm.that(result is test_case.expected_can_handle, eq=True)
 
@@ -274,7 +274,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             parse_method="parse_attribute",
             expected_type=m.Ldif.SchemaAttribute,
         )
-        tm.that(isinstance(attr_data, m.Ldif.SchemaAttribute), eq=True)
+        tm.that(attr_data, is_=m.Ldif.SchemaAttribute)
         if isinstance(attr_data, m.Ldif.SchemaAttribute):
             tm.that(attr_data.oid, eq="1.3.6.1.4.1.18060.0.4.1.2.100")
             tm.that(attr_data.name, eq="ads-enabled")
@@ -293,7 +293,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             parse_method="parse_attribute",
             expected_type=m.Ldif.SchemaAttribute,
         )
-        tm.that(isinstance(attr_data, m.Ldif.SchemaAttribute), eq=True)
+        tm.that(attr_data, is_=m.Ldif.SchemaAttribute)
         if isinstance(attr_data, m.Ldif.SchemaAttribute):
             tm.that(attr_data.syntax, eq="1.3.6.1.4.1.1466.115.121.1.15")
             tm.that(attr_data.length, eq=256)
@@ -314,7 +314,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         """Test objectClass detection for various scenarios."""
         server = FlextLdifServersApache()
         schema_quirk = server.schema_quirk
-        tm.that(isinstance(schema_quirk, FlextLdifServersApache.Schema), eq=True)
+        tm.that(schema_quirk, is_=FlextLdifServersApache.Schema)
         result = schema_quirk.can_handle_objectclass(test_case.oc_definition)
         tm.that(result is test_case.expected_can_handle, eq=True)
 
@@ -329,18 +329,18 @@ class TestsTestFlextLdifApacheQuirks(s):
             parse_method="parse_objectclass",
             expected_type=m.Ldif.SchemaObjectClass,
         )
-        tm.that(isinstance(oc_data, m.Ldif.SchemaObjectClass), eq=True)
+        tm.that(oc_data, is_=m.Ldif.SchemaObjectClass)
         if isinstance(oc_data, m.Ldif.SchemaObjectClass):
             tm.that(oc_data.oid, eq="1.3.6.1.4.1.18060.0.4.1.3.100")
             tm.that(oc_data.name, eq="ads-directoryService")
             tm.that(oc_data.kind, eq="STRUCTURAL")
             tm.that(oc_data.sup, eq="top")
             must_attrs = oc_data.must
-            tm.that(isinstance(must_attrs, list), eq=True)
+            tm.that(must_attrs, is_=list)
             tm.that(must_attrs, has="cn")
             tm.that(must_attrs, has="ads-directoryServiceId")
             may_attrs = oc_data.may
-            tm.that(isinstance(may_attrs, list), eq=True)
+            tm.that(may_attrs, is_=list)
             tm.that(may_attrs, has="ads-enabled")
 
     def test_schema_objectclass_parse_auxiliary(self) -> None:
@@ -354,7 +354,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             parse_method="parse_objectclass",
             expected_type=m.Ldif.SchemaObjectClass,
         )
-        tm.that(isinstance(oc_data, m.Ldif.SchemaObjectClass), eq=True)
+        tm.that(oc_data, is_=m.Ldif.SchemaObjectClass)
         if isinstance(oc_data, m.Ldif.SchemaObjectClass):
             tm.that(oc_data.kind, eq="AUXILIARY")
 
@@ -369,7 +369,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             parse_method="parse_objectclass",
             expected_type=m.Ldif.SchemaObjectClass,
         )
-        tm.that(isinstance(oc_data, m.Ldif.SchemaObjectClass), eq=True)
+        tm.that(oc_data, is_=m.Ldif.SchemaObjectClass)
         if isinstance(oc_data, m.Ldif.SchemaObjectClass):
             tm.that(oc_data.kind, eq="ABSTRACT")
 
@@ -435,7 +435,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk, acl_line, parse_method="parse", expected_type=m.Ldif.Tests.Acl
         )
-        tm.that(isinstance(acl_model, m.Ldif.Tests.Acl), eq=True)
+        tm.that(acl_model, is_=m.Ldif.Tests.Acl)
         if isinstance(acl_model, m.Ldif.Tests.Acl):
             roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
                 acl_quirk, acl_model.raw_acl or str(acl_model), parse_method="parse"
@@ -450,7 +450,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk, acl_line, parse_method="parse", expected_type=m.Ldif.Tests.Acl
         )
-        tm.that(isinstance(acl_model, m.Ldif.Tests.Acl), eq=True)
+        tm.that(acl_model, is_=m.Ldif.Tests.Acl)
         if isinstance(acl_model, m.Ldif.Tests.Acl):
             roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
                 acl_quirk, acl_model.raw_acl or str(acl_model), parse_method="parse"
@@ -465,7 +465,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk, acl_line, parse_method="parse", expected_type=m.Ldif.Tests.Acl
         )
-        tm.that(isinstance(acl_model, m.Ldif.Tests.Acl), eq=True)
+        tm.that(acl_model, is_=m.Ldif.Tests.Acl)
         if isinstance(acl_model, m.Ldif.Tests.Acl):
             roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
                 acl_quirk, acl_model.raw_acl or str(acl_model), parse_method="parse"
@@ -476,7 +476,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         """Test ACL detection rejects non-ApacheDS ACLs."""
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
-        tm.that(isinstance(acl_quirk, FlextLdifServersApache.Acl), eq=True)
+        tm.that(acl_quirk, is_=FlextLdifServersApache.Acl)
         acl_line = "access to * by * read"
         tm.that(acl_quirk.can_handle_acl(acl_line) is False, eq=True)
 
@@ -484,7 +484,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         """Test ACL detection rejects empty lines."""
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
-        tm.that(isinstance(acl_quirk, FlextLdifServersApache.Acl), eq=True)
+        tm.that(acl_quirk, is_=FlextLdifServersApache.Acl)
         tm.that(acl_quirk.can_handle_acl("") is False, eq=True)
 
     def test_acl_parse_success(self) -> None:
@@ -495,7 +495,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk, acl_line, parse_method="parse", expected_type=m.Ldif.Tests.Acl
         )
-        tm.that(isinstance(acl_data, m.Ldif.Tests.Acl), eq=True)
+        tm.that(acl_data, is_=m.Ldif.Tests.Acl)
         if isinstance(acl_data, m.Ldif.Tests.Acl):
             tm.that(acl_data.get_acl_format(), eq=c.Ldif.AclKeys.ACI)
             tm.that(acl_data.server_type, eq=c.Ldif.ServerTypes.APACHE)
@@ -508,7 +508,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk, acl_line, parse_method="parse", expected_type=m.Ldif.Tests.Acl
         )
-        tm.that(isinstance(acl_data, m.Ldif.Tests.Acl), eq=True)
+        tm.that(acl_data, is_=m.Ldif.Tests.Acl)
 
     def test_acl_write_with_content(self) -> None:
         """Test writing ACL with content to RFC string format."""
@@ -563,7 +563,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         """Test entry detection for various scenarios."""
         server = FlextLdifServersApache()
         entry_quirk = server.entry_quirk
-        tm.that(isinstance(entry_quirk, FlextLdifServersApache.Entry), eq=True)
+        tm.that(entry_quirk, is_=FlextLdifServersApache.Entry)
         result = entry_quirk.can_handle(test_case.entry_dn, test_case.attributes)
         tm.that(result is test_case.expected_can_handle, eq=True)
 

@@ -96,7 +96,7 @@ class TestsFlextLdifCommonDictionaryTypes(s):
     def test_attribute_dict_with_ldif_entry(self) -> None:
         """AttributeDict must work with real LDIF entry attributes."""
         attr_dict: t.Ldif.AttributeDict = self.SAMPLE_ATTR_DICT
-        tm.that(isinstance(attr_dict, dict), eq=True)
+        tm.that(attr_dict, is_=dict)
         tm.that(attr_dict[c.Names.CN], eq=["John Doe"])
         tm.that(len(attr_dict[c.Names.MAIL]), eq=2)
 
@@ -140,7 +140,7 @@ class TestModelsNamespace:
         objectclass_value: str | Sequence[str] | None = cast(
             "str | Sequence[str] | None", attrs.get(c.Names.OBJECTCLASS)
         )
-        tm.that(isinstance(objectclass_value, list), eq=True)
+        tm.that(objectclass_value, is_=list)
 
     def test_attributes_data_with_real_schema(self) -> None:
         """AttributesData must support real schema attribute patterns."""

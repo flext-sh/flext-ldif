@@ -58,7 +58,7 @@ class TestsFlextLdifSchemaServiceExecute(s):
         result = schema_service.execute()
         tm.that(result.is_success, eq=True)
         status = result.value
-        tm.that(isinstance(status, m.Ldif.SchemaServiceStatus), eq=True)
+        tm.that(status, is_=m.Ldif.SchemaServiceStatus)
         tm.that(status.service, eq="SchemaService")
         tm.that(status.status, eq="operational")
         tm.that(status.rfc_compliance, eq="RFC 4512")
@@ -80,7 +80,7 @@ class TestSchemaServiceBuilder:
     def test_builder_creates_instance(self) -> None:
         """Test builder() creates new instance."""
         service = FlextLdifSchema.builder()
-        tm.that(isinstance(service, FlextLdifSchema), eq=True)
+        tm.that(service, is_=FlextLdifSchema)
         tm.that(service.server_type, eq="rfc")
 
     def test_with_server_type_chains(self) -> None:
@@ -93,7 +93,7 @@ class TestSchemaServiceBuilder:
     def test_build_returns_self(self) -> None:
         """Test build() returns configured instance."""
         service = FlextLdifSchema.builder().with_server_type("oid").build()
-        tm.that(isinstance(service, FlextLdifSchema), eq=True)
+        tm.that(service, is_=FlextLdifSchema)
         tm.that(service.server_type, eq="oid")
 
     def test_fluent_builder_complete_chain(self) -> None:
@@ -116,7 +116,7 @@ class TestSchemaServiceParseAttribute:
         result = schema_service.parse_attribute(simple_attribute_definition)
         tm.that(result.is_success, eq=True)
         attr = result.value
-        tm.that(isinstance(attr, m.Ldif.SchemaAttribute), eq=True)
+        tm.that(attr, is_=m.Ldif.SchemaAttribute)
         tm.that(attr.oid, eq="2.5.4.3")
         tm.that(attr.name, eq="cn")
 
@@ -127,7 +127,7 @@ class TestSchemaServiceParseAttribute:
         result = schema_service.parse_attribute(complex_attribute_definition)
         tm.that(result.is_success, eq=True)
         attr = result.value
-        tm.that(isinstance(attr, m.Ldif.SchemaAttribute), eq=True)
+        tm.that(attr, is_=m.Ldif.SchemaAttribute)
         tm.that(attr.oid, eq="2.5.4.0")
         tm.that(attr.name, eq="objectClass")
 
@@ -169,7 +169,7 @@ class TestSchemaServiceParseObjectClass:
         result = schema_service.parse_objectclass(simple_objectclass_definition)
         tm.that(result.is_success, eq=True)
         oc = result.value
-        tm.that(isinstance(oc, m.Ldif.SchemaObjectClass), eq=True)
+        tm.that(oc, is_=m.Ldif.SchemaObjectClass)
         tm.that(oc.oid, eq="2.5.6.6")
         tm.that(oc.name, eq="person")
         tm.that(oc.kind, eq="STRUCTURAL")
@@ -181,7 +181,7 @@ class TestSchemaServiceParseObjectClass:
         result = schema_service.parse_objectclass(complex_objectclass_definition)
         tm.that(result.is_success, eq=True)
         oc = result.value
-        tm.that(isinstance(oc, m.Ldif.SchemaObjectClass), eq=True)
+        tm.that(oc, is_=m.Ldif.SchemaObjectClass)
         tm.that(oc.oid, eq="2.5.6.2")
         tm.that(oc.name, eq="country")
         tm.that(oc.kind, eq="STRUCTURAL")
@@ -347,7 +347,7 @@ class TestSchemaServiceWriteAttribute:
         result = schema_service.write_attribute(attr)
         tm.that(result.is_success, eq=True)
         ldif = result.value
-        tm.that(isinstance(ldif, str), eq=True)
+        tm.that(ldif, is_=str)
         tm.that("cn" in ldif or "2.5.4.3" in ldif, eq=True)
 
     def test_write_attribute_roundtrip(
@@ -391,7 +391,7 @@ class TestSchemaServiceWriteObjectClass:
         result = schema_service.write_objectclass(oc)
         tm.that(result.is_success, eq=True)
         ldif = result.value
-        tm.that(isinstance(ldif, str), eq=True)
+        tm.that(ldif, is_=str)
         tm.that("person" in ldif or "2.5.6.6" in ldif, eq=True)
 
     def test_write_objectclass_roundtrip(

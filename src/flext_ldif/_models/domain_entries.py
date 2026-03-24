@@ -3055,9 +3055,7 @@ class FlextLdifModelsDomainsEntries:
         @computed_field
         def was_transformed(self) -> bool:
             """Check if any transformations were applied."""
-            return (
-                self.original_dn != self.normalized_dn or self.transformations
-            )
+            return self.original_dn != self.normalized_dn or self.transformations
 
         @classmethod
         def create_minimal(cls, dn: str) -> Self:

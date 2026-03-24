@@ -90,8 +90,7 @@ class TestMalformedLdifHandling:
         ldif_content = "dn: cn=Minimal,dc=example,dc=com\n"
         result = api.parse(ldif_content)
         if result.is_success:
-            entries = result.value
-            assert entries or not entries
+            assert True
 
     def test_empty_attribute_values(self, api: FlextLdif) -> None:
         """Test handling of attributes with empty values.

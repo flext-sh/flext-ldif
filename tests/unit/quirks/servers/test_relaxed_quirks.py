@@ -126,7 +126,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
     ) -> None:
         """Test relaxed schema quirk initialization."""
         tm.that(schema_quirk, none=False)
-        tm.that(isinstance(schema_quirk, FlextLdifServersRelaxed.Schema), eq=True)
+        tm.that(schema_quirk, is_=FlextLdifServersRelaxed.Schema)
 
     @pytest.mark.parametrize(
         ("scenario", "definition_data"),
@@ -247,13 +247,13 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         result = schema_quirk.write_attribute(attr_data)
         tm.that(result.is_success, eq=True)
         written = result.value
-        tm.that(isinstance(written, str), eq=True)
+        tm.that(written, is_=str)
         tm.that(written, eq=True)
 
     def test_acl_initialization(self, acl_quirk: FlextLdifServersRelaxed.Acl) -> None:
         """Test relaxed ACL quirk initialization."""
         tm.that(acl_quirk, none=False)
-        tm.that(isinstance(acl_quirk, FlextLdifServersRelaxed.Acl), eq=True)
+        tm.that(acl_quirk, is_=FlextLdifServersRelaxed.Acl)
 
     @pytest.mark.parametrize(
         ("name", "acl_data"),
@@ -296,7 +296,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
     ) -> None:
         """Test relaxed entry quirk initialization."""
         tm.that(entry_quirk, none=False)
-        tm.that(isinstance(entry_quirk, FlextLdifServersRelaxed.Entry), eq=True)
+        tm.that(entry_quirk, is_=FlextLdifServersRelaxed.Entry)
 
     def test_entry_lenient_dn_parsing(
         self, relaxed_instance: FlextLdifServersRelaxed

@@ -197,7 +197,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
         result = u.Ldif.apply_transformations(attr, field_transforms=field_transforms)
         tm.that(result.is_success, eq=True)
         transformed = result.value
-        tm.that(isinstance(transformed, m.Ldif.SchemaAttribute), eq=True)
+        tm.that(transformed, is_=m.Ldif.SchemaAttribute)
         if isinstance(transformed, m.Ldif.SchemaAttribute):
             tm.that(transformed.name, eq="cn")
             tm.that(transformed.equality, eq="caseIgnoreMatch")
@@ -228,7 +228,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
         result = u.Ldif.apply_transformations(attr, field_transforms=field_transforms)
         tm.that(result.is_success, eq=True)
         transformed = result.value
-        tm.that(isinstance(transformed, m.Ldif.SchemaAttribute), eq=True)
+        tm.that(transformed, is_=m.Ldif.SchemaAttribute)
         if isinstance(transformed, m.Ldif.SchemaAttribute):
             tm.that(transformed.name, eq="cn")
             tm.that(transformed.equality, eq="caseIgnoreMatch")

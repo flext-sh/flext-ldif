@@ -177,7 +177,7 @@ class TestsTestFlextLdifProtocols(s):
             )
             tm.that(hasattr(constants_cls, "PRIORITY"), eq=True)
             priority = constants_cls.PRIORITY
-            tm.that(isinstance(priority, int), eq=True)
+            tm.that(priority, is_=int)
 
         @staticmethod
         def verify_registry_methods(
@@ -270,7 +270,7 @@ class TestsTestFlextLdifProtocols(s):
     ) -> None:
         """Test parse method returns r."""
         result = oid_schema.parse(self.Constants.SAMPLE_ATTR_DEF)
-        tm.that(isinstance(result, r), eq=True)
+        tm.that(result, is_=r)
 
     def test_can_handle_returns_bool(
         self, oid_schema: FlextLdifServersOid.Schema
@@ -279,9 +279,9 @@ class TestsTestFlextLdifProtocols(s):
         attr_result = oid_schema.can_handle_attribute(
             self.Constants.SAMPLE_ATTR_DEF_SIMPLE
         )
-        tm.that(isinstance(attr_result, bool), eq=True)
+        tm.that(attr_result, is_=bool)
         oc_result = oid_schema.can_handle_objectclass(self.Constants.SAMPLE_OC_DEF)
-        tm.that(isinstance(oc_result, bool), eq=True)
+        tm.that(oc_result, is_=bool)
 
     registry: ClassVar[FlextLdifServer]
 
@@ -331,6 +331,6 @@ class TestsTestFlextLdifProtocols(s):
         """Test calling protocol methods on implementations."""
         schema = FlextLdifServersOid.Schema()
         result = schema.can_handle_attribute(self.Constants.SAMPLE_ATTR_DEF_SIMPLE)
-        tm.that(isinstance(result, bool), eq=True)
+        tm.that(result, is_=bool)
         parse_result = schema.parse(self.Constants.SAMPLE_ATTR_DEF_SIMPLE)
         tm.that(hasattr(parse_result, self.Constants.ATTR_IS_SUCCESS), eq=True)

@@ -172,7 +172,7 @@ class TestsTestFlextLdifConstants:
                 u.Ldif.get_valid_values(category)
         else:
             values = u.Ldif.get_valid_values(category)
-            tm.that(isinstance(values, set), eq=True)
+            tm.that(values, is_=set)
             (
                 tm.that(values, eq=expected_values),
                 (f"Expected {expected_values}, got {values}"),

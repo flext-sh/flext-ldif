@@ -56,7 +56,9 @@ class TestsFlextLdifDnOperationsPure:
         tm.that(u.Ldif.split("cn=test"), eq=["cn=test"])
         dn = "cn=Test\\, User\\\\More,ou=Users\\, Group,dc=example"
         result = u.Ldif.split(dn)
-        tm.that(result, eq=["cn=Test\\, User\\\\More", "ou=Users\\, Group", "dc=example"])
+        tm.that(
+            result, eq=["cn=Test\\, User\\\\More", "ou=Users\\, Group", "dc=example"]
+        )
 
     def test_validate_dn_format_valid(self) -> None:
         """Test valid DN validation."""
@@ -111,25 +113,25 @@ class TestsFlextLdifDnOperationsPure:
         result = u.Ldif.compare_dns(dn1, dn2)
         tm.that(result.is_success, eq=True)
         comparison = result.value
-        tm.that(isinstance(comparison, int), eq=True)
+        tm.that(comparison, is_=int)
 
     def test_escape_dn_value(self) -> None:
         """Test escaping special DN value characters."""
         value = "Test, Value"
         result = u.Ldif.esc(value)
-        tm.that(isinstance(result, str), eq=True)
+        tm.that(result, is_=str)
 
     def test_unescape_dn_value(self) -> None:
         """Test unescaping DN value characters."""
         value = "Test\\,Value"
         result = u.Ldif.unesc(value)
-        tm.that(isinstance(result, str), eq=True)
+        tm.that(result, is_=str)
 
     def test_clean_dn(self) -> None:
         """Test DN cleaning."""
         dn = "  cn = John  ,  ou = Users  ,  dc = example  "
         result = u.Ldif.clean_dn(dn)
-        tm.that(isinstance(result, str), eq=True)
+        tm.that(result, is_=str)
         tm.that("  " not in result or result == dn, eq=True)
 
 
