@@ -39,51 +39,51 @@ if TYPE_CHECKING:
     from flext_ldif.services.transformers import FlextLdifTransformer
     from flext_ldif.services.writer import FlextLdifWriter
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "FlextLdifAcl": ("flext_ldif.services.acl", "FlextLdifAcl"),
-    "FlextLdifAnalysis": ("flext_ldif.services.analysis", "FlextLdifAnalysis"),
-    "FlextLdifCategorization": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "FlextLdifAcl": ["flext_ldif.services.acl", "FlextLdifAcl"],
+    "FlextLdifAnalysis": ["flext_ldif.services.analysis", "FlextLdifAnalysis"],
+    "FlextLdifCategorization": [
         "flext_ldif.services.categorization",
         "FlextLdifCategorization",
-    ),
-    "FlextLdifConversion": ("flext_ldif.services.conversion", "FlextLdifConversion"),
-    "FlextLdifDetector": ("flext_ldif.services.detector", "FlextLdifDetector"),
-    "FlextLdifDn": ("flext_ldif.services.dn", "FlextLdifDn"),
-    "FlextLdifEntries": ("flext_ldif.services.entries", "FlextLdifEntries"),
-    "FlextLdifFilters": ("flext_ldif.services.filters", "FlextLdifFilters"),
-    "FlextLdifMigrationPipeline": (
+    ],
+    "FlextLdifConversion": ["flext_ldif.services.conversion", "FlextLdifConversion"],
+    "FlextLdifDetector": ["flext_ldif.services.detector", "FlextLdifDetector"],
+    "FlextLdifDn": ["flext_ldif.services.dn", "FlextLdifDn"],
+    "FlextLdifEntries": ["flext_ldif.services.entries", "FlextLdifEntries"],
+    "FlextLdifFilters": ["flext_ldif.services.filters", "FlextLdifFilters"],
+    "FlextLdifMigrationPipeline": [
         "flext_ldif.services.migration",
         "FlextLdifMigrationPipeline",
-    ),
-    "FlextLdifParser": ("flext_ldif.services.parser", "FlextLdifParser"),
-    "FlextLdifProcessing": ("flext_ldif.services.processing", "FlextLdifProcessing"),
-    "FlextLdifProcessingPipeline": (
+    ],
+    "FlextLdifParser": ["flext_ldif.services.parser", "FlextLdifParser"],
+    "FlextLdifProcessing": ["flext_ldif.services.processing", "FlextLdifProcessing"],
+    "FlextLdifProcessingPipeline": [
         "flext_ldif.services.pipeline",
         "FlextLdifProcessingPipeline",
-    ),
-    "FlextLdifProcessingPipelineService": (
+    ],
+    "FlextLdifProcessingPipelineService": [
         "flext_ldif.services._services.processing_pipeline_service",
         "FlextLdifProcessingPipelineService",
-    ),
-    "FlextLdifSchema": ("flext_ldif.services.schema", "FlextLdifSchema"),
-    "FlextLdifServer": ("flext_ldif.services.server", "FlextLdifServer"),
-    "FlextLdifServiceRegistry": (
+    ],
+    "FlextLdifSchema": ["flext_ldif.services.schema", "FlextLdifSchema"],
+    "FlextLdifServer": ["flext_ldif.services.server", "FlextLdifServer"],
+    "FlextLdifServiceRegistry": [
         "flext_ldif.services.registry",
         "FlextLdifServiceRegistry",
-    ),
-    "FlextLdifSorting": ("flext_ldif.services.sorting", "FlextLdifSorting"),
-    "FlextLdifStatistics": ("flext_ldif.services.statistics", "FlextLdifStatistics"),
-    "FlextLdifSyntax": ("flext_ldif.services.syntax", "FlextLdifSyntax"),
-    "FlextLdifTransformer": (
+    ],
+    "FlextLdifSorting": ["flext_ldif.services.sorting", "FlextLdifSorting"],
+    "FlextLdifStatistics": ["flext_ldif.services.statistics", "FlextLdifStatistics"],
+    "FlextLdifSyntax": ["flext_ldif.services.syntax", "FlextLdifSyntax"],
+    "FlextLdifTransformer": [
         "flext_ldif.services.transformers",
         "FlextLdifTransformer",
-    ),
-    "FlextLdifValidation": (
+    ],
+    "FlextLdifValidation": [
         "flext_ldif.services.rfc_validation",
         "FlextLdifValidation",
-    ),
-    "FlextLdifWriter": ("flext_ldif.services.writer", "FlextLdifWriter"),
-    "_services": ("flext_ldif.services._services", ""),
+    ],
+    "FlextLdifWriter": ["flext_ldif.services.writer", "FlextLdifWriter"],
+    "_services": ["flext_ldif.services._services", ""],
 }
 
 __all__ = [

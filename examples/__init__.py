@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 
     from examples.demo_structured_migration import main
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "main": ("examples.demo_structured_migration", "main"),
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "main": ["examples.demo_structured_migration", "main"],
 }
 
 __all__ = [

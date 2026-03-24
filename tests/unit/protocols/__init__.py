@@ -15,11 +15,11 @@ if TYPE_CHECKING:
 
     from tests.unit.protocols.test_protocols import TestsTestFlextLdifProtocols
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "TestsTestFlextLdifProtocols": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "TestsTestFlextLdifProtocols": [
         "tests.unit.protocols.test_protocols",
         "TestsTestFlextLdifProtocols",
-    ),
+    ],
 }
 
 __all__ = [

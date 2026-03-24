@@ -19,19 +19,19 @@ if TYPE_CHECKING:
         TestsTestFlextLdifAclAttributeRegistry,
     )
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "GetAclAttributesServerType": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "GetAclAttributesServerType": [
         "tests.unit.constants.test_acl_registry",
         "GetAclAttributesServerType",
-    ),
-    "IsAclAttributeType": (
+    ],
+    "IsAclAttributeType": [
         "tests.unit.constants.test_acl_registry",
         "IsAclAttributeType",
-    ),
-    "TestsTestFlextLdifAclAttributeRegistry": (
+    ],
+    "TestsTestFlextLdifAclAttributeRegistry": [
         "tests.unit.constants.test_acl_registry",
         "TestsTestFlextLdifAclAttributeRegistry",
-    ),
+    ],
 }
 
 __all__ = [

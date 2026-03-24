@@ -18,13 +18,13 @@ if TYPE_CHECKING:
         TestFlextLdifUtilitiesServer,
     )
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "OidServer": ("tests.unit._utilities.server.test_server_utilities", "OidServer"),
-    "OudServer": ("tests.unit._utilities.server.test_server_utilities", "OudServer"),
-    "TestFlextLdifUtilitiesServer": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "OidServer": ["tests.unit._utilities.server.test_server_utilities", "OidServer"],
+    "OudServer": ["tests.unit._utilities.server.test_server_utilities", "OudServer"],
+    "TestFlextLdifUtilitiesServer": [
         "tests.unit._utilities.server.test_server_utilities",
         "TestFlextLdifUtilitiesServer",
-    ),
+    ],
 }
 
 __all__ = [

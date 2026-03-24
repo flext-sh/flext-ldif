@@ -17,11 +17,11 @@ if TYPE_CHECKING:
         FlextLdifProcessingPipelineService,
     )
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "FlextLdifProcessingPipelineService": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "FlextLdifProcessingPipelineService": [
         "flext_ldif.services._services.processing_pipeline_service",
         "FlextLdifProcessingPipelineService",
-    ),
+    ],
 }
 
 __all__ = [

@@ -16,11 +16,11 @@ if TYPE_CHECKING:
         TestFlextLdifUtilitiesParser,
     )
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "TestFlextLdifUtilitiesParser": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "TestFlextLdifUtilitiesParser": [
         "tests.unit._utilities.parser.test_parser_utilities",
         "TestFlextLdifUtilitiesParser",
-    ),
+    ],
 }
 
 __all__ = [

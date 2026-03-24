@@ -366,745 +366,745 @@ if TYPE_CHECKING:
     )
     from tests.utilities import FlextLdifTestUtilities, FlextLdifTestUtilities as u
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "ACL_TEST_CASES": ("tests.unit.quirks.servers.test_ds389_quirks", "ACL_TEST_CASES"),
-    "APIScenarios": ("tests.integration.test_api_integration", "APIScenarios"),
-    "ATTRIBUTE_TEST_CASES": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "ACL_TEST_CASES": ["tests.unit.quirks.servers.test_ds389_quirks", "ACL_TEST_CASES"],
+    "APIScenarios": ["tests.integration.test_api_integration", "APIScenarios"],
+    "ATTRIBUTE_TEST_CASES": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "ATTRIBUTE_TEST_CASES",
-    ),
-    "AclScenario": ("tests.unit.quirks.servers.test_ds389_quirks", "AclScenario"),
-    "AclTestCase": ("tests.unit.quirks.servers.test_ds389_quirks", "AclTestCase"),
-    "AttributeScenario": (
+    ],
+    "AclScenario": ["tests.unit.quirks.servers.test_ds389_quirks", "AclScenario"],
+    "AclTestCase": ["tests.unit.quirks.servers.test_ds389_quirks", "AclTestCase"],
+    "AttributeScenario": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "AttributeScenario",
-    ),
-    "AttributeTestCase": (
+    ],
+    "AttributeTestCase": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "AttributeTestCase",
-    ),
-    "ConfigTestData": ("tests.integration.test_config_integration", "ConfigTestData"),
-    "ENTRY_TEST_CASES": (
+    ],
+    "ConfigTestData": ["tests.integration.test_config_integration", "ConfigTestData"],
+    "ENTRY_TEST_CASES": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "ENTRY_TEST_CASES",
-    ),
-    "EntryScenario": ("tests.unit.quirks.servers.test_novell_quirks", "EntryScenario"),
-    "EntryTestCase": ("tests.unit.quirks.servers.test_novell_quirks", "EntryTestCase"),
-    "FIXTURES_DIR": ("tests.conftest", "FIXTURES_DIR"),
-    "FileManager": ("tests.support.test_files", "FileManager"),
-    "FlextLdifFixtures": ("tests.conftest", "FlextLdifFixtures"),
-    "FlextLdifTestConftest": (
+    ],
+    "EntryScenario": ["tests.unit.quirks.servers.test_novell_quirks", "EntryScenario"],
+    "EntryTestCase": ["tests.unit.quirks.servers.test_novell_quirks", "EntryTestCase"],
+    "FIXTURES_DIR": ["tests.conftest", "FIXTURES_DIR"],
+    "FileManager": ["tests.support.test_files", "FileManager"],
+    "FlextLdifFixtures": ["tests.conftest", "FlextLdifFixtures"],
+    "FlextLdifTestConftest": [
         "tests.support.conftest_factory",
         "FlextLdifTestConftest",
-    ),
-    "FlextLdifTestConstants": ("tests.constants", "FlextLdifTestConstants"),
-    "FlextLdifTestFactory": ("tests.test_factory", "FlextLdifTestFactory"),
-    "FlextLdifTestModels": ("tests.models", "FlextLdifTestModels"),
-    "FlextLdifTestProtocols": ("tests.protocols", "FlextLdifTestProtocols"),
-    "FlextLdifTestServiceFactory": (
+    ],
+    "FlextLdifTestConstants": ["tests.constants", "FlextLdifTestConstants"],
+    "FlextLdifTestFactory": ["tests.test_factory", "FlextLdifTestFactory"],
+    "FlextLdifTestModels": ["tests.models", "FlextLdifTestModels"],
+    "FlextLdifTestProtocols": ["tests.protocols", "FlextLdifTestProtocols"],
+    "FlextLdifTestServiceFactory": [
         "tests.support.real_services",
         "FlextLdifTestServiceFactory",
-    ),
-    "FlextLdifTestTypes": ("tests.typings", "FlextLdifTestTypes"),
-    "FlextLdifTestUtilities": ("tests.utilities", "FlextLdifTestUtilities"),
-    "FlextLdifTestsServiceBase": ("tests.base", "FlextLdifTestsServiceBase"),
-    "GenericFieldsDict": ("tests.typings", "GenericFieldsDict"),
-    "GetAclAttributesServerType": (
+    ],
+    "FlextLdifTestTypes": ["tests.typings", "FlextLdifTestTypes"],
+    "FlextLdifTestUtilities": ["tests.utilities", "FlextLdifTestUtilities"],
+    "FlextLdifTestsServiceBase": ["tests.base", "FlextLdifTestsServiceBase"],
+    "GenericFieldsDict": ["tests.typings", "GenericFieldsDict"],
+    "GetAclAttributesServerType": [
         "tests.unit.constants.test_acl_registry",
         "GetAclAttributesServerType",
-    ),
-    "GetValidValuesType": (
+    ],
+    "GetValidValuesType": [
         "tests.unit.utilities.test_utilities_constants",
         "GetValidValuesType",
-    ),
-    "IsAclAttributeType": (
+    ],
+    "IsAclAttributeType": [
         "tests.unit.constants.test_acl_registry",
         "IsAclAttributeType",
-    ),
-    "IsValidTestType": (
+    ],
+    "IsValidTestType": [
         "tests.unit.utilities.test_utilities_constants",
         "IsValidTestType",
-    ),
-    "LDAP_ADMIN_DN": ("tests.integration.conftest", "LDAP_ADMIN_DN"),
-    "LDAP_ADMIN_PASSWORD": ("tests.integration.conftest", "LDAP_ADMIN_PASSWORD"),
-    "LDAP_BASE_DN": ("tests.integration.conftest", "LDAP_BASE_DN"),
-    "LDAP_COMPOSE_FILE": ("tests.integration.conftest", "LDAP_COMPOSE_FILE"),
-    "LDAP_CONTAINER_NAME": ("tests.integration.conftest", "LDAP_CONTAINER_NAME"),
-    "LDAP_PORT": ("tests.integration.conftest", "LDAP_PORT"),
-    "LDAP_SERVICE_NAME": ("tests.integration.conftest", "LDAP_SERVICE_NAME"),
-    "LdifSample": ("tests.support.ldif_data", "LdifSample"),
-    "LdifTestData": ("tests.support.ldif_data", "LdifTestData"),
-    "MockFlextUtilitiesResultHelpers": (
+    ],
+    "LDAP_ADMIN_DN": ["tests.integration.conftest", "LDAP_ADMIN_DN"],
+    "LDAP_ADMIN_PASSWORD": ["tests.integration.conftest", "LDAP_ADMIN_PASSWORD"],
+    "LDAP_BASE_DN": ["tests.integration.conftest", "LDAP_BASE_DN"],
+    "LDAP_COMPOSE_FILE": ["tests.integration.conftest", "LDAP_COMPOSE_FILE"],
+    "LDAP_CONTAINER_NAME": ["tests.integration.conftest", "LDAP_CONTAINER_NAME"],
+    "LDAP_PORT": ["tests.integration.conftest", "LDAP_PORT"],
+    "LDAP_SERVICE_NAME": ["tests.integration.conftest", "LDAP_SERVICE_NAME"],
+    "LdifSample": ["tests.support.ldif_data", "LdifSample"],
+    "LdifTestData": ["tests.support.ldif_data", "LdifTestData"],
+    "MockFlextUtilitiesResultHelpers": [
         "tests.support.validators",
         "MockFlextUtilitiesResultHelpers",
-    ),
-    "MockMatchers": ("tests.support.validators", "MockMatchers"),
-    "OBJECTCLASS_TEST_CASES": (
+    ],
+    "MockMatchers": ["tests.support.validators", "MockMatchers"],
+    "OBJECTCLASS_TEST_CASES": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "OBJECTCLASS_TEST_CASES",
-    ),
-    "OID_FIXTURES_DIR": ("tests.conftest", "OID_FIXTURES_DIR"),
-    "ObjectClassScenario": (
+    ],
+    "OID_FIXTURES_DIR": ["tests.conftest", "OID_FIXTURES_DIR"],
+    "ObjectClassScenario": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "ObjectClassScenario",
-    ),
-    "ObjectClassTestCase": (
+    ],
+    "ObjectClassTestCase": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "ObjectClassTestCase",
-    ),
-    "OidServer": ("tests.unit._utilities.server.test_server_utilities", "OidServer"),
-    "OidTestConstants": (
+    ],
+    "OidServer": ["tests.unit._utilities.server.test_server_utilities", "OidServer"],
+    "OidTestConstants": [
         "tests.unit.test_migration_pipeline_quirks",
         "OidTestConstants",
-    ),
-    "OudServer": ("tests.unit._utilities.server.test_server_utilities", "OudServer"),
-    "ParseScenario": ("tests.unit.quirks.servers.test_relaxed_quirks", "ParseScenario"),
-    "RfcTestHelpers": (
+    ],
+    "OudServer": ["tests.unit._utilities.server.test_server_utilities", "OudServer"],
+    "ParseScenario": ["tests.unit.quirks.servers.test_relaxed_quirks", "ParseScenario"],
+    "RfcTestHelpers": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "RfcTestHelpers",
-    ),
-    "TestAclAttributes": ("tests.unit.test_filters", "TestAclAttributes"),
-    "TestAclParser": ("tests.unit.utilities.test_utilities_core", "TestAclParser"),
-    "TestAclRoundTripPreservation": (
+    ],
+    "TestAclAttributes": ["tests.unit.test_filters", "TestAclAttributes"],
+    "TestAclParser": ["tests.unit.utilities.test_utilities_core", "TestAclParser"],
+    "TestAclRoundTripPreservation": [
         "tests.integration.test_acl_metadata_preservation",
         "TestAclRoundTripPreservation",
-    ),
-    "TestAliasDiscovery": (
+    ],
+    "TestAliasDiscovery": [
         "tests.unit.services.test_quirks_standardization",
         "TestAliasDiscovery",
-    ),
-    "TestAttributeFixer": (
+    ],
+    "TestAttributeFixer": [
         "tests.unit.utilities.test_utilities_core",
         "TestAttributeFixer",
-    ),
-    "TestBoundaryValues": ("tests.integration.test_edge_cases", "TestBoundaryValues"),
-    "TestCategorizationRealData": (
+    ],
+    "TestBoundaryValues": ["tests.integration.test_edge_cases", "TestBoundaryValues"],
+    "TestCategorizationRealData": [
         "tests.integration.test_categorization_real_data",
         "TestCategorizationRealData",
-    ),
-    "TestData": ("tests.integration.test_api_integration", "TestData"),
-    "TestDeduplicationHelpers": (
+    ],
+    "TestData": ["tests.integration.test_api_integration", "TestData"],
+    "TestDeduplicationHelpers": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestDeduplicationHelpers",
-    ),
-    "TestDnCaseNormalizationScenarios": (
+    ],
+    "TestDnCaseNormalizationScenarios": [
         "tests.integration.test_dn_case_handling",
         "TestDnCaseNormalizationScenarios",
-    ),
-    "TestDnCaseRegistry": (
+    ],
+    "TestDnCaseRegistry": [
         "tests.integration.test_dn_case_handling",
         "TestDnCaseRegistry",
-    ),
-    "TestDnObjectClassMethods": (
+    ],
+    "TestDnObjectClassMethods": [
         "tests.unit.utilities.test_utilities_core",
         "TestDnObjectClassMethods",
-    ),
-    "TestEmptyAndMinimalCases": (
+    ],
+    "TestEmptyAndMinimalCases": [
         "tests.integration.test_edge_cases",
         "TestEmptyAndMinimalCases",
-    ),
-    "TestEncodingErrors": (
+    ],
+    "TestEncodingErrors": [
         "tests.integration.test_error_recovery",
         "TestEncodingErrors",
-    ),
-    "TestFlextLdifAPIIntegration": (
+    ],
+    "TestFlextLdifAPIIntegration": [
         "tests.integration.test_api_integration",
         "TestFlextLdifAPIIntegration",
-    ),
-    "TestFlextLdifDeduplicationHelpers": (
+    ],
+    "TestFlextLdifDeduplicationHelpers": [
         "tests.unit.test_helpers",
         "TestFlextLdifDeduplicationHelpers",
-    ),
-    "TestFlextLdifFacadeWorkflows": (
+    ],
+    "TestFlextLdifFacadeWorkflows": [
         "tests.integration.test_pipeline_integration",
         "TestFlextLdifFacadeWorkflows",
-    ),
-    "TestFlextLdifModels": ("tests.unit.models.test_models", "TestFlextLdifModels"),
-    "TestFlextLdifSettingsIntegration": (
+    ],
+    "TestFlextLdifModels": ["tests.unit.models.test_models", "TestFlextLdifModels"],
+    "TestFlextLdifSettingsIntegration": [
         "tests.integration.test_config_integration",
         "TestFlextLdifSettingsIntegration",
-    ),
-    "TestFlextLdifTypesStructure": (
+    ],
+    "TestFlextLdifTypesStructure": [
         "tests.unit.test_typings",
         "TestFlextLdifTypesStructure",
-    ),
-    "TestFlextLdifUtilitiesComprehensive": (
+    ],
+    "TestFlextLdifUtilitiesComprehensive": [
         "tests.unit.utilities.test_utilities_comprehensive",
         "TestFlextLdifUtilitiesComprehensive",
-    ),
-    "TestFlextLdifUtilitiesOID": (
+    ],
+    "TestFlextLdifUtilitiesOID": [
         "tests.unit._utilities.oid.test_oid_utilities",
         "TestFlextLdifUtilitiesOID",
-    ),
-    "TestFlextLdifUtilitiesParser": (
+    ],
+    "TestFlextLdifUtilitiesParser": [
         "tests.unit._utilities.parser.test_parser_utilities",
         "TestFlextLdifUtilitiesParser",
-    ),
-    "TestFlextLdifUtilitiesServer": (
+    ],
+    "TestFlextLdifUtilitiesServer": [
         "tests.unit._utilities.server.test_server_utilities",
         "TestFlextLdifUtilitiesServer",
-    ),
-    "TestIncompleteEntries": (
+    ],
+    "TestIncompleteEntries": [
         "tests.integration.test_error_recovery",
         "TestIncompleteEntries",
-    ),
-    "TestIntegrationWithLdifFixtures": (
+    ],
+    "TestIntegrationWithLdifFixtures": [
         "tests.unit.test_typings",
         "TestIntegrationWithLdifFixtures",
-    ),
-    "TestInvalidSchemaDefinitions": (
+    ],
+    "TestInvalidSchemaDefinitions": [
         "tests.integration.test_error_recovery",
         "TestInvalidSchemaDefinitions",
-    ),
-    "TestLargeAndComplexCases": (
+    ],
+    "TestLargeAndComplexCases": [
         "tests.integration.test_edge_cases",
         "TestLargeAndComplexCases",
-    ),
-    "TestLdifParser": ("tests.unit.utilities.test_utilities_core", "TestLdifParser"),
-    "TestMalformedLdifHandling": (
+    ],
+    "TestLdifParser": ["tests.unit.utilities.test_utilities_core", "TestLdifParser"],
+    "TestMalformedLdifHandling": [
         "tests.integration.test_error_recovery",
         "TestMalformedLdifHandling",
-    ),
-    "TestMinimalDifferencesOidOud": (
+    ],
+    "TestMinimalDifferencesOidOud": [
         "tests.integration.test_minimal_differences_metadata",
         "TestMinimalDifferencesOidOud",
-    ),
-    "TestModelsNamespace": ("tests.unit.test_typings", "TestModelsNamespace"),
-    "TestNovellAcls": (
+    ],
+    "TestModelsNamespace": ["tests.unit.test_typings", "TestModelsNamespace"],
+    "TestNovellAcls": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestNovellAcls",
-    ),
-    "TestNovellEntryDetection": (
+    ],
+    "TestNovellEntryDetection": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestNovellEntryDetection",
-    ),
-    "TestNovellSchemaAttributeDetection": (
+    ],
+    "TestNovellSchemaAttributeDetection": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestNovellSchemaAttributeDetection",
-    ),
-    "TestNovellSchemaAttributeParsing": (
+    ],
+    "TestNovellSchemaAttributeParsing": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestNovellSchemaAttributeParsing",
-    ),
-    "TestNovellSchemaObjectClassDetection": (
+    ],
+    "TestNovellSchemaObjectClassDetection": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestNovellSchemaObjectClassDetection",
-    ),
-    "TestNovellSchemaObjectClassParsing": (
+    ],
+    "TestNovellSchemaObjectClassParsing": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestNovellSchemaObjectClassParsing",
-    ),
-    "TestObjectClassUtilities": (
+    ],
+    "TestObjectClassUtilities": [
         "tests.unit.utilities.test_utilities_core",
         "TestObjectClassUtilities",
-    ),
-    "TestOidAclMetadataPreservation": (
+    ],
+    "TestOidAclMetadataPreservation": [
         "tests.integration.test_acl_metadata_preservation",
         "TestOidAclMetadataPreservation",
-    ),
-    "TestOidEntryIntegration": (
+    ],
+    "TestOidEntryIntegration": [
         "tests.integration.test_oid_integration",
         "TestOidEntryIntegration",
-    ),
-    "TestOidQuirksTransformations": (
+    ],
+    "TestOidQuirksTransformations": [
         "tests.integration.test_quirks_transformations",
         "TestOidQuirksTransformations",
-    ),
-    "TestOidRoundTripIntegration": (
+    ],
+    "TestOidRoundTripIntegration": [
         "tests.integration.test_oid_integration",
         "TestOidRoundTripIntegration",
-    ),
-    "TestOidSchemaIntegration": (
+    ],
+    "TestOidSchemaIntegration": [
         "tests.integration.test_oid_integration",
         "TestOidSchemaIntegration",
-    ),
-    "TestOidToOudAclConversion": (
+    ],
+    "TestOidToOudAclConversion": [
         "tests.integration.test_cross_quirk_conversion",
         "TestOidToOudAclConversion",
-    ),
-    "TestOidToOudIntegrationConversion": (
+    ],
+    "TestOidToOudIntegrationConversion": [
         "tests.integration.test_cross_quirk_conversion",
         "TestOidToOudIntegrationConversion",
-    ),
-    "TestOidToOudSchemaConversion": (
+    ],
+    "TestOidToOudSchemaConversion": [
         "tests.integration.test_cross_quirk_conversion",
         "TestOidToOudSchemaConversion",
-    ),
-    "TestOudAciMetadataPreservation": (
+    ],
+    "TestOudAciMetadataPreservation": [
         "tests.integration.test_acl_metadata_preservation",
         "TestOudAciMetadataPreservation",
-    ),
-    "TestOudAclIntegration": (
+    ],
+    "TestOudAclIntegration": [
         "tests.integration.test_oud_integration",
         "TestOudAclIntegration",
-    ),
-    "TestOudEntryIntegration": (
+    ],
+    "TestOudEntryIntegration": [
         "tests.integration.test_oud_integration",
         "TestOudEntryIntegration",
-    ),
-    "TestOudMetadataPreservation": (
+    ],
+    "TestOudMetadataPreservation": [
         "tests.integration.test_oud_integration",
         "TestOudMetadataPreservation",
-    ),
-    "TestOudQuirksTransformations": (
+    ],
+    "TestOudQuirksTransformations": [
         "tests.integration.test_quirks_transformations",
         "TestOudQuirksTransformations",
-    ),
-    "TestOudRoundTripIntegration": (
+    ],
+    "TestOudRoundTripIntegration": [
         "tests.integration.test_oud_integration",
         "TestOudRoundTripIntegration",
-    ),
-    "TestOudSchemaIntegration": (
+    ],
+    "TestOudSchemaIntegration": [
         "tests.integration.test_oud_integration",
         "TestOudSchemaIntegration",
-    ),
-    "TestOudToOidAclMigration": (
+    ],
+    "TestOudToOidAclMigration": [
         "tests.integration.test_oud_to_oid_migration",
         "TestOudToOidAclMigration",
-    ),
-    "TestOudToOidEntryMigration": (
+    ],
+    "TestOudToOidEntryMigration": [
         "tests.integration.test_oud_to_oid_migration",
         "TestOudToOidEntryMigration",
-    ),
-    "TestOudToOidFullMigration": (
+    ],
+    "TestOudToOidFullMigration": [
         "tests.integration.test_oud_to_oid_migration",
         "TestOudToOidFullMigration",
-    ),
-    "TestOudToOidSchemaMigration": (
+    ],
+    "TestOudToOidSchemaMigration": [
         "tests.integration.test_oud_to_oid_migration",
         "TestOudToOidSchemaMigration",
-    ),
-    "TestPhase1StandardizationResults": (
+    ],
+    "TestPhase1StandardizationResults": [
         "tests.unit.test_typings",
         "TestPhase1StandardizationResults",
-    ),
-    "TestQuirksAutoInterchange": (
+    ],
+    "TestQuirksAutoInterchange": [
         "tests.unit.services.test_quirks_standardization",
         "TestQuirksAutoInterchange",
-    ),
-    "TestQuirksConversionMatrixFacade": (
+    ],
+    "TestQuirksConversionMatrixFacade": [
         "tests.integration.test_cross_quirk_conversion",
         "TestQuirksConversionMatrixFacade",
-    ),
-    "TestQuirksPropertyValidation": (
+    ],
+    "TestQuirksPropertyValidation": [
         "tests.integration.test_quirks_transformations",
         "TestQuirksPropertyValidation",
-    ),
-    "TestQuirksWithRealLdifFixtures": (
+    ],
+    "TestQuirksWithRealLdifFixtures": [
         "tests.unit.services.test_quirks_standardization",
         "TestQuirksWithRealLdifFixtures",
-    ),
-    "TestRealLdapBatchOperations": (
+    ],
+    "TestRealLdapBatchOperations": [
         "tests.integration.test_real_ldap_crud",
         "TestRealLdapBatchOperations",
-    ),
-    "TestRealLdapCRUD": ("tests.integration.test_real_ldap_crud", "TestRealLdapCRUD"),
-    "TestRealLdapConfigurationFromEnv": (
+    ],
+    "TestRealLdapCRUD": ["tests.integration.test_real_ldap_crud", "TestRealLdapCRUD"],
+    "TestRealLdapConfigurationFromEnv": [
         "tests.integration.test_real_ldap_config",
         "TestRealLdapConfigurationFromEnv",
-    ),
-    "TestRealLdapExport": (
+    ],
+    "TestRealLdapExport": [
         "tests.integration.test_real_ldap_export",
         "TestRealLdapExport",
-    ),
-    "TestRealLdapImport": (
+    ],
+    "TestRealLdapImport": [
         "tests.integration.test_real_ldap_import",
         "TestRealLdapImport",
-    ),
-    "TestRealLdapRailwayComposition": (
+    ],
+    "TestRealLdapRailwayComposition": [
         "tests.integration.test_real_ldap_config",
         "TestRealLdapRailwayComposition",
-    ),
-    "TestRealLdapRoundtrip": (
+    ],
+    "TestRealLdapRoundtrip": [
         "tests.integration.test_real_ldap_roundtrip",
         "TestRealLdapRoundtrip",
-    ),
-    "TestRemovalOfOverEngineering": (
+    ],
+    "TestRemovalOfOverEngineering": [
         "tests.unit.test_typings",
         "TestRemovalOfOverEngineering",
-    ),
-    "TestRfcDockerRealData": (
+    ],
+    "TestRfcDockerRealData": [
         "tests.integration.test_rfc_docker_real",
         "TestRfcDockerRealData",
-    ),
-    "TestRfcExceptionHandlingRealScenarios": (
+    ],
+    "TestRfcExceptionHandlingRealScenarios": [
         "tests.integration.test_rfc_docker_real_integration",
         "TestRfcExceptionHandlingRealScenarios",
-    ),
-    "TestRfcIntegrationRealWorld": (
+    ],
+    "TestRfcIntegrationRealWorld": [
         "tests.integration.test_rfc_docker_real",
         "TestRfcIntegrationRealWorld",
-    ),
-    "TestRfcParserRealFixtures": (
+    ],
+    "TestRfcParserRealFixtures": [
         "tests.integration.test_rfc_docker_real_integration",
         "TestRfcParserRealFixtures",
-    ),
-    "TestRfcSchemaParserRealFixtures": (
+    ],
+    "TestRfcSchemaParserRealFixtures": [
         "tests.integration.test_rfc_docker_real_integration",
         "TestRfcSchemaParserRealFixtures",
-    ),
-    "TestRfcWriterRealFixtures": (
+    ],
+    "TestRfcWriterRealFixtures": [
         "tests.integration.test_rfc_docker_real_integration",
         "TestRfcWriterRealFixtures",
-    ),
-    "TestRoundtripEdgeCases": (
+    ],
+    "TestRoundtripEdgeCases": [
         "tests.integration.test_edge_cases",
         "TestRoundtripEdgeCases",
-    ),
-    "TestSchemaDeviationsAttributeKeyCasing": (
+    ],
+    "TestSchemaDeviationsAttributeKeyCasing": [
         "tests.integration.test_zero_data_loss_schema",
         "TestSchemaDeviationsAttributeKeyCasing",
-    ),
-    "TestSchemaDeviationsComplete": (
+    ],
+    "TestSchemaDeviationsComplete": [
         "tests.integration.test_zero_data_loss_schema",
         "TestSchemaDeviationsComplete",
-    ),
-    "TestSchemaDeviationsMissingSpaces": (
+    ],
+    "TestSchemaDeviationsMissingSpaces": [
         "tests.integration.test_zero_data_loss_schema",
         "TestSchemaDeviationsMissingSpaces",
-    ),
-    "TestSchemaDeviationsNameAliases": (
+    ],
+    "TestSchemaDeviationsNameAliases": [
         "tests.integration.test_zero_data_loss_schema",
         "TestSchemaDeviationsNameAliases",
-    ),
-    "TestSchemaDeviationsObsolete": (
+    ],
+    "TestSchemaDeviationsObsolete": [
         "tests.integration.test_zero_data_loss_schema",
         "TestSchemaDeviationsObsolete",
-    ),
-    "TestSchemaDeviationsOriginalString": (
+    ],
+    "TestSchemaDeviationsOriginalString": [
         "tests.integration.test_zero_data_loss_schema",
         "TestSchemaDeviationsOriginalString",
-    ),
-    "TestSchemaDeviationsRoundTrip": (
+    ],
+    "TestSchemaDeviationsRoundTrip": [
         "tests.integration.test_zero_data_loss_schema",
         "TestSchemaDeviationsRoundTrip",
-    ),
-    "TestSchemaDeviationsSpacing": (
+    ],
+    "TestSchemaDeviationsSpacing": [
         "tests.integration.test_zero_data_loss_schema",
         "TestSchemaDeviationsSpacing",
-    ),
-    "TestSchemaDeviationsSyntaxQuotes": (
+    ],
+    "TestSchemaDeviationsSyntaxQuotes": [
         "tests.integration.test_zero_data_loss_schema",
         "TestSchemaDeviationsSyntaxQuotes",
-    ),
-    "TestSchemaDeviationsUtilities": (
+    ],
+    "TestSchemaDeviationsUtilities": [
         "tests.integration.test_zero_data_loss_schema",
         "TestSchemaDeviationsUtilities",
-    ),
-    "TestSchemaDeviationsXOrigin": (
+    ],
+    "TestSchemaDeviationsXOrigin": [
         "tests.integration.test_zero_data_loss_schema",
         "TestSchemaDeviationsXOrigin",
-    ),
-    "TestSchemaServiceBuilder": (
+    ],
+    "TestSchemaServiceBuilder": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceBuilder",
-    ),
-    "TestSchemaServiceCanHandleAttribute": (
+    ],
+    "TestSchemaServiceCanHandleAttribute": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceCanHandleAttribute",
-    ),
-    "TestSchemaServiceIntegration": (
+    ],
+    "TestSchemaServiceIntegration": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceIntegration",
-    ),
-    "TestSchemaServiceParseAttribute": (
+    ],
+    "TestSchemaServiceParseAttribute": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceParseAttribute",
-    ),
-    "TestSchemaServiceParseObjectClass": (
+    ],
+    "TestSchemaServiceParseObjectClass": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceParseObjectClass",
-    ),
-    "TestSchemaServiceRepr": (
+    ],
+    "TestSchemaServiceRepr": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceRepr",
-    ),
-    "TestSchemaServiceValidateAttribute": (
+    ],
+    "TestSchemaServiceValidateAttribute": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceValidateAttribute",
-    ),
-    "TestSchemaServiceValidateObjectClass": (
+    ],
+    "TestSchemaServiceValidateObjectClass": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceValidateObjectClass",
-    ),
-    "TestSchemaServiceWriteAttribute": (
+    ],
+    "TestSchemaServiceWriteAttribute": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceWriteAttribute",
-    ),
-    "TestSchemaServiceWriteObjectClass": (
+    ],
+    "TestSchemaServiceWriteObjectClass": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceWriteObjectClass",
-    ),
-    "TestSchemaTransformerApplyAttributeTransformations": (
+    ],
+    "TestSchemaTransformerApplyAttributeTransformations": [
         "tests.unit.quirks.servers.test_schema_transformer",
         "TestSchemaTransformerApplyAttributeTransformations",
-    ),
-    "TestSchemaTransformerApplyObjectClassTransformations": (
+    ],
+    "TestSchemaTransformerApplyObjectClassTransformations": [
         "tests.unit.quirks.servers.test_schema_transformer",
         "TestSchemaTransformerApplyObjectClassTransformations",
-    ),
-    "TestSchemaTransformerNormalizeMatchingRule": (
+    ],
+    "TestSchemaTransformerNormalizeMatchingRule": [
         "tests.unit.quirks.servers.test_schema_transformer",
         "TestSchemaTransformerNormalizeMatchingRule",
-    ),
-    "TestSchemaTransformerNormalizeSyntaxOid": (
+    ],
+    "TestSchemaTransformerNormalizeSyntaxOid": [
         "tests.unit.quirks.servers.test_schema_transformer",
         "TestSchemaTransformerNormalizeSyntaxOid",
-    ),
-    "TestServerTypes": ("tests.unit.utilities.test_utilities_core", "TestServerTypes"),
-    "TestSystematicFixtureCoverage": (
+    ],
+    "TestServerTypes": ["tests.unit.utilities.test_utilities_core", "TestServerTypes"],
+    "TestSystematicFixtureCoverage": [
         "tests.integration.test_systematic_fixture_coverage",
         "TestSystematicFixtureCoverage",
-    ),
-    "TestUnicodeBoundaries": (
+    ],
+    "TestUnicodeBoundaries": [
         "tests.integration.test_edge_cases",
         "TestUnicodeBoundaries",
-    ),
-    "TestValidators": ("tests.support.validators", "TestValidators"),
-    "TestZeroDataLossOidOud": (
+    ],
+    "TestValidators": ["tests.support.validators", "TestValidators"],
+    "TestZeroDataLossOidOud": [
         "tests.integration.test_zero_data_loss_oid_oud",
         "TestZeroDataLossOidOud",
-    ),
-    "TestsFlextLdifCommonDictionaryTypes": (
+    ],
+    "TestsFlextLdifCommonDictionaryTypes": [
         "tests.unit.test_typings",
         "TestsFlextLdifCommonDictionaryTypes",
-    ),
-    "TestsFlextLdifDnOperationsPure": (
+    ],
+    "TestsFlextLdifDnOperationsPure": [
         "tests.unit.utilities.test_utilities_core",
         "TestsFlextLdifDnOperationsPure",
-    ),
-    "TestsFlextLdifEdgeCases": (
+    ],
+    "TestsFlextLdifEdgeCases": [
         "tests.unit.quirks.servers.test_edge_cases",
         "TestsFlextLdifEdgeCases",
-    ),
-    "TestsFlextLdifFixtures": (
+    ],
+    "TestsFlextLdifFixtures": [
         "tests.integration.test_ldif_fixtures_integration",
         "TestsFlextLdifFixtures",
-    ),
-    "TestsFlextLdifMatchers": ("tests.test_helpers", "TestsFlextLdifMatchers"),
-    "TestsFlextLdifMigrationPipeline": (
+    ],
+    "TestsFlextLdifMatchers": ["tests.test_helpers", "TestsFlextLdifMatchers"],
+    "TestsFlextLdifMigrationPipeline": [
         "tests.unit.test_migration_pipeline",
         "TestsFlextLdifMigrationPipeline",
-    ),
-    "TestsFlextLdifMigrationPipelineQuirks": (
+    ],
+    "TestsFlextLdifMigrationPipelineQuirks": [
         "tests.unit.test_migration_pipeline_quirks",
         "TestsFlextLdifMigrationPipelineQuirks",
-    ),
-    "TestsFlextLdifNovellInitialization": (
+    ],
+    "TestsFlextLdifNovellInitialization": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestsFlextLdifNovellInitialization",
-    ),
-    "TestsFlextLdifQuirksStandardizedConstants": (
+    ],
+    "TestsFlextLdifQuirksStandardizedConstants": [
         "tests.unit.services.test_quirks_standardization",
         "TestsFlextLdifQuirksStandardizedConstants",
-    ),
-    "TestsFlextLdifSchemaServiceExecute": (
+    ],
+    "TestsFlextLdifSchemaServiceExecute": [
         "tests.unit.services.test_schema_service",
         "TestsFlextLdifSchemaServiceExecute",
-    ),
-    "TestsFlextLdifSchemaTransformerNormalizeAttributeName": (
+    ],
+    "TestsFlextLdifSchemaTransformerNormalizeAttributeName": [
         "tests.unit.quirks.servers.test_schema_transformer",
         "TestsFlextLdifSchemaTransformerNormalizeAttributeName",
-    ),
-    "TestsFlextLdifTypes": ("tests.test_helpers", "TestsFlextLdifTypes"),
-    "TestsFlextLdifValidators": ("tests.test_helpers", "TestsFlextLdifValidators"),
-    "TestsFlextLdifVersion": (
+    ],
+    "TestsFlextLdifTypes": ["tests.test_helpers", "TestsFlextLdifTypes"],
+    "TestsFlextLdifValidators": ["tests.test_helpers", "TestsFlextLdifValidators"],
+    "TestsFlextLdifVersion": [
         "tests.unit.__init__.test_version",
         "TestsFlextLdifVersion",
-    ),
-    "TestsFlextLdifsFlextLdifWriterDnNormalization": (
+    ],
+    "TestsFlextLdifsFlextLdifWriterDnNormalization": [
         "tests.unit.services.test_writer_dn_normalization",
         "TestsFlextLdifsFlextLdifWriterDnNormalization",
-    ),
-    "TestsTestFlextLdifAclAttributeRegistry": (
+    ],
+    "TestsTestFlextLdifAclAttributeRegistry": [
         "tests.unit.constants.test_acl_registry",
         "TestsTestFlextLdifAclAttributeRegistry",
-    ),
-    "TestsTestFlextLdifApacheQuirks": (
+    ],
+    "TestsTestFlextLdifApacheQuirks": [
         "tests.unit.quirks.servers.test_apache_quirks",
         "TestsTestFlextLdifApacheQuirks",
-    ),
-    "TestsTestFlextLdifConstants": (
+    ],
+    "TestsTestFlextLdifConstants": [
         "tests.unit.utilities.test_utilities_constants",
         "TestsTestFlextLdifConstants",
-    ),
-    "TestsTestFlextLdifDs389Quirks": (
+    ],
+    "TestsTestFlextLdifDs389Quirks": [
         "tests.unit.quirks.servers.test_ds389_quirks",
         "TestsTestFlextLdifDs389Quirks",
-    ),
-    "TestsTestFlextLdifMigrationPipeline": (
+    ],
+    "TestsTestFlextLdifMigrationPipeline": [
         "tests.unit.services.test_migration_pipeline",
         "TestsTestFlextLdifMigrationPipeline",
-    ),
-    "TestsTestFlextLdifOidQuirks": (
+    ],
+    "TestsTestFlextLdifOidQuirks": [
         "tests.unit.quirks.servers.test_oid_quirks",
         "TestsTestFlextLdifOidQuirks",
-    ),
-    "TestsTestFlextLdifProtocols": (
+    ],
+    "TestsTestFlextLdifProtocols": [
         "tests.unit.protocols.test_protocols",
         "TestsTestFlextLdifProtocols",
-    ),
-    "TestsTestFlextLdifRelaxedQuirks": (
+    ],
+    "TestsTestFlextLdifRelaxedQuirks": [
         "tests.unit.quirks.servers.test_relaxed_quirks",
         "TestsTestFlextLdifRelaxedQuirks",
-    ),
-    "TestsTestFlextLdifServiceAPIs": (
+    ],
+    "TestsTestFlextLdifServiceAPIs": [
         "tests.unit.utilities.test_utilities",
         "TestsTestFlextLdifServiceAPIs",
-    ),
-    "ValidateManyType": (
+    ],
+    "ValidateManyType": [
         "tests.unit.utilities.test_utilities_constants",
         "ValidateManyType",
-    ),
-    "WORKSPACE_ROOT": ("tests.integration.conftest", "WORKSPACE_ROOT"),
-    "WriteScenario": ("tests.unit.quirks.servers.test_relaxed_quirks", "WriteScenario"),
-    "all_acl_fixtures": ("tests.integration.conftest", "all_acl_fixtures"),
-    "all_entries_fixtures": ("tests.integration.conftest", "all_entries_fixtures"),
-    "all_integration_fixtures": (
+    ],
+    "WORKSPACE_ROOT": ["tests.integration.conftest", "WORKSPACE_ROOT"],
+    "WriteScenario": ["tests.unit.quirks.servers.test_relaxed_quirks", "WriteScenario"],
+    "all_acl_fixtures": ["tests.integration.conftest", "all_acl_fixtures"],
+    "all_entries_fixtures": ["tests.integration.conftest", "all_entries_fixtures"],
+    "all_integration_fixtures": [
         "tests.integration.conftest",
         "all_integration_fixtures",
-    ),
-    "all_schema_fixtures": ("tests.integration.conftest", "all_schema_fixtures"),
-    "api": ("tests.integration.conftest", "api"),
-    "c": ("tests.constants", "FlextLdifTestConstants"),
-    "clean_test_ou": ("tests.integration.conftest", "clean_test_ou"),
-    "cleanup_state": ("tests.unit.quirks.servers.test_edge_cases", "cleanup_state"),
-    "complex_attribute_definition": (
+    ],
+    "all_schema_fixtures": ["tests.integration.conftest", "all_schema_fixtures"],
+    "api": ["tests.integration.conftest", "api"],
+    "c": ["tests.constants", "FlextLdifTestConstants"],
+    "clean_test_ou": ["tests.integration.conftest", "clean_test_ou"],
+    "cleanup_state": ["tests.unit.quirks.servers.test_edge_cases", "cleanup_state"],
+    "complex_attribute_definition": [
         "tests.unit.services.test_schema_service",
         "complex_attribute_definition",
-    ),
-    "complex_objectclass_definition": (
+    ],
+    "complex_objectclass_definition": [
         "tests.unit.services.test_schema_service",
         "complex_objectclass_definition",
-    ),
-    "constants": ("tests.unit.constants", ""),
-    "conversion_matrix": ("tests.integration.conftest", "conversion_matrix"),
-    "d": ("flext_tests", "d"),
-    "e": ("flext_tests", "e"),
-    "entry_quirk": ("tests.unit.quirks.servers.test_novell_quirks", "entry_quirk"),
-    "fixtures_dir": ("tests.integration.test_quirks_transformations", "fixtures_dir"),
-    "flext_ldif": ("tests.conftest", "flext_ldif"),
-    "h": ("flext_tests", "h"),
-    "integration": ("tests.integration", ""),
-    "large_test_dataset": ("tests.conftest_shared", "large_test_dataset"),
-    "ldap_connection": ("tests.integration.conftest", "ldap_connection"),
-    "ldap_container": ("tests.integration.conftest", "ldap_container"),
-    "ldap_container_shared": ("tests.integration.conftest", "ldap_container_shared"),
-    "ldif_api": ("tests.unit.quirks.servers.test_edge_cases", "ldif_api"),
-    "ldif_parser": ("tests.conftest", "ldif_parser"),
-    "ldif_writer": ("tests.conftest", "ldif_writer"),
-    "logger": ("tests.integration.test_config_integration", "logger"),
-    "m": ("tests.models", "FlextLdifTestModels"),
-    "make_test_base_dn": ("tests.integration.conftest", "make_test_base_dn"),
-    "make_test_username": ("tests.integration.conftest", "make_test_username"),
-    "meta_keys": ("tests.unit.quirks.servers.test_relaxed_quirks", "meta_keys"),
-    "migration_inputs": (
+    ],
+    "constants": ["tests.unit.constants", ""],
+    "conversion_matrix": ["tests.integration.conftest", "conversion_matrix"],
+    "d": ["flext_tests", "d"],
+    "e": ["flext_tests", "e"],
+    "entry_quirk": ["tests.unit.quirks.servers.test_novell_quirks", "entry_quirk"],
+    "fixtures_dir": ["tests.integration.test_quirks_transformations", "fixtures_dir"],
+    "flext_ldif": ["tests.conftest", "flext_ldif"],
+    "h": ["flext_tests", "h"],
+    "integration": ["tests.integration", ""],
+    "large_test_dataset": ["tests.conftest_shared", "large_test_dataset"],
+    "ldap_connection": ["tests.integration.conftest", "ldap_connection"],
+    "ldap_container": ["tests.integration.conftest", "ldap_container"],
+    "ldap_container_shared": ["tests.integration.conftest", "ldap_container_shared"],
+    "ldif_api": ["tests.unit.quirks.servers.test_edge_cases", "ldif_api"],
+    "ldif_parser": ["tests.conftest", "ldif_parser"],
+    "ldif_writer": ["tests.conftest", "ldif_writer"],
+    "logger": ["tests.integration.test_config_integration", "logger"],
+    "m": ["tests.models", "FlextLdifTestModels"],
+    "make_test_base_dn": ["tests.integration.conftest", "make_test_base_dn"],
+    "make_test_username": ["tests.integration.conftest", "make_test_username"],
+    "meta_keys": ["tests.unit.quirks.servers.test_relaxed_quirks", "meta_keys"],
+    "migration_inputs": [
         "tests.integration.test_quirks_transformations",
         "migration_inputs",
-    ),
-    "models": ("tests.unit.models", ""),
-    "novell_server": ("tests.unit.quirks.servers.test_novell_quirks", "novell_server"),
-    "oid_acl_fixture": ("tests.integration.conftest", "oid_acl_fixture"),
-    "oid_acl_quirk": ("tests.integration.conftest", "oid_acl_quirk"),
-    "oid_entries": ("tests.integration.conftest", "oid_entries"),
-    "oid_entries_fixture": ("tests.integration.conftest", "oid_entries_fixture"),
-    "oid_integration_fixture": (
+    ],
+    "models": ["tests.unit.models", ""],
+    "novell_server": ["tests.unit.quirks.servers.test_novell_quirks", "novell_server"],
+    "oid_acl_fixture": ["tests.integration.conftest", "oid_acl_fixture"],
+    "oid_acl_quirk": ["tests.integration.conftest", "oid_acl_quirk"],
+    "oid_entries": ["tests.integration.conftest", "oid_entries"],
+    "oid_entries_fixture": ["tests.integration.conftest", "oid_entries_fixture"],
+    "oid_integration_fixture": [
         "tests.integration.conftest",
         "oid_integration_fixture",
-    ),
-    "oid_quirk": ("tests.integration.conftest", "oid_quirk"),
-    "oid_schema_entries": ("tests.integration.conftest", "oid_schema_entries"),
-    "oid_schema_fixture": ("tests.integration.conftest", "oid_schema_fixture"),
-    "oid_schema_quirk": ("tests.integration.conftest", "oid_schema_quirk"),
-    "openldap_acl_fixture": ("tests.integration.conftest", "openldap_acl_fixture"),
-    "openldap_entries": ("tests.integration.conftest", "openldap_entries"),
-    "openldap_entries_fixture": (
+    ],
+    "oid_quirk": ["tests.integration.conftest", "oid_quirk"],
+    "oid_schema_entries": ["tests.integration.conftest", "oid_schema_entries"],
+    "oid_schema_fixture": ["tests.integration.conftest", "oid_schema_fixture"],
+    "oid_schema_quirk": ["tests.integration.conftest", "oid_schema_quirk"],
+    "openldap_acl_fixture": ["tests.integration.conftest", "openldap_acl_fixture"],
+    "openldap_entries": ["tests.integration.conftest", "openldap_entries"],
+    "openldap_entries_fixture": [
         "tests.integration.conftest",
         "openldap_entries_fixture",
-    ),
-    "openldap_integration_fixture": (
+    ],
+    "openldap_integration_fixture": [
         "tests.integration.conftest",
         "openldap_integration_fixture",
-    ),
-    "openldap_schema_entries": (
+    ],
+    "openldap_schema_entries": [
         "tests.integration.conftest",
         "openldap_schema_entries",
-    ),
-    "openldap_schema_fixture": (
+    ],
+    "openldap_schema_fixture": [
         "tests.integration.conftest",
         "openldap_schema_fixture",
-    ),
-    "oud_acl_fixture": ("tests.integration.conftest", "oud_acl_fixture"),
-    "oud_acl_quirk": ("tests.integration.conftest", "oud_acl_quirk"),
-    "oud_entries": ("tests.integration.conftest", "oud_entries"),
-    "oud_entries_fixture": ("tests.integration.conftest", "oud_entries_fixture"),
-    "oud_integration_fixture": (
+    ],
+    "oud_acl_fixture": ["tests.integration.conftest", "oud_acl_fixture"],
+    "oud_acl_quirk": ["tests.integration.conftest", "oud_acl_quirk"],
+    "oud_entries": ["tests.integration.conftest", "oud_entries"],
+    "oud_entries_fixture": ["tests.integration.conftest", "oud_entries_fixture"],
+    "oud_integration_fixture": [
         "tests.integration.conftest",
         "oud_integration_fixture",
-    ),
-    "oud_quirk": ("tests.integration.conftest", "oud_quirk"),
-    "oud_schema_entries": ("tests.integration.conftest", "oud_schema_entries"),
-    "oud_schema_fixture": ("tests.integration.conftest", "oud_schema_fixture"),
-    "oud_schema_quirk": ("tests.integration.conftest", "oud_schema_quirk"),
-    "p": ("tests.protocols", "FlextLdifTestProtocols"),
-    "parametrized_real_data": ("tests.conftest_shared", "parametrized_real_data"),
-    "parser": ("tests.integration.conftest", "parser"),
-    "protocols": ("tests.unit.protocols", ""),
-    "pytest_configure": ("tests.conftest", "pytest_configure"),
-    "r": ("flext_tests", "r"),
-    "real_entry": ("tests.conftest_shared", "real_entry"),
-    "real_ldif_content": ("tests.conftest_shared", "real_ldif_content"),
-    "real_ldif_group_entry": ("tests.conftest", "real_ldif_group_entry"),
-    "real_ldif_multiple_entries": ("tests.conftest", "real_ldif_multiple_entries"),
-    "real_ldif_user_entry": ("tests.conftest", "real_ldif_user_entry"),
-    "rfc_schema_entries": ("tests.integration.conftest", "rfc_schema_entries"),
-    "rfc_schema_fixture": ("tests.integration.conftest", "rfc_schema_fixture"),
-    "s": ("flext_tests", "s"),
-    "sample_ldif_entries": ("tests.conftest", "sample_ldif_entries"),
-    "schema_quirk": ("tests.unit.quirks.servers.test_novell_quirks", "schema_quirk"),
-    "schema_service": ("tests.unit.services.test_schema_service", "schema_service"),
-    "schema_service_oud": (
+    ],
+    "oud_quirk": ["tests.integration.conftest", "oud_quirk"],
+    "oud_schema_entries": ["tests.integration.conftest", "oud_schema_entries"],
+    "oud_schema_fixture": ["tests.integration.conftest", "oud_schema_fixture"],
+    "oud_schema_quirk": ["tests.integration.conftest", "oud_schema_quirk"],
+    "p": ["tests.protocols", "FlextLdifTestProtocols"],
+    "parametrized_real_data": ["tests.conftest_shared", "parametrized_real_data"],
+    "parser": ["tests.integration.conftest", "parser"],
+    "protocols": ["tests.unit.protocols", ""],
+    "pytest_configure": ["tests.conftest", "pytest_configure"],
+    "r": ["flext_tests", "r"],
+    "real_entry": ["tests.conftest_shared", "real_entry"],
+    "real_ldif_content": ["tests.conftest_shared", "real_ldif_content"],
+    "real_ldif_group_entry": ["tests.conftest", "real_ldif_group_entry"],
+    "real_ldif_multiple_entries": ["tests.conftest", "real_ldif_multiple_entries"],
+    "real_ldif_user_entry": ["tests.conftest", "real_ldif_user_entry"],
+    "rfc_schema_entries": ["tests.integration.conftest", "rfc_schema_entries"],
+    "rfc_schema_fixture": ["tests.integration.conftest", "rfc_schema_fixture"],
+    "s": ["flext_tests", "s"],
+    "sample_ldif_entries": ["tests.conftest", "sample_ldif_entries"],
+    "schema_quirk": ["tests.unit.quirks.servers.test_novell_quirks", "schema_quirk"],
+    "schema_service": ["tests.unit.services.test_schema_service", "schema_service"],
+    "schema_service_oud": [
         "tests.unit.services.test_schema_service",
         "schema_service_oud",
-    ),
-    "server": ("tests.integration.conftest", "server"),
-    "services": ("tests.unit.services", ""),
-    "simple_attribute_definition": (
+    ],
+    "server": ["tests.integration.conftest", "server"],
+    "services": ["tests.unit.services", ""],
+    "simple_attribute_definition": [
         "tests.unit.services.test_schema_service",
         "simple_attribute_definition",
-    ),
-    "simple_objectclass_definition": (
+    ],
+    "simple_objectclass_definition": [
         "tests.unit.services.test_schema_service",
         "simple_objectclass_definition",
-    ),
-    "support": ("tests.support", ""),
-    "t": ("tests.typings", "FlextLdifTestTypes"),
-    "temp_file": ("tests.conftest", "temp_file"),
-    "test_create_and_export_entry": (
+    ],
+    "support": ["tests.support", ""],
+    "t": ["tests.typings", "FlextLdifTestTypes"],
+    "temp_file": ["tests.conftest", "temp_file"],
+    "test_create_and_export_entry": [
         "tests.integration.test_simple_ldap",
         "test_create_and_export_entry",
-    ),
-    "test_ldap_connection": (
+    ],
+    "test_ldap_connection": [
         "tests.integration.test_simple_ldap",
         "test_ldap_connection",
-    ),
-    "test_simple_ldap_search": (
+    ],
+    "test_simple_ldap_search": [
         "tests.integration.test_simple_ldap",
         "test_simple_ldap_search",
-    ),
-    "tf": ("tests.test_helpers", "tf"),
-    "tk": ("tests.support.conftest_factory", "tk"),
-    "tm": ("tests.test_helpers", "tm"),
-    "tmp_ldif_path": ("tests.integration.conftest", "tmp_ldif_path"),
-    "tt": ("tests.test_helpers", "tt"),
-    "tv": ("tests.test_helpers", "tv"),
-    "u": ("tests.utilities", "FlextLdifTestUtilities"),
-    "unique_dn_suffix": ("tests.integration.conftest", "unique_dn_suffix"),
-    "unit": ("tests.unit", ""),
-    "utilities": ("tests.unit.utilities", ""),
-    "version_module": ("tests.unit.__init__.test_version", "version_module"),
-    "writer": ("tests.integration.conftest", "writer"),
-    "x": ("flext_tests", "x"),
+    ],
+    "tf": ["tests.test_helpers", "tf"],
+    "tk": ["tests.support.conftest_factory", "tk"],
+    "tm": ["tests.test_helpers", "tm"],
+    "tmp_ldif_path": ["tests.integration.conftest", "tmp_ldif_path"],
+    "tt": ["tests.test_helpers", "tt"],
+    "tv": ["tests.test_helpers", "tv"],
+    "u": ["tests.utilities", "FlextLdifTestUtilities"],
+    "unique_dn_suffix": ["tests.integration.conftest", "unique_dn_suffix"],
+    "unit": ["tests.unit", ""],
+    "utilities": ["tests.unit.utilities", ""],
+    "version_module": ["tests.unit.__init__.test_version", "version_module"],
+    "writer": ["tests.integration.conftest", "writer"],
+    "x": ["flext_tests", "x"],
 }
 
 __all__ = [

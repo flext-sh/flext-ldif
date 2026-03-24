@@ -18,22 +18,22 @@ if TYPE_CHECKING:
     from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
     from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema, logger
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "FlextLdifServersRfcAcl": ("flext_ldif.servers._rfc.acl", "FlextLdifServersRfcAcl"),
-    "FlextLdifServersRfcConstants": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "FlextLdifServersRfcAcl": ["flext_ldif.servers._rfc.acl", "FlextLdifServersRfcAcl"],
+    "FlextLdifServersRfcConstants": [
         "flext_ldif.servers._rfc.constants",
         "FlextLdifServersRfcConstants",
-    ),
-    "FlextLdifServersRfcEntry": (
+    ],
+    "FlextLdifServersRfcEntry": [
         "flext_ldif.servers._rfc.entry",
         "FlextLdifServersRfcEntry",
-    ),
-    "FlextLdifServersRfcSchema": (
+    ],
+    "FlextLdifServersRfcSchema": [
         "flext_ldif.servers._rfc.schema",
         "FlextLdifServersRfcSchema",
-    ),
-    "c": ("flext_ldif.servers._rfc.constants", "c"),
-    "logger": ("flext_ldif.servers._rfc.schema", "logger"),
+    ],
+    "c": ["flext_ldif.servers._rfc.constants", "c"],
+    "logger": ["flext_ldif.servers._rfc.schema", "logger"],
 }
 
 __all__ = [

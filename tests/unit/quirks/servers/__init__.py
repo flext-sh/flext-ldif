@@ -64,124 +64,124 @@ if TYPE_CHECKING:
         TestsFlextLdifSchemaTransformerNormalizeAttributeName,
     )
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "ACL_TEST_CASES": ("tests.unit.quirks.servers.test_ds389_quirks", "ACL_TEST_CASES"),
-    "ATTRIBUTE_TEST_CASES": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "ACL_TEST_CASES": ["tests.unit.quirks.servers.test_ds389_quirks", "ACL_TEST_CASES"],
+    "ATTRIBUTE_TEST_CASES": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "ATTRIBUTE_TEST_CASES",
-    ),
-    "AclScenario": ("tests.unit.quirks.servers.test_ds389_quirks", "AclScenario"),
-    "AclTestCase": ("tests.unit.quirks.servers.test_ds389_quirks", "AclTestCase"),
-    "AttributeScenario": (
+    ],
+    "AclScenario": ["tests.unit.quirks.servers.test_ds389_quirks", "AclScenario"],
+    "AclTestCase": ["tests.unit.quirks.servers.test_ds389_quirks", "AclTestCase"],
+    "AttributeScenario": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "AttributeScenario",
-    ),
-    "AttributeTestCase": (
+    ],
+    "AttributeTestCase": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "AttributeTestCase",
-    ),
-    "ENTRY_TEST_CASES": (
+    ],
+    "ENTRY_TEST_CASES": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "ENTRY_TEST_CASES",
-    ),
-    "EntryScenario": ("tests.unit.quirks.servers.test_novell_quirks", "EntryScenario"),
-    "EntryTestCase": ("tests.unit.quirks.servers.test_novell_quirks", "EntryTestCase"),
-    "OBJECTCLASS_TEST_CASES": (
+    ],
+    "EntryScenario": ["tests.unit.quirks.servers.test_novell_quirks", "EntryScenario"],
+    "EntryTestCase": ["tests.unit.quirks.servers.test_novell_quirks", "EntryTestCase"],
+    "OBJECTCLASS_TEST_CASES": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "OBJECTCLASS_TEST_CASES",
-    ),
-    "ObjectClassScenario": (
+    ],
+    "ObjectClassScenario": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "ObjectClassScenario",
-    ),
-    "ObjectClassTestCase": (
+    ],
+    "ObjectClassTestCase": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "ObjectClassTestCase",
-    ),
-    "ParseScenario": ("tests.unit.quirks.servers.test_relaxed_quirks", "ParseScenario"),
-    "RfcTestHelpers": (
+    ],
+    "ParseScenario": ["tests.unit.quirks.servers.test_relaxed_quirks", "ParseScenario"],
+    "RfcTestHelpers": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "RfcTestHelpers",
-    ),
-    "TestDeduplicationHelpers": (
+    ],
+    "TestDeduplicationHelpers": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestDeduplicationHelpers",
-    ),
-    "TestNovellAcls": (
+    ],
+    "TestNovellAcls": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestNovellAcls",
-    ),
-    "TestNovellEntryDetection": (
+    ],
+    "TestNovellEntryDetection": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestNovellEntryDetection",
-    ),
-    "TestNovellSchemaAttributeDetection": (
+    ],
+    "TestNovellSchemaAttributeDetection": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestNovellSchemaAttributeDetection",
-    ),
-    "TestNovellSchemaAttributeParsing": (
+    ],
+    "TestNovellSchemaAttributeParsing": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestNovellSchemaAttributeParsing",
-    ),
-    "TestNovellSchemaObjectClassDetection": (
+    ],
+    "TestNovellSchemaObjectClassDetection": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestNovellSchemaObjectClassDetection",
-    ),
-    "TestNovellSchemaObjectClassParsing": (
+    ],
+    "TestNovellSchemaObjectClassParsing": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestNovellSchemaObjectClassParsing",
-    ),
-    "TestSchemaTransformerApplyAttributeTransformations": (
+    ],
+    "TestSchemaTransformerApplyAttributeTransformations": [
         "tests.unit.quirks.servers.test_schema_transformer",
         "TestSchemaTransformerApplyAttributeTransformations",
-    ),
-    "TestSchemaTransformerApplyObjectClassTransformations": (
+    ],
+    "TestSchemaTransformerApplyObjectClassTransformations": [
         "tests.unit.quirks.servers.test_schema_transformer",
         "TestSchemaTransformerApplyObjectClassTransformations",
-    ),
-    "TestSchemaTransformerNormalizeMatchingRule": (
+    ],
+    "TestSchemaTransformerNormalizeMatchingRule": [
         "tests.unit.quirks.servers.test_schema_transformer",
         "TestSchemaTransformerNormalizeMatchingRule",
-    ),
-    "TestSchemaTransformerNormalizeSyntaxOid": (
+    ],
+    "TestSchemaTransformerNormalizeSyntaxOid": [
         "tests.unit.quirks.servers.test_schema_transformer",
         "TestSchemaTransformerNormalizeSyntaxOid",
-    ),
-    "TestsFlextLdifEdgeCases": (
+    ],
+    "TestsFlextLdifEdgeCases": [
         "tests.unit.quirks.servers.test_edge_cases",
         "TestsFlextLdifEdgeCases",
-    ),
-    "TestsFlextLdifNovellInitialization": (
+    ],
+    "TestsFlextLdifNovellInitialization": [
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestsFlextLdifNovellInitialization",
-    ),
-    "TestsFlextLdifSchemaTransformerNormalizeAttributeName": (
+    ],
+    "TestsFlextLdifSchemaTransformerNormalizeAttributeName": [
         "tests.unit.quirks.servers.test_schema_transformer",
         "TestsFlextLdifSchemaTransformerNormalizeAttributeName",
-    ),
-    "TestsTestFlextLdifApacheQuirks": (
+    ],
+    "TestsTestFlextLdifApacheQuirks": [
         "tests.unit.quirks.servers.test_apache_quirks",
         "TestsTestFlextLdifApacheQuirks",
-    ),
-    "TestsTestFlextLdifDs389Quirks": (
+    ],
+    "TestsTestFlextLdifDs389Quirks": [
         "tests.unit.quirks.servers.test_ds389_quirks",
         "TestsTestFlextLdifDs389Quirks",
-    ),
-    "TestsTestFlextLdifOidQuirks": (
+    ],
+    "TestsTestFlextLdifOidQuirks": [
         "tests.unit.quirks.servers.test_oid_quirks",
         "TestsTestFlextLdifOidQuirks",
-    ),
-    "TestsTestFlextLdifRelaxedQuirks": (
+    ],
+    "TestsTestFlextLdifRelaxedQuirks": [
         "tests.unit.quirks.servers.test_relaxed_quirks",
         "TestsTestFlextLdifRelaxedQuirks",
-    ),
-    "WriteScenario": ("tests.unit.quirks.servers.test_relaxed_quirks", "WriteScenario"),
-    "cleanup_state": ("tests.unit.quirks.servers.test_edge_cases", "cleanup_state"),
-    "entry_quirk": ("tests.unit.quirks.servers.test_novell_quirks", "entry_quirk"),
-    "ldif_api": ("tests.unit.quirks.servers.test_edge_cases", "ldif_api"),
-    "meta_keys": ("tests.unit.quirks.servers.test_relaxed_quirks", "meta_keys"),
-    "novell_server": ("tests.unit.quirks.servers.test_novell_quirks", "novell_server"),
-    "schema_quirk": ("tests.unit.quirks.servers.test_novell_quirks", "schema_quirk"),
+    ],
+    "WriteScenario": ["tests.unit.quirks.servers.test_relaxed_quirks", "WriteScenario"],
+    "cleanup_state": ["tests.unit.quirks.servers.test_edge_cases", "cleanup_state"],
+    "entry_quirk": ["tests.unit.quirks.servers.test_novell_quirks", "entry_quirk"],
+    "ldif_api": ["tests.unit.quirks.servers.test_edge_cases", "ldif_api"],
+    "meta_keys": ["tests.unit.quirks.servers.test_relaxed_quirks", "meta_keys"],
+    "novell_server": ["tests.unit.quirks.servers.test_novell_quirks", "novell_server"],
+    "schema_quirk": ["tests.unit.quirks.servers.test_novell_quirks", "schema_quirk"],
 }
 
 __all__ = [

@@ -150,335 +150,335 @@ if TYPE_CHECKING:
     from flext_ldif.typings import FlextLdifTypes, FlextLdifTypes as t
     from flext_ldif.utilities import FlextLdifUtilities, FlextLdifUtilities as u
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "AndFilter": ("flext_ldif._utilities.filters", "AndFilter"),
-    "ByAttrValueFilter": ("flext_ldif._utilities.filters", "ByAttrValueFilter"),
-    "ByAttrsFilter": ("flext_ldif._utilities.filters", "ByAttrsFilter"),
-    "ByDnFilter": ("flext_ldif._utilities.filters", "ByDnFilter"),
-    "ByDnUnderBaseFilter": ("flext_ldif._utilities.filters", "ByDnUnderBaseFilter"),
-    "ByObjectClassFilter": ("flext_ldif._utilities.filters", "ByObjectClassFilter"),
-    "CustomFilter": ("flext_ldif._utilities.filters", "CustomFilter"),
-    "ExcludeAttrsFilter": ("flext_ldif._utilities.filters", "ExcludeAttrsFilter"),
-    "Filter": ("flext_ldif._utilities.filters", "Filter"),
-    "FlextLdif": ("flext_ldif.api", "FlextLdif"),
-    "FlextLdifAcl": ("flext_ldif.services.acl", "FlextLdifAcl"),
-    "FlextLdifAnalysis": ("flext_ldif.services.analysis", "FlextLdifAnalysis"),
-    "FlextLdifCategorization": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "AndFilter": ["flext_ldif._utilities.filters", "AndFilter"],
+    "ByAttrValueFilter": ["flext_ldif._utilities.filters", "ByAttrValueFilter"],
+    "ByAttrsFilter": ["flext_ldif._utilities.filters", "ByAttrsFilter"],
+    "ByDnFilter": ["flext_ldif._utilities.filters", "ByDnFilter"],
+    "ByDnUnderBaseFilter": ["flext_ldif._utilities.filters", "ByDnUnderBaseFilter"],
+    "ByObjectClassFilter": ["flext_ldif._utilities.filters", "ByObjectClassFilter"],
+    "CustomFilter": ["flext_ldif._utilities.filters", "CustomFilter"],
+    "ExcludeAttrsFilter": ["flext_ldif._utilities.filters", "ExcludeAttrsFilter"],
+    "Filter": ["flext_ldif._utilities.filters", "Filter"],
+    "FlextLdif": ["flext_ldif.api", "FlextLdif"],
+    "FlextLdifAcl": ["flext_ldif.services.acl", "FlextLdifAcl"],
+    "FlextLdifAnalysis": ["flext_ldif.services.analysis", "FlextLdifAnalysis"],
+    "FlextLdifCategorization": [
         "flext_ldif.services.categorization",
         "FlextLdifCategorization",
-    ),
-    "FlextLdifConstants": ("flext_ldif.constants", "FlextLdifConstants"),
-    "FlextLdifConversion": ("flext_ldif.services.conversion", "FlextLdifConversion"),
-    "FlextLdifDetector": ("flext_ldif.services.detector", "FlextLdifDetector"),
-    "FlextLdifDn": ("flext_ldif.services.dn", "FlextLdifDn"),
-    "FlextLdifEntries": ("flext_ldif.services.entries", "FlextLdifEntries"),
-    "FlextLdifFilters": ("flext_ldif.services.filters", "FlextLdifFilters"),
-    "FlextLdifMigrationPipeline": (
+    ],
+    "FlextLdifConstants": ["flext_ldif.constants", "FlextLdifConstants"],
+    "FlextLdifConversion": ["flext_ldif.services.conversion", "FlextLdifConversion"],
+    "FlextLdifDetector": ["flext_ldif.services.detector", "FlextLdifDetector"],
+    "FlextLdifDn": ["flext_ldif.services.dn", "FlextLdifDn"],
+    "FlextLdifEntries": ["flext_ldif.services.entries", "FlextLdifEntries"],
+    "FlextLdifFilters": ["flext_ldif.services.filters", "FlextLdifFilters"],
+    "FlextLdifMigrationPipeline": [
         "flext_ldif.services.migration",
         "FlextLdifMigrationPipeline",
-    ),
-    "FlextLdifModels": ("flext_ldif.models", "FlextLdifModels"),
-    "FlextLdifModelsBases": ("flext_ldif._models.base", "FlextLdifModelsBases"),
-    "FlextLdifModelsCollections": (
+    ],
+    "FlextLdifModels": ["flext_ldif.models", "FlextLdifModels"],
+    "FlextLdifModelsBases": ["flext_ldif._models.base", "FlextLdifModelsBases"],
+    "FlextLdifModelsCollections": [
         "flext_ldif._models.collections",
         "FlextLdifModelsCollections",
-    ),
-    "FlextLdifModelsConversions": (
+    ],
+    "FlextLdifModelsConversions": [
         "flext_ldif._models.conversion",
         "FlextLdifModelsConversions",
-    ),
-    "FlextLdifModelsDomainSchema": (
+    ],
+    "FlextLdifModelsDomainSchema": [
         "flext_ldif._models.domain_schema",
         "FlextLdifModelsDomainSchema",
-    ),
-    "FlextLdifModelsDomains": ("flext_ldif._models.domain", "FlextLdifModelsDomains"),
-    "FlextLdifModelsDomainsEntries": (
+    ],
+    "FlextLdifModelsDomains": ["flext_ldif._models.domain", "FlextLdifModelsDomains"],
+    "FlextLdifModelsDomainsEntries": [
         "flext_ldif._models.domain_entries",
         "FlextLdifModelsDomainsEntries",
-    ),
-    "FlextLdifModelsEvents": ("flext_ldif._models.events", "FlextLdifModelsEvents"),
-    "FlextLdifModelsMetadata": (
+    ],
+    "FlextLdifModelsEvents": ["flext_ldif._models.events", "FlextLdifModelsEvents"],
+    "FlextLdifModelsMetadata": [
         "flext_ldif._models.metadata",
         "FlextLdifModelsMetadata",
-    ),
-    "FlextLdifModelsProcessing": (
+    ],
+    "FlextLdifModelsProcessing": [
         "flext_ldif._models.processing",
         "FlextLdifModelsProcessing",
-    ),
-    "FlextLdifModelsResults": ("flext_ldif._models.results", "FlextLdifModelsResults"),
-    "FlextLdifModelsSettings": (
+    ],
+    "FlextLdifModelsResults": ["flext_ldif._models.results", "FlextLdifModelsResults"],
+    "FlextLdifModelsSettings": [
         "flext_ldif._models.settings",
         "FlextLdifModelsSettings",
-    ),
-    "FlextLdifParser": ("flext_ldif.services.parser", "FlextLdifParser"),
-    "FlextLdifProcessing": ("flext_ldif.services.processing", "FlextLdifProcessing"),
-    "FlextLdifProcessingPipeline": (
+    ],
+    "FlextLdifParser": ["flext_ldif.services.parser", "FlextLdifParser"],
+    "FlextLdifProcessing": ["flext_ldif.services.processing", "FlextLdifProcessing"],
+    "FlextLdifProcessingPipeline": [
         "flext_ldif.services.pipeline",
         "FlextLdifProcessingPipeline",
-    ),
-    "FlextLdifProcessingPipelineService": (
+    ],
+    "FlextLdifProcessingPipelineService": [
         "flext_ldif.services._services.processing_pipeline_service",
         "FlextLdifProcessingPipelineService",
-    ),
-    "FlextLdifProtocols": ("flext_ldif.protocols", "FlextLdifProtocols"),
-    "FlextLdifQuirkMethodsMixin": (
+    ],
+    "FlextLdifProtocols": ["flext_ldif.protocols", "FlextLdifProtocols"],
+    "FlextLdifQuirkMethodsMixin": [
         "flext_ldif.servers._base.constants",
         "FlextLdifQuirkMethodsMixin",
-    ),
-    "FlextLdifSchema": ("flext_ldif.services.schema", "FlextLdifSchema"),
-    "FlextLdifServer": ("flext_ldif.services.server", "FlextLdifServer"),
-    "FlextLdifServersAd": ("flext_ldif.servers.ad", "FlextLdifServersAd"),
-    "FlextLdifServersApache": ("flext_ldif.servers.apache", "FlextLdifServersApache"),
-    "FlextLdifServersBase": ("flext_ldif.servers.base", "FlextLdifServersBase"),
-    "FlextLdifServersBaseConstants": (
+    ],
+    "FlextLdifSchema": ["flext_ldif.services.schema", "FlextLdifSchema"],
+    "FlextLdifServer": ["flext_ldif.services.server", "FlextLdifServer"],
+    "FlextLdifServersAd": ["flext_ldif.servers.ad", "FlextLdifServersAd"],
+    "FlextLdifServersApache": ["flext_ldif.servers.apache", "FlextLdifServersApache"],
+    "FlextLdifServersBase": ["flext_ldif.servers.base", "FlextLdifServersBase"],
+    "FlextLdifServersBaseConstants": [
         "flext_ldif.servers._base.constants",
         "FlextLdifServersBaseConstants",
-    ),
-    "FlextLdifServersBaseEntry": (
+    ],
+    "FlextLdifServersBaseEntry": [
         "flext_ldif.servers._base.entry",
         "FlextLdifServersBaseEntry",
-    ),
-    "FlextLdifServersBaseQuirkHelpers": (
+    ],
+    "FlextLdifServersBaseQuirkHelpers": [
         "flext_ldif.servers._base.constants",
         "FlextLdifServersBaseQuirkHelpers",
-    ),
-    "FlextLdifServersBaseSchema": (
+    ],
+    "FlextLdifServersBaseSchema": [
         "flext_ldif.servers._base.schema",
         "FlextLdifServersBaseSchema",
-    ),
-    "FlextLdifServersBaseSchemaAcl": (
+    ],
+    "FlextLdifServersBaseSchemaAcl": [
         "flext_ldif.servers._base.acl",
         "FlextLdifServersBaseSchemaAcl",
-    ),
-    "FlextLdifServersDs389": ("flext_ldif.servers.ds389", "FlextLdifServersDs389"),
-    "FlextLdifServersNovell": ("flext_ldif.servers.novell", "FlextLdifServersNovell"),
-    "FlextLdifServersOid": ("flext_ldif.servers.oid", "FlextLdifServersOid"),
-    "FlextLdifServersOidAcl": ("flext_ldif.servers._oid.acl", "FlextLdifServersOidAcl"),
-    "FlextLdifServersOidConstants": (
+    ],
+    "FlextLdifServersDs389": ["flext_ldif.servers.ds389", "FlextLdifServersDs389"],
+    "FlextLdifServersNovell": ["flext_ldif.servers.novell", "FlextLdifServersNovell"],
+    "FlextLdifServersOid": ["flext_ldif.servers.oid", "FlextLdifServersOid"],
+    "FlextLdifServersOidAcl": ["flext_ldif.servers._oid.acl", "FlextLdifServersOidAcl"],
+    "FlextLdifServersOidConstants": [
         "flext_ldif.servers._oid.constants",
         "FlextLdifServersOidConstants",
-    ),
-    "FlextLdifServersOidEntry": (
+    ],
+    "FlextLdifServersOidEntry": [
         "flext_ldif.servers._oid.entry",
         "FlextLdifServersOidEntry",
-    ),
-    "FlextLdifServersOidSchema": (
+    ],
+    "FlextLdifServersOidSchema": [
         "flext_ldif.servers._oid.schema",
         "FlextLdifServersOidSchema",
-    ),
-    "FlextLdifServersOpenldap": (
+    ],
+    "FlextLdifServersOpenldap": [
         "flext_ldif.servers.openldap",
         "FlextLdifServersOpenldap",
-    ),
-    "FlextLdifServersOpenldap1": (
+    ],
+    "FlextLdifServersOpenldap1": [
         "flext_ldif.servers.openldap1",
         "FlextLdifServersOpenldap1",
-    ),
-    "FlextLdifServersOud": ("flext_ldif.servers.oud", "FlextLdifServersOud"),
-    "FlextLdifServersOudAcl": ("flext_ldif.servers._oud.acl", "FlextLdifServersOudAcl"),
-    "FlextLdifServersOudConstants": (
+    ],
+    "FlextLdifServersOud": ["flext_ldif.servers.oud", "FlextLdifServersOud"],
+    "FlextLdifServersOudAcl": ["flext_ldif.servers._oud.acl", "FlextLdifServersOudAcl"],
+    "FlextLdifServersOudConstants": [
         "flext_ldif.servers._oud.constants",
         "FlextLdifServersOudConstants",
-    ),
-    "FlextLdifServersOudEntry": (
+    ],
+    "FlextLdifServersOudEntry": [
         "flext_ldif.servers._oud.entry",
         "FlextLdifServersOudEntry",
-    ),
-    "FlextLdifServersOudSchema": (
+    ],
+    "FlextLdifServersOudSchema": [
         "flext_ldif.servers._oud.schema",
         "FlextLdifServersOudSchema",
-    ),
-    "FlextLdifServersOudUtilities": (
+    ],
+    "FlextLdifServersOudUtilities": [
         "flext_ldif.servers._oud.utilities",
         "FlextLdifServersOudUtilities",
-    ),
-    "FlextLdifServersRelaxed": (
+    ],
+    "FlextLdifServersRelaxed": [
         "flext_ldif.servers.relaxed",
         "FlextLdifServersRelaxed",
-    ),
-    "FlextLdifServersRfc": ("flext_ldif.servers.rfc", "FlextLdifServersRfc"),
-    "FlextLdifServersRfcAcl": ("flext_ldif.servers._rfc.acl", "FlextLdifServersRfcAcl"),
-    "FlextLdifServersRfcConstants": (
+    ],
+    "FlextLdifServersRfc": ["flext_ldif.servers.rfc", "FlextLdifServersRfc"],
+    "FlextLdifServersRfcAcl": ["flext_ldif.servers._rfc.acl", "FlextLdifServersRfcAcl"],
+    "FlextLdifServersRfcConstants": [
         "flext_ldif.servers._rfc.constants",
         "FlextLdifServersRfcConstants",
-    ),
-    "FlextLdifServersRfcEntry": (
+    ],
+    "FlextLdifServersRfcEntry": [
         "flext_ldif.servers._rfc.entry",
         "FlextLdifServersRfcEntry",
-    ),
-    "FlextLdifServersRfcSchema": (
+    ],
+    "FlextLdifServersRfcSchema": [
         "flext_ldif.servers._rfc.schema",
         "FlextLdifServersRfcSchema",
-    ),
-    "FlextLdifServersTivoli": ("flext_ldif.servers.tivoli", "FlextLdifServersTivoli"),
-    "FlextLdifServiceBase": ("flext_ldif.base", "FlextLdifServiceBase"),
-    "FlextLdifServiceRegistry": (
+    ],
+    "FlextLdifServersTivoli": ["flext_ldif.servers.tivoli", "FlextLdifServersTivoli"],
+    "FlextLdifServiceBase": ["flext_ldif.base", "FlextLdifServiceBase"],
+    "FlextLdifServiceRegistry": [
         "flext_ldif.services.registry",
         "FlextLdifServiceRegistry",
-    ),
-    "FlextLdifSettings": ("flext_ldif.settings", "FlextLdifSettings"),
-    "FlextLdifShared": ("flext_ldif.shared", "FlextLdifShared"),
-    "FlextLdifSorting": ("flext_ldif.services.sorting", "FlextLdifSorting"),
-    "FlextLdifStatistics": ("flext_ldif.services.statistics", "FlextLdifStatistics"),
-    "FlextLdifSyntax": ("flext_ldif.services.syntax", "FlextLdifSyntax"),
-    "FlextLdifTransformer": (
+    ],
+    "FlextLdifSettings": ["flext_ldif.settings", "FlextLdifSettings"],
+    "FlextLdifShared": ["flext_ldif.shared", "FlextLdifShared"],
+    "FlextLdifSorting": ["flext_ldif.services.sorting", "FlextLdifSorting"],
+    "FlextLdifStatistics": ["flext_ldif.services.statistics", "FlextLdifStatistics"],
+    "FlextLdifSyntax": ["flext_ldif.services.syntax", "FlextLdifSyntax"],
+    "FlextLdifTransformer": [
         "flext_ldif.services.transformers",
         "FlextLdifTransformer",
-    ),
-    "FlextLdifTypes": ("flext_ldif.typings", "FlextLdifTypes"),
-    "FlextLdifUtilities": ("flext_ldif.utilities", "FlextLdifUtilities"),
-    "FlextLdifUtilitiesACL": ("flext_ldif._utilities.acl", "FlextLdifUtilitiesACL"),
-    "FlextLdifUtilitiesAttribute": (
+    ],
+    "FlextLdifTypes": ["flext_ldif.typings", "FlextLdifTypes"],
+    "FlextLdifUtilities": ["flext_ldif.utilities", "FlextLdifUtilities"],
+    "FlextLdifUtilitiesACL": ["flext_ldif._utilities.acl", "FlextLdifUtilitiesACL"],
+    "FlextLdifUtilitiesAttribute": [
         "flext_ldif._utilities.attribute",
         "FlextLdifUtilitiesAttribute",
-    ),
-    "FlextLdifUtilitiesBuilders": (
+    ],
+    "FlextLdifUtilitiesBuilders": [
         "flext_ldif._utilities.builders",
         "FlextLdifUtilitiesBuilders",
-    ),
-    "FlextLdifUtilitiesCollectionLdif": (
+    ],
+    "FlextLdifUtilitiesCollectionLdif": [
         "flext_ldif._utilities.collection_ldif",
         "FlextLdifUtilitiesCollectionLdif",
-    ),
-    "FlextLdifUtilitiesDN": ("flext_ldif._utilities.dn", "FlextLdifUtilitiesDN"),
-    "FlextLdifUtilitiesDecorators": (
+    ],
+    "FlextLdifUtilitiesDN": ["flext_ldif._utilities.dn", "FlextLdifUtilitiesDN"],
+    "FlextLdifUtilitiesDecorators": [
         "flext_ldif._utilities.decorators",
         "FlextLdifUtilitiesDecorators",
-    ),
-    "FlextLdifUtilitiesDetection": (
+    ],
+    "FlextLdifUtilitiesDetection": [
         "flext_ldif._utilities.detection",
         "FlextLdifUtilitiesDetection",
-    ),
-    "FlextLdifUtilitiesDispatch": (
+    ],
+    "FlextLdifUtilitiesDispatch": [
         "flext_ldif._utilities.dispatch",
         "FlextLdifUtilitiesDispatch",
-    ),
-    "FlextLdifUtilitiesEntry": (
+    ],
+    "FlextLdifUtilitiesEntry": [
         "flext_ldif._utilities.entry",
         "FlextLdifUtilitiesEntry",
-    ),
-    "FlextLdifUtilitiesEvents": (
+    ],
+    "FlextLdifUtilitiesEvents": [
         "flext_ldif._utilities.events",
         "FlextLdifUtilitiesEvents",
-    ),
-    "FlextLdifUtilitiesFilters": (
+    ],
+    "FlextLdifUtilitiesFilters": [
         "flext_ldif._utilities.filters",
         "FlextLdifUtilitiesFilters",
-    ),
-    "FlextLdifUtilitiesFluent": (
+    ],
+    "FlextLdifUtilitiesFluent": [
         "flext_ldif._utilities.fluent",
         "FlextLdifUtilitiesFluent",
-    ),
-    "FlextLdifUtilitiesFunctional": (
+    ],
+    "FlextLdifUtilitiesFunctional": [
         "flext_ldif._utilities.functional",
         "FlextLdifUtilitiesFunctional",
-    ),
-    "FlextLdifUtilitiesMetadata": (
+    ],
+    "FlextLdifUtilitiesMetadata": [
         "flext_ldif._utilities.metadata",
         "FlextLdifUtilitiesMetadata",
-    ),
-    "FlextLdifUtilitiesNormalization": (
+    ],
+    "FlextLdifUtilitiesNormalization": [
         "flext_ldif._utilities.normalization",
         "FlextLdifUtilitiesNormalization",
-    ),
-    "FlextLdifUtilitiesOID": ("flext_ldif._utilities.oid", "FlextLdifUtilitiesOID"),
-    "FlextLdifUtilitiesObjectClass": (
+    ],
+    "FlextLdifUtilitiesOID": ["flext_ldif._utilities.oid", "FlextLdifUtilitiesOID"],
+    "FlextLdifUtilitiesObjectClass": [
         "flext_ldif._utilities.object_class",
         "FlextLdifUtilitiesObjectClass",
-    ),
-    "FlextLdifUtilitiesParser": (
+    ],
+    "FlextLdifUtilitiesParser": [
         "flext_ldif._utilities.parser",
         "FlextLdifUtilitiesParser",
-    ),
-    "FlextLdifUtilitiesParsers": (
+    ],
+    "FlextLdifUtilitiesParsers": [
         "flext_ldif._utilities.parsers",
         "FlextLdifUtilitiesParsers",
-    ),
-    "FlextLdifUtilitiesPipeline": (
+    ],
+    "FlextLdifUtilitiesPipeline": [
         "flext_ldif._utilities.pipeline",
         "FlextLdifUtilitiesPipeline",
-    ),
-    "FlextLdifUtilitiesProcessing": (
+    ],
+    "FlextLdifUtilitiesProcessing": [
         "flext_ldif._utilities.processing",
         "FlextLdifUtilitiesProcessing",
-    ),
-    "FlextLdifUtilitiesResult": (
+    ],
+    "FlextLdifUtilitiesResult": [
         "flext_ldif._utilities.result",
         "FlextLdifUtilitiesResult",
-    ),
-    "FlextLdifUtilitiesSchema": (
+    ],
+    "FlextLdifUtilitiesSchema": [
         "flext_ldif._utilities.schema",
         "FlextLdifUtilitiesSchema",
-    ),
-    "FlextLdifUtilitiesServer": (
+    ],
+    "FlextLdifUtilitiesServer": [
         "flext_ldif._utilities.server",
         "FlextLdifUtilitiesServer",
-    ),
-    "FlextLdifUtilitiesTransformer": (
+    ],
+    "FlextLdifUtilitiesTransformer": [
         "flext_ldif._utilities.transformers",
         "FlextLdifUtilitiesTransformer",
-    ),
-    "FlextLdifUtilitiesTransformers": (
+    ],
+    "FlextLdifUtilitiesTransformers": [
         "flext_ldif._utilities.transformers",
         "FlextLdifUtilitiesTransformers",
-    ),
-    "FlextLdifUtilitiesTypeGuards": (
+    ],
+    "FlextLdifUtilitiesTypeGuards": [
         "flext_ldif._utilities.type_guards",
         "FlextLdifUtilitiesTypeGuards",
-    ),
-    "FlextLdifUtilitiesTypeHelpers": (
+    ],
+    "FlextLdifUtilitiesTypeHelpers": [
         "flext_ldif._utilities.type_helpers",
         "FlextLdifUtilitiesTypeHelpers",
-    ),
-    "FlextLdifUtilitiesValidation": (
+    ],
+    "FlextLdifUtilitiesValidation": [
         "flext_ldif._utilities.validation",
         "FlextLdifUtilitiesValidation",
-    ),
-    "FlextLdifUtilitiesWriter": (
+    ],
+    "FlextLdifUtilitiesWriter": [
         "flext_ldif._utilities.writer",
         "FlextLdifUtilitiesWriter",
-    ),
-    "FlextLdifUtilitiesWriters": (
+    ],
+    "FlextLdifUtilitiesWriters": [
         "flext_ldif._utilities.writers",
         "FlextLdifUtilitiesWriters",
-    ),
-    "FlextLdifValidation": (
+    ],
+    "FlextLdifValidation": [
         "flext_ldif.services.rfc_validation",
         "FlextLdifValidation",
-    ),
-    "FlextLdifWriter": ("flext_ldif.services.writer", "FlextLdifWriter"),
-    "IsSchemaFlextLdifUtilitiesFilters": (
+    ],
+    "FlextLdifWriter": ["flext_ldif.services.writer", "FlextLdifWriter"],
+    "IsSchemaFlextLdifUtilitiesFilters": [
         "flext_ldif._utilities.filters",
         "IsSchemaFlextLdifUtilitiesFilters",
-    ),
-    "NotFilter": ("flext_ldif._utilities.filters", "NotFilter"),
-    "OrFilter": ("flext_ldif._utilities.filters", "OrFilter"),
-    "__all__": ("flext_ldif.__version__", "__all__"),
-    "__author__": ("flext_ldif.__version__", "__author__"),
-    "__author_email__": ("flext_ldif.__version__", "__author_email__"),
-    "__description__": ("flext_ldif.__version__", "__description__"),
-    "__license__": ("flext_ldif.__version__", "__license__"),
-    "__title__": ("flext_ldif.__version__", "__title__"),
-    "__url__": ("flext_ldif.__version__", "__url__"),
-    "__version__": ("flext_ldif.__version__", "__version__"),
-    "__version_info__": ("flext_ldif.__version__", "__version_info__"),
-    "_models": ("flext_ldif._models", ""),
-    "_utilities": ("flext_ldif._utilities", ""),
-    "c": ("flext_ldif.constants", "FlextLdifConstants"),
-    "d": ("flext_core", "d"),
-    "e": ("flext_core", "e"),
-    "f": ("flext_ldif._utilities.functional", "f"),
-    "h": ("flext_core", "h"),
-    "logger": ("flext_ldif.servers.oid", "logger"),
-    "m": ("flext_ldif.models", "FlextLdifModels"),
-    "p": ("flext_ldif.protocols", "FlextLdifProtocols"),
-    "r": ("flext_core", "r"),
-    "s": ("flext_core", "s"),
-    "servers": ("flext_ldif.servers", ""),
-    "services": ("flext_ldif.services", ""),
-    "t": ("flext_ldif.typings", "FlextLdifTypes"),
-    "u": ("flext_ldif.utilities", "FlextLdifUtilities"),
-    "x": ("flext_core", "x"),
+    ],
+    "NotFilter": ["flext_ldif._utilities.filters", "NotFilter"],
+    "OrFilter": ["flext_ldif._utilities.filters", "OrFilter"],
+    "__all__": ["flext_ldif.__version__", "__all__"],
+    "__author__": ["flext_ldif.__version__", "__author__"],
+    "__author_email__": ["flext_ldif.__version__", "__author_email__"],
+    "__description__": ["flext_ldif.__version__", "__description__"],
+    "__license__": ["flext_ldif.__version__", "__license__"],
+    "__title__": ["flext_ldif.__version__", "__title__"],
+    "__url__": ["flext_ldif.__version__", "__url__"],
+    "__version__": ["flext_ldif.__version__", "__version__"],
+    "__version_info__": ["flext_ldif.__version__", "__version_info__"],
+    "_models": ["flext_ldif._models", ""],
+    "_utilities": ["flext_ldif._utilities", ""],
+    "c": ["flext_ldif.constants", "FlextLdifConstants"],
+    "d": ["flext_core", "d"],
+    "e": ["flext_core", "e"],
+    "f": ["flext_ldif._utilities.functional", "f"],
+    "h": ["flext_core", "h"],
+    "logger": ["flext_ldif.servers.oid", "logger"],
+    "m": ["flext_ldif.models", "FlextLdifModels"],
+    "p": ["flext_ldif.protocols", "FlextLdifProtocols"],
+    "r": ["flext_core", "r"],
+    "s": ["flext_core", "s"],
+    "servers": ["flext_ldif.servers", ""],
+    "services": ["flext_ldif.services", ""],
+    "t": ["flext_ldif.typings", "FlextLdifTypes"],
+    "u": ["flext_ldif.utilities", "FlextLdifUtilities"],
+    "x": ["flext_core", "x"],
 }
 
 __all__ = [

@@ -25,39 +25,39 @@ if TYPE_CHECKING:
     from flext_ldif._models.results import FlextLdifModelsResults
     from flext_ldif._models.settings import FlextLdifModelsSettings
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "FlextLdifModelsBases": ("flext_ldif._models.base", "FlextLdifModelsBases"),
-    "FlextLdifModelsCollections": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "FlextLdifModelsBases": ["flext_ldif._models.base", "FlextLdifModelsBases"],
+    "FlextLdifModelsCollections": [
         "flext_ldif._models.collections",
         "FlextLdifModelsCollections",
-    ),
-    "FlextLdifModelsConversions": (
+    ],
+    "FlextLdifModelsConversions": [
         "flext_ldif._models.conversion",
         "FlextLdifModelsConversions",
-    ),
-    "FlextLdifModelsDomainSchema": (
+    ],
+    "FlextLdifModelsDomainSchema": [
         "flext_ldif._models.domain_schema",
         "FlextLdifModelsDomainSchema",
-    ),
-    "FlextLdifModelsDomains": ("flext_ldif._models.domain", "FlextLdifModelsDomains"),
-    "FlextLdifModelsDomainsEntries": (
+    ],
+    "FlextLdifModelsDomains": ["flext_ldif._models.domain", "FlextLdifModelsDomains"],
+    "FlextLdifModelsDomainsEntries": [
         "flext_ldif._models.domain_entries",
         "FlextLdifModelsDomainsEntries",
-    ),
-    "FlextLdifModelsEvents": ("flext_ldif._models.events", "FlextLdifModelsEvents"),
-    "FlextLdifModelsMetadata": (
+    ],
+    "FlextLdifModelsEvents": ["flext_ldif._models.events", "FlextLdifModelsEvents"],
+    "FlextLdifModelsMetadata": [
         "flext_ldif._models.metadata",
         "FlextLdifModelsMetadata",
-    ),
-    "FlextLdifModelsProcessing": (
+    ],
+    "FlextLdifModelsProcessing": [
         "flext_ldif._models.processing",
         "FlextLdifModelsProcessing",
-    ),
-    "FlextLdifModelsResults": ("flext_ldif._models.results", "FlextLdifModelsResults"),
-    "FlextLdifModelsSettings": (
+    ],
+    "FlextLdifModelsResults": ["flext_ldif._models.results", "FlextLdifModelsResults"],
+    "FlextLdifModelsSettings": [
         "flext_ldif._models.settings",
         "FlextLdifModelsSettings",
-    ),
+    ],
 }
 
 __all__ = [

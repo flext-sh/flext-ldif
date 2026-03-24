@@ -18,22 +18,22 @@ if TYPE_CHECKING:
     from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
     from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema, logger
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "FlextLdifServersOidAcl": ("flext_ldif.servers._oid.acl", "FlextLdifServersOidAcl"),
-    "FlextLdifServersOidConstants": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "FlextLdifServersOidAcl": ["flext_ldif.servers._oid.acl", "FlextLdifServersOidAcl"],
+    "FlextLdifServersOidConstants": [
         "flext_ldif.servers._oid.constants",
         "FlextLdifServersOidConstants",
-    ),
-    "FlextLdifServersOidEntry": (
+    ],
+    "FlextLdifServersOidEntry": [
         "flext_ldif.servers._oid.entry",
         "FlextLdifServersOidEntry",
-    ),
-    "FlextLdifServersOidSchema": (
+    ],
+    "FlextLdifServersOidSchema": [
         "flext_ldif.servers._oid.schema",
         "FlextLdifServersOidSchema",
-    ),
-    "c": ("flext_ldif.servers._oid.constants", "c"),
-    "logger": ("flext_ldif.servers._oid.schema", "logger"),
+    ],
+    "c": ["flext_ldif.servers._oid.constants", "c"],
+    "logger": ["flext_ldif.servers._oid.schema", "logger"],
 }
 
 __all__ = [

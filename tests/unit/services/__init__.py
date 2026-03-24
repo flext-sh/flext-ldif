@@ -45,96 +45,96 @@ if TYPE_CHECKING:
         TestsFlextLdifsFlextLdifWriterDnNormalization,
     )
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "TestAliasDiscovery": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "TestAliasDiscovery": [
         "tests.unit.services.test_quirks_standardization",
         "TestAliasDiscovery",
-    ),
-    "TestQuirksAutoInterchange": (
+    ],
+    "TestQuirksAutoInterchange": [
         "tests.unit.services.test_quirks_standardization",
         "TestQuirksAutoInterchange",
-    ),
-    "TestQuirksWithRealLdifFixtures": (
+    ],
+    "TestQuirksWithRealLdifFixtures": [
         "tests.unit.services.test_quirks_standardization",
         "TestQuirksWithRealLdifFixtures",
-    ),
-    "TestSchemaServiceBuilder": (
+    ],
+    "TestSchemaServiceBuilder": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceBuilder",
-    ),
-    "TestSchemaServiceCanHandleAttribute": (
+    ],
+    "TestSchemaServiceCanHandleAttribute": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceCanHandleAttribute",
-    ),
-    "TestSchemaServiceIntegration": (
+    ],
+    "TestSchemaServiceIntegration": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceIntegration",
-    ),
-    "TestSchemaServiceParseAttribute": (
+    ],
+    "TestSchemaServiceParseAttribute": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceParseAttribute",
-    ),
-    "TestSchemaServiceParseObjectClass": (
+    ],
+    "TestSchemaServiceParseObjectClass": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceParseObjectClass",
-    ),
-    "TestSchemaServiceRepr": (
+    ],
+    "TestSchemaServiceRepr": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceRepr",
-    ),
-    "TestSchemaServiceValidateAttribute": (
+    ],
+    "TestSchemaServiceValidateAttribute": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceValidateAttribute",
-    ),
-    "TestSchemaServiceValidateObjectClass": (
+    ],
+    "TestSchemaServiceValidateObjectClass": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceValidateObjectClass",
-    ),
-    "TestSchemaServiceWriteAttribute": (
+    ],
+    "TestSchemaServiceWriteAttribute": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceWriteAttribute",
-    ),
-    "TestSchemaServiceWriteObjectClass": (
+    ],
+    "TestSchemaServiceWriteObjectClass": [
         "tests.unit.services.test_schema_service",
         "TestSchemaServiceWriteObjectClass",
-    ),
-    "TestsFlextLdifQuirksStandardizedConstants": (
+    ],
+    "TestsFlextLdifQuirksStandardizedConstants": [
         "tests.unit.services.test_quirks_standardization",
         "TestsFlextLdifQuirksStandardizedConstants",
-    ),
-    "TestsFlextLdifSchemaServiceExecute": (
+    ],
+    "TestsFlextLdifSchemaServiceExecute": [
         "tests.unit.services.test_schema_service",
         "TestsFlextLdifSchemaServiceExecute",
-    ),
-    "TestsFlextLdifsFlextLdifWriterDnNormalization": (
+    ],
+    "TestsFlextLdifsFlextLdifWriterDnNormalization": [
         "tests.unit.services.test_writer_dn_normalization",
         "TestsFlextLdifsFlextLdifWriterDnNormalization",
-    ),
-    "TestsTestFlextLdifMigrationPipeline": (
+    ],
+    "TestsTestFlextLdifMigrationPipeline": [
         "tests.unit.services.test_migration_pipeline",
         "TestsTestFlextLdifMigrationPipeline",
-    ),
-    "complex_attribute_definition": (
+    ],
+    "complex_attribute_definition": [
         "tests.unit.services.test_schema_service",
         "complex_attribute_definition",
-    ),
-    "complex_objectclass_definition": (
+    ],
+    "complex_objectclass_definition": [
         "tests.unit.services.test_schema_service",
         "complex_objectclass_definition",
-    ),
-    "schema_service": ("tests.unit.services.test_schema_service", "schema_service"),
-    "schema_service_oud": (
+    ],
+    "schema_service": ["tests.unit.services.test_schema_service", "schema_service"],
+    "schema_service_oud": [
         "tests.unit.services.test_schema_service",
         "schema_service_oud",
-    ),
-    "simple_attribute_definition": (
+    ],
+    "simple_attribute_definition": [
         "tests.unit.services.test_schema_service",
         "simple_attribute_definition",
-    ),
-    "simple_objectclass_definition": (
+    ],
+    "simple_objectclass_definition": [
         "tests.unit.services.test_schema_service",
         "simple_objectclass_definition",
-    ),
+    ],
 }
 
 __all__ = [

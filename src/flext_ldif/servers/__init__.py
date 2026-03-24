@@ -48,101 +48,101 @@ if TYPE_CHECKING:
     from flext_ldif.servers.rfc import FlextLdifServersRfc
     from flext_ldif.servers.tivoli import FlextLdifServersTivoli
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "FlextLdifQuirkMethodsMixin": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "FlextLdifQuirkMethodsMixin": [
         "flext_ldif.servers._base.constants",
         "FlextLdifQuirkMethodsMixin",
-    ),
-    "FlextLdifServersAd": ("flext_ldif.servers.ad", "FlextLdifServersAd"),
-    "FlextLdifServersApache": ("flext_ldif.servers.apache", "FlextLdifServersApache"),
-    "FlextLdifServersBase": ("flext_ldif.servers.base", "FlextLdifServersBase"),
-    "FlextLdifServersBaseConstants": (
+    ],
+    "FlextLdifServersAd": ["flext_ldif.servers.ad", "FlextLdifServersAd"],
+    "FlextLdifServersApache": ["flext_ldif.servers.apache", "FlextLdifServersApache"],
+    "FlextLdifServersBase": ["flext_ldif.servers.base", "FlextLdifServersBase"],
+    "FlextLdifServersBaseConstants": [
         "flext_ldif.servers._base.constants",
         "FlextLdifServersBaseConstants",
-    ),
-    "FlextLdifServersBaseEntry": (
+    ],
+    "FlextLdifServersBaseEntry": [
         "flext_ldif.servers._base.entry",
         "FlextLdifServersBaseEntry",
-    ),
-    "FlextLdifServersBaseQuirkHelpers": (
+    ],
+    "FlextLdifServersBaseQuirkHelpers": [
         "flext_ldif.servers._base.constants",
         "FlextLdifServersBaseQuirkHelpers",
-    ),
-    "FlextLdifServersBaseSchema": (
+    ],
+    "FlextLdifServersBaseSchema": [
         "flext_ldif.servers._base.schema",
         "FlextLdifServersBaseSchema",
-    ),
-    "FlextLdifServersBaseSchemaAcl": (
+    ],
+    "FlextLdifServersBaseSchemaAcl": [
         "flext_ldif.servers._base.acl",
         "FlextLdifServersBaseSchemaAcl",
-    ),
-    "FlextLdifServersDs389": ("flext_ldif.servers.ds389", "FlextLdifServersDs389"),
-    "FlextLdifServersNovell": ("flext_ldif.servers.novell", "FlextLdifServersNovell"),
-    "FlextLdifServersOid": ("flext_ldif.servers.oid", "FlextLdifServersOid"),
-    "FlextLdifServersOidAcl": ("flext_ldif.servers._oid.acl", "FlextLdifServersOidAcl"),
-    "FlextLdifServersOidConstants": (
+    ],
+    "FlextLdifServersDs389": ["flext_ldif.servers.ds389", "FlextLdifServersDs389"],
+    "FlextLdifServersNovell": ["flext_ldif.servers.novell", "FlextLdifServersNovell"],
+    "FlextLdifServersOid": ["flext_ldif.servers.oid", "FlextLdifServersOid"],
+    "FlextLdifServersOidAcl": ["flext_ldif.servers._oid.acl", "FlextLdifServersOidAcl"],
+    "FlextLdifServersOidConstants": [
         "flext_ldif.servers._oid.constants",
         "FlextLdifServersOidConstants",
-    ),
-    "FlextLdifServersOidEntry": (
+    ],
+    "FlextLdifServersOidEntry": [
         "flext_ldif.servers._oid.entry",
         "FlextLdifServersOidEntry",
-    ),
-    "FlextLdifServersOidSchema": (
+    ],
+    "FlextLdifServersOidSchema": [
         "flext_ldif.servers._oid.schema",
         "FlextLdifServersOidSchema",
-    ),
-    "FlextLdifServersOpenldap": (
+    ],
+    "FlextLdifServersOpenldap": [
         "flext_ldif.servers.openldap",
         "FlextLdifServersOpenldap",
-    ),
-    "FlextLdifServersOpenldap1": (
+    ],
+    "FlextLdifServersOpenldap1": [
         "flext_ldif.servers.openldap1",
         "FlextLdifServersOpenldap1",
-    ),
-    "FlextLdifServersOud": ("flext_ldif.servers.oud", "FlextLdifServersOud"),
-    "FlextLdifServersOudAcl": ("flext_ldif.servers._oud.acl", "FlextLdifServersOudAcl"),
-    "FlextLdifServersOudConstants": (
+    ],
+    "FlextLdifServersOud": ["flext_ldif.servers.oud", "FlextLdifServersOud"],
+    "FlextLdifServersOudAcl": ["flext_ldif.servers._oud.acl", "FlextLdifServersOudAcl"],
+    "FlextLdifServersOudConstants": [
         "flext_ldif.servers._oud.constants",
         "FlextLdifServersOudConstants",
-    ),
-    "FlextLdifServersOudEntry": (
+    ],
+    "FlextLdifServersOudEntry": [
         "flext_ldif.servers._oud.entry",
         "FlextLdifServersOudEntry",
-    ),
-    "FlextLdifServersOudSchema": (
+    ],
+    "FlextLdifServersOudSchema": [
         "flext_ldif.servers._oud.schema",
         "FlextLdifServersOudSchema",
-    ),
-    "FlextLdifServersOudUtilities": (
+    ],
+    "FlextLdifServersOudUtilities": [
         "flext_ldif.servers._oud.utilities",
         "FlextLdifServersOudUtilities",
-    ),
-    "FlextLdifServersRelaxed": (
+    ],
+    "FlextLdifServersRelaxed": [
         "flext_ldif.servers.relaxed",
         "FlextLdifServersRelaxed",
-    ),
-    "FlextLdifServersRfc": ("flext_ldif.servers.rfc", "FlextLdifServersRfc"),
-    "FlextLdifServersRfcAcl": ("flext_ldif.servers._rfc.acl", "FlextLdifServersRfcAcl"),
-    "FlextLdifServersRfcConstants": (
+    ],
+    "FlextLdifServersRfc": ["flext_ldif.servers.rfc", "FlextLdifServersRfc"],
+    "FlextLdifServersRfcAcl": ["flext_ldif.servers._rfc.acl", "FlextLdifServersRfcAcl"],
+    "FlextLdifServersRfcConstants": [
         "flext_ldif.servers._rfc.constants",
         "FlextLdifServersRfcConstants",
-    ),
-    "FlextLdifServersRfcEntry": (
+    ],
+    "FlextLdifServersRfcEntry": [
         "flext_ldif.servers._rfc.entry",
         "FlextLdifServersRfcEntry",
-    ),
-    "FlextLdifServersRfcSchema": (
+    ],
+    "FlextLdifServersRfcSchema": [
         "flext_ldif.servers._rfc.schema",
         "FlextLdifServersRfcSchema",
-    ),
-    "FlextLdifServersTivoli": ("flext_ldif.servers.tivoli", "FlextLdifServersTivoli"),
-    "_base": ("flext_ldif.servers._base", ""),
-    "_oid": ("flext_ldif.servers._oid", ""),
-    "_oud": ("flext_ldif.servers._oud", ""),
-    "_rfc": ("flext_ldif.servers._rfc", ""),
-    "c": ("flext_ldif.servers._rfc.constants", "c"),
-    "logger": ("flext_ldif.servers.oid", "logger"),
+    ],
+    "FlextLdifServersTivoli": ["flext_ldif.servers.tivoli", "FlextLdifServersTivoli"],
+    "_base": ["flext_ldif.servers._base", ""],
+    "_oid": ["flext_ldif.servers._oid", ""],
+    "_oud": ["flext_ldif.servers._oud", ""],
+    "_rfc": ["flext_ldif.servers._rfc", ""],
+    "c": ["flext_ldif.servers._rfc.constants", "c"],
+    "logger": ["flext_ldif.servers.oid", "logger"],
 }
 
 __all__ = [

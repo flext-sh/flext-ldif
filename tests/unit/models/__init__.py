@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 
     from tests.unit.models.test_models import TestFlextLdifModels
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "TestFlextLdifModels": ("tests.unit.models.test_models", "TestFlextLdifModels"),
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "TestFlextLdifModels": ["tests.unit.models.test_models", "TestFlextLdifModels"],
 }
 
 __all__ = [

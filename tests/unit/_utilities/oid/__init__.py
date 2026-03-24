@@ -14,11 +14,11 @@ if TYPE_CHECKING:
     from flext_core import FlextTypes
     from tests.unit._utilities.oid.test_oid_utilities import TestFlextLdifUtilitiesOID
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "TestFlextLdifUtilitiesOID": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "TestFlextLdifUtilitiesOID": [
         "tests.unit._utilities.oid.test_oid_utilities",
         "TestFlextLdifUtilitiesOID",
-    ),
+    ],
 }
 
 __all__ = [
