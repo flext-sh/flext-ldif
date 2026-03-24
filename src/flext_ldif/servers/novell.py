@@ -129,7 +129,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             if any(
                 name.lower().startswith(
                     tuple(
-                        FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES
+                        FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES,
                     ),
                 )
                 for name in name_matches
@@ -308,7 +308,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                         if parts[0].strip():
                             attr_name = parts[0].strip()
                             if attr_name.lower() not in u.enum_values(
-                                c.Ldif.RfcAclPermission
+                                c.Ldif.RfcAclPermission,
                             ):
                                 attributes.append(attr_name)
                 acl = m.Ldif.Acl(
@@ -426,7 +426,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         @override
         def model_post_init(
-            self, _context: t.MutableConfigurationMapping | None, /
+            self,
+            _context: t.MutableConfigurationMapping | None,
+            /,
         ) -> None:
             """Initialize eDirectory entry quirk."""
 
@@ -435,7 +437,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             if not entry.attributes:
                 return r[m.Ldif.Entry].ok(entry)
             attributes: MutableMapping[str, MutableSequence[str]] = {
-                **entry.attributes.attributes
+                **entry.attributes.attributes,
             }
             try:
                 object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
@@ -456,7 +458,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 ]
                 processed_attributes[c.Ldif.DictKeys.OBJECTCLASS] = object_classes
                 new_attrs = m.Ldif.Attributes.model_validate({
-                    "attributes": processed_attributes
+                    "attributes": processed_attributes,
                 })
                 new_entry = entry.model_copy(update={"attributes": new_attrs})
                 return r[m.Ldif.Entry].ok(new_entry)

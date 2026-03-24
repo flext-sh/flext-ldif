@@ -167,7 +167,8 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
     def _calculate_scores(self, content: str) -> MutableMapping[str, int]:
         """Calculate detection scores for each server type."""
         scores: MutableMapping[str, int] = dict.fromkeys(
-            self._get_all_server_types(), 0
+            self._get_all_server_types(),
+            0,
         )
         scores[u.Ldif.get_server_type_value("GENERIC")] = 1
         content_lower = content.lower()
@@ -263,7 +264,8 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         return scores
 
     def _determine_server_type(
-        self, scores: MutableMapping[str, int]
+        self,
+        scores: MutableMapping[str, int],
     ) -> tuple[str, float]:
         """Determine the most likely server type from scores."""
         if not scores:

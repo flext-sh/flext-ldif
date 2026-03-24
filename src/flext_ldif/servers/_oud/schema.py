@@ -136,7 +136,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         )
 
     def _collect_attribute_extensions(
-        self, attr: m.Ldif.SchemaAttribute
+        self,
+        attr: m.Ldif.SchemaAttribute,
     ) -> MutableSequence[str]:
         """Collect OUD X-* extensions from attribute."""
         extensions: MutableSequence[str] = []

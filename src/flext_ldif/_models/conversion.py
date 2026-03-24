@@ -72,7 +72,8 @@ class FlextLdifModelsConversions:
         def convert(self) -> t.Ldif.ConvertValue | None:
             val = self.value
             if isinstance(val, Sequence) and not isinstance(
-                val, (str, bytes, bytearray)
+                val,
+                (str, bytes, bytearray),
             ):
                 return [
                     item if isinstance(item, t.Ldif.CONTAINER_TYPES) else str(item)
@@ -88,7 +89,8 @@ class FlextLdifModelsConversions:
         def convert(self) -> t.Ldif.ConvertValue | None:
             val = self.value
             if isinstance(val, Sequence) and not isinstance(
-                val, (str, bytes, bytearray)
+                val,
+                (str, bytes, bytearray),
             ):
                 return [
                     item if isinstance(item, t.Ldif.CONTAINER_TYPES) else str(item)

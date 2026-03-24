@@ -106,7 +106,8 @@ class FlextLdifServersBaseSchema(
         """Initialize schema quirk service with optional DI service injection."""
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
         service_kwargs: MutableMapping[
-            str, t.Scalar | t.ConfigMap | MutableSequence[t.Scalar]
+            str,
+            t.Scalar | t.ConfigMap | MutableSequence[t.Scalar],
         ] = {}
         for key, value in filtered_kwargs.items():
             if isinstance(value, t.SCALAR_TYPES):
@@ -262,7 +263,8 @@ class FlextLdifServersBaseSchema(
     @staticmethod
     def validate_and_track_oid(
         metadata_extensions: MutableMapping[
-            str, MutableSequence[str] | str | bool | None
+            str,
+            MutableSequence[str] | str | bool | None,
         ],
         oid_value: str | None,
         oid_name: str,

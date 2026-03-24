@@ -96,7 +96,7 @@ class EntryTestCase(BaseModel):
     scenario: EntryScenario = Field(description="Entry detection scenario identifier")
     entry_dn: str = Field(description="Entry distinguished name")
     attributes: Mapping[str, Sequence[str]] = Field(
-        description="Entry attributes mapped by name"
+        description="Entry attributes mapped by name",
     )
     expected_can_handle: bool = Field(description="Expected can_handle result")
 
@@ -233,7 +233,8 @@ class TestsFlextLdifNovellInitialization(s):
         tm.that(server.priority, eq=20)
 
     def test_schema_quirk_initialization(
-        self, schema_quirk: FlextLdifServersNovell.Schema
+        self,
+        schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test schema quirk is initialized."""
         tm.that(schema_quirk, none=False)
@@ -244,7 +245,9 @@ class TestNovellSchemaAttributeDetection:
 
     @pytest.mark.parametrize("test_case", ATTRIBUTE_TEST_CASES)
     def test_can_handle_attribute(
-        self, test_case: AttributeTestCase, schema_quirk: FlextLdifServersNovell.Schema
+        self,
+        test_case: AttributeTestCase,
+        schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test attribute detection for various scenarios."""
         result = schema_quirk.can_handle_attribute(test_case.attr_definition)
@@ -255,7 +258,8 @@ class TestNovellSchemaAttributeParsing:
     """Test schema attribute parsing."""
 
     def test_parse_attribute_success(
-        self, schema_quirk: FlextLdifServersNovell.Schema
+        self,
+        schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing Novell eDirectory attribute definition."""
         attr_def = "( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' DESC 'Password Policy DN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE )"
@@ -270,7 +274,8 @@ class TestNovellSchemaAttributeParsing:
         )
 
     def test_parse_attribute_with_syntax_length(
-        self, schema_quirk: FlextLdifServersNovell.Schema
+        self,
+        schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing attribute with syntax length specification."""
         attr_def = "( 2.16.840.1.113719.1.1.4.1.1 NAME 'nspmAdminGroup' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
@@ -282,7 +287,8 @@ class TestNovellSchemaAttributeParsing:
         )
 
     def test_parse_attribute_missing_oid(
-        self, schema_quirk: FlextLdifServersNovell.Schema
+        self,
+        schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing attribute without OID fails."""
         attr_def = "NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15"
@@ -311,7 +317,8 @@ class TestNovellSchemaObjectClassParsing:
     """Test schema objectClass parsing."""
 
     def test_parse_objectclass_structural(
-        self, schema_quirk: FlextLdifServersNovell.Schema
+        self,
+        schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing STRUCTURAL objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' DESC 'NDS Person' SUP top STRUCTURAL MUST ( cn ) MAY ( loginDisabled ) )"
@@ -327,25 +334,32 @@ class TestNovellSchemaObjectClassParsing:
         )
 
     def test_parse_objectclass_auxiliary(
-        self, schema_quirk: FlextLdifServersNovell.Schema
+        self,
+        schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing AUXILIARY objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.2 NAME 'nspmPasswordPolicy' AUXILIARY MAY ( nspmPasswordPolicyDN ) )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            schema_quirk, oc_def, expected_kind="AUXILIARY"
+            schema_quirk,
+            oc_def,
+            expected_kind="AUXILIARY",
         )
 
     def test_parse_objectclass_abstract(
-        self, schema_quirk: FlextLdifServersNovell.Schema
+        self,
+        schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing ABSTRACT objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.3 NAME 'ndsbase' ABSTRACT )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            schema_quirk, oc_def, expected_kind="ABSTRACT"
+            schema_quirk,
+            oc_def,
+            expected_kind="ABSTRACT",
         )
 
     def test_parse_objectclass_missing_oid(
-        self, schema_quirk: FlextLdifServersNovell.Schema
+        self,
+        schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing objectClass without OID fails."""
         oc_def = "NAME 'ndsPerson' SUP top STRUCTURAL"
@@ -357,7 +371,8 @@ class TestNovellSchemaObjectClassParsing:
             tm.that(result.error, has="missing an OID")
 
     def test_write_attribute_to_rfc(
-        self, schema_quirk: FlextLdifServersNovell.Schema
+        self,
+        schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test writing attribute to RFC string format."""
         attr_data = m.Ldif.SchemaAttribute(
@@ -379,7 +394,8 @@ class TestNovellSchemaObjectClassParsing:
         )
 
     def test_write_objectclass_to_rfc(
-        self, schema_quirk: FlextLdifServersNovell.Schema
+        self,
+        schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test writing objectClass to RFC string format."""
         oc_data = m.Ldif.SchemaObjectClass(
@@ -410,14 +426,17 @@ class TestNovellEntryDetection:
     """Test entry detection."""
 
     def test_entry_initialization(
-        self, entry_quirk: FlextLdifServersNovell.Entry
+        self,
+        entry_quirk: FlextLdifServersNovell.Entry,
     ) -> None:
         """Test entry quirk is initialized."""
         tm.that(entry_quirk is not None, eq=True)
 
     @pytest.mark.parametrize("test_case", ENTRY_TEST_CASES)
     def test_can_handle_entry(
-        self, test_case: EntryTestCase, entry_quirk: FlextLdifServersNovell.Entry
+        self,
+        test_case: EntryTestCase,
+        entry_quirk: FlextLdifServersNovell.Entry,
     ) -> None:
         """Test entry detection for various scenarios."""
         quirk_entry = entry_quirk

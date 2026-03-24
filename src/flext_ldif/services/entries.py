@@ -106,17 +106,18 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
 
     @staticmethod
     def get_entry_attribute(
-        entry: m.Ldif.Entry, attribute_name: str
+        entry: m.Ldif.Entry,
+        attribute_name: str,
     ) -> r[MutableSequence[str]]:
         """Read one attribute from entry."""
         if entry.attributes is None:
             return r[MutableSequence[str]].fail(
-                f"Attribute '{attribute_name}' not found"
+                f"Attribute '{attribute_name}' not found",
             )
         value = entry.attributes.attributes.get(attribute_name)
         if value is None or not value:
             return r[MutableSequence[str]].fail(
-                f"Attribute '{attribute_name}' not found"
+                f"Attribute '{attribute_name}' not found",
             )
         return r[MutableSequence[str]].ok(list(value))
 
@@ -127,10 +128,10 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
         """Get entry attributes mapping."""
         if entry.attributes is None:
             return r[MutableMapping[str, MutableSequence[str]]].fail(
-                "Entry has no attributes"
+                "Entry has no attributes",
             )
         attrs: MutableMapping[str, MutableSequence[str]] = dict(
-            entry.attributes.attributes
+            entry.attributes.attributes,
         )
         return r[MutableMapping[str, MutableSequence[str]]].ok(attrs)
 
@@ -293,7 +294,7 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
                 self._attributes_to_remove,
             )
         return r[MutableSequence[m.Ldif.Entry]].fail(
-            f"Unknown operation: {self._operation}"
+            f"Unknown operation: {self._operation}",
         )
 
     def get_normalized_attribute(
@@ -323,7 +324,8 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
         return r[MutableSequence[m.Ldif.Entry]].ok(results)
 
     def with_attributes_to_remove(
-        self, attributes_to_remove: MutableSequence[str]
+        self,
+        attributes_to_remove: MutableSequence[str],
     ) -> Self:
         """Set attributes targeted by remove operation."""
         self._attributes_to_remove = attributes_to_remove

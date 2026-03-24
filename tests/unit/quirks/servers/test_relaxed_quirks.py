@@ -122,7 +122,8 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         return FlextLdifServersRelaxed()
 
     def test_schema_initialization(
-        self, schema_quirk: FlextLdifServersRelaxed.Schema
+        self,
+        schema_quirk: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test relaxed schema quirk initialization."""
         tm.that(schema_quirk, none=False)
@@ -212,7 +213,8 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         tm.that(result.is_success, eq=expected_success)
 
     def test_parse_attribute_stores_original_definition(
-        self, schema_quirk: FlextLdifServersRelaxed.Schema
+        self,
+        schema_quirk: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test parse_attribute stores original definition for recovery."""
         original = "( 1.2.3.4 NAME 'test' SYNTAX 1.2.3 )"
@@ -224,7 +226,8 @@ class TestsTestFlextLdifRelaxedQuirks(s):
             tm.that(parsed.metadata.extensions.original_format, eq=original)
 
     def test_write_attribute_to_rfc(
-        self, schema_quirk: FlextLdifServersRelaxed.Schema
+        self,
+        schema_quirk: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test writing attribute back to RFC format."""
         attr_data = m.Ldif.SchemaAttribute(
@@ -275,7 +278,8 @@ class TestsTestFlextLdifRelaxedQuirks(s):
             tm.that(parsed.raw_acl, eq=acl_line)
 
     def test_write_acl_preserves_raw_content(
-        self, acl_quirk: FlextLdifServersRelaxed.Acl
+        self,
+        acl_quirk: FlextLdifServersRelaxed.Acl,
     ) -> None:
         """Test that writing ACL preserves raw content."""
         raw_acl = '(targetentry="cn=REDACTED_LDAP_BIND_PASSWORD")(version 3.0;acl "REDACTED_LDAP_BIND_PASSWORD";allow(all)'
@@ -292,14 +296,16 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         tm.that(written, eq=raw_acl)
 
     def test_entry_initialization(
-        self, entry_quirk: FlextLdifServersRelaxed.Entry
+        self,
+        entry_quirk: FlextLdifServersRelaxed.Entry,
     ) -> None:
         """Test relaxed entry quirk initialization."""
         tm.that(entry_quirk, none=False)
         tm.that(entry_quirk, is_=FlextLdifServersRelaxed.Entry)
 
     def test_entry_lenient_dn_parsing(
-        self, relaxed_instance: FlextLdifServersRelaxed
+        self,
+        relaxed_instance: FlextLdifServersRelaxed,
     ) -> None:
         """Test entry quirk accepts malformed c.DNs."""
         tm.that(hasattr(relaxed_instance, "entry_quirk") or True, eq=True)
@@ -377,7 +383,8 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         tm.that(hasattr(parsed, "name"), eq=True)
 
     def test_relaxed_mode_integration(
-        self, relaxed_instance: FlextLdifServersRelaxed
+        self,
+        relaxed_instance: FlextLdifServersRelaxed,
     ) -> None:
         """Test relaxed mode full integration."""
         tm.that(relaxed_instance, none=False)
@@ -386,7 +393,8 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         tm.that(hasattr(relaxed_instance, "entry_quirk"), eq=True)
 
     def test_relaxed_mode_priority(
-        self, schema_quirk: FlextLdifServersRelaxed.Schema
+        self,
+        schema_quirk: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test relaxed mode has appropriate priority (low = last resort)."""
         tm.that(schema_quirk, none=False)
@@ -432,7 +440,8 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         tm.that(result.is_success, eq=expected_success)
 
     def test_conversion_attribute_oid_to_rfc(
-        self, schema_quirk: FlextLdifServersRelaxed.Schema
+        self,
+        schema_quirk: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test attribute conversion from OID format to c.RFC."""
         attr_data = m.Ldif.SchemaAttribute(
@@ -459,7 +468,8 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         tm.that(written, has="orclGUID")
 
     def test_conversion_objectclass_oid_to_rfc(
-        self, schema_quirk: FlextLdifServersRelaxed.Schema
+        self,
+        schema_quirk: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test objectclass conversion from OID format to c.RFC."""
         oc_data = m.Ldif.SchemaObjectClass(

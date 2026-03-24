@@ -60,7 +60,9 @@ class TestZeroDataLossOidOud:
         return loader.entries()
 
     def test_oid_parse_preserves_original_ldif(
-        self, api: FlextLdif, oid_fixture: str
+        self,
+        api: FlextLdif,
+        oid_fixture: str,
     ) -> None:
         """Test that OID parsing preserves original LDIF in metadata."""
         result = api.parse(oid_fixture, server_type="oid")
@@ -84,7 +86,9 @@ class TestZeroDataLossOidOud:
             assert "dn:" in original_ldif.lower(), "Original LDIF missing DN"
 
     def test_oud_parse_preserves_original_ldif(
-        self, api: FlextLdif, oud_fixture: str
+        self,
+        api: FlextLdif,
+        oud_fixture: str,
     ) -> None:
         """Test that OUD parsing preserves original LDIF in metadata."""
         result = api.parse(oud_fixture, server_type="oud")
@@ -101,7 +105,9 @@ class TestZeroDataLossOidOud:
             )
 
     def test_oid_boolean_conversion_tracking(
-        self, api: FlextLdif, oid_fixture: str
+        self,
+        api: FlextLdif,
+        oid_fixture: str,
     ) -> None:
         """Test that boolean conversions are tracked in metadata."""
         result = api.parse(oid_fixture, server_type="oid")
@@ -140,7 +146,9 @@ class TestZeroDataLossOidOud:
                     )
 
     def test_oid_oud_conversion_preserves_all_data(
-        self, api: FlextLdif, oid_fixture: str
+        self,
+        api: FlextLdif,
+        oid_fixture: str,
     ) -> None:
         """Test OID→OUD conversion preserves ALL data in metadata."""
         parse_result = api.parse(oid_fixture, server_type="oid")
@@ -161,14 +169,15 @@ class TestZeroDataLossOidOud:
                 and "entry_original_ldif" in oid_entry.metadata.original_strings
             ):
                 original_oid_ldif_raw = oid_entry.metadata.original_strings.get(
-                    "entry_original_ldif"
+                    "entry_original_ldif",
                 )
                 if isinstance(original_oid_ldif_raw, str):
                     original_oid_ldif = original_oid_ldif_raw
                     assert original_oid_ldif, "Original OID LDIF lost"
 
             def check_no_data_loss(
-                original: m.Ldif.Entry, converted: m.Ldif.Entry
+                original: m.Ldif.Entry,
+                converted: m.Ldif.Entry,
             ) -> tuple[bool, t.StrSequence]:
                 """Check for data loss between original and converted entries."""
                 lost_attrs: t.StrSequence = []
@@ -192,7 +201,9 @@ class TestZeroDataLossOidOud:
             assert no_loss, f"Data loss detected: {lost_attrs}"
 
     def test_round_trip_oid_oud_oid_preserves_formatting(
-        self, api: FlextLdif, oid_fixture: str
+        self,
+        api: FlextLdif,
+        oid_fixture: str,
     ) -> None:
         """Test OID→OUD→OID round-trip preserves ALL formatting."""
         parse_oid = api.parse(oid_fixture, server_type="oid")
@@ -222,7 +233,7 @@ class TestZeroDataLossOidOud:
                 and isinstance(orig.metadata.original_strings, dict)
             ):
                 original_ldif_raw = orig.metadata.original_strings.get(
-                    "entry_original_ldif"
+                    "entry_original_ldif",
                 )
                 if isinstance(original_ldif_raw, str):
                     original_ldif = original_ldif_raw
@@ -235,7 +246,7 @@ class TestZeroDataLossOidOud:
                     ):
                         roundtrip_original_raw = (
                             roundtrip.metadata.original_strings.get(
-                                "entry_original_ldif"
+                                "entry_original_ldif",
                             )
                         )
                         if isinstance(roundtrip_original_raw, str):
@@ -244,7 +255,9 @@ class TestZeroDataLossOidOud:
                             assert roundtrip_original
 
     def test_minimal_differences_tracking(
-        self, api: FlextLdif, oid_fixture: str
+        self,
+        api: FlextLdif,
+        oid_fixture: str,
     ) -> None:
         """Test that minimal differences are tracked for all conversions."""
         result = api.parse(oid_fixture, server_type="oid")
@@ -285,7 +298,9 @@ class TestZeroDataLossOidOud:
             _verify_soft_deleted_attributes(entry)
 
     def test_conversion_history_tracking(
-        self, api: FlextLdif, oid_fixture: str
+        self,
+        api: FlextLdif,
+        oid_fixture: str,
     ) -> None:
         """Test that conversion history is tracked in metadata."""
         result = api.parse(oid_fixture, server_type="oid")
@@ -301,7 +316,9 @@ class TestZeroDataLossOidOud:
                 )
 
     def test_original_strings_preservation(
-        self, api: FlextLdif, oid_fixture: str
+        self,
+        api: FlextLdif,
+        oid_fixture: str,
     ) -> None:
         """Test that ALL original strings are preserved in metadata."""
         result = api.parse(oid_fixture, server_type="oid")
@@ -315,7 +332,7 @@ class TestZeroDataLossOidOud:
             )
             if isinstance(entry.metadata.original_strings, dict):
                 original_ldif_raw = entry.metadata.original_strings.get(
-                    "entry_original_ldif"
+                    "entry_original_ldif",
                 )
                 if isinstance(original_ldif_raw, str):
                     original_ldif = original_ldif_raw
@@ -332,7 +349,9 @@ class TestZeroDataLossOidOud:
                     )
 
     def test_restore_original_format_option(
-        self, api: FlextLdif, oid_fixture: str
+        self,
+        api: FlextLdif,
+        oid_fixture: str,
     ) -> None:
         """Test that restore_original_format option restores exact original."""
         parse_result = api.parse(oid_fixture, server_type="oid")
@@ -352,7 +371,7 @@ class TestZeroDataLossOidOud:
                 and isinstance(entry.metadata.original_strings, dict)
             ):
                 original_ldif_raw = entry.metadata.original_strings.get(
-                    "entry_original_ldif"
+                    "entry_original_ldif",
                 )
                 if isinstance(original_ldif_raw, str):
                     original_ldif = original_ldif_raw

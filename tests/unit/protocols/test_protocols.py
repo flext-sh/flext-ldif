@@ -115,7 +115,7 @@ class TestsTestFlextLdifProtocols(s):
             )
             tm.that(
                 callable(
-                    getattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_PARSE)
+                    getattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_PARSE),
                 ),
                 eq=True,
             )
@@ -125,7 +125,7 @@ class TestsTestFlextLdifProtocols(s):
             )
             tm.that(
                 callable(
-                    getattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_WRITE)
+                    getattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_WRITE),
                 ),
                 eq=True,
             )
@@ -141,7 +141,7 @@ class TestsTestFlextLdifProtocols(s):
                     getattr(
                         schema,
                         TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_ATTRIBUTE,
-                    )
+                    ),
                 ),
                 eq=True,
             )
@@ -157,7 +157,7 @@ class TestsTestFlextLdifProtocols(s):
                     getattr(
                         schema,
                         TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_OBJECTCLASS,
-                    )
+                    ),
                 ),
                 eq=True,
             )
@@ -174,7 +174,8 @@ class TestsTestFlextLdifProtocols(s):
             tm.that(hasattr(constants_cls, "SERVER_TYPE"), eq=True)
             server_type = constants_cls.SERVER_TYPE
             tm.that(
-                isinstance(server_type, str) or hasattr(server_type, "value"), eq=True
+                isinstance(server_type, str) or hasattr(server_type, "value"),
+                eq=True,
             )
             tm.that(hasattr(constants_cls, "PRIORITY"), eq=True)
             priority = constants_cls.PRIORITY
@@ -199,7 +200,9 @@ class TestsTestFlextLdifProtocols(s):
         """Get all server implementations for testing."""
         return [
             cls.ProtocolServer(
-                name=name, server_class=server_class, schema_class=schema_class
+                name=name,
+                server_class=server_class,
+                schema_class=schema_class,
             )
             for name, server_class, schema_class in _create_server_implementations()
         ]
@@ -214,7 +217,8 @@ class TestsTestFlextLdifProtocols(s):
     def test_quirks_namespace_exists(self) -> None:
         """Test that Quirks namespace exists in Ldif namespace."""
         tm.that(
-            hasattr(FlextLdifProtocols.Ldif, self.Constants.NAMESPACE_QUIRKS), eq=True
+            hasattr(FlextLdifProtocols.Ldif, self.Constants.NAMESPACE_QUIRKS),
+            eq=True,
         )
 
     def test_schema_satisfies_protocol_oid(self) -> None:
@@ -261,24 +265,27 @@ class TestsTestFlextLdifProtocols(s):
         return FlextLdifServersOid.Schema()
 
     def test_schema_has_required_methods(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test schema has all required protocol methods."""
         self.Helpers.verify_protocol_methods(oid_schema)
 
     def test_parse_returns_flext_result(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test parse method returns r."""
         result = oid_schema.parse(self.Constants.SAMPLE_ATTR_DEF)
         tm.that(result, is_=r)
 
     def test_can_handle_returns_bool(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test can_handle methods return bool."""
         attr_result = oid_schema.can_handle_attribute(
-            self.Constants.SAMPLE_ATTR_DEF_SIMPLE
+            self.Constants.SAMPLE_ATTR_DEF_SIMPLE,
         )
         tm.that(attr_result, is_=bool)
         oc_result = oid_schema.can_handle_objectclass(self.Constants.SAMPLE_OC_DEF)
@@ -309,7 +316,8 @@ class TestsTestFlextLdifProtocols(s):
         """Test protocol can be used for type checking."""
         oid_schema: p.Ldif.SchemaQuirk = FlextLdifServersOid.Schema()
         is_schema = hasattr(oid_schema, self.Constants.ATTR_PARSE) and hasattr(
-            oid_schema, self.Constants.ATTR_WRITE
+            oid_schema,
+            self.Constants.ATTR_WRITE,
         )
         tm.that(is_schema, eq=True)
 

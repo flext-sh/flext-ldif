@@ -24,18 +24,21 @@ def fixtures_dir() -> Path:
 
 @pytest.fixture(scope="module")
 def migration_inputs(
-    fixtures_dir: Path, tmp_path_factory: pytest.TempPathFactory
+    fixtures_dir: Path,
+    tmp_path_factory: pytest.TempPathFactory,
 ) -> Mapping[str, Path]:
     base_dir = tmp_path_factory.mktemp("quirks-transform-inputs")
     oid_input_dir = base_dir / "oid_input"
     oid_input_dir.mkdir()
     shutil.copy(
-        fixtures_dir / "oid" / "oid_entries_fixtures.ldif", oid_input_dir / "data.ldif"
+        fixtures_dir / "oid" / "oid_entries_fixtures.ldif",
+        oid_input_dir / "data.ldif",
     )
     oud_input_dir = base_dir / "oud_input"
     oud_input_dir.mkdir()
     shutil.copy(
-        fixtures_dir / "oud" / "oud_entries_fixtures.ldif", oud_input_dir / "data.ldif"
+        fixtures_dir / "oud" / "oud_entries_fixtures.ldif",
+        oud_input_dir / "data.ldif",
     )
     return {"oid": oid_input_dir, "oud": oud_input_dir}
 
@@ -52,7 +55,10 @@ class TestOidQuirksTransformations:
         return FlextLdif.get_instance()
 
     def test_oid_parse_and_transform_schema(
-        self, api: FlextLdif, fixtures_dir: Path, tmp_path: Path
+        self,
+        api: FlextLdif,
+        fixtures_dir: Path,
+        tmp_path: Path,
     ) -> None:
         """Test OID schema parsing and transformation."""
         fixture_path = fixtures_dir / "oid" / "oid_schema_fixtures.ldif"
@@ -65,7 +71,10 @@ class TestOidQuirksTransformations:
             assert write_result.is_success or write_result.is_failure
 
     def test_oid_parse_and_transform_acl(
-        self, api: FlextLdif, fixtures_dir: Path, tmp_path: Path
+        self,
+        api: FlextLdif,
+        fixtures_dir: Path,
+        tmp_path: Path,
     ) -> None:
         """Test OID ACL parsing and transformation."""
         fixture_path = fixtures_dir / "oid" / "oid_acl_fixtures.ldif"
@@ -78,7 +87,10 @@ class TestOidQuirksTransformations:
             assert write_result.is_success or write_result.is_failure
 
     def test_oid_to_openldap_migration(
-        self, api: FlextLdif, migration_inputs: Mapping[str, Path], tmp_path: Path
+        self,
+        api: FlextLdif,
+        migration_inputs: Mapping[str, Path],
+        tmp_path: Path,
     ) -> None:
         """Test OID to OpenLDAP migration."""
         output_dir = tmp_path / "openldap_output"
@@ -104,7 +116,10 @@ class TestOudQuirksTransformations:
         return FlextLdif.get_instance()
 
     def test_oud_parse_and_transform_schema(
-        self, api: FlextLdif, fixtures_dir: Path, tmp_path: Path
+        self,
+        api: FlextLdif,
+        fixtures_dir: Path,
+        tmp_path: Path,
     ) -> None:
         """Test OUD schema parsing and transformation."""
         fixture_path = fixtures_dir / "oud" / "oud_schema_fixtures.ldif"
@@ -117,7 +132,10 @@ class TestOudQuirksTransformations:
             assert write_result.is_success or write_result.is_failure
 
     def test_oud_parse_and_transform_acl(
-        self, api: FlextLdif, fixtures_dir: Path, tmp_path: Path
+        self,
+        api: FlextLdif,
+        fixtures_dir: Path,
+        tmp_path: Path,
     ) -> None:
         """Test OUD ACL parsing and transformation."""
         fixture_path = fixtures_dir / "oud" / "oud_acl_fixtures.ldif"
@@ -130,7 +148,10 @@ class TestOudQuirksTransformations:
             assert write_result.is_success or write_result.is_failure
 
     def test_oid_to_oud_migration(
-        self, api: FlextLdif, migration_inputs: Mapping[str, Path], tmp_path: Path
+        self,
+        api: FlextLdif,
+        migration_inputs: Mapping[str, Path],
+        tmp_path: Path,
     ) -> None:
         """Test OID to OUD migration."""
         output_dir = tmp_path / "oud_output"
@@ -144,7 +165,10 @@ class TestOudQuirksTransformations:
         assert result.is_success or result.is_failure
 
     def test_oud_to_openldap_migration(
-        self, api: FlextLdif, migration_inputs: Mapping[str, Path], tmp_path: Path
+        self,
+        api: FlextLdif,
+        migration_inputs: Mapping[str, Path],
+        tmp_path: Path,
     ) -> None:
         """Test OUD to OpenLDAP migration."""
         output_dir = tmp_path / "openldap_oud_output"

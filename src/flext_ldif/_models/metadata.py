@@ -147,7 +147,8 @@ class FlextLdifModelsMetadata:
         """Transformation step information stored in metadata."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
+            extra="forbid",
+            validate_assignment=True,
         )
         step: str | None = None
         server: str | None = None

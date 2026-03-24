@@ -74,7 +74,8 @@ class TestsTestFlextLdifServiceAPIs:
 
         @staticmethod
         def verify_import(
-            check_type: TestsTestFlextLdifServiceAPIs.ImportCheck, check_target: str
+            check_type: TestsTestFlextLdifServiceAPIs.ImportCheck,
+            check_target: str,
         ) -> None:
             """Verify import availability based on check type."""
             match check_type:
@@ -137,7 +138,8 @@ class TestsTestFlextLdifServiceAPIs:
         return FlextLdifStatistics()
 
     @pytest.mark.parametrize(
-        "service_type", [ServiceType.DN_SERVICE, ServiceType.STATISTICS_SERVICE]
+        "service_type",
+        [ServiceType.DN_SERVICE, ServiceType.STATISTICS_SERVICE],
     )
     def test_service_instantiation(
         self,
@@ -163,7 +165,9 @@ class TestsTestFlextLdifServiceAPIs:
         ],
     )
     def test_imports_available(
-        self, check_type: ImportCheck, check_target: str
+        self,
+        check_type: ImportCheck,
+        check_target: str,
     ) -> None:
         """Test import availability with parametrized test cases."""
         self.Helpers.verify_import(check_type, check_target)

@@ -99,7 +99,7 @@ class FlextLdifUtilitiesPipeline:
                 func_result = func(entry)
                 if func_result is None:
                     return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(
-                        FlextLdifUtilitiesPipeline.FILTERED
+                        FlextLdifUtilitiesPipeline.FILTERED,
                     )
                 if isinstance(func_result, r):
                     if func_result.is_success:
@@ -108,17 +108,18 @@ class FlextLdifUtilitiesPipeline:
                             m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered
                         ].ok(entry_value)
                     return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].fail(
-                        func_result.error
+                        func_result.error,
                     )
                 return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(
-                    func_result
+                    func_result,
                 )
 
             self._steps.append((name, wrapped_func))
             return self
 
         def execute(
-            self, entries: MutableSequence[m.Ldif.Entry]
+            self,
+            entries: MutableSequence[m.Ldif.Entry],
         ) -> r[MutableSequence[m.Ldif.Entry]]:
             """Execute pipeline on a sequence of entries."""
 
@@ -147,14 +148,15 @@ class FlextLdifUtilitiesPipeline:
             return r[MutableSequence[m.Ldif.Entry]].ok(results)
 
         def execute_one(
-            self, entry: m.Ldif.Entry
+            self,
+            entry: m.Ldif.Entry,
         ) -> r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered]:
             """Execute pipeline on a single entry."""
             current: m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered = entry
             for step_name, step_func in self._steps:
                 if isinstance(current, FlextLdifUtilitiesPipeline._Filtered):
                     return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(
-                        FlextLdifUtilitiesPipeline.FILTERED
+                        FlextLdifUtilitiesPipeline.FILTERED,
                     )
                 result = step_func(current)
                 if result.is_failure:
@@ -179,10 +181,10 @@ class FlextLdifUtilitiesPipeline:
             ) -> r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered]:
                 if entry_filter.matches(entry):
                     return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(
-                        entry
+                        entry,
                     )
                 return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(
-                    FlextLdifUtilitiesPipeline.FILTERED
+                    FlextLdifUtilitiesPipeline.FILTERED,
                 )
 
             self._steps.append((step_name, filter_func))
@@ -246,7 +248,8 @@ class FlextLdifUtilitiesPipeline:
             self._max_errors = max_errors
 
         def validate(
-            self, entries: MutableSequence[m.Ldif.Entry]
+            self,
+            entries: MutableSequence[m.Ldif.Entry],
         ) -> r[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]:
             """Validate a sequence of entries."""
             results: MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult] = []
@@ -265,11 +268,12 @@ class FlextLdifUtilitiesPipeline:
                 if not self._collect_all and (not validation.is_valid):
                     break
             return r[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]].ok(
-                results
+                results,
             )
 
         def validate_one(
-            self, entry: m.Ldif.Entry
+            self,
+            entry: m.Ldif.Entry,
         ) -> r[FlextLdifUtilitiesPipeline.ValidationResult]:
             """Validate a single entry."""
             errors: MutableSequence[str] = []

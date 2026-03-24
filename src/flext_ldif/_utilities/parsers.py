@@ -20,13 +20,15 @@ class FlextLdifUtilitiesParsers:
         ldif_content: str,
         server_type: str,
         parse_attributes_hook: Callable[
-            [MutableSequence[str]], MutableMapping[str, MutableSequence[str]]
+            [MutableSequence[str]],
+            MutableMapping[str, MutableSequence[str]],
         ],
         *,
         parse_dn_hook: Callable[[str], str | None] | None = None,
         transform_entry_hook: Callable[[m.Ldif.Entry], m.Ldif.Entry] | None = None,
         parse_comments_hook: Callable[
-            [MutableSequence[str]], MutableMapping[str, MutableSequence[str]]
+            [MutableSequence[str]],
+            MutableMapping[str, MutableSequence[str]],
         ]
         | None = None,
     ) -> r[m.Ldif.Entry]:
@@ -113,7 +115,8 @@ class FlextLdifUtilitiesParsers:
         definition: str,
         server_type: str,
         parse_parts_hook: Callable[
-            [str], MutableMapping[str, str | MutableSequence[str] | None]
+            [str],
+            MutableMapping[str, str | MutableSequence[str] | None],
         ],
         *,
         transform_hook: Callable[
@@ -218,7 +221,7 @@ class FlextLdifUtilitiesParsers:
         ) as e:
             logger.exception("Failed to parse content", server_type=server_type)
             return r[MutableSequence[m.Ldif.Entry]].fail(
-                f"Failed to parse content: {e}"
+                f"Failed to parse content: {e}",
             )
 
 

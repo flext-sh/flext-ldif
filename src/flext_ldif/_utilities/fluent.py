@@ -230,7 +230,10 @@ class FlextLdifUtilitiesFluent:
         def convert_booleans(
             self,
             format_str: Literal[
-                "TRUE/FALSE", "true/false", "1/0", "yes/no"
+                "TRUE/FALSE",
+                "true/false",
+                "1/0",
+                "yes/no",
             ] = "TRUE/FALSE",
         ) -> Self:
             """Convert boolean attribute values."""

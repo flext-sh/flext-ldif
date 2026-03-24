@@ -66,7 +66,8 @@ def parse_and_evaluate_acls() -> None:
         required_perms = cast("Mapping[str, bool]", eval_context["permissions"])
     acls_for_eval = [m.Ldif.Acl.model_validate(acl) for acl in acls]
     evaluation_result = api.acl_service.evaluate_acl_context(
-        acls_for_eval, required_perms
+        acls_for_eval,
+        required_perms,
     )
     if evaluation_result.is_success:
         allowed = evaluation_result.value
@@ -105,7 +106,7 @@ def execute_acl_service() -> None:
             "objectClass": ["organizationalUnit"],
             "ou": ["Test"],
             "aci": [
-                '(target="ldap:///ou=Test,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Test ACL"; allow (read) userdn="ldap:///anyone";)'
+                '(target="ldap:///ou=Test,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Test ACL"; allow (read) userdn="ldap:///anyone";)',
             ],
         },
     )

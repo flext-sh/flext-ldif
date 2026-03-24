@@ -164,7 +164,8 @@ class FlextLdifModelsCollections:
             raise TypeError(msg)
 
         def __getitem__(
-            self, category: str
+            self,
+            category: str,
         ) -> MutableSequence[FlextLdifModelsDomains.Entry]:
             return self._entry_categories()[category]
 

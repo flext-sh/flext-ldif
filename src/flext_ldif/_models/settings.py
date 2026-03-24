@@ -148,7 +148,8 @@ class FlextLdifModelsSettings:
         """LDIF file loading configuration."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=False, validate_assignment=True
+            frozen=False,
+            validate_assignment=True,
         )
         file_path: Annotated[str, Field()] = ""
         encoding: Annotated[str, Field()] = "utf-8"
@@ -159,7 +160,8 @@ class FlextLdifModelsSettings:
         """Schema parsing configuration."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=False, validate_assignment=True
+            frozen=False,
+            validate_assignment=True,
         )
         parse_attributes: Annotated[bool, Field()] = True
         parse_objectclasses: Annotated[bool, Field()] = True
@@ -170,7 +172,8 @@ class FlextLdifModelsSettings:
         """Validation rule set configuration."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=False, validate_assignment=True
+            frozen=False,
+            validate_assignment=True,
         )
         name: Annotated[str, Field()] = "default"
         strict_mode: Annotated[bool, Field()] = False
@@ -853,7 +856,8 @@ class FlextLdifModelsSettings:
         """
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="allow", validate_assignment=True
+            extra="allow",
+            validate_assignment=True,
         )
         user_id: Annotated[
             str | None,
@@ -1139,7 +1143,7 @@ class FlextLdifModelsSettings:
             StringConstraints(min_length=1, max_length=50, pattern="^[A-Za-z0-9._-]+$"),
         ]
         allowed_encodings: Annotated[MutableSequence[str], Field()] = Field(
-            default_factory=list
+            default_factory=list,
         )
 
     class DnCaseRules(FlextModels.Value):

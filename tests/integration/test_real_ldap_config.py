@@ -59,7 +59,9 @@ class TestRealLdapRailwayComposition:
     """Test railway-oriented r composition (write -> parse -> validate)."""
 
     def test_railway_parse_validate_write_cycle(
-        self, flext_api: FlextLdif, tmp_path: Path
+        self,
+        flext_api: FlextLdif,
+        tmp_path: Path,
     ) -> None:
         """Test r railway composition: write -> parse -> validate."""
         entry_result = flext_api.models.Ldif.Entry.create(
@@ -81,8 +83,8 @@ class TestRealLdapRailwayComposition:
             .flat_map(lambda _: flext_api.parse(output_file))
             .flat_map(
                 lambda entries: flext_api.validate_entries(entries).map(
-                    lambda _: entries
-                )
+                    lambda _: entries,
+                ),
             )
         )
         assert result.is_success

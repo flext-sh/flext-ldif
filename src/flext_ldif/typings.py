@@ -81,7 +81,8 @@ class FlextLdifTypes(FlextTypes):
         type ParseMethodArg = str
         type ParseMethodReturn = r[FlextTypes.Scalar | list[str] | None]
         type ParseMethod = Callable[
-            [FlextTypes.NormalizedValue, str], ParseMethodReturn
+            [FlextTypes.NormalizedValue, str],
+            ParseMethodReturn,
         ]
         type ParseMethodDecorator = Callable[[ParseMethod], ParseMethod]
         type WriteMethodArg = FlextTypes.Scalar | list[str] | None
@@ -92,7 +93,8 @@ class FlextLdifTypes(FlextTypes):
             | r[FlextTypes.Scalar | list[str] | None]
         )
         type WriteMethod = Callable[
-            [FlextTypes.NormalizedValue, WriteMethodArg], WriteMethodReturn
+            [FlextTypes.NormalizedValue, WriteMethodArg],
+            WriteMethodReturn,
         ]
         type WriteMethodDecorator = Callable[[WriteMethod], WriteMethod]
         type SafeMethod = Callable[
@@ -137,7 +139,13 @@ class FlextLdifTypes(FlextTypes):
         )
 
         type ConversionTargetType = Literal[
-            "str", "int", "float", "bool", "list", "tuple", "dict"
+            "str",
+            "int",
+            "float",
+            "bool",
+            "list",
+            "tuple",
+            "dict",
         ]
         type ResultValue[T] = T
         type DN = str

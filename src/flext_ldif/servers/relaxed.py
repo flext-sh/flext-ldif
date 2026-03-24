@@ -292,7 +292,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                logger.debug(f"Relaxed attribute parse exception: {e}")
+                logger.debug("Relaxed attribute parse exception: %s", e)
                 return r[m.Ldif.SchemaAttribute].fail(
                     f"Failed to parse attribute definition: {e}",
                 )
@@ -443,7 +443,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def can_handle_acl(
-            self, acl_line: str | m.Ldif.Acl | t.NormalizedValue
+            self,
+            acl_line: str | m.Ldif.Acl | t.NormalizedValue,
         ) -> bool:
             """Accept any ACL line in relaxed mode."""
             _ = acl_line
@@ -476,7 +477,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                                 "metadata": m.Ldif.QuirkMetadata.model_validate({
                                     "quirk_type": self._get_server_type(),
                                     "extensions": m.Ldif.DynamicMetadata.model_validate({
-                                        "original_format": acl_line.strip()
+                                        "original_format": acl_line.strip(),
                                     }),
                                 }),
                             },
@@ -525,7 +526,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                logger.debug(f"Relaxed ACL parse failed: {e}")
+                logger.debug("Relaxed ACL parse failed: %s", e)
                 return r[m.Ldif.Acl].fail(f"Failed to parse ACL: {e}")
 
         @override
@@ -587,7 +588,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                logger.debug(f"DN normalization exception: {e}")
+                logger.debug("DN normalization exception: %s", e)
                 return r[str].fail(f"DN normalization failed: {e}")
 
         def process_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
@@ -709,7 +710,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                logger.debug(f"Relaxed entry creation failed: {e}")
+                logger.debug("Relaxed entry creation failed: %s", e)
                 return r[m.Ldif.Entry].fail(f"Failed to parse entry: {e}")
 
         @override
@@ -754,7 +755,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                logger.debug(f"Write entry failed: {e}")
+                logger.debug("Write entry failed: %s", e)
                 return r[str].fail(f"Failed to write entry: {e}")
 
 

@@ -92,7 +92,8 @@ class FlextLdifModels(FlextModels):
             rfc_subject_type: Annotated[str, Field(default="")]
             oid_subject_value: Annotated[str, Field(default="")]
             perms_dict: Annotated[
-                MutableMapping[str, bool], Field(default_factory=dict)
+                MutableMapping[str, bool],
+                Field(default_factory=dict),
             ]
             target_dn: Annotated[str, Field(default="entry")]
             target_attrs: Annotated[MutableSequence[str], Field(default_factory=list)]
@@ -141,7 +142,8 @@ class FlextLdifModels(FlextModels):
                 Field(default_factory=dict),
             ]
             server_priorities: Annotated[
-                MutableMapping[str, int], Field(default_factory=dict)
+                MutableMapping[str, int],
+                Field(default_factory=dict),
             ]
 
 

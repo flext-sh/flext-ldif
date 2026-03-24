@@ -201,7 +201,9 @@ class FlextLdifUtilitiesFunctional:
 
     @staticmethod
     def fold[T, U](
-        items: MutableSequence[T], folder: Callable[[U, T], U], initial: U
+        items: MutableSequence[T],
+        folder: Callable[[U, T], U],
+        initial: U,
     ) -> U:
         """Fold items using folder function (mnemonic: fd)."""
         result = initial
@@ -309,7 +311,9 @@ class FlextLdifUtilitiesFunctional:
 
     @staticmethod
     def get[T](
-        data: MutableMapping[str, T], key: str, default: T | None = None
+        data: MutableMapping[str, T],
+        key: str,
+        default: T | None = None,
     ) -> T | None:
         """Get value from dict with default (mnemonic: gt)."""
         return data.get(key, default)
@@ -328,7 +332,8 @@ class FlextLdifUtilitiesFunctional:
 
     @staticmethod
     def evolve[T](
-        data: MutableMapping[str, T], updates: MutableMapping[str, T]
+        data: MutableMapping[str, T],
+        updates: MutableMapping[str, T],
     ) -> MutableMapping[str, T]:
         """Update dict with changes (mnemonic: ev)."""
         return {**data, **updates}
@@ -721,7 +726,7 @@ class FlextLdifUtilitiesFunctional:
                 )
                 if isinstance(normalized_obj, dict):
                     return FlextLdifUtilitiesFunctional._to_general(
-                        normalized_obj.get(key)
+                        normalized_obj.get(key),
                     )
                 return None
 

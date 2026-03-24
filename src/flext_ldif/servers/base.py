@@ -28,7 +28,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     """Base class for LDIF/LDAP server quirks as FlextService V2."""
 
     model_config: ClassVar[ConfigDict] = ConfigDict(
-        arbitrary_types_allowed=True, extra="allow"
+        arbitrary_types_allowed=True,
+        extra="allow",
     )
     server_type: ClassVar[str]
     priority: ClassVar[int]

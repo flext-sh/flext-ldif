@@ -173,7 +173,7 @@ class FlextLdifUtilitiesCollectionLdif:
             filtered: t.MutableContainerMapping = {}
             for key, value in merged.items():
                 if filter_empty and FlextLdifUtilitiesCollectionLdif.is_empty_value(
-                    value
+                    value,
                 ):
                     continue
                 filtered[key] = value
@@ -334,12 +334,12 @@ class FlextLdifUtilitiesCollectionLdif:
                 case Mapping() as mapping_items:
                     raw_value = mapping_items.get(key_or_n, default)
                     value = FlextLdifUtilitiesCollectionLdif.to_config_map_value(
-                        raw_value
+                        raw_value,
                     )
                 case _ if getattr(data_or_items, key_or_n, None) is not None:
                     raw_attr = getattr(data_or_items, key_or_n, default)
                     value = FlextLdifUtilitiesCollectionLdif.to_config_map_value(
-                        raw_attr
+                        raw_attr,
                     )
                 case _:
                     value = default
@@ -780,7 +780,7 @@ class FlextLdifUtilitiesCollectionLdif:
                 for pred, result_val in pairs:
                     evaluated = False
                     if callable(
-                        pred
+                        pred,
                     ) and FlextLdifUtilitiesCollectionLdif.is_no_arg_callable(pred):
                         with contextlib.suppress(TypeError):
                             call_result = pred()
@@ -840,7 +840,8 @@ class FlextLdifUtilitiesCollectionLdif:
 
     @classmethod
     def comp(
-        cls, *fns: Callable[..., t.NormalizedValue]
+        cls,
+        *fns: Callable[..., t.NormalizedValue],
     ) -> Callable[..., t.NormalizedValue]:
         """Compose using FlextUtilities.chain() (mnemonic: cp)."""
         if not fns:
@@ -1019,7 +1020,7 @@ class FlextLdifUtilitiesCollectionLdif:
             items_list = [
                 {
                     str(key): FlextLdifUtilitiesCollectionLdif.to_config_map_value(
-                        value
+                        value,
                     )
                     for key, value in items.items()
                 },
@@ -1029,7 +1030,7 @@ class FlextLdifUtilitiesCollectionLdif:
                 if isinstance(item, Mapping):
                     items_list.append({
                         str(key): FlextLdifUtilitiesCollectionLdif.to_config_map_value(
-                            value
+                            value,
                         )
                         for key, value in item.items()
                     })
@@ -1184,7 +1185,8 @@ class FlextLdifUtilitiesCollectionLdif:
 
     @classmethod
     def pairs(
-        cls, d: t.MutableContainerMapping
+        cls,
+        d: t.MutableContainerMapping,
     ) -> MutableSequence[tuple[str, t.NormalizedValue]]:
         """Convert dict/mapping to list of (key, value) tuples (mnemonic: pr)."""
         return list(d.items())

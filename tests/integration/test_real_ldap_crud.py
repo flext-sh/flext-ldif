@@ -78,13 +78,17 @@ class TestRealLdapCRUD:
             {"mail": [("MODIFY_REPLACE", ["updated_crud@example.com"])]},
         )
         ldap_connection.search(
-            str(person_entry.dn), "(objectClass=*)", attributes=["*"]
+            str(person_entry.dn),
+            "(objectClass=*)",
+            attributes=["*"],
         )
         updated_entry = ldap_connection.entries[0]
         assert updated_entry["mail"].value == "updated_crud@example.com"
         ldap_connection.delete(str(person_entry.dn))
         result = ldap_connection.search(
-            str(person_entry.dn), "(objectClass=*)", search_scope="BASE"
+            str(person_entry.dn),
+            "(objectClass=*)",
+            search_scope="BASE",
         )
         assert not result or not ldap_connection.entries
 
@@ -119,7 +123,8 @@ class TestRealLdapBatchOperations:
             if result.is_success:
                 unwrapped_entry = result.value
                 if hasattr(unwrapped_entry, "dn") and hasattr(
-                    unwrapped_entry, "attributes"
+                    unwrapped_entry,
+                    "attributes",
                 ):
                     entries.append(unwrapped_entry)
                 else:
@@ -193,12 +198,15 @@ class TestRealLdapBatchOperations:
                     values = [str(attr_obj)]
                 attrs_dict[attr_name] = values
             result = m.Ldif.Entry.create(
-                dn=entry.entry_dn, attributes=attrs_dict, metadata=None
+                dn=entry.entry_dn,
+                attributes=attrs_dict,
+                metadata=None,
             )
             assert result.is_success
             unwrapped_entry = result.value
             if hasattr(unwrapped_entry, "dn") and hasattr(
-                unwrapped_entry, "attributes"
+                unwrapped_entry,
+                "attributes",
             ):
                 entries.append(unwrapped_entry)
             else:

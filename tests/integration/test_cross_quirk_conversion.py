@@ -132,7 +132,8 @@ class TestOidToOudAclConversion:
     """
 
     def test_oid_acl_parsing_and_roundtrip(
-        self, oid_acl_quirk: p.Ldif.AclQuirk
+        self,
+        oid_acl_quirk: p.Ldif.AclQuirk,
     ) -> None:
         """Test OID ACL parsing and round-trip within OID format."""
         oid_acl_str = CROSS_QUIRK_CONVERSION_CONSTANTS.OID_ACL_ANONYMOUS
@@ -146,7 +147,8 @@ class TestOidToOudAclConversion:
         assert hasattr(parsed_data, "permissions")
 
     def test_oud_acl_parsing_and_roundtrip(
-        self, oud_acl_quirk: p.Ldif.AclQuirk
+        self,
+        oud_acl_quirk: p.Ldif.AclQuirk,
     ) -> None:
         """Test OUD ACL parsing and round-trip within OUD format."""
         oud_aci = CROSS_QUIRK_CONVERSION_CONSTANTS.OUD_ACI_ANONYMOUS
@@ -221,7 +223,9 @@ class TestQuirksConversionMatrixFacade:
         assert conversion_matrix is not None
 
     def test_get_supported_conversions(
-        self, conversion_matrix: FlextLdifConversion, oud_quirk: FlextLdifServersOud
+        self,
+        conversion_matrix: FlextLdifConversion,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test checking supported conversions."""
         supported = conversion_matrix.get_supported_conversions(oud_quirk)

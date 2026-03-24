@@ -19,14 +19,16 @@ class TestsFlextLdifSchemaTransformerNormalizeAttributeName(s):
     def test_normalize_removes_binary_suffix(self) -> None:
         """Test that ;binary suffix is removed from attribute names."""
         result = u.Ldif.normalize_name(
-            "userCertificate;binary", suffixes_to_remove=[";binary"]
+            "userCertificate;binary",
+            suffixes_to_remove=[";binary"],
         )
         tm.that(result, eq="userCertificate")
 
     def test_normalize_replaces_underscores(self) -> None:
         """Test that underscores are replaced with hyphens."""
         result = u.Ldif.normalize_name(
-            "oracle_oid_attribute", char_replacements={"_": "-"}
+            "oracle_oid_attribute",
+            char_replacements={"_": "-"},
         )
         tm.that(result, eq="oracle-oid-attribute")
 
@@ -74,7 +76,7 @@ class TestSchemaTransformerNormalizeMatchingRule:
             "caseIgnoreSubStringsMatch",
             None,
             normalized_substr_values={
-                "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch"
+                "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch",
             },
             substr_rules_in_equality={"caseIgnoreSubStringsMatch": "caseIgnoreMatch"},
         )
@@ -85,7 +87,9 @@ class TestSchemaTransformerNormalizeMatchingRule:
         """Test that server-specific matching rule replacements are applied."""
         replacements = {"accessDirectiveMatch": "caseIgnoreMatch"}
         equality, substr = u.Ldif.normalize_matching_rules(
-            "accessDirectiveMatch", None, replacements=replacements
+            "accessDirectiveMatch",
+            None,
+            replacements=replacements,
         )
         tm.that(equality, eq="caseIgnoreMatch")
         tm.that(substr, none=True)
@@ -99,7 +103,8 @@ class TestSchemaTransformerNormalizeMatchingRule:
     def test_preserve_existing_substr(self) -> None:
         """Test that existing SUBSTR rules are preserved."""
         equality, substr = u.Ldif.normalize_matching_rules(
-            "caseIgnoreMatch", "caseIgnoreSubstringsMatch"
+            "caseIgnoreMatch",
+            "caseIgnoreSubstringsMatch",
         )
         tm.that(equality, eq="caseIgnoreMatch")
         tm.that(substr, eq="caseIgnoreSubstringsMatch")
@@ -117,7 +122,8 @@ class TestSchemaTransformerNormalizeSyntaxOid:
         """Test that server-specific syntax replacements are applied."""
         replacements = {"1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15"}
         result = u.Ldif.normalize_syntax_oid(
-            "1.3.6.1.4.1.1466.115.121.1.1", replacements=replacements
+            "1.3.6.1.4.1.1466.115.121.1.1",
+            replacements=replacements,
         )
         tm.that(result, eq="1.3.6.1.4.1.1466.115.121.1.15")
 
@@ -144,7 +150,9 @@ class TestSchemaTransformerApplyAttributeTransformations:
                 str(n) if isinstance(n, str) else n if n is None else str(n)
             )
             return u.Ldif.normalize_name(
-                n_str, suffixes_to_remove=[";binary"], char_replacements={"_": "-"}
+                n_str,
+                suffixes_to_remove=[";binary"],
+                char_replacements={"_": "-"},
             )
 
         def transform_equality(eq: str | None) -> str | None:
@@ -155,7 +163,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
                 eq_str,
                 None,
                 substr_rules_in_equality={
-                    "caseIgnoreSubstringsMatch": "caseIgnoreMatch"
+                    "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
                 },
             )[0]
 
@@ -167,7 +175,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
                 attr.equality,
                 sub_str,
                 substr_rules_in_equality={
-                    "caseIgnoreSubstringsMatch": "caseIgnoreMatch"
+                    "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
                 },
             )[1]
 
@@ -178,7 +186,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
             return u.Ldif.normalize_syntax_oid(
                 syn_str,
                 replacements={
-                    "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15"
+                    "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15",
                 },
             )
 
@@ -207,7 +215,9 @@ class TestSchemaTransformerApplyAttributeTransformations:
     def test_partial_transformations(self) -> None:
         """Test applying only some transformations."""
         attr = m.Ldif.SchemaAttribute(
-            oid="2.5.4.3", name="cn;binary", equality="caseIgnoreMatch"
+            oid="2.5.4.3",
+            name="cn;binary",
+            equality="caseIgnoreMatch",
         )
 
         def transform_name(n: str | None) -> str | None:
@@ -215,7 +225,9 @@ class TestSchemaTransformerApplyAttributeTransformations:
                 str(n) if isinstance(n, str) else n if n is None else str(n)
             )
             return u.Ldif.normalize_name(
-                n_str, suffixes_to_remove=[";binary"], char_replacements={"_": "-"}
+                n_str,
+                suffixes_to_remove=[";binary"],
+                char_replacements={"_": "-"},
             )
 
         field_transforms: Mapping[

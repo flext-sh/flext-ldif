@@ -113,7 +113,7 @@ class FlextLdifUtilitiesSchema:
                 field_name=field_name,
             )
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
-                f"Transformation of '{field_name}' error: {e}"
+                f"Transformation of '{field_name}' error: {e}",
             )
 
     @staticmethod
@@ -149,7 +149,7 @@ class FlextLdifUtilitiesSchema:
             )
             if result.is_failure:
                 return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
-                    result.error or "Field transformation failed"
+                    result.error or "Field transformation failed",
                 )
             unwrapped = result.value
             validation_result = (
@@ -173,7 +173,9 @@ class FlextLdifUtilitiesSchema:
                 UnicodeDecodeError,
                 struct.error,
             ) as exc:
-                logger.debug(f"SchemaAttribute cast failed after transformation: {exc}")
+                logger.debug(
+                    "SchemaAttribute cast failed after transformation: %s", exc
+                )
             try:
                 current = m.Ldif.SchemaObjectClass.model_validate(
                     unwrapped_validated,
@@ -349,21 +351,21 @@ class FlextLdifUtilitiesSchema:
         for key, raw_value in extensions_raw.items():
             if u.is_primitive(raw_value) or isinstance(raw_value, datetime):
                 converted[key] = FlextLdifUtilitiesSchema._convert_metadata_value(
-                    raw_value
+                    raw_value,
                 )
                 continue
             if FlextLdifUtilitiesSchema._is_object_list(raw_value):
                 converted[key] = FlextLdifUtilitiesSchema._convert_metadata_value(
-                    raw_value
+                    raw_value,
                 )
                 continue
             if FlextLdifUtilitiesSchema._is_object_mapping(raw_value):
                 converted[key] = FlextLdifUtilitiesSchema._convert_metadata_value(
-                    raw_value
+                    raw_value,
                 )
                 continue
             converted[key] = FlextLdifUtilitiesSchema._convert_metadata_value(
-                str(raw_value)
+                str(raw_value),
             )
         return converted
 
@@ -392,12 +394,14 @@ class FlextLdifUtilitiesSchema:
             converted_mapping: MutableMapping[str, t.Scalar | MutableSequence[str]] = {}
             for key_obj, nested_value_raw in value.items():
                 nested_value = FlextLdifUtilitiesSchema._convert_nested_metadata_value(
-                    nested_value_raw
+                    nested_value_raw,
                 )
                 converted_mapping[str(key_obj)] = nested_value
             return converted_mapping
         return {
-            "value": FlextLdifUtilitiesSchema._convert_nested_metadata_value(str(value))
+            "value": FlextLdifUtilitiesSchema._convert_nested_metadata_value(
+                str(value)
+            ),
         }
 
     @staticmethod
@@ -630,7 +634,7 @@ class FlextLdifUtilitiesSchema:
                         UnicodeDecodeError,
                         struct.error,
                     ) as exc:
-                        logger.debug(f"Schema line item validation failed: {exc}")
+                        logger.debug("Schema line item validation failed: %s", exc)
                         continue
         return items
 
@@ -683,7 +687,7 @@ class FlextLdifUtilitiesSchema:
         """Wrap transformation result with proper type."""
         try:
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(
-                m.Ldif.SchemaAttribute.model_validate(transformed)
+                m.Ldif.SchemaAttribute.model_validate(transformed),
             )
         except (
             ValueError,
@@ -693,15 +697,16 @@ class FlextLdifUtilitiesSchema:
             struct.error,
         ) as exc:
             logger.debug(
-                f"SchemaAttribute validation failed while returning result: {exc}"
+                "SchemaAttribute validation failed while returning result: %s",
+                exc,
             )
         try:
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(
-                m.Ldif.SchemaObjectClass.model_validate(transformed)
+                m.Ldif.SchemaObjectClass.model_validate(transformed),
             )
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
-                f"Unknown schema t.NormalizedValue type: {type(transformed).__name__}"
+                f"Unknown schema t.NormalizedValue type: {type(transformed).__name__}",
             )
 
     @staticmethod
@@ -763,7 +768,8 @@ class FlextLdifUtilitiesSchema:
         if not syntax or not syntax.strip():
             return None
         syntax_extensions: MutableMapping[
-            str, bool | MutableSequence[str] | str | None
+            str,
+            bool | MutableSequence[str] | str | None,
         ] = {}
         validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
         if validate_result.is_failure:
@@ -798,7 +804,7 @@ class FlextLdifUtilitiesSchema:
                 unwrapped,
             )
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(
-                validated_attr
+                validated_attr,
             )
         except (
             ValueError,
@@ -808,7 +814,8 @@ class FlextLdifUtilitiesSchema:
             struct.error,
         ) as exc:
             logger.debug(
-                f"SchemaAttribute validation failed after transformation: {exc}"
+                "SchemaAttribute validation failed after transformation: %s",
+                exc,
             )
         try:
             _ = m.Ldif.SchemaObjectClass.model_validate(schema_obj)
@@ -818,7 +825,7 @@ class FlextLdifUtilitiesSchema:
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(validated_oc)
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
-                f"Unknown schema t.NormalizedValue type: {type(schema_obj).__name__}"
+                f"Unknown schema t.NormalizedValue type: {type(schema_obj).__name__}",
             )
 
     @staticmethod
@@ -877,7 +884,7 @@ class FlextLdifUtilitiesSchema:
         ) as e:
             logger.exception("Transformation pipeline error")
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
-                f"Transformation pipeline error: {e}"
+                f"Transformation pipeline error: {e}",
             )
 
     @staticmethod
@@ -1043,7 +1050,7 @@ class FlextLdifUtilitiesSchema:
             UnicodeDecodeError,
             struct.error,
         ) as exc:
-            logger.debug(f"SchemaAttribute model validation did not match: {exc}")
+            logger.debug("SchemaAttribute model validation did not match: %s", exc)
         try:
             _ = m.Ldif.SchemaObjectClass.model_validate(definition)
             return "objectclass"
@@ -1054,7 +1061,7 @@ class FlextLdifUtilitiesSchema:
             UnicodeDecodeError,
             struct.error,
         ) as exc:
-            logger.debug(f"SchemaObjectClass model validation did not match: {exc}")
+            logger.debug("SchemaObjectClass model validation did not match: %s", exc)
         definition_str = str(definition)
         definition_lower = definition_str.lower()
         objectclass_only_keywords = [

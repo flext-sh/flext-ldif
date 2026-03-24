@@ -167,7 +167,9 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         )
 
     def test_write_entry_with_normalized_dn(
-        self, writer: FlextLdifWriter, dn_service: FlextLdifDn
+        self,
+        writer: FlextLdifWriter,
+        dn_service: FlextLdifDn,
     ) -> None:
         """Test writing entry with DN normalized before writing."""
         dn_value = "CN=John Doe,OU=People,DC=Example,DC=Com"
@@ -177,7 +179,7 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value=normalized_dn),
             attributes=m.Ldif.Attributes(
-                attributes={"cn": ["John Doe"], "objectClass": ["person"]}
+                attributes={"cn": ["John Doe"], "objectClass": ["person"]},
             ),
         )
         write_result = writer.write(

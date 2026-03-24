@@ -55,7 +55,8 @@ class TestsFlextLdifMigrationPipeline(s):
         input_dir.mkdir()
         output_dir.mkdir()
         pipeline = FlextLdifMigrationPipeline(
-            input_dir=input_dir, output_dir=output_dir
+            input_dir=input_dir,
+            output_dir=output_dir,
         )
         tm.that(pipeline, none=False)
         tm.that(pipeline.source_server_type, eq="rfc")
@@ -73,7 +74,10 @@ class TestsFlextLdifMigrationPipeline(s):
         ],
     )
     def test_initialization_with_different_server_types(
-        self, source: str, target: str, tmp_path: Path
+        self,
+        source: str,
+        target: str,
+        tmp_path: Path,
     ) -> None:
         """Test pipeline initialization with various server type combinations."""
         input_dir = tmp_path / "input"
@@ -89,7 +93,8 @@ class TestsFlextLdifMigrationPipeline(s):
         tm.that(pipeline, none=False)
 
     def test_execute_with_nonexistent_input_dir_returns_failure(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test pipeline returns failure when input directory doesn't exist."""
         nonexistent_input = tmp_path / "nonexistent"
@@ -143,7 +148,10 @@ class TestsFlextLdifMigrationPipeline(s):
         [("oid", "oud"), ("oud", "oid"), ("rfc", "oid"), ("rfc", "oud")],
     )
     def test_server_conversion_modes(
-        self, source: str, target: str, tmp_path: Path
+        self,
+        source: str,
+        target: str,
+        tmp_path: Path,
     ) -> None:
         """Test server-specific conversion modes."""
         input_dir = tmp_path / "input"

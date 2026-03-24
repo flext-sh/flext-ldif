@@ -273,7 +273,8 @@ class FlextLdifUtilitiesDispatch:
                 *validators,
             )
         return FlextLdifUtilitiesValidation.validate_value(
-            value_or_entries, *validators
+            value_or_entries,
+            *validators,
         )
 
     @staticmethod

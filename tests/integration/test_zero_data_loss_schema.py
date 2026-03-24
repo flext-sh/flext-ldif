@@ -42,7 +42,8 @@ class TestSchemaDeviationsSyntaxQuotes:
         return FlextLdifServersOud().schema_quirk
 
     def test_oid_syntax_quotes_tracked(
-        self, oid_schema: FlextLdifServersBaseSchema
+        self,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test OID syntax with quotes is tracked in metadata."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' EQUALITY caseIgnoreMatch SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )"
@@ -60,7 +61,8 @@ class TestSchemaDeviationsSyntaxQuotes:
         )
 
     def test_oud_syntax_no_quotes_tracked(
-        self, oud_schema: FlextLdifServersBaseSchema
+        self,
+        oud_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test OUD syntax without quotes is tracked in metadata."""
         oud_definition = "( 0.9.2342.19200300.100.1.1 NAME ( 'uid' 'userid' ) EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} X-ORIGIN 'RFC 4519' )"
@@ -91,7 +93,8 @@ class TestSchemaDeviationsXOrigin:
         return FlextLdifServersOud().schema_quirk
 
     def test_oid_no_x_origin_tracked(
-        self, oid_schema: FlextLdifServersBaseSchema
+        self,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test OID without X-ORIGIN is tracked in metadata."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' EQUALITY caseIgnoreMatch SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )"
@@ -148,7 +151,8 @@ class TestSchemaDeviationsNameAliases:
         return FlextLdifServersOud().schema_quirk
 
     def test_oid_single_name_tracked(
-        self, oid_schema: FlextLdifServersBaseSchema
+        self,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test OID single NAME format is tracked."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )"
@@ -170,7 +174,8 @@ class TestSchemaDeviationsNameAliases:
         assert len(name_values) == 1, "Single name should have one value"
 
     def test_oud_multiple_names_tracked(
-        self, oud_schema: FlextLdifServersBaseSchema
+        self,
+        oud_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test OUD multiple NAME aliases are tracked."""
         oud_definition = "( 0.9.2342.19200300.100.1.1 NAME ( 'uid' 'userid' ) SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
@@ -200,7 +205,8 @@ class TestSchemaDeviationsObsolete:
         return FlextLdifServersOid().schema_quirk
 
     def test_obsolete_marker_tracked(
-        self, oid_schema: FlextLdifServersBaseSchema
+        self,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test OBSOLETE marker is tracked in metadata."""
         oid_definition = "( 0.9.2342.19200300.100.1.23 NAME 'lastModifiedTime' OBSOLETE SYNTAX '1.3.6.1.4.1.1466.115.121.1.53' )"
@@ -246,7 +252,8 @@ class TestSchemaDeviationsSpacing:
         return FlextLdifServersOid().schema_quirk
 
     def test_trailing_spaces_tracked(
-        self, oid_schema: FlextLdifServersBaseSchema
+        self,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test trailing spaces are tracked."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  "
@@ -303,7 +310,8 @@ class TestSchemaDeviationsOriginalString:
         return FlextLdifServersOud().schema_quirk
 
     def test_oid_original_string_preserved(
-        self, oid_schema: FlextLdifServersBaseSchema
+        self,
+        oid_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test complete OID original string is preserved."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' EQUALITY caseIgnoreMatch SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  "
@@ -326,7 +334,8 @@ class TestSchemaDeviationsOriginalString:
         assert original, "original_string_complete should not be empty"
 
     def test_oud_original_string_preserved(
-        self, oud_schema: FlextLdifServersBaseSchema
+        self,
+        oud_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test complete OUD original string is preserved."""
         oud_definition = "( 0.9.2342.19200300.100.1.1 NAME ( 'uid' 'userid' ) EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} X-ORIGIN 'RFC 4519' )"
@@ -469,7 +478,8 @@ class TestSchemaDeviationsMissingSpaces:
         return FlextLdifServersOud().schema_quirk
 
     def test_missing_space_before_syntax_oid_tracked(
-        self, oud_schema: FlextLdifServersBaseSchema
+        self,
+        oud_schema: FlextLdifServersBaseSchema,
     ) -> None:
         """Test malformed SYNTAX1.3.6.1 is tracked for restoration."""
         oud_definition = "( 0.9.2342.19200300.100.1.47 NAME 'mailPreferenceOption' SYNTAX1.3.6.1.4.1.1466.115.121.1.27 SINGLE-VALUE X-ORIGIN 'RFC 1274' )"
@@ -479,7 +489,9 @@ class TestSchemaDeviationsMissingSpaces:
             if attr.metadata and attr.metadata.schema_format_details:
                 schema_details = attr.metadata.schema_format_details
                 syntax_spacing_before = getattr(
-                    schema_details, "syntax_spacing_before", None
+                    schema_details,
+                    "syntax_spacing_before",
+                    None,
                 )
                 assert syntax_spacing_before == "" or syntax_spacing_before is None, (
                     "Missing space before SYNTAX should be tracked (empty spacing_before)"
@@ -555,7 +567,7 @@ class TestSchemaDeviationsComplete:
         assert not missing, f"Missing OID deviation tracking: {missing}"
         assert extensions_dict["syntax_quotes"] is True, "OID syntax should be quoted"
         tracked_fields = len(extensions_dict) + len(
-            format_details.__class__.model_fields
+            format_details.__class__.model_fields,
         )
         assert tracked_fields >= len(oid_must_track), (
             f"Should track at least {len(oid_must_track)} fields, got {tracked_fields}"
@@ -598,7 +610,7 @@ class TestSchemaDeviationsComplete:
         )
         assert extensions_dict["x_origin_presence"] is True, "OUD should have X-ORIGIN"
         tracked_fields = len(extensions_dict) + len(
-            format_details.__class__.model_fields
+            format_details.__class__.model_fields,
         )
         assert tracked_fields >= len(oud_must_track), (
             f"Should track at least {len(oud_must_track)} fields, got {tracked_fields}"

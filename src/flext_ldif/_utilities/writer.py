@@ -383,7 +383,8 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def fold_line(
-        line: str, width: int = c.Ldif.LINE_FOLD_WIDTH
+        line: str,
+        width: int = c.Ldif.LINE_FOLD_WIDTH,
     ) -> MutableSequence[str]:
         """Fold long LDIF line according to RFC 2849 §3."""
         if not line:

@@ -32,7 +32,8 @@ class FlextLdifModelsDomainSchema:
         include_operational: Annotated[
             bool,
             Field(
-                default=False, description="Include operational attributes in discovery"
+                default=False,
+                description="Include operational attributes in discovery",
             ),
         ]
         max_entries: Annotated[

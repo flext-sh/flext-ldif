@@ -535,7 +535,8 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         return bool(schema_attrs & entry_attrs)
 
     def validate_dns(
-        self, entries: MutableSequence[m.Ldif.Entry]
+        self,
+        entries: MutableSequence[m.Ldif.Entry],
     ) -> r[MutableSequence[m.Ldif.Entry]]:
         """Validate and normalize all DNs to RFC 4514."""
 
@@ -663,7 +664,9 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 }
 
             priority_list: MutableSequence[str] = getattr(
-                constants, "CATEGORIZATION_PRIORITY", []
+                constants,
+                "CATEGORIZATION_PRIORITY",
+                [],
             )
             filtered: MutableSequence[str] = [
                 item for item in priority_list if is_valid_category(item)

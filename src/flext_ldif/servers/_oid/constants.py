@@ -37,7 +37,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "1.3.6.1.4.1.1466.115.121.1.15": "1.3.6.1.4.1.1466.115.121.1.1",
     }
     ATTR_NAME_CASE_MAP: ClassVar[MutableMapping[str, str]] = {
-        "middlename": "middleName"
+        "middlename": "middleName",
     }
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = (
         FlextLdifServersRfc.Constants.OPERATIONAL_ATTRIBUTES

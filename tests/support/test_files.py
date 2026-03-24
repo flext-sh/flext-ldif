@@ -31,7 +31,10 @@ class FileManager:
     """
 
     def create_ldif_file(
-        self, content: str, filename: str = "test.ldif", directory: Path | None = None
+        self,
+        content: str,
+        filename: str = "test.ldif",
+        directory: Path | None = None,
     ) -> Path:
         """Create LDIF file with given content.
 
@@ -109,7 +112,9 @@ class FileManager:
         return self.create_sample_file(sample, filename, directory)
 
     def create_invalid_file(
-        self, filename: str = "invalid.ldif", directory: Path | None = None
+        self,
+        filename: str = "invalid.ldif",
+        directory: Path | None = None,
     ) -> Path:
         """Create file with invalid LDIF data for error testing.
 
@@ -181,7 +186,10 @@ class FileManager:
         raise RuntimeError(msg)
 
     def create_text_file(
-        self, content: str, filename: str, directory: Path | None = None
+        self,
+        content: str,
+        filename: str,
+        directory: Path | None = None,
     ) -> Path:
         """Create text file with given content."""
         target_dir = self._resolve_directory(directory)
@@ -190,7 +198,9 @@ class FileManager:
         return file_path
 
     def create_file_set(
-        self, files: t.StrMapping, extension: str = ""
+        self,
+        files: t.StrMapping,
+        extension: str = "",
     ) -> Mapping[str, Path]:
         """Create set of files."""
         created: Mapping[str, Path] = {}

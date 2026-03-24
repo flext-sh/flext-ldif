@@ -76,7 +76,10 @@ class TestRealLdapImport:
                 attrs_dict[attr_name] = [str(attr_values)]
         ldap_connection.add(str(entry.dn), object_classes, attributes=attrs_dict)
         assert ldap_connection.search(
-            str(entry.dn), "(objectClass=*)", search_scope="BASE", attributes=["*"]
+            str(entry.dn),
+            "(objectClass=*)",
+            search_scope="BASE",
+            attributes=["*"],
         )
         imported_entry = ldap_connection.entries[0]
         assert imported_entry["cn"].value == unique_username
@@ -113,7 +116,10 @@ class TestRealLdapImport:
             attributes=attrs_dict,
         )
         assert ldap_connection.search(
-            str(entry.dn), "(objectClass=*)", search_scope="BASE", attributes=["*"]
+            str(entry.dn),
+            "(objectClass=*)",
+            search_scope="BASE",
+            attributes=["*"],
         )
         imported_entry = ldap_connection.entries[0]
         assert imported_entry["jpegPhoto"].value == binary_data
@@ -157,7 +163,10 @@ class TestRealLdapImport:
                 attrs_dict[attr_name] = [str(attr_values)]
         ldap_connection.add(str(entry.dn), object_classes, attributes=attrs_dict)
         assert ldap_connection.search(
-            str(entry.dn), "(objectClass=*)", search_scope="BASE", attributes=["*"]
+            str(entry.dn),
+            "(objectClass=*)",
+            search_scope="BASE",
+            attributes=["*"],
         )
         imported = ldap_connection.entries[0]
         assert imported["cn"].value == unique_username

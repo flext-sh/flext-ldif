@@ -172,7 +172,8 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def convert_boolean_attributes(
         attributes: Mapping[
-            str, MutableSequence[str] | MutableSequence[bytes] | str | bytes
+            str,
+            MutableSequence[str] | MutableSequence[bytes] | str | bytes,
         ],
         boolean_attr_names: set[str],
         *,
@@ -255,7 +256,8 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def has_all_attributes(
-        entry: m.Ldif.Entry, attributes: MutableSequence[str]
+        entry: m.Ldif.Entry,
+        attributes: MutableSequence[str],
     ) -> bool:
         """Check if entry has ALL specified attributes."""
         if not attributes:
@@ -267,7 +269,8 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def has_any_attributes(
-        entry: m.Ldif.Entry, attributes: MutableSequence[str]
+        entry: m.Ldif.Entry,
+        attributes: MutableSequence[str],
     ) -> bool:
         """Check if entry has ANY of the specified attributes."""
         if not attributes:
@@ -458,7 +461,8 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def remove_attributes(
-        entry: m.Ldif.Entry, attributes: MutableSequence[str]
+        entry: m.Ldif.Entry,
+        attributes: MutableSequence[str],
     ) -> m.Ldif.Entry:
         """Remove specified attributes from entry."""
         if not attributes or entry.attributes is None or entry.dn is None:
@@ -510,8 +514,8 @@ class FlextLdifUtilitiesEntry:
                 current = current.model_copy(
                     update={
                         "attributes": m.Ldif.Attributes.model_validate({
-                            "attributes": {**new_attrs}
-                        })
+                            "attributes": {**new_attrs},
+                        }),
                     },
                 )
             if config.convert_booleans and current.attributes:
@@ -533,8 +537,8 @@ class FlextLdifUtilitiesEntry:
                 current = current.model_copy(
                     update={
                         "attributes": m.Ldif.Attributes.model_validate({
-                            "attributes": {**converted}
-                        })
+                            "attributes": {**converted},
+                        }),
                     },
                 )
             if config.remove_attrs:

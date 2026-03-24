@@ -134,11 +134,13 @@ class TestModelsNamespace:
             c.Names.UID: "jdoe",
         }
         cn_value: str | t.StrSequence | None = cast(
-            "str | t.StrSequence | None", attrs.get(c.Names.CN)
+            "str | t.StrSequence | None",
+            attrs.get(c.Names.CN),
         )
         tm.that(cn_value, eq=["John Doe"])
         objectclass_value: str | t.StrSequence | None = cast(
-            "str | t.StrSequence | None", attrs.get(c.Names.OBJECTCLASS)
+            "str | t.StrSequence | None",
+            attrs.get(c.Names.OBJECTCLASS),
         )
         tm.that(objectclass_value, is_=list)
 
@@ -160,7 +162,7 @@ class TestModelsNamespace:
         cn_oid: t.Scalar | t.StrSequence | None = data[c.Names.CN].get("oid")
         tm.that(cn_oid, eq=c.OIDs.CN)
         uid_single_valued: t.Scalar | t.StrSequence | None = data[c.Names.UID].get(
-            "single_valued"
+            "single_valued",
         )
         tm.that(uid_single_valued is True, eq=True)
 
@@ -173,14 +175,14 @@ class TestModelsNamespace:
                 "sup": "organizationalPerson",
                 "must": [c.Names.UID],
                 "may": [c.Names.MAIL, "mobile"],
-            }
+            },
         }
         oid_value: t.Scalar | t.StrSequence | None = data[c.Names.INETORGPERSON].get(
-            "oid"
+            "oid",
         )
         tm.that(oid_value, eq="2.16.840.1.113730.3.2.2")
         may_values: t.Scalar | t.StrSequence | None = data[c.Names.INETORGPERSON].get(
-            "may"
+            "may",
         )
         tm.that(may_values, none=False)
         if may_values is not None and isinstance(may_values, list):
@@ -299,7 +301,7 @@ class TestIntegrationWithLdifFixtures:
     def test_models_namespace_with_schema_data(self) -> None:
         """Verify Models namespace types work with schema data."""
         schema_attrs: Mapping[str, Mapping[str, t.Scalar | t.StrSequence]] = {
-            c.Names.CN: {"oid": c.OIDs.CN, "syntax": "Directory String"}
+            c.Names.CN: {"oid": c.OIDs.CN, "syntax": "Directory String"},
         }
         cn_oid: t.Scalar | t.StrSequence | None = schema_attrs[c.Names.CN].get("oid")
         tm.that(cn_oid, eq=c.OIDs.CN)

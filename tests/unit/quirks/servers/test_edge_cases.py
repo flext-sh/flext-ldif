@@ -80,7 +80,7 @@ class TestsFlextLdifEdgeCases(s):
         )
         if not fixture_path.exists():
             fixture_path = Path(
-                "flext-ldif/tests/fixtures/edge_cases/size/large_multivalue.ldif"
+                "flext-ldif/tests/fixtures/edge_cases/size/large_multivalue.ldif",
             )
         result = ldif_api.parse(fixture_path, server_type="rfc")
         (
@@ -155,7 +155,9 @@ class TestsFlextLdifEdgeCases(s):
         tm.that(len(roundtrip_entries), eq=1)
 
     def test_roundtrip_large_multivalue(
-        self, ldif_api: FlextLdif, tmp_path: Path
+        self,
+        ldif_api: FlextLdif,
+        tmp_path: Path,
     ) -> None:
         """Test roundtrip of large multivalue entries."""
         large_multivalue_ldif = "dn: cn=test,dc=example,dc=com\ncn: test\nmember: cn=user1,dc=example,dc=com\nmember: cn=user2,dc=example,dc=com\nmember: cn=user3,dc=example,dc=com\nmember: cn=user4,dc=example,dc=com\nmember: cn=user5,dc=example,dc=com\nobjectClass: groupOfNames\n\n"

@@ -19,7 +19,8 @@ class FlextLdifUtilitiesFilters[T]:
     __slots__ = ()
 
     def __and__(
-        self, other: FlextLdifUtilitiesFilters[T]
+        self,
+        other: FlextLdifUtilitiesFilters[T],
     ) -> FlextLdifUtilitiesFilters.AndFilter[T]:
         """AND combination: filter1 & filter2."""
         return FlextLdifUtilitiesFilters.AndFilter[T](self, other)
@@ -29,7 +30,8 @@ class FlextLdifUtilitiesFilters[T]:
         return FlextLdifUtilitiesFilters.NotFilter[T](self)
 
     def __or__(
-        self, other: FlextLdifUtilitiesFilters[T]
+        self,
+        other: FlextLdifUtilitiesFilters[T],
     ) -> FlextLdifUtilitiesFilters.OrFilter[T]:
         """OR combination: filter1 | filter2."""
         return FlextLdifUtilitiesFilters.OrFilter[T](self, other)
@@ -347,7 +349,9 @@ class FlextLdifUtilitiesFilters[T]:
         ) -> FlextLdifUtilitiesFilters.ByAttrsFilter:
             """Create an attribute presence filter."""
             return FlextLdifUtilitiesFilters.ByAttrsFilter(
-                *attrs, mode=mode, case_insensitive=case_insensitive
+                *attrs,
+                mode=mode,
+                case_insensitive=case_insensitive,
             )
 
         @staticmethod
@@ -358,7 +362,8 @@ class FlextLdifUtilitiesFilters[T]:
         ) -> FlextLdifUtilitiesFilters.ByDnFilter:
             """Create a DN pattern filter."""
             return FlextLdifUtilitiesFilters.ByDnFilter(
-                pattern, case_insensitive=case_insensitive
+                pattern,
+                case_insensitive=case_insensitive,
             )
 
         @staticmethod
@@ -369,7 +374,8 @@ class FlextLdifUtilitiesFilters[T]:
         ) -> FlextLdifUtilitiesFilters.ByDnUnderBaseFilter:
             """Create a base DN filter."""
             return FlextLdifUtilitiesFilters.ByDnUnderBaseFilter(
-                base_dn, case_insensitive=case_insensitive
+                base_dn,
+                case_insensitive=case_insensitive,
             )
 
         @staticmethod
@@ -394,11 +400,12 @@ class FlextLdifUtilitiesFilters[T]:
 
         @staticmethod
         def is_schema(
-            *, is_schema: bool = True
+            *,
+            is_schema: bool = True,
         ) -> FlextLdifUtilitiesFilters.IsSchemaFlextLdifUtilitiesFilters:
             """Create a schema entry filter."""
             return FlextLdifUtilitiesFilters.IsSchemaFlextLdifUtilitiesFilters(
-                is_schema=is_schema
+                is_schema=is_schema,
             )
 
 

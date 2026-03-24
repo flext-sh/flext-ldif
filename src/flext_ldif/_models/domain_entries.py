@@ -536,7 +536,7 @@ class FlextLdifModelsDomainsEntries:
                 )
                 metadata = (
                     FlextLdifModelsDomainsEntries.QuirkMetadata.model_validate({
-                        "quirk_type": server_type
+                        "quirk_type": server_type,
                     })
                     if server_type != c.Ldif.ServerTypes.RFC.value
                     else None
@@ -764,7 +764,7 @@ class FlextLdifModelsDomainsEntries:
                         "attributes": normalized_dict,
                         "attribute_metadata": {},
                         "metadata": None,
-                    })
+                    }),
                 )
             except (ValueError, TypeError, AttributeError) as e:
                 return r[Self].fail(f"Failed to create Attributes: {e}")
@@ -789,7 +789,9 @@ class FlextLdifModelsDomainsEntries:
             return self
 
         def get(
-            self, key: str, default: MutableSequence[str] | None = None
+            self,
+            key: str,
+            default: MutableSequence[str] | None = None,
         ) -> MutableSequence[str]:
             """Get attribute values with optional default.
 
@@ -863,7 +865,9 @@ class FlextLdifModelsDomainsEntries:
             }
 
         def get_values(
-            self, key: str, default: MutableSequence[str] | None = None
+            self,
+            key: str,
+            default: MutableSequence[str] | None = None,
         ) -> MutableSequence[str]:
             """Get attribute values as a list (same as get()).
 
@@ -966,7 +970,8 @@ class FlextLdifModelsDomainsEntries:
             return self
 
         def to_ldap3(
-            self, exclude: MutableSequence[str] | None = None
+            self,
+            exclude: MutableSequence[str] | None = None,
         ) -> MutableMapping[str, MutableSequence[str]]:
             """Convert to ldap3-compatible attributes dict.
 
@@ -1135,7 +1140,8 @@ class FlextLdifModelsDomainsEntries:
         def normalize_dn_references(
             self,
             data: MutableMapping[
-                str, str | MutableSequence[str] | MutableMapping[str, str]
+                str,
+                str | MutableSequence[str] | MutableMapping[str, str],
             ],
             dn_fields: MutableSequence[str] | None = None,
         ) -> r[
@@ -1156,7 +1162,8 @@ class FlextLdifModelsDomainsEntries:
                 if dn_fields is None:
                     dn_fields = ["dn"] + list(c.Ldif.ALL_DN_VALUED)
                 normalized_data: MutableMapping[
-                    str, str | MutableSequence[str] | MutableMapping[str, str]
+                    str,
+                    str | MutableSequence[str] | MutableMapping[str, str],
                 ] = dict(
                     data,
                 )
@@ -1175,7 +1182,8 @@ class FlextLdifModelsDomainsEntries:
                         )
                 return r[
                     MutableMapping[
-                        str, str | MutableSequence[str] | MutableMapping[str, str]
+                        str,
+                        str | MutableSequence[str] | MutableMapping[str, str],
                     ]
                 ].ok(
                     normalized_data,
@@ -1189,7 +1197,8 @@ class FlextLdifModelsDomainsEntries:
             ) as e:
                 return r[
                     MutableMapping[
-                        str, str | MutableSequence[str] | MutableMapping[str, str]
+                        str,
+                        str | MutableSequence[str] | MutableMapping[str, str],
                     ]
                 ].fail(
                     f"Failed to normalize DN references: {e}",
@@ -1245,7 +1254,8 @@ class FlextLdifModelsDomainsEntries:
             return r[bool].ok(True)
 
         def _normalize_dn_list(
-            self, dn_list: MutableSequence[str]
+            self,
+            dn_list: MutableSequence[str],
         ) -> MutableSequence[str]:
             """Normalize a list of DN values.
 
@@ -1556,7 +1566,9 @@ class FlextLdifModelsDomainsEntries:
         """
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True, strict=True, validate_default=True
+            frozen=True,
+            strict=True,
+            validate_default=True,
         )
         original_format: Annotated[
             str | None,
@@ -1682,7 +1694,7 @@ class FlextLdifModelsDomainsEntries:
             if "attributes" not in value:
                 wrapped_value = {"attributes": value}
             return FlextLdifModelsDomainsEntries.Attributes.model_validate(
-                wrapped_value
+                wrapped_value,
             )
 
         @field_validator("dn", mode="before")
@@ -1763,7 +1775,8 @@ class FlextLdifModelsDomainsEntries:
             result = extra.get("unconverted_attributes")
             if result is not None and self.is_string_key_mapping(result):
                 converted_unconverted_attributes: MutableMapping[
-                    str, str | MutableSequence[str] | bytes
+                    str,
+                    str | MutableSequence[str] | bytes,
                 ] = {}
                 for key_candidate, raw_value in result.items():
                     key_str = key_candidate
@@ -1827,7 +1840,7 @@ class FlextLdifModelsDomainsEntries:
                     final_quirk_type_val = c.Ldif.ServerTypes.RFC
                 metadata_obj = (
                     FlextLdifModelsDomainsEntries.QuirkMetadata.model_validate({
-                        "quirk_type": final_quirk_type_val
+                        "quirk_type": final_quirk_type_val,
                     })
                 )
                 data_dict["metadata"] = metadata_obj
@@ -1850,22 +1863,22 @@ class FlextLdifModelsDomainsEntries:
                     )
                 except ValidationError as exc:
                     FlextLdifModelsDomainsEntries._logger.warning(
-                        f"Failed to validate server rules from JSON string: {exc}"
+                        f"Failed to validate server rules from JSON string: {exc}",
                     )
                     return None
             if FlextLdifModelsDomainsEntries.Entry.is_string_key_mapping(
-                validation_rules
+                validation_rules,
             ):
                 try:
                     validation_rules_payload: t.MutableContainerMapping = dict(
-                        validation_rules.items()
+                        validation_rules.items(),
                     )
                     return FlextLdifModelsSettings.ServerValidationRules.model_validate(
                         validation_rules_payload,
                     )
                 except ValidationError as exc:
                     FlextLdifModelsDomainsEntries._logger.warning(
-                        f"Failed to validate server rules from mapping: {exc}"
+                        f"Failed to validate server rules from mapping: {exc}",
                     )
             return None
 
@@ -1926,7 +1939,9 @@ class FlextLdifModelsDomainsEntries:
 
         @override
         def model_post_init(
-            self, _context: MutableMapping[str, t.Scalar] | None, /
+            self,
+            _context: MutableMapping[str, t.Scalar] | None,
+            /,
         ) -> None:
             """Post-init hook to ensure metadata is always initialized.
 
@@ -2046,13 +2061,9 @@ class FlextLdifModelsDomainsEntries:
                 )
                 self.metadata.validation_results = updated_validation_results
                 ext_violations: MutableSequence[t.Ldif.MetadataValue] = list(
-                    server_violations
+                    server_violations,
                 )
-                setattr(
-                    self.metadata.extensions,
-                    "server_specific_violations",
-                    ext_violations,
-                )
+                self.metadata.extensions.server_specific_violations = ext_violations
             return self
 
         def _check_binary_option_rule(
@@ -2290,7 +2301,8 @@ class FlextLdifModelsDomainsEntries:
             _outer_cls: type[FlextLdifModelsDomainsEntries.Entry]
 
             def __init__(
-                self, outer_cls: type[FlextLdifModelsDomainsEntries.Entry]
+                self,
+                outer_cls: type[FlextLdifModelsDomainsEntries.Entry],
             ) -> None:
                 """Initialize builder with reference to outer class."""
                 super().__init__()
@@ -2328,7 +2340,8 @@ class FlextLdifModelsDomainsEntries:
                 ) = None
 
             def acls(
-                self, acls: MutableSequence[FlextLdifModelsDomainsEntries.Acl]
+                self,
+                acls: MutableSequence[FlextLdifModelsDomainsEntries.Acl],
             ) -> Self:
                 self._acls = acls
                 return self
@@ -2382,7 +2395,8 @@ class FlextLdifModelsDomainsEntries:
                 return self
 
             def metadata(
-                self, metadata: FlextLdifModelsDomainsEntries.QuirkMetadata
+                self,
+                metadata: FlextLdifModelsDomainsEntries.QuirkMetadata,
             ) -> Self:
                 self._metadata = metadata
                 return self
@@ -2508,7 +2522,8 @@ class FlextLdifModelsDomainsEntries:
 
         class _CreateEntryParams(m.Value):
             model_config: ClassVar[ConfigDict] = ConfigDict(
-                extra="forbid", validate_assignment=True
+                extra="forbid",
+                validate_assignment=True,
             )
             dn: Annotated[str | FlextLdifModelsDomainsEntries.DN, Field(...)]
             attributes: Annotated[
@@ -2723,14 +2738,15 @@ class FlextLdifModelsDomainsEntries:
                 entry_attrs_payload = ldap3_entry.get("entry_attributes_as_dict", {})
                 attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
                 if FlextLdifModelsDomainsEntries.Entry.is_string_key_mapping(
-                    entry_attrs_payload
+                    entry_attrs_payload,
                 ):
                     entry_attrs_payload_typed: MutableMapping[
-                        str, t.NormalizedValue
+                        str,
+                        t.NormalizedValue,
                     ] = dict(entry_attrs_payload.items())
                     for attr_name, attr_value in entry_attrs_payload_typed.items():
                         if FlextLdifModelsDomainsEntries.Entry.is_object_sequence(
-                            attr_value
+                            attr_value,
                         ):
                             attrs_dict[attr_name] = [str(item) for item in attr_value]
                         elif isinstance(attr_value, str):
@@ -3096,7 +3112,8 @@ class FlextLdifModelsDomainsEntries:
         @field_validator("transformations", mode="after")
         @classmethod
         def deduplicate_transformations(
-            cls, v: MutableSequence[str]
+            cls,
+            v: MutableSequence[str],
         ) -> MutableSequence[str]:
             """Remove duplicate transformations while preserving order."""
             seen: set[str] = set()
@@ -3983,10 +4000,12 @@ class FlextLdifModelsDomainsEntries:
             setattr(self.extensions, rfc_format.META_DN_WAS_BASE64, was_base64)
             if escapes_applied:
                 ext_escapes: MutableSequence[t.Ldif.MetadataValue] = list(
-                    escapes_applied
+                    escapes_applied,
                 )
                 setattr(
-                    self.extensions, rfc_format.META_DN_ESCAPES_APPLIED, ext_escapes
+                    self.extensions,
+                    rfc_format.META_DN_ESCAPES_APPLIED,
+                    ext_escapes,
                 )
             setattr(
                 self.conversion_notes,

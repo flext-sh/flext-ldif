@@ -240,7 +240,8 @@ class FlextLdifConversion(
     ) -> MutableMapping[str, str | MutableMapping[str, str | t.NormalizedValue]]:
         """Analyze source metadata for intelligent conversion to target server."""
         conversion_analysis: MutableMapping[
-            str, str | MutableMapping[str, str | t.NormalizedValue]
+            str,
+            str | MutableMapping[str, str | t.NormalizedValue],
         ] = {}
         if not source_metadata or not FlextLdifConversion._has_attr(
             source_metadata,
@@ -260,7 +261,8 @@ class FlextLdifConversion(
             target_server_str,
         )
         acc_typed: MutableMapping[
-            str, str | MutableMapping[str, str | t.NormalizedValue]
+            str,
+            str | MutableMapping[str, str | t.NormalizedValue],
         ] = {}
         for key, value in boolean_analysis.items():
             if isinstance(value, str):
@@ -301,7 +303,8 @@ class FlextLdifConversion(
         orig_perms_dict: MutableMapping[str, bool],
         converted_acl: m.Ldif.Acl,
         perms_to_model: Callable[
-            [MutableMapping[str, bool | None]], m.Ldif.AclPermissions
+            [MutableMapping[str, bool | None]],
+            m.Ldif.AclPermissions,
         ],
     ) -> m.Ldif.Acl:
         """Apply OID to OUD permission mapping."""
@@ -319,7 +322,8 @@ class FlextLdifConversion(
         orig_perms_dict: MutableMapping[str, bool],
         converted_acl: m.Ldif.Acl,
         perms_to_model: Callable[
-            [MutableMapping[str, bool | None]], m.Ldif.AclPermissions
+            [MutableMapping[str, bool | None]],
+            m.Ldif.AclPermissions,
         ],
     ) -> m.Ldif.Acl:
         """Apply OUD to OID permission mapping."""
@@ -1754,7 +1758,9 @@ class FlextLdifConversion(
                 return quirk
             return None
         schema_quirk_raw: t.NormalizedValue | None = getattr(
-            quirk, "schema_quirk", None
+            quirk,
+            "schema_quirk",
+            None,
         )
         if schema_quirk_raw is not None:
             required_methods = ("parse", "write")

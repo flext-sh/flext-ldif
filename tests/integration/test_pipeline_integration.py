@@ -80,7 +80,7 @@ class TestFlextLdifFacadeWorkflows:
         """Test parsing LDIF from file path."""
         ldif_file = tmp_path / "test.ldif"
         ldif_file.write_text(
-            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: Test\n"
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: Test\n",
         )
         ldif = FlextLdif()
         result = ldif.parse(ldif_file)

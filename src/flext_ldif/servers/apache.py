@@ -92,7 +92,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             if any(
                 name.lower().startswith(
                     tuple(
-                        FlextLdifServersApache.Constants.DETECTION_ATTRIBUTE_PREFIXES
+                        FlextLdifServersApache.Constants.DETECTION_ATTRIBUTE_PREFIXES,
                     ),
                 )
                 for name in name_matches

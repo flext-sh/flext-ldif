@@ -23,10 +23,12 @@ class LdifSample(BaseModel):
     description: str = Field(description="Human-readable description of the sample")
     expected_entries: int = Field(description="Expected number of entries in the LDIF")
     has_binary: bool = Field(
-        default=False, description="Whether the sample contains binary data"
+        default=False,
+        description="Whether the sample contains binary data",
     )
     has_changes: bool = Field(
-        default=False, description="Whether the sample contains change records"
+        default=False,
+        description="Whether the sample contains change records",
     )
 
 

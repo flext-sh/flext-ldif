@@ -68,7 +68,7 @@ class FlextLdifTestConftest:
                 "sn": [
                     user.get("name", "User").split()[-1]
                     if " " in user.get("name", "")
-                    else "User"
+                    else "User",
                 ],
                 "mail": [user.get("email", f"test{i}@example.com")],
                 "uid": [f"testuser{i}"],
@@ -87,7 +87,7 @@ class FlextLdifTestConftest:
                     for i, user in enumerate(_TEST_USERS)
                 ],
             },
-        }
+        },
     ]
 
     def docker_control(self) -> tk:
@@ -109,7 +109,10 @@ class FlextLdifTestConftest:
         return str(int(time.time() * 1000))
 
     def unique_dn_suffix(
-        self, worker_id: str, session_id: str, request: pytest.FixtureRequest
+        self,
+        worker_id: str,
+        session_id: str,
+        request: pytest.FixtureRequest,
     ) -> str:
         """Generate unique DN suffix using factory pattern."""
         test_name = request.node.name if hasattr(request, "node") else "unknown"
@@ -121,7 +124,9 @@ class FlextLdifTestConftest:
         return f"{worker_id}-{session_id}-{test_name_clean}-{test_id}"
 
     def make_user_dn(
-        self, unique_dn_suffix: str, ldap_container: t.ContainerMapping
+        self,
+        unique_dn_suffix: str,
+        ldap_container: t.ContainerMapping,
     ) -> Callable[[str], str]:
         """Factory for unique user DNs."""
         base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -132,7 +137,9 @@ class FlextLdifTestConftest:
         return _make
 
     def make_group_dn(
-        self, unique_dn_suffix: str, ldap_container: t.ContainerMapping
+        self,
+        unique_dn_suffix: str,
+        ldap_container: t.ContainerMapping,
     ) -> Callable[[str], str]:
         """Factory for unique group DNs."""
         base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -143,7 +150,9 @@ class FlextLdifTestConftest:
         return _make
 
     def make_test_base_dn(
-        self, unique_dn_suffix: str, ldap_container: t.ContainerMapping
+        self,
+        unique_dn_suffix: str,
+        ldap_container: t.ContainerMapping,
     ) -> Callable[[str], str]:
         """Factory for unique base DNs."""
         base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -216,10 +225,12 @@ class FlextLdifTestConftest:
         start_result = docker_control.start_existing_container(container_name)
         if start_result.is_failure:
             pytest.skip(
-                f"Container {container_name} not found. Start it manually with: cd {Path(__file__).resolve().parents[4] / 'docker'} && docker compose -f docker-compose.openldap.yml up -d"
+                f"Container {container_name} not found. Start it manually with: cd {Path(__file__).resolve().parents[4] / 'docker'} && docker compose -f docker-compose.openldap.yml up -d",
             )
         port_ready = docker_control.wait_for_port_ready(
-            "localhost", self.LDAP_PORT, max_wait=30
+            "localhost",
+            self.LDAP_PORT,
+            max_wait=30,
         )
         if port_ready.is_failure or not port_ready.value:
             pytest.skip(f"Container port {self.LDAP_PORT} not ready within 30s")
@@ -233,7 +244,10 @@ class FlextLdifTestConftest:
                 server = Server(f"ldap://localhost:{self.LDAP_PORT}", get_info=ALL)
                 for bind_dn, password in self._ldap_bind_candidates():
                     conn = Connection(
-                        server, user=bind_dn, password=password, auto_bind=False
+                        server,
+                        user=bind_dn,
+                        password=password,
+                        auto_bind=False,
                     )
                     if conn.bind():
                         conn.unbind()
@@ -270,7 +284,8 @@ class FlextLdifTestConftest:
         return str(ldap_container.get("server_url", default_url))
 
     def ldap_connection(
-        self, ldap_container: t.ContainerMapping
+        self,
+        ldap_container: t.ContainerMapping,
     ) -> Generator[Connection]:
         """Create LDAP connection."""
         host = str(ldap_container.get("host", "localhost"))
@@ -289,13 +304,17 @@ class FlextLdifTestConftest:
         conn.unbind()
 
     def clean_test_ou(
-        self, ldap_connection: Connection, make_test_base_dn: Callable[[str], str]
+        self,
+        ldap_connection: Connection,
+        make_test_base_dn: Callable[[str], str],
     ) -> Generator[str]:
         """Create and clean isolated test OU."""
         test_ou_dn = make_test_base_dn("FlextLdifTests")
         try:
             ldap_connection.search(
-                test_ou_dn, "(objectClass=*)", search_scope="SUBTREE"
+                test_ou_dn,
+                "(objectClass=*)",
+                search_scope="SUBTREE",
             )
             if ldap_connection.entries:
                 dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
@@ -306,12 +325,16 @@ class FlextLdifTestConftest:
             pass
         with contextlib.suppress(Exception):
             ldap_connection.add(
-                test_ou_dn, ["organizationalUnit"], {"ou": "FlextLdifTests"}
+                test_ou_dn,
+                ["organizationalUnit"],
+                {"ou": "FlextLdifTests"},
             )
         yield test_ou_dn
         try:
             ldap_connection.search(
-                test_ou_dn, "(objectClass=*)", search_scope="SUBTREE"
+                test_ou_dn,
+                "(objectClass=*)",
+                search_scope="SUBTREE",
             )
             if ldap_connection.entries:
                 dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
@@ -382,7 +405,9 @@ class FlextLdifTestConftest:
         return ldif_file
 
     def ldif_changes_file(
-        self, test_ldif_dir: Path, sample_ldif_with_changes: str
+        self,
+        test_ldif_dir: Path,
+        sample_ldif_with_changes: str,
     ) -> Path:
         """LDIF changes file."""
         ldif_file = test_ldif_dir / "test_changes.ldif"
@@ -390,7 +415,9 @@ class FlextLdifTestConftest:
         return ldif_file
 
     def ldif_binary_file(
-        self, test_ldif_dir: Path, sample_ldif_with_binary: str
+        self,
+        test_ldif_dir: Path,
+        sample_ldif_with_binary: str,
     ) -> Path:
         """LDIF binary file."""
         ldif_file = test_ldif_dir / "test_binary.ldif"
@@ -642,11 +669,15 @@ class FlextLdifTestConftest:
         }
 
     def ldif_performance_config(
-        self, flext_domains: LocalTestDomains
+        self,
+        flext_domains: LocalTestDomains,
     ) -> t.ContainerMapping:
         """Performance config."""
         config = flext_domains.create_configuration(
-            batch_size=1000, memory_limit="50MB", timeout=30, max_workers=2
+            batch_size=1000,
+            memory_limit="50MB",
+            timeout=30,
+            max_workers=2,
         )
         return {
             "large_entry_count": 5000,
@@ -668,15 +699,19 @@ class FlextLdifTestConftest:
         config.addinivalue_line("markers", "performance: Performance tests")
         config.addinivalue_line("markers", "slow: Slow tests")
         config.addinivalue_line(
-            "markers", "docker: Tests requiring Docker OpenLDAP container"
+            "markers",
+            "docker: Tests requiring Docker OpenLDAP container",
         )
         config.addinivalue_line("markers", "real_ldap: Tests using real LDAP server")
         config.addinivalue_line(
-            "markers", "flext_tests: Tests using FlextTests utilities"
+            "markers",
+            "flext_tests: Tests using FlextTests utilities",
         )
 
     def pytest_collection_modifyitems(
-        self, config: pytest.Config, items: Sequence[pytest.Item]
+        self,
+        config: pytest.Config,
+        items: Sequence[pytest.Item],
     ) -> None:
         """Filter test items."""
         filtered_items: Sequence[pytest.Item] = []

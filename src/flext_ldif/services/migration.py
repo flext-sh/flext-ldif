@@ -129,7 +129,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                     total_processed += res.stats.total_entries
                     total_migrated += res.stats.processed_entries
                     converted_res_entries: MutableSequence[m.Ldif.Entry] = list(
-                        res.entries
+                        res.entries,
                     )
                     all_entries.extend(converted_res_entries)
                     output_files.extend(res.output_files)
@@ -181,7 +181,8 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             )
 
     def migrate_entries(
-        self, entries: MutableSequence[m.Ldif.Entry]
+        self,
+        entries: MutableSequence[m.Ldif.Entry],
     ) -> r[MutableSequence[m.Ldif.Entry]]:
         """Migrate entries from source to target server format."""
         try:
@@ -291,7 +292,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
 
     def _get_processing_pipeline(self) -> FlextLdifProcessingPipeline:
         """Get or create processing pipeline instance."""
-        service = getattr(self, "_processing_pipeline_service")
+        service = self._processing_pipeline_service
         return service.get_processing_pipeline(
             source_server_type=self.source_server_type,
             target_server_type=self.target_server_type,

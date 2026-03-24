@@ -57,11 +57,14 @@ class BasicUsageDry:
         if not entries:
             return r[Sequence[m.Ldif.Entry]].fail("Failed to create entries")
         transform_result = api.process(
-            "transform", entries, parallel=True, max_workers=6
+            "transform",
+            entries,
+            parallel=True,
+            max_workers=6,
         )
         if transform_result.is_failure:
             return r[Sequence[m.Ldif.Entry]].fail(
-                transform_result.error or "Transform failed"
+                transform_result.error or "Transform failed",
             )
         return r[Sequence[m.Ldif.Entry]].ok(entries)
 
@@ -84,7 +87,9 @@ class BasicUsageDry:
 
         detected = detect_result.value
         detected_server_type: str | None = getattr(
-            detected, "detected_server_type", None
+            detected,
+            "detected_server_type",
+            None,
         )
         server_type = detected_server_type or "rfc"
         parse_result = api.parse(sample_file, server_type=server_type)
@@ -112,17 +117,18 @@ class BasicUsageDry:
             server_result = api.get_effective_server_type()
             if server_result.is_failure:
                 return r[Sequence[m.Ldif.Entry]].fail(
-                    server_result.error or "Server detection failed"
+                    server_result.error or "Server detection failed",
                 )
             parse_result = api.parse(
-                self.SAMPLE_LDIF[:100], server_type=server_result.value
+                self.SAMPLE_LDIF[:100],
+                server_type=server_result.value,
             )
             if parse_result.is_failure:
                 return parse_result
             validate_result = api.validate_entries(parse_result.value)
             if validate_result.is_failure:
                 return r[Sequence[m.Ldif.Entry]].fail(
-                    validate_result.error or "Validation failed"
+                    validate_result.error or "Validation failed",
                 )
             return r[Sequence[m.Ldif.Entry]].ok(parse_result.value)
 
@@ -145,7 +151,7 @@ class BasicUsageDry:
             server_type = detect_result.value.detected_server_type
         elif detect_result.is_failure:
             return r[Sequence[m.Ldif.Entry]].fail(
-                detect_result.error or "Detection failed"
+                detect_result.error or "Detection failed",
             )
         parse_result = api.parse(self.SAMPLE_LDIF, server_type=server_type)
         if parse_result.is_failure:
@@ -154,7 +160,7 @@ class BasicUsageDry:
         validate_result = api.validate_entries(entries)
         if validate_result.is_failure:
             return r[Sequence[m.Ldif.Entry]].fail(
-                validate_result.error or "Validation failed"
+                validate_result.error or "Validation failed",
             )
         process_result = api.process("transform", entries, parallel=True, max_workers=4)
         if process_result.is_success:

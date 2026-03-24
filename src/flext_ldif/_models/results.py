@@ -39,7 +39,7 @@ class FlextLdifModelsResults:
 
     class StatisticsSummary(FlextLdifModelsBases.Base):
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True
+            frozen=True,
         )  # adds frozen; Base lacks it
         total_entries: int = 0
         processed_entries: int = 0
@@ -61,7 +61,7 @@ class FlextLdifModelsResults:
 
     class MigrationSummary(FlextLdifModelsBases.Base):
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True
+            frozen=True,
         )  # adds frozen; Base lacks it
         statistics: FlextLdifModelsResults.StatisticsSummary | None = None
         entry_count: int = 0
@@ -70,7 +70,7 @@ class FlextLdifModelsResults:
 
     class EntryResult(FlextLdifModelsBases.Base):
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True
+            frozen=True,
         )  # validate_default inherited from Base
         entries_by_category: Annotated[
             FlextLdifModelsCollections.FlexibleCategories,
@@ -87,7 +87,8 @@ class FlextLdifModelsResults:
 
         @overload
         def __getitem__(
-            self, key: slice
+            self,
+            key: slice,
         ) -> MutableSequence[FlextLdifModelsDomains.Entry]: ...
 
         @overload
@@ -286,7 +287,7 @@ class FlextLdifModelsResults:
             other: FlextLdifModelsResults.Statistics,
         ) -> FlextLdifModelsResults.Statistics:
             merged_reasons: MutableMapping[str, int] = dict(
-                self.rejection_reasons.items()
+                self.rejection_reasons.items(),
             )
             for reason, count in other.rejection_reasons.items():
                 merged_reasons[reason] = merged_reasons.get(reason, 0) + count
@@ -348,7 +349,7 @@ class FlextLdifModelsResults:
 
     class MigrationPipelineResult(FlextLdifModelsBases.Base):
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True
+            frozen=True,
         )  # validate_default inherited from Base
         migrated_schema: Annotated[
             FlextLdifModelsCollections.SchemaContent,
@@ -363,7 +364,7 @@ class FlextLdifModelsResults:
             Field(),
         ] = Field(default_factory=lambda: FlextLdifModelsResults._statistics_factory())
         output_files: Annotated[MutableSequence[str], Field()] = Field(
-            default_factory=list
+            default_factory=list,
         )
 
         @computed_field
@@ -398,7 +399,7 @@ class FlextLdifModelsResults:
         """Result of a migration comparison between source and target."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True
+            frozen=True,
         )  # validate_default inherited from Base
         total_oid: t.NonNegativeInt
         total_target: t.NonNegativeInt
@@ -412,7 +413,7 @@ class FlextLdifModelsResults:
         """Result of a comprehensive migration workflow."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True
+            frozen=True,
         )  # validate_default inherited from Base
         intermediate_migration: Annotated[str, Field()]
         final_migration: Annotated[str, Field()]
@@ -428,12 +429,12 @@ class FlextLdifModelsResults:
         """Result of an auto-detection migration pipeline."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True
+            frozen=True,
         )  # validate_default inherited from Base
         detected_server: Annotated[str, Field()]
         confidence: t.DecimalFraction
         patterns_found: Annotated[MutableSequence[str], Field()] = Field(
-            default_factory=list
+            default_factory=list,
         )
         total_entries: t.NonNegativeInt
         migration_success: Annotated[bool, Field()]
@@ -442,7 +443,7 @@ class FlextLdifModelsResults:
         """Summary of batch server comparisons."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True
+            frozen=True,
         )  # validate_default inherited from Base
         servers_tested: t.NonNegativeInt
         successful_parses: t.NonNegativeInt
@@ -463,7 +464,7 @@ class FlextLdifModelsResults:
 
     class ValidationResult(FlextLdifModelsBases.Base):
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True
+            frozen=True,
         )  # validate_default inherited from Base
         is_valid: Annotated[bool, Field()]
         total_entries: t.NonNegativeInt
@@ -479,7 +480,7 @@ class FlextLdifModelsResults:
 
     class EntryAnalysisResult(FlextLdifModelsBases.Base):
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True
+            frozen=True,
         )  # validate_default inherited from Base
         total_entries: t.NonNegativeInt
         objectclass_distribution: Annotated[
@@ -487,7 +488,7 @@ class FlextLdifModelsResults:
             Field(),
         ] = Field(default_factory=FlextLdifModelsCollections.DynamicCounts)
         patterns_detected: Annotated[MutableSequence[str], Field()] = Field(
-            default_factory=list
+            default_factory=list,
         )
 
         @computed_field
@@ -496,7 +497,7 @@ class FlextLdifModelsResults:
 
     class ServerDetectionResult(FlextLdifModelsBases.Base):
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True
+            frozen=True,
         )  # validate_default inherited from Base
         detected_server_type: Annotated[c.Ldif.ServerTypeLiteral, Field()]
         confidence: t.DecimalFraction
@@ -505,7 +506,7 @@ class FlextLdifModelsResults:
             Field(),
         ] = Field(default_factory=FlextLdifModelsCollections.DynamicCounts)
         patterns_found: Annotated[MutableSequence[str], Field()] = Field(
-            default_factory=list
+            default_factory=list,
         )
         is_confident: Annotated[bool, Field()]
         detection_error: str | None = None

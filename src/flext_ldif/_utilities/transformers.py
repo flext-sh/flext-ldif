@@ -56,7 +56,7 @@ class FlextLdifUtilitiesTransformers:
                     continue
                 _, _, value = comp.partition("=")
                 is_valid, errors = FlextLdifUtilitiesDN.is_valid_dn_string(
-                    value.strip()
+                    value.strip(),
                 )
                 if not is_valid:
                     all_errors.extend([f"RDN value '{value}': {e}" for e in errors])
@@ -76,7 +76,7 @@ class FlextLdifUtilitiesTransformers:
             )
             if self._validate:
                 validation_result = FlextLdifUtilitiesTransformers.NormalizeDnTransformer._validate_dn_components(  # noqa: SLF001
-                    dn_str
+                    dn_str,
                 )
                 if validation_result.is_failure:
                     error_msg = (
@@ -153,7 +153,8 @@ class FlextLdifUtilitiesTransformers:
                 return processed
 
             def map_process_value(
-                _key: str, value: MutableSequence[str]
+                _key: str,
+                value: MutableSequence[str],
             ) -> MutableSequence[str]:
                 """Process value list for attribute."""
                 return process_value_list(value)
@@ -170,7 +171,7 @@ class FlextLdifUtilitiesTransformers:
             if needs_update:
                 update_dict: t.MutableContainerMapping = {
                     "attributes": m.Ldif.Attributes.model_validate({
-                        "attributes": new_attrs
+                        "attributes": new_attrs,
                     }),
                 }
                 item = item.model_copy(update=update_dict)
@@ -252,7 +253,7 @@ class FlextLdifUtilitiesTransformers:
             )
             update_dict: t.MutableContainerMapping = {
                 "attributes": m.Ldif.Attributes.model_validate({
-                    "attributes": {**converted_attrs}
+                    "attributes": {**converted_attrs},
                 }),
             }
             updated_entry = item.model_copy(update=update_dict)
@@ -306,7 +307,7 @@ class FlextLdifUtilitiesTransformers:
                 attrs = {k: v for k, v in attrs.items() if key_not_in_exclude(k, v)}
             update_dict: t.MutableContainerMapping = {
                 "attributes": m.Ldif.Attributes.model_validate({
-                    "attributes": {**attrs}
+                    "attributes": {**attrs},
                 }),
             }
             updated_entry = item.model_copy(update=update_dict)
@@ -380,7 +381,9 @@ class FlextLdifUtilitiesTransformers:
         ) -> FlextLdifUtilitiesTransformers.NormalizeDnTransformer:
             """Create a DN normalization transformer."""
             return FlextLdifUtilitiesTransformers.NormalizeDnTransformer(
-                case=case, spaces=spaces, validate=validate
+                case=case,
+                spaces=spaces,
+                validate=validate,
             )
 
     class Transform:
@@ -396,7 +399,8 @@ class FlextLdifUtilitiesTransformers:
         ) -> FlextLdifUtilitiesTransformers.ConvertBooleansTransformer:
             """Create a boolean conversion transformer."""
             return FlextLdifUtilitiesTransformers.ConvertBooleansTransformer(
-                boolean_format, attributes=attributes
+                boolean_format,
+                attributes=attributes,
             )
 
         @staticmethod
@@ -414,7 +418,8 @@ class FlextLdifUtilitiesTransformers:
         ) -> FlextLdifUtilitiesTransformers.FilterAttrsTransformer:
             """Create an attribute filter transformer."""
             return FlextLdifUtilitiesTransformers.FilterAttrsTransformer(
-                include=include, exclude=exclude
+                include=include,
+                exclude=exclude,
             )
 
         @staticmethod

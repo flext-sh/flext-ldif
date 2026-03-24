@@ -27,7 +27,7 @@ class FlextLdifSorting(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
         return cls()
 
     entries: Annotated[MutableSequence[m.Ldif.Entry], Field()] = Field(
-        default_factory=_empty_entries
+        default_factory=_empty_entries,
     )
     sort_target: Annotated[str, Field()] = "entries"
     sort_by: Annotated[str, Field()] = "hierarchy"
@@ -61,7 +61,8 @@ class FlextLdifSorting(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
 
     @classmethod
     def by_dn(
-        cls, entries: MutableSequence[m.Ldif.Entry]
+        cls,
+        entries: MutableSequence[m.Ldif.Entry],
     ) -> r[MutableSequence[m.Ldif.Entry]]:
         """Sort entries alphabetically by full DN."""
         sorting_instance = cls(
@@ -73,7 +74,8 @@ class FlextLdifSorting(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
 
     @classmethod
     def by_hierarchy(
-        cls, entries: MutableSequence[m.Ldif.Entry]
+        cls,
+        entries: MutableSequence[m.Ldif.Entry],
     ) -> r[MutableSequence[m.Ldif.Entry]]:
         """Sort entries by hierarchy (depth-first, then alphabetical)."""
         sorting_instance = cls(
@@ -85,7 +87,8 @@ class FlextLdifSorting(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
 
     @classmethod
     def by_schema(
-        cls, entries: MutableSequence[m.Ldif.Entry]
+        cls,
+        entries: MutableSequence[m.Ldif.Entry],
     ) -> r[MutableSequence[m.Ldif.Entry]]:
         """Sort schema entries by OID (attributeTypes before objectClasses)."""
         sorting_instance = cls(
@@ -357,7 +360,7 @@ class FlextLdifSorting(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
             method()
             if method
             else r[MutableSequence[m.Ldif.Entry]].fail(
-                f"Unknown sort_target: {self.sort_target}"
+                f"Unknown sort_target: {self.sort_target}",
             )
         )
 
@@ -403,7 +406,7 @@ class FlextLdifSorting(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
         """Sort using custom predicate."""
         if self.custom_predicate is None:
             return r[MutableSequence[m.Ldif.Entry]].fail(
-                "Custom predicate not provided"
+                "Custom predicate not provided",
             )
         sorted_entries = sorted(self.entries, key=self.custom_predicate)
         return r[MutableSequence[m.Ldif.Entry]].ok(sorted_entries)
@@ -453,7 +456,7 @@ class FlextLdifSorting(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
             sorted_entries = self._levelorder_traverse(self.entries)
             return r[MutableSequence[m.Ldif.Entry]].ok(sorted_entries)
         return r[MutableSequence[m.Ldif.Entry]].fail(
-            f"Unknown traversal mode: {self.traversal}"
+            f"Unknown traversal mode: {self.traversal}",
         )
 
     def _by_schema(self) -> r[MutableSequence[m.Ldif.Entry]]:
@@ -511,7 +514,7 @@ class FlextLdifSorting(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
                         modified = True
             if modified:
                 sorted_attrs = m.Ldif.Attributes.model_validate({
-                    "attributes": attrs_dict
+                    "attributes": attrs_dict,
                 })
                 new_entry = entry.model_copy(update={"attributes": sorted_attrs})
                 return self._track_acl_sorting_metadata(new_entry)
@@ -579,7 +582,7 @@ class FlextLdifSorting(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
                 struct.error,
             ) as exc:
                 return r[MutableSequence[m.Ldif.Entry]].fail(
-                    f"Attribute sort failed: {exc}"
+                    f"Attribute sort failed: {exc}",
                 )
         return r[MutableSequence[m.Ldif.Entry]].ok(processed)
 
@@ -637,7 +640,7 @@ class FlextLdifSorting(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
         method = strategies.get(self.sort_by)
         if not method:
             return r[MutableSequence[m.Ldif.Entry]].fail(
-                f"Unknown strategy: {self.sort_by}"
+                f"Unknown strategy: {self.sort_by}",
             )
         return method()
 

@@ -17,7 +17,8 @@ class FlextLdifModelsProcessing:
         """Result of entry processing (transform or validate operation)."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=False, validate_assignment=True
+            frozen=False,
+            validate_assignment=True,
         )
         dn: Annotated[
             str,

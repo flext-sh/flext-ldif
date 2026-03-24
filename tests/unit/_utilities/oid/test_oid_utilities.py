@@ -39,7 +39,7 @@ class TestFlextLdifUtilitiesOID(s):
 
     def test_get_server_type_from_oid_success_oracle(self) -> None:
         result = u.Ldif.get_server_type_from_oid(
-            "2\\.16\\.840\\.1\\.113894\\.1\\.1\\.1"
+            "2\\.16\\.840\\.1\\.113894\\.1\\.1\\.1",
         )
         value = self.assert_success(result)
 

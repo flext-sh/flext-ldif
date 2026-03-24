@@ -83,7 +83,10 @@ class TestFlextLdifAPIIntegration:
         ],
     )
     def test_parse_ldif_scenarios(
-        self, scenario: APIScenarios, ldif_content: str, expected_entries: int
+        self,
+        scenario: APIScenarios,
+        ldif_content: str,
+        expected_entries: int,
     ) -> None:
         """Test parsing LDIF content across different scenarios."""
         ldif = FlextLdif()
@@ -106,7 +109,10 @@ class TestFlextLdifAPIIntegration:
         ],
     )
     def test_filter_by_objectclass_dynamic(
-        self, test_name: str, objectclass: str, expected_count: int
+        self,
+        test_name: str,
+        objectclass: str,
+        expected_count: int,
     ) -> None:
         """Dynamically test filtering by different objectClass values."""
         ldif = FlextLdif()
@@ -126,7 +132,10 @@ class TestFlextLdifAPIIntegration:
         ],
     )
     def test_filter_by_dn_pattern_dynamic(
-        self, test_name: str, dn_pattern: str, expected_count: int
+        self,
+        test_name: str,
+        dn_pattern: str,
+        expected_count: int,
     ) -> None:
         """Dynamically test filtering by different DN patterns."""
         ldif = FlextLdif()
@@ -148,7 +157,7 @@ class TestFlextLdifAPIIntegration:
                     c.Names.CN: [c.General.ATTR_VALUE_TEST],
                     c.Names.SN: [c.General.ATTR_VALUE_USER],
                     c.Names.OBJECTCLASS: [c.Names.PERSON],
-                }
+                },
             ),
         )
         assert entry.dn is not None
@@ -188,7 +197,9 @@ class TestFlextLdifAPIIntegration:
         assert parse_result.is_success
         entries = parse_result.value
         result = ldif.filter(
-            entries, dn_pattern="ou=Admins", attributes={c.Names.MAIL: ""}
+            entries,
+            dn_pattern="ou=Admins",
+            attributes={c.Names.MAIL: ""},
         )
         assert result.is_success
         filtered = result.value

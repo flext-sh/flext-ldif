@@ -220,13 +220,13 @@ class FlextLdifUtilitiesResult[T: t.NormalizedValue]:
     def _serialize_single_entry(entry: m.Ldif.Entry) -> r[MutableSequence[str]]:
         if entry.dn is None:
             return r[MutableSequence[str]].fail(
-                "Entry serialization failed: missing DN"
+                "Entry serialization failed: missing DN",
             )
         dn_value = entry.dn.value
         if not dn_value:
             return r[MutableSequence[str]].fail("Entry serialization failed: empty DN")
         lines: MutableSequence[str] = [
-            FlextLdifUtilitiesResult._encode_dn_line(dn_value)
+            FlextLdifUtilitiesResult._encode_dn_line(dn_value),
         ]
         entry_attributes: MutableMapping[str, MutableSequence[str]] = (
             entry.attributes.attributes if entry.attributes else {}

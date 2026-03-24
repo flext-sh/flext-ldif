@@ -24,7 +24,9 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
 
     @override
     def can_handle(
-        self, entry_dn: str, attributes: MutableMapping[str, MutableSequence[str]]
+        self,
+        entry_dn: str,
+        attributes: MutableMapping[str, MutableSequence[str]],
     ) -> bool:
         """Check if this RFC quirk can handle the entry."""
         if not entry_dn or not entry_dn.strip():
@@ -59,7 +61,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             entry = m.Ldif.Entry(
                 dn=m.Ldif.DN(value=dn.strip()),
                 attributes=m.Ldif.Attributes.model_validate({
-                    "attributes": attributes_dict
+                    "attributes": attributes_dict,
                 }),
             )
             return r[m.Ldif.Entry].ok(entry)

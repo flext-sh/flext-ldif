@@ -10,7 +10,7 @@ from flext_ldif import FlextLdifServiceBase, m, r, u
 
 
 class FlextLdifProcessing(
-    FlextLdifServiceBase[MutableSequence[m.Ldif.ProcessingResult]]
+    FlextLdifServiceBase[MutableSequence[m.Ldif.ProcessingResult]],
 ):
     """Service for batch and parallel entry processing."""
 

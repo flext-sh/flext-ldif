@@ -218,7 +218,7 @@ def parallel_schema_validation() -> r[t.ContainerMapping]:
     validation_result = api.validate_entries(test_entries)
     if validation_result.is_failure:
         return r[t.ContainerMapping].fail(
-            f"Schema validation failed: {validation_result.error}"
+            f"Schema validation failed: {validation_result.error}",
         )
     validation_report = validation_result.value
     error_analysis: Mapping[str, int] = {}
@@ -272,7 +272,9 @@ def schema_migration_pipeline() -> r[t.ContainerMapping]:
         return parse_result.map_or([])
 
     batch_result = u.process(
-        list(source_dir.glob("*.ldif")), parse_file, on_error="skip"
+        list(source_dir.glob("*.ldif")),
+        parse_file,
+        on_error="skip",
     )
     all_entries: Sequence[m.Ldif.Entry]
     if batch_result.is_success:
@@ -362,7 +364,9 @@ def batch_schema_operations() -> r[t.ContainerMapping]:
         return attr_result.map_or(None)
 
     batch_result = u.process(
-        core_attribute_definitions, create_core_attr, on_error="skip"
+        core_attribute_definitions,
+        create_core_attr,
+        on_error="skip",
     )
     if batch_result.is_success:
         core_attrs.extend([x for x in batch_result.value if x is not None])
@@ -442,18 +446,18 @@ def railway_schema_pipeline() -> r[t.ContainerMapping]:
     schema_build_result = intelligent_schema_building()
     if schema_build_result.is_failure:
         return r[t.ContainerMapping].fail(
-            f"Schema building failed: {schema_build_result.error}"
+            f"Schema building failed: {schema_build_result.error}",
         )
     schema_entries = schema_build_result.value
     schema_validation = api.validate_entries(schema_entries)
     if schema_validation.is_failure:
         return r[t.ContainerMapping].fail(
-            f"Schema validation failed: {schema_validation.error}"
+            f"Schema validation failed: {schema_validation.error}",
         )
     schema_report = schema_validation.value
     if not schema_report.is_valid:
         return r[t.ContainerMapping].fail(
-            f"Schema entries invalid: {schema_report.errors}"
+            f"Schema entries invalid: {schema_report.errors}",
         )
 
     def create_test_entry(i: int) -> m.Ldif.Entry | None:
@@ -493,15 +497,18 @@ def railway_schema_pipeline() -> r[t.ContainerMapping]:
     entry_validation = api.validate_entries(test_entries)
     if entry_validation.is_failure:
         return r[t.ContainerMapping].fail(
-            f"Entry validation failed: {entry_validation.error}"
+            f"Entry validation failed: {entry_validation.error}",
         )
     entry_report = entry_validation.value
     if not entry_report.is_valid:
         return r[t.ContainerMapping].fail(
-            f"Test entries invalid: {entry_report.errors}"
+            f"Test entries invalid: {entry_report.errors}",
         )
     process_result = api.process(
-        "transform", test_entries, parallel=True, max_workers=4
+        "transform",
+        test_entries,
+        parallel=True,
+        max_workers=4,
     )
     if process_result.is_failure:
         return r[t.ContainerMapping].fail(f"Processing failed: {process_result.error}")

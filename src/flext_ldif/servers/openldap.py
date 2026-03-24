@@ -338,7 +338,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             return (subject_value, access)
 
         def _parse_what_clause(
-            self, acl_content: str
+            self,
+            acl_content: str,
         ) -> tuple[str | None, MutableSequence[str]]:
             """Parse "to <what>" clause and extract attributes."""
             to_match = re.match(

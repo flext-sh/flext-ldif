@@ -41,7 +41,9 @@ class FlextLdifUtilitiesProcessing:
         if FlextLdifUtilitiesProcessing.is_two_arg_processor(predicate):
             try:
                 return FlextLdifUtilitiesProcessing.call_processor(
-                    predicate, key, value
+                    predicate,
+                    key,
+                    value,
                 )
             except (TypeError, ValueError):
                 try:
@@ -417,7 +419,7 @@ class FlextLdifUtilitiesProcessing:
             result = func(item)
             if result.is_failure:
                 return r[MutableSequence[U]].fail(
-                    result.error or "Batch operation failed"
+                    result.error or "Batch operation failed",
                 )
             results.append(result.value)
         return r[MutableSequence[U]].ok(results)
@@ -523,7 +525,7 @@ class FlextLdifUtilitiesProcessing:
         ] + list(filters)
         if not filter_list:
             return FlextLdifUtilitiesResult[MutableSequence[m.Ldif.Entry]].ok(
-                list(entries)
+                list(entries),
             )
         combined: FlextLdifUtilitiesFilters[m.Ldif.Entry] = filter_list[0]
         for f in filter_list[1:]:

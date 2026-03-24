@@ -18,7 +18,8 @@ class TestFlextLdifUtilitiesComprehensive:
 
     @pytest.mark.parametrize("test_data", FlextLdifTestFactory.parametrize_real_data())
     def test_all_utility_functions_with_real_data(
-        self, test_data: m.Ldif.Tests.LdifTestData
+        self,
+        test_data: m.Ldif.Tests.LdifTestData,
     ) -> None:
         """Test all utility functions with real generated data."""
         if test_data.dn:
@@ -30,7 +31,8 @@ class TestFlextLdifUtilitiesComprehensive:
     def test_real_ldif_processing_pipeline(self) -> None:
         """Test complete LDIF processing pipeline with real data."""
         ldif_content = FlextLdifTestFactory.create_real_ldif_content(
-            entries_count=5, include_schema=True
+            entries_count=5,
+            include_schema=True,
         )
         lines = ldif_content.split("\n")
         entries: MutableSequence[m.Ldif.Tests.LdifTestData] = []
@@ -44,7 +46,7 @@ class TestFlextLdifUtilitiesComprehensive:
                         server_type="generic",
                         dn=current_dn,
                         attributes=current_attrs,
-                    )
+                    ),
                 )
             elif line.startswith(" ") and entries:
                 continue

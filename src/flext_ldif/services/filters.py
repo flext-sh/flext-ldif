@@ -140,7 +140,7 @@ class FlextLdifFilters:
         ) as e:
             logger.exception("Failed to filter schema entries by OIDs")
             return r[MutableSequence[m.Ldif.Entry]].fail(
-                f"Schema OID filter failed: {e}"
+                f"Schema OID filter failed: {e}",
             )
 
 

@@ -57,7 +57,8 @@ class TestsFlextLdifDnOperationsPure:
         dn = "cn=Test\\, User\\\\More,ou=Users\\, Group,dc=example"
         result = u.Ldif.split(dn)
         tm.that(
-            result, eq=["cn=Test\\, User\\\\More", "ou=Users\\, Group", "dc=example"]
+            result,
+            eq=["cn=Test\\, User\\\\More", "ou=Users\\, Group", "dc=example"],
         )
 
     def test_validate_dn_format_valid(self) -> None:
@@ -142,7 +143,10 @@ class TestDnObjectClassMethods:
     def test_fix_missing_sup(self) -> None:
         """Test fixing missing SUP in AUXILIARY classes."""
         obj = m.Ldif.SchemaObjectClass(
-            oid="1.2.3.4", name="orcldasattrcategory", kind="AUXILIARY", sup=None
+            oid="1.2.3.4",
+            name="orcldasattrcategory",
+            kind="AUXILIARY",
+            sup=None,
         )
         u.Ldif.fix_missing_sup(obj)
         tm.that(obj.sup, eq="top")
@@ -150,7 +154,10 @@ class TestDnObjectClassMethods:
     def test_fix_kind_mismatch(self) -> None:
         """Test fixing kind mismatches."""
         obj = m.Ldif.SchemaObjectClass(
-            oid="1.2.3.4", name="testOC", sup="orclpwdverifierprofile", kind="AUXILIARY"
+            oid="1.2.3.4",
+            name="testOC",
+            sup="orclpwdverifierprofile",
+            kind="AUXILIARY",
         )
         u.Ldif.fix_kind_mismatch(obj)
         tm.that(obj.kind, eq="STRUCTURAL")
@@ -158,7 +165,10 @@ class TestDnObjectClassMethods:
     def test_ensure_sup_for_auxiliary(self) -> None:
         """Test ensuring AUXILIARY classes have SUP."""
         obj = m.Ldif.SchemaObjectClass(
-            oid="1.2.3.4", name="testOC", kind="AUXILIARY", sup=None
+            oid="1.2.3.4",
+            name="testOC",
+            kind="AUXILIARY",
+            sup=None,
         )
         u.Ldif.ensure_sup_for_auxiliary(obj)
         tm.that(obj.sup, eq="top")
@@ -196,7 +206,8 @@ class TestAttributeFixer:
     def test_normalize_matching_rules_both(self) -> None:
         """Test normalizing matching rules with both equality and substr."""
         result = u.Ldif.normalize_matching_rules(
-            "caseIgnoreMatch", "caseIgnoreSubstringsMatch"
+            "caseIgnoreMatch",
+            "caseIgnoreSubstringsMatch",
         )
         tm.that(result, eq=("caseIgnoreMatch", "caseIgnoreSubstringsMatch"))
 

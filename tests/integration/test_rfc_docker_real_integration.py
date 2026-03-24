@@ -38,7 +38,9 @@ class TestRfcParserRealFixtures:
         parse_response = parse_result.value
         typed_entries = [
             m.Ldif.Entry(
-                dn=entry.dn, attributes=entry.attributes, metadata=entry.metadata
+                dn=entry.dn,
+                attributes=entry.attributes,
+                metadata=entry.metadata,
             )
             for entry in parse_response.entries
         ]
@@ -56,7 +58,8 @@ class TestRfcParserRealFixtures:
         assert parse_response.entries
 
     def test_parse_openldap_entries_fixture(
-        self, quirk_registry: FlextLdifServer
+        self,
+        quirk_registry: FlextLdifServer,
     ) -> None:
         """Test parsing real OpenLDAP entries from fixtures."""
         entries_file = Path("tests/fixtures/openldap2/openldap2_entries_fixtures.ldif")
@@ -107,7 +110,9 @@ class TestRfcWriterRealFixtures:
         return FlextLdifServer()
 
     def test_write_and_reparse_oid_entries(
-        self, quirk_registry: FlextLdifServer, tmp_path: Path
+        self,
+        quirk_registry: FlextLdifServer,
+        tmp_path: Path,
     ) -> None:
         """Test roundtrip: parse OID fixture, write, and re-parse."""
         source_file = Path("tests/fixtures/oid/oid_entries_fixtures.ldif")
@@ -120,7 +125,9 @@ class TestRfcWriterRealFixtures:
         entries = parse_response.entries
         typed_entries = [
             m.Ldif.Entry(
-                dn=entry.dn, attributes=entry.attributes, metadata=entry.metadata
+                dn=entry.dn,
+                attributes=entry.attributes,
+                metadata=entry.metadata,
             )
             for entry in entries
         ]
@@ -128,7 +135,9 @@ class TestRfcWriterRealFixtures:
         output_file = tmp_path / "roundtrip.ldif"
         writer = FlextLdifWriter(server=quirk_registry)
         write_result = writer.write(
-            typed_entries, target_server_type="rfc", output_path=output_file
+            typed_entries,
+            target_server_type="rfc",
+            output_path=output_file,
         )
         assert write_result.is_success, f"Failed to write: {write_result.error}"
         assert output_file.exists()
@@ -139,7 +148,9 @@ class TestRfcWriterRealFixtures:
         assert len(reparsed_response.entries) == original_count
 
     def test_write_oud_acl_entries(
-        self, quirk_registry: FlextLdifServer, tmp_path: Path
+        self,
+        quirk_registry: FlextLdifServer,
+        tmp_path: Path,
     ) -> None:
         """Test writing OUD ACL entries to file."""
         acl_file = Path("tests/fixtures/oud/oud_acl_fixtures.ldif")
@@ -153,14 +164,18 @@ class TestRfcWriterRealFixtures:
         entries = parse_response.entries
         typed_entries = [
             m.Ldif.Entry(
-                dn=entry.dn, attributes=entry.attributes, metadata=entry.metadata
+                dn=entry.dn,
+                attributes=entry.attributes,
+                metadata=entry.metadata,
             )
             for entry in entries
         ]
         output_file = tmp_path / "acl_output.ldif"
         writer = FlextLdifWriter(server=quirk_registry)
         result = writer.write(
-            typed_entries, target_server_type="rfc", output_path=output_file
+            typed_entries,
+            target_server_type="rfc",
+            output_path=output_file,
         )
         assert result.is_success, f"Failed to write ACL entries: {result.error}"
         assert output_file.exists()
@@ -182,7 +197,9 @@ class TestRfcExceptionHandlingRealScenarios:
         assert result.error is not None
 
     def test_write_to_readonly_directory(
-        self, quirk_registry: FlextLdifServer, tmp_path: Path
+        self,
+        quirk_registry: FlextLdifServer,
+        tmp_path: Path,
     ) -> None:
         """Test write to read-only directory returns error."""
         readonly_dir = tmp_path / "readonly"
@@ -209,7 +226,9 @@ class TestRfcExceptionHandlingRealScenarios:
             readonly_dir.chmod(493)
 
     def test_parse_empty_file(
-        self, quirk_registry: FlextLdifServer, tmp_path: Path
+        self,
+        quirk_registry: FlextLdifServer,
+        tmp_path: Path,
     ) -> None:
         """Test parsing empty file."""
         empty_file = tmp_path / "empty.ldif"

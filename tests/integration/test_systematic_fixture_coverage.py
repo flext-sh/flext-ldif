@@ -38,12 +38,14 @@ class TestSystematicFixtureCoverage:
 
     @staticmethod
     def _limit_schema_fixture_content(
-        fixture_data: str, max_definitions: int = 50
+        fixture_data: str,
+        max_definitions: int = 50,
     ) -> str:
         """Build a minimal schema LDIF sample with bounded definitions."""
         lines = fixture_data.splitlines()
         first_dn = next(
-            (line for line in lines if line.startswith("dn:")), "dn: cn=schema"
+            (line for line in lines if line.startswith("dn:")),
+            "dn: cn=schema",
         )
         selected_lines = [first_dn]
         current_chunk: t.StrSequence = []
@@ -79,7 +81,10 @@ class TestSystematicFixtureCoverage:
         ids=["OID Schema", "OUD Schema"],
     )
     def test_schema_fixture_coverage(
-        self, api: FlextLdif, server_fixture: str, request: pytest.FixtureRequest
+        self,
+        api: FlextLdif,
+        server_fixture: str,
+        request: pytest.FixtureRequest,
     ) -> None:
         """Test schema fixtures can be parsed and written.
 
@@ -118,7 +123,10 @@ class TestSystematicFixtureCoverage:
         ids=["OID ACL", "OUD ACL"],
     )
     def test_acl_fixture_coverage(
-        self, api: FlextLdif, server_fixture: str, request: pytest.FixtureRequest
+        self,
+        api: FlextLdif,
+        server_fixture: str,
+        request: pytest.FixtureRequest,
     ) -> None:
         """Test ACL fixtures can be parsed and written.
 
@@ -150,7 +158,10 @@ class TestSystematicFixtureCoverage:
         ids=["OID Entries", "OUD Entries"],
     )
     def test_entries_fixture_coverage(
-        self, api: FlextLdif, server_fixture: str, request: pytest.FixtureRequest
+        self,
+        api: FlextLdif,
+        server_fixture: str,
+        request: pytest.FixtureRequest,
     ) -> None:
         """Test entry fixtures can be parsed and written.
 
@@ -191,7 +202,10 @@ class TestSystematicFixtureCoverage:
         ids=["OID Integration", "OUD Integration"],
     )
     def test_integration_fixture_coverage(
-        self, api: FlextLdif, server_fixture: str, request: pytest.FixtureRequest
+        self,
+        api: FlextLdif,
+        server_fixture: str,
+        request: pytest.FixtureRequest,
     ) -> None:
         """Test large integration fixtures for complete server×fixture coverage.
 
@@ -269,7 +283,7 @@ class TestSystematicFixtureCoverage:
                     assert fixture_data, f"{fixture_name} is empty"
                 except Exception as e:
                     pytest.fail(
-                        f"Fixture {fixture_name} ({fixture_type}) not available: {e}"
+                        f"Fixture {fixture_name} ({fixture_type}) not available: {e}",
                     )
 
     def test_all_servers_support_basic_ldif_operations(self, api: FlextLdif) -> None:

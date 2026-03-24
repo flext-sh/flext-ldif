@@ -61,8 +61,8 @@ class DRYEntryOperations:
         api = FlextLdif.get_instance()
         return DRYEntryOperations.advanced_filtering().flat_map(
             lambda e: api.process("transform", e, parallel=True, max_workers=4).map(
-                lambda res: [entry.model_dump() for entry in res]
-            )
+                lambda res: [entry.model_dump() for entry in res],
+            ),
         )
 
     @staticmethod

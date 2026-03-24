@@ -398,7 +398,8 @@ class TestsFlextLdifMatchers(tm):
                     )
                     if isinstance(attrs, dict):
                         objectclasses_raw = attrs.get(
-                            "objectClass", attrs.get("objectclass", [])
+                            "objectClass",
+                            attrs.get("objectclass", []),
                         )
                         if isinstance(objectclasses_raw, str):
                             objectclasses = [objectclasses_raw]
@@ -664,7 +665,8 @@ class TestsFlextLdifFixtures(tt):
 
     @classmethod
     def create_entries(
-        cls, entries_data: Sequence[tuple[str, Mapping[str, str | t.StrSequence]]]
+        cls,
+        entries_data: Sequence[tuple[str, Mapping[str, str | t.StrSequence]]],
     ) -> Sequence[m.Ldif.Entry]:
         """Create multiple test entries.
 
@@ -683,7 +685,8 @@ class TestsFlextLdifFixtures(tt):
 
     @staticmethod
     def run_fixture_roundtrip(
-        fixture_path: Path, msg: str | None = None
+        fixture_path: Path,
+        msg: str | None = None,
     ) -> Sequence[m.Ldif.Entry]:
         """Run fixture roundtrip - parse, write, parse again.
 
@@ -705,7 +708,8 @@ class TestsFlextLdifFixtures(tt):
 
     @staticmethod
     def load_fixture_entries(
-        fixture_path: Path, msg: str | None = None
+        fixture_path: Path,
+        msg: str | None = None,
     ) -> Sequence[m.Ldif.Entry]:
         """Load fixture entries from LDIF file.
 
@@ -723,7 +727,8 @@ class TestsFlextLdifFixtures(tt):
 
     @staticmethod
     def load_fixture_and_validate_structure(
-        fixture_path: Path, msg: str | None = None
+        fixture_path: Path,
+        msg: str | None = None,
     ) -> Sequence[m.Ldif.Entry]:
         """Load fixture and validate structure.
 

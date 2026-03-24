@@ -456,7 +456,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return False
 
     def _build_attribute_parts(
-        self, attr_data: m.Ldif.SchemaAttribute
+        self,
+        attr_data: m.Ldif.SchemaAttribute,
     ) -> MutableSequence[str]:
         """Build RFC attribute definition parts."""
         return u.Ldif.build_attribute_parts_with_metadata(
@@ -468,7 +469,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         self,
         oc_definition: str,
         metadata_extensions: MutableMapping[
-            str, MutableSequence[str] | str | bool | None
+            str,
+            MutableSequence[str] | str | bool | None,
         ],
     ) -> m.Ldif.QuirkMetadata:
         """Build objectClass metadata with extensions."""
@@ -483,7 +485,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return metadata
 
     def _build_objectclass_parts(
-        self, oc_data: m.Ldif.SchemaObjectClass
+        self,
+        oc_data: m.Ldif.SchemaObjectClass,
     ) -> MutableSequence[str]:
         """Build RFC objectClass definition parts."""
         return u.Ldif.build_objectclass_parts_with_metadata(
@@ -682,7 +685,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         oids: MutableSequence[str] | None,
         oid_type: str,
         metadata_extensions: MutableMapping[
-            str, MutableSequence[str] | str | bool | None
+            str,
+            MutableSequence[str] | str | bool | None,
         ],
     ) -> None:
         """Validate OID list and track in metadata."""

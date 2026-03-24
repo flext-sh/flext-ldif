@@ -31,7 +31,9 @@ class TestOudSchemaIntegration:
     """
 
     def test_parse_schema_fixture(
-        self, api: FlextLdif, oud_schema_fixture: str
+        self,
+        api: FlextLdif,
+        oud_schema_fixture: str,
     ) -> None:
         """Test parsing complete OUD schema fixture.
 
@@ -45,7 +47,9 @@ class TestOudSchemaIntegration:
         assert entries is not None
 
     def test_oracle_attributes_in_parsed_schema(
-        self, api: FlextLdif, oud_schema_fixture: str
+        self,
+        api: FlextLdif,
+        oud_schema_fixture: str,
     ) -> None:
         """Test that Oracle attributes are detected in parsed schema."""
         result = api.parse(oud_schema_fixture)
@@ -70,7 +74,9 @@ class TestOudSchemaIntegration:
         assert oracle_attr_count >= 0, "Schema parsing should complete successfully"
 
     def test_oracle_objectclasses_in_parsed_schema(
-        self, api: FlextLdif, oud_schema_fixture: str
+        self,
+        api: FlextLdif,
+        oud_schema_fixture: str,
     ) -> None:
         """Test that Oracle objectClasses are detected in parsed schema."""
         result = api.parse(oud_schema_fixture)
@@ -184,7 +190,9 @@ class TestOudEntryIntegration:
         )
 
     def test_oracle_objectclasses_preserved_in_parsing(
-        self, api: FlextLdif, entry_fixture: str
+        self,
+        api: FlextLdif,
+        entry_fixture: str,
     ) -> None:
         """Test that Oracle objectClasses are preserved during parsing."""
         result = api.parse(entry_fixture)
@@ -208,7 +216,9 @@ class TestOudEntryIntegration:
                     objectclasses: t.StrSequence = []
             else:
                 objectclasses = getattr(
-                    attrs_dict, "objectclass", getattr(attrs_dict, "objectClass", [])
+                    attrs_dict,
+                    "objectclass",
+                    getattr(attrs_dict, "objectClass", []),
                 )
             for oc in objectclasses:
                 if any(
@@ -235,7 +245,9 @@ class TestOudRoundTripIntegration:
         return loader.integration()
 
     def test_roundtrip_parse_write_parse(
-        self, api: FlextLdif, oud_integration_fixture: str
+        self,
+        api: FlextLdif,
+        oud_integration_fixture: str,
     ) -> None:
         """Test complete round-trip: parse → write → parse."""
         parse1_result = api.parse(oud_integration_fixture)
@@ -257,7 +269,9 @@ class TestOudRoundTripIntegration:
         assert dns1 == dns2, "DN set mismatch after round-trip"
 
     def test_roundtrip_dn_preservation(
-        self, api: FlextLdif, oud_integration_fixture: str
+        self,
+        api: FlextLdif,
+        oud_integration_fixture: str,
     ) -> None:
         """Test that DNs with spaces after commas are preserved."""
         parse_result = api.parse(oud_integration_fixture)

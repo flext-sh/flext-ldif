@@ -179,10 +179,10 @@ class FlextLdifFixtures:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         server_type: FlextLdifFixtures.ServerType = Field(
-            description="LDAP server type for the fixture"
+            description="LDAP server type for the fixture",
         )
         fixture_type: FlextLdifFixtures.FixtureType = Field(
-            description="Fixture category identifier"
+            description="Fixture category identifier",
         )
         file_path: Path = Field(description="Fixture file path")
         line_count: int = Field(description="Number of lines in the fixture file")
@@ -203,7 +203,8 @@ class FlextLdifFixtures:
 
         _content_cache: ClassVar[
             Mapping[
-                tuple[FlextLdifFixtures.ServerType, FlextLdifFixtures.FixtureType], str
+                tuple[FlextLdifFixtures.ServerType, FlextLdifFixtures.FixtureType],
+                str,
             ]
         ] = {}
         _metadata_cache: ClassVar[Mapping[Path, FlextLdifFixtures.Metadata]] = {}
@@ -271,7 +272,8 @@ class FlextLdifFixtures:
             return self._content_cache[cache_key]
 
         def load_all(
-            self, server_type: FlextLdifFixtures.ServerType
+            self,
+            server_type: FlextLdifFixtures.ServerType,
         ) -> Mapping[FlextLdifFixtures.FixtureType, str]:
             """Load all fixtures for a server type.
 
@@ -322,7 +324,8 @@ class FlextLdifFixtures:
             return available
 
         def get_available_fixtures(
-            self, server_type: FlextLdifFixtures.ServerType
+            self,
+            server_type: FlextLdifFixtures.ServerType,
         ) -> Sequence[FlextLdifFixtures.FixtureType]:
             """Get list of available fixture types for a server.
 
@@ -426,7 +429,8 @@ class FlextLdifFixtures:
 
             """
             return self._loader.load(
-                FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.SCHEMA
+                FlextLdifFixtures.ServerType.OID,
+                FlextLdifFixtures.FixtureType.SCHEMA,
             )
 
         def acl(self) -> str:
@@ -437,7 +441,8 @@ class FlextLdifFixtures:
 
             """
             return self._loader.load(
-                FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.ACL
+                FlextLdifFixtures.ServerType.OID,
+                FlextLdifFixtures.FixtureType.ACL,
             )
 
         def entries(self) -> str:
@@ -448,7 +453,8 @@ class FlextLdifFixtures:
 
             """
             return self._loader.load(
-                FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.ENTRIES
+                FlextLdifFixtures.ServerType.OID,
+                FlextLdifFixtures.FixtureType.ENTRIES,
             )
 
         def integration(self) -> str:
@@ -473,7 +479,8 @@ class FlextLdifFixtures:
             return self._loader.load_all(FlextLdifFixtures.ServerType.OID)
 
         def metadata(
-            self, fixture_type: FlextLdifFixtures.FixtureType
+            self,
+            fixture_type: FlextLdifFixtures.FixtureType,
         ) -> FlextLdifFixtures.Metadata:
             """Get metadata about an OID fixture.
 
@@ -485,7 +492,8 @@ class FlextLdifFixtures:
 
             """
             return self._loader.get_metadata(
-                FlextLdifFixtures.ServerType.OID, fixture_type
+                FlextLdifFixtures.ServerType.OID,
+                fixture_type,
             )
 
     class OUD:

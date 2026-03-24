@@ -24,10 +24,10 @@ class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
     """FlextLdifValidation class."""
 
     attribute_names: Annotated[MutableSequence[str], Field()] = Field(
-        default_factory=list
+        default_factory=list,
     )
     objectclass_names: Annotated[MutableSequence[str], Field()] = Field(
-        default_factory=list
+        default_factory=list,
     )
     max_attr_value_length: Annotated[int | None, Field()] = None
 
@@ -82,7 +82,8 @@ class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
         ).map_error(lambda e: f"Failed to validate attribute name: {e}")
 
     def validate_attribute_names(
-        self, names: MutableSequence[str]
+        self,
+        names: MutableSequence[str],
     ) -> r[MutableMapping[str, bool]]:
         """Validate_attribute_names method."""
         try:
@@ -118,7 +119,7 @@ class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
                 return r[bool].ok(False)
             return r[bool].ok(
                 FlextLdifUtilitiesValidation.Rfc.is_valid_rfc2849_attribute_value(
-                    value
+                    value,
                 ),
             )
         except (ValueError, TypeError, AttributeError) as e:

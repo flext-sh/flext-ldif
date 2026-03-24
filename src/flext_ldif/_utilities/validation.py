@@ -11,7 +11,8 @@ from flext_ldif import p, t
 class FlextLdifUtilitiesValidation(u):
     @staticmethod
     def validate_value(
-        value: t.Container, *validators: p.ValidatorSpec
+        value: t.Container,
+        *validators: p.ValidatorSpec,
     ) -> r[t.Container]:
         del validators
         return r[t.Container].ok(value)
@@ -20,7 +21,7 @@ class FlextLdifUtilitiesValidation(u):
         """RFC validation helpers."""
 
         _DESCRIPTOR_ADAPTER: Final[TypeAdapter[t.Ldif.Rfc4512Descriptor]] = TypeAdapter(
-            t.Ldif.Rfc4512Descriptor
+            t.Ldif.Rfc4512Descriptor,
         )
         _DN_COMPONENT_ADAPTER: Final[TypeAdapter[t.Ldif.Rfc4514DnComponent]] = (
             TypeAdapter(t.Ldif.Rfc4514DnComponent)

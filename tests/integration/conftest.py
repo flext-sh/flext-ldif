@@ -72,7 +72,8 @@ def _lock_file(worker_id: str) -> Generator[None]:
 
 
 def _wait_for_ldap_ready(
-    server_url: str, max_wait: float = 10.0
+    server_url: str,
+    max_wait: float = 10.0,
 ) -> tuple[str, str] | None:
     waited = 0.0
     interval = 1.0
@@ -81,7 +82,10 @@ def _wait_for_ldap_ready(
             server = Server(server_url, get_info=ALL)
             for bind_dn, password in _candidate_bind_credentials():
                 conn = Connection(
-                    server, user=bind_dn, password=password, auto_bind=False
+                    server,
+                    user=bind_dn,
+                    password=password,
+                    auto_bind=False,
                 )
                 if conn.bind():
                     conn.unbind()
@@ -175,7 +179,8 @@ def oid_integration_fixture() -> str:
 
 @pytest.fixture
 def oid_schema_entries(
-    api: FlextLdif, oid_schema_fixture: str
+    api: FlextLdif,
+    oid_schema_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse OID schema fixture into Entry models.
 
@@ -265,7 +270,8 @@ def oud_integration_fixture() -> str:
 
 @pytest.fixture
 def oud_schema_entries(
-    api: FlextLdif, oud_schema_fixture: str
+    api: FlextLdif,
+    oud_schema_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse OUD schema fixture into Entry models.
 
@@ -355,7 +361,8 @@ def openldap_integration_fixture() -> str:
 
 @pytest.fixture
 def openldap_schema_entries(
-    api: FlextLdif, openldap_schema_fixture: str
+    api: FlextLdif,
+    openldap_schema_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse OpenLDAP schema fixture into Entry models.
 
@@ -377,7 +384,8 @@ def openldap_schema_entries(
 
 @pytest.fixture
 def openldap_entries(
-    api: FlextLdif, openldap_entries_fixture: str
+    api: FlextLdif,
+    openldap_entries_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse OpenLDAP entries fixture into Entry models.
 
@@ -411,7 +419,8 @@ def rfc_schema_fixture() -> str:
 
 @pytest.fixture
 def rfc_schema_entries(
-    api: FlextLdif, rfc_schema_fixture: str
+    api: FlextLdif,
+    rfc_schema_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse RFC schema fixture into Entry models.
 
@@ -582,11 +591,12 @@ def ldap_container(worker_id: str) -> t.ContainerMapping:
         start_result = docker_control.start_existing_container(LDAP_CONTAINER_NAME)
         if start_result.is_failure:
             compose_result = docker_control.compose_up(
-                str(LDAP_COMPOSE_FILE), LDAP_SERVICE_NAME
+                str(LDAP_COMPOSE_FILE),
+                LDAP_SERVICE_NAME,
             )
             if compose_result.is_failure:
                 pytest.skip(
-                    f"Could not start shared OpenLDAP container: {compose_result.error}"
+                    f"Could not start shared OpenLDAP container: {compose_result.error}",
                 )
         port_result = docker_control.wait_for_port_ready("localhost", LDAP_PORT, 15)
         if port_result.is_failure or not port_result.value:
@@ -658,7 +668,7 @@ def ldap_connection(
     try:
         if not conn.bind():
             pytest.skip(
-                f"LDAP server not available at {server_url} for bind_dn={bind_dn}"
+                f"LDAP server not available at {server_url} for bind_dn={bind_dn}",
             )
     except (LDAPException, ConnectionError, TimeoutError, OSError) as exc:
         pytest.skip(f"LDAP server not available: {exc}")
@@ -668,7 +678,8 @@ def ldap_connection(
 
 @pytest.fixture
 def clean_test_ou(
-    ldap_connection: Connection, make_test_base_dn: Callable[[str], str]
+    ldap_connection: Connection,
+    make_test_base_dn: Callable[[str], str],
 ) -> Generator[str]:
     """Create and clean up an isolated OU for integration tests."""
     test_ou_dn = make_test_base_dn("FlextLdifTests")
@@ -681,7 +692,9 @@ def clean_test_ou(
                     ldap_connection.delete(dn)
     with contextlib.suppress(Exception):
         ldap_connection.add(
-            test_ou_dn, ["organizationalUnit"], {"ou": "FlextLdifTests"}
+            test_ou_dn,
+            ["organizationalUnit"],
+            {"ou": "FlextLdifTests"},
         )
     yield test_ou_dn
     with contextlib.suppress(Exception):

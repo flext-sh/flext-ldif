@@ -31,7 +31,9 @@ class TestMinimalDifferencesOidOud:
         return FlextLdif()
 
     def test_oid_fixture_all_differences_captured(
-        self, parser: FlextLdifParser, writer: FlextLdif
+        self,
+        parser: FlextLdifParser,
+        writer: FlextLdif,
     ) -> None:
         """Test that ALL minimal differences in OID fixtures are captured in metadata."""
         fixture_path = (
@@ -57,7 +59,9 @@ class TestMinimalDifferencesOidOud:
             )
 
     def test_oud_fixture_all_differences_captured(
-        self, parser: FlextLdifParser, writer: FlextLdif
+        self,
+        parser: FlextLdifParser,
+        writer: FlextLdif,
     ) -> None:
         """Test that ALL minimal differences in OUD fixtures are captured in metadata."""
         fixture_path = (
@@ -80,7 +84,9 @@ class TestMinimalDifferencesOidOud:
             )
 
     def test_round_trip_oid_preserves_all_differences(
-        self, parser: FlextLdifParser, writer: FlextLdif
+        self,
+        parser: FlextLdifParser,
+        writer: FlextLdif,
     ) -> None:
         """Test round-trip: OID -> RFC -> OID preserves ALL differences."""
         oid_ldif = "dn: cn=test, dc=example, dc=com\nobjectClass: top\nobjectClass: person\ncn: test\nsn: User\norcldasisenabled: 1\n"
@@ -92,7 +98,7 @@ class TestMinimalDifferencesOidOud:
         assert original_entry.metadata is not None
         assert "original_dn_complete" in original_entry.metadata.extensions
         write_result = writer.write(
-            entries=[m.Ldif.Entry.model_validate(original_entry)]
+            entries=[m.Ldif.Entry.model_validate(original_entry)],
         )
         assert write_result.is_success
         written_ldif = write_result.value
@@ -123,7 +129,8 @@ class TestMinimalDifferencesOidOud:
         entry = entries[0]
         assert entry.metadata is not None
         original_attrs = entry.metadata.extensions.get(
-            "original_attributes_complete", {}
+            "original_attributes_complete",
+            {},
         )
         assert isinstance(original_attrs, dict)
         if entry.metadata.original_attribute_case:
@@ -157,7 +164,8 @@ class TestMinimalDifferencesOidOud:
         converted_attrs = entry.metadata.extensions.get(c.Ldif.CONVERTED_ATTRIBUTES, {})
         if isinstance(converted_attrs, dict):
             raw_boolean_conversions = converted_attrs.get(
-                c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS, {}
+                c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS,
+                {},
             )
             boolean_conversions = (
                 dict(raw_boolean_conversions)

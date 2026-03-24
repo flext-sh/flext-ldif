@@ -80,7 +80,7 @@ class TestValidators:
                 (
                     isinstance(k, str) and isinstance(v, list)
                     for k, v in attributes_dict.items()
-                )
+                ),
             ),
         }
 

@@ -41,7 +41,8 @@ class DRYValidationAnalysis:
 
     @staticmethod
     def _generate_test_dataset(
-        count: int, error_rate: float = 0.0
+        count: int,
+        error_rate: float = 0.0,
     ) -> Sequence[m.Ldif.Entry]:
         """DRY test dataset generation with configurable errors."""
         api = FlextLdif.get_instance()
@@ -55,7 +56,7 @@ class DRYValidationAnalysis:
                     "mail": [
                         f"user{i}@example.com"
                         if i % int(1 / error_rate) != 0
-                        else "invalid"
+                        else "invalid",
                     ],
                     **({} if i % int(1 / error_rate) != 0 else {"sn": []}),
                 },
@@ -70,7 +71,7 @@ class DRYValidationAnalysis:
                     "mail": [
                         f"user{i}@example.com"
                         if i % int(1 / error_rate) != 0
-                        else "invalid"
+                        else "invalid",
                     ],
                     **({} if i % int(1 / error_rate) != 0 else {"sn": []}),
                 },

@@ -338,7 +338,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         return (base_dn, subject_type, subject_value)
 
     def _finalize_aci(
-        self, current_aci: MutableSequence[str], acls: MutableSequence[m.Ldif.Acl]
+        self,
+        current_aci: MutableSequence[str],
+        acls: MutableSequence[m.Ldif.Acl],
     ) -> None:
         """Parse and add accumulated ACI to ACL list."""
         if current_aci:
@@ -375,7 +377,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             extensions=extensions,
         )
         update_dict: MutableMapping[str, m.Ldif.QuirkMetadata] = {
-            "metadata": new_metadata
+            "metadata": new_metadata,
         }
         acl_updated = acl.model_copy(update=update_dict)
         acl_result: m.Ldif.Acl = acl_updated

@@ -662,7 +662,7 @@ class FlextLdifUtilitiesMetadata:
                     }
                 else:
                     normalized_metadata[key] = str(value)
-            setattr(model, "validation_metadata", t.ConfigMap(root=normalized_metadata))
+            model.validation_metadata = t.ConfigMap(root=normalized_metadata)
         except (AttributeError, TypeError, ValueError):
             pass
 
@@ -736,7 +736,7 @@ class FlextLdifUtilitiesMetadata:
                     c.Ldif.ServerTypes.RFC.value,
                 ),
             )
-            setattr(entry, "metadata", entry_metadata)
+            entry.metadata = entry_metadata
         update_dict: t.MutableContainerMapping = {"processing_stats": updated_stats}
         updated_metadata = entry_metadata.model_copy(update=update_dict)
         return entry.model_copy(update={"metadata": updated_metadata})
@@ -932,7 +932,7 @@ class FlextLdifUtilitiesMetadata:
         formatting_details = FlextLdifUtilitiesMetadata.analyze_schema_formatting(
             definition,
         )
-        setattr(metadata, "schema_format_details", formatting_details)
+        metadata.schema_format_details = formatting_details
         logger.debug(
             "Schema formatting preserved in metadata",
             quirk_type=metadata.quirk_type,

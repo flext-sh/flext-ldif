@@ -365,14 +365,14 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     )
                 entry_dn = entry.dn.value
                 attributes: MutableMapping[str, MutableSequence[str]] = {
-                    **entry.attributes.attributes
+                    **entry.attributes.attributes,
                 }
                 dn_lower = entry_dn.lower()
                 object_classes = [
                     str(oc) for oc in attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
                 ]
                 processed_attributes: MutableMapping[str, MutableSequence[str]] = {
-                    **attributes
+                    **attributes,
                 }
                 for attr_name, attr_values in processed_attributes.items():
                     processed_values: MutableSequence[str] = []
@@ -392,11 +392,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     for marker in FlextLdifServersTivoli.Constants.DETECTION_DN_MARKERS
                 )
                 processed_attributes[c.Ldif.QuirkMetadataKeys.IS_CONFIG_ENTRY] = [
-                    str(is_config)
+                    str(is_config),
                 ]
                 processed_attributes[c.Ldif.DictKeys.OBJECTCLASS] = object_classes
                 new_attrs = m.Ldif.Attributes.model_validate({
-                    "attributes": processed_attributes
+                    "attributes": processed_attributes,
                 })
                 processed_entry = entry.model_copy(update={"attributes": new_attrs})
                 return r[m.Ldif.Entry].ok(processed_entry)

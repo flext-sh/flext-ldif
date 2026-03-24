@@ -103,7 +103,7 @@ class EntryTestCase(BaseModel):
     scenario: EntryScenario = Field(description="Entry detection scenario identifier")
     entry_dn: str = Field(description="Entry distinguished name")
     attributes: Mapping[str, Sequence[str]] = Field(
-        description="Entry attributes mapped by name"
+        description="Entry attributes mapped by name",
     )
     expected_can_handle: bool = Field(description="Expected can_handle result")
 
@@ -304,12 +304,16 @@ class TestsTestFlextLdifApacheQuirks(s):
         schema = server.schema_quirk
         attr_def = "NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7"
         TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            schema, attr_def, parse_method="parse_attribute", should_succeed=False
+            schema,
+            attr_def,
+            parse_method="parse_attribute",
+            should_succeed=False,
         )
 
     @pytest.mark.parametrize("test_case", OBJECTCLASS_TEST_CASES)
     def test_schema_objectclass_can_handle(
-        self, test_case: ObjectClassTestCase
+        self,
+        test_case: ObjectClassTestCase,
     ) -> None:
         """Test objectClass detection for various scenarios."""
         server = FlextLdifServersApache()
@@ -379,7 +383,10 @@ class TestsTestFlextLdifApacheQuirks(s):
         schema = server.schema_quirk
         oc_def = "NAME 'ads-directoryService' SUP top STRUCTURAL"
         TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            schema, oc_def, parse_method="parse_objectclass", should_succeed=False
+            schema,
+            oc_def,
+            parse_method="parse_objectclass",
+            should_succeed=False,
         )
 
     def test_schema_write_attribute_to_rfc(self) -> None:
@@ -433,12 +440,17 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_quirk = server.acl_quirk
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl_quirk, acl_line, parse_method="parse", expected_type=m.Ldif.Tests.Acl
+            acl_quirk,
+            acl_line,
+            parse_method="parse",
+            expected_type=m.Ldif.Tests.Acl,
         )
         tm.that(acl_model, is_=m.Ldif.Tests.Acl)
         if isinstance(acl_model, m.Ldif.Tests.Acl):
             roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-                acl_quirk, acl_model.raw_acl or str(acl_model), parse_method="parse"
+                acl_quirk,
+                acl_model.raw_acl or str(acl_model),
+                parse_method="parse",
             )
             tm.that(roundtrip_result, none=False)
 
@@ -448,12 +460,17 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_quirk = server.acl_quirk
         acl_line = "aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl_quirk, acl_line, parse_method="parse", expected_type=m.Ldif.Tests.Acl
+            acl_quirk,
+            acl_line,
+            parse_method="parse",
+            expected_type=m.Ldif.Tests.Acl,
         )
         tm.that(acl_model, is_=m.Ldif.Tests.Acl)
         if isinstance(acl_model, m.Ldif.Tests.Acl):
             roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-                acl_quirk, acl_model.raw_acl or str(acl_model), parse_method="parse"
+                acl_quirk,
+                acl_model.raw_acl or str(acl_model),
+                parse_method="parse",
             )
             tm.that(roundtrip_result, none=False)
 
@@ -463,12 +480,17 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_quirk = server.acl_quirk
         acl_line = "(version 3.0) (deny grantAdd) (grantRemove)"
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl_quirk, acl_line, parse_method="parse", expected_type=m.Ldif.Tests.Acl
+            acl_quirk,
+            acl_line,
+            parse_method="parse",
+            expected_type=m.Ldif.Tests.Acl,
         )
         tm.that(acl_model, is_=m.Ldif.Tests.Acl)
         if isinstance(acl_model, m.Ldif.Tests.Acl):
             roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-                acl_quirk, acl_model.raw_acl or str(acl_model), parse_method="parse"
+                acl_quirk,
+                acl_model.raw_acl or str(acl_model),
+                parse_method="parse",
             )
             tm.that(roundtrip_result, none=False)
 
@@ -493,7 +515,10 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_quirk = server.acl_quirk
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
         acl_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl_quirk, acl_line, parse_method="parse", expected_type=m.Ldif.Tests.Acl
+            acl_quirk,
+            acl_line,
+            parse_method="parse",
+            expected_type=m.Ldif.Tests.Acl,
         )
         tm.that(acl_data, is_=m.Ldif.Tests.Acl)
         if isinstance(acl_data, m.Ldif.Tests.Acl):
@@ -506,7 +531,10 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_quirk = server.acl_quirk
         acl_line = "aci: ( deny grantAdd )"
         acl_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
-            acl_quirk, acl_line, parse_method="parse", expected_type=m.Ldif.Tests.Acl
+            acl_quirk,
+            acl_line,
+            parse_method="parse",
+            expected_type=m.Ldif.Tests.Acl,
         )
         tm.that(acl_data, is_=m.Ldif.Tests.Acl)
 
@@ -523,7 +551,10 @@ class TestsTestFlextLdifApacheQuirks(s):
             raw_acl="( version 3.0 ) ( deny grantAdd )",
         )
         TestDeduplicationHelpers.quirk_write_and_unwrap(
-            acl_quirk, acl_model, write_method="_write_acl", must_contain=["aci:"]
+            acl_quirk,
+            acl_model,
+            write_method="_write_acl",
+            must_contain=["aci:"],
         )
 
     def test_acl_write_with_clauses_only(self) -> None:
@@ -539,7 +570,10 @@ class TestsTestFlextLdifApacheQuirks(s):
             raw_acl="( version 3.0 ) ( deny grantAdd )",
         )
         TestDeduplicationHelpers.quirk_write_and_unwrap(
-            acl_quirk, acl_model, write_method="write", must_contain=["aci:"]
+            acl_quirk,
+            acl_model,
+            write_method="write",
+            must_contain=["aci:"],
         )
 
     def test_acl_write_empty(self) -> None:
@@ -555,7 +589,10 @@ class TestsTestFlextLdifApacheQuirks(s):
             raw_acl="",
         )
         TestDeduplicationHelpers.quirk_write_and_unwrap(
-            acl_quirk, acl_model, write_method="write", must_contain=["ads-aci", "aci:"]
+            acl_quirk,
+            acl_model,
+            write_method="write",
+            must_contain=["ads-aci", "aci:"],
         )
 
     @pytest.mark.parametrize("test_case", ENTRY_TEST_CASES)
@@ -580,7 +617,8 @@ class TestsTestFlextLdifApacheQuirks(s):
         return ldif
 
     @pytest.mark.parametrize(
-        "test_case", [c for c in ENTRY_TEST_CASES if c.expected_can_handle]
+        "test_case",
+        [c for c in ENTRY_TEST_CASES if c.expected_can_handle],
     )
     def test_entry_parse_ldif(self, test_case: EntryTestCase) -> None:
         """Test entry parsing via LDIF for Apache-detectable entries."""

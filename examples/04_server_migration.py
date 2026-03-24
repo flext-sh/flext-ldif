@@ -60,7 +60,8 @@ class ExampleServerMigration:
 
     @staticmethod
     def _detect_server_type(
-        api: FlextLdif, source_dir: Path
+        api: FlextLdif,
+        source_dir: Path,
     ) -> tuple[str, t.ContainerMapping]:
         """Detect server type from source data."""
         sample_file = source_dir / "data_00.ldif"
@@ -87,7 +88,9 @@ class ExampleServerMigration:
             dir_path.mkdir(exist_ok=True, parents=True)
 
         _ = u.process(
-            [source_dir, intermediate_dir, final_dir], setup_dir, on_error="skip"
+            [source_dir, intermediate_dir, final_dir],
+            setup_dir,
+            on_error="skip",
         )
         return (source_dir, intermediate_dir, final_dir)
 
@@ -99,7 +102,7 @@ class ExampleServerMigration:
         detect_result = api.detect_server_type(ldif_content=mixed_ldif)
         if detect_result.is_failure:
             return r[t.ContainerMapping].fail(
-                f"Server detection failed: {detect_result.error}"
+                f"Server detection failed: {detect_result.error}",
             )
         detection = detect_result.value
         detected_server = detection.detected_server_type or "rfc"
@@ -118,7 +121,7 @@ class ExampleServerMigration:
         )
         if migration_result.is_failure:
             return r[t.ContainerMapping].fail(
-                f"Migration to RFC failed: {migration_result.error}"
+                f"Migration to RFC failed: {migration_result.error}",
             )
         return r[t.ContainerMapping].ok({
             "detected_server": detected_server,
@@ -190,7 +193,8 @@ class ExampleServerMigration:
         )
         ExampleServerMigration._create_test_data(source_dir)
         source_server, detection_data = ExampleServerMigration._detect_server_type(
-            api, source_dir
+            api,
+            source_dir,
         )
         source_server_typed = source_server
         intermediate_migration = api.migrate(
@@ -201,12 +205,12 @@ class ExampleServerMigration:
             options=m.Ldif.MigrateOptions(
                 write_options=m.Ldif.WriteConfig(
                     fold_lines=False,
-                )
+                ),
             ),
         )
         if intermediate_migration.is_failure:
             return r[t.ContainerMapping].fail(
-                f"Intermediate migration failed: {intermediate_migration.error}"
+                f"Intermediate migration failed: {intermediate_migration.error}",
             )
         final_migration = api.migrate(
             input_dir=intermediate_dir,
@@ -216,7 +220,7 @@ class ExampleServerMigration:
         )
         if final_migration.is_failure:
             return r[t.ContainerMapping].fail(
-                f"Final migration failed: {final_migration.error}"
+                f"Final migration failed: {final_migration.error}",
             )
         final_result = final_migration.value
         final_count = final_result.stats.processed_entries if final_result.stats else 0
@@ -252,12 +256,12 @@ class ExampleServerMigration:
             options=m.Ldif.MigrateOptions(
                 write_options=m.Ldif.WriteConfig(
                     fold_lines=False,
-                )
+                ),
             ),
         )
         if migration_result.is_failure:
             return r[m.Ldif.MigrationPipelineResult].fail(
-                f"Migration failed: {migration_result.error}"
+                f"Migration failed: {migration_result.error}",
             )
         result = migration_result.value
         _ = len(result.entries)

@@ -42,7 +42,9 @@ class TestRfcDockerRealData:
         return Path("tests/fixtures/openldap2")
 
     def test_parse_real_oid_schema(
-        self, quirk_registry: FlextLdifServer, oid_fixtures_dir: Path
+        self,
+        quirk_registry: FlextLdifServer,
+        oid_fixtures_dir: Path,
     ) -> None:
         """Test parsing real OID schema from fixtures."""
         schema_file = oid_fixtures_dir / "oid_schema_fixtures.ldif"
@@ -64,7 +66,9 @@ class TestRfcDockerRealData:
         )
 
     def test_parse_real_oud_entries(
-        self, quirk_registry: FlextLdifServer, oud_fixtures_dir: Path
+        self,
+        quirk_registry: FlextLdifServer,
+        oud_fixtures_dir: Path,
     ) -> None:
         """Test parsing real OUD entries from fixtures."""
         entries_file = oud_fixtures_dir / "oud_entries_fixtures.ldif"
@@ -79,7 +83,9 @@ class TestRfcDockerRealData:
         assert all(hasattr(entry, "dn") for entry in entries)
 
     def test_parse_openldap_integration_data(
-        self, quirk_registry: FlextLdifServer, openldap_fixtures_dir: Path
+        self,
+        quirk_registry: FlextLdifServer,
+        openldap_fixtures_dir: Path,
     ) -> None:
         """Test parsing real OpenLDAP integration data."""
         integration_file = openldap_fixtures_dir / "openldap2_integration_fixtures.ldif"
@@ -96,7 +102,10 @@ class TestRfcDockerRealData:
             assert entries
 
     def test_roundtrip_oid_to_file(
-        self, quirk_registry: FlextLdifServer, oid_fixtures_dir: Path, tmp_path: Path
+        self,
+        quirk_registry: FlextLdifServer,
+        oid_fixtures_dir: Path,
+        tmp_path: Path,
     ) -> None:
         """Test read OID fixture, write to file, read back (roundtrip)."""
         source_file = oid_fixtures_dir / "oid_entries_fixtures.ldif"
@@ -110,14 +119,18 @@ class TestRfcDockerRealData:
         entries = parse_response.entries
         typed_entries = [
             m.Ldif.Entry(
-                dn=entry.dn, attributes=entry.attributes, metadata=entry.metadata
+                dn=entry.dn,
+                attributes=entry.attributes,
+                metadata=entry.metadata,
             )
             for entry in entries
         ]
         output_file = tmp_path / "roundtrip.ldif"
         writer = FlextLdifWriter()
         write_result = writer.write(
-            entries=typed_entries, target_server_type="oid", output_path=output_file
+            entries=typed_entries,
+            target_server_type="oid",
+            output_path=output_file,
         )
         assert write_result.is_success, f"Failed to write: {write_result.error}"
         assert output_file.exists()
@@ -129,7 +142,9 @@ class TestRfcDockerRealData:
         assert len(reparsed_entries) == len(typed_entries)
 
     def test_parse_oud_acl_entries(
-        self, quirk_registry: FlextLdifServer, oud_fixtures_dir: Path
+        self,
+        quirk_registry: FlextLdifServer,
+        oud_fixtures_dir: Path,
     ) -> None:
         """Test parsing OUD ACL entries from fixtures."""
         acl_file = oud_fixtures_dir / "oud_acl_fixtures.ldif"
@@ -163,7 +178,9 @@ class TestRfcDockerRealData:
             )
 
     def test_write_with_exception_handling(
-        self, quirk_registry: FlextLdifServer, tmp_path: Path
+        self,
+        quirk_registry: FlextLdifServer,
+        tmp_path: Path,
     ) -> None:
         """Test RFC writer exception handling (now exposed without pragmas)."""
         readonly_dir = tmp_path / "readonly"
@@ -177,7 +194,9 @@ class TestRfcDockerRealData:
             )
             writer = FlextLdifWriter()
             result = writer.write(
-                entries=[test_entry], target_server_type="rfc", output_path=output_file
+                entries=[test_entry],
+                target_server_type="rfc",
+                output_path=output_file,
             )
             if not result.is_success:
                 assert result.error is not None
@@ -189,7 +208,8 @@ class TestRfcDockerRealData:
             readonly_dir.chmod(493)
 
     def test_parse_broken_ldif_relaxed_mode(
-        self, quirk_registry: FlextLdifServer
+        self,
+        quirk_registry: FlextLdifServer,
     ) -> None:
         """Test relaxed parsing of broken/malformed LDIF."""
         broken_dir = Path("tests/fixtures/broken/structure")
@@ -205,7 +225,8 @@ class TestRfcDockerRealData:
                 assert isinstance(entries, list)
 
     def test_rfc_schema_parser_with_real_data(
-        self, quirk_registry: FlextLdifServer
+        self,
+        quirk_registry: FlextLdifServer,
     ) -> None:
         """Test RFC schema parser with real OID schema."""
         schema_file = Path("tests/fixtures/oid/oid_schema_fixtures.ldif")
@@ -259,7 +280,9 @@ class TestRfcIntegrationRealWorld:
             assert entries, "Integration file should have entries"
 
     def test_write_large_dataset(
-        self, quirk_registry: FlextLdifServer, tmp_path: Path
+        self,
+        quirk_registry: FlextLdifServer,
+        tmp_path: Path,
     ) -> None:
         """Test writing large dataset to file."""
         entry_models = [
@@ -271,7 +294,7 @@ class TestRfcIntegrationRealWorld:
                         "objectClass": ["person", "inetOrgPerson"],
                         "mail": [f"user{i}@example.com"],
                         "userPassword": [f"password{i}"],
-                    }
+                    },
                 ),
             )
             for i in range(100)
@@ -279,7 +302,9 @@ class TestRfcIntegrationRealWorld:
         output_file = tmp_path / "large_output.ldif"
         writer = FlextLdifWriter(server=quirk_registry)
         result = writer.write(
-            entry_models, target_server_type="rfc", output_path=output_file
+            entry_models,
+            target_server_type="rfc",
+            output_path=output_file,
         )
         assert result.is_success, f"Failed to write large dataset: {result.error}"
         assert output_file.exists()

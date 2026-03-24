@@ -76,7 +76,11 @@ def _write_categories_to_file(
         if not cat_entries:
             continue
         _write_category_header(
-            category, len(cat_entries), include_attributes, f, output_content_lines
+            category,
+            len(cat_entries),
+            include_attributes,
+            f,
+            output_content_lines,
         )
         for entry in cat_entries:
             if isinstance(entry, m.Ldif.Entry):
@@ -127,7 +131,7 @@ class TestCategorizationRealData:
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="ou=users,dc=example"),
                 attributes=m.Ldif.Attributes(
-                    attributes={"objectClass": ["organizationalUnit"]}
+                    attributes={"objectClass": ["organizationalUnit"]},
                 ),
             ),
             m.Ldif.Entry(
@@ -141,7 +145,7 @@ class TestCategorizationRealData:
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="ou=test,dc=example2"),
                 attributes=m.Ldif.Attributes(
-                    attributes={"objectClass": ["organizationalUnit"]}
+                    attributes={"objectClass": ["organizationalUnit"]},
                 ),
             ),
         ]
@@ -163,7 +167,10 @@ class TestCategorizationRealData:
             f.write(header)
             output_content_lines.append(header)
             _write_categories_to_file(
-                filtered, f, output_content_lines, include_attributes=False
+                filtered,
+                f,
+                output_content_lines,
+                include_attributes=False,
             )
         assert output_file.exists(), "Output file should be created"
         output_content = output_file.read_text(encoding="utf-8")
@@ -235,25 +242,25 @@ class TestCategorizationRealData:
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="dc=example"),
                 attributes=m.Ldif.Attributes(
-                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']}
+                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
                 ),
             ),
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="ou=users,dc=example"),
                 attributes=m.Ldif.Attributes(
-                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']}
+                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
                 ),
             ),
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="dc=example2"),
                 attributes=m.Ldif.Attributes(
-                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']}
+                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
                 ),
             ),
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="cn=config"),
                 attributes=m.Ldif.Attributes(
-                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']}
+                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
                 ),
             ),
         ]
@@ -289,7 +296,7 @@ class TestCategorizationRealData:
                 output_content_lines.append(entry_line)
             f.write("\n# ACLs WITHOUT BaseDN (system ACLs, kept):\n")
             output_content_lines.append(
-                "\n# ACLs WITHOUT BaseDN (system ACLs, kept):\n"
+                "\n# ACLs WITHOUT BaseDN (system ACLs, kept):\n",
             )
             for entry in acls_without_basedn:
                 dn = entry.dn.value if entry.dn is not None else "N/A"
@@ -355,7 +362,10 @@ class TestCategorizationRealData:
             f.write(header)
             output_content_lines.append(header)
             _write_categories_to_file(
-                filtered, f, output_content_lines, include_attributes=True
+                filtered,
+                f,
+                output_content_lines,
+                include_attributes=True,
             )
         assert output_file.exists(), "Output file should be created"
         output_content = output_file.read_text(encoding="utf-8")

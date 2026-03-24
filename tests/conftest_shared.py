@@ -33,7 +33,10 @@ def _create_sample_schema_attribute() -> m.Ldif.SchemaAttribute:
 
 def _create_sample_schema_objectclass() -> m.Ldif.SchemaObjectClass:
     return m.Ldif.SchemaObjectClass(
-        oid=c.RFC.OC_OID_PERSON, name=c.RFC.OC_NAME_PERSON, desc=None, sup=None
+        oid=c.RFC.OC_OID_PERSON,
+        name=c.RFC.OC_NAME_PERSON,
+        desc=None,
+        sup=None,
     )
 
 

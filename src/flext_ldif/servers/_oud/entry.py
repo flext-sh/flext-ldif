@@ -397,7 +397,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             else:
                 attrs_for_model[raw_key] = [str(raw_value)]
         corrected_ldif_attrs = m.Ldif.Attributes.model_validate({
-            "attributes": attrs_for_model
+            "attributes": attrs_for_model,
         })
         corrected_entry = entry.model_copy(update={"attributes": corrected_ldif_attrs})
         logger.debug(
@@ -515,7 +515,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         metadata_typed = metadata_typed.model_copy(update=update_dict)
         if commented_acl_values:
             converted_attrs_list: MutableSequence[str] = list(
-                commented_acl_values.keys()
+                commented_acl_values.keys(),
             )
             converted_attrs_typed: t.NormalizedValue = list(converted_attrs_list)
             current_extensions["converted_attributes"] = converted_attrs_typed
@@ -557,7 +557,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @override
     def can_handle(
-        self, entry_dn: str, attributes: MutableMapping[str, MutableSequence[str]]
+        self,
+        entry_dn: str,
+        attributes: MutableMapping[str, MutableSequence[str]],
     ) -> bool:
         """Check if OUD should handle this entry using pattern matching.
 

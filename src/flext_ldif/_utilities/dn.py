@@ -949,7 +949,7 @@ class FlextLdifUtilitiesDN:
         """Parse a single RDN component per RFC 4514."""
         if not rdn:
             return r[MutableSequence[tuple[str, str]]].fail(
-                "RDN must be a non-empty string"
+                "RDN must be a non-empty string",
             )
         try:
             pairs: MutableSequence[tuple[str, str]] = []
@@ -1024,7 +1024,7 @@ class FlextLdifUtilitiesDN:
                 struct.error,
             ) as exc:
                 return r[str | MutableSequence[tuple[str, str]]].fail(
-                    f"Clean failed: {exc}"
+                    f"Clean failed: {exc}",
                 )
         if validate:
             is_valid, errors = FlextLdifUtilitiesDN.is_valid_dn_string(current_dn)
@@ -1091,7 +1091,7 @@ class FlextLdifUtilitiesDN:
             ) as exc:
                 if fail_fast:
                     return r[MutableSequence[str]].fail(
-                        f"Base replacement failed: {exc}"
+                        f"Base replacement failed: {exc}",
                     )
         return r[MutableSequence[str]].ok(results)
 
@@ -1136,7 +1136,7 @@ class FlextLdifUtilitiesDN:
                 update={
                     "dn": transformed_dn,
                     "attributes": m.Ldif.Attributes.model_validate({
-                        "attributes": transformed_attrs
+                        "attributes": transformed_attrs,
                     }),
                 },
             )

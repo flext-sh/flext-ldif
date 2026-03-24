@@ -120,7 +120,7 @@ class EntryTestCase(BaseModel):
     scenario: EntryScenario = Field(description="Entry detection scenario identifier")
     entry_dn: str = Field(description="Entry distinguished name")
     attributes: Mapping[str, Sequence[str]] = Field(
-        description="Entry attributes mapped by name"
+        description="Entry attributes mapped by name",
     )
     expected_can_handle: bool = Field(description="Expected can_handle result")
 
@@ -341,7 +341,8 @@ class TestsTestFlextLdifDs389Quirks(s):
 
     @pytest.mark.parametrize("test_case", OBJECTCLASS_TEST_CASES)
     def test_schema_objectclass_can_handle(
-        self, test_case: ObjectClassTestCase
+        self,
+        test_case: ObjectClassTestCase,
     ) -> None:
         """Test objectClass detection for various scenarios."""
         server = FlextLdifServersDs389()
@@ -375,7 +376,9 @@ class TestsTestFlextLdifDs389Quirks(s):
         tm.that(schema_quirk, is_=FlextLdifServersDs389.Schema)
         oc_def = "( 2.16.840.1.113730.3.2.2 NAME 'nsds5replica' AUXILIARY MAY ( nsds5ReplicaId $ nsds5ReplicaRoot ) )"
         RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
-            schema_quirk, oc_def, expected_kind="AUXILIARY"
+            schema_quirk,
+            oc_def,
+            expected_kind="AUXILIARY",
         )
 
     def test_parse_objectclass_abstract(self) -> None:

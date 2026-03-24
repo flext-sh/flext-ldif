@@ -69,7 +69,9 @@ class TestRealLdapRoundtrip:
                 values = [str(attr_obj)]
             attrs_dict[attr_name] = values
         entry_result = flext_api.models.Ldif.Entry.create(
-            dn=ldap_entry.entry_dn, attributes=attrs_dict, metadata=None
+            dn=ldap_entry.entry_dn,
+            attributes=attrs_dict,
+            metadata=None,
         )
         assert entry_result.is_success
         flext_entry = entry_result.value
@@ -118,7 +120,7 @@ class TestRealLdapRoundtrip:
         assert reimported["sn"].value == original_attrs["sn"]
         assert reimported["mail"].value == original_attrs["mail"]
         assert set(reimported["telephoneNumber"].values) == set(
-            original_attrs["telephoneNumber"]
+            original_attrs["telephoneNumber"],
         )
 
 

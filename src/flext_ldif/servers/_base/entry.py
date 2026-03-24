@@ -88,7 +88,9 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
             return None
 
     def can_handle(
-        self, entry_dn: str, attributes: MutableMapping[str, MutableSequence[str]]
+        self,
+        entry_dn: str,
+        attributes: MutableMapping[str, MutableSequence[str]],
     ) -> bool:
         """Check if this quirk can handle the entry."""
         _ = entry_dn

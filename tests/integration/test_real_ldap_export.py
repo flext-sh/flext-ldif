@@ -58,7 +58,9 @@ class TestRealLdapExport:
             },
         )
         ldap_connection.search(
-            clean_test_ou, f"(cn={unique_username})", attributes=["*"]
+            clean_test_ou,
+            f"(cn={unique_username})",
+            attributes=["*"],
         )
         assert len(ldap_connection.entries) == 1
         ldap_entry = ldap_connection.entries[0]
@@ -85,7 +87,9 @@ class TestRealLdapExport:
                 values = [str(attr_obj)]
             attrs_dict[attr_name] = values
         entry_result = flext_api.models.Ldif.Entry.create(
-            dn=ldap_entry.entry_dn, attributes=attrs_dict, metadata=None
+            dn=ldap_entry.entry_dn,
+            attributes=attrs_dict,
+            metadata=None,
         )
         assert entry_result.is_success
         flext_entry = entry_result.value
@@ -144,12 +148,15 @@ class TestRealLdapExport:
                     values = [str(attr_obj)]
                 attrs_dict[attr_name] = values
             result = flext_api.models.Ldif.Entry.create(
-                dn=entry.entry_dn, attributes=attrs_dict, metadata=None
+                dn=entry.entry_dn,
+                attributes=attrs_dict,
+                metadata=None,
             )
             assert result.is_success
             unwrapped_entry = result.value
             if hasattr(unwrapped_entry, "dn") and hasattr(
-                unwrapped_entry, "attributes"
+                unwrapped_entry,
+                "attributes",
             ):
                 entries.append(unwrapped_entry)
             else:
@@ -184,10 +191,15 @@ class TestRealLdapExport:
         )
         group_dn = f"cn={unique_group_name},{groups_ou_dn}"
         ldap_connection.add(
-            group_dn, ["groupOfNames"], {"cn": unique_group_name, "member": person_dn}
+            group_dn,
+            ["groupOfNames"],
+            {"cn": unique_group_name, "member": person_dn},
         )
         ldap_connection.search(
-            clean_test_ou, "(objectClass=*)", search_scope="SUBTREE", attributes=["*"]
+            clean_test_ou,
+            "(objectClass=*)",
+            search_scope="SUBTREE",
+            attributes=["*"],
         )
         entries: Sequence[FlextLdifModels.Ldif.Entry] = []
         for entry in ldap_connection.entries:
@@ -214,12 +226,15 @@ class TestRealLdapExport:
                     values = [str(attr_obj)]
                 attrs_dict[attr_name] = values
             result = flext_api.models.Ldif.Entry.create(
-                dn=entry.entry_dn, attributes=attrs_dict, metadata=None
+                dn=entry.entry_dn,
+                attributes=attrs_dict,
+                metadata=None,
             )
             assert result.is_success
             unwrapped_entry = result.value
             if hasattr(unwrapped_entry, "dn") and hasattr(
-                unwrapped_entry, "attributes"
+                unwrapped_entry,
+                "attributes",
             ):
                 entries.append(unwrapped_entry)
             else:
@@ -263,7 +278,9 @@ class TestRealLdapExport:
                 values = [str(attr_obj)]
             attrs_dict[attr_name] = values
         entry_result = flext_api.models.Ldif.Entry.create(
-            dn=ldap_entry.entry_dn, attributes=attrs_dict, metadata=None
+            dn=ldap_entry.entry_dn,
+            attributes=attrs_dict,
+            metadata=None,
         )
         assert entry_result.is_success
         flext_entry = entry_result.value

@@ -321,7 +321,8 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             return r[MutableSequence[m.Ldif.Entry]].fail(f"Filter error: {e}")
 
     def filter_persons(
-        self, entries: MutableSequence[m.Ldif.Entry]
+        self,
+        entries: MutableSequence[m.Ldif.Entry],
     ) -> r[MutableSequence[m.Ldif.Entry]]:
         """Filter entries to only person entries."""
         person_classes = {"person", "inetorgperson", "organizationalperson"}
@@ -343,7 +344,8 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         return self.filter_entries(entries, IsPersonPredicate())
 
     def get_attribute_values(
-        self, attribute: str | MutableSequence[str]
+        self,
+        attribute: str | MutableSequence[str],
     ) -> r[MutableSequence[str]]:
         """Get values from attribute value container."""
         return FlextLdifEntries.get_attribute_values(attribute)

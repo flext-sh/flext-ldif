@@ -498,7 +498,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 if not entry.attributes or not entry.dn:
                     return r[m.Ldif.Entry].ok(entry)
                 attributes: MutableMapping[str, MutableSequence[str]] = {
-                    **entry.attributes.attributes
+                    **entry.attributes.attributes,
                 }
                 entry_dn = entry.dn.value
                 dn_lower = entry_dn.lower()
@@ -512,7 +512,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 processed_entry = m.Ldif.Entry(
                     dn=entry.dn,
                     attributes=m.Ldif.Attributes.model_validate({
-                        "attributes": attributes
+                        "attributes": attributes,
                     }),
                     metadata=metadata,
                 )

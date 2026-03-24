@@ -83,7 +83,7 @@ class FlextLdifUtilitiesDecorators:
             ),
         )
         try:
-            setattr(result_value, "metadata", metadata)
+            result_value.metadata = metadata
         except (
             ValueError,
             KeyError,
@@ -91,7 +91,7 @@ class FlextLdifUtilitiesDecorators:
             UnicodeDecodeError,
             struct.error,
         ) as e:
-            logger.debug(f"Failed to attach metadata: {e}")
+            logger.debug("Failed to attach metadata: %s", e)
 
     @staticmethod
     def _get_server_type_from_class(obj: t.NormalizedValue) -> str | None:

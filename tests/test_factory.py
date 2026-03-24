@@ -43,7 +43,9 @@ class FlextLdifTestFactory:
 
     @staticmethod
     def create_real_ldif_content(
-        entries_count: int = 3, *, include_schema: bool = False
+        entries_count: int = 3,
+        *,
+        include_schema: bool = False,
     ) -> str:
         """Create real LDIF content for testing."""
         lines: t.StrSequence = []

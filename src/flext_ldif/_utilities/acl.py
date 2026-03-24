@@ -601,7 +601,8 @@ class FlextLdifUtilitiesACL:
                 default_value = normalized_list
             elif isinstance(raw_default, Mapping):
                 normalized_mapping: MutableMapping[
-                    str, t.Scalar | MutableSequence[t.Scalar]
+                    str,
+                    t.Scalar | MutableSequence[t.Scalar],
                 ] = {}
                 for key, item in raw_default.items():
                     if isinstance(item, t.SCALAR_TYPES):

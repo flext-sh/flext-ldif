@@ -69,8 +69,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         return entry.model_copy(
             update={
                 "attributes": m.Ldif.Attributes.model_validate({
-                    "attributes": new_attributes
-                })
+                    "attributes": new_attributes,
+                }),
             },
         )
 
@@ -86,7 +86,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         boolean_attributes = FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES
         boolean_attr_names = {attr.lower() for attr in boolean_attributes}
         converted_attrs_for_util: MutableMapping[str, MutableSequence[str]] = dict(
-            entry_attributes.items()
+            entry_attributes.items(),
         )
         source_format = f"{FlextLdifServersOidConstants.ZERO_OID}/{FlextLdifServersOidConstants.ONE_OID}"
         target_format = "TRUE/FALSE"
@@ -98,7 +98,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         )
         converted_attrs: set[str] = set()
         boolean_conversions: MutableMapping[
-            str, MutableMapping[str, str | MutableSequence[str]]
+            str,
+            MutableMapping[str, str | MutableSequence[str]],
         ] = {}
         for attr_name, attr_values in entry_attributes.items():
             if attr_name.lower() in boolean_attr_names:
@@ -112,7 +113,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     original_format_str = f"{FlextLdifServersOidConstants.ONE_OID}/{FlextLdifServersOidConstants.ZERO_OID}"
                     converted_format_str = f"{c.Ldif.TRUE_RFC}/{c.Ldif.FALSE_RFC}"
                     conversion_dict: MutableMapping[
-                        str, str | MutableSequence[str]
+                        str,
+                        str | MutableSequence[str],
                     ] = {}
                     original_key: str = c.Ldif.CONVERSION_ORIGINAL_VALUE
                     converted_key: str = c.Ldif.CONVERSION_CONVERTED_VALUE
@@ -189,7 +191,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         _dn_stats: m.Ldif.DNStatistics,
         converted_attrs: set[str],
         boolean_conversions: MutableMapping[
-            str, MutableMapping[str, str | MutableSequence[str]]
+            str,
+            MutableMapping[str, str | MutableSequence[str]],
         ],
         acl_transformations: MutableMapping[str, m.Ldif.AttributeTransformation],
         rfc_violations: MutableSequence[str],
@@ -311,7 +314,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             else {}
         )
         boolean_conversions_dict: MutableMapping[
-            str, MutableMapping[str, str | MutableSequence[str]]
+            str,
+            MutableMapping[str, str | MutableSequence[str]],
         ] = {
             attr_name: dict(conversion_data)
             for attr_name, conversion_data in boolean_conversions.items()
@@ -343,7 +347,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 extensions_data[key] = [str(item) for item in val]
             elif isinstance(val, Mapping):
                 nested_dict: MutableMapping[
-                    str, t.Scalar | MutableSequence[t.Scalar]
+                    str,
+                    t.Scalar | MutableSequence[t.Scalar],
                 ] = {}
                 for nk, nv in val.items():
                     if isinstance(nv, list):
@@ -491,18 +496,14 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             schema_transformations_typed: MutableSequence[t.Ldif.MetadataValue] = [
                 str(item) for item in schema_transformations
             ]
-            setattr(
-                metadata.extensions,
-                "schema_transformations",
-                schema_transformations_typed,
-            )
+            metadata.extensions.schema_transformations = schema_transformations_typed
         if acl_transformations:
             metadata.attribute_transformations = {
                 **metadata.attribute_transformations,
                 **acl_transformations,
             }
         ldif_attrs = m.Ldif.Attributes.model_validate({
-            "attributes": {**converted_attributes}
+            "attributes": {**converted_attributes},
         })
         return r[m.Ldif.Entry].ok(
             m.Ldif.Entry(
@@ -673,7 +674,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         """Extract boolean conversions from entry metadata."""
         mk = c.Ldif
         boolean_conversions: MutableMapping[
-            str, MutableMapping[str, str | MutableSequence[str]]
+            str,
+            MutableMapping[str, str | MutableSequence[str]],
         ] = {}
         if not (entry_data.metadata and entry_data.metadata.extensions):
             return boolean_conversions
@@ -844,7 +846,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 ]
                 if boolean_conversions:
                     boolean_conversions_dict: MutableMapping[
-                        str, MutableMapping[str, str | MutableSequence[str]]
+                        str,
+                        MutableMapping[str, str | MutableSequence[str]],
                     ] = {
                         attr_name: dict(conversion_data)
                         for attr_name, conversion_data in boolean_conversions.items()
@@ -852,7 +855,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     conv_data: MutableMapping[
                         str,
                         MutableMapping[
-                            str, MutableMapping[str, str | MutableSequence[str]]
+                            str,
+                            MutableMapping[str, str | MutableSequence[str]],
                         ]
                         | MutableSequence[t.Ldif.MetadataValue],
                     ] = {

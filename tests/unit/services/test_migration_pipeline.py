@@ -47,7 +47,8 @@ class TestsTestFlextLdifMigrationPipeline(s):
         input_dir.mkdir()
         output_dir.mkdir()
         pipeline = FlextLdifMigrationPipeline(
-            input_dir=input_dir, output_dir=output_dir
+            input_dir=input_dir,
+            output_dir=output_dir,
         )
         tm.that(pipeline, none=False)
         tm.that(pipeline.source_server_type, eq="rfc")
@@ -65,7 +66,10 @@ class TestsTestFlextLdifMigrationPipeline(s):
         ],
     )
     def test_initialization_with_different_server_types(
-        self, source: str, target: str, tmp_path: Path
+        self,
+        source: str,
+        target: str,
+        tmp_path: Path,
     ) -> None:
         """Test pipeline initialization with various server type combinations."""
         input_dir = tmp_path / "input"
@@ -85,7 +89,8 @@ class TestsTestFlextLdifMigrationPipeline(s):
     def test_execute_fails_with_no_input_dir(self) -> None:
         """Test pipeline fails when input directory is not specified."""
         pipeline = FlextLdifMigrationPipeline(
-            source_server_type="oid", target_server_type="oud"
+            source_server_type="oid",
+            target_server_type="oud",
         )
         result = pipeline.execute()
         tm.that(result.is_failure, eq=True)
@@ -96,7 +101,9 @@ class TestsTestFlextLdifMigrationPipeline(s):
         input_dir = tmp_path / "input"
         input_dir.mkdir()
         pipeline = FlextLdifMigrationPipeline(
-            input_dir=input_dir, source_server_type="oid", target_server_type="oud"
+            input_dir=input_dir,
+            source_server_type="oid",
+            target_server_type="oud",
         )
         result = pipeline.execute()
         tm.that(result.is_failure, eq=True)
@@ -123,7 +130,7 @@ class TestsTestFlextLdifMigrationPipeline(s):
         input_dir.mkdir()
         nonexistent_output = tmp_path / "nonexistent"
         (input_dir / "test.ldif").write_text(
-            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
         )
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -145,7 +152,8 @@ class TestsTestFlextLdifMigrationPipeline(s):
         input_dir.mkdir()
         output_dir.mkdir()
         pipeline: FlextLdifMigrationPipeline = FlextLdifMigrationPipeline(
-            input_dir=input_dir, output_dir=output_dir
+            input_dir=input_dir,
+            output_dir=output_dir,
         )
         result = pipeline.execute()
         tm.that(result.is_success, eq=True)
@@ -187,9 +195,9 @@ class TestsTestFlextLdifMigrationPipeline(s):
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="cn=test,dc=example,dc=com"),
                 attributes=m.Ldif.Attributes(
-                    attributes={"cn": ["test"], "objectClass": ["person"]}
+                    attributes={"cn": ["test"], "objectClass": ["person"]},
                 ),
-            )
+            ),
         ]
         result = pipeline.migrate_entries(entries)
         tm.that(result.is_success, eq=True)
@@ -221,7 +229,10 @@ class TestsTestFlextLdifMigrationPipeline(s):
         [("oid", "oud"), ("oud", "oid"), ("rfc", "oid"), ("rfc", "oud")],
     )
     def test_server_conversion_modes(
-        self, source: str, target: str, tmp_path: Path
+        self,
+        source: str,
+        target: str,
+        tmp_path: Path,
     ) -> None:
         """Test server-specific conversion modes."""
         input_dir = tmp_path / "input"
@@ -229,7 +240,7 @@ class TestsTestFlextLdifMigrationPipeline(s):
         input_dir.mkdir()
         output_dir.mkdir()
         (input_dir / "test.ldif").write_text(
-            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
         )
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -247,10 +258,10 @@ class TestsTestFlextLdifMigrationPipeline(s):
         input_dir.mkdir()
         output_dir.mkdir()
         (input_dir / "schema.ldif").write_text(
-            "dn: cn=schema\nobjectClass: top\ncn: schema\n"
+            "dn: cn=schema\nobjectClass: top\ncn: schema\n",
         )
         (input_dir / "data.ldif").write_text(
-            "dn: cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com\nobjectClass: person\ncn: REDACTED_LDAP_BIND_PASSWORD\n"
+            "dn: cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com\nobjectClass: person\ncn: REDACTED_LDAP_BIND_PASSWORD\n",
         )
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,

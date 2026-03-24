@@ -19,7 +19,8 @@ def test_ldap_connection(ldap_connection: Connection) -> None:
 
 
 def test_simple_ldap_search(
-    ldap_connection: Connection, ldap_container: GenericFieldsDict
+    ldap_connection: Connection,
+    ldap_container: GenericFieldsDict,
 ) -> None:
     """Test simple LDAP search."""
     base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -41,7 +42,10 @@ def test_create_and_export_entry(
         ldap_connection.delete(test_dn)
     ldap_connection.add(test_dn, ["person"], {"cn": unique_username, "sn": "Test"})
     ldap_connection.search(
-        test_dn, "(objectClass=*)", search_scope="BASE", attributes=["*"]
+        test_dn,
+        "(objectClass=*)",
+        search_scope="BASE",
+        attributes=["*"],
     )
     assert len(ldap_connection.entries) == 1
     ldap_entry = ldap_connection.entries[0]
