@@ -12,7 +12,7 @@ from flext_core import FlextRuntime, r
 from flext_ldif import FlextLdifUtilitiesWriter, m, t
 
 
-class FlextLdifUtilitiesResult[T: t.NormalizedValue]:
+class FlextLdifUtilitiesResult[T]:
     """Extended r with LDIF-specific DSL operators."""
 
     __slots__ = ("_inner",)
@@ -75,26 +75,15 @@ class FlextLdifUtilitiesResult[T: t.NormalizedValue]:
             "attach_metadata not yet implemented for single entry",
         )
 
-    @overload
-    def __or__(self, transformer: Callable[[T], T]) -> FlextLdifUtilitiesResult[T]: ...
-
-    @overload
     def __or__(
         self,
-        transformer: Callable[[T], r[T]],
-    ) -> FlextLdifUtilitiesResult[T]: ...
-
-    def __or__(
-        self,
-        transformer: Callable[[T], T] | Callable[[T], r[T]],
+        transformer: Callable[[T], T],
     ) -> FlextLdifUtilitiesResult[T]:
         """Pipe operator: result | transformer."""
         if self.is_failure:
             return FlextLdifUtilitiesResult[T].fail(self.error)
-        result = transformer(self.value)
-        if isinstance(result, r):
-            return FlextLdifUtilitiesResult.from_result(result)
-        return FlextLdifUtilitiesResult.ok(result)
+        transformed = transformer(self.value)
+        return FlextLdifUtilitiesResult.ok(transformed)
 
     def __rshift__(self, output: Path | str | IO[str]) -> FlextLdifUtilitiesResult[str]:
         """Write operator: result >> output."""
@@ -106,12 +95,13 @@ class FlextLdifUtilitiesResult[T: t.NormalizedValue]:
             entry_payload = raw_value
         elif isinstance(raw_value, Sequence) and (not isinstance(raw_value, str)):
             entries: MutableSequence[m.Ldif.Entry] = []
-            for item in raw_value:
-                if not isinstance(item, m.Ldif.Entry):
+            seq_items = list(raw_value)
+            for seq_item in seq_items:
+                if not isinstance(seq_item, m.Ldif.Entry):
                     return FlextLdifUtilitiesResult[str].fail(
                         "Entry serialization failed: sequence contains non-entry value",
                     )
-                entries.append(item)
+                entries.append(seq_item)
             entry_payload = entries
         else:
             return FlextLdifUtilitiesResult[str].fail(
@@ -175,14 +165,14 @@ class FlextLdifUtilitiesResult[T: t.NormalizedValue]:
         return cls(r[T].fail(error_msg))
 
     @staticmethod
-    def from_result[TResult: t.NormalizedValue](
+    def from_result[TResult](
         result: r[TResult],
     ) -> FlextLdifUtilitiesResult[TResult]:
         """Wrap an existing r[T] in FlextLdifUtilitiesResult."""
         return FlextLdifUtilitiesResult(result)
 
     @staticmethod
-    def ok[TResult: t.NormalizedValue](
+    def ok[TResult](
         value: TResult,
     ) -> FlextLdifUtilitiesResult[TResult]:
         """Create a successful result with the given value."""
@@ -250,7 +240,7 @@ class FlextLdifUtilitiesResult[T: t.NormalizedValue]:
             return FlextLdifUtilitiesResult.ok(value)
         return FlextLdifUtilitiesResult[T].fail("Value did not match filter predicate")
 
-    def flat_map[U: t.NormalizedValue](
+    def flat_map[U](
         self,
         func: Callable[[T], r[U]],
     ) -> FlextLdifUtilitiesResult[U]:
@@ -258,7 +248,7 @@ class FlextLdifUtilitiesResult[T: t.NormalizedValue]:
         mapped_result = self._inner.flat_map(func)
         return FlextLdifUtilitiesResult(mapped_result)
 
-    def map[U: t.NormalizedValue](
+    def map[U](
         self,
         func: Callable[[T], U],
     ) -> FlextLdifUtilitiesResult[U]:

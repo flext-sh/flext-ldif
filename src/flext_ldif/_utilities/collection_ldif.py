@@ -6,7 +6,7 @@ import contextlib
 import inspect
 import struct
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
-from typing import overload, override
+from typing import overload
 
 from flext_core import FlextUtilities, r
 
@@ -183,7 +183,6 @@ class FlextLdifUtilitiesCollectionLdif:
     mg = merge_dicts
 
     @classmethod
-    @override
     def group_by(
         cls,
         items: t.MutableContainerList,
@@ -203,7 +202,6 @@ class FlextLdifUtilitiesCollectionLdif:
     gb = group_by
 
     @classmethod
-    @override
     def partition(
         cls,
         items: t.MutableContainerList,
@@ -239,7 +237,6 @@ class FlextLdifUtilitiesCollectionLdif:
         return default
 
     @classmethod
-    @override
     def pluck(
         cls,
         items: t.MutableContainerList,
@@ -276,7 +273,6 @@ class FlextLdifUtilitiesCollectionLdif:
     pk = pluck
 
     @staticmethod
-    @override
     def count[T](
         items: MutableSequence[T] | tuple[T, ...],
         predicate: Callable[[T], bool] | None = None,
@@ -290,7 +286,6 @@ class FlextLdifUtilitiesCollectionLdif:
     ct = count
 
     @classmethod
-    @override
     def omit(
         cls,
         data: t.MutableContainerMapping,
@@ -318,7 +313,6 @@ class FlextLdifUtilitiesCollectionLdif:
                 return False
 
     @staticmethod
-    @override
     def take(
         data_or_items: t.NormalizedValue,
         key_or_n: str | int,
@@ -369,7 +363,6 @@ class FlextLdifUtilitiesCollectionLdif:
     tk = take
 
     @classmethod
-    @override
     def try_[T](
         cls,
         func: Callable[[], T],
@@ -388,7 +381,6 @@ class FlextLdifUtilitiesCollectionLdif:
     tr = try_
 
     @staticmethod
-    @override
     def find(
         items: t.ContainerList,
         *,
@@ -401,7 +393,6 @@ class FlextLdifUtilitiesCollectionLdif:
         return None
 
     @staticmethod
-    @override
     def unwrap_or[T](result: r[T], *, default: T | None = None) -> T | None:
         """Unwrap r with default value."""
         if result.is_success:
@@ -409,7 +400,6 @@ class FlextLdifUtilitiesCollectionLdif:
         return default
 
     @staticmethod
-    @override
     def empty(items: t.NormalizedValue) -> bool:
         """Check if value is empty."""
         if items is None:
@@ -503,7 +493,6 @@ class FlextLdifUtilitiesCollectionLdif:
     lt = let
 
     @classmethod
-    @override
     def apply(
         cls,
         fn: FlextLdifUtilitiesCollectionLdif.VariadicCallable[t.NormalizedValue]
@@ -580,7 +569,6 @@ class FlextLdifUtilitiesCollectionLdif:
     ds = dissoc
 
     @classmethod
-    @override
     def update(
         cls,
         data: t.MutableContainerMapping,
@@ -658,7 +646,6 @@ class FlextLdifUtilitiesCollectionLdif:
         return all(args)
 
     @staticmethod
-    @override
     def any_(*args: t.NormalizedValue) -> bool:
         """Check if any value is truthy."""
         return any(args)
@@ -845,8 +832,16 @@ class FlextLdifUtilitiesCollectionLdif:
     ) -> Callable[..., t.NormalizedValue]:
         """Compose using FlextUtilities.chain() (mnemonic: cp)."""
         if not fns:
-            return lambda x: x
-        return lambda value: cls.chain(value, *fns)
+
+            def _identity(x: t.NormalizedValue) -> t.NormalizedValue:
+                return x
+
+            return _identity
+
+        def _composed(value: t.NormalizedValue) -> t.NormalizedValue:
+            return cls.chain(value, *fns)
+
+        return _composed
 
     cp = comp
 
@@ -857,8 +852,16 @@ class FlextLdifUtilitiesCollectionLdif:
     ) -> Callable[..., tuple[t.NormalizedValue, ...]]:
         """Juxtapose functions (mnemonic: jx)."""
         if not fns:
-            return lambda _x: ()
-        return lambda value: tuple(fn(value) for fn in fns)
+
+            def _empty(_x: t.NormalizedValue) -> tuple[t.NormalizedValue, ...]:
+                return ()
+
+            return _empty
+
+        def _juxtaposed(value: t.NormalizedValue) -> tuple[t.NormalizedValue, ...]:
+            return tuple(fn(value) for fn in fns)
+
+        return _juxtaposed
 
     jx = juxt
 
@@ -919,7 +922,6 @@ class FlextLdifUtilitiesCollectionLdif:
     ev = evolve
 
     @staticmethod
-    @override
     def or_[T: t.NormalizedValue](
         *values: T | None,
         default: T | None = None,
@@ -949,7 +951,6 @@ class FlextLdifUtilitiesCollectionLdif:
     mb = maybe
 
     @staticmethod
-    @override
     def chain(
         value: t.NormalizedValue,
         *funcs: Callable[..., t.NormalizedValue],
@@ -963,7 +964,6 @@ class FlextLdifUtilitiesCollectionLdif:
     ch = chain
 
     @staticmethod
-    @override
     def pick(
         data: t.NormalizedValue,
         *keys: str,
@@ -1049,7 +1049,6 @@ class FlextLdifUtilitiesCollectionLdif:
     rd = reduce_dict
 
     @staticmethod
-    @override
     def fold(
         items: t.NormalizedValue,
         *,
@@ -1194,7 +1193,6 @@ class FlextLdifUtilitiesCollectionLdif:
     pr = pairs
 
     @staticmethod
-    @override
     def is_type(
         value: t.NormalizedValue,
         type_spec: str | type | tuple[type, ...],
@@ -1223,7 +1221,6 @@ class FlextLdifUtilitiesCollectionLdif:
         return False
 
     @classmethod
-    @override
     def prop(cls, key: str) -> Callable[..., t.NormalizedValue]:
         """Property accessor using FlextUtilities.get() (mnemonic: pp)."""
 
@@ -1303,7 +1300,11 @@ class FlextLdifUtilitiesCollectionLdif:
         getters: MutableSequence[Callable[..., t.NormalizedValue]] = [
             make_getter(k) for k in keys
         ]
-        return lambda obj: cls.chain(obj, *getters)
+
+        def _path_getter(obj: t.NormalizedValue) -> t.NormalizedValue:
+            return cls.chain(obj, *getters)
+
+        return _path_getter
 
     ph = path
 

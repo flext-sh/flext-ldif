@@ -5,7 +5,7 @@ from __future__ import annotations
 import inspect
 import struct
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
-from typing import Literal, TypeIs, overload, override
+from typing import Literal, TypeIs, overload
 
 from flext_core import FlextLogger, FlextUtilities, r
 
@@ -228,7 +228,6 @@ class FlextLdifUtilitiesProcessing:
     ) -> FlextLdifUtilitiesResult[MutableSequence[m.Ldif.Entry]]: ...
 
     @staticmethod
-    @override
     def process(
         items_or_entries: t.NormalizedValue
         | t.MutableContainerList
@@ -425,7 +424,6 @@ class FlextLdifUtilitiesProcessing:
         return r[MutableSequence[U]].ok(results)
 
     @staticmethod
-    @override
     def filter[T: t.NormalizedValue, R: t.NormalizedValue](
         items_or_entries: T
         | MutableSequence[T]
@@ -534,7 +532,6 @@ class FlextLdifUtilitiesProcessing:
         return FlextLdifUtilitiesResult[MutableSequence[m.Ldif.Entry]].ok(filtered)
 
     @staticmethod
-    @override
     def is_entry_sequence(
         obj: t.NormalizedValue,
     ) -> TypeIs[MutableSequence[m.Ldif.Entry]]:

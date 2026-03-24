@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
-from typing import Literal, TypeIs, overload, override
+from typing import Literal, TypeIs, overload
 
 from flext_core import r
 
@@ -29,7 +29,6 @@ class FlextLdifUtilitiesDispatch:
     """Override dispatchers that route between parent classes."""
 
     @staticmethod
-    @override
     def extract_rdn(dn: str) -> r[str]:
         return FlextLdifUtilitiesDN.extract_rdn(dn)
 
@@ -42,12 +41,10 @@ class FlextLdifUtilitiesDispatch:
     def split(dn: m.Ldif.DN) -> MutableSequence[str]: ...
 
     @staticmethod
-    @override
     def split(dn: str | m.Ldif.DN) -> MutableSequence[str]:
         return FlextLdifUtilitiesDN.split(dn)
 
     @staticmethod
-    @override
     def has_objectclass(
         entry: m.Ldif.Entry,
         objectclasses: str | tuple[str, ...],
@@ -71,7 +68,6 @@ class FlextLdifUtilitiesDispatch:
     ) -> r[MutableSequence[tuple[str, bool, str | None]]]: ...
 
     @staticmethod
-    @override
     def validate_batch(
         values: MutableSequence[str],
         *,
@@ -118,7 +114,6 @@ class FlextLdifUtilitiesDispatch:
     ) -> r[t.MutableContainerMapping]: ...
 
     @staticmethod
-    @override
     def parse(
         definition: str | m.Ldif.DN | None,
         server_type: str | None = None,
@@ -148,7 +143,6 @@ class FlextLdifUtilitiesDispatch:
         )
 
     @staticmethod
-    @override
     def matches_server_patterns(
         value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         oid_pattern: t.MutableContainerMapping | str,
@@ -198,7 +192,6 @@ class FlextLdifUtilitiesDispatch:
         return False
 
     @staticmethod
-    @override
     def matches(server_type: str, *allowed_types: str) -> bool:
         return FlextLdifUtilitiesServer.matches(server_type, *allowed_types)
 
@@ -234,7 +227,6 @@ class FlextLdifUtilitiesDispatch:
     ) -> bool: ...
 
     @staticmethod
-    @override
     def validate(
         value_or_entries: MutableSequence[m.Ldif.Entry] | t.Container | str | m.Ldif.DN,
         validator_first: p.ValidatorSpec | None = None,
@@ -315,7 +307,6 @@ class FlextLdifUtilitiesDispatch:
     # --- MRO conflict resolution: filter (Processing vs Filters vs Result) ---
 
     @staticmethod
-    @override
     def filter[T: t.NormalizedValue, R: t.NormalizedValue](
         items_or_entries: T
         | MutableSequence[T]
@@ -344,7 +335,6 @@ class FlextLdifUtilitiesDispatch:
     # --- MRO conflict resolution: fold (CollectionLdif vs Writer) ---
 
     @staticmethod
-    @override
     def fold(
         items: t.NormalizedValue,
         *,
@@ -364,7 +354,6 @@ class FlextLdifUtilitiesDispatch:
     # --- MRO conflict resolution: is_entry_sequence (Processing vs TypeGuards) ---
 
     @staticmethod
-    @override
     def is_entry_sequence(
         obj: t.NormalizedValue,
     ) -> TypeIs[MutableSequence[m.Ldif.Entry]]:
