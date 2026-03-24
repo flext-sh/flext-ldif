@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from enum import StrEnum, unique
 from types import MappingProxyType
-from typing import ClassVar, Final, Literal
+from typing import ClassVar, Final
 
 from flext_core import FlextConstants
 
@@ -555,94 +555,9 @@ class FlextLdifConstants(FlextConstants):
             "sub",
             "subtree",
         )
-        type ServerTypeLiteral = Literal[
-            "oid",
-            "oud",
-            "openldap",
-            "openldap1",
-            "openldap2",
-            "ad",
-            "apache",
-            "ds389",
-            "rfc",
-            "relaxed",
-            "novell",
-            "ibm_tivoli",
-            "generic",
-        ]
-        type TransformationTypeLiteral = Literal[
-            "dn_cleaned",
-            "dn_normalized",
-            "tab_normalized",
-            "space_cleaned",
-            "utf8_decoded",
-            "base64_decoded",
-            "trailing_space_removed",
-            "escape_normalized",
-            "boolean_converted",
-            "acl_converted",
-            "attribute_removed",
-            "attribute_added",
-            "attribute_renamed",
-            "modified",
-            "matching_rule_replaced",
-            "syntax_oid_replaced",
-            "objectclass_filtered",
-            "removed",
-            "renamed",
-            "basedn_transform",
-        ]
-        type EncodingLiteral = Literal[
-            "utf-8",
-            "utf-16-le",
-            "utf-16",
-            "utf-32",
-            "ascii",
-            "latin-1",
-            "cp1252",
-            "iso-8859-1",
-        ]
-        type ChangeTypeLiteral = Literal[
-            "add",
-            "delete",
-            "modify",
-            "modrdn",
-            "moddn",
-        ]
-        type ModifyOperationLiteral = Literal["add", "delete", "replace"]
-        type AclSubjectTypeLiteral = Literal[
-            "user",
-            "group",
-            "role",
-            "self",
-            "all",
-            "public",
-            "anonymous",
-            "authenticated",
-            "sddl",
-            "dn",
-        ]
-        type AttributeMarkerStatusLiteral = Literal[
-            "normal",
-            "marked_for_removal",
-            "filtered",
-            "operational",
-            "hidden",
-            "renamed",
-        ]
-        type AnalyticsDetailLevelLiteral = Literal["low", "medium", "high"]
-        type CategoryLiteral = Literal[
-            "all",
-            "users",
-            "groups",
-            "hierarchy",
-            "schema",
-            "acl",
-            "rejected",
-        ]
-        type DetectionModeLiteral = Literal["auto", "manual", "disabled"]
-        type ErrorRecoveryModeLiteral = Literal["continue", "stop", "skip"]
-        type ValidationLevelLiteral = Literal["strict", "moderate", "lenient"]
+        # Keep these two aliases — referenced from frozen _utilities/ files
+        type AclSubjectTypeLiteral = AclSubjectType
+        type AttributeMarkerStatusLiteral = AttributeMarkerStatus
 
         OPENLDAP: Final = "openldap"
         IBM_TIVOLI: Final = "ibm_tivoli"
