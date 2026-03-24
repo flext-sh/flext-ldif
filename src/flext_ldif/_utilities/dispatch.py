@@ -65,7 +65,6 @@ class FlextLdifUtilitiesDispatch:
             collect_errors=collect_errors,
         )
 
-
     @staticmethod
     @overload
     def parse(
@@ -492,7 +491,6 @@ class FlextLdifUtilitiesDispatch:
     ) -> TypeIs[t.MutableContainerList]:
         """Route to Schema._is_object_sequence (resolves Schema vs core)."""
         return isinstance(value, Sequence) and not isinstance(value, (str, bytes))
-
 
 
 __all__ = ["FlextLdifUtilitiesDispatch"]
