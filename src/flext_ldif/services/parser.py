@@ -45,15 +45,15 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
 
     def parse_ldap3_results(
         self,
-        results: MutableSequence[tuple[str, MutableMapping[str, MutableSequence[str]]]],
+        results: Sequence[tuple[str, Mapping[str, Sequence[str]]]],
         server_type: str | None = None,
     ) -> r[m.Ldif.ParseResponse]:
         """Parse ldap3 search results by converting them to LDIF text first."""
-        ldif_lines: MutableSequence[str] = []
+        ldif_lines: list[str] = []
 
         def convert_entry(
-            dn_attrs: tuple[str, MutableMapping[str, MutableSequence[str]]],
-        ) -> MutableSequence[str]:
+            dn_attrs: tuple[str, Mapping[str, Sequence[str]]],
+        ) -> list[str]:
             """Convert single entry to LDIF lines."""
             dn, attrs = dn_attrs
             entry_lines: MutableSequence[str] = [f"dn: {dn}"]
