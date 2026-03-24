@@ -37,9 +37,6 @@ from flext_ldif import (
     t,
 )
 
-DnOps = FlextLdifUtilitiesFluent.DnOps
-EntryOps = FlextLdifUtilitiesFluent.EntryOps
-
 
 class FlextLdifUtilities(FlextUtilities):
     """FLEXT LDIF Utilities - Centralized helpers for LDIF operations."""
@@ -137,14 +134,14 @@ class FlextLdifUtilities(FlextUtilities):
         """Minimum parameter count for 2-argument functions."""
 
         @classmethod
-        def dn(cls, dn: str) -> DnOps:
+        def dn(cls, dn: str) -> FlextLdifUtilitiesFluent.DnOps:
             """Create fluent DN operations."""
-            return DnOps(dn)
+            return FlextLdifUtilitiesFluent.DnOps(dn)
 
         @classmethod
-        def entry(cls, entry: m.Ldif.Entry) -> EntryOps:
+        def entry(cls, entry: m.Ldif.Entry) -> FlextLdifUtilitiesFluent.EntryOps:
             """Create fluent entry operations."""
-            return EntryOps(entry)
+            return FlextLdifUtilitiesFluent.EntryOps(entry)
 
         # Mnemonic aliases inherited via MRO from mixin classes
 

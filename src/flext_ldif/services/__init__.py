@@ -27,11 +27,7 @@ if TYPE_CHECKING:
     from flext_ldif.services.filters import FlextLdifFilters
     from flext_ldif.services.migration import FlextLdifMigrationPipeline
     from flext_ldif.services.parser import FlextLdifParser
-    from flext_ldif.services.pipeline import (
-        FlextLdifProcessingPipeline,
-        Normalize,
-        Pipeline,
-    )
+    from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
     from flext_ldif.services.processing import FlextLdifProcessing
     from flext_ldif.services.registry import FlextLdifServiceRegistry
     from flext_ldif.services.rfc_validation import FlextLdifValidation
@@ -87,8 +83,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "FlextLdifValidation",
     ),
     "FlextLdifWriter": ("flext_ldif.services.writer", "FlextLdifWriter"),
-    "Normalize": ("flext_ldif.services.pipeline", "Normalize"),
-    "Pipeline": ("flext_ldif.services.pipeline", "Pipeline"),
     "_services": ("flext_ldif.services._services", ""),
 }
 
@@ -115,8 +109,6 @@ __all__ = [
     "FlextLdifTransformer",
     "FlextLdifValidation",
     "FlextLdifWriter",
-    "Normalize",
-    "Pipeline",
     "_services",
 ]
 

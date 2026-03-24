@@ -134,11 +134,7 @@ if TYPE_CHECKING:
     from flext_ldif.services.filters import FlextLdifFilters
     from flext_ldif.services.migration import FlextLdifMigrationPipeline
     from flext_ldif.services.parser import FlextLdifParser
-    from flext_ldif.services.pipeline import (
-        FlextLdifProcessingPipeline,
-        Normalize,
-        Pipeline,
-    )
+    from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
     from flext_ldif.services.processing import FlextLdifProcessing
     from flext_ldif.services.registry import FlextLdifServiceRegistry
     from flext_ldif.services.rfc_validation import FlextLdifValidation
@@ -455,10 +451,8 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "flext_ldif._utilities.filters",
         "IsSchemaFlextLdifUtilitiesFilters",
     ),
-    "Normalize": ("flext_ldif.services.pipeline", "Normalize"),
     "NotFilter": ("flext_ldif._utilities.filters", "NotFilter"),
     "OrFilter": ("flext_ldif._utilities.filters", "OrFilter"),
-    "Pipeline": ("flext_ldif.services.pipeline", "Pipeline"),
     "__all__": ("flext_ldif.__version__", "__all__"),
     "__author__": ("flext_ldif.__version__", "__author__"),
     "__author_email__": ("flext_ldif.__version__", "__author_email__"),
@@ -602,10 +596,8 @@ __all__ = [
     "FlextLdifValidation",
     "FlextLdifWriter",
     "IsSchemaFlextLdifUtilitiesFilters",
-    "Normalize",
     "NotFilter",
     "OrFilter",
-    "Pipeline",
     "__all__",
     "__author__",
     "__author_email__",

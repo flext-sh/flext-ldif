@@ -13,6 +13,7 @@ from flext_ldif import (
     r,
 )
 
+
 class FlextLdifProcessingPipeline:
     """Full processing pipeline with configuration."""
 
@@ -60,7 +61,7 @@ class FlextLdifProcessingPipeline:
                 or m.Ldif.AttrNormalizationConfig()
             )
             pipeline.add(
-                Normalize.attrs(
+                FlextLdifUtilitiesTransformers.Normalize.attrs(
                     case_fold_names=attr_config.case_fold_names,
                     trim_values=attr_config.trim_values,
                     remove_empty=attr_config.remove_empty,
