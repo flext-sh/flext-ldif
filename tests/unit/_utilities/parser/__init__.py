@@ -17,7 +17,10 @@ if TYPE_CHECKING:
     )
 
 _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "TestFlextLdifUtilitiesParser": ("tests.unit._utilities.parser.test_parser_utilities", "TestFlextLdifUtilitiesParser"),
+    "TestFlextLdifUtilitiesParser": (
+        "tests.unit._utilities.parser.test_parser_utilities",
+        "TestFlextLdifUtilitiesParser",
+    ),
 }
 
 __all__ = [

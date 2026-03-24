@@ -76,7 +76,8 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
         entry_candidates: tuple[t.NormalizedValue, ...] = ()
         with suppress(Exception):
             if isinstance(entries_raw, Sequence) and not isinstance(
-                entries_raw, str | bytes,
+                entries_raw,
+                str | bytes,
             ):
                 entry_candidates = tuple(entries_raw)
         for entry_candidate in entry_candidates:

@@ -258,7 +258,8 @@ class FlextLdifUtilitiesFluent:
             if self._error:
                 return self
             transformer = FlextLdifUtilitiesTransformers.Transform.filter_attrs(
-                include=include, exclude=exclude,
+                include=include,
+                exclude=exclude,
             )
             result = transformer.apply(self._entry)
             if result.is_failure:
@@ -317,7 +318,8 @@ class FlextLdifUtilitiesFluent:
             if self._error:
                 return self
             transformer = FlextLdifUtilitiesTransformers.Normalize.dn(
-                case=case, validate=validate,
+                case=case,
+                validate=validate,
             )
             result = transformer.apply(self._entry)
             if result.is_failure:

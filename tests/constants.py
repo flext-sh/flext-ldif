@@ -911,7 +911,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 """
                 method_name = parse_method or "parse"
                 parse_fn: Callable[[str], object] | None = getattr(
-                    quirk, method_name, None,
+                    quirk,
+                    method_name,
+                    None,
                 )
                 if parse_fn is None or not callable(parse_fn):
                     raise AssertionError(f"Quirk has no method '{method_name}'")

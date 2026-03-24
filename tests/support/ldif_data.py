@@ -22,10 +22,12 @@ class LdifSample(BaseModel):
 
     content: Annotated[str, Field(description="LDIF content as string")]
     description: Annotated[
-        str, Field(description="Human-readable description of the sample"),
+        str,
+        Field(description="Human-readable description of the sample"),
     ]
     expected_entries: Annotated[
-        int, Field(description="Expected number of entries in the LDIF"),
+        int,
+        Field(description="Expected number of entries in the LDIF"),
     ]
     has_binary: Annotated[
         bool,

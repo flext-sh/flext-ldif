@@ -26,7 +26,8 @@ logger = FlextLogger(__name__)
 
 
 class FlextLdifServersBaseEntry(
-    FlextLdifQuirkMethodsMixin, FlextService[m.Ldif.Entry | str],
+    FlextLdifQuirkMethodsMixin,
+    FlextService[m.Ldif.Entry | str],
 ):
     """Base class for entry processing quirks - satisfies Entry (structural typing)."""
 
