@@ -15,7 +15,10 @@ if TYPE_CHECKING:
     from tests.unit._utilities.oid.test_oid_utilities import TestFlextLdifUtilitiesOID
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "TestFlextLdifUtilitiesOID": ["tests.unit._utilities.oid.test_oid_utilities", "TestFlextLdifUtilitiesOID"],
+    "TestFlextLdifUtilitiesOID": [
+        "tests.unit._utilities.oid.test_oid_utilities",
+        "TestFlextLdifUtilitiesOID",
+    ],
 }
 
 __all__ = [
