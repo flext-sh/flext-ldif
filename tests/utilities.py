@@ -11,6 +11,7 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
     """Project test utility namespace extension."""
 
     class Ldif(FlextLdifUtilities.Ldif):
+        """LDIF test utility namespace."""
 
         class Tests(FlextTestsUtilities.Tests):
             """Test utilities with Matchers and Docker support."""

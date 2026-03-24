@@ -31,7 +31,7 @@ class FlextLdifTestTypes(FlextTestsTypes, FlextLdifTypes):
     """
 
     class Ldif(FlextLdifTypes.Ldif):
-
+        """LDIF test type namespace."""
 
         class Tests(FlextTestsTypes.Tests):
             """flext-ldif-specific test type definitions namespace.

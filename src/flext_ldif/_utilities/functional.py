@@ -620,7 +620,7 @@ class FlextLdifUtilitiesFunctional:
         else:
             normalized_default = str(default)
 
-        conversion_model: _conv.ConversionRequest | None = None
+        conversion_model: t.Ldif.ConversionRequest | None = None
         if target_type is str:
             conversion_model = _conv.ConvertToStr(
                 value=normalized_value,

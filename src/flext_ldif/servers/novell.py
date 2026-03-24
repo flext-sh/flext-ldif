@@ -434,7 +434,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             """Normalise eDirectory entries and expose metadata."""
             if not entry.attributes:
                 return r[m.Ldif.Entry].ok(entry)
-            attributes = entry.attributes.attributes.copy()
+            attributes: MutableMapping[str, MutableSequence[str]] = {
+                **entry.attributes.attributes
+            }
             try:
                 object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
                 processed_attributes: MutableMapping[str, MutableSequence[str]] = {}

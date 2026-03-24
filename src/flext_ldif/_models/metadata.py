@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import (
     ItemsView,
     KeysView,
+    Mapping,
     MutableMapping,
     MutableSequence,
     ValuesView,
@@ -61,7 +62,7 @@ class FlextLdifModelsMetadata:
             return key in self._extra()
 
         @classmethod
-        def from_dict(cls, data: t.MutableContainerMapping | None = None) -> Self:
+        def from_dict(cls, data: Mapping[str, t.NormalizedValue] | None = None) -> Self:
             """Create DynamicMetadata from a dictionary."""
             if data is None:
                 return cls()

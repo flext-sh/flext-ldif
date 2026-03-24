@@ -33,13 +33,13 @@ class FlextLdifTestProtocols(FlextTestsProtocols, FlextLdifProtocols):
     class Ldif(FlextLdifProtocols.Ldif):
         """Flext-ldif-specific test protocols."""
 
-
         class Tests:
             """Project-specific test protocols for flext-ldif.
 
             Separated from FlextTestsProtocols.Tests to avoid bad-override.
             Access via FlextLdifTestProtocols.LdifTests.* for flext-ldif-specific protocols.
             """
+
 
 p = FlextLdifTestProtocols
 

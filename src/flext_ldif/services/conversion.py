@@ -701,8 +701,18 @@ class FlextLdifConversion(
                     errors.append(f"Item {idx}: {error_msg}")
                     error_details.append(f"batch_item_{idx}: {error_msg}")
             duration_ms = (time.perf_counter() - start_time) * 1000.0
-            model_list_typed: t.MutableContainerList = list(model_list)
-            converted_typed: t.MutableContainerList = list(converted)
+            model_list_typed: MutableSequence[
+                m.Ldif.Acl
+                | m.Ldif.Entry
+                | m.Ldif.SchemaAttribute
+                | m.Ldif.SchemaObjectClass
+            ] = [*model_list]
+            converted_typed: MutableSequence[
+                m.Ldif.Acl
+                | m.Ldif.Entry
+                | m.Ldif.SchemaAttribute
+                | m.Ldif.SchemaObjectClass
+            ] = [*converted]
             errors_typed: MutableSequence[str] = errors
             items_processed = u.count(model_list_typed)
             items_converted = u.count(converted_typed)
@@ -753,9 +763,12 @@ class FlextLdifConversion(
             ].ok(converted)
         except (ValueError, TypeError, AttributeError, RuntimeError, Exception) as e:
             duration_ms = (time.perf_counter() - start_time) * 1000.0
-            model_list_as_list: t.MutableContainerList = (
-                list(model_list) if model_list else []
-            )
+            model_list_as_list: MutableSequence[
+                m.Ldif.Acl
+                | m.Ldif.Entry
+                | m.Ldif.SchemaAttribute
+                | m.Ldif.SchemaObjectClass
+            ] = [*model_list] if model_list else []
             items_count = u.count(model_list_as_list)
             conversion_config = m.Ldif.ConversionEventConfig(
                 conversion_operation=conversion_operation,

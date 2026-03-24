@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
 from flext_core import FlextLogger, FlextService, r
@@ -280,7 +280,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
     def _resolve_data(
         self,
         data: str | m.Ldif.Acl | None,
-        kwargs: t.MutableContainerMapping,
+        kwargs: Mapping[str, t.NormalizedValue],
     ) -> str | m.Ldif.Acl | None:
         """Resolve data from parameter or kwargs."""
         if data is not None:
@@ -291,7 +291,7 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
     def _resolve_operation(
         self,
         operation: str | None,
-        kwargs: t.MutableContainerMapping,
+        kwargs: Mapping[str, t.NormalizedValue],
     ) -> str | None:
         """Resolve operation from parameter or kwargs."""
         if operation is not None:

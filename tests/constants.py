@@ -188,7 +188,12 @@ class FlextLdifTestConstants(FlextTestsConstants):
             SAMPLE_GROUP_DN: Final[str] = "cn=testgroup,dc=test,dc=local"
             SAMPLE_OU_DN: Final[str] = "ou=testou,dc=test,dc=local"
             SAMPLE_ATTRIBUTES: Final[Mapping[str, t.StrSequence]] = {
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
                 "cn": ["Test User"],
                 "sn": ["User"],
                 "mail": ["test@example.com"],
@@ -236,7 +241,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
             """RFC server test constants (from fixtures/rfc_constants.py)."""
 
             ATTR_DEF_CN: Final[str] = "( 2.5.4.3 NAME 'cn' )"
-            ATTR_DEF_CN_FULL: Final[str] = "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )"
+            ATTR_DEF_CN_FULL: Final[str] = (
+                "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )"
+            )
             ATTR_DEF_CN_COMPLETE: Final[str] = (
                 "( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
             )
@@ -574,7 +581,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
                 """
                 if not isinstance(parser_service, FlextLdifParser):
-                    raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
+                    raise TypeError(
+                        f"Expected FlextLdifParser, got {type(parser_service)}"
+                    )
                 result = parser_service.parse_string(
                     content=content, server_type=server_type
                 )
@@ -824,7 +833,11 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
                 """
                 return m.Ldif.SchemaAttribute(
-                    oid=oid, name=name, desc=desc, syntax=syntax, single_value=single_value
+                    oid=oid,
+                    name=name,
+                    desc=desc,
+                    syntax=syntax,
+                    single_value=single_value,
                 )
 
             @staticmethod
@@ -1186,8 +1199,10 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     AssertionError: If parsing/writing fails or validations don't pass
 
                 """
-                attr = FlextLdifTestConstants.RfcTestHelpers.test_schema_parse_attribute(
-                    schema_quirk, attr_def, expected_oid, expected_name
+                attr = (
+                    FlextLdifTestConstants.RfcTestHelpers.test_schema_parse_attribute(
+                        schema_quirk, attr_def, expected_oid, expected_name
+                    )
                 )
                 write_method = getattr(schema_quirk, "write_attribute", None)
                 if write_method is None:
@@ -1230,7 +1245,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
                 """
                 if not isinstance(parser_service, FlextLdifParser):
-                    raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
+                    raise TypeError(
+                        f"Expected FlextLdifParser, got {type(parser_service)}"
+                    )
                 result = parser_service.parse_string(content=content, server_type="rfc")
                 if result.is_failure:
                     raise AssertionError(f"Parsing failed: {result.error}")
@@ -1280,7 +1297,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
                 """
                 if not isinstance(parser_service, FlextLdifParser):
-                    raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
+                    raise TypeError(
+                        f"Expected FlextLdifParser, got {type(parser_service)}"
+                    )
                 result = parser_service.parse_string(content=content, server_type="rfc")
                 if result.is_failure:
                     raise AssertionError(f"Parsing failed: {result.error}")
@@ -1343,7 +1362,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
                 """
                 if not isinstance(writer_service, FlextLdifWriter):
-                    raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
+                    raise TypeError(
+                        f"Expected FlextLdifWriter, got {type(writer_service)}"
+                    )
                 result = writer_service.write_to_string(entries=entries)
                 if result.is_failure:
                     raise AssertionError(f"Writing failed: {result.error}")
@@ -1353,7 +1374,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 if expected_content:
                     for substring in expected_content:
                         if substring not in ldif_string:
-                            raise AssertionError(f"'{substring}' not found in LDIF output")
+                            raise AssertionError(
+                                f"'{substring}' not found in LDIF output"
+                            )
                 return ldif_string
 
             @staticmethod
@@ -1376,7 +1399,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
                 """
                 if not isinstance(writer_service, FlextLdifWriter):
-                    raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
+                    raise TypeError(
+                        f"Expected FlextLdifWriter, got {type(writer_service)}"
+                    )
                 if not isinstance(file_path, Path):
                     raise TypeError(f"Expected Path, got {type(file_path)}")
                 result = writer_service.write_to_file(entries=entries, path=file_path)
@@ -1388,7 +1413,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     content = file_path.read_text()
                     for substring in expected_content:
                         if substring not in content:
-                            raise AssertionError(f"'{substring}' not found in file content")
+                            raise AssertionError(
+                                f"'{substring}' not found in file content"
+                            )
 
             @staticmethod
             def test_parse_edge_case(
@@ -1411,7 +1438,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
                 """
                 if not isinstance(parser_service, FlextLdifParser):
-                    raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
+                    raise TypeError(
+                        f"Expected FlextLdifParser, got {type(parser_service)}"
+                    )
                 result = parser_service.parse_string(content=content, server_type="rfc")
                 if should_succeed is True and result.is_failure:
                     raise AssertionError(
@@ -1425,7 +1454,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
             @staticmethod
             def test_write_entry_variations(
                 writer_service: FlextLdifWriter,
-                entry_data: Mapping[str, Mapping[str, str | Mapping[str, t.StrSequence]]],
+                entry_data: Mapping[
+                    str, Mapping[str, str | Mapping[str, t.StrSequence]]
+                ],
             ) -> None:
                 """Test writing entries with various data types.
 
@@ -1438,7 +1469,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
                 """
                 if not isinstance(writer_service, FlextLdifWriter):
-                    raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
+                    raise TypeError(
+                        f"Expected FlextLdifWriter, got {type(writer_service)}"
+                    )
                 for test_name, data in entry_data.items():
                     dn = str(data.get("dn", ""))
                     raw_attributes = data.get("attributes", {})
@@ -1446,7 +1479,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
                         attributes: Mapping[str, t.StrSequence] = {}
                     else:
                         attributes = {
-                            str(k): [str(i) for i in v] if isinstance(v, list) else [str(v)]
+                            str(k): [str(i) for i in v]
+                            if isinstance(v, list)
+                            else [str(v)]
                             for k, v in raw_attributes.items()
                         }
                     entry_result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
@@ -1655,7 +1690,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
                             ]
                             if len(string_values) == len(attr_value_raw):
                                 normalized_attrs[attr_name_raw] = string_values
-                    result = service.create_entry(dn=dn_raw, attributes=normalized_attrs)
+                    result = service.create_entry(
+                        dn=dn_raw, attributes=normalized_attrs
+                    )
                     if result.is_success:
                         entries.append(result.value)
                 return entries
@@ -1683,7 +1720,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
                 """
                 if not isinstance(parser_service, FlextLdifParser):
-                    raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
+                    raise TypeError(
+                        f"Expected FlextLdifParser, got {type(parser_service)}"
+                    )
                 results: Sequence[r[m.Ldif.ParseResponse]] = []
                 for test_case in test_cases:
                     ldif_content = str(test_case.get("ldif_content", ""))
@@ -1753,7 +1792,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     api, entries, must_contain=must_contain
                 )
                 output_file.write_text(ldif_string)
-                assert output_file.exists(), f"Output file {output_file} was not created"
+                assert output_file.exists(), (
+                    f"Output file {output_file} was not created"
+                )
 
             @staticmethod
             def api_parse_write_string_and_assert(
@@ -1821,7 +1862,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     result = method(content)
                 else:
                     parse_callable = getattr(quirk, "parse", None)
-                    if parse_callable is None or not isinstance(parse_callable, Callable):
+                    if parse_callable is None or not isinstance(
+                        parse_callable, Callable
+                    ):
                         msg = "Quirk has no callable parse method"
                         raise AssertionError(msg)
                     result = parse_callable(content)
@@ -1831,10 +1874,14 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     msg = "Parse method must return r-like t.NormalizedValue"
                     raise AssertionError(msg)
                 error = getattr(result, "error", None)
-                error_message = str(error) if error is not None else "Unknown parse error"
+                error_message = (
+                    str(error) if error is not None else "Unknown parse error"
+                )
                 if should_succeed is False:
                     if is_success:
-                        raise AssertionError(msg or "Expected failure but parse succeeded")
+                        raise AssertionError(
+                            msg or "Expected failure but parse succeeded"
+                        )
                     return None
                 if should_succeed is True and is_failure:
                     raise AssertionError(
@@ -1898,11 +1945,15 @@ class FlextLdifTestConstants(FlextTestsConstants):
                         raise AssertionError(msg)
                     result = method(data)
                 if hasattr(result, "is_success"):
-                    assert result.is_success, msg or f"quirk.write() failed: {result.error}"
+                    assert result.is_success, (
+                        msg or f"quirk.write() failed: {result.error}"
+                    )
                     output = result.value
                 else:
                     output = result
-                assert isinstance(output, str), f"Expected str, got {type(output).__name__}"
+                assert isinstance(output, str), (
+                    f"Expected str, got {type(output).__name__}"
+                )
                 if must_contain:
                     for substring in must_contain:
                         if substring not in output:
@@ -1963,7 +2014,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 else:
                     raise AssertionError(f"Unknown conversion_type: {conversion_type}")
                 result = convert_method(
-                    source=source_quirk, target=target_quirk, model_instance=model_instance
+                    source=source_quirk,
+                    target=target_quirk,
+                    model_instance=model_instance,
                 )
                 if hasattr(result, "is_success"):
                     assert result.is_success, f"convert() failed: {result.error}"
@@ -1972,7 +2025,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     output = result
                 if expected_type is str and (not isinstance(output, str)):
                     output = str(output)
-                if expected_type is not None and (not isinstance(output, expected_type)):
+                if expected_type is not None and (
+                    not isinstance(output, expected_type)
+                ):
                     raise AssertionError(
                         f"Expected {expected_type.__name__}, got {type(output).__name__}"
                     )
@@ -2025,7 +2080,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 )
                 if must_have_keys:
                     for key in must_have_keys:
-                        assert key in support_dict, f"Missing key '{key}' in support dict"
+                        assert key in support_dict, (
+                            f"Missing key '{key}' in support dict"
+                        )
                 if expected_support:
                     for key, expected_value in expected_support.items():
                         if key in support_dict:

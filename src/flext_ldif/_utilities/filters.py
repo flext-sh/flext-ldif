@@ -42,15 +42,15 @@ class FlextLdifUtilitiesFilters[T]:
         """Check if an item matches the filter criteria."""
         raise NotImplementedError
 
-    class AndFilter[_T](FlextLdifUtilitiesFilters[_T]):
+    class AndFilter[U](FlextLdifUtilitiesFilters[U]):  # noqa: F821
         """Filter that combines two filters with AND logic."""
 
         __slots__ = ("_left", "_right")
 
         def __init__(
             self,
-            left: FlextLdifUtilitiesFilters[_T],
-            right: FlextLdifUtilitiesFilters[_T],
+            left: FlextLdifUtilitiesFilters[U],
+            right: FlextLdifUtilitiesFilters[U],
         ) -> None:
             """Initialize AND filter."""
             super().__init__()
@@ -58,19 +58,19 @@ class FlextLdifUtilitiesFilters[T]:
             self._right = right
 
         @override
-        def matches(self, item: _T) -> bool:
+        def matches(self, item: U) -> bool:
             """Check if item matches both filters."""
             return self._left.matches(item) and self._right.matches(item)
 
-    class OrFilter[_T](FlextLdifUtilitiesFilters[_T]):
+    class OrFilter[U](FlextLdifUtilitiesFilters[U]):  # noqa: F821
         """Filter that combines two filters with OR logic."""
 
         __slots__ = ("_left", "_right")
 
         def __init__(
             self,
-            left: FlextLdifUtilitiesFilters[_T],
-            right: FlextLdifUtilitiesFilters[_T],
+            left: FlextLdifUtilitiesFilters[U],
+            right: FlextLdifUtilitiesFilters[U],
         ) -> None:
             """Initialize OR filter."""
             super().__init__()
@@ -78,26 +78,26 @@ class FlextLdifUtilitiesFilters[T]:
             self._right = right
 
         @override
-        def matches(self, item: _T) -> bool:
+        def matches(self, item: U) -> bool:
             """Check if item matches either filter."""
             return self._left.matches(item) or self._right.matches(item)
 
-    class NotFilter[_T](FlextLdifUtilitiesFilters[_T]):
+    class NotFilter[U](FlextLdifUtilitiesFilters[U]):  # noqa: F821
         """Filter that negates another filter."""
 
         __slots__ = ("_inner",)
 
-        def __init__(self, inner: FlextLdifUtilitiesFilters[_T]) -> None:
+        def __init__(self, inner: FlextLdifUtilitiesFilters[U]) -> None:
             """Initialize NOT filter."""
             super().__init__()
             self._inner = inner
 
         @override
-        def matches(self, item: _T) -> bool:
+        def matches(self, item: U) -> bool:
             """Check if item does NOT match inner filter."""
             return not self._inner.matches(item)
 
-    class ByDnFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
+    class ByDnFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):  # noqa: F821
         """Filter entries by DN pattern."""
 
         __slots__ = ("_case_insensitive", "_pattern")
@@ -131,7 +131,7 @@ class FlextLdifUtilitiesFilters[T]:
             )
             return bool(self._pattern.search(dn_str))
 
-    class ByDnUnderBaseFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
+    class ByDnUnderBaseFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):  # noqa: F821
         """Filter entries by base DN."""
 
         __slots__ = ("_base_dn", "_case_insensitive")
@@ -156,7 +156,7 @@ class FlextLdifUtilitiesFilters[T]:
                 dn_str = dn_str.lower()
             return dn_str.endswith((self._base_dn, f",{self._base_dn}"))
 
-    class ByObjectClassFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
+    class ByObjectClassFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):  # noqa: F821
         """Filter entries by objectClass."""
 
         __slots__ = ("_case_insensitive", "_classes", "_mode")
@@ -198,7 +198,7 @@ class FlextLdifUtilitiesFilters[T]:
                 return bool(entry_classes & self._classes)
             return self._classes <= entry_classes
 
-    class ByAttrsFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
+    class ByAttrsFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):  # noqa: F821
         """Filter entries by attribute presence."""
 
         __slots__ = ("_attrs", "_case_insensitive", "_mode")
@@ -234,7 +234,7 @@ class FlextLdifUtilitiesFilters[T]:
                 return bool(entry_attrs & self._attrs)
             return self._attrs <= entry_attrs
 
-    class ByAttrValueFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
+    class ByAttrValueFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):  # noqa: F821
         """Filter entries by attribute value."""
 
         __slots__ = ("_attr", "_case_insensitive", "_pattern")
@@ -274,7 +274,7 @@ class FlextLdifUtilitiesFilters[T]:
                     return any(self._pattern.search(v) for v in values)
             return False
 
-    class ExcludeAttrsFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
+    class ExcludeAttrsFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):  # noqa: F821
         """Filter entries that do NOT have specific attributes."""
 
         __slots__ = ("_attrs", "_case_insensitive")
@@ -302,7 +302,7 @@ class FlextLdifUtilitiesFilters[T]:
             )
             return not bool(entry_attrs & self._attrs)
 
-    class IsSchemaFlextLdifUtilitiesFilters(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
+    class IsSchemaFlextLdifUtilitiesFilters(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):  # noqa: F821
         """Filter for schema entries."""
 
         __slots__ = ("_is_schema",)
@@ -319,7 +319,7 @@ class FlextLdifUtilitiesFilters[T]:
             result = FlextLdifUtilitiesEntry.is_schema_entry(entry_facade)
             return result == self._is_schema
 
-    class CustomFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
+    class CustomFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):  # noqa: F821
         """Filter using a custom predicate function."""
 
         __slots__ = ("_predicate",)

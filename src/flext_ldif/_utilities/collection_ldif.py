@@ -1321,7 +1321,7 @@ class FlextLdifUtilitiesCollectionLdif:
 
     @staticmethod
     def normalize_mapping(
-        mapping: t.MutableContainerMapping,
+        mapping: Mapping[str, t.NormalizedValue],
     ) -> t.MutableContainerMapping:
         """Normalize a mapping of objects to a standard dict form."""
         normalized: t.MutableContainerMapping = {}

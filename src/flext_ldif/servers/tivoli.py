@@ -364,12 +364,16 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                         "Entry attributes are required for Tivoli DS normalization",
                     )
                 entry_dn = entry.dn.value
-                attributes = entry.attributes.attributes.copy()
+                attributes: MutableMapping[str, MutableSequence[str]] = {
+                    **entry.attributes.attributes
+                }
                 dn_lower = entry_dn.lower()
                 object_classes = [
                     str(oc) for oc in attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
                 ]
-                processed_attributes = attributes.copy()
+                processed_attributes: MutableMapping[str, MutableSequence[str]] = {
+                    **attributes
+                }
                 for attr_name, attr_values in processed_attributes.items():
                     processed_values: MutableSequence[str] = []
                     for value in attr_values:

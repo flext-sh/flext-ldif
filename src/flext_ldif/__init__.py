@@ -91,6 +91,7 @@ if TYPE_CHECKING:
         CustomTransformer,
         FilterAttrsTransformer,
         FlextLdifUtilitiesTransformer,
+        FlextLdifUtilitiesTransformers,
         Normalize,
         NormalizeAttrsTransformer,
         NormalizeDnTransformer,
@@ -446,6 +447,10 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "flext_ldif._utilities.transformers",
         "FlextLdifUtilitiesTransformer",
     ),
+    "FlextLdifUtilitiesTransformers": (
+        "flext_ldif._utilities.transformers",
+        "FlextLdifUtilitiesTransformers",
+    ),
     "FlextLdifUtilitiesTypeGuards": (
         "flext_ldif._utilities.type_guards",
         "FlextLdifUtilitiesTypeGuards",
@@ -645,6 +650,7 @@ __all__ = [
     "FlextLdifUtilitiesSchema",
     "FlextLdifUtilitiesServer",
     "FlextLdifUtilitiesTransformer",
+    "FlextLdifUtilitiesTransformers",
     "FlextLdifUtilitiesTypeGuards",
     "FlextLdifUtilitiesTypeHelpers",
     "FlextLdifUtilitiesValidation",

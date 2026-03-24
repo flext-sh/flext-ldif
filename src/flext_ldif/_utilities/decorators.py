@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Callable, MutableMapping, MutableSequence
+from collections.abc import Callable, MutableMapping
 from datetime import UTC, datetime
 from functools import wraps
 from typing import TypeIs, TypeVar
@@ -121,7 +121,7 @@ class FlextLdifUtilitiesDecorators:
                 arg: t.Ldif.ParseMethodArg,
             ) -> t.Ldif.ParseMethodReturn:
                 def _parse_error(message: str) -> t.Ldif.ParseMethodReturn:
-                    return r[t.Scalar | MutableSequence[str] | None].fail(message)
+                    return r[t.Scalar | list[str] | None].fail(message)
 
                 return FlextLdifUtilitiesDecorators._execute_safe_operation(
                     operation_name=operation_name,
@@ -212,7 +212,7 @@ class FlextLdifUtilitiesDecorators:
                 arg: t.Ldif.WriteMethodArg,
             ) -> t.Ldif.WriteMethodReturn:
                 def _write_error(message: str) -> t.Ldif.WriteMethodReturn:
-                    return r[t.Scalar | MutableSequence[str] | None].fail(message)
+                    return r[t.Scalar | list[str] | None].fail(message)
 
                 return FlextLdifUtilitiesDecorators._execute_safe_operation(
                     operation_name=operation_name,

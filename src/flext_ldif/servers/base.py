@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping, MutableSequence
+from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
 from typing import ClassVar, Self, overload, override
 
 from flext_core import FlextLogger
@@ -415,7 +415,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 return result
             return r[str].fail("No entry quirk found")
 
-        def format_ldif_output(ldif_lines: MutableSequence[str]) -> str:
+        def format_ldif_output(ldif_lines: Sequence[str]) -> str:
             """Format LDIF output with proper newline handling."""
             ldif = "\n".join(ldif_lines)
             if ldif and (not ldif.endswith("\n")):

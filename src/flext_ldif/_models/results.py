@@ -119,12 +119,12 @@ class FlextLdifModelsResults:
             value: FlextLdifModelsCollections.FlexibleCategories
             | MutableMapping[str, MutableSequence[FlextLdifModelsDomains.Entry]],
         ) -> FlextLdifModelsCollections.FlexibleCategories:
-            if isinstance(value, dict):
-                result = FlextLdifModelsCollections.FlexibleCategories()
-                for cat, entries in value.items():
-                    result.add_entries(str(cat), list(entries))
-                return result
-            return value
+            if isinstance(value, FlextLdifModelsCollections.FlexibleCategories):
+                return value
+            result = FlextLdifModelsCollections.FlexibleCategories()
+            for cat, entries in value.items():
+                result.add_entries(str(cat), [*entries])
+            return result
 
         @classmethod
         def empty(cls) -> Self:
@@ -166,9 +166,9 @@ class FlextLdifModelsResults:
         def merge(self, other: FlextLdifModelsResults.EntryResult) -> Self:
             merged_categories = FlextLdifModelsCollections.FlexibleCategories()
             for cat, entries in self.entries_by_category.items():
-                merged_categories.add_entries(cat, list(entries))
+                merged_categories.add_entries(cat, [*entries])
             for cat, entries in other.entries_by_category.items():
-                merged_categories.add_entries(cat, list(entries))
+                merged_categories.add_entries(cat, [*entries])
             self_stats = (
                 self.statistics or FlextLdifModelsResults.Statistics.for_pipeline()
             )

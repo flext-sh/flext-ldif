@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping, MutableSequence
+from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
 from typing import override
 
 from flext_core import r
@@ -19,7 +19,7 @@ class FlextLdifUtilitiesTransformer[T]:
         """Apply the transformation to an item."""
         raise NotImplementedError
 
-    def apply_batch(self, items: MutableSequence[T]) -> r[MutableSequence[T]]:
+    def apply_batch(self, items: MutableSequence[T]) -> r[Sequence[T]]:
         """Apply transformation to a batch of items."""
         return r.traverse(items, self.apply)
 
@@ -75,7 +75,7 @@ class FlextLdifUtilitiesTransformers:
                 else str(item.dn)
             )
             if self._validate:
-                validation_result = FlextLdifUtilitiesTransformers.NormalizeDnTransformer._validate_dn_components(
+                validation_result = FlextLdifUtilitiesTransformers.NormalizeDnTransformer._validate_dn_components(  # noqa: SLF001
                     dn_str
                 )
                 if validation_result.is_failure:
@@ -249,7 +249,7 @@ class FlextLdifUtilitiesTransformers:
                 target_format=self._format,
             )
             update_dict: t.MutableContainerMapping = {
-                "attributes": m.Ldif.Attributes(attributes=dict(converted_attrs)),
+                "attributes": m.Ldif.Attributes(attributes={**converted_attrs}),
             }
             updated_entry = item.model_copy(update=update_dict)
             return r[m.Ldif.Entry].ok(updated_entry)
@@ -301,7 +301,7 @@ class FlextLdifUtilitiesTransformers:
 
                 attrs = {k: v for k, v in attrs.items() if key_not_in_exclude(k, v)}
             update_dict: t.MutableContainerMapping = {
-                "attributes": m.Ldif.Attributes(attributes=dict(attrs)),
+                "attributes": m.Ldif.Attributes(attributes={**attrs}),
             }
             updated_entry = item.model_copy(update=update_dict)
             return r[m.Ldif.Entry].ok(updated_entry)

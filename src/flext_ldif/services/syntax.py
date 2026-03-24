@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import Callable, MutableMapping, MutableSequence
+from collections.abc import Callable, MutableMapping
 from typing import override
 
 from flext_ldif import FlextLdifServiceBase, c, d, m, r, u
@@ -79,7 +79,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
             catch=(TypeError, AttributeError),
         ).map_error(lambda e: f"Failed to check RFC 4517 standard: {e}")
 
-    def list_common_syntaxes(self) -> r[MutableSequence[str]]:
+    def list_common_syntaxes(self) -> r[list[str]]:
         """List all supported RFC 4517 syntax OIDs."""
         return u.try_(
             lambda: sorted(self._common_syntaxes),

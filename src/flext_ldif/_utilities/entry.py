@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from typing import Literal
 
 from flext_core import FlextLogger, r
@@ -97,7 +97,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def analyze_differences(
-        entry_attrs: t.MutableContainerMapping,
+        entry_attrs: t.ContainerMapping,
         converted_attrs: MutableMapping[str, MutableSequence[t.Ldif.AttributeValue]],
         original_dn: str,
         cleaned_dn: str,
@@ -171,7 +171,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def convert_boolean_attributes(
-        attributes: MutableMapping[
+        attributes: Mapping[
             str, MutableSequence[str] | MutableSequence[bytes] | str | bytes
         ],
         boolean_attr_names: set[str],
@@ -361,7 +361,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def matches_entry_server_patterns(
         entry_dn: str,
-        attributes: t.MutableContainerMapping,
+        attributes: Mapping[str, Sequence[str]],
         config: FlextLdifModelsSettings.ServerPatternsConfig,
     ) -> bool:
         """Check if entry matches server-specific patterns."""
@@ -508,9 +508,7 @@ class FlextLdifUtilitiesEntry:
                     else attrs
                 )
                 current = current.model_copy(
-                    update={
-                        "attributes": m.Ldif.Attributes(attributes=dict(new_attrs))
-                    },
+                    update={"attributes": m.Ldif.Attributes(attributes={**new_attrs})},
                 )
             if config.convert_booleans and current.attributes:
                 source_format, target_format = config.convert_booleans
@@ -529,9 +527,7 @@ class FlextLdifUtilitiesEntry:
                     target_format=target_format,
                 )
                 current = current.model_copy(
-                    update={
-                        "attributes": m.Ldif.Attributes(attributes=dict(converted))
-                    },
+                    update={"attributes": m.Ldif.Attributes(attributes={**converted})},
                 )
             if config.remove_attrs:
                 current = FlextLdifUtilitiesEntry.remove_attributes(

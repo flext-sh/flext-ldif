@@ -2851,7 +2851,7 @@ class FlextLdifModelsDomainsEntries:
             True if attribute exists with at least one value, False otherwise
 
             """
-            return self.get_attribute_values(attribute_name)
+            return bool(self.get_attribute_values(attribute_name))
 
         def has_object_class(self, object_class: str) -> bool:
             """Check if entry has specified t.NormalizedValue class.
@@ -3038,12 +3038,12 @@ class FlextLdifModelsDomainsEntries:
         @computed_field
         def has_errors(self) -> bool:
             """Check if any validation errors exist."""
-            return self.validation_errors
+            return bool(self.validation_errors)
 
         @computed_field
         def has_warnings(self) -> bool:
             """Check if any validation warnings exist."""
-            return self.validation_warnings
+            return bool(self.validation_warnings)
 
         @computed_field
         def transformation_count(self) -> int:
@@ -3053,7 +3053,7 @@ class FlextLdifModelsDomainsEntries:
         @computed_field
         def was_transformed(self) -> bool:
             """Check if any transformations were applied."""
-            return self.original_dn != self.normalized_dn or self.transformations
+            return self.original_dn != self.normalized_dn or bool(self.transformations)
 
         @classmethod
         def create_minimal(cls, dn: str) -> Self:
@@ -3252,12 +3252,12 @@ class FlextLdifModelsDomainsEntries:
         @computed_field
         def had_errors(self) -> bool:
             """Check if any errors occurred."""
-            return self.errors
+            return bool(self.errors)
 
         @computed_field
         def had_warnings(self) -> bool:
             """Check if any warnings occurred."""
-            return self.warnings
+            return bool(self.warnings)
 
         @computed_field
         def objectclasses_changed(self) -> bool:

@@ -220,7 +220,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         return entry_data.model_copy(
             update={
                 "attributes": m.Ldif.Attributes(
-                    attributes=dict(new_attributes_dict),
+                    attributes={**new_attributes_dict},
                     attribute_metadata=entry_data.attributes.attribute_metadata,
                     metadata=entry_data.attributes.metadata,
                 ),
@@ -308,8 +308,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             r[Entry] - entry with corrected syntax, fail() if syntax errors
 
         """
-        attrs_dict_raw = entry.attributes.attributes if entry.attributes else {}
-        attrs_dict: t.Ldif.AttributeDict = dict(attrs_dict_raw.items())
+        attrs_dict_raw: MutableMapping[str, MutableSequence[str]] = (
+            entry.attributes.attributes if entry.attributes else {}
+        )
+        attrs_dict: t.Ldif.AttributeDict = {
+            k: list(v) for k, v in attrs_dict_raw.items()
+        }
         aci_validation_error = FlextLdifServersOudEntry.validate_aci_macros_in_entry(
             attrs_dict,
             validate_aci_macros,
@@ -669,7 +673,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 )
             entry_after_post: m.Ldif.Entry = post_parse_result.value
             original_dn = entry_after_post.dn.value if entry_after_post.dn else ""
-            original_attrs = (
+            original_attrs: MutableMapping[str, MutableSequence[str]] = (
                 entry_after_post.attributes.attributes
                 if entry_after_post.attributes
                 and entry_after_post.attributes.attributes
@@ -1339,7 +1343,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             original_dn = dn
             parsed_dn = entry.dn.value if entry.dn else None
             parsed_attrs: MutableMapping[str, MutableSequence[str]] = (
-                dict(entry.attributes.attributes) if entry.attributes else {}
+                {**entry.attributes.attributes} if entry.attributes else {}
             )
             converted_attrs: MutableMapping[str, MutableSequence[str | bytes]] = {
                 k: list(v) for k, v in parsed_attrs.items()
@@ -1397,7 +1401,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _find_aci_in_dict(
         self,
-        attrs: t.MutableContainerMapping | None,
+        attrs: Mapping[str, MutableSequence[str] | str] | None,
     ) -> MutableSequence[str] | str | None:
         """Find ACI value in dictionary (case-insensitive)."""
         if not attrs:
@@ -1414,7 +1418,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _find_aci_values(
         self,
         entry: m.Ldif.Entry,
-        original_attrs: t.Ldif.AttributeDictGeneric,
+        original_attrs: Mapping[str, MutableSequence[str] | str],
     ) -> MutableSequence[str] | str | None:
         """Find ACI values from entry or original_attrs."""
         aci_values: MutableSequence[str] | str | None = None
@@ -1469,7 +1473,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         self,
         entry: m.Ldif.Entry,
         original_dn: str,
-        original_attrs: t.Ldif.AttributeDictGeneric,
+        original_attrs: Mapping[str, MutableSequence[str] | str],
     ) -> r[m.Ldif.Entry]:
         """Hook: Process ACLs and propagate their extensions to entry metadata.
 
@@ -1595,7 +1599,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             - Oracle OUD ACI Macros: https://docs.oracle.com/cd/E22289_01/html/821-1277/aci-syntax.html
 
         """
-        attrs_dict = entry.attributes.attributes if entry.attributes is not None else {}
+        attrs_dict: MutableMapping[str, MutableSequence[str]] = (
+            entry.attributes.attributes if entry.attributes is not None else {}
+        )
         aci_attrs = attrs_dict.get("aci")
         if aci_attrs and core_u.is_type(aci_attrs, (list, tuple)):
             has_macros = False
@@ -1773,9 +1779,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         current_extensions: t.MutableContainerMapping,
     ) -> None:
         """Process list of ACI values and extract metadata."""
-        aci_list = list(aci_values) if isinstance(aci_values, list) else [aci_values]
+        aci_list: MutableSequence[str] = (
+            [*aci_values] if isinstance(aci_values, MutableSequence) else [aci_values]
+        )
         for aci_value in aci_list:
-            normalized_aci = aci_value.strip()
+            normalized_aci = str(aci_value).strip()
             if not normalized_aci.startswith("aci:"):
                 normalized_aci = f"aci: {normalized_aci}"
             acl_result = acl_quirk.parse(normalized_aci)

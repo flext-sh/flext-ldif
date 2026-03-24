@@ -140,10 +140,10 @@ class FlextLdifUtilitiesWriters:
             if transform_sup_hook and objectclass.sup:
                 sup_value = objectclass.sup
                 sup_list: MutableSequence[str]
-                if isinstance(sup_value, (list, tuple)):
-                    sup_list = [str(item) for item in sup_value]
-                else:
+                if isinstance(sup_value, str):
                     sup_list = [sup_value]
+                else:
+                    sup_list = [str(item) for item in sup_value]
                 setattr(objectclass, "sup", transform_sup_hook(sup_list))
             parts = build_parts_hook(objectclass)
             definition = "( " + " ".join(parts) + " )"

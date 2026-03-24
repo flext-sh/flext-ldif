@@ -69,7 +69,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
         """Execute write operation with parameters."""
         params_mapping: MutableMapping[str, t.GeneralValueType] = {}
         if isinstance(params, Mapping):
-            params_mapping = params
+            params_mapping = {str(k): v for k, v in params.items()}
         params_data = params_mapping
         entries_raw = u.take(params_data, "entries")
         entries: MutableSequence[m.Ldif.Entry] = []

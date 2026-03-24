@@ -101,7 +101,7 @@ class FlextLdifUtilitiesParser:
             new_attrs["_original_dn_line"] = [original_line]
             return (value, new_attrs)
         if "_original_lines" not in current_attrs:
-            original_lines_list: MutableSequence[str] = []
+            original_lines_list: list[str] = []
             current_attrs["_original_lines"] = original_lines_list
         current_attrs["_original_lines"].append(original_line)
         current_attrs.setdefault(key, []).append(value)
@@ -261,7 +261,7 @@ class FlextLdifUtilitiesParser:
         if len(current_values) == 1:
             entry_dict[current_attr] = current_values[0]
         else:
-            entry_dict[current_attr] = current_values
+            entry_dict[current_attr] = [*current_values]
 
     @staticmethod
     def handle_multivalued_attribute(

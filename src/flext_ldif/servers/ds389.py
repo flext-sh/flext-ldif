@@ -497,7 +497,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             try:
                 if not entry.attributes or not entry.dn:
                     return r[m.Ldif.Entry].ok(entry)
-                attributes = entry.attributes.attributes.copy()
+                attributes: MutableMapping[str, MutableSequence[str]] = {
+                    **entry.attributes.attributes
+                }
                 entry_dn = entry.dn.value
                 dn_lower = entry_dn.lower()
                 metadata = entry.metadata or m.Ldif.QuirkMetadata(

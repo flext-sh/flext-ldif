@@ -60,7 +60,7 @@ class FlextLdifProcessing(
             on_failure=lambda e: r[MutableSequence[m.Ldif.ProcessingResult]].fail(
                 e or "Batch processing failed",
             ),
-            on_success=lambda v: r[MutableSequence[m.Ldif.ProcessingResult]].ok(v),
+            on_success=lambda v: r[MutableSequence[m.Ldif.ProcessingResult]].ok([*v]),
         )
 
     @staticmethod

@@ -315,7 +315,7 @@ class FlextLdifUtilitiesPipeline:
 
 
 # Module-level aliases for backward compatibility (referenced by __init__.py)
-_Filtered = FlextLdifUtilitiesPipeline._Filtered
+_Filtered = FlextLdifUtilitiesPipeline._Filtered  # noqa: SLF001
 FILTERED = FlextLdifUtilitiesPipeline.FILTERED
 PipelineStep = FlextLdifUtilitiesPipeline.PipelineStep
 Pipeline = FlextLdifUtilitiesPipeline.Pipeline

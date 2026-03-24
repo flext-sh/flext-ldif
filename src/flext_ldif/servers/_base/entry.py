@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 import re
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self, override
@@ -152,7 +152,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         write_options: FlextLdifModelsSettings.WriteFormatOptions | None = None,
     ) -> r[str]:
         """Write Entry model(s) to LDIF string format."""
-        if isinstance(entry_data, list):
+        if isinstance(entry_data, MutableSequence):
             return self._write_entry_list(entry_data, write_options)
         return self._write_single_entry(entry_data, write_options)
 
@@ -463,7 +463,7 @@ class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | s
         opts = self._resolve_write_options_for_header(write_options)
         header_lines = self._build_header_lines(opts, len(entries))
 
-        def format_output(results: MutableSequence[str]) -> str:
+        def format_output(results: Sequence[str]) -> str:
             all_lines = [*header_lines, *results]
             ldif_output = "\n".join(all_lines) if all_lines else ""
             if header_lines and (not ldif_output.endswith("\n")):

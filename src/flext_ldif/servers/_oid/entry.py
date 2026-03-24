@@ -497,7 +497,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 **metadata.attribute_transformations,
                 **acl_transformations,
             }
-        ldif_attrs = m.Ldif.Attributes(attributes=dict(converted_attributes))
+        ldif_attrs = m.Ldif.Attributes(attributes={**converted_attributes})
         return r[m.Ldif.Entry].ok(
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value=cleaned_dn),
