@@ -49,6 +49,10 @@ if TYPE_CHECKING:
     from flext_ldif.servers.tivoli import FlextLdifServersTivoli
 
 _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
+    "FlextLdifQuirkMethodsMixin": (
+        "flext_ldif.servers._base.constants",
+        "FlextLdifQuirkMethodsMixin",
+    ),
     "FlextLdifServersAd": ("flext_ldif.servers.ad", "FlextLdifServersAd"),
     "FlextLdifServersApache": ("flext_ldif.servers.apache", "FlextLdifServersApache"),
     "FlextLdifServersBase": ("flext_ldif.servers.base", "FlextLdifServersBase"),
@@ -133,10 +137,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "FlextLdifServersRfcSchema",
     ),
     "FlextLdifServersTivoli": ("flext_ldif.servers.tivoli", "FlextLdifServersTivoli"),
-    "FlextLdifQuirkMethodsMixin": (
-        "flext_ldif.servers._base.constants",
-        "FlextLdifQuirkMethodsMixin",
-    ),
     "_base": ("flext_ldif.servers._base", ""),
     "_oid": ("flext_ldif.servers._oid", ""),
     "_oud": ("flext_ldif.servers._oud", ""),

@@ -254,6 +254,10 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "FlextLdifProcessingPipelineService",
     ),
     "FlextLdifProtocols": ("flext_ldif.protocols", "FlextLdifProtocols"),
+    "FlextLdifQuirkMethodsMixin": (
+        "flext_ldif.servers._base.constants",
+        "FlextLdifQuirkMethodsMixin",
+    ),
     "FlextLdifSchema": ("flext_ldif.services.schema", "FlextLdifSchema"),
     "FlextLdifServer": ("flext_ldif.services.server", "FlextLdifServer"),
     "FlextLdifServersAd": ("flext_ldif.servers.ad", "FlextLdifServersAd"),
@@ -494,10 +498,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "Pipeline": ("flext_ldif._utilities.pipeline", "Pipeline"),
     "PipelineStep": ("flext_ldif._utilities.pipeline", "PipelineStep"),
     "ProcessConfigBuilder": ("flext_ldif._utilities.builders", "ProcessConfigBuilder"),
-    "FlextLdifQuirkMethodsMixin": (
-        "flext_ldif.servers._base.constants",
-        "FlextLdifQuirkMethodsMixin",
-    ),
     "RemoveAttrsTransformer": (
         "flext_ldif._utilities.transformers",
         "RemoveAttrsTransformer",
