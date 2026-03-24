@@ -15,9 +15,9 @@ if TYPE_CHECKING:
 
     from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
     from flext_ldif.servers._base.constants import (
+        FlextLdifQuirkMethodsMixin,
         FlextLdifServersBaseConstants,
         FlextLdifServersBaseQuirkHelpers,
-        FlextLdifQuirkMethodsMixin,
     )
     from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
     from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema, logger
@@ -43,17 +43,20 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "flext_ldif.servers._base.acl",
         "FlextLdifServersBaseSchemaAcl",
     ),
-    "FlextLdifQuirkMethodsMixin": ("flext_ldif.servers._base.constants", "FlextLdifQuirkMethodsMixin"),
+    "FlextLdifQuirkMethodsMixin": (
+        "flext_ldif.servers._base.constants",
+        "FlextLdifQuirkMethodsMixin",
+    ),
     "logger": ("flext_ldif.servers._base.schema", "logger"),
 }
 
 __all__ = [
+    "FlextLdifQuirkMethodsMixin",
     "FlextLdifServersBaseConstants",
     "FlextLdifServersBaseEntry",
     "FlextLdifServersBaseQuirkHelpers",
     "FlextLdifServersBaseSchema",
     "FlextLdifServersBaseSchemaAcl",
-    "FlextLdifQuirkMethodsMixin",
     "logger",
 ]
 
