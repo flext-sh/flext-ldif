@@ -51,12 +51,6 @@ class FlextLdifTypes(FlextTypes):
         type ValueType = Scalar | list[str]
         type ValueList = list[ValueType]
         type AttributeValue = str | bytes
-        type DnString = str
-        type RdnString = str
-        type ServerType = str
-        type MetadataKey = str
-        type ProcessingMode = Literal["validate", "transform", "filter"]
-        type ValidationLevel = Literal["strict", "moderate", "lenient"]
         type EntryAttributesDict = dict[str, list[str]]
         type RawEntryDict = dict[str, str | list[str] | set[str]]
 
