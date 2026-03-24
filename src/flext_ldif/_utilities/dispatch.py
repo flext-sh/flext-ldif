@@ -328,5 +328,171 @@ class FlextLdifUtilitiesDispatch:
         """Route to Processing.is_entry_sequence (resolves Processing vs TypeGuards)."""
         return FlextLdifUtilitiesProcessing.is_entry_sequence(obj)
 
+    # --- MRO conflict resolution: Collection methods (CollectionLdif vs FlextUtilities) ---
+
+    @staticmethod
+    def or_[T: t.NormalizedValue](
+        *values: T | None,
+        default: T | None = None,
+    ) -> T | None:
+        """Route to CollectionLdif.or_ (resolves CollectionLdif vs core)."""
+        return FlextLdifUtilitiesCollectionLdif.or_(*values, default=default)
+
+    @classmethod
+    def try_[TResult](
+        cls,
+        func: Callable[[], TResult],
+        *,
+        default: TResult | None = None,
+        catch: type[Exception] | tuple[type[Exception], ...] = Exception,
+    ) -> TResult | None:
+        """Route to CollectionLdif.try_ (resolves CollectionLdif vs core)."""
+        return FlextLdifUtilitiesCollectionLdif.try_(func, default=default, catch=catch)
+
+    @classmethod
+    def update(
+        cls,
+        data: t.MutableContainerMapping,
+        updates: t.MutableContainerMapping,
+    ) -> t.MutableContainerMapping:
+        """Route to CollectionLdif.update (resolves CollectionLdif vs core)."""
+        return FlextLdifUtilitiesCollectionLdif.update(data, updates)
+
+    @classmethod
+    def omit(
+        cls,
+        data: t.MutableContainerMapping,
+        *keys: str,
+    ) -> t.MutableContainerMapping:
+        """Route to CollectionLdif.omit (resolves CollectionLdif vs core)."""
+        return FlextLdifUtilitiesCollectionLdif.omit(data, *keys)
+
+    @staticmethod
+    def pick(
+        data: t.NormalizedValue,
+        *keys: str,
+        as_dict: bool = True,
+    ) -> t.MutableContainerMapping | t.MutableContainerList:
+        """Route to CollectionLdif.pick (resolves CollectionLdif vs core)."""
+        return FlextLdifUtilitiesCollectionLdif.pick(data, *keys, as_dict=as_dict)
+
+    @classmethod
+    def pluck(
+        cls,
+        items: t.MutableContainerList,
+        *,
+        key: str | int | Callable[..., t.NormalizedValue],
+    ) -> t.MutableContainerList:
+        """Route to CollectionLdif.pluck (resolves CollectionLdif vs core)."""
+        return FlextLdifUtilitiesCollectionLdif.pluck(items, key=key)
+
+    @classmethod
+    def prop(cls, key: str) -> Callable[..., t.NormalizedValue]:
+        """Route to CollectionLdif.prop (resolves CollectionLdif vs core)."""
+        return FlextLdifUtilitiesCollectionLdif.prop(key)
+
+    @staticmethod
+    def take(
+        data_or_items: t.NormalizedValue,
+        key_or_n: str | int,
+        *,
+        as_type: type | None = None,
+        default: t.NormalizedValue | None = None,
+        from_start: bool = True,
+    ) -> t.MutableContainerMapping | t.MutableContainerList | t.NormalizedValue | None:
+        """Route to CollectionLdif.take (resolves CollectionLdif vs core)."""
+        return FlextLdifUtilitiesCollectionLdif.take(
+            data_or_items,
+            key_or_n,
+            as_type=as_type,
+            default=default,
+            from_start=from_start,
+        )
+
+    @staticmethod
+    def is_type(
+        value: t.NormalizedValue,
+        type_spec: str | type | tuple[type, ...],
+    ) -> bool:
+        """Route to CollectionLdif.is_type (resolves CollectionLdif vs core)."""
+        return FlextLdifUtilitiesCollectionLdif.is_type(value, type_spec)
+
+    @staticmethod
+    def count[T](
+        items: MutableSequence[T] | tuple[T, ...],
+        predicate: Callable[[T], bool] | None = None,
+    ) -> int:
+        """Route to CollectionLdif.count (resolves CollectionLdif vs core)."""
+        return FlextLdifUtilitiesCollectionLdif.count(items, predicate)
+
+    @staticmethod
+    def find(
+        items: t.ContainerList,
+        *,
+        predicate: Callable[..., bool],
+    ) -> t.NormalizedValue | None:
+        """Route to CollectionLdif.find (resolves CollectionLdif vs core)."""
+        return FlextLdifUtilitiesCollectionLdif.find(items, predicate=predicate)
+
+    @classmethod
+    def group_by(
+        cls,
+        items: t.MutableContainerList,
+        *,
+        key: Callable[..., t.NormalizedValue],
+    ) -> MutableMapping[t.NormalizedValue, t.MutableContainerList]:
+        """Route to CollectionLdif.group_by (resolves CollectionLdif vs core)."""
+        return FlextLdifUtilitiesCollectionLdif.group_by(items, key=key)
+
+    @classmethod
+    def partition(
+        cls,
+        items: t.MutableContainerList,
+        *,
+        predicate: Callable[..., bool],
+    ) -> tuple[t.MutableContainerList, t.MutableContainerList]:
+        """Route to CollectionLdif.partition (resolves CollectionLdif vs core)."""
+        return FlextLdifUtilitiesCollectionLdif.partition(items, predicate=predicate)
+
+    @staticmethod
+    def build(
+        value: t.NormalizedValue,
+        *,
+        ops: t.MutableContainerMapping | None = None,
+    ) -> t.NormalizedValue:
+        """Route to Normalization.build (resolves Normalization vs core)."""
+        from flext_ldif import FlextLdifUtilitiesNormalization
+
+        return FlextLdifUtilitiesNormalization.build(value, ops=ops)
+
+    @staticmethod
+    def write_file(
+        content: str,
+        file_path: object,
+        encoding: str = "utf-8",
+    ) -> r[MutableMapping[str, str | int]]:
+        """Route to Writer.write_file (resolves Writer vs core)."""
+        from pathlib import Path
+
+        from flext_ldif import FlextLdifUtilitiesWriter
+
+        path = file_path if isinstance(file_path, Path) else Path(str(file_path))
+        return FlextLdifUtilitiesWriter.write_file(content, path, encoding)
+
+    @staticmethod
+    def _is_object_mapping(
+        value: t.NormalizedValue,
+    ) -> TypeIs[MutableMapping[t.NormalizedValue, t.NormalizedValue]]:
+        """Route to Schema._is_object_mapping (resolves Schema vs core)."""
+        return isinstance(value, Mapping)
+
+    @staticmethod
+    def _is_object_sequence(
+        value: t.NormalizedValue,
+    ) -> TypeIs[t.MutableContainerList]:
+        """Route to Schema._is_object_sequence (resolves Schema vs core)."""
+        return isinstance(value, Sequence) and not isinstance(value, (str, bytes))
+
+
 
 __all__ = ["FlextLdifUtilitiesDispatch"]
