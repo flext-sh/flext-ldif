@@ -413,7 +413,7 @@ class TestNovellEntryDetection:
         self, entry_quirk: FlextLdifServersNovell.Entry
     ) -> None:
         """Test entry quirk is initialized."""
-        tm.that(entry_quirk, none=False)
+        tm.that(entry_quirk is not None, eq=True)
 
     @pytest.mark.parametrize("test_case", ENTRY_TEST_CASES)
     def test_can_handle_entry(

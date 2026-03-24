@@ -10,7 +10,9 @@ from collections.abc import Mapping, Sequence
 import pytest
 from flext_tests import tm
 
-from tests import FlextLdifTestFactory, m, u
+from tests import u
+from tests.models import FlextLdifTestModels as m
+from tests.test_factory import FlextLdifTestFactory
 
 
 class TestFlextLdifUtilitiesComprehensive:
@@ -25,7 +27,7 @@ class TestFlextLdifUtilitiesComprehensive:
             dn = test_data.dn
             result = u.Ldif.norm_string(dn)
             tm.that(result, is_=str)
-            tm.that(result, eq=True)
+            tm.that(result, empty=False)
 
     def test_real_ldif_processing_pipeline(self) -> None:
         """Test complete LDIF processing pipeline with real data."""
@@ -58,7 +60,7 @@ class TestFlextLdifUtilitiesComprehensive:
         tm.that(len(entries), gte=5)
         for entry in entries:
             tm.that(entry.dn, none=False)
-            tm.that(entry.attributes, eq=True)
+            tm.that(entry.attributes, none=False)
             tm.that(entry.attributes, is_=dict)
 
     @pytest.mark.parametrize("server_type", ["generic", "openldap", "ad", "oid", "oud"])
@@ -70,4 +72,4 @@ class TestFlextLdifUtilitiesComprehensive:
         tm.that(hasattr(entry, "attributes"), eq=True)
         normalized = u.Ldif.normalize_server_type(server_type)
         tm.that(normalized, is_=str)
-        tm.that(normalized, eq=True)
+        tm.that(normalized, empty=False)

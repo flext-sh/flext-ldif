@@ -7,11 +7,11 @@ import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from pathlib import Path
 
-from flext_core import FlextLogger, r, u
+from flext_core import FlextLogger, r
+from pydantic import BaseModel
 
 from flext_ldif import c, m, t
 
-_TUPLE_LENGTH_TWO = 2
 logger = FlextLogger(__name__)
 
 
@@ -26,12 +26,12 @@ class FlextLdifUtilitiesWriter:
         changetype_config: t.MutableContainerMapping,
     ) -> None:
         """Add changetype lines based on format."""
-        include_changetype = bool(u.get(changetype_config, "include_changetype"))
-        changetype_value = u.get(changetype_config, "changetype_value")
+        include_changetype = bool(changetype_config.get("include_changetype"))
+        changetype_value = changetype_config.get("changetype_value")
         fold_long_lines = bool(
-            u.get(changetype_config, "fold_long_lines", default=True),
+            changetype_config.get("fold_long_lines", True),
         )
-        width_raw = u.get(changetype_config, "width", default=76)
+        width_raw = changetype_config.get("width", 76)
         width = int(width_raw) if isinstance(width_raw, (str, int, float)) else 76
         if format_type == "modify":
             changetype_line = "changetype: modify"
@@ -93,8 +93,7 @@ class FlextLdifUtilitiesWriter:
             parts.append(f"NAME '{attr_data.name}'")
         if attr_data.desc:
             parts.append(f"DESC '{attr_data.desc}'")
-        if attr_data.metadata and u.get(
-            attr_data.metadata.extensions,
+        if attr_data.metadata and attr_data.metadata.extensions.get(
             c.Ldif.OBSOLETE,
         ):
             parts.append("OBSOLETE")
@@ -106,7 +105,7 @@ class FlextLdifUtilitiesWriter:
         if attr_data.usage:
             parts.append(f"USAGE {attr_data.usage}")
         x_origin = (
-            u.get(attr_data.metadata.extensions, "x_origin")
+            attr_data.metadata.extensions.get("x_origin")
             if attr_data.metadata
             else None
         )
@@ -125,8 +124,7 @@ class FlextLdifUtilitiesWriter:
             parts.append(f"NAME '{oc_data.name}'")
         if oc_data.desc:
             parts.append(f"DESC '{oc_data.desc}'")
-        if oc_data.metadata and u.get(
-            oc_data.metadata.extensions,
+        if oc_data.metadata and oc_data.metadata.extensions.get(
             c.Ldif.OBSOLETE,
         ):
             parts.append("OBSOLETE")
@@ -142,7 +140,7 @@ class FlextLdifUtilitiesWriter:
         FlextLdifUtilitiesWriter._add_oc_must_may(parts, oc_data.must, "MUST")
         FlextLdifUtilitiesWriter._add_oc_must_may(parts, oc_data.may, "MAY")
         oc_x_origin = (
-            u.get(oc_data.metadata.extensions, "x_origin") if oc_data.metadata else None
+            oc_data.metadata.extensions.get("x_origin") if oc_data.metadata else None
         )
         if oc_x_origin:
             parts.append(f"X-ORIGIN '{oc_x_origin}'")
@@ -273,8 +271,7 @@ class FlextLdifUtilitiesWriter:
         """Add flags to attribute parts list."""
         if attr_data.single_value:
             parts.append("SINGLE-VALUE")
-        if attr_data.metadata and u.get(
-            attr_data.metadata.extensions,
+        if attr_data.metadata and attr_data.metadata.extensions.get(
             c.Ldif.COLLECTIVE,
         ):
             parts.append("COLLECTIVE")
@@ -317,8 +314,9 @@ class FlextLdifUtilitiesWriter:
         attr_order_raw: MutableSequence[str] | None = None
         metadata_extensions = getattr(metadata, "extensions", None)
         if isinstance(metadata_extensions, Mapping):
-            typed_extensions = t.ConfigMap(metadata_extensions).root
-            raw_attr_order: t.NormalizedValue | None = typed_extensions.get(
+            ext: dict[str, t.NormalizedValue | BaseModel] = dict(metadata_extensions)  # type: ignore[arg-type]
+            typed_extensions = t.ConfigMap(root=ext).root
+            raw_attr_order: t.NormalizedValue | BaseModel | None = typed_extensions.get(
                 "attribute_order",
             )
             if isinstance(raw_attr_order, Sequence) and not isinstance(
@@ -329,7 +327,7 @@ class FlextLdifUtilitiesWriter:
         elif isinstance(metadata, Mapping):
             raw_extensions = metadata.get("extensions")
             if isinstance(raw_extensions, Mapping):
-                typed_extensions = t.ConfigMap(raw_extensions).root
+                typed_extensions = t.ConfigMap(root=dict(raw_extensions)).root
                 raw_attr_order = typed_extensions.get("attribute_order")
                 if isinstance(raw_attr_order, Sequence) and not isinstance(
                     raw_attr_order,

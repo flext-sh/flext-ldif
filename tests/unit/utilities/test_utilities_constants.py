@@ -160,8 +160,8 @@ class TestsTestFlextLdifConstants:
     )
     def test_get_valid_values(
         self,
-        scenario: str,
-        test_type: GetValidValuesType,
+        _scenario: str,
+        _test_type: GetValidValuesType,
         category: str,
         expected_values: set[str],
         should_raise: bool,
@@ -173,9 +173,8 @@ class TestsTestFlextLdifConstants:
         else:
             values = u.Ldif.get_valid_values(category)
             tm.that(values, is_=set)
-            (
-                tm.that(values, eq=expected_values),
-                (f"Expected {expected_values}, got {values}"),
+            assert values == expected_values, (
+                f"Expected {expected_values}, got {values}"
             )
 
     @pytest.mark.parametrize(
@@ -239,7 +238,7 @@ class TestsTestFlextLdifConstants:
             is_valid, invalid = u.Ldif.validate_many(values, category)
             tm.that(is_valid, eq=expected_valid)
             if not expected_valid:
-                tm.that(invalid, eq=True)
+                tm.that(invalid, empty=False)
 
     def test_constants_are_accessible(self) -> None:
         """Test that constants are properly defined and accessible."""

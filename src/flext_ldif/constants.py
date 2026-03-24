@@ -192,6 +192,7 @@ class FlextLdifConstants(FlextConstants):
             ACI = "aci"
             ACCESS = "access"
 
+        TUPLE_LENGTH_TWO: Final[int] = 2
         MAX_LINE_LENGTH: Final[int] = 78
 
         ASCII_PRINTABLE_MIN: Final[int] = 32
@@ -1113,137 +1114,137 @@ class FlextLdifConstants(FlextConstants):
             ACL = "acl"
             REJECTED = "rejected"
 
-    @unique
-    class DnPrefixField(StrEnum):
-        """Dn_Prefix field constants."""
+        @unique
+        class DnPrefixField(StrEnum):
+            """Dn_Prefix field constants."""
 
-        PREFIX = "dn:"
-        PREFIX_SHORT = "dn"
+            PREFIX = "dn:"
+            PREFIX_SHORT = "dn"
 
-    @unique
-    class SchemaKwField(StrEnum):
-        """Schema_Kw field constants."""
+        @unique
+        class SchemaKwField(StrEnum):
+            """Schema_Kw field constants."""
 
-        NAME = "NAME"
-        DESC = "DESC"
+            NAME = "NAME"
+            DESC = "DESC"
 
-    @unique
-    class AclBindIpField(StrEnum):
-        """Acl_Bind_Ip field constants."""
+        @unique
+        class AclBindIpField(StrEnum):
+            """Acl_Bind_Ip field constants."""
 
-        IP_FULL = "acl:vendor:bind_ip"
-        IP = "bind_ip"
+            IP_FULL = "acl:vendor:bind_ip"
+            IP = "bind_ip"
 
-    @unique
-    class PersonField(StrEnum):
-        """Person field constants."""
+        @unique
+        class PersonField(StrEnum):
+            """Person field constants."""
 
-        PERSON = "person"
+            PERSON = "person"
 
-    @unique
-    class OrganizationalUnitField(StrEnum):
-        """Organizational_Unit field constants."""
+        @unique
+        class OrganizationalUnitField(StrEnum):
+            """Organizational_Unit field constants."""
 
-        UNIT = "organizationalUnit"
-        UNIT_LOWER = "organizationalunit"
+            UNIT = "organizationalUnit"
+            UNIT_LOWER = "organizationalunit"
 
-    @unique
-    class UserField(StrEnum):
-        """User field constants."""
+        @unique
+        class UserField(StrEnum):
+            """User field constants."""
 
-        USER = "user"
+            USER = "user"
 
-    @unique
-    class GroupField(StrEnum):
-        """Group field constants."""
+        @unique
+        class GroupField(StrEnum):
+            """Group field constants."""
 
-        GROUP = "group"
+            GROUP = "group"
 
-    @unique
-    class AudioField(StrEnum):
-        """Audio field constants."""
+        @unique
+        class AudioField(StrEnum):
+            """Audio field constants."""
 
-        AUDIO = "audio"
-        AUDIO_OID = "1.3.6.1.4.1.1466.115.121.1.4"
+            AUDIO = "audio"
+            AUDIO_OID = "1.3.6.1.4.1.1466.115.121.1.4"
 
-    @unique
-    class StrictField(StrEnum):
-        """Strict field constants."""
+        @unique
+        class StrictField(StrEnum):
+            """Strict field constants."""
 
-        STRICT = "strict"
+            STRICT = "strict"
 
-    @unique
-    class LenientField(StrEnum):
-        """Lenient field constants."""
+        @unique
+        class LenientField(StrEnum):
+            """Lenient field constants."""
 
-        LENIENT = "lenient"
+            LENIENT = "lenient"
 
-    @unique
-    class SubtreeField(StrEnum):
-        """Subtree field constants."""
+        @unique
+        class SubtreeField(StrEnum):
+            """Subtree field constants."""
 
-        SUBTREE = "subtree"
+            SUBTREE = "subtree"
 
-    @unique
-    class OnelevelField(StrEnum):
-        """Onelevel field constants."""
+        @unique
+        class OnelevelField(StrEnum):
+            """Onelevel field constants."""
 
-        ONELEVEL = "onelevel"
+            ONELEVEL = "onelevel"
 
-    @unique
-    class BaseField(StrEnum):
-        """Base field constants."""
+        @unique
+        class BaseField(StrEnum):
+            """Base field constants."""
 
-        BASE = "base"
-        BASE_OID = "1.3.6.1.4.1.1466.115.121.1"
+            BASE = "base"
+            BASE_OID = "1.3.6.1.4.1.1466.115.121.1"
 
-    @unique
-    class AllField(StrEnum):
-        """All field constants."""
+        @unique
+        class AllField(StrEnum):
+            """All field constants."""
 
-        ALL = "all"
+            ALL = "all"
 
-    @unique
-    class AciField(StrEnum):
-        """Aci field constants."""
+        @unique
+        class AciField(StrEnum):
+            """Aci field constants."""
 
-        ACI = "aci"
-        ACI_OID = "1.3.6.1.4.1.1466.115.121.1.1"
+            ACI = "aci"
+            ACI_OID = "1.3.6.1.4.1.1466.115.121.1.1"
 
-    @unique
-    class AclWildcardField(StrEnum):
-        """Acl_Wildcard field constants."""
+        @unique
+        class AclWildcardField(StrEnum):
+            """Acl_Wildcard field constants."""
 
-        TYPE = "all"
-        VALUE = "*"
+            TYPE = "all"
+            VALUE = "*"
 
-    @unique
-    class ProcessingMode(StrEnum):
-        """Processing mode enumeration."""
+        @unique
+        class ProcessingMode(StrEnum):
+            """Processing mode enumeration."""
 
-        STRICT = "strict"
-        RELAXED = "relaxed"
-        AUTO = "auto"
+            STRICT = "strict"
+            RELAXED = "relaxed"
+            AUTO = "auto"
 
-    @unique
-    class ValidationLevel(StrEnum):
-        """Validation level enumeration."""
+        @unique
+        class ValidationLevel(StrEnum):
+            """Validation level enumeration."""
 
-        NONE = "none"
-        BASIC = "basic"
-        FULL = "full"
+            NONE = "none"
+            BASIC = "basic"
+            FULL = "full"
 
-    @unique
-    class ConversionTargetType(StrEnum):
-        """Conversion target type enumeration."""
+        @unique
+        class ConversionTargetType(StrEnum):
+            """Conversion target type enumeration."""
 
-        STR = "str"
-        INT = "int"
-        FLOAT = "float"
-        BOOL = "bool"
-        LIST = "list"
-        TUPLE = "tuple"
-        DICT = "dict"
+            STR = "str"
+            INT = "int"
+            FLOAT = "float"
+            BOOL = "bool"
+            LIST = "list"
+            TUPLE = "tuple"
+            DICT = "dict"
 
 
 c = FlextLdifConstants

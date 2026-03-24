@@ -10,7 +10,7 @@ from flext_core import FlextService, FlextSettings
 from flext_ldif import FlextLdifSettings, m, t
 
 
-class FlextLdifServiceBase[TDomainResult: t.NormalizedValue](
+class FlextLdifServiceBase[TDomainResult: t.ValueOrModel](
     FlextService[TDomainResult],
     ABC,
 ):

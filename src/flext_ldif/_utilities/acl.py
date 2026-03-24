@@ -213,8 +213,7 @@ class FlextLdifUtilitiesACL:
         """Normalize permission name using map if available."""
         if not permission_map:
             return perm
-        mapped = u.get(permission_map, perm, default=perm)
-        return mapped if isinstance(mapped, str) else perm
+        return permission_map.get(perm, perm)
 
     @staticmethod
     def _parse_single_acl_with_config(
@@ -276,12 +275,12 @@ class FlextLdifUtilitiesACL:
         }
         operators = bind_operators or default_operators
         if subject_type == "self":
-            op = u.get(operators, "self", default="userdn")
+            op = operators.get("self", "userdn")
             return f'{op}="{self_value}"'
         if subject_type == "anonymous":
-            op = u.get(operators, "anonymous", default="userdn")
+            op = operators.get("anonymous", "userdn")
             return f'{op}="{anonymous_value}"'
-        op = u.get(operators, subject_type, default="userdn")
+        op = operators.get(subject_type, "userdn")
         value = subject_value.replace(", ", ",")
         if not value.startswith("ldap:///"):
             value = f"ldap:///{value}"
@@ -317,27 +316,25 @@ class FlextLdifUtilitiesACL:
         if not bind_rules_data:
             return ("self", "ldap:///self")
         for rule in bind_rules_data:
-            rule_type_raw = u.get(rule, "type", default="")
-            rule_type = rule_type_raw.lower() if isinstance(rule_type_raw, str) else ""
-            rule_value_raw = u.get(rule, "value", default="")
-            rule_value = rule_value_raw if isinstance(rule_value_raw, str) else ""
+            rule_type_raw = rule.get("type", "")
+            rule_type = rule_type_raw.lower()
+            rule_value_raw = rule.get("value", "")
+            rule_value = rule_value_raw
             special_match = FlextLdifUtilitiesACL._check_special_value(
                 rule_value,
                 special_values,
             )
             if special_match:
                 return special_match
-            mapped_type_raw = u.get(subject_type_map, rule_type)
+            mapped_type_raw = subject_type_map.get(rule_type)
             mapped_type: str | None = (
                 mapped_type_raw if isinstance(mapped_type_raw, str) else None
             )
             if mapped_type:
                 return (mapped_type, rule_value)
         if bind_rules_data:
-            default_value_raw = u.get(bind_rules_data[0], "value", default="")
-            default_value = (
-                default_value_raw if isinstance(default_value_raw, str) else ""
-            )
+            default_value_raw = bind_rules_data[0].get("value", "")
+            default_value = default_value_raw
         else:
             default_value = ""
         return ("user", default_value)

@@ -60,11 +60,8 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
         """Validate entry objectClass values."""
         errors: MutableSequence[str] = []
         is_valid = True
-        oc_values_raw = u.get(
-            entry.attributes.attributes if entry.attributes else {},
-            "objectClass",
-            default=[],
-        )
+        attrs = entry.attributes.attributes if entry.attributes else {}
+        oc_values_raw = attrs.get("objectClass", [])
         if isinstance(oc_values_raw, str):
             oc_values: MutableSequence[str] = [oc_values_raw]
         elif isinstance(oc_values_raw, list):

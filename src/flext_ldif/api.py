@@ -253,8 +253,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                 entry_typed = m.Ldif.Entry.model_validate(entry)
         return self.acl_service.extract_acls_from_entry(entry_typed, server_type)
 
-    @override
-    def filter(
+    def filter(  # type: ignore[override]
         self,
         entries: MutableSequence[m.Ldif.Entry],
         *,
@@ -435,8 +434,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         )
         return pipeline.execute()
 
-    @override
-    def parse(
+    def parse(  # type: ignore[override]
         self,
         value: str | Path,
         *,
@@ -457,8 +455,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         entries_list: MutableSequence[m.Ldif.Entry] = list(response.entries)
         return r[MutableSequence[m.Ldif.Entry]].ok(entries_list)
 
-    @override
-    def process(
+    def process(  # type: ignore[override]
         self,
         processor_name: str,
         entries: MutableSequence[m.Ldif.Entry],
@@ -500,8 +497,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             format_options=format_options,
         )
 
-    @override
-    def write_file(
+    def write_file(  # type: ignore[override]
         self,
         entries: MutableSequence[m.Ldif.Entry],
         path: Path,
