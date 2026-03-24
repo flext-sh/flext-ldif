@@ -26,7 +26,7 @@ from collections.abc import (
     Sized,
 )
 from pathlib import Path
-from typing import Final, cast
+from typing import Final
 
 from flext_core import r
 from flext_tests import FlextTestsConstants
@@ -797,7 +797,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
             @staticmethod
             def test_create_entry_and_unwrap(
                 dn: str,
-                attributes: MutableMapping[str, str | MutableSequence[str]] | None = None,
+                attributes: MutableMapping[str, str | MutableSequence[str]]
+                | None = None,
             ) -> m.Ldif.Entry:
                 """Create an entry and unwrap the result.
 
@@ -897,13 +898,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 quirk: (p.Ldif.SchemaQuirk | p.Ldif.AclQuirk | p.Ldif.EntryQuirk),
                 content: str,
                 parse_method: str | None = None,
-            ) -> (
-                p.Ldif.SchemaAttribute
-                | p.Ldif.SchemaObjectClass
-                | p.Ldif.Acl
-                | p.Ldif.Entry
-                | None
-            ):
+            ) -> object | None:
                 """Parse using quirk and assert success.
 
                 Args:
@@ -919,18 +914,17 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
                 """
                 method_name = parse_method or "parse"
-                method = getattr(quirk, method_name, None)
-                if not callable(method):
-                    raise AssertionError(f"Quirk has no method '{method_name}'")
-                result = method(content)
-                is_failure = getattr(result, "is_failure", None)
-                if isinstance(is_failure, bool) and is_failure:
-                    error = getattr(result, "error", "Unknown error")
-                    raise AssertionError(f"Parsing failed: {error}")
-                return cast(
-                    "p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | p.Ldif.Acl | p.Ldif.Entry | None",
-                    getattr(result, "value", result),
+                parse_fn: Callable[[str], object] | None = getattr(
+                    quirk, method_name, None
                 )
+                if parse_fn is None or not callable(parse_fn):
+                    raise AssertionError(f"Quirk has no method '{method_name}'")
+                raw_res: object = parse_fn(content)
+                is_failure: object = getattr(raw_res, "is_failure", None)
+                if isinstance(is_failure, bool) and is_failure:
+                    error: object = getattr(raw_res, "error", "Unknown error")
+                    raise AssertionError(f"Parsing failed: {error}")
+                return getattr(raw_res, "value", raw_res)
 
             @staticmethod
             def test_schema_quirk_parse_and_assert(
@@ -1229,7 +1223,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 if hasattr(result, "is_failure") and result.is_failure:
                     raise AssertionError(f"Attribute writing failed: {result.error}")
                 written_raw = result.value if hasattr(result, "value") else result
-                written: str = written_raw if isinstance(written_raw, str) else str(written_raw)
+                written: str = (
+                    written_raw if isinstance(written_raw, str) else str(written_raw)
+                )
                 if must_contain:
                     for element in must_contain:
                         if element not in written:
@@ -1500,9 +1496,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     else:
                         attributes = {
                             str(k): (
-                                [str(i) for i in v]
-                                if isinstance(v, list)
-                                else [str(v)]
+                                [str(i) for i in v] if isinstance(v, list) else [str(v)]
                             )
                             for k, v in raw_attributes.items()
                         }
@@ -2084,7 +2078,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     AssertionError: If result doesn't have expected keys or values
 
                 """
-                get_support_method: Callable[..., object] | None = getattr(
+                get_support_method: Callable[..., Mapping[str, bool]] | None = getattr(
                     conversion_matrix,
                     "get_supported_conversions",
                     None,
@@ -2092,19 +2086,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 if get_support_method is None:
                     msg = "conversion_matrix has no get_supported_conversions"
                     raise AssertionError(msg)
-                support_result: object = get_support_method(quirk)
-                raw_support: object
-                if hasattr(support_result, "is_success"):
-                    assert getattr(support_result, "is_success"), (
-                        f"get_supported_conversions failed: {getattr(support_result, 'error', None)}"
-                    )
-                    raw_support = getattr(support_result, "value", support_result)
-                else:
-                    raw_support = support_result
-                assert isinstance(raw_support, dict), (
-                    f"Expected dict, got {type(raw_support).__name__}"
-                )
-                support_dict: dict[str, bool] = raw_support
+                support_result: Mapping[str, bool] = get_support_method(quirk)
+                support_dict: dict[str, bool] = dict(support_result)
                 if must_have_keys:
                     for key in must_have_keys:
                         assert key in support_dict, (
@@ -2149,9 +2132,18 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     AssertionError: If conversion fails or count doesn't match
 
                 """
-                batch_convert_method: Callable[..., object] | None = getattr(
-                    conversion_matrix, "batch_convert", None
-                )
+                batch_convert_method: (
+                    Callable[
+                        ...,
+                        Sequence[
+                            m.Ldif.Entry
+                            | m.Ldif.SchemaAttribute
+                            | m.Ldif.SchemaObjectClass
+                            | m.Ldif.Acl
+                        ],
+                    ]
+                    | None
+                ) = getattr(conversion_matrix, "batch_convert", None)
                 if batch_convert_method is None:
                     msg = "conversion_matrix has no batch_convert method"
                     raise AssertionError(msg)
@@ -2182,36 +2174,18 @@ class FlextLdifTestConstants(FlextTestsConstants):
                         model_list.append(parse_result.value)
                 else:
                     raise AssertionError(f"Unknown conversion_type: {conversion_type}")
-                batch_raw: object = batch_convert_method(
-                    source=source_quirk,
-                    target=target_quirk,
-                    model_list=model_list,
-                )
-                if hasattr(batch_raw, "is_success"):
-                    assert getattr(batch_raw, "is_success"), (
-                        f"batch_convert() failed: {getattr(batch_raw, 'error', None)}"
-                    )
-                    converted_raw: object = getattr(batch_raw, "value", batch_raw)
-                else:
-                    converted_raw = batch_raw
-                assert isinstance(converted_raw, list), (
-                    f"Expected list, got {type(converted_raw).__name__}"
-                )
                 converted_items: list[
-                    m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-                ] = [
-                    item
-                    for item in converted_raw
-                    if isinstance(
-                        item,
-                        (
-                            m.Ldif.Entry,
-                            m.Ldif.SchemaAttribute,
-                            m.Ldif.SchemaObjectClass,
-                            m.Ldif.Acl,
-                        ),
+                    m.Ldif.Entry
+                    | m.Ldif.SchemaAttribute
+                    | m.Ldif.SchemaObjectClass
+                    | m.Ldif.Acl
+                ] = list(
+                    batch_convert_method(
+                        source=source_quirk,
+                        target=target_quirk,
+                        model_list=model_list,
                     )
-                ]
+                )
                 if expected_count is not None:
                     assert len(converted_items) == expected_count, (
                         f"Expected {expected_count} items, got {len(converted_items)}"

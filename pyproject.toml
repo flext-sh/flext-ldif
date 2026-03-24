@@ -576,6 +576,13 @@ root = "src"
 
 [[tool.pyright.executionEnvironments]]
 reportPrivateUsage = "none"
+reportUnknownArgumentType = "none"
+reportUnknownMemberType = "none"
+reportUnknownVariableType = "none"
+root = "tests/integration"
+
+[[tool.pyright.executionEnvironments]]
+reportPrivateUsage = "none"
 root = "tests"
 
 # [MANAGED] tomlsort

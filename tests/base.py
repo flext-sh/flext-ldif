@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from itertools import starmap
 from typing import override
 
@@ -87,7 +87,7 @@ class FlextLdifTestsServiceBase(s[m.Ldif.Entry]):
     def create_entry(
         cls,
         dn: str,
-        attributes: Mapping[str, str | t.StrSequence] | None = None,
+        attributes: MutableMapping[str, str | MutableSequence[str]] | None = None,
     ) -> m.Ldif.Entry:
         """Create test entry using real FlextLdifEntries service.
 

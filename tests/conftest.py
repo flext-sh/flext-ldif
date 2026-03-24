@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 from enum import StrEnum, unique
 from pathlib import Path
 from typing import Annotated, ClassVar, Final
@@ -18,7 +18,6 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
-from tests import t
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -111,7 +110,15 @@ class FlextLdifFixtures:
         metadata = loader.get_metadata(FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.SCHEMA)
     """
 
-    _instances: ClassVar[t.ContainerMapping] = {}
+    _instances: ClassVar[
+        dict[
+            str,
+            FlextLdifFixtures.OID
+            | FlextLdifFixtures.OUD
+            | FlextLdifFixtures.OpenLDAP
+            | FlextLdifFixtures.Loader,
+        ]
+    ] = {}
 
     @classmethod
     def get_oid(cls) -> FlextLdifFixtures.OID:
@@ -212,12 +219,12 @@ class FlextLdifFixtures:
         """
 
         _content_cache: ClassVar[
-            Mapping[
+            MutableMapping[
                 tuple[FlextLdifFixtures.ServerType, FlextLdifFixtures.FixtureType],
                 str,
             ]
         ] = {}
-        _metadata_cache: ClassVar[Mapping[Path, FlextLdifFixtures.Metadata]] = {}
+        _metadata_cache: ClassVar[MutableMapping[Path, FlextLdifFixtures.Metadata]] = {}
 
         def __init__(self, fixtures_root: Path | None = None) -> None:
             """Initialize fixture loader.
@@ -294,7 +301,7 @@ class FlextLdifFixtures:
                 Dict mapping fixture types to their content strings
 
             """
-            fixtures: Mapping[FlextLdifFixtures.FixtureType, str] = {}
+            fixtures: MutableMapping[FlextLdifFixtures.FixtureType, str] = {}
             fixture_types = [
                 FlextLdifFixtures.FixtureType.SCHEMA,
                 FlextLdifFixtures.FixtureType.ACL,

@@ -21,7 +21,9 @@ from collections.abc import Callable, Generator, Mapping, Sequence
 from pathlib import Path
 
 import pytest
+from flext_tests import FlextTestsDocker
 from ldap3 import ALL, Connection, Server
+from ldap3.abstract.entry import Entry as LdapEntry
 from ldap3.core.exceptions import LDAPException
 
 from flext_ldif import (
@@ -35,7 +37,7 @@ from flext_ldif import (
     FlextLdifWriter,
     m,
 )
-from tests import FlextLdifFixtures, t, u
+from tests import FlextLdifFixtures, t
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[3]
 LDAP_CONTAINER_NAME = "flext-openldap-test"
@@ -87,7 +89,8 @@ def _wait_for_ldap_ready(
                     password=password,
                     auto_bind=False,
                 )
-                if conn.bind():
+                bound: bool = bool(conn.bind())
+                if bound:
                     conn.unbind()
                     return (bind_dn, password)
                 conn.unbind()
@@ -195,7 +198,7 @@ def oid_schema_entries(
         AssertionError: If parsing fails.
 
     """
-    result = api.parse(oid_schema_fixture)
+    result = api.parse_ldif(oid_schema_fixture)
     assert result.is_success, f"OID schema parsing failed: {result.error}"
     return result.value
 
@@ -215,7 +218,7 @@ def oid_entries(api: FlextLdif, oid_entries_fixture: str) -> Sequence[m.Ldif.Ent
         AssertionError: If parsing fails.
 
     """
-    result = api.parse(oid_entries_fixture)
+    result = api.parse_ldif(oid_entries_fixture)
     assert result.is_success, f"OID entries parsing failed: {result.error}"
     return result.value
 
@@ -286,7 +289,7 @@ def oud_schema_entries(
         AssertionError: If parsing fails.
 
     """
-    result = api.parse(oud_schema_fixture)
+    result = api.parse_ldif(oud_schema_fixture)
     assert result.is_success, f"OUD schema parsing failed: {result.error}"
     return result.value
 
@@ -306,7 +309,7 @@ def oud_entries(api: FlextLdif, oud_entries_fixture: str) -> Sequence[m.Ldif.Ent
         AssertionError: If parsing fails.
 
     """
-    result = api.parse(oud_entries_fixture)
+    result = api.parse_ldif(oud_entries_fixture)
     assert result.is_success, f"OUD entries parsing failed: {result.error}"
     return result.value
 
@@ -377,7 +380,7 @@ def openldap_schema_entries(
         AssertionError: If parsing fails.
 
     """
-    result = api.parse(openldap_schema_fixture)
+    result = api.parse_ldif(openldap_schema_fixture)
     assert result.is_success, f"OpenLDAP schema parsing failed: {result.error}"
     return result.value
 
@@ -400,7 +403,7 @@ def openldap_entries(
         AssertionError: If parsing fails.
 
     """
-    result = api.parse(openldap_entries_fixture)
+    result = api.parse_ldif(openldap_entries_fixture)
     assert result.is_success, f"OpenLDAP entries parsing failed: {result.error}"
     return result.value
 
@@ -435,7 +438,7 @@ def rfc_schema_entries(
         AssertionError: If parsing fails.
 
     """
-    result = api.parse(rfc_schema_fixture)
+    result = api.parse_ldif(rfc_schema_fixture)
     assert result.is_success, f"RFC schema parsing failed: {result.error}"
     return result.value
 
@@ -585,7 +588,9 @@ def oud_acl_quirk(oud_quirk: FlextLdifServersBase) -> FlextLdifServersBaseSchema
 @pytest.fixture(scope="session")
 def ldap_container(worker_id: str) -> t.ContainerMapping:
     """Ensure shared OpenLDAP container is available for integration tests."""
-    docker_control = u.Tests.Docker(workspace_root=WORKSPACE_ROOT, worker_id=worker_id)
+    docker_control = FlextTestsDocker(
+        workspace_root=WORKSPACE_ROOT, worker_id=worker_id
+    )
     server_url = f"ldap://localhost:{LDAP_PORT}"
     with _lock_file(worker_id):
         start_result = docker_control.start_existing_container(LDAP_CONTAINER_NAME)
@@ -627,7 +632,7 @@ def ldap_container_shared(ldap_container: t.ContainerMapping) -> str:
 @pytest.fixture
 def unique_dn_suffix(worker_id: str, request: pytest.FixtureRequest) -> str:
     """Build a unique suffix for LDAP DNs per test execution."""
-    test_name = request.node.name if hasattr(request, "node") else "unknown"
+    test_name: str = request.node.name
     test_name_clean = "".join(
         ch if ch.isalnum() or ch in {"-", "_"} else "-" for ch in test_name
     )[:20]
@@ -666,7 +671,8 @@ def ldap_connection(
     server = Server(server_url, get_info=ALL)
     conn = Connection(server, user=bind_dn, password=password, auto_bind=False)
     try:
-        if not conn.bind():
+        bind_ok: bool = bool(conn.bind())
+        if not bind_ok:
             pytest.skip(
                 f"LDAP server not available at {server_url} for bind_dn={bind_dn}",
             )
@@ -685,8 +691,9 @@ def clean_test_ou(
     test_ou_dn = make_test_base_dn("FlextLdifTests")
     with contextlib.suppress(Exception):
         ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
-        if ldap_connection.entries:
-            dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
+        entries: list[LdapEntry] = list(ldap_connection.entries)
+        if entries:
+            dns_to_delete: list[str] = [str(entry.entry_dn) for entry in entries]
             for dn in reversed(dns_to_delete):
                 with contextlib.suppress(Exception):
                     ldap_connection.delete(dn)
@@ -699,8 +706,9 @@ def clean_test_ou(
     yield test_ou_dn
     with contextlib.suppress(Exception):
         ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
-        if ldap_connection.entries:
-            dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
-            for dn in reversed(dns_to_delete):
+        entries2: list[LdapEntry] = list(ldap_connection.entries)
+        if entries2:
+            dns_to_delete2: list[str] = [str(entry.entry_dn) for entry in entries2]
+            for dn in reversed(dns_to_delete2):
                 with contextlib.suppress(Exception):
                     ldap_connection.delete(dn)
