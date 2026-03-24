@@ -25,32 +25,32 @@ class TestsFlextLdifVersion(s):
         """Test __version__ is exported and accessible."""
         tm.that(hasattr(version_module, "__version__"), eq=True)
         tm.that(isinstance(version_module.__version__, str), eq=True)
-        tm.that(version_module.__version__ != "", eq=True)
+        tm.that(version_module.__version__, ne="")
 
     def test_version_info_exported(self) -> None:
         """Test __version_info__ is exported and is a tuple."""
         tm.that(hasattr(version_module, "__version_info__"), eq=True)
         tm.that(isinstance(version_module.__version_info__, tuple), eq=True)
-        tm.that(len(version_module.__version_info__) >= 2, eq=True)
+        tm.that(len(version_module.__version_info__), gte=2)
 
     def test_version_info_parsing(self) -> None:
         """Test __version_info__ correctly parses version string."""
         version_parts = version_module.__version__.split(".")
         version_info = version_module.__version_info__
-        tm.that(len(version_info) == len(version_parts), eq=True)
+        tm.that(len(version_info), eq=len(version_parts))
         for part, info_part in zip(version_parts, version_info, strict=False):
             if part.isdigit():
                 tm.that(isinstance(info_part, int), eq=True)
-                tm.that(info_part == int(part), eq=True)
+                tm.that(info_part, eq=int(part))
             else:
                 tm.that(isinstance(info_part, str), eq=True)
-                tm.that(info_part == part, eq=True)
+                tm.that(info_part, eq=part)
 
     def test_title_exported(self) -> None:
         """Test __title__ is exported."""
         tm.that(hasattr(version_module, "__title__"), eq=True)
         tm.that(isinstance(version_module.__title__, str), eq=True)
-        tm.that(version_module.__title__ != "", eq=True)
+        tm.that(version_module.__title__, ne="")
 
     def test_description_exported(self) -> None:
         """Test __description__ is exported."""
@@ -71,7 +71,7 @@ class TestsFlextLdifVersion(s):
         """Test __license__ is exported."""
         tm.that(hasattr(version_module, "__license__"), eq=True)
         tm.that(isinstance(version_module.__license__, str), eq=True)
-        tm.that(version_module.__license__ != "", eq=True)
+        tm.that(version_module.__license__, ne="")
 
     def test_url_exported(self) -> None:
         """Test __url__ is exported."""
@@ -94,7 +94,7 @@ class TestsFlextLdifVersion(s):
         tm.that(isinstance(version_module.__all__, list), eq=True)
         for export in expected_exports:
             (
-                tm.that(export in version_module.__all__, eq=True),
+                tm.that(version_module.__all__, has=export),
                 f"{export} not in __all__",
             )
             (
@@ -105,28 +105,28 @@ class TestsFlextLdifVersion(s):
     def test_version_default_fallback(self) -> None:
         """Test version falls back to default when metadata missing."""
         original_version = version_module.__version__
-        tm.that(original_version != "", eq=True)
-        tm.that(original_version != "0.0.0", eq=True)
+        tm.that(original_version, ne="")
+        tm.that(original_version, ne="0.0.0")
 
     def test_version_info_with_prerelease(self) -> None:
         """Test __version_info__ handles prerelease versions correctly."""
         version_str = "1.2.3-alpha.1"
         parts = version_str.split(".")
         version_info = tuple(int(part) if part.isdigit() else part for part in parts)
-        tm.that(version_info[0] == 1, eq=True)
-        tm.that(version_info[1] == 2, eq=True)
+        tm.that(version_info[0], eq=1)
+        tm.that(version_info[1], eq=2)
         tm.that(isinstance(version_info[2], str), eq=True)
         if isinstance(version_info[2], str):
-            tm.that("alpha" in version_info[2], eq=True)
+            tm.that(version_info[2], has="alpha")
 
     def test_version_info_with_build(self) -> None:
         """Test __version_info__ handles build metadata correctly."""
         version_str = "1.2.3+build.123"
         parts = version_str.split(".")
         version_info = tuple(int(part) if part.isdigit() else part for part in parts)
-        tm.that(version_info[0] == 1, eq=True)
-        tm.that(version_info[1] == 2, eq=True)
+        tm.that(version_info[0], eq=1)
+        tm.that(version_info[1], eq=2)
         tm.that(isinstance(version_info[2], str), eq=True)
         if isinstance(version_info[2], str):
-            tm.that("+build" in version_info[2], eq=True)
-        tm.that(version_info[3] == 123, eq=True)
+            tm.that(version_info[2], has="+build")
+        tm.that(version_info[3], eq=123)

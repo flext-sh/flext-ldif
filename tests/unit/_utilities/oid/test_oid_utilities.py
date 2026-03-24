@@ -25,7 +25,7 @@ class TestFlextLdifUtilitiesOID(s):
         result = u.Ldif.extract_from_definition("( 1.2.840.113556.1.4.221 NAME 'x' )")
         value = self.assert_success(result)
 
-        tm.that(value == "1.2.840.113556.1.4.221", eq=True)
+        tm.that(value, eq="1.2.840.113556.1.4.221")
 
     def test_get_server_type_from_oid_failure_unknown(self) -> None:
         result = u.Ldif.get_server_type_from_oid("1.2.3.4.5")
@@ -43,7 +43,7 @@ class TestFlextLdifUtilitiesOID(s):
         )
         value = self.assert_success(result)
 
-        tm.that(value == "oid", eq=True)
+        tm.that(value, eq="oid")
 
     def test_parse_to_tuple_failure_not_integers(self) -> None:
         result = u.Ldif.parse_to_tuple("1.2.invalid")
@@ -54,4 +54,4 @@ class TestFlextLdifUtilitiesOID(s):
         result = u.Ldif.parse_to_tuple("1.2.840")
         value = self.assert_success(result)
 
-        tm.that(value == (1, 2, 840), eq=True)
+        tm.that(value, eq=(1, 2, 840))

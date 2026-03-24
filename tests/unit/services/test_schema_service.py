@@ -59,10 +59,10 @@ class TestsFlextLdifSchemaServiceExecute(s):
         tm.that(result.is_success, eq=True)
         status = result.value
         tm.that(isinstance(status, m.Ldif.SchemaServiceStatus), eq=True)
-        tm.that(status.service == "SchemaService", eq=True)
-        tm.that(status.status == "operational", eq=True)
-        tm.that(status.rfc_compliance == "RFC 4512", eq=True)
-        tm.that("parse_attribute" in status.operations, eq=True)
+        tm.that(status.service, eq="SchemaService")
+        tm.that(status.status, eq="operational")
+        tm.that(status.rfc_compliance, eq="RFC 4512")
+        tm.that(status.operations, has="parse_attribute")
 
     def test_execute_with_different_server_type(
         self, schema_service_oud: FlextLdifSchema
@@ -71,7 +71,7 @@ class TestsFlextLdifSchemaServiceExecute(s):
         result = schema_service_oud.execute()
         tm.that(result.is_success, eq=True)
         status = result.value
-        tm.that(status.server_type == "oud", eq=True)
+        tm.that(status.server_type, eq="oud")
 
 
 class TestSchemaServiceBuilder:
@@ -81,29 +81,29 @@ class TestSchemaServiceBuilder:
         """Test builder() creates new instance."""
         service = FlextLdifSchema.builder()
         tm.that(isinstance(service, FlextLdifSchema), eq=True)
-        tm.that(service.server_type == "rfc", eq=True)
+        tm.that(service.server_type, eq="rfc")
 
     def test_with_server_type_chains(self) -> None:
         """Test with_server_type() returns self for chaining."""
         service = FlextLdifSchema.builder()
         chained = service.with_server_type("oud")
         tm.that(chained is service, eq=True)
-        tm.that(service.server_type == "oud", eq=True)
+        tm.that(service.server_type, eq="oud")
 
     def test_build_returns_self(self) -> None:
         """Test build() returns configured instance."""
         service = FlextLdifSchema.builder().with_server_type("oid").build()
         tm.that(isinstance(service, FlextLdifSchema), eq=True)
-        tm.that(service.server_type == "oid", eq=True)
+        tm.that(service.server_type, eq="oid")
 
     def test_fluent_builder_complete_chain(self) -> None:
         """Test complete fluent builder chain."""
         service = FlextLdifSchema.builder().with_server_type("oud").build()
-        tm.that(service.server_type == "oud", eq=True)
+        tm.that(service.server_type, eq="oud")
         result = service.execute()
         tm.that(result.is_success, eq=True)
         status = result.value
-        tm.that(status.server_type == "oud", eq=True)
+        tm.that(status.server_type, eq="oud")
 
 
 class TestSchemaServiceParseAttribute:
@@ -117,8 +117,8 @@ class TestSchemaServiceParseAttribute:
         tm.that(result.is_success, eq=True)
         attr = result.value
         tm.that(isinstance(attr, m.Ldif.SchemaAttribute), eq=True)
-        tm.that(attr.oid == "2.5.4.3", eq=True)
-        tm.that(attr.name == "cn", eq=True)
+        tm.that(attr.oid, eq="2.5.4.3")
+        tm.that(attr.name, eq="cn")
 
     def test_parse_complex_attribute(
         self, schema_service: FlextLdifSchema, complex_attribute_definition: str
@@ -128,8 +128,8 @@ class TestSchemaServiceParseAttribute:
         tm.that(result.is_success, eq=True)
         attr = result.value
         tm.that(isinstance(attr, m.Ldif.SchemaAttribute), eq=True)
-        tm.that(attr.oid == "2.5.4.0", eq=True)
-        tm.that(attr.name == "objectClass", eq=True)
+        tm.that(attr.oid, eq="2.5.4.0")
+        tm.that(attr.name, eq="objectClass")
 
     def test_parse_attribute_empty_string(
         self, schema_service: FlextLdifSchema
@@ -137,9 +137,9 @@ class TestSchemaServiceParseAttribute:
         """Test parsing empty attribute definition."""
         result = schema_service.parse_attribute("")
         tm.that(result.is_failure, eq=True)
-        tm.that(result.error is not None, eq=True)
+        tm.that(result.error, none=False)
         if result.error is not None:
-            tm.that("empty" in result.error.lower(), eq=True)
+            tm.that(result.error.lower(), has="empty")
 
     def test_parse_attribute_whitespace_only(
         self, schema_service: FlextLdifSchema
@@ -147,9 +147,9 @@ class TestSchemaServiceParseAttribute:
         """Test parsing whitespace-only attribute definition."""
         result = schema_service.parse_attribute("   ")
         tm.that(result.is_failure, eq=True)
-        tm.that(result.error is not None, eq=True)
+        tm.that(result.error, none=False)
         if result.error is not None:
-            tm.that("empty" in result.error.lower(), eq=True)
+            tm.that(result.error.lower(), has="empty")
 
     def test_parse_attribute_invalid_format(
         self, schema_service: FlextLdifSchema
@@ -170,9 +170,9 @@ class TestSchemaServiceParseObjectClass:
         tm.that(result.is_success, eq=True)
         oc = result.value
         tm.that(isinstance(oc, m.Ldif.SchemaObjectClass), eq=True)
-        tm.that(oc.oid == "2.5.6.6", eq=True)
-        tm.that(oc.name == "person", eq=True)
-        tm.that(oc.kind == "STRUCTURAL", eq=True)
+        tm.that(oc.oid, eq="2.5.6.6")
+        tm.that(oc.name, eq="person")
+        tm.that(oc.kind, eq="STRUCTURAL")
 
     def test_parse_complex_objectclass(
         self, schema_service: FlextLdifSchema, complex_objectclass_definition: str
@@ -182,9 +182,9 @@ class TestSchemaServiceParseObjectClass:
         tm.that(result.is_success, eq=True)
         oc = result.value
         tm.that(isinstance(oc, m.Ldif.SchemaObjectClass), eq=True)
-        tm.that(oc.oid == "2.5.6.2", eq=True)
-        tm.that(oc.name == "country", eq=True)
-        tm.that(oc.kind == "STRUCTURAL", eq=True)
+        tm.that(oc.oid, eq="2.5.6.2")
+        tm.that(oc.name, eq="country")
+        tm.that(oc.kind, eq="STRUCTURAL")
 
     def test_parse_objectclass_empty_string(
         self, schema_service: FlextLdifSchema
@@ -192,9 +192,9 @@ class TestSchemaServiceParseObjectClass:
         """Test parsing empty objectClass definition."""
         result = schema_service.parse_objectclass("")
         tm.that(result.is_failure, eq=True)
-        tm.that(result.error is not None, eq=True)
+        tm.that(result.error, none=False)
         if result.error is not None:
-            tm.that("empty" in result.error.lower(), eq=True)
+            tm.that(result.error.lower(), has="empty")
 
     def test_parse_objectclass_whitespace_only(
         self, schema_service: FlextLdifSchema
@@ -202,9 +202,9 @@ class TestSchemaServiceParseObjectClass:
         """Test parsing whitespace-only objectClass definition."""
         result = schema_service.parse_objectclass("   ")
         tm.that(result.is_failure, eq=True)
-        tm.that(result.error is not None, eq=True)
+        tm.that(result.error, none=False)
         if result.error is not None:
-            tm.that("empty" in result.error.lower(), eq=True)
+            tm.that(result.error.lower(), has="empty")
 
     def test_parse_objectclass_invalid_format(
         self, schema_service: FlextLdifSchema
@@ -237,9 +237,9 @@ class TestSchemaServiceValidateAttribute:
         )
         result = schema_service.validate_attribute(attr)
         tm.that(result.is_failure, eq=True)
-        tm.that(result.error is not None, eq=True)
+        tm.that(result.error, none=False)
         if result.error is not None:
-            tm.that("name" in result.error.lower(), eq=True)
+            tm.that(result.error.lower(), has="name")
 
     def test_validate_attribute_without_oid(
         self, schema_service: FlextLdifSchema
@@ -250,9 +250,9 @@ class TestSchemaServiceValidateAttribute:
         )
         result = schema_service.validate_attribute(attr)
         tm.that(result.is_failure, eq=True)
-        tm.that(result.error is not None, eq=True)
+        tm.that(result.error, none=False)
         if result.error is not None:
-            tm.that("oid" in result.error.lower(), eq=True)
+            tm.that(result.error.lower(), has="oid")
 
     def test_validate_attribute_with_invalid_syntax_oid(
         self, schema_service: FlextLdifSchema
@@ -263,9 +263,9 @@ class TestSchemaServiceValidateAttribute:
         )
         result = schema_service.validate_attribute(attr)
         tm.that(result.is_failure, eq=True)
-        tm.that(result.error is not None, eq=True)
+        tm.that(result.error, none=False)
         if result.error is not None:
-            tm.that("syntax" in result.error.lower(), eq=True)
+            tm.that(result.error.lower(), has="syntax")
 
     def test_validate_attribute_none(self, schema_service: FlextLdifSchema) -> None:
         """Test validating None attribute - skipped as method doesn't accept None."""
@@ -292,9 +292,9 @@ class TestSchemaServiceValidateObjectClass:
         oc = m.Ldif.SchemaObjectClass(oid="1.2.3.4", name="", kind="STRUCTURAL")
         result = schema_service.validate_objectclass(oc)
         tm.that(result.is_failure, eq=True)
-        tm.that(result.error is not None, eq=True)
+        tm.that(result.error, none=False)
         if result.error is not None:
-            tm.that("name" in result.error.lower(), eq=True)
+            tm.that(result.error.lower(), has="name")
 
     def test_validate_objectclass_without_oid(
         self, schema_service: FlextLdifSchema
@@ -303,9 +303,9 @@ class TestSchemaServiceValidateObjectClass:
         oc = m.Ldif.SchemaObjectClass(oid="", name="testOC", kind="STRUCTURAL")
         result = schema_service.validate_objectclass(oc)
         tm.that(result.is_failure, eq=True)
-        tm.that(result.error is not None, eq=True)
+        tm.that(result.error, none=False)
         if result.error is not None:
-            tm.that("oid" in result.error.lower(), eq=True)
+            tm.that(result.error.lower(), has="oid")
 
     def test_validate_objectclass_invalid_kind(
         self, schema_service: FlextLdifSchema
@@ -314,9 +314,9 @@ class TestSchemaServiceValidateObjectClass:
         oc = m.Ldif.SchemaObjectClass(oid="1.2.3.4", name="testOC", kind="INVALID")
         result = schema_service.validate_objectclass(oc)
         tm.that(result.is_failure, eq=True)
-        tm.that(result.error is not None, eq=True)
+        tm.that(result.error, none=False)
         if result.error is not None:
-            tm.that("kind" in result.error.lower(), eq=True)
+            tm.that(result.error.lower(), has="kind")
 
     def test_validate_objectclass_valid_kinds(
         self, schema_service: FlextLdifSchema
@@ -363,8 +363,8 @@ class TestSchemaServiceWriteAttribute:
         roundtrip_result = schema_service.parse_attribute(written)
         tm.that(roundtrip_result.is_success, eq=True)
         roundtrip_attr = roundtrip_result.value
-        tm.that(roundtrip_attr.oid == attr.oid, eq=True)
-        tm.that(roundtrip_attr.name == attr.name, eq=True)
+        tm.that(roundtrip_attr.oid, eq=attr.oid)
+        tm.that(roundtrip_attr.name, eq=attr.name)
 
     def test_write_invalid_attribute(self, schema_service: FlextLdifSchema) -> None:
         """Test writing invalid attribute (should fail validation)."""
@@ -373,9 +373,9 @@ class TestSchemaServiceWriteAttribute:
         )
         result = schema_service.write_attribute(attr)
         tm.that(result.is_failure, eq=True)
-        tm.that(result.error is not None, eq=True)
+        tm.that(result.error, none=False)
         if result.error is not None:
-            tm.that("oid" in result.error.lower(), eq=True)
+            tm.that(result.error.lower(), has="oid")
 
 
 class TestSchemaServiceWriteObjectClass:
@@ -407,17 +407,17 @@ class TestSchemaServiceWriteObjectClass:
         roundtrip_result = schema_service.parse_objectclass(written)
         tm.that(roundtrip_result.is_success, eq=True)
         roundtrip_oc = roundtrip_result.value
-        tm.that(roundtrip_oc.oid == oc.oid, eq=True)
-        tm.that(roundtrip_oc.name == oc.name, eq=True)
+        tm.that(roundtrip_oc.oid, eq=oc.oid)
+        tm.that(roundtrip_oc.name, eq=oc.name)
 
     def test_write_invalid_objectclass(self, schema_service: FlextLdifSchema) -> None:
         """Test writing invalid objectClass (should fail validation)."""
         oc = m.Ldif.SchemaObjectClass(oid="", name="testOC", kind="STRUCTURAL")
         result = schema_service.write_objectclass(oc)
         tm.that(result.is_failure, eq=True)
-        tm.that(result.error is not None, eq=True)
+        tm.that(result.error, none=False)
         if result.error is not None:
-            tm.that("oid" in result.error.lower(), eq=True)
+            tm.that(result.error.lower(), has="oid")
 
 
 class TestSchemaServiceCanHandleAttribute:
@@ -464,14 +464,14 @@ class TestSchemaServiceRepr:
     def test_repr_default_server_type(self, schema_service: FlextLdifSchema) -> None:
         """Test __repr__ with default server type."""
         repr_str = repr(schema_service)
-        tm.that("FlextLdifSchema" in repr_str, eq=True)
-        tm.that("rfc" in repr_str, eq=True)
+        tm.that(repr_str, has="FlextLdifSchema")
+        tm.that(repr_str, has="rfc")
 
     def test_repr_custom_server_type(self, schema_service_oud: FlextLdifSchema) -> None:
         """Test __repr__ with custom server type."""
         repr_str = repr(schema_service_oud)
-        tm.that("FlextLdifSchema" in repr_str, eq=True)
-        tm.that("oud" in repr_str, eq=True)
+        tm.that(repr_str, has="FlextLdifSchema")
+        tm.that(repr_str, has="oud")
 
 
 class TestSchemaServiceIntegration:
@@ -492,8 +492,8 @@ class TestSchemaServiceIntegration:
         roundtrip_result = schema_service.parse_attribute(written)
         tm.that(roundtrip_result.is_success, eq=True)
         roundtrip_attr = roundtrip_result.value
-        tm.that(roundtrip_attr.oid == attr.oid, eq=True)
-        tm.that(roundtrip_attr.name == attr.name, eq=True)
+        tm.that(roundtrip_attr.oid, eq=attr.oid)
+        tm.that(roundtrip_attr.name, eq=attr.name)
 
     def test_parse_validate_write_roundtrip_objectclass(
         self, schema_service: FlextLdifSchema, simple_objectclass_definition: str
@@ -510,9 +510,9 @@ class TestSchemaServiceIntegration:
         roundtrip_result = schema_service.parse_objectclass(written)
         tm.that(roundtrip_result.is_success, eq=True)
         roundtrip_oc = roundtrip_result.value
-        tm.that(roundtrip_oc.oid == oc.oid, eq=True)
-        tm.that(roundtrip_oc.name == oc.name, eq=True)
-        tm.that(roundtrip_oc.kind == oc.kind, eq=True)
+        tm.that(roundtrip_oc.oid, eq=oc.oid)
+        tm.that(roundtrip_oc.name, eq=oc.name)
+        tm.that(roundtrip_oc.kind, eq=oc.kind)
 
     def test_multiple_server_types(self) -> None:
         """Test service works with different server types."""
@@ -528,4 +528,4 @@ class TestSchemaServiceIntegration:
             result = service.execute()
             tm.that(result.is_success, eq=True)
             status = result.value
-            tm.that(status.server_type == server_type, eq=True)
+            tm.that(status.server_type, eq=server_type)

@@ -80,7 +80,7 @@ class TestsTestFlextLdifServiceAPIs:
             match check_type:
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.MODELS:
                     (
-                        tm.that(m is not None, eq=True),
+                        tm.that(m, none=False),
                         "m should be available",
                     )
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.CONSTANTS:
@@ -91,7 +91,7 @@ class TestsTestFlextLdifServiceAPIs:
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.UTILITIES_MODULE:
                     spec = importlib.util.find_spec(check_target)
                     (
-                        tm.that(spec is not None, eq=True),
+                        tm.that(spec, none=False),
                         f"Module {check_target} should exist",
                     )
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.SERVICES_MODULE:
@@ -122,7 +122,7 @@ class TestsTestFlextLdifServiceAPIs:
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.CONFIGURATION:
                     config = FlextLdifSettings()
                     (
-                        tm.that(config is not None, eq=True),
+                        tm.that(config, none=False),
                         "FlextLdifSettings should instantiate",
                     )
 
@@ -148,7 +148,7 @@ class TestsTestFlextLdifServiceAPIs:
         """Test service instantiation with parametrized test cases."""
         service = self.Helpers.get_service(service_type, dn_service, statistics_service)
         (
-            tm.that(service is not None, eq=True),
+            tm.that(service, none=False),
             (f"Service {service_type.value} should be instantiated"),
         )
 

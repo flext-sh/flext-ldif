@@ -236,23 +236,23 @@ class TestsTestFlextLdifApacheQuirks(s):
     def test_server_initialization(self) -> None:
         """Test Apache Directory Server initialization."""
         server = FlextLdifServersApache()
-        tm.that(server.server_type == "apache", eq=True)
-        tm.that(server.priority == 15, eq=True)
+        tm.that(server.server_type, eq="apache")
+        tm.that(server.priority, eq=15)
 
     def test_schema_quirk_initialization(self) -> None:
         """Test schema quirk is initialized."""
         server = FlextLdifServersApache()
-        tm.that(server.schema_quirk is not None, eq=True)
+        tm.that(server.schema_quirk, none=False)
 
     def test_acl_quirk_initialization(self) -> None:
         """Test ACL quirk is initialized."""
         server = FlextLdifServersApache()
-        tm.that(server.acl_quirk is not None, eq=True)
+        tm.that(server.acl_quirk, none=False)
 
     def test_entry_quirk_initialization(self) -> None:
         """Test entry quirk is initialized."""
         server = FlextLdifServersApache()
-        tm.that(server.entry_quirk is not None, eq=True)
+        tm.that(server.entry_quirk, none=False)
 
     @pytest.mark.parametrize("test_case", ATTRIBUTE_TEST_CASES)
     def test_schema_attribute_can_handle(self, test_case: AttributeTestCase) -> None:
@@ -276,10 +276,10 @@ class TestsTestFlextLdifApacheQuirks(s):
         )
         tm.that(isinstance(attr_data, m.Ldif.SchemaAttribute), eq=True)
         if isinstance(attr_data, m.Ldif.SchemaAttribute):
-            tm.that(attr_data.oid == "1.3.6.1.4.1.18060.0.4.1.2.100", eq=True)
-            tm.that(attr_data.name == "ads-enabled", eq=True)
-            tm.that(attr_data.desc == "Enable flag", eq=True)
-            tm.that(attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.7", eq=True)
+            tm.that(attr_data.oid, eq="1.3.6.1.4.1.18060.0.4.1.2.100")
+            tm.that(attr_data.name, eq="ads-enabled")
+            tm.that(attr_data.desc, eq="Enable flag")
+            tm.that(attr_data.syntax, eq="1.3.6.1.4.1.1466.115.121.1.7")
             tm.that(attr_data.single_value is True, eq=True)
 
     def test_schema_attribute_parse_with_syntax_length(self) -> None:
@@ -295,8 +295,8 @@ class TestsTestFlextLdifApacheQuirks(s):
         )
         tm.that(isinstance(attr_data, m.Ldif.SchemaAttribute), eq=True)
         if isinstance(attr_data, m.Ldif.SchemaAttribute):
-            tm.that(attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.15", eq=True)
-            tm.that(attr_data.length == 256, eq=True)
+            tm.that(attr_data.syntax, eq="1.3.6.1.4.1.1466.115.121.1.15")
+            tm.that(attr_data.length, eq=256)
 
     def test_schema_attribute_parse_missing_oid(self) -> None:
         """Test parsing attribute without OID fails."""
@@ -331,17 +331,17 @@ class TestsTestFlextLdifApacheQuirks(s):
         )
         tm.that(isinstance(oc_data, m.Ldif.SchemaObjectClass), eq=True)
         if isinstance(oc_data, m.Ldif.SchemaObjectClass):
-            tm.that(oc_data.oid == "1.3.6.1.4.1.18060.0.4.1.3.100", eq=True)
-            tm.that(oc_data.name == "ads-directoryService", eq=True)
-            tm.that(oc_data.kind == "STRUCTURAL", eq=True)
-            tm.that(oc_data.sup == "top", eq=True)
+            tm.that(oc_data.oid, eq="1.3.6.1.4.1.18060.0.4.1.3.100")
+            tm.that(oc_data.name, eq="ads-directoryService")
+            tm.that(oc_data.kind, eq="STRUCTURAL")
+            tm.that(oc_data.sup, eq="top")
             must_attrs = oc_data.must
             tm.that(isinstance(must_attrs, list), eq=True)
-            tm.that("cn" in must_attrs, eq=True)
-            tm.that("ads-directoryServiceId" in must_attrs, eq=True)
+            tm.that(must_attrs, has="cn")
+            tm.that(must_attrs, has="ads-directoryServiceId")
             may_attrs = oc_data.may
             tm.that(isinstance(may_attrs, list), eq=True)
-            tm.that("ads-enabled" in may_attrs, eq=True)
+            tm.that(may_attrs, has="ads-enabled")
 
     def test_schema_objectclass_parse_auxiliary(self) -> None:
         """Test parsing AUXILIARY objectClass."""
@@ -356,7 +356,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         )
         tm.that(isinstance(oc_data, m.Ldif.SchemaObjectClass), eq=True)
         if isinstance(oc_data, m.Ldif.SchemaObjectClass):
-            tm.that(oc_data.kind == "AUXILIARY", eq=True)
+            tm.that(oc_data.kind, eq="AUXILIARY")
 
     def test_schema_objectclass_parse_abstract(self) -> None:
         """Test parsing ABSTRACT objectClass."""
@@ -371,7 +371,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         )
         tm.that(isinstance(oc_data, m.Ldif.SchemaObjectClass), eq=True)
         if isinstance(oc_data, m.Ldif.SchemaObjectClass):
-            tm.that(oc_data.kind == "ABSTRACT", eq=True)
+            tm.that(oc_data.kind, eq="ABSTRACT")
 
     def test_schema_objectclass_parse_missing_oid(self) -> None:
         """Test parsing objectClass without OID fails."""
@@ -440,7 +440,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
                 acl_quirk, acl_model.raw_acl or str(acl_model), parse_method="parse"
             )
-            tm.that(roundtrip_result is not None, eq=True)
+            tm.that(roundtrip_result, none=False)
 
     def test_acl_can_handle_with_aci(self) -> None:
         """Test ACL detection with aci attribute."""
@@ -455,7 +455,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
                 acl_quirk, acl_model.raw_acl or str(acl_model), parse_method="parse"
             )
-            tm.that(roundtrip_result is not None, eq=True)
+            tm.that(roundtrip_result, none=False)
 
     def test_acl_can_handle_with_version_prefix(self) -> None:
         """Test ACL detection with version prefix."""
@@ -470,7 +470,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
                 acl_quirk, acl_model.raw_acl or str(acl_model), parse_method="parse"
             )
-            tm.that(roundtrip_result is not None, eq=True)
+            tm.that(roundtrip_result, none=False)
 
     def test_acl_can_handle_negative(self) -> None:
         """Test ACL detection rejects non-ApacheDS ACLs."""
@@ -497,8 +497,8 @@ class TestsTestFlextLdifApacheQuirks(s):
         )
         tm.that(isinstance(acl_data, m.Ldif.Tests.Acl), eq=True)
         if isinstance(acl_data, m.Ldif.Tests.Acl):
-            tm.that(acl_data.get_acl_format() == c.Ldif.AclKeys.ACI, eq=True)
-            tm.that(acl_data.server_type == c.Ldif.ServerTypes.APACHE, eq=True)
+            tm.that(acl_data.get_acl_format(), eq=c.Ldif.AclKeys.ACI)
+            tm.that(acl_data.server_type, eq=c.Ldif.ServerTypes.APACHE)
 
     def test_acl_parse_with_aci_attribute(self) -> None:
         """Test parsing ACI with aci attribute."""

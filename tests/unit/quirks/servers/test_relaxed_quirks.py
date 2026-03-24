@@ -125,7 +125,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         self, schema_quirk: FlextLdifServersRelaxed.Schema
     ) -> None:
         """Test relaxed schema quirk initialization."""
-        tm.that(schema_quirk is not None, eq=True)
+        tm.that(schema_quirk, none=False)
         tm.that(isinstance(schema_quirk, FlextLdifServersRelaxed.Schema), eq=True)
 
     @pytest.mark.parametrize(
@@ -150,7 +150,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
             parsed = result.value
             tm.that(hasattr(parsed, "name"), eq=True)
             if scenario in {ParseScenario.VALID, ParseScenario.MALFORMED}:
-                tm.that(parsed.oid is not None, eq=True)
+                tm.that(parsed.oid, none=False)
                 tm.that(parsed.metadata, eq=True)
                 if (
                     parsed.metadata is not None
@@ -209,7 +209,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
     ) -> None:
         """Test parsing attributes with various NAME formats."""
         result = schema_quirk._parse_attribute(definition)
-        tm.that(result.is_success == expected_success, eq=True)
+        tm.that(result.is_success, eq=expected_success)
 
     def test_parse_attribute_stores_original_definition(
         self, schema_quirk: FlextLdifServersRelaxed.Schema
@@ -221,7 +221,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         parsed = result.value
         tm.that(parsed.metadata, eq=True)
         if parsed.metadata is not None and parsed.metadata.extensions is not None:
-            tm.that(parsed.metadata.extensions.original_format == original, eq=True)
+            tm.that(parsed.metadata.extensions.original_format, eq=original)
 
     def test_write_attribute_to_rfc(
         self, schema_quirk: FlextLdifServersRelaxed.Schema
@@ -252,7 +252,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
 
     def test_acl_initialization(self, acl_quirk: FlextLdifServersRelaxed.Acl) -> None:
         """Test relaxed ACL quirk initialization."""
-        tm.that(acl_quirk is not None, eq=True)
+        tm.that(acl_quirk, none=False)
         tm.that(isinstance(acl_quirk, FlextLdifServersRelaxed.Acl), eq=True)
 
     @pytest.mark.parametrize(
@@ -272,7 +272,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         tm.that(hasattr(result, "is_success"), eq=True)
         if result.is_success:
             parsed = result.value
-            tm.that(parsed.raw_acl == acl_line, eq=True)
+            tm.that(parsed.raw_acl, eq=acl_line)
 
     def test_write_acl_preserves_raw_content(
         self, acl_quirk: FlextLdifServersRelaxed.Acl
@@ -289,13 +289,13 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         result = acl_quirk.write(acl_data)
         tm.that(result.is_success, eq=True)
         written = result.value
-        tm.that(written == raw_acl, eq=True)
+        tm.that(written, eq=raw_acl)
 
     def test_entry_initialization(
         self, entry_quirk: FlextLdifServersRelaxed.Entry
     ) -> None:
         """Test relaxed entry quirk initialization."""
-        tm.that(entry_quirk is not None, eq=True)
+        tm.that(entry_quirk, none=False)
         tm.that(isinstance(entry_quirk, FlextLdifServersRelaxed.Entry), eq=True)
 
     def test_entry_lenient_dn_parsing(
@@ -380,7 +380,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         self, relaxed_instance: FlextLdifServersRelaxed
     ) -> None:
         """Test relaxed mode full integration."""
-        tm.that(relaxed_instance is not None, eq=True)
+        tm.that(relaxed_instance, none=False)
         tm.that(hasattr(relaxed_instance, "schema_quirk"), eq=True)
         tm.that(hasattr(relaxed_instance, "acl_quirk"), eq=True)
         tm.that(hasattr(relaxed_instance, "entry_quirk"), eq=True)
@@ -389,7 +389,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         self, schema_quirk: FlextLdifServersRelaxed.Schema
     ) -> None:
         """Test relaxed mode has appropriate priority (low = last resort)."""
-        tm.that(schema_quirk is not None, eq=True)
+        tm.that(schema_quirk, none=False)
 
     @pytest.mark.parametrize(
         ("definition", "expected_success"),
@@ -409,7 +409,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
     ) -> None:
         """Test can_handle_attribute behavior through parse method."""
         result = schema_quirk.parse(definition)
-        tm.that(result.is_success == expected_success, eq=True)
+        tm.that(result.is_success, eq=expected_success)
 
     @pytest.mark.parametrize(
         ("definition", "expected_success"),
@@ -429,7 +429,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
     ) -> None:
         """Test can_handle_objectclass behavior through parse method."""
         result = schema_quirk.parse(definition)
-        tm.that(result.is_success == expected_success, eq=True)
+        tm.that(result.is_success, eq=expected_success)
 
     def test_conversion_attribute_oid_to_rfc(
         self, schema_quirk: FlextLdifServersRelaxed.Schema
@@ -455,8 +455,8 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         result = schema_quirk.write_attribute(attr_data)
         tm.that(result.is_success, eq=True)
         written = result.value
-        tm.that("2.16.840.1.113894.1.1.1" in written, eq=True)
-        tm.that("orclGUID" in written, eq=True)
+        tm.that(written, has="2.16.840.1.113894.1.1.1")
+        tm.that(written, has="orclGUID")
 
     def test_conversion_objectclass_oid_to_rfc(
         self, schema_quirk: FlextLdifServersRelaxed.Schema
@@ -471,5 +471,5 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         result = schema_quirk.write_objectclass(oc_data)
         tm.that(result.is_success, eq=True)
         written = result.value
-        tm.that("2.16.840.1.113894.1.2.1" in written, eq=True)
-        tm.that("orclContext" in written, eq=True)
+        tm.that(written, has="2.16.840.1.113894.1.2.1")
+        tm.that(written, has="orclContext")

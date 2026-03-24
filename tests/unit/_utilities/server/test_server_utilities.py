@@ -41,7 +41,7 @@ class TestFlextLdifUtilitiesServer(s):
         result = u.Ldif._extract_server_name("OidSchema")
         value = self.assert_success(result)
 
-        tm.that(value == "Oid", eq=True)
+        tm.that(value, eq="Oid")
 
     def test_get_type_from_independent_class_success(self) -> None:
         class FlextLdifServersOidSchema:
@@ -49,7 +49,7 @@ class TestFlextLdifUtilitiesServer(s):
 
         result = u.Ldif._get_type_from_independent_class(FlextLdifServersOidSchema)
 
-        tm.that(result == "oid", eq=True)
+        tm.that(result, eq="oid")
 
     def test_get_type_from_independent_class_failure_unknown_server(self) -> None:
         class FlextLdifServersUnknownSchema:
@@ -57,17 +57,17 @@ class TestFlextLdifUtilitiesServer(s):
 
         result = u.Ldif._get_type_from_independent_class(FlextLdifServersUnknownSchema)
 
-        tm.that(result is None, eq=True)
+        tm.that(result, none=True)
 
     def test_get_type_from_nested_class_success_from_parent_constants(self) -> None:
         result = u.Ldif._get_type_from_nested_class(OidServer.Entry)
 
-        tm.that(result == "oid", eq=True)
+        tm.that(result, eq="oid")
 
     def test_extract_server_type_from_constants_success(self) -> None:
         result = u.Ldif.extract_server_type_from_constants(OudServer)
 
-        tm.that(result == "oud", eq=True)
+        tm.that(result, eq="oud")
 
     def test_get_parent_server_type_failure_raises_attribute_error(self) -> None:
         class Unknown:

@@ -55,7 +55,7 @@ class TestFlextLdifUtilitiesComprehensive:
                 if key not in entries[-1].attributes:
                     entries[-1].attributes[key] = []
                 entries[-1].attributes[key].append(value)
-        tm.that(len(entries) >= 5, eq=True)
+        tm.that(len(entries), gte=5)
         for entry in entries:
             tm.that(entry.dn, none=False)
             tm.that(entry.attributes, eq=True)
@@ -65,7 +65,7 @@ class TestFlextLdifUtilitiesComprehensive:
     def test_server_specific_utilities(self, server_type: str) -> None:
         """Test server-specific utility functions."""
         entry = FlextLdifTestFactory.create_real_entry(server_type=server_type)
-        tm.that(entry is not None, eq=True)
+        tm.that(entry, none=False)
         tm.that(hasattr(entry, "dn"), eq=True)
         tm.that(hasattr(entry, "attributes"), eq=True)
         normalized = u.Ldif.normalize_server_type(server_type)

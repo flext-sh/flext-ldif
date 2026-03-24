@@ -229,14 +229,14 @@ class TestsFlextLdifNovellInitialization(s):
     def test_server_initialization(self) -> None:
         """Test Novell eDirectory server initialization."""
         server = FlextLdifServersNovell()
-        tm.that(server.server_type == "novell", eq=True)
-        tm.that(server.priority == 20, eq=True)
+        tm.that(server.server_type, eq="novell")
+        tm.that(server.priority, eq=20)
 
     def test_schema_quirk_initialization(
         self, schema_quirk: FlextLdifServersNovell.Schema
     ) -> None:
         """Test schema quirk is initialized."""
-        tm.that(schema_quirk is not None, eq=True)
+        tm.that(schema_quirk, none=False)
 
 
 class TestNovellSchemaAttributeDetection:
@@ -288,9 +288,9 @@ class TestNovellSchemaAttributeParsing:
         attr_def = "NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15"
         result = schema_quirk.parse_attribute(attr_def)
         tm.that(result.is_failure, eq=True)
-        tm.that(result.error is not None, eq=True)
+        tm.that(result.error, none=False)
         if result.error is not None:
-            tm.that("missing an OID" in result.error, eq=True)
+            tm.that(result.error, has="missing an OID")
 
 
 class TestNovellSchemaObjectClassDetection:
@@ -352,9 +352,9 @@ class TestNovellSchemaObjectClassParsing:
         quirk_schema = schema_quirk
         result = quirk_schema.parse_objectclass(oc_def)
         tm.that(result.is_failure, eq=True)
-        tm.that(result.error is not None, eq=True)
+        tm.that(result.error, none=False)
         if result.error is not None:
-            tm.that("missing an OID" in result.error, eq=True)
+            tm.that(result.error, has="missing an OID")
 
     def test_write_attribute_to_rfc(
         self, schema_quirk: FlextLdifServersNovell.Schema
@@ -413,7 +413,7 @@ class TestNovellEntryDetection:
         self, entry_quirk: FlextLdifServersNovell.Entry
     ) -> None:
         """Test entry quirk is initialized."""
-        tm.that(entry_quirk is not None, eq=True)
+        tm.that(entry_quirk, none=False)
 
     @pytest.mark.parametrize("test_case", ENTRY_TEST_CASES)
     def test_can_handle_entry(

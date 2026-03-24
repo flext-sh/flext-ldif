@@ -208,7 +208,7 @@ class TestsTestFlextLdifProtocols(s):
         """Test that protocol is defined and accessible."""
         tm.that(hasattr(FlextLdifProtocols.Ldif, protocol_name), eq=True)
         protocol = getattr(FlextLdifProtocols.Ldif, protocol_name)
-        tm.that(protocol is not None, eq=True)
+        tm.that(protocol, none=False)
 
     def test_quirks_namespace_exists(self) -> None:
         """Test that Quirks namespace exists in Ldif namespace."""
@@ -302,7 +302,7 @@ class TestsTestFlextLdifProtocols(s):
     def test_registry_global_instance(self) -> None:
         """Test registry global instance is accessible."""
         instance = FlextLdifServer.get_global_instance()
-        tm.that(instance is not None, eq=True)
+        tm.that(instance, none=False)
 
     def test_protocol_type_checking(self) -> None:
         """Test protocol can be used for type checking."""
@@ -325,7 +325,7 @@ class TestsTestFlextLdifProtocols(s):
             if hasattr(s, self.Constants.ATTR_PARSE)
             and hasattr(s, self.Constants.ATTR_WRITE)
         ]
-        tm.that(len(schemas) == 3, eq=True)
+        tm.that(len(schemas), eq=3)
 
     def test_protocol_method_calls(self) -> None:
         """Test calling protocol methods on implementations."""

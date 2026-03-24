@@ -46,7 +46,7 @@ class TestsFlextLdifMigrationPipeline(s):
             source_server_type="oid",
             target_server_type="oud",
         )
-        tm.that(pipeline is not None, eq=True)
+        tm.that(pipeline, none=False)
 
     def test_initialization_with_defaults(self, tmp_path: Path) -> None:
         """Test pipeline initialization with default server types."""
@@ -57,9 +57,9 @@ class TestsFlextLdifMigrationPipeline(s):
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir, output_dir=output_dir
         )
-        tm.that(pipeline is not None, eq=True)
-        tm.that(pipeline.source_server_type == "rfc", eq=True)
-        tm.that(pipeline.target_server_type == "rfc", eq=True)
+        tm.that(pipeline, none=False)
+        tm.that(pipeline.source_server_type, eq="rfc")
+        tm.that(pipeline.target_server_type, eq="rfc")
 
     @pytest.mark.parametrize(
         ("source", "target"),
@@ -86,7 +86,7 @@ class TestsFlextLdifMigrationPipeline(s):
             source_server_type=source,
             target_server_type=target,
         )
-        tm.that(pipeline is not None, eq=True)
+        tm.that(pipeline, none=False)
 
     def test_execute_with_nonexistent_input_dir_returns_failure(
         self, tmp_path: Path
@@ -103,8 +103,8 @@ class TestsFlextLdifMigrationPipeline(s):
         )
         result = pipeline.execute()
         tm.that(result.is_failure, eq=True)
-        tm.that(result.error is not None, eq=True)
-        tm.that("not found" in str(result.error).lower(), eq=True)
+        tm.that(result.error, none=False)
+        tm.that(str(result.error).lower(), has="not found")
 
     def test_execution_with_empty_input(self, tmp_path: Path) -> None:
         """Test pipeline handles empty input directory gracefully."""

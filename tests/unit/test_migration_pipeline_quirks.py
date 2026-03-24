@@ -62,8 +62,8 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         content = output_file.read_text(encoding="utf-8")
         val_true_rfc = OidTestConstants.OID_TO_RFC_BOOLEAN[val_true_oid]
         val_false_rfc = OidTestConstants.OID_TO_RFC_BOOLEAN[val_false_oid]
-        tm.that(f"{attr_enabled.lower()}: {val_true_rfc}" in content, eq=True)
-        tm.that(f"{attr_locked.lower()}: {val_false_rfc}" in content, eq=True)
+        tm.that(content, has=f"{attr_enabled.lower()}: {val_true_rfc}")
+        tm.that(content, has=f"{attr_locked.lower()}: {val_false_rfc}")
         tm.that(f"{attr_enabled.lower()}: {val_true_oid}" not in content, eq=True)
         tm.that(f"{attr_locked.lower()}: {val_false_oid}" not in content, eq=True)
 
@@ -97,8 +97,8 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         content = output_file.read_text(encoding="utf-8")
         val_true_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_true_rfc]
         val_false_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_false_rfc]
-        tm.that(f"{attr_enabled.lower()}: {val_true_oid}" in content, eq=True)
-        tm.that(f"{attr_locked.lower()}: {val_false_oid}" in content, eq=True)
+        tm.that(content, has=f"{attr_enabled.lower()}: {val_true_oid}")
+        tm.that(content, has=f"{attr_locked.lower()}: {val_false_oid}")
         tm.that(f"{attr_enabled.lower()}: {val_true_rfc}" not in content, eq=True)
         tm.that(f"{attr_locked.lower()}: {val_false_rfc}" not in content, eq=True)
 
@@ -161,11 +161,9 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             f"Expected output file to exist: {output_file}",
         )
         content = output_file.read_text(encoding="utf-8")
-        tm.that(
-            f"{FlextLdifServersOidConstants.ORCLACI}: {acl_val}" in content, eq=True
-        )
+        tm.that(content, has=f"{FlextLdifServersOidConstants.ORCLACI}: {acl_val}")
         (
-            tm.that(not re.search(r"(^|\\n)aci:", content), eq=True),
+            tm.that(re.search(r"(^|\\n)aci:", content), eq=False),
             ("Should not have standalone 'aci:' attribute"),
         )
 
@@ -193,7 +191,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
             f"Expected output file to exist: {output_file}",
         )
         content = output_file.read_text(encoding="utf-8")
-        tm.that(f"dn: {FlextLdifServersRfc.Constants.SCHEMA_DN}" in content, eq=True)
+        tm.that(content, has=f"dn: {FlextLdifServersRfc.Constants.SCHEMA_DN}")
         tm.that(
             f"dn: {FlextLdifServersOidConstants.SCHEMA_DN_QUIRK}" not in content,
             eq=True,
@@ -222,4 +220,4 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         output_file = output_dir / "migrated.ldif"
         content = output_file.read_text(encoding="utf-8")
         val_true_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_true_rfc]
-        tm.that(f"{attr_enabled.lower()}: {val_true_oid}" in content, eq=True)
+        tm.that(content, has=f"{attr_enabled.lower()}: {val_true_oid}")

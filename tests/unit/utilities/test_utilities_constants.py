@@ -174,7 +174,7 @@ class TestsTestFlextLdifConstants:
             values = u.Ldif.get_valid_values(category)
             tm.that(isinstance(values, set), eq=True)
             (
-                tm.that(values == expected_values, eq=True),
+                tm.that(values, eq=expected_values),
                 (f"Expected {expected_values}, got {values}"),
             )
 
@@ -206,7 +206,7 @@ class TestsTestFlextLdifConstants:
             pytest.skip("is_valid does not raise for unknown category")
         else:
             result = u.Ldif.is_valid(value, category)
-            tm.that(result == expected_result, eq=True)
+            tm.that(result, eq=expected_result)
 
     @pytest.mark.parametrize(
         (
@@ -237,7 +237,7 @@ class TestsTestFlextLdifConstants:
                 u.Ldif.validate_many(values, category)
         else:
             is_valid, invalid = u.Ldif.validate_many(values, category)
-            tm.that(is_valid == expected_valid, eq=True)
+            tm.that(is_valid, eq=expected_valid)
             if not expected_valid:
                 tm.that(invalid, eq=True)
 
@@ -245,8 +245,8 @@ class TestsTestFlextLdifConstants:
         """Test that constants are properly defined and accessible."""
         tm.that(hasattr(u.Ldif, "CATEGORY_MAP"), eq=True)
         category_map = u.Ldif.CATEGORY_MAP
-        tm.that("server_type" in category_map, eq=True)
-        tm.that("encoding" in category_map, eq=True)
+        tm.that(category_map, has="server_type")
+        tm.that(category_map, has="encoding")
         tm.that(hasattr(u.Ldif, "get_valid_values"), eq=True)
         tm.that(hasattr(u.Ldif, "is_valid"), eq=True)
         tm.that(hasattr(u.Ldif, "validate_many"), eq=True)

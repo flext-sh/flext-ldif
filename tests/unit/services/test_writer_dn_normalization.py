@@ -39,20 +39,20 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         tm.that(result.is_success, eq=True), "DN parsing should succeed"
         components = result.value
         (
-            tm.that(len(components) == 4, eq=True),
+            tm.that(len(components), eq=4),
             "DN should have 4 components",
         )
         attr_names = [comp[0] for comp in components]
         (
-            tm.that("cn" in attr_names, eq=True),
+            tm.that(attr_names, has="cn"),
             "Should contain cn component",
         )
         (
-            tm.that("ou" in attr_names, eq=True),
+            tm.that(attr_names, has="ou"),
             "Should contain ou component",
         )
         (
-            tm.that("dc" in attr_names, eq=True),
+            tm.that(attr_names, has="dc"),
             "Should contain dc component",
         )
 
@@ -66,20 +66,20 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         )
         components = result.value
         (
-            tm.that(len(components) >= 3, eq=True),
+            tm.that(len(components), gte=3),
             "DN should have at least 3 components",
         )
         attr_names = [comp[0] for comp in components]
         (
-            tm.that("cn" in attr_names, eq=True),
+            tm.that(attr_names, has="cn"),
             "Should contain cn attribute",
         )
         (
-            tm.that("ou" in attr_names, eq=True),
+            tm.that(attr_names, has="ou"),
             "Should contain ou attribute",
         )
         (
-            tm.that("dc" in attr_names, eq=True),
+            tm.that(attr_names, has="dc"),
             "Should contain dc attribute",
         )
 
@@ -97,11 +97,11 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
             "Attribute names should be lowercase",
         )
         (
-            tm.that("ou=" in normalized.lower(), eq=True),
+            tm.that(normalized.lower(), has="ou="),
             "Should contain ou component",
         )
         (
-            tm.that("dc=" in normalized.lower(), eq=True),
+            tm.that(normalized.lower(), has="dc="),
             "Should contain dc component",
         )
 
@@ -135,11 +135,11 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         dn = "cn = John Doe , ou = people , dc = example , dc = com"
         cleaned = dn_service.clean_dn(dn)
         (
-            tm.that("cn=" in cleaned, eq=True),
+            tm.that(cleaned, has="cn="),
             "Should remove spaces around =",
         )
         (
-            tm.that(len(cleaned) < len(dn), eq=True),
+            tm.that(len(cleaned), lt=len(dn)),
             "Cleaned DN should be shorter",
         )
 
@@ -148,7 +148,7 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         value = "John, Jr."
         escaped = dn_service.escape_dn_value(value)
         (
-            tm.that(escaped != value, eq=True),
+            tm.that(escaped, ne=value),
             "Should escape special characters",
         )
         (
@@ -160,9 +160,9 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         """Test unescaping hex-encoded characters in DN values."""
         value = "John\\2C Jr."
         unescaped = dn_service.unescape_dn_value(value)
-        tm.that(unescaped != value, eq=True), "Should unescape hex values"
+        tm.that(unescaped, ne=value), "Should unescape hex values"
         (
-            tm.that("," in unescaped, eq=True),
+            tm.that(unescaped, has=","),
             "Hex-escaped comma should be unescaped",
         )
 
@@ -189,6 +189,6 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         output = write_result.value
         if isinstance(output, str):
             (
-                tm.that("dn: cn=" in output, eq=True),
+                tm.that(output, has="dn: cn="),
                 ("Output should have normalized DN with lowercase cn"),
             )

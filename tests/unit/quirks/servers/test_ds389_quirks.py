@@ -267,26 +267,26 @@ class TestsTestFlextLdifDs389Quirks(s):
     def test_server_initialization(self) -> None:
         """Test DS389 server initialization."""
         server = FlextLdifServersDs389()
-        tm.that(server.server_type == "ds389", eq=True)
-        tm.that(server.priority == 30, eq=True)
+        tm.that(server.server_type, eq="ds389")
+        tm.that(server.priority, eq=30)
 
     def test_schema_quirk_initialization(self) -> None:
         """Test schema quirk is initialized."""
         server = FlextLdifServersDs389()
         schema_quirk = server.schema_quirk
-        tm.that(schema_quirk is not None, eq=True)
+        tm.that(schema_quirk, none=False)
 
     def test_acl_quirk_initialization(self) -> None:
         """Test ACL quirk is initialized."""
         server = FlextLdifServersDs389()
         acl_quirk = server.acl_quirk
-        tm.that(acl_quirk is not None, eq=True)
+        tm.that(acl_quirk, none=False)
 
     def test_entry_quirk_initialization(self) -> None:
         """Test entry quirk is initialized."""
         server = FlextLdifServersDs389()
         entry_quirk = server.entry_quirk
-        tm.that(entry_quirk is not None, eq=True)
+        tm.that(entry_quirk, none=False)
 
     @pytest.mark.parametrize("test_case", ATTRIBUTE_TEST_CASES)
     def test_schema_attribute_can_handle(self, test_case: AttributeTestCase) -> None:
@@ -335,9 +335,9 @@ class TestsTestFlextLdifDs389Quirks(s):
         attr_def = "NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27"
         result = schema_quirk.parse(attr_def)
         tm.that(result.is_failure, eq=True)
-        tm.that(result.error is not None, eq=True)
+        tm.that(result.error, none=False)
         if result.error is not None:
-            tm.that("missing an OID" in result.error, eq=True)
+            tm.that(result.error, has="missing an OID")
 
     @pytest.mark.parametrize("test_case", OBJECTCLASS_TEST_CASES)
     def test_schema_objectclass_can_handle(
@@ -388,7 +388,7 @@ class TestsTestFlextLdifDs389Quirks(s):
         tm.that(result.is_success, eq=True)
         oc_data = result.value
         assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
-        tm.that(oc_data.kind == "ABSTRACT", eq=True)
+        tm.that(oc_data.kind, eq="ABSTRACT")
 
     def test_parse_objectclass_missing_oid(self) -> None:
         """Test parsing objectClass without OID fails."""
@@ -398,9 +398,9 @@ class TestsTestFlextLdifDs389Quirks(s):
         oc_def = "NAME 'nscontainer' SUP top STRUCTURAL"
         result = schema_quirk.parse(oc_def)
         tm.that(result.is_failure, eq=True)
-        tm.that(result.error is not None, eq=True)
+        tm.that(result.error, none=False)
         if result.error is not None:
-            tm.that("missing an OID" in result.error, eq=True)
+            tm.that(result.error, has="missing an OID")
 
     def test_write_objectclass_to_rfc(self) -> None:
         """Test writing objectClass to RFC string format."""
@@ -418,9 +418,9 @@ class TestsTestFlextLdifDs389Quirks(s):
         result = schema_quirk.write(oc_data)
         tm.that(result.is_success, eq=True)
         oc_str = result.value
-        tm.that("2.16.840.1.113730.3.2.1" in oc_str, eq=True)
-        tm.that("nscontainer" in oc_str, eq=True)
-        tm.that("STRUCTURAL" in oc_str, eq=True)
+        tm.that(oc_str, has="2.16.840.1.113730.3.2.1")
+        tm.that(oc_str, has="nscontainer")
+        tm.that(oc_str, has="STRUCTURAL")
 
     @pytest.mark.parametrize("test_case", ENTRY_TEST_CASES)
     def test_entry_can_handle(self, test_case: EntryTestCase) -> None:

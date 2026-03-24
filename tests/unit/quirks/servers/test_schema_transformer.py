@@ -21,14 +21,14 @@ class TestsFlextLdifSchemaTransformerNormalizeAttributeName(s):
         result = u.Ldif.normalize_name(
             "userCertificate;binary", suffixes_to_remove=[";binary"]
         )
-        tm.that(result == "userCertificate", eq=True)
+        tm.that(result, eq="userCertificate")
 
     def test_normalize_replaces_underscores(self) -> None:
         """Test that underscores are replaced with hyphens."""
         result = u.Ldif.normalize_name(
             "oracle_oid_attribute", char_replacements={"_": "-"}
         )
-        tm.that(result == "oracle-oid-attribute", eq=True)
+        tm.that(result, eq="oracle-oid-attribute")
 
     def test_normalize_removes_binary_and_underscores(self) -> None:
         """Test that both ;binary and underscores are normalized."""
@@ -37,22 +37,22 @@ class TestsFlextLdifSchemaTransformerNormalizeAttributeName(s):
             suffixes_to_remove=[";binary"],
             char_replacements={"_": "-"},
         )
-        tm.that(result == "oracle-certificate", eq=True)
+        tm.that(result, eq="oracle-certificate")
 
     def test_normalize_rfc_compliant_name_unchanged(self) -> None:
         """Test that RFC-compliant names are unchanged."""
         result = u.Ldif.normalize_name("cn")
-        tm.that(result == "cn", eq=True)
+        tm.that(result, eq="cn")
 
     def test_normalize_handles_empty_string(self) -> None:
         """Test that empty string is handled gracefully."""
         result = u.Ldif.normalize_name("")
-        tm.that(not result, eq=True)
+        tm.that(result, eq=False)
 
     def test_normalize_handles_none(self) -> None:
         """Test that None is handled gracefully."""
         result = u.Ldif.normalize_name(None)
-        tm.that(result is None, eq=True)
+        tm.that(result, none=True)
 
 
 class TestSchemaTransformerNormalizeMatchingRule:
@@ -65,8 +65,8 @@ class TestSchemaTransformerNormalizeMatchingRule:
             None,
             substr_rules_in_equality={"caseIgnoreSubstringsMatch": "caseIgnoreMatch"},
         )
-        tm.that(equality == "caseIgnoreMatch", eq=True)
-        tm.that(substr == "caseIgnoreSubstringsMatch", eq=True)
+        tm.that(equality, eq="caseIgnoreMatch")
+        tm.that(substr, eq="caseIgnoreSubstringsMatch")
 
     def test_fix_substr_rule_capital_s(self) -> None:
         """Test that caseIgnoreSubStringsMatch (capital S) is handled."""
@@ -78,8 +78,8 @@ class TestSchemaTransformerNormalizeMatchingRule:
             },
             substr_rules_in_equality={"caseIgnoreSubStringsMatch": "caseIgnoreMatch"},
         )
-        tm.that(equality == "caseIgnoreMatch", eq=True)
-        tm.that(substr == "caseIgnoreSubstringsMatch", eq=True)
+        tm.that(equality, eq="caseIgnoreMatch")
+        tm.that(substr, eq="caseIgnoreSubstringsMatch")
 
     def test_apply_matching_rule_replacements(self) -> None:
         """Test that server-specific matching rule replacements are applied."""
@@ -87,22 +87,22 @@ class TestSchemaTransformerNormalizeMatchingRule:
         equality, substr = u.Ldif.normalize_matching_rules(
             "accessDirectiveMatch", None, replacements=replacements
         )
-        tm.that(equality == "caseIgnoreMatch", eq=True)
-        tm.that(substr is None, eq=True)
+        tm.that(equality, eq="caseIgnoreMatch")
+        tm.that(substr, none=True)
 
     def test_rfc_compliant_rule_unchanged(self) -> None:
         """Test that RFC-compliant rules are unchanged."""
         equality, substr = u.Ldif.normalize_matching_rules("caseIgnoreMatch", None)
-        tm.that(equality == "caseIgnoreMatch", eq=True)
-        tm.that(substr is None, eq=True)
+        tm.that(equality, eq="caseIgnoreMatch")
+        tm.that(substr, none=True)
 
     def test_preserve_existing_substr(self) -> None:
         """Test that existing SUBSTR rules are preserved."""
         equality, substr = u.Ldif.normalize_matching_rules(
             "caseIgnoreMatch", "caseIgnoreSubstringsMatch"
         )
-        tm.that(equality == "caseIgnoreMatch", eq=True)
-        tm.that(substr == "caseIgnoreSubstringsMatch", eq=True)
+        tm.that(equality, eq="caseIgnoreMatch")
+        tm.that(substr, eq="caseIgnoreSubstringsMatch")
 
 
 class TestSchemaTransformerNormalizeSyntaxOid:
@@ -111,7 +111,7 @@ class TestSchemaTransformerNormalizeSyntaxOid:
     def test_remove_quotes_from_syntax(self) -> None:
         """Test that quotes are removed from syntax OIDs."""
         result = u.Ldif.normalize_syntax_oid("'1.3.6.1.4.1.1466.115.121.1.15'")
-        tm.that(result == "1.3.6.1.4.1.1466.115.121.1.15", eq=True)
+        tm.that(result, eq="1.3.6.1.4.1.1466.115.121.1.15")
 
     def test_apply_syntax_replacements(self) -> None:
         """Test that server-specific syntax replacements are applied."""
@@ -119,12 +119,12 @@ class TestSchemaTransformerNormalizeSyntaxOid:
         result = u.Ldif.normalize_syntax_oid(
             "1.3.6.1.4.1.1466.115.121.1.1", replacements=replacements
         )
-        tm.that(result == "1.3.6.1.4.1.1466.115.121.1.15", eq=True)
+        tm.that(result, eq="1.3.6.1.4.1.1466.115.121.1.15")
 
     def test_rfc_compliant_syntax_unchanged(self) -> None:
         """Test that RFC-compliant syntax OIDs are unchanged."""
         result = u.Ldif.normalize_syntax_oid("1.3.6.1.4.1.1466.115.121.1.15")
-        tm.that(result == "1.3.6.1.4.1.1466.115.121.1.15", eq=True)
+        tm.that(result, eq="1.3.6.1.4.1.1466.115.121.1.15")
 
 
 class TestSchemaTransformerApplyAttributeTransformations:
@@ -199,10 +199,10 @@ class TestSchemaTransformerApplyAttributeTransformations:
         transformed = result.value
         tm.that(isinstance(transformed, m.Ldif.SchemaAttribute), eq=True)
         if isinstance(transformed, m.Ldif.SchemaAttribute):
-            tm.that(transformed.name == "cn", eq=True)
-            tm.that(transformed.equality == "caseIgnoreMatch", eq=True)
-            tm.that(transformed.substr == "caseIgnoreSubstringsMatch", eq=True)
-            tm.that(transformed.syntax == "1.3.6.1.4.1.1466.115.121.1.15", eq=True)
+            tm.that(transformed.name, eq="cn")
+            tm.that(transformed.equality, eq="caseIgnoreMatch")
+            tm.that(transformed.substr, eq="caseIgnoreSubstringsMatch")
+            tm.that(transformed.syntax, eq="1.3.6.1.4.1.1466.115.121.1.15")
 
     def test_partial_transformations(self) -> None:
         """Test applying only some transformations."""
@@ -230,8 +230,8 @@ class TestSchemaTransformerApplyAttributeTransformations:
         transformed = result.value
         tm.that(isinstance(transformed, m.Ldif.SchemaAttribute), eq=True)
         if isinstance(transformed, m.Ldif.SchemaAttribute):
-            tm.that(transformed.name == "cn", eq=True)
-            tm.that(transformed.equality == "caseIgnoreMatch", eq=True)
+            tm.that(transformed.name, eq="cn")
+            tm.that(transformed.equality, eq="caseIgnoreMatch")
 
 
 class TestSchemaTransformerApplyObjectClassTransformations:
@@ -243,5 +243,5 @@ class TestSchemaTransformerApplyObjectClassTransformations:
         result = u.Ldif.apply_transformations(oc, field_transforms=None)
         tm.that(result.is_success, eq=True)
         transformed = result.value
-        tm.that(transformed.name == "top", eq=True)
-        tm.that(transformed.oid == "2.5.6.0", eq=True)
+        tm.that(transformed.name, eq="top")
+        tm.that(transformed.oid, eq="2.5.6.0")
