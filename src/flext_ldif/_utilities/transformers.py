@@ -211,7 +211,7 @@ class FlextLdifUtilitiesTransformers:
                 self._new_base,
             )
             update_dict: MutableMapping[str, m.Ldif.DN] = {
-                "dn": m.Ldif.DN(value=new_dn_str)
+                "dn": m.Ldif.DN(value=new_dn_str),
             }
             updated_entry = item.model_copy(update=update_dict)
             return r[m.Ldif.Entry].ok(updated_entry)

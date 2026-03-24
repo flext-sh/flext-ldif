@@ -73,13 +73,13 @@ class AttributeTestCase(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     scenario: Annotated[
-        AttributeScenario, Field(description="Attribute scenario identifier")
+        AttributeScenario, Field(description="Attribute scenario identifier"),
     ]
     attr_definition: Annotated[
-        str, Field(description="Schema attribute definition string")
+        str, Field(description="Schema attribute definition string"),
     ]
     expected_can_handle: Annotated[
-        bool, Field(description="Expected can_handle result")
+        bool, Field(description="Expected can_handle result"),
     ]
     expected_name: Annotated[
         str | None,
@@ -96,13 +96,13 @@ class ObjectClassTestCase(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     scenario: Annotated[
-        ObjectClassScenario, Field(description="ObjectClass scenario identifier")
+        ObjectClassScenario, Field(description="ObjectClass scenario identifier"),
     ]
     oc_definition: Annotated[
-        str, Field(description="Schema objectClass definition string")
+        str, Field(description="Schema objectClass definition string"),
     ]
     expected_can_handle: Annotated[
-        bool, Field(description="Expected can_handle result")
+        bool, Field(description="Expected can_handle result"),
     ]
     expected_name: Annotated[
         str | None,
@@ -119,7 +119,7 @@ class EntryTestCase(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     scenario: Annotated[
-        EntryScenario, Field(description="Entry detection scenario identifier")
+        EntryScenario, Field(description="Entry detection scenario identifier"),
     ]
     entry_dn: Annotated[str, Field(description="Entry distinguished name")]
     attributes: Annotated[
@@ -129,7 +129,7 @@ class EntryTestCase(BaseModel):
         ),
     ]
     expected_can_handle: Annotated[
-        bool, Field(description="Expected can_handle result")
+        bool, Field(description="Expected can_handle result"),
     ]
 
 

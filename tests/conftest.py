@@ -190,10 +190,10 @@ class FlextLdifFixtures:
         ]
         file_path: Annotated[Path, Field(description="Fixture file path")]
         line_count: Annotated[
-            int, Field(description="Number of lines in the fixture file")
+            int, Field(description="Number of lines in the fixture file"),
         ]
         entry_count: Annotated[
-            int, Field(description="Number of LDIF entries in the fixture")
+            int, Field(description="Number of LDIF entries in the fixture"),
         ]
         size_bytes: Annotated[int, Field(description="Fixture file size in bytes")]
 

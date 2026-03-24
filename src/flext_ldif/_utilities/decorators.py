@@ -81,7 +81,7 @@ class FlextLdifUtilitiesDecorators:
             ),
         )
         try:
-            setattr(result_value, "metadata", metadata)
+            result_value.metadata = metadata
         except (
             ValueError,
             KeyError,

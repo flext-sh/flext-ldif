@@ -1985,7 +1985,7 @@ class FlextLdifConversion(
         if write_res.is_success:
             return r[t.Ldif.SchemaConversionValue].ok(write_res.value)
         return r[t.Ldif.SchemaConversionValue].fail(
-            write_res.error or "Schema write failed"
+            write_res.error or "Schema write failed",
         )
 
     def _write_objectclass_to_rfc(

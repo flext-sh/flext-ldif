@@ -664,9 +664,9 @@ class FlextLdifUtilitiesMetadata:
                 else:
                     normalized_metadata[key] = str(value)
             config_root: MutableMapping[str, t.NormalizedValue | BaseModel] = dict(
-                normalized_metadata
+                normalized_metadata,
             )
-            setattr(model, "validation_metadata", t.ConfigMap(root=config_root))
+            model.validation_metadata = t.ConfigMap(root=config_root)
         except (AttributeError, TypeError, ValueError):
             pass
 
@@ -740,9 +740,9 @@ class FlextLdifUtilitiesMetadata:
                     c.Ldif.ServerTypes.RFC.value,
                 ),
             )
-            setattr(entry, "metadata", entry_metadata)
+            entry.metadata = entry_metadata
         update_dict: MutableMapping[str, m.Ldif.EntryStatistics] = {
-            "processing_stats": updated_stats
+            "processing_stats": updated_stats,
         }
         updated_metadata = entry_metadata.model_copy(update=update_dict)
         return entry.model_copy(update={"metadata": updated_metadata})
@@ -926,7 +926,7 @@ class FlextLdifUtilitiesMetadata:
             extras = {
                 extra_key: u.normalize_to_metadata(extra_value)
                 for extra_key, extra_value in t.ConfigMap(
-                    root=config_map_root
+                    root=config_map_root,
                 ).root.items()
             }
         opt = extras.get(key)
@@ -943,7 +943,7 @@ class FlextLdifUtilitiesMetadata:
         formatting_details = FlextLdifUtilitiesMetadata.analyze_schema_formatting(
             definition,
         )
-        setattr(metadata, "schema_format_details", formatting_details)
+        metadata.schema_format_details = formatting_details
         logger.debug(
             "Schema formatting preserved in metadata",
             quirk_type=metadata.quirk_type,

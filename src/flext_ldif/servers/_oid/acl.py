@@ -702,7 +702,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             update={
                 "server_type": server_type,
                 "metadata": updated_metadata,
-            }
+            },
         )
 
     @override

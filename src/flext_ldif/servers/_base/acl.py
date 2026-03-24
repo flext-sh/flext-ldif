@@ -23,7 +23,7 @@ logger = FlextLogger(__name__)
 
 
 class FlextLdifServersBaseSchemaAcl(
-    FlextLdifQuirkMethodsMixin, FlextService[m.Ldif.Acl | str]
+    FlextLdifQuirkMethodsMixin, FlextService[m.Ldif.Acl | str],
 ):
     """Base class for ACL quirks - satisfies Acl (structural typing)."""
 

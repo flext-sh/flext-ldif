@@ -589,7 +589,7 @@ def oud_acl_quirk(oud_quirk: FlextLdifServersBase) -> FlextLdifServersBaseSchema
 def ldap_container(worker_id: str) -> t.ContainerMapping:
     """Ensure shared OpenLDAP container is available for integration tests."""
     docker_control = FlextTestsDocker(
-        workspace_root=WORKSPACE_ROOT, worker_id=worker_id
+        workspace_root=WORKSPACE_ROOT, worker_id=worker_id,
     )
     server_url = f"ldap://localhost:{LDAP_PORT}"
     with _lock_file(worker_id):

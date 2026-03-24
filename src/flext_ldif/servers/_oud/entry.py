@@ -510,7 +510,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             )
         )
         update_dict: MutableMapping[str, FlextLdifModelsDomains.WriteOptions | None] = {
-            "write_options": new_write_options
+            "write_options": new_write_options,
         }
         metadata_typed = metadata_typed.model_copy(update=update_dict)
         if commented_acl_values:

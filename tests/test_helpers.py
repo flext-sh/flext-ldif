@@ -155,7 +155,7 @@ class TestsFlextLdifMatchers(tm):
             raise AssertionError(msg or "Entry has no DN value")
         dn_value = dn_obj.value if hasattr(dn_obj, "value") else str(dn_obj)
         oc_seq: t.StrSequence | None = attrs.get("objectClass") or attrs.get(
-            "objectclass"
+            "objectclass",
         )
         objectclasses: list[str] = list(oc_seq) if oc_seq else []
         if dn is not None:
@@ -375,7 +375,7 @@ class TestsFlextLdifMatchers(tm):
                     )
                     if oc_attrs:
                         oc_seq_raw: MutableSequence[str] | None = oc_attrs.get(
-                            "objectClass"
+                            "objectClass",
                         ) or oc_attrs.get("objectclass")
                         objectclasses_parsed: list[str] = (
                             list(oc_seq_raw) if oc_seq_raw else []
@@ -664,7 +664,7 @@ class TestsFlextLdifFixtures(tt):
         write_result: r[str] = api.write(entries)
         ldif_content: str = _unwrap_result(write_result, msg=msg)
         roundtrip_result: r[MutableSequence[m.Ldif.Entry]] = api.parse_ldif(
-            ldif_content
+            ldif_content,
         )
         return _unwrap_result(roundtrip_result, msg=msg)
 

@@ -174,7 +174,7 @@ class FlextLdifUtilitiesSchema:
                 struct.error,
             ) as exc:
                 logger.debug(
-                    "SchemaAttribute cast failed after transformation: %s", str(exc)
+                    "SchemaAttribute cast failed after transformation: %s", str(exc),
                 )
             try:
                 current = m.Ldif.SchemaObjectClass.model_validate(
@@ -401,7 +401,7 @@ class FlextLdifUtilitiesSchema:
             return converted_mapping
         return {
             "value": FlextLdifUtilitiesSchema._convert_nested_metadata_value(
-                str(value)
+                str(value),
             ),
         }
 
@@ -698,7 +698,7 @@ class FlextLdifUtilitiesSchema:
             struct.error,
         ) as exc:
             logger.debug(
-                "SchemaAttribute validation failed while returning result: %s", str(exc)
+                "SchemaAttribute validation failed while returning result: %s", str(exc),
             )
         try:
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(
@@ -814,7 +814,7 @@ class FlextLdifUtilitiesSchema:
             struct.error,
         ) as exc:
             logger.debug(
-                "SchemaAttribute validation failed after transformation: %s", str(exc)
+                "SchemaAttribute validation failed after transformation: %s", str(exc),
             )
         try:
             _ = m.Ldif.SchemaObjectClass.model_validate(schema_obj)
@@ -1061,7 +1061,7 @@ class FlextLdifUtilitiesSchema:
             struct.error,
         ) as exc:
             logger.debug(
-                "SchemaObjectClass model validation did not match: %s", str(exc)
+                "SchemaObjectClass model validation did not match: %s", str(exc),
             )
         definition_str = str(definition)
         definition_lower = definition_str.lower()

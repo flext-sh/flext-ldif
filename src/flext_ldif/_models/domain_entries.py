@@ -2063,11 +2063,7 @@ class FlextLdifModelsDomainsEntries:
                 ext_violations: MutableSequence[t.Ldif.MetadataValue] = list(
                     server_violations,
                 )
-                setattr(
-                    self.metadata.extensions,
-                    "server_specific_violations",
-                    ext_violations,
-                )
+                self.metadata.extensions.server_specific_violations = ext_violations
             return self
 
         def _check_binary_option_rule(

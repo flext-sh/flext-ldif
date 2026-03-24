@@ -393,7 +393,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 "Entry quirk not available",
             )
         entries_result: r[MutableSequence[m.Ldif.Entry]] = entry_quirk.parse_quirk(
-            value
+            value,
         )
         if entries_result.is_failure:
             error_msg = entries_result.error or "Entry parsing failed"
