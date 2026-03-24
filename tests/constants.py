@@ -587,10 +587,6 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     List of parsed entries
 
                 """
-                if not isinstance(parser_service, FlextLdifParser):
-                    raise TypeError(
-                        f"Expected FlextLdifParser, got {type(parser_service)}",
-                    )
                 result = parser_service.parse_string(
                     content=content,
                     server_type=server_type,
@@ -1258,10 +1254,6 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     AssertionError: If parsing fails or structure doesn't match
 
                 """
-                if not isinstance(parser_service, FlextLdifParser):
-                    raise TypeError(
-                        f"Expected FlextLdifParser, got {type(parser_service)}",
-                    )
                 result = parser_service.parse_string(content=content, server_type="rfc")
                 if result.is_failure:
                     raise AssertionError(f"Parsing failed: {result.error}")
@@ -1310,10 +1302,6 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     AssertionError: If parsing fails or structure doesn't match
 
                 """
-                if not isinstance(parser_service, FlextLdifParser):
-                    raise TypeError(
-                        f"Expected FlextLdifParser, got {type(parser_service)}",
-                    )
                 result = parser_service.parse_string(content=content, server_type="rfc")
                 if result.is_failure:
                     raise AssertionError(f"Parsing failed: {result.error}")
@@ -1376,16 +1364,10 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     AssertionError: If writing fails or expected content not found
 
                 """
-                if not isinstance(writer_service, FlextLdifWriter):
-                    raise TypeError(
-                        f"Expected FlextLdifWriter, got {type(writer_service)}",
-                    )
                 result = writer_service.write_to_string(entries=entries)
                 if result.is_failure:
                     raise AssertionError(f"Writing failed: {result.error}")
                 ldif_string = result.value
-                if not isinstance(ldif_string, str):
-                    raise AssertionError(f"Expected string, got {type(ldif_string)}")
                 if expected_content:
                     for substring in expected_content:
                         if substring not in ldif_string:
@@ -1413,10 +1395,6 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     AssertionError: If writing fails or expected content not found
 
                 """
-                if not isinstance(writer_service, FlextLdifWriter):
-                    raise TypeError(
-                        f"Expected FlextLdifWriter, got {type(writer_service)}",
-                    )
                 if not isinstance(file_path, Path):
                     raise TypeError(f"Expected Path, got {type(file_path)}")
                 result = writer_service.write_to_file(entries=entries, path=file_path)
@@ -1452,10 +1430,6 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     AssertionError: If should_succeed specified and result doesn't match
 
                 """
-                if not isinstance(parser_service, FlextLdifParser):
-                    raise TypeError(
-                        f"Expected FlextLdifParser, got {type(parser_service)}",
-                    )
                 result = parser_service.parse_string(content=content, server_type="rfc")
                 if should_succeed is True and result.is_failure:
                     raise AssertionError(
@@ -1484,10 +1458,6 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     AssertionError: If any write operation fails
 
                 """
-                if not isinstance(writer_service, FlextLdifWriter):
-                    raise TypeError(
-                        f"Expected FlextLdifWriter, got {type(writer_service)}",
-                    )
                 for test_name, data in entry_data.items():
                     dn = str(data.get("dn", ""))
                     raw_attributes = data.get("attributes", {})
@@ -1697,8 +1667,6 @@ class FlextLdifTestConstants(FlextTestsConstants):
                         raise AssertionError(msg)
                     normalized_attrs: dict[str, str | MutableSequence[str]] = {}
                     for attr_name_raw, attr_value_raw in attrs_raw.items():
-                        if not isinstance(attr_name_raw, str):
-                            continue
                         if isinstance(attr_value_raw, str):
                             normalized_attrs[attr_name_raw] = attr_value_raw
                             continue
@@ -1738,10 +1706,6 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     AssertionError: If validation fails when validate_all is True
 
                 """
-                if not isinstance(parser_service, FlextLdifParser):
-                    raise TypeError(
-                        f"Expected FlextLdifParser, got {type(parser_service)}",
-                    )
                 results: Sequence[r[m.Ldif.ParseResponse]] = []
                 for test_case in test_cases:
                     ldif_content = str(test_case.get("ldif_content", ""))
