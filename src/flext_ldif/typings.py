@@ -150,6 +150,16 @@ class FlextLdifTypes(FlextTypes):
         type ResultValue[T] = T
         type DN = str
 
+        type ConvertedModel = (
+            m.Ldif.Entry
+            | m.Ldif.SchemaAttribute
+            | m.Ldif.SchemaObjectClass
+            | m.Ldif.Acl
+        )
+        type SchemaConversionValue = (
+            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
+        )
+
 
 t = FlextLdifTypes
 

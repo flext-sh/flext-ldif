@@ -12,7 +12,6 @@ from typing import (
     Final,
     Literal,
     Self,
-    TypeAlias,
     TypeIs,
     override,
 )
@@ -35,12 +34,8 @@ from flext_ldif import (
 )
 
 TUPLE_LENGTH_PAIR = 2
-ConvertedModel: TypeAlias = (
-    m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-)
-SchemaConversionValue: TypeAlias = (
-    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
-)
+ConvertedModel = t.Ldif.ConvertedModel
+SchemaConversionValue = t.Ldif.SchemaConversionValue
 logger = FlextLogger(__name__)
 
 

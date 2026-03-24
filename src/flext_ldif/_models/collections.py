@@ -101,11 +101,11 @@ class FlextLdifModelsCollections:
         attributes: Annotated[
             MutableSequence[FlextLdifModelsDomains.SchemaAttribute],
             Field(),
-        ] = Field(default_factory=list)
+        ]
         object_classes: Annotated[
             MutableSequence[FlextLdifModelsDomains.SchemaObjectClass],
             Field(),
-        ] = Field(default_factory=list)
+        ]
 
     class CategoryPaths(FlextLdifModelsMetadata.DynamicMetadata):
         """Category to file path mapping model."""
@@ -149,7 +149,7 @@ class FlextLdifModelsCollections:
         categories: Annotated[
             MutableMapping[str, MutableSequence[FlextLdifModelsDomains.Entry]],
             Field(),
-        ] = Field(default_factory=dict)
+        ]
 
         @override
         def __eq__(self, other: t.NormalizedValue) -> bool:

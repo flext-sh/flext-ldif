@@ -266,7 +266,7 @@ class FlextLdifModelsSettings:
             Field(
                 description="Mapping of bind type to regex pattern",
             ),
-        ] = Field(default_factory=dict)
+        ]
         default_name: Annotated[
             str,
             Field(description="Default ACL name if not found"),
@@ -288,33 +288,19 @@ class FlextLdifModelsSettings:
             Field(
                 description="Extra regex patterns for server-specific fields",
             ),
-        ] = Field(default_factory=dict)
+        ]
         permission_map: Annotated[
             MutableMapping[str, str],
             Field(
                 description="Mapping of permission name to normalized name",
             ),
-        ] = Field(
-            default_factory=lambda: {
-                "read": "read",
-                "write": "write",
-                "add": "add",
-                "delete": "delete",
-                "search": "search",
-                "compare": "compare",
-            },
-        )
+        ]
         special_subjects: Annotated[
             MutableMapping[str, tuple[str, str]],
             Field(
                 description="Special subject DN to (type, value) mapping",
             ),
-        ] = Field(
-            default_factory=lambda: {
-                "ldap:///self": ("self", "ldap:///self"),
-                "ldap:///anyone": ("anonymous", "ldap:///anyone"),
-            },
-        )
+        ]
 
     class AciWriterConfig(FlextModels.Value):
         """Configuration for ACI writing.
@@ -366,15 +352,7 @@ class FlextLdifModelsSettings:
             Field(
                 description="Mapping of subject type to bind operator",
             ),
-        ] = Field(
-            default_factory=lambda: {
-                "user": "userdn",
-                "group": "groupdn",
-                "role": "roledn",
-                "self": "userdn",
-                "anonymous": "userdn",
-            },
-        )
+        ]
 
     class AciLineFormatConfig(FlextModels.Value):
         r"""Configuration for formatting ACI line.
@@ -440,7 +418,7 @@ class FlextLdifModelsSettings:
             Field(
                 description="Set of attribute names that indicate this server",
             ),
-        ] = Field(default_factory=frozenset)
+        ]
         keyword_patterns: Annotated[
             tuple[str, ...],
             Field(description="Keywords to search in attribute names"),
@@ -793,7 +771,7 @@ class FlextLdifModelsSettings:
             Field(
                 description="List of (attr, value) pairs parsed so far",
             ),
-        ] = Field(default_factory=list)
+        ]
 
     class MetadataTransformationConfig(FlextModels.Value):
         """Configuration for metadata transformation tracking.
@@ -821,19 +799,19 @@ class FlextLdifModelsSettings:
             Field(
                 description="List of attribute names that were transformed",
             ),
-        ] = Field(default_factory=list)
+        ]
         original_attrs: Annotated[
             MutableMapping[str, MutableSequence[str]],
             Field(
                 description="Original attributes before transformation",
             ),
-        ] = Field(default_factory=dict)
+        ]
         transformed_attrs: Annotated[
             MutableMapping[str, MutableSequence[str]],
             Field(
                 description="Transformed attributes after transformation",
             ),
-        ] = Field(default_factory=dict)
+        ]
 
     class LogContextExtras(FlextModels.Value):
         """Additional context fields for logging events.
@@ -900,51 +878,45 @@ class FlextLdifModelsSettings:
             Field(
                 description="DN patterns for user entries (e.g., '*,ou=users,*')",
             ),
-        ] = Field(default_factory=list)
+        ]
         group_dn_patterns: Annotated[
             MutableSequence[str],
             Field(description="DN patterns for group entries"),
-        ] = Field(default_factory=list)
+        ]
         hierarchy_dn_patterns: Annotated[
             MutableSequence[str],
             Field(
                 description="DN patterns for organizational hierarchy",
             ),
-        ] = Field(default_factory=list)
+        ]
         schema_dn_patterns: Annotated[
             MutableSequence[str],
             Field(description="DN patterns for schema entries"),
-        ] = Field(default_factory=list)
+        ]
         user_objectclasses: Annotated[
             MutableSequence[str],
             Field(
                 description="ObjectClasses identifying user entries",
             ),
-        ] = Field(default_factory=lambda: ["person", "inetOrgPerson", "orclUser"])
+        ]
         group_objectclasses: Annotated[
             MutableSequence[str],
             Field(
                 description="ObjectClasses identifying group entries",
             ),
-        ] = Field(
-            default_factory=lambda: [
-                "groupOfUniqueNames",
-                "groupOfNames",
-                "orclGroup",
-            ],
-        )
+        ]
         hierarchy_objectclasses: Annotated[
             MutableSequence[str],
             Field(
                 description="ObjectClasses identifying organizational units",
             ),
-        ] = Field(default_factory=lambda: ["organizationalUnit", "organization"])
+        ]
         acl_attributes: Annotated[
             MutableSequence[str],
             Field(
                 description="Attribute names containing ACL information",
             ),
-        ] = Field(default_factory=lambda: ["orclaci", "orclentrylevelaci"])
+        ]
 
     class MigrateOptions(FlextModels.Value):
         """Options for FlextLdif.migrate() operation.
@@ -1087,53 +1059,53 @@ class FlextLdifModelsSettings:
             Field(
                 description="ObjectClasses that should be blocked/rejected",
             ),
-        ] = Field(default_factory=list)
+        ]
         allowed_objectclasses: Annotated[
             MutableSequence[str],
             Field(
                 description="ObjectClasses that are explicitly allowed",
             ),
-        ] = Field(default_factory=list)
+        ]
         required_attributes: Annotated[
             MutableSequence[str],
             Field(description="Attributes that must be present"),
-        ] = Field(default_factory=list)
+        ]
         blocked_attributes: Annotated[
             MutableSequence[str],
             Field(
                 description="Attributes that should be blocked",
             ),
-        ] = Field(default_factory=list)
+        ]
         allowed_attribute_oids: Annotated[
             MutableSequence[str],
             Field(
                 description="OID patterns for allowed schema attributes",
             ),
-        ] = Field(default_factory=list)
+        ]
         allowed_objectclass_oids: Annotated[
             MutableSequence[str],
             Field(
                 description="OID patterns for allowed objectClasses",
             ),
-        ] = Field(default_factory=list)
+        ]
         allowed_matchingrule_oids: Annotated[
             MutableSequence[str],
             Field(
                 description="OID patterns for allowed matchingRules",
             ),
-        ] = Field(default_factory=list)
+        ]
         allowed_matchingruleuse_oids: Annotated[
             MutableSequence[str],
             Field(
                 description="OID patterns for allowed matchingRuleUse definitions",
             ),
-        ] = Field(default_factory=list)
+        ]
         allowed_ldapsyntax_oids: Annotated[
             MutableSequence[str],
             Field(
                 description="OID patterns for allowed ldapSyntaxes definitions",
             ),
-        ] = Field(default_factory=list)
+        ]
 
     class EncodingRules(FlextModels.Value):
         """Generic encoding rules - server classes provide values."""
@@ -1142,9 +1114,7 @@ class FlextLdifModelsSettings:
             str,
             StringConstraints(min_length=1, max_length=50, pattern="^[A-Za-z0-9._-]+$"),
         ]
-        allowed_encodings: Annotated[MutableSequence[str], Field()] = Field(
-            default_factory=list,
-        )
+        allowed_encodings: Annotated[MutableSequence[str]]
 
     class DnCaseRules(FlextModels.Value):
         """Generic DN case rules - server classes provide values."""
@@ -1350,7 +1320,7 @@ class FlextLdifModelsSettings:
             Field(
                 description="Set of ACL attribute names (e.g., {'orclaci', 'orclentrylevelaci'}). Used to identify ACL attributes.",
             ),
-        ] = Field(default_factory=frozenset)
+        ]
         comment_acl_in_non_acl_phases: Annotated[
             bool,
             Field(
@@ -1368,7 +1338,7 @@ class FlextLdifModelsSettings:
             Field(
                 description="Attributes to write first after DN, in order. Default: ['objectClass']. Remaining attributes sorted alphabetically.",
             ),
-        ] = Field(default_factory=lambda: ["objectClass"])
+        ]
         sort_objectclass_values: Annotated[
             bool,
             Field(
@@ -1410,7 +1380,7 @@ class FlextLdifModelsSettings:
             Field(
                 description="Dictionary of category names to entry counts for statistics summary. Example: {'users': 150, 'groups': 25, 'acl': 42}.",
             ),
-        ] = Field(default_factory=dict)
+        ]
 
     class WriteOutputOptions(FlextModels.ArbitraryTypesModel):
         """Output visibility options for attributes based on their marker status.

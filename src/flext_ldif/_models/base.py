@@ -110,7 +110,7 @@ class FlextLdifModelsBases:
             Field(
                 description="Validation violations captured during parsing/processing",
             ),
-        ] = Field(default_factory=list)
+        ]
         validation_metadata: Annotated[
             t.ConfigMap | None,
             Field(

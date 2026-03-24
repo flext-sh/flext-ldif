@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from enum import StrEnum, unique
 from pathlib import Path
-from typing import ClassVar, Final
+from typing import Annotated, ClassVar, Final
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -178,16 +178,26 @@ class FlextLdifFixtures:
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
-        server_type: FlextLdifFixtures.ServerType = Field(
-            description="LDAP server type for the fixture",
-        )
-        fixture_type: FlextLdifFixtures.FixtureType = Field(
-            description="Fixture category identifier",
-        )
-        file_path: Path = Field(description="Fixture file path")
-        line_count: int = Field(description="Number of lines in the fixture file")
-        entry_count: int = Field(description="Number of LDIF entries in the fixture")
-        size_bytes: int = Field(description="Fixture file size in bytes")
+        server_type: Annotated[
+            FlextLdifFixtures.ServerType,
+            Field(
+                description="LDAP server type for the fixture",
+            ),
+        ]
+        fixture_type: Annotated[
+            FlextLdifFixtures.FixtureType,
+            Field(
+                description="Fixture category identifier",
+            ),
+        ]
+        file_path: Annotated[Path, Field(description="Fixture file path")]
+        line_count: Annotated[
+            int, Field(description="Number of lines in the fixture file")
+        ]
+        entry_count: Annotated[
+            int, Field(description="Number of LDIF entries in the fixture")
+        ]
+        size_bytes: Annotated[int, Field(description="Fixture file size in bytes")]
 
     class Loader:
         """Generic fixture loader for all LDAP server types.

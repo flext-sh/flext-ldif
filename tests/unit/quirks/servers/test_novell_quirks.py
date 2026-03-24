@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from enum import StrEnum, unique
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 import pytest
 from flext_tests import tm
@@ -59,14 +59,25 @@ class AttributeTestCase(BaseModel):
 
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
-    scenario: AttributeScenario = Field(description="Attribute scenario identifier")
-    attr_definition: str = Field(description="Schema attribute definition string")
-    expected_can_handle: bool = Field(description="Expected can_handle result")
-    expected_oid: str | None = Field(default=None, description="Expected parsed OID")
-    expected_name: str | None = Field(
-        default=None,
-        description="Expected parsed attribute name",
-    )
+    scenario: Annotated[
+        AttributeScenario, Field(description="Attribute scenario identifier")
+    ]
+    attr_definition: Annotated[
+        str, Field(description="Schema attribute definition string")
+    ]
+    expected_can_handle: Annotated[
+        bool, Field(description="Expected can_handle result")
+    ]
+    expected_oid: Annotated[
+        str | None, Field(default=None, description="Expected parsed OID")
+    ]
+    expected_name: Annotated[
+        str | None,
+        Field(
+            default=None,
+            description="Expected parsed attribute name",
+        ),
+    ]
 
 
 class ObjectClassTestCase(BaseModel):
@@ -74,18 +85,32 @@ class ObjectClassTestCase(BaseModel):
 
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
-    scenario: ObjectClassScenario = Field(description="ObjectClass scenario identifier")
-    oc_definition: str = Field(description="Schema objectClass definition string")
-    expected_can_handle: bool = Field(description="Expected can_handle result")
-    expected_oid: str | None = Field(default=None, description="Expected parsed OID")
-    expected_name: str | None = Field(
-        default=None,
-        description="Expected parsed objectClass name",
-    )
-    expected_kind: str | None = Field(
-        default=None,
-        description="Expected parsed objectClass kind",
-    )
+    scenario: Annotated[
+        ObjectClassScenario, Field(description="ObjectClass scenario identifier")
+    ]
+    oc_definition: Annotated[
+        str, Field(description="Schema objectClass definition string")
+    ]
+    expected_can_handle: Annotated[
+        bool, Field(description="Expected can_handle result")
+    ]
+    expected_oid: Annotated[
+        str | None, Field(default=None, description="Expected parsed OID")
+    ]
+    expected_name: Annotated[
+        str | None,
+        Field(
+            default=None,
+            description="Expected parsed objectClass name",
+        ),
+    ]
+    expected_kind: Annotated[
+        str | None,
+        Field(
+            default=None,
+            description="Expected parsed objectClass kind",
+        ),
+    ]
 
 
 class EntryTestCase(BaseModel):
@@ -93,12 +118,19 @@ class EntryTestCase(BaseModel):
 
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
-    scenario: EntryScenario = Field(description="Entry detection scenario identifier")
-    entry_dn: str = Field(description="Entry distinguished name")
-    attributes: Mapping[str, Sequence[str]] = Field(
-        description="Entry attributes mapped by name",
-    )
-    expected_can_handle: bool = Field(description="Expected can_handle result")
+    scenario: Annotated[
+        EntryScenario, Field(description="Entry detection scenario identifier")
+    ]
+    entry_dn: Annotated[str, Field(description="Entry distinguished name")]
+    attributes: Annotated[
+        Mapping[str, Sequence[str]],
+        Field(
+            description="Entry attributes mapped by name",
+        ),
+    ]
+    expected_can_handle: Annotated[
+        bool, Field(description="Expected can_handle result")
+    ]
 
 
 ATTRIBUTE_TEST_CASES = (

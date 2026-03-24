@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from enum import StrEnum, unique
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 import pytest
 from flext_core import r
@@ -77,9 +77,9 @@ class TestsTestFlextLdifProtocols(s):
         __test__ = False
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
-        name: str = Field(description="Protocol server implementation name")
-        server_class: type = Field(description="Server implementation class")
-        schema_class: type = Field(description="Schema implementation class")
+        name: Annotated[str, Field(description="Protocol server implementation name")]
+        server_class: Annotated[type, Field(description="Server implementation class")]
+        schema_class: Annotated[type, Field(description="Schema implementation class")]
 
     class Constants:
         """Test constants organized as nested class."""

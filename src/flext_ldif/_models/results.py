@@ -75,15 +75,15 @@ class FlextLdifModelsResults:
         entries_by_category: Annotated[
             FlextLdifModelsCollections.FlexibleCategories,
             Field(),
-        ] = Field(default_factory=FlextLdifModelsCollections.FlexibleCategories)
+        ]
         statistics: Annotated[
             FlextLdifModelsResults.Statistics,
             Field(),
-        ] = Field(default_factory=lambda: FlextLdifModelsResults._statistics_factory())
+        ]
         file_paths: Annotated[
             FlextLdifModelsCollections.CategoryPaths,
             Field(),
-        ] = Field(default_factory=FlextLdifModelsCollections.CategoryPaths)
+        ]
 
         @overload
         def __getitem__(
@@ -218,11 +218,11 @@ class FlextLdifModelsResults:
         rejection_reasons: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
             Field(),
-        ] = Field(default_factory=FlextLdifModelsCollections.DynamicCounts)
+        ]
         events: Annotated[
             MutableSequence[FlextLdifModelsResults.EventType],
             Field(),
-        ] = Field(default_factory=list)
+        ]
 
         @computed_field
         def failure_rate(self) -> float:
@@ -354,18 +354,16 @@ class FlextLdifModelsResults:
         migrated_schema: Annotated[
             FlextLdifModelsCollections.SchemaContent,
             Field(),
-        ] = Field(default_factory=FlextLdifModelsCollections.SchemaContent)
+        ]
         entries: Annotated[
             MutableSequence[FlextLdifModelsDomains.Entry],
             Field(),
-        ] = Field(default_factory=list)
+        ]
         stats: Annotated[
             FlextLdifModelsResults.Statistics,
             Field(),
-        ] = Field(default_factory=lambda: FlextLdifModelsResults._statistics_factory())
-        output_files: Annotated[MutableSequence[str], Field()] = Field(
-            default_factory=list,
-        )
+        ]
+        output_files: Annotated[MutableSequence[str]]
 
         @computed_field
         def entry_count(self) -> int:
@@ -433,9 +431,7 @@ class FlextLdifModelsResults:
         )  # validate_default inherited from Base
         detected_server: Annotated[str, Field()]
         confidence: t.DecimalFraction
-        patterns_found: Annotated[MutableSequence[str], Field()] = Field(
-            default_factory=list,
-        )
+        patterns_found: Annotated[MutableSequence[str], Field()]
         total_entries: t.NonNegativeInt
         migration_success: Annotated[bool, Field()]
 
@@ -451,16 +447,16 @@ class FlextLdifModelsResults:
         server_results: Annotated[
             MutableMapping[str, t.Ldif.MetadataValue],
             Field(),
-        ] = Field(default_factory=dict)
+        ]
 
     class ClientStatus(m.Value):
         # model_config: frozen + validate_default fully inherited from m.Value
         status: Annotated[str, Field()]
-        services: Annotated[MutableSequence[str], Field()] = Field(default_factory=list)
+        services: Annotated[MutableSequence[str], Field()]
         config: Annotated[
             FlextLdifModelsCollections.ConfigSettings,
             Field(),
-        ] = Field(default_factory=FlextLdifModelsCollections.ConfigSettings)
+        ]
 
     class ValidationResult(FlextLdifModelsBases.Base):
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -470,7 +466,7 @@ class FlextLdifModelsResults:
         total_entries: t.NonNegativeInt
         valid_entries: t.NonNegativeInt
         invalid_entries: t.NonNegativeInt
-        errors: Annotated[MutableSequence[str], Field()] = Field(default_factory=list)
+        errors: Annotated[MutableSequence[str], Field()]
 
         @computed_field
         def success_rate(self) -> float:
@@ -486,10 +482,8 @@ class FlextLdifModelsResults:
         objectclass_distribution: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
             Field(),
-        ] = Field(default_factory=FlextLdifModelsCollections.DynamicCounts)
-        patterns_detected: Annotated[MutableSequence[str], Field()] = Field(
-            default_factory=list,
-        )
+        ]
+        patterns_detected: Annotated[MutableSequence[str], Field()]
 
         @computed_field
         def unique_objectclasses(self) -> int:
@@ -504,10 +498,8 @@ class FlextLdifModelsResults:
         scores: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
             Field(),
-        ] = Field(default_factory=FlextLdifModelsCollections.DynamicCounts)
-        patterns_found: Annotated[MutableSequence[str], Field()] = Field(
-            default_factory=list,
-        )
+        ]
+        patterns_found: Annotated[MutableSequence[str], Field()]
         is_confident: Annotated[bool, Field()]
         detection_error: str | None = None
         fallback_reason: str | None = None
@@ -517,28 +509,28 @@ class FlextLdifModelsResults:
         categorized: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
             Field(),
-        ] = Field(default_factory=FlextLdifModelsCollections.DynamicCounts)
+        ]
         rejection_rate: Annotated[float, Field()]
         rejection_count: Annotated[int, Field()]
         written_counts: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
             Field(),
-        ] = Field(default_factory=FlextLdifModelsCollections.DynamicCounts)
+        ]
         output_files: Annotated[
             FlextLdifModelsCollections.CategoryPaths,
             Field(),
-        ] = Field(default_factory=FlextLdifModelsCollections.CategoryPaths)
+        ]
 
     class EntriesStatistics(m.Value):
         total_entries: Annotated[int, Field()]
         object_class_distribution: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
             Field(),
-        ] = Field(default_factory=FlextLdifModelsCollections.DynamicCounts)
+        ]
         server_type_distribution: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
             Field(),
-        ] = Field(default_factory=FlextLdifModelsCollections.DynamicCounts)
+        ]
 
     class DictAccessibleValue(m.Value):
         """Temporary wrapper for values accessed like dicts."""
@@ -628,7 +620,7 @@ class FlextLdifModelsResults:
         error_distribution: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
             Field(),
-        ] = Field(default_factory=FlextLdifModelsCollections.DynamicCounts)
+        ]
 
     class RdbmsTableSummary(FlextLdifModelsBases.Base):
         table_name: Annotated[str, Field()]
@@ -649,14 +641,14 @@ class FlextLdifModelsResults:
         results: Annotated[
             FlextLdifModelsCollections.BooleanFlags,
             Field(),
-        ] = Field(default_factory=FlextLdifModelsCollections.BooleanFlags)
+        ]
 
     class ParseResponse(m.Value):
         # model_config: frozen + validate_default fully inherited from m.Value
         entries: Annotated[
             MutableSequence[FlextLdifModelsDomains.Entry],
             Field(),
-        ] = Field(default_factory=list)
+        ]
         statistics: Annotated[FlextLdifModelsResults.Statistics, Field()]
         detected_server_type: c.Ldif.ServerTypeLiteral | None = None
 
@@ -672,7 +664,7 @@ class FlextLdifModelsResults:
         acls: Annotated[
             MutableSequence[FlextLdifModelsDomains.Acl],
             Field(),
-        ] = Field(default_factory=list)
+        ]
         statistics: Annotated[FlextLdifModelsResults.Statistics, Field()]
 
     class AclEvaluationResult(m.Value):
