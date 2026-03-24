@@ -471,7 +471,7 @@ class FlextLdifUtilitiesEntry:
         }
         return m.Ldif.Entry.create(
             dn=entry.dn,
-            attributes=m.Ldif.Attributes(attributes=filtered),
+            attributes=m.Ldif.Attributes.model_validate({"attributes": filtered}),
         ).unwrap_or(entry)
 
     @staticmethod
@@ -508,7 +508,7 @@ class FlextLdifUtilitiesEntry:
                     else attrs
                 )
                 current = current.model_copy(
-                    update={"attributes": m.Ldif.Attributes(attributes={**new_attrs})},
+                    update={"attributes": m.Ldif.Attributes.model_validate({"attributes": {**new_attrs}})},
                 )
             if config.convert_booleans and current.attributes:
                 source_format, target_format = config.convert_booleans
@@ -527,7 +527,7 @@ class FlextLdifUtilitiesEntry:
                     target_format=target_format,
                 )
                 current = current.model_copy(
-                    update={"attributes": m.Ldif.Attributes(attributes={**converted})},
+                    update={"attributes": m.Ldif.Attributes.model_validate({"attributes": {**converted}})},
                 )
             if config.remove_attrs:
                 current = FlextLdifUtilitiesEntry.remove_attributes(

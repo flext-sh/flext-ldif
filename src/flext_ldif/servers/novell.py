@@ -313,10 +313,10 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                                 attributes.append(attr_name)
                 acl = m.Ldif.Acl(
                     name=FlextLdifServersNovell.Constants.ACL_DEFAULT_NAME,
-                    target=m.Ldif.AclTarget(
-                        target_dn=scope or "",
-                        attributes=attributes,
-                    ),
+                    target=m.Ldif.AclTarget.model_validate({
+                        "target_dn": scope or "",
+                        "attributes": attributes,
+                    }),
                     subject=m.Ldif.AclSubject(
                         subject_type="user",
                         subject_value=trustee
@@ -455,7 +455,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     self._get_server_type(),
                 ]
                 processed_attributes[c.Ldif.DictKeys.OBJECTCLASS] = object_classes
-                new_attrs = m.Ldif.Attributes(attributes=processed_attributes)
+                new_attrs = m.Ldif.Attributes.model_validate({"attributes": processed_attributes})
                 new_entry = entry.model_copy(update={"attributes": new_attrs})
                 return r[m.Ldif.Entry].ok(new_entry)
             except (ValueError, TypeError, AttributeError) as exc:

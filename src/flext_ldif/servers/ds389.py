@@ -407,10 +407,10 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
                 acl = m.Ldif.Acl(
                     name=acl_name,
-                    target=m.Ldif.AclTarget(
-                        target_dn=target_dn,
-                        attributes=target_attributes,
-                    ),
+                    target=m.Ldif.AclTarget.model_validate({
+                        "target_dn": target_dn,
+                        "attributes": target_attributes,
+                    }),
                     subject=m.Ldif.AclSubject(
                         subject_type="user",
                         subject_value=userdn_matches[0]
@@ -511,7 +511,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
                 processed_entry = m.Ldif.Entry(
                     dn=entry.dn,
-                    attributes=m.Ldif.Attributes(attributes=attributes),
+                    attributes=m.Ldif.Attributes.model_validate({"attributes": attributes}),
                     metadata=metadata,
                 )
                 return r[m.Ldif.Entry].ok(processed_entry)

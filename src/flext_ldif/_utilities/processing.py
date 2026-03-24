@@ -505,7 +505,7 @@ class FlextLdifUtilitiesProcessing:
             for k, v in items_or_entries.items():
                 items_dict[k] = FlextLdifUtilitiesProcessing.to_config_map_value(v)
             dict_filter_result = FlextUtilities.filter(items_dict, predicate)
-            return dict_filter_result or {}
+            return dict(dict_filter_result) if dict_filter_result else {}
         items_single_list: t.MutableContainerList = [items_or_entries]
         single_filter_result = FlextUtilities.filter(items_single_list, predicate)
         return list(single_filter_result) if single_filter_result else []

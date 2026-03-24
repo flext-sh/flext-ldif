@@ -510,7 +510,7 @@ class FlextLdifSorting(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
                         attrs_dict[acl_attr] = sorted_acl
                         modified = True
             if modified:
-                sorted_attrs = m.Ldif.Attributes(attributes=attrs_dict)
+                sorted_attrs = m.Ldif.Attributes.model_validate({"attributes": attrs_dict})
                 new_entry = entry.model_copy(update={"attributes": sorted_attrs})
                 return self._track_acl_sorting_metadata(new_entry)
             return entry
@@ -656,7 +656,7 @@ class FlextLdifSorting(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
         )
         original_attr_order = list(attrs_dict.keys())
         sorted_dict: MutableMapping[str, MutableSequence[str]] = dict(sorted_items)
-        sorted_attrs = m.Ldif.Attributes(attributes=sorted_dict)
+        sorted_attrs = m.Ldif.Attributes.model_validate({"attributes": sorted_dict})
         new_entry = entry.model_copy(update={"attributes": sorted_attrs})
         new_attr_order = list(sorted_dict.keys())
         if original_attr_order != new_attr_order:
@@ -712,7 +712,7 @@ class FlextLdifSorting(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
             key=lambda x: x[0].lower(),
         )
         sorted_dict = dict([*ordered, *remaining])
-        sorted_attrs = m.Ldif.Attributes(attributes=sorted_dict)
+        sorted_attrs = m.Ldif.Attributes.model_validate({"attributes": sorted_dict})
         new_entry = entry.model_copy(update={"attributes": sorted_attrs})
         new_attr_order = list(sorted_dict.keys())
         if original_attr_order != new_attr_order:

@@ -279,7 +279,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                     else []
                 )
                 dn: str = dn_raw if isinstance(dn_raw, str) else "*"
-                target = m.Ldif.AclTarget(target_dn=dn, attributes=attrs)
+                target = m.Ldif.AclTarget.model_validate({"target_dn": dn, "attributes": attrs})
         return FlextLdifUtilitiesACL.build_aci_target_clause(
             target_attributes=target.attributes if target else None,
             target_dn=target.target_dn if target else None,

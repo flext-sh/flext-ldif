@@ -49,7 +49,7 @@ class FlextLdifUtilitiesParsers:
                 comments = parse_comments_hook(lines)
                 attributes.update(comments)
             dn_obj = m.Ldif.DN(value=dn)
-            attrs_obj = m.Ldif.Attributes(attributes=attributes)
+            attrs_obj = m.Ldif.Attributes.model_validate({"attributes": attributes})
             entry = m.Ldif.Entry(dn=dn_obj, attributes=attrs_obj)
             if transform_entry_hook:
                 entry = transform_entry_hook(entry)

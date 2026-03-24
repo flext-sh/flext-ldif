@@ -219,11 +219,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         )
         return entry_data.model_copy(
             update={
-                "attributes": m.Ldif.Attributes(
-                    attributes={**new_attributes_dict},
-                    attribute_metadata=entry_data.attributes.attribute_metadata,
-                    metadata=entry_data.attributes.metadata,
-                ),
+                "attributes": m.Ldif.Attributes.model_validate({
+                    "attributes": {**new_attributes_dict},
+                    "attribute_metadata": entry_data.attributes.attribute_metadata,
+                    "metadata": entry_data.attributes.metadata,
+                }),
                 "metadata": updated_metadata,
             },
         )
@@ -396,7 +396,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 attrs_for_model[raw_key] = [str(item) for item in raw_value]
             else:
                 attrs_for_model[raw_key] = [str(raw_value)]
-        corrected_ldif_attrs = m.Ldif.Attributes(attributes=attrs_for_model)
+        corrected_ldif_attrs = m.Ldif.Attributes.model_validate({"attributes": attrs_for_model})
         corrected_entry = entry.model_copy(update={"attributes": corrected_ldif_attrs})
         logger.debug(
             "OUD quirks: Applied syntax corrections before writing (structure preserved)",
@@ -2007,11 +2007,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if restored:
                 entry_data = entry_data.model_copy(
                     update={
-                        "attributes": m.Ldif.Attributes(
-                            attributes=restored,
-                            attribute_metadata=entry_data.attributes.attribute_metadata,
-                            metadata=entry_data.attributes.metadata,
-                        ),
+                        "attributes": m.Ldif.Attributes.model_validate({
+                            "attributes": restored,
+                            "attribute_metadata": entry_data.attributes.attribute_metadata,
+                            "metadata": entry_data.attributes.metadata,
+                        }),
                     },
                 )
         return entry_data

@@ -57,7 +57,7 @@ class FlextLdifUtilitiesCollectionLdif:
         cls,
         *dicts: t.MutableContainerMapping | None,
     ) -> t.MutableContainerMapping:
-        """Deep merge using FlextUtilities.merge() with deep strategy (mnemonic: dm)."""
+        """Deep merge using FlextUtilities.merge_mappings() with deep strategy (mnemonic: dm)."""
         if not dicts:
             return {}
         mapping_list: MutableSequence[t.MutableContainerMapping] = [
@@ -74,13 +74,13 @@ class FlextLdifUtilitiesCollectionLdif:
                 key: FlextLdifUtilitiesCollectionLdif.to_config_map_value(value)
                 for key, value in dict(mapping).items()
             }
-            merge_result = FlextUtilities.merge(
+            merge_result = FlextUtilities.merge_mappings(
                 merged,
                 mapping_dict,
                 strategy="deep",
             )
             if merge_result.is_success:
-                merged = merge_result.value
+                merged = dict(merge_result.value)
         return merged
 
     dm = deep_merge
@@ -128,7 +128,7 @@ class FlextLdifUtilitiesCollectionLdif:
         cls,
         *dicts: t.MutableContainerMapping | None,
     ) -> t.MutableContainerMapping:
-        """Deep defaults using FlextUtilities.merge() deep strategy + first wins (mnemonic: dd)."""
+        """Deep defaults using FlextUtilities.merge_mappings() deep strategy + first wins (mnemonic: dd)."""
         if not dicts:
             return {}
         dict_list = [
@@ -159,7 +159,7 @@ class FlextLdifUtilitiesCollectionLdif:
         merged: t.MutableContainerMapping = {}
         for dict_item in dicts_typed:
             dict_item_dict: t.MutableContainerMapping = dict(dict_item)
-            merge_result = FlextUtilities.merge(
+            merge_result = FlextUtilities.merge_mappings(
                 merged,
                 dict_item_dict,
                 strategy=strategy,
@@ -168,7 +168,7 @@ class FlextLdifUtilitiesCollectionLdif:
                 return r[t.MutableContainerMapping].fail(
                     merge_result.error or "Merge failed",
                 )
-            merged = merge_result.value
+            merged = dict(merge_result.value)
         if filter_none or filter_empty:
             filtered: t.MutableContainerMapping = {}
             for key, value in merged.items():
@@ -561,7 +561,7 @@ class FlextLdifUtilitiesCollectionLdif:
         key: str,
         value: t.NormalizedValue,
     ) -> t.MutableContainerMapping:
-        """Associate key-value using FlextUtilities.merge() DSL (mnemonic: ac)."""
+        """Associate key-value using FlextUtilities.merge_mappings() DSL (mnemonic: ac)."""
         updated = dict(data)
         updated[key] = value
         return updated
@@ -586,7 +586,7 @@ class FlextLdifUtilitiesCollectionLdif:
         data: t.MutableContainerMapping,
         updates: t.MutableContainerMapping,
     ) -> t.MutableContainerMapping:
-        """Update dict using FlextUtilities.merge() (mnemonic: ud)."""
+        """Update dict using FlextUtilities.merge_mappings() (mnemonic: ud)."""
         updated = dict(data)
         updated.update(updates)
         return updated

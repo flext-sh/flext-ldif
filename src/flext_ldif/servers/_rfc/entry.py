@@ -58,7 +58,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         try:
             entry = m.Ldif.Entry(
                 dn=m.Ldif.DN(value=dn.strip()),
-                attributes=m.Ldif.Attributes(attributes=attributes_dict),
+                attributes=m.Ldif.Attributes.model_validate({"attributes": attributes_dict}),
             )
             return r[m.Ldif.Entry].ok(entry)
         except (

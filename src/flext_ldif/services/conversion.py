@@ -1502,11 +1502,11 @@ class FlextLdifConversion(
                         updated_attrs[new_key] = converted_values
                     else:
                         updated_attrs[lower_k] = converted_values
-                new_attributes = m.Ldif.Attributes(
-                    attributes=updated_attrs,
-                    attribute_metadata={},
-                    metadata=None,
-                )
+                new_attributes = m.Ldif.Attributes.model_validate({
+                    "attributes": updated_attrs,
+                    "attribute_metadata": {},
+                    "metadata": None,
+                })
                 converted_entry = converted_entry.model_copy(
                     update={"attributes": new_attributes},
                 )
@@ -1537,11 +1537,11 @@ class FlextLdifConversion(
                         updated_attrs_rfc_to_oid[new_key] = converted_values
                     else:
                         updated_attrs_rfc_to_oid[lower_k] = converted_values
-                new_attributes = m.Ldif.Attributes(
-                    attributes=updated_attrs_rfc_to_oid,
-                    attribute_metadata={},
-                    metadata=None,
-                )
+                new_attributes = m.Ldif.Attributes.model_validate({
+                    "attributes": updated_attrs_rfc_to_oid,
+                    "attribute_metadata": {},
+                    "metadata": None,
+                })
                 converted_entry = converted_entry.model_copy(
                     update={"attributes": new_attributes},
                 )

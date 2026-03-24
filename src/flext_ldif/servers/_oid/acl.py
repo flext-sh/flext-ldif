@@ -161,6 +161,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _normalize_to_dict(
         value: m.Ldif.AclSubject
         | m.Ldif.QuirkMetadata
+        | t.MutableConfigurationMapping
         | MutableMapping[
             str,
             t.Scalar
@@ -586,10 +587,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             )
             acl_model = m.Ldif.Acl.model_validate({
                 "name": FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME,
-                "target": m.Ldif.AclTarget(
-                    target_dn=target_dn,
-                    attributes=target_attrs or [],
-                ),
+                "target": m.Ldif.AclTarget.model_validate({
+                    "target_dn": target_dn,
+                    "attributes": target_attrs or [],
+                }),
                 "subject": m.Ldif.AclSubject.model_validate({
                     "subject_type": str(rfc_subject_type),
                     "subject_value": rfc_subject_value,

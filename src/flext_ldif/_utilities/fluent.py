@@ -200,7 +200,7 @@ class FlextLdifUtilitiesFluent:
                 new_attrs[name] = list(new_attrs[name]) + list(values)
             else:
                 new_attrs[name] = list(values)
-            new_attributes = m.Ldif.Attributes(attributes=new_attrs)
+            new_attributes = m.Ldif.Attributes.model_validate({"attributes": new_attrs})
             self._entry = self._entry.model_copy(update={"attributes": new_attributes})
             return self
 

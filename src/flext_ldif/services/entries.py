@@ -185,7 +185,7 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
         }
         modified_entry = m.Ldif.Entry(
             dn=entry.dn,
-            attributes=m.Ldif.Attributes(attributes=new_attrs),
+            attributes=m.Ldif.Attributes.model_validate({"attributes": new_attrs}),
             metadata=entry.metadata,
         )
         return r[m.Ldif.Entry].ok(modified_entry)
@@ -214,7 +214,7 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
         new_attrs["objectClass"] = new_ocs
         modified_entry = m.Ldif.Entry(
             dn=entry.dn,
-            attributes=m.Ldif.Attributes(attributes=new_attrs),
+            attributes=m.Ldif.Attributes.model_validate({"attributes": new_attrs}),
             metadata=entry.metadata,
         )
         return r[m.Ldif.Entry].ok(modified_entry)
@@ -247,7 +247,7 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
         }
         modified_entry = m.Ldif.Entry(
             dn=entry.dn,
-            attributes=m.Ldif.Attributes(attributes=new_attrs),
+            attributes=m.Ldif.Attributes.model_validate({"attributes": new_attrs}),
             metadata=entry.metadata,
         )
         return r[m.Ldif.Entry].ok(modified_entry)

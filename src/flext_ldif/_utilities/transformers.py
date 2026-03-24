@@ -169,7 +169,7 @@ class FlextLdifUtilitiesTransformers:
             )
             if needs_update:
                 update_dict: t.MutableContainerMapping = {
-                    "attributes": m.Ldif.Attributes(attributes=new_attrs),
+                    "attributes": m.Ldif.Attributes.model_validate({"attributes": new_attrs}),
                 }
                 item = item.model_copy(update=update_dict)
             return r[m.Ldif.Entry].ok(item)
@@ -249,7 +249,7 @@ class FlextLdifUtilitiesTransformers:
                 target_format=self._format,
             )
             update_dict: t.MutableContainerMapping = {
-                "attributes": m.Ldif.Attributes(attributes={**converted_attrs}),
+                "attributes": m.Ldif.Attributes.model_validate({"attributes": {**converted_attrs}}),
             }
             updated_entry = item.model_copy(update=update_dict)
             return r[m.Ldif.Entry].ok(updated_entry)
@@ -301,7 +301,7 @@ class FlextLdifUtilitiesTransformers:
 
                 attrs = {k: v for k, v in attrs.items() if key_not_in_exclude(k, v)}
             update_dict: t.MutableContainerMapping = {
-                "attributes": m.Ldif.Attributes(attributes={**attrs}),
+                "attributes": m.Ldif.Attributes.model_validate({"attributes": {**attrs}}),
             }
             updated_entry = item.model_copy(update=update_dict)
             return r[m.Ldif.Entry].ok(updated_entry)

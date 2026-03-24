@@ -94,8 +94,10 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         if target_values["ordering"]:
             target_rules["ordering"] = target_values["ordering"]
         if target_rules:
-            attr_data.metadata.extensions[c.Ldif.SCHEMA_TARGET_MATCHING_RULES] = (
-                target_rules
+            setattr(
+                attr_data.metadata.extensions,
+                c.Ldif.SCHEMA_TARGET_MATCHING_RULES,
+                target_rules,
             )
         attr_data.metadata.extensions[c.Ldif.META_TRANSFORMATION_TIMESTAMP] = (
             u.generate_iso_timestamp()

@@ -395,7 +395,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     str(is_config)
                 ]
                 processed_attributes[c.Ldif.DictKeys.OBJECTCLASS] = object_classes
-                new_attrs = m.Ldif.Attributes(attributes=processed_attributes)
+                new_attrs = m.Ldif.Attributes.model_validate({"attributes": processed_attributes})
                 processed_entry = entry.model_copy(update={"attributes": new_attrs})
                 return r[m.Ldif.Entry].ok(processed_entry)
             except (ValueError, TypeError, AttributeError) as exc:

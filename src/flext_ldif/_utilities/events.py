@@ -112,17 +112,17 @@ class FlextLdifUtilitiesEvents:
         error_details_list = FlextLdifUtilitiesEvents._to_error_details_list(
             list(config.error_details) if config.error_details is not None else None,
         )
-        return FlextLdifModelsEvents.ConversionEvent(
-            event_type="ldif.conversion",
-            aggregate_id=aggregate_id,
-            conversion_operation=config.conversion_operation,
-            source_format=config.source_format,
-            target_format=config.target_format,
-            items_converted=config.items_converted,
-            items_failed=config.items_failed,
-            conversion_duration_ms=config.conversion_duration_ms,
-            error_details=error_details_list,
-        )
+        return FlextLdifModelsEvents.ConversionEvent.model_validate({
+            "event_type": "ldif.conversion",
+            "aggregate_id": aggregate_id,
+            "conversion_operation": config.conversion_operation,
+            "source_format": config.source_format,
+            "target_format": config.target_format,
+            "items_converted": config.items_converted,
+            "items_failed": config.items_failed,
+            "conversion_duration_ms": config.conversion_duration_ms,
+            "error_details": error_details_list,
+        })
 
     @staticmethod
     def create_dn_event(
@@ -148,17 +148,17 @@ class FlextLdifUtilitiesEvents:
         error_details_list = FlextLdifUtilitiesEvents._to_error_details_list(
             list(config.error_details) if config.error_details is not None else None,
         )
-        return FlextLdifModelsEvents.MigrationEvent(
-            event_type="ldif.migration",
-            aggregate_id=aggregate_id,
-            migration_operation=config.migration_operation,
-            source_server=config.source_server,
-            target_server=config.target_server,
-            entries_migrated=config.entries_migrated,
-            entries_failed=config.entries_failed,
-            migration_duration_ms=config.migration_duration_ms,
-            error_details=error_details_list,
-        )
+        return FlextLdifModelsEvents.MigrationEvent.model_validate({
+            "event_type": "ldif.migration",
+            "aggregate_id": aggregate_id,
+            "migration_operation": config.migration_operation,
+            "source_server": config.source_server,
+            "target_server": config.target_server,
+            "entries_migrated": config.entries_migrated,
+            "entries_failed": config.entries_failed,
+            "migration_duration_ms": config.migration_duration_ms,
+            "error_details": error_details_list,
+        })
 
     @staticmethod
     def create_schema_event(

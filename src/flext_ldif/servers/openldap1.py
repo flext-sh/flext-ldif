@@ -332,10 +332,10 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 )
                 acl = m.Ldif.Acl(
                     name=FlextLdifServersOpenldap1.Constants.ACL_ATTRIBUTE_NAME,
-                    target=m.Ldif.AclTarget(
-                        target_dn=target_dn,
-                        attributes=target_attrs,
-                    ),
+                    target=m.Ldif.AclTarget.model_validate({
+                        "target_dn": target_dn,
+                        "attributes": target_attrs,
+                    }),
                     subject=m.Ldif.AclSubject(
                         subject_type=subject_type,
                         subject_value=first_who,

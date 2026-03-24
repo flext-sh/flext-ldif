@@ -76,16 +76,16 @@ class FlextLdifModelsEvents:
             parse_duration_ms: float = 0.0,
             error_details: MutableSequence[str] | None = None,
         ) -> Self:
-            return cls(
-                event_type="ldif.parse",
-                aggregate_id=str(file_path),
-                parse_operation="parse_file",
-                source_type="file",
-                entries_parsed=entries_parsed,
-                entries_failed=entries_failed,
-                parse_duration_ms=parse_duration_ms,
-                error_details=error_details,
-            )
+            return cls.model_validate({
+                "event_type": "ldif.parse",
+                "aggregate_id": str(file_path),
+                "parse_operation": "parse_file",
+                "source_type": "file",
+                "entries_parsed": entries_parsed,
+                "entries_failed": entries_failed,
+                "parse_duration_ms": parse_duration_ms,
+                "error_details": error_details,
+            })
 
         @classmethod
         def for_ldap3(
@@ -96,16 +96,16 @@ class FlextLdifModelsEvents:
             parse_duration_ms: float = 0.0,
             error_details: MutableSequence[str] | None = None,
         ) -> Self:
-            return cls(
-                event_type="ldif.parse",
-                aggregate_id=connection_info,
-                parse_operation="parse_ldap3",
-                source_type="ldap3",
-                entries_parsed=entries_parsed,
-                entries_failed=entries_failed,
-                parse_duration_ms=parse_duration_ms,
-                error_details=error_details,
-            )
+            return cls.model_validate({
+                "event_type": "ldif.parse",
+                "aggregate_id": connection_info,
+                "parse_operation": "parse_ldap3",
+                "source_type": "ldap3",
+                "entries_parsed": entries_parsed,
+                "entries_failed": entries_failed,
+                "parse_duration_ms": parse_duration_ms,
+                "error_details": error_details,
+            })
 
         @classmethod
         def for_string(
@@ -116,16 +116,16 @@ class FlextLdifModelsEvents:
             parse_duration_ms: float = 0.0,
             error_details: MutableSequence[str] | None = None,
         ) -> Self:
-            return cls(
-                event_type="ldif.parse",
-                aggregate_id=f"content_{content_length}chars",
-                parse_operation="parse_string",
-                source_type="string",
-                entries_parsed=entries_parsed,
-                entries_failed=entries_failed,
-                parse_duration_ms=parse_duration_ms,
-                error_details=error_details,
-            )
+            return cls.model_validate({
+                "event_type": "ldif.parse",
+                "aggregate_id": f"content_{content_length}chars",
+                "parse_operation": "parse_string",
+                "source_type": "string",
+                "entries_parsed": entries_parsed,
+                "entries_failed": entries_failed,
+                "parse_duration_ms": parse_duration_ms,
+                "error_details": error_details,
+            })
 
     class WriteEvent(m.DomainEvent):
         write_operation: str = "write_file"
