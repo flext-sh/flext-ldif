@@ -10,6 +10,10 @@ requires = [ "poetry-core>=2" ]
 # [CUSTOM] project metadata
 [project]
 
+
+
+
+
 authors = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -103,6 +107,10 @@ dev = [
   "vulture>=2.13",
 ]
 
+
+
+
+
 # [MANAGED] coverage
 [tool.coverage.report]
 fail_under = 15
@@ -110,12 +118,20 @@ precision = 2
 show_missing = true
 skip_covered = false
 
+
+
+
+
 # [MANAGED] deptry
 [tool.deptry]
 known_first_party = [
   "flext_ldif",
 ]
 pep621_dev_dependency_groups = [ "dev" ]
+
+
+
+
 
 # [MANAGED] mypy
 [tool.mypy]
@@ -134,33 +150,48 @@ python_version = "3.13"
 
 [tool.poetry]
 
+
+
+
+
 # [MANAGED] pydantic-mypy
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
 
+
+
+
+
 # [MANAGED] pyrefly
 [tool.pyrefly]
+disable-project-excludes-heuristics = true
 ignore-errors-in-generated-code = true
 project-excludes = [
   "**/*_pb2*.py",
   "**/*_pb2_grpc*.py",
   "**/.venv/**",
-  "**/_pb2.py",
-  "**/_pb2_grpc.py",
+  "**/__pycache__",
+  "**/node_modules",
   "**/typings/**",
   "**/vendor/**",
-  "../typings/**",
+  "**/venv/**",
   ".venv/**",
   "typings/**",
   "vendor/**",
+]
+project-includes = [
+    "examples/**/*.py*",
+    "src/**/*.py*",
+    "tests/**/*.py*",
 ]
 python-version = "3.13"
 search-path = [
   ".",
   "src",
 ]
+use-ignore-files = false
 
 [tool.pyrefly.errors]
 bad-override = false
@@ -177,6 +208,10 @@ redundant-cast = true
 unannotated-attribute = true
 unannotated-parameter = true
 unannotated-return = true
+
+
+
+
 
 # [MANAGED] pyright
 [tool.pyright]
@@ -220,17 +255,17 @@ reportUnusedVariable = "error"
 typeCheckingMode = "strict"
 
 [[tool.pyright.executionEnvironments]]
-extraPaths = [ "src" ]
+extraPaths = ["src"]
 reportPrivateUsage = "error"
 root = "src"
 
 [[tool.pyright.executionEnvironments]]
-extraPaths = [ ".", "src" ]
+extraPaths = [".", "src"]
 reportPrivateUsage = "none"
 root = "tests"
 
 [[tool.pyright.executionEnvironments]]
-extraPaths = [ ".", "src" ]
+extraPaths = [".", "src"]
 reportPrivateUsage = "none"
 root = "examples"
 
@@ -253,6 +288,10 @@ markers = [
 minversion = "8.0"
 python_classes = [ "Test*" ]
 python_files = [ "*_test.py", "*_tests.py", "test_*.py" ]
+
+
+
+
 
 # [MANAGED] ruff
 [tool.ruff]
@@ -361,9 +400,7 @@ split-on-trailing-comma = true
 
 [tool.ruff.lint.per-file-ignores]
 
-"**/.vulture_whitelist.py" = [
-  "ALL",
-]
+
 "**/*_pb2*.py" = [
   "ALL",
 ]
@@ -541,6 +578,9 @@ split-on-trailing-comma = true
   "S404",
   "S603",
 ]
+"**/.vulture_whitelist.py" = [
+  "ALL",
+]
 "**/__init__.py" = [
   "ANN401",
   "D107",
@@ -623,7 +663,7 @@ split-on-trailing-comma = true
   "S404",
   "S603",
 ]
-"**/tools/*.py" = [
+"**/tools/**/*.py" = [
   "FBT001",
   "FBT002",
   "N802",
@@ -632,7 +672,7 @@ split-on-trailing-comma = true
   "S607",
   "T201",
 ]
-"**/tools/**/*.py" = [
+"**/tools/*.py" = [
   "FBT001",
   "FBT002",
   "N802",
@@ -651,6 +691,9 @@ split-on-trailing-comma = true
   "S607",
 ]
 
+
+
+
 # [MANAGED] tomlsort
 [tool.tomlsort]
 all = true
@@ -661,6 +704,10 @@ sort_first = [
   "project",
   "tool",
 ]
+
+
+
+
 
 # [MANAGED] yamlfix
 [tool.yamlfix]

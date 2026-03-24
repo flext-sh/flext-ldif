@@ -28,15 +28,6 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "docker: marks tests that require Docker")
     config.addinivalue_line("markers", "slow: marks tests as slow tests")
     config.addinivalue_line("markers", "real: marks tests using real functionality")
-    _rebuild_pydantic_models()
-
-
-def _rebuild_pydantic_models() -> None:
-    """Rebuild Pydantic models with forward references.
-
-    Pydantic v2 requires model_rebuild() when using forward references
-    between modules. This ensures Entry and result models are fully defined.
-    """
 
 
 @pytest.fixture(scope="session")
