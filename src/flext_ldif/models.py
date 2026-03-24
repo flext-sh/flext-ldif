@@ -17,6 +17,7 @@ from flext_core import FlextModels
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif import (
+    t,
     FlextLdifModelsCollections,
     FlextLdifModelsConversions,
     FlextLdifModelsDomains,
