@@ -30,16 +30,16 @@ class FlextLdifTestProtocols(FlextTestsProtocols, FlextLdifProtocols):
     - Only flext-ldif-specific test protocols allowed
     """
 
-    class LdifTests:
-        """Project-specific test protocols for flext-ldif.
+    class Ldif(FlextLdifProtocols.Ldif):
+        """Flext-ldif-specific test protocols."""
 
-        Separated from FlextTestsProtocols.Tests to avoid bad-override.
-        Access via FlextLdifTestProtocols.LdifTests.* for flext-ldif-specific protocols.
-        """
 
-        class Ldif:
-            """Flext-ldif-specific test protocols."""
+        class Tests:
+            """Project-specific test protocols for flext-ldif.
 
+            Separated from FlextTestsProtocols.Tests to avoid bad-override.
+            Access via FlextLdifTestProtocols.LdifTests.* for flext-ldif-specific protocols.
+            """
 
 p = FlextLdifTestProtocols
 

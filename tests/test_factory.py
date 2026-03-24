@@ -9,8 +9,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping, Sequence
 
-from flext_ldif import t
-from tests import m
+from tests import m, t
 
 
 class FlextLdifTestFactory:

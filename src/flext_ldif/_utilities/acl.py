@@ -22,26 +22,26 @@ logger = FlextLogger(__name__)
 TUPLE_LENGTH_PAIR = 2
 
 
-def _is_acl_subject_type(
-    value: str,
-) -> TypeIs[c.Ldif.AclSubjectTypeLiteral]:
-    """Type guard to check if string is a valid AclSubjectTypeLiteral."""
-    return value in {
-        "user",
-        "group",
-        "role",
-        "self",
-        "all",
-        "public",
-        "anonymous",
-        "authenticated",
-        "sddl",
-        "dn",
-    }
-
-
 class FlextLdifUtilitiesACL:
     """Generic ACL parsing and writing utilities."""
+
+    @staticmethod
+    def _is_acl_subject_type(
+        value: str,
+    ) -> TypeIs[c.Ldif.AclSubjectTypeLiteral]:
+        """Type guard to check if string is a valid AclSubjectTypeLiteral."""
+        return value in {
+            "user",
+            "group",
+            "role",
+            "self",
+            "all",
+            "public",
+            "anonymous",
+            "authenticated",
+            "sddl",
+            "dn",
+        }
 
     _RFC_ACL_ATTRIBUTES: tuple[str, ...] = (
         "aci",
@@ -939,7 +939,7 @@ class FlextLdifUtilitiesACL:
             target=m.Ldif.AclTarget(target_dn=target_dn, attributes=target_attributes),
             subject=m.Ldif.AclSubject(
                 subject_type=subject_type
-                if _is_acl_subject_type(subject_type)
+                if FlextLdifUtilitiesACL._is_acl_subject_type(subject_type)
                 else "user",
                 subject_value=subject_value,
             ),

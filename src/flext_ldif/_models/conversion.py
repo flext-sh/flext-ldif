@@ -90,11 +90,11 @@ class FlextLdifModelsConversions:
             if isinstance(val, Sequence) and not isinstance(
                 val, (str, bytes, bytearray)
             ):
-                return tuple(
+                return [
                     item if isinstance(item, t.Ldif.CONTAINER_TYPES) else str(item)
                     for item in val
-                )
-            return (val if isinstance(val, t.Ldif.CONTAINER_TYPES) else str(val),)
+                ]
+            return [val if isinstance(val, t.Ldif.CONTAINER_TYPES) else str(val)]
 
     class ConvertToDict(_FrozenConversion):
         target_type: Literal["dict"] = "dict"

@@ -5,14 +5,12 @@ Tests all 830 uncovered lines in utilities.py with real data and automation.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import MutableMapping, MutableSequence
 
 import pytest
 from flext_tests import tm
 
-from tests import u
-from tests.models import FlextLdifTestModels as m
-from tests.test_factory import FlextLdifTestFactory
+from tests import FlextLdifTestFactory, m, u
 
 
 class TestFlextLdifUtilitiesComprehensive:
@@ -35,11 +33,11 @@ class TestFlextLdifUtilitiesComprehensive:
             entries_count=5, include_schema=True
         )
         lines = ldif_content.split("\n")
-        entries: Sequence[m.Ldif.Tests.LdifTestData] = []
+        entries: MutableSequence[m.Ldif.Tests.LdifTestData] = []
         for line in lines:
             if line.startswith("dn:"):
                 current_dn = line[4:].strip()
-                current_attrs: Mapping[str, Sequence[str]] = {}
+                current_attrs: MutableMapping[str, MutableSequence[str]] = {}
                 entries.append(
                     m.Ldif.Tests.LdifTestData(
                         id=f"entry_{len(entries)}",
@@ -54,9 +52,12 @@ class TestFlextLdifUtilitiesComprehensive:
                 key, value = line.split(":", 1)
                 key = key.strip()
                 value = value.strip()
-                if key not in entries[-1].attributes:
-                    entries[-1].attributes[key] = []
-                entries[-1].attributes[key].append(value)
+                attrs: MutableMapping[str, MutableSequence[str]] = entries[
+                    -1
+                ].attributes  # type: ignore[assignment]
+                if key not in attrs:
+                    attrs[key] = []
+                attrs[key].append(value)
         tm.that(len(entries), gte=5)
         for entry in entries:
             tm.that(entry.dn, none=False)

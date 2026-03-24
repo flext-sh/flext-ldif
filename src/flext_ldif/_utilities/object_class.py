@@ -9,34 +9,32 @@ from flext_core import FlextLogger, r
 
 from flext_ldif import FlextLdifModelsDomains, FlextLdifUtilitiesSchema, c, m, t
 
-
-class _SchemaConstants:
-    """Schema constants container for type safety (single class, no loose helpers)."""
-
-    _instance: _SchemaConstants | None = None
-    auxiliary: str
-    structural: str
-
-    def __init__(self) -> None:
-        """Initialize schema constants from SchemaKind enum."""
-        super().__init__()
-        self.auxiliary = c.Ldif.SchemaKind.AUXILIARY.value
-        self.structural = c.Ldif.SchemaKind.STRUCTURAL.value
-
-    @classmethod
-    def get_instance(cls) -> _SchemaConstants:
-        """Return cached schema constants instance (avoids repeated getattr)."""
-        if cls._instance is None:
-            cls._instance = cls()
-        return cls._instance
-
-
 logger = FlextLogger(__name__)
 _ParsedObjectClass = FlextLdifModelsDomains.ParsedObjectClass
 
 
 class FlextLdifUtilitiesObjectClass:
     """RFC 4512 ObjectClass Validation and Correction Utilities."""
+
+    class _SchemaConstants:
+        """Schema constants container for type safety (single class, no loose helpers)."""
+
+        _instance: FlextLdifUtilitiesObjectClass._SchemaConstants | None = None
+        auxiliary: str
+        structural: str
+
+        def __init__(self) -> None:
+            """Initialize schema constants from SchemaKind enum."""
+            super().__init__()
+            self.auxiliary = c.Ldif.SchemaKind.AUXILIARY.value
+            self.structural = c.Ldif.SchemaKind.STRUCTURAL.value
+
+        @classmethod
+        def get_instance(cls) -> FlextLdifUtilitiesObjectClass._SchemaConstants:
+            """Return cached schema constants instance (avoids repeated getattr)."""
+            if cls._instance is None:
+                cls._instance = cls()
+            return cls._instance
 
     @staticmethod
     def align_kind_with_superior(
@@ -58,7 +56,7 @@ class FlextLdifUtilitiesObjectClass:
         default_sup: str = "top",
     ) -> None:
         """Ensure AUXILIARY ObjectClass has SUP attribute."""
-        schema_constants = _SchemaConstants.get_instance()
+        schema_constants = FlextLdifUtilitiesObjectClass._SchemaConstants.get_instance()
         if schema_oc.kind == schema_constants.auxiliary and (not schema_oc.sup):
             setattr(schema_oc, "sup", default_sup)
 
@@ -77,12 +75,14 @@ class FlextLdifUtilitiesObjectClass:
         }
         auxiliary_superiors = {"javanamingref", "javanamingReference"}
         sup_value = schema_oc.sup
-        if isinstance(sup_value, list):
+        if isinstance(sup_value, str):
+            sup_lower = sup_value.lower() if sup_value else ""
+        elif sup_value is not None:
             first_sup = sup_value[0] if sup_value else ""
             sup_lower = str(first_sup).lower() if first_sup else ""
         else:
-            sup_lower = sup_value.lower() if sup_value else ""
-        schema_constants = _SchemaConstants.get_instance()
+            sup_lower = ""
+        schema_constants = FlextLdifUtilitiesObjectClass._SchemaConstants.get_instance()
         if (
             sup_lower in structural_superiors
             and schema_oc.kind == schema_constants.auxiliary
@@ -97,7 +97,7 @@ class FlextLdifUtilitiesObjectClass:
     @staticmethod
     def fix_missing_sup(schema_oc: FlextLdifModelsDomains.SchemaObjectClass) -> None:
         """Fix AUXILIARY ObjectClass missing SUP (superior) attribute."""
-        schema_constants = _SchemaConstants.get_instance()
+        schema_constants = FlextLdifUtilitiesObjectClass._SchemaConstants.get_instance()
         if schema_oc.kind == schema_constants.auxiliary and (not schema_oc.sup):
             setattr(schema_oc, "sup", "top")
 

@@ -20,10 +20,9 @@ from itertools import starmap
 from typing import override
 
 from flext_core import r
-from flext_tests import s
 
-from flext_ldif import FlextLdifEntries, t
-from tests import m
+from flext_ldif import FlextLdifEntries
+from tests import m, s, t
 
 
 class FlextLdifTestsServiceBase(s[m.Ldif.Entry]):

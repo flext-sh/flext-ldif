@@ -10,15 +10,12 @@ from flext_ldif import FlextLdifUtilities
 class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
     """Project test utility namespace extension."""
 
-    OID = FlextLdifUtilities.Ldif
+    class Ldif(FlextLdifUtilities.Ldif):
 
-    class TestCategorization:
-        """Test categorization utilities."""
+        class Tests(FlextTestsUtilities.Tests):
+            """Test utilities with Matchers and Docker support."""
 
-    class Tests(FlextTestsUtilities.Tests):
-        """Test utilities with Matchers and Docker support."""
-
-        Docker = FlextTestsDocker
+            Docker = FlextTestsDocker
 
 
 u = FlextLdifTestUtilities

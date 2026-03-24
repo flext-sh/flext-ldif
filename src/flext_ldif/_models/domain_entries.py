@@ -1625,7 +1625,7 @@ class FlextLdifModelsDomainsEntries:
 
         def has_original_format(self) -> bool:
             """Check if original ACL format is available for name replacement."""
-            return self.original_format is not None and self.original_format
+            return self.original_format is not None and bool(self.original_format)
 
     class Entry(m.Entity):
         """LDIF entry domain model.

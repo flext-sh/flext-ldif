@@ -32,20 +32,25 @@ _TDecoratorReturn = TypeVar(
 )
 
 
-def _is_metadata_attachable(
-    obj: t.NormalizedValue,
-) -> TypeIs[
-    m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-]:
-    """Type guard to check if t.NormalizedValue supports metadata attachment."""
-    return isinstance(
-        obj,
-        (m.Ldif.Entry, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl),
-    )
-
-
 class FlextLdifUtilitiesDecorators:
     """Decorators for LDIF server quirk metadata assignment."""
+
+    @staticmethod
+    def _is_metadata_attachable(
+        obj: t.NormalizedValue,
+    ) -> TypeIs[
+        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+    ]:
+        """Type guard to check if t.NormalizedValue supports metadata attachment."""
+        return isinstance(
+            obj,
+            (
+                m.Ldif.Entry,
+                m.Ldif.SchemaAttribute,
+                m.Ldif.SchemaObjectClass,
+                m.Ldif.Acl,
+            ),
+        )
 
     @staticmethod
     def _attach_metadata_if_present(
@@ -54,7 +59,10 @@ class FlextLdifUtilitiesDecorators:
         server_type: str | None,
     ) -> None:
         """Attach metadata to result value if it has metadata attribute."""
-        if result_value is None or not _is_metadata_attachable(result_value):
+        if (
+            result_value is None
+            or not FlextLdifUtilitiesDecorators._is_metadata_attachable(result_value)
+        ):
             return
         extensions_dict_raw: MutableMapping[str, str | None] = {
             "server_type": server_type,
@@ -147,7 +155,7 @@ class FlextLdifUtilitiesDecorators:
                 result = func(self, arg)
                 if result.is_success:
                     unwrapped = result.value
-                    if _is_metadata_attachable(unwrapped):
+                    if FlextLdifUtilitiesDecorators._is_metadata_attachable(unwrapped):
                         server_type = (
                             FlextLdifUtilitiesDecorators._get_server_type_from_class(
                                 unwrapped,

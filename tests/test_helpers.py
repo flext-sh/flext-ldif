@@ -24,8 +24,8 @@ from flext_tests import (
     tv,
 )
 
-from flext_ldif import FlextLdif, FlextLdifEntries, m
-from tests import t
+from flext_ldif import FlextLdif, FlextLdifEntries
+from tests import m, t
 
 
 class _TestsBase:

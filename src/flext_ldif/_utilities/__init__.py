@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
     from flext_ldif._utilities.builders import (
         FilterConfigBuilder,
+        FlextLdifUtilitiesBuilders,
         ProcessConfigBuilder,
         TransformConfigBuilder,
         WriteConfigBuilder,
@@ -43,7 +44,7 @@ if TYPE_CHECKING:
         NotFilter,
         OrFilter,
     )
-    from flext_ldif._utilities.fluent import DnOps, EntryOps
+    from flext_ldif._utilities.fluent import DnOps, EntryOps, FlextLdifUtilitiesFluent
     from flext_ldif._utilities.functional import FlextLdifUtilitiesFunctional, f
     from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
     from flext_ldif._utilities.normalization import FlextLdifUtilitiesNormalization
@@ -52,6 +53,7 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
     from flext_ldif._utilities.parsers import FlextLdifUtilitiesParsers
     from flext_ldif._utilities.pipeline import (
+        FlextLdifUtilitiesPipeline,
         Pipeline,
         PipelineStep,
         ValidationPipeline,
@@ -106,6 +108,10 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "flext_ldif._utilities.attribute",
         "FlextLdifUtilitiesAttribute",
     ),
+    "FlextLdifUtilitiesBuilders": (
+        "flext_ldif._utilities.builders",
+        "FlextLdifUtilitiesBuilders",
+    ),
     "FlextLdifUtilitiesCollectionLdif": (
         "flext_ldif._utilities.collection_ldif",
         "FlextLdifUtilitiesCollectionLdif",
@@ -135,6 +141,10 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "flext_ldif._utilities.filters",
         "FlextLdifUtilitiesFilters",
     ),
+    "FlextLdifUtilitiesFluent": (
+        "flext_ldif._utilities.fluent",
+        "FlextLdifUtilitiesFluent",
+    ),
     "FlextLdifUtilitiesFunctional": (
         "flext_ldif._utilities.functional",
         "FlextLdifUtilitiesFunctional",
@@ -159,6 +169,10 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "FlextLdifUtilitiesParsers": (
         "flext_ldif._utilities.parsers",
         "FlextLdifUtilitiesParsers",
+    ),
+    "FlextLdifUtilitiesPipeline": (
+        "flext_ldif._utilities.pipeline",
+        "FlextLdifUtilitiesPipeline",
     ),
     "FlextLdifUtilitiesProcessing": (
         "flext_ldif._utilities.processing",
@@ -256,6 +270,7 @@ __all__ = [
     "FilterConfigBuilder",
     "FlextLdifUtilitiesACL",
     "FlextLdifUtilitiesAttribute",
+    "FlextLdifUtilitiesBuilders",
     "FlextLdifUtilitiesCollectionLdif",
     "FlextLdifUtilitiesDN",
     "FlextLdifUtilitiesDecorators",
@@ -264,6 +279,7 @@ __all__ = [
     "FlextLdifUtilitiesEntry",
     "FlextLdifUtilitiesEvents",
     "FlextLdifUtilitiesFilters",
+    "FlextLdifUtilitiesFluent",
     "FlextLdifUtilitiesFunctional",
     "FlextLdifUtilitiesMetadata",
     "FlextLdifUtilitiesNormalization",
@@ -271,6 +287,7 @@ __all__ = [
     "FlextLdifUtilitiesObjectClass",
     "FlextLdifUtilitiesParser",
     "FlextLdifUtilitiesParsers",
+    "FlextLdifUtilitiesPipeline",
     "FlextLdifUtilitiesProcessing",
     "FlextLdifUtilitiesResult",
     "FlextLdifUtilitiesSchema",

@@ -390,7 +390,7 @@ class FlextLdifUtilitiesCollectionLdif:
     @staticmethod
     @override
     def find(
-        items: t.MutableContainerList,
+        items: t.ContainerList,
         *,
         predicate: Callable[..., bool],
     ) -> t.NormalizedValue | None:

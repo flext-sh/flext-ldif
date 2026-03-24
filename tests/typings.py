@@ -30,14 +30,17 @@ class FlextLdifTestTypes(FlextTestsTypes, FlextLdifTypes):
     Short name 't' for convenient access in tests.
     """
 
-    class Tests(FlextTestsTypes.Tests):
-        """flext-ldif-specific test type definitions namespace.
+    class Ldif(FlextLdifTypes.Ldif):
 
-        Use t.Tests.* for generic test types from FlextTestsTypes.
-        """
 
-        class Fixtures:
-            """TypedDict definitions for LDIF test fixtures."""
+        class Tests(FlextTestsTypes.Tests):
+            """flext-ldif-specific test type definitions namespace.
+
+            Use t.Tests.* for generic test types from FlextTestsTypes.
+            """
+
+            class Fixtures:
+                """TypedDict definitions for LDIF test fixtures."""
 
 
 t = FlextLdifTestTypes
