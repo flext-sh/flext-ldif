@@ -310,6 +310,8 @@ class FlextLdifUtilitiesProcessing:
             case list() | tuple():
                 items_list: t.MutableContainerList = [
                     FlextLdifUtilitiesProcessing.normalize_container(item)
+                    if not isinstance(item, m.Ldif.Entry)
+                    else str(item)
                     for item in items_or_entries
                 ]
                 return FlextLdifUtilitiesProcessing.process_list_items(
@@ -491,22 +493,23 @@ class FlextLdifUtilitiesProcessing:
 
     @staticmethod
     def filter_base_class(
-        items_or_entries: t.NormalizedValue,
+        items_or_entries: t.NormalizedValue | MutableSequence[m.Ldif.Entry],
         predicate: Callable[..., bool],
         _mapper: Callable[..., t.NormalizedValue] | None = None,
     ) -> t.MutableContainerList | t.MutableContainerMapping:
         """Filter using base class Collection.filter (internal helper)."""
         if isinstance(items_or_entries, (list, tuple)):
-            items_list: t.MutableContainerList = list(items_or_entries)
+            items_list: t.MutableContainerList = [
+                x if not isinstance(x, m.Ldif.Entry) else str(x)
+                for x in items_or_entries
+            ]
             list_filter_result = FlextUtilities.filter(items_list, predicate)
             return list(list_filter_result) if list_filter_result else []
         if isinstance(items_or_entries, dict):
-            items_dict: t.MutableContainerMapping = {}
-            for k, v in items_or_entries.items():
-                items_dict[k] = FlextLdifUtilitiesProcessing.to_config_map_value(v)
+            items_dict: t.MutableContainerMapping = dict(items_or_entries)
             dict_filter_result = FlextUtilities.filter(items_dict, predicate)
             return dict(dict_filter_result) if dict_filter_result else {}
-        items_single_list: t.MutableContainerList = [items_or_entries]
+        items_single_list: t.MutableContainerList = []
         single_filter_result = FlextUtilities.filter(items_single_list, predicate)
         return list(single_filter_result) if single_filter_result else []
 
@@ -533,22 +536,20 @@ class FlextLdifUtilitiesProcessing:
 
     @staticmethod
     def is_entry_sequence(
-        obj: t.NormalizedValue,
+        obj: object,
     ) -> TypeIs[MutableSequence[m.Ldif.Entry]]:
         """Check if value is a Sequence of Entry objects."""
-        match obj:
-            case str() | bytes():
-                return False
-            case Sequence() as seq if seq:
-                match seq[0]:
-                    case m.Ldif.Entry():
-                        return True
-                    case _:
-                        return False
-            case Sequence():
+        if isinstance(obj, (str, bytes)):
+            return False
+        if isinstance(obj, list):
+            if not obj:
                 return True
-            case _:
-                return False
+            return isinstance(obj[0], m.Ldif.Entry)  # pyright: ignore[reportUnknownVariableType,reportArgumentType]
+        if isinstance(obj, tuple):
+            if not obj:
+                return True
+            return isinstance(obj[0], m.Ldif.Entry)  # pyright: ignore[reportUnknownVariableType,reportArgumentType]
+        return False
 
     @staticmethod
     def normalize_container(value: t.NormalizedValue) -> t.NormalizedValue:

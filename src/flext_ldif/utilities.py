@@ -77,7 +77,7 @@ class FlextLdifUtilities(FlextUtilities):
             attr_definition: str,
             *,
             validate_syntax: bool = True,
-        ) -> r[MutableMapping[str, t.Ldif.NormalizedValue]]:
+        ) -> r[t.MutableContainerMapping]:
             """Route to Schema.parse_attribute (resolves Attribute vs Schema)."""
             return FlextLdifUtilitiesSchema.parse_attribute(
                 attr_definition,
@@ -88,7 +88,7 @@ class FlextLdifUtilities(FlextUtilities):
         @override
         def parse_objectclass(
             oc_definition: str,
-        ) -> MutableMapping[str, t.Ldif.NormalizedValue]:
+        ) -> t.MutableContainerMapping:
             """Route to Schema.parse_objectclass (resolves ObjectClass vs Schema)."""
             return FlextLdifUtilitiesSchema.parse_objectclass(oc_definition)
 

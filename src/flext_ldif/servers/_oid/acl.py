@@ -288,7 +288,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _build_oid_acl_metadata(
         self,
-        config: FlextLdifServersOidAcl.OidAclMetadataConfig,
+        config: m.Ldif.OidAclMetadataConfig,
     ) -> t.MutableConfigurationMapping:
         """Build metadata extensions for OID ACL with Oracle-specific features."""
         target_attrs_str: str = (
@@ -698,11 +698,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 extensions=FlextLdifModelsMetadata.DynamicMetadata(),
             )
         )
-        update_dict: t.MutableContainerMapping = {
+        return acl_data.model_copy(update={
             "server_type": server_type,
             "metadata": updated_metadata,
-        }
-        return acl_data.model_copy(update=update_dict)
+        })
 
     @override
     def _write_acl(

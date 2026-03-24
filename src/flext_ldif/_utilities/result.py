@@ -5,7 +5,7 @@ from __future__ import annotations
 import base64
 from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
 from pathlib import Path
-from typing import IO, Self, overload, override
+from typing import IO, Self, override
 
 from flext_core import FlextRuntime, r
 
@@ -89,19 +89,18 @@ class FlextLdifUtilitiesResult[T]:
         """Write operator: result >> output."""
         if self.is_failure:
             return FlextLdifUtilitiesResult[str].fail(self.error)
-        raw_value = self.value
+        value_obj: object = self.value
         entry_payload: m.Ldif.Entry | MutableSequence[m.Ldif.Entry]
-        if isinstance(raw_value, m.Ldif.Entry):
-            entry_payload = raw_value
-        elif isinstance(raw_value, Sequence) and (not isinstance(raw_value, str)):
+        if isinstance(value_obj, m.Ldif.Entry):
+            entry_payload = value_obj
+        elif isinstance(value_obj, (list, tuple)):
             entries: MutableSequence[m.Ldif.Entry] = []
-            seq_items = list(raw_value)
-            for seq_item in seq_items:
-                if not isinstance(seq_item, m.Ldif.Entry):
+            for entry_candidate in value_obj:  # pyright: ignore[reportUnknownVariableType]
+                if not isinstance(entry_candidate, m.Ldif.Entry):
                     return FlextLdifUtilitiesResult[str].fail(
                         "Entry serialization failed: sequence contains non-entry value",
                     )
-                entries.append(seq_item)
+                entries.append(entry_candidate)
             entry_payload = entries
         else:
             return FlextLdifUtilitiesResult[str].fail(

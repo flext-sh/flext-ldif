@@ -52,22 +52,6 @@ class FlextLdifUtilitiesDispatch:
         return FlextLdifUtilitiesEntry.has_objectclass(entry, objectclasses)
 
     @staticmethod
-    @overload
-    def validate_batch(
-        values: MutableSequence[str],
-        *,
-        collect_errors: bool = True,
-    ) -> r[MutableSequence[tuple[str, bool, MutableSequence[str]]]]: ...
-
-    @staticmethod
-    @overload
-    def validate_batch(
-        values: MutableSequence[str],
-        *,
-        collect_errors: bool = True,
-    ) -> r[MutableSequence[tuple[str, bool, str | None]]]: ...
-
-    @staticmethod
     def validate_batch(
         values: MutableSequence[str],
         *,
@@ -81,36 +65,22 @@ class FlextLdifUtilitiesDispatch:
             collect_errors=collect_errors,
         )
 
+
     @staticmethod
     @overload
     def parse(
-        definition: str,
+        definition: str | m.Ldif.DN | None,
+        server_type: str | None = None,
+        parse_parts_hook: None = None,
     ) -> r[MutableSequence[tuple[str, str]]]: ...
 
     @staticmethod
     @overload
     def parse(
-        definition: m.Ldif.DN,
-    ) -> r[MutableSequence[tuple[str, str]]]: ...
-
-    @staticmethod
-    @overload
-    def parse(
-        definition: str | m.Ldif.DN,
-        server_type: str | None = None,
+        definition: str | m.Ldif.DN | None,
+        server_type: str | None,
         parse_parts_hook: Callable[[str], t.MutableContainerMapping]
-        | Callable[[str], r[t.MutableContainerMapping]]
-        | None = None,
-    ) -> r[t.MutableContainerMapping]: ...
-
-    @staticmethod
-    @overload
-    def parse(
-        definition: str,
-        server_type: str | None = None,
-        parse_parts_hook: Callable[[str], t.MutableContainerMapping]
-        | Callable[[str], r[t.MutableContainerMapping]]
-        | None = None,
+        | Callable[[str], r[t.MutableContainerMapping]],
     ) -> r[t.MutableContainerMapping]: ...
 
     @staticmethod
@@ -287,22 +257,20 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def _is_entry_sequence(
-        obj: t.NormalizedValue,
+        obj: object,
     ) -> bool:
         """Check if value is a Sequence of Entry objects (dispatch helper)."""
-        match obj:
-            case str() | bytes():
-                return False
-            case Sequence() as seq if seq:
-                match seq[0]:
-                    case m.Ldif.Entry():
-                        return True
-                    case _:
-                        return False
-            case Sequence():
+        if isinstance(obj, (str, bytes)):
+            return False
+        if isinstance(obj, list):
+            if not obj:
                 return True
-            case _:
-                return False
+            return isinstance(obj[0], m.Ldif.Entry)  # pyright: ignore[reportUnknownVariableType,reportArgumentType]
+        if isinstance(obj, tuple):
+            if not obj:
+                return True
+            return isinstance(obj[0], m.Ldif.Entry)  # pyright: ignore[reportUnknownVariableType,reportArgumentType]
+        return False
 
     # --- MRO conflict resolution: filter (Processing vs Filters vs Result) ---
 
@@ -355,7 +323,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def is_entry_sequence(
-        obj: t.NormalizedValue,
+        obj: object,
     ) -> TypeIs[MutableSequence[m.Ldif.Entry]]:
         """Route to Processing.is_entry_sequence (resolves Processing vs TypeGuards)."""
         return FlextLdifUtilitiesProcessing.is_entry_sequence(obj)
