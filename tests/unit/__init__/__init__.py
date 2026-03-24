@@ -16,10 +16,7 @@ if TYPE_CHECKING:
     from tests.unit.__init__.test_version import TestsFlextLdifVersion, version_module
 
 _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "TestsFlextLdifVersion": (
-        "tests.unit.__init__.test_version",
-        "TestsFlextLdifVersion",
-    ),
+    "TestsFlextLdifVersion": ("tests.unit.__init__.test_version", "TestsFlextLdifVersion"),
     "version_module": ("tests.unit.__init__.test_version", "version_module"),
 }
 
