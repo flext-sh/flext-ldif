@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from flext_ldif import FlextLdifModelsDomainOperations
+from flext_ldif import FlextLdifModelsDomainsEntries
 
 
-class FlextLdifModelsDomains(FlextLdifModelsDomainOperations):
+class FlextLdifModelsDomains(FlextLdifModelsDomainsEntries):
     pass
 
 

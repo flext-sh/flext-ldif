@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar, Literal
 
 from flext_core import FlextModels
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict, Field  # ConfigDict used by _FrozenConversion
 
 from flext_ldif import t
 
@@ -14,8 +14,10 @@ from flext_ldif import t
 class FlextLdifModelsConversions:
     """LDIF conversion models namespace."""
 
-    class ConvertToStr(FlextModels.ArbitraryTypesModel):
+    class _FrozenConversion(FlextModels.ArbitraryTypesModel):
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="forbid")
+
+    class ConvertToStr(_FrozenConversion):
         target_type: Literal["str"] = "str"
         value: Annotated[t.Ldif.ConvertValue, Field(...)]
         default: t.Ldif.ConvertValue | None = None
@@ -26,8 +28,7 @@ class FlextLdifModelsConversions:
             except (TypeError, ValueError):
                 return self.default
 
-    class ConvertToInt(FlextModels.ArbitraryTypesModel):
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="forbid")
+    class ConvertToInt(_FrozenConversion):
         target_type: Literal["int"] = "int"
         value: Annotated[t.Ldif.ConvertValue, Field(...)]
         default: t.Ldif.ConvertValue | None = None
@@ -38,8 +39,7 @@ class FlextLdifModelsConversions:
             except (TypeError, ValueError):
                 return self.default
 
-    class ConvertToFloat(FlextModels.ArbitraryTypesModel):
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="forbid")
+    class ConvertToFloat(_FrozenConversion):
         target_type: Literal["float"] = "float"
         value: Annotated[t.Ldif.ConvertValue, Field(...)]
         default: t.Ldif.ConvertValue | None = None
@@ -50,8 +50,7 @@ class FlextLdifModelsConversions:
             except (TypeError, ValueError):
                 return self.default
 
-    class ConvertToBool(FlextModels.ArbitraryTypesModel):
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="forbid")
+    class ConvertToBool(_FrozenConversion):
         target_type: Literal["bool"] = "bool"
         value: Annotated[t.Ldif.ConvertValue, Field(...)]
         default: t.Ldif.ConvertValue | None = None
@@ -65,8 +64,7 @@ class FlextLdifModelsConversions:
             except (TypeError, ValueError):
                 return self.default
 
-    class ConvertToList(FlextModels.ArbitraryTypesModel):
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="forbid")
+    class ConvertToList(_FrozenConversion):
         target_type: Literal["list"] = "list"
         value: Annotated[t.Ldif.ConvertValue, Field(...)]
         default: t.Ldif.ConvertValue | None = None
@@ -82,8 +80,7 @@ class FlextLdifModelsConversions:
                 ]
             return [val if isinstance(val, t.Ldif.CONTAINER_TYPES) else str(val)]
 
-    class ConvertToTuple(FlextModels.ArbitraryTypesModel):
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="forbid")
+    class ConvertToTuple(_FrozenConversion):
         target_type: Literal["tuple"] = "tuple"
         value: Annotated[t.Ldif.ConvertValue, Field(...)]
         default: t.Ldif.ConvertValue | None = None
@@ -99,8 +96,7 @@ class FlextLdifModelsConversions:
                 )
             return (val if isinstance(val, t.Ldif.CONTAINER_TYPES) else str(val),)
 
-    class ConvertToDict(FlextModels.ArbitraryTypesModel):
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="forbid")
+    class ConvertToDict(_FrozenConversion):
         target_type: Literal["dict"] = "dict"
         value: Annotated[t.Ldif.ConvertValue, Field(...)]
         default: t.Ldif.ConvertValue | None = None

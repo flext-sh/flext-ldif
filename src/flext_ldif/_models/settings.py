@@ -194,9 +194,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         line_breaks: Annotated[
             MutableSequence[int] | None,
             Field(description="List of line break positions in ACL"),
@@ -241,9 +238,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         server_type: Annotated[
             c.Ldif.ServerTypeLiteral,
             Field(..., description="Server type for metadata"),
@@ -335,9 +329,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         aci_prefix: Annotated[
             str,
             Field(description="Prefix for ACI line"),
@@ -399,9 +390,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         name: Annotated[str, Field(..., description="ACL name")]
         target_clause: Annotated[str, Field(..., description="Target clause string")]
         permissions_clause: Annotated[
@@ -434,9 +422,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         dn_patterns: Annotated[
             tuple[tuple[str, ...], ...],
             Field(
@@ -475,9 +460,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         case_mappings: Annotated[
             MutableMapping[str, str] | None,
             Field(
@@ -519,9 +501,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         case_mappings: Annotated[
             MutableMapping[str, str] | None,
             Field(
@@ -567,9 +546,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         objectclasses: Annotated[
             MutableSequence[str] | None,
             Field(description="Required objectClasses"),
@@ -616,9 +592,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         normalize_dns: Annotated[
             bool,
             Field(description="Normalize DN format"),
@@ -663,9 +636,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         objectclasses: Annotated[
             MutableSequence[str] | None,
             Field(description="Filter by objectClass"),
@@ -716,9 +686,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         original_name: Annotated[
             str,
             Field(..., description="Original attribute name (PRESERVED EXACTLY as-is)"),
@@ -761,9 +728,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         quirk_type: Annotated[
             c.Ldif.ServerTypeLiteral,
             Field(
@@ -807,9 +771,6 @@ class FlextLdifModelsSettings:
         because the parsing logic mutates state during RDN processing.
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         current_attr: Annotated[
             str,
             Field(description="Current attribute name being parsed"),
@@ -839,9 +800,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         original_dn: Annotated[
             str,
             Field(..., description="Original DN before transformation"),
@@ -1249,7 +1207,6 @@ class FlextLdifModelsSettings:
         for folding, and whether to respect attribute ordering from metadata.
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         line_width: Annotated[
             int,
             Field(
@@ -1524,7 +1481,6 @@ class FlextLdifModelsSettings:
         filtering, and removed attribute tracking.
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         output_file_mapping: Annotated[
             MutableMapping[str, str],
             Field(
@@ -1717,9 +1673,6 @@ class FlextLdifModelsSettings:
         Replaces dict-based parameter passing with type-safe Pydantic model.
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True, validate_default=True
-        )
         input_dir: Annotated[
             str,
             Field(
@@ -1773,9 +1726,6 @@ class FlextLdifModelsSettings:
         Provides type-safe configuration for LDIF parsing operations.
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True, validate_default=True
-        )
         file_path: Annotated[str, Field(description="Path to LDIF file to parse")]
         server_type: Annotated[
             c.Ldif.ServerTypeLiteral,
@@ -1823,9 +1773,6 @@ class FlextLdifModelsSettings:
         Provides type-safe configuration for LDIF writing operations.
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True, validate_default=True
-        )
         output_path: Annotated[
             str,
             Field(description="Path where LDIF file will be written"),
@@ -1878,7 +1825,6 @@ class FlextLdifModelsSettings:
         Structured representation of FlextLdifSettings for reporting and diagnostics.
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         ldif_encoding: Annotated[
             c.Ldif.EncodingLiteral,
             Field(description="LDIF encoding setting"),
@@ -1921,9 +1867,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         ldif_content: Annotated[str, Field(..., description="Raw LDIF content string")]
         server_type: Annotated[
             str,
@@ -1987,9 +1930,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         parsed_entries: Annotated[
             MutableSequence[tuple[str, MutableMapping[str, MutableSequence[str]]]],
             Field(..., description="List of (dn, attrs) tuples from parser"),
@@ -2037,9 +1977,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         definition: Annotated[str, Field(..., description="Raw objectClass definition")]
         server_type: Annotated[str, Field(..., description="Server type identifier")]
         parse_core_hook: Annotated[
@@ -2067,9 +2004,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         dn: Annotated[str, Field(..., description="Distinguished name")]
         attrs: Annotated[
             MutableMapping[str, MutableSequence[str]],
@@ -2112,9 +2046,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         entry: Annotated[
             FlextLdifModelsDomains.Entry,
             Field(..., description="Entry model to write"),
@@ -2150,9 +2081,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         entries: Annotated[
             MutableSequence[FlextLdifModelsDomains.Entry],
             Field(..., description="List of entries to write"),
@@ -2183,9 +2111,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         entries: Annotated[
             MutableSequence[FlextLdifModelsDomains.Entry],
             Field(..., description="List of entries to sort"),
@@ -2224,9 +2149,6 @@ class FlextLdifModelsSettings:
         ]
 
     class _SchemaConversionPipelineBaseConfig(FlextModels.Value):
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", arbitrary_types_allowed=True
-        )
         source_schema: Annotated[
             p.Ldif.SchemaQuirk,
             Field(..., description="Source schema quirk"),
@@ -2280,9 +2202,6 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid", validate_assignment=True
-        )
         original_acl: Annotated[
             FlextLdifModelsDomains.Acl,
             Field(..., description="Original ACL model"),
