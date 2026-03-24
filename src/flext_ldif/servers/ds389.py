@@ -511,7 +511,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
                 processed_entry = m.Ldif.Entry(
                     dn=entry.dn,
-                    attributes=m.Ldif.Attributes.model_validate({"attributes": attributes}),
+                    attributes=m.Ldif.Attributes.model_validate({
+                        "attributes": attributes
+                    }),
                     metadata=metadata,
                 )
                 return r[m.Ldif.Entry].ok(processed_entry)

@@ -251,7 +251,10 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             """Build OpenLDAP Acl model from parsed components."""
             return m.Ldif.Acl(
                 name=FlextLdifServersOpenldap.Constants.ACL_DEFAULT_NAME,
-                target=m.Ldif.AclTarget.model_validate({"target_dn": what, "attributes": attributes}),
+                target=m.Ldif.AclTarget.model_validate({
+                    "target_dn": what,
+                    "attributes": attributes,
+                }),
                 subject=m.Ldif.AclSubject(
                     subject_type="all",
                     subject_value=subject_value,

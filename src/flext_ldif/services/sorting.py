@@ -510,7 +510,9 @@ class FlextLdifSorting(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
                         attrs_dict[acl_attr] = sorted_acl
                         modified = True
             if modified:
-                sorted_attrs = m.Ldif.Attributes.model_validate({"attributes": attrs_dict})
+                sorted_attrs = m.Ldif.Attributes.model_validate({
+                    "attributes": attrs_dict
+                })
                 new_entry = entry.model_copy(update={"attributes": sorted_attrs})
                 return self._track_acl_sorting_metadata(new_entry)
             return entry

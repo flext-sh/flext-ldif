@@ -455,7 +455,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     self._get_server_type(),
                 ]
                 processed_attributes[c.Ldif.DictKeys.OBJECTCLASS] = object_classes
-                new_attrs = m.Ldif.Attributes.model_validate({"attributes": processed_attributes})
+                new_attrs = m.Ldif.Attributes.model_validate({
+                    "attributes": processed_attributes
+                })
                 new_entry = entry.model_copy(update={"attributes": new_attrs})
                 return r[m.Ldif.Entry].ok(new_entry)
             except (ValueError, TypeError, AttributeError) as exc:

@@ -396,7 +396,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 attrs_for_model[raw_key] = [str(item) for item in raw_value]
             else:
                 attrs_for_model[raw_key] = [str(raw_value)]
-        corrected_ldif_attrs = m.Ldif.Attributes.model_validate({"attributes": attrs_for_model})
+        corrected_ldif_attrs = m.Ldif.Attributes.model_validate({
+            "attributes": attrs_for_model
+        })
         corrected_entry = entry.model_copy(update={"attributes": corrected_ldif_attrs})
         logger.debug(
             "OUD quirks: Applied syntax corrections before writing (structure preserved)",

@@ -936,7 +936,10 @@ class FlextLdifUtilitiesACL:
         )
         acl_model = m.Ldif.Acl(
             name=acl_name,
-            target=m.Ldif.AclTarget.model_validate({"target_dn": target_dn, "attributes": target_attributes}),
+            target=m.Ldif.AclTarget.model_validate({
+                "target_dn": target_dn,
+                "attributes": target_attributes,
+            }),
             subject=m.Ldif.AclSubject(
                 subject_type=subject_type
                 if FlextLdifUtilitiesACL._is_acl_subject_type(subject_type)

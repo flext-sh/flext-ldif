@@ -1135,7 +1135,9 @@ class FlextLdifUtilitiesDN:
             return entry.model_copy(
                 update={
                     "dn": transformed_dn,
-                    "attributes": m.Ldif.Attributes.model_validate({"attributes": transformed_attrs}),
+                    "attributes": m.Ldif.Attributes.model_validate({
+                        "attributes": transformed_attrs
+                    }),
                 },
             )
 

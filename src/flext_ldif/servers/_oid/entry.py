@@ -67,7 +67,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         if new_attributes == entry.attributes.attributes:
             return entry
         return entry.model_copy(
-            update={"attributes": m.Ldif.Attributes.model_validate({"attributes": new_attributes})},
+            update={
+                "attributes": m.Ldif.Attributes.model_validate({
+                    "attributes": new_attributes
+                })
+            },
         )
 
     def _convert_boolean_attributes_to_rfc(
@@ -497,7 +501,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 **metadata.attribute_transformations,
                 **acl_transformations,
             }
-        ldif_attrs = m.Ldif.Attributes.model_validate({"attributes": {**converted_attributes}})
+        ldif_attrs = m.Ldif.Attributes.model_validate({
+            "attributes": {**converted_attributes}
+        })
         return r[m.Ldif.Entry].ok(
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value=cleaned_dn),
