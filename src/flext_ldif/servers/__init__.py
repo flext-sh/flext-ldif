@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from flext_ldif.servers._base.constants import (
         FlextLdifServersBaseConstants,
         FlextLdifServersBaseQuirkHelpers,
-        QuirkMethodsMixin,
+        FlextLdifQuirkMethodsMixin,
     )
     from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
     from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
@@ -133,7 +133,7 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "FlextLdifServersRfcSchema",
     ),
     "FlextLdifServersTivoli": ("flext_ldif.servers.tivoli", "FlextLdifServersTivoli"),
-    "QuirkMethodsMixin": ("flext_ldif.servers._base.constants", "QuirkMethodsMixin"),
+    "FlextLdifQuirkMethodsMixin": ("flext_ldif.servers._base.constants", "FlextLdifQuirkMethodsMixin"),
     "_base": ("flext_ldif.servers._base", ""),
     "_oid": ("flext_ldif.servers._oid", ""),
     "_oud": ("flext_ldif.servers._oud", ""),
@@ -173,7 +173,7 @@ __all__ = [
     "FlextLdifServersRfcEntry",
     "FlextLdifServersRfcSchema",
     "FlextLdifServersTivoli",
-    "QuirkMethodsMixin",
+    "FlextLdifQuirkMethodsMixin",
     "_base",
     "_oid",
     "_oud",

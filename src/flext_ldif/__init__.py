@@ -113,7 +113,7 @@ if TYPE_CHECKING:
     from flext_ldif.servers._base.constants import (
         FlextLdifServersBaseConstants,
         FlextLdifServersBaseQuirkHelpers,
-        QuirkMethodsMixin,
+        FlextLdifQuirkMethodsMixin,
     )
     from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
     from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
@@ -494,7 +494,7 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "Pipeline": ("flext_ldif._utilities.pipeline", "Pipeline"),
     "PipelineStep": ("flext_ldif._utilities.pipeline", "PipelineStep"),
     "ProcessConfigBuilder": ("flext_ldif._utilities.builders", "ProcessConfigBuilder"),
-    "QuirkMethodsMixin": ("flext_ldif.servers._base.constants", "QuirkMethodsMixin"),
+    "FlextLdifQuirkMethodsMixin": ("flext_ldif.servers._base.constants", "FlextLdifQuirkMethodsMixin"),
     "RemoveAttrsTransformer": (
         "flext_ldif._utilities.transformers",
         "RemoveAttrsTransformer",
@@ -667,7 +667,7 @@ __all__ = [
     "Pipeline",
     "PipelineStep",
     "ProcessConfigBuilder",
-    "QuirkMethodsMixin",
+    "FlextLdifQuirkMethodsMixin",
     "RemoveAttrsTransformer",
     "ReplaceBaseDnTransformer",
     "Transform",

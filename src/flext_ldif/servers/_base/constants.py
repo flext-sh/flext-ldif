@@ -44,7 +44,7 @@ class FlextLdifServersBaseQuirkHelpers:
 
     @staticmethod
     def get_parent_quirk_safe(
-        instance: QuirkMethodsMixin,
+        instance: FlextLdifQuirkMethodsMixin,
     ) -> p.Ldif.SchemaQuirk | None:
         """Get _parent_quirk attribute safely with type narrowing."""
         parent_raw: p.Ldif.SchemaQuirk | None = getattr(instance, "_parent_quirk", None)
@@ -70,13 +70,13 @@ class FlextLdifServersBaseQuirkHelpers:
 
     @staticmethod
     def get_server_type_from_utilities(
-        quirk_class: type[QuirkMethodsMixin],
+        quirk_class: type[FlextLdifQuirkMethodsMixin],
     ) -> c.Ldif.ServerTypeLiteral:
         """Get server type from utilities using type-safe access pattern."""
         return FlextLdifUtilitiesServer.get_parent_server_type(quirk_class)
 
 
-class QuirkMethodsMixin:
+class FlextLdifQuirkMethodsMixin:
     """Mixin providing common quirk methods for Schema, Acl, and Entry classes."""
 
     def _get_parent_quirk_safe(self) -> p.Ldif.SchemaQuirk | None:
@@ -96,8 +96,8 @@ class QuirkMethodsMixin:
 
 
 __all__ = [
+    "FlextLdifQuirkMethodsMixin",
     "FlextLdifServersBaseConstants",
     "FlextLdifServersBaseQuirkHelpers",
-    "QuirkMethodsMixin",
     "logger",
 ]

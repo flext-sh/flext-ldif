@@ -12,8 +12,8 @@ from pydantic import Field, ValidationError
 from flext_ldif import (
     FlextLdifModelsDomains,
     FlextLdifModelsMetadata,
+    FlextLdifQuirkMethodsMixin,
     FlextLdifUtilitiesACL,
-    QuirkMethodsMixin,
     m,
     p,
     t,
@@ -22,7 +22,9 @@ from flext_ldif import (
 logger = FlextLogger(__name__)
 
 
-class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl | str]):
+class FlextLdifServersBaseSchemaAcl(
+    FlextLdifQuirkMethodsMixin, FlextService[m.Ldif.Acl | str]
+):
     """Base class for ACL quirks - satisfies Acl (structural typing)."""
 
     acl_attribute_name: ClassVar[str] = "acl"

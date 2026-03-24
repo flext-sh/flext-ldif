@@ -11,11 +11,11 @@ from pydantic import Field
 
 from flext_ldif import (
     FlextLdifModelsMetadata,
+    FlextLdifQuirkMethodsMixin,
     FlextLdifUtilitiesMetadata,
     FlextLdifUtilitiesOID,
     FlextLdifUtilitiesParser,
     FlextLdifUtilitiesSchema,
-    QuirkMethodsMixin,
     c,
     m,
     p,
@@ -26,7 +26,7 @@ logger = FlextLogger(__name__)
 
 
 class FlextLdifServersBaseSchema(
-    QuirkMethodsMixin,
+    FlextLdifQuirkMethodsMixin,
     s[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str],
 ):
     """Base class for schema quirks - s V2 with enhanced usability."""

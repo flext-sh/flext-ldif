@@ -15,7 +15,7 @@ from pydantic import Field, ValidationError
 from flext_ldif import (
     FlextLdifModelsDomains,
     FlextLdifModelsSettings,
-    QuirkMethodsMixin,
+    FlextLdifQuirkMethodsMixin,
     c,
     m,
     p,
@@ -25,7 +25,9 @@ from flext_ldif import (
 logger = FlextLogger(__name__)
 
 
-class FlextLdifServersBaseEntry(QuirkMethodsMixin, FlextService[m.Ldif.Entry | str]):
+class FlextLdifServersBaseEntry(
+    FlextLdifQuirkMethodsMixin, FlextService[m.Ldif.Entry | str]
+):
     """Base class for entry processing quirks - satisfies Entry (structural typing)."""
 
     server_type: str = "unknown"
