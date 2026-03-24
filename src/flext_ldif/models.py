@@ -135,7 +135,7 @@ class FlextLdifModels(FlextModels):
         class RegistryStatsDict(FlextModels.ArbitraryTypesModel):
             """Registry statistics dictionary model."""
 
-            total_servers: Annotated[int, Field(default=0)]
+            total_servers: Annotated[t.NonNegativeInt, Field(default=0)]
             quirks_by_server: Annotated[
                 MutableMapping[str, FlextLdifModels.Ldif.QuirksByServerDict],
                 Field(default_factory=dict),

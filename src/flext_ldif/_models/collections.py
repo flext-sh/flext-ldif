@@ -111,7 +111,7 @@ class FlextLdifModelsCollections:
         """Category to file path mapping model."""
 
     class ConfigSettings(FlextLdifModelsMetadata.DynamicMetadata):
-        def set_setting(self, key: str, value: str | int | bool) -> None:
+        def set_setting(self, key: str, value: t.Scalar) -> None:
             self[key] = value
 
     class BooleanFlags(FlextLdifModelsBases.Base):

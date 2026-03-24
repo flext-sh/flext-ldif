@@ -785,9 +785,9 @@ class FlextLdifUtilitiesMetadata:
         quirk_type: str,
         _original_acl_format: str | None = None,
         **extra: t.Scalar,
-    ) -> MutableMapping[str, str | int | bool]:
+    ) -> MutableMapping[str, t.Scalar]:
         """Build metadata for ACL parsing as a dictionary."""
-        result: MutableMapping[str, str | int | bool] = {
+        result: MutableMapping[str, t.Scalar] = {
             "quirk_type": quirk_type,
             "source_server": quirk_type,
         }

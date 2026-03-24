@@ -1002,7 +1002,7 @@ class FlextLdifModelsSettings:
         """
 
         migration_config: Annotated[
-            MutableMapping[str, str | int | bool] | None,
+            MutableMapping[str, t.Scalar] | None,
             Field(
                 description="Structured migration config with 6-file output and tracking",
             ),
@@ -1608,7 +1608,7 @@ class FlextLdifModelsSettings:
             Field(default=None, description="Jinja2 template for file headers"),
         ]
         header_data: Annotated[
-            MutableMapping[str, str | int | bool],
+            MutableMapping[str, t.Scalar],
             Field(default_factory=dict, description="Data to pass to header template"),
         ]
 

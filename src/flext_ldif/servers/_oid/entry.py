@@ -702,10 +702,10 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     def _extract_original_extensions(
         self,
         original_entry: m.Ldif.Entry,
-    ) -> MutableMapping[str, str | int | bool | MutableSequence[str]]:
+    ) -> MutableMapping[str, t.Scalar | MutableSequence[str]]:
         """Extract compatible extensions from original entry metadata."""
         original_extensions: MutableMapping[
-            str, str | int | bool | MutableSequence[str]
+            str, t.Scalar | MutableSequence[str]
         ] = {}
         if not (original_entry.metadata and original_entry.metadata.extensions):
             return original_extensions
