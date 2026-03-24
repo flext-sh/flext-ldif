@@ -351,7 +351,7 @@ class FlextLdifUtilitiesParser:
     def track_base64_attribute(attr_name: str, entry_dict: t.Ldif.RawEntryDict) -> None:
         """Track attribute that uses base64 encoding."""
         if "_base64_attrs" not in entry_dict:
-            entry_dict["_base64_attrs"] = set()
+            entry_dict["_base64_attrs"] = set[str]()
         if isinstance(entry_dict["_base64_attrs"], set):
             entry_dict["_base64_attrs"].add(attr_name)
 

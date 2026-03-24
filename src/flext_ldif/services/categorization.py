@@ -236,7 +236,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         }
         for category, entries in categories.items():
             if not entries:
-                filtered[category] = []
+                filtered[category] = list[m.Ldif.Entry]()
                 continue
             if category in filterable_categories:
                 entries_list: MutableSequence[m.Ldif.Entry] = []
@@ -287,12 +287,12 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
     ) -> r[m.Ldif.FlexibleCategories]:
         """Categorize entries into 6 categories."""
         categories = m.Ldif.FlexibleCategories()
-        categories[c.Ldif.Category.SCHEMA] = []
-        categories[c.Ldif.Category.HIERARCHY] = []
-        categories[c.Ldif.Category.USERS] = []
-        categories[c.Ldif.Category.GROUPS] = []
-        categories[c.Ldif.Category.ACL] = []
-        categories[c.Ldif.Category.REJECTED] = []
+        categories[c.Ldif.Category.SCHEMA] = list[m.Ldif.Entry]()
+        categories[c.Ldif.Category.HIERARCHY] = list[m.Ldif.Entry]()
+        categories[c.Ldif.Category.USERS] = list[m.Ldif.Entry]()
+        categories[c.Ldif.Category.GROUPS] = list[m.Ldif.Entry]()
+        categories[c.Ldif.Category.ACL] = list[m.Ldif.Entry]()
+        categories[c.Ldif.Category.REJECTED] = list[m.Ldif.Entry]()
 
         def categorize_single_entry(entry: m.Ldif.Entry) -> tuple[str, m.Ldif.Entry]:
             """Categorize single entry."""
@@ -397,12 +397,12 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
     def execute(self) -> r[m.Ldif.FlexibleCategories]:
         """Execute categorization pass (use individual methods for specific operations)."""
         categories = m.Ldif.FlexibleCategories()
-        categories[c.Ldif.Category.SCHEMA] = []
-        categories[c.Ldif.Category.HIERARCHY] = []
-        categories[c.Ldif.Category.USERS] = []
-        categories[c.Ldif.Category.GROUPS] = []
-        categories[c.Ldif.Category.ACL] = []
-        categories[c.Ldif.Category.REJECTED] = []
+        categories[c.Ldif.Category.SCHEMA] = list[m.Ldif.Entry]()
+        categories[c.Ldif.Category.HIERARCHY] = list[m.Ldif.Entry]()
+        categories[c.Ldif.Category.USERS] = list[m.Ldif.Entry]()
+        categories[c.Ldif.Category.GROUPS] = list[m.Ldif.Entry]()
+        categories[c.Ldif.Category.ACL] = list[m.Ldif.Entry]()
+        categories[c.Ldif.Category.REJECTED] = list[m.Ldif.Entry]()
         return r[m.Ldif.FlexibleCategories].ok(categories)
 
     def filter_by_base_dn(
@@ -413,12 +413,12 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         if not self._base_dn:
             return categories
         filtered = m.Ldif.FlexibleCategories()
-        filtered[c.Ldif.Category.SCHEMA] = []
-        filtered[c.Ldif.Category.HIERARCHY] = []
-        filtered[c.Ldif.Category.USERS] = []
-        filtered[c.Ldif.Category.GROUPS] = []
-        filtered[c.Ldif.Category.ACL] = []
-        filtered[c.Ldif.Category.REJECTED] = []
+        filtered[c.Ldif.Category.SCHEMA] = list[m.Ldif.Entry]()
+        filtered[c.Ldif.Category.HIERARCHY] = list[m.Ldif.Entry]()
+        filtered[c.Ldif.Category.USERS] = list[m.Ldif.Entry]()
+        filtered[c.Ldif.Category.GROUPS] = list[m.Ldif.Entry]()
+        filtered[c.Ldif.Category.ACL] = list[m.Ldif.Entry]()
+        filtered[c.Ldif.Category.REJECTED] = list[m.Ldif.Entry]()
         all_excluded_entries: MutableSequence[m.Ldif.Entry] = []
         for category, entries in categories.items():
             if not entries:

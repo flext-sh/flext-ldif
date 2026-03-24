@@ -195,7 +195,7 @@ class FlextLdifUtilitiesCollectionLdif:
         for item in items_list:
             k = key(item)
             if k not in result:
-                result[k] = []
+                result[k] = list[t.ContainerValue]()
             result[k].append(item)
         return result
 

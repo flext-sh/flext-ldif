@@ -1220,7 +1220,7 @@ class FlextLdifModelsDomainsEntries:
             """
             normalized = self._normalize_dn(dn)
             if normalized not in self._case_variants:
-                self._case_variants[normalized] = set()
+                self._case_variants[normalized] = set[str]()
             self._case_variants[normalized].add(dn)
             if normalized not in self._registry or force:
                 self._registry[normalized] = dn

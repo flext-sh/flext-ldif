@@ -1129,7 +1129,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             acl_attr_names_to_skip.add(acl_attr_name.lower())
             sort_key = original_acl_attr or acl_attr_name
             if sort_key not in acl_comments_dict:
-                acl_comments_dict[sort_key] = []
+                acl_comments_dict[sort_key] = list[str]()
             acl_values = self._normalize_acl_values(acl_values_raw)
             self._add_acl_value_comments(
                 acl_comments_dict[sort_key],
@@ -1158,7 +1158,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if is_skip_to_04 and attr_name.lower() in acl_attr_set:
                 acl_attr_names_to_skip.add(attr_name.lower())
                 if attr_name not in acl_comments_dict:
-                    acl_comments_dict[attr_name] = []
+                    acl_comments_dict[attr_name] = list[str]()
                 for acl_value in transformation.original_values:
                     acl_comments_dict[attr_name].extend([
                         f"# [REMOVED] {attr_name}: {acl_value}",
