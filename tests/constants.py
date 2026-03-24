@@ -1464,7 +1464,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     dn = str(data.get("dn", ""))
                     raw_attributes = data.get("attributes", {})
                     if not isinstance(raw_attributes, dict):
-                        attributes: dict[str, str | MutableSequence[str]] = {}
+                        attributes: MutableMapping[str, str | MutableSequence[str]] = {}
                     else:
                         attributes = {
                             str(k): (
@@ -1667,7 +1667,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     if not isinstance(attrs_raw, dict):
                         msg = "Entry data must include dict 'attributes'"
                         raise AssertionError(msg)
-                    normalized_attrs: dict[str, str | MutableSequence[str]] = {}
+                    normalized_attrs: MutableMapping[str, str | MutableSequence[str]] = {}
                     for attr_name_raw, attr_value_raw in attrs_raw.items():
                         if isinstance(attr_value_raw, str):
                             normalized_attrs[attr_name_raw] = attr_value_raw

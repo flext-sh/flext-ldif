@@ -27,37 +27,16 @@ if TYPE_CHECKING:
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdifModelsBases": ["flext_ldif._models.base", "FlextLdifModelsBases"],
-    "FlextLdifModelsCollections": [
-        "flext_ldif._models.collections",
-        "FlextLdifModelsCollections",
-    ],
-    "FlextLdifModelsConversions": [
-        "flext_ldif._models.conversion",
-        "FlextLdifModelsConversions",
-    ],
-    "FlextLdifModelsDomainSchema": [
-        "flext_ldif._models.domain_schema",
-        "FlextLdifModelsDomainSchema",
-    ],
+    "FlextLdifModelsCollections": ["flext_ldif._models.collections", "FlextLdifModelsCollections"],
+    "FlextLdifModelsConversions": ["flext_ldif._models.conversion", "FlextLdifModelsConversions"],
+    "FlextLdifModelsDomainSchema": ["flext_ldif._models.domain_schema", "FlextLdifModelsDomainSchema"],
     "FlextLdifModelsDomains": ["flext_ldif._models.domain", "FlextLdifModelsDomains"],
-    "FlextLdifModelsDomainsEntries": [
-        "flext_ldif._models.domain_entries",
-        "FlextLdifModelsDomainsEntries",
-    ],
+    "FlextLdifModelsDomainsEntries": ["flext_ldif._models.domain_entries", "FlextLdifModelsDomainsEntries"],
     "FlextLdifModelsEvents": ["flext_ldif._models.events", "FlextLdifModelsEvents"],
-    "FlextLdifModelsMetadata": [
-        "flext_ldif._models.metadata",
-        "FlextLdifModelsMetadata",
-    ],
-    "FlextLdifModelsProcessing": [
-        "flext_ldif._models.processing",
-        "FlextLdifModelsProcessing",
-    ],
+    "FlextLdifModelsMetadata": ["flext_ldif._models.metadata", "FlextLdifModelsMetadata"],
+    "FlextLdifModelsProcessing": ["flext_ldif._models.processing", "FlextLdifModelsProcessing"],
     "FlextLdifModelsResults": ["flext_ldif._models.results", "FlextLdifModelsResults"],
-    "FlextLdifModelsSettings": [
-        "flext_ldif._models.settings",
-        "FlextLdifModelsSettings",
-    ],
+    "FlextLdifModelsSettings": ["flext_ldif._models.settings", "FlextLdifModelsSettings"],
 }
 
 __all__ = [

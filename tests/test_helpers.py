@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from pathlib import Path
 from typing import TypeVar
 
@@ -614,7 +614,7 @@ class TestsFlextLdifFixtures(tt):
 
         """
         service = FlextLdifEntries()
-        attrs_typed: dict[str, str | MutableSequence[str]] = {
+        attrs_typed: MutableMapping[str, str | MutableSequence[str]] = {
             k: ([v] if isinstance(v, str) else list(v)) for k, v in attributes.items()
         }
         result = service.create_entry(dn=dn, attributes=attrs_typed)
