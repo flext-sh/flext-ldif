@@ -1,5 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Sequence, Mapping
+from collections.abc import Mapping
 
-type DnRefData = Mapping[str, Mapping[str, str] | Sequence[str] | str]
+from flext_ldif import t
+
+type DnRefData = Mapping[str, t.StrMapping | t.StrSequence | str]

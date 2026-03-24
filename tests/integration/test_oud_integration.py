@@ -14,13 +14,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 import re
 
 import pytest
 
-from flext_ldif import FlextLdif, u
+from flext_ldif import FlextLdif, t, u
 from tests import FlextLdifFixtures
 
 
@@ -152,7 +150,7 @@ class TestOudAclIntegration:
                     else aci_attr_values
                 )
             else:
-                aci_values: Sequence[str] = []
+                aci_values: t.StrSequence = []
             for aci in aci_values:
                 if isinstance(aci, str) and "\n" in aci:
                     has_multiline = True
@@ -207,7 +205,7 @@ class TestOudEntryIntegration:
                         oc_attr.values if hasattr(oc_attr, "values") else oc_attr
                     )
                 else:
-                    objectclasses: Sequence[str] = []
+                    objectclasses: t.StrSequence = []
             else:
                 objectclasses = getattr(
                     attrs_dict, "objectclass", getattr(attrs_dict, "objectClass", [])

@@ -19,7 +19,7 @@ from collections.abc import Mapping, Sequence
 
 from flext_core import r
 
-from flext_ldif import FlextLdif, m
+from flext_ldif import FlextLdif, m, t
 
 
 class DRYValidationAnalysis:
@@ -31,7 +31,7 @@ class DRYValidationAnalysis:
     ) -> r[m.Ldif.ValidationResult]:
         """DRY validation analysis: categorize errors and detect patterns."""
         if not validation_result.is_valid:
-            error_groups: Mapping[str, Sequence[str]] = {}
+            error_groups: Mapping[str, t.StrSequence] = {}
             for error in validation_result.errors:
                 category = getattr(error, "category", "unknown")
                 if category not in error_groups:

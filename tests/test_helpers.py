@@ -74,12 +74,12 @@ class TestsFlextLdifMatchers(tm):
         dn_contains: str | None = None,
         dn_starts: str | None = None,
         dn_ends: str | None = None,
-        has_attr: str | Sequence[str] | None = None,
-        not_has_attr: str | Sequence[str] | None = None,
-        attr_equals: Mapping[str, str | Sequence[str]] | None = None,
-        attr_contains: Mapping[str, str | Sequence[str]] | None = None,
-        has_oc: str | Sequence[str] | None = None,
-        not_has_oc: str | Sequence[str] | None = None,
+        has_attr: str | t.StrSequence | None = None,
+        not_has_attr: str | t.StrSequence | None = None,
+        attr_equals: Mapping[str, str | t.StrSequence] | None = None,
+        attr_contains: Mapping[str, str | t.StrSequence] | None = None,
+        has_oc: str | t.StrSequence | None = None,
+        not_has_oc: str | t.StrSequence | None = None,
         attr_count: int | None = None,
         attr_count_gt: int | None = None,
         attr_count_gte: int | None = None,
@@ -149,7 +149,7 @@ class TestsFlextLdifMatchers(tm):
             raise AssertionError(msg or "Entry has no 'attributes' attribute")
         attrs_obj = entry.attributes
         if attrs_obj is None:
-            attrs: Mapping[str, Sequence[str]] = {}
+            attrs: Mapping[str, t.StrSequence] = {}
         elif hasattr(attrs_obj, "attributes") and attrs_obj.attributes is not None:
             attrs = attrs_obj.attributes
         elif isinstance(attrs_obj, dict):
@@ -283,10 +283,10 @@ class TestsFlextLdifMatchers(tm):
         count_lt: int | None = None,
         count_lte: int | None = None,
         empty: bool | None = None,
-        all_have_attr: str | Sequence[str] | None = None,
-        all_have_oc: str | Sequence[str] | None = None,
-        any_has_attr: str | Sequence[str] | None = None,
-        any_has_oc: str | Sequence[str] | None = None,
+        all_have_attr: str | t.StrSequence | None = None,
+        all_have_oc: str | t.StrSequence | None = None,
+        any_has_attr: str | t.StrSequence | None = None,
+        any_has_oc: str | t.StrSequence | None = None,
         at_index: Mapping[int, t.ContainerMapping] | None = None,
         msg: str | None = None,
     ) -> Sequence[m.Ldif.Entry]:
@@ -409,7 +409,7 @@ class TestsFlextLdifMatchers(tm):
                                 if isinstance(item, str)
                             ]
                         else:
-                            objectclasses: Sequence[str] = []
+                            objectclasses: t.StrSequence = []
                         if all(oc in objectclasses for oc in oc_list):
                             found = True
                             break
@@ -429,7 +429,7 @@ class TestsFlextLdifMatchers(tm):
                     dn_value = raw_dn if isinstance(raw_dn, str) else None
                     raw_has_attr = validation_params.get("has_attr")
                     if isinstance(raw_has_attr, str):
-                        has_attr_value: str | Sequence[str] | None = raw_has_attr
+                        has_attr_value: str | t.StrSequence | None = raw_has_attr
                     elif isinstance(raw_has_attr, list) and all(
                         isinstance(item, str) for item in raw_has_attr
                     ):
@@ -438,7 +438,7 @@ class TestsFlextLdifMatchers(tm):
                         has_attr_value = None
                     raw_not_has_attr = validation_params.get("not_has_attr")
                     if isinstance(raw_not_has_attr, str):
-                        not_has_attr_value: str | Sequence[str] | None = (
+                        not_has_attr_value: str | t.StrSequence | None = (
                             raw_not_has_attr
                         )
                     elif isinstance(raw_not_has_attr, list) and all(
@@ -467,12 +467,12 @@ class TestsFlextLdifMatchers(tm):
         dn_contains: str | None = None,
         dn_starts: str | None = None,
         dn_ends: str | None = None,
-        has_attr: str | Sequence[str] | None = None,
-        not_has_attr: str | Sequence[str] | None = None,
-        attr_equals: Mapping[str, str | Sequence[str]] | None = None,
-        attr_contains: Mapping[str, str | Sequence[str]] | None = None,
-        has_oc: str | Sequence[str] | None = None,
-        not_has_oc: str | Sequence[str] | None = None,
+        has_attr: str | t.StrSequence | None = None,
+        not_has_attr: str | t.StrSequence | None = None,
+        attr_equals: Mapping[str, str | t.StrSequence] | None = None,
+        attr_contains: Mapping[str, str | t.StrSequence] | None = None,
+        has_oc: str | t.StrSequence | None = None,
+        not_has_oc: str | t.StrSequence | None = None,
         attr_count: int | None = None,
         attr_count_gt: int | None = None,
         attr_count_gte: int | None = None,
@@ -532,10 +532,10 @@ class TestsFlextLdifMatchers(tm):
         count_lt: int | None = None,
         count_lte: int | None = None,
         empty: bool | None = None,
-        all_have_attr: str | Sequence[str] | None = None,
-        all_have_oc: str | Sequence[str] | None = None,
-        any_has_attr: str | Sequence[str] | None = None,
-        any_has_oc: str | Sequence[str] | None = None,
+        all_have_attr: str | t.StrSequence | None = None,
+        all_have_oc: str | t.StrSequence | None = None,
+        any_has_attr: str | t.StrSequence | None = None,
+        any_has_oc: str | t.StrSequence | None = None,
         at_index: Mapping[int, t.ContainerMapping] | None = None,
     ) -> Sequence[m.Ldif.Entry]:
         """Assert r success and validate entries list.
@@ -641,7 +641,7 @@ class TestsFlextLdifFixtures(tt):
     __test__ = False
 
     @classmethod
-    def create_entry(cls, dn: str, **attributes: str | Sequence[str]) -> m.Ldif.Entry:
+    def create_entry(cls, dn: str, **attributes: str | t.StrSequence) -> m.Ldif.Entry:
         """Create test entry from DN and attributes.
 
         Args:
@@ -653,7 +653,7 @@ class TestsFlextLdifFixtures(tt):
 
         """
         service = FlextLdifEntries()
-        attrs_dict: Mapping[str, str | Sequence[str]] = {
+        attrs_dict: Mapping[str, str | t.StrSequence] = {
             k: [v] if isinstance(v, str) else v for k, v in attributes.items()
         }
         result = service.create_entry(dn=dn, attributes=attrs_dict)
@@ -664,7 +664,7 @@ class TestsFlextLdifFixtures(tt):
 
     @classmethod
     def create_entries(
-        cls, entries_data: Sequence[tuple[str, Mapping[str, str | Sequence[str]]]]
+        cls, entries_data: Sequence[tuple[str, Mapping[str, str | t.StrSequence]]]
     ) -> Sequence[m.Ldif.Entry]:
         """Create multiple test entries.
 

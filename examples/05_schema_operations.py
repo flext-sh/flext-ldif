@@ -27,7 +27,7 @@ from flext_ldif import FlextLdif, FlextLdifModels, m, t, u
 
 class _InvalidScenario(TypedDict):
     dn: str
-    attributes: Mapping[str, Sequence[str]]
+    attributes: Mapping[str, t.StrSequence]
 
 
 def intelligent_schema_building() -> r[Sequence[m.Ldif.Entry]]:
@@ -76,7 +76,7 @@ def intelligent_schema_building() -> r[Sequence[m.Ldif.Entry]]:
     ]
 
     def create_attr_entry(
-        attr_def: Mapping[str, str | bool | Sequence[str]],
+        attr_def: Mapping[str, str | bool | t.StrSequence],
     ) -> m.Ldif.Entry | None:
         """Create attribute type entry."""
         attr_dn = f"cn={attr_def['name']},cn=schema"
@@ -122,11 +122,11 @@ def intelligent_schema_building() -> r[Sequence[m.Ldif.Entry]]:
     ]
 
     def create_oc_entry(
-        oc_def: Mapping[str, str | Sequence[str]],
+        oc_def: Mapping[str, str | t.StrSequence],
     ) -> m.Ldif.Entry | None:
         """Create t.NormalizedValue class entry."""
         oc_dn = f"cn={oc_def['name']},cn=schema"
-        attrs: Mapping[str, Sequence[str]] = {
+        attrs: Mapping[str, t.StrSequence] = {
             "objectClass": ["top", "ldapSubentry", "objectClassDescription"],
             "cn": [str(oc_def["name"])],
             "description": [str(oc_def["description"])],
@@ -291,7 +291,7 @@ def schema_migration_pipeline() -> r[t.ContainerMapping]:
 
     def migrate_entry(ldif_entry: m.Ldif.Entry) -> m.Ldif.Entry | None:
         """Migrate legacy entry to modern schema."""
-        attrs_dict: Mapping[str, str | Sequence[str]] = {}
+        attrs_dict: Mapping[str, str | t.StrSequence] = {}
         if (
             hasattr(ldif_entry, "attributes")
             and ldif_entry.attributes is not None
@@ -388,7 +388,7 @@ def batch_schema_operations() -> r[t.ContainerMapping]:
     ]
 
     def create_oc_def(
-        oc_def: tuple[str, str, str, Sequence[str], Sequence[str]],
+        oc_def: tuple[str, str, str, t.StrSequence, t.StrSequence],
     ) -> m.Ldif.Entry | None:
         """Create t.NormalizedValue class definition entry."""
         name, desc, sup, must_attrs, may_attrs = oc_def

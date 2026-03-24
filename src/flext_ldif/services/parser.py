@@ -8,7 +8,7 @@ from typing import override
 
 from pydantic import PrivateAttr
 
-from flext_ldif import FlextLdifServer, m, r, s, u
+from flext_ldif import FlextLdifServer, m, r, s, t, u
 
 
 class FlextLdifParser(s[m.Ldif.ParseResponse]):
@@ -45,14 +45,14 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
 
     def parse_ldap3_results(
         self,
-        results: Sequence[tuple[str, Mapping[str, Sequence[str]]]],
+        results: Sequence[tuple[str, Mapping[str, t.StrSequence]]],
         server_type: str | None = None,
     ) -> r[m.Ldif.ParseResponse]:
         """Parse ldap3 search results by converting them to LDIF text first."""
         ldif_lines: list[str] = []
 
         def convert_entry(
-            dn_attrs: tuple[str, Mapping[str, Sequence[str]]],
+            dn_attrs: tuple[str, Mapping[str, t.StrSequence]],
         ) -> list[str]:
             """Convert single entry to LDIF lines."""
             dn, attrs = dn_attrs

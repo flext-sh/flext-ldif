@@ -8,10 +8,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
-from collections.abc import Sequence, Mapping
+from collections.abc import Mapping
 from pathlib import Path
 
 from pydantic import BaseModel, Field
+
+from flext_ldif import t
 
 
 class LdifSample(BaseModel):
@@ -121,7 +123,7 @@ class LdifTestData:
     @staticmethod
     def large_dataset(num_entries: int = 100) -> LdifSample:
         """Generate large LDIF dataset for performance testing."""
-        entries: Sequence[str] = []
+        entries: t.StrSequence = []
         for i in range(num_entries):
             entry = f"dn: uid=user{i:04d},ou=people,dc=example,dc=com\nobjectClass: inetOrgPerson\nobjectClass: organizationalPerson\nobjectClass: person\nobjectClass: top\nuid: user{i:04d}\ncn: User {i:04d}\nsn: User\ngivenName: Test\nmail: user{i:04d}@example.com\nemployeeNumber: E{i:06d}\n\n"
             entries.append(entry)

@@ -17,7 +17,7 @@ from __future__ import annotations
 import contextlib
 import fcntl
 import time
-from collections.abc import Mapping, Callable, Generator, Sequence
+from collections.abc import Callable, Generator, Mapping, Sequence
 from pathlib import Path
 
 import pytest

@@ -18,13 +18,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence, Mapping
 from typing import Final
 
 import pytest
 from flext_core import FlextLogger
 
-from flext_ldif import FlextLdif, FlextLdifSettings, c
+from flext_ldif import FlextLdif, FlextLdifSettings, c, t
 
 logger = FlextLogger(__name__)
 
@@ -32,7 +31,7 @@ logger = FlextLogger(__name__)
 class ConfigTestData:
     """Test data constants and mappings for config integration tests."""
 
-    SERVER_TYPES: Final[Sequence[str]] = ["oid", "oud", "openldap", "rfc"]
+    SERVER_TYPES: Final[t.StrSequence] = ["oid", "oud", "openldap", "rfc"]
     BASIC_ENTRY: Final[str] = (
         "dn: cn=Test,dc=example,dc=com\ncn: Test\nobjectClass: person\n"
     )
@@ -42,7 +41,7 @@ class ConfigTestData:
     FILTER_CONTENT: Final[str] = (
         "dn: cn=Person1,dc=example,dc=com\ncn: Person1\nobjectClass: person\n\ndn: cn=Group1,dc=example,dc=com\ncn: Group1\nobjectClass: groupOfNames\n"
     )
-    SERVER_CONTENT: Final[Mapping[str, str]] = {
+    SERVER_CONTENT: Final[t.StrMapping] = {
         "oid": "dn: cn=OID Test,dc=example,dc=com\ncn: OID Test\nobjectClass: person\n",
         "oud": "dn: cn=OUD Test,dc=example,dc=com\ncn: OUD Test\nobjectClass: person\n",
         "openldap": "dn: cn=OpenLDAP Test,dc=example,dc=com\ncn: OpenLDAP Test\nobjectClass: person\n",

@@ -18,6 +18,7 @@ from flext_ldif import (
     FlextLdifServersOid,
     FlextLdifServersOud,
     FlextLdifServersRfc,
+    t,
 )
 from tests import c, s
 
@@ -137,8 +138,8 @@ class TestQuirksWithRealLdifFixtures:
     def _sample_ldif_records(ldif_content: str, max_records: int = 25) -> str:
         """Return first LDIF records to keep fixture parsing lightweight."""
         lines = ldif_content.splitlines()
-        sampled: Sequence[str] = []
-        current_record: Sequence[str] = []
+        sampled: t.StrSequence = []
+        current_record: t.StrSequence = []
         record_count = 0
 
         def flush_record() -> None:

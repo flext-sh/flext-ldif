@@ -6,7 +6,7 @@ eDirectory-specific attributes, t.NormalizedValue classes, and entries in LDIF f
 
 from __future__ import annotations
 
-from collections.abc import Sequence, Mapping
+from collections.abc import Mapping, Sequence
 from enum import StrEnum, unique
 from typing import ClassVar
 

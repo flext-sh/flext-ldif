@@ -9,6 +9,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping, Sequence
 
+from flext_ldif import t
 from tests import m
 
 
@@ -18,7 +19,7 @@ class FlextLdifTestFactory:
     @staticmethod
     def create_real_entry(
         dn: str | None = None,
-        attributes: Mapping[str, Sequence[str]] | None = None,
+        attributes: Mapping[str, t.StrSequence] | None = None,
         server_type: str = "generic",
     ) -> m.Ldif.Entry:
         """Create a real Entry model with valid data."""
@@ -46,7 +47,7 @@ class FlextLdifTestFactory:
         entries_count: int = 3, *, include_schema: bool = False
     ) -> str:
         """Create real LDIF content for testing."""
-        lines: Sequence[str] = []
+        lines: t.StrSequence = []
         if include_schema:
             lines.extend([
                 "dn: cn=schema",

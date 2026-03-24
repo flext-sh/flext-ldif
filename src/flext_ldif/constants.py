@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifTypes as t
-
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import ClassVar, Final, Literal
 
 from flext_core import FlextConstants
+
+from flext_ldif import FlextLdifTypes as t
 
 
 class FlextLdifConstants(FlextConstants):

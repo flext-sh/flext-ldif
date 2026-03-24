@@ -23,6 +23,7 @@ from flext_ldif import (
     FlextLdifServersOud,
     m,
     p,
+    t,
 )
 
 
@@ -292,7 +293,7 @@ class TestQuirksConversionMatrixFacade:
             assert parse_result.is_success, f"Parse failed: {parse_result.error}"
             oud_attr_models.append(parse_result.value)
         assert len(oud_attr_models) == 2
-        oid_attr_strings: Sequence[str] = []
+        oid_attr_strings: t.StrSequence = []
         for oud_model in oud_attr_models:
             write_result = oud_quirk.schema_quirk.write(oud_model)
             assert write_result.is_success, f"Write failed: {write_result.error}"

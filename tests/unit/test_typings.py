@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import ast
 import inspect
-from collections.abc import Sequence, Mapping
+from collections.abc import Mapping
 from pathlib import Path
 from typing import ClassVar, cast
 
@@ -78,7 +78,7 @@ class TestFlextLdifTypesStructure:
 class TestsFlextLdifCommonDictionaryTypes(s):
     """Test common dictionary type definitions with REAL data."""
 
-    SAMPLE_ATTR_DICT: ClassVar[Mapping[str, Sequence[str]]] = {
+    SAMPLE_ATTR_DICT: ClassVar[Mapping[str, t.StrSequence]] = {
         c.Names.CN: ["John Doe"],
         c.Names.SN: ["Doe"],
         c.Names.MAIL: ["john@example.com", "john.doe@example.com"],
@@ -126,25 +126,25 @@ class TestModelsNamespace:
 
     def test_entry_attributes_dict_with_real_ldif_data(self) -> None:
         """EntryAttributesDict must work with real LDIF attribute data."""
-        attrs: Mapping[str, t.Scalar | Sequence[str]] = {
+        attrs: Mapping[str, t.Scalar | t.StrSequence] = {
             c.Names.CN: ["John Doe"],
             c.Names.OBJECTCLASS: [c.Names.INETORGPERSON, c.Names.PERSON, c.Names.TOP],
             c.Names.SN: "Doe",
             c.Names.MAIL: ["john@example.com"],
             c.Names.UID: "jdoe",
         }
-        cn_value: str | Sequence[str] | None = cast(
-            "str | Sequence[str] | None", attrs.get(c.Names.CN)
+        cn_value: str | t.StrSequence | None = cast(
+            "str | t.StrSequence | None", attrs.get(c.Names.CN)
         )
         tm.that(cn_value, eq=["John Doe"])
-        objectclass_value: str | Sequence[str] | None = cast(
-            "str | Sequence[str] | None", attrs.get(c.Names.OBJECTCLASS)
+        objectclass_value: str | t.StrSequence | None = cast(
+            "str | t.StrSequence | None", attrs.get(c.Names.OBJECTCLASS)
         )
         tm.that(objectclass_value, is_=list)
 
     def test_attributes_data_with_real_schema(self) -> None:
         """AttributesData must support real schema attribute patterns."""
-        data: Mapping[str, Mapping[str, t.Scalar | Sequence[str]]] = {
+        data: Mapping[str, Mapping[str, t.Scalar | t.StrSequence]] = {
             c.Names.CN: {
                 "oid": c.OIDs.CN,
                 "syntax": "Directory String",
@@ -157,16 +157,16 @@ class TestModelsNamespace:
                 "single_valued": True,
             },
         }
-        cn_oid: t.Scalar | Sequence[str] | None = data[c.Names.CN].get("oid")
+        cn_oid: t.Scalar | t.StrSequence | None = data[c.Names.CN].get("oid")
         tm.that(cn_oid, eq=c.OIDs.CN)
-        uid_single_valued: t.Scalar | Sequence[str] | None = data[c.Names.UID].get(
+        uid_single_valued: t.Scalar | t.StrSequence | None = data[c.Names.UID].get(
             "single_valued"
         )
         tm.that(uid_single_valued is True, eq=True)
 
     def test_objectclasses_data_with_real_schema(self) -> None:
         """ObjectClassesData must support real objectClass patterns."""
-        data: Mapping[str, Mapping[str, t.Scalar | Sequence[str]]] = {
+        data: Mapping[str, Mapping[str, t.Scalar | t.StrSequence]] = {
             c.Names.INETORGPERSON: {
                 "oid": "2.16.840.1.113730.3.2.2",
                 "kind": "STRUCTURAL",
@@ -175,11 +175,11 @@ class TestModelsNamespace:
                 "may": [c.Names.MAIL, "mobile"],
             }
         }
-        oid_value: t.Scalar | Sequence[str] | None = data[c.Names.INETORGPERSON].get(
+        oid_value: t.Scalar | t.StrSequence | None = data[c.Names.INETORGPERSON].get(
             "oid"
         )
         tm.that(oid_value, eq="2.16.840.1.113730.3.2.2")
-        may_values: t.Scalar | Sequence[str] | None = data[c.Names.INETORGPERSON].get(
+        may_values: t.Scalar | t.StrSequence | None = data[c.Names.INETORGPERSON].get(
             "may"
         )
         tm.that(may_values, none=False)
@@ -188,7 +188,7 @@ class TestModelsNamespace:
 
     def test_extensions_with_reals(self) -> None:
         """QuirkExtensions must support real quirk metadata."""
-        extensions: Mapping[str, t.Scalar] = {
+        extensions: t.ScalarMapping = {
             "supports_dn_case_registry": True,
             "priority": 10,
             "server_type": "oud",
@@ -200,7 +200,7 @@ class TestModelsNamespace:
 class TestRemovalOfOverEngineering:
     """Test that over-engineered types were properly removed."""
 
-    REMOVED_NAMESPACES: ClassVar[Sequence[str]] = [
+    REMOVED_NAMESPACES: ClassVar[t.StrSequence] = [
         "Parser",
         "Writer",
         "LdifValidation",
@@ -214,13 +214,13 @@ class TestRemovalOfOverEngineering:
         "LdifProject",
         "Project",
     ]
-    REMOVED_COMMON_DICT: ClassVar[Sequence[str]] = [
+    REMOVED_COMMON_DICT: ClassVar[t.StrSequence] = [
         "ChangeDict",
         "CategorizedDict",
         "TreeDict",
         "HierarchyDict",
     ]
-    REMOVED_ENTRY: ClassVar[Sequence[str]] = [
+    REMOVED_ENTRY: ClassVar[t.StrSequence] = [
         "EntryConfiguration",
         "EntryValidation",
         "EntryTransformation",
@@ -298,8 +298,8 @@ class TestIntegrationWithLdifFixtures:
 
     def test_models_namespace_with_schema_data(self) -> None:
         """Verify Models namespace types work with schema data."""
-        schema_attrs: Mapping[str, Mapping[str, t.Scalar | Sequence[str]]] = {
+        schema_attrs: Mapping[str, Mapping[str, t.Scalar | t.StrSequence]] = {
             c.Names.CN: {"oid": c.OIDs.CN, "syntax": "Directory String"}
         }
-        cn_oid: t.Scalar | Sequence[str] | None = schema_attrs[c.Names.CN].get("oid")
+        cn_oid: t.Scalar | t.StrSequence | None = schema_attrs[c.Names.CN].get("oid")
         tm.that(cn_oid, eq=c.OIDs.CN)
