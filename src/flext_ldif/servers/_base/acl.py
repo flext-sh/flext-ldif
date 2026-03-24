@@ -168,8 +168,7 @@ class FlextLdifServersBaseSchemaAcl(
         )
         return r[str].ok(formatted_value)
 
-    @override
-    def parse(self, value: str) -> r[m.Ldif.Acl]:
+    def parse_quirk(self, value: str) -> r[m.Ldif.Acl]:
         """Parse ACL line to Acl model."""
         return self._parse_acl(value)
 
@@ -212,7 +211,7 @@ class FlextLdifServersBaseSchemaAcl(
 
     def _execute_acl_parse(self, data: str) -> r[m.Ldif.Acl | str]:
         """Execute ACL parse operation."""
-        parse_result = self.parse(data)
+        parse_result = self.parse_quirk(data)
         if parse_result.is_success:
             return r[m.Ldif.Acl | str].ok(parse_result.value)
         return r[m.Ldif.Acl | str].fail(parse_result.error or "Parse failed")

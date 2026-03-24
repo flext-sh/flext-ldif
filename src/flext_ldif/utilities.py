@@ -9,8 +9,6 @@ from typing import ClassVar, override
 from flext_core import FlextUtilities, r
 
 from flext_ldif import (
-    DnOps,
-    EntryOps,
     FlextLdifUtilitiesACL,
     FlextLdifUtilitiesAttribute,
     FlextLdifUtilitiesCollectionLdif,
@@ -20,6 +18,7 @@ from flext_ldif import (
     FlextLdifUtilitiesDN,
     FlextLdifUtilitiesEntry,
     FlextLdifUtilitiesEvents,
+    FlextLdifUtilitiesFluent,
     FlextLdifUtilitiesMetadata,
     FlextLdifUtilitiesNormalization,
     FlextLdifUtilitiesObjectClass,
@@ -38,11 +37,14 @@ from flext_ldif import (
     t,
 )
 
+DnOps = FlextLdifUtilitiesFluent.DnOps
+EntryOps = FlextLdifUtilitiesFluent.EntryOps
+
 
 class FlextLdifUtilities(FlextUtilities):
     """FLEXT LDIF Utilities - Centralized helpers for LDIF operations."""
 
-    class Ldif(
+    class Ldif(  # pyright: ignore[reportIncompatibleMethodOverride]
         FlextLdifUtilitiesDispatch,
         FlextLdifUtilitiesProcessing,
         FlextLdifUtilitiesCollectionLdif,

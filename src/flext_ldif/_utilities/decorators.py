@@ -6,7 +6,7 @@ import struct
 from collections.abc import Callable, MutableMapping
 from datetime import UTC, datetime
 from functools import wraps
-from typing import TypeIs, TypeVar
+from typing import TypeVar
 
 from flext_core import FlextLogger, r
 
@@ -38,9 +38,7 @@ class FlextLdifUtilitiesDecorators:
     @staticmethod
     def _is_metadata_attachable(
         obj: t.NormalizedValue,
-    ) -> TypeIs[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-    ]:
+    ) -> bool:
         """Type guard to check if t.NormalizedValue supports metadata attachment."""
         return isinstance(
             obj,
@@ -91,7 +89,7 @@ class FlextLdifUtilitiesDecorators:
             UnicodeDecodeError,
             struct.error,
         ) as e:
-            logger.debug("Failed to attach metadata: %s", e)
+            logger.debug("Failed to attach metadata: %s", str(e))  # noqa: RUF065
 
     @staticmethod
     def _get_server_type_from_class(obj: t.NormalizedValue) -> str | None:

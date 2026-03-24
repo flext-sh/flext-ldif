@@ -40,10 +40,11 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
                 return r[str].ok(dn_text)
             case list() as dn_list:
                 return r[str].ok(dn_list[0] if dn_list else "")
-        return r[str].fail("Dict entry has unsupported 'dn' value type")
+            case _:
+                return r[str].fail("Dict entry has unsupported 'dn' value type")
 
     @staticmethod
-    def _extract_dn_from_object(entry: t.NormalizedValue) -> r[str]:
+    def _extract_dn_from_object(entry: t.NormalizedValue | m.Ldif.Entry) -> r[str]:
         dn_value = getattr(entry, "dn", None)
         if dn_value is None:
             return r[str].fail("Entry missing DN (dn is None)")
@@ -102,7 +103,8 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
                 return r[MutableSequence[str]].ok(values)
             case tuple() | set() | frozenset() as values:
                 return r[MutableSequence[str]].ok(list(values))
-        return r[MutableSequence[str]].fail("Unsupported attribute input type")
+            case _:
+                return r[MutableSequence[str]].fail("Unsupported attribute input type")
 
     @staticmethod
     def get_entry_attribute(
@@ -168,7 +170,8 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
                 return FlextLdifEntries._normalize_string_value(value_text)
             case list() as value_list:
                 return FlextLdifEntries._normalize_list_value(value_list)
-        return r[str].fail("Unsupported attribute value type")
+            case _:
+                return r[str].fail("Unsupported attribute value type")
 
     @staticmethod
     def remove_attributes(
@@ -268,8 +271,7 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
             results.append(result.value)
         return r[MutableSequence[m.Ldif.Entry]].ok(results)
 
-    @override
-    def build(self) -> MutableSequence[m.Ldif.Entry]:
+    def build_entries(self) -> MutableSequence[m.Ldif.Entry]:
         """Execute and return processed entries or raise on failure."""
         result = self.execute()
         if result.is_failure:

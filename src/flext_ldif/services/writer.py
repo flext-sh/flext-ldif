@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from contextlib import suppress
 from pathlib import Path
 from typing import override
@@ -67,7 +67,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
     @override
     def execute(self, params: t.ValueOrModel | None = None) -> r[m.Ldif.WriteResponse]:
         """Execute write operation with parameters."""
-        params_mapping: MutableMapping[str, t.GeneralValueType] = {}
+        params_mapping: MutableMapping[str, t.NormalizedValue] = {}
         if isinstance(params, Mapping):
             params_mapping = {str(k): v for k, v in params.items()}
         params_data = params_mapping
@@ -75,7 +75,10 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
         entries: MutableSequence[m.Ldif.Entry] = []
         entry_candidates: tuple[t.NormalizedValue, ...] = ()
         with suppress(Exception):
-            entry_candidates = tuple(t.ObjectList(entries_raw).root)
+            if isinstance(entries_raw, Sequence) and not isinstance(
+                entries_raw, str | bytes
+            ):
+                entry_candidates = tuple(entries_raw)
         for entry_candidate in entry_candidates:
             validated_entry: m.Ldif.Entry | None = None
             with suppress(Exception):

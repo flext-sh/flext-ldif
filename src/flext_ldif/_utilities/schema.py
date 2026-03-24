@@ -174,7 +174,7 @@ class FlextLdifUtilitiesSchema:
                 struct.error,
             ) as exc:
                 logger.debug(
-                    "SchemaAttribute cast failed after transformation: %s", exc
+                    "SchemaAttribute cast failed after transformation: %s", str(exc)
                 )
             try:
                 current = m.Ldif.SchemaObjectClass.model_validate(
@@ -361,7 +361,7 @@ class FlextLdifUtilitiesSchema:
                 continue
             if FlextLdifUtilitiesSchema._is_object_mapping(raw_value):
                 converted[key] = FlextLdifUtilitiesSchema._convert_metadata_value(
-                    raw_value,
+                    dict(raw_value),
                 )
                 continue
             converted[key] = FlextLdifUtilitiesSchema._convert_metadata_value(
@@ -374,13 +374,14 @@ class FlextLdifUtilitiesSchema:
         value: t.Scalar
         | datetime
         | t.MutableContainerList
-        | MutableMapping[t.NormalizedValue, t.NormalizedValue],
+        | MutableMapping[t.NormalizedValue, t.NormalizedValue]
+        | Mapping[str, t.NormalizedValue],
     ) -> (
         t.Scalar
         | MutableSequence[str]
         | MutableMapping[str, t.Scalar | MutableSequence[str]]
     ):
-        if u.is_primitive(value):
+        if isinstance(value, t.SCALAR_TYPES):
             return value
         if isinstance(value, datetime):
             return value.isoformat()
@@ -429,7 +430,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _is_object_mapping(
         value: t.NormalizedValue,
-    ) -> TypeIs[MutableMapping[t.NormalizedValue, t.NormalizedValue]]:
+    ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
         return isinstance(value, Mapping)
 
     @staticmethod
@@ -634,7 +635,7 @@ class FlextLdifUtilitiesSchema:
                         UnicodeDecodeError,
                         struct.error,
                     ) as exc:
-                        logger.debug("Schema line item validation failed: %s", exc)
+                        logger.debug("Schema line item validation failed: %s", str(exc))  # noqa: RUF065
                         continue
         return items
 
@@ -697,8 +698,7 @@ class FlextLdifUtilitiesSchema:
             struct.error,
         ) as exc:
             logger.debug(
-                "SchemaAttribute validation failed while returning result: %s",
-                exc,
+                "SchemaAttribute validation failed while returning result: %s", str(exc)
             )
         try:
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(
@@ -814,8 +814,7 @@ class FlextLdifUtilitiesSchema:
             struct.error,
         ) as exc:
             logger.debug(
-                "SchemaAttribute validation failed after transformation: %s",
-                exc,
+                "SchemaAttribute validation failed after transformation: %s", str(exc)
             )
         try:
             _ = m.Ldif.SchemaObjectClass.model_validate(schema_obj)
@@ -1050,7 +1049,7 @@ class FlextLdifUtilitiesSchema:
             UnicodeDecodeError,
             struct.error,
         ) as exc:
-            logger.debug("SchemaAttribute model validation did not match: %s", exc)
+            logger.debug("SchemaAttribute model validation did not match: %s", str(exc))  # noqa: RUF065
         try:
             _ = m.Ldif.SchemaObjectClass.model_validate(definition)
             return "objectclass"
@@ -1061,7 +1060,9 @@ class FlextLdifUtilitiesSchema:
             UnicodeDecodeError,
             struct.error,
         ) as exc:
-            logger.debug("SchemaObjectClass model validation did not match: %s", exc)
+            logger.debug(
+                "SchemaObjectClass model validation did not match: %s", str(exc)
+            )
         definition_str = str(definition)
         definition_lower = definition_str.lower()
         objectclass_only_keywords = [

@@ -4,8 +4,14 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_ldif import FlextLdifTransformer, Normalize, Pipeline, c, m, r
-
+from flext_ldif import (
+    FlextLdifTransformer,
+    FlextLdifUtilitiesPipeline,
+    FlextLdifUtilitiesTransformers,
+    c,
+    m,
+    r,
+)
 
 class FlextLdifProcessingPipeline:
     """Full processing pipeline with configuration."""
@@ -29,9 +35,9 @@ class FlextLdifProcessingPipeline:
         """Execute the processing pipeline."""
         return self._pipeline.execute(entries)
 
-    def _build_pipeline(self) -> Pipeline:
+    def _build_pipeline(self) -> FlextLdifUtilitiesPipeline.Pipeline:
         """Build the internal pipeline based on configuration."""
-        pipeline = Pipeline()
+        pipeline = FlextLdifUtilitiesPipeline.Pipeline()
         if self._config.normalize_dns and self._config.process_config is not None:
             dn_config = (
                 self._config.process_config.dn_config or m.Ldif.DnNormalizationConfig()
@@ -41,7 +47,7 @@ class FlextLdifProcessingPipeline:
             case_enum = c.Ldif.CaseFoldOption(case_fold_value)
             spaces_enum = c.Ldif.SpaceHandlingOption(space_handling_value)
             pipeline.add(
-                Normalize.dn(
+                FlextLdifUtilitiesTransformers.Normalize.dn(
                     case=case_enum,
                     spaces=spaces_enum,
                     validate=dn_config.validate_before,

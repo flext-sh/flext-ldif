@@ -1114,7 +1114,7 @@ class FlextLdifModelsSettings:
             str,
             StringConstraints(min_length=1, max_length=50, pattern="^[A-Za-z0-9._-]+$"),
         ]
-        allowed_encodings: Annotated[MutableSequence[str]]
+        allowed_encodings: Annotated[MutableSequence[str], Field()]
 
     class DnCaseRules(FlextModels.Value):
         """Generic DN case rules - server classes provide values."""

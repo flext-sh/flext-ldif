@@ -163,7 +163,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                     extensions.get("target_permissions") if extensions else None
                 )
             if isinstance(target_perms_dict_raw, Mapping):
-                target_perms_dict = target_perms_dict_raw
+                target_perms_dict = {
+                    str(k): v for k, v in target_perms_dict_raw.items()
+                }
         if target_perms_dict:
             perms_data: t.MutableContainerMapping = {}
             for key, val in target_perms_dict.items():
@@ -345,7 +347,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Parse and add accumulated ACI to ACL list."""
         if current_aci:
             aci_text = "\n".join(current_aci)
-            result = self.parse(aci_text)
+            result = self.parse_quirk(aci_text)
             if result.is_success:
                 acls.append(result.value)
 

@@ -33,7 +33,7 @@ class TestRfcParserRealFixtures:
         if not entries_file.exists():
             pytest.skip(f"Fixture not found: {entries_file}")
         parser = FlextLdifParser()
-        parse_result = parser.parse(entries_file)
+        parse_result = parser.parse_source(entries_file)
         assert parse_result.is_success
         parse_response = parse_result.value
         typed_entries = [

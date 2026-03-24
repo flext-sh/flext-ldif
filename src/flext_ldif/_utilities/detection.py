@@ -8,7 +8,7 @@ from typing import TypeIs
 
 from flext_core import u
 
-from flext_ldif import m, p, t
+from flext_ldif import m, p
 
 
 class FlextLdifUtilitiesDetection:
@@ -46,18 +46,15 @@ class FlextLdifUtilitiesDetection:
                     and getattr(cls, "Constants", None) is not None
                     and (not u.is_dict_like(getattr(cls, "Constants", None)))
                 ):
-                    constants_obj: t.NormalizedValue | None = getattr(
-                        cls,
-                        "Constants",
-                        None,
-                    )
-                    if not isinstance(constants_obj, type):
+                    constants_raw = getattr(cls, "Constants", None)
+                    if not isinstance(constants_raw, type):
                         continue
+                    constants_cls: type = constants_raw
                     if FlextLdifUtilitiesDetection._is_server_constants_class(
-                        constants_obj,
+                        constants_cls,
                         required_attr,
                     ):
-                        return constants_obj
+                        return constants_cls
             return None
 
     class PatternDetectionMixin(BaseDetectionMixin):

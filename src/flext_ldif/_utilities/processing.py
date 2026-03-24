@@ -12,9 +12,9 @@ from flext_core import FlextLogger, FlextUtilities, r
 from flext_ldif import (
     FlextLdifUtilitiesEntry,
     FlextLdifUtilitiesFilters,
+    FlextLdifUtilitiesPipeline,
     FlextLdifUtilitiesResult,
     FlextLdifUtilitiesTransformer,
-    Pipeline,
     c,
     m,
     t,
@@ -402,7 +402,7 @@ class FlextLdifUtilitiesProcessing:
         fail_fast: bool = True,
     ) -> FlextLdifUtilitiesResult[MutableSequence[m.Ldif.Entry]]:
         """Apply entry transformers to LDIF entries using pipeline semantics."""
-        pipeline = Pipeline(fail_fast=fail_fast)
+        pipeline = FlextLdifUtilitiesPipeline.Pipeline(fail_fast=fail_fast)
         for transformer in transformers:
             _ = pipeline.add(transformer)
         return FlextLdifUtilitiesResult[MutableSequence[m.Ldif.Entry]].from_result(

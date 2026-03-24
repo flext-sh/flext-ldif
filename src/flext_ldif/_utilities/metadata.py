@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import TypeIs
 
 from flext_core import FlextLogger, u
+from pydantic import BaseModel
 
 from flext_ldif import (
     FlextLdifModelsDomains,
@@ -616,7 +617,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _normalize_dict_list(
-        values: t.MutableContainerList,
+        values: t.MutableContainerList | MutableSequence[str],
     ) -> MutableSequence[t.Scalar]:
         normalized: MutableSequence[t.Scalar] = []
         for item in values:
@@ -662,7 +663,10 @@ class FlextLdifUtilitiesMetadata:
                     }
                 else:
                     normalized_metadata[key] = str(value)
-            setattr(model, "validation_metadata", t.ConfigMap(root=normalized_metadata))
+            config_root: MutableMapping[str, t.NormalizedValue | BaseModel] = dict(
+                normalized_metadata
+            )
+            setattr(model, "validation_metadata", t.ConfigMap(root=config_root))
         except (AttributeError, TypeError, ValueError):
             pass
 
@@ -737,7 +741,9 @@ class FlextLdifUtilitiesMetadata:
                 ),
             )
             setattr(entry, "metadata", entry_metadata)
-        update_dict: t.MutableContainerMapping = {"processing_stats": updated_stats}
+        update_dict: MutableMapping[str, m.Ldif.EntryStatistics] = {
+            "processing_stats": updated_stats
+        }
         updated_metadata = entry_metadata.model_copy(update=update_dict)
         return entry.model_copy(update={"metadata": updated_metadata})
 
@@ -886,17 +892,13 @@ class FlextLdifUtilitiesMetadata:
             "source_server": quirk_type,
         }
         if "rfc_violations" in extra:
-            violations = extra["rfc_violations"]
-            if isinstance(violations, Sequence) and (
-                not isinstance(violations, (str, bytes))
-            ):
-                result["rfc_violations"] = [str(v) for v in violations]
+            violations_val = extra["rfc_violations"]
+            if isinstance(violations_val, str):
+                result["rfc_violations"] = [violations_val]
         if "attribute_conflicts" in extra:
-            conflicts = extra["attribute_conflicts"]
-            if isinstance(conflicts, Sequence) and (
-                not isinstance(conflicts, (str, bytes))
-            ):
-                result["has_attribute_conflicts"] = conflicts
+            conflicts_val = extra["attribute_conflicts"]
+            if isinstance(conflicts_val, str):
+                result["has_attribute_conflicts"] = conflicts_val
         return result
 
     @staticmethod
@@ -910,13 +912,22 @@ class FlextLdifUtilitiesMetadata:
         if write_opts is None:
             return None
         key = c.Ldif.WRITE_OPTIONS
-        raw_extras = getattr(write_opts, "model_extra", None)
+        raw_extras: dict[str, t.NormalizedValue] | None = None
+        if isinstance(write_opts, BaseModel):
+            model_extra_val = write_opts.model_extra
+            if isinstance(model_extra_val, dict):
+                raw_extras = {str(k): v for k, v in model_extra_val.items()}
         extras: t.MutableContainerMapping = {}
         opt: t.NormalizedValue | None = None
-        if isinstance(raw_extras, Mapping):
+        if raw_extras is not None:
+            config_map_root: MutableMapping[str, t.NormalizedValue | BaseModel] = dict(
+                raw_extras,
+            )
             extras = {
                 extra_key: u.normalize_to_metadata(extra_value)
-                for extra_key, extra_value in t.ConfigMap(raw_extras).root.items()
+                for extra_key, extra_value in t.ConfigMap(
+                    root=config_map_root
+                ).root.items()
             }
         opt = extras.get(key)
         if isinstance(opt, Mapping):

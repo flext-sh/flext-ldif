@@ -13,6 +13,7 @@ from flext_ldif import (
     FlextLdifFilters,
     FlextLdifServer,
     FlextLdifServersBaseConstants,
+    FlextLdifUtilitiesDN,
     c,
     m,
     r,
@@ -140,7 +141,9 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         return category
 
     @staticmethod
-    def _ensure_entry_model(value: t.NormalizedValue) -> m.Ldif.Entry | None:
+    def _ensure_entry_model(
+        value: t.NormalizedValue | m.Ldif.Entry,
+    ) -> m.Ldif.Entry | None:
         if isinstance(value, m.Ldif.Entry):
             return value
         if isinstance(value, BaseModel):
@@ -264,7 +267,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 filtered[category] = passthrough_entries
         if excluded_entries:
             rejected_category = c.Ldif.Category.REJECTED
-            existing_rejected_raw: t.MutableContainerList = filtered.get(
+            existing_rejected_raw: MutableSequence[m.Ldif.Entry] = filtered.get(
                 rejected_category,
                 [],
             )
@@ -464,7 +467,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 filtered[category] = passthrough_entries
         if all_excluded_entries:
             rejected_category = c.Ldif.Category.REJECTED
-            existing_rejected_raw: t.MutableContainerList = filtered.get(
+            existing_rejected_raw: MutableSequence[m.Ldif.Entry] = filtered.get(
                 rejected_category,
                 [],
             )
@@ -528,7 +531,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
             return False
         attrs_dict: MutableMapping[str, MutableSequence[str]] = (
             entry.attributes.attributes
-            if FlextLdifCategorization._has_attr(entry.attributes, "attributes")
+            if hasattr(entry.attributes, "attributes")
             else {}
         )
         entry_attrs = {attr.lower() for attr in attrs_dict}
@@ -543,7 +546,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         def validate_entry(entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
             """Validate and normalize entry DN."""
             dn_str = entry.dn.value if entry.dn else ""
-            if not u.Ldif.validate(dn_str):
+            if not FlextLdifUtilitiesDN.validate_dn(dn_str):
                 rejected_entry = u.Ldif.update_entry_statistics(
                     entry,
                     mark_rejected=(

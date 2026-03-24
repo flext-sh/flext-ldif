@@ -363,7 +363,7 @@ class FlextLdifModelsResults:
             FlextLdifModelsResults.Statistics,
             Field(),
         ]
-        output_files: Annotated[MutableSequence[str]]
+        output_files: Annotated[MutableSequence[str], Field()]
 
         @computed_field
         def entry_count(self) -> int:

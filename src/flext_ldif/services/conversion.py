@@ -25,6 +25,7 @@ from flext_ldif import (
     FlextLdifServersBaseSchema,
     FlextLdifServersOidConstants,
     FlextLdifServiceBase,
+    FlextLdifUtilitiesDN,
     c,
     m,
     p,
@@ -79,7 +80,13 @@ class FlextLdifConversion(
         | FlextLogger
         | p.Ldif.SchemaQuirk
         | m.Ldif.SchemaAttributeConversionPipelineConfig
-        | m.Ldif.SchemaObjectClassConversionPipelineConfig,
+        | m.Ldif.SchemaObjectClassConversionPipelineConfig
+        | m.Ldif.QuirkMetadata
+        | m.Ldif.DynamicMetadata
+        | m.Ldif.AclPermissions
+        | m.Ldif.Attributes
+        | m.Ldif.SchemaAttribute
+        | m.Ldif.SchemaObjectClass,
         attr_name: str,
     ) -> bool:
         return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
@@ -95,17 +102,15 @@ class FlextLdifConversion(
         )
 
     @staticmethod
-    @override
-    def _is_object_mapping(
+    def _is_mapping_value(
         value: t.NormalizedValue,
-    ) -> TypeIs[MutableMapping[t.NormalizedValue, t.NormalizedValue]]:
+    ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
         return isinstance(value, Mapping)
 
     @staticmethod
-    @override
-    def _is_object_sequence(
+    def _is_sequence_value(
         value: t.NormalizedValue,
-    ) -> TypeIs[t.MutableContainerList]:
+    ) -> bool:
         return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
     @staticmethod
@@ -183,7 +188,7 @@ class FlextLdifConversion(
         target_server_type: str,
     ) -> MutableMapping[str, MutableMapping[str, str]]:
         """Analyze boolean conversions for target compatibility."""
-        if not boolean_conversions or not FlextLdifConversion._is_object_mapping(
+        if not boolean_conversions or not FlextLdifConversion._is_mapping_value(
             boolean_conversions,
         ):
             return {}
@@ -193,7 +198,7 @@ class FlextLdifConversion(
         result: MutableMapping[str, MutableMapping[str, str]] = {}
         for attr_name, conv_info in typed_boolean_conversions.items():
             source_format = ""
-            if FlextLdifConversion._is_object_mapping(conv_info):
+            if FlextLdifConversion._is_mapping_value(conv_info):
                 conv_info_dict: t.MutableContainerMapping = {}
                 for raw_key, raw_value in conv_info.items():
                     conv_info_dict[str(raw_key)] = raw_value
@@ -211,7 +216,7 @@ class FlextLdifConversion(
         target_server_type: str,
     ) -> MutableMapping[str, t.MutableContainerMapping]:
         """Analyze DN spacing for target compatibility."""
-        if FlextLdifConversion._is_object_mapping(original_format_details):
+        if FlextLdifConversion._is_mapping_value(original_format_details):
             format_details: t.MutableContainerMapping = {}
             for raw_key, raw_value in original_format_details.items():
                 format_details[str(raw_key)] = raw_value
@@ -488,7 +493,7 @@ class FlextLdifConversion(
             return ""
         if u.is_primitive(value):
             return value
-        if FlextLdifConversion._is_object_sequence(value):
+        if isinstance(value, Sequence) and not isinstance(value, str | bytes):
             normalized_items: MutableSequence[t.Scalar | str] = [
                 item if isinstance(item, t.SCALAR_TYPES) else str(item)
                 for item in value
@@ -617,13 +622,9 @@ class FlextLdifConversion(
     ) -> r[SchemaConversionValue] | None:
         if isinstance(value, str):
             return FlextLdifConversion._schema_conversion_ok(value)
-        if FlextLdifConversion._is_object_mapping(value):
-            # Convert dict to str for LDIF representation if passthrough
-            typed_value: t.MutableContainerMapping = {}
-            for raw_key, raw_item in value.items():
-                typed_value[str(raw_key)] = raw_item
-            return FlextLdifConversion._schema_conversion_ok(str(typed_value))
-        return None
+        # SchemaAttribute and SchemaObjectClass are BaseModel subclasses
+        # Convert to string representation for LDIF passthrough
+        return FlextLdifConversion._schema_conversion_ok(str(value))
 
     @staticmethod
     def _validate_ldif_string(ldif_string: str, operation: str) -> r[str]:
@@ -691,7 +692,7 @@ class FlextLdifConversion(
             errors: MutableSequence[str] = []
             error_details: MutableSequence[str] = []
             for idx, model_item in enumerate(model_list):
-                result = self.convert(source, target, model_item)
+                result = self.convert_model(source, target, model_item)
                 unwrapped = result.map_or(None)
                 if unwrapped is not None:
                     converted.append(unwrapped)
@@ -796,8 +797,7 @@ class FlextLdifConversion(
                 ]
             ].fail(f"Batch conversion failed: {e}")
 
-    @override
-    def convert(
+    def convert_model(
         self,
         source: str | FlextLdifServersBase,
         target: str | FlextLdifServersBase,
@@ -1024,15 +1024,15 @@ class FlextLdifConversion(
         if acl is None:
             acl = getattr(quirk, "_acl_quirk", None)
         test_acl_def = 'targetattr="*" (version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
-        if acl and callable(getattr(acl, "parse", None)):
-            acl_result = acl.parse(test_acl_def)
+        if acl and callable(getattr(acl, "parse_quirk", None)):
+            acl_result = acl.parse_quirk(test_acl_def)
             if acl_result.map_or(None) is not None:
                 support["acl"] = 1
         return support
 
     def _check_attribute_support(
         self,
-        quirk_schema: t.NormalizedValue,
+        quirk_schema: t.NormalizedValue | FlextLdifServersBase,
         test_attr_def: str,
         support: t.Ldif.DistributionDict,
     ) -> t.Ldif.DistributionDict:
@@ -1098,7 +1098,7 @@ class FlextLdifConversion(
 
     def _check_objectclass_support(
         self,
-        quirk_schema: t.NormalizedValue,
+        quirk_schema: t.NormalizedValue | FlextLdifServersBase,
         test_oc_def: str,
         support: t.Ldif.DistributionDict,
     ) -> t.Ldif.DistributionDict:
@@ -1413,7 +1413,8 @@ class FlextLdifConversion(
         """Convert Entry model directly without serialization."""
         try:
             entry_dn = entry.dn.value if entry.dn else ""
-            if not u.Ldif.validate(entry_dn):
+            is_valid: bool = FlextLdifUtilitiesDN.validate_dn(entry_dn)
+            if not is_valid:
                 return r[
                     m.Ldif.Entry
                     | m.Ldif.SchemaAttribute
@@ -1673,7 +1674,7 @@ class FlextLdifConversion(
             return ""
         if u.is_primitive(value):
             return value
-        if FlextLdifConversion._is_object_sequence(value):
+        if isinstance(value, Sequence) and not isinstance(value, str | bytes):
             converted_list: MutableSequence[t.Scalar] = []
             for item in value:
                 if isinstance(item, t.SCALAR_TYPES):
@@ -1681,7 +1682,7 @@ class FlextLdifConversion(
                 else:
                     converted_list.append(str(item))
             return converted_list
-        if FlextLdifConversion._is_object_mapping(value):
+        if isinstance(value, Mapping):
             typed_value: t.MutableContainerMapping = {}
             for raw_key, raw_item in value.items():
                 typed_value[str(raw_key)] = raw_item
@@ -1704,14 +1705,14 @@ class FlextLdifConversion(
                 return value
             if isinstance(value, datetime):
                 return value.isoformat()
-            if FlextLdifConversion._is_object_mapping(value):
+            if isinstance(value, Mapping):
                 normalized_mapping: t.MutableContainerMapping = {}
                 for raw_key, raw_item in value.items():
                     key = str(raw_key)
                     item: t.NormalizedValue = raw_item
                     normalized_mapping[key] = to_general_value(item)
                 return normalized_mapping
-            if FlextLdifConversion._is_object_sequence(value):
+            if isinstance(value, Sequence) and not isinstance(value, str | bytes):
                 normalized_sequence: t.MutableContainerList = [
                     to_general_value(item) for item in value
                 ]
@@ -1738,7 +1739,7 @@ class FlextLdifConversion(
     def _get_schema_quirk_for_support_check(
         self,
         quirk: FlextLdifServersBase,
-    ) -> t.NormalizedValue | None:
+    ) -> t.NormalizedValue | FlextLdifServersBase | None:
         """Get schema quirk from base quirk for support checking."""
         if FlextLdifConversion._has_attr(
             quirk,
@@ -1827,7 +1828,7 @@ class FlextLdifConversion(
                     value,
                 )
                 continue
-            if FlextLdifConversion._is_object_mapping(value):
+            if isinstance(value, Mapping):
                 normalized_mapping: t.MutableContainerMapping = {}
                 for raw_k, raw_v in value.items():
                     normalized_mapping[str(raw_k)] = (
@@ -1837,7 +1838,7 @@ class FlextLdifConversion(
                     normalized_mapping,
                 )
                 continue
-            if FlextLdifConversion._is_object_sequence(value):
+            if isinstance(value, Sequence) and not isinstance(value, str | bytes):
                 normalized_sequence: t.MutableContainerList = [
                     FlextLdifConversion._normalize_metadata_value(raw_item)
                     for raw_item in value

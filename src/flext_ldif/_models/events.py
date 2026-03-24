@@ -6,20 +6,22 @@ from collections.abc import MutableSequence
 from pathlib import Path
 from typing import Annotated, Self
 
-from flext_core import m
+from flext_core._models.domain_event import FlextModelsDomainEvent
 from pydantic import Field
 
 from flext_ldif import FlextLdifModelsBases, FlextLdifModelsSettings, c
 
+_DomainEventBase = FlextModelsDomainEvent.Entry
+
+
+def _filter_criteria_factory() -> MutableSequence[
+    FlextLdifModelsSettings.FilterCriteria
+]:
+    return []
+
 
 class FlextLdifModelsEvents:
     """LDIF event and configuration models container class."""
-
-    @staticmethod
-    def _filter_criteria_factory() -> MutableSequence[
-        FlextLdifModelsSettings.FilterCriteria
-    ]:
-        return []
 
     class DnEventConfig(FlextLdifModelsBases.Base):
         dn_operation: str
@@ -49,17 +51,17 @@ class FlextLdifModelsEvents:
         conversion_duration_ms: float = 0.0
         error_details: MutableSequence[str] | None = None
 
-    class FilterEvent(m.DomainEvent):
+    class FilterEvent(_DomainEventBase):
         filter_operation: str
         entries_before: int
         entries_after: int
         filter_criteria: Annotated[
             MutableSequence[FlextLdifModelsSettings.FilterCriteria],
-            Field(default_factory=FlextLdifModelsEvents._filter_criteria_factory),
+            Field(default_factory=_filter_criteria_factory),
         ]
         filter_duration_ms: float = 0.0
 
-    class ParseEvent(m.DomainEvent):
+    class ParseEvent(_DomainEventBase):
         parse_operation: str
         source_type: str
         entries_parsed: int = 0
@@ -127,7 +129,7 @@ class FlextLdifModelsEvents:
                 "error_details": error_details,
             })
 
-    class WriteEvent(m.DomainEvent):
+    class WriteEvent(_DomainEventBase):
         write_operation: str = "write_file"
         target_type: str = "file"
         entries_written: int = 0
@@ -135,13 +137,13 @@ class FlextLdifModelsEvents:
         write_duration_ms: float = 0.0
         error_details: MutableSequence[str] | None = None
 
-    class CategoryEvent(m.DomainEvent):
+    class CategoryEvent(_DomainEventBase):
         category_operation: str
         entries_categorized: int = 0
         categories_created: Annotated[MutableSequence[str], Field(default_factory=list)]
         categorization_duration_ms: float = 0.0
 
-    class AclEvent(m.DomainEvent):
+    class AclEvent(_DomainEventBase):
         acl_operation: str
         acls_processed: int = 0
         acls_succeeded: int = 0
@@ -149,7 +151,7 @@ class FlextLdifModelsEvents:
         acl_duration_ms: float = 0.0
         error_details: MutableSequence[str] | None = None
 
-    class DnEvent(m.DomainEvent):
+    class DnEvent(_DomainEventBase):
         dn_operation: str
         input_dn: str
         output_dn: str | None = None
@@ -158,7 +160,7 @@ class FlextLdifModelsEvents:
         has_output: bool = False
         component_count: int = 0
 
-    class MigrationEvent(m.DomainEvent):
+    class MigrationEvent(_DomainEventBase):
         migration_operation: str
         source_server: str
         target_server: str
@@ -169,7 +171,7 @@ class FlextLdifModelsEvents:
         migration_success_rate: float = 0.0
         throughput_entries_per_sec: float = 0.0
 
-    class ConversionEvent(m.DomainEvent):
+    class ConversionEvent(_DomainEventBase):
         conversion_operation: str
         source_format: str
         target_format: str
@@ -180,7 +182,7 @@ class FlextLdifModelsEvents:
         conversion_success_rate: float = 0.0
         throughput_items_per_sec: float = 0.0
 
-    class SchemaEvent(m.DomainEvent):
+    class SchemaEvent(_DomainEventBase):
         schema_operation: str
         items_processed: int = 0
         items_succeeded: int = 0

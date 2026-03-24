@@ -38,7 +38,7 @@ class FlextLdifModelsMetadata:
         schema_transformations: MutableSequence[t.Ldif.MetadataValue] | None = None
 
         @override
-        def __eq__(self, other: t.NormalizedValue) -> bool:
+        def __eq__(self, other: object) -> bool:
             if isinstance(other, dict):
                 return dict(self.items()) == other
             if isinstance(other, type(self)):

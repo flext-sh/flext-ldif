@@ -83,8 +83,7 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
         return cls.Normalizer.escape_dn_value(value)
 
     @classmethod
-    @override
-    def normalize(cls, dn: str) -> r[str]:
+    def normalize_dn(cls, dn: str) -> r[str]:
         """Normalize DN per RFC 4514 (lowercase attrs, preserve values)."""
         return cls.Normalizer.normalize(dn)
 
@@ -137,8 +136,7 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
             raise ValueError(msg)
         return v
 
-    @override
-    def build(self) -> str:
+    def build_dn(self) -> str:
         """Execute and return unwrapped result (fluent terminal)."""
         return self.execute().value
 
@@ -184,10 +182,9 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
         """Instance method shortcut for normalize."""
         if dn is None:
             return r[str].fail("DN cannot be None")
-        return self.normalize(dn)
+        return self.normalize_dn(dn)
 
-    @override
-    def parse(self, value: str | None) -> r[MutableSequence[tuple[str, str]]]:
+    def parse_dn(self, value: str | None) -> r[MutableSequence[tuple[str, str]]]:
         """Instance method shortcut for parse_components."""
         if value is None:
             return r[MutableSequence[tuple[str, str]]].fail("DN cannot be None")

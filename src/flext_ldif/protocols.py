@@ -272,7 +272,7 @@ class FlextLdifProtocols(FlextProtocols):
         class SchemaQuirk(Protocol):
             """Protocol for Schema quirk implementations."""
 
-            def parse(
+            def parse_quirk(
                 self,
                 value: str,
             ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
@@ -306,7 +306,7 @@ class FlextLdifProtocols(FlextProtocols):
         class AclQuirk(Protocol):
             """Protocol for ACL quirk implementations."""
 
-            def parse(self, value: str) -> r[m.Ldif.Acl]:
+            def parse_quirk(self, value: str) -> r[m.Ldif.Acl]:
                 """Parse ACL definition."""
                 ...
 
@@ -318,7 +318,7 @@ class FlextLdifProtocols(FlextProtocols):
         class EntryQuirk(Protocol):
             """Protocol for Entry quirk implementations."""
 
-            def parse(self, value: str) -> r[MutableSequence[m.Ldif.Entry]]:
+            def parse_quirk(self, value: str) -> r[MutableSequence[m.Ldif.Entry]]:
                 """Parse entry definition."""
                 ...
 

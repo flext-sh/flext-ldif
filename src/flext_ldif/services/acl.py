@@ -203,7 +203,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
             return r[m.Ldif.Acl].fail(
                 f"No ACL quirk found for server type: {normalized_server_type}",
             )
-        return acl_quirk.parse(acl_string).fold(
+        return acl_quirk.parse_quirk(acl_string).fold(
             on_failure=lambda e: r[m.Ldif.Acl].fail(e or "ACL parsing failed"),
             on_success=lambda v: r[m.Ldif.Acl].ok(v),
         )

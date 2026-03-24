@@ -85,8 +85,7 @@ class FlextLdifProcessing(
             "FlextLdifProcessing does not support generic execute(). Use specific methods instead.",
         )
 
-    @override
-    def process(
+    def process_entries(
         self,
         processor_name: str,
         entries: MutableSequence[m.Ldif.Entry],

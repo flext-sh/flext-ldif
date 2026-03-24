@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import MutableSequence
+from collections.abc import MutableMapping, MutableSequence
 from typing import Literal, Self
 
 from flext_core import r
@@ -11,8 +11,7 @@ from flext_core import r
 from flext_ldif import (
     FlextLdifUtilitiesDN,
     FlextLdifUtilitiesEntry,
-    Normalize,
-    Transform,
+    FlextLdifUtilitiesTransformers,
     c,
     m,
 )
@@ -170,7 +169,7 @@ class FlextLdifUtilitiesFluent:
         def __init__(self, entry: m.Ldif.Entry) -> None:
             """Initialize entry operations."""
             super().__init__()
-            self._entry = entry
+            self._entry: m.Ldif.Entry = entry
             self._error: str | None = None
 
         @property
@@ -190,12 +189,12 @@ class FlextLdifUtilitiesFluent:
             if self._entry.attributes is None:
                 self._error = "Entry has no attributes"
                 return self
-            attrs = (
+            attrs: MutableMapping[str, MutableSequence[str]] = (
                 self._entry.attributes.attributes
                 if getattr(self._entry.attributes, "attributes", None) is not None
                 else {}
             )
-            new_attrs = dict(attrs)
+            new_attrs: MutableMapping[str, MutableSequence[str]] = dict(attrs)
             if name in new_attrs:
                 new_attrs[name] = list(new_attrs[name]) + list(values)
             else:
@@ -239,7 +238,9 @@ class FlextLdifUtilitiesFluent:
             """Convert boolean attribute values."""
             if self._error:
                 return self
-            transformer = Transform.convert_booleans(boolean_format=format_str)
+            transformer = FlextLdifUtilitiesTransformers.Transform.convert_booleans(
+                boolean_format=format_str
+            )
             result = transformer.apply(self._entry)
             if result.is_failure:
                 self._error = result.error
@@ -256,7 +257,9 @@ class FlextLdifUtilitiesFluent:
             """Filter attributes."""
             if self._error:
                 return self
-            transformer = Transform.filter_attrs(include=include, exclude=exclude)
+            transformer = FlextLdifUtilitiesTransformers.Transform.filter_attrs(
+                include=include, exclude=exclude
+            )
             result = transformer.apply(self._entry)
             if result.is_failure:
                 self._error = result.error
@@ -292,7 +295,7 @@ class FlextLdifUtilitiesFluent:
             """Normalize the entry's attributes."""
             if self._error:
                 return self
-            transformer = Normalize.attrs(
+            transformer = FlextLdifUtilitiesTransformers.Normalize.attrs(
                 case_fold_names=case_fold_names,
                 trim_values=trim_values,
                 remove_empty=remove_empty,
@@ -313,7 +316,9 @@ class FlextLdifUtilitiesFluent:
             """Normalize the entry's DN."""
             if self._error:
                 return self
-            transformer = Normalize.dn(case=case, validate=validate)
+            transformer = FlextLdifUtilitiesTransformers.Normalize.dn(
+                case=case, validate=validate
+            )
             result = transformer.apply(self._entry)
             if result.is_failure:
                 self._error = result.error
@@ -359,8 +364,4 @@ class FlextLdifUtilitiesFluent:
             return r[bool].ok(True)
 
 
-# Module-level aliases for backward compatibility (referenced by __init__.py)
-DnOps = FlextLdifUtilitiesFluent.DnOps
-EntryOps = FlextLdifUtilitiesFluent.EntryOps
-
-__all__ = ["DnOps", "EntryOps", "FlextLdifUtilitiesFluent"]
+__all__ = ["FlextLdifUtilitiesFluent"]

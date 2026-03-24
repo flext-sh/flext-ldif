@@ -253,7 +253,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
                 entry_typed = m.Ldif.Entry.model_validate(entry)
         return self.acl_service.extract_acls_from_entry(entry_typed, server_type)
 
-    def filter(  # type: ignore[override]
+    def filter_entries_by_criteria(
         self,
         entries: MutableSequence[m.Ldif.Entry],
         *,
@@ -436,7 +436,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         )
         return pipeline.execute()
 
-    def parse(  # type: ignore[override]
+    def parse_ldif(
         self,
         value: str | Path,
         *,
@@ -457,7 +457,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         entries_list: MutableSequence[m.Ldif.Entry] = list(response.entries)
         return r[MutableSequence[m.Ldif.Entry]].ok(entries_list)
 
-    def process(  # type: ignore[override]
+    def process_ldif(
         self,
         processor_name: str,
         entries: MutableSequence[m.Ldif.Entry],
@@ -467,7 +467,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         max_workers: int = 4,
     ) -> r[MutableSequence[m.Ldif.ProcessingResult]]:
         """Process entries using processing service."""
-        return self.processing_service.process(
+        return self.processing_service.process_entries(
             processor_name,
             entries,
             parallel=parallel,
@@ -499,7 +499,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             format_options=format_options,
         )
 
-    def write_file(  # type: ignore[override]
+    def write_ldif_file(
         self,
         entries: MutableSequence[m.Ldif.Entry],
         path: Path,
@@ -549,7 +549,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             content = resolved_path.read_text(encoding="utf-8")
         except OSError as e:
             return r[MutableSequence[m.Ldif.Entry]].fail(f"Failed to read file: {e}")
-        return self.parse(value=content, server_type=server_type)
+        return self.parse_ldif(value=content, server_type=server_type)
 
 
 __all__ = ["FlextLdif"]

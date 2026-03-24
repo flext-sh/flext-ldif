@@ -112,7 +112,7 @@ class FlextLdifServersBaseEntry(
     @override
     def execute(self, **kwargs: t.MutableContainerMapping) -> r[m.Ldif.Entry | str]:
         """Execute entry operation (parse/write)."""
-        kwargs_map: t.MutableContainerMapping = kwargs
+        kwargs_map: MutableMapping[str, t.MutableContainerMapping] = kwargs
         ldif_content = kwargs_map.get("ldif_content")
         entry_model = kwargs_map.get("entry_model")
         if isinstance(ldif_content, str):
@@ -126,8 +126,7 @@ class FlextLdifServersBaseEntry(
             return r[m.Ldif.Entry | str].ok(str_result.map_or(""))
         return r[m.Ldif.Entry | str].ok("")
 
-    @override
-    def parse(self, value: str) -> r[MutableSequence[m.Ldif.Entry]]:
+    def parse_quirk(self, value: str) -> r[MutableSequence[m.Ldif.Entry]]:
         """Parse LDIF content string into Entry models."""
         return self._parse_content(value)
 

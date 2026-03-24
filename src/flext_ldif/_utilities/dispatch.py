@@ -13,12 +13,11 @@ from flext_ldif import (
     FlextLdifUtilitiesDN,
     FlextLdifUtilitiesEntry,
     FlextLdifUtilitiesFilters,
+    FlextLdifUtilitiesPipeline,
     FlextLdifUtilitiesProcessing,
     FlextLdifUtilitiesResult,
     FlextLdifUtilitiesServer,
     FlextLdifUtilitiesValidation,
-    ValidationPipeline,
-    ValidationResult,
     m,
     p,
     t,
@@ -172,7 +171,7 @@ class FlextLdifUtilitiesDispatch:
         strict: bool = True,
         collect_all: bool = True,
         max_errors: int = 0,
-    ) -> r[MutableSequence[ValidationResult]]: ...
+    ) -> r[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]: ...
 
     @staticmethod
     @overload
@@ -203,7 +202,11 @@ class FlextLdifUtilitiesDispatch:
         strict: bool = True,
         collect_all: bool = True,
         max_errors: int = 0,
-    ) -> r[MutableSequence[ValidationResult]] | r[t.Container] | bool:
+    ) -> (
+        r[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]
+        | r[t.Container]
+        | bool
+    ):
         """Validate entries against rules."""
         if isinstance(value_or_entries, str | m.Ldif.DN) and validator_first is None:
             return FlextLdifUtilitiesDN.validate_dn(value_or_entries)
@@ -245,9 +248,9 @@ class FlextLdifUtilitiesDispatch:
         strict: bool,
         collect_all: bool,
         max_errors: int,
-    ) -> r[MutableSequence[ValidationResult]]:
+    ) -> r[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]:
         """Internal: Validate LDIF entries."""
-        pipeline = ValidationPipeline(
+        pipeline = FlextLdifUtilitiesPipeline.ValidationPipeline(
             strict=strict,
             collect_all=collect_all,
             max_errors=max_errors,
@@ -460,7 +463,7 @@ class FlextLdifUtilitiesDispatch:
         ops: t.MutableContainerMapping | None = None,
     ) -> t.NormalizedValue:
         """Route to Normalization.build (resolves Normalization vs core)."""
-        from flext_ldif import FlextLdifUtilitiesNormalization
+        from flext_ldif import FlextLdifUtilitiesNormalization  # noqa: PLC0415
 
         return FlextLdifUtilitiesNormalization.build(value, ops=ops)
 
@@ -471,9 +474,9 @@ class FlextLdifUtilitiesDispatch:
         encoding: str = "utf-8",
     ) -> r[MutableMapping[str, str | int]]:
         """Route to Writer.write_file (resolves Writer vs core)."""
-        from pathlib import Path
+        from pathlib import Path  # noqa: PLC0415
 
-        from flext_ldif import FlextLdifUtilitiesWriter
+        from flext_ldif import FlextLdifUtilitiesWriter  # noqa: PLC0415
 
         path = file_path if isinstance(file_path, Path) else Path(str(file_path))
         return FlextLdifUtilitiesWriter.write_file(content, path, encoding)
@@ -481,7 +484,7 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     def _is_object_mapping(
         value: t.NormalizedValue,
-    ) -> TypeIs[MutableMapping[t.NormalizedValue, t.NormalizedValue]]:
+    ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
         """Route to Schema._is_object_mapping (resolves Schema vs core)."""
         return isinstance(value, Mapping)
 

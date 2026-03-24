@@ -26,7 +26,7 @@ class FlextLdifTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Apply server-specific transformation."""
         service = FlextLdifConversion()
-        result = service.convert(
+        result = service.convert_model(
             source=self._source_server.value,
             target=self._target_server.value,
             model_instance=item,

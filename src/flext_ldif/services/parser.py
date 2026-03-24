@@ -32,8 +32,7 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
             "FlextLdifParser requires input data to parse. Use parse(), parse_string(), parse_ldif_file(), or parse_ldap3_results() methods.",
         )
 
-    @override
-    def parse(
+    def parse_source(
         self,
         source: str | Path,
         server_type: str | None = None,

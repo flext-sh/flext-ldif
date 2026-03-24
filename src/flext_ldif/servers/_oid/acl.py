@@ -698,10 +698,12 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 extensions=FlextLdifModelsMetadata.DynamicMetadata(),
             )
         )
-        return acl_data.model_copy(update={
-            "server_type": server_type,
-            "metadata": updated_metadata,
-        })
+        return acl_data.model_copy(
+            update={
+                "server_type": server_type,
+                "metadata": updated_metadata,
+            }
+        )
 
     @override
     def _write_acl(

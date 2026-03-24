@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC
+from collections.abc import Sequence
 from typing import override
 
 from flext_core import FlextService, FlextSettings
@@ -10,7 +11,7 @@ from flext_core import FlextService, FlextSettings
 from flext_ldif import FlextLdifSettings, m, t
 
 
-class FlextLdifServiceBase[TDomainResult: t.ValueOrModel](
+class FlextLdifServiceBase[TDomainResult: t.ValueOrModel | Sequence[t.ValueOrModel]](
     FlextService[TDomainResult],
     ABC,
 ):

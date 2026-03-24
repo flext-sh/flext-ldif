@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import MutableMapping, MutableSequence
-from typing import ClassVar, override
+from typing import ClassVar
 
 from flext_core import FlextLogger, FlextRegistry
 
@@ -116,11 +116,6 @@ class FlextLdifServer(FlextRegistry):
             "quirks_by_server": quirks_by_server,
             "server_priorities": priorities,
         }
-
-    @override
-    def schema(self, server_type: str) -> FlextLdifServersBaseSchema | None:
-        """Get schema quirk for a server type (QuirkRegistry compliance)."""
-        return self.get_schema_quirk(server_type)
 
     def schema_quirk(self, server_type: str) -> FlextLdifServersBaseSchema | None:
         """Get schema quirk for a server type."""

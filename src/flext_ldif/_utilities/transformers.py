@@ -169,7 +169,7 @@ class FlextLdifUtilitiesTransformers:
                 or (new_attrs != attrs)
             )
             if needs_update:
-                update_dict: t.MutableContainerMapping = {
+                update_dict: MutableMapping[str, m.Ldif.Attributes] = {
                     "attributes": m.Ldif.Attributes.model_validate({
                         "attributes": new_attrs,
                     }),
@@ -210,7 +210,9 @@ class FlextLdifUtilitiesTransformers:
                 self._old_base,
                 self._new_base,
             )
-            update_dict: t.MutableContainerMapping = {"dn": m.Ldif.DN(value=new_dn_str)}
+            update_dict: MutableMapping[str, m.Ldif.DN] = {
+                "dn": m.Ldif.DN(value=new_dn_str)
+            }
             updated_entry = item.model_copy(update=update_dict)
             return r[m.Ldif.Entry].ok(updated_entry)
 
@@ -251,10 +253,11 @@ class FlextLdifUtilitiesTransformers:
                 boolean_attr_names=boolean_attrs,
                 target_format=self._format,
             )
-            update_dict: t.MutableContainerMapping = {
-                "attributes": m.Ldif.Attributes.model_validate({
-                    "attributes": {**converted_attrs},
-                }),
+            new_attributes = m.Ldif.Attributes.model_validate({
+                "attributes": {**converted_attrs},
+            })
+            update_dict: MutableMapping[str, m.Ldif.Attributes] = {
+                "attributes": new_attributes,
             }
             updated_entry = item.model_copy(update=update_dict)
             return r[m.Ldif.Entry].ok(updated_entry)
@@ -305,12 +308,13 @@ class FlextLdifUtilitiesTransformers:
                     return key.lower() not in exclude_lower
 
                 attrs = {k: v for k, v in attrs.items() if key_not_in_exclude(k, v)}
-            update_dict: t.MutableContainerMapping = {
-                "attributes": m.Ldif.Attributes.model_validate({
-                    "attributes": {**attrs},
-                }),
+            new_attributes = m.Ldif.Attributes.model_validate({
+                "attributes": {**attrs},
+            })
+            update_dict_final: MutableMapping[str, m.Ldif.Attributes] = {
+                "attributes": new_attributes,
             }
-            updated_entry = item.model_copy(update=update_dict)
+            updated_entry = item.model_copy(update=update_dict_final)
             return r[m.Ldif.Entry].ok(updated_entry)
 
     class RemoveAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
@@ -444,27 +448,7 @@ class FlextLdifUtilitiesTransformers:
             )
 
 
-# Module-level aliases for backward compatibility (referenced by __init__.py)
-NormalizeDnTransformer = FlextLdifUtilitiesTransformers.NormalizeDnTransformer
-NormalizeAttrsTransformer = FlextLdifUtilitiesTransformers.NormalizeAttrsTransformer
-ReplaceBaseDnTransformer = FlextLdifUtilitiesTransformers.ReplaceBaseDnTransformer
-ConvertBooleansTransformer = FlextLdifUtilitiesTransformers.ConvertBooleansTransformer
-FilterAttrsTransformer = FlextLdifUtilitiesTransformers.FilterAttrsTransformer
-RemoveAttrsTransformer = FlextLdifUtilitiesTransformers.RemoveAttrsTransformer
-CustomTransformer = FlextLdifUtilitiesTransformers.CustomTransformer
-Normalize = FlextLdifUtilitiesTransformers.Normalize
-Transform = FlextLdifUtilitiesTransformers.Transform
-
 __all__ = [
-    "ConvertBooleansTransformer",
-    "CustomTransformer",
-    "FilterAttrsTransformer",
     "FlextLdifUtilitiesTransformer",
     "FlextLdifUtilitiesTransformers",
-    "Normalize",
-    "NormalizeAttrsTransformer",
-    "NormalizeDnTransformer",
-    "RemoveAttrsTransformer",
-    "ReplaceBaseDnTransformer",
-    "Transform",
 ]

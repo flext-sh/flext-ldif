@@ -920,7 +920,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     ) -> None:
         """Parse ACL and merge additional extensions from parsed model."""
         try:
-            acl_result = acl_quirk.parse(acl_value)
+            acl_result = acl_quirk.parse_quirk(acl_value)
             if not acl_result.is_success:
                 return
             acl_model = m.Ldif.Acl.model_validate(acl_result.value)

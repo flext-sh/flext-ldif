@@ -360,7 +360,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             Parsed dict or None if unparseable
 
         """
-        parsed: t.NormalizedValue
+        parsed: m.Ldif.DynamicMetadata | t.NormalizedValue
         if isinstance(commented_raw, str):
             parsed = m.Ldif.DynamicMetadata.model_validate_json(commented_raw)
         else:
@@ -369,9 +369,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return None
         normalized: t.MutableContainerMapping = {}
         for raw_key, raw_value in parsed.items():
-            normalized[raw_key] = (
-                FlextLdifModelsMetadata.DynamicMetadata.coerce_metadata_value(raw_value)
-            )
+            normalized[raw_key] = raw_value
         return normalized
 
     @staticmethod
@@ -511,7 +509,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 hidden_attrs,
             )
         )
-        update_dict: t.MutableContainerMapping = {"write_options": new_write_options}
+        update_dict: MutableMapping[str, FlextLdifModelsDomains.WriteOptions | None] = {
+            "write_options": new_write_options
+        }
         metadata_typed = metadata_typed.model_copy(update=update_dict)
         if commented_acl_values:
             converted_attrs_list: MutableSequence[str] = list(
@@ -534,7 +534,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if commented_attrs:
             commented_attrs_typed: t.NormalizedValue = list(commented_attrs)
             current_extensions["acl_commented_attributes"] = commented_attrs_typed
-        update_dict_final: t.MutableContainerMapping = {
+        update_dict_final: MutableMapping[
+            str,
+            t.MutableContainerMapping | FlextLdifModelsDomains.WriteOptions | None,
+        ] = {
             "extensions": current_extensions,
             "write_options": new_write_options,
         }
@@ -663,9 +666,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         return "\n".join(comment_lines) + "\n" if comment_lines else ""
 
     @override
-    def parse(self, value: str) -> r[MutableSequence[m.Ldif.Entry]]:
+    def parse_quirk(self, value: str) -> r[MutableSequence[m.Ldif.Entry]]:
         """Parse LDIF content and apply OUD post-processing hooks."""
-        parsed_result = super().parse(value)
+        parsed_result = super().parse_quirk(value)
         if parsed_result.is_failure:
             return parsed_result
         processed_entries: MutableSequence[m.Ldif.Entry] = []
@@ -1790,7 +1793,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             normalized_aci = str(aci_value).strip()
             if not normalized_aci.startswith("aci:"):
                 normalized_aci = f"aci: {normalized_aci}"
-            acl_result = acl_quirk.parse(normalized_aci)
+            acl_result = acl_quirk.parse_quirk(normalized_aci)
             if acl_result.is_success:
                 acl_model = acl_result.value
                 if acl_model.metadata and acl_model.metadata.extensions:
@@ -1889,7 +1892,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if not normalized_aci.startswith("aci:"):
             normalized_aci = f"aci: {normalized_aci}"
         acl_quirk = FlextLdifServersOudAcl()
-        parse_result = acl_quirk.parse(normalized_aci)
+        parse_result = acl_quirk.parse_quirk(normalized_aci)
         if parse_result.is_success:
             parsed_acl = parse_result.value
             if parsed_acl.metadata and parsed_acl.metadata.extensions:

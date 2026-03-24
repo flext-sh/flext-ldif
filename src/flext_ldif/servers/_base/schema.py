@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
 from flext_core import FlextLogger, r, s
@@ -115,19 +115,6 @@ class FlextLdifServersBaseSchema(
                 continue
             if isinstance(value, t.ConfigMap):
                 service_kwargs[key] = value
-                continue
-            if isinstance(value, Sequence) and (
-                not isinstance(value, (str, bytes, bytearray))
-            ):
-                scalar_values: MutableSequence[t.Scalar] = []
-                for item in value:
-                    if isinstance(item, t.SCALAR_TYPES):
-                        scalar_values.append(item)
-                    else:
-                        scalar_values = []
-                        break
-                else:
-                    service_kwargs[key] = scalar_values
         super().__init__()
         self._schema_service = _schema_service
         if _parent_quirk is not None:
@@ -369,8 +356,7 @@ class FlextLdifServersBaseSchema(
         detected_op = self._auto_detect_operation(data, operation_final)
         return self._route_operation(data, detected_op)
 
-    @override
-    def parse(
+    def parse_quirk(
         self,
         value: str,
     ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:

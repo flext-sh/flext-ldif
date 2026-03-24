@@ -272,7 +272,13 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
         def validate_registry(
             registry_obj: p.Ldif.QuirkRegistry | t.NormalizedValue,
-        ) -> Callable[[str, p.Ldif.SchemaQuirk | t.NormalizedValue], None] | None:
+        ) -> (
+            Callable[
+                [str, p.Ldif.SchemaQuirk | t.NormalizedValue | FlextLdifServersBase],
+                None,
+            ]
+            | None
+        ):
             """Validate registry has register method."""
             method = getattr(registry_obj, "register_quirk", None)
             if method is not None and callable(method):
@@ -280,7 +286,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
                 def typed_register(
                     server_type: str,
-                    quirk: p.Ldif.SchemaQuirk | t.NormalizedValue,
+                    quirk: p.Ldif.SchemaQuirk
+                    | t.NormalizedValue
+                    | FlextLdifServersBase,
                 ) -> None:
                     _ = captured(server_type, quirk)
 
@@ -288,8 +296,12 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             return None
 
         def perform_registration(
-            register_func: Callable[[str, t.NormalizedValue], None] | None,
-            instance: t.NormalizedValue | FlextLdifServersBase,
+            register_func: Callable[
+                [str, p.Ldif.SchemaQuirk | t.NormalizedValue | FlextLdifServersBase],
+                None,
+            ]
+            | None,
+            instance: p.Ldif.SchemaQuirk | FlextLdifServersBase,
         ) -> None:
             """Execute registration if method is available."""
             if register_func is not None:
@@ -298,11 +310,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                     callable(getattr(instance, method, None))
                     for method in required_methods
                 ):
-                    schema_quirk = instance
-                    register_func("auto", schema_quirk)
+                    register_func("auto", instance)
 
-        register_method = validate_registry(registry)
-        perform_registration(register_method, quirk_instance)
+        register_method_typed = validate_registry(registry)
+        perform_registration(register_method_typed, quirk_instance)
 
     @staticmethod
     def _extract_entries(
@@ -374,15 +385,16 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             return r[m.Ldif.Entry].ok(first_entry)
         return r[m.Ldif.Entry].fail("No valid parameters")
 
-    @override
-    def parse(self, value: str) -> r[FlextLdifModelsResults.ParseResponse]:
+    def parse_ldif(self, value: str) -> r[FlextLdifModelsResults.ParseResponse]:
         """Parse LDIF text to Entry models."""
         entry_quirk = getattr(self, "entry_quirk", None)
         if entry_quirk is None:
             return r[FlextLdifModelsResults.ParseResponse].fail(
                 "Entry quirk not available",
             )
-        entries_result: r[MutableSequence[m.Ldif.Entry]] = entry_quirk.parse(value)
+        entries_result: r[MutableSequence[m.Ldif.Entry]] = entry_quirk.parse_quirk(
+            value
+        )
         if entries_result.is_failure:
             error_msg = entries_result.error or "Entry parsing failed"
             return r[FlextLdifModelsResults.ParseResponse].fail(error_msg)
@@ -427,7 +439,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     def _execute_parse(self, ldif_text: str) -> r[m.Ldif.Entry]:
         """Execute parse operation."""
-        parse_result = self.parse(ldif_text)
+        parse_result = self.parse_ldif(ldif_text)
         if not parse_result.is_success:
             return r[m.Ldif.Entry].fail(parse_result.error or "Parse failed")
         parse_response = parse_result.value
@@ -439,7 +451,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     def _handle_parse_operation(self, ldif_text: str) -> r[m.Ldif.Entry | str]:
         """Handle parse operation for main quirk."""
-        parse_result = self.parse(ldif_text)
+        parse_result = self.parse_ldif(ldif_text)
         if parse_result.is_success:
             parse_response = parse_result.value
             entries = getattr(parse_response, "entries", [])
@@ -536,3 +548,6 @@ class _PriorityDescriptor:
 FlextLdifServersBase.server_type = "unknown"
 FlextLdifServersBase.priority = 0
 __all__ = ["FlextLdifServersBase"]
+
+# Keep descriptors available for potential future use
+_DESCRIPTORS = (_ServerTypeDescriptor, _PriorityDescriptor)

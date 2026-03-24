@@ -5,12 +5,12 @@ Single class per module: all helpers in FlextLdifUtilitiesTypeHelpers.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Mapping, Sequence
 from typing import TypeIs
 
 from flext_core import u
 
-from flext_ldif import m, t
+from flext_ldif import t
 
 
 class FlextLdifUtilitiesTypeHelpers:
@@ -19,7 +19,7 @@ class FlextLdifUtilitiesTypeHelpers:
     @staticmethod
     def is_entry_sequence(
         obj: t.NormalizedValue,
-    ) -> TypeIs[MutableSequence[m.Ldif.Entry]]:
+    ) -> bool:
         """Check if t.NormalizedValue is a Sequence but not a string, bytes, or dict (for Entry sequences)."""
         return isinstance(obj, Sequence) and (
             not isinstance(obj, str | bytes) and not u.is_dict_like(obj)
@@ -28,23 +28,23 @@ class FlextLdifUtilitiesTypeHelpers:
     @staticmethod
     def is_mapping_of_scalars(
         obj: t.NormalizedValue,
-    ) -> TypeIs[MutableMapping[str, t.Scalar | None]]:
+    ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
         """Check if t.NormalizedValue is a Mapping of scalar values (for simple dicts)."""
         if not isinstance(obj, Mapping):
             return False
-        return all(isinstance(v, t.Primitives | None) for v in obj.values())
+        return all(isinstance(v, t.PRIMITIVES_TYPES | type(None)) for v in obj.values())
 
     @staticmethod
     def is_mapping_type(
         obj: t.NormalizedValue,
-    ) -> TypeIs[t.MutableContainerMapping]:
+    ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
         """Check if t.NormalizedValue is a Mapping but not a string (for dict-like objects)."""
         return isinstance(obj, Mapping) and (not isinstance(obj, str | bytes))
 
     @staticmethod
     def is_sequence_of_scalars(
         obj: t.NormalizedValue,
-    ) -> TypeIs[MutableSequence[t.Scalar | None]]:
+    ) -> bool:
         """Check if t.NormalizedValue is a Sequence of scalar values (for simple sequences)."""
         if (
             not isinstance(obj, Sequence)
@@ -52,7 +52,7 @@ class FlextLdifUtilitiesTypeHelpers:
             or u.is_dict_like(obj)
         ):
             return False
-        return all(isinstance(item, t.Primitives | None) for item in obj)
+        return all(isinstance(item, t.PRIMITIVES_TYPES | type(None)) for item in obj)
 
 
 __all__ = ["FlextLdifUtilitiesTypeHelpers"]

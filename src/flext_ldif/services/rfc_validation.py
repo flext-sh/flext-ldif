@@ -33,8 +33,7 @@ class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
         return cls()
 
     @d.track_operation()
-    @override
-    def build(self) -> m.Ldif.ValidationBatchResult:
+    def build_validation(self) -> m.Ldif.ValidationBatchResult:
         """Build method."""
         result: MutableMapping[str, bool] = {}
         if self.attribute_names:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable, MutableSequence
-from typing import Self, override
+from typing import Self
 
 from flext_core import FlextUtilities, r
 
@@ -101,7 +101,7 @@ class FlextLdifUtilitiesNormalization:
 
         def str_list(self, default: MutableSequence[str] | None = None) -> Self:
             """Convert to string list using parent Conversion utilities."""
-            self._default = default if default is not None else MutableSequence[str]()
+            self._default = default if default is not None else []
             self._target_type = "to_str_list"
             return self
 
@@ -198,7 +198,8 @@ class FlextLdifUtilitiesNormalization:
                 return [normalize_single(str(v)) for v in seq_value]
             case set() | frozenset() as set_value:
                 return {normalize_single(str(v)) for v in set_value}
-        return normalize_single(str(value))
+            case _:
+                return [normalize_single(str(v)) for v in value]
 
     nz = normalize_ldif
 
@@ -264,7 +265,6 @@ class FlextLdifUtilitiesNormalization:
         return FlextLdifUtilitiesNormalization.ConvBuilder(value=value)
 
     @staticmethod
-    @override
     def build(
         value: t.NormalizedValue,
         *,

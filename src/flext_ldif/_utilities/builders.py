@@ -310,16 +310,6 @@ class FlextLdifUtilitiesBuilders:
             return self
 
 
-# Module-level aliases for backward compatibility (referenced by __init__.py)
-ProcessConfigBuilder = FlextLdifUtilitiesBuilders.ProcessConfigBuilder
-TransformConfigBuilder = FlextLdifUtilitiesBuilders.TransformConfigBuilder
-FilterConfigBuilder = FlextLdifUtilitiesBuilders.FilterConfigBuilder
-WriteConfigBuilder = FlextLdifUtilitiesBuilders.WriteConfigBuilder
-
 __all__ = [
-    "FilterConfigBuilder",
     "FlextLdifUtilitiesBuilders",
-    "ProcessConfigBuilder",
-    "TransformConfigBuilder",
-    "WriteConfigBuilder",
 ]

@@ -237,7 +237,7 @@ class FlextLdifUtilitiesFunctional:
             t.MutableContainerList | tuple[t.NormalizedValue, ...] | t.NormalizedValue,
         ],
         *,
-        predicate: Callable[..., bool] = lambda x: x is not None,
+        predicate: Callable[[t.NormalizedValue], bool] = lambda x: x is not None,
         on_error: Literal["skip", "stop", "collect"] = "skip",
     ) -> t.MutableContainerList:
         """Process and flatten items (mnemonic: pf)."""
