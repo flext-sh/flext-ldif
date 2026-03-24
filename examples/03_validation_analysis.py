@@ -31,7 +31,7 @@ class DRYValidationAnalysis:
     ) -> r[m.Ldif.ValidationResult]:
         """DRY validation analysis: categorize errors and detect patterns."""
         if not validation_result.is_valid:
-            error_groups: Mapping[str, t.StrSequence] = {}
+            error_groups: Mapping[str, Sequence[str]] = {}
             for error in validation_result.errors:
                 category = getattr(error, "category", "unknown")
                 if category not in error_groups:

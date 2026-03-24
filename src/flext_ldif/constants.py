@@ -793,7 +793,7 @@ class FlextLdifConstants(FlextConstants):
         _FROM_LONG_DICT: ClassVar[MutableMapping[str, str]] = {
             v: k for k, v in _LONG_NAMES_DICT.items()
         }
-        FROM_LONG: Final[t.StrMapping] = MappingProxyType(_FROM_LONG_DICT)
+        FROM_LONG: Final[Mapping[str, str]] = MappingProxyType(_FROM_LONG_DICT)
         _SELF_ALIASES: ClassVar[tuple[str, ...]] = ("ad", "apache", "novell")
         _ALIASES_DICT: ClassVar[MutableMapping[str, str]] = {
             name: name for name in _SELF_ALIASES
@@ -905,7 +905,7 @@ class FlextLdifConstants(FlextConstants):
         BINARY: Final[str] = "1.3.6.1.4.1.1466.115.121.1.5"
         DN: Final[str] = "1.3.6.1.4.1.1466.115.121.1.12"
         OID: Final[str] = "1.3.6.1.4.1.1466.115.121.1.38"
-        OID_TO_NAME: ClassVar[t.StrMapping] = MappingProxyType({
+        OID_TO_NAME: ClassVar[Mapping[str, str]] = MappingProxyType({
             "2.5.5.5": "integer",
             "1.3.6.1.4.1.1466.115.121.1.1": "aci",
             "1.3.6.1.4.1.1466.115.121.1.2": "access_point",

@@ -45,7 +45,7 @@ class TestData:
     COMPLEX_LDIF: Final[str] = (
         f"{c.RFC.SAMPLE_LDIF_MULTIPLE}\ndn: cn=Admin1,ou=Admins,dc=example,dc=com\ncn: Admin1\nmail: REDACTED_LDAP_BIND_PASSWORD1@example.com\nobjectClass: person\n\ndn: cn=Admin2,ou=Admins,dc=example,dc=com\ncn: Admin2\nmail: REDACTED_LDAP_BIND_PASSWORD2@example.com\nobjectClass: person\n"
     )
-    FILTER_TEST_DATA: Final[Mapping[str, t.StrMapping]] = {
+    FILTER_TEST_DATA: Final[Mapping[str, Mapping[str, str]]] = {
         "person": {"objectclass": "person", "expected_count": "2"},
         "organizationalPerson": {
             "objectclass": "organizationalPerson",
@@ -53,7 +53,7 @@ class TestData:
         },
         "nonexistent": {"objectclass": "nonexistent", "expected_count": "0"},
     }
-    DN_PATTERN_DATA: Final[Mapping[str, t.StrMapping]] = {
+    DN_PATTERN_DATA: Final[Mapping[str, Mapping[str, str]]] = {
         "dc=example": {"pattern": "dc=example", "expected_count": "4"},
         "cn=user1": {"pattern": "cn=user1", "expected_count": "1"},
         "nonexistent": {"pattern": "ou=NonExistent", "expected_count": "0"},

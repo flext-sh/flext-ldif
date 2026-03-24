@@ -131,11 +131,11 @@ class TestRealLdapBatchOperations:
         for entry in entries:
             object_classes = entry.get_attribute_values("objectclass")
             if not isinstance(object_classes, list):
-                object_classes_typed: t.StrSequence = (
+                object_classes_typed: Sequence[str] = (
                     list(object_classes) if object_classes else []
                 )
                 object_classes = object_classes_typed
-            attrs_dict: Mapping[str, t.StrSequence] = {}
+            attrs_dict: Mapping[str, Sequence[str]] = {}
             assert entry.attributes is not None
             for attr_name, attr_values in entry.attributes.attributes.items():
                 if attr_name.lower() == "objectclass":

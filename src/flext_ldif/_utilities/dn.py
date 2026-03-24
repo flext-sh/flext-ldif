@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import string
 import struct
-from collections.abc import (, MutableMapping, MutableSequence
+from collections.abc import (
     Callable,
     Generator,
     MutableMapping,

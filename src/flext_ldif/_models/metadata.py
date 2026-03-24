@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import (, MutableMapping, MutableSequence
+from collections.abc import (
     ItemsView,
     KeysView,
     MutableMapping,

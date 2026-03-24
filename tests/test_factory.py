@@ -18,7 +18,7 @@ class FlextLdifTestFactory:
     @staticmethod
     def create_real_entry(
         dn: str | None = None,
-        attributes: Mapping[str, t.StrSequence] | None = None,
+        attributes: Mapping[str, Sequence[str]] | None = None,
         server_type: str = "generic",
     ) -> m.Ldif.Entry:
         """Create a real Entry model with valid data."""
@@ -46,7 +46,7 @@ class FlextLdifTestFactory:
         entries_count: int = 3, *, include_schema: bool = False
     ) -> str:
         """Create real LDIF content for testing."""
-        lines: t.StrSequence = []
+        lines: Sequence[str] = []
         if include_schema:
             lines.extend([
                 "dn: cn=schema",

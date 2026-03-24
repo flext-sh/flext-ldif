@@ -52,7 +52,7 @@ class FlextLdifTestConftest:
     Reduces conftest.py from 1400+ lines to ~20 lines using DRY principles.
     """
 
-    _TEST_USERS: ClassVar[Sequence[t.StrMapping]] = [
+    _TEST_USERS: ClassVar[Sequence[Mapping[str, str]]] = [
         {"name": "Test User 1", "email": "user1@example.com"},
         {"name": "Test User 2", "email": "user2@example.com"},
         {"name": "Test User 3", "email": "user3@example.com"},
@@ -599,7 +599,7 @@ class FlextLdifTestConftest:
 
     def ldif_test_entries(
         self,
-    ) -> Sequence[Mapping[str, Mapping[str, t.StrSequence] | str]]:
+    ) -> Sequence[Mapping[str, Mapping[str, Sequence[str]] | str]]:
         """LDIF test entries."""
         entries = copy.deepcopy(self._LDIF_TEST_ENTRIES)
         return [
@@ -617,7 +617,7 @@ class FlextLdifTestConftest:
 
     def ldif_test_content(self, ldif_test_entries: Sequence[t.ContainerMapping]) -> str:
         """Generate LDIF content."""
-        content_lines: t.StrSequence = []
+        content_lines: Sequence[str] = []
         for entry in ldif_test_entries:
             dn = entry.get("dn", "")
             content_lines.append(f"dn: {dn}")
@@ -631,7 +631,7 @@ class FlextLdifTestConftest:
             content_lines.append("")
         return "\n".join(content_lines)
 
-    def ldif_error_scenarios(self) -> t.StrMapping:
+    def ldif_error_scenarios(self) -> Mapping[str, str]:
         """Error scenarios."""
         return {
             "invalid_dn": "dn: invalid-dn-format\nobjectClass: person\n",

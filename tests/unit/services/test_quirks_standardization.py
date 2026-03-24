@@ -137,8 +137,8 @@ class TestQuirksWithRealLdifFixtures:
     def _sample_ldif_records(ldif_content: str, max_records: int = 25) -> str:
         """Return first LDIF records to keep fixture parsing lightweight."""
         lines = ldif_content.splitlines()
-        sampled: t.StrSequence = []
-        current_record: t.StrSequence = []
+        sampled: Sequence[str] = []
+        current_record: Sequence[str] = []
         record_count = 0
 
         def flush_record() -> None:

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import ClassVar
 
 import pytest
@@ -18,7 +18,7 @@ import pytest
 from flext_ldif import m
 from tests import s
 
-type DnRefData = Mapping[str, t.StrMapping | t.StrSequence | str]
+type DnRefData = Mapping[str, Mapping[str, str] | Sequence[str] | str]
 
 
 class TestDnCaseRegistry(s):

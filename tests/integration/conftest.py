@@ -17,7 +17,7 @@ from __future__ import annotations
 import contextlib
 import fcntl
 import time
-from collections.abc import Callable, Generator, Sequence
+from collections.abc import Callable, Generator, Mapping, Sequence
 from pathlib import Path
 
 import pytest
@@ -432,11 +432,11 @@ def rfc_schema_entries(
 
 
 @pytest.fixture
-def all_schema_fixtures() -> t.StrMapping:
+def all_schema_fixtures() -> Mapping[str, str]:
     """Provide all schema fixtures by server type.
 
     Returns:
-        t.StrMapping: Dictionary mapping server type to schema fixture.
+        Mapping[str, str]: Dictionary mapping server type to schema fixture.
 
     """
     return {
@@ -448,11 +448,11 @@ def all_schema_fixtures() -> t.StrMapping:
 
 
 @pytest.fixture
-def all_entries_fixtures() -> t.StrMapping:
+def all_entries_fixtures() -> Mapping[str, str]:
     """Provide all entries fixtures by server type.
 
     Returns:
-        t.StrMapping: Dictionary mapping server type to entries fixture.
+        Mapping[str, str]: Dictionary mapping server type to entries fixture.
 
     """
     return {
@@ -463,11 +463,11 @@ def all_entries_fixtures() -> t.StrMapping:
 
 
 @pytest.fixture
-def all_acl_fixtures() -> t.StrMapping:
+def all_acl_fixtures() -> Mapping[str, str]:
     """Provide all ACL fixtures by server type.
 
     Returns:
-        t.StrMapping: Dictionary mapping server type to ACL fixture.
+        Mapping[str, str]: Dictionary mapping server type to ACL fixture.
 
     """
     return {
@@ -478,11 +478,11 @@ def all_acl_fixtures() -> t.StrMapping:
 
 
 @pytest.fixture
-def all_integration_fixtures() -> t.StrMapping:
+def all_integration_fixtures() -> Mapping[str, str]:
     """Provide all integration fixtures by server type.
 
     Returns:
-        t.StrMapping: Dictionary mapping server type to integration fixture.
+        Mapping[str, str]: Dictionary mapping server type to integration fixture.
 
     """
     return {

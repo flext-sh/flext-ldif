@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import (, MutableMapping, MutableSequence
+from collections.abc import (
     Callable,
     Iterable,
     Mapping,
@@ -575,9 +575,7 @@ class FlextLdifUtilitiesFunctional:
 
         """
         normalized_value: (
-            t.Container
-            | MutableSequence[t.Container]
-            | t.MutableFlatContainerMapping
+            t.Container | MutableSequence[t.Container] | t.MutableFlatContainerMapping
         )
         if isinstance(value, t.CONTAINER_TYPES):
             normalized_value = value

@@ -187,7 +187,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
         SAMPLE_USER_DN: Final[str] = "cn=testuser,dc=test,dc=local"
         SAMPLE_GROUP_DN: Final[str] = "cn=testgroup,dc=test,dc=local"
         SAMPLE_OU_DN: Final[str] = "ou=testou,dc=test,dc=local"
-        SAMPLE_ATTRIBUTES: Final[Mapping[str, t.StrSequence]] = {
+        SAMPLE_ATTRIBUTES: Final[Mapping[str, Sequence[str]]] = {
             "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
             "cn": ["Test User"],
             "sn": ["User"],
@@ -589,7 +589,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
         @staticmethod
         def test_entry_create_and_unwrap(
-            dn: str, attributes: Mapping[str, str | t.StrSequence]
+            dn: str, attributes: Mapping[str, str | Sequence[str]]
         ) -> m.Ldif.Entry:
             """Create an entry and unwrap the result.
 
@@ -622,8 +622,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
             expected_length: int | None = None,
             expected_kind: str | None = None,
             expected_sup: str | None = None,
-            expected_must: t.StrSequence | None = None,
-            expected_may: t.StrSequence | None = None,
+            expected_must: Sequence[str] | None = None,
+            expected_may: Sequence[str] | None = None,
         ) -> p.Ldif.SchemaAttribute | None:
             """Parse schema definition and assert properties.
 
@@ -774,7 +774,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
         @staticmethod
         def test_create_entry_and_unwrap(
-            dn: str, attributes: Mapping[str, str | t.StrSequence] | None = None
+            dn: str, attributes: Mapping[str, str | Sequence[str]] | None = None
         ) -> m.Ldif.Entry:
             """Create an entry and unwrap the result.
 
@@ -834,8 +834,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
             desc: str | None = None,
             kind: str = "STRUCTURAL",
             sup: str | None = None,
-            must: t.StrSequence | None = None,
-            may: t.StrSequence | None = None,
+            must: Sequence[str] | None = None,
+            may: Sequence[str] | None = None,
         ) -> m.Ldif.SchemaObjectClass:
             """Create a schema objectClass and unwrap the result.
 
@@ -914,8 +914,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
             expected_desc: str | None = None,
             expected_sup: str | None = None,
             expected_kind: str | None = None,
-            expected_must: t.StrSequence | None = None,
-            expected_may: t.StrSequence | None = None,
+            expected_must: Sequence[str] | None = None,
+            expected_may: Sequence[str] | None = None,
             expected_syntax: str | None = None,
             expected_equality: str | None = None,
             expected_single_value: bool | None = None,
@@ -1168,7 +1168,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             attr_def: str,
             expected_oid: str,
             expected_name: str,
-            must_contain: t.StrSequence | None = None,
+            must_contain: Sequence[str] | None = None,
         ) -> tuple[t.NormalizedValue, str]:
             """Parse attribute definition, write it back, and validate output.
 
@@ -1210,7 +1210,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             parser_service: FlextLdifParser,
             content: str,
             expected_dn: str,
-            expected_attributes: t.StrSequence,
+            expected_attributes: Sequence[str],
             expected_count: int = 1,
         ) -> Sequence[m.Ldif.Entry]:
             """Parse LDIF content and assert entry structure.
@@ -1261,7 +1261,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
         def test_parse_and_assert_multiple_entries(
             parser_service: FlextLdifParser,
             content: str,
-            expected_dns: t.StrSequence,
+            expected_dns: Sequence[str],
             expected_count: int,
         ) -> Sequence[m.Ldif.Entry]:
             """Parse LDIF content with multiple entries and assert structure.
@@ -1302,7 +1302,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
         @staticmethod
         def test_create_entry(
-            dn: str, attributes: Mapping[str, str | t.StrSequence]
+            dn: str, attributes: Mapping[str, str | Sequence[str]]
         ) -> m.Ldif.Entry:
             """Create an entry for testing.
 
@@ -1326,7 +1326,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
         def test_write_entries_to_string(
             writer_service: FlextLdifWriter,
             entries: Sequence[m.Ldif.Entry],
-            expected_content: t.StrSequence | None = None,
+            expected_content: Sequence[str] | None = None,
         ) -> str:
             """Write entries to LDIF string.
 
@@ -1361,7 +1361,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             writer_service: FlextLdifWriter,
             entries: Sequence[m.Ldif.Entry],
             file_path: str | Path,
-            expected_content: t.StrSequence | None = None,
+            expected_content: Sequence[str] | None = None,
         ) -> None:
             """Write entries to LDIF file.
 
@@ -1425,7 +1425,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
         @staticmethod
         def test_write_entry_variations(
             writer_service: FlextLdifWriter,
-            entry_data: Mapping[str, Mapping[str, str | Mapping[str, t.StrSequence]]],
+            entry_data: Mapping[str, Mapping[str, str | Mapping[str, Sequence[str]]]],
         ) -> None:
             """Test writing entries with various data types.
 
@@ -1443,7 +1443,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 dn = str(data.get("dn", ""))
                 raw_attributes = data.get("attributes", {})
                 if not isinstance(raw_attributes, dict):
-                    attributes: Mapping[str, t.StrSequence] = {}
+                    attributes: Mapping[str, Sequence[str]] = {}
                 else:
                     attributes = {
                         str(k): [str(i) for i in v] if isinstance(v, list) else [str(v)]
@@ -1642,7 +1642,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 if not isinstance(attrs_raw, dict):
                     msg = "Entry data must include dict 'attributes'"
                     raise AssertionError(msg)
-                normalized_attrs: Mapping[str, str | t.StrSequence] = {}
+                normalized_attrs: Mapping[str, str | Sequence[str]] = {}
                 for attr_name_raw, attr_value_raw in attrs_raw.items():
                     if not isinstance(attr_name_raw, str):
                         continue
@@ -1706,7 +1706,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
         def helper_api_write_and_unwrap(
             api: FlextLdif,
             entries: Sequence[m.Ldif.Entry],
-            must_contain: t.StrSequence | None = None,
+            must_contain: Sequence[str] | None = None,
         ) -> str:
             """Write entries to string and unwrap result.
 
@@ -1736,7 +1736,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             api: FlextLdif,
             entries: Sequence[m.Ldif.Entry],
             output_file: str | Path,
-            must_contain: t.StrSequence | None = None,
+            must_contain: Sequence[str] | None = None,
         ) -> None:
             """Write entries to file and assert content.
 
@@ -1759,7 +1759,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
         def api_parse_write_string_and_assert(
             api: FlextLdif,
             entries: Sequence[m.Ldif.Entry],
-            must_contain: t.StrSequence | None = None,
+            must_contain: Sequence[str] | None = None,
         ) -> None:
             """Write entries to string and assert content.
 
@@ -1868,7 +1868,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             | m.Ldif.Acl,
             msg: str | None = None,
             write_method: str | None = None,
-            must_contain: t.StrSequence | None = None,
+            must_contain: Sequence[str] | None = None,
         ) -> str:
             """Write using quirk and unwrap result.
 
@@ -1918,7 +1918,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             target_quirk: p.Ldif.SchemaQuirk,
             conversion_type: str,
             data: str,
-            must_contain: t.StrSequence | None = None,
+            must_contain: Sequence[str] | None = None,
             expected_type: type | None = None,
         ) -> str:
             """Convert data between quirks and assert result.
@@ -1988,7 +1988,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
         def helper_get_supported_conversions_and_assert(
             conversion_matrix: FlextLdifConversion,
             quirk: p.Ldif.SchemaQuirk,
-            must_have_keys: t.StrSequence | None = None,
+            must_have_keys: Sequence[str] | None = None,
             expected_support: Mapping[str, bool] | None = None,
         ) -> Mapping[str, bool]:
             """Get supported conversions and assert result.
@@ -2040,7 +2040,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             source_quirk: p.Ldif.SchemaQuirk,
             target_quirk: p.Ldif.SchemaQuirk,
             conversion_type: str,
-            items: t.StrSequence,
+            items: Sequence[str],
             expected_count: int | None = None,
         ) -> Sequence[
             m.Ldif.Entry

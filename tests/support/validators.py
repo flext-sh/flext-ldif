@@ -5,7 +5,7 @@ This module provides validation utilities for testing flext-ldif functionality.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
 from flext_core import r
 
@@ -66,7 +66,7 @@ class TestValidators:
         dn_value = entry.dn if entry.dn is not None else ""
         if entry.attributes is not None:
             if isinstance(entry.attributes, m.Ldif.Attributes):
-                attributes_dict: Mapping[str, t.StrSequence] = (
+                attributes_dict: Mapping[str, Sequence[str]] = (
                     entry.attributes.attributes
                 )
             else:
