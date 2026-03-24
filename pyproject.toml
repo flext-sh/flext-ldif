@@ -165,6 +165,10 @@ project-includes = [
 python-version = "3.13"
 search-path = [
   ".",
+  "../flext-core/examples",
+  "../flext-core/src",
+  "../flext-tests",
+  "../flext-tests/src",
   "src",
 ]
 use-ignore-files = false
