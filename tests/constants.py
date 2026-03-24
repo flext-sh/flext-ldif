@@ -17,7 +17,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence, Sized
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+    Sized,
+)
 from pathlib import Path
 from typing import Final, cast
 
@@ -92,7 +99,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             OPENLDAP2: Final[str] = "openldap2"
             RFC: Final[str] = "rfc"
 
-        class Rfc:
+        class Rfc(FlextLdifConstants.Ldif.Rfc):
             """RFC test constants for schema and entry testing."""
 
             ATTR_DEF_CN: Final[str] = (
@@ -329,7 +336,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             ACL_LINE_EMPTY_OID: Final[str] = ""
             ACL_LINE_INVALID_OID: Final[str] = "invalid.oid.format"
 
-        class OID:
+        class OidServer:
             """OID server test constants (from fixtures/oid_constants.py)."""
 
             ORACLE_OID_NAMESPACE: Final[str] = "2.16.840.1.113894"
@@ -600,7 +607,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             @staticmethod
             def test_entry_create_and_unwrap(
                 dn: str,
-                attributes: Mapping[str, str | t.StrSequence],
+                attributes: MutableMapping[str, str | MutableSequence[str]],
             ) -> m.Ldif.Entry:
                 """Create an entry and unwrap the result.
 
@@ -635,7 +642,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 expected_sup: str | None = None,
                 expected_must: t.StrSequence | None = None,
                 expected_may: t.StrSequence | None = None,
-            ) -> p.Ldif.SchemaAttribute | None:
+            ) -> p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | None:
                 """Parse schema definition and assert properties.
 
                 Args:
@@ -675,7 +682,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 result = parse_method(schema_def)
                 if hasattr(result, "is_failure") and result.is_failure:
                     raise AssertionError(f"Parsing failed: {result.error}")
-                value = result.value if hasattr(result, "value") else result
+                value: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass = (
+                    result.value if hasattr(result, "value") else result
+                )
                 if expected_oid is not None:
                     actual_oid = getattr(value, "oid", None)
                     if actual_oid != expected_oid:
@@ -725,16 +734,24 @@ class FlextLdifTestConstants(FlextTestsConstants):
                             f"Expected SUP '{expected_sup}', got '{actual_sup}'",
                         )
                 if expected_must is not None:
-                    actual_must = getattr(value, "must", None) or []
-                    if list(actual_must) != expected_must:
+                    actual_must: list[str] = (
+                        list(value.must or [])
+                        if isinstance(value, m.Ldif.SchemaObjectClass)
+                        else []
+                    )
+                    if actual_must != list(expected_must):
                         raise AssertionError(
-                            f"Expected MUST {expected_must}, got {list(actual_must)}",
+                            f"Expected MUST {expected_must}, got {actual_must}",
                         )
                 if expected_may is not None:
-                    actual_may = getattr(value, "may", None) or []
-                    if list(actual_may) != expected_may:
+                    actual_may: list[str] = (
+                        list(value.may or [])
+                        if isinstance(value, m.Ldif.SchemaObjectClass)
+                        else []
+                    )
+                    if actual_may != list(expected_may):
                         raise AssertionError(
-                            f"Expected MAY {expected_may}, got {list(actual_may)}",
+                            f"Expected MAY {expected_may}, got {actual_may}",
                         )
                 return value
 
@@ -758,15 +775,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     AssertionError: If result is failure or type mismatch
 
                 """
-                is_failure = getattr(result, "is_failure", None)
-                if not isinstance(is_failure, bool):
-                    raise TypeError(
-                        f"Expected r-like t.NormalizedValue, got {type(result)}",
-                    )
-                if is_failure:
-                    error = getattr(result, "error", "Unknown error")
-                    raise AssertionError(f"Result is failure: {error}")
-                value = getattr(result, "value", None)
+                if result.is_failure:
+                    raise AssertionError(f"Result is failure: {result.error}")
+                value: TResult = result.value
                 if expected_type is not None and (not isinstance(value, expected_type)):
                     raise AssertionError(
                         f"Expected {expected_type.__name__}, got {type(value).__name__}",
@@ -786,7 +797,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             @staticmethod
             def test_create_entry_and_unwrap(
                 dn: str,
-                attributes: Mapping[str, str | t.StrSequence] | None = None,
+                attributes: MutableMapping[str, str | MutableSequence[str]] | None = None,
             ) -> m.Ldif.Entry:
                 """Create an entry and unwrap the result.
 
@@ -850,8 +861,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 desc: str | None = None,
                 kind: str = "STRUCTURAL",
                 sup: str | None = None,
-                must: t.StrSequence | None = None,
-                may: t.StrSequence | None = None,
+                must: list[str] | None = None,
+                may: list[str] | None = None,
             ) -> m.Ldif.SchemaObjectClass:
                 """Create a schema objectClass and unwrap the result.
 
@@ -1085,7 +1096,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     name=str(data.get("name", "")),
                     desc=desc_value if isinstance(desc_value, str) else None,
                     kind=str(data.get("kind", "STRUCTURAL")),
-                    sup=sup_value if isinstance(sup_value, (str, list)) else None,
+                    sup=sup_value if isinstance(sup_value, str) else None,
                     must=must_list,
                     may=may_list,
                 )
@@ -1185,7 +1196,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 expected_oid: str,
                 expected_name: str,
                 must_contain: t.StrSequence | None = None,
-            ) -> tuple[t.NormalizedValue, str]:
+            ) -> tuple[m.Ldif.SchemaAttribute, str]:
                 """Parse attribute definition, write it back, and validate output.
 
                 Args:
@@ -1217,7 +1228,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 result = write_method(attr)
                 if hasattr(result, "is_failure") and result.is_failure:
                     raise AssertionError(f"Attribute writing failed: {result.error}")
-                written = result.value if hasattr(result, "value") else result
+                written_raw = result.value if hasattr(result, "value") else result
+                written: str = written_raw if isinstance(written_raw, str) else str(written_raw)
                 if must_contain:
                     for element in must_contain:
                         if element not in written:
@@ -1328,7 +1340,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             @staticmethod
             def test_create_entry(
                 dn: str,
-                attributes: Mapping[str, str | t.StrSequence],
+                attributes: MutableMapping[str, str | MutableSequence[str]],
             ) -> m.Ldif.Entry:
                 """Create an entry for testing.
 
@@ -1351,7 +1363,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             @staticmethod
             def test_write_entries_to_string(
                 writer_service: FlextLdifWriter,
-                entries: Sequence[m.Ldif.Entry],
+                entries: MutableSequence[m.Ldif.Entry],
                 expected_content: t.StrSequence | None = None,
             ) -> str:
                 """Write entries to LDIF string.
@@ -1389,7 +1401,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             @staticmethod
             def test_write_entries_to_file(
                 writer_service: FlextLdifWriter,
-                entries: Sequence[m.Ldif.Entry],
+                entries: MutableSequence[m.Ldif.Entry],
                 file_path: str | Path,
                 expected_content: t.StrSequence | None = None,
             ) -> None:
@@ -1484,12 +1496,14 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     dn = str(data.get("dn", ""))
                     raw_attributes = data.get("attributes", {})
                     if not isinstance(raw_attributes, dict):
-                        attributes: Mapping[str, t.StrSequence] = {}
+                        attributes: dict[str, str | MutableSequence[str]] = {}
                     else:
                         attributes = {
-                            str(k): [str(i) for i in v]
-                            if isinstance(v, list)
-                            else [str(v)]
+                            str(k): (
+                                [str(i) for i in v]
+                                if isinstance(v, list)
+                                else [str(v)]
+                            )
                             for k, v in raw_attributes.items()
                         }
                     entry_result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
@@ -1687,7 +1701,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     if not isinstance(attrs_raw, dict):
                         msg = "Entry data must include dict 'attributes'"
                         raise AssertionError(msg)
-                    normalized_attrs: Mapping[str, str | t.StrSequence] = {}
+                    normalized_attrs: dict[str, str | MutableSequence[str]] = {}
                     for attr_name_raw, attr_value_raw in attrs_raw.items():
                         if not isinstance(attr_name_raw, str):
                             continue
@@ -1695,7 +1709,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                             normalized_attrs[attr_name_raw] = attr_value_raw
                             continue
                         if isinstance(attr_value_raw, list):
-                            string_values = [
+                            string_values: MutableSequence[str] = [
                                 item for item in attr_value_raw if isinstance(item, str)
                             ]
                             if len(string_values) == len(attr_value_raw):
@@ -1756,7 +1770,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             @staticmethod
             def helper_api_write_and_unwrap(
                 api: FlextLdif,
-                entries: Sequence[m.Ldif.Entry],
+                entries: MutableSequence[m.Ldif.Entry],
                 must_contain: t.StrSequence | None = None,
             ) -> str:
                 """Write entries to string and unwrap result.
@@ -1785,7 +1799,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             @staticmethod
             def api_parse_write_file_and_assert(
                 api: FlextLdif,
-                entries: Sequence[m.Ldif.Entry],
+                entries: MutableSequence[m.Ldif.Entry],
                 output_file: str | Path,
                 must_contain: t.StrSequence | None = None,
             ) -> None:
@@ -1813,7 +1827,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             @staticmethod
             def api_parse_write_string_and_assert(
                 api: FlextLdif,
-                entries: Sequence[m.Ldif.Entry],
+                entries: MutableSequence[m.Ldif.Entry],
                 must_contain: t.StrSequence | None = None,
             ) -> None:
                 """Write entries to string and assert content.
@@ -1844,14 +1858,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 parse_method: str | None = None,
                 expected_type: type | None = None,
                 should_succeed: bool | None = None,
-            ) -> (
-                p.Ldif.SchemaAttribute
-                | p.Ldif.SchemaObjectClass
-                | p.Ldif.Entry
-                | p.Ldif.Acl
-                | Sequence[p.Ldif.Entry]
-                | None
-            ):
+            ) -> object | None:
                 """Parse using quirk and unwrap result.
 
                 Args:
@@ -1871,28 +1878,27 @@ class FlextLdifTestConstants(FlextTestsConstants):
                         or if type doesn't match
 
                 """
+                raw_result: object
+                parse_fn: Callable[[str], object] | None
                 if parse_method:
-                    method = getattr(quirk, parse_method, None)
-                    if method is None or not callable(method):
+                    parse_fn = getattr(quirk, parse_method, None)
+                    if parse_fn is None or not callable(parse_fn):
                         raise AssertionError(f"Quirk has no method '{parse_method}'")
-                    result = method(content)
+                    raw_result = parse_fn(content)
                 else:
-                    parse_callable = getattr(quirk, "parse", None)
-                    if parse_callable is None or not isinstance(
-                        parse_callable,
-                        Callable,
-                    ):
+                    parse_fn = getattr(quirk, "parse", None)
+                    if parse_fn is None or not callable(parse_fn):
                         msg = "Quirk has no callable parse method"
                         raise AssertionError(msg)
-                    result = parse_callable(content)
-                is_success = getattr(result, "is_success", None)
-                is_failure = getattr(result, "is_failure", None)
+                    raw_result = parse_fn(content)
+                is_success: bool | None = getattr(raw_result, "is_success", None)
+                is_failure: bool | None = getattr(raw_result, "is_failure", None)
                 if not isinstance(is_success, bool) or not isinstance(is_failure, bool):
                     msg = "Parse method must return r-like t.NormalizedValue"
                     raise AssertionError(msg)
-                error = getattr(result, "error", None)
+                error_val: object = getattr(raw_result, "error", None)
                 error_message = (
-                    str(error) if error is not None else "Unknown parse error"
+                    str(error_val) if error_val is not None else "Unknown parse error"
                 )
                 if should_succeed is False:
                     if is_success:
@@ -1908,7 +1914,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     assert is_success, msg or f"quirk.parse() failed: {error_message}"
                 if is_failure:
                     return None
-                value = getattr(result, "value", None)
+                value: object = getattr(raw_result, "value", None)
                 if expected_type is not None:
                     if hasattr(expected_type, "__protocol_attrs__"):
                         pass
@@ -2078,7 +2084,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     AssertionError: If result doesn't have expected keys or values
 
                 """
-                get_support_method = getattr(
+                get_support_method: Callable[..., object] | None = getattr(
                     conversion_matrix,
                     "get_supported_conversions",
                     None,
@@ -2086,17 +2092,19 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 if get_support_method is None:
                     msg = "conversion_matrix has no get_supported_conversions"
                     raise AssertionError(msg)
-                result = get_support_method(quirk)
-                if hasattr(result, "is_success"):
-                    assert result.is_success, (
-                        f"get_supported_conversions failed: {result.error}"
+                support_result: object = get_support_method(quirk)
+                raw_support: object
+                if hasattr(support_result, "is_success"):
+                    assert getattr(support_result, "is_success"), (
+                        f"get_supported_conversions failed: {getattr(support_result, 'error', None)}"
                     )
-                    support_dict = result.value
+                    raw_support = getattr(support_result, "value", support_result)
                 else:
-                    support_dict = result
-                assert isinstance(support_dict, dict), (
-                    f"Expected dict, got {type(support_dict).__name__}"
+                    raw_support = support_result
+                assert isinstance(raw_support, dict), (
+                    f"Expected dict, got {type(raw_support).__name__}"
                 )
+                support_dict: dict[str, bool] = raw_support
                 if must_have_keys:
                     for key in must_have_keys:
                         assert key in support_dict, (
@@ -2141,11 +2149,13 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     AssertionError: If conversion fails or count doesn't match
 
                 """
-                batch_convert_method = getattr(conversion_matrix, "batch_convert", None)
+                batch_convert_method: Callable[..., object] | None = getattr(
+                    conversion_matrix, "batch_convert", None
+                )
                 if batch_convert_method is None:
                     msg = "conversion_matrix has no batch_convert method"
                     raise AssertionError(msg)
-                model_list: Sequence[
+                model_list: MutableSequence[
                     m.Ldif.Entry
                     | m.Ldif.SchemaAttribute
                     | m.Ldif.SchemaObjectClass
@@ -2172,24 +2182,54 @@ class FlextLdifTestConstants(FlextTestsConstants):
                         model_list.append(parse_result.value)
                 else:
                     raise AssertionError(f"Unknown conversion_type: {conversion_type}")
-                result = batch_convert_method(
+                batch_raw: object = batch_convert_method(
                     source=source_quirk,
                     target=target_quirk,
                     model_list=model_list,
                 )
-                if hasattr(result, "is_success"):
-                    assert result.is_success, f"batch_convert() failed: {result.error}"
-                    converted_items = result.value
+                if hasattr(batch_raw, "is_success"):
+                    assert getattr(batch_raw, "is_success"), (
+                        f"batch_convert() failed: {getattr(batch_raw, 'error', None)}"
+                    )
+                    converted_raw: object = getattr(batch_raw, "value", batch_raw)
                 else:
-                    converted_items = result
-                assert isinstance(converted_items, list), (
-                    f"Expected list, got {type(converted_items).__name__}"
+                    converted_raw = batch_raw
+                assert isinstance(converted_raw, list), (
+                    f"Expected list, got {type(converted_raw).__name__}"
                 )
+                converted_items: list[
+                    m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+                ] = [
+                    item
+                    for item in converted_raw
+                    if isinstance(
+                        item,
+                        (
+                            m.Ldif.Entry,
+                            m.Ldif.SchemaAttribute,
+                            m.Ldif.SchemaObjectClass,
+                            m.Ldif.Acl,
+                        ),
+                    )
+                ]
                 if expected_count is not None:
                     assert len(converted_items) == expected_count, (
                         f"Expected {expected_count} items, got {len(converted_items)}"
                     )
                 return converted_items
+
+    # Top-level aliases for convenient access (c.Names, c.RFC, etc.)
+    Names = Ldif.Names
+    Rfc = Ldif.Rfc
+    RFC = Ldif.RFC
+    TestData = Ldif.TestData
+    General = Ldif.General
+    DNs = Ldif.DNs
+    OIDs = Ldif.OIDs
+    Fixtures = Ldif.Fixtures
+    OidServer = Ldif.OidServer
+    RfcTestHelpers = Ldif.RfcTestHelpers
+    TestDeduplicationHelpers = Ldif.TestDeduplicationHelpers
 
 
 c = FlextLdifTestConstants
