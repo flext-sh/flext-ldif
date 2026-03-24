@@ -19,7 +19,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Sequence, Callable, Mapping
 from pathlib import Path
 
 import pytest

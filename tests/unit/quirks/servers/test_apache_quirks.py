@@ -6,7 +6,7 @@ Directory Server-specific attributes, t.NormalizedValue classes, entries, and AC
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence, Mapping
 from enum import StrEnum, unique
 from typing import ClassVar
 

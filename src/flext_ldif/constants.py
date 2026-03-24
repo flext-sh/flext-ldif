@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from flext_ldif import FlextLdifTypes as t
+
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import ClassVar, Final, Literal
@@ -382,7 +384,7 @@ class FlextLdifConstants(FlextConstants):
             "oid",
             "oud",
         ])
-        SCHEMA_ENTRY_PATTERNS: ClassVar[Mapping[str, Sequence[str]]] = (
+        SCHEMA_ENTRY_PATTERNS: ClassVar[Mapping[str, t.StrSequence]] = (
             MappingProxyType({
                 "rfc": ("cn=schema",),
                 "oid": ("cn=schema", "cn=subschema"),

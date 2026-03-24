@@ -6,7 +6,7 @@ utilities that enhance RFC schema parsing with server-specific transformations.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Sequence, Callable, Mapping
 
 from flext_core import r
 from flext_tests import tm

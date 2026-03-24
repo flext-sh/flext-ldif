@@ -7,8 +7,9 @@ conversions and other server-specific attribute transformations during migration
 
 from __future__ import annotations
 
-import re
 from collections.abc import Mapping
+
+import re
 from pathlib import Path
 from typing import Final
 

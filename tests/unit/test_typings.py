@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import ast
 import inspect
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence, Mapping
 from pathlib import Path
 from typing import ClassVar, cast
 

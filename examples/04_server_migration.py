@@ -16,7 +16,7 @@ Original: 252 lines | Advanced: ~200 lines with parallel migration + auto-detect
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence, Mapping
 from pathlib import Path
 
 from flext_core import r

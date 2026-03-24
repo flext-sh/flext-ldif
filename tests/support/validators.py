@@ -5,7 +5,7 @@ This module provides validation utilities for testing flext-ldif functionality.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence, Mapping
 
 from flext_core import r
 
