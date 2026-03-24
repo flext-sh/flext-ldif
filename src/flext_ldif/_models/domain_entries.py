@@ -2063,7 +2063,11 @@ class FlextLdifModelsDomainsEntries:
                 ext_violations: MutableSequence[t.Ldif.MetadataValue] = list(
                     server_violations,
                 )
-                self.metadata.extensions.server_specific_violations = ext_violations
+                setattr(
+                    self.metadata.extensions,
+                    "server_specific_violations",
+                    ext_violations,
+                )
             return self
 
         def _check_binary_option_rule(
@@ -3715,9 +3719,10 @@ class FlextLdifModelsDomainsEntries:
                 description="Original formatting details for round-trip preservation (DN line, syntax, encoding, spacing)",
             ),
         ] = None
-        schema_format_details: (
-            FlextLdifModelsDomainsEntries.SchemaFormatDetails | None
-        ) = None
+        schema_format_details: Annotated[
+            FlextLdifModelsDomainsEntries.SchemaFormatDetails | None,
+            Field(description="Schema formatting details for round-trip preservation"),
+        ] = None
         soft_delete_markers: Annotated[
             MutableSequence[str],
             Field(

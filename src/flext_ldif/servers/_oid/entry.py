@@ -496,7 +496,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             schema_transformations_typed: MutableSequence[t.Ldif.MetadataValue] = [
                 str(item) for item in schema_transformations
             ]
-            metadata.extensions.schema_transformations = schema_transformations_typed
+            setattr(
+                metadata.extensions,
+                "schema_transformations",
+                schema_transformations_typed,
+            )
         if acl_transformations:
             metadata.attribute_transformations = {
                 **metadata.attribute_transformations,

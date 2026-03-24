@@ -34,6 +34,8 @@ class FlextLdifModelsMetadata:
         schema_source_server: str | None = None
         server_type: str | None = None
         relaxed_mode: bool | None = None
+        server_specific_violations: MutableSequence[t.Ldif.MetadataValue] | None = None
+        schema_transformations: MutableSequence[t.Ldif.MetadataValue] | None = None
 
         @override
         def __eq__(self, other: t.NormalizedValue) -> bool:
