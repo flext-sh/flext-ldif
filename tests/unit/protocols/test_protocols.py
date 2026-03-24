@@ -54,7 +54,7 @@ class TestsTestFlextLdifProtocols(s):
         ACL = "AclQuirk"
         ENTRY = "EntryQuirk"
 
-    _PROTOCOL_NAMES: ClassVar[Sequence[str]] = [
+    _PROTOCOL_NAMES: ClassVar[t.StrSequence] = [
         ProtocolNames.SCHEMA.value,
         ProtocolNames.ACL.value,
         ProtocolNames.ENTRY.value,

@@ -94,7 +94,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         **kwargs: t.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize RFC schema quirk service."""
-        filtered_kwargs: MutableMapping[str, t.Scalar] = {}
+        filtered_kwargs: t.MutableConfigurationMapping = {}
         excluded_keys = {
             "_parent_quirk",
             "parent_quirk",

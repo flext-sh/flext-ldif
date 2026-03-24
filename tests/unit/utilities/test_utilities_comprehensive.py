@@ -37,7 +37,7 @@ class TestFlextLdifUtilitiesComprehensive:
         for line in lines:
             if line.startswith("dn:"):
                 current_dn = line[4:].strip()
-                current_attrs: Mapping[str, Sequence[str]] = {}
+                current_attrs: Mapping[str, t.StrSequence] = {}
                 entries.append(
                     m.Ldif.Tests.LdifTestData(
                         id=f"entry_{len(entries)}",

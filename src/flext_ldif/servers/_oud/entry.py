@@ -1244,7 +1244,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     ]
                     acl_metadata_extensions[dest_key] = value_list
                 elif isinstance(value_raw, Mapping):
-                    value_dict_2: MutableMapping[str, t.Scalar] = {}
+                    value_dict_2: t.MutableConfigurationMapping = {}
                     for k, v in value_raw.items():
                         key = str(k)
                         value_dict_2[key] = v if u.is_primitive(v) else str(v)
@@ -1289,7 +1289,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 ]
                 acl_metadata_extensions[dest_key] = value_list
             elif isinstance(value_raw, Mapping):
-                value_dict_1: MutableMapping[str, t.Scalar] = {}
+                value_dict_1: t.MutableConfigurationMapping = {}
                 for k, v in value_raw.items():
                     key = str(k)
                     if u.is_primitive(v):
@@ -1849,7 +1849,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 ]
                 current_extensions[final_key] = value_list
             elif isinstance(value, Mapping):
-                value_dict_inner: MutableMapping[str, t.Scalar] = {}
+                value_dict_inner: t.MutableConfigurationMapping = {}
                 for k, v in value.items():
                     key = str(k)
                     if u.is_primitive(v):

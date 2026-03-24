@@ -6,7 +6,7 @@ attribute mappings and validation.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from enum import StrEnum, unique
 from typing import ClassVar
 
@@ -46,7 +46,7 @@ class TestsTestFlextLdifAclAttributeRegistry(s):
     GET_ACL_ATTRIBUTES_DATA: ClassVar[
         Mapping[
             str,
-            tuple[GetAclAttributesServerType, str | None, Sequence[str], Sequence[str]],
+            tuple[GetAclAttributesServerType, str | None, t.StrSequence, t.StrSequence],
         ]
     ] = {
         "get_acl_attributes_rfc_foundation": (
@@ -166,8 +166,8 @@ class TestsTestFlextLdifAclAttributeRegistry(s):
         scenario: str,
         server_type: GetAclAttributesServerType,
         param_server_type: str | None,
-        required_attrs: Sequence[str],
-        forbidden_attrs: Sequence[str],
+        required_attrs: t.StrSequence,
+        forbidden_attrs: t.StrSequence,
     ) -> None:
         """Parametrized test for get_acl_attributes."""
         attrs = u.Ldif.get_acl_attributes(param_server_type)

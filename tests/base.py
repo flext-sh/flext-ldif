@@ -86,7 +86,7 @@ class FlextLdifTestsServiceBase(s[m.Ldif.Entry]):
 
     @classmethod
     def create_entry(
-        cls, dn: str, attributes: Mapping[str, str | Sequence[str]] | None = None
+        cls, dn: str, attributes: Mapping[str, str | t.StrSequence] | None = None
     ) -> m.Ldif.Entry:
         """Create test entry using real FlextLdifEntries service.
 
@@ -112,7 +112,7 @@ class FlextLdifTestsServiceBase(s[m.Ldif.Entry]):
 
     @classmethod
     def create_entries(
-        cls, entries_data: Sequence[tuple[str, Mapping[str, str | Sequence[str]]]]
+        cls, entries_data: Sequence[tuple[str, Mapping[str, str | t.StrSequence]]]
     ) -> Sequence[m.Ldif.Entry]:
         """Create multiple test entries.
 

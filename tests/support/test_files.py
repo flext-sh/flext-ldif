@@ -136,7 +136,7 @@ class FileManager:
 
     @classmethod
     @contextmanager
-    def ldif_files(cls, files: Mapping[str, str]) -> Generator[Mapping[str, Path]]:
+    def ldif_files(cls, files: t.StrMapping) -> Generator[Mapping[str, Path]]:
         """Context manager for LDIF files.
 
         Args:
@@ -188,7 +188,7 @@ class FileManager:
         return file_path
 
     def create_file_set(
-        self, files: Mapping[str, str], extension: str = ""
+        self, files: t.StrMapping, extension: str = ""
     ) -> Mapping[str, Path]:
         """Create set of files."""
         created: Mapping[str, Path] = {}

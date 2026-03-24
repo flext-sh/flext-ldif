@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import (
+from collections.abc import (, MutableMapping, MutableSequence
     Callable,
     KeysView,
     Mapping,

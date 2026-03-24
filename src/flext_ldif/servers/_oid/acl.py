@@ -170,7 +170,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         ]
         | str
         | None,
-    ) -> MutableMapping[str, t.Scalar]:
+    ) -> t.MutableConfigurationMapping:
         """Normalize value to dict for model validation."""
         if isinstance(value, Mapping):
             return {
@@ -288,7 +288,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _build_oid_acl_metadata(
         self,
         config: FlextLdifServersOidAcl.OidAclMetadataConfig,
-    ) -> MutableMapping[str, t.Scalar]:
+    ) -> t.MutableConfigurationMapping:
         """Build metadata extensions for OID ACL with Oracle-specific features."""
         target_attrs_str: str = (
             _OidAclTargetAttributesJson(root=config.target_attrs).model_dump_json()
@@ -300,7 +300,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             if config.perms_dict
             else ""
         )
-        metadata_dict: MutableMapping[str, t.Scalar] = dict(
+        metadata_dict: t.MutableConfigurationMapping = dict(
             FlextLdifUtilitiesMetadata.build_acl_metadata_complete(
                 "oid",
                 acl_line=config.acl_line,
@@ -625,7 +625,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _prepare_subject_and_permissions_for_write(
         self,
-        acl_subject: m.Ldif.AclSubject | MutableMapping[str, t.Scalar],
+        acl_subject: m.Ldif.AclSubject | t.MutableConfigurationMapping,
         acl_permissions: m.Ldif.AclPermissions | MutableMapping[str, bool] | None,
         metadata: m.Ldif.QuirkMetadata
         | MutableMapping[

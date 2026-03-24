@@ -23,7 +23,7 @@ from flext_ldif import FlextLdif, FlextLdifUtilities, c, m
 def _write_entry_to_file(
     entry: m.Ldif.Entry,
     f: TextIO,
-    output_content_lines: Sequence[str],
+    output_content_lines: t.StrSequence,
     *,
     include_attributes: bool = False,
 ) -> None:
@@ -58,7 +58,7 @@ def _write_entry_to_file(
 def _write_categories_to_file(
     filtered: m.Ldif.FlexibleCategories,
     f: TextIO,
-    output_content_lines: Sequence[str],
+    output_content_lines: t.StrSequence,
     *,
     include_attributes: bool = False,
 ) -> None:
@@ -93,7 +93,7 @@ def _write_category_header(
     entry_count: int,
     include_attributes: bool,
     f: TextIO,
-    output_content_lines: Sequence[str],
+    output_content_lines: t.StrSequence,
 ) -> None:
     """Write category header to file."""
     category_header = (
@@ -157,7 +157,7 @@ class TestCategorizationRealData:
         categories = categories_result.value
         filtered = categorization.filter_by_base_dn(categories)
         output_file = tmp_path / "test_base_dn_substring_edge_cases.ldif"
-        output_content_lines: Sequence[str] = []
+        output_content_lines: t.StrSequence = []
         with output_file.open("w", encoding="utf-8") as f:
             header = f"# Base DN Substring Matching Edge Cases Test\n# Base DN: {base_dn}\n# Tests: dc=example vs dc=example2 (should not match)\n\n"
             f.write(header)
@@ -275,7 +275,7 @@ class TestCategorizationRealData:
             else:
                 acls_without_basedn.append(entry)
         output_file = tmp_path / "test_acl_substring_edge_cases.ldif"
-        output_content_lines: Sequence[str] = []
+        output_content_lines: t.StrSequence = []
         with output_file.open("w", encoding="utf-8") as f:
             header = f"# ACL Substring Matching Edge Cases Test\n# Base DN: {base_dn}\n# Tests: dc=example vs dc=example2 (should not match)\n\n"
             f.write(header)
@@ -349,7 +349,7 @@ class TestCategorizationRealData:
         categories = categories_result.value
         filtered = categorization.filter_by_base_dn(categories)
         output_file = tmp_path / "output_real_migration_categorized.ldif"
-        output_content_lines: Sequence[str] = []
+        output_content_lines: t.StrSequence = []
         with output_file.open("w", encoding="utf-8") as f:
             header = f"# Complete Migration Test Output\n# Base DN: {base_dn}\n# Total entries processed: {len(entries)}\n\n"
             f.write(header)

@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping
 
 import pytest
 from ldap3 import Connection
@@ -48,7 +48,7 @@ class TestRealLdapRoundtrip:
         """Verify LDAP → LDIF → LDAP preserves data integrity."""
         unique_username = make_test_username("RoundtripTest")
         original_dn = f"cn={unique_username},{clean_test_ou}"
-        original_attrs: Mapping[str, str | Sequence[str]] = {
+        original_attrs: Mapping[str, str | t.StrSequence] = {
             "cn": unique_username,
             "sn": "Test",
             "mail": "roundtrip@example.com",
@@ -91,7 +91,7 @@ class TestRealLdapRoundtrip:
         }
         attrs = reimport_entry.attributes
         assert attrs is not None
-        reimport_attrs: Mapping[str, Sequence[str]] = {
+        reimport_attrs: Mapping[str, t.StrSequence] = {
             attr_name: attr_values
             for attr_name, attr_values in attrs.attributes.items()
             if attr_name.lower() not in ldif_special_attrs

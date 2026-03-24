@@ -16,7 +16,7 @@ Original: 252 lines | Advanced: ~200 lines with parallel migration + auto-detect
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core import r
@@ -47,7 +47,7 @@ class ExampleServerMigration:
             return f'dn: cn=User{i},ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: User{i}\nsn: TestUser{i}\nmail: user{i}@example.com\norclguid: user{i}guid456\naci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="ldap:///self";)\n'
 
         batch_result = u.process(list(range(20)), create_entry_data, on_error="skip")
-        source_data: Sequence[str] = []
+        source_data: t.StrSequence = []
         if batch_result.is_success:
             source_data = batch_result.value
 
@@ -133,7 +133,7 @@ class ExampleServerMigration:
         """Batch comparison of parsing across multiple LDAP servers."""
         api = FlextLdif.get_instance()
         test_ldif = 'dn: cn=Server Comparison,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Server Comparison\nsn: Test\nmail: comparison@example.com\n# OID-specific attributes\norclguid: abc123def456\norclaci: access to attr=mail by * read\n# OUD-specific attributes\naci: (targetattr="mail")(version 3.0; acl "mail access"; allow (read,search) userdn="ldap:///anyone";)\n# OpenLDAP-specific attributes\nentryUUID: 12345678-1234-1234-1234-123456789012\nentryCSN: 20240101000000.000000Z#000000#000#000000\n'
-        servers: Sequence[str] = ["rfc", "oid", "oud", "openldap"]
+        servers: t.StrSequence = ["rfc", "oid", "oud", "openldap"]
         comparison_results: Mapping[
             str,
             Mapping[str, bool | int | str | None],

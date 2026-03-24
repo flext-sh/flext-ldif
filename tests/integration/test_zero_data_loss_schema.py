@@ -16,8 +16,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 import pytest
 
 from flext_ldif import (
@@ -543,7 +541,7 @@ class TestSchemaDeviationsComplete:
         ]
         assert format_details is not None
         extensions_dict = format_details.extensions.model_dump()
-        missing: Sequence[str] = []
+        missing: t.StrSequence = []
         for f in oid_must_track:
             if f == "original_string_complete":
                 if format_details.original_string_complete is None:
@@ -583,7 +581,7 @@ class TestSchemaDeviationsComplete:
         ]
         assert format_details is not None
         extensions_dict = format_details.extensions.model_dump()
-        missing: Sequence[str] = []
+        missing: t.StrSequence = []
         for f in oud_must_track:
             if f == "original_string_complete":
                 if format_details.original_string_complete is None:

@@ -6,7 +6,7 @@ Directory Server-specific attributes, t.NormalizedValue classes, entries, and AC
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from enum import StrEnum, unique
 from typing import ClassVar
 
@@ -102,7 +102,7 @@ class EntryTestCase(BaseModel):
 
     scenario: EntryScenario = Field(description="Entry detection scenario identifier")
     entry_dn: str = Field(description="Entry distinguished name")
-    attributes: Mapping[str, Sequence[str]] = Field(
+    attributes: Mapping[str, t.StrSequence] = Field(
         description="Entry attributes mapped by name"
     )
     expected_can_handle: bool = Field(description="Expected can_handle result")
@@ -568,7 +568,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         tm.that(result is test_case.expected_can_handle, eq=True)
 
     @staticmethod
-    def _build_ldif(entry_dn: str, attributes: Mapping[str, Sequence[str]]) -> str:
+    def _build_ldif(entry_dn: str, attributes: Mapping[str, t.StrSequence]) -> str:
         """Build LDIF string from DN and attributes."""
         ldif = f"dn: {entry_dn}\n"
         for attr, values in attributes.items():

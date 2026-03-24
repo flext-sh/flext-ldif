@@ -127,7 +127,7 @@ class FlextLdifUtilitiesMetadata:
         })
 
     @staticmethod
-    def _convert_transformation_to_metadata_value() -> MutableMapping[str, t.Scalar]:
+    def _convert_transformation_to_metadata_value() -> t.MutableConfigurationMapping:
         """Convert TransformationInfo Pydantic model to MetadataAttributeValue-compatible dict."""
         return {}
 
@@ -785,9 +785,9 @@ class FlextLdifUtilitiesMetadata:
         quirk_type: str,
         _original_acl_format: str | None = None,
         **extra: t.Scalar,
-    ) -> MutableMapping[str, t.Scalar]:
+    ) -> t.MutableConfigurationMapping:
         """Build metadata for ACL parsing as a dictionary."""
-        result: MutableMapping[str, t.Scalar] = {
+        result: t.MutableConfigurationMapping = {
             "quirk_type": quirk_type,
             "source_server": quirk_type,
         }
