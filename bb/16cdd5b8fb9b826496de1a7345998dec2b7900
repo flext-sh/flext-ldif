@@ -1,0 +1,86 @@
+tests/integration/test_real_ldap_crud.py
+  f57af31825b70f47 27,137-140
+tests/integration/test_real_ldap_import.py
+  f57af31825b70f47 32,62-65,145-148
+tests/unit/services/test_writer_dn_normalization.py
+  f57af31825b70f47 115
+tests/unit/quirks/servers/test_relaxed_quirks.py
+  f57af31825b70f47 149-156,206-207,319-326
+tests/support/conftest_factory.py
+  f57af31825b70f47 69-75,90,92,100,103-104,923-924
+tests/integration/test_zero_data_loss_oid_oud.py
+  f57af31825b70f47 378-380
+tests/test_factory.py
+  f57af31825b70f47 41-45
+src/flext_ldif/_models/domain_entries.py
+  8138edf6bc0fab47 994
+tests/integration/test_rfc_docker_real_integration.py
+  f57af31825b70f47 19,212
+tests/integration/test_oud_integration.py
+  f57af31825b70f47 160
+tests/integration/test_simple_ldap.py
+  8138edf6bc0fab47 6,55-58,61
+tests/__init__.py
+  f57af31825b70f47 1062
+tests/integration/test_config_integration.py
+  f57af31825b70f47 69,80-81,93,109,136
+tests/unit/protocols/test_protocols.py
+  f57af31825b70f47 177
+tests/base.py
+  f57af31825b70f47 20,22,24,27,30,54-57
+tests/constants.py
+  f57af31825b70f47 1984,1987-1988,1990,1992,1995-1996,1998,2000,2130-2131,2133,2135,2139-2140,2142,2144
+tests/support/validators.py
+  f57af31825b70f47 12,58,68-69,72-73
+tests/integration/test_categorization_real_data.py
+  f57af31825b70f47 129,136,142,148,155,243,250,257,264
+examples/05_schema_operations.py
+  f57af31825b70f47 297,318-320,325
+tests/test_helpers.py
+  f57af31825b70f47 23-24,37,60,185,187,189-190,192,201,203,205-206,208,528-529,547,588,602,674-675,694-695
+tests/unit/services/test_migration_pipeline.py
+  f57af31825b70f47 196
+tests/integration/test_rfc_docker_real.py
+  f57af31825b70f47 194,300
+tests/integration/test_zero_data_loss_schema.py
+  f57af31825b70f47 560,600
+examples/06_acl_processing.py
+  f57af31825b70f47 68,151
+tests/integration/test_api_integration.py
+  f57af31825b70f47 161
+tests/unit/quirks/servers/test_novell_quirks.py
+  f57af31825b70f47 466
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.19",
+  "base_commit_sha": "bb16cdd5b8fb9b826496de1a7345998dec2b7900",
+  "prompts": {
+    "8138edf6bc0fab47": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "458a9205-8e72-4758-9c6d-2636f729252c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 11,
+      "total_deletions": 9,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    },
+    "f57af31825b70f47": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "aa03ae85-26c5-44c0-8b62-1626d42c43a2",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 200,
+      "total_deletions": 224,
+      "accepted_lines": 152,
+      "overriden_lines": 4
+    }
+  }
+}
