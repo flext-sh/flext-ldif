@@ -78,7 +78,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         return self._acl_service
 
     @property
-    def constants(self) -> type:
+    def constants(self) -> type[c]:
         """Get constants (use string literals instead)."""
         return c
 

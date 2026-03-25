@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap import FlextLdapProtocols  # pyrefly: ignore
+from flext_ldap import FlextLdapProtocols
 from flext_tests import FlextTestsProtocols
 
 

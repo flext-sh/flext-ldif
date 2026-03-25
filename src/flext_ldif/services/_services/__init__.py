@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
-# Regenerate with: make codegen
+# Regenerate with: make gen
 #
 """Services package."""
 
@@ -18,10 +18,7 @@ if TYPE_CHECKING:
     )
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "FlextLdifProcessingPipelineService": [
-        "flext_ldif.services._services.processing_pipeline_service",
-        "FlextLdifProcessingPipelineService",
-    ],
+    "FlextLdifProcessingPipelineService": ["flext_ldif.services._services.processing_pipeline_service", "FlextLdifProcessingPipelineService"],
 }
 
 __all__ = [

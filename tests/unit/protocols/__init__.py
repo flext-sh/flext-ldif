@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
-# Regenerate with: make codegen
+# Regenerate with: make gen
 #
 """Protocols package."""
 
@@ -16,10 +16,7 @@ if TYPE_CHECKING:
     from tests.unit.protocols.test_protocols import TestsTestFlextLdifProtocols
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "TestsTestFlextLdifProtocols": [
-        "tests.unit.protocols.test_protocols",
-        "TestsTestFlextLdifProtocols",
-    ],
+    "TestsTestFlextLdifProtocols": ["tests.unit.protocols.test_protocols", "TestsTestFlextLdifProtocols"],
 }
 
 __all__ = [

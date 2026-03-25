@@ -140,10 +140,7 @@ class TestsTestFlextLdifMigrationPipeline(s):
         )
         result = pipeline.execute()
         tm.that(result.is_success, eq=True)
-        (
-            tm.that(nonexistent_output.exists(), eq=True),
-            (f"Output dir {nonexistent_output} not created"),
-        )
+        _ = tm.that(nonexistent_output.exists(), eq=True)
 
     def test_execute_with_empty_input(self, tmp_path: Path) -> None:
         """Test pipeline handles empty input directory gracefully."""

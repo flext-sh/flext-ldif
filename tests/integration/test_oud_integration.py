@@ -59,6 +59,7 @@ class TestOudSchemaIntegration:
             assert True
             return
         schema_entry = entries[0]
+        assert schema_entry.attributes is not None
         attrs_dict = (
             schema_entry.attributes.attributes
             if hasattr(schema_entry.attributes, "attributes")
@@ -86,6 +87,7 @@ class TestOudSchemaIntegration:
             assert True
             return
         schema_entry = entries[0]
+        assert schema_entry.attributes is not None
         attrs = (
             schema_entry.attributes.attributes
             if hasattr(schema_entry.attributes, "attributes")
@@ -143,20 +145,17 @@ class TestOudAclIntegration:
         assert entries_with_aci > 0, "No entries with aci found"
         has_multiline = False
         for entry in entries:
+            if entry.attributes is None:
+                continue
             attrs_dict = (
                 entry.attributes.attributes
                 if hasattr(entry.attributes, "attributes")
                 else entry.attributes
             )
+            aci_values: t.StrSequence = []
             if isinstance(attrs_dict, dict) and "aci" in attrs_dict:
                 aci_attr_values = attrs_dict["aci"]
-                aci_values = (
-                    aci_attr_values.values
-                    if hasattr(aci_attr_values, "values")
-                    else aci_attr_values
-                )
-            else:
-                aci_values: t.StrSequence = []
+                aci_values = list(aci_attr_values)
             for aci in aci_values:
                 if isinstance(aci, str) and "\n" in aci:
                     has_multiline = True
@@ -201,25 +200,25 @@ class TestOudEntryIntegration:
         oracle_oc_patterns = ["orclContext", "orclContainer", "orclPrivilegeGroup"]
         entries_with_oracle_oc = 0
         for entry in entries:
+            if entry.attributes is None:
+                continue
             attrs_dict = (
                 entry.attributes.attributes
                 if hasattr(entry.attributes, "attributes")
                 else entry.attributes
             )
+            objectclasses: t.StrSequence = []
             if isinstance(attrs_dict, dict):
                 oc_attr = attrs_dict.get("objectclass") or attrs_dict.get("objectClass")
                 if oc_attr:
-                    objectclasses = (
-                        oc_attr.values if hasattr(oc_attr, "values") else oc_attr
-                    )
-                else:
-                    objectclasses: t.StrSequence = []
+                    objectclasses = list(oc_attr)
             else:
-                objectclasses = getattr(
+                raw_oc = getattr(
                     attrs_dict,
                     "objectclass",
                     getattr(attrs_dict, "objectClass", []),
                 )
+                objectclasses = list(raw_oc) if raw_oc else []
             for oc in objectclasses:
                 if any(
                     pattern in str(oc).lower()

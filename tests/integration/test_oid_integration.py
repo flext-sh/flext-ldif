@@ -60,6 +60,7 @@ class TestOidSchemaIntegration:
         assert result.is_success
         entries = result.value
         schema_entry = entries[0]
+        assert schema_entry.attributes is not None
         attrs_dict = (
             schema_entry.attributes.attributes
             if hasattr(schema_entry.attributes, "attributes")
@@ -101,6 +102,7 @@ class TestOidSchemaIntegration:
         assert result.is_success
         entries = result.value
         schema_entry = entries[0]
+        assert schema_entry.attributes is not None
         attrs_dict = (
             schema_entry.attributes.attributes
             if hasattr(schema_entry.attributes, "attributes")
@@ -289,11 +291,7 @@ class TestOidRoundTripIntegration:
             attr_values = entry.attributes.attributes.get(attr_name)
             if attr_values is None:
                 return 0
-            return (
-                len(attr_values.values)
-                if hasattr(attr_values, "values")
-                else len(attr_values or [])
-            )
+            return len(attr_values)
 
         original_orclaci_count = sum(
             get_attribute_values_count(entry, "orclaci") for entry in entries_1

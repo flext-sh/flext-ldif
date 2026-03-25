@@ -32,9 +32,9 @@ class TestRealLdapConfigurationFromEnv:
     def test_config_loaded_from_env(self, flext_api: FlextLdif) -> None:
         """Verify FlextLdifSettings loads from environment variables."""
         root_config = flext_api.config
-        ldif_config = root_config.ldif if hasattr(root_config, "ldif") else None
-        if ldif_config is None:
-            ldif_config = FlextLdifSettings.get_global()
+        ldif_config: FlextLdifSettings = (
+            getattr(root_config, "ldif", None) or FlextLdifSettings.get_global()
+        )
         assert ldif_config.ldif_encoding in {
             "utf-8",
             "utf-16",

@@ -22,7 +22,7 @@ from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
 from pathlib import Path
 
 import pytest
-from ldap3 import Connection  # pyrefly: ignore
+from ldap3 import Connection
 
 from flext_ldif import FlextLdif, m, t
 
@@ -148,7 +148,7 @@ class TestRealLdapBatchOperations:
                 if isinstance(attr_values, list):
                     attrs_dict[attr_name] = attr_values
                 elif hasattr(attr_values, "values"):
-                    attrs_dict[attr_name] = list(attr_values.values)
+                    attrs_dict[attr_name] = list(attr_values)
                 else:
                     attrs_dict[attr_name] = [str(attr_values)]
             ldap_connection.add(str(entry.dn), object_classes, attrs_dict)
@@ -189,13 +189,15 @@ class TestRealLdapBatchOperations:
         for entry in ldap_connection.entries:
             attrs_dict: MutableMapping[str, MutableSequence[str] | str] = {}
             for attr_name in entry.entry_attributes:
-                attr_obj = entry[attr_name]
-                if hasattr(attr_obj, "values"):
-                    values = [str(v) if not isinstance(v, str) else v for v in attr_obj]
-                elif isinstance(attr_obj, list):
-                    values = [str(v) for v in attr_obj]
-                else:
-                    values = [str(attr_obj)]
+                raw_values: list[str] = [
+                    str(v)
+                    for v in (
+                        entry[attr_name].values
+                        if hasattr(entry[attr_name], "values")
+                        else [str(entry[attr_name])]
+                    )
+                ]
+                values: list[str] = raw_values
                 attrs_dict[attr_name] = values
             result = m.Ldif.Entry.create(
                 dn=entry.entry_dn,

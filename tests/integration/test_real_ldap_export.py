@@ -24,7 +24,7 @@ from collections.abc import (
 from pathlib import Path
 
 import pytest
-from ldap3 import Connection  # pyrefly: ignore
+from ldap3 import Connection
 
 from flext_ldif import FlextLdif, FlextLdifModels, m
 
@@ -71,24 +71,10 @@ class TestRealLdapExport:
         attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
         for attr_name in ldap_entry.entry_attributes:
             attr_obj = ldap_entry[attr_name]
-            if hasattr(attr_obj, "raw_values"):
-                values = [
-                    v.decode("utf-8") if isinstance(v, bytes) else str(v)
-                    for v in attr_obj.raw_values
-                ]
-            elif hasattr(attr_obj, "value"):
-                val = attr_obj.value
-                if isinstance(val, bytes):
-                    values = [val.decode("utf-8")]
-                elif isinstance(val, list):
-                    values = [
-                        v.decode("utf-8") if isinstance(v, bytes) else str(v)
-                        for v in val
-                    ]
-                else:
-                    values = [str(val)]
-            else:
-                values = [str(attr_obj)]
+            values: list[str] = [
+                v.decode("utf-8") if isinstance(v, bytes) else str(v)
+                for v in attr_obj.raw_values
+            ]
             attrs_dict[attr_name] = values
         entry_result = flext_api.models.Ldif.Entry.create(
             dn=ldap_entry.entry_dn,

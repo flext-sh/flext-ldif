@@ -55,10 +55,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         result = pipeline.execute()
         tm.ok(result)
         output_file = output_dir / "migrated.ldif"
-        (
-            tm.that(output_file.exists(), eq=True),
-            f"Expected output file to exist: {output_file}",
-        )
+        _ = tm.that(output_file.exists(), eq=True)
         content = output_file.read_text(encoding="utf-8")
         val_true_rfc = OidTestConstants.OID_TO_RFC_BOOLEAN[val_true_oid]
         val_false_rfc = OidTestConstants.OID_TO_RFC_BOOLEAN[val_false_oid]
@@ -90,10 +87,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         result = pipeline.execute()
         tm.ok(result)
         output_file = output_dir / "migrated.ldif"
-        (
-            tm.that(output_file.exists(), eq=True),
-            f"Expected output file to exist: {output_file}",
-        )
+        _ = tm.that(output_file.exists(), eq=True)
         content = output_file.read_text(encoding="utf-8")
         val_true_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_true_rfc]
         val_false_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_false_rfc]
@@ -122,10 +116,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         result = pipeline.execute()
         tm.ok(result)
         output_file = output_dir / "migrated.ldif"
-        (
-            tm.that(output_file.exists(), eq=True),
-            f"Expected output file to exist: {output_file}",
-        )
+        _ = tm.that(output_file.exists(), eq=True)
         content = output_file.read_text(encoding="utf-8")
         tm.that(
             (
@@ -156,16 +147,10 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         result = pipeline.execute()
         tm.ok(result)
         output_file = output_dir / "migrated.ldif"
-        (
-            tm.that(output_file.exists(), eq=True),
-            f"Expected output file to exist: {output_file}",
-        )
+        _ = tm.that(output_file.exists(), eq=True)
         content = output_file.read_text(encoding="utf-8")
         tm.that(content, has=f"{FlextLdifServersOidConstants.ORCLACI}: {acl_val}")
-        (
-            tm.that(not re.search(r"(^|\\n)aci:", content), eq=True),
-            ("Should not have standalone 'aci:' attribute"),
-        )
+        _ = tm.that(not re.search(r"(^|\\n)aci:", content), eq=True)
 
     def test_oid_schema_dn_conversion(self, tmp_path: Path) -> None:
         """Test OID schema DN conversion (cn=subschemasubentry -> cn=schema)."""
@@ -186,10 +171,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         result = pipeline.execute()
         tm.ok(result)
         output_file = output_dir / "migrated.ldif"
-        (
-            tm.that(output_file.exists(), eq=True),
-            f"Expected output file to exist: {output_file}",
-        )
+        _ = tm.that(output_file.exists(), eq=True)
         content = output_file.read_text(encoding="utf-8")
         tm.that(content, has=f"dn: {FlextLdifServersRfc.Constants.SCHEMA_DN}")
         tm.that(

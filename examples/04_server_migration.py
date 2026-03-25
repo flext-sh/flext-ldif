@@ -173,7 +173,7 @@ class ExampleServerMigration:
             if res.get("parsed_successfully", False)
         )
         total_servers = len(servers)
-        return r.ok({
+        return r[t.ContainerMapping].ok({
             "servers_tested": total_servers,
             "successful_parses": successful_parses,
             "success_rate": successful_parses / total_servers

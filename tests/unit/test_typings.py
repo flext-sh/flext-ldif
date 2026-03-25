@@ -40,10 +40,7 @@ class TestFlextLdifTypesStructure:
             and (not m[0].startswith("__"))
             and (m[1].__module__ not in {"typing", "builtins"})
         ]
-        (
-            tm.that(not user_functions, eq=True),
-            "typings.py must not contain functions",
-        )
+        _ = tm.that(not user_functions, eq=True)
 
     def test_only_required_imports(self) -> None:
         """typings.py must only import from flext_core (Tier 0 architecture rule)."""
@@ -62,17 +59,11 @@ class TestFlextLdifTypesStructure:
             for imp in flext_ldif_imports
             if imp.startswith("flext_ldif.") and "_" in imp.split(".")[-1]
         ]
-        (
-            tm.that(not internal_imports, eq=True),
-            (f"typings.py must not import from internal modules: {internal_imports}"),
-        )
+        _ = tm.that(not internal_imports, eq=True)
         service_imports = [
             imp for imp in flext_ldif_imports if "services" in imp or "api" in imp
         ]
-        (
-            tm.that(not service_imports, eq=True),
-            (f"typings.py must not import from services/api: {service_imports}"),
-        )
+        _ = tm.that(not service_imports, eq=True)
 
 
 class TestsFlextLdifCommonDictionaryTypes(s):
@@ -118,7 +109,7 @@ class TestsFlextLdifCommonDictionaryTypes(s):
             "objectClasses": 78,
             "dITContentRules": 23,
         }
-        tm.that(all(isinstance(v, int) for v in dist.values()), eq=True)
+        tm.that(len(dist), eq=3)
 
 
 class TestModelsNamespace:

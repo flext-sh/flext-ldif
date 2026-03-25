@@ -93,14 +93,8 @@ class TestsFlextLdifVersion(s):
         tm.that(hasattr(version_module, "__all__"), eq=True)
         tm.that(version_module.__all__, is_=list)
         for export in expected_exports:
-            (
-                tm.that(version_module.__all__, has=export),
-                f"{export} not in __all__",
-            )
-            (
-                tm.that(hasattr(version_module, export), eq=True),
-                f"{export} not accessible",
-            )
+            _ = tm.that(version_module.__all__, has=export)
+            _ = tm.that(hasattr(version_module, export), eq=True)
 
     def test_version_default_fallback(self) -> None:
         """Test version falls back to default when metadata missing."""

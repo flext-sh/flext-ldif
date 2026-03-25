@@ -585,7 +585,9 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_model = m.Ldif.Tests.Acl(
             name="ads-aci",
             target=m.Ldif.Tests.AclTarget(target_dn="", attributes=[]),
-            subject=m.Ldif.Tests.AclSubject(subject_type="all", subject_value=""),
+            subject=m.Ldif.Tests.AclSubject(
+                subject_type=c.Ldif.AclSubjectType.ALL, subject_value=""
+            ),
             permissions=m.Ldif.Tests.AclPermissions(),
             server_type=c.Ldif.ServerTypes.APACHE,
             raw_acl="( version 3.0 ) ( deny grantAdd )",
@@ -604,7 +606,9 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_model = m.Ldif.Tests.Acl(
             name="aci",
             target=m.Ldif.Tests.AclTarget(target_dn="", attributes=[]),
-            subject=m.Ldif.Tests.AclSubject(subject_type="all", subject_value=""),
+            subject=m.Ldif.Tests.AclSubject(
+                subject_type=c.Ldif.AclSubjectType.ALL, subject_value=""
+            ),
             permissions=m.Ldif.Tests.AclPermissions(),
             server_type=c.Ldif.ServerTypes.APACHE,
             raw_acl="( version 3.0 ) ( deny grantAdd )",
@@ -623,7 +627,9 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_model = m.Ldif.Tests.Acl(
             name="ads-aci",
             target=m.Ldif.Tests.AclTarget(target_dn="", attributes=[]),
-            subject=m.Ldif.Tests.AclSubject(subject_type="all", subject_value=""),
+            subject=m.Ldif.Tests.AclSubject(
+                subject_type=c.Ldif.AclSubjectType.ALL, subject_value=""
+            ),
             permissions=m.Ldif.Tests.AclPermissions(),
             server_type=c.Ldif.ServerTypes.APACHE,
             raw_acl="",

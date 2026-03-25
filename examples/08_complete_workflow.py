@@ -8,7 +8,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_ldif import FlextLdif, m
+from flext_ldif import FlextLdif, c, m
 
 
 def complete_ldif_processing_workflow() -> None:
@@ -138,8 +138,8 @@ def access_all_namespace_classes() -> None:
     if entry_result.is_failure:
         return
     _ = entry_result.value
-    _ = api.constants.LdifFormatting.MAX_LINE_WIDTH
-    _ = api.constants.Encoding.UTF8
+    _ = c.Ldif.MAX_LINE_WIDTH
+    _ = c.Ldif.Encoding.UTF8
     _ = datetime.now(UTC).timestamp()
     _ = api.ldif_config.ldif_encoding
 

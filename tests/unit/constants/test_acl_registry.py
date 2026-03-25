@@ -172,15 +172,9 @@ class TestsTestFlextLdifAclAttributeRegistry(s):
         """Parametrized test for get_acl_attributes."""
         attrs = u.Ldif.get_acl_attributes(param_server_type)
         for required in required_attrs:
-            (
-                tm.that(attrs, has=required),
-                f"{required} not in {scenario}",
-            )
+            _ = tm.that(attrs, has=required)
         for forbidden in forbidden_attrs:
-            (
-                tm.that(forbidden not in attrs, eq=True),
-                f"{forbidden} should not be in {scenario}",
-            )
+            _ = tm.that(forbidden not in attrs, eq=True)
 
     @pytest.mark.parametrize(
         ("scenario", "test_type", "attr_name", "server_type", "expected_result"),
@@ -199,7 +193,7 @@ class TestsTestFlextLdifAclAttributeRegistry(s):
     ) -> None:
         """Parametrized test for is_acl_attribute."""
         result = u.Ldif.is_acl_attribute(attr_name, server_type)
-        tm.that(result, eq=expected_result), f"{scenario} failed"
+        _ = tm.that(result, eq=expected_result)
 
     def test_acl_registry_no_mutation(self) -> None:
         """get_acl_attributes should return new list each time."""

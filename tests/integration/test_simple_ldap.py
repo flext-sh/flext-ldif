@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 from collections.abc import Callable
 
-from ldap3 import Connection  # pyrefly: ignore
+from ldap3 import Connection
 
 from flext_ldif import FlextLdif
 from tests import GenericFieldsDict
@@ -14,8 +14,10 @@ from tests import GenericFieldsDict
 def test_ldap_connection(ldap_connection: Connection) -> None:
     """Test basic LDAP connection."""
     assert ldap_connection.bound
-    assert ldap_connection.server.info is not None
-    assert "dc=flext,dc=local" in ldap_connection.server.info.naming_contexts
+    server_info = getattr(ldap_connection.server, "info", None)
+    assert server_info is not None
+    naming_contexts: list[str] = list(getattr(server_info, "naming_contexts", []))
+    assert "dc=flext,dc=local" in naming_contexts
 
 
 def test_simple_ldap_search(
@@ -53,7 +55,8 @@ def test_create_and_export_entry(
     entry_result = api.models.Ldif.Entry.create(
         dn=ldap_entry.entry_dn,
         attributes={
-            attr: list(ldap_entry[attr].values) for attr in ldap_entry.entry_attributes
+            attr: [str(v) for v in ldap_entry[attr].values]
+            for attr in ldap_entry.entry_attributes
         },
     )
     assert entry_result.is_success

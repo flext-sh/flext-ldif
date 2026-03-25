@@ -74,10 +74,7 @@ class TestsFlextLdifDnOperationsPure:
             "cn=Test\\3DUser,dc=example,dc=com",
         ]
         for dn in valid_dns:
-            (
-                tm.that(u.Ldif.validate(dn), eq=True),
-                f"DN should be valid: {dn}",
-            )
+            _ = tm.that(u.Ldif.validate(dn), eq=True)
 
     def test_validate_dn_format_invalid(self) -> None:
         """Test invalid DN validation."""
@@ -94,10 +91,7 @@ class TestsFlextLdifDnOperationsPure:
             "cn=test\\XY",
         ]
         for dn in invalid_dns:
-            (
-                tm.that(not u.Ldif.validate(dn), eq=True),
-                f"DN should be invalid: {dn}",
-            )
+            _ = tm.that(not u.Ldif.validate(dn), eq=True)
 
     def test_parse_components(self) -> None:
         """Test DN component parsing."""
@@ -255,10 +249,7 @@ class TestLdifParser:
         """Test parsing multiple LDIF entries separated by empty line."""
         content = "dn: cn=test1,dc=example,dc=com\ncn: test1\nobjectClass: person\n\ndn: cn=test2,dc=example,dc=com\ncn: test2\nobjectClass: person\n"
         result = u.Ldif.parse_ldif_lines(content)
-        (
-            tm.that(len(result), eq=2),
-            f"Expected 2 entries but got {len(result)}: {result}",
-        )
+        _ = tm.that(len(result), eq=2)
         dn1, attrs1 = result[0]
         tm.that(dn1, eq="cn=test1,dc=example,dc=com")
         tm.that(attrs1.get("cn"), eq=["test1"])

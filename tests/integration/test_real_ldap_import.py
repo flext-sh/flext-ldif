@@ -27,7 +27,7 @@ from collections.abc import (
 from pathlib import Path
 
 import pytest
-from ldap3 import Connection  # pyrefly: ignore
+from ldap3 import Connection
 
 from flext_ldif import FlextLdif, t
 

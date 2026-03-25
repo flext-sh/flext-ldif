@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
-# Regenerate with: make codegen
+# Regenerate with: make gen
 #
 """RFC 4512 Compliant Server Classes for LDIF/LDAP processing."""
 
@@ -20,18 +20,9 @@ if TYPE_CHECKING:
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdifServersRfcAcl": ["flext_ldif.servers._rfc.acl", "FlextLdifServersRfcAcl"],
-    "FlextLdifServersRfcConstants": [
-        "flext_ldif.servers._rfc.constants",
-        "FlextLdifServersRfcConstants",
-    ],
-    "FlextLdifServersRfcEntry": [
-        "flext_ldif.servers._rfc.entry",
-        "FlextLdifServersRfcEntry",
-    ],
-    "FlextLdifServersRfcSchema": [
-        "flext_ldif.servers._rfc.schema",
-        "FlextLdifServersRfcSchema",
-    ],
+    "FlextLdifServersRfcConstants": ["flext_ldif.servers._rfc.constants", "FlextLdifServersRfcConstants"],
+    "FlextLdifServersRfcEntry": ["flext_ldif.servers._rfc.entry", "FlextLdifServersRfcEntry"],
+    "FlextLdifServersRfcSchema": ["flext_ldif.servers._rfc.schema", "FlextLdifServersRfcSchema"],
     "c": ["flext_ldif.servers._rfc.constants", "c"],
     "logger": ["flext_ldif.servers._rfc.schema", "logger"],
 }

@@ -98,7 +98,7 @@ class FlextLdifModelsConversions:
                 val,
                 (str, bytes, bytearray),
             ):
-                return [item for item in val]  # noqa: C416
+                return list(val)
             if isinstance(val, (str, int, float, bool, datetime, Path)):
                 return [val]
             return [str(val)]

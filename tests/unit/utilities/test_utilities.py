@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import importlib.util
 from enum import StrEnum, unique
-from typing import ClassVar
 
 import pytest
 from flext_tests import tm
@@ -29,9 +28,6 @@ class TestsTestFlextLdifServiceAPIs:
     Tests service instantiation and import availability using parametrized tests
     and nested class organization for better code organization.
     """
-
-    dn_service: ClassVar[FlextLdifDn]
-    statistics_service: ClassVar[FlextLdifStatistics]
 
     @unique
     class ServiceType(StrEnum):
@@ -80,52 +76,30 @@ class TestsTestFlextLdifServiceAPIs:
             """Verify import availability based on check type."""
             match check_type:
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.MODELS:
-                    (
-                        tm.that(m, none=False),
-                        "m should be available",
-                    )
+                    _ = tm.that(m, none=False)
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.CONSTANTS:
-                    (
-                        tm.that(hasattr(c, check_target), eq=True),
-                        f"c should have {check_target}",
-                    )
+                    _ = tm.that(hasattr(c, check_target), eq=True)
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.UTILITIES_MODULE:
                     spec = importlib.util.find_spec(check_target)
-                    (
-                        tm.that(spec is not None, eq=True),
-                        f"Module {check_target} should exist",
-                    )
+                    _ = tm.that(spec is not None, eq=True)
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.SERVICES_MODULE:
-                    (
-                        tm.that(
-                            hasattr(
-                                services,
-                                TestsTestFlextLdifServiceAPIs.Constants.SERVICE_DN,
-                            ),
-                            eq=True,
+                    _ = tm.that(
+                        hasattr(
+                            services,
+                            TestsTestFlextLdifServiceAPIs.Constants.SERVICE_DN,
                         ),
-                        (
-                            f"services should have {TestsTestFlextLdifServiceAPIs.Constants.SERVICE_DN}"
-                        ),
+                        eq=True,
                     )
-                    (
-                        tm.that(
-                            hasattr(
-                                services,
-                                TestsTestFlextLdifServiceAPIs.Constants.SERVICE_STATISTICS,
-                            ),
-                            eq=True,
+                    _ = tm.that(
+                        hasattr(
+                            services,
+                            TestsTestFlextLdifServiceAPIs.Constants.SERVICE_STATISTICS,
                         ),
-                        (
-                            f"services should have {TestsTestFlextLdifServiceAPIs.Constants.SERVICE_STATISTICS}"
-                        ),
+                        eq=True,
                     )
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.CONFIGURATION:
                     config = FlextLdifSettings()
-                    (
-                        tm.that(config, none=False),
-                        "FlextLdifSettings should instantiate",
-                    )
+                    _ = tm.that(config, none=False)
 
     @pytest.fixture
     def dn_service(self) -> FlextLdifDn:
@@ -149,10 +123,7 @@ class TestsTestFlextLdifServiceAPIs:
     ) -> None:
         """Test service instantiation with parametrized test cases."""
         service = self.Helpers.get_service(service_type, dn_service, statistics_service)
-        (
-            tm.that(service, none=False),
-            (f"Service {service_type.value} should be instantiated"),
-        )
+        _ = tm.that(service, none=False)
 
     @pytest.mark.parametrize(
         ("check_type", "check_target"),

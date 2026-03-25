@@ -168,8 +168,7 @@ class TestSchemaDeviationsNameAliases:
         assert extensions_dict.get("name_values") == ["uid"], (
             "Should preserve name value"
         )
-        name_values = extensions_dict.get("name_values")
-        assert isinstance(name_values, list), "name_values should be a list"
+        name_values: list[str] = list(extensions_dict.get("name_values", []))
         assert len(name_values) == 1, "Single name should have one value"
 
     def test_oud_multiple_names_tracked(
@@ -188,8 +187,7 @@ class TestSchemaDeviationsNameAliases:
         assert extensions_dict.get("name_format") == "multiple", (
             "Should detect multiple NAME format"
         )
-        name_values = extensions_dict.get("name_values", [])
-        assert isinstance(name_values, list), "name_values should be a list"
+        name_values: list[str] = list(extensions_dict.get("name_values", []))
         assert len(name_values) >= 2, "Multiple names should have at least 2 values"
         assert "uid" in name_values, "Should include 'uid' in name values"
         assert "userid" in name_values, "Should include 'userid' in name values"

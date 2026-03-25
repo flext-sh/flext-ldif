@@ -44,7 +44,7 @@ def intelligent_schema_building() -> r[MutableSequence[m.Ldif.Entry]]:
     )
     if schema_root_result.is_success:
         schema_entries.append(schema_root_result.value)
-    attribute_types = [
+    attribute_types: list[Mapping[str, str | bool | t.StrSequence]] = [
         {
             "name": "cn",
             "description": "Common Name",

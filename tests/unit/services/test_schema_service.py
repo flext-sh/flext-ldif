@@ -367,10 +367,7 @@ class TestSchemaServiceValidateObjectClass:
         for kind in ["ABSTRACT", "STRUCTURAL", "AUXILIARY"]:
             oc = m.Ldif.SchemaObjectClass(oid="1.2.3.4", name="testOC", kind=kind)
             result = schema_service.validate_objectclass(oc)
-            (
-                tm.that(result.is_success, eq=True),
-                f"Kind {kind} should be valid",
-            )
+            _ = tm.that(result.is_success, eq=True)
 
     def test_validate_objectclass_none(self, schema_service: FlextLdifSchema) -> None:
         """Test validating None objectClass - skipped as method doesn't accept None."""

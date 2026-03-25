@@ -170,15 +170,15 @@ class TestsTestFlextLdifProtocols(s):
             not as direct instance attributes.
             """
             tm.that(hasattr(server, "Constants"), eq=True)
-            constants_cls = server.Constants
+            constants_cls: type = getattr(server, "Constants")
             tm.that(hasattr(constants_cls, "SERVER_TYPE"), eq=True)
-            server_type = constants_cls.SERVER_TYPE
+            server_type: str = getattr(constants_cls, "SERVER_TYPE")
             tm.that(
                 isinstance(server_type, str) or hasattr(server_type, "value"),
                 eq=True,
             )
             tm.that(hasattr(constants_cls, "PRIORITY"), eq=True)
-            priority = constants_cls.PRIORITY
+            priority: int = getattr(constants_cls, "PRIORITY")
             tm.that(priority, is_=int)
 
         @staticmethod
@@ -257,8 +257,6 @@ class TestsTestFlextLdifProtocols(s):
         """Test that Relaxed server class has protocol attributes in Constants."""
         self.Helpers.verify_server_attributes(FlextLdifServersRelaxed)
 
-    oid_schema: ClassVar[FlextLdifServersOid.Schema]
-
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
         """Create OID Schema instance."""
@@ -290,8 +288,6 @@ class TestsTestFlextLdifProtocols(s):
         tm.that(attr_result, is_=bool)
         oc_result = oid_schema.can_handle_objectclass(self.Constants.SAMPLE_OC_DEF)
         tm.that(oc_result, is_=bool)
-
-    registry: ClassVar[FlextLdifServer]
 
     @pytest.fixture
     def registry(self) -> FlextLdifServer:

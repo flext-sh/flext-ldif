@@ -54,10 +54,6 @@ class TestsTestFlextLdifRelaxedQuirks(s):
     - Error recovery and edge cases
     """
 
-    schema_quirk: ClassVar[FlextLdifServersRelaxed.Schema]
-    acl_quirk: ClassVar[FlextLdifServersRelaxed.Acl]
-    entry_quirk: ClassVar[FlextLdifServersRelaxed.Entry]
-    relaxed_instance: ClassVar[FlextLdifServersRelaxed]
     ATTRIBUTE_DEFINITIONS: ClassVar[Mapping[ParseScenario, tuple[str, bool]]] = {
         ParseScenario.VALID: (
             "( 1.2.3.4 NAME 'testAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
@@ -144,10 +140,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         definition, should_succeed = definition_data
         result = schema_quirk.parse_attribute(definition)
         if should_succeed:
-            (
-                tm.that(result.is_success, eq=True),
-                f"Scenario {scenario}: expected success",
-            )
+            _ = tm.that(result.is_success, eq=True)
             parsed = result.value
             tm.that(hasattr(parsed, "name"), eq=True)
             if scenario in {ParseScenario.VALID, ParseScenario.MALFORMED}:
@@ -165,10 +158,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
                         eq=True,
                     )
         else:
-            (
-                tm.that(result.is_failure, eq=True),
-                f"Scenario {scenario}: expected failure",
-            )
+            _ = tm.that(result.is_failure, eq=True)
 
     @pytest.mark.parametrize(
         ("scenario", "definition_data"),
@@ -185,17 +175,11 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         definition, should_succeed = definition_data
         result = schema_quirk.parse_objectclass(definition)
         if should_succeed:
-            (
-                tm.that(result.is_success, eq=True),
-                f"Scenario {scenario}: expected success",
-            )
+            _ = tm.that(result.is_success, eq=True)
             parsed = result.value
             tm.that(hasattr(parsed, "name"), eq=True)
         else:
-            (
-                tm.that(result.is_failure, eq=True),
-                f"Scenario {scenario}: expected failure",
-            )
+            _ = tm.that(result.is_failure, eq=True)
 
     @pytest.mark.parametrize(
         ("definition", "expected_success"),
@@ -286,7 +270,9 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         acl_data = m.Ldif.Tests.Acl(
             name="test_acl",
             target=m.Ldif.Tests.AclTarget(target_dn="*", attributes=[]),
-            subject=m.Ldif.Tests.AclSubject(subject_type="all", subject_value="*"),
+            subject=m.Ldif.Tests.AclSubject(
+                subject_type=c.Ldif.AclSubjectType.ALL, subject_value="*"
+            ),
             permissions=m.Ldif.Tests.AclPermissions(),
             raw_acl=raw_acl,
         )

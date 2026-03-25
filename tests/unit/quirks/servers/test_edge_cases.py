@@ -38,10 +38,7 @@ class TestsFlextLdifEdgeCases(s):
         """Test parsing of entries with unicode characters in names."""
         unicode_ldif = "dn: cn=José,ou=Users,dc=example,dc=com\ncn: José\nsn: García\nobjectClass: person\n\n"
         result = ldif_api.parse_source(unicode_ldif, server_type="rfc")
-        (
-            tm.that(result.is_success, eq=True),
-            f"Failed to parse unicode content: {result.error}",
-        )
+        _ = tm.that(result.is_success, eq=True)
         entries = result.value
         tm.that(entries, eq=True)
         for entry in entries:
@@ -56,10 +53,7 @@ class TestsFlextLdifEdgeCases(s):
         """Test parsing of entries with very deep DN hierarchies."""
         deep_dn_ldif = "dn: cn=level1,ou=level2,ou=level3,ou=level4,ou=level5,ou=level6,dc=example,dc=com\ncn: level1\nobjectClass: person\n\n"
         result = ldif_api.parse_source(deep_dn_ldif, server_type="rfc")
-        (
-            tm.that(result.is_success, eq=True),
-            f"Failed to parse deep DN content: {result.error}",
-        )
+        _ = tm.that(result.is_success, eq=True)
         entries = result.value
         tm.that(entries, eq=True)
         max_depth = 0
@@ -67,10 +61,7 @@ class TestsFlextLdifEdgeCases(s):
             if entry.dn is not None:
                 depth = entry.dn.value.count(",") + 1
                 max_depth = max(max_depth, depth)
-        (
-            tm.that(max_depth, gt=5),
-            f"Expected deep DN, got depth {max_depth}",
-        )
+        _ = tm.that(max_depth, gt=5)
 
     def test_large_multivalue(self, ldif_api: FlextLdif) -> None:
         """Test parsing of attributes with many values."""
@@ -83,10 +74,7 @@ class TestsFlextLdifEdgeCases(s):
                 "flext-ldif/tests/fixtures/edge_cases/size/large_multivalue.ldif",
             )
         result = ldif_api.parse_source(fixture_path, server_type="rfc")
-        (
-            tm.that(result.is_success, eq=True),
-            (f"Failed to parse large multivalue fixture: {result.error}"),
-        )
+        _ = tm.that(result.is_success, eq=True)
         entries = result.value
         tm.that(entries, eq=True)
         max_values = 0
@@ -94,39 +82,21 @@ class TestsFlextLdifEdgeCases(s):
             if entry.attributes is None:
                 continue
             for attr_value in entry.attributes.values():
-                if isinstance(attr_value, list):
-                    values = attr_value
-                elif hasattr(attr_value, "values"):
-                    values = attr_value.values
-                else:
-                    values = [attr_value]
-                max_values = max(max_values, len(values))
-        (
-            tm.that(max_values, gte=10),
-            (f"Expected large multivalue (>=10), got {max_values} values"),
-        )
+                max_values = max(max_values, len(attr_value))
+        _ = tm.that(max_values, gte=10)
 
     def test_roundtrip_unicode(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of unicode entries."""
         unicode_ldif = "dn: cn=José,ou=Users,dc=example,dc=com\ncn: José\nsn: García\nobjectClass: person\n\n"
         parse_result = ldif_api.parse_source(unicode_ldif, server_type="rfc")
-        (
-            tm.that(parse_result.is_success, eq=True),
-            f"Parse failed: {parse_result.error}",
-        )
+        _ = tm.that(parse_result.is_success, eq=True)
         entries = parse_result.value
         tm.that(len(entries), eq=1)
         output_path = tmp_path / "unicode_roundtrip.ldif"
         write_result = ldif_api.write_ldif_file(entries, output_path, server_type="rfc")
-        (
-            tm.that(write_result.is_success, eq=True),
-            f"Write failed: {write_result.error}",
-        )
+        _ = tm.that(write_result.is_success, eq=True)
         roundtrip_result = ldif_api.parse_source(output_path, server_type="rfc")
-        (
-            tm.that(roundtrip_result.is_success, eq=True),
-            (f"Roundtrip parse failed: {roundtrip_result.error}"),
-        )
+        _ = tm.that(roundtrip_result.is_success, eq=True)
         roundtrip_entries = roundtrip_result.value
         tm.that(len(roundtrip_entries), eq=1)
 
@@ -134,23 +104,14 @@ class TestsFlextLdifEdgeCases(s):
         """Test roundtrip of deep DN entries."""
         deep_dn_ldif = "dn: cn=level1,ou=level2,ou=level3,ou=level4,ou=level5,ou=level6,dc=example,dc=com\ncn: level1\nobjectClass: person\n\n"
         parse_result = ldif_api.parse_source(deep_dn_ldif, server_type="rfc")
-        (
-            tm.that(parse_result.is_success, eq=True),
-            f"Parse failed: {parse_result.error}",
-        )
+        _ = tm.that(parse_result.is_success, eq=True)
         entries = parse_result.value
         tm.that(len(entries), eq=1)
         output_path = tmp_path / "deep_dn_roundtrip.ldif"
         write_result = ldif_api.write_ldif_file(entries, output_path, server_type="rfc")
-        (
-            tm.that(write_result.is_success, eq=True),
-            f"Write failed: {write_result.error}",
-        )
+        _ = tm.that(write_result.is_success, eq=True)
         roundtrip_result = ldif_api.parse_source(output_path, server_type="rfc")
-        (
-            tm.that(roundtrip_result.is_success, eq=True),
-            (f"Roundtrip parse failed: {roundtrip_result.error}"),
-        )
+        _ = tm.that(roundtrip_result.is_success, eq=True)
         roundtrip_entries = roundtrip_result.value
         tm.that(len(roundtrip_entries), eq=1)
 
@@ -162,22 +123,13 @@ class TestsFlextLdifEdgeCases(s):
         """Test roundtrip of large multivalue entries."""
         large_multivalue_ldif = "dn: cn=test,dc=example,dc=com\ncn: test\nmember: cn=user1,dc=example,dc=com\nmember: cn=user2,dc=example,dc=com\nmember: cn=user3,dc=example,dc=com\nmember: cn=user4,dc=example,dc=com\nmember: cn=user5,dc=example,dc=com\nobjectClass: groupOfNames\n\n"
         parse_result = ldif_api.parse_source(large_multivalue_ldif, server_type="rfc")
-        (
-            tm.that(parse_result.is_success, eq=True),
-            f"Parse failed: {parse_result.error}",
-        )
+        _ = tm.that(parse_result.is_success, eq=True)
         entries = parse_result.value
         tm.that(len(entries), eq=1)
         output_path = tmp_path / "large_multivalue_roundtrip.ldif"
         write_result = ldif_api.write_ldif_file(entries, output_path, server_type="rfc")
-        (
-            tm.that(write_result.is_success, eq=True),
-            f"Write failed: {write_result.error}",
-        )
+        _ = tm.that(write_result.is_success, eq=True)
         roundtrip_result = ldif_api.parse_source(output_path, server_type="rfc")
-        (
-            tm.that(roundtrip_result.is_success, eq=True),
-            (f"Roundtrip parse failed: {roundtrip_result.error}"),
-        )
+        _ = tm.that(roundtrip_result.is_success, eq=True)
         roundtrip_entries = roundtrip_result.value
         tm.that(len(roundtrip_entries), eq=1)

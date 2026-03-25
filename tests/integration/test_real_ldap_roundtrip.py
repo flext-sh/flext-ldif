@@ -25,7 +25,7 @@ from collections.abc import (
 )
 
 import pytest
-from ldap3 import Connection  # pyrefly: ignore
+from ldap3 import Connection
 
 from flext_ldif import FlextLdif
 

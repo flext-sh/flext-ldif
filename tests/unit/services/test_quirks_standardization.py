@@ -103,14 +103,8 @@ class TestsFlextLdifQuirksStandardizedConstants(s):
         ]
         for constants in quirks:
             canonical = constants.CANONICAL_NAME
-            (
-                tm.that(constants.CAN_NORMALIZE_FROM, has=canonical),
-                (f"{canonical} must be in CAN_NORMALIZE_FROM"),
-            )
-            (
-                tm.that(constants.CAN_DENORMALIZE_TO, has=canonical),
-                (f"{canonical} must be in CAN_DENORMALIZE_TO"),
-            )
+            _ = tm.that(constants.CAN_NORMALIZE_FROM, has=canonical)
+            _ = tm.that(constants.CAN_DENORMALIZE_TO, has=canonical)
 
 
 @pytest.mark.unit

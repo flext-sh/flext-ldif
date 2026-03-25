@@ -24,9 +24,9 @@ from pathlib import Path
 
 import pytest
 from flext_tests import FlextTestsDocker
-from ldap3 import ALL, Connection, Server  # pyrefly: ignore
-from ldap3.abstract.entry import Entry as LdapEntry  # pyrefly: ignore
-from ldap3.core.exceptions import LDAPException  # pyrefly: ignore
+from ldap3 import ALL, Connection, Server
+from ldap3.abstract.entry import Entry as LdapEntry
+from ldap3.core.exceptions import LDAPException
 
 from flext_ldif import (
     FlextLdif,
@@ -641,8 +641,11 @@ def ldap_container_shared(ldap_container: t.ContainerMapping) -> str:
 @pytest.fixture
 def unique_dn_suffix(worker_id: str, request: pytest.FixtureRequest) -> str:
     """Build a unique suffix for LDAP DNs per test execution."""
-    test_name: str = request.node.name
-    test_name_clean = "".join(
+    node = getattr(request, "node", None)
+    test_name: str = (
+        str(getattr(node, "name", "unknown")) if node is not None else "unknown"
+    )
+    test_name_clean: str = "".join(
         ch if ch.isalnum() or ch in {"-", "_"} else "-" for ch in test_name
     )[:20]
     return f"{worker_id}-{int(time.time() * 1000)}-{test_name_clean}"

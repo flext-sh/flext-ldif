@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
-# Regenerate with: make codegen
+# Regenerate with: make gen
 #
 """Tests for flext_ldif._utilities.parser module."""
 
@@ -17,10 +17,7 @@ if TYPE_CHECKING:
     )
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "TestFlextLdifUtilitiesParser": [
-        "tests.unit._utilities.parser.test_parser_utilities",
-        "TestFlextLdifUtilitiesParser",
-    ],
+    "TestFlextLdifUtilitiesParser": ["tests.unit._utilities.parser.test_parser_utilities", "TestFlextLdifUtilitiesParser"],
 }
 
 __all__ = [
