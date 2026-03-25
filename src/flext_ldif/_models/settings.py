@@ -1670,7 +1670,7 @@ class FlextLdifModelsSettings:
         server_type: Annotated[
             c.Ldif.ServerTypeLiteral,
             Field(description="LDAP server type to use for parsing quirks"),
-        ] = "rfc"
+        ] = c.Ldif.ServerTypes.RFC
         enable_auto_detection: Annotated[
             bool,
             Field(description="If True, auto-detect server type from file content"),
@@ -1705,11 +1705,11 @@ class FlextLdifModelsSettings:
         server_type: Annotated[
             c.Ldif.ServerTypeLiteral,
             Field(description="LDAP server type to use for writing quirks"),
-        ] = "rfc"
+        ] = c.Ldif.ServerTypes.RFC
         encoding: Annotated[
             c.Ldif.EncodingLiteral,
             Field(description="Character encoding for output file"),
-        ] = "utf-8"
+        ] = c.Ldif.Encoding.UTF8
         max_line_length: Annotated[
             int,
             Field(description="Maximum line length for LDIF output", ge=50, le=1000),

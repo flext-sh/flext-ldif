@@ -21,7 +21,7 @@ class FlextLdifModelsDomainSchema:
         server_type: Annotated[
             c.Ldif.ServerTypeLiteral,
             Field(description="LDAP server type for discovery"),
-        ] = "rfc"
+        ] = c.Ldif.ServerTypes.RFC
         naming_contexts: Annotated[
             MutableSequence[str],
             Field(
@@ -51,7 +51,7 @@ class FlextLdifModelsDomainSchema:
         search_type: Annotated[
             c.Ldif.ServerTypeLiteral,
             Field(description="Server type context for lookup"),
-        ] = "rfc"
+        ] = c.Ldif.ServerTypes.RFC
         element_type: Annotated[
             str | None,
             Field(

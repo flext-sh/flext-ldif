@@ -408,7 +408,7 @@ class FlextLdifModelsDomainsEntries:
                 return None
             return FlextLdifModelsDomainsEntries.Syntax.resolve_syntax_oid(
                 self.syntax,
-                server_type="rfc",
+                server_type=c.Ldif.ServerTypes.RFC,
             )
 
     class Syntax(FlextLdifModelsBases.SchemaElement):
@@ -474,7 +474,7 @@ class FlextLdifModelsDomainsEntries:
             Field(
                 description="Expected character encoding (utf-8, ascii, iso-8859-1, etc.)",
             ),
-        ] = "utf-8"
+        ] = c.Ldif.Encoding.UTF8
         validation_pattern: Annotated[
             str | None,
             Field(description="Optional regex pattern for value validation"),
@@ -504,7 +504,7 @@ class FlextLdifModelsDomainsEntries:
         def resolve_syntax_oid(
             cls,
             oid: str,
-            server_type: c.Ldif.ServerTypeLiteral = "rfc",
+            server_type: c.Ldif.ServerTypeLiteral = c.Ldif.ServerTypes.RFC,
         ) -> Self | None:
             """Resolve a syntax OID to a Syntax model using RFC 4517 validation.
 
@@ -551,7 +551,7 @@ class FlextLdifModelsDomainsEntries:
                     is_binary=False,
                     case_insensitive=False,
                     allows_multivalued=True,
-                    encoding="utf-8",
+                    encoding=c.Ldif.Encoding.UTF8,
                     validation_pattern=None,
                     validation_metadata=None,
                     metadata=metadata,
@@ -761,15 +761,14 @@ class FlextLdifModelsDomainsEntries:
                         normalized_dict[key] = [val]
                     else:
                         normalized_dict[key] = [str(val)]
-                return r[Self].ok(
-                    cls.model_validate({
-                        "attributes": normalized_dict,
-                        "attribute_metadata": {},
-                        "metadata": None,
-                    }),
-                )
+                validated = cls.model_validate({
+                    "attributes": normalized_dict,
+                    "attribute_metadata": {},
+                    "metadata": None,
+                })
+                return r.ok(validated)
             except (ValueError, TypeError, AttributeError) as e:
-                return r[Self].fail(f"Failed to create Attributes: {e}")
+                return r.fail(f"Failed to create Attributes: {e}")
 
         def add_attribute(self, key: str, values: MutableSequence[str]) -> Self:
             """Add or update an attribute with values.
@@ -2153,7 +2152,7 @@ class FlextLdifModelsDomainsEntries:
                     ]
                 else:
                     base_attr = attr_desc
-                    attr_options: MutableSequence[str] = []
+                    attr_options: list[str] = []
                     options = attr_options
                 if not base_attr or not base_attr[0].isalpha():
                     violations.append(
@@ -2619,9 +2618,9 @@ class FlextLdifModelsDomainsEntries:
                 if params.statistics is not None:
                     entry_data["statistics"] = params.statistics
                 entry_instance = cls.model_validate(entry_data)
-                return r[Self].ok(entry_instance)
+                return r.ok(entry_instance)
             except (ValueError, TypeError, AttributeError) as e:
-                return r[Self].fail(f"Failed to create Entry: {e}")
+                return r.fail(f"Failed to create Entry: {e}")
 
         @classmethod
         def _normalize_attributes(
@@ -3946,7 +3945,7 @@ class FlextLdifModelsDomainsEntries:
             return self.track_attribute_transformation(
                 original_name=attribute_name,
                 new_name=None,
-                transformation_type="attribute_removed",
+                transformation_type=c.Ldif.TransformationType.ATTRIBUTE_REMOVED,
                 original_values=values,
                 reason=reason,
             )
@@ -4005,7 +4004,7 @@ class FlextLdifModelsDomainsEntries:
             self,
             original_dn: str,
             transformed_dn: str,
-            transformation_type: c.Ldif.TransformationTypeLiteral = "dn_normalized",
+            transformation_type: c.Ldif.TransformationTypeLiteral = c.Ldif.TransformationType.DN_NORMALIZED,
             *,
             was_base64: bool = False,
             escapes_applied: MutableSequence[str] | None = None,
