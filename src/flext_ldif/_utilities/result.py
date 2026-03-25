@@ -85,23 +85,35 @@ class FlextLdifUtilitiesResult[T]:
         transformed = transformer(self.value)
         return FlextLdifUtilitiesResult.ok(transformed)
 
+    @staticmethod
+    def _extract_entries(
+        seq: Sequence[t.NormalizedValue],
+    ) -> MutableSequence[m.Ldif.Entry] | None:
+        """Extract Entry objects from a sequence, returning None if any non-Entry found."""
+        entries: MutableSequence[m.Ldif.Entry] = []
+        for item in seq:
+            if not isinstance(item, m.Ldif.Entry):
+                return None
+            entries.append(item)
+        return entries
+
     def __rshift__(self, output: Path | str | IO[str]) -> FlextLdifUtilitiesResult[str]:
         """Write operator: result >> output."""
         if self.is_failure:
             return FlextLdifUtilitiesResult[str].fail(self.error)
-        value_ref: t.NormalizedValue = self._to_normalized()
         entry_payload: m.Ldif.Entry | MutableSequence[m.Ldif.Entry]
-        if isinstance(value_ref, m.Ldif.Entry):
-            entry_payload = value_ref
-        elif isinstance(value_ref, (list, tuple)):
-            entries: MutableSequence[m.Ldif.Entry] = []
-            for candidate in value_ref:
-                if not isinstance(candidate, m.Ldif.Entry):
-                    return FlextLdifUtilitiesResult[str].fail(
-                        "Entry serialization failed: sequence contains non-entry value",
-                    )
-                entries.append(candidate)
-            entry_payload = entries
+        val_raw = self.value
+        if isinstance(val_raw, m.Ldif.Entry):
+            entry_payload = val_raw
+        elif isinstance(val_raw, (list, tuple)):
+            entry_list_result = FlextLdifUtilitiesResult._extract_entries(
+                val_raw,  # pyright: ignore[reportUnknownArgumentType]
+            )
+            if entry_list_result is None:
+                return FlextLdifUtilitiesResult[str].fail(
+                    "Entry serialization failed: sequence contains non-entry value",
+                )
+            entry_payload = entry_list_result
         else:
             return FlextLdifUtilitiesResult[str].fail(
                 "Entry serialization failed: value must be Entry or sequence of Entry",
