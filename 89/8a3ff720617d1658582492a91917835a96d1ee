@@ -1,0 +1,23 @@
+examples/06_acl_processing.py
+  f57af31825b70f47 67,149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.19",
+  "base_commit_sha": "898a3ff720617d1658582492a91917835a96d1ee",
+  "prompts": {
+    "f57af31825b70f47": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "aa03ae85-26c5-44c0-8b62-1626d42c43a2",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 6,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
