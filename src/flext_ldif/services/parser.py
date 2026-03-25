@@ -112,10 +112,13 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
             return r[m.Ldif.ParseResponse].fail(
                 f"Entry quirk for server type {effective_server_type} does not have parse method",
             )
-        parse_attr: Callable[
-            [str],
-            r[MutableSequence[m.Ldif.Entry]] | MutableSequence[m.Ldif.Entry] | None,
-        ] | None = getattr(
+        parse_attr: (
+            Callable[
+                [str],
+                r[MutableSequence[m.Ldif.Entry]] | MutableSequence[m.Ldif.Entry] | None,
+            ]
+            | None
+        ) = getattr(
             entry_quirk_raw,
             "parse",
             None,

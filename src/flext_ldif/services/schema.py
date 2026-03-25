@@ -75,10 +75,11 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
     @override
     def execute(self) -> r[m.Ldif.SchemaServiceStatus]:
         """Execute schema service self-check."""
+        server_type = c.Ldif.ServerTypes(self._server_type)
         return r[m.Ldif.SchemaServiceStatus].ok(
             m.Ldif.SchemaServiceStatus(
                 service="SchemaService",
-                server_type=self._server_type,
+                server_type=server_type,
                 status="operational",
                 rfc_compliance="RFC 4512",
                 operations=[
