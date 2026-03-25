@@ -90,7 +90,7 @@ class TestFlextLdifAPIIntegration:
     ) -> None:
         """Test parsing LDIF content across different scenarios."""
         ldif = FlextLdif()
-        result = ldif.parse(ldif_content)
+        result = ldif.parse_source(ldif_content)
         assert result.is_success
         entries = result.value
         assert len(entries) == expected_entries
@@ -116,10 +116,10 @@ class TestFlextLdifAPIIntegration:
     ) -> None:
         """Dynamically test filtering by different objectClass values."""
         ldif = FlextLdif()
-        parse_result = ldif.parse(self._MULTI_ENTRY_LDIF)
+        parse_result = ldif.parse_source(self._MULTI_ENTRY_LDIF)
         assert parse_result.is_success
         entries = parse_result.value
-        result = ldif.filter(entries, objectclass=objectclass)
+        result = ldif.filter_ldif(entries, objectclass=objectclass)
         assert result.is_success
         filtered = result.value
         assert len(filtered) == expected_count
@@ -139,10 +139,10 @@ class TestFlextLdifAPIIntegration:
     ) -> None:
         """Dynamically test filtering by different DN patterns."""
         ldif = FlextLdif()
-        parse_result = ldif.parse(self._COMPLEX_LDIF)
+        parse_result = ldif.parse_source(self._COMPLEX_LDIF)
         assert parse_result.is_success
         entries = parse_result.value
-        result = ldif.filter(entries, dn_pattern=dn_pattern)
+        result = ldif.filter_ldif(entries, dn_pattern=dn_pattern)
         assert result.is_success
         filtered = result.value
         assert len(filtered) == expected_count
@@ -171,7 +171,7 @@ class TestFlextLdifAPIIntegration:
     def test_validate_entries_workflow(self) -> None:
         """Test complete validation workflow."""
         ldif = FlextLdif()
-        parse_result = ldif.parse(self._SIMPLE_LDIF)
+        parse_result = ldif.parse_source(self._SIMPLE_LDIF)
         assert parse_result.is_success
         entries = parse_result.value
         validate_result = ldif.validate_entries(entries)
@@ -195,10 +195,10 @@ class TestFlextLdifAPIIntegration:
     def test_filter_multiple_criteria_combined(self) -> None:
         """Test filtering with combined DN and attribute criteria."""
         ldif = FlextLdif()
-        parse_result = ldif.parse(self._COMPLEX_LDIF)
+        parse_result = ldif.parse_source(self._COMPLEX_LDIF)
         assert parse_result.is_success
         entries = parse_result.value
-        result = ldif.filter(
+        result = ldif.filter_ldif(
             entries,
             dn_pattern="ou=Admins",
             attributes={c.Ldif.Names.MAIL: ""},
@@ -218,7 +218,7 @@ class TestFlextLdifAPIIntegration:
     def test_end_to_end_workflow_complete(self) -> None:
         """Test complete end-to-end workflow from parse to filter."""
         ldif = FlextLdif()
-        parse_result = ldif.parse(self._SIMPLE_LDIF)
+        parse_result = ldif.parse_source(self._SIMPLE_LDIF)
         assert parse_result.is_success
         entries = parse_result.value
         analyze_result = FlextLdifStatistics().calculate_for_entries(entries)
@@ -227,7 +227,7 @@ class TestFlextLdifAPIIntegration:
         assert stats.total_entries == 1
         validate_result = ldif.validate_entries(entries)
         assert validate_result.is_success
-        filter_result = ldif.filter(entries, objectclass=c.Ldif.Names.PERSON)
+        filter_result = ldif.filter_ldif(entries, objectclass=c.Ldif.Names.PERSON)
         assert filter_result.is_success
         filtered = filter_result.value
         assert len(filtered) == 1

@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, MutableMapping, MutableSequence
 from re import Pattern
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, ClassVar, Literal
 
 from flext_ldif import FlextLdifUtilitiesEntry
 
@@ -17,6 +17,19 @@ class FlextLdifUtilitiesFilters[T]:
     """Base class for entry filters."""
 
     __slots__ = ()
+
+    AndFilter: ClassVar[type[_AndFilter[m.Ldif.Entry]]]
+    OrFilter: ClassVar[type[_OrFilter[m.Ldif.Entry]]]
+    NotFilter: ClassVar[type[_NotFilter[m.Ldif.Entry]]]
+    ByDnFilter: ClassVar[type[_ByDnFilter]]
+    ByDnUnderBaseFilter: ClassVar[type[_ByDnUnderBaseFilter]]
+    ByObjectClassFilter: ClassVar[type[_ByObjectClassFilter]]
+    ByAttrsFilter: ClassVar[type[_ByAttrsFilter]]
+    ByAttrValueFilter: ClassVar[type[_ByAttrValueFilter]]
+    ExcludeAttrsFilter: ClassVar[type[_ExcludeAttrsFilter]]
+    IsSchemaFlextLdifUtilitiesFilters: ClassVar[type[_IsSchemaFilter]]
+    CustomFilter: ClassVar[type[_CustomFilter]]
+    Filter: ClassVar[type[_FilterFactory]]
 
     def __and__(
         self,

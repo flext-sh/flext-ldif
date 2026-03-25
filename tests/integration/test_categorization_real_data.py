@@ -343,7 +343,7 @@ class TestCategorizationRealData:
             "Input file content should match"
         )
         ldif = FlextLdif()
-        parse_result = ldif.parse(value=ldif_content, server_type="rfc")
+        parse_result = ldif.parse_source(value=ldif_content, server_type="rfc")
         assert parse_result.is_success, f"Parsing failed: {parse_result.error}"
         entries = parse_result.value
         assert len(entries) == 6, f"Should parse 6 entries, got {len(entries)}"

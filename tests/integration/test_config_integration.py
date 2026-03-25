@@ -59,14 +59,14 @@ class TestFlextLdifSettingsIntegration:
     def test_default_config_initialization(self) -> None:
         """Test facade initializes with default config."""
         ldif = FlextLdif()
-        result = ldif.parse(ConfigTestData.BASIC_ENTRY)
+        result = ldif.parse_source(ConfigTestData.BASIC_ENTRY)
         assert result.is_success
 
     def test_custom_config_with_server_type(self) -> None:
         """Test facade with custom config and server type."""
         config = FlextLdifSettings(server_type="openldap")
         ldif = FlextLdif(config=config)
-        result = ldif.parse(ConfigTestData.BASIC_ENTRY)
+        result = ldif.parse_source(ConfigTestData.BASIC_ENTRY)
         assert result.is_success
         entries = result.value
         assert len(entries) == 1
@@ -90,7 +90,7 @@ class TestFlextLdifSettingsIntegration:
         """Test that config settings affect parsing behavior."""
         config = FlextLdifSettings(server_type=server_type)
         ldif = FlextLdif(config=config)
-        result = ldif.parse(ConfigTestData.BASIC_ENTRY)
+        result = ldif.parse_source(ConfigTestData.BASIC_ENTRY)
         assert result.is_success
 
     @pytest.mark.parametrize(
@@ -106,7 +106,7 @@ class TestFlextLdifSettingsIntegration:
         config = FlextLdifSettings(server_type=server_type)
         ldif = FlextLdif(config=config)
         content = ConfigTestData.SERVER_CONTENT[expected_content_key]
-        result = ldif.parse(content)
+        result = ldif.parse_source(content)
         assert result.is_success
         entries = result.value
         assert len(entries) == 1
@@ -117,8 +117,8 @@ class TestFlextLdifSettingsIntegration:
         ldif = FlextLdif(config=config)
         content1 = "dn: cn=Test1,dc=example,dc=com\ncn: Test1\nobjectClass: person\n"
         content2 = "dn: cn=Test2,dc=example,dc=com\ncn: Test2\nobjectClass: person\n"
-        result1 = ldif.parse(content1)
-        result2 = ldif.parse(content2)
+        result1 = ldif.parse_source(content1)
+        result2 = ldif.parse_source(content2)
         assert result1.is_success
         assert result2.is_success
 
@@ -126,7 +126,7 @@ class TestFlextLdifSettingsIntegration:
         """Test config handling with multiple entries."""
         config = FlextLdifSettings(server_type="rfc")
         ldif = FlextLdif(config=config)
-        result = ldif.parse(ConfigTestData.MULTIPLE_ENTRIES)
+        result = ldif.parse_source(ConfigTestData.MULTIPLE_ENTRIES)
         assert result.is_success
         entries = result.value
         assert len(entries) == 3
@@ -135,11 +135,11 @@ class TestFlextLdifSettingsIntegration:
         """Test that config doesn't interfere with filtering."""
         config = FlextLdifSettings(server_type="rfc")
         ldif = FlextLdif(config=config)
-        parse_result = ldif.parse(ConfigTestData.FILTER_CONTENT)
+        parse_result = ldif.parse_source(ConfigTestData.FILTER_CONTENT)
         assert parse_result.is_success
         entries = parse_result.value
         assert len(entries) == 2
-        filter_result = ldif.filter(entries, objectclass="person")
+        filter_result = ldif.filter_ldif(entries, objectclass="person")
         assert filter_result.is_success
         filtered = filter_result.value
         assert len(filtered) == 1

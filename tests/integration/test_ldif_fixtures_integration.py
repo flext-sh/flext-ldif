@@ -30,7 +30,7 @@ class TestsFlextLdifFixtures:
     def test_rfc_fixture_parsing(self, ldif: FlextLdif) -> None:
         """Test parsing RFC fixture with current baseline entries."""
         fixture = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
-        result = ldif.parse(fixture)
+        result = ldif.parse_source(fixture)
         assert result.is_success
         entries_raw = result.value
         assert isinstance(entries_raw, list)
@@ -41,7 +41,7 @@ class TestsFlextLdifFixtures:
     def test_rfc_fixture_validation(self, ldif: FlextLdif) -> None:
         """Test RFC fixture entries are valid."""
         fixture = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
-        parse_result = ldif.parse(fixture)
+        parse_result = ldif.parse_source(fixture)
         assert parse_result.is_success
         entries_raw = parse_result.value
         assert isinstance(entries_raw, list)
@@ -52,7 +52,7 @@ class TestsFlextLdifFixtures:
     def test_oid_fixture_parsing(self, ldif: FlextLdif) -> None:
         """Test parsing OID fixture."""
         fixture = Path("tests/fixtures/oid/oid_entries_fixtures.ldif")
-        result = ldif.parse(fixture)
+        result = ldif.parse_source(fixture)
         assert result.is_success
         entries_raw = result.value
         assert isinstance(entries_raw, list)
@@ -61,7 +61,7 @@ class TestsFlextLdifFixtures:
     def test_oud_fixture_parsing(self, ldif: FlextLdif) -> None:
         """Test parsing OUD fixture."""
         fixture = Path("tests/fixtures/oud/oud_entries_fixtures.ldif")
-        result = ldif.parse(fixture)
+        result = ldif.parse_source(fixture)
         assert result.is_success
         entries_raw = result.value
         assert isinstance(entries_raw, list)
@@ -70,7 +70,7 @@ class TestsFlextLdifFixtures:
     def test_openldap2_fixture_parsing(self, ldif: FlextLdif) -> None:
         """Test parsing OpenLDAP2 fixture with 45+ entries."""
         fixture = Path("tests/fixtures/openldap2/openldap2_integration_fixtures.ldif")
-        result = ldif.parse(fixture)
+        result = ldif.parse_source(fixture)
         assert result.is_success
         entries_raw = result.value
         assert isinstance(entries_raw, list)
@@ -87,7 +87,7 @@ class TestsFlextLdifFixtures:
             "tests/fixtures/openldap2/openldap2_entries_fixtures.ldif",
         ]
         for fixture_path in fixtures:
-            result = ldif.parse(Path(fixture_path))
+            result = ldif.parse_source(Path(fixture_path))
             assert result.is_success, f"Failed to parse {fixture_path}: {result.error}"
             entries_raw = result.value
             assert isinstance(entries_raw, list)
@@ -98,7 +98,7 @@ class TestsFlextLdifFixtures:
     def test_rfc_entries_have_valid_dns(self, ldif: FlextLdif) -> None:
         """Test all RFC entries have valid DNs."""
         fixture = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
-        result = ldif.parse(fixture)
+        result = ldif.parse_source(fixture)
         assert result.is_success
         entries_raw = result.value
         assert isinstance(entries_raw, list)
@@ -117,7 +117,7 @@ class TestsFlextLdifFixtures:
             "tests/fixtures/openldap2/openldap2_entries_fixtures.ldif",
         ]
         for fixture_path in fixtures:
-            result = ldif.parse(Path(fixture_path))
+            result = ldif.parse_source(Path(fixture_path))
             assert result.is_success
             entries_raw = result.value
             assert isinstance(entries_raw, list)
