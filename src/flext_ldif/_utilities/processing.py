@@ -544,11 +544,11 @@ class FlextLdifUtilitiesProcessing:
         if isinstance(obj, list):
             if not obj:
                 return True
-            return isinstance(obj[0], m.Ldif.Entry)  # pyright: ignore[reportUnknownVariableType,reportArgumentType]
+            return isinstance(obj[0], m.Ldif.Entry)
         if isinstance(obj, tuple):
             if not obj:
                 return True
-            return isinstance(obj[0], m.Ldif.Entry)  # pyright: ignore[reportUnknownVariableType,reportArgumentType]
+            return isinstance(obj[0], m.Ldif.Entry)
         return False
 
     @staticmethod

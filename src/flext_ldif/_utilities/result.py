@@ -95,7 +95,7 @@ class FlextLdifUtilitiesResult[T]:
             entry_payload = value_obj
         elif isinstance(value_obj, (list, tuple)):
             entries: MutableSequence[m.Ldif.Entry] = []
-            for entry_candidate in value_obj:  # pyright: ignore[reportUnknownVariableType]
+            for entry_candidate in value_obj:
                 if not isinstance(entry_candidate, m.Ldif.Entry):
                     return FlextLdifUtilitiesResult[str].fail(
                         "Entry serialization failed: sequence contains non-entry value",
