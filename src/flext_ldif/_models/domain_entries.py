@@ -3575,7 +3575,10 @@ class FlextLdifModelsDomainsEntries:
         ] = None
         field_order: Annotated[
             MutableSequence[str],
-            Field(description="Original order of schema fields"),
+            Field(
+                default_factory=list,
+                description="Original order of schema fields",
+            ),
         ]
         x_origin: Annotated[
             str | None,
@@ -3583,11 +3586,15 @@ class FlextLdifModelsDomainsEntries:
         ] = None
         x_ordered: Annotated[
             MutableSequence[str],
-            Field(description="X-ORDERED field values"),
+            Field(
+                default_factory=list,
+                description="X-ORDERED field values",
+            ),
         ]
         extensions: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
+                default_factory=FlextLdifModelsMetadata.DynamicMetadata,
                 description="Non-standard schema extensions",
             ),
         ]
@@ -3780,6 +3787,17 @@ class FlextLdifModelsDomainsEntries:
                 description="Complete conversion history for audit trail: [{'step': 'parse_oid_entry', 'timestamp': '2025-01-01T00:00:00Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'oid', 'operation': 'parse'}, {'step': 'normalize_to_rfc', 'timestamp': '2025-01-01T00:00:01Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'rfc', 'operation': 'normalize'}, ...]",
             ),
         ]
+
+        @field_validator("quirk_type", mode="before")
+        @classmethod
+        def _coerce_quirk_type(
+            cls,
+            value: c.Ldif.ServerTypes | str,
+        ) -> c.Ldif.ServerTypes:
+            """Normalize string server types into canonical enum values."""
+            if isinstance(value, c.Ldif.ServerTypes):
+                return value
+            return FlextLdifShared.normalize_server_type(value)
 
         @classmethod
         def create_for(

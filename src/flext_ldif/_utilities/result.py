@@ -7,7 +7,7 @@ from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
 from pathlib import Path
 from typing import IO, Self, override
 
-from flext_core import FlextRuntime, r
+from flext_core import FlextModelsResult, r
 
 from flext_ldif import FlextLdifUtilitiesWriter, m, t
 
@@ -18,7 +18,7 @@ class FlextLdifUtilitiesResult[T]:
     __slots__ = ("_inner",)
     _inner: r[T]
 
-    def __init__(self, inner: r[T] | FlextRuntime.RuntimeResult[T]) -> None:
+    def __init__(self, inner: r[T] | FlextModelsResult.RuntimeResult[T]) -> None:
         """Initialize FlextLdifUtilitiesResult wrapping r[T] or RuntimeResult."""
         super().__init__()
         inner_result: r[T]

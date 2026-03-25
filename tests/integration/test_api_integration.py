@@ -40,10 +40,10 @@ class APIScenarios(StrEnum):
 class TestData:
     """Test data constants for API integration tests."""
 
-    SIMPLE_LDIF: Final[str] = c.RFC.SAMPLE_LDIF_BASIC
-    MULTI_ENTRY_LDIF: Final[str] = c.RFC.SAMPLE_LDIF_MULTIPLE
+    SIMPLE_LDIF: Final[str] = c.Ldif.RFC.SAMPLE_LDIF_BASIC
+    MULTI_ENTRY_LDIF: Final[str] = c.Ldif.RFC.SAMPLE_LDIF_MULTIPLE
     COMPLEX_LDIF: Final[str] = (
-        f"{c.RFC.SAMPLE_LDIF_MULTIPLE}\ndn: cn=Admin1,ou=Admins,dc=example,dc=com\ncn: Admin1\nmail: REDACTED_LDAP_BIND_PASSWORD1@example.com\nobjectClass: person\n\ndn: cn=Admin2,ou=Admins,dc=example,dc=com\ncn: Admin2\nmail: REDACTED_LDAP_BIND_PASSWORD2@example.com\nobjectClass: person\n"
+        f"{c.Ldif.RFC.SAMPLE_LDIF_MULTIPLE}\ndn: cn=Admin1,ou=Admins,dc=example,dc=com\ncn: Admin1\nmail: REDACTED_LDAP_BIND_PASSWORD1@example.com\nobjectClass: person\n\ndn: cn=Admin2,ou=Admins,dc=example,dc=com\ncn: Admin2\nmail: REDACTED_LDAP_BIND_PASSWORD2@example.com\nobjectClass: person\n"
     )
     FILTER_TEST_DATA: Final[Mapping[str, t.StrMapping]] = {
         "person": {"objectclass": "person", "expected_count": "2"},
@@ -71,8 +71,8 @@ class TestFlextLdifAPIIntegration:
     - Builder pattern for complex test setup
     """
 
-    _SIMPLE_LDIF: Final[str] = c.RFC.SAMPLE_LDIF_BASIC
-    _MULTI_ENTRY_LDIF: Final[str] = c.RFC.SAMPLE_LDIF_MULTIPLE
+    _SIMPLE_LDIF: Final[str] = c.Ldif.RFC.SAMPLE_LDIF_BASIC
+    _MULTI_ENTRY_LDIF: Final[str] = c.Ldif.RFC.SAMPLE_LDIF_MULTIPLE
     _COMPLEX_LDIF: Final[str] = TestData.COMPLEX_LDIF
 
     @pytest.mark.parametrize(
@@ -149,22 +149,24 @@ class TestFlextLdifAPIIntegration:
 
     def test_build_entry_programmatic(self) -> None:
         """Test building entries programmatically using models."""
-        test_dn = c.RFC.TEST_DN
+        test_dn = c.Ldif.RFC.TEST_DN
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value=test_dn),
             attributes=m.Ldif.Attributes(
                 attributes={
-                    c.Names.CN: [c.General.ATTR_VALUE_TEST],
-                    c.Names.SN: [c.General.ATTR_VALUE_USER],
-                    c.Names.OBJECTCLASS: [c.Names.PERSON],
+                    c.Ldif.Names.CN: [c.Ldif.General.ATTR_VALUE_TEST],
+                    c.Ldif.Names.SN: [c.Ldif.General.ATTR_VALUE_USER],
+                    c.Ldif.Names.OBJECTCLASS: [c.Ldif.Names.PERSON],
                 },
             ),
         )
         assert entry.dn is not None
         assert entry.attributes is not None
         assert entry.dn.value == test_dn
-        assert c.Names.CN in entry.attributes.attributes
-        assert entry.attributes.attributes[c.Names.CN] == [c.General.ATTR_VALUE_TEST]
+        assert c.Ldif.Names.CN in entry.attributes.attributes
+        assert entry.attributes.attributes[c.Ldif.Names.CN] == [
+            c.Ldif.General.ATTR_VALUE_TEST
+        ]
 
     def test_validate_entries_workflow(self) -> None:
         """Test complete validation workflow."""
@@ -199,7 +201,7 @@ class TestFlextLdifAPIIntegration:
         result = ldif.filter(
             entries,
             dn_pattern="ou=Admins",
-            attributes={c.Names.MAIL: ""},
+            attributes={c.Ldif.Names.MAIL: ""},
         )
         assert result.is_success
         filtered = result.value
@@ -225,7 +227,7 @@ class TestFlextLdifAPIIntegration:
         assert stats.total_entries == 1
         validate_result = ldif.validate_entries(entries)
         assert validate_result.is_success
-        filter_result = ldif.filter(entries, objectclass=c.Names.PERSON)
+        filter_result = ldif.filter(entries, objectclass=c.Ldif.Names.PERSON)
         assert filter_result.is_success
         filtered = filter_result.value
         assert len(filtered) == 1

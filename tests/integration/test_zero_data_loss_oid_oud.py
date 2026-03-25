@@ -218,7 +218,7 @@ class TestZeroDataLossOidOud:
         write_oid = api.write(
             oud_entries,
             server_type="oid",
-            format_options=m.WriteFormatOptions(restore_original_format=True),
+            format_options=m.Ldif.WriteFormatOptions(restore_original_format=True),
         )
         assert write_oid.is_success
         roundtrip_ldif = write_oid.value
@@ -360,7 +360,7 @@ class TestZeroDataLossOidOud:
         write_result = api.write(
             entries,
             server_type="oid",
-            format_options=m.WriteFormatOptions(restore_original_format=True),
+            format_options=m.Ldif.WriteFormatOptions(restore_original_format=True),
         )
         assert write_result.is_success
         restored_ldif = write_result.value

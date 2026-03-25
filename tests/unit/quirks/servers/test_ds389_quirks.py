@@ -17,7 +17,7 @@ from tests import c, m, s
 
 from flext_ldif import FlextLdifServersDs389
 
-RfcTestHelpers = c.RfcTestHelpers
+RfcTestHelpers = c.Ldif.RfcTestHelpers
 
 
 @unique

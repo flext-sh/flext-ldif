@@ -10,8 +10,6 @@ from flext_core import FlextLogger, FlextService, r
 from pydantic import Field, ValidationError
 
 from flext_ldif import (
-    FlextLdifModelsDomains,
-    FlextLdifModelsMetadata,
     FlextLdifQuirkMethodsMixin,
     FlextLdifUtilitiesACL,
     m,
@@ -113,7 +111,7 @@ class FlextLdifServersBaseSchemaAcl(
         }
         if extensions:
             all_extensions.update(extensions)
-        extensions_model = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+        extensions_model = m.Ldif.DynamicMetadata.from_dict(
             all_extensions,
         )
         return m.Ldif.QuirkMetadata(
@@ -173,7 +171,11 @@ class FlextLdifServersBaseSchemaAcl(
         """Parse ACL line to Acl model."""
         return self._parse_acl(value)
 
-    def write(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
+    def parse(self, acl_text: str) -> r[m.Ldif.Acl]:
+        """Compatibility parser entrypoint for direct ACL quirk consumers."""
+        return self.parse_quirk(acl_text)
+
+    def write(self, acl_data: m.Ldif.Acl) -> r[str]:
         """Write Acl model to string format."""
         return self._write_acl(acl_data)
 
@@ -307,7 +309,7 @@ class FlextLdifServersBaseSchemaAcl(
         """Check if this server supports a specific feature."""
         return False
 
-    def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
+    def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
         """Write ACL data to RFC-compliant string format (internal)."""
         _ = acl_data
         return r[str].fail("Must be implemented by subclass")

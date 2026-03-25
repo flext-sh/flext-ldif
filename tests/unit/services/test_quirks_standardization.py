@@ -87,8 +87,8 @@ class TestsFlextLdifQuirksStandardizedConstants(s):
             ]
         ] = [
             (FlextLdifServersRfc, "rfc"),
-            (FlextLdifServersOid, c.Fixtures.OID),
-            (FlextLdifServersOud, c.Fixtures.OUD),
+            (FlextLdifServersOid, c.Ldif.Fixtures.OID),
+            (FlextLdifServersOud, c.Ldif.Fixtures.OUD),
         ]
         for quirk_class, expected_canonical in quirks:
             constants = quirk_class.Constants
@@ -167,7 +167,9 @@ class TestQuirksWithRealLdifFixtures:
     @pytest.fixture(scope="class")
     def oid_schema_ldif(self) -> str:
         """Load real OID schema LDIF fixture."""
-        fixture_path = Path(f"tests/fixtures/{c.Fixtures.OID}/oid_schema_fixtures.ldif")
+        fixture_path = Path(
+            f"tests/fixtures/{c.Ldif.Fixtures.OID}/oid_schema_fixtures.ldif"
+        )
         if not fixture_path.exists():
             pytest.skip(f"Fixture not found: {fixture_path}")
         return self._sample_ldif_records(fixture_path.read_text(encoding="utf-8"))
@@ -175,7 +177,9 @@ class TestQuirksWithRealLdifFixtures:
     @pytest.fixture(scope="class")
     def oud_schema_ldif(self) -> str:
         """Load real OUD schema LDIF fixture."""
-        fixture_path = Path(f"tests/fixtures/{c.Fixtures.OUD}/oud_schema_fixtures.ldif")
+        fixture_path = Path(
+            f"tests/fixtures/{c.Ldif.Fixtures.OUD}/oud_schema_fixtures.ldif"
+        )
         if not fixture_path.exists():
             pytest.skip(f"Fixture not found: {fixture_path}")
         return self._sample_ldif_records(fixture_path.read_text(encoding="utf-8"))

@@ -292,12 +292,14 @@ class FlextLdifModelsSettings:
         permission_map: Annotated[
             MutableMapping[str, str],
             Field(
+                default_factory=dict,
                 description="Mapping of permission name to normalized name",
             ),
         ]
         special_subjects: Annotated[
             MutableMapping[str, tuple[str, str]],
             Field(
+                default_factory=dict,
                 description="Special subject DN to (type, value) mapping",
             ),
         ]

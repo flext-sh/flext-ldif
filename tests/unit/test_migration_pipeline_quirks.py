@@ -42,7 +42,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         attr_locked = "orclAccountLocked"
         val_true_oid = OidTestConstants.RFC_TO_OID_BOOLEAN["TRUE"]
         val_false_oid = OidTestConstants.RFC_TO_OID_BOOLEAN["FALSE"]
-        ldif_content = f"dn: {c.DNs.TEST_USER}\n{c.Names.OBJECTCLASS}: {c.Names.TOP}\n{c.Names.OBJECTCLASS}: {c.Names.PERSON}\n{c.Names.OBJECTCLASS}: orcluser\n{c.Names.CN}: test\n{c.Names.SN}: test\n{attr_enabled}: {val_true_oid}\n{attr_locked}: {val_false_oid}\n"
+        ldif_content = f"dn: {c.Ldif.DNs.TEST_USER}\n{c.Ldif.Names.OBJECTCLASS}: {c.Ldif.Names.TOP}\n{c.Ldif.Names.OBJECTCLASS}: {c.Ldif.Names.PERSON}\n{c.Ldif.Names.OBJECTCLASS}: orcluser\n{c.Ldif.Names.CN}: test\n{c.Ldif.Names.SN}: test\n{attr_enabled}: {val_true_oid}\n{attr_locked}: {val_false_oid}\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -77,7 +77,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         attr_locked = "orclAccountLocked"
         val_true_rfc = "TRUE"
         val_false_rfc = "FALSE"
-        ldif_content = f"dn: {c.DNs.TEST_USER}\n{c.Names.OBJECTCLASS}: {c.Names.TOP}\n{c.Names.OBJECTCLASS}: {c.Names.PERSON}\n{c.Names.OBJECTCLASS}: orcluser\n{c.Names.CN}: test\n{c.Names.SN}: test\n{attr_enabled}: {val_true_rfc}\n{attr_locked}: {val_false_rfc}\n"
+        ldif_content = f"dn: {c.Ldif.DNs.TEST_USER}\n{c.Ldif.Names.OBJECTCLASS}: {c.Ldif.Names.TOP}\n{c.Ldif.Names.OBJECTCLASS}: {c.Ldif.Names.PERSON}\n{c.Ldif.Names.OBJECTCLASS}: orcluser\n{c.Ldif.Names.CN}: test\n{c.Ldif.Names.SN}: test\n{attr_enabled}: {val_true_rfc}\n{attr_locked}: {val_false_rfc}\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -109,7 +109,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         input_dir.mkdir()
         output_dir.mkdir()
         acl_val = "access to entry by * (read)"
-        ldif_content = f"dn: {c.DNs.TEST_USER}\n{c.Names.OBJECTCLASS}: {c.Names.TOP}\n{c.Names.OBJECTCLASS}: {c.Names.PERSON}\n{c.Names.CN}: test\n{c.Names.SN}: test\n{FlextLdifServersOidConstants.ORCLACI}: {acl_val}\n"
+        ldif_content = f"dn: {c.Ldif.DNs.TEST_USER}\n{c.Ldif.Names.OBJECTCLASS}: {c.Ldif.Names.TOP}\n{c.Ldif.Names.OBJECTCLASS}: {c.Ldif.Names.PERSON}\n{c.Ldif.Names.CN}: test\n{c.Ldif.Names.SN}: test\n{FlextLdifServersOidConstants.ORCLACI}: {acl_val}\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -143,7 +143,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         input_dir.mkdir()
         output_dir.mkdir()
         acl_val = "access to entry by * (read)"
-        ldif_content = f"dn: {c.DNs.TEST_USER}\n{c.Names.OBJECTCLASS}: {c.Names.TOP}\n{c.Names.OBJECTCLASS}: {c.Names.PERSON}\n{c.Names.CN}: test\n{c.Names.SN}: test\n{FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME}: {acl_val}\n"
+        ldif_content = f"dn: {c.Ldif.DNs.TEST_USER}\n{c.Ldif.Names.OBJECTCLASS}: {c.Ldif.Names.TOP}\n{c.Ldif.Names.OBJECTCLASS}: {c.Ldif.Names.PERSON}\n{c.Ldif.Names.CN}: test\n{c.Ldif.Names.SN}: test\n{FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME}: {acl_val}\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -173,7 +173,7 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-        ldif_content = f"dn: {FlextLdifServersOidConstants.SCHEMA_DN_QUIRK}\n{c.Names.OBJECTCLASS}: {c.Names.TOP}\n{c.Names.OBJECTCLASS}: subschema\n{c.Names.CN}: subschemasubentry\n"
+        ldif_content = f"dn: {FlextLdifServersOidConstants.SCHEMA_DN_QUIRK}\n{c.Ldif.Names.OBJECTCLASS}: {c.Ldif.Names.TOP}\n{c.Ldif.Names.OBJECTCLASS}: subschema\n{c.Ldif.Names.CN}: subschemasubentry\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -198,14 +198,14 @@ class TestsFlextLdifMigrationPipelineQuirks(s):
         )
 
     def test_pipeline_enforces_quirks(self, tmp_path: Path) -> None:
-        """Test that pipeline enforces quirks even if input looks like c.RFC."""
+        """Test that pipeline enforces quirks even if input looks like c.Ldif.RFC."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
         attr_enabled = "orclIsEnabled"
         val_true_rfc = "TRUE"
-        ldif_content = f"dn: {c.DNs.TEST_USER}\n{c.Names.OBJECTCLASS}: {c.Names.TOP}\n{c.Names.OBJECTCLASS}: {c.Names.PERSON}\n{c.Names.CN}: test\n{attr_enabled}: {val_true_rfc}\n"
+        ldif_content = f"dn: {c.Ldif.DNs.TEST_USER}\n{c.Ldif.Names.OBJECTCLASS}: {c.Ldif.Names.TOP}\n{c.Ldif.Names.OBJECTCLASS}: {c.Ldif.Names.PERSON}\n{c.Ldif.Names.CN}: test\n{attr_enabled}: {val_true_rfc}\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,

@@ -17,8 +17,8 @@ from tests import c, m, s
 
 from flext_ldif import FlextLdifServersNovell
 
-RfcTestHelpers = c.RfcTestHelpers
-TestDeduplicationHelpers = c.TestDeduplicationHelpers
+RfcTestHelpers = c.Ldif.RfcTestHelpers
+TestDeduplicationHelpers = c.Ldif.TestDeduplicationHelpers
 
 
 @unique

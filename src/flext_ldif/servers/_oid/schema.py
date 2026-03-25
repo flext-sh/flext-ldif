@@ -9,7 +9,6 @@ from typing import override
 from flext_core import FlextLogger, r
 
 from flext_ldif import (
-    FlextLdifModelsMetadata,
     FlextLdifServersBaseSchema,
     FlextLdifServersOidConstants,
     FlextLdifServersRfc,
@@ -314,10 +313,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                     c.Ldif.SCHEMA_ORIGINAL_STRING_COMPLETE
                 ] = attr_definition
                 attr_data.metadata.extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = "oid"
-                metadata_public = m.Ldif.QuirkMetadata.model_validate(
-                    attr_data.metadata.model_dump(),
-                )
-                u.Ldif.preserve_schema_formatting(metadata_public, attr_definition)
+                u.Ldif.preserve_schema_formatting(attr_data.metadata, attr_definition)
                 self._add_target_metadata(attr_data, target_values)
             return r[m.Ldif.SchemaAttribute].ok(attr_data)
         except (
@@ -525,7 +521,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             }
             oid_metadata = attr_copy.metadata.model_copy(
                 update={
-                    "extensions": FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+                    "extensions": m.Ldif.DynamicMetadata.from_dict(
                         new_extensions,
                     ),
                 },

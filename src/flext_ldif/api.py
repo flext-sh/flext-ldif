@@ -302,6 +302,22 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             filtered.append(entry)
         return r[MutableSequence[m.Ldif.Entry]].ok(filtered)
 
+    def filter(
+        self,
+        entries: MutableSequence[m.Ldif.Entry],
+        *,
+        objectclass: str | None = None,
+        dn_pattern: str | None = None,
+        attributes: MutableMapping[str, str | MutableSequence[str]] | None = None,
+    ) -> r[MutableSequence[m.Ldif.Entry]]:
+        """Compatibility facade for criteria-based entry filtering."""
+        return self.filter_entries_by_criteria(
+            entries,
+            objectclass=objectclass,
+            dn_pattern=dn_pattern,
+            attributes=attributes,
+        )
+
     def filter_entries(
         self,
         entries: MutableSequence[m.Ldif.Entry],

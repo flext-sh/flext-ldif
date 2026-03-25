@@ -17,7 +17,7 @@ from tests import c, m, s
 
 from flext_ldif import FlextLdifServersApache
 
-TestDeduplicationHelpers = c.TestDeduplicationHelpers
+TestDeduplicationHelpers = c.Ldif.TestDeduplicationHelpers
 
 
 @unique

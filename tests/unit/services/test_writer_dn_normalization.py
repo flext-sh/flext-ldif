@@ -185,7 +185,7 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
         write_result = writer.write(
             entries=[entry],
             target_server_type="rfc",
-            format_options=m.WriteFormatOptions(fold_long_lines=False),
+            format_options=m.Ldif.WriteFormatOptions(fold_long_lines=False),
         )
         tm.that(write_result.is_success, eq=True)
         output = write_result.value

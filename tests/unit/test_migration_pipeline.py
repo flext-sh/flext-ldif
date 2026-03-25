@@ -132,7 +132,7 @@ class TestsFlextLdifMigrationPipeline(s):
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-        ldif_content = f"dn: {c.TestData.SAMPLE_USER_DN}\nobjectClass: person\nobjectClass: top\ncn: testuser\nsn: test\n"
+        ldif_content = f"dn: {c.Ldif.TestData.SAMPLE_USER_DN}\nobjectClass: person\nobjectClass: top\ncn: testuser\nsn: test\n"
         (input_dir / "test.ldif").write_text(ldif_content)
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -159,7 +159,7 @@ class TestsFlextLdifMigrationPipeline(s):
         input_dir.mkdir()
         output_dir.mkdir()
         ldif_content = (
-            f"dn: {c.TestData.SAMPLE_USER_DN}\nobjectClass: person\ncn: testuser\n"
+            f"dn: {c.Ldif.TestData.SAMPLE_USER_DN}\nobjectClass: person\ncn: testuser\n"
         )
         (input_dir / "test.ldif").write_text(ldif_content)
         pipeline = FlextLdifMigrationPipeline(

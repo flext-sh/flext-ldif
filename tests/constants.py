@@ -2160,19 +2160,6 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     )
                 return converted_items
 
-    # Top-level aliases for convenient access (c.Names, c.RFC, etc.)
-    Names = Ldif.Names
-    Rfc = Ldif.Rfc
-    RFC = Ldif.RFC
-    TestData = Ldif.TestData
-    General = Ldif.General
-    DNs = Ldif.DNs
-    OIDs = Ldif.OIDs
-    Fixtures = Ldif.Fixtures
-    OidServer = Ldif.OidServer
-    RfcTestHelpers = Ldif.RfcTestHelpers
-    TestDeduplicationHelpers = Ldif.TestDeduplicationHelpers
-
 
 c = FlextLdifTestConstants
 

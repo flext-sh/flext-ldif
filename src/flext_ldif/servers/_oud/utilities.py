@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifModelsSettings, FlextLdifServersOudConstants
+from flext_ldif import (
+    FlextLdifConstants,
+    FlextLdifModelsSettings,
+    FlextLdifServersOudConstants,
+)
 
 
 class FlextLdifServersOudUtilities:
@@ -13,7 +17,7 @@ class FlextLdifServersOudUtilities:
         """Create AciParserConfig for OUD ACL parsing."""
         constants = FlextLdifServersOudConstants
         return FlextLdifModelsSettings.AciParserConfig(
-            server_type="oud",
+            server_type=FlextLdifConstants.Ldif.ServerTypes.OUD,
             aci_prefix="aci:",
             version_acl_pattern=constants.ACL_VERSION_ACL_PATTERN,
             targetattr_pattern=constants.ACL_TARGETATTR_PATTERN,

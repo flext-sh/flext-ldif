@@ -6,7 +6,7 @@ from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
 from flext_core import m
-from pydantic import ConfigDict, Field, computed_field
+from pydantic import ConfigDict, Field, computed_field, field_validator
 
 from flext_ldif import FlextLdifShared, c, t
 
@@ -104,10 +104,11 @@ class FlextLdifModelsBases:
             Field(
                 description="LDAP server type (oid, oud, openldap, rfc, etc.)",
             ),
-        ] = "rfc"
+        ] = c.Ldif.ServerTypes.RFC
         validation_violations: Annotated[
             MutableSequence[str],
             Field(
+                default_factory=list,
                 description="Validation violations captured during parsing/processing",
             ),
         ]
@@ -127,6 +128,16 @@ class FlextLdifModelsBases:
         def is_valid(self) -> bool:
             """Check if ACL element passed validation."""
             return not self.validation_violations
+
+        @field_validator("server_type", mode="before")
+        @classmethod
+        def _coerce_server_type(
+            cls,
+            value: c.Ldif.ServerTypes | str,
+        ) -> c.Ldif.ServerTypes:
+            if isinstance(value, c.Ldif.ServerTypes):
+                return value
+            return FlextLdifShared.normalize_server_type(value)
 
 
 __all__ = ["FlextLdifModelsBases"]

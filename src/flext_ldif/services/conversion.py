@@ -847,6 +847,24 @@ class FlextLdifConversion(
         )
         return result
 
+    def convert(
+        self,
+        source: str | FlextLdifServersBase,
+        target: str | FlextLdifServersBase,
+        model_instance: m.Ldif.Entry
+        | m.Ldif.SchemaAttribute
+        | m.Ldif.SchemaObjectClass
+        | m.Ldif.Acl,
+    ) -> r[
+        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+    ]:
+        """Compatibility facade for conversion matrix callers."""
+        return self.convert_model(
+            source=source,
+            target=target,
+            model_instance=model_instance,
+        )
+
     @override
     def execute(
         self,

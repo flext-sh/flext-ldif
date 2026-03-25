@@ -10,7 +10,6 @@ from flext_core import FlextLogger, r, s
 from pydantic import Field
 
 from flext_ldif import (
-    FlextLdifModelsMetadata,
     FlextLdifQuirkMethodsMixin,
     FlextLdifUtilitiesMetadata,
     FlextLdifUtilitiesOID,
@@ -229,11 +228,11 @@ class FlextLdifServersBaseSchema(
                 extensions_typed[key] = val
         metadata = m.Ldif.QuirkMetadata(
             quirk_type=quirk_type,
-            extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+            extensions=m.Ldif.DynamicMetadata.from_dict(
                 extensions_typed,
             )
             if extensions_typed
-            else FlextLdifModelsMetadata.DynamicMetadata(),
+            else m.Ldif.DynamicMetadata(),
         )
         FlextLdifServersBaseSchema._preserve_formatting(metadata, attr_definition)
         preview_len = 100
@@ -362,6 +361,13 @@ class FlextLdifServersBaseSchema(
     ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
         """Parse schema definition (attribute or objectClass)."""
         return self.route_parse(value)
+
+    def parse(
+        self,
+        schema_text: str,
+    ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
+        """Compatibility parser entrypoint for direct schema quirk consumers."""
+        return self.parse_quirk(schema_text)
 
     def parse_attribute(self, definition: str) -> r[m.Ldif.SchemaAttribute]:
         """Parse attribute definition (public API)."""

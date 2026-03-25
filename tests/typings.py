@@ -42,6 +42,8 @@ class FlextLdifTestTypes(FlextTestsTypes, FlextLdifTypes):
             class Fixtures:
                 """TypedDict definitions for LDIF test fixtures."""
 
+    Guards = FlextTestsTypes.Tests.Guards
+
 
 t = FlextLdifTestTypes
 type GenericFieldsDict = t.StrMapping
