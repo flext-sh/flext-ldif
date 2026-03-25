@@ -171,9 +171,7 @@ class FlextLdifUtilitiesMetadata:
             FlextLdifUtilitiesMetadata._extract_single_value_details,
         ]
         for extractor in extractors:
-            extracted_raw: Mapping[str, str | bool | MutableSequence[str]] = extractor(
-                definition
-            )
+            extracted_raw = extractor(definition)
             for key, value in extracted_raw.items():
                 if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(value):
                     if value is not None:

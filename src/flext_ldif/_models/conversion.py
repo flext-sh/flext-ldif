@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from datetime import datetime
+from pathlib import Path
 from typing import Annotated, ClassVar, Literal
 
 from flext_core import FlextModels
@@ -79,7 +81,7 @@ class FlextLdifModelsConversions:
                     item if isinstance(item, t.Ldif.CONTAINER_TYPES) else str(item)
                     for item in val
                 ]
-            return [val if isinstance(val, t.Ldif.CONTAINER_TYPES) else str(val)]
+            return [val if isinstance(val, (str, int, float, bool, datetime, Path)) else str(val)]
 
     class ConvertToTuple(_FrozenConversion):
         target_type: Literal["tuple"] = "tuple"
@@ -93,10 +95,10 @@ class FlextLdifModelsConversions:
                 (str, bytes, bytearray),
             ):
                 return [
-                    item if isinstance(item, t.Ldif.CONTAINER_TYPES) else str(item)
+                    item if isinstance(item, (str, int, float, bool, datetime, Path)) else str(item)
                     for item in val
                 ]
-            return [val if isinstance(val, t.Ldif.CONTAINER_TYPES) else str(val)]
+            return [val if isinstance(val, (str, int, float, bool, datetime, Path)) else str(val)]
 
     class ConvertToDict(_FrozenConversion):
         target_type: Literal["dict"] = "dict"

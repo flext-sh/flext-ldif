@@ -1,4 +1,5 @@
 """Base Quirk Classes for LDIF/LDAP Server Extensions."""
+# mypy: disable-error-code="override"
 
 from __future__ import annotations
 

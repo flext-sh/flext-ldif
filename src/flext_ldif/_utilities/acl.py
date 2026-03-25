@@ -607,7 +607,7 @@ class FlextLdifUtilitiesACL:
                         normalized_mapping[key] = item
                         continue
                     if isinstance(item, list):
-                        nested_list: Sequence[t.Scalar] = [
+                        nested_list: MutableSequence[t.Scalar] = [
                             nested_item
                             if isinstance(nested_item, t.SCALAR_TYPES)
                             else str(nested_item)
@@ -942,7 +942,7 @@ class FlextLdifUtilitiesACL:
             subject=m.Ldif.AclSubject(
                 subject_type=subject_type
                 if FlextLdifUtilitiesACL._is_acl_subject_type(subject_type)
-                else "user",
+                else c.Ldif.AclSubjectType.USER,
                 subject_value=subject_value,
             ),
             permissions=m.Ldif.AclPermissions(**permissions_dict),
