@@ -7,13 +7,13 @@ from flext_core import m
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
 from flext_ldif import (
+    FlextLdifModelsBases,
     FlextLdifModelsCollections,
     FlextLdifModelsDomains,
     FlextLdifModelsEvents,
     c,
     t,
 )
-from flext_ldif._models.base import FlextLdifModelsBases
 
 
 class FlextLdifModelsResults:

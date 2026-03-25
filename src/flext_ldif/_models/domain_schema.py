@@ -5,8 +5,7 @@ from typing import Annotated
 
 from pydantic import Field
 
-from flext_ldif import c
-from flext_ldif._models.base import FlextLdifModelsBases
+from flext_ldif import FlextLdifModelsBases, c
 
 
 class FlextLdifModelsDomainSchema:

@@ -558,7 +558,10 @@ class FlextLdifConstants(FlextConstants):
         # Keep these two aliases — referenced from frozen _utilities/ files
         type AclSubjectTypeLiteral = AclSubjectType
         type AttributeMarkerStatusLiteral = AttributeMarkerStatus
+        type ChangeTypeLiteral = ChangeType
+        type EncodingLiteral = Encoding
         type ServerTypeLiteral = ServerTypes
+        type TransformationTypeLiteral = TransformationType
 
         OPENLDAP: Final = "openldap"
         IBM_TIVOLI: Final = "ibm_tivoli"

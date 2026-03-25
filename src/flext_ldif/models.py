@@ -91,9 +91,10 @@ class FlextLdifModels(FlextModels):
             oid_subject_type: Annotated[str, Field(default="")]
             rfc_subject_type: Annotated[str, Field(default="")]
             oid_subject_value: Annotated[str, Field(default="")]
-            perms_dict: Annotated[MutableMapping[str, bool]] = Field(
-                default_factory=dict
-            )
+            perms_dict: Annotated[
+                MutableMapping[str, bool],
+                Field(default_factory=dict),
+            ]
             target_dn: Annotated[str, Field(default="entry")]
             target_attrs: MutableSequence[str] = Field(default_factory=list)
             acl_filter: Annotated[str, Field(default="")]
@@ -137,11 +138,13 @@ class FlextLdifModels(FlextModels):
 
             total_servers: Annotated[t.NonNegativeInt, Field(default=0)]
             quirks_by_server: Annotated[
-                MutableMapping[str, FlextLdifModels.Ldif.QuirksByServerDict]
-            ] = Field(default_factory=dict)
-            server_priorities: Annotated[MutableMapping[str, int]] = Field(
-                default_factory=dict
-            )
+                MutableMapping[str, FlextLdifModels.Ldif.QuirksByServerDict],
+                Field(default_factory=dict),
+            ]
+            server_priorities: Annotated[
+                MutableMapping[str, int],
+                Field(default_factory=dict),
+            ]
 
 
 __all__ = ["FlextLdifModels", "m"]

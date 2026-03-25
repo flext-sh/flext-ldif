@@ -160,8 +160,8 @@ class TestsTestFlextLdifConstants:
     )
     def test_get_valid_values(
         self,
-        _scenario: str,
-        _test_type: GetValidValuesType,
+        scenario: str,
+        test_type: GetValidValuesType,
         category: str,
         expected_values: set[str],
         should_raise: bool,

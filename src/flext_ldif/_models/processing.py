@@ -7,7 +7,7 @@ from typing import Annotated, ClassVar
 
 from pydantic import ConfigDict, Field
 
-from flext_ldif._models.base import FlextLdifModelsBases
+from flext_ldif import FlextLdifModelsBases
 
 
 class FlextLdifModelsProcessing:

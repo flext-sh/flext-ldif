@@ -9,8 +9,7 @@ from typing import Self
 from flext_core._models.domain_event import FlextModelsDomainEvent
 from pydantic import Field
 
-from flext_ldif import FlextLdifModelsSettings, c
-from flext_ldif._models.base import FlextLdifModelsBases
+from flext_ldif import FlextLdifModelsBases, FlextLdifModelsSettings, c
 
 _DomainEventBase = FlextModelsDomainEvent.Entry
 
