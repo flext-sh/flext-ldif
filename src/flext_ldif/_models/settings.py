@@ -1318,6 +1318,7 @@ class FlextLdifModelsSettings:
         acl_attribute_names: Annotated[
             frozenset[str],
             Field(
+                default_factory=frozenset,
                 description="Set of ACL attribute names (e.g., {'orclaci', 'orclentrylevelaci'}). Used to identify ACL attributes.",
             ),
         ]
@@ -1336,6 +1337,7 @@ class FlextLdifModelsSettings:
         rfc_order_priority_attributes: Annotated[
             MutableSequence[str],
             Field(
+                default_factory=lambda: ["objectClass"],
                 description="Attributes to write first after DN, in order. Default: ['objectClass']. Remaining attributes sorted alphabetically.",
             ),
         ]
@@ -1378,6 +1380,7 @@ class FlextLdifModelsSettings:
         statistics_categories: Annotated[
             MutableMapping[str, int],
             Field(
+                default_factory=dict,
                 description="Dictionary of category names to entry counts for statistics summary. Example: {'users': 150, 'groups': 25, 'acl': 42}.",
             ),
         ]

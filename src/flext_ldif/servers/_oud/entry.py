@@ -12,7 +12,7 @@ import re
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from typing import override
 
-from flext_core import FlextLogger, r, u as core_u
+from flext_core import FlextLogger, r
 
 from flext_ldif import (
     FlextLdifModelsDomains,
@@ -163,7 +163,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             k: v
             for k, v in kwargs.items()
             if k != "_parent_quirk"
-            and core_u.is_type(v, (str, float, bool, type(None)))
+            and u.is_type(v, (str, float, bool, type(None)))
         }
         entry_service_typed: p.Ldif.EntryQuirk | None = (
             entry_service if entry_service is not None else None
@@ -249,7 +249,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return m.Ldif.WriteOptions()
         hidden_attrs_raw = getattr(write_opts, "hidden_attrs", [])
         hidden_attrs_set: set[str] = set()
-        if core_u.is_type(hidden_attrs_raw, (list, tuple, frozenset, set)):
+        if u.is_type(hidden_attrs_raw, (list, tuple, frozenset, set)):
             hidden_attrs_set = {str(item) for item in hidden_attrs_raw}
         hidden_attrs_set.update(hidden_attrs)
         if isinstance(write_opts, FlextLdifModelsDomains.WriteOptions):
@@ -470,7 +470,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         for acl_attr in acl_attribute_names:
             if acl_attr in new_attrs:
                 acl_values = new_attrs[acl_attr]
-                if core_u.is_type(acl_values, list):
+                if u.is_type(acl_values, list):
                     commented_vals[acl_attr] = list(acl_values)
                 else:
                     commented_vals[acl_attr] = [str(acl_values)]
@@ -550,9 +550,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     ) -> str | None:
         """Validate ACI macros if present. Returns error message or None if valid."""
         aci_attrs = attrs_dict.get("aci")
-        if aci_attrs and core_u.is_type(aci_attrs, (list, tuple)):
+        if aci_attrs and u.is_type(aci_attrs, (list, tuple)):
             for aci_value in aci_attrs:
-                if core_u.is_type(aci_value, str):
+                if u.is_type(aci_value, str):
                     validation_result = validate_aci_macros(aci_value)
                     if validation_result.is_failure:
                         return f"ACI macro validation failed: {validation_result.error}"
@@ -955,7 +955,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if (
             entry.metadata
             and entry.metadata.extensions
-            and core_u.is_type(entry.metadata.extensions, dict)
+            and u.is_type(entry.metadata.extensions, dict)
         ):
             rejection_reason = entry.metadata.extensions.get("rejection_reason")
             if rejection_reason:
@@ -1024,7 +1024,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             removed_attr_names: MutableSequence[str] = [
                 str(attr_name)
                 for attr_name in removed_attrs_dict
-                if core_u.is_type(attr_name, str)
+                if u.is_type(attr_name, str)
                 and attr_name.lower() not in acl_attr_names_to_skip
             ]
             ordered_removed_attrs = self._determine_attribute_order(
@@ -1516,7 +1516,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         acl_quirk_raw = getattr(parent, "_acl_quirk", None)
         if not acl_quirk_raw:
             return r[m.Ldif.Entry].ok(entry)
-        if not core_u.is_type(acl_quirk_raw, FlextLdifServersOudAcl):
+        if not u.is_type(acl_quirk_raw, FlextLdifServersOudAcl):
             return r[m.Ldif.Entry].ok(entry)
         acl_quirk: FlextLdifServersOudAcl = acl_quirk_raw
         self._process_aci_list_for_finalize(aci_values, acl_quirk, current_extensions)
@@ -1609,11 +1609,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entry.attributes.attributes if entry.attributes is not None else {}
         )
         aci_attrs = attrs_dict.get("aci")
-        if aci_attrs and core_u.is_type(aci_attrs, (list, tuple)):
+        if aci_attrs and u.is_type(aci_attrs, (list, tuple)):
             has_macros = False
             acl_metadata_extensions: t.MutableContainerMapping = {}
             for aci_value in aci_attrs:
-                if core_u.is_type(aci_value, str):
+                if u.is_type(aci_value, str):
                     process_result = self._process_single_aci_value(
                         aci_value,
                         acl_metadata_extensions,
@@ -1627,7 +1627,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if has_macros:
                 aci_list = (
                     list(aci_attrs)
-                    if core_u.is_type(aci_attrs, (list, tuple))
+                    if u.is_type(aci_attrs, (list, tuple))
                     else [str(aci_attrs)]
                 )
                 logger.debug(
@@ -1764,7 +1764,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return entry_data
         normalized_aci_values: MutableSequence[str] = []
         for aci in aci_values:
-            aci_str = aci if core_u.is_type(aci, str) else str(aci)
+            aci_str = aci if u.is_type(aci, str) else str(aci)
             normalized_aci, was_filtered = self._normalize_aci_value(
                 aci_str,
                 base_dn,
@@ -1896,7 +1896,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             parsed_acl = parse_result.value
             if parsed_acl.metadata and parsed_acl.metadata.extensions:
                 acl_extensions = parsed_acl.metadata.extensions
-                if core_u.is_type(
+                if u.is_type(
                     acl_extensions,
                     FlextLdifModelsMetadata.DynamicMetadata,
                 ):

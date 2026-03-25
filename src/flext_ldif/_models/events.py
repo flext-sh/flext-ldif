@@ -4,14 +4,15 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 from pathlib import Path
-from typing import Self
+from typing import Annotated, Self
 
 from flext_core._models.domain_event import FlextModelsDomainEvent
-from pydantic import Field
+from pydantic import BeforeValidator, Field
 
 from flext_ldif import FlextLdifModelsBases, FlextLdifModelsSettings, c
 
 _DomainEventBase = FlextModelsDomainEvent.Entry
+_ = BeforeValidator
 
 
 def _filter_criteria_factory() -> MutableSequence[
@@ -55,9 +56,10 @@ class FlextLdifModelsEvents:
         filter_operation: str
         entries_before: int
         entries_after: int
-        filter_criteria: MutableSequence[FlextLdifModelsSettings.FilterCriteria] = (
-            Field(default_factory=_filter_criteria_factory)
-        )
+        filter_criteria: Annotated[
+            MutableSequence[FlextLdifModelsSettings.FilterCriteria],
+            Field(default_factory=_filter_criteria_factory),
+        ]
         filter_duration_ms: float = 0.0
 
     class ParseEvent(_DomainEventBase):

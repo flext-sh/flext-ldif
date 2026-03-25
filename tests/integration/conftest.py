@@ -16,6 +16,8 @@ from __future__ import annotations
 
 import contextlib
 import fcntl
+import os
+import tempfile
 import time
 from collections.abc import Callable, Generator, Mapping, Sequence
 from pathlib import Path
@@ -63,7 +65,13 @@ def _candidate_bind_credentials() -> tuple[tuple[str, str], ...]:
 @contextlib.contextmanager
 def _lock_file(worker_id: str) -> Generator[None]:
     _ = worker_id
-    lock_path = Path.home() / ".flext" / f"{LDAP_CONTAINER_NAME}.lock"
+    lock_root = os.environ.get("FLEXT_TEST_LOCK_DIR")
+    lock_dir = (
+        Path(lock_root).expanduser()
+        if isinstance(lock_root, str) and lock_root.strip()
+        else Path(tempfile.gettempdir()) / ".flext"
+    )
+    lock_path = lock_dir / f"{LDAP_CONTAINER_NAME}.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with lock_path.open("w", encoding="utf-8") as lock_handle:
         fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)

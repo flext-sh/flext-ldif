@@ -7,7 +7,7 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from functools import reduce
 from typing import override
 
-from flext_core import FlextLogger, r, u as core_u
+from flext_core import FlextLogger, r
 from pydantic import RootModel
 
 from flext_ldif import (
@@ -277,7 +277,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         metadata_keys_dict = {
             k: v
             for k, v in c.Ldif.__dict__.items()
-            if not k.startswith("_") and core_u.is_type(v, str)
+            if not k.startswith("_") and u.is_type(v, str)
         }
         metadata_keys_str: str | None = (
             m.Ldif.DynamicMetadata.from_dict(metadata_keys_dict).model_dump_json()
@@ -973,11 +973,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         acl_quirk = getattr(parent, "_acl_quirk", None) if parent is not None else None
         acl_list = (
             list(orclaci_values)
-            if core_u.is_type(orclaci_values, (list, tuple))
+            if u.is_type(orclaci_values, (list, tuple))
             else [str(orclaci_values)]
         )
         for acl_value in acl_list:
-            if not core_u.is_type(acl_value, str):
+            if not u.is_type(acl_value, str):
                 continue
             self._extract_acl_metadata_from_string(acl_value, current_extensions)
             if acl_quirk is not None:
@@ -1030,7 +1030,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if attr_name.lower() not in boolean_attr_names:
                 continue
             conv_data = boolean_conversions.get(attr_name, {})
-            if core_u.is_type(conv_data, dict) and conv_data:
+            if u.is_type(conv_data, dict) and conv_data:
                 self._restore_boolean_attribute_from_metadata(
                     attr_name,
                     conv_data,

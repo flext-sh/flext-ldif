@@ -9,7 +9,7 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import FlextLogger, FlextService, r, u as core_u
+from flext_core import FlextLogger, FlextService, r
 from pydantic import Field, ValidationError
 
 from flext_ldif import (
@@ -20,6 +20,7 @@ from flext_ldif import (
     m,
     p,
     t,
+    u,
 )
 
 logger = FlextLogger(__name__)
@@ -130,6 +131,10 @@ class FlextLdifServersBaseEntry(
     def parse_quirk(self, value: str) -> r[MutableSequence[m.Ldif.Entry]]:
         """Parse LDIF content string into Entry models."""
         return self._parse_content(value)
+
+    def parse(self, ldif_text: str) -> r[MutableSequence[m.Ldif.Entry]]:
+        """Compatibility parser entrypoint expected by server protocols."""
+        return self.parse_quirk(ldif_text)
 
     def parse_entry(
         self,
@@ -324,7 +329,7 @@ class FlextLdifServersBaseEntry(
         extensions_data: t.MutableContainerMapping = {}
         if entry_data.metadata:
             metadata_extensions = entry_data.metadata.extensions
-            if core_u.is_type(metadata_extensions, Mapping):
+            if u.is_type(metadata_extensions, Mapping):
                 extensions_data = dict(metadata_extensions)
         hidden_raw = extensions_data.get(c.Ldif.HIDDEN_ATTRIBUTES)
         if isinstance(hidden_raw, list):
@@ -437,7 +442,7 @@ class FlextLdifServersBaseEntry(
         if hasattr(entry_data, "attributes") and entry_data.attributes:
             for attr_name, values in entry_data.attributes.items():
                 attr_is_hidden = attr_name.lower() in hidden_attributes
-                if core_u.is_type(values, list):
+                if isinstance(values, MutableSequence):
                     for value in values:
                         str_value = str(value)
                         if not str_value and (not write_empty_values):

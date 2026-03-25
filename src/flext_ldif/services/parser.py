@@ -6,9 +6,11 @@ from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from pathlib import Path
 from typing import override
 
-from pydantic import PrivateAttr
+from pydantic import BeforeValidator, PrivateAttr
 
-from flext_ldif import FlextLdifServer, m, r, s, t, u
+from flext_ldif import FlextLdifServer, c, m, r, s, t, u
+
+_ = BeforeValidator
 
 
 class FlextLdifParser(s[m.Ldif.ParseResponse]):
@@ -124,10 +126,11 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
             error_msg = parse_result.error or "LDIF parsing failed"
             return r[m.Ldif.ParseResponse].fail(str(error_msg))
         entries = parse_result.value
+        detected_server_type = c.Ldif.ServerTypes(effective_server_type)
         response = m.Ldif.ParseResponse(
             entries=entries,
             statistics=m.Ldif.Statistics(total_entries=len(entries), parse_errors=0),
-            detected_server_type=effective_server_type,
+            detected_server_type=detected_server_type,
         )
         return r[m.Ldif.ParseResponse].ok(response)
 

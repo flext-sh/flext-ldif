@@ -532,6 +532,22 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         except OSError as e:
             return r[bool].fail(f"Failed to write file: {e}")
 
+    def write_file(
+        self,
+        entries: MutableSequence[m.Ldif.Entry],
+        path: Path,
+        *,
+        server_type: str | None = None,
+        format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
+    ) -> r[bool]:
+        """Compatibility facade for writing entries to LDIF file."""
+        return self.write_ldif_file(
+            entries,
+            path,
+            server_type=server_type,
+            format_options=format_options,
+        )
+
     def _get_effective_server_type_value(self) -> str:
         """Get effective server type value (internal helper)."""
         result = self.get_effective_server_type()

@@ -3493,6 +3493,7 @@ class FlextLdifModelsDomainsEntries:
         hidden_attrs: Annotated[
             MutableSequence[str],
             Field(
+                default_factory=list,
                 description="Attributes to exclude from output",
             ),
         ]
@@ -3628,36 +3629,42 @@ class FlextLdifModelsDomainsEntries:
         extensions: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
+                default_factory=FlextLdifModelsMetadata.DynamicMetadata,
                 description="Extensible metadata storage for quirk-specific data (server-injected validation rules, unconverted attributes, etc.)",
             ),
         ]
         rfc_violations: Annotated[
             MutableSequence[str],
             Field(
+                default_factory=list,
                 description="RFC violations detected (e.g., 'RFC 2849 §2: DN required')",
             ),
         ]
         rfc_warnings: Annotated[
             MutableSequence[str],
             Field(
+                default_factory=list,
                 description="Non-fatal RFC warnings (e.g., unusual but valid formatting)",
             ),
         ]
         conversion_notes: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
+                default_factory=FlextLdifModelsMetadata.DynamicMetadata,
                 description="Map of conversion operation name → human-readable description",
             ),
         ]
         attribute_transformations: Annotated[
             MutableMapping[str, FlextLdifModelsDomainsEntries.AttributeTransformation],
             Field(
+                default_factory=dict,
                 description="Detailed transformation records keyed by original attribute name",
             ),
         ]
         server_specific_data: Annotated[
             FlextLdifModelsMetadata.EntryMetadata,
             Field(
+                default_factory=FlextLdifModelsMetadata.EntryMetadata,
                 description="Preservation of server-proprietary data for round-trip conversions",
             ),
         ]
@@ -3676,12 +3683,14 @@ class FlextLdifModelsDomainsEntries:
         acls: Annotated[
             MutableSequence[str],
             Field(
+                default_factory=list,
                 description="Access Control Lists extracted from entry attributes during parsing",
             ),
         ]
         objectclasses: Annotated[
             MutableSequence[str],
             Field(
+                default_factory=list,
                 description="ObjectClass definitions for schema validation (not RFC LDIF data)",
             ),
         ]
@@ -3706,6 +3715,7 @@ class FlextLdifModelsDomainsEntries:
         removed_attributes: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
+                default_factory=FlextLdifModelsMetadata.DynamicMetadata,
                 description="Attributes removed during conversion (was entry_metadata.removed_attributes_with_values)",
             ),
         ]
@@ -3722,42 +3732,49 @@ class FlextLdifModelsDomainsEntries:
         soft_delete_markers: Annotated[
             MutableSequence[str],
             Field(
+                default_factory=list,
                 description="Attributes soft-deleted during conversion (can be restored). Different from removed_attributes: these are intentionally hidden for target server but preserved for reverse conversion.",
             ),
         ]
         original_attribute_case: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
+                default_factory=FlextLdifModelsMetadata.DynamicMetadata,
                 description="Original case of attribute names: {'objectclass': 'objectClass', 'cn': 'CN'}. Used to restore original case during reverse conversion.",
             ),
         ]
         schema_quirks_applied: Annotated[
             MutableSequence[str],
             Field(
+                default_factory=list,
                 description="List of schema quirks applied during parsing: ['matching_rule_normalization', 'syntax_oid_conversion', 'schema_dn_quirk']",
             ),
         ]
         boolean_conversions: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
+                default_factory=FlextLdifModelsMetadata.DynamicMetadata,
                 description="Boolean conversion tracking: {'orcldasisenabled': {'original': '1', 'converted': 'TRUE', 'format': 'OID->RFC'}}",
             ),
         ]
         minimal_differences: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
+                default_factory=FlextLdifModelsMetadata.DynamicMetadata,
                 description="Complete minimal differences tracking for zero data loss: {'dn': {'has_differences': True, 'original': 'cn=test, dc=example', 'converted': 'cn=test,dc=example', 'differences': [...], 'spacing_changes': {...}, 'case_changes': [...], 'punctuation_changes': [...], 'original_length': 20, 'converted_length': 19}, 'attribute_cn': {'has_differences': False, ...}, 'schema_attr_uid': {'has_differences': True, 'original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", 'converted': 'attributeTypes: ( 0.9.2342... NAME uid SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )', 'differences': [...], 'syntax_quotes_removed': True, 'trailing_spaces_removed': True, ...}}",
             ),
         ]
         original_strings: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
+                default_factory=FlextLdifModelsMetadata.DynamicMetadata,
                 description="Complete preservation of original strings before ANY conversion: {'dn_original': 'cn=test, dc=example;', 'attribute_cn_original': 'CN', 'schema_attr_uid_original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", 'acl_original': 'orclaci: { ... }', 'entry_original_ldif': 'dn: cn=test\\ncn: test\\n'}",
             ),
         ]
         conversion_history: Annotated[
             MutableSequence[MutableMapping[str, str]],
             Field(
+                default_factory=list,
                 description="Complete conversion history for audit trail: [{'step': 'parse_oid_entry', 'timestamp': '2025-01-01T00:00:00Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'oid', 'operation': 'parse'}, {'step': 'normalize_to_rfc', 'timestamp': '2025-01-01T00:00:01Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'rfc', 'operation': 'normalize'}, ...]",
             ),
         ]

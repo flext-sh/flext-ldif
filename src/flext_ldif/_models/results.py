@@ -213,15 +213,15 @@ class FlextLdifModelsResults:
         entries_written: t.NonNegativeInt = 0
         output_file: str | None = None
         file_size_bytes: t.NonNegativeInt = 0
-        encoding: c.Ldif.EncodingLiteral = "utf-8"
+        encoding: c.Ldif.EncodingLiteral = c.Ldif.Encoding.UTF8
         processing_duration: t.NonNegativeFloat = 0.0
         rejection_reasons: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
-            Field(),
+            Field(default_factory=FlextLdifModelsCollections.DynamicCounts),
         ]
         events: Annotated[
             MutableSequence[FlextLdifModelsResults.EventType],
-            Field(),
+            Field(default_factory=list),
         ]
 
         @computed_field

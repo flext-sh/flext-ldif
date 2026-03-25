@@ -755,7 +755,7 @@ class FlextLdifConversion(
                     | m.Ldif.Acl
                 ]
             ].ok(converted)
-        except (ValueError, TypeError, AttributeError, RuntimeError, Exception) as e:
+        except (ValueError, TypeError, AttributeError, RuntimeError) as e:
             duration_ms = (time.perf_counter() - start_time) * 1000.0
             model_list_as_list: MutableSequence[
                 m.Ldif.Acl
