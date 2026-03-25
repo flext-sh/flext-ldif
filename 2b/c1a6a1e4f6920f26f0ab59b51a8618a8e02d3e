@@ -1,0 +1,23 @@
+src/flext_ldif/typings.py
+  8138edf6bc0fab47 9,12,27,29,39,81,83,87,89-92,95,100-101,109,116-120
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.19",
+  "base_commit_sha": "2bc1a6a1e4f6920f26f0ab59b51a8618a8e02d3e",
+  "prompts": {
+    "8138edf6bc0fab47": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "458a9205-8e72-4758-9c6d-2636f729252c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 67,
+      "total_deletions": 66,
+      "accepted_lines": 22,
+      "overriden_lines": 0
+    }
+  }
+}
