@@ -112,7 +112,10 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
             return r[m.Ldif.ParseResponse].fail(
                 f"Entry quirk for server type {effective_server_type} does not have parse method",
             )
-        parse_attr: Callable[[str], r[MutableSequence[m.Ldif.Entry]]] | None = getattr(
+        parse_attr: Callable[
+            [str],
+            r[MutableSequence[m.Ldif.Entry]] | MutableSequence[m.Ldif.Entry] | None,
+        ] | None = getattr(
             entry_quirk_raw,
             "parse",
             None,
@@ -121,11 +124,16 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
             return r[m.Ldif.ParseResponse].fail(
                 f"Entry quirk for server type {effective_server_type} parse is not callable",
             )
-        parse_result = parse_attr(content)
-        if parse_result.is_failure:
-            error_msg = parse_result.error or "LDIF parsing failed"
-            return r[m.Ldif.ParseResponse].fail(str(error_msg))
-        entries = parse_result.value
+        parse_out = parse_attr(content)
+        if isinstance(parse_out, r):
+            if parse_out.is_failure:
+                error_msg = parse_out.error or "LDIF parsing failed"
+                return r[m.Ldif.ParseResponse].fail(str(error_msg))
+            entries = parse_out.value
+        elif parse_out is None:
+            return r[m.Ldif.ParseResponse].fail("LDIF parsing failed")
+        else:
+            entries = parse_out
         detected_server_type = c.Ldif.ServerTypes(effective_server_type)
         response = m.Ldif.ParseResponse(
             entries=entries,

@@ -132,9 +132,12 @@ class FlextLdifServersBaseEntry(
         """Parse LDIF content string into Entry models."""
         return self._parse_content(value)
 
-    def parse(self, ldif_text: str) -> r[MutableSequence[m.Ldif.Entry]]:
-        """Compatibility parser entrypoint expected by server protocols."""
-        return self.parse_quirk(ldif_text)
+    def parse(self, ldif_text: str) -> MutableSequence[m.Ldif.Entry] | None:
+        """Compatibility parser entrypoint for direct quirk consumers."""
+        parse_result = self.parse_quirk(ldif_text)
+        if parse_result.is_failure:
+            return None
+        return parse_result.value
 
     def parse_entry(
         self,
