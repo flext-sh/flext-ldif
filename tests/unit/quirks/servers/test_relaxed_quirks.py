@@ -97,6 +97,11 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         "broken": ("(targetentry invalid) broken", True),
     }
 
+    schema_quirk: ClassVar
+    acl_quirk: ClassVar
+    entry_quirk: ClassVar
+    relaxed_instance: ClassVar
+
     @pytest.fixture
     def schema_quirk(self) -> FlextLdifServersRelaxed.Schema:
         """Create relaxed schema quirk instance."""

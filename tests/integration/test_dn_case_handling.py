@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableMapping, MutableSequence
+from typing import ClassVar
 
 import pytest
 
@@ -24,6 +25,8 @@ type DnRefData = MutableMapping[
 
 class TestDnCaseRegistry(s):
     """Test DN case registry functionality."""
+
+    registry: ClassVar
 
     @pytest.fixture
     def registry(self) -> m.Ldif.DnRegistry:

@@ -7,6 +7,8 @@ escaped characters and complex DN structures during write operations.
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 import pytest
 from flext_tests import tm
 
@@ -16,6 +18,9 @@ from tests import m, s
 
 class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
     """Test Writer integration with DnService for DN normalization."""
+
+    writer: ClassVar
+    dn_service: ClassVar
 
     @pytest.fixture
     def writer(self) -> FlextLdifWriter:
