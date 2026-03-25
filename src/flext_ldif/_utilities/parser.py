@@ -277,10 +277,7 @@ class FlextLdifUtilitiesParser:
             entry_dict[attr_name] = [*existing, attr_value]
             return True
         if not u.is_list_like(existing):
-            if isinstance(existing, str):
-                entry_dict[attr_name] = [existing, attr_value]
-            else:
-                entry_dict[attr_name] = [str(existing), attr_value]
+            entry_dict[attr_name] = [existing, attr_value]
         else:
             existing_list: MutableSequence[str]
             existing_list = [str(item) for item in existing]

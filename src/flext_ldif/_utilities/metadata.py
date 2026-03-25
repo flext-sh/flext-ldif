@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from typing import TypeIs
 
 from flext_core import FlextLogger, u
@@ -157,7 +157,11 @@ class FlextLdifUtilitiesMetadata:
     ) -> t.MutableContainerMapping:
         """Extract all schema formatting details into combined dict."""
         combined: t.MutableContainerMapping = {}
-        extractors = [
+        extractors: Sequence[
+            Callable[
+                [str], Mapping[str, str | bool | int | MutableSequence[str] | None]
+            ]
+        ] = [
             FlextLdifUtilitiesMetadata._extract_prefix_details,
             FlextLdifUtilitiesMetadata._extract_oid_details,
             FlextLdifUtilitiesMetadata._extract_syntax_details,

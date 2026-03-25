@@ -5,7 +5,6 @@ from __future__ import annotations
 import struct
 from collections.abc import (
     Callable,
-    Iterable,
     Mapping,
     MutableMapping,
     MutableSequence,
@@ -50,8 +49,7 @@ class FlextLdifUtilitiesFunctional:
             for key, item in value.items():
                 normalized_mapping[key] = FlextLdifUtilitiesFunctional._to_general(item)
             return normalized_mapping
-        if isinstance(value, Iterable):
-            return [FlextLdifUtilitiesFunctional._to_general(item) for item in value]
+        return [FlextLdifUtilitiesFunctional._to_general(item) for item in value]
         return value
 
     @staticmethod

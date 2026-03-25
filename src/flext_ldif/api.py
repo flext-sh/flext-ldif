@@ -302,7 +302,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             filtered.append(entry)
         return r[MutableSequence[m.Ldif.Entry]].ok(filtered)
 
-    def filter(  # type: ignore[override]
+    def filter(
         self,
         entries: MutableSequence[m.Ldif.Entry],
         *,
@@ -473,7 +473,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         entries_list: MutableSequence[m.Ldif.Entry] = list(response.entries)
         return r[MutableSequence[m.Ldif.Entry]].ok(entries_list)
 
-    def parse(  # type: ignore[override]
+    def parse(
         self,
         value: str | Path,
         *,
@@ -548,7 +548,7 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         except OSError as e:
             return r[bool].fail(f"Failed to write file: {e}")
 
-    def write_file(  # type: ignore[override]
+    def write_file(
         self,
         entries: MutableSequence[m.Ldif.Entry],
         path: Path,

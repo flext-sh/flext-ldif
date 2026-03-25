@@ -81,7 +81,11 @@ class FlextLdifModelsConversions:
                     item if isinstance(item, t.Ldif.CONTAINER_TYPES) else str(item)
                     for item in val
                 ]
-            return [val if isinstance(val, (str, int, float, bool, datetime, Path)) else str(val)]
+            return [
+                val
+                if isinstance(val, (str, int, float, bool, datetime, Path))
+                else str(val)
+            ]
 
     class ConvertToTuple(_FrozenConversion):
         target_type: Literal["tuple"] = "tuple"
@@ -94,11 +98,10 @@ class FlextLdifModelsConversions:
                 val,
                 (str, bytes, bytearray),
             ):
-                return [
-                    item if isinstance(item, (str, int, float, bool, datetime, Path)) else str(item)
-                    for item in val
-                ]
-            return [val if isinstance(val, (str, int, float, bool, datetime, Path)) else str(val)]
+                return [item for item in val]  # noqa: C416
+            if isinstance(val, (str, int, float, bool, datetime, Path)):
+                return [val]
+            return [str(val)]
 
     class ConvertToDict(_FrozenConversion):
         target_type: Literal["dict"] = "dict"

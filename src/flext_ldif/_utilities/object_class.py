@@ -77,11 +77,9 @@ class FlextLdifUtilitiesObjectClass:
         sup_value = schema_oc.sup
         if isinstance(sup_value, str):
             sup_lower = sup_value.lower() if sup_value else ""
-        elif sup_value is not None:
+        else:
             first_sup = sup_value[0] if sup_value else ""
             sup_lower = str(first_sup).lower() if first_sup else ""
-        else:
-            sup_lower = ""
         schema_constants = FlextLdifUtilitiesObjectClass._SchemaConstants.get_instance()
         if (
             sup_lower in structural_superiors

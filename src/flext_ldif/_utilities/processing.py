@@ -474,8 +474,6 @@ class FlextLdifUtilitiesProcessing:
                     mode,
                 )
 
-        if not isinstance(predicate_or_filter1, FlextLdifUtilitiesFilters):
-            return []
         entry_filter: FlextLdifUtilitiesFilters[m.Ldif.Entry] = predicate_or_filter1
 
         def predicate_wrapper(item: t.Ldif.NormalizedValue) -> bool:

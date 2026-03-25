@@ -1245,7 +1245,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         for src_key, dest_key in key_mapping.items():
             value_raw = acl_extensions.get(src_key)
             if value_raw is not None:
-                if value_raw is None or u.is_primitive(value_raw):
+                if u.is_primitive(value_raw):
                     acl_metadata_extensions[dest_key] = value_raw
                 elif isinstance(value_raw, (list, tuple)):
                     value_list: MutableSequence[t.Ldif.Scalar] = [
@@ -1413,11 +1413,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return None
         for key, value in attrs.items():
             if key.lower() == "aci":
-                if value is None:
-                    return None
                 if isinstance(value, str):
                     return value
-                return str(value)
+                return value
         return None
 
     def _find_aci_values(

@@ -187,19 +187,19 @@ class TestQuirksWithRealLdifFixtures:
     def test_oid_can_handle_real_oid_ldif(self, oid_schema_ldif: str) -> None:
         """OID quirk must handle real OID LDIF data."""
         oid = FlextLdifServersOid.Entry()
-        result = oid.parse(oid_schema_ldif)
+        result = oid.parse_input(oid_schema_ldif)
         tm.that(result, none=False)
 
     def test_rfc_handles_all_ldif(self, oid_schema_ldif: str) -> None:
         """RFC quirk must handle any valid LDIF (lowest priority fallback)."""
         rfc = FlextLdifServersRfc.Entry()
-        result = rfc.parse(oid_schema_ldif)
+        result = rfc.parse_input(oid_schema_ldif)
         tm.that(result, none=False)
 
     def test_oud_can_handle_oud_ldif(self, oud_schema_ldif: str) -> None:
         """OUD quirk must handle real OUD LDIF data."""
         oud = FlextLdifServersOud.Entry()
-        result = oud.parse(oud_schema_ldif)
+        result = oud.parse_input(oud_schema_ldif)
         tm.that(result, none=False)
 
 

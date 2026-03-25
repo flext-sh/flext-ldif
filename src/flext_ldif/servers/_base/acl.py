@@ -172,7 +172,7 @@ class FlextLdifServersBaseSchemaAcl(
         """Parse ACL line to Acl model."""
         return self._parse_acl(value)
 
-    def parse(self, acl_text: str) -> r[m.Ldif.Acl]:
+    def parse_input(self, acl_text: str) -> r[m.Ldif.Acl]:
         """Compatibility parser entrypoint for direct ACL quirk consumers."""
         return self.parse_quirk(acl_text)
 

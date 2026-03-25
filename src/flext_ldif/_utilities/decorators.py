@@ -81,7 +81,8 @@ class FlextLdifUtilitiesDecorators:
             ),
         )
         try:
-            result_value.metadata = metadata  # type: ignore[union-attr]
+            if hasattr(result_value, "metadata"):
+                setattr(result_value, "metadata", metadata)
         except (
             ValueError,
             KeyError,

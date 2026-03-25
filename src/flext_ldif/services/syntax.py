@@ -105,9 +105,8 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
             return r[str].fail("OID cannot be empty")
         try:
             name_raw = self._oid_to_name.get(oid, "")
-            if isinstance(name_raw, str) and name_raw:
-                name_text: str = name_raw
-                return r[str].ok(name_text)
+            if name_raw:
+                return r[str].ok(name_raw)
             return r[str].fail(f"Syntax name not found for OID: {oid}")
         except (TypeError, KeyError) as e:
             return r[str].fail(f"Failed to lookup OID: {e}")

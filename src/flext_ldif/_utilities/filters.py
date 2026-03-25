@@ -407,18 +407,18 @@ class _FilterFactory:
 
 
 # Attach inner classes to outer class for backward compatibility
-FlextLdifUtilitiesFilters.AndFilter = _AndFilter  # type: ignore[attr-defined]
-FlextLdifUtilitiesFilters.OrFilter = _OrFilter  # type: ignore[attr-defined]
-FlextLdifUtilitiesFilters.NotFilter = _NotFilter  # type: ignore[attr-defined]
-FlextLdifUtilitiesFilters.ByDnFilter = _ByDnFilter  # type: ignore[attr-defined]
-FlextLdifUtilitiesFilters.ByDnUnderBaseFilter = _ByDnUnderBaseFilter  # type: ignore[attr-defined]
-FlextLdifUtilitiesFilters.ByObjectClassFilter = _ByObjectClassFilter  # type: ignore[attr-defined]
-FlextLdifUtilitiesFilters.ByAttrsFilter = _ByAttrsFilter  # type: ignore[attr-defined]
-FlextLdifUtilitiesFilters.ByAttrValueFilter = _ByAttrValueFilter  # type: ignore[attr-defined]
-FlextLdifUtilitiesFilters.ExcludeAttrsFilter = _ExcludeAttrsFilter  # type: ignore[attr-defined]
-FlextLdifUtilitiesFilters.IsSchemaFlextLdifUtilitiesFilters = _IsSchemaFilter  # type: ignore[attr-defined]
-FlextLdifUtilitiesFilters.CustomFilter = _CustomFilter  # type: ignore[attr-defined]
-FlextLdifUtilitiesFilters.Filter = _FilterFactory  # type: ignore[attr-defined]
+FlextLdifUtilitiesFilters.AndFilter = _AndFilter
+FlextLdifUtilitiesFilters.OrFilter = _OrFilter
+FlextLdifUtilitiesFilters.NotFilter = _NotFilter
+FlextLdifUtilitiesFilters.ByDnFilter = _ByDnFilter
+FlextLdifUtilitiesFilters.ByDnUnderBaseFilter = _ByDnUnderBaseFilter
+FlextLdifUtilitiesFilters.ByObjectClassFilter = _ByObjectClassFilter
+FlextLdifUtilitiesFilters.ByAttrsFilter = _ByAttrsFilter
+FlextLdifUtilitiesFilters.ByAttrValueFilter = _ByAttrValueFilter
+FlextLdifUtilitiesFilters.ExcludeAttrsFilter = _ExcludeAttrsFilter
+FlextLdifUtilitiesFilters.IsSchemaFlextLdifUtilitiesFilters = _IsSchemaFilter
+FlextLdifUtilitiesFilters.CustomFilter = _CustomFilter
+FlextLdifUtilitiesFilters.Filter = _FilterFactory
 
 # Module-level aliases for backward compatibility (referenced by __init__.py)
 AndFilter = _AndFilter

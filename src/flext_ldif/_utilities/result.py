@@ -89,18 +89,18 @@ class FlextLdifUtilitiesResult[T]:
         """Write operator: result >> output."""
         if self.is_failure:
             return FlextLdifUtilitiesResult[str].fail(self.error)
-        value_obj: object = self.value
+        value_ref: t.NormalizedValue = self._to_normalized()
         entry_payload: m.Ldif.Entry | MutableSequence[m.Ldif.Entry]
-        if isinstance(value_obj, m.Ldif.Entry):
-            entry_payload = value_obj
-        elif isinstance(value_obj, (list, tuple)):
+        if isinstance(value_ref, m.Ldif.Entry):
+            entry_payload = value_ref
+        elif isinstance(value_ref, (list, tuple)):
             entries: MutableSequence[m.Ldif.Entry] = []
-            for entry_candidate in value_obj:
-                if not isinstance(entry_candidate, m.Ldif.Entry):
+            for candidate in value_ref:
+                if not isinstance(candidate, m.Ldif.Entry):
                     return FlextLdifUtilitiesResult[str].fail(
                         "Entry serialization failed: sequence contains non-entry value",
                     )
-                entries.append(entry_candidate)
+                entries.append(candidate)
             entry_payload = entries
         else:
             return FlextLdifUtilitiesResult[str].fail(

@@ -36,11 +36,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     def __init__(self, **kwargs: t.Scalar) -> None:
         """Initialize base quirk and its nested quirks."""
-        init_kwargs: MutableMapping[str, t.Scalar | None] = {}
+        init_kwargs: MutableMapping[str, t.Scalar] = {}
         for key, value in kwargs.items():
-            if value is None:
-                init_kwargs[key] = None
-            elif u.is_primitive(value):
+            if u.is_primitive(value):
                 init_kwargs[key] = value
         super().__init__()
         parent_ref: FlextLdifServersBase = self
@@ -111,7 +109,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             value = v
             if isinstance(value, (str, float, bool)):
                 filtered_kwargs[k] = value
-            if isinstance(value, (str, int, bool, list)) or value is None:
+            if isinstance(value, (str, int, bool, list)):
                 execute_kwargs[k] = value
         type(instance).__init__(instance, **filtered_kwargs)
         if cls.auto_execute:

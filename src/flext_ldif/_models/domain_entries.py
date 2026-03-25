@@ -45,6 +45,10 @@ from flext_ldif import (
 )
 
 
+def _empty_conversion_history_factory() -> MutableSequence[MutableMapping[str, str]]:
+    return []
+
+
 class FlextLdifModelsDomainsEntries:
     """LDIF domain models container class.
 
@@ -766,9 +770,10 @@ class FlextLdifModelsDomainsEntries:
                     "attribute_metadata": {},
                     "metadata": None,
                 })
-                return r.ok(validated)
+                result: r[Self] = r[Self].ok(validated)
+                return result
             except (ValueError, TypeError, AttributeError) as e:
-                return r.fail(f"Failed to create Attributes: {e}")
+                return r[Self].fail(f"Failed to create Attributes: {e}")
 
         def add_attribute(self, key: str, values: MutableSequence[str]) -> Self:
             """Add or update an attribute with values.
@@ -2618,9 +2623,10 @@ class FlextLdifModelsDomainsEntries:
                 if params.statistics is not None:
                     entry_data["statistics"] = params.statistics
                 entry_instance = cls.model_validate(entry_data)
-                return r.ok(entry_instance)
+                result: r[Self] = r[Self].ok(entry_instance)
+                return result
             except (ValueError, TypeError, AttributeError) as e:
-                return r.fail(f"Failed to create Entry: {e}")
+                return r[Self].fail(f"Failed to create Entry: {e}")
 
         @classmethod
         def _normalize_attributes(
@@ -3782,10 +3788,10 @@ class FlextLdifModelsDomainsEntries:
         conversion_history: Annotated[
             MutableSequence[MutableMapping[str, str]],
             Field(
-                default_factory=list,
+                default_factory=_empty_conversion_history_factory,
                 description="Complete conversion history for audit trail: [{'step': 'parse_oid_entry', 'timestamp': '2025-01-01T00:00:00Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'oid', 'operation': 'parse'}, {'step': 'normalize_to_rfc', 'timestamp': '2025-01-01T00:00:01Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'rfc', 'operation': 'normalize'}, ...]",
             ),
-        ] = Field(default_factory=list)
+        ] = Field(default_factory=_empty_conversion_history_factory)
 
         @field_validator("quirk_type", mode="before")
         @classmethod

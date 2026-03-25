@@ -652,5 +652,5 @@ class TestsTestFlextLdifApacheQuirks(s):
         server = FlextLdifServersApache()
         entry_quirk = server.entry_quirk
         ldif = self._build_ldif(test_case.entry_dn, test_case.attributes)
-        result = entry_quirk.parse(ldif)
+        result = entry_quirk.parse_input($$$)
         tm.that(hasattr(result, "is_success"), eq=True)

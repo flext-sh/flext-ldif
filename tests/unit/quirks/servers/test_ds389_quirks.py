@@ -369,7 +369,7 @@ class TestsTestFlextLdifDs389Quirks(s):
         schema_quirk = server.schema_quirk
         tm.that(schema_quirk, is_=FlextLdifServersDs389.Schema)
         attr_def = "NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27"
-        result = schema_quirk.parse(attr_def)
+        result = schema_quirk.parse_input($$$)
         tm.that(result.is_failure, eq=True)
         tm.that(result.error, none=False)
         if result.error is not None:
@@ -423,7 +423,7 @@ class TestsTestFlextLdifDs389Quirks(s):
         schema_quirk = server.schema_quirk
         tm.that(schema_quirk, is_=FlextLdifServersDs389.Schema)
         oc_def = "( 2.16.840.1.113730.3.2.3 NAME 'nsds5base' ABSTRACT )"
-        result = schema_quirk.parse(oc_def)
+        result = schema_quirk.parse_input($$$)
         tm.that(result.is_success, eq=True)
         oc_data = result.value
         assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
@@ -435,7 +435,7 @@ class TestsTestFlextLdifDs389Quirks(s):
         schema_quirk = server.schema_quirk
         tm.that(schema_quirk, is_=FlextLdifServersDs389.Schema)
         oc_def = "NAME 'nscontainer' SUP top STRUCTURAL"
-        result = schema_quirk.parse(oc_def)
+        result = schema_quirk.parse_input($$$)
         tm.that(result.is_failure, eq=True)
         tm.that(result.error, none=False)
         if result.error is not None:

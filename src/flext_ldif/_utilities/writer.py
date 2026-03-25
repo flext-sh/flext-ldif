@@ -19,6 +19,22 @@ class FlextLdifUtilitiesWriter:
     """Pure LDIF Formatting Operations - No Models, No Side Effects."""
 
     @staticmethod
+    def _extract_extensions(
+        metadata: t.NormalizedValue,
+    ) -> MutableMapping[str, t.NormalizedValue | BaseModel] | None:
+        """Extract extensions mapping from metadata (BaseModel or Mapping)."""
+        ext_raw: t.NormalizedValue | None = None
+        if isinstance(metadata, BaseModel):
+            ext_raw = getattr(metadata, "extensions", None)
+        elif isinstance(metadata, Mapping):
+            ext_raw = metadata.get("extensions")
+        if ext_raw is None:
+            return None
+        if isinstance(ext_raw, Mapping):
+            return dict(ext_raw)
+        return None
+
+    @staticmethod
     def _add_changetype_lines(
         ldif_lines: MutableSequence[str],
         *,
@@ -312,12 +328,11 @@ class FlextLdifUtilitiesWriter:
         if metadata is None:
             return None
         attr_order_raw: MutableSequence[str] | None = None
-        metadata_extensions = getattr(metadata, "extensions", None)
-        if isinstance(metadata_extensions, Mapping):
-            ext: MutableMapping[str, t.NormalizedValue | BaseModel] = dict(
-                metadata_extensions
-            )
-            typed_extensions = t.ConfigMap(root=ext).root
+        extensions_mapping: MutableMapping[str, t.NormalizedValue | BaseModel] | None = (
+            FlextLdifUtilitiesWriter._extract_extensions(metadata)
+        )
+        if extensions_mapping is not None:
+            typed_extensions = t.ConfigMap(root=extensions_mapping).root
             raw_attr_order: t.NormalizedValue | BaseModel | None = typed_extensions.get(
                 "attribute_order",
             )

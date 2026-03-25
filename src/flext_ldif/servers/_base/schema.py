@@ -363,7 +363,7 @@ class FlextLdifServersBaseSchema(
         """Parse schema definition (attribute or objectClass)."""
         return self.route_parse(value)
 
-    def parse(
+    def parse_input(
         self,
         schema_text: str,
     ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:

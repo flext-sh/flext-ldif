@@ -133,7 +133,7 @@ class FlextLdifServersBaseEntry(
         """Parse LDIF content string into Entry models."""
         return self._parse_content(value)
 
-    def parse(self, ldif_text: str) -> MutableSequence[m.Ldif.Entry] | None:
+    def parse_input(self, ldif_text: str) -> MutableSequence[m.Ldif.Entry] | None:
         """Compatibility parser entrypoint for direct quirk consumers."""
         parse_result = self.parse_quirk(ldif_text)
         if parse_result.is_failure:
@@ -446,17 +446,8 @@ class FlextLdifServersBaseEntry(
         if hasattr(entry_data, "attributes") and entry_data.attributes:
             for attr_name, values in entry_data.attributes.items():
                 attr_is_hidden = attr_name.lower() in hidden_attributes
-                if isinstance(values, MutableSequence):
-                    for value in values:
-                        str_value = str(value)
-                        if not str_value and (not write_empty_values):
-                            continue
-                        attr_line = emit_attribute_line(attr_name, str_value)
-                        if attr_is_hidden and write_hidden_attributes_as_comments:
-                            attr_line = f"# {attr_line}"
-                        append_attribute_line(attr_name, attr_line)
-                else:
-                    str_value = str(values)
+                for value in values:
+                    str_value = str(value)
                     if not str_value and (not write_empty_values):
                         continue
                     attr_line = emit_attribute_line(attr_name, str_value)

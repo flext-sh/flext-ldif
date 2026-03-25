@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import MutableMapping, MutableSequence
 from typing import override
 
 from flext_core import FlextLogger, r
@@ -40,7 +40,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             return r[m.Ldif.Entry].fail(f"Invalid entry: {entry}")
         if not entry.dn or not hasattr(entry.dn, "value"):
             return r[m.Ldif.Entry].fail(f"Invalid DN in entry: {entry.dn}")
-        if not entry.attributes or not isinstance(entry.attributes.attributes, Mapping):
+        if not entry.attributes or not entry.attributes.attributes:
             return r[m.Ldif.Entry].fail(
                 f"Invalid attributes in entry: {entry.attributes}",
             )

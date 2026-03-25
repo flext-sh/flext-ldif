@@ -16,10 +16,21 @@ from flext_ldif import (
 )
 
 
+def _events_list_factory() -> list[
+    FlextLdifModelsEvents.AclEvent
+    | FlextLdifModelsEvents.CategoryEvent
+    | FlextLdifModelsEvents.ConversionEvent
+    | FlextLdifModelsEvents.DnEvent
+    | FlextLdifModelsEvents.FilterEvent
+    | FlextLdifModelsEvents.MigrationEvent
+    | FlextLdifModelsEvents.ParseEvent
+    | FlextLdifModelsEvents.SchemaEvent
+    | FlextLdifModelsEvents.WriteEvent
+]:
+    return []
+
+
 class FlextLdifModelsResults:
-    @staticmethod
-    def _events_factory() -> MutableSequence[FlextLdifModelsResults.EventType]:
-        return []
 
     @staticmethod
     def _statistics_factory() -> FlextLdifModelsResults.Statistics:
@@ -221,8 +232,8 @@ class FlextLdifModelsResults:
         ] = Field(default_factory=FlextLdifModelsCollections.DynamicCounts)
         events: Annotated[
             MutableSequence[FlextLdifModelsResults.EventType],
-            Field(default_factory=list),
-        ] = Field(default_factory=list)
+            Field(default_factory=_events_list_factory),
+        ] = Field(default_factory=_events_list_factory)
 
         @computed_field
         def failure_rate(self) -> float:

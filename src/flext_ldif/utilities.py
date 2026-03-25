@@ -41,7 +41,7 @@ from flext_ldif import (
 class FlextLdifUtilities(FlextUtilities):
     """FLEXT LDIF Utilities - Centralized helpers for LDIF operations."""
 
-    class Ldif(  # type: ignore[misc]
+    class Ldif(
         FlextLdifUtilitiesDispatch,
         FlextLdifUtilitiesProcessing,
         FlextLdifUtilitiesCollectionLdif,
