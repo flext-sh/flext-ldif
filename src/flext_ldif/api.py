@@ -457,6 +457,15 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         entries_list: MutableSequence[m.Ldif.Entry] = list(response.entries)
         return r[MutableSequence[m.Ldif.Entry]].ok(entries_list)
 
+    def parse(
+        self,
+        value: str | Path,
+        *,
+        server_type: str | None = None,
+    ) -> r[MutableSequence[m.Ldif.Entry]]:
+        """Compatibility facade for LDIF parsing from content or file path."""
+        return self.parse_ldif(value, server_type=server_type)
+
     def process_ldif(
         self,
         processor_name: str,
