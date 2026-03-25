@@ -40,7 +40,7 @@ class TestEmptyAndMinimalCases:
         - No errors on empty input
         """
         ldif_content = ""
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result.is_success
         entries = result.value
         assert not entries
@@ -54,7 +54,7 @@ class TestEmptyAndMinimalCases:
         - Graceful handling of blank input
         """
         ldif_content = "   \n\n  \t\n  "
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result.is_success
         entries = result.value
         assert not entries
@@ -68,7 +68,7 @@ class TestEmptyAndMinimalCases:
         - No entry creation from comments
         """
         ldif_content = "# Comment line 1\n# Comment line 2\n# Comment line 3\n"
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result.is_success
         entries = result.value
         assert not entries
@@ -82,7 +82,7 @@ class TestEmptyAndMinimalCases:
         - Returns exactly one entry
         """
         ldif_content = "dn: cn=Single,dc=example,dc=com\n"
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result.is_success
         entries = result.value
         assert len(entries) == 1
@@ -97,7 +97,7 @@ class TestEmptyAndMinimalCases:
         - Entry parses successfully
         """
         ldif_content = "dn: cn=OneAttr,dc=example,dc=com\ncn: OneAttr\n"
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result.is_success
         entries = result.value
         assert len(entries) == 1
@@ -121,7 +121,7 @@ class TestLargeAndComplexCases:
         """
         attributes = "".join(f"mail: user{i}@example.com\n" for i in range(100))
         ldif_content = f"dn: cn=ManyAttrs,dc=example,dc=com\nobjectClass: person\ncn: ManyAttrs\n{attributes}"
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result.is_success
         entries = result.value
         assert len(entries) == 1
@@ -138,7 +138,7 @@ class TestLargeAndComplexCases:
         """
         values = "".join(f"mail: user{i}@example.com\n" for i in range(100))
         ldif_content = f"dn: cn=ManyValues,dc=example,dc=com\nobjectClass: person\ncn: ManyValues\n{values}"
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result.is_success
         entries = result.value
         assert len(entries) == 1
@@ -153,7 +153,7 @@ class TestLargeAndComplexCases:
         """
         long_value = "x" * 10000
         ldif_content = f"dn: cn=LongValue,dc=example,dc=com\nobjectClass: person\ncn: LongValue\ndescription: {long_value}\n"
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result.is_success
         entries = result.value
         assert len(entries) == 1
@@ -169,7 +169,7 @@ class TestLargeAndComplexCases:
         deep_dn = ",".join(f"ou=level{i}" for i in range(10))
         deep_dn += ",dc=example,dc=com"
         ldif_content = f"dn: cn=DeepNest,{deep_dn}\nobjectClass: person\ncn: DeepNest\n"
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result.is_success
         entries = result.value
         assert len(entries) == 1
@@ -192,7 +192,7 @@ class TestBoundaryValues:
         - Minimal but valid content
         """
         ldif_content = "dn: cn=A,dc=B\nobjectClass: X\ncn: A\nsn: B\n"
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result.is_success
         entries = result.value
         assert len(entries) == 1
@@ -206,7 +206,7 @@ class TestBoundaryValues:
         - Values preserved exactly
         """
         ldif_content = "dn: cn=Special,dc=example,dc=com\ncn: Special\nsn: *\nmail: +\ndescription: -\n"
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result.is_success
         entries = result.value
         assert len(entries) == 1
@@ -225,7 +225,7 @@ class TestBoundaryValues:
         ldif_content = (
             f"dn: cn=MaxRDN,{dn_components}\nobjectClass: person\ncn: MaxRDN\n"
         )
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result.is_success
         entries = result.value
         assert len(entries) == 1
@@ -239,7 +239,7 @@ class TestBoundaryValues:
         - Still properly parsed
         """
         ldif_content = "dn: cn=MinDN\nobjectClass: top\ncn: MinDN\n"
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result is not None
 
 
@@ -260,7 +260,7 @@ class TestUnicodeBoundaries:
         - Proper encoding handling
         """
         ldif_content = "dn: cn=BMP,dc=example,dc=com\ncn: BMP\ndescription: Contains BMP: café, naïve, résumé, 中文, 日本語, العربية\n"
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result.is_success
 
     def test_supplementary_plane_characters(self, api: FlextLdif) -> None:
@@ -272,7 +272,7 @@ class TestUnicodeBoundaries:
         - No truncation of supplementary chars
         """
         ldif_content = "dn: cn=Supplementary,dc=example,dc=com\ncn: Supplementary\ndescription: Contains emoji: 😀 🎉 🚀\n"
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result.is_success
 
     def test_zero_width_characters(self, api: FlextLdif) -> None:
@@ -284,7 +284,7 @@ class TestUnicodeBoundaries:
         - Preserved in roundtrip
         """
         ldif_content = "dn: cn=ZeroWidth,dc=example,dc=com\ncn: ZeroWidth\ndescription: Contains\u200bzero\u200bwidth\u200bspaces\n"
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result.is_success
 
     def test_combining_characters(self, api: FlextLdif) -> None:
@@ -296,7 +296,7 @@ class TestUnicodeBoundaries:
         - Text normalization working
         """
         ldif_content = "dn: cn=Combining,dc=example,dc=com\ncn: Combining\ndescription: Contains combining: é (e + ́)\n"
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result.is_success
 
 
@@ -317,7 +317,7 @@ class TestRoundtripEdgeCases:
         - Consistent round-trip
         """
         ldif_content = ""
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result.is_success
         entries = result.value
         assert not entries
@@ -335,13 +335,13 @@ class TestRoundtripEdgeCases:
         - No attribute loss
         """
         ldif_content = "dn: cn=Test,dc=example,dc=com\ncn: Test\n"
-        result = api.parse(ldif_content)
+        result = api.parse_source(ldif_content)
         assert result.is_success
         entries = result.value
         assert len(entries) == 1
         write_result = api.write(entries)
         assert write_result.is_success
-        roundtrip_result = api.parse(write_result.value)
+        roundtrip_result = api.parse_source(write_result.value)
         assert roundtrip_result.is_success
         roundtrip_entries = roundtrip_result.value
         assert len(roundtrip_entries) == 1
@@ -358,13 +358,13 @@ class TestRoundtripEdgeCases:
             f"dn: cn=Entry{i},dc=example,dc=com\nobjectClass: person\ncn: Entry{i}\nsn: Test{i}"
             for i in range(100)
         )
-        result = api.parse(entries_ldif)
+        result = api.parse_source(entries_ldif)
         assert result.is_success
         entries = result.value
         initial_count = len(entries)
         write_result = api.write(entries)
         assert write_result.is_success
-        roundtrip_result = api.parse(write_result.value)
+        roundtrip_result = api.parse_source(write_result.value)
         assert roundtrip_result.is_success
         roundtrip_entries = roundtrip_result.value
         assert len(roundtrip_entries) == initial_count

@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, MutableMapping, MutableSequence
 from re import Pattern
-from typing import TYPE_CHECKING, ClassVar, Literal
+from typing import TYPE_CHECKING, ClassVar, Literal, override
 
 from flext_ldif import FlextLdifUtilitiesEntry
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class FlextLdifUtilitiesFilters[T]:
     """Base class for entry filters."""
 
-    __slots__ = ()
+    __slots__: ClassVar[tuple[str, ...]] = ()
 
     AndFilter: ClassVar[type[_AndFilter[m.Ldif.Entry]]]
     OrFilter: ClassVar[type[_OrFilter[m.Ldif.Entry]]]
@@ -73,6 +73,7 @@ class _AndFilter[U](FlextLdifUtilitiesFilters[U]):
         self._left = left
         self._right = right
 
+    @override
     def matches(self, item: U) -> bool:
         """Check if item matches both filters."""
         return self._left.matches(item) and self._right.matches(item)
@@ -93,6 +94,7 @@ class _OrFilter[U](FlextLdifUtilitiesFilters[U]):
         self._left = left
         self._right = right
 
+    @override
     def matches(self, item: U) -> bool:
         """Check if item matches either filter."""
         return self._left.matches(item) or self._right.matches(item)
@@ -108,6 +110,7 @@ class _NotFilter[U](FlextLdifUtilitiesFilters[U]):
         super().__init__()
         self._inner = inner
 
+    @override
     def matches(self, item: U) -> bool:
         """Check if item does NOT match inner filter."""
         return not self._inner.matches(item)
@@ -135,6 +138,7 @@ class _ByDnFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
         self._pattern = compiled_pattern
         self._case_insensitive = case_insensitive
 
+    @override
     def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry DN matches pattern."""
         if item.dn is None:
@@ -158,6 +162,7 @@ class _ByDnUnderBaseFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
         self._base_dn = base_dn.lower() if case_insensitive else base_dn
         self._case_insensitive = case_insensitive
 
+    @override
     def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry DN is under base DN."""
         if item.dn is None:
@@ -191,6 +196,7 @@ class _ByObjectClassFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
         )
         self._mode = mode
 
+    @override
     def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry has matching objectClasses."""
         if item.attributes is None:
@@ -231,6 +237,7 @@ class _ByAttrsFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
         self._attrs = {a.lower() for a in attrs} if case_insensitive else set(attrs)
         self._mode = mode
 
+    @override
     def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry has matching attributes."""
         if item.attributes is None:
@@ -272,6 +279,7 @@ class _ByAttrValueFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
         self._pattern = compiled_pattern
         self._case_insensitive = case_insensitive
 
+    @override
     def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry has attribute with matching value."""
         if item.attributes is None:
@@ -299,6 +307,7 @@ class _ExcludeAttrsFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
         self._case_insensitive = case_insensitive
         self._attrs = {a.lower() for a in attrs} if case_insensitive else set(attrs)
 
+    @override
     def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry is missing any of the specified attributes."""
         if item.attributes is None:
@@ -324,6 +333,7 @@ class _IsSchemaFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
         super().__init__()
         self._is_schema = is_schema
 
+    @override
     def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry is a schema entry."""
         entry_facade: m.Ldif.Entry = item
@@ -341,6 +351,7 @@ class _CustomFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
         super().__init__()
         self._predicate = predicate
 
+    @override
     def matches(self, item: m.Ldif.Entry) -> bool:
         """Check if entry matches custom predicate."""
         return self._predicate(item)
@@ -349,7 +360,7 @@ class _CustomFilter(FlextLdifUtilitiesFilters["m.Ldif.Entry"]):
 class _FilterFactory:
     """Factory class for creating entry filters."""
 
-    __slots__ = ()
+    __slots__: ClassVar[tuple[str, ...]] = ()
 
     @staticmethod
     def by_attrs(

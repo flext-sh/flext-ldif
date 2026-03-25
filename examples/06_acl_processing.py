@@ -14,8 +14,7 @@ All functionality accessed through FlextLdif facade.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import cast
+from collections.abc import MutableMapping
 
 from flext_ldif import FlextLdif, FlextLdifModels, m, t, u
 
@@ -24,7 +23,7 @@ def extract_acls_from_entry() -> None:
     """Extract ACL information from an LDIF entry."""
     api = FlextLdif.get_instance()
     ldif_content = 'dn: cn=test,ou=People,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Allow read"; allow (read,search) userdn="ldap:///anyone";)\n'
-    parse_result = api.parse(ldif_content)
+    parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
     entries = parse_result.value
@@ -43,7 +42,7 @@ def parse_and_evaluate_acls() -> None:
     """Parse ACL attributes and evaluate against context."""
     api = FlextLdif.get_instance()
     ldif_content = 'dn: ou=People,dc=example,dc=com\nobjectClass: organizationalUnit\nou: People\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="cn || sn")(version 3.0; acl "Allow self write"; allow (write) userdn="ldap:///self";)\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Allow REDACTED_LDAP_BIND_PASSWORD all"; allow (all) userdn="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com";)\n'
-    parse_result = api.parse(ldif_content)
+    parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
     entries = parse_result.value
@@ -61,9 +60,13 @@ def parse_and_evaluate_acls() -> None:
         "target_dn": "ou=People,dc=example,dc=com",
         "permissions": {"read": True, "write": True},
     }
-    required_perms: Mapping[str, bool] = {}
-    if "permissions" in eval_context and isinstance(eval_context["permissions"], dict):
-        required_perms = cast("Mapping[str, bool]", eval_context["permissions"])
+    required_perms: MutableMapping[str, bool] = {}
+    if "permissions" in eval_context:
+        perms_raw = eval_context["permissions"]
+        if isinstance(perms_raw, dict):
+            for k, v in perms_raw.items():
+                if isinstance(k, str) and isinstance(v, bool):
+                    required_perms[k] = v
     acls_for_eval = [m.Ldif.Acl.model_validate(acl) for acl in acls]
     evaluation_result = api.acl_service.evaluate_acl_context(
         acls_for_eval,
@@ -78,7 +81,7 @@ def process_entries_with_acls() -> None:
     """Process entries that contain ACL information."""
     api = FlextLdif.get_instance()
     ldif_content = 'dn: ou=People,dc=example,dc=com\nobjectClass: organizationalUnit\nou: People\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Read access"; allow (read) userdn="ldap:///anyone";)\n\ndn: ou=Groups,dc=example,dc=com\nobjectClass: organizationalUnit\nou: Groups\naci: (target="ldap:///ou=Groups,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Admin access"; allow (all) userdn="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com";)\n\ndn: cn=user,ou=People,dc=example,dc=com\nobjectClass: person\ncn: user\nsn: test\n'
-    parse_result = api.parse(ldif_content)
+    parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
     entries = parse_result.value
@@ -123,7 +126,7 @@ def acl_pipeline() -> None:
     """Complete ACL processing pipeline."""
     api = FlextLdif.get_instance()
     ldif_content = 'dn: ou=Pipeline,dc=example,dc=com\nobjectClass: organizationalUnit\nou: Pipeline\naci: (target="ldap:///ou=Pipeline,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Pipeline ACL"; allow (read,search) userdn="ldap:///anyone";)\n'
-    parse_result = api.parse(ldif_content)
+    parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
     entries = parse_result.value
@@ -141,9 +144,13 @@ def acl_pipeline() -> None:
         "permissions": {"read": True},
     }
     acls_typed = [m.Ldif.Acl.model_validate(acl) for acl in acls]
-    required_perms: Mapping[str, bool] = {}
-    if "permissions" in eval_context and isinstance(eval_context["permissions"], dict):
-        required_perms = cast("Mapping[str, bool]", eval_context["permissions"])
+    required_perms: MutableMapping[str, bool] = {}
+    if "permissions" in eval_context:
+        perms_raw = eval_context["permissions"]
+        if isinstance(perms_raw, dict):
+            for k, v in perms_raw.items():
+                if isinstance(k, str) and isinstance(v, bool):
+                    required_perms[k] = v
     eval_result = api.acl_service.evaluate_acl_context(acls_typed, required_perms)
     if eval_result.is_success:
         validation_result = api.validate_entries([entry])

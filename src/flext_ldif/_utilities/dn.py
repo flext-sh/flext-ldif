@@ -117,8 +117,8 @@ class FlextLdifUtilitiesDN:
             "had_utf8_chars": False,
             "had_escape_sequences": False,
             "validation_status": "",
-            "validation_warnings": [],
-            "validation_errors": [],
+            "validation_warnings": list[str](),
+            "validation_errors": list[str](),
         }
         result = original_dn
         transform_rules: MutableSequence[tuple[str, str, str, str, str]] = [

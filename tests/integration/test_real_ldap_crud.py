@@ -18,11 +18,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
 from pathlib import Path
 
 import pytest
-from ldap3 import Connection
+from ldap3 import Connection  # pyrefly: ignore[missing-import]
 
 from flext_ldif import FlextLdif, m, t
 
@@ -107,7 +107,7 @@ class TestRealLdapBatchOperations:
         make_test_username: Callable[[str], str],
     ) -> None:
         """Create batch of entries using FlextLdif API and write to LDAP."""
-        entries: Sequence[m.Ldif.Entry] = []
+        entries: MutableSequence[m.Ldif.Entry] = []
         for i in range(20):
             unique_username = make_test_username(f"BatchUser{i}")
             person_dn = f"cn={unique_username},{clean_test_ou}"
@@ -132,7 +132,7 @@ class TestRealLdapBatchOperations:
                     facade_entry = m.Ldif.Entry.model_validate(entry_dict)
                     entries.append(facade_entry)
         assert len(entries) == 20
-        ldap_entries: Sequence[m.Ldif.DN | None] = []
+        ldap_entries: MutableSequence[m.Ldif.DN | None] = []
         for entry in entries:
             object_classes = entry.get_attribute_values("objectclass")
             if not isinstance(object_classes, list):
@@ -140,7 +140,7 @@ class TestRealLdapBatchOperations:
                     list(object_classes) if object_classes else []
                 )
                 object_classes = object_classes_typed
-            attrs_dict: Mapping[str, t.StrSequence] = {}
+            attrs_dict: MutableMapping[str, Sequence[str]] = {}
             assert entry.attributes is not None
             for attr_name, attr_values in entry.attributes.attributes.items():
                 if attr_name.lower() == "objectclass":
@@ -185,9 +185,9 @@ class TestRealLdapBatchOperations:
         )
         actual_count = len(ldap_connection.entries)
         assert actual_count > 0, "No entries found in LDAP"
-        entries: Sequence[m.Ldif.Entry] = []
+        entries: MutableSequence[m.Ldif.Entry] = []
         for entry in ldap_connection.entries:
-            attrs_dict = {}
+            attrs_dict: MutableMapping[str, MutableSequence[str] | str] = {}
             for attr_name in entry.entry_attributes:
                 attr_obj = entry[attr_name]
                 if hasattr(attr_obj, "values"):
@@ -214,10 +214,10 @@ class TestRealLdapBatchOperations:
                 facade_entry = m.Ldif.Entry.model_validate(entry_dict)
                 entries.append(facade_entry)
         export_file = tmp_path / "batch_export.ldif"
-        write_result = flext_api.write_file(entries, export_file)
+        write_result = flext_api.write_ldif_file(entries, export_file)
         assert write_result.is_success
         assert export_file.exists()
-        parse_result = flext_api.parse(export_file)
+        parse_result = flext_api.parse_source(export_file)
         assert parse_result.is_success
         parsed_entries = parse_result.value
         assert len(parsed_entries) == actual_count

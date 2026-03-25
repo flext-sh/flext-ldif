@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, MutableMapping, MutableSequence
-from typing import Self, override
+from typing import ClassVar, Self, override
 
 from flext_core import r
 
@@ -16,7 +16,7 @@ class FlextLdifUtilitiesPipeline:
     class _Filtered:
         """Sentinel class to signal that an entry was filtered out."""
 
-        __slots__ = ()
+        __slots__: ClassVar[tuple[str, ...]] = ()
 
     FILTERED = _Filtered()
 

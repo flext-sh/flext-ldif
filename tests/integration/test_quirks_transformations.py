@@ -64,10 +64,12 @@ class TestOidQuirksTransformations:
         fixture_path = fixtures_dir / "oid" / "oid_schema_fixtures.ldif"
         if not fixture_path.exists():
             pytest.skip(f"Fixture not found: {fixture_path}")
-        parse_result = api.parse(fixture_path)
+        parse_result = api.parse_source(fixture_path)
         if parse_result.is_success:
             entries = parse_result.value
-            write_result = api.write_file(entries, tmp_path / "oid_schema_output.ldif")
+            write_result = api.write_ldif_file(
+                entries, tmp_path / "oid_schema_output.ldif"
+            )
             assert write_result.is_success or write_result.is_failure
 
     def test_oid_parse_and_transform_acl(
@@ -80,10 +82,12 @@ class TestOidQuirksTransformations:
         fixture_path = fixtures_dir / "oid" / "oid_acl_fixtures.ldif"
         if not fixture_path.exists():
             pytest.skip(f"Fixture not found: {fixture_path}")
-        parse_result = api.parse(fixture_path)
+        parse_result = api.parse_source(fixture_path)
         if parse_result.is_success:
             entries = parse_result.value
-            write_result = api.write_file(entries, tmp_path / "oid_acl_output.ldif")
+            write_result = api.write_ldif_file(
+                entries, tmp_path / "oid_acl_output.ldif"
+            )
             assert write_result.is_success or write_result.is_failure
 
     def test_oid_to_openldap_migration(
@@ -125,10 +129,12 @@ class TestOudQuirksTransformations:
         fixture_path = fixtures_dir / "oud" / "oud_schema_fixtures.ldif"
         if not fixture_path.exists():
             pytest.skip(f"Fixture not found: {fixture_path}")
-        parse_result = api.parse(fixture_path)
+        parse_result = api.parse_source(fixture_path)
         if parse_result.is_success:
             entries = parse_result.value
-            write_result = api.write_file(entries, tmp_path / "oud_schema_output.ldif")
+            write_result = api.write_ldif_file(
+                entries, tmp_path / "oud_schema_output.ldif"
+            )
             assert write_result.is_success or write_result.is_failure
 
     def test_oud_parse_and_transform_acl(
@@ -141,10 +147,12 @@ class TestOudQuirksTransformations:
         fixture_path = fixtures_dir / "oud" / "oud_acl_fixtures.ldif"
         if not fixture_path.exists():
             pytest.skip(f"Fixture not found: {fixture_path}")
-        parse_result = api.parse(fixture_path)
+        parse_result = api.parse_source(fixture_path)
         if parse_result.is_success:
             entries = parse_result.value
-            write_result = api.write_file(entries, tmp_path / "oud_acl_output.ldif")
+            write_result = api.write_ldif_file(
+                entries, tmp_path / "oud_acl_output.ldif"
+            )
             assert write_result.is_success or write_result.is_failure
 
     def test_oid_to_oud_migration(

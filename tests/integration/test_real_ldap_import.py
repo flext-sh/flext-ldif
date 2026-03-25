@@ -23,7 +23,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 
 import pytest
-from ldap3 import Connection
+from ldap3 import Connection  # pyrefly: ignore[missing-import]
 
 from flext_ldif import FlextLdif, t
 
@@ -50,7 +50,7 @@ class TestRealLdapImport:
         """Import LDIF entry to real LDAP server."""
         unique_username = make_test_username("ImportTest")
         ldif_content = f"dn: cn={unique_username},{clean_test_ou}\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: {unique_username}\nsn: Test\nmail: import@example.com\n"
-        parse_result = flext_api.parse(ldif_content)
+        parse_result = flext_api.parse_source(ldif_content)
         assert parse_result.is_success
         entries = parse_result.value
         assert len(entries) == 1
@@ -97,7 +97,7 @@ class TestRealLdapImport:
         binary_data = b"fake_jpeg_data_here"
         encoded_photo = base64.b64encode(binary_data).decode("ascii")
         ldif_content = f"dn: cn={unique_username},{clean_test_ou}\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: {unique_username}\nsn: Test\njpegPhoto:: {encoded_photo}\n"
-        parse_result = flext_api.parse(ldif_content)
+        parse_result = flext_api.parse_source(ldif_content)
         assert parse_result.is_success
         entries = parse_result.value
         entry = entries[0]
@@ -137,7 +137,7 @@ class TestRealLdapImport:
         ldif_file = tmp_path / "import.ldif"
         ldif_content = f"dn: cn={unique_username},{clean_test_ou}\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: {unique_username}\nsn: Test\nmail: import@example.com\n"
         ldif_file.write_text(ldif_content)
-        parse_result = flext_api.parse(ldif_file)
+        parse_result = flext_api.parse_source(ldif_file)
         assert parse_result.is_success
         entries = parse_result.value
         assert len(entries) == 1

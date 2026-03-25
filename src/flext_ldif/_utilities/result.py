@@ -87,7 +87,7 @@ class FlextLdifUtilitiesResult[T]:
 
     @staticmethod
     def _extract_entries(
-        seq: Sequence[t.NormalizedValue],
+        seq: Sequence[object],
     ) -> MutableSequence[m.Ldif.Entry] | None:
         """Extract Entry objects from a sequence, returning None if any non-Entry found."""
         entries: MutableSequence[m.Ldif.Entry] = []
@@ -105,19 +105,20 @@ class FlextLdifUtilitiesResult[T]:
         val_raw = self.value
         if isinstance(val_raw, m.Ldif.Entry):
             entry_payload = val_raw
-        elif isinstance(val_raw, (list, tuple)):
+        else:
+            if not isinstance(val_raw, Sequence):
+                return FlextLdifUtilitiesResult[str].fail(
+                    "Entry serialization failed: value must be Entry or sequence of Entry",
+                )
+            seq_as_objects: Sequence[object] = list.__call__(val_raw)
             entry_list_result = FlextLdifUtilitiesResult._extract_entries(
-                val_raw,  # pyright: ignore[reportUnknownArgumentType]
+                seq_as_objects
             )
             if entry_list_result is None:
                 return FlextLdifUtilitiesResult[str].fail(
                     "Entry serialization failed: sequence contains non-entry value",
                 )
             entry_payload = entry_list_result
-        else:
-            return FlextLdifUtilitiesResult[str].fail(
-                "Entry serialization failed: value must be Entry or sequence of Entry",
-            )
         serialized = FlextLdifUtilitiesResult._serialize_entries_to_ldif(entry_payload)
         if serialized.is_failure:
             serialized_error = serialized.error

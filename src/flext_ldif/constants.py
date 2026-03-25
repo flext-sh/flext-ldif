@@ -555,13 +555,7 @@ class FlextLdifConstants(FlextConstants):
             "sub",
             "subtree",
         )
-        # Keep these two aliases — referenced from frozen _utilities/ files
-        type AclSubjectTypeLiteral = AclSubjectType
-        type AttributeMarkerStatusLiteral = AttributeMarkerStatus
-        type ChangeTypeLiteral = ChangeType
-        type EncodingLiteral = Encoding
-        type ServerTypeLiteral = ServerTypes
-        type TransformationTypeLiteral = TransformationType
+        # Type aliases moved after ChangeType class definition (see below)
 
         OPENLDAP: Final = "openldap"
         IBM_TIVOLI: Final = "ibm_tivoli"
@@ -821,6 +815,14 @@ class FlextLdifConstants(FlextConstants):
             ABSTRACT = "ABSTRACT"
             STRUCTURAL = "STRUCTURAL"
             AUXILIARY = "AUXILIARY"
+
+        # Keep these aliases — referenced from frozen _utilities/ files
+        type AclSubjectTypeLiteral = AclSubjectType
+        type AttributeMarkerStatusLiteral = AttributeMarkerStatus
+        type ChangeTypeLiteral = ChangeType
+        type EncodingLiteral = Encoding
+        type ServerTypeLiteral = ServerTypes
+        type TransformationTypeLiteral = TransformationType
 
         DEFAULT_MAX_ATTR_VALUE_LENGTH: Final[int] = 1048576
 

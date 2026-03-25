@@ -271,7 +271,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
     ) -> None:
         """Test ACL parsing in relaxed mode with various scenarios."""
         acl_line, _should_succeed = acl_data
-        result = acl_quirk.parse_input($$$)
+        result = acl_quirk.parse_input(acl_line)
         tm.that(hasattr(result, "is_success"), eq=True)
         if result.is_success:
             parsed = result.value
@@ -416,7 +416,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         expected_success: bool,
     ) -> None:
         """Test can_handle_attribute behavior through parse method."""
-        result = schema_quirk.parse_input($$$)
+        result = schema_quirk.parse_input(definition)
         tm.that(result.is_success, eq=expected_success)
 
     @pytest.mark.parametrize(
@@ -436,7 +436,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         expected_success: bool,
     ) -> None:
         """Test can_handle_objectclass behavior through parse method."""
-        result = schema_quirk.parse_input($$$)
+        result = schema_quirk.parse_input(definition)
         tm.that(result.is_success, eq=expected_success)
 
     def test_conversion_attribute_oid_to_rfc(

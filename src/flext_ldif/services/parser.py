@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from pathlib import Path
 from typing import override
 
@@ -108,35 +108,15 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
             return r[m.Ldif.ParseResponse].fail(
                 f"No entry quirk found for server type: {effective_server_type}",
             )
-        if not getattr(entry_quirk_raw, "parse", None) is not None:
+        if not hasattr(entry_quirk_raw, "parse_quirk"):
             return r[m.Ldif.ParseResponse].fail(
-                f"Entry quirk for server type {effective_server_type} does not have parse method",
+                f"Entry quirk for server type {effective_server_type} does not have parse_quirk method",
             )
-        parse_attr: (
-            Callable[
-                [str],
-                r[MutableSequence[m.Ldif.Entry]] | MutableSequence[m.Ldif.Entry] | None,
-            ]
-            | None
-        ) = getattr(
-            entry_quirk_raw,
-            "parse",
-            None,
-        )
-        if parse_attr is None or not callable(parse_attr):
-            return r[m.Ldif.ParseResponse].fail(
-                f"Entry quirk for server type {effective_server_type} parse is not callable",
-            )
-        parse_out = parse_attr(content)
-        if isinstance(parse_out, r):
-            if parse_out.is_failure:
-                error_msg = parse_out.error or "LDIF parsing failed"
-                return r[m.Ldif.ParseResponse].fail(str(error_msg))
-            entries = parse_out.value
-        elif parse_out is None:
-            return r[m.Ldif.ParseResponse].fail("LDIF parsing failed")
-        else:
-            entries = parse_out
+        parse_out = entry_quirk_raw.parse_quirk(content)
+        if parse_out.is_failure:
+            error_msg = parse_out.error or "LDIF parsing failed"
+            return r[m.Ldif.ParseResponse].fail(str(error_msg))
+        entries = parse_out.value
         detected_server_type = c.Ldif.ServerTypes(effective_server_type)
         response = m.Ldif.ParseResponse(
             entries=entries,

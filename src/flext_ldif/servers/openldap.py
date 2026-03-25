@@ -450,6 +450,14 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             )
             return is_config_dn or has_olc_attrs or has_olc_classes
 
+        @staticmethod
+        def _dn_case_rules() -> MutableMapping[
+            str, t.Scalar | MutableSequence[str] | None
+        ]:
+            """Return DN case rules for OpenLDAP."""
+            normalize_to: str | None = None
+            return {"preserve_case": True, "normalize_to": normalize_to}
+
         def _inject_validation_rules(self, entry: m.Ldif.Entry) -> m.Ldif.Entry:
             """Inject OpenLDAP-specific validation rules into Entry metadata via DI."""
             server_type = c.Ldif.ServerTypes.OPENLDAP.value
@@ -470,7 +478,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     "default_encoding": "utf-8",
                     "allowed_encodings": ["utf-8", "latin-1", "iso-8859-1", "ascii"],
                 },
-                "dn_case_rules": {"preserve_case": True, "normalize_to": None},
+                "dn_case_rules": self._dn_case_rules(),
                 "acl_format_rules": {
                     "format": "olcAccess",
                     "attribute_name": "olcAccess",

@@ -65,7 +65,7 @@ class TestZeroDataLossOidOud:
         oid_fixture: str,
     ) -> None:
         """Test that OID parsing preserves original LDIF in metadata."""
-        result = api.parse(oid_fixture, server_type="oid")
+        result = api.parse_source(oid_fixture, server_type="oid")
         assert result.is_success, f"Parse failed: {result.error}"
         entries = result.value
         assert entries, "No entries parsed"
@@ -91,7 +91,7 @@ class TestZeroDataLossOidOud:
         oud_fixture: str,
     ) -> None:
         """Test that OUD parsing preserves original LDIF in metadata."""
-        result = api.parse(oud_fixture, server_type="oud")
+        result = api.parse_source(oud_fixture, server_type="oud")
         assert result.is_success, f"Parse failed: {result.error}"
         entries = result.value
         assert entries, "No entries parsed"
@@ -110,7 +110,7 @@ class TestZeroDataLossOidOud:
         oid_fixture: str,
     ) -> None:
         """Test that boolean conversions are tracked in metadata."""
-        result = api.parse(oid_fixture, server_type="oid")
+        result = api.parse_source(oid_fixture, server_type="oid")
         assert result.is_success
         entries = result.value
         boolean_entries = [
@@ -151,13 +151,13 @@ class TestZeroDataLossOidOud:
         oid_fixture: str,
     ) -> None:
         """Test OID→OUD conversion preserves ALL data in metadata."""
-        parse_result = api.parse(oid_fixture, server_type="oid")
+        parse_result = api.parse_source(oid_fixture, server_type="oid")
         assert parse_result.is_success
         oid_entries = parse_result.value
         write_result = api.write(oid_entries, server_type="rfc")
         assert write_result.is_success
         rfc_ldif = write_result.value
-        parse_oud_result = api.parse(rfc_ldif, server_type="oud")
+        parse_oud_result = api.parse_source(rfc_ldif, server_type="oud")
         assert parse_oud_result.is_success
         oud_entries = parse_oud_result.value
         assert len(oid_entries) == len(oud_entries), "Entry count mismatch"
@@ -206,13 +206,13 @@ class TestZeroDataLossOidOud:
         oid_fixture: str,
     ) -> None:
         """Test OID→OUD→OID round-trip preserves ALL formatting."""
-        parse_oid = api.parse(oid_fixture, server_type="oid")
+        parse_oid = api.parse_source(oid_fixture, server_type="oid")
         assert parse_oid.is_success
         original_entries = parse_oid.value
         write_oud = api.write(original_entries, server_type="oud")
         assert write_oud.is_success
         oud_ldif = write_oud.value
-        parse_oud = api.parse(oud_ldif, server_type="oud")
+        parse_oud = api.parse_source(oud_ldif, server_type="oud")
         assert parse_oud.is_success
         oud_entries = parse_oud.value
         write_oid = api.write(
@@ -222,7 +222,7 @@ class TestZeroDataLossOidOud:
         )
         assert write_oid.is_success
         roundtrip_ldif = write_oid.value
-        parse_roundtrip = api.parse(roundtrip_ldif, server_type="oid")
+        parse_roundtrip = api.parse_source(roundtrip_ldif, server_type="oid")
         assert parse_roundtrip.is_success
         roundtrip_entries = parse_roundtrip.value
         assert len(original_entries) == len(roundtrip_entries)
@@ -260,7 +260,7 @@ class TestZeroDataLossOidOud:
         oid_fixture: str,
     ) -> None:
         """Test that minimal differences are tracked for all conversions."""
-        result = api.parse(oid_fixture, server_type="oid")
+        result = api.parse_source(oid_fixture, server_type="oid")
         assert result.is_success
         entries = result.value
         for entry in entries:
@@ -291,7 +291,7 @@ class TestZeroDataLossOidOud:
 
     def test_soft_delete_tracking(self, api: FlextLdif, oid_fixture: str) -> None:
         """Test that soft-deleted attributes are tracked in metadata."""
-        result = api.parse(oid_fixture, server_type="oid")
+        result = api.parse_source(oid_fixture, server_type="oid")
         assert result.is_success
         entries = result.value
         for entry in entries:
@@ -303,7 +303,7 @@ class TestZeroDataLossOidOud:
         oid_fixture: str,
     ) -> None:
         """Test that conversion history is tracked in metadata."""
-        result = api.parse(oid_fixture, server_type="oid")
+        result = api.parse_source(oid_fixture, server_type="oid")
         assert result.is_success
         entries = result.value
         for entry in entries:
@@ -321,7 +321,7 @@ class TestZeroDataLossOidOud:
         oid_fixture: str,
     ) -> None:
         """Test that ALL original strings are preserved in metadata."""
-        result = api.parse(oid_fixture, server_type="oid")
+        result = api.parse_source(oid_fixture, server_type="oid")
         assert result.is_success
         entries = result.value
         for entry in entries:
@@ -354,7 +354,7 @@ class TestZeroDataLossOidOud:
         oid_fixture: str,
     ) -> None:
         """Test that restore_original_format option restores exact original."""
-        parse_result = api.parse(oid_fixture, server_type="oid")
+        parse_result = api.parse_source(oid_fixture, server_type="oid")
         assert parse_result.is_success
         entries = parse_result.value
         write_result = api.write(

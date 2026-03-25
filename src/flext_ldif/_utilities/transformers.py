@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
-from typing import override
+from typing import ClassVar, override
 
 from flext_core import r
 
@@ -13,7 +13,7 @@ from flext_ldif import FlextLdifUtilitiesDN, FlextLdifUtilitiesEntry, c, m, t
 class FlextLdifUtilitiesTransformer[T]:
     """Base class for entry transformers."""
 
-    __slots__ = ()
+    __slots__: ClassVar[tuple[str, ...]] = ()
 
     def apply(self, item: T) -> r[T]:
         """Apply the transformation to an item."""
@@ -360,7 +360,7 @@ class FlextLdifUtilitiesTransformers:
     class Normalize:
         """Factory class for normalization transformers."""
 
-        __slots__ = ()
+        __slots__: ClassVar[tuple[str, ...]] = ()
 
         @staticmethod
         def attrs(
@@ -393,7 +393,7 @@ class FlextLdifUtilitiesTransformers:
     class Transform:
         """Factory class for general transformers."""
 
-        __slots__ = ()
+        __slots__: ClassVar[tuple[str, ...]] = ()
 
         @staticmethod
         def convert_booleans(

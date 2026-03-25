@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable, MutableMapping, MutableSequence
-from typing import Annotated, Self, override
+from typing import TYPE_CHECKING, Annotated, Self, override
 
 from pydantic import Field, PrivateAttr, field_validator
 
@@ -45,18 +45,18 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
         Field(description="Enable domain event emission for operations"),
     ] = False
     _last_event: m.Ldif.DnEvent | None = PrivateAttr(default=None)
-    _normalizer_instance: Normalizer | None = PrivateAttr(default=None)
-    _parser_instance: Parser | None = PrivateAttr(default=None)
+    _normalizer_instance: _DnNormalizer | None = PrivateAttr(default=None)
+    _parser_instance: _DnParser | None = PrivateAttr(default=None)
 
     @property
-    def _normalizer(self) -> FlextLdifDn.Normalizer:
+    def _normalizer(self) -> _DnNormalizer:
         """Get or create Normalizer instance."""
         if self._normalizer_instance is None:
             self._normalizer_instance = FlextLdifDn.Normalizer()
         return self._normalizer_instance
 
     @property
-    def _parser(self) -> FlextLdifDn.Parser:
+    def _parser(self) -> _DnParser:
         """Get or create Parser instance."""
         if self._parser_instance is None:
             self._parser_instance = FlextLdifDn.Parser()
@@ -361,5 +361,9 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
             unescaped = FlextLdifDn.Normalizer.unescape_dn_value(dn)
             return r[str].ok(unescaped)
 
+
+if TYPE_CHECKING:
+    type _DnNormalizer = FlextLdifDn.Normalizer
+    type _DnParser = FlextLdifDn.Parser
 
 __all__ = ["FlextLdifDn"]

@@ -15,11 +15,11 @@ SRP: Dataset generation, validation, analysis - each isolated, composition handl
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableSequence
 
 from flext_core import r
 
-from flext_ldif import FlextLdif, m, t
+from flext_ldif import FlextLdif, m
 
 
 class DRYValidationAnalysis:
@@ -31,7 +31,7 @@ class DRYValidationAnalysis:
     ) -> r[m.Ldif.ValidationResult]:
         """DRY validation analysis: categorize errors and detect patterns."""
         if not validation_result.is_valid:
-            error_groups: Mapping[str, t.StrSequence] = {}
+            error_groups: dict[str, list[str]] = {}
             for error in validation_result.errors:
                 category = getattr(error, "category", "unknown")
                 if category not in error_groups:
@@ -43,7 +43,7 @@ class DRYValidationAnalysis:
     def _generate_test_dataset(
         count: int,
         error_rate: float = 0.0,
-    ) -> Sequence[m.Ldif.Entry]:
+    ) -> MutableSequence[m.Ldif.Entry]:
         """DRY test dataset generation with configurable errors."""
         api = FlextLdif.get_instance()
         return [

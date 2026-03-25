@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import MutableSequence
 
 from flext_ldif import (
     FlextLdifConversion,
@@ -23,7 +23,6 @@ from flext_ldif import (
     FlextLdifServersOud,
     m,
     p,
-    t,
 )
 
 
@@ -58,7 +57,7 @@ class TestOidToOudSchemaConversion:
     ) -> None:
         """Test converting OID attribute definition to OUD format."""
         oid_attribute = CROSS_QUIRK_CONVERSION_CONSTANTS.OID_ATTRIBUTE_ORCLGUID
-        parse_result = oid_schema_quirk.parse_input(oid_attribute)
+        parse_result = oid_schema_quirk.parse_quirk(oid_attribute)
         assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
         unwrapped = parse_result.value
         assert isinstance(unwrapped, m.Ldif.SchemaAttribute), (
@@ -71,7 +70,7 @@ class TestOidToOudSchemaConversion:
         rfc_result = oid_schema_quirk.write(parsed_data)
         assert rfc_result.is_success, f"OID write failed: {rfc_result.error}"
         rfc_format: str = rfc_result.value
-        oud_parse_result = oud_schema_quirk.parse_input(rfc_format)
+        oud_parse_result = oud_schema_quirk.parse_quirk(rfc_format)
         assert oud_parse_result.is_success, (
             f"OUD parse failed: {oud_parse_result.error}"
         )
@@ -91,7 +90,7 @@ class TestOidToOudSchemaConversion:
     ) -> None:
         """Test converting OID objectClass definition to OUD format."""
         oid_objectclass = CROSS_QUIRK_CONVERSION_CONSTANTS.OID_OBJECTCLASS_ORCLCONTAINER
-        parse_result = oid_schema_quirk.parse_input(oid_objectclass)
+        parse_result = oid_schema_quirk.parse_quirk(oid_objectclass)
         assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
         unwrapped = parse_result.value
         assert isinstance(unwrapped, m.Ldif.SchemaObjectClass), (
@@ -105,7 +104,7 @@ class TestOidToOudSchemaConversion:
         rfc_result = oid_schema_quirk.write(parsed_data)
         assert rfc_result.is_success, f"OID write failed: {rfc_result.error}"
         rfc_format: str = rfc_result.value
-        oud_parse_result = oud_schema_quirk.parse_input(rfc_format)
+        oud_parse_result = oud_schema_quirk.parse_quirk(rfc_format)
         assert oud_parse_result.is_success, (
             f"OUD parse failed: {oud_parse_result.error}"
         )
@@ -137,7 +136,7 @@ class TestOidToOudAclConversion:
     ) -> None:
         """Test OID ACL parsing and round-trip within OID format."""
         oid_acl_str = CROSS_QUIRK_CONVERSION_CONSTANTS.OID_ACL_ANONYMOUS
-        parse_result = oid_acl_quirk.parse_input(oid_acl_str)
+        parse_result = oid_acl_quirk.parse_quirk(oid_acl_str)
         assert parse_result.is_success, f"OID ACL parse failed: {parse_result.error}"
         parsed_data = parse_result.value
         assert parsed_data.server_type in {"oid", "oracle_oid"}
@@ -152,7 +151,7 @@ class TestOidToOudAclConversion:
     ) -> None:
         """Test OUD ACL parsing and round-trip within OUD format."""
         oud_aci = CROSS_QUIRK_CONVERSION_CONSTANTS.OUD_ACI_ANONYMOUS
-        parse_result = oud_acl_quirk.parse_input(oud_aci)
+        parse_result = oud_acl_quirk.parse_quirk(oud_aci)
         assert parse_result.is_success, f"OUD ACL parse failed: {parse_result.error}"
         parsed_data = parse_result.value
         assert parsed_data.server_type in {"oud", "rfc", "generic"}
@@ -199,13 +198,13 @@ class TestOidToOudIntegrationConversion:
         for line in oid_schema_fixture.split("\n"):
             if "attributetypes:" in line.lower() and "2.16.840.1.113894" in line:
                 attr_def = line.split(":", 1)[1].strip()
-                parse_result = oid_schema_quirk.parse_input(attr_def)
+                parse_result = oid_schema_quirk.parse_quirk(attr_def)
                 if not parse_result.is_success:
                     continue
                 parsed_data = parse_result.value
                 rfc_result = oid_schema_quirk.write(parsed_data)
                 assert rfc_result.is_success
-                oud_result = oud_schema_quirk.parse_input(rfc_result.value)
+                oud_result = oud_schema_quirk.parse_quirk(rfc_result.value)
                 assert oud_result.is_success, (
                     "OUD quirk should parse converted attribute"
                 )
@@ -291,13 +290,13 @@ class TestQuirksConversionMatrixFacade:
             CROSS_QUIRK_CONVERSION_CONSTANTS.OUD_ATTRIBUTE_ORCLGUID,
             "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
         ]
-        oud_attr_models: Sequence[m.Ldif.SchemaAttribute] = []
+        oud_attr_models: MutableSequence[m.Ldif.SchemaAttribute] = []
         for attr_string in oud_attr_strings:
             parse_result = oud_quirk.schema_quirk.parse_attribute(attr_string)
             assert parse_result.is_success, f"Parse failed: {parse_result.error}"
             oud_attr_models.append(parse_result.value)
         assert len(oud_attr_models) == 2
-        oid_attr_strings: t.StrSequence = []
+        oid_attr_strings: MutableSequence[str] = []
         for oud_model in oud_attr_models:
             write_result = oud_quirk.schema_quirk.write(oud_model)
             assert write_result.is_success, f"Write failed: {write_result.error}"

@@ -77,8 +77,8 @@ class TestFlextLdifSettingsIntegration:
         config2 = FlextLdifSettings(server_type="openldap")
         ldif1 = FlextLdif(config=config1)
         ldif2 = FlextLdif(config=config2)
-        result1 = ldif1.parse(ConfigTestData.BASIC_ENTRY)
-        result2 = ldif2.parse(ConfigTestData.BASIC_ENTRY)
+        result1 = ldif1.parse_source(ConfigTestData.BASIC_ENTRY)
+        result2 = ldif2.parse_source(ConfigTestData.BASIC_ENTRY)
         assert result1.is_success
         assert result2.is_success
 

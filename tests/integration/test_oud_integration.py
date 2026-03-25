@@ -18,7 +18,7 @@ import re
 
 import pytest
 
-from flext_ldif import FlextLdif, t, u
+from flext_ldif import FlextLdif, t
 from tests import FlextLdifFixtures
 
 
@@ -41,7 +41,7 @@ class TestOudSchemaIntegration:
         - Schema parsing succeeds
         - Returns valid entry list
         """
-        result = api.parse(oud_schema_fixture)
+        result = api.parse_source(oud_schema_fixture)
         assert result.is_success, f"Schema parsing failed: {result.error}"
         entries = result.value
         assert entries is not None
@@ -52,10 +52,10 @@ class TestOudSchemaIntegration:
         oud_schema_fixture: str,
     ) -> None:
         """Test that Oracle attributes are detected in parsed schema."""
-        result = api.parse(oud_schema_fixture)
+        result = api.parse_source(oud_schema_fixture)
         assert result.is_success
         entries = result.value
-        if not u.is_list_non_empty(entries):
+        if not entries or len(entries) == 0:
             assert True
             return
         schema_entry = entries[0]
@@ -79,10 +79,10 @@ class TestOudSchemaIntegration:
         oud_schema_fixture: str,
     ) -> None:
         """Test that Oracle objectClasses are detected in parsed schema."""
-        result = api.parse(oud_schema_fixture)
+        result = api.parse_source(oud_schema_fixture)
         assert result.is_success
         entries = result.value
-        if not u.is_list_non_empty(entries):
+        if not entries or len(entries) == 0:
             assert True
             return
         schema_entry = entries[0]
@@ -125,14 +125,14 @@ class TestOudAclIntegration:
 
     def test_parse_fixture(self, api: FlextLdif, acl_fixture: str) -> None:
         """Test parsing complete OUD ACL fixture."""
-        result = api.parse(acl_fixture)
+        result = api.parse_source(acl_fixture)
         assert result.is_success, f"ACL parsing failed: {result.error}"
         entries = result.value
         assert entries, "No ACL entries parsed"
 
     def test_multiline_acis_preserved(self, api: FlextLdif, acl_fixture: str) -> None:
         """Test that multi-line ACIs are preserved during parsing."""
-        result = api.parse(acl_fixture)
+        result = api.parse_source(acl_fixture)
         assert result.is_success
         entries = result.value
         entries_with_aci = sum(
@@ -181,7 +181,7 @@ class TestOudEntryIntegration:
 
     def test_parse_entry_fixture(self, api: FlextLdif, entry_fixture: str) -> None:
         """Test parsing complete OUD entry fixture."""
-        result = api.parse(entry_fixture)
+        result = api.parse_source(entry_fixture)
         assert result.is_success, f"Entry fixture parsing failed: {result.error}"
         entries = result.value
         min_expected_entries = 10
@@ -195,7 +195,7 @@ class TestOudEntryIntegration:
         entry_fixture: str,
     ) -> None:
         """Test that Oracle objectClasses are preserved during parsing."""
-        result = api.parse(entry_fixture)
+        result = api.parse_source(entry_fixture)
         assert result.is_success
         entries = result.value
         oracle_oc_patterns = ["orclContext", "orclContainer", "orclPrivilegeGroup"]
@@ -250,7 +250,7 @@ class TestOudRoundTripIntegration:
         oud_integration_fixture: str,
     ) -> None:
         """Test complete round-trip: parse → write → parse."""
-        parse1_result = api.parse(oud_integration_fixture)
+        parse1_result = api.parse_source(oud_integration_fixture)
         assert parse1_result.is_success, f"Initial parse failed: {parse1_result.error}"
         entries1 = parse1_result.value
         assert entries1, "No entries parsed from fixture"
@@ -258,7 +258,7 @@ class TestOudRoundTripIntegration:
         assert write_result.is_success, f"Write failed: {write_result.error}"
         written_ldif = write_result.value
         assert written_ldif, "Empty LDIF output"
-        parse2_result = api.parse(written_ldif)
+        parse2_result = api.parse_source(written_ldif)
         assert parse2_result.is_success, f"Second parse failed: {parse2_result.error}"
         entries2 = parse2_result.value
         assert len(entries1) == len(entries2), (
@@ -274,7 +274,7 @@ class TestOudRoundTripIntegration:
         oud_integration_fixture: str,
     ) -> None:
         """Test that DNs with spaces after commas are preserved."""
-        parse_result = api.parse(oud_integration_fixture)
+        parse_result = api.parse_source(oud_integration_fixture)
         assert parse_result.is_success
         entries = parse_result.value
         entries_with_dn_spaces = [
@@ -282,14 +282,14 @@ class TestOudRoundTripIntegration:
             for entry in entries
             if entry.dn is not None and ", " in entry.dn.value
         ]
-        if u.is_list_non_empty(entries_with_dn_spaces):
+        if entries_with_dn_spaces:
             test_entry = entries_with_dn_spaces[0]
             assert test_entry.dn is not None
             original_dn = test_entry.dn.value
             write_result = api.write([test_entry])
             assert write_result.is_success
             written_ldif = write_result.value
-            parse2_result = api.parse(written_ldif)
+            parse2_result = api.parse_source(written_ldif)
             assert parse2_result.is_success
             entries2 = parse2_result.value
             assert len(entries2) == 1
@@ -312,7 +312,7 @@ class TestOudMetadataPreservation:
         """Test that metadata is attached to parsed entries."""
         test_ldif = "dn: cn=OracleContext,dc=example,dc=com\ncn: OracleContext\nobjectClass: top\nobjectClass: orclContext\norclVersion: 90600\n"
         api = FlextLdif.get_instance()
-        result = api.parse(test_ldif)
+        result = api.parse_source(test_ldif)
         assert result.is_success
         entries = result.value
         assert len(entries) == 1

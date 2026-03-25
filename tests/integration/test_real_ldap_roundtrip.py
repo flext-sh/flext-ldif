@@ -21,7 +21,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 
 import pytest
-from ldap3 import Connection
+from ldap3 import Connection  # pyrefly: ignore[missing-import]
 
 from flext_ldif import FlextLdif, t
 
@@ -80,7 +80,7 @@ class TestRealLdapRoundtrip:
         ldif_output = write_result.value
         unique_username_copy = make_test_username("RoundtripTestCopy")
         reimport_dn = f"cn={unique_username_copy},{clean_test_ou}"
-        parse_result = flext_api.parse(ldif_output)
+        parse_result = flext_api.parse_source(ldif_output)
         assert parse_result.is_success
         parsed_entries = parse_result.value
         assert len(parsed_entries) == 1

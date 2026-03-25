@@ -181,8 +181,8 @@ class TestFlextLdifAPIIntegration:
         """Test that multiple FlextLdif instances work independently."""
         ldif1 = FlextLdif()
         ldif2 = FlextLdif()
-        result1 = ldif1.parse(self._SIMPLE_LDIF)
-        result2 = ldif2.parse(self._SIMPLE_LDIF)
+        result1 = ldif1.parse_source(self._SIMPLE_LDIF)
+        result2 = ldif2.parse_source(self._SIMPLE_LDIF)
         assert result1.is_success
         assert result2.is_success
         entries1 = result1.value

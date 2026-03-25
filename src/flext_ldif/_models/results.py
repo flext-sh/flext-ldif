@@ -31,7 +31,6 @@ def _events_list_factory() -> list[
 
 
 class FlextLdifModelsResults:
-
     @staticmethod
     def _statistics_factory() -> FlextLdifModelsResults.Statistics:
         return FlextLdifModelsResults.Statistics()

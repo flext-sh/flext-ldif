@@ -16,7 +16,7 @@ Original: .bak file | Advanced: ~250 lines with parallel schema processing + int
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from pathlib import Path
 from typing import TypedDict
 
@@ -30,10 +30,10 @@ class _InvalidScenario(TypedDict):
     attributes: Mapping[str, t.StrSequence]
 
 
-def intelligent_schema_building() -> r[Sequence[m.Ldif.Entry]]:
+def intelligent_schema_building() -> r[MutableSequence[m.Ldif.Entry]]:
     """Intelligent schema building with automatic type detection and validation."""
     api = FlextLdif.get_instance()
-    schema_entries: Sequence[FlextLdifModels.Ldif.Entry] = []
+    schema_entries: list[FlextLdifModels.Ldif.Entry] = []
     schema_root_result = api.create_entry(
         dn="cn=schema",
         attributes={
@@ -126,7 +126,7 @@ def intelligent_schema_building() -> r[Sequence[m.Ldif.Entry]]:
     ) -> m.Ldif.Entry | None:
         """Create t.NormalizedValue class entry."""
         oc_dn = f"cn={oc_def['name']},cn=schema"
-        attrs: Mapping[str, t.StrSequence] = {
+        attrs: MutableMapping[str, MutableSequence[str] | str] = {
             "objectClass": ["top", "ldapSubentry", "objectClassDescription"],
             "cn": [str(oc_def["name"])],
             "description": [str(oc_def["description"])],
@@ -145,13 +145,13 @@ def intelligent_schema_building() -> r[Sequence[m.Ldif.Entry]]:
         created_entry = create_oc_entry(oc_def)
         if created_entry is not None:
             schema_entries.append(created_entry)
-    return r[Sequence[m.Ldif.Entry]].ok(schema_entries)
+    return r[MutableSequence[m.Ldif.Entry]].ok(schema_entries)
 
 
 def parallel_schema_validation() -> r[t.ContainerMapping]:
     """Parallel schema validation with comprehensive error analysis."""
     api = FlextLdif.get_instance()
-    test_entries: Sequence[m.Ldif.Entry] = []
+    test_entries: list[m.Ldif.Entry] = []
     for i in range(30):
         if i % 3 == 0:
             entry_result = api.create_entry(
@@ -186,7 +186,7 @@ def parallel_schema_validation() -> r[t.ContainerMapping]:
             )
         if entry_result.is_success:
             test_entries.append(entry_result.value)
-    invalid_scenarios: Sequence[_InvalidScenario] = [
+    invalid_scenarios: list[_InvalidScenario] = [
         {
             "dn": "cn=Invalid Person,ou=People,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["Invalid Person"]},
@@ -212,7 +212,10 @@ def parallel_schema_validation() -> r[t.ContainerMapping]:
     for invalid in invalid_scenarios:
         dn = invalid["dn"]
         attributes = invalid["attributes"]
-        entry_result = api.create_entry(dn=dn, attributes=attributes)
+        attrs_mutable: MutableMapping[str, MutableSequence[str] | str] = {
+            k: list(v) for k, v in attributes.items()
+        }
+        entry_result = api.create_entry(dn=dn, attributes=attrs_mutable)
         if entry_result.is_success:
             test_entries.append(entry_result.value)
     validation_result = api.validate_entries(test_entries)
@@ -221,8 +224,8 @@ def parallel_schema_validation() -> r[t.ContainerMapping]:
             f"Schema validation failed: {validation_result.error}",
         )
     validation_report = validation_result.value
-    error_analysis: Mapping[str, int] = {}
-    analysis: t.ContainerMapping = {
+    error_analysis: dict[str, int] = {}
+    analysis: dict[str, int | float | dict[str, int]] = {
         "total_entries": len(test_entries),
         "valid_entries": validation_report.valid_entries,
         "invalid_entries": validation_report.invalid_entries,
@@ -264,11 +267,11 @@ def schema_migration_pipeline() -> r[t.ContainerMapping]:
         (source_dir / f"legacy_{i}.ldif").write_text(entry)
 
     _ = u.process(list(enumerate(legacy_entries)), write_legacy_file, on_error="skip")
-    migration_results: t.ContainerMapping = {}
+    migration_results: dict[str, int | bool | dict[str, int]] = {}
 
-    def parse_file(ldif_file: Path) -> Sequence[m.Ldif.Entry]:
+    def parse_file(ldif_file: Path) -> MutableSequence[m.Ldif.Entry]:
         """Parse LDIF file."""
-        parse_result = api.parse(ldif_file)
+        parse_result = api.parse_ldif(ldif_file)
         return parse_result.map_or([])
 
     batch_result = u.process(
@@ -276,7 +279,7 @@ def schema_migration_pipeline() -> r[t.ContainerMapping]:
         parse_file,
         on_error="skip",
     )
-    all_entries: Sequence[m.Ldif.Entry]
+    all_entries: list[m.Ldif.Entry]
     if batch_result.is_success:
         all_entries = [e for sub in batch_result.value for e in sub]
     else:
@@ -293,7 +296,7 @@ def schema_migration_pipeline() -> r[t.ContainerMapping]:
 
     def migrate_entry(ldif_entry: m.Ldif.Entry) -> m.Ldif.Entry | None:
         """Migrate legacy entry to modern schema."""
-        attrs_dict: Mapping[str, str | t.StrSequence] = {}
+        attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
         if (
             hasattr(ldif_entry, "attributes")
             and ldif_entry.attributes is not None
@@ -315,7 +318,7 @@ def schema_migration_pipeline() -> r[t.ContainerMapping]:
         return migrate_result.map_or(None)
 
     batch_result = u.process(all_entries, migrate_entry, on_error="skip")
-    migrated_entries: Sequence[m.Ldif.Entry]
+    migrated_entries: list[m.Ldif.Entry]
     if batch_result.is_success:
         migrated_entries = [x for x in batch_result.value if x is not None]
     else:
@@ -331,7 +334,7 @@ def schema_migration_pipeline() -> r[t.ContainerMapping]:
         }
     if migrated_entries:
         output_file = migrated_dir / "migrated_schema_compliant.ldif"
-        write_result = api.write_file(migrated_entries, output_file)
+        write_result = api.write_ldif_file(migrated_entries, output_file)
         migration_results["output_written"] = write_result.is_success
     return r[t.ContainerMapping].ok(migration_results)
 
@@ -339,8 +342,8 @@ def schema_migration_pipeline() -> r[t.ContainerMapping]:
 def batch_schema_operations() -> r[t.ContainerMapping]:
     """Batch schema operations with parallel processing."""
     api = FlextLdif.get_instance()
-    schema_batches: Sequence[tuple[str, Sequence[FlextLdifModels.Ldif.Entry]]] = []
-    core_attrs: Sequence[FlextLdifModels.Ldif.Entry] = []
+    schema_batches: list[tuple[str, list[FlextLdifModels.Ldif.Entry]]] = []
+    core_attrs: list[FlextLdifModels.Ldif.Entry] = []
     core_attribute_definitions = [
         ("cn", "Common Name", "1.3.6.1.4.1.1466.115.121.1.15", False),
         ("sn", "Surname", "1.3.6.1.4.1.1466.115.121.1.15", False),
@@ -371,7 +374,7 @@ def batch_schema_operations() -> r[t.ContainerMapping]:
     if batch_result.is_success:
         core_attrs.extend([x for x in batch_result.value if x is not None])
     schema_batches.append(("core_attributes", core_attrs))
-    object_classes: Sequence[FlextLdifModels.Ldif.Entry] = []
+    object_classes: list[FlextLdifModels.Ldif.Entry] = []
     oc_definitions = [
         ("person", "Person", "top", ["cn", "sn"], ["mail", "telephoneNumber"]),
         (
@@ -396,16 +399,16 @@ def batch_schema_operations() -> r[t.ContainerMapping]:
     ) -> m.Ldif.Entry | None:
         """Create t.NormalizedValue class definition entry."""
         name, desc, sup, must_attrs, may_attrs = oc_def
-        attrs = {
+        attrs: MutableMapping[str, MutableSequence[str] | str] = {
             "objectClass": ["top", "ldapSubentry", "objectClassDescription"],
             "cn": [name],
             "description": [desc],
             "sup": [sup],
         }
         if must_attrs:
-            attrs["must"] = must_attrs
+            attrs["must"] = list(must_attrs)
         if may_attrs:
-            attrs["may"] = may_attrs
+            attrs["may"] = list(may_attrs)
         oc_result = api.create_entry(dn=f"cn={name},cn=schema", attributes=attrs)
         return oc_result.map_or(None)
 
@@ -413,7 +416,7 @@ def batch_schema_operations() -> r[t.ContainerMapping]:
     if batch_result.is_success:
         object_classes.extend([x for x in batch_result.value if x is not None])
     schema_batches.append(("object_classes", object_classes))
-    batch_results: t.ContainerMapping = {}
+    batch_results: dict[str, dict[str, int] | str | None] = {}
     total_schema_entries = 0
     for batch_name, entries in schema_batches:
         if not entries:
@@ -489,7 +492,7 @@ def railway_schema_pipeline() -> r[t.ContainerMapping]:
         return entry_result.map_or(None)
 
     batch_result = u.process(list(range(10)), create_test_entry, on_error="skip")
-    test_entries = (
+    test_entries: list[m.Ldif.Entry] = (
         [x for x in batch_result.value if x is not None]
         if batch_result.is_success
         else []
@@ -504,7 +507,7 @@ def railway_schema_pipeline() -> r[t.ContainerMapping]:
         return r[t.ContainerMapping].fail(
             f"Test entries invalid: {entry_report.errors}",
         )
-    process_result = api.process(
+    process_result = api.process_ldif(
         "transform",
         test_entries,
         parallel=True,
@@ -516,9 +519,9 @@ def railway_schema_pipeline() -> r[t.ContainerMapping]:
     output_dir = Path("examples/schema_compliant_output")
     output_dir.mkdir(exist_ok=True)
     schema_file = output_dir / "schema.ldif"
-    schema_write = api.write_file(schema_entries, schema_file)
+    schema_write = api.write_ldif_file(list(schema_entries), schema_file)
     entries_file = output_dir / "entries.ldif"
-    entries_write = api.write_file(test_entries, entries_file)
+    entries_write = api.write_ldif_file(test_entries, entries_file)
     return r[t.ContainerMapping].ok({
         "schema_entries": len(schema_entries),
         "schema_valid": schema_report.valid_entries,

@@ -20,7 +20,7 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import pytest
-from ldap3 import Connection
+from ldap3 import Connection  # pyrefly: ignore[missing-import]
 
 from flext_ldif import FlextLdif, FlextLdifModels, m
 
@@ -285,7 +285,7 @@ class TestRealLdapExport:
         assert entry_result.is_success
         flext_entry = entry_result.value
         output_file = tmp_path / "export.ldif"
-        write_result = flext_api.write_file([flext_entry], output_file)
+        write_result = flext_api.write_ldif_file([flext_entry], output_file)
         assert write_result.is_success
         assert output_file.exists()
         content = output_file.read_text()

@@ -15,7 +15,7 @@ SRP: Each method does ONE thing, composition handles complexity
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import MutableSequence
 
 from flext_core import r
 
@@ -26,7 +26,7 @@ class DRYEntryOperations:
     """DRY entry operations: intelligent builders + railway composition."""
 
     @staticmethod
-    def advanced_filtering() -> r[Sequence[m.Ldif.Entry]]:
+    def advanced_filtering() -> r[MutableSequence[m.Ldif.Entry]]:
         """DRY advanced filtering: type-safe predicates + composition."""
         api = FlextLdif.get_instance()
         entries_result = DRYEntryOperations.intelligent_builders()
@@ -56,21 +56,23 @@ class DRYEntryOperations:
         )
 
     @staticmethod
-    def batch_processing() -> r[Sequence[t.ContainerMapping]]:
+    def batch_processing() -> r[MutableSequence[t.ContainerMapping]]:
         """DRY batch processing: parallel transformation pipeline."""
         api = FlextLdif.get_instance()
         return DRYEntryOperations.advanced_filtering().flat_map(
-            lambda e: api.process("transform", e, parallel=True, max_workers=4).map(
+            lambda e: api.process_ldif(
+                "transform", e, parallel=True, max_workers=4
+            ).map(
                 lambda res: [entry.model_dump() for entry in res],
             ),
         )
 
     @staticmethod
-    def intelligent_builders() -> r[Sequence[m.Ldif.Entry]]:
+    def intelligent_builders() -> r[MutableSequence[m.Ldif.Entry]]:
         """DRY intelligent builders: auto-detect types from attributes."""
         api = FlextLdif.get_instance()
-        created_entries: Sequence[m.Ldif.Entry] = []
-        people_data: Sequence[tuple[str, str, str, str]] = [
+        created_entries: list[m.Ldif.Entry] = []
+        people_data: list[tuple[str, str, str, str]] = [
             ("Alice Johnson", "Johnson", "alice@example.com", "+1-555-0101"),
             ("Bob Smith", "Smith", "bob@example.com", "+1-555-0102"),
             ("Carol Davis", "Davis", "carol@example.com", "+1-555-0103"),
@@ -89,6 +91,6 @@ class DRYEntryOperations:
                 created_entries.append(create_result.value)
 
         if not created_entries:
-            return r[Sequence[m.Ldif.Entry]].fail("No entries were created")
+            return r[MutableSequence[m.Ldif.Entry]].fail("No entries were created")
 
-        return r[Sequence[m.Ldif.Entry]].ok(created_entries)
+        return r[MutableSequence[m.Ldif.Entry]].ok(created_entries)

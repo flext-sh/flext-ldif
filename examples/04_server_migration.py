@@ -16,7 +16,6 @@ Original: 252 lines | Advanced: ~200 lines with parallel migration + auto-detect
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core import r
@@ -47,9 +46,9 @@ class ExampleServerMigration:
             return f'dn: cn=User{i},ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: User{i}\nsn: TestUser{i}\nmail: user{i}@example.com\norclguid: user{i}guid456\naci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="ldap:///self";)\n'
 
         batch_result = u.process(list(range(20)), create_entry_data, on_error="skip")
-        source_data: t.StrSequence = []
+        source_data: list[str] = []
         if batch_result.is_success:
-            source_data = batch_result.value
+            source_data = list(batch_result.value)
 
         def write_file(item: tuple[int, str]) -> None:
             """Write entry to file."""
@@ -66,7 +65,7 @@ class ExampleServerMigration:
         """Detect server type from source data."""
         sample_file = source_dir / "data_00.ldif"
         detect_result = api.detect_server_type(ldif_content=sample_file)
-        detection_data: t.ContainerMapping = {}
+        detection_data: dict[str, str | float | None] = {}
         if detect_result.is_success:
             detection = detect_result.value
             detection_data = {
@@ -106,7 +105,7 @@ class ExampleServerMigration:
             )
         detection = detect_result.value
         detected_server = detection.detected_server_type or "rfc"
-        parse_result = api.parse(mixed_ldif, server_type=detected_server)
+        parse_result = api.parse_ldif(mixed_ldif, server_type=detected_server)
         if parse_result.is_failure:
             return r[t.ContainerMapping].fail(f"Parse failed: {parse_result.error}")
         entries = parse_result.value
@@ -136,14 +135,14 @@ class ExampleServerMigration:
         """Batch comparison of parsing across multiple LDAP servers."""
         api = FlextLdif.get_instance()
         test_ldif = 'dn: cn=Server Comparison,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Server Comparison\nsn: Test\nmail: comparison@example.com\n# OID-specific attributes\norclguid: abc123def456\norclaci: access to attr=mail by * read\n# OUD-specific attributes\naci: (targetattr="mail")(version 3.0; acl "mail access"; allow (read,search) userdn="ldap:///anyone";)\n# OpenLDAP-specific attributes\nentryUUID: 12345678-1234-1234-1234-123456789012\nentryCSN: 20240101000000.000000Z#000000#000#000000\n'
-        servers: t.StrSequence = ["rfc", "oid", "oud", "openldap"]
-        comparison_results: Mapping[
+        servers: list[str] = ["rfc", "oid", "oud", "openldap"]
+        comparison_results: dict[
             str,
-            Mapping[str, bool | int | str | None],
+            dict[str, bool | int | str | None],
         ] = {}
         for server in servers:
             server_type = server
-            parse_result = api.parse(test_ldif, server_type=server_type)
+            parse_result = api.parse_ldif(test_ldif, server_type=server_type)
             if parse_result.is_success:
                 entries = parse_result.value
                 comparison_results[server] = {

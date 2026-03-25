@@ -1820,7 +1820,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 parse_method: str | None = None,
                 expected_type: type | None = None,
                 should_succeed: bool | None = None,
-            ) -> object | None:
+            ) -> BaseModel | None:
                 """Parse using quirk and unwrap result.
 
                 Args:
@@ -1884,6 +1884,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
                         raise AssertionError(
                             f"Expected {expected_type.__name__}, got {type(value).__name__}",
                         )
+                if not isinstance(value, BaseModel):
+                    return None
                 return value
 
             @staticmethod

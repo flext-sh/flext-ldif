@@ -426,16 +426,16 @@ class FlextLdifUtilitiesProcessing:
         return r[MutableSequence[U]].ok(results)
 
     @staticmethod
-    def filter[T: t.NormalizedValue, R: t.NormalizedValue](
+    def filter_with_predicates[T: t.NormalizedValue, R: t.NormalizedValue](
         items_or_entries: T
         | MutableSequence[T]
         | tuple[T, ...]
         | MutableMapping[str, T]
         | MutableSequence[m.Ldif.Entry],
-        predicate_or_filter1: FlextLdifUtilitiesProcessing.VariadicCallable[bool]
+        predicate_or_filter1: Callable[..., bool]
         | FlextLdifUtilitiesFilters[m.Ldif.Entry],
         *filters: FlextLdifUtilitiesFilters[m.Ldif.Entry],
-        _mapper: FlextLdifUtilitiesProcessing.VariadicCallable[R] | None = None,
+        _mapper: Callable[..., R] | None = None,
         mode: Literal["all", "any"] = "all",
     ) -> (
         t.MutableContainerList
@@ -447,9 +447,7 @@ class FlextLdifUtilitiesProcessing:
             case FlextLdifUtilitiesFilters():
                 pass
             case _:
-                predicate: FlextLdifUtilitiesProcessing.VariadicCallable[bool] = (
-                    predicate_or_filter1
-                )
+                predicate: Callable[..., bool] = predicate_or_filter1
 
                 def predicate_callable(item: t.NormalizedValue) -> bool:
                     return predicate(item)

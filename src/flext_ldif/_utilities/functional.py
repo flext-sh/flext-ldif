@@ -37,7 +37,7 @@ class FlextLdifUtilitiesFunctional:
         if isinstance(value, BaseModel):
             model_mapping: t.MutableContainerMapping = {
                 key: FlextLdifUtilitiesFunctional._to_general(getattr(value, key))
-                for key in type(value).model_fields
+                for key in value.__class__.model_fields
             }
             extra = value.__pydantic_extra__
             if extra:
@@ -50,7 +50,6 @@ class FlextLdifUtilitiesFunctional:
                 normalized_mapping[key] = FlextLdifUtilitiesFunctional._to_general(item)
             return normalized_mapping
         return [FlextLdifUtilitiesFunctional._to_general(item) for item in value]
-        return value
 
     @staticmethod
     def or_[T](*values: T | None, default: T | None = None) -> T | None:

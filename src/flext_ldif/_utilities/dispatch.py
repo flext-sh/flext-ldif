@@ -297,7 +297,7 @@ class FlextLdifUtilitiesDispatch:
         | FlextLdifUtilitiesResult[MutableSequence[m.Ldif.Entry]]
     ):
         """Route to Processing.filter (resolves Processing vs Filters vs Result)."""
-        return FlextLdifUtilitiesProcessing.filter(
+        return FlextLdifUtilitiesProcessing.filter_with_predicates(
             items_or_entries,
             predicate_or_filter1,
             *filters,

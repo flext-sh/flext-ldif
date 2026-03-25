@@ -72,6 +72,15 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         @override
+        def or_[T: t.NormalizedValue](
+            *values: T | None,
+            default: T | None = None,
+        ) -> T | None:
+            """Return first non-None value (resolves MRO conflict)."""
+            return FlextLdifUtilitiesCollectionLdif.or_(*values, default=default)
+
+        @staticmethod
+        @override
         def parse_attribute(
             attr_definition: str,
             *,

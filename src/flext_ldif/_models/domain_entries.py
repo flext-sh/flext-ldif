@@ -770,10 +770,13 @@ class FlextLdifModelsDomainsEntries:
                     "attribute_metadata": {},
                     "metadata": None,
                 })
-                result: r[Self] = r[Self].ok(validated)
-                return result
+                ok_result: r[Self] = r(value=validated, is_success=True)
+                return ok_result
             except (ValueError, TypeError, AttributeError) as e:
-                return r[Self].fail(f"Failed to create Attributes: {e}")
+                fail_result: r[Self] = r(
+                    error=f"Failed to create Attributes: {e}", is_success=False
+                )
+                return fail_result
 
         def add_attribute(self, key: str, values: MutableSequence[str]) -> Self:
             """Add or update an attribute with values.
@@ -2623,10 +2626,13 @@ class FlextLdifModelsDomainsEntries:
                 if params.statistics is not None:
                     entry_data["statistics"] = params.statistics
                 entry_instance = cls.model_validate(entry_data)
-                result: r[Self] = r[Self].ok(entry_instance)
-                return result
+                ok_result: r[Self] = r(value=entry_instance, is_success=True)
+                return ok_result
             except (ValueError, TypeError, AttributeError) as e:
-                return r[Self].fail(f"Failed to create Entry: {e}")
+                fail_result: r[Self] = r(
+                    error=f"Failed to create Entry: {e}", is_success=False
+                )
+                return fail_result
 
         @classmethod
         def _normalize_attributes(

@@ -103,8 +103,8 @@ class TestFlextLdifFacadeWorkflows:
         """Test that multiple FlextLdif instances don't interfere."""
         ldif1 = FlextLdif()
         ldif2 = FlextLdif()
-        result1 = ldif1.parse("dn: cn=test1,dc=example,dc=com\ncn: test1")
-        result2 = ldif2.parse("dn: cn=test2,dc=example,dc=com\ncn: test2")
+        result1 = ldif1.parse_source("dn: cn=test1,dc=example,dc=com\ncn: test1")
+        result2 = ldif2.parse_source("dn: cn=test2,dc=example,dc=com\ncn: test2")
         assert result1 is not None
         assert result2 is not None
 

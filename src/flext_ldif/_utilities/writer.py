@@ -328,9 +328,9 @@ class FlextLdifUtilitiesWriter:
         if metadata is None:
             return None
         attr_order_raw: MutableSequence[str] | None = None
-        extensions_mapping: MutableMapping[str, t.NormalizedValue | BaseModel] | None = (
-            FlextLdifUtilitiesWriter._extract_extensions(metadata)
-        )
+        extensions_mapping: (
+            MutableMapping[str, t.NormalizedValue | BaseModel] | None
+        ) = FlextLdifUtilitiesWriter._extract_extensions(metadata)
         if extensions_mapping is not None:
             typed_extensions = t.ConfigMap(root=extensions_mapping).root
             raw_attr_order: t.NormalizedValue | BaseModel | None = typed_extensions.get(

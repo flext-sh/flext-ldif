@@ -24,9 +24,9 @@ from pathlib import Path
 
 import pytest
 from flext_tests import FlextTestsDocker
-from ldap3 import ALL, Connection, Server
-from ldap3.abstract.entry import Entry as LdapEntry
-from ldap3.core.exceptions import LDAPException
+from ldap3 import ALL, Connection, Server  # pyrefly: ignore[missing-import]
+from ldap3.abstract.entry import Entry as LdapEntry  # pyrefly: ignore[missing-import]
+from ldap3.core.exceptions import LDAPException  # pyrefly: ignore[missing-import]
 
 from flext_ldif import (
     FlextLdif,

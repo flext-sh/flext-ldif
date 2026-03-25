@@ -3,20 +3,10 @@
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-⚠️ DEPRECATED: This example uses the old utilities.py API which has been removed.
-This file needs updating to use the new service-based architecture:
-- Use services.DnService for DN operations
-- Use services.ValidationService for validation
-- Use client methods for LDIF/encoding operations
-
-For updated examples, see:
-- examples/01_basic_usage.py (parse, write, validate)
-- examples/02_dn_operations.py (DN parsing with services)
-
 Demonstrates FlextLdif advanced functionality:
 - Batch processing with direct API methods (no manual setup!)
 - Parallel processing for performance (simplified)
-- Utility functions (DN, text, time, validation, encoding, file) [DEPRECATED]
+- Utility functions (DN parsing, validation, encoding, file)
 - Processing pipelines (streamlined)
 
 All functionality accessed through FlextLdif facade using direct methods.
@@ -25,7 +15,6 @@ No manual processor creation or conversion loops required.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -36,11 +25,11 @@ def basic_batch_processing() -> None:
     """Process entries in batches using direct API method."""
     api = FlextLdif.get_instance()
     ldif_content = "dn: cn=User1,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User1\nsn: One\n\ndn: cn=User2,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User2\nsn: Two\n\ndn: cn=User3,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User3\nsn: Three\n"
-    parse_result = api.parse(ldif_content)
+    parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
     entries = parse_result.value
-    batch_result = api.process("transform", entries, parallel=False)
+    batch_result = api.process_ldif("transform", entries, parallel=False)
     if batch_result.is_success:
         processed = batch_result.value
         _ = len(processed)
@@ -54,7 +43,7 @@ def parallel_processing() -> None:
     Results may be in different order due to parallel execution.
     """
     api = FlextLdif.get_instance()
-    entries: Sequence[FlextLdifModels.Ldif.Entry] = []
+    entries: list[FlextLdifModels.Ldif.Entry] = []
     for i in range(10):
         result = api.create_entry(
             dn=f"cn=User{i},ou=People,dc=example,dc=com",
@@ -66,7 +55,7 @@ def parallel_processing() -> None:
         )
         if result.is_success:
             entries.append(result.value)
-    parallel_result = api.process("validate", entries, parallel=True)
+    parallel_result = api.process_ldif("validate", entries, parallel=True)
     if parallel_result.is_success:
         processed = parallel_result.value
         _ = len(processed)
@@ -83,7 +72,7 @@ def use_dn_utilities() -> None:
     if validation_result.is_success:
         is_valid = validation_result.value
         _ = is_valid
-    normalize_result = FlextLdifDn.normalize(dn)
+    normalize_result = FlextLdifDn.normalize_dn(dn)
     if normalize_result.is_success:
         normalized = normalize_result.value
         _ = normalized
@@ -126,7 +115,7 @@ def use_ldif_utilities() -> None:
     ldif_content = (
         "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
     )
-    syntax_result = api.parse(ldif_content)
+    syntax_result = api.parse_ldif(ldif_content)
     _ = syntax_result.is_success
     if syntax_result.is_success:
         entries = syntax_result.value
@@ -171,7 +160,7 @@ def complete_processing_pipeline() -> None:
     """Complete pipeline using utilities and direct processing methods."""
     api = FlextLdif.get_instance()
     ldif_content = "dn: cn=Pipeline,ou=People,dc=example,dc=com\nobjectClass: person\ncn: Pipeline\nsn: User\n"
-    parse_result = api.parse(ldif_content)
+    parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
     entries = parse_result.value
@@ -182,7 +171,7 @@ def complete_processing_pipeline() -> None:
         return dn_result.is_success
 
     _ = u.process(entries, validate_entry, on_error="skip")
-    batch_result = api.process("transform", entries, parallel=False)
+    batch_result = api.process_ldif("transform", entries, parallel=False)
     if batch_result.is_success:
         processed = batch_result.value
         analysis_result = api.get_entry_statistics(entries)
