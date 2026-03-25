@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 from pathlib import Path
-from typing import Annotated, Self
+from typing import Self
 
 from flext_core._models.domain_event import FlextModelsDomainEvent
 from pydantic import Field
 
-from flext_ldif import FlextLdifModelsBases, FlextLdifModelsSettings, c
+from flext_ldif import FlextLdifModelsSettings, c
+from flext_ldif._models.base import FlextLdifModelsBases
 
 _DomainEventBase = FlextModelsDomainEvent.Entry
 
@@ -55,10 +56,9 @@ class FlextLdifModelsEvents:
         filter_operation: str
         entries_before: int
         entries_after: int
-        filter_criteria: Annotated[
-            MutableSequence[FlextLdifModelsSettings.FilterCriteria],
-            Field(default_factory=_filter_criteria_factory),
-        ]
+        filter_criteria: MutableSequence[FlextLdifModelsSettings.FilterCriteria] = (
+            Field(default_factory=_filter_criteria_factory)
+        )
         filter_duration_ms: float = 0.0
 
     class ParseEvent(_DomainEventBase):
@@ -140,7 +140,7 @@ class FlextLdifModelsEvents:
     class CategoryEvent(_DomainEventBase):
         category_operation: str
         entries_categorized: int = 0
-        categories_created: Annotated[MutableSequence[str], Field(default_factory=list)]
+        categories_created: MutableSequence[str] = Field(default_factory=list)
         categorization_duration_ms: float = 0.0
 
     class AclEvent(_DomainEventBase):

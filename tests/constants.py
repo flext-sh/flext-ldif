@@ -1667,7 +1667,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     if not isinstance(attrs_raw, dict):
                         msg = "Entry data must include dict 'attributes'"
                         raise AssertionError(msg)
-                    normalized_attrs: MutableMapping[str, str | MutableSequence[str]] = {}
+                    normalized_attrs: MutableMapping[
+                        str, str | MutableSequence[str]
+                    ] = {}
                     for attr_name_raw, attr_value_raw in attrs_raw.items():
                         if isinstance(attr_value_raw, str):
                             normalized_attrs[attr_name_raw] = attr_value_raw

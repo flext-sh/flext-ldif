@@ -1458,39 +1458,37 @@ class FlextLdifModelsSettings:
         output_file_mapping: Annotated[
             MutableMapping[str, str],
             Field(
-                default_factory=lambda: {
-                    "schema": "00-schema.ldif",
-                    "hierarchy": "01-hierarchy.ldif",
-                    "users": "02-users.ldif",
-                    "groups": "03-groups.ldif",
-                    "acl": "04-acl.ldif",
-                    "data": "05-data.ldif",
-                    "rejected": "06-rejected.ldif",
-                },
                 description="Mapping of category names to output filenames",
             ),
-        ]
+        ] = Field(
+            default_factory=lambda: {
+                "schema": "00-schema.ldif",
+                "hierarchy": "01-hierarchy.ldif",
+                "users": "02-users.ldif",
+                "groups": "03-groups.ldif",
+                "acl": "04-acl.ldif",
+                "data": "05-data.ldif",
+                "rejected": "06-rejected.ldif",
+            }
+        )
         hierarchy_objectclasses: Annotated[
             MutableSequence[str],
             Field(
-                default_factory=list,
                 description="ObjectClasses for hierarchy entries (01-hierarchy.ldif)",
             ),
-        ]
+        ] = Field(default_factory=list)
         user_objectclasses: Annotated[
             MutableSequence[str],
             Field(
-                default_factory=list,
                 description="ObjectClasses for user entries (02-users.ldif)",
             ),
-        ]
+        ] = Field(default_factory=list)
         group_objectclasses: Annotated[
             MutableSequence[str],
             Field(
-                default_factory=list,
                 description="ObjectClasses for group entries (03-groups.ldif)",
             ),
-        ]
+        ] = Field(default_factory=list)
         attribute_whitelist: Annotated[
             MutableSequence[str] | None,
             Field(
@@ -1539,8 +1537,8 @@ class FlextLdifModelsSettings:
         ]
         header_data: Annotated[
             MutableMapping[str, t.Scalar],
-            Field(default_factory=dict, description="Data to pass to header template"),
-        ]
+            Field(description="Data to pass to header template"),
+        ] = Field(default_factory=dict)
 
     class ParseFormatOptions(FlextLdifModelsBases.Base):
         """Formatting options for LDIF parsing (VIEW MODEL).

@@ -9,7 +9,7 @@ Provides OUD-specific quirks for schema, ACL, and entry processing.
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from typing import override
 
 from flext_core import FlextLogger, r, u as core_u
@@ -1330,20 +1330,19 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         original_entry_dict = dict(entry_dict)
         entry_attrs: MutableMapping[str, MutableSequence[str]] = {}
         for k, v in entry_dict.items():
-            if isinstance(v, list):
-                values: MutableSequence[str] = []
-                for item in v:
-                    if isinstance(item, bytes):
-                        values.append(item.decode("utf-8"))
-                    else:
-                        values.append(str(item))
-                entry_attrs[str(k)] = values
-            elif isinstance(v, bytes):
-                entry_attrs[str(k)] = [v.decode("utf-8")]
-            elif isinstance(v, str):
-                entry_attrs[str(k)] = [v]
-            else:
-                entry_attrs[str(k)] = [str(v)]
+            match v:
+                case list():
+                    values: Sequence[str] = [
+                        item.decode("utf-8") if isinstance(item, bytes) else str(item)
+                        for item in v
+                    ]
+                    entry_attrs[str(k)] = values
+                case bytes():
+                    entry_attrs[str(k)] = [v.decode("utf-8")]
+                case str():
+                    entry_attrs[str(k)] = [v]
+                case _:
+                    entry_attrs[str(k)] = [str(v)]
         result = self.parse_entry(dn, entry_attrs)
         if result.is_success:
             entry = result.value

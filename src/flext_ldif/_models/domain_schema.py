@@ -5,7 +5,8 @@ from typing import Annotated
 
 from pydantic import Field
 
-from flext_ldif import FlextLdifModelsBases, c
+from flext_ldif import c
+from flext_ldif._models.base import FlextLdifModelsBases
 
 
 class FlextLdifModelsDomainSchema:
@@ -25,10 +26,9 @@ class FlextLdifModelsDomainSchema:
         naming_contexts: Annotated[
             MutableSequence[str],
             Field(
-                default_factory=list,
                 description="Naming contexts to discover schema from",
             ),
-        ]
+        ] = Field(default_factory=list)
         include_operational: Annotated[
             bool,
             Field(

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from typing import TypeIs
 
 from flext_core import FlextLogger, r, u
@@ -592,12 +592,10 @@ class FlextLdifUtilitiesACL:
             elif u.is_primitive(raw_default):
                 default_value = raw_default
             elif isinstance(raw_default, list):
-                normalized_list: MutableSequence[t.Scalar] = []
-                for item in raw_default:
-                    if isinstance(item, t.SCALAR_TYPES):
-                        normalized_list.append(item)
-                    else:
-                        normalized_list.append(str(item))
+                normalized_list: Sequence[t.Scalar] = [
+                    item if isinstance(item, t.SCALAR_TYPES) else str(item)
+                    for item in raw_default
+                ]
                 default_value = normalized_list
             elif isinstance(raw_default, Mapping):
                 normalized_mapping: MutableMapping[
@@ -609,12 +607,12 @@ class FlextLdifUtilitiesACL:
                         normalized_mapping[key] = item
                         continue
                     if isinstance(item, list):
-                        nested_list: MutableSequence[t.Scalar] = []
-                        for nested_item in item:
-                            if isinstance(nested_item, t.SCALAR_TYPES):
-                                nested_list.append(nested_item)
-                            else:
-                                nested_list.append(str(nested_item))
+                        nested_list: Sequence[t.Scalar] = [
+                            nested_item
+                            if isinstance(nested_item, t.SCALAR_TYPES)
+                            else str(nested_item)
+                            for nested_item in item
+                        ]
                         normalized_mapping[key] = nested_list
                         continue
                     normalized_mapping[key] = str(item)

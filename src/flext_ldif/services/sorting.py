@@ -26,7 +26,7 @@ class FlextLdifSorting(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
         """Create a new sorting service instance for builder pattern."""
         return cls()
 
-    entries: Annotated[MutableSequence[m.Ldif.Entry], Field(default_factory=list)]
+    entries: MutableSequence[m.Ldif.Entry] = Field(default_factory=list)
     sort_target: Annotated[str, Field()] = "entries"
     sort_by: Annotated[str, Field()] = "hierarchy"
     custom_predicate: Annotated[
@@ -36,10 +36,9 @@ class FlextLdifSorting(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
     sort_attributes: Annotated[bool, Field()] = False
     attribute_order: Annotated[MutableSequence[str] | None, Field()] = None
     sort_acl: Annotated[bool, Field()] = False
-    acl_attributes: Annotated[
-        MutableSequence[str],
-        Field(default_factory=lambda: list(c.Ldif.DEFAULT_ACL_ATTRIBUTES)),
-    ]
+    acl_attributes: MutableSequence[str] = Field(
+        default_factory=lambda: list(c.Ldif.DEFAULT_ACL_ATTRIBUTES),
+    )
     traversal: Annotated[str, Field()] = "depth-first"
 
     @classmethod

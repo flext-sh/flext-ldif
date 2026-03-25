@@ -20,9 +20,18 @@ if TYPE_CHECKING:
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdifServersOidAcl": ["flext_ldif.servers._oid.acl", "FlextLdifServersOidAcl"],
-    "FlextLdifServersOidConstants": ["flext_ldif.servers._oid.constants", "FlextLdifServersOidConstants"],
-    "FlextLdifServersOidEntry": ["flext_ldif.servers._oid.entry", "FlextLdifServersOidEntry"],
-    "FlextLdifServersOidSchema": ["flext_ldif.servers._oid.schema", "FlextLdifServersOidSchema"],
+    "FlextLdifServersOidConstants": [
+        "flext_ldif.servers._oid.constants",
+        "FlextLdifServersOidConstants",
+    ],
+    "FlextLdifServersOidEntry": [
+        "flext_ldif.servers._oid.entry",
+        "FlextLdifServersOidEntry",
+    ],
+    "FlextLdifServersOidSchema": [
+        "flext_ldif.servers._oid.schema",
+        "FlextLdifServersOidSchema",
+    ],
     "c": ["flext_ldif.servers._oid.constants", "c"],
     "logger": ["flext_ldif.servers._oid.schema", "logger"],
 }

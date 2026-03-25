@@ -7,7 +7,6 @@ import time
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 from typing import (
-    Annotated,
     ClassVar,
     Final,
     Literal,
@@ -145,10 +144,7 @@ class FlextLdifConversion(
         """Default DN registry factory function."""
         return m.Ldif.DnRegistry()
 
-    dn_registry: Annotated[
-        m.Ldif.DnRegistry,
-        Field(default_factory=_default_dn_registry),
-    ]
+    dn_registry: m.Ldif.DnRegistry = Field(default_factory=_default_dn_registry)
 
     def __new__(cls) -> Self:
         """Create service instance with matching signature for type checker."""
@@ -1673,12 +1669,10 @@ class FlextLdifConversion(
         if u.is_primitive(value):
             return value
         if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-            converted_list: MutableSequence[t.Scalar] = []
-            for item in value:
-                if isinstance(item, t.SCALAR_TYPES):
-                    converted_list.append(item)
-                else:
-                    converted_list.append(str(item))
+            converted_list: Sequence[t.Scalar] = [
+                item if isinstance(item, t.SCALAR_TYPES) else str(item)
+                for item in value
+            ]
             return converted_list
         if isinstance(value, Mapping):
             typed_value: t.MutableContainerMapping = {}

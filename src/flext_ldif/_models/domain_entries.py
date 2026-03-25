@@ -36,13 +36,13 @@ from pydantic import (
 )
 
 from flext_ldif import (
-    FlextLdifModelsBases,
     FlextLdifModelsMetadata,
     FlextLdifModelsSettings,
     FlextLdifShared,
     c,
     t,
 )
+from flext_ldif._models.base import FlextLdifModelsBases
 
 
 class FlextLdifModelsDomainsEntries:
