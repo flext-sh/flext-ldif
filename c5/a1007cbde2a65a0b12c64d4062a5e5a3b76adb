@@ -1,0 +1,79 @@
+tests/unit/quirks/servers/test_novell_quirks.py
+  8138edf6bc0fab47 9,126
+tests/unit/constants/test_acl_registry.py
+  8138edf6bc0fab47 56,62,68,74
+tests/integration/test_real_ldap_export.py
+  8138edf6bc0fab47 27
+tests/integration/conftest.py
+  8138edf6bc0fab47 27-29
+tests/unit/utilities/test_utilities.py
+  8138edf6bc0fab47 95
+tests/unit/services/test_quirks_standardization.py
+  8138edf6bc0fab47 141-142
+tests/unit/services/test_writer_dn_normalization.py
+  8138edf6bc0fab47 89,176
+tests/integration/test_zero_data_loss_schema.py
+  8138edf6bc0fab47 556,596
+tests/test_factory.py
+  8138edf6bc0fab47 36-39,54
+tests/unit/quirks/servers/test_schema_transformer.py
+  8138edf6bc0fab47 9,193,197,233,237
+tests/unit/_utilities/server/test_server_utilities.py
+  8138edf6bc0fab47 5-6
+tests/unit/services/test_schema_service.py
+  8138edf6bc0fab47 26,90,96,102,570-574
+tests/test_helpers.py
+  8138edf6bc0fab47 640,643-644,662-666,685,704-705
+tests/support/validators.py
+  8138edf6bc0fab47 56
+tests/unit/quirks/servers/test_ds389_quirks.py
+  8138edf6bc0fab47 9,153
+tests/unit/_utilities/parser/test_parser_utilities.py
+  8138edf6bc0fab47 4-5
+tests/support/real_services.py
+  8138edf6bc0fab47 11,22-30,151,188,256,271,282,291,321,339
+tests/integration/test_systematic_fixture_coverage.py
+  8138edf6bc0fab47 50-51,152
+tests/integration/test_real_ldap_roundtrip.py
+  8138edf6bc0fab47 28
+tests/unit/_utilities/oid/test_oid_utilities.py
+  8138edf6bc0fab47 7
+tests/integration/test_real_ldap_import.py
+  8138edf6bc0fab47 30
+tests/unit/quirks/servers/test_edge_cases.py
+  8138edf6bc0fab47 120,144,172
+tests/unit/protocols/test_protocols.py
+  8138edf6bc0fab47 279,344
+tests/unit/test_typings.py
+  8138edf6bc0fab47 81,87
+tests/integration/test_real_ldap_crud.py
+  8138edf6bc0fab47 25
+tests/support/conftest_factory.py
+  8138edf6bc0fab47 34,47,437,441,445,523
+tests/unit/utilities/test_utilities_comprehensive.py
+  8138edf6bc0fab47 57,59
+tests/protocols.py
+  8138edf6bc0fab47 12
+tests/integration/test_simple_ldap.py
+  8138edf6bc0fab47 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.19",
+  "base_commit_sha": "c5a1007cbde2a65a0b12c64d4062a5e5a3b76adb",
+  "prompts": {
+    "8138edf6bc0fab47": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "458a9205-8e72-4758-9c6d-2636f729252c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 122,
+      "total_deletions": 108,
+      "accepted_lines": 99,
+      "overriden_lines": 0
+    }
+  }
+}
