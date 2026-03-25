@@ -18,7 +18,6 @@ from flext_ldif import (
     FlextLdifServersOid,
     FlextLdifServersOud,
     FlextLdifServersRfc,
-    t,
 )
 from tests import c, s
 

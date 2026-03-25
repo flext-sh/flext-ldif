@@ -24,8 +24,8 @@ from flext_ldif import (
     FlextLdifServersOid,
     FlextLdifServersOud,
 )
+from tests import u
 
-from tests import t, u
 
 class TestSchemaDeviationsSyntaxQuotes:
     """Test syntax OID quotation tracking (OID uses quotes, OUD/RFC don't)."""

@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import FlextLdif, t, u
+from flext_ldif import FlextLdif
 
 
 class TestSystematicFixtureCoverage:

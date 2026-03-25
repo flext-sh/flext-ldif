@@ -664,7 +664,7 @@ class TestsFlextLdifFixtures(tt):
         write_result = api.write(entries)
         ldif_content = _unwrap_result(write_result, msg=msg)
         roundtrip_result = api.parse_ldif(ldif_content)
-        return _unwrap_result(roundtrip_result, msg=msg)
+        return list(_unwrap_result(roundtrip_result, msg=msg))
 
     @staticmethod
     def load_fixture_entries(
@@ -683,7 +683,7 @@ class TestsFlextLdifFixtures(tt):
         """
         api = FlextLdif.get_instance()
         result = api.parse_ldif(fixture_path)
-        return _unwrap_result(result, msg=msg)
+        return list(_unwrap_result(result, msg=msg))
 
     @staticmethod
     def load_fixture_and_validate_structure(

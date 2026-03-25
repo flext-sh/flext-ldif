@@ -53,7 +53,9 @@ class TestValidators:
     Validation = u
 
     @staticmethod
-    def validate_ldif_entry(entry: p.Entry) -> Mapping[str, bool | Mapping[str, t.StrSequence] | dict[str, t.StrSequence]]:
+    def validate_ldif_entry(
+        entry: p.Entry,
+    ) -> Mapping[str, bool | Mapping[str, t.StrSequence] | dict[str, t.StrSequence]]:
         """Validate a real LDIF entry t.NormalizedValue.
 
         Args:

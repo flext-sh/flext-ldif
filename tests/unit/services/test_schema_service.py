@@ -93,13 +93,23 @@ class TestSchemaServiceBuilder:
 
     def test_build_returns_self(self) -> None:
         """Test build() returns configured instance."""
-        service = FlextLdifSchema.builder().with_server_type(c.Ldif.ServerTypes("oid")).build_schema()
+        service = (
+            FlextLdifSchema
+            .builder()
+            .with_server_type(c.Ldif.ServerTypes("oid"))
+            .build_schema()
+        )
         tm.that(service, is_=FlextLdifSchema)
         tm.that(service.server_type, eq="oid")
 
     def test_fluent_builder_complete_chain(self) -> None:
         """Test complete fluent builder chain."""
-        service = FlextLdifSchema.builder().with_server_type(c.Ldif.ServerTypes("oud")).build_schema()
+        service = (
+            FlextLdifSchema
+            .builder()
+            .with_server_type(c.Ldif.ServerTypes("oud"))
+            .build_schema()
+        )
         tm.that(service.server_type, eq="oud")
         result = service.execute()
         tm.that(result.is_success, eq=True)

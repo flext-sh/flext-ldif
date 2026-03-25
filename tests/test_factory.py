@@ -32,11 +32,11 @@ class FlextLdifTestFactory:
                 "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
             }
 
-        # Direct instantiation for test data to avoid Generic Result inference issues in linter
+        # Use model_validate to avoid LaxStr type incompatibility with pyrefly
         mutable_attrs: dict[str, list[str]] = {
             k: list(v) for k, v in attributes.items()
         }
-        attrs = m.Ldif.Attributes(attributes=mutable_attrs)
+        attrs = m.Ldif.Attributes.model_validate({"attributes": mutable_attrs})
 
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
