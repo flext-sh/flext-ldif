@@ -1,0 +1,107 @@
+tests/integration/test_categorization_real_data.py
+  8138edf6bc0fab47 16,26,61,100,164,274-275,285,359
+src/flext_ldif/_utilities/metadata.py
+  8138edf6bc0fab47 673-674,768,951
+tests/integration/test_dn_case_handling.py
+  8138edf6bc0fab47 13,21-22
+src/flext_ldif/_utilities/dispatch.py
+  8138edf6bc0fab47 300
+src/flext_ldif/_utilities/object_class.py
+  8138edf6bc0fab47 51,61,88,93,100
+tests/integration/test_simple_ldap.py
+  8138edf6bc0fab47 8
+examples/01_basic_usage.py
+  8138edf6bc0fab47 24,41,44,58-59,66,69,95,103,110,121,124,129-131,134,137,139,157,160,162,168,171,175-176
+tests/integration/test_quirks_transformations.py
+  8138edf6bc0fab47 70,88,135,153
+tests/integration/test_real_ldap_crud.py
+  8138edf6bc0fab47 21,25,110,135,143,188,190
+src/flext_ldif/_utilities/dn.py
+  8138edf6bc0fab47 120-121
+examples/04_server_migration.py
+  8138edf6bc0fab47 49,51,68,108,138-139,141,145
+examples/05_schema_operations.py
+  8138edf6bc0fab47 19,33,36,129,148,154,189,215-218,227-228,270,272,274,282,299,321,337,345-346,377,402,409,411,419,495,510,522,524
+src/flext_ldif/_models/domain_entries.py
+  8138edf6bc0fab47 773-774,776-777,779,2629-2630,2632-2633,2635
+tests/constants.py
+  8138edf6bc0fab47 1823,1887-1888
+tests/integration/test_real_ldap_import.py
+  8138edf6bc0fab47 26
+src/flext_ldif/_utilities/result.py
+  8138edf6bc0fab47 90,108-109,111-113,115
+examples/07_advanced_processing.py
+  8138edf6bc0fab47 9,28,32,46,58,75,118,163,174
+src/flext_ldif/_utilities/filters.py
+  8138edf6bc0fab47 8,19,76,97,113,141,165,199,240,282,310,336,354,363
+examples/06_acl_processing.py
+  8138edf6bc0fab47 17,26,45,63-69,84,129,147-153
+tests/integration/test_real_ldap_roundtrip.py
+  8138edf6bc0fab47 24
+tests/unit/quirks/servers/test_relaxed_quirks.py
+  8138edf6bc0fab47 274,419,439
+examples/03_validation_analysis.py
+  8138edf6bc0fab47 18,34,46
+tests/unit/quirks/servers/test_ds389_quirks.py
+  8138edf6bc0fab47 372,426,438
+src/flext_ldif/_utilities/transformers.py
+  8138edf6bc0fab47 6,16,363,396
+src/flext_ldif/services/dn.py
+  8138edf6bc0fab47 7,48-49,52,59,365-368
+tests/support/conftest_factory.py
+  8138edf6bc0fab47 27
+src/flext_ldif/_utilities/pipeline.py
+  8138edf6bc0fab47 6,19
+src/flext_ldif/_utilities/functional.py
+  8138edf6bc0fab47 40
+tests/unit/quirks/servers/test_apache_quirks.py
+  8138edf6bc0fab47 9,127,304,324,365,391,407,480,488,502,510,524,532,561,578,590,609,628,668
+src/flext_ldif/_utilities/writers.py
+  8138edf6bc0fab47 145
+src/flext_ldif/_models/conversion.py
+  8138edf6bc0fab47 101
+tests/integration/test_api_integration.py
+  8138edf6bc0fab47 184-185
+src/flext_ldif/utilities.py
+  8138edf6bc0fab47 75-81
+tests/integration/test_cross_quirk_conversion.py
+  8138edf6bc0fab47 60,73,93,107,139,154,201,207,293,299
+examples/02_entry_operations.py
+  8138edf6bc0fab47 18,29,59,63,71,74-75,94,96
+src/flext_ldif/constants.py
+  8138edf6bc0fab47 558,819-826
+tests/integration/conftest.py
+  8138edf6bc0fab47 27-29
+src/flext_ldif/_utilities/processing.py
+  8138edf6bc0fab47 429,435,438,450
+src/flext_ldif/servers/openldap.py
+  8138edf6bc0fab47 453-460,481
+src/flext_ldif/services/parser.py
+  8138edf6bc0fab47 5,111,113,115-119
+examples/08_complete_workflow.py
+  8138edf6bc0fab47 18,29,53,59,84,103,115,128,150
+tests/integration/test_real_ldap_export.py
+  8138edf6bc0fab47 23
+tests/integration/test_oud_integration.py
+  8138edf6bc0fab47 21,58,85,285
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.19",
+  "base_commit_sha": "f06cfe55b2473926daf602e5ce2b95c7fa364667",
+  "prompts": {
+    "8138edf6bc0fab47": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "458a9205-8e72-4758-9c6d-2636f729252c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 446,
+      "total_deletions": 410,
+      "accepted_lines": 308,
+      "overriden_lines": 1
+    }
+  }
+}
