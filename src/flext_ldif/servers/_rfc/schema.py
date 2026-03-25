@@ -474,9 +474,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         ],
     ) -> m.Ldif.QuirkMetadata:
         """Build objectClass metadata with extensions."""
-        server_type: Literal["rfc"] = "rfc"
         metadata = m.Ldif.QuirkMetadata(
-            quirk_type=server_type,
+            quirk_type=c.Ldif.ServerTypes.RFC,
             extensions=m.Ldif.DynamicMetadata.model_validate(metadata_extensions)
             if metadata_extensions
             else m.Ldif.DynamicMetadata(),

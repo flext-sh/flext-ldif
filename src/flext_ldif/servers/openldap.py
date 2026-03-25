@@ -120,7 +120,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         ACL_ATTRS_PATTERN: ClassVar[str] = (
             "attrs?\\s*=\\s*([^,\\s]+(?:\\s*,\\s*[^,\\s]+)*)"
         )
-        ACL_SUBJECT_TYPE_WHO: ClassVar[c.Ldif.AclSubjectTypeLiteral] = "all"
+        ACL_SUBJECT_TYPE_WHO: ClassVar[c.Ldif.AclSubjectType] = c.Ldif.AclSubjectType.ALL
         ACL_INDEX_PREFIX_PATTERN: ClassVar[str] = "^(\\{\\d+\\})?\\s*to\\s+"
         ACL_START_PREFIX: ClassVar[str] = "to"
         ACL_ATTRS_SEPARATOR: ClassVar[str] = ","
@@ -256,7 +256,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     "attributes": attributes,
                 }),
                 subject=m.Ldif.AclSubject(
-                    subject_type="all",
+                    subject_type=c.Ldif.AclSubjectType.ALL,
                     subject_value=subject_value,
                 ),
                 permissions=m.Ldif.AclPermissions(

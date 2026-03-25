@@ -79,10 +79,10 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
             catch=(TypeError, AttributeError),
         ).map_error(lambda e: f"Failed to check RFC 4517 standard: {e}")
 
-    def list_common_syntaxes(self) -> r[MutableSequence[str]]:
+    def list_common_syntaxes(self) -> r[list[str]]:
         """List all supported RFC 4517 syntax OIDs."""
         return u.try_(
-            lambda: sorted(self._common_syntaxes),
+            lambda: list(sorted(self._common_syntaxes)),
             catch=(TypeError, AttributeError),
         ).map_error(lambda e: f"Failed to list common syntaxes: {e}")
 
@@ -125,7 +125,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
         if oid_valid.is_failure:
             return r[m.Ldif.Syntax].fail(f"Invalid OID format: {oid}")
         try:
-            normalized_server_type: c.Ldif.ServerTypeLiteral = (
+            normalized_server_type: c.Ldif.ServerTypes = (
                 u.Ldif.normalize_server_type(server_type)
             )
             syntax = m.Ldif.Syntax.resolve_syntax_oid(

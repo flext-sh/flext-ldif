@@ -236,7 +236,7 @@ class FlextLdifUtilitiesTransformers:
         def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
             """Convert boolean attributes in an entry."""
             if item.attributes is None:
-                return r[str].ok(item)
+                return r[m.Ldif.Entry].ok(item)
             attrs_dict = item.attributes.attributes
             boolean_attrs = {
                 "userpassword",

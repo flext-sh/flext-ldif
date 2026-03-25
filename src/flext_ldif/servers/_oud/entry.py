@@ -767,7 +767,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             for attr_name in entry_attrs:
                 original_attribute_case[attr_name.lower()] = attr_name
         metadata_config = m.Ldif.EntryParseMetadataConfig(
-            quirk_type="oud",
+            quirk_type=c.Ldif.ServerTypes.OUD,
             original_entry_dn=entry_dn,
             cleaned_dn=entry.dn.value if entry.dn else entry_dn,
             original_dn_line=f"dn: {entry_dn}",
@@ -1331,7 +1331,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         for k, v in entry_dict.items():
             match v:
                 case list():
-                    values: Sequence[str] = [
+                    values: MutableSequence[str] = [
                         item.decode("utf-8") if isinstance(item, bytes) else str(item)
                         for item in v
                     ]

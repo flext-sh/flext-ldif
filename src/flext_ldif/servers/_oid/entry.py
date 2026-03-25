@@ -564,7 +564,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 target_name=attr_name,
                 original_values=attr_values,
                 target_values=attr_values,
-                transformation_type="renamed",
+                transformation_type=c.Ldif.TransformationType.ATTRIBUTE_RENAMED,
                 reason=f"OID ACL ({original_name}) → RFC 2256 (aci)",
             )
             for attr_name, attr_values in converted_attributes.items()

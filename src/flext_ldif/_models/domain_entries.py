@@ -94,7 +94,7 @@ class FlextLdifModelsDomainsEntries:
                 default_factory=FlextLdifModelsMetadata.EntryMetadata,
                 description="Quirk-specific metadata for preserving original format",
             ),
-        ]
+        ] = Field(default_factory=FlextLdifModelsMetadata.EntryMetadata)
         _DN_COMPONENT_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
             r"^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\\\,]|\\\\.)*$",
             re.IGNORECASE,
@@ -3498,7 +3498,7 @@ class FlextLdifModelsDomainsEntries:
                 default_factory=list,
                 description="Attributes to exclude from output",
             ),
-        ]
+        ] = Field(default_factory=list)
         sort_entries: Annotated[
             bool,
             Field(description="Whether to sort entries in output"),
@@ -3641,42 +3641,42 @@ class FlextLdifModelsDomainsEntries:
                 default_factory=FlextLdifModelsMetadata.DynamicMetadata,
                 description="Extensible metadata storage for quirk-specific data (server-injected validation rules, unconverted attributes, etc.)",
             ),
-        ]
+        ] = Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
         rfc_violations: Annotated[
             MutableSequence[str],
             Field(
                 default_factory=list,
                 description="RFC violations detected (e.g., 'RFC 2849 §2: DN required')",
             ),
-        ]
+        ] = Field(default_factory=list)
         rfc_warnings: Annotated[
             MutableSequence[str],
             Field(
                 default_factory=list,
                 description="Non-fatal RFC warnings (e.g., unusual but valid formatting)",
             ),
-        ]
+        ] = Field(default_factory=list)
         conversion_notes: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
                 default_factory=FlextLdifModelsMetadata.DynamicMetadata,
                 description="Map of conversion operation name → human-readable description",
             ),
-        ]
+        ] = Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
         attribute_transformations: Annotated[
             MutableMapping[str, FlextLdifModelsDomainsEntries.AttributeTransformation],
             Field(
                 default_factory=dict,
                 description="Detailed transformation records keyed by original attribute name",
             ),
-        ]
+        ] = Field(default_factory=dict)
         server_specific_data: Annotated[
             FlextLdifModelsMetadata.EntryMetadata,
             Field(
                 default_factory=FlextLdifModelsMetadata.EntryMetadata,
                 description="Preservation of server-proprietary data for round-trip conversions",
             ),
-        ]
+        ] = Field(default_factory=FlextLdifModelsMetadata.EntryMetadata)
         original_server_type: Annotated[
             c.Ldif.ServerTypeLiteral | None,
             Field(
@@ -3695,14 +3695,14 @@ class FlextLdifModelsDomainsEntries:
                 default_factory=list,
                 description="Access Control Lists extracted from entry attributes during parsing",
             ),
-        ]
+        ] = Field(default_factory=list)
         objectclasses: Annotated[
             MutableSequence[str],
             Field(
                 default_factory=list,
                 description="ObjectClass definitions for schema validation (not RFC LDIF data)",
             ),
-        ]
+        ] = Field(default_factory=list)
         validation_results: Annotated[
             FlextLdifModelsDomainsEntries.ValidationMetadata | None,
             Field(
@@ -3727,7 +3727,7 @@ class FlextLdifModelsDomainsEntries:
                 default_factory=FlextLdifModelsMetadata.DynamicMetadata,
                 description="Attributes removed during conversion (was entry_metadata.removed_attributes_with_values)",
             ),
-        ]
+        ] = Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
         original_format_details: Annotated[
             FlextLdifModelsDomainsEntries.FormatDetails | None,
             Field(
@@ -3744,49 +3744,49 @@ class FlextLdifModelsDomainsEntries:
                 default_factory=list,
                 description="Attributes soft-deleted during conversion (can be restored). Different from removed_attributes: these are intentionally hidden for target server but preserved for reverse conversion.",
             ),
-        ]
+        ] = Field(default_factory=list)
         original_attribute_case: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
                 default_factory=FlextLdifModelsMetadata.DynamicMetadata,
                 description="Original case of attribute names: {'objectclass': 'objectClass', 'cn': 'CN'}. Used to restore original case during reverse conversion.",
             ),
-        ]
+        ] = Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
         schema_quirks_applied: Annotated[
             MutableSequence[str],
             Field(
                 default_factory=list,
                 description="List of schema quirks applied during parsing: ['matching_rule_normalization', 'syntax_oid_conversion', 'schema_dn_quirk']",
             ),
-        ]
+        ] = Field(default_factory=list)
         boolean_conversions: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
                 default_factory=FlextLdifModelsMetadata.DynamicMetadata,
                 description="Boolean conversion tracking: {'orcldasisenabled': {'original': '1', 'converted': 'TRUE', 'format': 'OID->RFC'}}",
             ),
-        ]
+        ] = Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
         minimal_differences: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
                 default_factory=FlextLdifModelsMetadata.DynamicMetadata,
                 description="Complete minimal differences tracking for zero data loss: {'dn': {'has_differences': True, 'original': 'cn=test, dc=example', 'converted': 'cn=test,dc=example', 'differences': [...], 'spacing_changes': {...}, 'case_changes': [...], 'punctuation_changes': [...], 'original_length': 20, 'converted_length': 19}, 'attribute_cn': {'has_differences': False, ...}, 'schema_attr_uid': {'has_differences': True, 'original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", 'converted': 'attributeTypes: ( 0.9.2342... NAME uid SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )', 'differences': [...], 'syntax_quotes_removed': True, 'trailing_spaces_removed': True, ...}}",
             ),
-        ]
+        ] = Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
         original_strings: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             Field(
                 default_factory=FlextLdifModelsMetadata.DynamicMetadata,
                 description="Complete preservation of original strings before ANY conversion: {'dn_original': 'cn=test, dc=example;', 'attribute_cn_original': 'CN', 'schema_attr_uid_original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", 'acl_original': 'orclaci: { ... }', 'entry_original_ldif': 'dn: cn=test\\ncn: test\\n'}",
             ),
-        ]
+        ] = Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
         conversion_history: Annotated[
             MutableSequence[MutableMapping[str, str]],
             Field(
                 default_factory=list,
                 description="Complete conversion history for audit trail: [{'step': 'parse_oid_entry', 'timestamp': '2025-01-01T00:00:00Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'oid', 'operation': 'parse'}, {'step': 'normalize_to_rfc', 'timestamp': '2025-01-01T00:00:01Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'rfc', 'operation': 'normalize'}, ...]",
             ),
-        ]
+        ] = Field(default_factory=list)
 
         @field_validator("quirk_type", mode="before")
         @classmethod

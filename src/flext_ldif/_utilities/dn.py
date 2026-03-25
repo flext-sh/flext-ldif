@@ -311,7 +311,7 @@ class FlextLdifUtilitiesDN:
             _ = metadata.track_dn_transformation(
                 original_dn=config.original_dn,
                 transformed_dn=config.transformed_dn,
-                transformation_type="basedn_transform",
+                transformation_type=c.Ldif.TransformationType.DN_NORMALIZED,
             )
 
         def track_attr(attr_name: str) -> None:
@@ -319,7 +319,7 @@ class FlextLdifUtilitiesDN:
             _ = metadata.track_attribute_transformation(
                 original_name=attr_name,
                 new_name=attr_name,
-                transformation_type="modified",
+                transformation_type=c.Ldif.TransformationType.MODIFIED,
                 original_values=list(config.original_attrs.get(attr_name, [])),
                 new_values=config.transformed_attrs[attr_name],
                 reason=f"BaseDN transformation: {config.source_dn} → {config.target_dn}",

@@ -23,6 +23,8 @@ class FlextLdifServersOudUtilities:
             targetattr_pattern=constants.ACL_TARGETATTR_PATTERN,
             allow_deny_pattern=constants.ACL_ALLOW_DENY_PATTERN,
             bind_patterns=dict(constants.ACL_BIND_PATTERNS),
+            permission_map={},
+            special_subjects={},
             extra_patterns={
                 "targetscope": constants.ACL_TARGETSCOPE_PATTERN,
                 "targattrfilters": constants.ACL_TARGATTRFILTERS_PATTERN,

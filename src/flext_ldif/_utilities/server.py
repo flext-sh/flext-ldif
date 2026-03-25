@@ -279,25 +279,6 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def normalize_server_type(
         server_type: str,
-    ) -> Literal[
-        "oid",
-        "oud",
-        "openldap",
-        "openldap1",
-        "openldap2",
-        "ad",
-        "apache",
-        "ds389",
-        "rfc",
-        "relaxed",
-        "novell",
-        "ibm_tivoli",
-        "generic",
-    ]:
-        """Normalize server type string to canonical ServerTypes enum value."""
-        normalized = FlextLdifShared.normalize_server_type(server_type).value
-        if FlextLdifUtilitiesServer._is_valid_server_type_literal(normalized):
-            return normalized
-        valid_types = [s.value for s in c.Ldif.ServerTypes.__members__.values()]
-        msg = f"Invalid server type: {server_type}. Valid types: {valid_types}"
-        raise ValueError(msg)
+    ) -> c.Ldif.ServerTypes:
+        """Normalize server type string to canonical ServerTypes enum member."""
+        return FlextLdifShared.normalize_server_type(server_type)

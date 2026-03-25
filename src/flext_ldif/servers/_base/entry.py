@@ -283,7 +283,7 @@ class FlextLdifServersBaseEntry(
             )
         else:
             updated_metadata = m.Ldif.QuirkMetadata(
-                quirk_type="rfc",
+                quirk_type=c.Ldif.ServerTypes.RFC,
                 write_options=write_options_typed,
                 extensions=existing_extensions,
             )

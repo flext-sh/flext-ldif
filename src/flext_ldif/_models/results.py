@@ -82,8 +82,8 @@ class FlextLdifModelsResults:
         ]
         file_paths: Annotated[
             FlextLdifModelsCollections.CategoryPaths,
-            Field(),
-        ]
+            Field(default_factory=FlextLdifModelsCollections.CategoryPaths),
+        ] = Field(default_factory=FlextLdifModelsCollections.CategoryPaths)
 
         @overload
         def __getitem__(
@@ -218,11 +218,11 @@ class FlextLdifModelsResults:
         rejection_reasons: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
             Field(default_factory=FlextLdifModelsCollections.DynamicCounts),
-        ]
+        ] = Field(default_factory=FlextLdifModelsCollections.DynamicCounts)
         events: Annotated[
             MutableSequence[FlextLdifModelsResults.EventType],
             Field(default_factory=list),
-        ]
+        ] = Field(default_factory=list)
 
         @computed_field
         def failure_rate(self) -> float:

@@ -45,8 +45,8 @@ class FlextLdifDn(FlextLdifServiceBase[str]):
         Field(description="Enable domain event emission for operations"),
     ] = False
     _last_event: m.Ldif.DnEvent | None = PrivateAttr(default=None)
-    _normalizer_instance: FlextLdifDn.Normalizer | None = PrivateAttr(default=None)
-    _parser_instance: FlextLdifDn.Parser | None = PrivateAttr(default=None)
+    _normalizer_instance: Normalizer | None = PrivateAttr(default=None)
+    _parser_instance: Parser | None = PrivateAttr(default=None)
 
     @property
     def _normalizer(self) -> FlextLdifDn.Normalizer:

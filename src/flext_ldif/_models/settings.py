@@ -1329,7 +1329,7 @@ class FlextLdifModelsSettings:
                 default_factory=frozenset,
                 description="Set of ACL attribute names (e.g., {'orclaci', 'orclentrylevelaci'}). Used to identify ACL attributes.",
             ),
-        ]
+        ] = Field(default_factory=frozenset)
         comment_acl_in_non_acl_phases: Annotated[
             bool,
             Field(
@@ -1348,7 +1348,7 @@ class FlextLdifModelsSettings:
                 default_factory=lambda: ["objectClass"],
                 description="Attributes to write first after DN, in order. Default: ['objectClass']. Remaining attributes sorted alphabetically.",
             ),
-        ]
+        ] = Field(default_factory=lambda: ["objectClass"])
         sort_objectclass_values: Annotated[
             bool,
             Field(
@@ -1391,7 +1391,7 @@ class FlextLdifModelsSettings:
                 default_factory=dict,
                 description="Dictionary of category names to entry counts for statistics summary. Example: {'users': 150, 'groups': 25, 'acl': 42}.",
             ),
-        ]
+        ] = Field(default_factory=dict)
 
     class WriteOutputOptions(FlextModels.ArbitraryTypesModel):
         """Output visibility options for attributes based on their marker status.

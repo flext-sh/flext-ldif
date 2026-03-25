@@ -78,7 +78,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 m.Ldif.CategoryRules.model_validate(categorization_rules),
             )
         else:
-            object.__setattr__(self, "_categorization_rules", m.Ldif.CategoryRules())
+            object.__setattr__(self, "_categorization_rules", m.Ldif.CategoryRules.model_validate({}))
         if isinstance(schema_whitelist_rules, m.Ldif.WhitelistRules):
             object.__setattr__(self, "_schema_whitelist_rules", schema_whitelist_rules)
         elif isinstance(schema_whitelist_rules, dict):
@@ -605,7 +605,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
             dn_obj = m.Ldif.DN(value=normalized_dn)
             return r[m.Ldif.Entry].ok(entry.model_copy(update={"dn": dn_obj}))
 
-        validated: Sequence[m.Ldif.Entry] = [
+        validated: MutableSequence[m.Ldif.Entry] = [
             validation_result.value
             for entry in entries
             if (validation_result := validate_entry(entry)).is_success
@@ -815,7 +815,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         *,
         passed: bool,
         rejection_reason: str | None = None,
-    ) -> Sequence[m.Ldif.Entry]:
+    ) -> MutableSequence[m.Ldif.Entry]:
         """Update metadata for filtered entries using u."""
         return [
             u.Ldif.update_entry_statistics(

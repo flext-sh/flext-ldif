@@ -149,7 +149,7 @@ class FlextLdifModelsCollections:
         categories: Annotated[
             MutableMapping[str, MutableSequence[FlextLdifModelsDomains.Entry]],
             Field(default_factory=dict),
-        ]
+        ] = Field(default_factory=dict)
 
         @override
         def __eq__(self, other: object) -> bool:

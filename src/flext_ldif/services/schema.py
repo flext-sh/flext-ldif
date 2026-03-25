@@ -16,13 +16,13 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
     _registry: FlextLdifServer = PrivateAttr(
         default_factory=FlextLdifServer.get_global_instance,
     )
-    _server_type: c.Ldif.ServerTypeLiteral = PrivateAttr(default="rfc")
+    _server_type: c.Ldif.ServerTypes = PrivateAttr(default=c.Ldif.ServerTypes.RFC)
 
     def __init__(
         self,
         *,
         registry: FlextLdifServer | None = None,
-        server_type: c.Ldif.ServerTypeLiteral = "rfc",
+        server_type: c.Ldif.ServerTypes = c.Ldif.ServerTypes.RFC,
     ) -> None:
         """Initialize schema service with dependency injection."""
         super().__init__()
@@ -39,7 +39,7 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
         return f"FlextLdifSchema[{self._server_type}]"
 
     @property
-    def server_type(self) -> c.Ldif.ServerTypeLiteral:
+    def server_type(self) -> c.Ldif.ServerTypes:
         """Get configured server type."""
         return self._server_type
 
@@ -115,7 +115,7 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             attr_domain = m.Ldif.SchemaAttribute.model_validate(parsed_dict)
             if metadata_extensions and issubclass(metadata_extensions.__class__, dict):
                 attr_domain.metadata = m.Ldif.QuirkMetadata(
-                    quirk_type="rfc",
+                    quirk_type=c.Ldif.ServerTypes.RFC,
                     extensions=m.Ldif.DynamicMetadata.from_dict({}),
                 )
             attr: m.Ldif.SchemaAttribute = attr_domain
@@ -159,7 +159,7 @@ class FlextLdifSchema(s[m.Ldif.SchemaServiceStatus]):
             oc_domain = m.Ldif.SchemaObjectClass.model_validate(oc_dict)
             if metadata_extensions and issubclass(metadata_extensions.__class__, dict):
                 oc_domain.metadata = m.Ldif.QuirkMetadata(
-                    quirk_type="rfc",
+                    quirk_type=c.Ldif.ServerTypes.RFC,
                     extensions=m.Ldif.DynamicMetadata.from_dict({}),
                 )
             oc: m.Ldif.SchemaObjectClass = oc_domain

@@ -301,7 +301,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                         attributes=[],
                     ),
                     subject=m.Ldif.AclSubject(
-                        subject_type="sddl",
+                        subject_type=c.Ldif.AclSubjectType.SDDL,
                         subject_value=decoded_sddl or (raw_value or ""),
                     ),
                     permissions=m.Ldif.AclPermissions(),

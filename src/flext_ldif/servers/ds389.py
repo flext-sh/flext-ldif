@@ -412,7 +412,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                         "attributes": target_attributes,
                     }),
                     subject=m.Ldif.AclSubject(
-                        subject_type="user",
+                        subject_type=c.Ldif.AclSubjectType.USER,
                         subject_value=userdn_matches[0]
                         if userdn_matches
                         else FlextLdifServersDs389.Constants.ACL_ANONYMOUS_SUBJECT,

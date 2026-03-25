@@ -129,15 +129,15 @@ class FlextLdifUtilitiesEvents:
         config: FlextLdifModelsEvents.DnEventConfig,
     ) -> FlextLdifModelsEvents.DnEvent:
         """Create DnEvent with standardized fields from config Model."""
-        return FlextLdifModelsEvents.DnEvent(
-            event_type="ldif.dn",
-            aggregate_id=config.input_dn,
-            dn_operation=config.dn_operation,
-            input_dn=config.input_dn,
-            output_dn=config.output_dn,
-            dn_duration_ms=config.operation_duration_ms,
-            validation_result=config.validation_result,
-        )
+        return FlextLdifModelsEvents.DnEvent.model_validate({
+            "event_type": "ldif.dn",
+            "aggregate_id": config.input_dn,
+            "dn_operation": config.dn_operation,
+            "input_dn": config.input_dn,
+            "output_dn": config.output_dn,
+            "dn_duration_ms": config.operation_duration_ms,
+            "validation_result": config.validation_result,
+        })
 
     @staticmethod
     def create_migration_event(
@@ -166,15 +166,15 @@ class FlextLdifUtilitiesEvents:
     ) -> FlextLdifModelsEvents.SchemaEvent:
         """Create SchemaEvent with standardized fields from config Model."""
         aggregate_id = f"{config.server_type}_schema_{config.schema_operation}"
-        return FlextLdifModelsEvents.SchemaEvent(
-            event_type="ldif.schema",
-            aggregate_id=aggregate_id,
-            schema_operation=config.schema_operation,
-            items_processed=config.items_processed,
-            items_succeeded=config.items_succeeded,
-            items_failed=config.items_failed,
-            schema_duration_ms=config.operation_duration_ms,
-        )
+        return FlextLdifModelsEvents.SchemaEvent.model_validate({
+            "event_type": "ldif.schema",
+            "aggregate_id": aggregate_id,
+            "schema_operation": config.schema_operation,
+            "items_processed": config.items_processed,
+            "items_succeeded": config.items_succeeded,
+            "items_failed": config.items_failed,
+            "schema_duration_ms": config.operation_duration_ms,
+        })
 
     @staticmethod
     def log_and_emit_conversion_event(

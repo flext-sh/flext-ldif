@@ -315,17 +315,17 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     compare=read_perm in first_access or auth_perm in first_access,
                 )
                 first_who_lower = first_who.lower().strip()
-                subject_type: c.Ldif.AclSubjectTypeLiteral
+                subject_type: c.Ldif.AclSubjectType
                 if first_who_lower == "self":
-                    subject_type = "self"
+                    subject_type = c.Ldif.AclSubjectType.SELF
                 elif first_who_lower in {"*", "all"}:
-                    subject_type = "all"
+                    subject_type = c.Ldif.AclSubjectType.ALL
                 elif first_who_lower == "anonymous":
-                    subject_type = "anonymous"
+                    subject_type = c.Ldif.AclSubjectType.ANONYMOUS
                 elif first_who_lower == "authenticated":
-                    subject_type = "authenticated"
+                    subject_type = c.Ldif.AclSubjectType.AUTHENTICATED
                 else:
-                    subject_type = "user"
+                    subject_type = c.Ldif.AclSubjectType.USER
                 acl_extensions = m.Ldif.DynamicMetadata.model_construct(
                     _fields_set={"original_format"},
                     original_format=acl_line,

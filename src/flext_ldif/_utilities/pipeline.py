@@ -309,7 +309,7 @@ class FlextLdifUtilitiesPipeline:
                         errors.append("Entry has no objectClass attribute")
                     else:
                         warnings.append("Entry has no objectClass attribute")
-            return r[str].ok(
+            return r[FlextLdifUtilitiesPipeline.ValidationResult].ok(
                 FlextLdifUtilitiesPipeline.ValidationResult(
                     is_valid=not errors,
                     errors=errors,

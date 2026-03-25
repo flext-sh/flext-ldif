@@ -847,7 +847,7 @@ class FlextLdifConversion(
         )
         return result
 
-    def convert(
+    def convert_entry(
         self,
         source: str | FlextLdifServersBase,
         target: str | FlextLdifServersBase,
@@ -952,7 +952,7 @@ class FlextLdifConversion(
                 if original_acl is not None:
                     return original_acl
                 return m.Ldif.Acl(
-                    server_type="rfc",
+                    server_type=c.Ldif.ServerTypes.RFC,
                     validation_violations=[],
                     name="",
                     target=None,
@@ -1323,17 +1323,17 @@ class FlextLdifConversion(
                 )
             return FlextLdifConversion._schema_conversion_ok(parse_result.value)
 
-        parse_result = self._parse_objectclass_with_schema(
+        oc_parse_result = self._parse_objectclass_with_schema(
             schema,
             value,
             parse_error_message=parse_error_message,
         )
-        if parse_result.is_failure:
+        if oc_parse_result.is_failure:
             return FlextLdifConversion._schema_conversion_fail(
-                parse_result.error,
+                oc_parse_result.error,
                 parse_error_message,
             )
-        return FlextLdifConversion._schema_conversion_ok(parse_result.value)
+        return FlextLdifConversion._schema_conversion_ok(oc_parse_result.value)
 
     def _convert_schema_via_rfc_pipeline(
         self,
@@ -1447,7 +1447,7 @@ class FlextLdifConversion(
                     target_server_type_raw,
                 )
             else:
-                target_server_type_str = "rfc"
+                target_server_type_str = c.Ldif.ServerTypes.RFC
             validated_quirk_type = u.Ldif.normalize_server_type(
                 str(target_server_type_str),
             )

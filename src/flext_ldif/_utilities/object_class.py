@@ -135,11 +135,11 @@ class FlextLdifUtilitiesObjectClass:
             kind_raw = parsed_dict.get("kind")
             kind_value = kind_raw if isinstance(kind_raw, str) else ""
             must_raw = parsed_dict.get("must")
-            must_value: Sequence[str] = (
+            must_value: list[str] = (
                 [str(item) for item in must_raw] if isinstance(must_raw, list) else []
             )
             may_raw = parsed_dict.get("may")
-            may_value: Sequence[str] = (
+            may_value: list[str] = (
                 [str(item) for item in may_raw] if isinstance(may_raw, list) else []
             )
             schema_oc = m.Ldif.SchemaObjectClass(

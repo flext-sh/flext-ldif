@@ -101,7 +101,7 @@ class FlextLdifUtilitiesParser:
             new_attrs["_original_dn_line"] = [original_line]
             return (value, new_attrs)
         if "_original_lines" not in current_attrs:
-            original_lines_list: MutableSequence[str] = []
+            original_lines_list: list[str] = []
             current_attrs["_original_lines"] = original_lines_list
         current_attrs["_original_lines"].append(original_line)
         current_attrs.setdefault(key, []).append(value)
@@ -315,7 +315,7 @@ class FlextLdifUtilitiesParser:
             if not line.strip():
                 if current_entry:
                     entries.append(current_entry)
-                    current_entry: t.Ldif.RawEntryDict = {}
+                    current_entry = {}
                 continue
             if ":" in line:
                 key, value = line.split(":", 1)

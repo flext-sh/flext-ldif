@@ -318,7 +318,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                         "attributes": attributes,
                     }),
                     subject=m.Ldif.AclSubject(
-                        subject_type="user",
+                        subject_type=c.Ldif.AclSubjectType.USER,
                         subject_value=trustee
                         or FlextLdifServersNovell.Constants.ACL_DEFAULT_SUBJECT_VALUE_UNKNOWN,
                     ),

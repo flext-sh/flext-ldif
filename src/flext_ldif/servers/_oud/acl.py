@@ -401,7 +401,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     def _parse_ds_privilege_name(self, privilege_name: str) -> r[m.Ldif.Acl]:
         """Parse OUD ds-privilege-name format (simple privilege names)."""
         try:
-            server_type_oud: c.Ldif.ServerTypeLiteral = "oud"
+            server_type_oud: c.Ldif.ServerTypes = c.Ldif.ServerTypes.OUD
             acl_model = m.Ldif.Acl(
                 name=privilege_name,
                 target=None,

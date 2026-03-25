@@ -349,7 +349,7 @@ class TestQuirksConversionMatrixFacade:
     ) -> None:
         """Test error handling for invalid model type."""
         invalid_model = m.Ldif.Entry(dn=None, attributes=None)
-        result = conversion_matrix.convert(oud_quirk, oid_quirk, invalid_model)
+        result = conversion_matrix.convert_entry(oud_quirk, oid_quirk, invalid_model)
         assert result.is_failure
         assert result.error is not None
 
