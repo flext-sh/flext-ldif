@@ -1,0 +1,29 @@
+tests/integration/test_dn_case_handling.py
+  8138edf6bc0fab47 14,29-30
+tests/unit/quirks/servers/test_relaxed_quirks.py
+  8138edf6bc0fab47 100-104
+tests/unit/services/test_writer_dn_normalization.py
+  8138edf6bc0fab47 10-11,22-24
+tests/unit/protocols/test_protocols.py
+  8138edf6bc0fab47 260-262
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.19",
+  "base_commit_sha": "9b3f3a10989a2c6e824f2acc1fdb1d7d9113bd56",
+  "prompts": {
+    "8138edf6bc0fab47": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "458a9205-8e72-4758-9c6d-2636f729252c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 1,
+      "accepted_lines": 16,
+      "overriden_lines": 0
+    }
+  }
+}
