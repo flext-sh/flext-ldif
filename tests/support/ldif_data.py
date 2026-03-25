@@ -31,18 +31,12 @@ class LdifSample(BaseModel):
     ]
     has_binary: Annotated[
         bool,
-        Field(
-            default=False,
-            description="Whether the sample contains binary data",
-        ),
-    ]
+        Field(description="Whether the sample contains binary data"),
+    ] = False
     has_changes: Annotated[
         bool,
-        Field(
-            default=False,
-            description="Whether the sample contains change records",
-        ),
-    ]
+        Field(description="Whether the sample contains change records"),
+    ] = False
 
 
 class LdifTestData:

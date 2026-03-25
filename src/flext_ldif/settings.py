@@ -23,15 +23,12 @@ class FlextLdifSettings(FlextSettings):
 
     ldif_encoding: Annotated[
         str,
-        Field(
-            default="utf-8",
-            description="Default encoding for LDIF read/write operations",
-        ),
-    ]
+        Field(description="Default encoding for LDIF read/write operations"),
+    ] = "utf-8"
     ldif_strict_validation: Annotated[
         bool,
-        Field(default=True, description="Enable strict LDIF validation rules"),
-    ]
+        Field(description="Enable strict LDIF validation rules"),
+    ] = True
 
 
 __all__ = ["FlextLdifSettings"]

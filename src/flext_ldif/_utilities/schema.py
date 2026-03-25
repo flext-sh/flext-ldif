@@ -1060,8 +1060,7 @@ class FlextLdifUtilitiesSchema:
             UnicodeDecodeError,
             struct.error,
         ):
-            logger.debug(
-                "SchemaObjectClass model validation did not match: {exc}")
+            logger.debug("SchemaObjectClass model validation did not match: {exc}")
         definition_str = str(definition)
         definition_lower = definition_str.lower()
         objectclass_only_keywords = [

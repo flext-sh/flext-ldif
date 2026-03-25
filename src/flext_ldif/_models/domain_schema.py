@@ -20,8 +20,8 @@ class FlextLdifModelsDomainSchema:
 
         server_type: Annotated[
             c.Ldif.ServerTypeLiteral,
-            Field(default="rfc", description="LDAP server type for discovery"),
-        ]
+            Field(description="LDAP server type for discovery"),
+        ] = "rfc"
         naming_contexts: Annotated[
             MutableSequence[str],
             Field(
@@ -30,18 +30,12 @@ class FlextLdifModelsDomainSchema:
         ] = Field(default_factory=list)
         include_operational: Annotated[
             bool,
-            Field(
-                default=False,
-                description="Include operational attributes in discovery",
-            ),
-        ]
+            Field(description="Include operational attributes in discovery"),
+        ] = False
         max_entries: Annotated[
             int | None,
-            Field(
-                default=None,
-                description="Maximum entries to sample for schema discovery",
-            ),
-        ]
+            Field(description="Maximum entries to sample for schema discovery"),
+        ] = None
 
     class SchemaLookup(FlextLdifModelsBases.Base):
         """Schema element lookup configuration and results.
@@ -56,15 +50,14 @@ class FlextLdifModelsDomainSchema:
         ]
         search_type: Annotated[
             c.Ldif.ServerTypeLiteral,
-            Field(default="rfc", description="Server type context for lookup"),
-        ]
+            Field(description="Server type context for lookup"),
+        ] = "rfc"
         element_type: Annotated[
             str | None,
             Field(
-                default=None,
-                description="Type of element to lookup (attribute, objectclass, syntax)",
+                description="Type of element to lookup (attribute, objectclass, syntax)"
             ),
-        ]
+        ] = None
 
 
 __all__ = ["FlextLdifModelsDomainSchema"]

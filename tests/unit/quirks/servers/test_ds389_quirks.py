@@ -83,15 +83,12 @@ class AttributeTestCase(BaseModel):
     ]
     expected_oid: Annotated[
         str | None,
-        Field(default=None, description="Expected parsed OID"),
-    ]
+        Field(description="Expected parsed OID"),
+    ] = None
     expected_name: Annotated[
         str | None,
-        Field(
-            default=None,
-            description="Expected parsed attribute name",
-        ),
-    ]
+        Field(description="Expected parsed attribute name"),
+    ] = None
 
 
 class ObjectClassTestCase(BaseModel):
@@ -113,22 +110,16 @@ class ObjectClassTestCase(BaseModel):
     ]
     expected_oid: Annotated[
         str | None,
-        Field(default=None, description="Expected parsed OID"),
-    ]
+        Field(description="Expected parsed OID"),
+    ] = None
     expected_name: Annotated[
         str | None,
-        Field(
-            default=None,
-            description="Expected parsed objectClass name",
-        ),
-    ]
+        Field(description="Expected parsed objectClass name"),
+    ] = None
     expected_kind: Annotated[
         str | None,
-        Field(
-            default=None,
-            description="Expected parsed objectClass kind",
-        ),
-    ]
+        Field(description="Expected parsed objectClass kind"),
+    ] = None
 
 
 class AclTestCase(BaseModel):
@@ -144,11 +135,8 @@ class AclTestCase(BaseModel):
     ]
     expected_success: Annotated[
         bool,
-        Field(
-            default=False,
-            description="Expected parse success state",
-        ),
-    ]
+        Field(description="Expected parse success state"),
+    ] = False
 
 
 class EntryTestCase(BaseModel):

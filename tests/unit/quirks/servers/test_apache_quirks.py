@@ -86,11 +86,8 @@ class AttributeTestCase(BaseModel):
     ]
     expected_name: Annotated[
         str | None,
-        Field(
-            default=None,
-            description="Expected parsed attribute name",
-        ),
-    ]
+        Field(description="Expected parsed attribute name"),
+    ] = None
 
 
 class ObjectClassTestCase(BaseModel):
@@ -112,11 +109,8 @@ class ObjectClassTestCase(BaseModel):
     ]
     expected_name: Annotated[
         str | None,
-        Field(
-            default=None,
-            description="Expected parsed objectClass name",
-        ),
-    ]
+        Field(description="Expected parsed objectClass name"),
+    ] = None
 
 
 class EntryTestCase(BaseModel):
@@ -149,25 +143,16 @@ class AclTestCase(BaseModel):
     scenario: Annotated[AclScenario, Field(description="ACL scenario identifier")]
     acl_line: Annotated[
         str | None,
-        Field(
-            default=None,
-            description="ACL line under test",
-        ),
-    ]
+        Field(description="ACL line under test"),
+    ] = None
     expected_can_handle: Annotated[
         bool,
-        Field(
-            default=False,
-            description="Expected can_handle result",
-        ),
-    ]
+        Field(description="Expected can_handle result"),
+    ] = False
     expected_success: Annotated[
         bool,
-        Field(
-            default=False,
-            description="Expected parse success state",
-        ),
-    ]
+        Field(description="Expected parse success state"),
+    ] = False
 
 
 ATTRIBUTE_TEST_CASES = (

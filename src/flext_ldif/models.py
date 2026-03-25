@@ -80,63 +80,51 @@ class FlextLdifModels(FlextModels):
             """Write statistics for batch content operations."""
 
             model_config: ClassVar[ConfigDict] = ConfigDict(validate_default=True)
-            total_entries: Annotated[t.NonNegativeInt, Field(default=0)]
-            successful: Annotated[t.NonNegativeInt, Field(default=0)]
-            failed: Annotated[t.NonNegativeInt, Field(default=0)]
+            total_entries: Annotated[t.NonNegativeInt, Field()] = 0
+            successful: Annotated[t.NonNegativeInt, Field()] = 0
+            failed: Annotated[t.NonNegativeInt, Field()] = 0
 
         class OidAclMetadataConfig(BaseModel):
             """Configuration model for OID ACL metadata parsing."""
 
-            acl_line: Annotated[str, Field(default="")]
-            oid_subject_type: Annotated[str, Field(default="")]
-            rfc_subject_type: Annotated[str, Field(default="")]
-            oid_subject_value: Annotated[str, Field(default="")]
+            acl_line: Annotated[str, Field()] = ""
+            oid_subject_type: Annotated[str, Field()] = ""
+            rfc_subject_type: Annotated[str, Field()] = ""
+            oid_subject_value: Annotated[str, Field()] = ""
             perms_dict: Annotated[
                 MutableMapping[str, bool],
                 Field(default_factory=dict),
             ]
-            target_dn: Annotated[str, Field(default="entry")]
+            target_dn: Annotated[str, Field()] = "entry"
             target_attrs: MutableSequence[str] = Field(default_factory=list)
-            acl_filter: Annotated[str, Field(default="")]
-            acl_constraint: Annotated[str, Field(default="")]
-            bindmode: Annotated[str, Field(default="")]
-            deny_group_override: Annotated[bool, Field(default=False)]
-            append_to_all: Annotated[bool, Field(default=False)]
-            bind_ip_filter: Annotated[str, Field(default="")]
-            constrain_to_added_object: Annotated[str, Field(default="")]
+            acl_filter: Annotated[str, Field()] = ""
+            acl_constraint: Annotated[str, Field()] = ""
+            bindmode: Annotated[str, Field()] = ""
+            deny_group_override: Annotated[bool, Field()] = False
+            append_to_all: Annotated[bool, Field()] = False
+            bind_ip_filter: Annotated[str, Field()] = ""
+            constrain_to_added_object: Annotated[str, Field()] = ""
 
         class QuirksByServerDict(FlextModels.ArbitraryTypesModel):
             """Quirks by server dictionary model."""
 
             schema_type: Annotated[
                 str | None,
-                Field(
-                    default=None,
-                    alias="schema",
-                    description="Schema quirk type",
-                ),
-            ]
+                Field(alias="schema", description="Schema quirk type"),
+            ] = None
             acl_type: Annotated[
                 str | None,
-                Field(
-                    default=None,
-                    alias="acl",
-                    description="ACL quirk type",
-                ),
-            ]
+                Field(alias="acl", description="ACL quirk type"),
+            ] = None
             entry_type: Annotated[
                 str | None,
-                Field(
-                    default=None,
-                    alias="entry",
-                    description="Entry quirk type",
-                ),
-            ]
+                Field(alias="entry", description="Entry quirk type"),
+            ] = None
 
         class RegistryStatsDict(FlextModels.ArbitraryTypesModel):
             """Registry statistics dictionary model."""
 
-            total_servers: Annotated[t.NonNegativeInt, Field(default=0)]
+            total_servers: Annotated[t.NonNegativeInt, Field()] = 0
             quirks_by_server: Annotated[
                 MutableMapping[str, FlextLdifModels.Ldif.QuirksByServerDict],
                 Field(default_factory=dict),

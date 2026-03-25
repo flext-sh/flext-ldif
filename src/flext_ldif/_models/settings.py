@@ -1426,38 +1426,33 @@ class FlextLdifModelsSettings:
         show_operational_attributes: Annotated[
             str,
             Field(
-                default="hide",
-                description="How to handle operational attributes in output. Options: 'show' (write normally), 'hide' (don't write), 'comment' (write as LDIF comment).",
+                description="How to handle operational attributes in output. Options: 'show' (write normally), 'hide' (don't write), 'comment' (write as LDIF comment)."
             ),
-        ]
+        ] = "hide"
         show_removed_attributes: Annotated[
             str,
             Field(
-                default="comment",
-                description="How to handle removed attributes in output. Default 'comment' writes removed attrs as '# [REMOVED] attr: value'.",
+                description="How to handle removed attributes in output. Default 'comment' writes removed attrs as '# [REMOVED] attr: value'."
             ),
-        ]
+        ] = "comment"
         show_filtered_attributes: Annotated[
             str,
             Field(
-                default="hide",
-                description="How to handle filtered attributes in output. Default 'hide' completely omits filtered attributes.",
+                description="How to handle filtered attributes in output. Default 'hide' completely omits filtered attributes."
             ),
-        ]
+        ] = "hide"
         show_hidden_attributes: Annotated[
             str,
             Field(
-                default="hide",
-                description="How to handle explicitly hidden attributes in output. Default 'hide' completely omits hidden attributes.",
+                description="How to handle explicitly hidden attributes in output. Default 'hide' completely omits hidden attributes."
             ),
-        ]
+        ] = "hide"
         show_renamed_original: Annotated[
             str,
             Field(
-                default="comment",
-                description="How to handle original names of renamed attributes. Default 'comment' writes '# [RENAMED] old -> new: value'.",
+                description="How to handle original names of renamed attributes. Default 'comment' writes '# [RENAMED] old -> new: value'."
             ),
-        ]
+        ] = "comment"
 
     class MigrationConfig(FlextModels.Value):
         """Configuration for migration pipeline from YAML or dict.
@@ -1502,50 +1497,36 @@ class FlextLdifModelsSettings:
         ] = Field(default_factory=list)
         attribute_whitelist: Annotated[
             MutableSequence[str] | None,
-            Field(
-                default=None,
-                description="If provided, only these attributes are kept",
-            ),
-        ]
+            Field(description="If provided, only these attributes are kept"),
+        ] = None
         attribute_blacklist: Annotated[
             MutableSequence[str] | None,
-            Field(
-                default=None,
-                description="If provided, these attributes are removed",
-            ),
-        ]
+            Field(description="If provided, these attributes are removed"),
+        ] = None
         objectclass_whitelist: Annotated[
             MutableSequence[str] | None,
             Field(
-                default=None,
-                description="If provided, only entries with these objectClasses are kept",
+                description="If provided, only entries with these objectClasses are kept"
             ),
-        ]
+        ] = None
         objectclass_blacklist: Annotated[
             MutableSequence[str] | None,
             Field(
-                default=None,
-                description="If provided, entries with these objectClasses are removed",
+                description="If provided, entries with these objectClasses are removed"
             ),
-        ]
+        ] = None
         track_removed_attributes: Annotated[
             bool,
-            Field(
-                default=True,
-                description="If True, tracks removed attributes in entry metadata",
-            ),
-        ]
+            Field(description="If True, tracks removed attributes in entry metadata"),
+        ] = True
         write_removed_as_comments: Annotated[
             bool,
-            Field(
-                default=True,
-                description="If True, writes removed attributes as comments in LDIF",
-            ),
-        ]
+            Field(description="If True, writes removed attributes as comments in LDIF"),
+        ] = True
         header_template: Annotated[
             str | None,
-            Field(default=None, description="Jinja2 template for file headers"),
-        ]
+            Field(description="Jinja2 template for file headers"),
+        ] = None
         header_data: Annotated[
             MutableMapping[str, t.Scalar],
             Field(description="Data to pass to header template"),
@@ -1594,61 +1575,51 @@ class FlextLdifModelsSettings:
         auto_parse_schema: Annotated[
             bool,
             Field(
-                default=True,
-                description="If True, automatically parses schema definitions from entries.",
+                description="If True, automatically parses schema definitions from entries."
             ),
-        ]
+        ] = True
         auto_extract_acls: Annotated[
             bool,
             Field(
-                default=True,
-                description="If True, automatically extracts ACLs from entry attributes.",
+                description="If True, automatically extracts ACLs from entry attributes."
             ),
-        ]
+        ] = True
         preserve_attribute_order: Annotated[
             bool,
             Field(
-                default=False,
-                description="If True, preserves the original attribute order from the LDIF file in Entry.metadata.",
+                description="If True, preserves the original attribute order from the LDIF file in Entry.metadata."
             ),
-        ]
+        ] = False
         validate_entries: Annotated[
             bool,
-            Field(
-                default=True,
-                description="If True, validates entries against LDAP schema rules.",
-            ),
-        ]
+            Field(description="If True, validates entries against LDAP schema rules."),
+        ] = True
         normalize_dns: Annotated[
             bool,
             Field(
-                default=True,
-                description="If True, normalizes DN formatting to RFC 2253 standard.",
+                description="If True, normalizes DN formatting to RFC 2253 standard."
             ),
-        ]
+        ] = True
         max_parse_errors: Annotated[
             int,
             Field(
-                default=100,
                 ge=0,
                 le=10000,
                 description="Maximum number of parsing errors to collect before stopping. 0 means no limit.",
             ),
-        ]
+        ] = 100
         include_operational_attrs: Annotated[
             bool,
             Field(
-                default=False,
-                description="If True, includes operational attributes in parsed entries.",
+                description="If True, includes operational attributes in parsed entries."
             ),
-        ]
+        ] = False
         strict_schema_validation: Annotated[
             bool,
             Field(
-                default=False,
-                description="If True, applies strict schema validation and fails on violations.",
+                description="If True, applies strict schema validation and fails on violations."
             ),
-        ]
+        ] = False
 
     class MigrationPipelineParams(FlextModels.Value):
         """Typed parameters for migration pipeline factory.
@@ -1658,50 +1629,36 @@ class FlextLdifModelsSettings:
 
         input_dir: Annotated[
             str,
-            Field(
-                default=".",
-                description="Input directory containing LDIF files to migrate",
-            ),
-        ]
+            Field(description="Input directory containing LDIF files to migrate"),
+        ] = "."
         output_dir: Annotated[
             str,
-            Field(default=".", description="Output directory for migrated LDIF files"),
-        ]
+            Field(description="Output directory for migrated LDIF files"),
+        ] = "."
         source_server: Annotated[
             str,
-            Field(
-                default=c.Ldif.ServerTypes.RFC.value,
-                description="Source LDAP server type (e.g., 'oid', 'oud', 'rfc')",
-            ),
-        ]
+            Field(description="Source LDAP server type (e.g., 'oid', 'oud', 'rfc')"),
+        ] = c.Ldif.ServerTypes.RFC.value
         target_server: Annotated[
             str,
-            Field(
-                default=c.Ldif.ServerTypes.RFC,
-                description="Target LDAP server type (e.g., 'oid', 'oud', 'rfc')",
-            ),
-        ]
+            Field(description="Target LDAP server type (e.g., 'oid', 'oud', 'rfc')"),
+        ] = c.Ldif.ServerTypes.RFC
         migration_config: Annotated[
             FlextLdifModelsSettings.MigrationConfig | None,
             Field(
-                default=None,
-                description="Optional migration configuration for file organization and filtering",
+                description="Optional migration configuration for file organization and filtering"
             ),
-        ]
+        ] = None
         enable_quirks_detection: Annotated[
             bool,
-            Field(
-                default=True,
-                description="If True, auto-detect server type from content",
-            ),
-        ]
+            Field(description="If True, auto-detect server type from content"),
+        ] = True
         enable_relaxed_parsing: Annotated[
             bool,
             Field(
-                default=False,
-                description="If True, use lenient parsing for broken/non-compliant LDIF",
+                description="If True, use lenient parsing for broken/non-compliant LDIF"
             ),
-        ]
+        ] = False
 
     class ParserParams(FlextModels.Value):
         """Typed parameters for parser service factory.
@@ -1712,43 +1669,28 @@ class FlextLdifModelsSettings:
         file_path: Annotated[str, Field(description="Path to LDIF file to parse")]
         server_type: Annotated[
             c.Ldif.ServerTypeLiteral,
-            Field(
-                default="rfc",
-                description="LDAP server type to use for parsing quirks",
-            ),
-        ]
+            Field(description="LDAP server type to use for parsing quirks"),
+        ] = "rfc"
         enable_auto_detection: Annotated[
             bool,
-            Field(
-                default=False,
-                description="If True, auto-detect server type from file content",
-            ),
-        ]
+            Field(description="If True, auto-detect server type from file content"),
+        ] = False
         enable_relaxed_parsing: Annotated[
             bool,
-            Field(default=False, description="If True, use lenient parsing mode"),
-        ]
+            Field(description="If True, use lenient parsing mode"),
+        ] = False
         parse_schema: Annotated[
             bool,
-            Field(
-                default=True,
-                description="If True, parses schema definitions from entries",
-            ),
-        ]
+            Field(description="If True, parses schema definitions from entries"),
+        ] = True
         parse_acls: Annotated[
             bool,
-            Field(
-                default=True,
-                description="If True, extracts ACLs from entry attributes",
-            ),
-        ]
+            Field(description="If True, extracts ACLs from entry attributes"),
+        ] = True
         validate_entries: Annotated[
             bool,
-            Field(
-                default=True,
-                description="If True, validates entries against schema rules",
-            ),
-        ]
+            Field(description="If True, validates entries against schema rules"),
+        ] = True
 
     class WriterParams(FlextModels.Value):
         """Typed parameters for writer service factory.
@@ -1762,45 +1704,28 @@ class FlextLdifModelsSettings:
         ]
         server_type: Annotated[
             c.Ldif.ServerTypeLiteral,
-            Field(
-                default="rfc",
-                description="LDAP server type to use for writing quirks",
-            ),
-        ]
+            Field(description="LDAP server type to use for writing quirks"),
+        ] = "rfc"
         encoding: Annotated[
             c.Ldif.EncodingLiteral,
-            Field(default="utf-8", description="Character encoding for output file"),
-        ]
+            Field(description="Character encoding for output file"),
+        ] = "utf-8"
         max_line_length: Annotated[
             int,
-            Field(
-                default=c.Ldif.MAX_LINE_WIDTH,
-                description="Maximum line length for LDIF output",
-                ge=50,
-                le=1000,
-            ),
-        ]
+            Field(description="Maximum line length for LDIF output", ge=50, le=1000),
+        ] = c.Ldif.MAX_LINE_WIDTH
         include_operational_attrs: Annotated[
             bool,
-            Field(
-                default=False,
-                description="If True, includes operational attributes in output",
-            ),
-        ]
+            Field(description="If True, includes operational attributes in output"),
+        ] = False
         sort_attributes: Annotated[
             bool,
-            Field(
-                default=False,
-                description="If True, sorts attributes alphabetically",
-            ),
-        ]
+            Field(description="If True, sorts attributes alphabetically"),
+        ] = False
         strict_rfc_compliance: Annotated[
             bool,
-            Field(
-                default=True,
-                description="If True, enforces strict RFC 2849 compliance",
-            ),
-        ]
+            Field(description="If True, enforces strict RFC 2849 compliance"),
+        ] = True
 
     class ConfigInfo(FlextModels.Value):
         """Configuration information for logging and introspection.
@@ -1833,10 +1758,9 @@ class FlextLdifModelsSettings:
         quirks_server_type: Annotated[
             c.Ldif.ServerTypeLiteral | None,
             Field(
-                default=None,
-                description="Configured server type for quirks (None if auto-detect)",
+                description="Configured server type for quirks (None if auto-detect)"
             ),
-        ]
+        ] = None
         enable_relaxed_parsing: Annotated[
             bool,
             Field(description="Whether relaxed parsing mode is enabled"),
@@ -1868,42 +1792,33 @@ class FlextLdifModelsSettings:
                 tuple[str, MutableMapping[str, MutableSequence[str]]],
             ]
             | None,
-            Field(
-                default=None,
-                description="Optional hook to transform attrs before parsing",
-            ),
-        ]
+            Field(description="Optional hook to transform attrs before parsing"),
+        ] = None
         post_parse_hook: Annotated[
             Callable[[FlextLdifModelsDomains.Entry], FlextLdifModelsDomains.Entry]
             | None,
-            Field(
-                default=None,
-                description="Optional hook to transform entry after parsing",
-            ),
-        ]
+            Field(description="Optional hook to transform entry after parsing"),
+        ] = None
         preserve_metadata_hook: Annotated[
             Callable[[FlextLdifModelsDomains.Entry, str, str], None] | None,
-            Field(default=None, description="Optional hook to preserve original LDIF"),
-        ]
+            Field(description="Optional hook to preserve original LDIF"),
+        ] = None
         skip_empty_entries: Annotated[
             bool,
-            Field(default=True, description="Skip entries with no attributes"),
-        ]
+            Field(description="Skip entries with no attributes"),
+        ] = True
         log_level: Annotated[
             str,
-            Field(
-                default="debug",
-                description="Logging verbosity ('debug', 'info', 'warning')",
-            ),
-        ]
+            Field(description="Logging verbosity ('debug', 'info', 'warning')"),
+        ] = "debug"
         ldif_parser: Annotated[
             Callable[
                 [str],
                 MutableSequence[tuple[str, MutableMapping[str, MutableSequence[str]]]],
             ]
             | None,
-            Field(default=None, description="Optional custom LDIF parser"),
-        ]
+            Field(description="Optional custom LDIF parser"),
+        ] = None
 
     class EntryProcessingConfig(FlextModels.Value):
         """Configuration for entry processing.
@@ -1930,27 +1845,21 @@ class FlextLdifModelsSettings:
                 tuple[str, MutableMapping[str, MutableSequence[str]]],
             ]
             | None,
-            Field(
-                default=None,
-                description="Optional hook to transform attrs before parsing",
-            ),
-        ]
+            Field(description="Optional hook to transform attrs before parsing"),
+        ] = None
         post_parse_hook: Annotated[
             Callable[[FlextLdifModelsDomains.Entry], FlextLdifModelsDomains.Entry]
             | None,
-            Field(
-                default=None,
-                description="Optional hook to transform entry after parsing",
-            ),
-        ]
+            Field(description="Optional hook to transform entry after parsing"),
+        ] = None
         preserve_metadata_hook: Annotated[
             Callable[[FlextLdifModelsDomains.Entry, str, str], None] | None,
-            Field(default=None, description="Optional hook to preserve original LDIF"),
-        ]
+            Field(description="Optional hook to preserve original LDIF"),
+        ] = None
         skip_empty_entries: Annotated[
             bool,
-            Field(default=True, description="Skip entries with no attributes"),
-        ]
+            Field(description="Skip entries with no attributes"),
+        ] = True
 
     class ObjectClassParseConfig(FlextModels.Value):
         """Configuration for objectClass definition parsing.
@@ -1968,16 +1877,16 @@ class FlextLdifModelsSettings:
         ]
         validate_structural_hook: Annotated[
             Callable[[str, MutableSequence[str]], bool] | None,
-            Field(default=None, description="Optional structural validation"),
-        ]
+            Field(description="Optional structural validation"),
+        ] = None
         transform_sup_hook: Annotated[
             Callable[[MutableSequence[str]], MutableSequence[str]] | None,
-            Field(default=None, description="Optional SUP transformation"),
-        ]
+            Field(description="Optional SUP transformation"),
+        ] = None
         enrich_metadata_hook: Annotated[
             Callable[[FlextLdifModelsDomains.SchemaObjectClass], None] | None,
-            Field(default=None, description="Optional metadata enrichment"),
-        ]
+            Field(description="Optional metadata enrichment"),
+        ] = None
 
     class EntryParseConfig(FlextModels.Value):
         """Configuration for entry parsing.
@@ -2006,20 +1915,20 @@ class FlextLdifModelsSettings:
                 t.MutableContainerMapping | None,
             ]
             | None,
-            Field(default=None, description="Optional metadata building"),
-        ]
+            Field(description="Optional metadata building"),
+        ] = None
         normalize_dn_hook: Annotated[
             Callable[[str], str] | None,
-            Field(default=None, description="Optional DN normalization"),
-        ]
+            Field(description="Optional DN normalization"),
+        ] = None
         transform_attrs_hook: Annotated[
             Callable[
                 [str, MutableMapping[str, MutableSequence[str]]],
                 tuple[str, MutableMapping[str, MutableSequence[str]]],
             ]
             | None,
-            Field(default=None, description="Optional attribute transformation"),
-        ]
+            Field(description="Optional attribute transformation"),
+        ] = None
 
     class EntryWriteConfig(FlextModels.Value):
         """Configuration for entry writing.
@@ -2040,21 +1949,21 @@ class FlextLdifModelsSettings:
         ]
         write_comments_hook: Annotated[
             Callable[[FlextLdifModelsDomains.Entry, MutableSequence[str]], None] | None,
-            Field(default=None, description="Optional comments writing"),
-        ]
+            Field(description="Optional comments writing"),
+        ] = None
         transform_entry_hook: Annotated[
             Callable[[FlextLdifModelsDomains.Entry], FlextLdifModelsDomains.Entry]
             | None,
-            Field(default=None, description="Optional entry transformation"),
-        ]
+            Field(description="Optional entry transformation"),
+        ] = None
         write_dn_hook: Annotated[
             Callable[[str, MutableSequence[str]], None] | None,
-            Field(default=None, description="Optional DN writing"),
-        ]
+            Field(description="Optional DN writing"),
+        ] = None
         include_comments: Annotated[
             bool,
-            Field(default=True, description="Include metadata comments"),
-        ]
+            Field(description="Include metadata comments"),
+        ] = True
 
     class BatchWriteConfig(FlextModels.Value):
         """Configuration for batch entry writing.
@@ -2075,16 +1984,16 @@ class FlextLdifModelsSettings:
         ]
         write_header_hook: Annotated[
             Callable[[], str] | None,
-            Field(default=None, description="Optional header writing"),
-        ]
+            Field(description="Optional header writing"),
+        ] = None
         include_header: Annotated[
             bool,
-            Field(default=True, description="Include LDIF header"),
-        ]
+            Field(description="Include LDIF header"),
+        ] = True
         entry_separator: Annotated[
             str,
-            Field(default="\n", description="Separator between entries"),
-        ]
+            Field(description="Separator between entries"),
+        ] = "\n"
 
     class SortConfig(FlextModels.Value):
         """Configuration for entry sorting.
@@ -2100,36 +2009,33 @@ class FlextLdifModelsSettings:
         ]
         target: Annotated[
             str,
-            Field(
-                default="entries",
-                description="Sort target (entries, attributes, acl)",
-            ),
-        ]
-        by: Annotated[str, Field(default="hierarchy", description="Sort strategy")]
+            Field(description="Sort target (entries, attributes, acl)"),
+        ] = "entries"
+        by: Annotated[str, Field(description="Sort strategy")] = "hierarchy"
         traversal: Annotated[
             str,
-            Field(default="depth-first", description="Traversal order"),
-        ]
+            Field(description="Traversal order"),
+        ] = "depth-first"
         predicate: Annotated[
             Callable[[FlextLdifModelsDomains.Entry], str | int | float] | None,
-            Field(default=None, description="Custom predicate function"),
-        ]
+            Field(description="Custom predicate function"),
+        ] = None
         sort_attributes: Annotated[
             bool,
-            Field(default=False, description="Sort attributes within entries"),
-        ]
+            Field(description="Sort attributes within entries"),
+        ] = False
         attribute_order: Annotated[
             MutableSequence[str] | None,
-            Field(default=None, description="Custom attribute order"),
-        ]
+            Field(description="Custom attribute order"),
+        ] = None
         sort_acl: Annotated[
             bool,
-            Field(default=False, description="Sort ACL attributes"),
-        ]
+            Field(description="Sort ACL attributes"),
+        ] = False
         acl_attributes: Annotated[
             MutableSequence[str] | None,
-            Field(default=None, description="ACL attributes to sort"),
-        ]
+            Field(description="ACL attributes to sort"),
+        ] = None
 
     class _SchemaConversionPipelineBaseConfig(FlextModels.Value):
         source_schema: Annotated[
@@ -2147,16 +2053,16 @@ class FlextLdifModelsSettings:
 
         item_type: Annotated[
             Literal["attribute"],
-            Field(default="attribute", description="Discriminator"),
-        ]
+            Field(description="Discriminator"),
+        ] = "attribute"
         item: Annotated[
             FlextLdifModelsDomains.SchemaAttribute,
             Field(..., description="Schema attribute to convert"),
         ]
         item_name: Annotated[
             str,
-            Field(default="attribute", description="Item name for errors"),
-        ]
+            Field(description="Item name for errors"),
+        ] = "attribute"
 
     class SchemaObjectClassConversionPipelineConfig(
         _SchemaConversionPipelineBaseConfig,
@@ -2165,16 +2071,16 @@ class FlextLdifModelsSettings:
 
         item_type: Annotated[
             Literal["objectclass"],
-            Field(default="objectclass", description="Discriminator"),
-        ]
+            Field(description="Discriminator"),
+        ] = "objectclass"
         item: Annotated[
             FlextLdifModelsDomains.SchemaObjectClass,
             Field(..., description="Schema objectclass to convert"),
         ]
         item_name: Annotated[
             str,
-            Field(default="objectclass", description="Item name for errors"),
-        ]
+            Field(description="Item name for errors"),
+        ] = "objectclass"
 
     class PermissionMappingConfig(FlextModels.Value):
         """Configuration for permission mapping during ACL conversion.
@@ -2199,13 +2105,13 @@ class FlextLdifModelsSettings:
         ]
         source_server_type: Annotated[
             str | None,
-            Field(default=None, description="Source server type"),
-        ]
+            Field(description="Source server type"),
+        ] = None
         target_server_type: Annotated[
             str | None,
-            Field(default=None, description="Target server type"),
-        ]
+            Field(description="Target server type"),
+        ] = None
         converted_has_permissions: Annotated[
             bool,
-            Field(default=False, description="Whether converted ACL has permissions"),
-        ]
+            Field(description="Whether converted ACL has permissions"),
+        ] = False
