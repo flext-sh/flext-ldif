@@ -15,8 +15,6 @@ logger = FlextLogger.create_module_logger(__name__)
 class FlextLdifUtilitiesWriters:
     """Master class for all LDIF writing utilities — flat MRO methods."""
 
-    WriteStats = m.Ldif.Stats
-
     @staticmethod
     def get_entry_dn_string(entry: m.Ldif.Entry) -> str:
         """Extract DN string from entry."""
@@ -185,7 +183,7 @@ class FlextLdifUtilitiesWriters:
                 header = config.write_header_hook()
                 if header:
                     parts.append(header)
-            stats = FlextLdifUtilitiesWriters.WriteStats(
+            stats = m.Ldif.Stats(
                 total_entries=len(config.entries),
             )
             entries_typed: MutableSequence[m.Ldif.Entry] = list(config.entries)

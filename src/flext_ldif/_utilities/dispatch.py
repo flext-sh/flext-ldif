@@ -14,11 +14,13 @@ from flext_ldif import (
     FlextLdifUtilitiesDN,
     FlextLdifUtilitiesEntry,
     FlextLdifUtilitiesFilters,
+    FlextLdifUtilitiesNormalization,
     FlextLdifUtilitiesPipeline,
     FlextLdifUtilitiesProcessing,
     FlextLdifUtilitiesResult,
     FlextLdifUtilitiesServer,
     FlextLdifUtilitiesValidation,
+    FlextLdifUtilitiesWriter,
     m,
     p,
     t,
@@ -464,8 +466,6 @@ class FlextLdifUtilitiesDispatch:
         ops: t.MutableContainerMapping | None = None,
     ) -> t.NormalizedValue:
         """Route to Normalization.build (resolves Normalization vs core)."""
-        from flext_ldif import FlextLdifUtilitiesNormalization
-
         return FlextLdifUtilitiesNormalization.build(value, ops=ops)
 
     @staticmethod
@@ -475,8 +475,6 @@ class FlextLdifUtilitiesDispatch:
         encoding: str = "utf-8",
     ) -> r[MutableMapping[str, str | int]]:
         """Route to Writer.write_file (resolves Writer vs core)."""
-        from flext_ldif import FlextLdifUtilitiesWriter
-
         path = file_path if isinstance(file_path, Path) else Path(file_path)
         return FlextLdifUtilitiesWriter.write_file(content, path, encoding)
 

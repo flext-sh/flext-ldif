@@ -46,7 +46,7 @@ class FlextLdifUtilitiesTransformers:
             self._validate = validate
 
         @staticmethod
-        def _validate_dn_components(dn_str: str) -> r[bool]:
+        def validate_dn_components(dn_str: str) -> r[bool]:
             """Helper: Validate DN components."""
             components = FlextLdifUtilitiesDN.split(dn_str)
             all_errors: MutableSequence[str] = []
@@ -75,7 +75,7 @@ class FlextLdifUtilitiesTransformers:
                 else str(item.dn)
             )
             if self._validate:
-                validation_result = FlextLdifUtilitiesTransformers.NormalizeDnTransformer._validate_dn_components(
+                validation_result = FlextLdifUtilitiesTransformers.NormalizeDnTransformer.validate_dn_components(
                     dn_str,
                 )
                 if validation_result.is_failure:
