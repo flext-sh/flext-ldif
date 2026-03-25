@@ -19,11 +19,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
-from collections.abc import Callable, Mapping
+from collections.abc import (
+    Callable,
+    MutableMapping,
+    MutableSequence,
+)
 from pathlib import Path
 
 import pytest
-from ldap3 import Connection  # pyrefly: ignore[missing-import]
+from ldap3 import Connection  # pyrefly: ignore
 
 from flext_ldif import FlextLdif, t
 
@@ -61,7 +65,7 @@ class TestRealLdapImport:
                 list(object_classes) if object_classes else []
             )
             object_classes = object_classes_typed
-        attrs_dict: Mapping[str, t.StrSequence] = {}
+        attrs_dict: MutableMapping[str, MutableSequence[str] | bytes] = {}
         assert entry.attributes is not None
         for attr_name, attr_values in entry.attributes.attributes.items():
             if attr_name.lower() == "objectclass":
@@ -70,8 +74,6 @@ class TestRealLdapImport:
                 continue
             if isinstance(attr_values, list):
                 attrs_dict[attr_name] = attr_values
-            elif hasattr(attr_values, "values"):
-                attrs_dict[attr_name] = list(attr_values.values)
             else:
                 attrs_dict[attr_name] = [str(attr_values)]
         ldap_connection.add(str(entry.dn), object_classes, attributes=attrs_dict)
@@ -102,7 +104,7 @@ class TestRealLdapImport:
         entries = parse_result.value
         entry = entries[0]
         assert entry.attributes is not None
-        attrs_dict: Mapping[str, t.StrSequence | bytes] = {
+        attrs_dict: MutableMapping[str, MutableSequence[str] | bytes] = {
             attr_name: attr_values
             for attr_name, attr_values in entry.attributes.attributes.items()
             if attr_name.lower() != "objectclass"
@@ -148,7 +150,7 @@ class TestRealLdapImport:
                 list(object_classes) if object_classes else []
             )
             object_classes = object_classes_typed
-        attrs_dict: Mapping[str, t.StrSequence] = {}
+        attrs_dict: MutableMapping[str, MutableSequence[str] | bytes] = {}
         assert entry.attributes is not None
         for attr_name, attr_values in entry.attributes.attributes.items():
             if attr_name.lower() == "objectclass":
@@ -157,8 +159,6 @@ class TestRealLdapImport:
                 continue
             if isinstance(attr_values, list):
                 attrs_dict[attr_name] = attr_values
-            elif hasattr(attr_values, "values"):
-                attrs_dict[attr_name] = list(attr_values.values)
             else:
                 attrs_dict[attr_name] = [str(attr_values)]
         ldap_connection.add(str(entry.dn), object_classes, attributes=attrs_dict)

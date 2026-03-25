@@ -78,13 +78,13 @@ class TestFlextLdifTypesStructure:
 class TestsFlextLdifCommonDictionaryTypes(s):
     """Test common dictionary type definitions with REAL data."""
 
-    SAMPLE_ATTR_DICT: ClassVar[Mapping[str, t.StrSequence]] = {
+    SAMPLE_ATTR_DICT: ClassVar[dict[str, list[str]]] = {
         c.Ldif.Names.CN: ["John Doe"],
         c.Ldif.Names.SN: ["Doe"],
         c.Ldif.Names.MAIL: ["john@example.com", "john.doe@example.com"],
         c.Ldif.Names.OBJECTCLASS: [c.Ldif.Names.PERSON, c.Ldif.Names.INETORGPERSON],
     }
-    SAMPLE_DISTRIBUTION: ClassVar[Mapping[str, int]] = {
+    SAMPLE_DISTRIBUTION: ClassVar[dict[str, int]] = {
         c.Ldif.Names.INETORGPERSON: 1245,
         "groupOfNames": 89,
         "organizationalUnit": 34,

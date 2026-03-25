@@ -637,11 +637,11 @@ class TestsFlextLdifFixtures(tt):
             List of created entries
 
         """
-        result: Sequence[m.Ldif.Entry] = []
+        entries: list[m.Ldif.Entry] = []
         for dn, attrs in entries_data:
             entry = cls.create_entry(dn, **attrs)
-            result.append(entry)
-        return result
+            entries.append(entry)
+        return entries
 
     @staticmethod
     def run_fixture_roundtrip(
@@ -659,13 +659,11 @@ class TestsFlextLdifFixtures(tt):
 
         """
         api = FlextLdif.get_instance()
-        parse_result: r[MutableSequence[m.Ldif.Entry]] = api.parse_ldif(fixture_path)
-        entries: MutableSequence[m.Ldif.Entry] = _unwrap_result(parse_result, msg=msg)
-        write_result: r[str] = api.write(entries)
-        ldif_content: str = _unwrap_result(write_result, msg=msg)
-        roundtrip_result: r[MutableSequence[m.Ldif.Entry]] = api.parse_ldif(
-            ldif_content,
-        )
+        parse_result = api.parse_ldif(fixture_path)
+        entries = _unwrap_result(parse_result, msg=msg)
+        write_result = api.write(entries)
+        ldif_content = _unwrap_result(write_result, msg=msg)
+        roundtrip_result = api.parse_ldif(ldif_content)
         return _unwrap_result(roundtrip_result, msg=msg)
 
     @staticmethod
@@ -684,7 +682,7 @@ class TestsFlextLdifFixtures(tt):
 
         """
         api = FlextLdif.get_instance()
-        result: r[MutableSequence[m.Ldif.Entry]] = api.parse_ldif(fixture_path)
+        result = api.parse_ldif(fixture_path)
         return _unwrap_result(result, msg=msg)
 
     @staticmethod
@@ -703,8 +701,8 @@ class TestsFlextLdifFixtures(tt):
 
         """
         api = FlextLdif.get_instance()
-        result: r[MutableSequence[m.Ldif.Entry]] = api.parse_ldif(fixture_path)
-        entries: MutableSequence[m.Ldif.Entry] = _unwrap_result(result, msg=msg)
+        result = api.parse_ldif(fixture_path)
+        entries = _unwrap_result(result, msg=msg)
         TestsFlextLdifMatchers.entries(entries, msg=msg)
         return entries
 

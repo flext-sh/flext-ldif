@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 from collections.abc import Callable
 
-from ldap3 import Connection  # pyrefly: ignore[missing-import]
+from ldap3 import Connection  # pyrefly: ignore
 
 from flext_ldif import FlextLdif
 from tests import GenericFieldsDict

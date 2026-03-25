@@ -22,7 +22,7 @@ from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
 from pathlib import Path
 
 import pytest
-from ldap3 import Connection  # pyrefly: ignore[missing-import]
+from ldap3 import Connection  # pyrefly: ignore
 
 from flext_ldif import FlextLdif, m, t
 

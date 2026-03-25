@@ -23,7 +23,7 @@ def schema_service() -> FlextLdifSchema:
 @pytest.fixture
 def schema_service_oud() -> FlextLdifSchema:
     """Create FlextLdifSchema instance with OUD server type."""
-    return FlextLdifSchema(server_type="oud")
+    return FlextLdifSchema(server_type=c.Ldif.ServerTypes("oud"))
 
 
 @pytest.fixture
@@ -87,19 +87,19 @@ class TestSchemaServiceBuilder:
     def test_with_server_type_chains(self) -> None:
         """Test with_server_type() returns self for chaining."""
         service = FlextLdifSchema.builder()
-        chained = service.with_server_type("oud")
+        chained = service.with_server_type(c.Ldif.ServerTypes("oud"))
         tm.that(chained is service, eq=True)
         tm.that(service.server_type, eq="oud")
 
     def test_build_returns_self(self) -> None:
         """Test build() returns configured instance."""
-        service = FlextLdifSchema.builder().with_server_type("oid").build_schema()
+        service = FlextLdifSchema.builder().with_server_type(c.Ldif.ServerTypes("oid")).build_schema()
         tm.that(service, is_=FlextLdifSchema)
         tm.that(service.server_type, eq="oid")
 
     def test_fluent_builder_complete_chain(self) -> None:
         """Test complete fluent builder chain."""
-        service = FlextLdifSchema.builder().with_server_type("oud").build_schema()
+        service = FlextLdifSchema.builder().with_server_type(c.Ldif.ServerTypes("oud")).build_schema()
         tm.that(service.server_type, eq="oud")
         result = service.execute()
         tm.that(result.is_success, eq=True)
@@ -567,11 +567,11 @@ class TestSchemaServiceIntegration:
     def test_multiple_server_types(self) -> None:
         """Test service works with different server types."""
         server_registry = FlextLdifServer.get_global_instance()
-        server_types: tuple[c.Ldif.ServerTypeLiteral, ...] = (
-            "rfc",
-            "oud",
-            "oid",
-            "openldap",
+        server_types: tuple[c.Ldif.ServerTypes, ...] = (
+            c.Ldif.ServerTypes.RFC,
+            c.Ldif.ServerTypes.OUD,
+            c.Ldif.ServerTypes.OID,
+            c.Ldif.ServerTypes.OPENLDAP,
         )
         for server_type in server_types:
             service = FlextLdifSchema(server_type=server_type, registry=server_registry)

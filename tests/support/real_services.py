@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import tempfile
+from collections.abc import Mapping
 from pathlib import Path
 
 from flext_ldif import (
@@ -17,6 +18,16 @@ from flext_ldif import (
     FlextLdifWriter,
 )
 from tests import t
+
+type _ServiceMapping = Mapping[
+    str,
+    t.NormalizedValue
+    | FlextLdifParser
+    | FlextLdifServer
+    | FlextLdifWriter
+    | FlextLdifMigrationPipeline
+    | "_ServiceMapping",
+]
 
 
 class FlextLdifTestServiceFactory:
@@ -137,7 +148,7 @@ class FlextLdifTestServiceFactory:
         cls,
         config_type: str = "strict",
         quirk_registry: FlextLdifServer | None = None,
-    ) -> t.ContainerMapping:
+    ) -> _ServiceMapping:
         """Create complete service set for testing.
 
         Args:
@@ -174,7 +185,7 @@ class FlextLdifTestServiceFactory:
         cls,
         config: t.ContainerMapping | None = None,
         quirk_registry: FlextLdifServer | None = None,
-    ) -> t.ContainerMapping:
+    ) -> _ServiceMapping:
         """Create unified service API for backward compatibility.
 
         Args:
@@ -242,7 +253,7 @@ class FlextLdifTestServiceFactory:
         max_entries: int = 10000,
         encoding: str = "utf-8",
         max_line_length: int = 76,
-    ) -> t.ContainerMapping:
+    ) -> _ServiceMapping:
         """Create API with specific configuration."""
         config = cls._ConfigFactory.create_test_config(
             encoding=encoding,
@@ -257,7 +268,7 @@ class FlextLdifTestServiceFactory:
     def create_lenient_api(
         cls,
         quirk_registry: FlextLdifServer | None = None,
-    ) -> t.ContainerMapping:
+    ) -> _ServiceMapping:
         """Create API with lenient parsing."""
         return cls.create_api(
             cls._ConfigFactory.create_lenient_config(),
@@ -268,7 +279,7 @@ class FlextLdifTestServiceFactory:
     def create_strict_api(
         cls,
         quirk_registry: FlextLdifServer | None = None,
-    ) -> t.ContainerMapping:
+    ) -> _ServiceMapping:
         """Create API with strict parsing and validation."""
         return cls.create_api(cls._ConfigFactory.create_strict_config(), quirk_registry)
 
@@ -277,7 +288,7 @@ class FlextLdifTestServiceFactory:
         cls,
         max_entries: int = 100000,
         quirk_registry: FlextLdifServer | None = None,
-    ) -> t.ContainerMapping:
+    ) -> _ServiceMapping:
         """Create API optimized for performance testing."""
         return cls.create_api(
             cls._ConfigFactory.create_performance_config(max_entries),
@@ -307,7 +318,7 @@ class FlextLdifTestServiceFactory:
     def services_for_integration_test(
         cls,
         quirk_registry: FlextLdifServer | None = None,
-    ) -> t.ContainerMapping:
+    ) -> _ServiceMapping:
         """Create all services configured for integration testing."""
         config = cls.create_test_config()
         if quirk_registry is None:
@@ -325,7 +336,7 @@ class FlextLdifTestServiceFactory:
     def minimal_services(
         cls,
         quirk_registry: FlextLdifServer | None = None,
-    ) -> t.ContainerMapping:
+    ) -> _ServiceMapping:
         """Create minimal service set for basic testing."""
         if quirk_registry is None:
             quirk_registry = FlextLdifServer()

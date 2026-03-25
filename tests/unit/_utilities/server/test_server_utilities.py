@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import pytest
 from flext_tests import tm
-from tests import s, u
+from tests import u
+from tests.base import FlextLdifTestsServiceBase as s
 
 
 class OidServer:

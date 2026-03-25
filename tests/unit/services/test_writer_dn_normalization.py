@@ -86,7 +86,7 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
     def test_normalize_dn_to_lowercase(self, dn_service: FlextLdifDn) -> None:
         """Test DN normalization converts attribute names to lowercase per RFC 4514."""
         dn = "CN=John Doe,OU=People,DC=Example,DC=Com"
-        result = dn_service.normalize(dn)
+        result = dn_service.normalize_dn(dn)
         (
             tm.that(result.is_success, eq=True),
             "DN normalization should succeed",
@@ -173,7 +173,7 @@ class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
     ) -> None:
         """Test writing entry with DN normalized before writing."""
         dn_value = "CN=John Doe,OU=People,DC=Example,DC=Com"
-        normalize_result = dn_service.normalize(dn_value)
+        normalize_result = dn_service.normalize_dn(dn_value)
         tm.that(normalize_result.is_success, eq=True)
         normalized_dn = normalize_result.value
         entry = m.Ldif.Entry(

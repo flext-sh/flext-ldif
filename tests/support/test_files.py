@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import types
-from collections.abc import Generator, Mapping
+from collections.abc import Generator, Mapping, MutableMapping
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -74,7 +74,10 @@ class FileManager:
             filename = f"{safe_name}.ldif"
         return self.create_ldif_file(sample.content, filename, directory)
 
-    def create_all_samples(self, directory: Path | None = None) -> Mapping[str, Path]:
+    def create_all_samples(
+        self,
+        directory: Path | None = None,
+    ) -> MutableMapping[str, Path]:
         """Create files for all test samples.
 
         Args:
@@ -85,7 +88,7 @@ class FileManager:
 
         """
         target_dir = self._resolve_directory(directory)
-        files: Mapping[str, Path] = {}
+        files: MutableMapping[str, Path] = {}
         for name, sample in LdifTestData.all_samples().items():
             file_path = self.create_sample_file(sample, f"{name}.ldif", target_dir)
             files[name] = file_path
@@ -201,9 +204,9 @@ class FileManager:
         self,
         files: t.StrMapping,
         extension: str = "",
-    ) -> Mapping[str, Path]:
+    ) -> MutableMapping[str, Path]:
         """Create set of files."""
-        created: Mapping[str, Path] = {}
+        created: MutableMapping[str, Path] = {}
         for name, content in files.items():
             filename = f"{name}{extension}"
             created[name] = self.create_text_file(content, filename)

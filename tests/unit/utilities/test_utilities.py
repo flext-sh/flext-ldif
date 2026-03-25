@@ -92,7 +92,7 @@ class TestsTestFlextLdifServiceAPIs:
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.UTILITIES_MODULE:
                     spec = importlib.util.find_spec(check_target)
                     (
-                        tm.that(spec, none=False),
+                        tm.that(spec is not None, eq=True),
                         f"Module {check_target} should exist",
                     )
                 case TestsTestFlextLdifServiceAPIs.ImportCheck.SERVICES_MODULE:

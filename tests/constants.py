@@ -30,6 +30,7 @@ from typing import Final
 
 from flext_core import r
 from flext_tests import FlextTestsConstants
+from pydantic import BaseModel
 
 from flext_ldif import (
     FlextLdif,
@@ -1205,13 +1206,11 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     AssertionError: If parsing/writing fails or validations don't pass
 
                 """
-                attr = (
-                    FlextLdifTestConstants.RfcTestHelpers.test_schema_parse_attribute(
-                        schema_quirk,
-                        attr_def,
-                        expected_oid,
-                        expected_name,
-                    )
+                attr = FlextLdifTestConstants.Ldif.RfcTestHelpers.test_schema_parse_attribute(
+                    schema_quirk,
+                    attr_def,
+                    expected_oid,
+                    expected_name,
                 )
                 write_method = getattr(schema_quirk, "write_attribute", None)
                 if write_method is None:
@@ -1657,7 +1656,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
                 """
                 service = FlextLdifEntries()
-                entries: Sequence[m.Ldif.Entry] = []
+                entries: MutableSequence[m.Ldif.Entry] = []
                 for entry_data in entries_data:
                     dn_raw = entry_data.get("dn")
                     attrs_raw = entry_data.get("attributes")
@@ -1710,7 +1709,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     AssertionError: If validation fails when validate_all is True
 
                 """
-                results: Sequence[r[m.Ldif.ParseResponse]] = []
+                results: MutableSequence[r[m.Ldif.ParseResponse]] = []
                 for test_case in test_cases:
                     ldif_content = str(test_case.get("ldif_content", ""))
                     should_succeed = test_case.get("should_succeed")
@@ -1776,7 +1775,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 """
                 assert isinstance(api, FlextLdif)
                 assert isinstance(output_file, Path)
-                ldif_string = FlextLdifTestConstants.TestDeduplicationHelpers.helper_api_write_and_unwrap(
+                ldif_string = FlextLdifTestConstants.Ldif.TestDeduplicationHelpers.helper_api_write_and_unwrap(
                     api,
                     entries,
                     must_contain=must_contain,
@@ -1800,7 +1799,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     must_contain: List of strings that must appear in output
 
                 """
-                FlextLdifTestConstants.TestDeduplicationHelpers.helper_api_write_and_unwrap(
+                FlextLdifTestConstants.Ldif.TestDeduplicationHelpers.helper_api_write_and_unwrap(
                     api,
                     entries,
                     must_contain=must_contain,

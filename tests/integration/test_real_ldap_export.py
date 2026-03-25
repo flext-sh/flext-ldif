@@ -16,11 +16,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import (
+    Callable,
+    MutableMapping,
+    MutableSequence,
+)
 from pathlib import Path
 
 import pytest
-from ldap3 import Connection  # pyrefly: ignore[missing-import]
+from ldap3 import Connection  # pyrefly: ignore
 
 from flext_ldif import FlextLdif, FlextLdifModels, m
 
@@ -64,7 +68,7 @@ class TestRealLdapExport:
         )
         assert len(ldap_connection.entries) == 1
         ldap_entry = ldap_connection.entries[0]
-        attrs_dict = {}
+        attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
         for attr_name in ldap_entry.entry_attributes:
             attr_obj = ldap_entry[attr_name]
             if hasattr(attr_obj, "raw_values"):
@@ -123,9 +127,9 @@ class TestRealLdapExport:
             )
         ldap_connection.search(clean_test_ou, "(objectClass=person)", attributes=["*"])
         assert len(ldap_connection.entries) == 5
-        entries: Sequence[FlextLdifModels.Ldif.Entry] = []
+        entries: MutableSequence[FlextLdifModels.Ldif.Entry] = []
         for entry in ldap_connection.entries:
-            attrs_dict = {}
+            attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
             for attr_name in entry.entry_attributes:
                 attr_obj = entry[attr_name]
                 if hasattr(attr_obj, "raw_values"):
@@ -201,9 +205,9 @@ class TestRealLdapExport:
             search_scope="SUBTREE",
             attributes=["*"],
         )
-        entries: Sequence[FlextLdifModels.Ldif.Entry] = []
+        entries: MutableSequence[FlextLdifModels.Ldif.Entry] = []
         for entry in ldap_connection.entries:
-            attrs_dict = {}
+            attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
             for attr_name in entry.entry_attributes:
                 attr_obj = entry[attr_name]
                 if hasattr(attr_obj, "raw_values"):
@@ -267,13 +271,13 @@ class TestRealLdapExport:
         )
         ldap_connection.search(person_dn, "(objectClass=*)", attributes=["*"])
         ldap_entry = ldap_connection.entries[0]
-        attrs_dict = {}
+        attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
         for attr_name in ldap_entry.entry_attributes:
             attr_obj = ldap_entry[attr_name]
             if hasattr(attr_obj, "values"):
-                values = [str(v) if not isinstance(v, str) else v for v in attr_obj]
-            elif isinstance(attr_obj, list):
-                values = [str(v) for v in attr_obj]
+                values = [
+                    str(v) if not isinstance(v, str) else v for v in attr_obj.values
+                ]
             else:
                 values = [str(attr_obj)]
             attrs_dict[attr_name] = values

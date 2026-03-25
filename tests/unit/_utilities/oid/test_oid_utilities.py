@@ -4,7 +4,7 @@ import re
 from unittest.mock import patch
 
 from flext_tests import tm
-from tests import s
+from tests.base import FlextLdifTestsServiceBase as s
 
 from flext_ldif import u
 

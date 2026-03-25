@@ -33,7 +33,10 @@ class FlextLdifTestFactory:
             }
 
         # Direct instantiation for test data to avoid Generic Result inference issues in linter
-        attrs = m.Ldif.Attributes(attributes=attributes)
+        mutable_attrs: dict[str, list[str]] = {
+            k: list(v) for k, v in attributes.items()
+        }
+        attrs = m.Ldif.Attributes(attributes=mutable_attrs)
 
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
@@ -48,7 +51,7 @@ class FlextLdifTestFactory:
         include_schema: bool = False,
     ) -> str:
         """Create real LDIF content for testing."""
-        lines: t.StrSequence = []
+        lines: list[str] = []
         if include_schema:
             lines.extend([
                 "dn: cn=schema",

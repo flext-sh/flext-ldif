@@ -18,12 +18,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import (
+    Callable,
+    MutableMapping,
+    MutableSequence,
+)
 
 import pytest
-from ldap3 import Connection  # pyrefly: ignore[missing-import]
+from ldap3 import Connection  # pyrefly: ignore
 
-from flext_ldif import FlextLdif, t
+from flext_ldif import FlextLdif
 
 
 @pytest.fixture
@@ -48,7 +52,7 @@ class TestRealLdapRoundtrip:
         """Verify LDAP → LDIF → LDAP preserves data integrity."""
         unique_username = make_test_username("RoundtripTest")
         original_dn = f"cn={unique_username},{clean_test_ou}"
-        original_attrs: Mapping[str, str | t.StrSequence] = {
+        original_attrs: MutableMapping[str, str | MutableSequence[str]] = {
             "cn": unique_username,
             "sn": "Test",
             "mail": "roundtrip@example.com",
@@ -58,13 +62,13 @@ class TestRealLdapRoundtrip:
         ldap_connection.add(original_dn, ["person", "inetOrgPerson"], original_attrs)
         ldap_connection.search(original_dn, "(objectClass=*)", attributes=["*"])
         ldap_entry = ldap_connection.entries[0]
-        attrs_dict = {}
+        attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
         for attr_name in ldap_entry.entry_attributes:
             attr_obj = ldap_entry[attr_name]
             if hasattr(attr_obj, "values"):
-                values = [str(v) if not isinstance(v, str) else v for v in attr_obj]
-            elif isinstance(attr_obj, list):
-                values = [str(v) for v in attr_obj]
+                values = [
+                    str(v) if not isinstance(v, str) else v for v in attr_obj.values
+                ]
             else:
                 values = [str(attr_obj)]
             attrs_dict[attr_name] = values
@@ -93,8 +97,8 @@ class TestRealLdapRoundtrip:
         }
         attrs = reimport_entry.attributes
         assert attrs is not None
-        reimport_attrs: Mapping[str, t.StrSequence] = {
-            attr_name: attr_values
+        reimport_attrs: MutableMapping[str, MutableSequence[str]] = {
+            attr_name: list(attr_values)
             for attr_name, attr_values in attrs.attributes.items()
             if attr_name.lower() not in ldif_special_attrs
             and attr_name.lower() != "objectclass"

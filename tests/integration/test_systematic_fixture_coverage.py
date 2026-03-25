@@ -47,8 +47,8 @@ class TestSystematicFixtureCoverage:
             (line for line in lines if line.startswith("dn:")),
             "dn: cn=schema",
         )
-        selected_lines = [first_dn]
-        current_chunk: t.StrSequence = []
+        selected_lines: list[str] = [first_dn]
+        current_chunk: list[str] = []
         definitions_count = 0
 
         def flush_chunk() -> None:
@@ -149,7 +149,7 @@ class TestSystematicFixtureCoverage:
         write_result = api.write(entries)
         assert write_result.is_success, f"Write failed: {write_result.error}"
         written_content = write_result.value
-        if u.is_list_non_empty(entries):
+        if len(entries) > 0:
             assert len(written_content) >= 0, "Write result should be string"
 
     @pytest.mark.parametrize(

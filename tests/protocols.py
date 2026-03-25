@@ -9,12 +9,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_ldap import FlextLdapProtocols  # pyrefly: ignore
 from flext_tests import FlextTestsProtocols
 
-from flext_ldif import FlextLdifProtocols
 
-
-class FlextLdifTestProtocols(FlextTestsProtocols, FlextLdifProtocols):
+class FlextLdifTestProtocols(
+    FlextTestsProtocols,
+    FlextLdapProtocols,
+):
     """Protocol definitions for flext-ldif tests.
 
     Extends both FlextTestsProtocols and FlextLdifProtocols with flext-ldif-specific
@@ -30,7 +32,7 @@ class FlextLdifTestProtocols(FlextTestsProtocols, FlextLdifProtocols):
     - Only flext-ldif-specific test protocols allowed
     """
 
-    class Ldif(FlextLdifProtocols.Ldif):
+    class Ldif(FlextLdapProtocols.Ldif):
         """Flext-ldif-specific test protocols."""
 
         class Tests:

@@ -276,7 +276,7 @@ class TestsTestFlextLdifProtocols(s):
         oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test parse method returns r."""
-        result = oid_schema.parse(self.Constants.SAMPLE_ATTR_DEF)
+        result = oid_schema.parse_attribute(self.Constants.SAMPLE_ATTR_DEF)
         tm.that(result, is_=r)
 
     def test_can_handle_returns_bool(
@@ -341,5 +341,5 @@ class TestsTestFlextLdifProtocols(s):
         schema = FlextLdifServersOid.Schema()
         result = schema.can_handle_attribute(self.Constants.SAMPLE_ATTR_DEF_SIMPLE)
         tm.that(result, is_=bool)
-        parse_result = schema.parse(self.Constants.SAMPLE_ATTR_DEF_SIMPLE)
+        parse_result = schema.parse_attribute(self.Constants.SAMPLE_ATTR_DEF_SIMPLE)
         tm.that(hasattr(parse_result, self.Constants.ATTR_IS_SUCCESS), eq=True)

@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Annotated, ClassVar, Literal
 
 from flext_core import FlextModels
-from pydantic import ConfigDict, Field  # ConfigDict used by _FrozenConversion
+from pydantic import ConfigDict, Field
 
 from flext_ldif import t
 
@@ -98,7 +98,7 @@ class FlextLdifModelsConversions:
                 val,
                 (str, bytes, bytearray),
             ):
-                return [item for item in val]  # noqa: C416 - pyrefly rejects list()
+                return [item for item in val]
             if isinstance(val, (str, int, float, bool, datetime, Path)):
                 return [val]
             return [str(val)]

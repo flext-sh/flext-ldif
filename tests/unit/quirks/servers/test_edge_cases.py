@@ -117,7 +117,7 @@ class TestsFlextLdifEdgeCases(s):
         entries = parse_result.value
         tm.that(len(entries), eq=1)
         output_path = tmp_path / "unicode_roundtrip.ldif"
-        write_result = ldif_api.write_file(entries, output_path, server_type="rfc")
+        write_result = ldif_api.write_ldif_file(entries, output_path, server_type="rfc")
         (
             tm.that(write_result.is_success, eq=True),
             f"Write failed: {write_result.error}",
@@ -141,7 +141,7 @@ class TestsFlextLdifEdgeCases(s):
         entries = parse_result.value
         tm.that(len(entries), eq=1)
         output_path = tmp_path / "deep_dn_roundtrip.ldif"
-        write_result = ldif_api.write_file(entries, output_path, server_type="rfc")
+        write_result = ldif_api.write_ldif_file(entries, output_path, server_type="rfc")
         (
             tm.that(write_result.is_success, eq=True),
             f"Write failed: {write_result.error}",
@@ -169,7 +169,7 @@ class TestsFlextLdifEdgeCases(s):
         entries = parse_result.value
         tm.that(len(entries), eq=1)
         output_path = tmp_path / "large_multivalue_roundtrip.ldif"
-        write_result = ldif_api.write_file(entries, output_path, server_type="rfc")
+        write_result = ldif_api.write_ldif_file(entries, output_path, server_type="rfc")
         (
             tm.that(write_result.is_success, eq=True),
             f"Write failed: {write_result.error}",

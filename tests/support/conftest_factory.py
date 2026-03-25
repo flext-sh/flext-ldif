@@ -14,7 +14,14 @@ import contextlib
 import copy
 import tempfile
 import time
-from collections.abc import Callable, Collection, Generator, Mapping, Sequence
+from collections.abc import (
+    Callable,
+    Collection,
+    Generator,
+    Mapping,
+    MutableSequence,
+    Sequence,
+)
 from pathlib import Path
 from typing import (
     ClassVar,
@@ -24,7 +31,7 @@ from typing import (
 import pytest
 from flext_core import FlextConstants, FlextLogger, FlextSettings, r
 from flext_tests import tk
-from ldap3 import ALL, Connection, Server  # pyrefly: ignore[missing-import]
+from ldap3 import ALL, Connection, Server  # pyrefly: ignore
 
 from flext_ldif import (
     FlextLdif,
@@ -32,13 +39,12 @@ from flext_ldif import (
     FlextLdifServer,
     FlextLdifServersBase,
     FlextLdifWriter,
-    p,
 )
-from tests import t, u
+from tests import p, t
 
 from ..conftest import FlextLdifFixtures
 from .ldif_data import LdifTestData
-from .real_services import FlextLdifTestServiceFactory
+from .real_services import FlextLdifTestServiceFactory, _ServiceMapping
 from .test_files import FileManager
 from .validators import TestValidators
 
@@ -90,6 +96,62 @@ class FlextLdifTestConftest:
         },
     ]
 
+    @staticmethod
+    def _ldap_bind(connection: Connection) -> bool:
+        bind_method = getattr(connection, "bind", None)
+        if callable(bind_method):
+            return bool(bind_method())
+        return False
+
+    @staticmethod
+    def _ldap_unbind(connection: Connection) -> None:
+        unbind_method = getattr(connection, "unbind", None)
+        if callable(unbind_method):
+            _ = unbind_method()
+
+    @staticmethod
+    def _ldap_search(
+        connection: Connection,
+        search_base: str,
+        search_filter: str,
+        *,
+        search_scope: str = "SUBTREE",
+    ) -> bool:
+        search_method = getattr(connection, "search", None)
+        if callable(search_method):
+            return bool(
+                search_method(
+                    search_base,
+                    search_filter,
+                    search_scope=search_scope,
+                ),
+            )
+        return False
+
+    @staticmethod
+    def _ldap_add(
+        connection: Connection,
+        dn: str,
+        object_class: Sequence[str],
+        attributes: Mapping[str, str | Sequence[str]],
+    ) -> bool:
+        add_method = getattr(connection, "add", None)
+        if callable(add_method):
+            return bool(add_method(dn, object_class, attributes))
+        return False
+
+    @staticmethod
+    def _ldap_delete(connection: Connection, dn: str) -> bool:
+        delete_method = getattr(connection, "delete", None)
+        if callable(delete_method):
+            return bool(delete_method(dn))
+        return False
+
+    @staticmethod
+    def _ldap_entries(connection: Connection) -> Sequence[p.Ldap.Ldap3Entry]:
+        entries = getattr(connection, "entries", [])
+        return [entry for entry in entries if isinstance(entry, p.Ldap.Ldap3Entry)]
+
     def docker_control(self) -> tk:
         """Provide tk instance for container management.
 
@@ -97,7 +159,7 @@ class FlextLdifTestConftest:
         are resolved correctly regardless of which project runs the tests.
         """
         workspace_root = Path(__file__).resolve().parents[4]
-        return u.Tests.Docker(workspace_root=workspace_root)
+        return tk(workspace_root=workspace_root)
 
     def worker_id(self, request: pytest.FixtureRequest) -> str:
         """Get pytest-xdist worker ID for DN namespacing."""
@@ -115,7 +177,8 @@ class FlextLdifTestConftest:
         request: pytest.FixtureRequest,
     ) -> str:
         """Generate unique DN suffix using factory pattern."""
-        test_name = request.node.name if hasattr(request, "node") else "unknown"
+        node_name = getattr(getattr(request, "node", None), "name", "unknown")
+        test_name = str(node_name)
         allowed_chars = {"-", "_"}
         test_name_clean = "".join(
             c if c.isalnum() or c in allowed_chars else "-" for c in test_name
@@ -249,13 +312,13 @@ class FlextLdifTestConftest:
                         password=password,
                         auto_bind=False,
                     )
-                    if conn.bind():
-                        conn.unbind()
+                    if self._ldap_bind(conn):
+                        self._ldap_unbind(conn)
                         active_bind_dn = bind_dn
                         active_password = password
                         logger.debug("Container ready after %.1fs", waited)
                         break
-                    conn.unbind()
+                    self._ldap_unbind(conn)
                 else:
                     time.sleep(wait_interval)
                     waited += wait_interval
@@ -294,14 +357,18 @@ class FlextLdifTestConftest:
         bind_dn = str(ldap_container.get("bind_dn", self.LDAP_ADMIN_DN))
         password = str(ldap_container.get("password", self.LDAP_ADMIN_PASSWORD))
         server = Server(f"ldap://{host}:{port}", get_info=ALL)
-        conn = Connection(server, user=bind_dn, password=password)
+        conn = Connection(
+            server,
+            user=bind_dn,
+            password=password,
+        )
         try:
-            if not conn.bind():
+            if not self._ldap_bind(conn):
                 pytest.skip(f"LDAP server not available at {host}:{port}")
         except Exception as e:
             pytest.skip(f"LDAP server not available: {e}")
         yield conn
-        conn.unbind()
+        self._ldap_unbind(conn)
 
     def clean_test_ou(
         self,
@@ -311,36 +378,49 @@ class FlextLdifTestConftest:
         """Create and clean isolated test OU."""
         test_ou_dn = make_test_base_dn("FlextLdifTests")
         try:
-            ldap_connection.search(
+            _ = self._ldap_search(
+                ldap_connection,
                 test_ou_dn,
                 "(objectClass=*)",
                 search_scope="SUBTREE",
             )
-            if ldap_connection.entries:
-                dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
+            ldap_entries = self._ldap_entries(ldap_connection)
+            if ldap_entries:
+                dns_to_delete = [
+                    entry.entry_dn
+                    for entry in ldap_entries
+                    if entry.entry_dn is not None
+                ]
                 for dn in reversed(dns_to_delete):
                     with contextlib.suppress(Exception):
-                        ldap_connection.delete(dn)
+                        _ = self._ldap_delete(ldap_connection, dn)
         except Exception:
             pass
         with contextlib.suppress(Exception):
-            ldap_connection.add(
+            _ = self._ldap_add(
+                ldap_connection,
                 test_ou_dn,
                 ["organizationalUnit"],
                 {"ou": "FlextLdifTests"},
             )
         yield test_ou_dn
         try:
-            ldap_connection.search(
+            _ = self._ldap_search(
+                ldap_connection,
                 test_ou_dn,
                 "(objectClass=*)",
                 search_scope="SUBTREE",
             )
-            if ldap_connection.entries:
-                dns_to_delete = [entry.entry_dn for entry in ldap_connection.entries]
+            ldap_entries = self._ldap_entries(ldap_connection)
+            if ldap_entries:
+                dns_to_delete = [
+                    entry.entry_dn
+                    for entry in ldap_entries
+                    if entry.entry_dn is not None
+                ]
                 for dn in reversed(dns_to_delete):
                     with contextlib.suppress(Exception):
-                        ldap_connection.delete(dn)
+                        _ = self._ldap_delete(ldap_connection, dn)
         except Exception:
             pass
 
@@ -354,15 +434,15 @@ class FlextLdifTestConftest:
             "normalize_attributes": True,
         }
 
-    def real_ldif_api(self) -> t.ContainerMapping:
+    def real_ldif_api(self) -> _ServiceMapping:
         """Real LDIF API services."""
         return FlextLdifTestServiceFactory.create_api()
 
-    def strict_ldif_api(self) -> t.ContainerMapping:
+    def strict_ldif_api(self) -> _ServiceMapping:
         """Strict LDIF API services."""
         return FlextLdifTestServiceFactory.create_strict_api()
 
-    def lenient_ldif_api(self) -> t.ContainerMapping:
+    def lenient_ldif_api(self) -> _ServiceMapping:
         """Lenient LDIF API services."""
         return FlextLdifTestServiceFactory.create_lenient_api()
 
@@ -440,7 +520,7 @@ class FlextLdifTestConftest:
         """Real writer service."""
         return FlextLdifTestServiceFactory.create_writer(quirk_registry=quirk_registry)
 
-    def integration_services(self) -> t.ContainerMapping:
+    def integration_services(self) -> _ServiceMapping:
         """Integration services."""
         return FlextLdifTestServiceFactory.services_for_integration_test()
 
@@ -538,7 +618,14 @@ class FlextLdifTestConftest:
             },
         }
 
-    def transformation_rules(self) -> t.ContainerMapping:
+    def transformation_rules(
+        self,
+    ) -> Mapping[
+        str,
+        Mapping[str, str]
+        | Mapping[str, Callable[[str | float | None], str]]
+        | Mapping[str, str | Mapping[str, str]],
+    ]:
         """Transformation rules."""
 
         def _transform_mail(x: str | float | None) -> str:
@@ -626,15 +713,14 @@ class FlextLdifTestConftest:
 
     def ldif_test_entries(
         self,
-    ) -> Sequence[Mapping[str, Mapping[str, t.StrSequence] | str]]:
+    ) -> MutableSequence[Mapping[str, Mapping[str, Collection[str]] | str]]:
         """LDIF test entries."""
-        entries = copy.deepcopy(self._LDIF_TEST_ENTRIES)
+        entries: MutableSequence[Mapping[str, Mapping[str, Collection[str]] | str]] = (
+            list(copy.deepcopy(self._LDIF_TEST_ENTRIES))
+        )
         return [
             {
-                key: {
-                    k: list(v) if isinstance(v, Collection) else v
-                    for k, v in value.items()
-                }
+                key: {k: list(v) for k, v in value.items()}
                 if isinstance(value, dict)
                 else value
                 for key, value in entry.items()
@@ -642,9 +728,12 @@ class FlextLdifTestConftest:
             for entry in entries
         ]
 
-    def ldif_test_content(self, ldif_test_entries: Sequence[t.ContainerMapping]) -> str:
+    def ldif_test_content(
+        self,
+        ldif_test_entries: Sequence[t.ContainerMapping],
+    ) -> str:
         """Generate LDIF content."""
-        content_lines: t.StrSequence = []
+        content_lines: MutableSequence[str] = []
         for entry in ldif_test_entries:
             dn = entry.get("dn", "")
             content_lines.append(f"dn: {dn}")
@@ -652,9 +741,15 @@ class FlextLdifTestConftest:
             assert isinstance(attributes, dict)
             for attr_key, attr_values in attributes.items():
                 attr_name: str = str(attr_key)
-                content_lines.extend(
-                    f"{attr_name}: {value_item!s}" for value_item in attr_values
-                )
+                if isinstance(attr_values, Sequence) and not isinstance(
+                    attr_values,
+                    str,
+                ):
+                    content_lines.extend(
+                        f"{attr_name}: {value_item!s}" for value_item in attr_values
+                    )
+                else:
+                    content_lines.append(f"{attr_name}: {attr_values!s}")
             content_lines.append("")
         return "\n".join(content_lines)
 
@@ -711,10 +806,10 @@ class FlextLdifTestConftest:
     def pytest_collection_modifyitems(
         self,
         config: pytest.Config,
-        items: Sequence[pytest.Item],
+        items: MutableSequence[pytest.Item],
     ) -> None:
         """Filter test items."""
-        filtered_items: Sequence[pytest.Item] = []
+        filtered_items: MutableSequence[pytest.Item] = []
         for item in items:
             if hasattr(item, "parent") and item.parent is not None:
                 parent = item.parent

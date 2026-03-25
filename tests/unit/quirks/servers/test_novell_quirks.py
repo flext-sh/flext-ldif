@@ -6,7 +6,7 @@ eDirectory-specific attributes, t.NormalizedValue classes, and entries in LDIF f
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
@@ -123,7 +123,7 @@ class EntryTestCase(BaseModel):
     ]
     entry_dn: Annotated[str, Field(description="Entry distinguished name")]
     attributes: Annotated[
-        Mapping[str, Sequence[str]],
+        MutableMapping[str, MutableSequence[str]],
         Field(
             description="Entry attributes mapped by name",
         ),
