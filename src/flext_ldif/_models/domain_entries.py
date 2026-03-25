@@ -49,6 +49,12 @@ def _empty_conversion_history_factory() -> MutableSequence[MutableMapping[str, s
     return []
 
 
+# Compiled patterns for RFC validation — C-engine regex vs Python char loops.
+_ATTR_NAME_PATTERN = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]*$")
+_ATTR_OPTION_PATTERN = re.compile(r"^[a-zA-Z][a-zA-Z0-9_-]*$")
+_BINARY_CHAR_PATTERN = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\xff]")
+
+
 class FlextLdifModelsDomainsEntries:
     """LDIF domain models container class.
 
@@ -2153,31 +2159,23 @@ class FlextLdifModelsDomainsEntries:
             if self.attributes is None or not self.attributes:
                 return violations
             for attr_desc in self.attributes.attributes:
-                if ";" in attr_desc:
-                    base_attr, options_str = attr_desc.split(";", 1)
-                    options = [
-                        opt.strip() for opt in options_str.split(";") if opt.strip()
-                    ]
-                else:
-                    base_attr = attr_desc
-                    attr_options: list[str] = []
-                    options = attr_options
-                if not base_attr or not base_attr[0].isalpha():
+                parts = attr_desc.split(";")
+                base_attr = parts[0]
+                if not _ATTR_NAME_PATTERN.match(base_attr):
                     violations.append(
-                        f"RFC 4512 § 2.5: '{base_attr}' must start with letter",
+                        f"RFC 4512 § 2.5: '{base_attr}' must start with letter"
+                        if not base_attr or not base_attr[0].isalpha()
+                        else f"RFC 4512 § 2.5: '{base_attr}' has invalid characters",
                     )
-                elif not all(c.isalnum() or c == "-" for c in base_attr):
-                    violations.append(
-                        f"RFC 4512 § 2.5: '{base_attr}' has invalid characters",
-                    )
-                for option in options:
-                    if not option or not option[0].isalpha():
+                for option in parts[1:]:
+                    option = option.strip()
+                    if not option:
+                        continue
+                    if not _ATTR_OPTION_PATTERN.match(option):
                         violations.append(
-                            f"RFC 4512 § 2.5: option '{option}' must start with letter",
-                        )
-                    elif not all(c.isalnum() or c in {"-", "_"} for c in option):
-                        violations.append(
-                            f"RFC 4512 § 2.5: option '{option}' has invalid characters",
+                            f"RFC 4512 § 2.5: option '{option}' must start with letter"
+                            if not option or not option[0].isalpha()
+                            else f"RFC 4512 § 2.5: option '{option}' has invalid characters",
                         )
             return violations
 
@@ -2189,17 +2187,16 @@ class FlextLdifModelsDomainsEntries:
             violations: MutableSequence[str] = []
             if self.attributes is None or not self.attributes:
                 return violations
-            attr_name_pattern = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]*$")
             for attr_desc in self.attributes.attributes:
                 parts = attr_desc.split(";")
                 base_name = parts[0]
-                if not attr_name_pattern.match(base_name):
+                if not _ATTR_NAME_PATTERN.match(base_name):
                     violations.append(f"RFC 4512 § 2.5.1: '{base_name}' invalid syntax")
                 if len(parts) > 1:
                     invalid_options = [
                         f"RFC 4512 § 2.5.2: option '{option}' invalid syntax"
                         for option in parts[1:]
-                        if option and (not attr_name_pattern.match(option))
+                        if option and (not _ATTR_NAME_PATTERN.match(option))
                     ]
                     violations.extend(invalid_options)
             return violations
@@ -2224,6 +2221,9 @@ class FlextLdifModelsDomainsEntries:
         def _validate_binary_options(self) -> MutableSequence[str]:
             """Validate binary attribute options per RFC 2849 § 5.2.
 
+            Uses compiled regex for O(1)-per-match detection instead of
+            Python char-by-char ord() loops.
+
             Note: self.attributes may be None when using model_construct (bypasses validation).
             """
             violations: MutableSequence[str] = []
@@ -2233,12 +2233,7 @@ class FlextLdifModelsDomainsEntries:
                 if ";binary" in attr_name.lower():
                     continue
                 for value in attr_values:
-                    has_binary = any(
-                        (ord(char) < c.Ldif.ASCII_SPACE_CHAR and char not in "\t\n\r")
-                        or ord(char) > c.Ldif.ASCII_TILDE_CHAR
-                        for char in value
-                    )
-                    if has_binary:
+                    if _BINARY_CHAR_PATTERN.search(value):
                         violations.append(
                             f"RFC 2849 § 5.2: '{attr_name}' may need ';binary' option",
                         )
