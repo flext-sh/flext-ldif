@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
-
 if TYPE_CHECKING:
     from flext_core import FlextTypes
     from tests.unit._utilities.server.test_server_utilities import (
@@ -22,7 +21,10 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "OidServer": ["tests.unit._utilities.server.test_server_utilities", "OidServer"],
     "OudServer": ["tests.unit._utilities.server.test_server_utilities", "OudServer"],
-    "TestFlextLdifUtilitiesServer": ["tests.unit._utilities.server.test_server_utilities", "TestFlextLdifUtilitiesServer"],
+    "TestFlextLdifUtilitiesServer": [
+        "tests.unit._utilities.server.test_server_utilities",
+        "TestFlextLdifUtilitiesServer",
+    ],
 }
 
 __all__ = [
@@ -49,6 +51,7 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
 
     Raises:
         AttributeError: If attribute not registered.
+
     """
     if name in _LAZY_CACHE:
         return _LAZY_CACHE[name]
@@ -63,6 +66,7 @@ def __dir__() -> Sequence[str]:
 
     Returns:
         List of public names from module exports.
+
     """
     return sorted(__all__)
 

@@ -11,6 +11,9 @@ requires = [ "hatchling" ]
 # [CUSTOM] project metadata
 [project]
 
+
+
+
 authors = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -24,7 +27,7 @@ classifiers = [
 ]
 dependencies = [
   "colorlog>=6.9",
-  "flext-core @ ../flext-core",
+  "flext-core",
   "ldap3>=2.9.1",
   "pydantic-core>=2.41.4",
   "pydantic-settings>=2.11",
@@ -104,6 +107,12 @@ dev = [
   "vulture>=2.13",
 ]
 
+
+
+
+
+
+
 # [MANAGED] coverage
 [tool.coverage.report]
 fail_under = 15
@@ -111,13 +120,22 @@ precision = 2
 show_missing = true
 skip_covered = false
 
+
+
+
 # [MANAGED] deptry
 [tool.deptry]
 known_first_party = [ "flext_ldif" ]
 pep621_dev_dependency_groups = [ "dev" ]
 
+
+
+
 [tool.hatch.metadata]
 allow-direct-references = true
+
+
+
 
 # [MANAGED] mypy
 [tool.mypy]
@@ -131,14 +149,18 @@ python_version = "3.13"
 
 [tool.poetry]
 
-# [MANAGED] pydantic-mypy
 
-# [CUSTOM] poetry dev extensions
-[tool.poetry.group.dev.dependencies]
+
+
+
+# [MANAGED] pydantic-mypy
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
+
+
+
 
 # [MANAGED] pyrefly
 [tool.pyrefly]
@@ -179,6 +201,9 @@ redundant-cast = true
 unannotated-attribute = true
 unannotated-parameter = true
 unannotated-return = true
+
+
+
 
 # [MANAGED] pyright
 [tool.pyright]
@@ -224,17 +249,17 @@ venv = ".venv"
 venvPath = ".."
 
 [[tool.pyright.executionEnvironments]]
-extraPaths = [ "src" ]
+extraPaths = ["src"]
 reportPrivateUsage = "error"
 root = "src"
 
 [[tool.pyright.executionEnvironments]]
-extraPaths = [ ".", "src" ]
+extraPaths = [".", "src"]
 reportPrivateUsage = "none"
 root = "tests"
 
 [[tool.pyright.executionEnvironments]]
-extraPaths = [ ".", "src" ]
+extraPaths = [".", "src"]
 reportPrivateUsage = "none"
 root = "examples"
 
@@ -255,6 +280,9 @@ markers = [
 minversion = "8.0"
 python_classes = [ "Test*" ]
 python_files = [ "*_test.py", "*_tests.py", "test_*.py" ]
+
+
+
 
 # [MANAGED] ruff
 [tool.ruff]
@@ -354,7 +382,7 @@ split-on-trailing-comma = true
 
 [tool.ruff.lint.per-file-ignores]
 
-"**/.vulture_whitelist.py" = [ "ALL" ]
+
 "**/*_pb2*.py" = [ "ALL" ]
 "**/*docs*" = [ "INP001", "S404", "S603", "T201" ]
 "**/*examples*" = [
@@ -478,6 +506,7 @@ split-on-trailing-comma = true
 ]
 "**/*typings*" = [ "ANN401" ]
 "**/*utilities*" = [ "C901", "E402", "PLC2801", "PLW1510", "S404", "S603" ]
+"**/.vulture_whitelist.py" = [ "ALL" ]
 "**/__init__.py" = [ "ANN401", "D107", "F822", "N999", "PLC2701", "RUF067" ]
 "**/_utilities/parser.py" = [ "ARG004", "FBT001" ]
 "**/alert_manager*.py" = [ "S310" ]
@@ -497,7 +526,6 @@ split-on-trailing-comma = true
 "**/settings.py" = [ "ANN401", "PLC0415", "S105" ]
 "**/singer/*.py" = [ "S404", "S603" ]
 "**/subprocess.py" = [ "S404", "S603" ]
-"**/tools/*.py" = [ "FBT001", "FBT002", "N802", "S404", "S603", "S607", "T201" ]
 "**/tools/**/*.py" = [
   "FBT001",
   "FBT002",
@@ -507,8 +535,11 @@ split-on-trailing-comma = true
   "S607",
   "T201",
 ]
+"**/tools/*.py" = [ "FBT001", "FBT002", "N802", "S404", "S603", "S607", "T201" ]
 "**/typings.py" = [ "RUF036" ]
 "**/workspace/*.py" = [ "PLC0415", "S404", "S603", "S607" ]
+
+
 
 # [MANAGED] tomlsort
 [tool.tomlsort]
@@ -518,6 +549,9 @@ sort_first = [ "build-system", "dependency-groups", "project", "tool" ]
 
 [tool.uv.sources.flext-core]
 workspace = true
+
+
+
 
 # [MANAGED] yamlfix
 [tool.yamlfix]

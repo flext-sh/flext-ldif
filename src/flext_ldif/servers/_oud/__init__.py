@@ -10,9 +10,9 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
-
 if TYPE_CHECKING:
     from flext_core import FlextTypes
+
     from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
     from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants, c
     from flext_ldif.servers._oud.entry import FlextLdifServersOudEntry
@@ -21,10 +21,22 @@ if TYPE_CHECKING:
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdifServersOudAcl": ["flext_ldif.servers._oud.acl", "FlextLdifServersOudAcl"],
-    "FlextLdifServersOudConstants": ["flext_ldif.servers._oud.constants", "FlextLdifServersOudConstants"],
-    "FlextLdifServersOudEntry": ["flext_ldif.servers._oud.entry", "FlextLdifServersOudEntry"],
-    "FlextLdifServersOudSchema": ["flext_ldif.servers._oud.schema", "FlextLdifServersOudSchema"],
-    "FlextLdifServersOudUtilities": ["flext_ldif.servers._oud.utilities", "FlextLdifServersOudUtilities"],
+    "FlextLdifServersOudConstants": [
+        "flext_ldif.servers._oud.constants",
+        "FlextLdifServersOudConstants",
+    ],
+    "FlextLdifServersOudEntry": [
+        "flext_ldif.servers._oud.entry",
+        "FlextLdifServersOudEntry",
+    ],
+    "FlextLdifServersOudSchema": [
+        "flext_ldif.servers._oud.schema",
+        "FlextLdifServersOudSchema",
+    ],
+    "FlextLdifServersOudUtilities": [
+        "flext_ldif.servers._oud.utilities",
+        "FlextLdifServersOudUtilities",
+    ],
     "c": ["flext_ldif.servers._oud.constants", "c"],
     "logger": ["flext_ldif.servers._oud.schema", "logger"],
 }
@@ -57,6 +69,7 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
 
     Raises:
         AttributeError: If attribute not registered.
+
     """
     if name in _LAZY_CACHE:
         return _LAZY_CACHE[name]
@@ -71,6 +84,7 @@ def __dir__() -> Sequence[str]:
 
     Returns:
         List of public names from module exports.
+
     """
     return sorted(__all__)
 

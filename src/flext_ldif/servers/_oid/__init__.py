@@ -10,9 +10,9 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
-
 if TYPE_CHECKING:
     from flext_core import FlextTypes
+
     from flext_ldif.servers._oid.acl import FlextLdifServersOidAcl
     from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants, c
     from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
@@ -20,9 +20,18 @@ if TYPE_CHECKING:
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdifServersOidAcl": ["flext_ldif.servers._oid.acl", "FlextLdifServersOidAcl"],
-    "FlextLdifServersOidConstants": ["flext_ldif.servers._oid.constants", "FlextLdifServersOidConstants"],
-    "FlextLdifServersOidEntry": ["flext_ldif.servers._oid.entry", "FlextLdifServersOidEntry"],
-    "FlextLdifServersOidSchema": ["flext_ldif.servers._oid.schema", "FlextLdifServersOidSchema"],
+    "FlextLdifServersOidConstants": [
+        "flext_ldif.servers._oid.constants",
+        "FlextLdifServersOidConstants",
+    ],
+    "FlextLdifServersOidEntry": [
+        "flext_ldif.servers._oid.entry",
+        "FlextLdifServersOidEntry",
+    ],
+    "FlextLdifServersOidSchema": [
+        "flext_ldif.servers._oid.schema",
+        "FlextLdifServersOidSchema",
+    ],
     "c": ["flext_ldif.servers._oid.constants", "c"],
     "logger": ["flext_ldif.servers._oid.schema", "logger"],
 }
@@ -54,6 +63,7 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
 
     Raises:
         AttributeError: If attribute not registered.
+
     """
     if name in _LAZY_CACHE:
         return _LAZY_CACHE[name]
@@ -68,6 +78,7 @@ def __dir__() -> Sequence[str]:
 
     Returns:
         List of public names from module exports.
+
     """
     return sorted(__all__)
 

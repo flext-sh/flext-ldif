@@ -150,10 +150,7 @@ class FlextLdifTypes(FlextTypes):
         type ParseMethodDecorator = Callable[[ParseMethod], ParseMethod]
         type WriteMethodArg = _Scalar | list[str] | None
         type WriteMethodReturn = (
-            _Scalar
-            | list[str]
-            | None
-            | r[_Scalar | list[str] | None]
+            _Scalar | list[str] | None | r[_Scalar | list[str] | None]
         )
         type WriteMethod = Callable[
             [_NormalizedValue, WriteMethodArg],
@@ -177,11 +174,7 @@ class FlextLdifTypes(FlextTypes):
         TSchema = TypeVar("TSchema")
 
         TRUE_STRINGS: frozenset[str] = frozenset({"true", "1", "yes", "on"})
-        type ConvertValue = (
-            _Container
-            | list[_Container]
-            | dict[str, _Container]
-        )
+        type ConvertValue = _Container | list[_Container] | dict[str, _Container]
         CONTAINER_TYPES: tuple[type, ...] = (
             str,
             int,
