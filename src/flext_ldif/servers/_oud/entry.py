@@ -162,8 +162,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         {
             k: v
             for k, v in kwargs.items()
-            if k != "_parent_quirk"
-            and u.is_type(v, (str, float, bool, type(None)))
+            if k != "_parent_quirk" and u.is_type(v, (str, float, bool, type(None)))
         }
         entry_service_typed: p.Ldif.EntryQuirk | None = (
             entry_service if entry_service is not None else None

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC
 from collections.abc import Sequence
-from typing import Annotated, override
+from typing import override
 
 from flext_core import FlextService, FlextSettings
 

@@ -91,6 +91,7 @@ class FlextLdifModelsDomainsEntries:
         metadata: Annotated[
             FlextLdifModelsMetadata.EntryMetadata,
             Field(
+                default_factory=FlextLdifModelsMetadata.EntryMetadata,
                 description="Quirk-specific metadata for preserving original format",
             ),
         ]
@@ -682,6 +683,7 @@ class FlextLdifModelsDomainsEntries:
         attribute_metadata: Annotated[
             MutableMapping[str, MutableMapping[str, str | MutableSequence[str]]],
             Field(
+                default_factory=dict,
                 description="Metadata for each attribute, like category or hidden status.",
             ),
         ]

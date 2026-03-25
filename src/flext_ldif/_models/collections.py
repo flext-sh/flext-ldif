@@ -148,7 +148,7 @@ class FlextLdifModelsCollections:
         model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow", frozen=False)
         categories: Annotated[
             MutableMapping[str, MutableSequence[FlextLdifModelsDomains.Entry]],
-            Field(),
+            Field(default_factory=dict),
         ]
 
         @override

@@ -876,44 +876,50 @@ class FlextLdifModelsSettings:
         user_dn_patterns: Annotated[
             MutableSequence[str],
             Field(
+                default_factory=list,
                 description="DN patterns for user entries (e.g., '*,ou=users,*')",
             ),
         ]
         group_dn_patterns: Annotated[
             MutableSequence[str],
-            Field(description="DN patterns for group entries"),
+            Field(default_factory=list, description="DN patterns for group entries"),
         ]
         hierarchy_dn_patterns: Annotated[
             MutableSequence[str],
             Field(
+                default_factory=list,
                 description="DN patterns for organizational hierarchy",
             ),
         ]
         schema_dn_patterns: Annotated[
             MutableSequence[str],
-            Field(description="DN patterns for schema entries"),
+            Field(default_factory=list, description="DN patterns for schema entries"),
         ]
         user_objectclasses: Annotated[
             MutableSequence[str],
             Field(
+                default_factory=list,
                 description="ObjectClasses identifying user entries",
             ),
         ]
         group_objectclasses: Annotated[
             MutableSequence[str],
             Field(
+                default_factory=list,
                 description="ObjectClasses identifying group entries",
             ),
         ]
         hierarchy_objectclasses: Annotated[
             MutableSequence[str],
             Field(
+                default_factory=list,
                 description="ObjectClasses identifying organizational units",
             ),
         ]
         acl_attributes: Annotated[
             MutableSequence[str],
             Field(
+                default_factory=list,
                 description="Attribute names containing ACL information",
             ),
         ]
