@@ -17,7 +17,7 @@ from flext_core import u
 from flext_ldif import t
 
 
-class FlextLdifUtilitiesTypeGuards(u):
+class FlextLdifUtilitiesTypeGuards:
     """Type guards for LDIF Model identification.
 
     Provides safe type narrowing for SchemaAttribute and SchemaObjectClass

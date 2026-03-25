@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Callable, MutableMapping
 from enum import Enum
-from pathlib import Path
-from typing import ClassVar, Literal, TypeIs, overload, override
-
-from flext_core import FlextResult
+from typing import ClassVar, override
 
 from flext_core import FlextUtilities, r
 
@@ -21,7 +18,6 @@ from flext_ldif import (
     FlextLdifUtilitiesDN,
     FlextLdifUtilitiesEntry,
     FlextLdifUtilitiesEvents,
-    FlextLdifUtilitiesFilters,
     FlextLdifUtilitiesFluent,
     FlextLdifUtilitiesMetadata,
     FlextLdifUtilitiesNormalization,
@@ -30,7 +26,6 @@ from flext_ldif import (
     FlextLdifUtilitiesParser,
     FlextLdifUtilitiesParsers,
     FlextLdifUtilitiesProcessing,
-    FlextLdifUtilitiesResult,
     FlextLdifUtilitiesSchema,
     FlextLdifUtilitiesServer,
     FlextLdifUtilitiesTypeGuards,
@@ -148,7 +143,7 @@ class FlextLdifUtilities(FlextUtilities):
             """Create fluent entry operations."""
             return FlextLdifUtilitiesFluent.EntryOps(entry)
 
-        # Mnemonic aliases inherited via MRO from mixin classes
+        # Methods inherited via MRO from mixin classes (no explicit overrides needed)
 
 
 u = FlextLdifUtilities
