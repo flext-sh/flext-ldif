@@ -557,7 +557,7 @@ class TestSchemaDeviationsComplete:
                 if format_details.original_string_complete is None:
                     missing.append(f)
             elif f == "field_order":
-                if format_details.field_order is None or not format_details.field_order:
+                if not format_details.field_order:
                     missing.append(f)
             elif f not in extensions_dict:
                 missing.append(f)
@@ -597,7 +597,7 @@ class TestSchemaDeviationsComplete:
                 if format_details.original_string_complete is None:
                     missing.append(f)
             elif f == "field_order":
-                if format_details.field_order is None or not format_details.field_order:
+                if not format_details.field_order:
                     missing.append(f)
             elif f not in extensions_dict:
                 missing.append(f)

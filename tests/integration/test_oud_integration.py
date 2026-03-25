@@ -157,7 +157,7 @@ class TestOudAclIntegration:
                 aci_attr_values = attrs_dict["aci"]
                 aci_values = list(aci_attr_values)
             for aci in aci_values:
-                if isinstance(aci, str) and "\n" in aci:
+                if "\n" in aci:
                     has_multiline = True
                     break
             if has_multiline:

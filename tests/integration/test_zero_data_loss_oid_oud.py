@@ -375,7 +375,6 @@ class TestZeroDataLossOidOud:
                 )
                 if isinstance(original_ldif_raw, str):
                     original_ldif = original_ldif_raw
-                    if isinstance(restored_ldif, str):
-                        assert original_ldif.strip() in restored_ldif, (
-                            f"Original LDIF not found in restored output for entry {entry.dn}"
-                        )
+                    assert original_ldif.strip() in restored_ldif, (
+                        f"Original LDIF not found in restored output for entry {entry.dn}"
+                    )

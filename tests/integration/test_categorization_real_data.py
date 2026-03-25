@@ -83,13 +83,12 @@ def _write_categories_to_file(
             output_content_lines,
         )
         for entry in cat_entries:
-            if isinstance(entry, m.Ldif.Entry):
-                _write_entry_to_file(
-                    entry,
-                    f,
-                    output_content_lines,
-                    include_attributes=include_attributes,
-                )
+            _write_entry_to_file(
+                entry,
+                f,
+                output_content_lines,
+                include_attributes=include_attributes,
+            )
 
 
 def _write_category_header(
@@ -126,26 +125,34 @@ class TestCategorizationRealData:
         entries = [
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="dc=example"),
-                attributes=m.Ldif.Attributes(attributes={"objectClass": ["domain"]}),
+                attributes=m.Ldif.Attributes(
+                    attributes={"objectClass": ["domain"]}, attribute_metadata={}
+                ),
             ),
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="ou=users,dc=example"),
                 attributes=m.Ldif.Attributes(
                     attributes={"objectClass": ["organizationalUnit"]},
+                    attribute_metadata={},
                 ),
             ),
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="cn=user1,ou=users,dc=example"),
-                attributes=m.Ldif.Attributes(attributes={"objectClass": ["person"]}),
+                attributes=m.Ldif.Attributes(
+                    attributes={"objectClass": ["person"]}, attribute_metadata={}
+                ),
             ),
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="dc=example2"),
-                attributes=m.Ldif.Attributes(attributes={"objectClass": ["domain"]}),
+                attributes=m.Ldif.Attributes(
+                    attributes={"objectClass": ["domain"]}, attribute_metadata={}
+                ),
             ),
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="ou=test,dc=example2"),
                 attributes=m.Ldif.Attributes(
                     attributes={"objectClass": ["organizationalUnit"]},
+                    attribute_metadata={},
                 ),
             ),
         ]
@@ -182,17 +189,13 @@ class TestCategorizationRealData:
         example_dns = [
             e.dn.value
             for e in hierarchy
-            if isinstance(e, m.Ldif.Entry)
-            and e.dn is not None
-            and (e.dn.value == "dc=example")
+            if e.dn is not None and (e.dn.value == "dc=example")
         ]
         assert len(example_dns) == 1, "dc=example should be in hierarchy category"
         users_ou_dns = [
             e.dn.value
             for e in hierarchy
-            if isinstance(e, m.Ldif.Entry)
-            and e.dn is not None
-            and (e.dn.value == "ou=users,dc=example")
+            if e.dn is not None and (e.dn.value == "ou=users,dc=example")
         ]
         assert len(users_ou_dns) == 1, (
             "ou=users,dc=example should be in hierarchy category"
@@ -200,9 +203,7 @@ class TestCategorizationRealData:
         user1_dns = [
             e.dn.value
             for e in users
-            if isinstance(e, m.Ldif.Entry)
-            and e.dn is not None
-            and (e.dn.value == "cn=user1,ou=users,dc=example")
+            if e.dn is not None and (e.dn.value == "cn=user1,ou=users,dc=example")
         ]
         assert len(user1_dns) == 1, (
             "cn=user1,ou=users,dc=example should be in users category"
@@ -210,9 +211,7 @@ class TestCategorizationRealData:
         example2_rejected = [
             e.dn.value
             for e in rejected
-            if isinstance(e, m.Ldif.Entry)
-            and e.dn is not None
-            and (e.dn.value == "dc=example2")
+            if e.dn is not None and (e.dn.value == "dc=example2")
         ]
         assert len(example2_rejected) == 1, (
             "dc=example2 should be rejected (not under base DN, prevents substring false positive)"
@@ -220,9 +219,7 @@ class TestCategorizationRealData:
         test_ou_rejected = [
             e.dn.value
             for e in rejected
-            if isinstance(e, m.Ldif.Entry)
-            and e.dn is not None
-            and (e.dn.value == "ou=test,dc=example2")
+            if e.dn is not None and (e.dn.value == "ou=test,dc=example2")
         ]
         assert len(test_ou_rejected) == 1, (
             "ou=test,dc=example2 should be rejected (not under base DN)"
@@ -243,24 +240,28 @@ class TestCategorizationRealData:
                 dn=m.Ldif.DN(value="dc=example"),
                 attributes=m.Ldif.Attributes(
                     attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
+                    attribute_metadata={},
                 ),
             ),
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="ou=users,dc=example"),
                 attributes=m.Ldif.Attributes(
                     attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
+                    attribute_metadata={},
                 ),
             ),
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="dc=example2"),
                 attributes=m.Ldif.Attributes(
                     attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
+                    attribute_metadata={},
                 ),
             ),
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="cn=config"),
                 attributes=m.Ldif.Attributes(
                     attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
+                    attribute_metadata={},
                 ),
             ),
         ]
@@ -274,8 +275,6 @@ class TestCategorizationRealData:
         acls_with_basedn: MutableSequence[m.Ldif.Entry] = []
         acls_without_basedn: MutableSequence[m.Ldif.Entry] = []
         for entry in acl_category:
-            if not isinstance(entry, m.Ldif.Entry):
-                continue
             dn_str = entry.dn.value if entry.dn is not None else None
             if dn_str and FlextLdifUtilities.Ldif.is_under_base(dn_str, base_dn):
                 acls_with_basedn.append(entry)

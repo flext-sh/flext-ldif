@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdifParser, FlextLdifServer, FlextLdifWriter, m
-from tests import tm
+from tests.test_helpers import TestsFlextLdifMatchers as tm
 
 
 class TestRfcParserRealFixtures:
@@ -208,7 +208,9 @@ class TestRfcExceptionHandlingRealScenarios:
         try:
             test_entry = m.Ldif.Entry(
                 dn=m.Ldif.DN(value="cn=test,dc=example,dc=com"),
-                attributes=m.Ldif.Attributes(attributes={"cn": ["test"]}),
+                attributes=m.Ldif.Attributes(
+                    attributes={"cn": ["test"]}, attribute_metadata={}
+                ),
             )
             writer = FlextLdifWriter(server=quirk_registry)
             result = writer.write(

@@ -38,11 +38,11 @@ class FlextLdifTestFactory:
         }
         attrs = m.Ldif.Attributes.model_validate({"attributes": mutable_attrs})
 
-        return m.Ldif.Entry(
-            dn=m.Ldif.DN(value=dn),
-            attributes=attrs,
-            server_type=server_type,
-        )
+        return m.Ldif.Entry.model_validate({
+            "dn": m.Ldif.DN(value=dn),
+            "attributes": attrs,
+            "server_type": server_type,
+        })
 
     @staticmethod
     def create_real_ldif_content(

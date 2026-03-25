@@ -1981,22 +1981,23 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     msg = "conversion_matrix has no convert method"
                     raise AssertionError(msg)
                 conversion_type_lower = conversion_type.lower()
+                model_instance: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
                 if conversion_type_lower == "attribute":
                     schema_service = FlextLdifSchema()
-                    parse_result = schema_service.parse_attribute(data)
-                    if not parse_result.is_success:
+                    attr_parse_result = schema_service.parse_attribute(data)
+                    if not attr_parse_result.is_success:
                         raise AssertionError(
-                            f"Failed to parse attribute: {parse_result.error}",
+                            f"Failed to parse attribute: {attr_parse_result.error}",
                         )
-                    model_instance = parse_result.value
+                    model_instance = attr_parse_result.value
                 elif conversion_type_lower in {"objectclass", "objectclasses"}:
                     schema_service = FlextLdifSchema()
-                    parse_result = schema_service.parse_objectclass(data)
-                    if not parse_result.is_success:
+                    oc_parse_result = schema_service.parse_objectclass(data)
+                    if not oc_parse_result.is_success:
                         raise AssertionError(
-                            f"Failed to parse objectclass: {parse_result.error}",
+                            f"Failed to parse objectclass: {oc_parse_result.error}",
                         )
-                    model_instance = parse_result.value
+                    model_instance = oc_parse_result.value
                 else:
                     raise AssertionError(f"Unknown conversion_type: {conversion_type}")
                 result = convert_method(
@@ -2126,21 +2127,21 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 if conversion_type_lower == "attribute":
                     schema_service = FlextLdifSchema()
                     for item in items:
-                        parse_result = schema_service.parse_attribute(str(item))
-                        if not parse_result.is_success:
+                        attr_parse_result = schema_service.parse_attribute(str(item))
+                        if not attr_parse_result.is_success:
                             raise AssertionError(
-                                f"Failed to parse attribute: {parse_result.error}",
+                                f"Failed to parse attribute: {attr_parse_result.error}",
                             )
-                        model_list.append(parse_result.value)
+                        model_list.append(attr_parse_result.value)
                 elif conversion_type_lower in {"objectclass", "objectclasses"}:
                     schema_service = FlextLdifSchema()
                     for item in items:
-                        parse_result = schema_service.parse_objectclass(str(item))
-                        if not parse_result.is_success:
+                        oc_parse_result = schema_service.parse_objectclass(str(item))
+                        if not oc_parse_result.is_success:
                             raise AssertionError(
-                                f"Failed to parse objectclass: {parse_result.error}",
+                                f"Failed to parse objectclass: {oc_parse_result.error}",
                             )
-                        model_list.append(parse_result.value)
+                        model_list.append(oc_parse_result.value)
                 else:
                     raise AssertionError(f"Unknown conversion_type: {conversion_type}")
                 converted_items: Sequence[

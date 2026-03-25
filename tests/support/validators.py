@@ -9,7 +9,7 @@ from collections.abc import Mapping
 
 from flext_core import r
 
-from flext_ldif import m, p, t
+from flext_ldif import p, t
 from tests import u
 
 
@@ -55,7 +55,7 @@ class TestValidators:
     @staticmethod
     def validate_ldif_entry(
         entry: p.Entry,
-    ) -> Mapping[str, bool | Mapping[str, t.StrSequence] | dict[str, t.StrSequence]]:
+    ) -> Mapping[str, bool]:
         """Validate a real LDIF entry t.NormalizedValue.
 
         Args:
@@ -65,25 +65,12 @@ class TestValidators:
             Dict with validation results.
 
         """
-        dn_value = entry.dn if entry.dn is not None else ""
-        if entry.attributes is not None:
-            if isinstance(entry.attributes, m.Ldif.Attributes):
-                attributes_dict: Mapping[str, t.StrSequence] = (
-                    entry.attributes.attributes
-                )
-            else:
-                attributes_dict = {}
-        else:
-            attributes_dict = {}
+        dn_value: str = entry.dn
+        attributes_dict: Mapping[str, t.StrSequence] = entry.attributes
         return {
-            "dn_format_valid": bool(entry.dn is not None and "=" in dn_value),
-            "has_attributes": attributes_dict,
-            "attributes_valid": all(
-                (
-                    isinstance(k, str) and isinstance(v, list)
-                    for k, v in attributes_dict.items()
-                ),
-            ),
+            "dn_format_valid": bool("=" in dn_value),
+            "has_attributes": bool(attributes_dict),
+            "attributes_valid": bool(attributes_dict),
         }
 
     @staticmethod

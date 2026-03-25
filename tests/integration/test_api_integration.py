@@ -158,6 +158,7 @@ class TestFlextLdifAPIIntegration:
                     c.Ldif.Names.SN: [c.Ldif.General.ATTR_VALUE_USER],
                     c.Ldif.Names.OBJECTCLASS: [c.Ldif.Names.PERSON],
                 },
+                attribute_metadata={},
             ),
         )
         assert entry.dn is not None

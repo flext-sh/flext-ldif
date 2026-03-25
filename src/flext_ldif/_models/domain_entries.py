@@ -991,7 +991,7 @@ class FlextLdifModelsDomainsEntries:
                 Dict compatible with ldap3 library format
 
             """
-            exclude_set = set(exclude if exclude is not None else [])
+            exclude_set: set[str] = set(exclude if exclude is not None else [])
             return {
                 attr_name: values
                 for attr_name, values in self.attributes.items()

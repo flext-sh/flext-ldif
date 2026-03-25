@@ -97,11 +97,6 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         "broken": ("(targetentry invalid) broken", True),
     }
 
-    schema_quirk: ClassVar
-    acl_quirk: ClassVar
-    entry_quirk: ClassVar
-    relaxed_instance: ClassVar
-
     @pytest.fixture
     def schema_quirk(self) -> FlextLdifServersRelaxed.Schema:
         """Create relaxed schema quirk instance."""
@@ -151,17 +146,14 @@ class TestsTestFlextLdifRelaxedQuirks(s):
             if scenario in {ParseScenario.VALID, ParseScenario.MALFORMED}:
                 tm.that(parsed.oid, none=False)
                 tm.that(parsed.metadata, eq=True)
-                if (
-                    parsed.metadata is not None
-                    and parsed.metadata.extensions is not None
-                ):
-                    tm.that(
-                        (
-                            parsed.metadata.extensions.schema_source_server == "relaxed"
-                            or parsed.metadata.extensions.original_format is not None
-                        ),
-                        eq=True,
-                    )
+                assert parsed.metadata is not None
+                tm.that(
+                    (
+                        parsed.metadata.extensions.schema_source_server == "relaxed"
+                        or parsed.metadata.extensions.original_format is not None
+                    ),
+                    eq=True,
+                )
         else:
             _ = tm.that(result.is_failure, eq=True)
 
@@ -211,8 +203,8 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         tm.that(result.is_success, eq=True)
         parsed = result.value
         tm.that(parsed.metadata, eq=True)
-        if parsed.metadata is not None and parsed.metadata.extensions is not None:
-            tm.that(parsed.metadata.extensions.original_format, eq=original)
+        assert parsed.metadata is not None
+        tm.that(parsed.metadata.extensions.original_format, eq=original)
 
     def test_write_attribute_to_rfc(
         self,
@@ -324,14 +316,14 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         tm.that(result.is_success, eq=True)
         parsed = result.value
         tm.that(parsed.metadata, eq=True)
-        if parsed.metadata is not None and parsed.metadata.extensions is not None:
-            tm.that(
-                (
-                    parsed.metadata.extensions.original_format is not None
-                    or parsed.metadata.extensions.schema_source_server is not None
-                ),
-                eq=True,
-            )
+        assert parsed.metadata is not None
+        tm.that(
+            (
+                parsed.metadata.extensions.original_format is not None
+                or parsed.metadata.extensions.schema_source_server is not None
+            ),
+            eq=True,
+        )
 
     @pytest.mark.parametrize(
         ("parse_type", "input_without_oid"),

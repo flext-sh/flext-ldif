@@ -71,10 +71,7 @@ class TestRealLdapExport:
         attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
         for attr_name in ldap_entry.entry_attributes:
             attr_obj = ldap_entry[attr_name]
-            values: list[str] = [
-                v.decode("utf-8") if isinstance(v, bytes) else str(v)
-                for v in attr_obj.raw_values
-            ]
+            values: list[str] = [v.decode("utf-8") for v in attr_obj.raw_values]
             attrs_dict[attr_name] = values
         entry_result = flext_api.models.Ldif.Entry.create(
             dn=ldap_entry.entry_dn,
@@ -119,10 +116,7 @@ class TestRealLdapExport:
             for attr_name in entry.entry_attributes:
                 attr_obj = entry[attr_name]
                 if hasattr(attr_obj, "raw_values"):
-                    values = [
-                        v.decode("utf-8") if isinstance(v, bytes) else str(v)
-                        for v in attr_obj.raw_values
-                    ]
+                    values = [v.decode("utf-8") for v in attr_obj.raw_values]
                 elif hasattr(attr_obj, "value"):
                     val = attr_obj.value
                     if isinstance(val, bytes):
@@ -197,10 +191,7 @@ class TestRealLdapExport:
             for attr_name in entry.entry_attributes:
                 attr_obj = entry[attr_name]
                 if hasattr(attr_obj, "raw_values"):
-                    values = [
-                        v.decode("utf-8") if isinstance(v, bytes) else str(v)
-                        for v in attr_obj.raw_values
-                    ]
+                    values = [v.decode("utf-8") for v in attr_obj.raw_values]
                 elif hasattr(attr_obj, "value"):
                     val = attr_obj.value
                     if isinstance(val, bytes):

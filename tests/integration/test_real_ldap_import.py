@@ -29,7 +29,7 @@ from pathlib import Path
 import pytest
 from ldap3 import Connection
 
-from flext_ldif import FlextLdif, t
+from flext_ldif import FlextLdif
 
 
 @pytest.fixture
@@ -59,12 +59,10 @@ class TestRealLdapImport:
         entries = parse_result.value
         assert len(entries) == 1
         entry = entries[0]
-        object_classes = entry.get_attribute_values("objectclass")
-        if not isinstance(object_classes, list):
-            object_classes_typed: t.StrSequence = (
-                list(object_classes) if object_classes else []
-            )
-            object_classes = object_classes_typed
+        object_classes_raw = entry.get_attribute_values("objectclass")
+        object_classes: list[str] = (
+            list(object_classes_raw) if object_classes_raw else []
+        )
         attrs_dict: MutableMapping[str, MutableSequence[str] | bytes] = {}
         assert entry.attributes is not None
         for attr_name, attr_values in entry.attributes.attributes.items():
@@ -144,12 +142,10 @@ class TestRealLdapImport:
         entries = parse_result.value
         assert len(entries) == 1
         entry = entries[0]
-        object_classes = entry.get_attribute_values("objectclass")
-        if not isinstance(object_classes, list):
-            object_classes_typed: t.StrSequence = (
-                list(object_classes) if object_classes else []
-            )
-            object_classes = object_classes_typed
+        object_classes_raw = entry.get_attribute_values("objectclass")
+        object_classes: list[str] = (
+            list(object_classes_raw) if object_classes_raw else []
+        )
         attrs_dict: MutableMapping[str, MutableSequence[str] | bytes] = {}
         assert entry.attributes is not None
         for attr_name, attr_values in entry.attributes.attributes.items():

@@ -174,7 +174,7 @@ class TestsTestFlextLdifProtocols(s):
             tm.that(hasattr(constants_cls, "SERVER_TYPE"), eq=True)
             server_type: str = getattr(constants_cls, "SERVER_TYPE")
             tm.that(
-                isinstance(server_type, str) or hasattr(server_type, "value"),
+                hasattr(server_type, "value") or bool(server_type),
                 eq=True,
             )
             tm.that(hasattr(constants_cls, "PRIORITY"), eq=True)
@@ -256,9 +256,6 @@ class TestsTestFlextLdifProtocols(s):
     def test_server_has_protocol_attributes_relaxed(self) -> None:
         """Test that Relaxed server class has protocol attributes in Constants."""
         self.Helpers.verify_server_attributes(FlextLdifServersRelaxed)
-
-    oid_schema: ClassVar
-    registry: ClassVar
 
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:

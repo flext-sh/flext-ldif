@@ -65,8 +65,7 @@ def parse_and_evaluate_acls() -> None:
         perms_raw = eval_context["permissions"]
         if isinstance(perms_raw, dict):
             for k, v in perms_raw.items():
-                if isinstance(k, str) and isinstance(v, bool):
-                    required_perms[k] = v
+                required_perms[k] = v
     acls_for_eval = [m.Ldif.Acl.model_validate(acl) for acl in acls]
     evaluation_result = api.acl_service.evaluate_acl_context(
         acls_for_eval,
@@ -149,8 +148,7 @@ def acl_pipeline() -> None:
         perms_raw = eval_context["permissions"]
         if isinstance(perms_raw, dict):
             for k, v in perms_raw.items():
-                if isinstance(k, str) and isinstance(v, bool):
-                    required_perms[k] = v
+                required_perms[k] = v
     eval_result = api.acl_service.evaluate_acl_context(acls_typed, required_perms)
     if eval_result.is_success:
         validation_result = api.validate_entries([entry])

@@ -294,7 +294,7 @@ def schema_migration_pipeline() -> r[t.ContainerMapping]:
             "errors": len(pre_report.errors),
         }
 
-    def migrate_entry(ldif_entry: m.Ldif.Entry) -> m.Ldif.Entry | None:
+    def migrate_entry(ldif_entry: m.Ldif.Entry) -> MutableSequence[m.Ldif.Entry]:
         """Migrate legacy entry to modern schema."""
         attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
         if (
@@ -315,12 +315,14 @@ def schema_migration_pipeline() -> r[t.ContainerMapping]:
             else ""
         )
         migrate_result = api.create_entry(dn=entry_dn, attributes=attrs_dict)
-        return migrate_result.map_or(None)
+        if migrate_result.is_success:
+            return [migrate_result.value]
+        return []
 
     batch_result = u.process(all_entries, migrate_entry, on_error="skip")
     migrated_entries: list[m.Ldif.Entry]
     if batch_result.is_success:
-        migrated_entries = [x for x in batch_result.value if x is not None]
+        migrated_entries = [x for batch in batch_result.value for x in batch]
     else:
         migrated_entries = []
     migration_results["entries_migrated"] = len(migrated_entries)

@@ -65,24 +65,31 @@ class FlextLdifTestConftest:
     ]
     _LDIF_TEST_ENTRIES: ClassVar[
         Sequence[Mapping[str, Mapping[str, Collection[str]] | str]]
-    ] = [
-        {
-            "dn": f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com",
-            "attributes": {
-                "objectclass": ["inetOrgPerson", "person"],
-                "cn": [user.get("name", "Test User")],
-                "sn": [
-                    user.get("name", "User").split()[-1]
-                    if " " in user.get("name", "")
-                    else "User",
-                ],
-                "mail": [user.get("email", f"test{i}@example.com")],
-                "uid": [f"testuser{i}"],
-            },
-        }
-        for i, user in enumerate(_TEST_USERS)
-    ] + [
-        {
+    ]
+
+    @staticmethod
+    def _build_test_entries() -> Sequence[
+        Mapping[str, Mapping[str, Collection[str]] | str]
+    ]:
+        users = FlextLdifTestConftest._TEST_USERS
+        entries: list[Mapping[str, Mapping[str, Collection[str]] | str]] = [
+            {
+                "dn": f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com",
+                "attributes": {
+                    "objectclass": ["inetOrgPerson", "person"],
+                    "cn": [user.get("name", "Test User")],
+                    "sn": [
+                        user.get("name", "User").split()[-1]
+                        if " " in user.get("name", "")
+                        else "User",
+                    ],
+                    "mail": [user.get("email", f"test{i}@example.com")],
+                    "uid": [f"testuser{i}"],
+                },
+            }
+            for i, user in enumerate(users)
+        ]
+        entries.append({
             "dn": "cn=testgroup,ou=groups,dc=example,dc=com",
             "attributes": {
                 "objectclass": ["groupOfNames"],
@@ -90,11 +97,11 @@ class FlextLdifTestConftest:
                 "description": ["Test group for LDIF processing"],
                 "member": [
                     f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com"
-                    for i, user in enumerate(_TEST_USERS)
+                    for i, user in enumerate(users)
                 ],
             },
-        },
-    ]
+        })
+        return entries
 
     @staticmethod
     def _ldap_bind(connection: Connection) -> bool:
@@ -622,9 +629,7 @@ class FlextLdifTestConftest:
         self,
     ) -> Mapping[
         str,
-        Mapping[str, str]
-        | Mapping[str, Callable[[str | float | None], str]]
-        | Mapping[str, str | Mapping[str, str]],
+        Mapping[str, str | Callable[[str | float | None], str] | Mapping[str, str]],
     ]:
         """Transformation rules."""
 
@@ -914,5 +919,7 @@ class FlextLdifTestConftest:
         assert quirk is not None, "OID quirk must be registered"
         return cast("p.Ldif.SchemaQuirk", quirk.schema_quirk)
 
+
+FlextLdifTestConftest._LDIF_TEST_ENTRIES = FlextLdifTestConftest._build_test_entries()
 
 __all__ = ["FlextLdifTestConftest", "tk"]

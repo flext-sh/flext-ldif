@@ -17,15 +17,17 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from itertools import starmap
-from typing import override
+from typing import ClassVar, override
 
-from flext_core import r
+from _pytest.fixtures import FixtureFunctionDefinition
+from flext_core import FlextService, r
+from pydantic import ConfigDict
 
 from flext_ldif import FlextLdifEntries
-from tests import m, s, t
+from tests import m, t
 
 
-class FlextLdifTestsServiceBase(s[m.Ldif.Entry]):
+class FlextLdifTestsServiceBase(FlextService[m.Ldif.Entry]):
     """Base class for all test services in flext-ldif.
 
     Extends s from flext_tests with LDIF-specific utilities:
@@ -48,6 +50,10 @@ class FlextLdifTestsServiceBase(s[m.Ldif.Entry]):
                 unwrapped = self.assert_success(result)
 
     """
+
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        ignored_types=(FixtureFunctionDefinition,),
+    )
 
     @override
     def execute(self) -> r[m.Ldif.Entry]:

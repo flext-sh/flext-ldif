@@ -24,7 +24,7 @@ from pathlib import Path
 import pytest
 from ldap3 import Connection
 
-from flext_ldif import FlextLdif, m, t
+from flext_ldif import FlextLdif, m
 
 
 @pytest.fixture
@@ -134,12 +134,10 @@ class TestRealLdapBatchOperations:
         assert len(entries) == 20
         ldap_entries: MutableSequence[m.Ldif.DN | None] = []
         for entry in entries:
-            object_classes = entry.get_attribute_values("objectclass")
-            if not isinstance(object_classes, list):
-                object_classes_typed: t.StrSequence = (
-                    list(object_classes) if object_classes else []
-                )
-                object_classes = object_classes_typed
+            object_classes_raw = entry.get_attribute_values("objectclass")
+            object_classes: list[str] = (
+                list(object_classes_raw) if object_classes_raw else []
+            )
             attrs_dict: MutableMapping[str, Sequence[str]] = {}
             assert entry.attributes is not None
             for attr_name, attr_values in entry.attributes.attributes.items():

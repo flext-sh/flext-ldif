@@ -190,7 +190,9 @@ class TestRfcDockerRealData:
             output_file = readonly_dir / "test.ldif"
             test_entry = m.Ldif.Entry(
                 dn=m.Ldif.DN(value="cn=test,dc=example,dc=com"),
-                attributes=m.Ldif.Attributes(attributes={"cn": ["test"]}),
+                attributes=m.Ldif.Attributes(
+                    attributes={"cn": ["test"]}, attribute_metadata={}
+                ),
             )
             writer = FlextLdifWriter()
             result = writer.write(
@@ -295,6 +297,7 @@ class TestRfcIntegrationRealWorld:
                         "mail": [f"user{i}@example.com"],
                         "userPassword": [f"password{i}"],
                     },
+                    attribute_metadata={},
                 ),
             )
             for i in range(100)

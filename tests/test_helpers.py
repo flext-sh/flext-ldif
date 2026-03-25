@@ -20,8 +20,8 @@ from typing import TypeVar
 
 from flext_core import r
 from flext_tests import (
-    tm,
-    tv,
+    tm as _base_tm,
+    tv as _base_tv,
 )
 
 from flext_ldif import FlextLdif, FlextLdifEntries
@@ -34,7 +34,7 @@ class _TestsBase:
     __test__ = False
 
 
-tt = _TestsBase
+_base_tt = _TestsBase
 
 TResult = TypeVar("TResult")
 
@@ -57,7 +57,7 @@ def _unwrap_result[TResult](
     return value
 
 
-class TestsFlextLdifMatchers(tm):
+class TestsFlextLdifMatchers(_base_tm):
     """Enhanced matchers for flext-ldif tests.
 
     Consolidates entry and entries validation into unified, highly parameterized methods.
@@ -182,11 +182,14 @@ class TestsFlextLdifMatchers(tm):
             for attr, expected in attr_equals.items():
                 TestsFlextLdifMatchers.that(attrs, msg=msg, contains=attr)
                 if hasattr(entry, "get_attribute_values"):
-                    values = entry.get_attribute_values(attr)
+                    values: Sequence[str] = list(entry.get_attribute_values(attr))
                 else:
-                    values = attrs.get(attr, [])
-                    if isinstance(values, str):
-                        values = [values]
+                    raw_values = attrs.get(attr, [])
+                    values = (
+                        [raw_values]
+                        if isinstance(raw_values, str)
+                        else list(raw_values)
+                    )
                 expected_list = (
                     [expected] if isinstance(expected, str) else list(expected)
                 )
@@ -195,11 +198,14 @@ class TestsFlextLdifMatchers(tm):
             for attr, substring in attr_contains.items():
                 TestsFlextLdifMatchers.that(attrs, msg=msg, contains=attr)
                 if hasattr(entry, "get_attribute_values"):
-                    values = entry.get_attribute_values(attr)
+                    values = list(entry.get_attribute_values(attr))
                 else:
-                    values = attrs.get(attr, [])
-                    if isinstance(values, str):
-                        values = [values]
+                    raw_values = attrs.get(attr, [])
+                    values = (
+                        [raw_values]
+                        if isinstance(raw_values, str)
+                        else list(raw_values)
+                    )
                 if isinstance(substring, str):
                     if not any(substring in str(v) for v in values):
                         error_msg = (
@@ -519,7 +525,8 @@ class TestsFlextLdifMatchers(tm):
             The validated list of entries
 
         """
-        entries: Sequence[m.Ldif.Entry] = list(_unwrap_result(result, msg=msg))
+        unwrapped = _unwrap_result(result, msg=msg)
+        entries: Sequence[m.Ldif.Entry] = list(unwrapped)
         return TestsFlextLdifMatchers.entries(
             entries,
             msg=msg,
@@ -537,7 +544,7 @@ class TestsFlextLdifMatchers(tm):
         )
 
 
-class TestsFlextLdifValidators(tv):
+class TestsFlextLdifValidators(_base_tv):
     """Enhanced validators for flext-ldif tests.
 
     Extends tv with flext-ldif specific validation methods.
@@ -578,7 +585,7 @@ class TestsFlextLdifValidators(tv):
         return True
 
 
-class TestsFlextLdifTypes(tt):
+class TestsFlextLdifTypes(_base_tt):
     """Enhanced type helpers for flext-ldif tests.
 
     Extends t with flext-ldif specific type operations.
@@ -592,7 +599,7 @@ class TestsFlextLdifTypes(tt):
         return m.Ldif.Entry
 
 
-class TestsFlextLdifFixtures(tt):
+class TestsFlextLdifFixtures(_base_tt):
     """Enhanced fixtures for flext-ldif tests.
 
     Extends tt with flext-ldif specific factory methods.
@@ -664,7 +671,8 @@ class TestsFlextLdifFixtures(tt):
         write_result = api.write(entries)
         ldif_content = _unwrap_result(write_result, msg=msg)
         roundtrip_result = api.parse_ldif(ldif_content)
-        return list(_unwrap_result(roundtrip_result, msg=msg))
+        roundtrip_entries = _unwrap_result(roundtrip_result, msg=msg)
+        return list(roundtrip_entries)
 
     @staticmethod
     def load_fixture_entries(
@@ -683,7 +691,8 @@ class TestsFlextLdifFixtures(tt):
         """
         api = FlextLdif.get_instance()
         result = api.parse_ldif(fixture_path)
-        return list(_unwrap_result(result, msg=msg))
+        unwrapped = _unwrap_result(result, msg=msg)
+        return list(unwrapped)
 
     @staticmethod
     def load_fixture_and_validate_structure(
