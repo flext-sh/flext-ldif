@@ -1,0 +1,61 @@
+tests/integration/test_real_ldap_crud.py
+  8138edf6bc0fab47 192-197,199-200
+tests/integration/test_simple_ldap.py
+  8138edf6bc0fab47 17-19,58
+tests/integration/test_zero_data_loss_schema.py
+  8138edf6bc0fab47 171,190
+examples/05_schema_operations.py
+  8138edf6bc0fab47 47
+tests/integration/conftest.py
+  8138edf6bc0fab47 648
+examples/08_complete_workflow.py
+  8138edf6bc0fab47 11,141-142
+tests/integration/test_oud_integration.py
+  8138edf6bc0fab47 62,90,148-149,155,158,203-204,210,214,216,221
+tests/integration/test_real_ldap_export.py
+  8138edf6bc0fab47 74-77
+tests/unit/__init__/test_version.py
+  8138edf6bc0fab47 96-97
+tests/integration/test_oid_integration.py
+  8138edf6bc0fab47 63,105,294
+examples/04_server_migration.py
+  8138edf6bc0fab47 176
+tests/integration/test_minimal_differences_metadata.py
+  8138edf6bc0fab47 172,175
+tests/unit/test_typings.py
+  8138edf6bc0fab47 112
+src/flext_ldif/api.py
+  8138edf6bc0fab47 81
+tests/unit/quirks/servers/test_edge_cases.py
+  8138edf6bc0fab47 85
+tests/unit/protocols/test_protocols.py
+  8138edf6bc0fab47 173,175,181
+tests/unit/constants/test_acl_registry.py
+  8138edf6bc0fab47 175,177,196
+tests/unit/utilities/test_utilities.py
+  8138edf6bc0fab47 86,93
+tests/unit/quirks/servers/test_apache_quirks.py
+  8138edf6bc0fab47 589,610,631
+tests/integration/test_real_ldap_config.py
+  8138edf6bc0fab47 35-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.19",
+  "base_commit_sha": "53766a360a9dd7085041f083cc4f24abd9472db8",
+  "prompts": {
+    "8138edf6bc0fab47": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "458a9205-8e72-4758-9c6d-2636f729252c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 100,
+      "total_deletions": 150,
+      "accepted_lines": 60,
+      "overriden_lines": 3
+    }
+  }
+}
