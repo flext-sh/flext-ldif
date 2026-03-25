@@ -6,90 +6,27 @@ All model-based unions belong in consuming modules, NOT here.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from types import ModuleType
-from typing import TYPE_CHECKING, Annotated, Literal, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Annotated, Literal, TypeVar
 
-from annotated_types import Ge, Le
 from flext_core import FlextTypes, r
 from pydantic import BaseModel, StringConstraints
 
 if TYPE_CHECKING:
     from flext_ldif import m
 
-# ---------------------------------------------------------------------------
-# Primitive type building blocks (previously on FlextTypes, removed in migration)
-# ---------------------------------------------------------------------------
-_Primitives: TypeAlias = str | int | float | bool
-_Scalar: TypeAlias = str | int | float | bool | datetime
-_Container: TypeAlias = str | int | float | bool | datetime | Path
-_NormalizedValue: TypeAlias = (
-    _Container
-    | BaseModel
-    | Mapping[str, "_NormalizedValue"]
-    | Sequence["_NormalizedValue"]
-    | tuple["_NormalizedValue", ...]
-    | None
-)
-
 
 class FlextLdifTypes(FlextTypes):
     """LDIF domain types extending flext-core FlextTypes."""
 
-    # ------------------------------------------------------------------
-    # Bridge aliases: types removed from FlextTypes in migration
-    # ------------------------------------------------------------------
-    Primitives: TypeAlias = _Primitives
-    Scalar: TypeAlias = _Scalar
-    Container: TypeAlias = _Container
-    NormalizedValue: TypeAlias = _NormalizedValue
-    Numeric: TypeAlias = int | float
-
-    # Annotated validation types
-    NonNegativeInt: TypeAlias = Annotated[int, Ge(0)]
-    NonNegativeFloat: TypeAlias = Annotated[float, Ge(0.0)]
-    DecimalFraction: TypeAlias = Annotated[float, Ge(0.0), Le(1.0)]
-
-    # Collection types
-    StrSequence: TypeAlias = Sequence[str]
-    ContainerMapping: TypeAlias = Mapping[str, _NormalizedValue]
-    MutableContainerMapping: TypeAlias = MutableMapping[str, _NormalizedValue]
-    ContainerList: TypeAlias = Sequence[_NormalizedValue]
-    MutableContainerList: TypeAlias = MutableSequence[_NormalizedValue]
-    MutableConfigurationMapping: TypeAlias = MutableMapping[
-        str, MutableMapping[str, str] | MutableSequence[str] | str
-    ]
-    MutableFlatContainerMapping: TypeAlias = MutableMapping[str, _Scalar | None]
-    ScalarMapping: TypeAlias = Mapping[str, _Scalar]
-    ValueOrModel: TypeAlias = _NormalizedValue | BaseModel
-
-    # Runtime tuple constants for isinstance checks
-    PRIMITIVES_TYPES: tuple[type, ...] = (str, int, float, bool)
-    SCALAR_TYPES: tuple[type, ...] = (str, int, float, bool, datetime)
-    CONTAINER_TYPES: tuple[type, ...] = (str, int, float, bool, datetime, Path)
-
-    # Module export type (for lazy __init__.py loaders)
-    ModuleExport: TypeAlias = (
-        _NormalizedValue | type | ModuleType | Callable[..., object]
-    )
-
-    # Metadata value (top-level alias for t.MetadataValue usage)
-    MetadataValue: TypeAlias = (
-        _Primitives
-        | None
-        | datetime
-        | list[_Primitives | None | datetime]
-        | dict[str, _Primitives | None | datetime]
-    )
-
     class Ldif:
         """LDIF domain type namespace."""
 
-        type Scalar = _Primitives | None
+        type Scalar = FlextTypes.Primitives | None
 
-        type _MetadataLeaf = _Primitives | None | datetime
+        type _MetadataLeaf = FlextTypes.Primitives | None | datetime
         type MetadataValue = (
             _MetadataLeaf
             | list[_MetadataLeaf | list[_MetadataLeaf] | dict[str, _MetadataLeaf]]
@@ -99,7 +36,7 @@ class FlextLdifTypes(FlextTypes):
             ]
         )
 
-        type _ContainerLeaf = _Primitives | None | BaseModel | datetime
+        type _ContainerLeaf = FlextTypes.Primitives | None | BaseModel | datetime
         type RecursiveContainer = (
             _ContainerLeaf
             | list[_ContainerLeaf | list[_ContainerLeaf] | dict[str, _ContainerLeaf]]
@@ -126,7 +63,6 @@ class FlextLdifTypes(FlextTypes):
                 strip_whitespace=True,
             ),
         ]
-        # Validation types for conversion pipeline
         type Rfc4514DnComponent = Annotated[
             str,
             StringConstraints(
@@ -142,24 +78,27 @@ class FlextLdifTypes(FlextTypes):
         ]
 
         type ParseMethodArg = str
-        type ParseMethodReturn = r[_Scalar | list[str] | None]
+        type ParseMethodReturn = r[FlextTypes.Scalar | list[str] | None]
         type ParseMethod = Callable[
-            [_NormalizedValue, str],
+            [FlextTypes.NormalizedValue, str],
             ParseMethodReturn,
         ]
         type ParseMethodDecorator = Callable[[ParseMethod], ParseMethod]
-        type WriteMethodArg = _Scalar | list[str] | None
+        type WriteMethodArg = FlextTypes.Scalar | list[str] | None
         type WriteMethodReturn = (
-            _Scalar | list[str] | None | r[_Scalar | list[str] | None]
+            FlextTypes.Scalar
+            | list[str]
+            | None
+            | r[FlextTypes.Scalar | list[str] | None]
         )
         type WriteMethod = Callable[
-            [_NormalizedValue, WriteMethodArg],
+            [FlextTypes.NormalizedValue, WriteMethodArg],
             WriteMethodReturn,
         ]
         type WriteMethodDecorator = Callable[[WriteMethod], WriteMethod]
         type SafeMethod = Callable[
-            [_NormalizedValue, ParseMethodArg],
-            _Scalar | list[str] | None,
+            [FlextTypes.NormalizedValue, ParseMethodArg],
+            FlextTypes.Scalar | list[str] | None,
         ]
         type SafeMethodDecorator = Callable[[SafeMethod], SafeMethod]
 
@@ -167,14 +106,18 @@ class FlextLdifTypes(FlextTypes):
         type AttributeDict = dict[str, list[str]]
         type AttributeDictGeneric = dict[str, list[str] | str]
 
-        type TemplateValue = _Scalar | None
+        type TemplateValue = FlextTypes.Scalar | None
         T = TypeVar("T")
         TEntry = TypeVar("TEntry")
         TAttribute = TypeVar("TAttribute")
         TSchema = TypeVar("TSchema")
 
         TRUE_STRINGS: frozenset[str] = frozenset({"true", "1", "yes", "on"})
-        type ConvertValue = _Container | list[_Container] | dict[str, _Container]
+        type ConvertValue = (
+            FlextTypes.Container
+            | list[FlextTypes.Container]
+            | dict[str, FlextTypes.Container]
+        )
         CONTAINER_TYPES: tuple[type, ...] = (
             str,
             int,
