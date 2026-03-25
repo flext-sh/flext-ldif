@@ -10,10 +10,10 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
+
 if TYPE_CHECKING:
     from flext_core import FlextTypes
-
-    from flext_ldif.services import _services
+    import flext_ldif.services._services as _services
     from flext_ldif.services._services.processing_pipeline_service import (
         FlextLdifProcessingPipelineService,
     )
@@ -42,46 +42,25 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdifAcl": ["flext_ldif.services.acl", "FlextLdifAcl"],
     "FlextLdifAnalysis": ["flext_ldif.services.analysis", "FlextLdifAnalysis"],
-    "FlextLdifCategorization": [
-        "flext_ldif.services.categorization",
-        "FlextLdifCategorization",
-    ],
+    "FlextLdifCategorization": ["flext_ldif.services.categorization", "FlextLdifCategorization"],
     "FlextLdifConversion": ["flext_ldif.services.conversion", "FlextLdifConversion"],
     "FlextLdifDetector": ["flext_ldif.services.detector", "FlextLdifDetector"],
     "FlextLdifDn": ["flext_ldif.services.dn", "FlextLdifDn"],
     "FlextLdifEntries": ["flext_ldif.services.entries", "FlextLdifEntries"],
     "FlextLdifFilters": ["flext_ldif.services.filters", "FlextLdifFilters"],
-    "FlextLdifMigrationPipeline": [
-        "flext_ldif.services.migration",
-        "FlextLdifMigrationPipeline",
-    ],
+    "FlextLdifMigrationPipeline": ["flext_ldif.services.migration", "FlextLdifMigrationPipeline"],
     "FlextLdifParser": ["flext_ldif.services.parser", "FlextLdifParser"],
     "FlextLdifProcessing": ["flext_ldif.services.processing", "FlextLdifProcessing"],
-    "FlextLdifProcessingPipeline": [
-        "flext_ldif.services.pipeline",
-        "FlextLdifProcessingPipeline",
-    ],
-    "FlextLdifProcessingPipelineService": [
-        "flext_ldif.services._services.processing_pipeline_service",
-        "FlextLdifProcessingPipelineService",
-    ],
+    "FlextLdifProcessingPipeline": ["flext_ldif.services.pipeline", "FlextLdifProcessingPipeline"],
+    "FlextLdifProcessingPipelineService": ["flext_ldif.services._services.processing_pipeline_service", "FlextLdifProcessingPipelineService"],
     "FlextLdifSchema": ["flext_ldif.services.schema", "FlextLdifSchema"],
     "FlextLdifServer": ["flext_ldif.services.server", "FlextLdifServer"],
-    "FlextLdifServiceRegistry": [
-        "flext_ldif.services.registry",
-        "FlextLdifServiceRegistry",
-    ],
+    "FlextLdifServiceRegistry": ["flext_ldif.services.registry", "FlextLdifServiceRegistry"],
     "FlextLdifSorting": ["flext_ldif.services.sorting", "FlextLdifSorting"],
     "FlextLdifStatistics": ["flext_ldif.services.statistics", "FlextLdifStatistics"],
     "FlextLdifSyntax": ["flext_ldif.services.syntax", "FlextLdifSyntax"],
-    "FlextLdifTransformer": [
-        "flext_ldif.services.transformers",
-        "FlextLdifTransformer",
-    ],
-    "FlextLdifValidation": [
-        "flext_ldif.services.rfc_validation",
-        "FlextLdifValidation",
-    ],
+    "FlextLdifTransformer": ["flext_ldif.services.transformers", "FlextLdifTransformer"],
+    "FlextLdifValidation": ["flext_ldif.services.rfc_validation", "FlextLdifValidation"],
     "FlextLdifWriter": ["flext_ldif.services.writer", "FlextLdifWriter"],
     "_services": ["flext_ldif.services._services", ""],
 }
@@ -130,7 +109,6 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
 
     Raises:
         AttributeError: If attribute not registered.
-
     """
     if name in _LAZY_CACHE:
         return _LAZY_CACHE[name]
@@ -145,7 +123,6 @@ def __dir__() -> Sequence[str]:
 
     Returns:
         List of public names from module exports.
-
     """
     return sorted(__all__)
 

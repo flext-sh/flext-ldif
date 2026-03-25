@@ -15,9 +15,9 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
+
 if TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from tests.support.conftest_factory import FlextLdifTestConftest, tk
     from tests.support.ldif_data import LdifSample, LdifTestData
     from tests.support.real_services import FlextLdifTestServiceFactory
@@ -30,20 +30,11 @@ if TYPE_CHECKING:
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FileManager": ["tests.support.test_files", "FileManager"],
-    "FlextLdifTestConftest": [
-        "tests.support.conftest_factory",
-        "FlextLdifTestConftest",
-    ],
-    "FlextLdifTestServiceFactory": [
-        "tests.support.real_services",
-        "FlextLdifTestServiceFactory",
-    ],
+    "FlextLdifTestConftest": ["tests.support.conftest_factory", "FlextLdifTestConftest"],
+    "FlextLdifTestServiceFactory": ["tests.support.real_services", "FlextLdifTestServiceFactory"],
     "LdifSample": ["tests.support.ldif_data", "LdifSample"],
     "LdifTestData": ["tests.support.ldif_data", "LdifTestData"],
-    "MockFlextUtilitiesResultHelpers": [
-        "tests.support.validators",
-        "MockFlextUtilitiesResultHelpers",
-    ],
+    "MockFlextUtilitiesResultHelpers": ["tests.support.validators", "MockFlextUtilitiesResultHelpers"],
     "MockMatchers": ["tests.support.validators", "MockMatchers"],
     "TestValidators": ["tests.support.validators", "TestValidators"],
     "tk": ["tests.support.conftest_factory", "tk"],
@@ -79,7 +70,6 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
 
     Raises:
         AttributeError: If attribute not registered.
-
     """
     if name in _LAZY_CACHE:
         return _LAZY_CACHE[name]
@@ -94,7 +84,6 @@ def __dir__() -> Sequence[str]:
 
     Returns:
         List of public names from module exports.
-
     """
     return sorted(__all__)
 

@@ -10,9 +10,9 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
+
 if TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
     from flext_ldif.servers._base.constants import (
         FlextLdifQuirkMethodsMixin,
@@ -23,30 +23,12 @@ if TYPE_CHECKING:
     from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema, logger
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "FlextLdifQuirkMethodsMixin": [
-        "flext_ldif.servers._base.constants",
-        "FlextLdifQuirkMethodsMixin",
-    ],
-    "FlextLdifServersBaseConstants": [
-        "flext_ldif.servers._base.constants",
-        "FlextLdifServersBaseConstants",
-    ],
-    "FlextLdifServersBaseEntry": [
-        "flext_ldif.servers._base.entry",
-        "FlextLdifServersBaseEntry",
-    ],
-    "FlextLdifServersBaseQuirkHelpers": [
-        "flext_ldif.servers._base.constants",
-        "FlextLdifServersBaseQuirkHelpers",
-    ],
-    "FlextLdifServersBaseSchema": [
-        "flext_ldif.servers._base.schema",
-        "FlextLdifServersBaseSchema",
-    ],
-    "FlextLdifServersBaseSchemaAcl": [
-        "flext_ldif.servers._base.acl",
-        "FlextLdifServersBaseSchemaAcl",
-    ],
+    "FlextLdifQuirkMethodsMixin": ["flext_ldif.servers._base.constants", "FlextLdifQuirkMethodsMixin"],
+    "FlextLdifServersBaseConstants": ["flext_ldif.servers._base.constants", "FlextLdifServersBaseConstants"],
+    "FlextLdifServersBaseEntry": ["flext_ldif.servers._base.entry", "FlextLdifServersBaseEntry"],
+    "FlextLdifServersBaseQuirkHelpers": ["flext_ldif.servers._base.constants", "FlextLdifServersBaseQuirkHelpers"],
+    "FlextLdifServersBaseSchema": ["flext_ldif.servers._base.schema", "FlextLdifServersBaseSchema"],
+    "FlextLdifServersBaseSchemaAcl": ["flext_ldif.servers._base.acl", "FlextLdifServersBaseSchemaAcl"],
     "logger": ["flext_ldif.servers._base.schema", "logger"],
 }
 
@@ -78,7 +60,6 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
 
     Raises:
         AttributeError: If attribute not registered.
-
     """
     if name in _LAZY_CACHE:
         return _LAZY_CACHE[name]
@@ -93,7 +74,6 @@ def __dir__() -> Sequence[str]:
 
     Returns:
         List of public names from module exports.
-
     """
     return sorted(__all__)
 

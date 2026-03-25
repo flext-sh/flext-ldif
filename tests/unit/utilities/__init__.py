@@ -10,9 +10,9 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
+
 if TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from tests.unit.utilities.test_utilities import TestsTestFlextLdifServiceAPIs
     from tests.unit.utilities.test_utilities_comprehensive import (
         TestFlextLdifUtilitiesComprehensive,
@@ -34,49 +34,19 @@ if TYPE_CHECKING:
     )
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "GetValidValuesType": [
-        "tests.unit.utilities.test_utilities_constants",
-        "GetValidValuesType",
-    ],
-    "IsValidTestType": [
-        "tests.unit.utilities.test_utilities_constants",
-        "IsValidTestType",
-    ],
+    "GetValidValuesType": ["tests.unit.utilities.test_utilities_constants", "GetValidValuesType"],
+    "IsValidTestType": ["tests.unit.utilities.test_utilities_constants", "IsValidTestType"],
     "TestAclParser": ["tests.unit.utilities.test_utilities_core", "TestAclParser"],
-    "TestAttributeFixer": [
-        "tests.unit.utilities.test_utilities_core",
-        "TestAttributeFixer",
-    ],
-    "TestDnObjectClassMethods": [
-        "tests.unit.utilities.test_utilities_core",
-        "TestDnObjectClassMethods",
-    ],
-    "TestFlextLdifUtilitiesComprehensive": [
-        "tests.unit.utilities.test_utilities_comprehensive",
-        "TestFlextLdifUtilitiesComprehensive",
-    ],
+    "TestAttributeFixer": ["tests.unit.utilities.test_utilities_core", "TestAttributeFixer"],
+    "TestDnObjectClassMethods": ["tests.unit.utilities.test_utilities_core", "TestDnObjectClassMethods"],
+    "TestFlextLdifUtilitiesComprehensive": ["tests.unit.utilities.test_utilities_comprehensive", "TestFlextLdifUtilitiesComprehensive"],
     "TestLdifParser": ["tests.unit.utilities.test_utilities_core", "TestLdifParser"],
-    "TestObjectClassUtilities": [
-        "tests.unit.utilities.test_utilities_core",
-        "TestObjectClassUtilities",
-    ],
+    "TestObjectClassUtilities": ["tests.unit.utilities.test_utilities_core", "TestObjectClassUtilities"],
     "TestServerTypes": ["tests.unit.utilities.test_utilities_core", "TestServerTypes"],
-    "TestsFlextLdifDnOperationsPure": [
-        "tests.unit.utilities.test_utilities_core",
-        "TestsFlextLdifDnOperationsPure",
-    ],
-    "TestsTestFlextLdifConstants": [
-        "tests.unit.utilities.test_utilities_constants",
-        "TestsTestFlextLdifConstants",
-    ],
-    "TestsTestFlextLdifServiceAPIs": [
-        "tests.unit.utilities.test_utilities",
-        "TestsTestFlextLdifServiceAPIs",
-    ],
-    "ValidateManyType": [
-        "tests.unit.utilities.test_utilities_constants",
-        "ValidateManyType",
-    ],
+    "TestsFlextLdifDnOperationsPure": ["tests.unit.utilities.test_utilities_core", "TestsFlextLdifDnOperationsPure"],
+    "TestsTestFlextLdifConstants": ["tests.unit.utilities.test_utilities_constants", "TestsTestFlextLdifConstants"],
+    "TestsTestFlextLdifServiceAPIs": ["tests.unit.utilities.test_utilities", "TestsTestFlextLdifServiceAPIs"],
+    "ValidateManyType": ["tests.unit.utilities.test_utilities_constants", "ValidateManyType"],
 }
 
 __all__ = [
@@ -113,7 +83,6 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
 
     Raises:
         AttributeError: If attribute not registered.
-
     """
     if name in _LAZY_CACHE:
         return _LAZY_CACHE[name]
@@ -128,7 +97,6 @@ def __dir__() -> Sequence[str]:
 
     Returns:
         List of public names from module exports.
-
     """
     return sorted(__all__)
 

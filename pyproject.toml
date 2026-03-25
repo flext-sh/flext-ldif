@@ -24,7 +24,7 @@ classifiers = [
 ]
 dependencies = [
   "colorlog>=6.9",
-  "flext-core",
+  "flext-core @ ../flext-core",
   "ldap3>=2.9.1",
   "pydantic-core>=2.41.4",
   "pydantic-settings>=2.11",
@@ -113,33 +113,28 @@ skip_covered = false
 
 # [MANAGED] deptry
 [tool.deptry]
-known_first_party = [
-  "flext_ldif",
-]
-pep621_dev_dependency_groups = [
-  "dev",
-]
+known_first_party = [ "flext_ldif" ]
+pep621_dev_dependency_groups = [ "dev" ]
 
 [tool.hatch.metadata]
 allow-direct-references = true
 
 # [MANAGED] mypy
 [tool.mypy]
-disable_error_code = [
-  "prop-decorator",
-]
+disable_error_code = [ "prop-decorator" ]
 explicit_package_bases = true
 ignore_missing_imports = true
 mypy_path = [ ".", "../typings", "../typings/generated", "src" ]
 namespace_packages = true
-plugins = [
-  "pydantic.mypy",
-]
+plugins = [ "pydantic.mypy" ]
 python_version = "3.13"
 
 [tool.poetry]
 
 # [MANAGED] pydantic-mypy
+
+# [CUSTOM] poetry dev extensions
+[tool.poetry.group.dev.dependencies]
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true
@@ -162,18 +157,9 @@ project-excludes = [
   "typings/**",
   "vendor/**",
 ]
-project-includes = [
-  "examples/**/*.py*",
-  "src/**/*.py*",
-  "tests/**/*.py*",
-]
+project-includes = [ "examples/**/*.py*", "src/**/*.py*", "tests/**/*.py*" ]
 python-version = "3.13"
-search-path = [
-  ".",
-  "../flext-tests",
-  "../flext-tests/src",
-  "src",
-]
+search-path = [ ".", "../flext-tests", "../flext-tests/src", "src" ]
 use-ignore-files = false
 
 [tool.pyrefly.errors]
@@ -213,16 +199,8 @@ exclude = [
   ".ruff_cache",
   ".venv",
 ]
-extraPaths = [
-  ".",
-  "../typings",
-  "../typings/generated",
-  "src",
-]
-ignore = [
-  "../typings",
-  "../typings/generated",
-]
+extraPaths = [ ".", "../typings", "../typings/generated", "src" ]
+ignore = [ "../typings", "../typings/generated" ]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
 reportCallIssue = "none"
@@ -262,9 +240,7 @@ root = "examples"
 
 # [MANAGED] pytest
 [tool.pytest.ini_options]
-addopts = [
-  "--strict-markers",
-]
+addopts = [ "--strict-markers" ]
 markers = [
   "docker: tests requiring Docker",
   "e2e: end-to-end integration tests",
@@ -277,14 +253,8 @@ markers = [
   "unit: unit tests",
 ]
 minversion = "8.0"
-python_classes = [
-  "Test*",
-]
-python_files = [
-  "*_test.py",
-  "*_tests.py",
-  "test_*.py",
-]
+python_classes = [ "Test*" ]
+python_files = [ "*_test.py", "*_tests.py", "test_*.py" ]
 
 # [MANAGED] ruff
 [tool.ruff]
@@ -310,11 +280,7 @@ line-length = 88
 preview = true
 respect-gitignore = true
 show-fixes = true
-src = [
-  "examples",
-  "src",
-  "tests",
-]
+src = [ "examples", "src", "tests" ]
 target-version = "py313"
 
 [tool.ruff.format]
@@ -378,32 +344,19 @@ ignore = [
   "UP040",
   "W293",
 ]
-select = [
-  "ALL",
-]
+select = [ "ALL" ]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
 force-single-line = false
-known-first-party = [
-  "flext_ldif",
-]
+known-first-party = [ "flext_ldif" ]
 split-on-trailing-comma = true
 
 [tool.ruff.lint.per-file-ignores]
 
-"**/.vulture_whitelist.py" = [
-  "ALL",
-]
-"**/*_pb2*.py" = [
-  "ALL",
-]
-"**/*docs*" = [
-  "INP001",
-  "S404",
-  "S603",
-  "T201",
-]
+"**/.vulture_whitelist.py" = [ "ALL" ]
+"**/*_pb2*.py" = [ "ALL" ]
+"**/*docs*" = [ "INP001", "S404", "S603", "T201" ]
 "**/*examples*" = [
   "ANN401",
   "C901",
@@ -423,41 +376,13 @@ split-on-trailing-comma = true
   "T201",
   "TID252",
 ]
-"**/*exceptions*" = [
-  "A001",
-  "S105",
-  "SLF001",
-]
-"**/*instrumentation*" = [
-  "C901",
-  "FBT001",
-  "SLF001",
-]
-"**/*loggings*" = [
-  "PLR0904",
-  "PLW0603",
-]
-"**/*middleware*" = [
-  "ANN401",
-  "FBT001",
-  "FBT002",
-  "PLC2801",
-  "S107",
-]
-"**/*models*" = [
-  "ANN401",
-  "FBT001",
-  "PLC2701",
-  "PLR0206",
-  "PLW0603",
-]
-"**/*oracle*" = [
-  "DTZ007",
-]
-"**/*result*" = [
-  "PLC2701",
-  "SLF001",
-]
+"**/*exceptions*" = [ "A001", "S105", "SLF001" ]
+"**/*instrumentation*" = [ "C901", "FBT001", "SLF001" ]
+"**/*loggings*" = [ "PLR0904", "PLW0603" ]
+"**/*middleware*" = [ "ANN401", "FBT001", "FBT002", "PLC2801", "S107" ]
+"**/*models*" = [ "ANN401", "FBT001", "PLC2701", "PLR0206", "PLW0603" ]
+"**/*oracle*" = [ "DTZ007" ]
+"**/*result*" = [ "PLC2701", "SLF001" ]
 "**/*scripts*" = [
   "EXE001",
   "FIX002",
@@ -474,17 +399,8 @@ split-on-trailing-comma = true
   "T201",
   "TID252",
 ]
-"**/*service*" = [
-  "N815",
-  "PLC2801",
-  "S404",
-  "S603",
-  "SLF001",
-]
-"**/*subprocess_utils*" = [
-  "S404",
-  "S603",
-]
+"**/*service*" = [ "N815", "PLC2801", "S404", "S603", "SLF001" ]
+"**/*subprocess_utils*" = [ "S404", "S603" ]
 "**/*tests*" = [
   "ANN001",
   "ANN002",
@@ -560,108 +476,28 @@ split-on-trailing-comma = true
   "TRY003",
   "TRY004",
 ]
-"**/*typings*" = [
-  "ANN401",
-]
-"**/*utilities*" = [
-  "C901",
-  "E402",
-  "PLC2801",
-  "PLW1510",
-  "S404",
-  "S603",
-]
-"**/__init__.py" = [
-  "ANN401",
-  "D107",
-  "F822",
-  "N999",
-  "PLC2701",
-  "RUF067",
-]
-"**/_utilities/parser.py" = [
-  "ARG004",
-  "FBT001",
-]
-"**/alert_manager*.py" = [
-  "S310",
-]
-"**/config.py" = [
-  "ANN401",
-  "FBT001",
-  "SLF001",
-]
-"**/constants.py" = [
-  "S105",
-]
-"**/container.py" = [
-  "ANN401",
-  "SLF001",
-]
-"**/external_command*.py" = [
-  "S404",
-  "S603",
-]
-"**/file_tools.py" = [
-  "D102",
-]
-"**/managers.py" = [
-  "S105",
-]
-"**/models.py" = [
-  "PLC0415",
-  "PLC2801",
-  "S102",
-  "S105",
-]
-"**/orchestrator*.py" = [
-  "S404",
-  "S603",
-]
-"**/output.py" = [
-  "FBT001",
-]
-"**/plugins/*.py" = [
-  "FBT001",
-  "FBT002",
-  "S404",
-  "S603",
-  "S607",
-  "TID252",
-]
-"**/protocol_impls/*.py" = [
-  "SLF001",
-]
-"**/providers/*.py" = [
-  "S106",
-  "S107",
-]
-"**/services/prompts.py" = [
-  "D102",
-  "D107",
-]
-"**/settings.py" = [
-  "ANN401",
-  "PLC0415",
-  "S105",
-]
-"**/singer/*.py" = [
-  "S404",
-  "S603",
-]
-"**/subprocess.py" = [
-  "S404",
-  "S603",
-]
-"**/tools/*.py" = [
-  "FBT001",
-  "FBT002",
-  "N802",
-  "S404",
-  "S603",
-  "S607",
-  "T201",
-]
+"**/*typings*" = [ "ANN401" ]
+"**/*utilities*" = [ "C901", "E402", "PLC2801", "PLW1510", "S404", "S603" ]
+"**/__init__.py" = [ "ANN401", "D107", "F822", "N999", "PLC2701", "RUF067" ]
+"**/_utilities/parser.py" = [ "ARG004", "FBT001" ]
+"**/alert_manager*.py" = [ "S310" ]
+"**/config.py" = [ "ANN401", "FBT001", "SLF001" ]
+"**/constants.py" = [ "S105" ]
+"**/container.py" = [ "ANN401", "SLF001" ]
+"**/external_command*.py" = [ "S404", "S603" ]
+"**/file_tools.py" = [ "D102" ]
+"**/managers.py" = [ "S105" ]
+"**/models.py" = [ "PLC0415", "PLC2801", "S102", "S105" ]
+"**/orchestrator*.py" = [ "S404", "S603" ]
+"**/output.py" = [ "FBT001" ]
+"**/plugins/*.py" = [ "FBT001", "FBT002", "S404", "S603", "S607", "TID252" ]
+"**/protocol_impls/*.py" = [ "SLF001" ]
+"**/providers/*.py" = [ "S106", "S107" ]
+"**/services/prompts.py" = [ "D102", "D107" ]
+"**/settings.py" = [ "ANN401", "PLC0415", "S105" ]
+"**/singer/*.py" = [ "S404", "S603" ]
+"**/subprocess.py" = [ "S404", "S603" ]
+"**/tools/*.py" = [ "FBT001", "FBT002", "N802", "S404", "S603", "S607", "T201" ]
 "**/tools/**/*.py" = [
   "FBT001",
   "FBT002",
@@ -671,26 +507,14 @@ split-on-trailing-comma = true
   "S607",
   "T201",
 ]
-"**/typings.py" = [
-  "RUF036",
-]
-"**/workspace/*.py" = [
-  "PLC0415",
-  "S404",
-  "S603",
-  "S607",
-]
+"**/typings.py" = [ "RUF036" ]
+"**/workspace/*.py" = [ "PLC0415", "S404", "S603", "S607" ]
 
 # [MANAGED] tomlsort
 [tool.tomlsort]
 all = true
 in_place = true
-sort_first = [
-  "build-system",
-  "dependency-groups",
-  "project",
-  "tool",
-]
+sort_first = [ "build-system", "dependency-groups", "project", "tool" ]
 
 [tool.uv.sources.flext-core]
 workspace = true

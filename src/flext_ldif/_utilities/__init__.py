@@ -10,9 +10,9 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
+
 if TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
     from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
     from flext_ldif._utilities.builders import FlextLdifUtilitiesBuilders
@@ -25,8 +25,8 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
     from flext_ldif._utilities.filters import (
         AndFilter,
-        ByAttrsFilter,
         ByAttrValueFilter,
+        ByAttrsFilter,
         ByDnFilter,
         ByDnUnderBaseFilter,
         ByObjectClassFilter,
@@ -72,124 +72,37 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "ExcludeAttrsFilter": ["flext_ldif._utilities.filters", "ExcludeAttrsFilter"],
     "Filter": ["flext_ldif._utilities.filters", "Filter"],
     "FlextLdifUtilitiesACL": ["flext_ldif._utilities.acl", "FlextLdifUtilitiesACL"],
-    "FlextLdifUtilitiesAttribute": [
-        "flext_ldif._utilities.attribute",
-        "FlextLdifUtilitiesAttribute",
-    ],
-    "FlextLdifUtilitiesBuilders": [
-        "flext_ldif._utilities.builders",
-        "FlextLdifUtilitiesBuilders",
-    ],
-    "FlextLdifUtilitiesCollectionLdif": [
-        "flext_ldif._utilities.collection_ldif",
-        "FlextLdifUtilitiesCollectionLdif",
-    ],
+    "FlextLdifUtilitiesAttribute": ["flext_ldif._utilities.attribute", "FlextLdifUtilitiesAttribute"],
+    "FlextLdifUtilitiesBuilders": ["flext_ldif._utilities.builders", "FlextLdifUtilitiesBuilders"],
+    "FlextLdifUtilitiesCollectionLdif": ["flext_ldif._utilities.collection_ldif", "FlextLdifUtilitiesCollectionLdif"],
     "FlextLdifUtilitiesDN": ["flext_ldif._utilities.dn", "FlextLdifUtilitiesDN"],
-    "FlextLdifUtilitiesDecorators": [
-        "flext_ldif._utilities.decorators",
-        "FlextLdifUtilitiesDecorators",
-    ],
-    "FlextLdifUtilitiesDetection": [
-        "flext_ldif._utilities.detection",
-        "FlextLdifUtilitiesDetection",
-    ],
-    "FlextLdifUtilitiesDispatch": [
-        "flext_ldif._utilities.dispatch",
-        "FlextLdifUtilitiesDispatch",
-    ],
-    "FlextLdifUtilitiesEntry": [
-        "flext_ldif._utilities.entry",
-        "FlextLdifUtilitiesEntry",
-    ],
-    "FlextLdifUtilitiesEvents": [
-        "flext_ldif._utilities.events",
-        "FlextLdifUtilitiesEvents",
-    ],
-    "FlextLdifUtilitiesFilters": [
-        "flext_ldif._utilities.filters",
-        "FlextLdifUtilitiesFilters",
-    ],
-    "FlextLdifUtilitiesFluent": [
-        "flext_ldif._utilities.fluent",
-        "FlextLdifUtilitiesFluent",
-    ],
-    "FlextLdifUtilitiesFunctional": [
-        "flext_ldif._utilities.functional",
-        "FlextLdifUtilitiesFunctional",
-    ],
-    "FlextLdifUtilitiesMetadata": [
-        "flext_ldif._utilities.metadata",
-        "FlextLdifUtilitiesMetadata",
-    ],
-    "FlextLdifUtilitiesNormalization": [
-        "flext_ldif._utilities.normalization",
-        "FlextLdifUtilitiesNormalization",
-    ],
+    "FlextLdifUtilitiesDecorators": ["flext_ldif._utilities.decorators", "FlextLdifUtilitiesDecorators"],
+    "FlextLdifUtilitiesDetection": ["flext_ldif._utilities.detection", "FlextLdifUtilitiesDetection"],
+    "FlextLdifUtilitiesDispatch": ["flext_ldif._utilities.dispatch", "FlextLdifUtilitiesDispatch"],
+    "FlextLdifUtilitiesEntry": ["flext_ldif._utilities.entry", "FlextLdifUtilitiesEntry"],
+    "FlextLdifUtilitiesEvents": ["flext_ldif._utilities.events", "FlextLdifUtilitiesEvents"],
+    "FlextLdifUtilitiesFilters": ["flext_ldif._utilities.filters", "FlextLdifUtilitiesFilters"],
+    "FlextLdifUtilitiesFluent": ["flext_ldif._utilities.fluent", "FlextLdifUtilitiesFluent"],
+    "FlextLdifUtilitiesFunctional": ["flext_ldif._utilities.functional", "FlextLdifUtilitiesFunctional"],
+    "FlextLdifUtilitiesMetadata": ["flext_ldif._utilities.metadata", "FlextLdifUtilitiesMetadata"],
+    "FlextLdifUtilitiesNormalization": ["flext_ldif._utilities.normalization", "FlextLdifUtilitiesNormalization"],
     "FlextLdifUtilitiesOID": ["flext_ldif._utilities.oid", "FlextLdifUtilitiesOID"],
-    "FlextLdifUtilitiesObjectClass": [
-        "flext_ldif._utilities.object_class",
-        "FlextLdifUtilitiesObjectClass",
-    ],
-    "FlextLdifUtilitiesParser": [
-        "flext_ldif._utilities.parser",
-        "FlextLdifUtilitiesParser",
-    ],
-    "FlextLdifUtilitiesParsers": [
-        "flext_ldif._utilities.parsers",
-        "FlextLdifUtilitiesParsers",
-    ],
-    "FlextLdifUtilitiesPipeline": [
-        "flext_ldif._utilities.pipeline",
-        "FlextLdifUtilitiesPipeline",
-    ],
-    "FlextLdifUtilitiesProcessing": [
-        "flext_ldif._utilities.processing",
-        "FlextLdifUtilitiesProcessing",
-    ],
-    "FlextLdifUtilitiesResult": [
-        "flext_ldif._utilities.result",
-        "FlextLdifUtilitiesResult",
-    ],
-    "FlextLdifUtilitiesSchema": [
-        "flext_ldif._utilities.schema",
-        "FlextLdifUtilitiesSchema",
-    ],
-    "FlextLdifUtilitiesServer": [
-        "flext_ldif._utilities.server",
-        "FlextLdifUtilitiesServer",
-    ],
-    "FlextLdifUtilitiesTransformer": [
-        "flext_ldif._utilities.transformers",
-        "FlextLdifUtilitiesTransformer",
-    ],
-    "FlextLdifUtilitiesTransformers": [
-        "flext_ldif._utilities.transformers",
-        "FlextLdifUtilitiesTransformers",
-    ],
-    "FlextLdifUtilitiesTypeGuards": [
-        "flext_ldif._utilities.type_guards",
-        "FlextLdifUtilitiesTypeGuards",
-    ],
-    "FlextLdifUtilitiesTypeHelpers": [
-        "flext_ldif._utilities.type_helpers",
-        "FlextLdifUtilitiesTypeHelpers",
-    ],
-    "FlextLdifUtilitiesValidation": [
-        "flext_ldif._utilities.validation",
-        "FlextLdifUtilitiesValidation",
-    ],
-    "FlextLdifUtilitiesWriter": [
-        "flext_ldif._utilities.writer",
-        "FlextLdifUtilitiesWriter",
-    ],
-    "FlextLdifUtilitiesWriters": [
-        "flext_ldif._utilities.writers",
-        "FlextLdifUtilitiesWriters",
-    ],
-    "IsSchemaFlextLdifUtilitiesFilters": [
-        "flext_ldif._utilities.filters",
-        "IsSchemaFlextLdifUtilitiesFilters",
-    ],
+    "FlextLdifUtilitiesObjectClass": ["flext_ldif._utilities.object_class", "FlextLdifUtilitiesObjectClass"],
+    "FlextLdifUtilitiesParser": ["flext_ldif._utilities.parser", "FlextLdifUtilitiesParser"],
+    "FlextLdifUtilitiesParsers": ["flext_ldif._utilities.parsers", "FlextLdifUtilitiesParsers"],
+    "FlextLdifUtilitiesPipeline": ["flext_ldif._utilities.pipeline", "FlextLdifUtilitiesPipeline"],
+    "FlextLdifUtilitiesProcessing": ["flext_ldif._utilities.processing", "FlextLdifUtilitiesProcessing"],
+    "FlextLdifUtilitiesResult": ["flext_ldif._utilities.result", "FlextLdifUtilitiesResult"],
+    "FlextLdifUtilitiesSchema": ["flext_ldif._utilities.schema", "FlextLdifUtilitiesSchema"],
+    "FlextLdifUtilitiesServer": ["flext_ldif._utilities.server", "FlextLdifUtilitiesServer"],
+    "FlextLdifUtilitiesTransformer": ["flext_ldif._utilities.transformers", "FlextLdifUtilitiesTransformer"],
+    "FlextLdifUtilitiesTransformers": ["flext_ldif._utilities.transformers", "FlextLdifUtilitiesTransformers"],
+    "FlextLdifUtilitiesTypeGuards": ["flext_ldif._utilities.type_guards", "FlextLdifUtilitiesTypeGuards"],
+    "FlextLdifUtilitiesTypeHelpers": ["flext_ldif._utilities.type_helpers", "FlextLdifUtilitiesTypeHelpers"],
+    "FlextLdifUtilitiesValidation": ["flext_ldif._utilities.validation", "FlextLdifUtilitiesValidation"],
+    "FlextLdifUtilitiesWriter": ["flext_ldif._utilities.writer", "FlextLdifUtilitiesWriter"],
+    "FlextLdifUtilitiesWriters": ["flext_ldif._utilities.writers", "FlextLdifUtilitiesWriters"],
+    "IsSchemaFlextLdifUtilitiesFilters": ["flext_ldif._utilities.filters", "IsSchemaFlextLdifUtilitiesFilters"],
     "NotFilter": ["flext_ldif._utilities.filters", "NotFilter"],
     "OrFilter": ["flext_ldif._utilities.filters", "OrFilter"],
     "f": ["flext_ldif._utilities.functional", "f"],
@@ -262,7 +175,6 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
 
     Raises:
         AttributeError: If attribute not registered.
-
     """
     if name in _LAZY_CACHE:
         return _LAZY_CACHE[name]
@@ -277,7 +189,6 @@ def __dir__() -> Sequence[str]:
 
     Returns:
         List of public names from module exports.
-
     """
     return sorted(__all__)
 
