@@ -23,8 +23,12 @@ from flext_ldif import (
 class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
     """FlextLdifValidation class."""
 
-    attribute_names: Annotated[MutableSequence[str], Field(default_factory=list)] = Field(default_factory=list)
-    objectclass_names: Annotated[MutableSequence[str], Field(default_factory=list)] = Field(default_factory=list)
+    attribute_names: Annotated[MutableSequence[str], Field(default_factory=list)] = (
+        Field(default_factory=list)
+    )
+    objectclass_names: Annotated[MutableSequence[str], Field(default_factory=list)] = (
+        Field(default_factory=list)
+    )
     max_attr_value_length: Annotated[int | None, Field()] = None
 
     @classmethod

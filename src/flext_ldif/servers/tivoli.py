@@ -97,7 +97,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ACL_DEFAULT_NAME: ClassVar[str] = "Tivoli ACL"
         ACL_ACCESS_PATTERN: ClassVar[str] = 'access\\s+"(\\w+)"'
         ACL_DEFAULT_TARGET_DN: ClassVar[str] = ""
-        ACL_DEFAULT_SUBJECT_TYPE: ClassVar[c.Ldif.AclSubjectType] = c.Ldif.AclSubjectType.ALL
+        ACL_DEFAULT_SUBJECT_TYPE: ClassVar[c.Ldif.AclSubjectType] = (
+            c.Ldif.AclSubjectType.ALL
+        )
         ACL_DEFAULT_SUBJECT_VALUE: ClassVar[str] = ""
         ACL_PRIMARY_ATTRIBUTE_NAME: ClassVar[str] = "ibm-slapdaccesscontrol"
         ACL_SEPARATOR: ClassVar[str] = "#"

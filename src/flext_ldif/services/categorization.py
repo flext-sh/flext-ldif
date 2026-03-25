@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import MutableMapping, MutableSequence, Sequence
+from collections.abc import MutableMapping, MutableSequence
 from typing import Final, override
 
 from flext_core import FlextLogger
@@ -78,7 +78,9 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 m.Ldif.CategoryRules.model_validate(categorization_rules),
             )
         else:
-            object.__setattr__(self, "_categorization_rules", m.Ldif.CategoryRules.model_validate({}))
+            object.__setattr__(
+                self, "_categorization_rules", m.Ldif.CategoryRules.model_validate({})
+            )
         if isinstance(schema_whitelist_rules, m.Ldif.WhitelistRules):
             object.__setattr__(self, "_schema_whitelist_rules", schema_whitelist_rules)
         elif isinstance(schema_whitelist_rules, dict):

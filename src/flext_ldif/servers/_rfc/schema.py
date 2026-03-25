@@ -6,7 +6,7 @@ import re
 import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
-from typing import Literal, Self, overload, override
+from typing import Self, overload, override
 
 from flext_core import FlextLogger, r
 

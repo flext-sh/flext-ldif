@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import Callable, MutableMapping, MutableSequence
+from collections.abc import Callable, MutableMapping
 from typing import override
 
 from flext_ldif import FlextLdifServiceBase, c, d, m, r, u
@@ -82,7 +82,7 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
     def list_common_syntaxes(self) -> r[list[str]]:
         """List all supported RFC 4517 syntax OIDs."""
         return u.try_(
-            lambda: list(sorted(self._common_syntaxes)),
+            lambda: sorted(self._common_syntaxes),
             catch=(TypeError, AttributeError),
         ).map_error(lambda e: f"Failed to list common syntaxes: {e}")
 
@@ -125,8 +125,8 @@ class FlextLdifSyntax(FlextLdifServiceBase[m.Ldif.SyntaxServiceStatus]):
         if oid_valid.is_failure:
             return r[m.Ldif.Syntax].fail(f"Invalid OID format: {oid}")
         try:
-            normalized_server_type: c.Ldif.ServerTypes = (
-                u.Ldif.normalize_server_type(server_type)
+            normalized_server_type: c.Ldif.ServerTypes = u.Ldif.normalize_server_type(
+                server_type
             )
             syntax = m.Ldif.Syntax.resolve_syntax_oid(
                 oid=oid,
