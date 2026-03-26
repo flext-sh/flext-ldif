@@ -302,49 +302,6 @@ class FlextLdifUtilitiesParser:
         return r[tuple[str, str, bool]].ok((attr_name, attr_value, is_base64))
 
     @staticmethod
-    def parse_ldif(
-        ldif_lines: MutableSequence[str],
-    ) -> MutableSequence[t.Ldif.RawEntryDict]:
-        """Parse list of LDIF lines into entries (simple version)."""
-        entries: MutableSequence[t.Ldif.RawEntryDict] = []
-        current_entry: t.Ldif.RawEntryDict = {}
-        for line in ldif_lines:
-            if not line.strip():
-                if current_entry:
-                    entries.append(current_entry)
-                    current_entry = {}
-                continue
-            if ":" in line:
-                key, value = line.split(":", 1)
-                current_entry[key.strip()] = value.strip()
-        if current_entry:
-            entries.append(current_entry)
-        return entries
-
-    @staticmethod
-    def parse_ldif_lines(
-        ldif_content: str,
-    ) -> MutableSequence[tuple[str, t.Ldif.EntryAttributesDict]]:
-        """Parse LDIF content into (dn, attributes_dict) tuples - RFC 2849 compliant."""
-        if not ldif_content:
-            return []
-        entries: MutableSequence[tuple[str, t.Ldif.EntryAttributesDict]] = []
-        current_dn: str | None = None
-        current_attrs: t.Ldif.EntryAttributesDict = {}
-        unfolded_lines = FlextLdifUtilitiesParser.unfold_lines(ldif_content)
-        for raw_line in unfolded_lines:
-            line = raw_line.rstrip("\r\n").strip()
-            current_dn, current_attrs = FlextLdifUtilitiesParser._process_ldif_line(
-                line,
-                current_dn,
-                current_attrs,
-                entries,
-            )
-        if current_dn is not None:
-            entries.append((current_dn, current_attrs))
-        return entries
-
-    @staticmethod
     def track_base64_attribute(attr_name: str, entry_dict: t.Ldif.RawEntryDict) -> None:
         """Track attribute that uses base64 encoding."""
         if "_base64_attrs" not in entry_dict:

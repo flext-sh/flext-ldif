@@ -26,28 +26,13 @@ if TYPE_CHECKING:
     )
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "TestAttributeFixer": [
-        "tests.unit.utilities.test_utilities_core",
-        "TestAttributeFixer",
-    ],
-    "TestDnObjectClassMethods": [
-        "tests.unit.utilities.test_utilities_core",
-        "TestDnObjectClassMethods",
-    ],
-    "TestFlextLdifUtilitiesComprehensive": [
-        "tests.unit.utilities.test_utilities_comprehensive",
-        "TestFlextLdifUtilitiesComprehensive",
-    ],
+    "TestAttributeFixer": ["tests.unit.utilities.test_utilities_core", "TestAttributeFixer"],
+    "TestDnObjectClassMethods": ["tests.unit.utilities.test_utilities_core", "TestDnObjectClassMethods"],
+    "TestFlextLdifUtilitiesComprehensive": ["tests.unit.utilities.test_utilities_comprehensive", "TestFlextLdifUtilitiesComprehensive"],
     "TestLdifParser": ["tests.unit.utilities.test_utilities_core", "TestLdifParser"],
-    "TestObjectClassUtilities": [
-        "tests.unit.utilities.test_utilities_core",
-        "TestObjectClassUtilities",
-    ],
+    "TestObjectClassUtilities": ["tests.unit.utilities.test_utilities_core", "TestObjectClassUtilities"],
     "TestServerTypes": ["tests.unit.utilities.test_utilities_core", "TestServerTypes"],
-    "TestsFlextLdifDnOperationsPure": [
-        "tests.unit.utilities.test_utilities_core",
-        "TestsFlextLdifDnOperationsPure",
-    ],
+    "TestsFlextLdifDnOperationsPure": ["tests.unit.utilities.test_utilities_core", "TestsFlextLdifDnOperationsPure"],
 }
 
 __all__ = [

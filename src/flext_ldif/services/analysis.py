@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
-from collections import Counter
 from collections.abc import MutableMapping, MutableSequence
 from typing import override
 
@@ -107,38 +105,6 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
         errors.extend(oc_errors)
         is_entry_valid = is_entry_valid and oc_valid
         return (is_entry_valid, errors)
-
-    @staticmethod
-    def analyze(
-        entries: MutableSequence[m.Ldif.Entry],
-    ) -> r[m.Ldif.EntryAnalysisResult]:
-        """Analyze LDIF entries and generate statistics."""
-        total_entries = len(entries)
-        objectclass_distribution: Counter[str] = Counter()
-        patterns_detected: set[str] = set()
-
-        def process_entry(entry: m.Ldif.Entry) -> None:
-            """Process entry for analysis."""
-            for oc_name in entry.get_objectclass_names():
-                objectclass_distribution[oc_name] += 1
-            dn_str_lower = str(entry.dn).lower()
-            if "ou=users" in dn_str_lower:
-                patterns_detected.add("user pattern")
-            if "ou=groups" in dn_str_lower:
-                patterns_detected.add("group pattern")
-
-        for entry in entries:
-            with contextlib.suppress(Exception):
-                process_entry(entry)
-        return r[m.Ldif.EntryAnalysisResult].ok(
-            m.Ldif.EntryAnalysisResult(
-                total_entries=total_entries,
-                objectclass_distribution=m.Ldif.DynamicCounts(
-                    **objectclass_distribution,
-                ),
-                patterns_detected=sorted(patterns_detected),
-            ),
-        )
 
     @staticmethod
     def validate_entries(

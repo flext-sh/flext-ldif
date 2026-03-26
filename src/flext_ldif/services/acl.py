@@ -117,32 +117,6 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
             ),
         )
 
-    @staticmethod
-    def extract_acl_entries(
-        entries: MutableSequence[m.Ldif.Entry],
-        acl_attributes: MutableSequence[str] | None = None,
-    ) -> r[MutableSequence[m.Ldif.Entry]]:
-        """Extract entries that contain ACL attributes."""
-        if not entries:
-            return r[MutableSequence[m.Ldif.Entry]].ok([])
-        if acl_attributes is None:
-            acl_attributes = list(FlextLdifUtilitiesACL.get_acl_attributes())
-
-        def has_acl_attribute(entry: m.Ldif.Entry) -> bool:
-            """Check if entry has at least one ACL attribute."""
-            if FlextLdifAcl._is_schema_entry(entry):
-                return False
-            for attr_name in acl_attributes:
-                attr_values = entry.get_attribute_values(attr_name)
-                if u.is_list_non_empty(attr_values):
-                    return True
-            return False
-
-        acl_entries: MutableSequence[m.Ldif.Entry] = [
-            entry for entry in entries if has_acl_attribute(entry)
-        ]
-        return r[MutableSequence[m.Ldif.Entry]].ok(acl_entries)
-
     @override
     def execute(self) -> r[m.Ldif.AclResponse]:
         """Execute ACL service health check."""
@@ -206,16 +180,6 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
         return acl_quirk.parse_quirk(acl_string).fold(
             on_failure=lambda e: r[m.Ldif.Acl].fail(e or "ACL parsing failed"),
             on_success=lambda v: r[m.Ldif.Acl].ok(v),
-        )
-
-    def write_acl(self, acl: m.Ldif.Acl, server_type: str) -> r[str]:
-        """Write ACL model to string format."""
-        acl_quirk = self._server.acl(server_type)
-        if acl_quirk is None:
-            return r[str].fail(f"No ACL quirk found for server type: {server_type}")
-        return acl_quirk.write(acl).fold(
-            on_failure=lambda e: r[str].fail(e or "ACL writing failed"),
-            on_success=lambda v: r[str].ok(v),
         )
 
 

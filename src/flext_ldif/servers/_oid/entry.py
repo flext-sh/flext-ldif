@@ -40,40 +40,6 @@ class _OidObjectListJson(RootModel[t.MutableContainerList]):
 class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     """Oracle Internet Directory (OID) Entry implementation."""
 
-    def normalize_schema_strings_inline(self, entry: m.Ldif.Entry) -> m.Ldif.Entry:
-        """Normalize schema attribute strings (attributetypes, objectclasses)."""
-        if not entry.attributes:
-            return entry
-        schema_attrs = FlextLdifServersOidConstants.SCHEMA_FILTERABLE_FIELDS
-        if not any(
-            attr_name.lower() in schema_attrs
-            for attr_name in entry.attributes.attributes
-        ):
-            return entry
-        replacements = FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC
-        new_attributes: MutableMapping[str, MutableSequence[str]] = {
-            attr_name: [
-                reduce(
-                    lambda val, pair: val.replace(pair[0], pair[1]),
-                    replacements.items(),
-                    value,
-                )
-                for value in attr_values
-            ]
-            if attr_name.lower() in schema_attrs
-            else attr_values
-            for attr_name, attr_values in entry.attributes.attributes.items()
-        }
-        if new_attributes == entry.attributes.attributes:
-            return entry
-        return entry.model_copy(
-            update={
-                "attributes": m.Ldif.Attributes.model_validate({
-                    "attributes": new_attributes,
-                }),
-            },
-        )
-
     def _convert_boolean_attributes_to_rfc(
         self,
         entry_attributes: MutableMapping[str, MutableSequence[str]],

@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableSequence, Sequence
 from pathlib import Path
 from typing import override
 
 from pydantic import BeforeValidator, PrivateAttr
 
-from flext_ldif import FlextLdifServer, c, m, r, s, t, u
+from flext_ldif import FlextLdifServer, c, m, r, s, u
 
 _ = BeforeValidator
 
@@ -31,7 +30,7 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
     def execute(self) -> r[m.Ldif.ParseResponse]:
         """Guard against invoking the service without input data."""
         return r[m.Ldif.ParseResponse].fail(
-            "FlextLdifParser requires input data to parse. Use parse(), parse_string(), parse_ldif_file(), or parse_ldap3_results() methods.",
+            "FlextLdifParser requires input data to parse. Use parse(), parse_string(), or parse_ldif_file() methods.",
         )
 
     def parse_source(
@@ -43,34 +42,6 @@ class FlextLdifParser(s[m.Ldif.ParseResponse]):
         if isinstance(source, Path):
             return self.parse_ldif_file(source, server_type)
         return self.parse_string(source, server_type)
-
-    def parse_ldap3_results(
-        self,
-        results: Sequence[tuple[str, Mapping[str, t.StrSequence]]],
-        server_type: str | None = None,
-    ) -> r[m.Ldif.ParseResponse]:
-        """Parse ldap3 search results by converting them to LDIF text first."""
-        ldif_lines: MutableSequence[str] = []
-
-        def convert_entry(
-            dn_attrs: tuple[str, Mapping[str, t.StrSequence]],
-        ) -> MutableSequence[str]:
-            """Convert single entry to LDIF lines."""
-            dn, attrs = dn_attrs
-            entry_lines: MutableSequence[str] = [f"dn: {dn}"]
-            for attr_name, values in attrs.items():
-                attr_lines: MutableSequence[str] = [
-                    f"{attr_name}: {value}" for value in values
-                ]
-                entry_lines.extend(attr_lines)
-            entry_lines.append("")
-            return entry_lines
-
-        for dn_attrs in results:
-            entry_lines = convert_entry(dn_attrs)
-            ldif_lines.extend(entry_lines)
-        content = "\n".join(ldif_lines)
-        return self.parse_string(content, server_type)
 
     def parse_ldif_file(
         self,

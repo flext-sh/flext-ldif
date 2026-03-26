@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import base64
-import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
-from pathlib import Path
 
 from flext_core import FlextLogger, r
 from pydantic import BaseModel
@@ -33,38 +31,6 @@ class FlextLdifUtilitiesWriter:
         if isinstance(ext_raw, Mapping):
             return dict(ext_raw)
         return None
-
-    @staticmethod
-    def _add_changetype_lines(
-        ldif_lines: MutableSequence[str],
-        *,
-        format_type: str,
-        changetype_config: t.MutableContainerMapping,
-    ) -> None:
-        """Add changetype lines based on format."""
-        include_changetype = bool(changetype_config.get("include_changetype"))
-        changetype_value = changetype_config.get("changetype_value")
-        fold_long_lines = bool(
-            changetype_config.get("fold_long_lines", True),
-        )
-        width_raw = changetype_config.get("width", 76)
-        width = int(width_raw) if isinstance(width_raw, (str, int, float)) else 76
-        if format_type == "modify":
-            changetype_line = "changetype: modify"
-            FlextLdifUtilitiesWriter._add_line_with_folding(
-                ldif_lines,
-                changetype_line,
-                fold_long_lines=fold_long_lines,
-                width=width,
-            )
-        elif include_changetype and changetype_value:
-            changetype_line = f"changetype: {changetype_value}"
-            FlextLdifUtilitiesWriter._add_line_with_folding(
-                ldif_lines,
-                changetype_line,
-                fold_long_lines=fold_long_lines,
-                width=width,
-            )
 
     @staticmethod
     def _add_line_with_folding(
@@ -212,72 +178,6 @@ class FlextLdifUtilitiesWriter:
         if output_options.show_removed_attributes:
             return (f"# {attr_name}", attr_values)
         return None
-
-    @staticmethod
-    def _process_add_attributes(
-        attributes: t.Ldif.EntryAttributesDict,
-        hidden: set[str],
-        *,
-        fold_long_lines: bool,
-        width: int,
-    ) -> MutableSequence[str]:
-        """Process attributes in ADD format."""
-        lines: MutableSequence[str] = []
-        for attr_name, values in attributes.items():
-            if not values or attr_name in hidden:
-                continue
-            for value in values:
-                attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(
-                    attr_name,
-                    value,
-                )
-                FlextLdifUtilitiesWriter._add_line_with_folding(
-                    lines,
-                    attr_line,
-                    fold_long_lines=fold_long_lines,
-                    width=width,
-                )
-        return lines
-
-    @staticmethod
-    def _process_modify_attributes(
-        attributes: t.Ldif.EntryAttributesDict,
-        hidden: set[str],
-        modify_operation: str,
-        *,
-        fold_long_lines: bool,
-        width: int,
-    ) -> MutableSequence[str]:
-        """Process attributes in MODIFY format."""
-        lines: MutableSequence[str] = []
-        first_attr = True
-        for attr_name, values in attributes.items():
-            if not values or attr_name in hidden:
-                continue
-            if not first_attr:
-                lines.append("-")
-            first_attr = False
-            op_line = f"{modify_operation}: {attr_name}"
-            FlextLdifUtilitiesWriter._add_line_with_folding(
-                lines,
-                op_line,
-                fold_long_lines=fold_long_lines,
-                width=width,
-            )
-            for value in values:
-                attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(
-                    attr_name,
-                    value,
-                )
-                FlextLdifUtilitiesWriter._add_line_with_folding(
-                    lines,
-                    attr_line,
-                    fold_long_lines=fold_long_lines,
-                    width=width,
-                )
-        if lines and lines[-1] != "-":
-            lines.append("-")
-        return lines
 
     @staticmethod
     def add_attribute_flags(
@@ -482,32 +382,6 @@ class FlextLdifUtilitiesWriter:
             if byte_val < safe_min or byte_val > safe_max or byte_val in safe_exclude:
                 return True
         return False
-
-    @staticmethod
-    def write_file(
-        content: str,
-        file_path: Path,
-        encoding: str = "utf-8",
-    ) -> r[MutableMapping[str, str | int]]:
-        """Write content to file (pure I/O operation)."""
-        try:
-            file_path.parent.mkdir(parents=True, exist_ok=True)
-            _ = file_path.write_text(content, encoding=encoding)
-            stats: MutableMapping[str, str | int] = {
-                "bytes_written": len(content.encode(encoding)),
-                "path": str(file_path),
-                "encoding": encoding,
-            }
-            return r[MutableMapping[str, str | int]].ok(stats)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            logger.exception("File write failed", file_path=str(file_path))
-            return r[MutableMapping[str, str | int]].fail(f"File write failed: {e}")
 
     @staticmethod
     def write_rfc_attribute(

@@ -107,23 +107,6 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
                 return r[MutableSequence[str]].fail("Unsupported attribute input type")
 
     @staticmethod
-    def get_entry_attribute(
-        entry: m.Ldif.Entry,
-        attribute_name: str,
-    ) -> r[MutableSequence[str]]:
-        """Read one attribute from entry."""
-        if entry.attributes is None:
-            return r[MutableSequence[str]].fail(
-                f"Attribute '{attribute_name}' not found",
-            )
-        value = entry.attributes.attributes.get(attribute_name)
-        if value is None or not value:
-            return r[MutableSequence[str]].fail(
-                f"Attribute '{attribute_name}' not found",
-            )
-        return r[MutableSequence[str]].ok(list(value))
-
-    @staticmethod
     def get_entry_attributes(
         entry: m.Ldif.Entry,
     ) -> r[MutableMapping[str, MutableSequence[str]]]:
@@ -161,19 +144,6 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
         return r[MutableSequence[str]].fail("Entry is missing objectClass attribute")
 
     @staticmethod
-    def normalize_attribute_value(value: str | MutableSequence[str] | None) -> r[str]:
-        """Normalize supported attribute value shapes to one string."""
-        match value:
-            case None:
-                return r[str].fail("Cannot normalize None value")
-            case str() as value_text:
-                return FlextLdifEntries._normalize_string_value(value_text)
-            case list() as value_list:
-                return FlextLdifEntries._normalize_list_value(value_list)
-            case _:
-                return r[str].fail("Unsupported attribute value type")
-
-    @staticmethod
     def remove_attributes(
         entry: m.Ldif.Entry,
         attributes_to_remove: MutableSequence[str],
@@ -194,91 +164,6 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
         )
         return r[m.Ldif.Entry].ok(modified_entry)
 
-    @staticmethod
-    def remove_objectclasses(
-        entry: m.Ldif.Entry,
-        objectclasses_to_remove: MutableSequence[str],
-    ) -> r[m.Ldif.Entry]:
-        """Remove objectClass values from a single entry."""
-        if entry.attributes is None:
-            return r[m.Ldif.Entry].ok(entry)
-        objectclasses_result = FlextLdifEntries.get_entry_objectclasses(entry)
-        if objectclasses_result.is_failure:
-            return r[m.Ldif.Entry].ok(entry)
-        current_ocs = objectclasses_result.value
-        if not current_ocs:
-            return r[m.Ldif.Entry].ok(entry)
-        ocs_to_remove_lower = {oc.lower() for oc in objectclasses_to_remove}
-        new_ocs = [oc for oc in current_ocs if oc.lower() not in ocs_to_remove_lower]
-        if not new_ocs:
-            return r[m.Ldif.Entry].fail(
-                "Cannot remove all objectClass values from entry",
-            )
-        new_attrs = dict(entry.attributes.attributes)
-        new_attrs["objectClass"] = new_ocs
-        modified_entry = m.Ldif.Entry(
-            dn=entry.dn,
-            attributes=m.Ldif.Attributes.model_validate({"attributes": new_attrs}),
-            metadata=entry.metadata,
-        )
-        return r[m.Ldif.Entry].ok(modified_entry)
-
-    @staticmethod
-    def remove_operational_attributes(entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
-        """Remove known operational attributes from one entry."""
-        operational_attrs = {
-            "createTimestamp",
-            "modifyTimestamp",
-            "creatorsName",
-            "modifiersName",
-            "entryUUID",
-            "entryDN",
-            "subschemaSubentry",
-            "hasSubordinates",
-            "numSubordinates",
-            "structuralObjectClass",
-            "governingStructureRule",
-            "entryCSN",
-            "contextCSN",
-        }
-        if entry.attributes is None:
-            return r[m.Ldif.Entry].ok(entry)
-        operational_attrs_lower = {attr.lower() for attr in operational_attrs}
-        new_attrs = {
-            k: v
-            for k, v in entry.attributes.attributes.items()
-            if k.lower() not in operational_attrs_lower
-        }
-        modified_entry = m.Ldif.Entry(
-            dn=entry.dn,
-            attributes=m.Ldif.Attributes.model_validate({"attributes": new_attrs}),
-            metadata=entry.metadata,
-        )
-        return r[m.Ldif.Entry].ok(modified_entry)
-
-    @staticmethod
-    def remove_operational_attributes_batch(
-        entries: MutableSequence[m.Ldif.Entry],
-    ) -> r[MutableSequence[m.Ldif.Entry]]:
-        """Remove operational attributes for all entries."""
-        results: MutableSequence[m.Ldif.Entry] = []
-        for entry in entries:
-            result = FlextLdifEntries.remove_operational_attributes(entry)
-            if result.is_failure:
-                return r[MutableSequence[m.Ldif.Entry]].fail(
-                    result.error or "Failed to process entry",
-                )
-            results.append(result.value)
-        return r[MutableSequence[m.Ldif.Entry]].ok(results)
-
-    def build_entries(self) -> MutableSequence[m.Ldif.Entry]:
-        """Execute and return processed entries or raise on failure."""
-        result = self.execute()
-        if result.is_failure:
-            msg = f"Build failed: {result.error}"
-            raise RuntimeError(msg)
-        return result.value
-
     @override
     def execute(self) -> r[MutableSequence[m.Ldif.Entry]]:
         """Run configured entry operation."""
@@ -298,50 +183,6 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
         return r[MutableSequence[m.Ldif.Entry]].fail(
             f"Unknown operation: {self._operation}",
         )
-
-    def get_normalized_attribute(
-        self,
-        entry: m.Ldif.Entry,
-        attribute_name: str,
-    ) -> r[str]:
-        """Get and normalize one entry attribute."""
-        return self.get_entry_attribute(entry, attribute_name).flat_map(
-            FlextLdifEntries.normalize_attribute_value,
-        )
-
-    def remove_attributes_batch(
-        self,
-        entries: MutableSequence[m.Ldif.Entry],
-        attributes: MutableSequence[str],
-    ) -> r[MutableSequence[m.Ldif.Entry]]:
-        """Remove selected attributes for all entries."""
-        results: MutableSequence[m.Ldif.Entry] = []
-        for entry in entries:
-            result = FlextLdifEntries.remove_attributes(entry, attributes)
-            if result.is_failure:
-                return r[MutableSequence[m.Ldif.Entry]].fail(
-                    result.error or "Failed to process entry",
-                )
-            results.append(result.value)
-        return r[MutableSequence[m.Ldif.Entry]].ok(results)
-
-    def with_attributes_to_remove(
-        self,
-        attributes_to_remove: MutableSequence[str],
-    ) -> Self:
-        """Set attributes targeted by remove operation."""
-        self._attributes_to_remove = attributes_to_remove
-        return self
-
-    def with_entries(self, entries: MutableSequence[m.Ldif.Entry]) -> Self:
-        """Set entries to process."""
-        self._entries = entries
-        return self
-
-    def with_operation(self, operation: str) -> Self:
-        """Set operation name for execution."""
-        self._operation = operation
-        return self
 
 
 __all__ = ["FlextLdifEntries"]

@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
+from collections.abc import MutableMapping, MutableSequence, Sequence
 from typing import ClassVar, override
 
 from flext_core import r
 
-from flext_ldif import FlextLdifUtilitiesDN, FlextLdifUtilitiesEntry, c, m, t
+from flext_ldif import FlextLdifUtilitiesDN, c, m, t
 
 
 class FlextLdifUtilitiesTransformer[T]:
@@ -177,186 +177,6 @@ class FlextLdifUtilitiesTransformers:
                 item = item.model_copy(update=update_dict)
             return r[m.Ldif.Entry].ok(item)
 
-    class ReplaceBaseDnTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
-        """Transformer for replacing base DN in entries."""
-
-        __slots__ = ("_case_insensitive", "_new_base", "_old_base")
-
-        def __init__(
-            self,
-            old_base: str,
-            new_base: str,
-            *,
-            case_insensitive: bool = True,
-        ) -> None:
-            """Initialize base DN replacement transformer."""
-            super().__init__()
-            self._old_base = old_base
-            self._new_base = new_base
-            self._case_insensitive = case_insensitive
-
-        @override
-        def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
-            """Replace base DN in an entry."""
-            if item.dn is None:
-                return r[m.Ldif.Entry].fail("Entry has no DN")
-            dn_str = (
-                item.dn.value
-                if getattr(item.dn, "value", None) is not None
-                else str(item.dn)
-            )
-            new_dn_str = FlextLdifUtilitiesDN.transform_dn_attribute(
-                dn_str,
-                self._old_base,
-                self._new_base,
-            )
-            update_dict: MutableMapping[str, m.Ldif.DN] = {
-                "dn": m.Ldif.DN(value=new_dn_str),
-            }
-            updated_entry = item.model_copy(update=update_dict)
-            return r[m.Ldif.Entry].ok(updated_entry)
-
-    class ConvertBooleansTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
-        """Transformer for converting boolean attribute values."""
-
-        __slots__ = ("_attributes", "_format")
-
-        def __init__(
-            self,
-            boolean_format: str = "TRUE/FALSE",
-            *,
-            attributes: MutableSequence[str] | None = None,
-        ) -> None:
-            """Initialize boolean conversion transformer."""
-            super().__init__()
-            self._format = boolean_format
-            self._attributes = attributes
-
-        @override
-        def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
-            """Convert boolean attributes in an entry."""
-            if item.attributes is None:
-                return r[m.Ldif.Entry].ok(item)
-            attrs_dict = item.attributes.attributes
-            boolean_attrs = {
-                "userpassword",
-                "pwdaccountlocked",
-                "pwdlocked",
-                "accountlocked",
-                "passwordexpired",
-                "passwordneverexpires",
-            }
-            if self._attributes:
-                boolean_attrs = {attr.lower() for attr in self._attributes}
-            converted_attrs = FlextLdifUtilitiesEntry.convert_boolean_attributes(
-                attributes=attrs_dict,
-                boolean_attr_names=boolean_attrs,
-                target_format=self._format,
-            )
-            new_attributes = m.Ldif.Attributes.model_validate({
-                "attributes": {**converted_attrs},
-            })
-            update_dict: MutableMapping[str, m.Ldif.Attributes] = {
-                "attributes": new_attributes,
-            }
-            updated_entry = item.model_copy(update=update_dict)
-            return r[m.Ldif.Entry].ok(updated_entry)
-
-    class FilterAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
-        """Transformer for filtering entry attributes."""
-
-        __slots__ = ("_exclude", "_include")
-        _include: set[str] | None
-        _exclude: set[str]
-
-        def __init__(
-            self,
-            *,
-            include: MutableSequence[str] | None = None,
-            exclude: MutableSequence[str] | None = None,
-        ) -> None:
-            """Initialize attribute filter transformer."""
-            super().__init__()
-            self._include = {str(item) for item in include} if include else None
-            self._exclude: set[str] = (
-                {str(item) for item in exclude} if exclude else set()
-            )
-
-        @override
-        def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
-            """Filter attributes in an entry."""
-            if item.attributes is None:
-                return r[m.Ldif.Entry].fail("Entry has no attributes")
-            attrs: MutableMapping[str, MutableSequence[str]] = (
-                item.attributes.attributes
-                if getattr(item.attributes, "attributes", None) is not None
-                else {}
-            )
-            if self._include is not None:
-                include_lower = {i.lower() for i in self._include}
-
-                def key_in_include(key: str, _value: t.NormalizedValue) -> bool:
-                    """Check if key lowercase is in include set."""
-                    return key.lower() in include_lower
-
-                attrs = {k: v for k, v in attrs.items() if key_in_include(k, v)}
-            if self._exclude:
-                exclude_lower = {e.lower() for e in self._exclude}
-
-                def key_not_in_exclude(key: str, _value: t.NormalizedValue) -> bool:
-                    """Check if key lowercase is not in exclude set."""
-                    return key.lower() not in exclude_lower
-
-                attrs = {k: v for k, v in attrs.items() if key_not_in_exclude(k, v)}
-            new_attributes = m.Ldif.Attributes.model_validate({
-                "attributes": {**attrs},
-            })
-            update_dict_final: MutableMapping[str, m.Ldif.Attributes] = {
-                "attributes": new_attributes,
-            }
-            updated_entry = item.model_copy(update=update_dict_final)
-            return r[m.Ldif.Entry].ok(updated_entry)
-
-    class RemoveAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
-        """Transformer for removing specific attributes from entries."""
-
-        __slots__ = ("_attributes",)
-
-        def __init__(self, *attributes: str) -> None:
-            """Initialize attribute removal transformer."""
-            super().__init__()
-            self._attributes = {attr.lower() for attr in attributes}
-
-        @override
-        def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
-            """Remove attributes from an entry."""
-            updated_entry = FlextLdifUtilitiesEntry.remove_attributes(
-                item,
-                list(self._attributes),
-            )
-            return r[m.Ldif.Entry].ok(updated_entry)
-
-    class CustomTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
-        """Transformer using a custom function."""
-
-        __slots__ = ("_func",)
-
-        def __init__(
-            self,
-            func: Callable[[m.Ldif.Entry], m.Ldif.Entry | r[m.Ldif.Entry]],
-        ) -> None:
-            """Initialize custom transformer."""
-            super().__init__()
-            self._func = func
-
-        @override
-        def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
-            """Apply custom transformation to an entry."""
-            result = self._func(item)
-            if isinstance(result, r):
-                return result
-            return r[m.Ldif.Entry].ok(result)
-
     class Normalize:
         """Factory class for normalization transformers."""
 
@@ -388,63 +208,6 @@ class FlextLdifUtilitiesTransformers:
                 case=case,
                 spaces=spaces,
                 validate=validate,
-            )
-
-    class Transform:
-        """Factory class for general transformers."""
-
-        __slots__: ClassVar[tuple[str, ...]] = ()
-
-        @staticmethod
-        def convert_booleans(
-            boolean_format: str = "TRUE/FALSE",
-            *,
-            attributes: MutableSequence[str] | None = None,
-        ) -> FlextLdifUtilitiesTransformers.ConvertBooleansTransformer:
-            """Create a boolean conversion transformer."""
-            return FlextLdifUtilitiesTransformers.ConvertBooleansTransformer(
-                boolean_format,
-                attributes=attributes,
-            )
-
-        @staticmethod
-        def custom(
-            func: Callable[[m.Ldif.Entry], m.Ldif.Entry | r[m.Ldif.Entry]],
-        ) -> FlextLdifUtilitiesTransformers.CustomTransformer:
-            """Create a custom transformer from a function."""
-            return FlextLdifUtilitiesTransformers.CustomTransformer(func)
-
-        @staticmethod
-        def filter_attrs(
-            *,
-            include: MutableSequence[str] | None = None,
-            exclude: MutableSequence[str] | None = None,
-        ) -> FlextLdifUtilitiesTransformers.FilterAttrsTransformer:
-            """Create an attribute filter transformer."""
-            return FlextLdifUtilitiesTransformers.FilterAttrsTransformer(
-                include=include,
-                exclude=exclude,
-            )
-
-        @staticmethod
-        def remove_attrs(
-            *attributes: str,
-        ) -> FlextLdifUtilitiesTransformers.RemoveAttrsTransformer:
-            """Create an attribute removal transformer."""
-            return FlextLdifUtilitiesTransformers.RemoveAttrsTransformer(*attributes)
-
-        @staticmethod
-        def replace_base(
-            old_base: str,
-            new_base: str,
-            *,
-            case_insensitive: bool = True,
-        ) -> FlextLdifUtilitiesTransformers.ReplaceBaseDnTransformer:
-            """Create a base DN replacement transformer."""
-            return FlextLdifUtilitiesTransformers.ReplaceBaseDnTransformer(
-                old_base,
-                new_base,
-                case_insensitive=case_insensitive,
             )
 
 

@@ -7,7 +7,7 @@ from collections.abc import MutableMapping, MutableSequence
 from pathlib import Path
 from typing import override
 
-from flext_ldif import FlextLdifServer, FlextLdifSettings, m, p, r, s, u
+from flext_ldif import FlextLdifServer, m, p, r, s, u
 
 
 class FlextLdifDetector(s[m.Ldif.ClientStatus]):
@@ -61,39 +61,6 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
     def _get_server_registry() -> FlextLdifServer:
         """Get server registry instance."""
         return FlextLdifServer.get_global_instance()
-
-    @staticmethod
-    def resolve_from_config(
-        config: FlextLdifSettings,
-        target_server_type: str | None = None,
-    ) -> str:
-        """Determine effective server type based on a prioritized configuration hierarchy."""
-        if target_server_type:
-            return target_server_type
-        detection_mode_raw = getattr(config, "quirks_detection_mode", "auto")
-        detection_mode = (
-            detection_mode_raw if isinstance(detection_mode_raw, str) else "auto"
-        )
-        configured_server_raw = getattr(config, "quirks_server_type", None)
-        configured_server = (
-            configured_server_raw if isinstance(configured_server_raw, str) else None
-        )
-        if getattr(
-            config,
-            "enable_relaxed_parsing",
-            getattr(getattr(config, "ldif", None), "enable_relaxed_parsing", False),
-        ):
-            return u.Ldif.get_server_type_value("RELAXED")
-        if detection_mode == "manual":
-            if configured_server is None:
-                return u.Ldif.get_server_type_value("RFC")
-            if not configured_server.strip():
-                return u.Ldif.get_server_type_value("RFC")
-            return configured_server
-        if detection_mode == "disabled":
-            return u.Ldif.get_server_type_value("RFC")
-        default_server_raw = getattr(config, "ldif_default_server_type", "rfc")
-        return default_server_raw if isinstance(default_server_raw, str) else "rfc"
 
     def detect_server_type(
         self,

@@ -197,36 +197,6 @@ class TestLdifParser:
         result = u.Ldif.extract_extensions(definition)
         tm.that(result.get("DESC"), eq=["Test attribute"])
 
-    def test_parse_ldif_lines_empty(self) -> None:
-        """Test parsing empty LDIF content."""
-        content = ""
-        result = u.Ldif.parse_ldif_lines(content)
-        tm.that(result, eq=[])
-
-    def test_parse_ldif_lines_single_entry(self) -> None:
-        """Test parsing single LDIF entry."""
-        content = "dn: cn=test,dc=example,dc=com\ncn: test\nobjectClass: person\n"
-        result = u.Ldif.parse_ldif_lines(content)
-        tm.that(len(result), eq=1)
-        dn, attrs = result[0]
-        tm.that(dn, eq="cn=test,dc=example,dc=com")
-        tm.that(attrs.get("cn"), eq=["test"])
-        tm.that(attrs.get("objectClass"), eq=["person"])
-
-    def test_parse_ldif_lines_multiple_entries(self) -> None:
-        """Test parsing multiple LDIF entries separated by empty line."""
-        content = "dn: cn=test1,dc=example,dc=com\ncn: test1\nobjectClass: person\n\ndn: cn=test2,dc=example,dc=com\ncn: test2\nobjectClass: person\n"
-        result = u.Ldif.parse_ldif_lines(content)
-        _ = tm.that(len(result), eq=2)
-        dn1, attrs1 = result[0]
-        tm.that(dn1, eq="cn=test1,dc=example,dc=com")
-        tm.that(attrs1.get("cn"), eq=["test1"])
-        tm.that(attrs1.get("objectClass"), eq=["person"])
-        dn2, attrs2 = result[1]
-        tm.that(dn2, eq="cn=test2,dc=example,dc=com")
-        tm.that(attrs2.get("cn"), eq=["test2"])
-        tm.that(attrs2.get("objectClass"), eq=["person"])
-
     def test_unfold_lines_basic(self) -> None:
         """Test unfolding RFC 2849 folded lines."""
         content = "dn: cn=verylongname\n withfoldedcontinuation,dc=example,dc=com\n"
