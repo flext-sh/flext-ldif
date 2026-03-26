@@ -37,7 +37,6 @@ if TYPE_CHECKING:
     from flext_ldif._models.settings import FlextLdifModelsSettings
     from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
     from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
-    from flext_ldif._utilities.builders import FlextLdifUtilitiesBuilders
     from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
     from flext_ldif._utilities.decorators import FlextLdifUtilitiesDecorators
     from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
@@ -323,10 +322,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "flext_ldif._utilities.attribute",
         "FlextLdifUtilitiesAttribute",
     ],
-    "FlextLdifUtilitiesBuilders": [
-        "flext_ldif._utilities.builders",
-        "FlextLdifUtilitiesBuilders",
-    ],
     "FlextLdifUtilitiesCollectionLdif": [
         "flext_ldif._utilities.collection_ldif",
         "FlextLdifUtilitiesCollectionLdif",
@@ -538,7 +533,6 @@ __all__ = [
     "FlextLdifUtilities",
     "FlextLdifUtilitiesACL",
     "FlextLdifUtilitiesAttribute",
-    "FlextLdifUtilitiesBuilders",
     "FlextLdifUtilitiesCollectionLdif",
     "FlextLdifUtilitiesDN",
     "FlextLdifUtilitiesDecorators",
