@@ -13,10 +13,10 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import FlextLdifMigrationPipeline
-from tests import m, s
+from tests import m
 
 
-class TestsTestFlextLdifMigrationPipeline(s):
+class TestsTestFlextLdifMigrationPipeline:
     """Consolidated test suite for LDIF migration pipeline.
 
     Tests initialization, validation, execution with different server types.

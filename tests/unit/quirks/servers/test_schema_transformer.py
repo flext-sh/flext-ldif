@@ -7,10 +7,10 @@ utilities that enhance RFC schema parsing with server-specific transformations.
 from __future__ import annotations
 
 from flext_tests import tm
-from tests import s, u
+from tests import u
 
 
-class TestsFlextLdifSchemaTransformerNormalizeAttributeName(s):
+class TestsFlextLdifSchemaTransformerNormalizeAttributeName:
     """Test normalize_attribute_name transformation."""
 
     def test_normalize_removes_binary_suffix(self) -> None:
