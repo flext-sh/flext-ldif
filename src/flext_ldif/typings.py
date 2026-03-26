@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import datetime
-from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Literal, TypeVar
+from typing import TYPE_CHECKING, Annotated, TypeVar
 
 from flext_core import FlextTypes, r
 from pydantic import BaseModel, StringConstraints
@@ -112,40 +111,6 @@ class FlextLdifTypes(FlextTypes):
         TAttribute = TypeVar("TAttribute")
         TSchema = TypeVar("TSchema")
 
-        TRUE_STRINGS: frozenset[str] = frozenset({"true", "1", "yes", "on"})
-        type ConvertValue = (
-            FlextTypes.Container
-            | list[FlextTypes.Container]
-            | dict[str, FlextTypes.Container]
-        )
-        CONTAINER_TYPES: tuple[type, ...] = (
-            str,
-            int,
-            float,
-            bool,
-            datetime,
-            Path,
-        )
-
-        type ConversionRequest = (
-            m.Ldif.ConvertToStr
-            | m.Ldif.ConvertToInt
-            | m.Ldif.ConvertToFloat
-            | m.Ldif.ConvertToBool
-            | m.Ldif.ConvertToList
-            | m.Ldif.ConvertToTuple
-            | m.Ldif.ConvertToDict
-        )
-
-        type ConversionTargetType = Literal[
-            "str",
-            "int",
-            "float",
-            "bool",
-            "list",
-            "tuple",
-            "dict",
-        ]
         type ResultValue[T] = T
         type DN = str
 

@@ -27,7 +27,6 @@ if TYPE_CHECKING:
     )
     from flext_ldif._models.base import FlextLdifModelsBases
     from flext_ldif._models.collections import FlextLdifModelsCollections
-    from flext_ldif._models.conversion import FlextLdifModelsConversions
     from flext_ldif._models.domain import FlextLdifModelsDomains
     from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
     from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema
@@ -63,7 +62,6 @@ if TYPE_CHECKING:
     )
     from flext_ldif._utilities.functional import FlextLdifUtilitiesFunctional, f
     from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
-    from flext_ldif._utilities.normalization import FlextLdifUtilitiesNormalization
     from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
     from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
     from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
@@ -179,10 +177,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdifModelsCollections": [
         "flext_ldif._models.collections",
         "FlextLdifModelsCollections",
-    ],
-    "FlextLdifModelsConversions": [
-        "flext_ldif._models.conversion",
-        "FlextLdifModelsConversions",
     ],
     "FlextLdifModelsDomainSchema": [
         "flext_ldif._models.domain_schema",
@@ -370,10 +364,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "flext_ldif._utilities.metadata",
         "FlextLdifUtilitiesMetadata",
     ],
-    "FlextLdifUtilitiesNormalization": [
-        "flext_ldif._utilities.normalization",
-        "FlextLdifUtilitiesNormalization",
-    ],
     "FlextLdifUtilitiesOID": ["flext_ldif._utilities.oid", "FlextLdifUtilitiesOID"],
     "FlextLdifUtilitiesObjectClass": [
         "flext_ldif._utilities.object_class",
@@ -490,7 +480,6 @@ __all__ = [
     "FlextLdifModels",
     "FlextLdifModelsBases",
     "FlextLdifModelsCollections",
-    "FlextLdifModelsConversions",
     "FlextLdifModelsDomainSchema",
     "FlextLdifModelsDomains",
     "FlextLdifModelsDomainsEntries",
@@ -560,7 +549,6 @@ __all__ = [
     "FlextLdifUtilitiesFilters",
     "FlextLdifUtilitiesFunctional",
     "FlextLdifUtilitiesMetadata",
-    "FlextLdifUtilitiesNormalization",
     "FlextLdifUtilitiesOID",
     "FlextLdifUtilitiesObjectClass",
     "FlextLdifUtilitiesParser",

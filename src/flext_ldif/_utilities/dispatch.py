@@ -11,7 +11,6 @@ from flext_ldif import (
     FlextLdifUtilitiesAttribute,
     FlextLdifUtilitiesCollectionLdif,
     FlextLdifUtilitiesDN,
-    FlextLdifUtilitiesNormalization,
     FlextLdifUtilitiesPipeline,
     FlextLdifUtilitiesServer,
     FlextLdifUtilitiesValidation,
@@ -247,15 +246,6 @@ class FlextLdifUtilitiesDispatch:
     ) -> t.NormalizedValue | None:
         """Route to CollectionLdif.find (resolves CollectionLdif vs core)."""
         return FlextLdifUtilitiesCollectionLdif.find(items, predicate=predicate)
-
-    @staticmethod
-    def build(
-        value: t.NormalizedValue,
-        *,
-        ops: t.MutableContainerMapping | None = None,
-    ) -> t.NormalizedValue:
-        """Route to Normalization.build (resolves Normalization vs core)."""
-        return FlextLdifUtilitiesNormalization.build(value, ops=ops)
 
 
 __all__ = ["FlextLdifUtilitiesDispatch"]

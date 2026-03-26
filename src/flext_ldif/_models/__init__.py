@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 
     from flext_ldif._models.base import FlextLdifModelsBases
     from flext_ldif._models.collections import FlextLdifModelsCollections
-    from flext_ldif._models.conversion import FlextLdifModelsConversions
     from flext_ldif._models.domain import FlextLdifModelsDomains
     from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
     from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema
@@ -30,10 +29,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdifModelsCollections": [
         "flext_ldif._models.collections",
         "FlextLdifModelsCollections",
-    ],
-    "FlextLdifModelsConversions": [
-        "flext_ldif._models.conversion",
-        "FlextLdifModelsConversions",
     ],
     "FlextLdifModelsDomainSchema": [
         "flext_ldif._models.domain_schema",
@@ -63,7 +58,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
 __all__ = [
     "FlextLdifModelsBases",
     "FlextLdifModelsCollections",
-    "FlextLdifModelsConversions",
     "FlextLdifModelsDomainSchema",
     "FlextLdifModelsDomains",
     "FlextLdifModelsDomainsEntries",
