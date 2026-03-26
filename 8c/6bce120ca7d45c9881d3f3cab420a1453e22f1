@@ -1,0 +1,25 @@
+tests/unit/quirks/servers/test_edge_cases.py
+  2fc71215a0f5c7a4 42,46,49,57,78
+tests/unit/quirks/servers/test_apache_quirks.py
+  2fc71215a0f5c7a4 564
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.19",
+  "base_commit_sha": "8c6bce120ca7d45c9881d3f3cab420a1453e22f1",
+  "prompts": {
+    "2fc71215a0f5c7a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ada22849-84c1-436f-91ff-ac0191f290fd",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 6,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}
