@@ -12,7 +12,7 @@ import pytest
 from flext_tests import tm
 
 import flext_ldif
-from tests import c, s, t
+from tests import c, t
 
 
 class TestFlextLdifTypesStructure:
@@ -66,7 +66,7 @@ class TestFlextLdifTypesStructure:
         _ = tm.that(not service_imports, eq=True)
 
 
-class TestsFlextLdifCommonDictionaryTypes(s):
+class TestsFlextLdifCommonDictionaryTypes:
     """Test common dictionary type definitions with REAL data."""
 
     SAMPLE_ATTR_DICT: ClassVar[dict[str, list[str]]] = {

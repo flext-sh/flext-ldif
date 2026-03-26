@@ -20,7 +20,6 @@ from flext_ldif import (
     FlextLdifUtilitiesOID,
     FlextLdifUtilitiesParser,
     FlextLdifUtilitiesParsers,
-    FlextLdifUtilitiesProcessing,
     FlextLdifUtilitiesSchema,
     FlextLdifUtilitiesServer,
     FlextLdifUtilitiesValidation,
@@ -35,7 +34,6 @@ class FlextLdifUtilities(FlextUtilities):
 
     class Ldif(
         FlextLdifUtilitiesDispatch,
-        FlextLdifUtilitiesProcessing,
         FlextLdifUtilitiesCollectionLdif,
         FlextLdifUtilitiesACL,
         FlextLdifUtilitiesAttribute,

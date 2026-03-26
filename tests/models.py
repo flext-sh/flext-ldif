@@ -73,9 +73,6 @@ class FlextLdifTestModels(FlextTestsModels, FlextLdifModels):
 
             # Validation rules for testing
             ServerValidationRules = FlextLdifModelsSettings.ServerValidationRules
-            EncodingRules = FlextLdifModelsSettings.EncodingRules
-            DnCaseRules = FlextLdifModelsSettings.DnCaseRules
-            AclFormatRules = FlextLdifModelsSettings.AclFormatRules
 
             class LdifTestData(FlextLdifModels.Value):
                 """Test data for LDIF utilities."""

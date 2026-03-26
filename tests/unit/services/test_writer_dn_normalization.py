@@ -11,10 +11,10 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import FlextLdifDn, FlextLdifWriter
-from tests import m, s
+from tests import m
 
 
-class TestsFlextLdifsFlextLdifWriterDnNormalization(s):
+class TestsFlextLdifsFlextLdifWriterDnNormalization:
     """Test Writer integration with DnService for DN normalization."""
 
     @pytest.fixture

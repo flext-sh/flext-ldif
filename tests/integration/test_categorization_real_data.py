@@ -72,7 +72,7 @@ def _write_categories_to_file(
         c.Ldif.Categories.REJECTED,
     ]
     for category in categories:
-        cat_entries = filtered.get_entries(category)
+        cat_entries = filtered.get(category)
         if not cat_entries:
             continue
         _write_category_header(
@@ -183,9 +183,9 @@ class TestCategorizationRealData:
         output_content = output_file.read_text(encoding="utf-8")
         assert output_content, "Output file should not be empty"
         assert base_dn in output_content, f"Output should contain base DN: {base_dn}"
-        hierarchy = filtered.get_entries(c.Ldif.Categories.HIERARCHY)
-        users = filtered.get_entries(c.Ldif.Categories.USERS)
-        rejected = filtered.get_entries(c.Ldif.Categories.REJECTED)
+        hierarchy = filtered.get(c.Ldif.Categories.HIERARCHY)
+        users = filtered.get(c.Ldif.Categories.USERS)
+        rejected = filtered.get(c.Ldif.Categories.REJECTED)
         example_dns = [
             e.dn.value
             for e in hierarchy
@@ -271,7 +271,7 @@ class TestCategorizationRealData:
         categories_result = categorization.categorize_entries(validate_result.value)
         assert categories_result.is_success
         categories = categories_result.value
-        acl_category = categories.get_entries(c.Ldif.Categories.ACL)
+        acl_category = categories.get(c.Ldif.Categories.ACL)
         acls_with_basedn: MutableSequence[m.Ldif.Entry] = []
         acls_without_basedn: MutableSequence[m.Ldif.Entry] = []
         for entry in acl_category:
@@ -374,9 +374,9 @@ class TestCategorizationRealData:
         assert "dc=example" in output_content, (
             "Output should contain entries under base DN"
         )
-        hierarchy = filtered.get_entries(c.Ldif.Categories.HIERARCHY)
-        users = filtered.get_entries(c.Ldif.Categories.USERS)
-        rejected = filtered.get_entries(c.Ldif.Categories.REJECTED)
+        hierarchy = filtered.get(c.Ldif.Categories.HIERARCHY)
+        users = filtered.get(c.Ldif.Categories.USERS)
+        rejected = filtered.get(c.Ldif.Categories.REJECTED)
         assert len(hierarchy) >= 2, "Should have hierarchy entries under base DN"
         assert len(users) >= 2, "Should have user entries under base DN"
         assert len(rejected) >= 2, "Should have rejected entries outside base DN"

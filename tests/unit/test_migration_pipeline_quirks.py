@@ -19,7 +19,7 @@ from flext_ldif import (
     FlextLdifServersOidConstants,
     FlextLdifServersRfc,
 )
-from tests import c, s
+from tests import c
 
 
 class OidTestConstants:
@@ -29,7 +29,7 @@ class OidTestConstants:
     OID_TO_RFC_BOOLEAN: Final[Mapping[str, str]] = {"1": "TRUE", "0": "FALSE"}
 
 
-class TestsFlextLdifMigrationPipelineQuirks(s):
+class TestsFlextLdifMigrationPipelineQuirks:
     """Test suite for migration pipeline quirks."""
 
     def test_oid_boolean_conversion_oid_to_rfc(self, tmp_path: Path) -> None:

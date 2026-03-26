@@ -19,11 +19,11 @@ from flext_ldif import (
     FlextLdifServersOud,
     FlextLdifServersRfc,
 )
-from tests import c, s
+from tests import c
 
 
 @pytest.mark.unit
-class TestsFlextLdifQuirksStandardizedConstants(s):
+class TestsFlextLdifQuirksStandardizedConstants:
     """Verify all quirks have standardized Constants."""
 
     def test_rfc_schema_constants(self) -> None:

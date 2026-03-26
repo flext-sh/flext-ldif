@@ -38,7 +38,6 @@ from flext_ldif import (
     FlextLdifConversion,
     FlextLdifEntries,
     FlextLdifParser,
-    FlextLdifSchema,
     FlextLdifServersBaseSchema,
     FlextLdifServersBaseSchemaAcl,
     FlextLdifWriter,
@@ -100,7 +99,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             OPENLDAP2: Final[str] = "openldap2"
             RFC: Final[str] = "rfc"
 
-        class Rfc(FlextLdifConstants.Ldif.Rfc):
+        class Rfc:
             """RFC test constants for schema and entry testing."""
 
             ATTR_DEF_CN: Final[str] = (

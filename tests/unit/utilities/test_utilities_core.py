@@ -17,27 +17,6 @@ from tests import c, m, u
 class TestsFlextLdifDnOperationsPure:
     """Test DN operations as pure functions returning primitives."""
 
-    def test_norm_component_basic(self) -> None:
-        """Test basic DN component normalization."""
-        result = u.Ldif.norm_component("cn = John Doe")
-        tm.that(result, eq="cn=John Doe")
-
-    def test_norm_component_no_spaces(self) -> None:
-        """Test component without spaces."""
-        result = u.Ldif.norm_component("cn=Jane Smith")
-        tm.that(result, eq="cn=Jane Smith")
-
-    def test_norm_string_full_dn(self) -> None:
-        """Test full DN normalization."""
-        dn = "cn = John Doe , ou = Users , dc = example , dc = com"
-        result = u.Ldif.norm_string(dn)
-        tm.that(result, eq="cn=John Doe,ou=Users,dc=example,dc=com")
-
-    def test_norm_string_empty(self) -> None:
-        """Test empty DN."""
-        result = u.Ldif.norm_string("")
-        tm.that(not result, eq=True)
-
     def test_split_dn_components(self) -> None:
         """Test splitting DN into components."""
         dn = "cn=John,ou=Users,dc=example,dc=com"
@@ -156,17 +135,6 @@ class TestDnObjectClassMethods:
         u.Ldif.fix_kind_mismatch(obj)
         tm.that(obj.kind, eq="STRUCTURAL")
 
-    def test_ensure_sup_for_auxiliary(self) -> None:
-        """Test ensuring AUXILIARY classes have SUP."""
-        obj = m.Ldif.SchemaObjectClass(
-            oid="1.2.3.4",
-            name="testOC",
-            kind="AUXILIARY",
-            sup=None,
-        )
-        u.Ldif.ensure_sup_for_auxiliary(obj)
-        tm.that(obj.sup, eq="top")
-
 
 @pytest.mark.unit
 class TestAttributeFixer:
@@ -267,32 +235,6 @@ class TestLdifParser:
 
 
 @pytest.mark.unit
-class TestAclParser:
-    """Test ACL parsing utilities."""
-
-    def test_parse_oid_format(self) -> None:
-        """Test parsing OID ACL format."""
-        acl_line = 'orclaci: ( VERSION 3.0; ACETYPE ALLOW; (USERDN="ldap:///cn=*,ou=users,o=test");(ACITYPE ALLOW))'
-        result = u.Ldif.parser(acl_line)
-        tm.that(result, none=False)
-        if result is not None:
-            tm.that(result.get("format"), eq="oid")
-
-    def test_parse_oud_format(self) -> None:
-        """Test parsing OUD ACL format."""
-        acl_line = "aci: targetattr=*"
-        result = u.Ldif.parser(acl_line)
-        tm.that(result, none=False)
-        if result is not None:
-            tm.that(result.get("format"), eq="oud")
-
-    def test_parse_empty_acl(self) -> None:
-        """Test parsing empty ACL."""
-        result = u.Ldif.parser("")
-        tm.that(result, none=True)
-
-
-@pytest.mark.unit
 class TestServerTypes:
     """Test server type operations (via u.Ldif MRO)."""
 
@@ -347,28 +289,6 @@ class TestObjectClassUtilities:
         u.Ldif.fix_missing_sup(oc)
         tm.that(oc.sup, eq=original_sup)
 
-    def test_ensure_sup_for_auxiliary_adds_sup(self) -> None:
-        """Test ensure_sup_for_auxiliary adds SUP when missing."""
-        oc = m.Ldif.SchemaObjectClass(
-            name="testAuxiliary",
-            oid="1.2.3.4.7",
-            kind=c.Ldif.SchemaKind.AUXILIARY,
-            sup=None,
-        )
-        u.Ldif.ensure_sup_for_auxiliary(oc)
-        tm.that(oc.sup, eq="top")
-
-    def test_ensure_sup_for_auxiliary_custom_default(self) -> None:
-        """Test ensure_sup_for_auxiliary with custom default SUP."""
-        oc = m.Ldif.SchemaObjectClass(
-            name="testAuxiliary",
-            oid="1.2.3.4.8",
-            kind=c.Ldif.SchemaKind.AUXILIARY,
-            sup=None,
-        )
-        u.Ldif.ensure_sup_for_auxiliary(oc, default_sup="custom")
-        tm.that(oc.sup, eq="custom")
-
     def test_fix_kind_mismatch_structural_superior(self) -> None:
         """Test fixing kind mismatch with STRUCTURAL superior."""
         oc = m.Ldif.SchemaObjectClass(
@@ -390,37 +310,3 @@ class TestObjectClassUtilities:
         )
         u.Ldif.fix_kind_mismatch(oc)
         tm.that(oc.kind, eq=c.Ldif.SchemaKind.AUXILIARY)
-
-    def test_align_kind_with_superior_structural(self) -> None:
-        """Test aligning kind with STRUCTURAL superior."""
-        oc = m.Ldif.SchemaObjectClass(
-            name="testClass",
-            oid="1.2.3.4.11",
-            kind=c.Ldif.SchemaKind.AUXILIARY,
-            sup="someSuperior",
-        )
-        u.Ldif.align_kind_with_superior(oc, c.Ldif.SchemaKind.STRUCTURAL)
-        tm.that(oc.kind, eq=c.Ldif.SchemaKind.STRUCTURAL)
-
-    def test_align_kind_with_superior_auxiliary(self) -> None:
-        """Test aligning kind with AUXILIARY superior."""
-        oc = m.Ldif.SchemaObjectClass(
-            name="testClass",
-            oid="1.2.3.4.12",
-            kind=c.Ldif.SchemaKind.STRUCTURAL,
-            sup="someSuperior",
-        )
-        u.Ldif.align_kind_with_superior(oc, c.Ldif.SchemaKind.AUXILIARY)
-        tm.that(oc.kind, eq=c.Ldif.SchemaKind.AUXILIARY)
-
-    def test_align_kind_with_superior_no_conflict(self) -> None:
-        """Test that matching kinds are not changed."""
-        oc = m.Ldif.SchemaObjectClass(
-            name="testClass",
-            oid="1.2.3.4.13",
-            kind=c.Ldif.SchemaKind.STRUCTURAL,
-            sup="someSuperior",
-        )
-        original_kind = oc.kind
-        u.Ldif.align_kind_with_superior(oc, c.Ldif.SchemaKind.STRUCTURAL)
-        tm.that(oc.kind, eq=original_kind)

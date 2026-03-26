@@ -16,18 +16,6 @@ from tests import FlextLdifTestFactory, m, u
 class TestFlextLdifUtilitiesComprehensive:
     """Comprehensive automated tests for all utilities functionality."""
 
-    @pytest.mark.parametrize("test_data", FlextLdifTestFactory.parametrize_real_data())
-    def test_all_utility_functions_with_real_data(
-        self,
-        test_data: m.Ldif.Tests.LdifTestData,
-    ) -> None:
-        """Test all utility functions with real generated data."""
-        if test_data.dn:
-            dn = test_data.dn
-            result = u.Ldif.norm_string(dn)
-            tm.that(result, is_=str)
-            tm.that(result, empty=False)
-
     def test_real_ldif_processing_pipeline(self) -> None:
         """Test complete LDIF processing pipeline with real data."""
         ldif_content = FlextLdifTestFactory.create_real_ldif_content(

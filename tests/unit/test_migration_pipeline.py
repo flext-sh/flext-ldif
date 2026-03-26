@@ -28,10 +28,10 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import FlextLdifMigrationPipeline
-from tests import c, s
+from tests import c
 
 
-class TestsFlextLdifMigrationPipeline(s):
+class TestsFlextLdifMigrationPipeline:
     """Test LDIF migration pipeline initialization, validation, and execution."""
 
     def test_initialization_with_required_params(self, tmp_path: Path) -> None:
