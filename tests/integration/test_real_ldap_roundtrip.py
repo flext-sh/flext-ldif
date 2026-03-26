@@ -27,7 +27,7 @@ from collections.abc import (
 import pytest
 from ldap3 import Connection
 
-from flext_ldif import FlextLdif
+from flext_ldif import FlextLdif, m
 
 
 @pytest.fixture
@@ -72,7 +72,7 @@ class TestRealLdapRoundtrip:
             else:
                 values = [str(attr_obj)]
             attrs_dict[attr_name] = values
-        entry_result = flext_api.models.Ldif.Entry.create(
+        entry_result = m.Ldif.Entry.create(
             dn=ldap_entry.entry_dn,
             attributes=attrs_dict,
             metadata=None,
@@ -84,7 +84,7 @@ class TestRealLdapRoundtrip:
         ldif_output = write_result.value
         unique_username_copy = make_test_username("RoundtripTestCopy")
         reimport_dn = f"cn={unique_username_copy},{clean_test_ou}"
-        parse_result = flext_api.parse_source(ldif_output)
+        parse_result = flext_api.parse_ldif(ldif_output)
         assert parse_result.is_success
         parsed_entries = parse_result.value
         assert len(parsed_entries) == 1

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
-from functools import reduce
 from typing import override
 
 from flext_core import FlextLogger, r

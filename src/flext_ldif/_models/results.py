@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from collections.abc import MutableMapping, MutableSequence
-from typing import Annotated, ClassVar, Self, overload
+from typing import Annotated, ClassVar, Self
 
 from flext_core import m
-from pydantic import ConfigDict, Field, computed_field, field_validator
+from pydantic import ConfigDict, Field, computed_field
 
 from flext_ldif import (
     FlextLdifModelsBases,
@@ -61,129 +61,6 @@ class FlextLdifModelsResults:
         entry_count: int = 0
         output_files: int = 0
         is_empty: bool = True
-
-    class EntryResult(FlextLdifModelsBases.Base):
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-        )  # validate_default inherited from Base
-        entries_by_category: Annotated[
-            FlextLdifModelsCollections.FlexibleCategories,
-            Field(),
-        ]
-        statistics: Annotated[
-            FlextLdifModelsResults.Statistics,
-            Field(),
-        ]
-        file_paths: Annotated[
-            FlextLdifModelsCollections.CategoryPaths,
-            Field(default_factory=FlextLdifModelsCollections.CategoryPaths),
-        ] = Field(default_factory=FlextLdifModelsCollections.CategoryPaths)
-
-        @overload
-        def __getitem__(
-            self,
-            key: slice,
-        ) -> MutableSequence[FlextLdifModelsDomains.Entry]: ...
-
-        @overload
-        def __getitem__(self, key: int) -> FlextLdifModelsDomains.Entry: ...
-
-        def __getitem__(
-            self,
-            key: int | slice,
-        ) -> (
-            FlextLdifModelsDomains.Entry | MutableSequence[FlextLdifModelsDomains.Entry]
-        ):
-            return self.get_all_entries()[key]
-
-        def __len__(self) -> int:
-            return len(self.get_all_entries())
-
-        @property
-        def content(self) -> MutableSequence[FlextLdifModelsDomains.Entry]:
-            return self.get_all_entries()
-
-        @property
-        def entries(self) -> MutableSequence[FlextLdifModelsDomains.Entry]:
-            return self.get_all_entries()
-
-        @field_validator("entries_by_category", mode="before")
-        @classmethod
-        def _convert_dict_to_categories(
-            cls,
-            value: FlextLdifModelsCollections.FlexibleCategories
-            | MutableMapping[str, MutableSequence[FlextLdifModelsDomains.Entry]],
-        ) -> FlextLdifModelsCollections.FlexibleCategories:
-            if isinstance(value, FlextLdifModelsCollections.FlexibleCategories):
-                return value
-            result = FlextLdifModelsCollections.FlexibleCategories()
-            for cat, entries in value.items():
-                result.add_entries(str(cat), [*entries])
-            return result
-
-        @classmethod
-        def empty(cls) -> Self:
-            return cls(
-                entries_by_category=FlextLdifModelsCollections.FlexibleCategories(),
-                statistics=FlextLdifModelsResults.Statistics.for_pipeline(),
-            )
-
-        @classmethod
-        def from_entries(
-            cls,
-            entries: MutableSequence[FlextLdifModelsDomains.Entry],
-            category: str = "all",
-            statistics: FlextLdifModelsResults.Statistics | None = None,
-        ) -> Self:
-            entry_list = list(entries)
-            stats = statistics or FlextLdifModelsResults.Statistics.for_pipeline(
-                total=len(entry_list),
-            )
-            flex = FlextLdifModelsCollections.FlexibleCategories()
-            flex[category] = entry_list
-            return cls(entries_by_category=flex, statistics=stats)
-
-        def get_all_entries(self) -> MutableSequence[FlextLdifModelsDomains.Entry]:
-            all_entries: MutableSequence[FlextLdifModelsDomains.Entry] = []
-            for entries in self.entries_by_category.values():
-                all_entries.extend(entries)
-            return all_entries
-
-        def get_category(
-            self,
-            category: str,
-            default: MutableSequence[FlextLdifModelsDomains.Entry] | None = None,
-        ) -> MutableSequence[FlextLdifModelsDomains.Entry]:
-            if category in self.entries_by_category:
-                return self.entries_by_category[category]
-            return default if default is not None else []
-
-        def merge(self, other: FlextLdifModelsResults.EntryResult) -> Self:
-            merged_categories = FlextLdifModelsCollections.FlexibleCategories()
-            for cat, entries in self.entries_by_category.items():
-                merged_categories.add_entries(cat, [*entries])
-            for cat, entries in other.entries_by_category.items():
-                merged_categories.add_entries(cat, [*entries])
-            self_stats = (
-                self.statistics or FlextLdifModelsResults.Statistics.for_pipeline()
-            )
-            other_stats = (
-                other.statistics or FlextLdifModelsResults.Statistics.for_pipeline()
-            )
-            merged_stats = self_stats.model_copy(
-                update={
-                    "total_entries": self_stats.total_entries
-                    + other_stats.total_entries,
-                },
-            )
-            merged_paths = FlextLdifModelsCollections.CategoryPaths()
-            merged_paths.update(self.file_paths.to_dict())
-            merged_paths.update(other.file_paths.to_dict())
-            return self.__class__(
-                entries_by_category=merged_categories,
-                statistics=merged_stats,
-                file_paths=merged_paths,
-            )
 
     class Statistics(m.Statistics):
         # model_config: all of frozen, extra="forbid", validate_default, str_strip_whitespace inherited from m.Statistics
@@ -557,13 +434,6 @@ class FlextLdifModelsResults:
         statistics: Annotated[FlextLdifModelsResults.Statistics, Field()]
         detected_server_type: c.Ldif.ServerTypeLiteral | None = None
 
-        def get_entries(self) -> MutableSequence[FlextLdifModelsDomains.Entry]:
-            return [
-                entry
-                for entry in self.entries
-                if entry.dn is not None and entry.attributes is not None
-            ]
-
     class AclResponse(m.Value):
         # model_config: frozen + validate_default fully inherited from m.Value
         acls: Annotated[
@@ -582,6 +452,3 @@ class FlextLdifModelsResults:
         # model_config: frozen + validate_default fully inherited from m.Value
         content: str | None = None
         statistics: Annotated[FlextLdifModelsResults.Statistics, Field()]
-
-        def get_content(self) -> str:
-            return self.content or ""

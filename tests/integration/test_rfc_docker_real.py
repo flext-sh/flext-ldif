@@ -12,10 +12,13 @@ Tests validate RFC 2849 compliance with real LDAP servers.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Final
 
 import pytest
 
 from flext_ldif import FlextLdifParser, FlextLdifServer, FlextLdifWriter, m
+
+_FIXTURES_DIR: Final[Path] = Path(__file__).resolve().parent.parent / "fixtures"
 
 
 class TestRfcDockerRealData:
@@ -29,17 +32,17 @@ class TestRfcDockerRealData:
     @pytest.fixture
     def oid_fixtures_dir(self) -> Path:
         """Path to OID fixtures."""
-        return Path("tests/fixtures/oid")
+        return _FIXTURES_DIR / "oid"
 
     @pytest.fixture
     def oud_fixtures_dir(self) -> Path:
         """Path to OUD fixtures."""
-        return Path("tests/fixtures/oud")
+        return _FIXTURES_DIR / "oud"
 
     @pytest.fixture
     def openldap_fixtures_dir(self) -> Path:
         """Path to OpenLDAP fixtures."""
-        return Path("tests/fixtures/openldap2")
+        return _FIXTURES_DIR / "openldap2"
 
     def test_parse_real_oid_schema(
         self,
@@ -164,7 +167,7 @@ class TestRfcDockerRealData:
 
     def test_parse_edge_case_unicode(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing Unicode edge cases."""
-        unicode_dir = Path("tests/fixtures/edge_cases/unicode")
+        unicode_dir = _FIXTURES_DIR / "edge_cases" / "unicode"
         if not unicode_dir.exists():
             pytest.skip("Unicode fixtures not found")
         unicode_files = list(unicode_dir.glob("*.ldif"))
@@ -214,7 +217,7 @@ class TestRfcDockerRealData:
         quirk_registry: FlextLdifServer,
     ) -> None:
         """Test relaxed parsing of broken/malformed LDIF."""
-        broken_dir = Path("tests/fixtures/broken/structure")
+        broken_dir = _FIXTURES_DIR / "broken" / "structure"
         if not broken_dir.exists():
             pytest.skip("Broken fixtures not found")
         broken_files = list(broken_dir.glob("*.ldif"))
@@ -231,7 +234,7 @@ class TestRfcDockerRealData:
         quirk_registry: FlextLdifServer,
     ) -> None:
         """Test RFC schema parser with real OID schema."""
-        schema_file = Path("tests/fixtures/oid/oid_schema_fixtures.ldif")
+        schema_file = _FIXTURES_DIR / "oid" / "oid_schema_fixtures.ldif"
         if not schema_file.exists():
             pytest.skip("OID schema fixtures not found")
         parser = FlextLdifParser()
@@ -260,7 +263,7 @@ class TestRfcIntegrationRealWorld:
 
     def test_large_oid_schema_parsing(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing large real OID schema (345KB fixture)."""
-        schema_file = Path("tests/fixtures/oid/oid_schema_fixtures.ldif")
+        schema_file = _FIXTURES_DIR / "oid" / "oid_schema_fixtures.ldif"
         if not schema_file.exists():
             pytest.skip("OID schema fixtures not found")
         file_size = schema_file.stat().st_size
@@ -271,7 +274,7 @@ class TestRfcIntegrationRealWorld:
 
     def test_large_oud_integration_data(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing large real OUD integration data (31KB)."""
-        integration_file = Path("tests/fixtures/oud/oud_integration_fixtures.ldif")
+        integration_file = _FIXTURES_DIR / "oud" / "oud_integration_fixtures.ldif"
         if not integration_file.exists():
             pytest.skip("OUD integration fixtures not found")
         parser = FlextLdifParser()

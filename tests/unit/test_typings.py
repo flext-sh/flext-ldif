@@ -283,10 +283,12 @@ class TestIntegrationWithLdifFixtures:
     @pytest.fixture
     def oid_ldif_path(self) -> Path:
         """Path to OID LDIF fixtures."""
-        base_path = Path("flext-ldif/tests/fixtures/oid/oid_entries_fixtures.ldif")
-        if not base_path.exists():
-            base_path = Path("tests/fixtures/oid/oid_entries_fixtures.ldif")
-        return base_path
+        return (
+            Path(__file__).resolve().parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_entries_fixtures.ldif"
+        )
 
     def test_types_work_with_ldif_fixtures(self, oid_ldif_path: Path) -> None:
         """Verify types work with real LDIF fixture files."""

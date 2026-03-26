@@ -64,7 +64,7 @@ class TestOidQuirksTransformations:
         fixture_path = fixtures_dir / "oid" / "oid_schema_fixtures.ldif"
         if not fixture_path.exists():
             pytest.skip(f"Fixture not found: {fixture_path}")
-        parse_result = api.parse_source(fixture_path)
+        parse_result = api.parse_ldif(fixture_path)
         if parse_result.is_success:
             entries = parse_result.value
             write_result = api.write_ldif_file(
@@ -82,7 +82,7 @@ class TestOidQuirksTransformations:
         fixture_path = fixtures_dir / "oid" / "oid_acl_fixtures.ldif"
         if not fixture_path.exists():
             pytest.skip(f"Fixture not found: {fixture_path}")
-        parse_result = api.parse_source(fixture_path)
+        parse_result = api.parse_ldif(fixture_path)
         if parse_result.is_success:
             entries = parse_result.value
             write_result = api.write_ldif_file(
@@ -129,7 +129,7 @@ class TestOudQuirksTransformations:
         fixture_path = fixtures_dir / "oud" / "oud_schema_fixtures.ldif"
         if not fixture_path.exists():
             pytest.skip(f"Fixture not found: {fixture_path}")
-        parse_result = api.parse_source(fixture_path)
+        parse_result = api.parse_ldif(fixture_path)
         if parse_result.is_success:
             entries = parse_result.value
             write_result = api.write_ldif_file(
@@ -147,7 +147,7 @@ class TestOudQuirksTransformations:
         fixture_path = fixtures_dir / "oud" / "oud_acl_fixtures.ldif"
         if not fixture_path.exists():
             pytest.skip(f"Fixture not found: {fixture_path}")
-        parse_result = api.parse_source(fixture_path)
+        parse_result = api.parse_ldif(fixture_path)
         if parse_result.is_success:
             entries = parse_result.value
             write_result = api.write_ldif_file(

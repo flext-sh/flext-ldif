@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 from flext_core import FlextSettings
 
-from flext_ldif import FlextLdif, FlextLdifSettings
+from flext_ldif import FlextLdif, FlextLdifSettings, m
 
 
 @pytest.fixture
@@ -64,7 +64,7 @@ class TestRealLdapRailwayComposition:
         tmp_path: Path,
     ) -> None:
         """Test r railway composition: write -> parse -> validate."""
-        entry_result = flext_api.models.Ldif.Entry.create(
+        entry_result = m.Ldif.Entry.create(
             dn="cn=RailwayTest,ou=people,dc=example,dc=com",
             attributes={
                 "objectClass": ["person", "inetOrgPerson"],
@@ -80,7 +80,7 @@ class TestRealLdapRailwayComposition:
         result = (
             flext_api
             .write_ldif_file([flext_entry], output_file)
-            .flat_map(lambda _: flext_api.parse_source(output_file))
+            .flat_map(lambda _: flext_api.parse_ldif(output_file))
             .flat_map(
                 lambda entries: flext_api.validate_entries(entries).map(
                     lambda _: entries,

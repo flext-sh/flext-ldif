@@ -7,7 +7,7 @@ from collections.abc import Callable, MutableMapping, MutableSequence
 
 from ldap3 import Connection
 
-from flext_ldif import FlextLdif
+from flext_ldif import FlextLdif, m
 from tests import GenericFieldsDict
 
 
@@ -56,7 +56,7 @@ def test_create_and_export_entry(
         attr: [str(v) for v in ldap_entry[attr].values]
         for attr in ldap_entry.entry_attributes
     }
-    entry_result = api.models.Ldif.Entry.create(
+    entry_result = m.Ldif.Entry.create(
         dn=ldap_entry.entry_dn,
         attributes=attrs,
     )

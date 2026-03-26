@@ -637,33 +637,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             or "objectclass" in attributes
         )
 
-    def generate_entry_comments(
-        self,
-        entry: m.Ldif.Entry,
-        format_options: m.Ldif.WriteFormatOptions | None = None,
-    ) -> str:
-        """Generate LDIF comments for transformations, including OUD-specific ACL handling.
-
-        OUD Override of RFC's generate_entry_comments to add phase-aware ACL comments.
-        Delegates to _add_transformation_comments() for OID→OUD specific handling.
-
-        Args:
-            entry: Entry to generate comments for
-            format_options: Write format options controlling comment generation (optional)
-
-        Returns:
-            String containing comment lines (with trailing newline if non-empty)
-
-        """
-        if not format_options:
-            return ""
-        comment_lines: MutableSequence[str] = []
-        if format_options.write_transformation_comments:
-            self._add_transformation_comments(comment_lines, entry, format_options)
-        if format_options.write_rejection_reasons:
-            self._add_rejection_reason_comments(comment_lines, entry)
-        return "\n".join(comment_lines) + "\n" if comment_lines else ""
-
     @override
     def parse_quirk(self, value: str) -> r[MutableSequence[m.Ldif.Entry]]:
         """Parse LDIF content and apply OUD post-processing hooks."""

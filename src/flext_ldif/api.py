@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import ClassVar, override
 
 from flext_core import FlextLogger
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel
 
 from flext_ldif import (
     FlextLdifAcl,
@@ -25,7 +25,6 @@ from flext_ldif import (
     FlextLdifStatistics,
     FlextLdifValidation,
     FlextLdifWriter,
-    c,
     m,
     p,
     r,
@@ -78,11 +77,6 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         return self._acl_service
 
     @property
-    def constants(self) -> type[c]:
-        """Get constants (use string literals instead)."""
-        return c
-
-    @property
     def detector(self) -> FlextLdifDetector:
         """Get detector service instance (lazy initialization)."""
         if self._detector_service is None:
@@ -95,11 +89,6 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         if self._entries_service is None:
             self._entries_service = FlextLdifEntries()
         return self._entries_service
-
-    @property
-    def models(self) -> type[m]:
-        """Get FlextLdifModels class."""
-        return m
 
     @property
     def parser(self) -> FlextLdifParser:
@@ -121,22 +110,6 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         if self._server_service is None:
             self._server_service = FlextLdifServer.get_global_instance()
         return self._server_service
-
-    @property
-    @computed_field
-    def service_stats(self) -> MutableMapping[str, bool]:
-        """Pydantic 2 computed field showing service initialization status."""
-        return {
-            "parser": self._parser_service is not None,
-            "writer": self._writer_service is not None,
-            "detector": self._detector_service is not None,
-            "validator": True,
-            "statistics": True,
-            "processing": self._processing_service is not None,
-            "acl": self._acl_service is not None,
-            "entries": self._entries_service is not None,
-            "server": self._server_service is not None,
-        }
 
     @property
     def writer(self) -> FlextLdifWriter:
@@ -302,22 +275,6 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             filtered.append(entry)
         return r[MutableSequence[m.Ldif.Entry]].ok(filtered)
 
-    def filter_ldif(
-        self,
-        entries: MutableSequence[m.Ldif.Entry],
-        *,
-        objectclass: str | None = None,
-        dn_pattern: str | None = None,
-        attributes: MutableMapping[str, str | MutableSequence[str]] | None = None,
-    ) -> r[MutableSequence[m.Ldif.Entry]]:
-        """Compatibility facade for criteria-based entry filtering."""
-        return self.filter_entries_by_criteria(
-            entries,
-            objectclass=objectclass,
-            dn_pattern=dn_pattern,
-            attributes=attributes,
-        )
-
     def filter_entries(
         self,
         entries: MutableSequence[m.Ldif.Entry],
@@ -473,15 +430,6 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
         entries_list: MutableSequence[m.Ldif.Entry] = list(response.entries)
         return r[MutableSequence[m.Ldif.Entry]].ok(entries_list)
 
-    def parse_source(
-        self,
-        value: str | Path,
-        *,
-        server_type: str | None = None,
-    ) -> r[MutableSequence[m.Ldif.Entry]]:
-        """Compatibility facade for LDIF parsing from content or file path."""
-        return self.parse_ldif(value, server_type=server_type)
-
     def process_ldif(
         self,
         processor_name: str,
@@ -547,22 +495,6 @@ class FlextLdif(FlextLdifServiceBase[m.Ldif.Entry]):
             return r[bool].ok(value=True)
         except OSError as e:
             return r[bool].fail(f"Failed to write file: {e}")
-
-    def write_entries_file(
-        self,
-        entries: MutableSequence[m.Ldif.Entry],
-        path: Path,
-        *,
-        server_type: str | None = None,
-        format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
-    ) -> r[bool]:
-        """Compatibility facade for writing entries to LDIF file."""
-        return self.write_ldif_file(
-            entries,
-            path,
-            server_type=server_type,
-            format_options=format_options,
-        )
 
     def _get_effective_server_type_value(self) -> str:
         """Get effective server type value (internal helper)."""

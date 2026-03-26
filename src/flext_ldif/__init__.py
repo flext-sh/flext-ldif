@@ -58,7 +58,7 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
     from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
     from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
-    from flext_ldif.api import FlextLdif
+    from flext_ldif.api import FlextLdif, ldif
     from flext_ldif.base import FlextLdifServiceBase, s
     from flext_ldif.constants import FlextLdifConstants, FlextLdifConstants as c
     from flext_ldif.models import FlextLdifModels, FlextLdifModels as m
@@ -224,6 +224,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "d": ["flext_core", "d"],
     "e": ["flext_core", "e"],
     "h": ["flext_core", "h"],
+    "ldif": ["flext_ldif.api", "ldif"],
     "logger": ["flext_ldif.servers.oid", "logger"],
     "m": ["flext_ldif.models", "FlextLdifModels"],
     "p": ["flext_ldif.protocols", "FlextLdifProtocols"],
@@ -340,6 +341,7 @@ __all__ = [
     "d",
     "e",
     "h",
+    "ldif",
     "logger",
     "m",
     "p",

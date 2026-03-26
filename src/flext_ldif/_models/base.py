@@ -73,21 +73,6 @@ class FlextLdifModelsBases:
                         pass
             return "rfc"
 
-    class FrozenLdifModel(Base):
-        """Immutable LDIF model — Base with frozen=True."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-
-    class FrozenIgnoreLdifModel(m.ArbitraryTypesModel):
-        """Immutable LDIF model that silently ignores extra fields."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="ignore")
-
-    class MutableIgnoreLdifModel(Base):
-        """Mutable LDIF model that silently ignores extra fields."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False, extra="ignore")
-
     class AclElement(m.ArbitraryTypesModel):
         """Base class for all ACL-related models."""
 

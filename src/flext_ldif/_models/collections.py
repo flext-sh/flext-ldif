@@ -81,12 +81,6 @@ class FlextLdifModelsCollections:
             extra = self._extra()
             return [(k, self._to_count(v)) for k, v in extra.items()]
 
-        def max_key(self) -> str | None:
-            extra = self._extra()
-            if not extra:
-                return None
-            return max(extra, key=lambda k: self._to_count(extra.get(k, 0)))
-
         def set_count(self, key: str, value: int) -> None:
             setattr(self, key, value)
 

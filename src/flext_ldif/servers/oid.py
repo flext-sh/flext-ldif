@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping, MutableSequence
-
 from flext_core import FlextLogger
 
 from flext_ldif import (
@@ -12,8 +10,6 @@ from flext_ldif import (
     FlextLdifServersOidEntry,
     FlextLdifServersOidSchema,
     FlextLdifServersRfc,
-    m,
-    r,
 )
 
 logger = FlextLogger(__name__)

@@ -26,7 +26,7 @@ class TestFlextLdifFacadeWorkflows:
         """Test complete parse workflow with simple LDIF."""
         ldif = FlextLdif()
         ldif_content = "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: Test\nmail: test@example.com\n"
-        result = ldif.parse_source(ldif_content)
+        result = ldif.parse_ldif(ldif_content)
         assert result.is_success
         entries = result.value
         assert len(entries) == 1
@@ -37,7 +37,7 @@ class TestFlextLdifFacadeWorkflows:
         """Test parsing multiple entries from single string."""
         ldif = FlextLdif()
         ldif_content = "dn: cn=user1,dc=example,dc=com\nobjectClass: person\ncn: user1\nsn: User1\n\ndn: cn=user2,dc=example,dc=com\nobjectClass: person\ncn: user2\nsn: User2\n\ndn: cn=user3,dc=example,dc=com\nobjectClass: person\ncn: user3\nsn: User3\n"
-        result = ldif.parse_source(ldif_content)
+        result = ldif.parse_ldif(ldif_content)
         assert result.is_success
         entries = result.value
         assert len(entries) == 3
@@ -46,7 +46,7 @@ class TestFlextLdifFacadeWorkflows:
         """Test parsing entries with multivalued attributes."""
         ldif = FlextLdif()
         ldif_content = "dn: cn=group,dc=example,dc=com\nobjectClass: groupOfNames\ncn: group\nmember: cn=user1,dc=example,dc=com\nmember: cn=user2,dc=example,dc=com\nmember: cn=user3,dc=example,dc=com\n"
-        result = ldif.parse_source(ldif_content)
+        result = ldif.parse_ldif(ldif_content)
         assert result.is_success
         entries = result.value
         assert len(entries) == 1
@@ -57,7 +57,7 @@ class TestFlextLdifFacadeWorkflows:
         ldif_content = (
             "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: Test\n"
         )
-        parse_result = ldif.parse_source(ldif_content)
+        parse_result = ldif.parse_ldif(ldif_content)
         assert parse_result.is_success
         entries = parse_result.value
         validation_result = ldif.validate_entries(entries)
@@ -70,9 +70,9 @@ class TestFlextLdifFacadeWorkflows:
         ldif_content = (
             "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: Test\n"
         )
-        parse_result = ldif.parse_source(ldif_content)
+        parse_result = ldif.parse_ldif(ldif_content)
         entries = parse_result.value
-        write_result = ldif.write_entries_file(entries, output_file)
+        write_result = ldif.write_ldif_file(entries, output_file)
         if write_result.is_success:
             assert output_file.exists()
 
@@ -83,7 +83,7 @@ class TestFlextLdifFacadeWorkflows:
             "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: Test\n",
         )
         ldif = FlextLdif()
-        result = ldif.parse_source(ldif_file)
+        result = ldif.parse_ldif(ldif_file)
         if result.is_success:
             entries = result.value
             assert len(entries) == 1
@@ -96,15 +96,15 @@ class TestFlextLdifFacadeWorkflows:
             encoding="utf-8",
         )
         ldif = FlextLdif()
-        result = ldif.parse_source(ldif_file)
+        result = ldif.parse_ldif(ldif_file)
         assert result is not None
 
     def test_multiple_ldif_instances_are_independent(self) -> None:
         """Test that multiple FlextLdif instances don't interfere."""
         ldif1 = FlextLdif()
         ldif2 = FlextLdif()
-        result1 = ldif1.parse_source("dn: cn=test1,dc=example,dc=com\ncn: test1")
-        result2 = ldif2.parse_source("dn: cn=test2,dc=example,dc=com\ncn: test2")
+        result1 = ldif1.parse_ldif("dn: cn=test1,dc=example,dc=com\ncn: test1")
+        result2 = ldif2.parse_ldif("dn: cn=test2,dc=example,dc=com\ncn: test2")
         assert result1 is not None
         assert result2 is not None
 
@@ -112,14 +112,14 @@ class TestFlextLdifFacadeWorkflows:
         """Test error handling for invalid LDIF."""
         ldif = FlextLdif()
         invalid_content = "This is not valid LDIF format"
-        result = ldif.parse_source(invalid_content)
+        result = ldif.parse_ldif(invalid_content)
         assert result is not None
 
     def test_get_entry_attributes_preserves_types(self) -> None:
         """Test that get_entry_attributes preserves attribute value types."""
         ldif = FlextLdif()
         ldif_content = "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nmail: test@example.com\n"
-        parse_result = ldif.parse_source(ldif_content)
+        parse_result = ldif.parse_ldif(ldif_content)
         entries = parse_result.value
         if entries:
             entry = entries[0]
@@ -130,14 +130,14 @@ class TestFlextLdifFacadeWorkflows:
         """Test chaining multiple operations using railway pattern."""
         ldif = FlextLdif()
         ldif_content = "dn: cn=user1,dc=example,dc=com\nobjectClass: person\ncn: user1\nsn: User1\n\ndn: cn=user2,dc=example,dc=com\nobjectClass: person\ncn: user2\nsn: User2\n"
-        result = ldif.parse_source(ldif_content).flat_map(ldif.validate_entries)
+        result = ldif.parse_ldif(ldif_content).flat_map(ldif.validate_entries)
         assert result is not None
 
     def test_parse_with_rfc_and_extensions(self) -> None:
         """Test parsing LDIF with RFC extensions."""
         ldif = FlextLdif()
         ldif_content = "version: 1\n# Comment line\ndn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: Test\n"
-        result = ldif.parse_source(ldif_content)
+        result = ldif.parse_ldif(ldif_content)
         assert result.is_success
         entries = result.value
         assert len(entries) == 1

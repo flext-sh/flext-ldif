@@ -100,7 +100,7 @@ class TestSystematicFixtureCoverage:
         assert fixture_data, f"Fixture {server_fixture} is empty"
         schema_sample = self._limit_schema_fixture_content(fixture_data)
         assert schema_sample, "Schema sample extraction produced empty content"
-        parse_result = api.parse_source(schema_sample)
+        parse_result = api.parse_ldif(schema_sample)
         assert parse_result.is_success, f"Parse failed: {parse_result.error}"
         entries = parse_result.value
         assert entries, "No entries parsed from schema fixture"
@@ -108,7 +108,7 @@ class TestSystematicFixtureCoverage:
         assert write_result.is_success, f"Write failed: {write_result.error}"
         written_content = write_result.value
         assert written_content, "Write produced empty content"
-        roundtrip_result = api.parse_source(written_content)
+        roundtrip_result = api.parse_ldif(written_content)
         assert roundtrip_result.is_success, (
             f"Roundtrip parse failed: {roundtrip_result.error}"
         )
@@ -143,7 +143,7 @@ class TestSystematicFixtureCoverage:
         """
         fixture_data = request.getfixturevalue(server_fixture)
         assert fixture_data, f"Fixture {server_fixture} is empty"
-        parse_result = api.parse_source(fixture_data)
+        parse_result = api.parse_ldif(fixture_data)
         assert parse_result.is_success, f"Parse failed: {parse_result.error}"
         entries = parse_result.value
         write_result = api.write(entries)
@@ -176,7 +176,7 @@ class TestSystematicFixtureCoverage:
         """
         fixture_data = request.getfixturevalue(server_fixture)
         assert fixture_data, f"Fixture {server_fixture} is empty"
-        parse_result = api.parse_source(fixture_data)
+        parse_result = api.parse_ldif(fixture_data)
         assert parse_result.is_success, f"Parse failed: {parse_result.error}"
         entries = parse_result.value
         assert entries, "Entry fixture should parse to at least one entry"
@@ -187,7 +187,7 @@ class TestSystematicFixtureCoverage:
         assert write_result.is_success, f"Write failed: {write_result.error}"
         written_content = write_result.value
         assert written_content, "Write produced empty content"
-        roundtrip_result = api.parse_source(written_content)
+        roundtrip_result = api.parse_ldif(written_content)
         assert roundtrip_result.is_success, (
             f"Roundtrip parse failed: {roundtrip_result.error}"
         )
@@ -226,7 +226,7 @@ class TestSystematicFixtureCoverage:
         """
         fixture_data = request.getfixturevalue(server_fixture)
         assert fixture_data, f"Fixture {server_fixture} is empty"
-        parse_result = api.parse_source(fixture_data)
+        parse_result = api.parse_ldif(fixture_data)
         assert parse_result.is_success, f"Parse failed: {parse_result.error}"
         entries = parse_result.value
         assert entries, "Integration fixture should parse to multiple entries"
@@ -243,7 +243,7 @@ class TestSystematicFixtureCoverage:
         assert len(written_content) > len(fixture_data) * 0.5, (
             "Written content significantly smaller than fixture (possible data loss)"
         )
-        roundtrip_result = api.parse_source(written_content)
+        roundtrip_result = api.parse_ldif(written_content)
         assert roundtrip_result.is_success, (
             f"Roundtrip parse failed: {roundtrip_result.error}"
         )
@@ -296,7 +296,7 @@ class TestSystematicFixtureCoverage:
         as a fallback for all server types.
         """
         ldif_content = "dn: cn=Test,dc=example,dc=com\nobjectClass: person\ncn: Test\nsn: User\nmail: test@example.com\n"
-        parse_result = api.parse_source(ldif_content)
+        parse_result = api.parse_ldif(ldif_content)
         assert parse_result.is_success
         entries = parse_result.value
         assert len(entries) == 1
@@ -304,7 +304,7 @@ class TestSystematicFixtureCoverage:
         assert write_result.is_success
         written_content = write_result.value
         assert "cn=test,dc=example,dc=com" in written_content.lower()
-        roundtrip_result = api.parse_source(written_content)
+        roundtrip_result = api.parse_ldif(written_content)
         assert roundtrip_result.is_success
         roundtrip_entries = roundtrip_result.value
         assert len(roundtrip_entries) == 1

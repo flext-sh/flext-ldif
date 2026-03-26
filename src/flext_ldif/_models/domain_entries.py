@@ -22,8 +22,8 @@ from collections.abc import (
     ValuesView,
 )
 from contextlib import suppress
-from datetime import UTC, datetime
-from typing import Annotated, ClassVar, Self, TypedDict, TypeIs, Unpack, override
+from datetime import datetime
+from typing import Annotated, ClassVar, Self, TypedDict, TypeIs, override
 
 from flext_core import FlextLogger, m, r
 from pydantic import (
@@ -115,44 +115,6 @@ class FlextLdifModelsDomainsEntries:
             """Return DN value as string for str() conversion."""
             return self.value
 
-        @property
-        def components(self) -> MutableSequence[str]:
-            """Parse DN into individual RDN components.
-
-            Returns:
-                List of RDN components (e.g., ['cn=test', 'ou=users', ...])
-
-            Note:
-                Using @property instead of @computed_field to avoid
-                serialization issues with extra="forbid" on round-trips.
-
-            """
-            if not self.value:
-                return []
-            raw_components = [comp.strip() for comp in self.value.split(",")]
-            return [comp for comp in raw_components if comp]
-
-        @property
-        def was_base64_encoded(self) -> bool:
-            """Check if DN was originally base64-encoded per RFC 2849.
-
-            Uses metadata to track if DN had :: indicator in original LDIF.
-            Useful for round-trip conversions between servers (OID → OUD).
-
-            Returns:
-                True if DN was base64-encoded in source LDIF, False otherwise
-
-            Example:
-                # DN with UTF-8 characters in LDIF:
-                dn:: Y249am9zw6ksZGM9ZXhhbXBsZSxkYz1jb20=
-                # Decoded to: cn=josé,dc=example,dc=com
-                # entry.dn
-
-            """
-            if not self.metadata:
-                return False
-            return getattr(self.metadata, "original_format", None) == "base64"
-
         @classmethod
         def from_value(cls, dn: str | Self | None) -> Self:
             """Create DN from string or existing instance.
@@ -181,61 +143,6 @@ class FlextLdifModelsDomainsEntries:
                 "value": str(dn),
                 "metadata": FlextLdifModelsMetadata.EntryMetadata.model_validate({}),
             })
-
-        def create_statistics(
-            self,
-            original_dn: str | None = None,
-            cleaned_dn: str | None = None,
-            transformations: MutableSequence[str] | None = None,
-            **transformation_flags: Unpack[
-                FlextLdifModelsDomainsEntries._DNStatisticsFlags
-            ],
-        ) -> FlextLdifModelsDomainsEntries.DNStatistics:
-            """Create DNStatistics for this DN with transformation history.
-
-            Helper method for creating complete statistics from DN metadata.
-            Uses metadata to populate transformation flags automatically.
-
-            Args:
-                original_dn: Original DN before transformations (defaults to self.value)
-                cleaned_dn: DN after clean_dn() (defaults to self.value)
-                transformations: List of transformation types applied
-                **transformation_flags: Additional transformation flags
-
-            Returns:
-                DNStatistics instance tracking transformation history
-
-            Example:
-                dn = DN(value="cn=test,dc=example,dc=com")
-                stats = dn.create_statistics(
-                    original_dn="cn=test  ,dc=example,dc=com",
-                    transformations=[c.Ldif.TransformationType.SPACE_CLEANED],
-                    had_extra_spaces=True,
-                )
-
-            """
-            final_dn = self.value
-            orig_dn = original_dn or final_dn
-            clean_dn = cleaned_dn or final_dn
-            flags = transformation_flags.copy()
-            if self.metadata:
-                if self.was_base64_encoded:
-                    _ = flags.setdefault("was_base64_encoded", True)
-                if getattr(self.metadata, "had_utf8_chars", False):
-                    _ = flags.setdefault("had_utf8_chars", True)
-                if getattr(self.metadata, "had_escape_sequences", False):
-                    _ = flags.setdefault("had_escape_sequences", True)
-            return (
-                FlextLdifModelsDomainsEntries.DNStatistics.create_with_transformation(
-                    original_dn=orig_dn,
-                    cleaned_dn=clean_dn,
-                    normalized_dn=final_dn,
-                    transformations=transformations
-                    if transformations is not None
-                    else [],
-                    **flags,
-                )
-            )
 
     class SchemaAttribute(FlextLdifModelsBases.SchemaElement):
         """LDAP schema attribute definition model (RFC 4512 compliant).
@@ -361,29 +268,6 @@ class FlextLdifModelsDomainsEntries:
             Field(description="Quirk-specific metadata"),
         ] = None
 
-        @computed_field
-        def has_matching_rules(self) -> bool:
-            """Check if attribute has any matching rules defined."""
-            return bool(self.equality or self.ordering or self.substr)
-
-        @computed_field
-        def syntax_definition(self) -> FlextLdifModelsDomainsEntries.Syntax | None:
-            """Resolve syntax OID to complete Syntax model using RFC 4517 validation.
-
-            Returns:
-                Resolved Syntax model with RFC 4517 compliance details, or None if:
-                - syntax field is None or empty
-                - syntax OID validation fails
-                - syntax resolution fails
-
-            """
-            if not self.syntax:
-                return None
-            return FlextLdifModelsDomainsEntries.Syntax.resolve_syntax_oid(
-                self.syntax,
-                server_type=c.Ldif.ServerTypes.RFC,
-            )
-
     class Syntax(FlextLdifModelsBases.SchemaElement):
         """LDAP attribute syntax definition model (RFC 4517 compliant).
 
@@ -456,22 +340,6 @@ class FlextLdifModelsDomainsEntries:
             FlextLdifModelsDomainsEntries.QuirkMetadata | None,
             Field(description="Server-specific quirk metadata"),
         ] = None
-
-        @computed_field
-        def is_rfc4517_standard(self) -> bool:
-            """Check if this is a standard RFC 4517 syntax OID."""
-            oid_base = "1.3.6.1.4.1.1466.115.121.1"
-            return self.oid.startswith(oid_base)
-
-        @computed_field
-        def syntax_oid_suffix(self) -> str | None:
-            """Extract the numeric suffix from RFC 4517 OID."""
-            oid_base = "1.3.6.1.4.1.1466.115.121.1"
-            is_standard = self.oid.startswith(oid_base)
-            if not is_standard:
-                return None
-            parts = self.oid.split(".")
-            return parts[-1] if parts else None
 
         @classmethod
         def resolve_syntax_oid(
@@ -591,55 +459,6 @@ class FlextLdifModelsDomainsEntries:
             Field(description="Quirk-specific metadata"),
         ] = None
 
-        @computed_field
-        def attribute_summary(self) -> MutableMapping[str, int]:
-            """Get summary of required and optional attributes."""
-            must_count = len(self.must) if self.must else 0
-            may_count = len(self.may) if self.may else 0
-            return {
-                "required": must_count,
-                "optional": may_count,
-                "total": must_count + may_count,
-            }
-
-        @computed_field
-        def is_abstract(self) -> bool:
-            """Check if this is an abstract t.NormalizedValue class."""
-            return self.kind.upper() == "ABSTRACT"
-
-        @computed_field
-        def is_auxiliary(self) -> bool:
-            """Check if this is an auxiliary t.NormalizedValue class."""
-            return self.kind.upper() == "AUXILIARY"
-
-        @computed_field
-        def is_structural(self) -> bool:
-            """Check if this is a structural t.NormalizedValue class."""
-            return self.kind.upper() == "STRUCTURAL"
-
-        @computed_field
-        def total_attributes(self) -> int:
-            """Total number of attributes (required + optional)."""
-            must_count = len(self.must) if self.must else 0
-            may_count = len(self.may) if self.may else 0
-            return must_count + may_count
-
-    class ParsedObjectClass(FlextLdifModelsBases.Base):
-        """Typed payload for parsed objectClass definitions.
-
-        Used internally by FlextLdifUtilitiesObjectClass.resolve_objectclass() to validate
-        parsed dict before creating SchemaObjectClass model.
-        """
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore")
-        oid: str
-        kind: str
-        name: Annotated[str, Field()] = ""
-        desc: Annotated[str | None, Field()] = None
-        sup: Annotated[str | MutableSequence[str] | None, Field()] = None
-        must: Annotated[MutableSequence[str] | None, Field()] = None
-        may: Annotated[MutableSequence[str] | None, Field()] = None
-
     class Attributes(m.ArbitraryTypesModel):
         """LDIF attributes container - simplified dict-like interface."""
 
@@ -700,53 +519,6 @@ class FlextLdifModelsDomainsEntries:
             """Check if attribute exists."""
             return key in self.attributes
 
-        @classmethod
-        def create(
-            cls,
-            attrs_data: MutableMapping[
-                str,
-                str
-                | MutableSequence[str]
-                | bytes
-                | MutableSequence[bytes]
-                | int
-                | float
-                | bool
-                | None,
-            ],
-        ) -> r[Self]:
-            """Create an Attributes instance from data.
-
-            Args:
-                attrs_data: Mapping of attribute names to values
-                (str, list[str], bytes, list[bytes], int, float, bool, or None)
-
-            Returns:
-                r[Self] with Attributes instance or error
-
-            """
-            try:
-                normalized_dict: MutableMapping[str, MutableSequence[str]] = {}
-                for key, val in attrs_data.items():
-                    if isinstance(val, list):
-                        normalized_dict[key] = [str(v) for v in val]
-                    elif isinstance(val, str):
-                        normalized_dict[key] = [val]
-                    else:
-                        normalized_dict[key] = [str(val)]
-                validated = cls.model_validate({
-                    "attributes": normalized_dict,
-                    "attribute_metadata": {},
-                    "metadata": None,
-                })
-                ok_result: r[Self] = r(value=validated, is_success=True)
-                return ok_result
-            except (ValueError, TypeError, AttributeError) as e:
-                fail_result: r[Self] = r(
-                    error=f"Failed to create Attributes: {e}", is_success=False
-                )
-                return fail_result
-
         def add_attribute(self, key: str, values: MutableSequence[str]) -> Self:
             """Add or update an attribute with values.
 
@@ -759,11 +531,6 @@ class FlextLdifModelsDomainsEntries:
 
             """
             self.attributes[key] = values
-            return self
-
-        def add_attribute_value(self, key: str, value: str) -> Self:
-            """Add or update an attribute from a single value."""
-            self.attributes[key] = [value]
             return self
 
         def get(
@@ -787,60 +554,6 @@ class FlextLdifModelsDomainsEntries:
             if key in self.attributes:
                 return self.attributes[key]
             return []
-
-        def get_active_attributes(self) -> MutableMapping[str, MutableSequence[str]]:
-            """Get only active attributes (exclude deleted/hidden).
-
-            MEDIUM COMPLEXITY: Filters attributes based on metadata status,
-            handles missing metadata gracefully.
-
-            Returns:
-                Dict of attribute_name -> values for active attributes only
-
-            """
-
-            def _to_str(value: str) -> str:
-                """Convert str to str, handling byte representation if necessary."""
-                return value
-
-            def _convert_values(values: MutableSequence[str]) -> MutableSequence[str]:
-                """Convert list of str to list of str."""
-                return [_to_str(v) for v in values]
-
-            if not self.attribute_metadata:
-                return {
-                    _to_str(name): _convert_values(values)
-                    for name, values in self.attributes.items()
-                }
-            return {
-                _to_str(name): _convert_values(values)
-                for name, values in self.attributes.items()
-                if self.attribute_metadata.get(str(name), {}).get(
-                    "status",
-                    c.CommonStatus.ACTIVE,
-                )
-                not in {"deleted", "hidden"}
-            }
-
-        def get_deleted_attributes(
-            self,
-        ) -> MutableMapping[str, MutableMapping[str, str | MutableSequence[str]]]:
-            """Get soft-deleted attributes with their metadata.
-
-            MEDIUM COMPLEXITY: Returns deleted attributes with full audit trail
-            (timestamp, reason, original values) for reconciliation.
-
-            Returns:
-                Dict of attribute_name -> metadata_dict for deleted attributes
-
-            """
-            if not self.attribute_metadata:
-                return {}
-            return {
-                name: meta
-                for name, meta in self.attribute_metadata.items()
-                if meta.get("status") == "deleted"
-            }
 
         def get_values(
             self,
@@ -893,47 +606,6 @@ class FlextLdifModelsDomainsEntries:
             """Get attribute names."""
             return self.attributes.keys()
 
-        def mark_as_deleted(
-            self,
-            attribute_name: str,
-            reason: str,
-            deleted_by: str,
-        ) -> None:
-            """Mark attribute as soft-deleted with audit trail.
-
-            HIGH COMPLEXITY: Uses UTC timestamp, tracks deletion metadata,
-            preserves original values for compliance/rollback.
-
-            Uses existing attribute_metadata dict to track deletion.
-            Attribute stays in self.attributes but is marked.
-
-            Args:
-                attribute_name: Name of attribute to mark deleted
-                reason: Reason for deletion (e.g., "migration", "obsolete")
-                deleted_by: Server/quirk that deleted it (e.g., "oid", "oud")
-
-            Raises:
-                ValueError: If attribute not found in attributes
-
-            """
-            if attribute_name not in self.attributes:
-                msg = f"Attribute '{attribute_name}' not found in attributes"
-                raise ValueError(msg)
-
-            def _to_str(value: str) -> str:
-                """Convert str to str, handling byte representation if necessary."""
-                return value
-
-            self.attribute_metadata[str(attribute_name)] = {
-                "status": "deleted",
-                "deleted_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
-                "deleted_reason": reason,
-                "deleted_by": deleted_by,
-                "original_values": [
-                    _to_str(v) for v in self.attributes[attribute_name]
-                ],
-            }
-
         def remove_attribute(self, key: str) -> Self:
             """Remove an attribute if it exists.
 
@@ -946,26 +618,6 @@ class FlextLdifModelsDomainsEntries:
             """
             _ = self.attributes.pop(key, None)
             return self
-
-        def to_ldap3(
-            self,
-            exclude: MutableSequence[str] | None = None,
-        ) -> MutableMapping[str, MutableSequence[str]]:
-            """Convert to ldap3-compatible attributes dict.
-
-            Args:
-                exclude: List of attribute names to exclude from output
-
-            Returns:
-                Dict compatible with ldap3 library format
-
-            """
-            exclude_set: set[str] = set(exclude if exclude is not None else [])
-            return {
-                attr_name: values
-                for attr_name, values in self.attributes.items()
-                if attr_name not in exclude_set
-            }
 
         def values(self) -> ValuesView[MutableSequence[str]]:
             """Get attribute values lists."""
@@ -1034,118 +686,6 @@ class FlextLdifModelsDomainsEntries:
                 return value
             return None
 
-        def get_case_variants(self, dn: str) -> set[str]:
-            """Get all case variants seen for a DN.
-
-            Args:
-                dn: Distinguished Name to get variants for
-
-            Returns:
-                Set of all case variants seen (including canonical)
-
-            """
-            normalized = self._normalize_dn(dn)
-            return self._case_variants.get(normalized, set())
-
-        def get_stats(self) -> MutableMapping[str, int]:
-            """Get registry statistics.
-
-            Returns:
-                Dictionary with registry statistics
-
-            """
-            total_variants = sum(
-                len(variants) for variants in self._case_variants.values()
-            )
-            multiple_variants = sum(
-                1 for variants in self._case_variants.values() if len(variants) > 1
-            )
-            return {
-                "total_dns": len(self._registry),
-                "total_variants": total_variants,
-                "dns_with_multiple_variants": multiple_variants,
-            }
-
-        def has_dn(self, dn: str) -> bool:
-            """Check if DN is registered (case-insensitive).
-
-            Args:
-                dn: Distinguished Name to check
-
-            Returns:
-                True if DN is registered, False otherwise
-
-            """
-            normalized = self._normalize_dn(dn)
-            return normalized in self._registry
-
-        def normalize_dn_references(
-            self,
-            data: MutableMapping[
-                str,
-                str | MutableSequence[str] | MutableMapping[str, str],
-            ],
-            dn_fields: MutableSequence[str] | None = None,
-        ) -> r[
-            MutableMapping[str, str | MutableSequence[str] | MutableMapping[str, str]]
-        ]:
-            """Normalize DN references in data t.NormalizedValue to canonical case.
-
-            Args:
-                data: Dictionary containing DN references
-                dn_fields: List of field names containing DNs or DN lists.
-                          If None, uses default DN fields from c.
-
-            Returns:
-                r[dict[str, str | list[str] | dict[str, str]]] with normalized data dict
-
-            """
-            try:
-                if dn_fields is None:
-                    dn_fields = ["dn"] + list(c.Ldif.ALL_DN_VALUED)
-                normalized_data: MutableMapping[
-                    str,
-                    str | MutableSequence[str] | MutableMapping[str, str],
-                ] = dict(
-                    data,
-                )
-                for field_name in dn_fields:
-                    if field_name not in normalized_data:
-                        continue
-                    field_value = normalized_data[field_name]
-                    if isinstance(field_value, str):
-                        normalized_data[field_name] = self._normalize_single_dn(
-                            str(field_value),
-                        )
-                    elif isinstance(field_value, list):
-                        field_value_list = [str(item) for item in field_value]
-                        normalized_data[field_name] = self._normalize_dn_list(
-                            field_value_list,
-                        )
-                return r[
-                    MutableMapping[
-                        str,
-                        str | MutableSequence[str] | MutableMapping[str, str],
-                    ]
-                ].ok(
-                    normalized_data,
-                )
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
-                return r[
-                    MutableMapping[
-                        str,
-                        str | MutableSequence[str] | MutableMapping[str, str],
-                    ]
-                ].fail(
-                    f"Failed to normalize DN references: {e}",
-                )
-
         def register_dn(self, dn: str, *, force: bool = False) -> str:
             """Register DN and return its canonical case.
 
@@ -1194,36 +734,6 @@ class FlextLdifModelsDomainsEntries:
             if inconsistencies:
                 return r[bool].ok(False)
             return r[bool].ok(True)
-
-        def _normalize_dn_list(
-            self,
-            dn_list: MutableSequence[str],
-        ) -> MutableSequence[str]:
-            """Normalize a list of DN values.
-
-            Args:
-                dn_list: List of DN strings
-
-            Returns:
-                List with DN strings normalized
-
-            """
-            return [self._normalize_single_dn(item) for item in dn_list]
-
-        def _normalize_single_dn(self, dn: str) -> str:
-            """Normalize a single DN string to canonical case.
-
-            Args:
-                dn: DN string to normalize
-
-            Returns:
-                Normalized DN string
-
-            """
-            canonical = self.get_canonical_dn(dn)
-            if canonical:
-                return canonical
-            return self._normalize_dn(dn)
 
     class AclPermissions(m.ArbitraryTypesModel):
         """ACL permissions for LDAP operations.
@@ -2192,139 +1702,6 @@ class FlextLdifModelsDomainsEntries:
                 )
             return violations
 
-        class Builder:
-            """Builder pattern for Entry creation (reduces complexity, improves readability)."""
-
-            _outer_cls: type[FlextLdifModelsDomainsEntries.Entry]
-
-            def __init__(
-                self,
-                outer_cls: type[FlextLdifModelsDomainsEntries.Entry],
-            ) -> None:
-                """Initialize builder with reference to outer class."""
-                super().__init__()
-                self._outer_cls = outer_cls
-                self._dn: str | FlextLdifModelsDomainsEntries.DN | None = None
-                self._attributes: (
-                    MutableMapping[str, str | MutableSequence[str]]
-                    | FlextLdifModelsDomainsEntries.Attributes
-                    | None
-                ) = None
-                self._metadata: FlextLdifModelsDomainsEntries.QuirkMetadata | None = (
-                    None
-                )
-                self._acls: (
-                    MutableSequence[FlextLdifModelsDomainsEntries.Acl] | None
-                ) = None
-                self._objectclasses: (
-                    MutableSequence[FlextLdifModelsDomainsEntries.SchemaObjectClass]
-                    | None
-                ) = None
-                self._attributes_schema: (
-                    MutableSequence[FlextLdifModelsDomainsEntries.SchemaAttribute]
-                    | None
-                ) = None
-                self._entry_metadata: FlextLdifModelsMetadata.EntryMetadata | None = (
-                    None
-                )
-                self._validation_metadata: (
-                    FlextLdifModelsDomainsEntries.ValidationMetadata | None
-                ) = None
-                self._server_type: c.Ldif.ServerTypeLiteral | None = None
-                self._source_entry: str | None = None
-                self._unconverted_attributes: (
-                    FlextLdifModelsMetadata.DynamicMetadata | None
-                ) = None
-
-            def acls(
-                self,
-                acls: MutableSequence[FlextLdifModelsDomainsEntries.Acl],
-            ) -> Self:
-                self._acls = acls
-                return self
-
-            def attributes(
-                self,
-                attributes: MutableMapping[str, str | MutableSequence[str]]
-                | FlextLdifModelsDomainsEntries.Attributes,
-            ) -> Self:
-                self._attributes = attributes
-                return self
-
-            def attributes_schema(
-                self,
-                attributes_schema: MutableSequence[
-                    FlextLdifModelsDomainsEntries.SchemaAttribute
-                ],
-            ) -> Self:
-                self._attributes_schema = attributes_schema
-                return self
-
-            def build(self) -> r[FlextLdifModelsDomainsEntries.Entry]:
-                """Build the Entry using the accumulated parameters."""
-                if self._dn is None or self._attributes is None:
-                    return r[FlextLdifModelsDomainsEntries.Entry].fail(
-                        "DN and attributes are required",
-                    )
-                return self._outer_cls.create(
-                    dn=self._dn,
-                    attributes=self._attributes,
-                    metadata=self._metadata,
-                    acls=self._acls,
-                    objectclasses=self._objectclasses,
-                    attributes_schema=self._attributes_schema,
-                    entry_metadata=self._entry_metadata,
-                    validation_metadata=self._validation_metadata,
-                    server_type=self._server_type,
-                    source_entry=self._source_entry,
-                    unconverted_attributes=self._unconverted_attributes,
-                )
-
-            def dn(self, dn: str | FlextLdifModelsDomainsEntries.DN) -> Self:
-                self._dn = dn
-                return self
-
-            def entry_metadata(
-                self,
-                entry_metadata: FlextLdifModelsMetadata.EntryMetadata,
-            ) -> Self:
-                self._entry_metadata = entry_metadata
-                return self
-
-            def metadata(
-                self,
-                metadata: FlextLdifModelsDomainsEntries.QuirkMetadata,
-            ) -> Self:
-                self._metadata = metadata
-                return self
-
-            def objectclasses(
-                self,
-                objectclasses: MutableSequence[
-                    FlextLdifModelsDomainsEntries.SchemaObjectClass
-                ],
-            ) -> Self:
-                self._objectclasses = objectclasses
-                return self
-
-            def server_type(
-                self,
-                server_type: c.Ldif.ServerTypeLiteral,
-            ) -> Self:
-                self._server_type = server_type
-                return self
-
-            def source_entry(self, source_entry: str) -> Self:
-                self._source_entry = source_entry
-                return self
-
-            def unconverted_attributes(
-                self,
-                unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata,
-            ) -> Self:
-                self._unconverted_attributes = unconverted_attributes
-                return self
-
         @computed_field
         def has_validation_errors(self) -> bool:
             """Check if entry has validation errors.
@@ -2578,11 +1955,6 @@ class FlextLdifModelsDomainsEntries:
                         metadata.extensions[f"unconverted_{key}"] = str(value)
 
         @classmethod
-        def builder(cls) -> Builder:
-            """Create a new Entry builder instance."""
-            return cls.Builder(outer_cls=cls)
-
-        @classmethod
         def create(
             cls,
             dn: str | FlextLdifModelsDomainsEntries.DN,
@@ -2622,92 +1994,6 @@ class FlextLdifModelsDomainsEntries:
                 statistics=statistics,
             )
             return cls._create_entry(params=params)
-
-        @classmethod
-        def from_ldap3(cls, ldap3_entry: t.MutableContainerMapping) -> r[Self]:
-            """Create Entry from ldap3 Entry t.NormalizedValue.
-
-            Args:
-                ldap3_entry: ldap3 Entry t.NormalizedValue with entry_dn and entry_attributes_as_dict
-
-            Returns:
-                r[Self] with Entry instance or error
-
-            """
-            try:
-                dn_str = str(ldap3_entry.get("entry_dn", ""))
-                entry_attrs_payload = ldap3_entry.get("entry_attributes_as_dict", {})
-                attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
-                if FlextLdifModelsDomainsEntries.Entry.is_string_key_mapping(
-                    entry_attrs_payload,
-                ):
-                    entry_attrs_payload_typed: MutableMapping[
-                        str,
-                        t.NormalizedValue,
-                    ] = dict(entry_attrs_payload.items())
-                    for attr_name, attr_value in entry_attrs_payload_typed.items():
-                        if FlextLdifModelsDomainsEntries.Entry.is_object_sequence(
-                            attr_value,
-                        ):
-                            attrs_dict[attr_name] = [str(item) for item in attr_value]
-                        elif isinstance(attr_value, str):
-                            attrs_dict[attr_name] = [attr_value]
-                        else:
-                            attrs_dict[attr_name] = [str(attr_value)]
-                return cls.create(dn=dn_str, attributes=attrs_dict)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
-                return r[Self](
-                    error=f"Failed to create Entry from ldap3: {e}",
-                    is_success=False,
-                )
-
-        def clone(self) -> Self:
-            """Create an immutable copy of the entry.
-
-            Returns:
-            New Entry instance with same values (shallow copy of attributes)
-
-            """
-            return self.model_copy(deep=True)
-
-        def count_attributes(self) -> int:
-            """Count the number of attributes in the entry.
-
-            Returns:
-            Number of attributes (including multivalued attributes count as 1)
-
-            """
-            if self.attributes is None:
-                return 0
-            return len(self.attributes)
-
-        def get_all_attribute_names(self) -> MutableSequence[str]:
-            """Get list of all attribute names in the entry.
-
-            Returns:
-            List of attribute names (case as stored in entry)
-
-            """
-            if self.attributes is None:
-                return []
-            return list(self.attributes.keys())
-
-        def get_all_attributes(self) -> MutableMapping[str, MutableSequence[str]]:
-            """Get all attributes as dictionary.
-
-            Returns:
-            Dictionary of attribute_name -> list[str] (deep copy)
-
-            """
-            if self.attributes is None:
-                return {}
-            return dict(self.attributes.attributes)
 
         def get_attribute_values(self, attribute_name: str) -> MutableSequence[str]:
             """Get all values for a specific attribute.
@@ -2981,35 +2267,6 @@ class FlextLdifModelsDomainsEntries:
                 "normalized_dn": dn,
             })
 
-        @classmethod
-        def create_with_transformation(
-            cls,
-            original_dn: str,
-            cleaned_dn: str,
-            normalized_dn: str,
-            transformations: MutableSequence[str] | None = None,
-            **flags: Unpack[FlextLdifModelsDomainsEntries._DNStatisticsFlags],
-        ) -> Self:
-            """Create statistics with transformation details.
-
-            Args:
-                original_dn: Original DN string
-                cleaned_dn: Cleaned DN string
-                normalized_dn: Normalized DN string
-                transformations: List of transformation types applied
-                **flags: Optional DNStatistics fields (type-safe via DNStatisticsFlags)
-
-            """
-            return cls.model_validate({
-                "original_dn": original_dn,
-                "cleaned_dn": cleaned_dn,
-                "normalized_dn": normalized_dn,
-                "transformations": (
-                    transformations if transformations is not None else []
-                ),
-                **flags,
-            })
-
         @field_validator("transformations", mode="after")
         @classmethod
         def deduplicate_transformations(
@@ -3196,17 +2453,6 @@ class FlextLdifModelsDomainsEntries:
             """Create minimal statistics for newly parsed entry."""
             return cls.model_validate({"was_parsed": True})
 
-        @classmethod
-        def create_with_dn_stats(
-            cls,
-            dn_statistics: FlextLdifModelsDomainsEntries.DNStatistics,
-        ) -> Self:
-            """Create statistics with DN transformation details."""
-            return cls.model_validate({
-                "was_parsed": True,
-                "dn_statistics": dn_statistics,
-            })
-
         @field_validator("filters_applied", mode="after")
         @classmethod
         def deduplicate_filters(cls, v: MutableSequence[str]) -> MutableSequence[str]:
@@ -3247,22 +2493,6 @@ class FlextLdifModelsDomainsEntries:
             warnings = [*self.warnings, warning]
             return self.model_copy(update={"warnings": warnings})
 
-        def apply_quirk(
-            self,
-            quirk_type: c.Ldif.ServerTypeLiteral,
-        ) -> Self:
-            """Record quirk application.
-
-            Returns new instance with quirk recorded (frozen model).
-            """
-            quirks_applied = [*self.quirks_applied, quirk_type]
-            return self.model_copy(
-                update={
-                    "quirks_applied": quirks_applied,
-                    "quirk_transformations": self.quirk_transformations + 1,
-                },
-            )
-
         def mark_filtered(self, filter_type: str, *, passed: bool) -> Self:
             """Mark entry as filtered with result.
 
@@ -3295,38 +2525,6 @@ class FlextLdifModelsDomainsEntries:
                     "rejection_reason": reason,
                 },
             )
-
-        def mark_validated(self) -> Self:
-            """Mark entry as validated.
-
-            Returns new instance with was_validated=True (frozen model).
-            """
-            return self.model_copy(update={"was_validated": True})
-
-        def track_attribute_change(self, attr_name: str, change_type: str) -> Self:
-            """Track attribute modification.
-
-            Returns new instance with attribute change tracked (frozen model).
-            """
-            if change_type == c.Ldif.ChangeType.ADDED:
-                attributes_added = [*self.attributes_added, attr_name]
-                return self.model_copy(update={"attributes_added": attributes_added})
-            if change_type == c.Ldif.ChangeType.REMOVED:
-                attributes_removed = [*self.attributes_removed, attr_name]
-                return self.model_copy(
-                    update={"attributes_removed": attributes_removed},
-                )
-            if change_type == c.Ldif.ChangeType.MODIFIED:
-                attributes_modified = [*self.attributes_modified, attr_name]
-                return self.model_copy(
-                    update={"attributes_modified": attributes_modified},
-                )
-            if change_type == c.Ldif.ChangeType.FILTERED:
-                attributes_filtered = [*self.attributes_filtered, attr_name]
-                return self.model_copy(
-                    update={"attributes_filtered": attributes_filtered},
-                )
-            return self
 
     class ValidationMetadata(FlextLdifModelsBases.Base):
         """Validation results and error tracking metadata.
@@ -3754,153 +2952,6 @@ class FlextLdifModelsDomainsEntries:
             """
             self.conversion_notes[operation] = description
             return self
-
-        def record_original_format(
-            self,
-            original_ldif: str,
-            attribute_case: FlextLdifModelsMetadata.DynamicMetadata | None = None,
-        ) -> Self:
-            r"""Record original LDIF format for round-trip conversion.
-
-            RFC Compliance: Preserves ALL original formatting details.
-
-            Args:
-                original_ldif: Complete original LDIF string
-                attribute_case: Map of normalized→original attribute case
-
-            Returns:
-                Self for method chaining
-
-            Example:
-                >>> metadata.record_original_format(
-                ...     original_ldif="dn: CN=test\\\\nCN: test\\\\n",
-                ...     attribute_case={"cn": "CN"},
-                ... )
-
-            """
-            self.original_strings["entry_original_ldif"] = original_ldif
-            if attribute_case:
-                for key, value in attribute_case.items():
-                    self.original_attribute_case[key] = value
-            return self
-
-        def set_server_context(
-            self,
-            source_server: c.Ldif.ServerTypeLiteral,
-            target_server: c.Ldif.ServerTypeLiteral | None = None,
-        ) -> Self:
-            """Set source and target server context.
-
-            Args:
-                source_server: Source LDAP server type (oid, oud, openldap, etc.)
-                target_server: Target LDAP server type (optional)
-
-            Returns:
-                Self for method chaining
-
-            Example:
-                >>> metadata.set_server_context(
-                ...     source_server="oid", target_server="oud"
-                ... )
-
-            """
-            self.original_server_type = source_server
-            if target_server:
-                self.target_server_type = target_server
-            rfc_format = c.Ldif
-            self.extensions[rfc_format.META_TRANSFORMATION_SOURCE] = source_server
-            if target_server:
-                self.extensions[rfc_format.META_TRANSFORMATION_TARGET] = target_server
-            return self
-
-        def track_attribute_removal(
-            self,
-            attribute_name: str,
-            values: MutableSequence[str],
-            reason: str | None = None,
-        ) -> Self:
-            """Track an attribute removal in metadata.
-
-            RFC Compliance: Preserves removed attribute data for round-trip conversions.
-            Uses c.Ldif.SKIPPED_ATTRIBUTES tracking.
-
-            Args:
-                attribute_name: Name of removed attribute
-                values: Values that were removed
-                reason: Human-readable reason for removal
-
-            Returns:
-                Self for method chaining
-
-            Example:
-                >>> metadata.track_attribute_removal(
-                ...     attribute_name="orclLastAppliedChangeNumber",
-                ...     values=["12345"],
-                ...     reason="OID-specific operational attribute",
-                ... )
-
-            """
-            ext_values: MutableSequence[t.Ldif.MetadataValue] = list(values)
-            setattr(self.removed_attributes, attribute_name, ext_values)
-            return self.track_attribute_transformation(
-                original_name=attribute_name,
-                new_name=None,
-                transformation_type=c.Ldif.TransformationType.ATTRIBUTE_REMOVED,
-                original_values=values,
-                reason=reason,
-            )
-
-        def track_attribute_transformation(
-            self,
-            original_name: str,
-            new_name: str | None,
-            transformation_type: c.Ldif.TransformationTypeLiteral,
-            original_values: MutableSequence[str] | None = None,
-            new_values: MutableSequence[str] | None = None,
-            reason: str | None = None,
-        ) -> Self:
-            """Track an attribute transformation in metadata.
-
-            RFC Compliance: Stores original data for round-trip support.
-
-            Args:
-                original_name: Original attribute name before transformation
-                new_name: New attribute name (None if removed)
-                transformation_type: Type of transformation (renamed/removed/modified/added)
-                original_values: Original values before transformation
-                new_values: New values after transformation
-                reason: Human-readable reason for transformation
-
-            Returns:
-                Self for method chaining
-
-            Example:
-                >>> metadata.track_attribute_transformation(
-                ...     original_name="orclPassword",
-                ...     new_name="userPassword",
-                ...     transformation_type=c.Ldif.TransformationType.ATTRIBUTE_RENAMED,
-                ...     reason="OID→OUD attribute mapping",
-                ... )
-
-            """
-            transformation = FlextLdifModelsDomainsEntries.AttributeTransformation(
-                original_name=original_name,
-                target_name=new_name,
-                transformation_type=transformation_type,
-                original_values=list(original_values) if original_values else [],
-                target_values=new_values or [],
-                reason=reason or "",
-            )
-            updated_transformations = dict(self.attribute_transformations)
-            updated_transformations[original_name] = transformation
-            self.attribute_transformations = updated_transformations
-            note_key = f"attr_{original_name}_{transformation_type}"
-            self.conversion_notes[note_key] = (
-                reason or f"{transformation_type}: {original_name} → {new_name}"
-            )
-            return self
-
-
 
 
 __all__ = ["FlextLdifModelsDomainsEntries"]
