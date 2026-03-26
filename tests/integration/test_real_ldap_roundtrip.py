@@ -27,13 +27,13 @@ from collections.abc import (
 import pytest
 from ldap3 import Connection
 
-from flext_ldif import FlextLdif, m
+from flext_ldif import ldif, m
 
 
 @pytest.fixture
-def flext_api() -> FlextLdif:
-    """FlextLdif API instance."""
-    return FlextLdif.get_instance()
+def flext_api() -> ldif:
+    """Ldif API instance."""
+    return ldif.get_instance()
 
 
 @pytest.mark.docker
@@ -46,7 +46,7 @@ class TestRealLdapRoundtrip:
         self,
         ldap_connection: Connection,
         clean_test_ou: str,
-        flext_api: FlextLdif,
+        flext_api: ldif,
         make_test_username: Callable[[str], str],
     ) -> None:
         """Verify LDAP → LDIF → LDAP preserves data integrity."""

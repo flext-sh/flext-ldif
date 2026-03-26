@@ -3,25 +3,25 @@
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-Demonstrates FlextLdif ACL-related functionality:
+Demonstrates ldif ACL-related functionality:
 - Extracting ACLs from LDIF entries
 - Parsing ACL attributes
 - Evaluating ACLs against context
 - Working with ACL components
 
-All functionality accessed through FlextLdif facade.
+All functionality accessed through ldif facade.
 """
 
 from __future__ import annotations
 
 from collections.abc import MutableMapping
 
-from flext_ldif import FlextLdif, FlextLdifModels, m, t, u
+from flext_ldif import ldif, m, t, u
 
 
 def extract_acls_from_entry() -> None:
     """Extract ACL information from an LDIF entry."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     ldif_content = 'dn: cn=test,ou=People,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Allow read"; allow (read,search) userdn="ldap:///anyone";)\n'
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
@@ -40,7 +40,7 @@ def extract_acls_from_entry() -> None:
 
 def parse_and_evaluate_acls() -> None:
     """Parse ACL attributes and evaluate against context."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     ldif_content = 'dn: ou=People,dc=example,dc=com\nobjectClass: organizationalUnit\nou: People\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="cn || sn")(version 3.0; acl "Allow self write"; allow (write) userdn="ldap:///self";)\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Allow REDACTED_LDAP_BIND_PASSWORD all"; allow (all) userdn="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com";)\n'
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
@@ -79,7 +79,7 @@ def parse_and_evaluate_acls() -> None:
 
 def process_entries_with_acls() -> None:
     """Process entries that contain ACL information."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     ldif_content = 'dn: ou=People,dc=example,dc=com\nobjectClass: organizationalUnit\nou: People\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Read access"; allow (read) userdn="ldap:///anyone";)\n\ndn: ou=Groups,dc=example,dc=com\nobjectClass: organizationalUnit\nou: Groups\naci: (target="ldap:///ou=Groups,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Admin access"; allow (all) userdn="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com";)\n\ndn: cn=user,ou=People,dc=example,dc=com\nobjectClass: person\ncn: user\nsn: test\n'
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
@@ -87,7 +87,7 @@ def process_entries_with_acls() -> None:
     entries = parse_result.value
     acl_service = api.acl_service
 
-    def process_entry_acls(entry: FlextLdifModels.Ldif.Entry) -> tuple[str, int] | None:
+    def process_entry_acls(entry: m.Ldif.Entry) -> tuple[str, int] | None:
         """Extract ACLs from entry."""
         acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
         if acl_result.is_success:
@@ -102,8 +102,8 @@ def process_entries_with_acls() -> None:
 
 def execute_acl_service() -> None:
     """Execute ACL service with entry data."""
-    api = FlextLdif.get_instance()
-    entry_result = api.models.Ldif.Entry.create(
+    api = ldif.get_instance()
+    entry_result = m.Ldif.Entry.create(
         dn="ou=Test,dc=example,dc=com",
         attributes={
             "objectClass": ["organizationalUnit"],
@@ -124,7 +124,7 @@ def execute_acl_service() -> None:
 
 def acl_pipeline() -> None:
     """Complete ACL processing pipeline."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     ldif_content = 'dn: ou=Pipeline,dc=example,dc=com\nobjectClass: organizationalUnit\nou: Pipeline\naci: (target="ldap:///ou=Pipeline,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Pipeline ACL"; allow (read,search) userdn="ldap:///anyone";)\n'
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:

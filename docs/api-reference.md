@@ -4,7 +4,7 @@
 - [🎯 Library Overview](#library-overview)
   - [Generic RFC-Based Architecture with ZERO Bypass Paths](#generic-rfc-based-architecture-with-zero-bypass-paths)
 - [Core API Classes](#core-api-classes)
-  - [FlextLdif](#flextldif)
+  - [ldif](#flextldif)
   - [QuirksConversionMatrix](#quirksconversionmatrix)
   - [DnCaseRegistry](#dncaseregistry)
 - [Domain Models](#domain-models)
@@ -58,7 +58,7 @@ FLEXT-LDIF enforces a **strict RFC-first design** with **mandatory quirks system
 1. ✅ **MANDATORY quirk_registry**: All RFC parsers/writers REQUIRE quirk_registry parameter (not Optional)
 1. ✅ **Zero Bypass Paths**: NO direct usage of parsers/writers - ALL operations through handlers/facade
 1. ✅ **Generic Transformation**: Source → RFC → Target pipeline works with ANY LDAP server
-1. ✅ **Library-Only Interface**: NO CLI code, tools, or applications - API-only through FlextLdif facade
+1. ✅ **Library-Only Interface**: NO CLI code, tools, or applications - API-only through ldif facade
 
 **Architecture Benefits**:
 
@@ -77,12 +77,12 @@ FLEXT-LDIF enforces a **strict RFC-first design** with **mandatory quirks system
 
 ## Core API Classes
 
-### FlextLdif
+### ldif
 
 Main unified interface for all LDIF processing operations.
 
 ```python
-class FlextLdif:
+class ldif:
     """Unified LDIF Processing API."""
 
     def __init__(self, config: FlextLdifModels.Config | None = None) -> None:
@@ -106,7 +106,7 @@ def parse_file(self, file_path: Path | str) -> r[Sequence[FlextLdifModels.Entry]
         r containing list of parsed entries or error
 
     Example:
-        >>> api = FlextLdif()
+        >>> api = ldif()
         >>> result = api.parse_file("directory.ldif")
         >>> if result.is_success:
         ...     entries = result.unwrap()
@@ -567,7 +567,7 @@ config = FlextLdifModels.Config(
 )
 
 # Use configuration with API
-api = FlextLdif(config=config)
+api = ldif(config=config)
 ```
 
 ### FlextLdifModels.Factory
@@ -646,7 +646,7 @@ instance_config = FlextLdifModels.Config(
 )
 
 # Use with API instance
-api = FlextLdif(config=instance_config)
+api = ldif(config=instance_config)
 ```
 
 ## Error Handling
@@ -729,10 +729,10 @@ except FlextLdifValidationError as e:
 # python -m flext_ldif parse directory.ldif
 
 # ✅ NEW (Library API):
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 from pathlib import Path
 
-api = FlextLdif()
+api = ldif()
 result = api.parse_file(Path("directory.ldif"))
 if result.is_success:
     entries = result.unwrap()
@@ -770,7 +770,7 @@ if result.is_success:
 ```python
 def process_enterprise_directory(input_file: Path, output_file: Path) -> r[t.Dict]:
     """Process enterprise directory with complete pipeline."""
-    api = FlextLdif(FlextLdifModels.Config(strict_validation=True))
+    api = ldif(FlextLdifModels.Config(strict_validation=True))
 
     return (
         # Parse directory export
@@ -802,7 +802,7 @@ def process_enterprise_directory(input_file: Path, output_file: Path) -> r[t.Dic
 ```python
 def process_multiple_files(file_paths: Sequence[Path]) -> r[t.Dict]:
     """Process multiple LDIF files in batch."""
-    api = FlextLdif()
+    api = ldif()
     all_entries = []
     processing_stats = {}
 
@@ -826,7 +826,7 @@ def process_multiple_files(file_paths: Sequence[Path]) -> r[t.Dict]:
 
 ```python
 def filter_by_custom_criteria(
-    api: FlextLdif, entries: Sequence[FlextLdifModels.Entry]
+    api: ldif, entries: Sequence[FlextLdifModels.Entry]
 ) -> r[Sequence[FlextLdifModels.Entry]]:
     """Apply custom filtering logic."""
 
@@ -1093,7 +1093,7 @@ from flext_core import u
 container = FlextContainer.get_global()
 
 # Register LDIF API as service
-api = FlextLdif()
+api = ldif()
 register_result = container.register("ldif_api", api)
 
 # Retrieve from container in other services
@@ -1147,11 +1147,11 @@ logger.info(
 ### Basic Usage - Parse, Validate, Write
 
 ```python
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 from pathlib import Path
 
 # Initialize API (library-only, no CLI)
-api = FlextLdif()
+api = ldif()
 
 # Parse LDIF file
 parse_result = api.parse_file(Path("directory.ldif"))
@@ -1255,10 +1255,10 @@ else:
 ### Railway-Oriented Pipeline
 
 ```python
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 from pathlib import Path
 
-api = FlextLdif()
+api = ldif()
 
 # Composable pipeline with explicit error handling
 result = (

@@ -739,7 +739,7 @@ class FlextLdifUtilitiesACL:
                 subject_value=subject_value,
             ),
             permissions=m.Ldif.AclPermissions(**permissions_dict),
-            server_type=config.server_type,
+            server_type=c.Ldif.ServerTypes(config.server_type),
             raw_acl=acl_line,
             metadata=m.Ldif.QuirkMetadata.create_for(
                 config.server_type,

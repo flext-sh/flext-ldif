@@ -293,7 +293,7 @@ ENTRY_TEST_CASES = (
 
 
 class TestsTestFlextLdifDs389Quirks:
-    """Test FlextLdif DS389 server quirks."""
+    """Test ldif DS389 server quirks."""
 
     ATTRIBUTE_DATA: ClassVar[tuple[AttributeTestCase, ...]] = ATTRIBUTE_TEST_CASES
     OBJECTCLASS_DATA: ClassVar[tuple[ObjectClassTestCase, ...]] = OBJECTCLASS_TEST_CASES

@@ -49,12 +49,12 @@ from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 
 
 def process_directory_export(file_path: str) -> r[t.Dict]:
     """Process LDIF directory export with railway programming."""
-    api = FlextLdif()
+    api = ldif()
 
     return (
         # Parse LDIF file (memory-bound operation)
@@ -84,7 +84,7 @@ from pathlib import Path
 
 def process_ldif_with_memory_check(file_path: Path) -> r[t.Dict]:
     """Process LDIF with memory size validation."""
-    api = FlextLdif()
+    api = ldif()
 
     # Check file size before processing (custom parser loads into memory)
     file_size = file_path.stat().st_size
@@ -104,7 +104,7 @@ def process_ldif_with_memory_check(file_path: Path) -> r[t.Dict]:
 ### FLEXT Oracle Unified Directory Migration
 
 ```python
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif import ldif, FlextLdifModels
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -142,7 +142,7 @@ class FLEXTOUDMigrationService:
             encoding="utf-8",
         )
 
-        self._ldif_api = FlextLdif(config=migration_config)
+        self._ldif_api = ldif(config=migration_config)
 
     def process_oud_export(self, export_file: Path) -> r[t.Dict]:
         """Process Oracle Unified Directory LDIF export."""
@@ -284,7 +284,7 @@ from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 
 
 class LdifAPIService(FlextAPIService):
@@ -292,7 +292,7 @@ class LdifAPIService(FlextAPIService):
 
     def __init__(self) -> None:
         super().__init__()
-        self._ldif_api = FlextLdif()
+        self._ldif_api = ldif()
 
     def parse_ldif_endpoint(self, file_content: str) -> r[t.Dict]:
         """API endpoint for LDIF parsing with memory awareness."""
@@ -364,7 +364,7 @@ from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 from pathlib import Path
 
 class LdifCLIService(FlextCliService):
@@ -372,7 +372,7 @@ class LdifCLIService(FlextCliService):
 
     def __init__(self) -> None:
         super().__init__()
-        self._ldif_api = FlextLdif()
+        self._ldif_api = ldif()
 
     def parse_command(self, input_file: str, output_format: str = 'summary') -> r[bool]:
         """CLI command for parsing LDIF files with size checking."""
@@ -456,7 +456,7 @@ from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 from pathlib import Path
 import psutil
 import os
@@ -464,7 +464,7 @@ import os
 
 def process_multiple_ldif_files(file_paths: Sequence[Path]) -> r[t.Dict]:
     """Process multiple LDIF files with memory monitoring."""
-    api = FlextLdif()
+    api = ldif()
     all_entries = []
     processing_stats = {}
     process = psutil.Process(os.getpid())
@@ -526,7 +526,7 @@ def safe_ldif_processing(file_path: Path) -> r[list]:
             f"File too large for current implementation: {file_size} bytes"
         )
 
-    api = FlextLdif()
+    api = ldif()
     return api.parse_file(file_path)
 ```
 
@@ -537,7 +537,7 @@ Handle LDIF format errors specifically:
 ```python
 def robust_ldif_processing(content: str) -> r[t.Dict]:
     """Process LDIF with format-specific error handling."""
-    api = FlextLdif()
+    api = ldif()
 
     result = api.parse_string(content)
     if result.is_failure:
@@ -595,7 +595,7 @@ def process_small_ldif(file_path: Path) -> r[t.Dict]:
     if file_path.stat().st_size > 100 * 1024 * 1024:
         return r[t.Dict].fail("File too large for current implementation")
 
-    api = FlextLdif()
+    api = ldif()
     return api.parse_file(file_path)
 
 

@@ -195,10 +195,10 @@ Production-ready workflows:
 All examples follow library-only patterns:
 
 ```python
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 
 # Initialize API
-api = FlextLdif()
+api = ldif()
 
 # Use functionality
 result = api.parse("dn: cn=test,dc=example,dc=com\ncn: test\n")
@@ -231,7 +231,7 @@ else:
 
 - **Library demonstrations** - Pure library API usage
 - **Reusable patterns** - Copy-paste friendly code
-- **API coverage** - FlextLdif functionality
+- **API coverage** - ldif functionality
 - **Error handling** - r pattern
 
 ### ❌ What These Examples Are NOT
@@ -323,7 +323,7 @@ Looking for specific features? Use this quick reference:
 
 When adding examples:
 
-- Use FlextLdif (api.py) exclusively
+- Use ldif (api.py) exclusively
 - No CLI patterns (main, print, argparse)
 - Include r error handling
 - Demonstrate specific functionality

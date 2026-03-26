@@ -10,8 +10,12 @@ from typing import override
 from flext_ldif import FlextLdifServer, m, p, r, s, u
 
 
-class FlextLdifDetector(s[m.Ldif.ClientStatus]):
-    """Service for detecting LDAP server type from LDIF content."""
+class FlextLdifDetectorMixin:
+    """Detector methods for MRO composition on FlextLdif.
+
+    Overrides ``_get_effective_server_type_value`` from ParserMixin/WriterMixin
+    to integrate auto-detection when FlextLdif composes all three mixins.
+    """
 
     @staticmethod
     def _add_pattern_if_match(
@@ -34,7 +38,7 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         server_type: str,
     ) -> type[p.Ldif.ServerDetectionConstants] | None:
         """Get server Constants class dynamically via FlextLdifServer registry."""
-        registry = FlextLdifDetector._get_server_registry()
+        registry = FlextLdifServer.get_global_instance()
         server_quirk_result = registry.quirk(server_type)
         if not server_quirk_result.is_success:
             return None
@@ -56,11 +60,6 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         ):
             return constants
         return None
-
-    @staticmethod
-    def _get_server_registry() -> FlextLdifServer:
-        """Get server registry instance."""
-        return FlextLdifServer.get_global_instance()
 
     def detect_server_type(
         self,
@@ -104,18 +103,6 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
         )
         return r[m.Ldif.ServerDetectionResult].ok(detection_result)
 
-    @override
-    def execute(self) -> r[m.Ldif.ClientStatus]:
-        """Execute server detector self-check (required by FlextService)."""
-        config_settings = m.Ldif.ConfigSettings()
-        config_settings.set_setting("service", "FlextLdifDetector")
-        status_result = m.Ldif.ClientStatus(
-            status="initialized",
-            services=["detect_server_type"],
-            config=config_settings,
-        )
-        return r[m.Ldif.ClientStatus].ok(status_result)
-
     def get_effective_server_type(
         self,
         ldif_path: Path | None = None,
@@ -130,6 +117,13 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
             if detection_result.is_success:
                 return r[str].ok(detection_result.value.detected_server_type)
         return r[str].ok("rfc")
+
+    def _get_effective_server_type_value(self) -> str:
+        """Resolve effective server type via detector (overrides ParserMixin default)."""
+        result = self.get_effective_server_type()
+        if result.is_success:
+            return result.value
+        return "rfc"
 
     def _calculate_scores(self, content: str) -> MutableMapping[str, int]:
         """Calculate detection scores for each server type."""
@@ -503,4 +497,20 @@ class FlextLdifDetector(s[m.Ldif.ClientStatus]):
                 scores[server_type] += score_attr_match
 
 
-__all__ = ["FlextLdifDetector"]
+class FlextLdifDetector(FlextLdifDetectorMixin, s[m.Ldif.ClientStatus]):
+    """Standalone detector service (also usable outside FlextLdif MRO)."""
+
+    @override
+    def execute(self) -> r[m.Ldif.ClientStatus]:
+        """Execute server detector self-check (required by FlextService)."""
+        config_settings = m.Ldif.ConfigSettings()
+        config_settings.set_setting("service", "FlextLdifDetector")
+        status_result = m.Ldif.ClientStatus(
+            status="initialized",
+            services=["detect_server_type"],
+            config=config_settings,
+        )
+        return r[m.Ldif.ClientStatus].ok(status_result)
+
+
+__all__ = ["FlextLdifDetector", "FlextLdifDetectorMixin"]

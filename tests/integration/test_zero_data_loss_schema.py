@@ -19,10 +19,10 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import (
-    FlextLdif,
     FlextLdifServersBaseSchema,
     FlextLdifServersOid,
     FlextLdifServersOud,
+    ldif,
 )
 from tests import u
 
@@ -356,9 +356,9 @@ class TestSchemaDeviationsRoundTrip:
     """Test round-trip conversion preserves all deviations."""
 
     @pytest.fixture
-    def api(self) -> FlextLdif:
-        """Create FlextLdif API instance."""
-        return FlextLdif.get_instance()
+    def api(self) -> ldif:
+        """Create ldif API instance."""
+        return ldif.get_instance()
 
     def test_oid_to_rfc_metadata_preserved(self) -> None:
         """Test OID→RFC conversion preserves all metadata."""

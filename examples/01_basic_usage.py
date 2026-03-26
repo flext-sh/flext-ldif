@@ -27,7 +27,7 @@ from typing import Final
 
 from flext_core import FlextContext, FlextLogger, r
 
-from flext_ldif import FlextLdif, m
+from flext_ldif import ldif, m
 
 logger: Final = FlextLogger(__name__)
 
@@ -40,7 +40,7 @@ class BasicUsageDry:
     @staticmethod
     def batch_transform() -> r[MutableSequence[m.Ldif.Entry]]:
         """DRY batch transformation - returns created entries."""
-        api = FlextLdif.get_instance()
+        api = ldif.get_instance()
         entries: list[m.Ldif.Entry] = []
         for i in range(10):
             result = api.create_entry(
@@ -76,7 +76,7 @@ class BasicUsageDry:
             r with processing result or error.
 
         """
-        api = FlextLdif.get_instance()
+        api = ldif.get_instance()
         sample_file = Path("examples/sample_basic.ldif")
         if not sample_file.exists():
             return r[str].fail("Sample file not found")
@@ -114,7 +114,7 @@ class BasicUsageDry:
             r with processing result or error.
 
         """
-        api = FlextLdif.get_instance()
+        api = ldif.get_instance()
         with FlextContext.Correlation.new_correlation("req-123-dry"):
             server_result = api.get_effective_server_type()
             if server_result.is_failure:
@@ -148,7 +148,7 @@ class BasicUsageDry:
             r with parsed and validated entries or error.
 
         """
-        api = FlextLdif.get_instance()
+        api = ldif.get_instance()
         server_type = "rfc"
         detect_result = api.detect_server_type(ldif_content=self.SAMPLE_LDIF)
         if detect_result.is_success and detect_result.value.detected_server_type:

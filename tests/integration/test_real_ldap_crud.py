@@ -24,13 +24,13 @@ from pathlib import Path
 import pytest
 from ldap3 import Connection
 
-from flext_ldif import FlextLdif, m
+from flext_ldif import ldif, m
 
 
 @pytest.fixture
-def flext_api() -> FlextLdif:
-    """FlextLdif API instance."""
-    return FlextLdif.get_instance()
+def flext_api() -> ldif:
+    """Ldif API instance."""
+    return ldif.get_instance()
 
 
 @pytest.mark.docker
@@ -43,26 +43,24 @@ class TestRealLdapCRUD:
         self,
         ldap_connection: Connection,
         clean_test_ou: str,
-        flext_api: FlextLdif,
         make_test_username: Callable[[str], str],
     ) -> None:
         """Test Create→Read→Update→Delete cycle."""
         unique_username = make_test_username("CRUDTestUser")
         person_dn = f"cn={unique_username},{clean_test_ou}"
-        person_result = flext_api.create_entry(
+        person_result = m.Ldif.Entry.create(
             dn=person_dn,
             attributes={
                 "cn": unique_username,
                 "sn": "User",
                 "mail": "crud@example.com",
                 "uid": unique_username,
+                "objectClass": ["inetOrgPerson", "person", "top"],
             },
-            objectclasses=["inetOrgPerson", "person", "top"],
         )
         assert person_result.is_success
         person_entry = person_result.value
-        obj_class_values = person_entry.get_attribute_values("objectclass")
-        assert isinstance(obj_class_values, list)
+        obj_class_values = list(person_entry.get_attribute_values("objectclass"))
         assert person_entry.attributes is not None
         ldap_connection.add(
             str(person_entry.dn),
@@ -103,22 +101,22 @@ class TestRealLdapBatchOperations:
         self,
         ldap_connection: Connection,
         clean_test_ou: str,
-        flext_api: FlextLdif,
+        flext_api: ldif,
         make_test_username: Callable[[str], str],
     ) -> None:
-        """Create batch of entries using FlextLdif API and write to LDAP."""
+        """Create batch of entries using ldif API and write to LDAP."""
         entries: MutableSequence[m.Ldif.Entry] = []
         for i in range(20):
             unique_username = make_test_username(f"BatchUser{i}")
             person_dn = f"cn={unique_username},{clean_test_ou}"
-            result = flext_api.create_entry(
+            result = m.Ldif.Entry.create(
                 dn=person_dn,
                 attributes={
                     "cn": unique_username,
                     "sn": f"User{i}",
                     "mail": f"batch{i}@example.com",
+                    "objectClass": ["inetOrgPerson", "person", "top"],
                 },
-                objectclasses=["inetOrgPerson", "person", "top"],
             )
             if result.is_success:
                 unwrapped_entry = result.value
@@ -158,7 +156,7 @@ class TestRealLdapBatchOperations:
         self,
         ldap_connection: Connection,
         clean_test_ou: str,
-        flext_api: FlextLdif,
+        flext_api: ldif,
         tmp_path: Path,
         make_test_username: Callable[[str], str],
     ) -> None:

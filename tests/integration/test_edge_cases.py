@@ -20,18 +20,18 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 
 
 class TestEmptyAndMinimalCases:
     """Test edge cases for empty and minimal LDIF content."""
 
     @pytest.fixture
-    def api(self) -> FlextLdif:
-        """FlextLdif API instance."""
-        return FlextLdif.get_instance()
+    def api(self) -> ldif:
+        """Ldif API instance."""
+        return ldif.get_instance()
 
-    def test_completely_empty_ldif(self, api: FlextLdif) -> None:
+    def test_completely_empty_ldif(self, api: ldif) -> None:
         """Test parsing of completely empty LDIF.
 
         Validates:
@@ -45,7 +45,7 @@ class TestEmptyAndMinimalCases:
         entries = result.value
         assert not entries
 
-    def test_only_whitespace(self, api: FlextLdif) -> None:
+    def test_only_whitespace(self, api: ldif) -> None:
         """Test LDIF with only whitespace.
 
         Validates:
@@ -59,7 +59,7 @@ class TestEmptyAndMinimalCases:
         entries = result.value
         assert not entries
 
-    def test_only_comments(self, api: FlextLdif) -> None:
+    def test_only_comments(self, api: ldif) -> None:
         """Test LDIF with only comment lines.
 
         Validates:
@@ -73,7 +73,7 @@ class TestEmptyAndMinimalCases:
         entries = result.value
         assert not entries
 
-    def test_single_entry_minimal(self, api: FlextLdif) -> None:
+    def test_single_entry_minimal(self, api: ldif) -> None:
         """Test minimal single entry.
 
         Validates:
@@ -88,7 +88,7 @@ class TestEmptyAndMinimalCases:
         assert len(entries) == 1
         assert str(entries[0].dn).lower() == "cn=single,dc=example,dc=com"
 
-    def test_minimal_with_one_attribute(self, api: FlextLdif) -> None:
+    def test_minimal_with_one_attribute(self, api: ldif) -> None:
         """Test minimal entry with one attribute.
 
         Validates:
@@ -107,11 +107,11 @@ class TestLargeAndComplexCases:
     """Test edge cases for large and complex LDIF content."""
 
     @pytest.fixture
-    def api(self) -> FlextLdif:
-        """FlextLdif API instance."""
-        return FlextLdif.get_instance()
+    def api(self) -> ldif:
+        """Ldif API instance."""
+        return ldif.get_instance()
 
-    def test_entry_with_many_attributes(self, api: FlextLdif) -> None:
+    def test_entry_with_many_attributes(self, api: ldif) -> None:
         """Test entry with many attributes (100+).
 
         Validates:
@@ -128,7 +128,7 @@ class TestLargeAndComplexCases:
         assert entries[0].attributes is not None
         assert entries[0].attributes.attributes
 
-    def test_entry_with_many_values_per_attribute(self, api: FlextLdif) -> None:
+    def test_entry_with_many_values_per_attribute(self, api: ldif) -> None:
         """Test single attribute with many values (100+).
 
         Validates:
@@ -143,7 +143,7 @@ class TestLargeAndComplexCases:
         entries = result.value
         assert len(entries) == 1
 
-    def test_very_long_single_value(self, api: FlextLdif) -> None:
+    def test_very_long_single_value(self, api: ldif) -> None:
         """Test attribute with very long single value (10KB+).
 
         Validates:
@@ -158,7 +158,7 @@ class TestLargeAndComplexCases:
         entries = result.value
         assert len(entries) == 1
 
-    def test_deeply_nested_dn_hierarchy(self, api: FlextLdif) -> None:
+    def test_deeply_nested_dn_hierarchy(self, api: ldif) -> None:
         """Test DN with deep nesting (10+ levels).
 
         Validates:
@@ -179,11 +179,11 @@ class TestBoundaryValues:
     """Test boundary value conditions."""
 
     @pytest.fixture
-    def api(self) -> FlextLdif:
-        """FlextLdif API instance."""
-        return FlextLdif.get_instance()
+    def api(self) -> ldif:
+        """Ldif API instance."""
+        return ldif.get_instance()
 
-    def test_single_character_values(self, api: FlextLdif) -> None:
+    def test_single_character_values(self, api: ldif) -> None:
         """Test attributes with single character values.
 
         Validates:
@@ -197,7 +197,7 @@ class TestBoundaryValues:
         entries = result.value
         assert len(entries) == 1
 
-    def test_special_single_characters(self, api: FlextLdif) -> None:
+    def test_special_single_characters(self, api: ldif) -> None:
         """Test special single characters in values.
 
         Validates:
@@ -211,7 +211,7 @@ class TestBoundaryValues:
         entries = result.value
         assert len(entries) == 1
 
-    def test_maximum_rdn_components(self, api: FlextLdif) -> None:
+    def test_maximum_rdn_components(self, api: ldif) -> None:
         """Test DN with maximum RDN components.
 
         Validates:
@@ -230,7 +230,7 @@ class TestBoundaryValues:
         entries = result.value
         assert len(entries) == 1
 
-    def test_minimum_valid_dn(self, api: FlextLdif) -> None:
+    def test_minimum_valid_dn(self, api: ldif) -> None:
         """Test absolute minimum valid DN.
 
         Validates:
@@ -247,11 +247,11 @@ class TestUnicodeBoundaries:
     """Test Unicode and character encoding boundaries."""
 
     @pytest.fixture
-    def api(self) -> FlextLdif:
-        """FlextLdif API instance."""
-        return FlextLdif.get_instance()
+    def api(self) -> ldif:
+        """Ldif API instance."""
+        return ldif.get_instance()
 
-    def test_bmp_characters(self, api: FlextLdif) -> None:
+    def test_bmp_characters(self, api: ldif) -> None:
         """Test Basic Multilingual Plane characters (U+0000 to U+FFFF).
 
         Validates:
@@ -263,7 +263,7 @@ class TestUnicodeBoundaries:
         result = api.parse_ldif(ldif_content)
         assert result.is_success
 
-    def test_supplementary_plane_characters(self, api: FlextLdif) -> None:
+    def test_supplementary_plane_characters(self, api: ldif) -> None:
         """Test Supplementary Plane characters (U+10000+).
 
         Validates:
@@ -275,7 +275,7 @@ class TestUnicodeBoundaries:
         result = api.parse_ldif(ldif_content)
         assert result.is_success
 
-    def test_zero_width_characters(self, api: FlextLdif) -> None:
+    def test_zero_width_characters(self, api: ldif) -> None:
         """Test zero-width and invisible characters.
 
         Validates:
@@ -287,7 +287,7 @@ class TestUnicodeBoundaries:
         result = api.parse_ldif(ldif_content)
         assert result.is_success
 
-    def test_combining_characters(self, api: FlextLdif) -> None:
+    def test_combining_characters(self, api: ldif) -> None:
         """Test combining diacritical marks.
 
         Validates:
@@ -304,11 +304,11 @@ class TestRoundtripEdgeCases:
     """Test roundtrip parsing with edge cases."""
 
     @pytest.fixture
-    def api(self) -> FlextLdif:
-        """FlextLdif API instance."""
-        return FlextLdif.get_instance()
+    def api(self) -> ldif:
+        """Ldif API instance."""
+        return ldif.get_instance()
 
-    def test_roundtrip_empty(self, api: FlextLdif) -> None:
+    def test_roundtrip_empty(self, api: ldif) -> None:
         """Test roundtrip of empty LDIF.
 
         Validates:
@@ -326,7 +326,7 @@ class TestRoundtripEdgeCases:
         written = write_result.value
         assert not written or written.isspace() or written.strip() == "version: 1"
 
-    def test_roundtrip_single_minimal_entry(self, api: FlextLdif) -> None:
+    def test_roundtrip_single_minimal_entry(self, api: ldif) -> None:
         """Test roundtrip of single minimal entry.
 
         Validates:
@@ -346,7 +346,7 @@ class TestRoundtripEdgeCases:
         roundtrip_entries = roundtrip_result.value
         assert len(roundtrip_entries) == 1
 
-    def test_roundtrip_with_many_entries(self, api: FlextLdif) -> None:
+    def test_roundtrip_with_many_entries(self, api: ldif) -> None:
         """Test roundtrip with many entries (100+).
 
         Validates:

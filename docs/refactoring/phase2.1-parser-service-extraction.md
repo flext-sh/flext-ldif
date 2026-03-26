@@ -37,7 +37,7 @@
 
 **Date**: 2025-01-29
 **Status**: Complete - Ready for Integration
-**Goal**: Extract all parsing operations from FlextLdif facade into dedicated FlextLdifParser
+**Goal**: Extract all parsing operations from ldif facade into dedicated FlextLdifParser
 
 ______________________________________________________________________
 
@@ -137,10 +137,10 @@ ______________________________________________________________________
 
 ### Step 1: Update api.py to use parser service
 
-Replace existing parse methods in `FlextLdif` class:
+Replace existing parse methods in `ldif` class:
 
 ```python
-class FlextLdif(Flext[t.ContainerMapping]):
+class ldif(Flext[t.ContainerMapping]):
     _parser: FlextLdifParser  # Add new service
 
     def __init__(self, config: FlextLdifSettings | None = None) -> None:
@@ -352,7 +352,7 @@ ______________________________________________________________________
 
 ## Next Steps
 
-1. **Integrate into api.py**: Update FlextLdif to use FlextLdifParser
+1. **Integrate into api.py**: Update ldif to use FlextLdifParser
 1. **Remove duplicate code**: Delete original parse methods from api.py
 1. **Update tests**: Create comprehensive test suite for parser service
 1. **Verify integration**: Run existing tests to ensure no regressions

@@ -96,7 +96,7 @@ docs/
 
 **api-reference.md** - Complete API documentation:
 
-- **FlextLdif**: Unified interface for all LDIF operations
+- **ldif**: Unified interface for all LDIF operations
 - **Service Classes**: Parser, validator, writer, repository, analytics services
 - **Models**: Entry, DN, Config, and other domain models
 - **Error Handling**: Exception hierarchy and r patterns

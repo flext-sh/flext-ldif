@@ -1,6 +1,6 @@
-"""Tests for FlextLdif protocol definitions and implementations.
+"""Tests for ldif protocol definitions and implementations.
 
-This module tests the core protocols used across FlextLdif including
+This module tests the core protocols used across ldif including
 server implementations, ACL handling, and service contracts.
 """
 
@@ -26,7 +26,6 @@ from flext_ldif import (
     p,
     t,
 )
-from tests import s
 
 
 def _create_server_implementations() -> Sequence[tuple[str, type, type]]:
@@ -39,7 +38,7 @@ def _create_server_implementations() -> Sequence[tuple[str, type, type]]:
     ]
 
 
-class TestsTestFlextLdifProtocols(s):
+class TestsTestFlextLdifProtocols:
     """Test suite for FlextLdifProtocols protocol definitions.
 
     Uses nested classes for organization: ProtocolNames, ServerTypes, TestCase,

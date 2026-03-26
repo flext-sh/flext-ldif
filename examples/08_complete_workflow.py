@@ -8,12 +8,12 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_ldif import FlextLdif, c, m
+from flext_ldif import c, ldif, m
 
 
 def complete_ldif_processing_workflow() -> None:
     """Run a complete LDIF processing workflow."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     content = "dn: cn=Workflow User,dc=example,dc=com\nobjectClass: person\ncn: Workflow User\nsn: User\n"
     parse_result = api.parse_ldif(content, server_type="rfc")
     if parse_result.is_failure:
@@ -31,7 +31,7 @@ def complete_ldif_processing_workflow() -> None:
 
 def server_migration_workflow() -> None:
     """Run a server migration workflow."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     source_dir = Path("examples/workflow_source")
     target_dir = Path("examples/workflow_target")
     source_dir.mkdir(exist_ok=True)
@@ -55,7 +55,7 @@ def server_migration_workflow() -> None:
 
 def entry_building_and_processing_workflow() -> None:
     """Run an entry building and processing workflow."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     created: list[m.Ldif.Entry] = []
     for idx in range(2):
         create_result = api.create_entry(
@@ -80,7 +80,7 @@ def entry_building_and_processing_workflow() -> None:
 
 def schema_driven_workflow() -> None:
     """Run a schema driven workflow."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     entries: list[m.Ldif.Entry] = []
     for idx in range(5):
         created = api.create_entry(
@@ -98,7 +98,7 @@ def schema_driven_workflow() -> None:
 
 def acl_processing_workflow() -> None:
     """Run an ACL processing workflow."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     ldif_content = 'dn: ou=Secure,dc=example,dc=com\nobjectClass: organizationalUnit\nou: Secure\naci: (targetattr="*")(version 3.0; acl "a"; allow (read) userdn="ldap:///anyone";)\n'
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
@@ -111,7 +111,7 @@ def acl_processing_workflow() -> None:
 
 def batch_processing_workflow() -> None:
     """Run a batch processing workflow."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     entries: list[m.Ldif.Entry] = []
     for idx in range(10):
         result = api.create_entry(
@@ -130,8 +130,8 @@ def batch_processing_workflow() -> None:
 
 def access_all_namespace_classes() -> None:
     """Access all namespace classes."""
-    api = FlextLdif.get_instance()
-    entry_result = api.models.Ldif.Entry.create(
+    api = ldif.get_instance()
+    entry_result = m.Ldif.Entry.create(
         dn="cn=test,dc=example,dc=com",
         attributes={"objectClass": ["person"], "cn": ["test"], "sn": ["user"]},
     )
@@ -146,7 +146,7 @@ def access_all_namespace_classes() -> None:
 
 def error_handling_and_recovery() -> None:
     """Run an error handling and recovery workflow."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     parse_result = api.parse_ldif(
         "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
     )

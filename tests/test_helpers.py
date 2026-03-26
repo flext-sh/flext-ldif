@@ -24,7 +24,7 @@ from flext_tests import (
     tv as _base_tv,
 )
 
-from flext_ldif import FlextLdif, FlextLdifEntries
+from flext_ldif import FlextLdifEntries, ldif
 from tests import m, t
 
 
@@ -665,7 +665,7 @@ class TestsFlextLdifFixtures(_base_tt):
             List of entries after roundtrip
 
         """
-        api = FlextLdif.get_instance()
+        api = ldif.get_instance()
         parse_result = api.parse_ldif(fixture_path)
         entries = _unwrap_result(parse_result, msg=msg)
         write_result = api.write(entries)
@@ -689,7 +689,7 @@ class TestsFlextLdifFixtures(_base_tt):
             List of parsed entries
 
         """
-        api = FlextLdif.get_instance()
+        api = ldif.get_instance()
         result = api.parse_ldif(fixture_path)
         unwrapped = _unwrap_result(result, msg=msg)
         return list(unwrapped)
@@ -709,7 +709,7 @@ class TestsFlextLdifFixtures(_base_tt):
             List of validated entries
 
         """
-        api = FlextLdif.get_instance()
+        api = ldif.get_instance()
         result = api.parse_ldif(fixture_path)
         entries = _unwrap_result(result, msg=msg)
         TestsFlextLdifMatchers.entries(entries, msg=msg)

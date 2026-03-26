@@ -29,13 +29,13 @@ from pathlib import Path
 import pytest
 from ldap3 import Connection
 
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 
 
 @pytest.fixture
-def flext_api() -> FlextLdif:
-    """FlextLdif API instance."""
-    return FlextLdif.get_instance()
+def flext_api() -> ldif:
+    """Ldif API instance."""
+    return ldif.get_instance()
 
 
 @pytest.mark.docker
@@ -48,7 +48,7 @@ class TestRealLdapImport:
         self,
         ldap_connection: Connection,
         clean_test_ou: str,
-        flext_api: FlextLdif,
+        flext_api: ldif,
         make_test_username: Callable[[str], str],
     ) -> None:
         """Import LDIF entry to real LDAP server."""
@@ -89,7 +89,7 @@ class TestRealLdapImport:
         self,
         ldap_connection: Connection,
         clean_test_ou: str,
-        flext_api: FlextLdif,
+        flext_api: ldif,
         make_test_username: Callable[[str], str],
     ) -> None:
         """Import LDIF with binary attributes (base64-encoded)."""
@@ -128,7 +128,7 @@ class TestRealLdapImport:
         self,
         ldap_connection: Connection,
         clean_test_ou: str,
-        flext_api: FlextLdif,
+        flext_api: ldif,
         tmp_path: Path,
         make_test_username: Callable[[str], str],
     ) -> None:

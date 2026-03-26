@@ -90,9 +90,9 @@ config = FlextLdifModels.Config(
 )
 
 # Use configuration with API
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 
-api = FlextLdif(config=config)
+api = ldif(config=config)
 
 # Access configuration values
 print(f"Max entries: {config.max_entries}")
@@ -157,7 +157,7 @@ def load_config_from_environment() -> FlextLdifModels.Config:
 
 # Use environment-based configuration
 config = load_config_from_environment()
-api = FlextLdif(config=config)
+api = ldif(config=config)
 ```
 
 ## Configuration Scenarios
@@ -178,7 +178,7 @@ def create_development_config() -> FlextLdifModels.Config:
 
 
 # Development API instance
-dev_api = FlextLdif(config=create_development_config())
+dev_api = ldif(config=create_development_config())
 ```
 
 ### Production Configuration
@@ -199,7 +199,7 @@ def create_production_config() -> FlextLdifModels.Config:
 
 
 # Production API instance
-prod_api = FlextLdif(config=create_production_config())
+prod_api = ldif(config=create_production_config())
 ```
 
 ### Migration Configuration
@@ -220,7 +220,7 @@ def create_migration_config() -> FlextLdifModels.Config:
 
 
 # Migration API instance
-migration_api = FlextLdif(config=create_migration_config())
+migration_api = ldif(config=create_migration_config())
 ```
 
 ## Advanced Configuration
@@ -256,7 +256,7 @@ config_data = {
 validation_result = validate_configuration(config_data)
 if validation_result.is_success:
     config = validation_result.unwrap()
-    api = FlextLdif(config=config)
+    api = ldif(config=config)
 else:
     print(f"Configuration error: {validation_result.error}")
 ```
@@ -334,7 +334,7 @@ class ConfigurationProfiles:
 
 
 # Use predefined profiles
-api = FlextLdif(config=ConfigurationProfiles.enterprise())
+api = ldif(config=ConfigurationProfiles.enterprise())
 ```
 
 ## Integration with FLEXT Configuration
@@ -376,7 +376,7 @@ if registration_result.is_success:
 config_result = container.get("ldif_config")
 if config_result.is_success:
     retrieved_config = config_result.unwrap()
-    api = FlextLdif(config=retrieved_config)
+    api = ldif(config=retrieved_config)
 ```
 
 ### Configuration Logging
@@ -423,7 +423,7 @@ def log_configuration(config: FlextLdifModels.Config) -> None:
 # Log configuration during initialization
 config = FlextLdifModels.Config(max_entries=50000)
 log_configuration(config)
-api = FlextLdif(config=config)
+api = ldif(config=config)
 ```
 
 ## Configuration Best Practices
@@ -448,17 +448,17 @@ config_dict = {
 Validate configuration at application startup:
 
 ```python
-def initialize_application_config() -> r[FlextLdif]:
+def initialize_application_config() -> r[ldif]:
     """Initialize application with validated configuration."""
     try:
         config = FlextLdifModels.Config(
             max_entries=int(os.getenv("MAX_ENTRIES", "50000")),
             strict_validation=os.getenv("STRICT_VALIDATION", "").lower() == "true",
         )
-        api = FlextLdif(config=config)
-        return r[FlextLdif].ok(api)
+        api = ldif(config=config)
+        return r[ldif].ok(api)
     except Exception as e:
-        return r[FlextLdif].fail(f"Configuration initialization failed: {e}")
+        return r[ldif].fail(f"Configuration initialization failed: {e}")
 ```
 
 ### 3. Use Environment-Specific Profiles
@@ -480,7 +480,7 @@ def get_environment_config(environment: str) -> FlextLdifModels.Config:
 # Use environment-based configuration
 env = os.getenv("ENVIRONMENT", "development")
 config = get_environment_config(env)
-api = FlextLdif(config=config)
+api = ldif(config=config)
 ```
 
 ### 4. Document Configuration Changes

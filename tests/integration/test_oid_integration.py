@@ -1,7 +1,7 @@
 """Integration tests for OID (Oracle Internet Directory) quirks.
 
 Tests complete workflow with real fixture data:
-- Parse OID LDIF fixtures via FlextLdif API
+- Parse OID LDIF fixtures via ldif API
 - Process entries with OID quirks automatically
 - Convert to RFC format
 - Write back to LDIF
@@ -14,21 +14,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdif, m
+from flext_ldif import ldif, m
 
 
 class TestOidSchemaIntegration:
     """Integration tests for OID schema processing.
 
     Uses centralized fixtures from tests/integration/conftest.py:
-    - api: FlextLdif API instance
+    - api: ldif API instance
     - oid_schema_fixture: OID schema LDIF content
     - oid_entries_fixture: OID entries LDIF content
     """
 
     def test_parse_schema_fixture(
         self,
-        api: FlextLdif,
+        api: ldif,
         oid_schema_fixture: str,
     ) -> None:
         """Test parsing complete OID schema fixture.
@@ -47,7 +47,7 @@ class TestOidSchemaIntegration:
 
     def test_oracle_attributes_in_parsed_schema(
         self,
-        api: FlextLdif,
+        api: ldif,
         oid_schema_fixture: str,
     ) -> None:
         """Test that Oracle attributes are detected in parsed schema.
@@ -89,7 +89,7 @@ class TestOidSchemaIntegration:
 
     def test_oracle_objectclasses_in_parsed_schema(
         self,
-        api: FlextLdif,
+        api: ldif,
         oid_schema_fixture: str,
     ) -> None:
         """Test that Oracle objectClasses are detected in parsed schema.
@@ -134,13 +134,13 @@ class TestOidEntryIntegration:
     """Integration tests for OID entry processing.
 
     Uses centralized fixtures from tests/integration/conftest.py:
-    - api: FlextLdif API instance
+    - api: ldif API instance
     - oid_integration_fixture: OID integration LDIF content
     """
 
     def test_parse_integration_fixture(
         self,
-        api: FlextLdif,
+        api: ldif,
         oid_integration_fixture: str,
     ) -> None:
         """Test parsing complete OID integration fixture.
@@ -159,7 +159,7 @@ class TestOidEntryIntegration:
 
     def test_oracle_acls_preserved_in_parsing(
         self,
-        api: FlextLdif,
+        api: ldif,
         oid_integration_fixture: str,
     ) -> None:
         """Test that Oracle ACLs are preserved during parsing.
@@ -189,7 +189,7 @@ class TestOidEntryIntegration:
 
     def test_oracle_attributes_preserved_in_parsing(
         self,
-        api: FlextLdif,
+        api: ldif,
         oid_integration_fixture: str,
     ) -> None:
         """Test that Oracle-specific attributes are preserved during parsing.
@@ -216,13 +216,13 @@ class TestOidRoundTripIntegration:
     """Integration tests for OID round-trip: parse → write → parse.
 
     Uses centralized fixtures from tests/integration/conftest.py:
-    - api: FlextLdif API instance
+    - api: ldif API instance
     - oid_integration_fixture: OID integration LDIF content
     """
 
     def test_roundtrip_parse_write_parse(
         self,
-        api: FlextLdif,
+        api: ldif,
         oid_integration_fixture: str,
     ) -> None:
         """Test round-trip: parse OID fixture → write to LDIF → parse again.
@@ -249,7 +249,7 @@ class TestOidRoundTripIntegration:
 
     def test_roundtrip_dn_preservation(
         self,
-        api: FlextLdif,
+        api: ldif,
         oid_integration_fixture: str,
     ) -> None:
         """Test that DNs are preserved in round-trip.
@@ -272,7 +272,7 @@ class TestOidRoundTripIntegration:
 
     def test_roundtrip_oracle_acl_preservation(
         self,
-        api: FlextLdif,
+        api: ldif,
         oid_integration_fixture: str,
     ) -> None:
         """Test that Oracle ACLs are preserved in round-trip.

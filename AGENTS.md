@@ -88,7 +88,7 @@ Tier 2 - Infrastructure:
 
 Tier 3 - Application (Top Layer):
   ├── services/*.py   # Business logic → All lower tiers
-  └── api.py          # FlextLdif facade → All lower tiers
+  └── api.py          # ldif facade → All lower tiers
 ```
 
 **WHY THIS MATTERS**:
@@ -140,7 +140,7 @@ ______________________________________________________________________
 - ✅ Tests: 100% passing (no skipped tests)
 - ✅ Coverage: 100% (all testable code covered)
 - ✅ Mock Tests: 0 remaining (all use REAL implementations)
-- ✅ Test Structure: Unified Tests[FlextLdif]\* classes with short name aliases
+- ✅ Test Structure: Unified Tests[ldif]\* classes with short name aliases
 
 **Server Implementation Status**: See project documentation for server implementation details.
 
@@ -307,7 +307,7 @@ FLEXT-LDIF is built on a **generic RFC-compliant foundation** with a powerful **
 
 ```
 src/flext_ldif/
-├── api.py                      # FlextLdif facade (main entry point)
+├── api.py                      # ldif facade (main entry point)
 ├── models.py                   # FlextLdifModels (Pydantic v2)
 ├── config.py                   # FlextLdifConfig
 ├── constants.py                # FlextLdifConstants
@@ -557,7 +557,7 @@ from flext_ldif import QuirkBase  # ✅ ALLOWED
 from flext_ldif import ParserService
 
 # services/parser.py
-from flext_ldif import FlextLdif  # CIRCULAR!
+from flext_ldif import ldif  # CIRCULAR!
 
 # ✅ CORRECT - Services use protocols, not concrete api.py
 # services/parser.py
@@ -571,7 +571,7 @@ from flext_ldif import p
 # tests/unit/test_my_module.py
 
 # ✅ CORRECT - Import from package root
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 from flext_ldif import m
 from flext_ldif import c
 
@@ -584,15 +584,15 @@ from flext_ldif import ProcessConfigBuilder
 
 # ✅ CORRECT - Use pytest fixtures
 @pytest.fixture
-def ldif_client() -> FlextLdif:
-    return FlextLdif()
+def ldif_client() -> ldif:
+    return ldif()
 
 
 # ❌ FORBIDDEN - Don't use TYPE_CHECKING in tests unnecessarily
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flext_ldif import FlextLdif
+    from flext_ldif import ldif
 ```
 
 ### 6. Complete Import Hierarchy Reference
@@ -756,10 +756,9 @@ ______________________________________________________________________
 ### r Pattern (Railway-Oriented Programming)
 
 ```python
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 from pathlib import Path
 
-ldif = FlextLdif()
 
 # All operations return r for composable error handling
 result = ldif.parse(Path("directory.ldif"))

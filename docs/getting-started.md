@@ -62,7 +62,7 @@ cd flext-ldif
 make setup
 
 # Verify installation
-python -c "from flext_ldif import FlextLdif; print('FLEXT-LDIF installed successfully')"
+python -c "from flext_ldif import ldif; print('FLEXT-LDIF installed successfully')"
 ```
 
 ### Development Commands
@@ -88,11 +88,11 @@ PYTHONPATH=src pytest tests/unit/test_oid.py -v  # Specific test file
 ```bash
 # ✅ CORRECT
 PYTHONPATH=src poetry run pytest tests/unit/test_oid.py -v
-PYTHONPATH=src poetry run python -c "from flext_ldif import FlextLdif"
+PYTHONPATH=src poetry run python -c "from flext_ldif import ldif"
 
 # ❌ WRONG - Will fail with import errors
 poetry run pytest tests/unit/test_oid.py -v
-python -c "from flext_ldif import FlextLdif"
+python -c "from flext_ldif import ldif"
 ```
 
 ## First Steps
@@ -102,11 +102,11 @@ python -c "from flext_ldif import FlextLdif"
 Create your first LDIF processing script:
 
 ```python
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 from pathlib import Path
 
 # Initialize the LDIF API
-api = FlextLdif()
+api = ldif()
 
 # Sample LDIF content
 sample_ldif = """dn: cn=John Doe,ou=People,dc=example,dc=com
@@ -142,10 +142,10 @@ else:
 Process LDIF files with error handling:
 
 ```python
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 from pathlib import Path
 
-api = FlextLdif()
+api = ldif()
 
 # Parse LDIF file
 ldif_path = Path("directory.ldif")
@@ -177,7 +177,7 @@ else:
 Configure LDIF processing behavior:
 
 ```python
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif import ldif, FlextLdifModels
 
 # Create configuration
 config = FlextLdifModels.Config(
@@ -188,7 +188,7 @@ config = FlextLdifModels.Config(
 )
 
 # Initialize API with configuration
-api = FlextLdif(config=config)
+api = ldif(config=config)
 ```
 
 ### Advanced Configuration
@@ -329,7 +329,7 @@ ouds = quirk_registry.get_entrys("oud")
 Validate and clean LDIF data:
 
 ```python
-api = FlextLdif(FlextLdifModels.Config(strict_validation=True))
+api = ldif(FlextLdifModels.Config(strict_validation=True))
 
 # Parse with strict validation
 result = api.parse_string(ldif_content)

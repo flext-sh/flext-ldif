@@ -17,7 +17,7 @@ from collections.abc import MutableSequence
 from pathlib import Path
 from typing import TextIO
 
-from flext_ldif import FlextLdif, FlextLdifUtilities, c, m
+from flext_ldif import FlextLdifUtilities, c, ldif, m
 
 
 def _write_entry_to_file(
@@ -156,7 +156,7 @@ class TestCategorizationRealData:
                 ),
             ),
         ]
-        categorization = FlextLdif.categorization(base_dn=base_dn, server_type="oud")
+        categorization = ldif.categorization(base_dn=base_dn, server_type="oud")
         validate_result = categorization.validate_dns(entries)
         assert validate_result.is_success, (
             f"DN validation failed: {validate_result.error}"
@@ -265,7 +265,7 @@ class TestCategorizationRealData:
                 ),
             ),
         ]
-        categorization = FlextLdif.categorization(base_dn=base_dn, server_type="oud")
+        categorization = ldif.categorization(base_dn=base_dn, server_type="oud")
         validate_result = categorization.validate_dns(acl_entries)
         assert validate_result.is_success
         categories_result = categorization.categorize_entries(validate_result.value)
@@ -341,13 +341,13 @@ class TestCategorizationRealData:
         assert input_file.read_text(encoding="utf-8") == ldif_content, (
             "Input file content should match"
         )
-        ldif = FlextLdif()
-        parse_result = ldif.parse_ldif(value=ldif_content, server_type="rfc")
+        api = ldif()
+        parse_result = api.parse_ldif(value=ldif_content, server_type="rfc")
         assert parse_result.is_success, f"Parsing failed: {parse_result.error}"
         entries = parse_result.value
         assert len(entries) == 6, f"Should parse 6 entries, got {len(entries)}"
         base_dn = "dc=example"
-        categorization = FlextLdif.categorization(base_dn=base_dn, server_type="oud")
+        categorization = api.categorization(base_dn=base_dn, server_type="oud")
         validate_result = categorization.validate_dns(entries)
         assert validate_result.is_success
         categories_result = categorization.categorize_entries(validate_result.value)

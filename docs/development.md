@@ -46,7 +46,7 @@ cd flext-ldif
 make setup
 
 # Verify LDIF functionality
-python -c "from flext_ldif import FlextLdif; print('LDIF development environment ready')"
+python -c "from flext_ldif import ldif; print('LDIF development environment ready')"
 ```
 
 ### Development Commands
@@ -102,7 +102,7 @@ class _ParserHelper:
 #### Working with LDIF Entries
 
 ```python
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif import ldif, FlextLdifModels
 
 # LDIF entry creation using Factory pattern
 entry_data = {
@@ -116,7 +116,7 @@ entry_data = {
 entry = FlextLdifModels.Entry.create(entry_data)
 
 # LDIF processing with memory awareness
-api = FlextLdif()
+api = ldif()
 
 # For small files (< 100MB)
 result = api.parse_file("small_directory.ldif")
@@ -183,7 +183,7 @@ description: Administrator account
 
 # Test parsing with various LDIF formats
 def test_ldif_parsing():
-    api = FlextLdif()
+    api = ldif()
     result = api.parse_string(create_test_ldif())
     assert result.is_success
     entries = result.unwrap()
@@ -202,7 +202,7 @@ def test_memory_usage():
     process = psutil.Process(os.getpid())
     initial_memory = process.memory_info().rss
 
-    api = FlextLdif()
+    api = ldif()
     result = api.parse_file("test_data.ldif")
 
     final_memory = process.memory_info().rss
@@ -228,7 +228,7 @@ def test_memory_usage():
 # Good: Process small files directly
 def process_small_ldif(file_path: str) -> r[t.Dict]:
     """Process LDIF files under 100MB."""
-    api = FlextLdif()
+    api = ldif()
     return api.parse_file(file_path)
 
 

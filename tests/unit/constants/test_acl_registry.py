@@ -1,4 +1,4 @@
-"""Tests for FlextLdif ACL attribute registry constants.
+"""Tests for ldif ACL attribute registry constants.
 
 This module tests the ACL attribute registry for server-specific ACL
 attribute mappings and validation.
@@ -13,7 +13,7 @@ from typing import ClassVar
 import pytest
 from flext_tests import t, tm
 
-from tests import s, u
+from tests import u
 
 
 @unique
@@ -40,7 +40,7 @@ class IsAclAttributeType(StrEnum):
 
 
 @pytest.mark.unit
-class TestsTestFlextLdifAclAttributeRegistry(s):
+class TestsTestFlextLdifAclAttributeRegistry:
     """Test suite for AclAttributeRegistry."""
 
     GET_ACL_ATTRIBUTES_DATA: ClassVar[

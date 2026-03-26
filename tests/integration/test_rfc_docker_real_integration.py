@@ -137,10 +137,10 @@ class TestRfcWriterRealFixtures:
         original_count = len(entries)
         output_file = tmp_path / "roundtrip.ldif"
         writer = FlextLdifWriter(server=quirk_registry)
-        write_result = writer.write(
+        write_result = writer.write_ldif_file(
             typed_entries,
-            target_server_type="rfc",
-            output_path=output_file,
+            output_file,
+            server_type="rfc",
         )
         assert write_result.is_success, f"Failed to write: {write_result.error}"
         assert output_file.exists()
@@ -175,10 +175,10 @@ class TestRfcWriterRealFixtures:
         ]
         output_file = tmp_path / "acl_output.ldif"
         writer = FlextLdifWriter(server=quirk_registry)
-        result = writer.write(
+        result = writer.write_ldif_file(
             typed_entries,
-            target_server_type="rfc",
-            output_path=output_file,
+            output_file,
+            server_type="rfc",
         )
         assert result.is_success, f"Failed to write ACL entries: {result.error}"
         assert output_file.exists()
@@ -216,10 +216,10 @@ class TestRfcExceptionHandlingRealScenarios:
                 ),
             )
             writer = FlextLdifWriter(server=quirk_registry)
-            result = writer.write(
+            result = writer.write_ldif_file(
                 [test_entry],
-                target_server_type="rfc",
-                output_path=readonly_dir / "test.ldif",
+                readonly_dir / "test.ldif",
+                server_type="rfc",
             )
             if not result.is_success:
                 assert result.error is not None

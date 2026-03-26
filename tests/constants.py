@@ -33,13 +33,13 @@ from flext_tests import FlextTestsConstants
 from pydantic import BaseModel
 
 from flext_ldif import (
-    FlextLdif,
     FlextLdifConstants,
     FlextLdifEntries,
     FlextLdifParser,
     FlextLdifServersBaseSchema,
     FlextLdifServersBaseSchemaAcl,
     FlextLdifWriter,
+    ldif,
     m,
     p,
     t,
@@ -1728,14 +1728,14 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
             @staticmethod
             def helper_api_write_and_unwrap(
-                api: FlextLdif,
+                api: ldif,
                 entries: MutableSequence[m.Ldif.Entry],
                 must_contain: t.StrSequence | None = None,
             ) -> str:
                 """Write entries to string and unwrap result.
 
                 Args:
-                    api: FlextLdif instance
+                    api: ldif instance
                     entries: List of entries to write
                     must_contain: List of strings that must appear in output
 
@@ -1743,7 +1743,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     LDIF string
 
                 """
-                assert isinstance(api, FlextLdif)
+                assert isinstance(api, ldif)
                 result = api.write(entries)
                 assert result.is_success, f"write() failed: {result.error}"
                 ldif_string = result.value
@@ -1757,7 +1757,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
             @staticmethod
             def api_parse_write_file_and_assert(
-                api: FlextLdif,
+                api: ldif,
                 entries: MutableSequence[m.Ldif.Entry],
                 output_file: str | Path,
                 must_contain: t.StrSequence | None = None,
@@ -1765,13 +1765,13 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 """Write entries to file and assert content.
 
                 Args:
-                    api: FlextLdif instance
+                    api: ldif instance
                     entries: List of entries to write
                     output_file: Path to output file
                     must_contain: List of strings that must appear in output
 
                 """
-                assert isinstance(api, FlextLdif)
+                assert isinstance(api, ldif)
                 assert isinstance(output_file, Path)
                 ldif_string = FlextLdifTestConstants.Ldif.TestDeduplicationHelpers.helper_api_write_and_unwrap(
                     api,
@@ -1785,14 +1785,14 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
             @staticmethod
             def api_parse_write_string_and_assert(
-                api: FlextLdif,
+                api: ldif,
                 entries: MutableSequence[m.Ldif.Entry],
                 must_contain: t.StrSequence | None = None,
             ) -> None:
                 """Write entries to string and assert content.
 
                 Args:
-                    api: FlextLdif instance
+                    api: ldif instance
                     entries: List of entries to write
                     must_contain: List of strings that must appear in output
 

@@ -27,20 +27,20 @@ class OudServer:
         SERVER_TYPE = "oud"
 
 
-class TestFlextLdifUtilitiesServer(s):
+class TestFlextLdifUtilitiesServer:
     def test_extract_server_name_failure_no_suffix(self) -> None:
         result = u.Ldif._extract_server_name("FlextLdifServersUnknown")
 
-        self.assert_failure(result)
+        s.assert_failure(result)
 
     def test_extract_server_name_failure_empty_name_after_suffix(self) -> None:
         result = u.Ldif._extract_server_name("Schema")
 
-        self.assert_failure(result)
+        s.assert_failure(result)
 
     def test_extract_server_name_success_schema_suffix(self) -> None:
         result = u.Ldif._extract_server_name("OidSchema")
-        value = self.assert_success(result)
+        value = s.assert_success(result)
 
         tm.that(value, eq="Oid")
 

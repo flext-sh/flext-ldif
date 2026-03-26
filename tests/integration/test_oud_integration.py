@@ -1,7 +1,7 @@
 """Integration tests for OUD (Oracle Unified Directory) quirks.
 
 Tests complete workflow with real fixture data:
-- Parse OUD LDIF fixtures via FlextLdif API
+- Parse OUD LDIF fixtures via ldif API
 - Process entries with OUD quirks automatically
 - Convert to RFC format
 - Write back to LDIF
@@ -18,7 +18,7 @@ import re
 
 import pytest
 
-from flext_ldif import FlextLdif, t
+from flext_ldif import ldif, t
 from tests import FlextLdifFixtures
 
 
@@ -26,13 +26,13 @@ class TestOudSchemaIntegration:
     """Integration tests for OUD schema processing.
 
     Uses centralized fixtures from tests/integration/conftest.py:
-    - api: FlextLdif API instance
+    - api: ldif API instance
     - oud_schema_fixture: OUD schema LDIF content
     """
 
     def test_parse_schema_fixture(
         self,
-        api: FlextLdif,
+        api: ldif,
         oud_schema_fixture: str,
     ) -> None:
         """Test parsing complete OUD schema fixture.
@@ -48,7 +48,7 @@ class TestOudSchemaIntegration:
 
     def test_oracle_attributes_in_parsed_schema(
         self,
-        api: FlextLdif,
+        api: ldif,
         oud_schema_fixture: str,
     ) -> None:
         """Test that Oracle attributes are detected in parsed schema."""
@@ -76,7 +76,7 @@ class TestOudSchemaIntegration:
 
     def test_oracle_objectclasses_in_parsed_schema(
         self,
-        api: FlextLdif,
+        api: ldif,
         oud_schema_fixture: str,
     ) -> None:
         """Test that Oracle objectClasses are detected in parsed schema."""
@@ -115,9 +115,9 @@ class TestOudAclIntegration:
     """Integration tests for OUD ACL processing."""
 
     @pytest.fixture
-    def api(self) -> FlextLdif:
-        """Create FlextLdif API instance."""
-        return FlextLdif.get_instance()
+    def api(self) -> ldif:
+        """Create ldif API instance."""
+        return ldif.get_instance()
 
     @pytest.fixture
     def acl_fixture(self) -> str:
@@ -125,14 +125,14 @@ class TestOudAclIntegration:
         loader = FlextLdifFixtures.OUD()
         return loader.acl()
 
-    def test_parse_fixture(self, api: FlextLdif, acl_fixture: str) -> None:
+    def test_parse_fixture(self, api: ldif, acl_fixture: str) -> None:
         """Test parsing complete OUD ACL fixture."""
         result = api.parse_ldif(acl_fixture)
         assert result.is_success, f"ACL parsing failed: {result.error}"
         entries = result.value
         assert entries, "No ACL entries parsed"
 
-    def test_multiline_acis_preserved(self, api: FlextLdif, acl_fixture: str) -> None:
+    def test_multiline_acis_preserved(self, api: ldif, acl_fixture: str) -> None:
         """Test that multi-line ACIs are preserved during parsing."""
         result = api.parse_ldif(acl_fixture)
         assert result.is_success
@@ -168,9 +168,9 @@ class TestOudEntryIntegration:
     """Integration tests for OUD entry processing."""
 
     @pytest.fixture
-    def api(self) -> FlextLdif:
-        """Create FlextLdif API instance."""
-        return FlextLdif.get_instance()
+    def api(self) -> ldif:
+        """Create ldif API instance."""
+        return ldif.get_instance()
 
     @pytest.fixture
     def entry_fixture(self) -> str:
@@ -178,7 +178,7 @@ class TestOudEntryIntegration:
         loader = FlextLdifFixtures.OUD()
         return loader.entries()
 
-    def test_parse_entry_fixture(self, api: FlextLdif, entry_fixture: str) -> None:
+    def test_parse_entry_fixture(self, api: ldif, entry_fixture: str) -> None:
         """Test parsing complete OUD entry fixture."""
         result = api.parse_ldif(entry_fixture)
         assert result.is_success, f"Entry fixture parsing failed: {result.error}"
@@ -190,7 +190,7 @@ class TestOudEntryIntegration:
 
     def test_oracle_objectclasses_preserved_in_parsing(
         self,
-        api: FlextLdif,
+        api: ldif,
         entry_fixture: str,
     ) -> None:
         """Test that Oracle objectClasses are preserved during parsing."""
@@ -233,9 +233,9 @@ class TestOudRoundTripIntegration:
     """Integration tests for complete OUD round-trip workflow."""
 
     @pytest.fixture
-    def api(self) -> FlextLdif:
-        """Create FlextLdif API instance."""
-        return FlextLdif.get_instance()
+    def api(self) -> ldif:
+        """Create ldif API instance."""
+        return ldif.get_instance()
 
     @pytest.fixture
     def integration_fixture(self) -> str:
@@ -245,7 +245,7 @@ class TestOudRoundTripIntegration:
 
     def test_roundtrip_parse_write_parse(
         self,
-        api: FlextLdif,
+        api: ldif,
         oud_integration_fixture: str,
     ) -> None:
         """Test complete round-trip: parse → write → parse."""
@@ -269,7 +269,7 @@ class TestOudRoundTripIntegration:
 
     def test_roundtrip_dn_preservation(
         self,
-        api: FlextLdif,
+        api: ldif,
         oud_integration_fixture: str,
     ) -> None:
         """Test that DNs with spaces after commas are preserved."""
@@ -303,14 +303,14 @@ class TestOudMetadataPreservation:
     """Integration tests for metadata preservation in OUD quirks."""
 
     @pytest.fixture
-    def api(self) -> FlextLdif:
-        """Create FlextLdif API instance."""
-        return FlextLdif.get_instance()
+    def api(self) -> ldif:
+        """Create ldif API instance."""
+        return ldif.get_instance()
 
     def test_metadata_attached_to_parsed_entries(self) -> None:
         """Test that metadata is attached to parsed entries."""
         test_ldif = "dn: cn=OracleContext,dc=example,dc=com\ncn: OracleContext\nobjectClass: top\nobjectClass: orclContext\norclVersion: 90600\n"
-        api = FlextLdif.get_instance()
+        api = ldif.get_instance()
         result = api.parse_ldif(test_ldif)
         assert result.is_success
         entries = result.value

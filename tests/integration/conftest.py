@@ -1,7 +1,7 @@
 """Centralized pytest fixtures for integration tests.
 
 This module provides all fixtures needed for integration tests across flext-ldif:
-- FlextLdif API instances
+- ldif API instances
 - Fixture data from all supported servers (OID, OUD, OpenLDAP, RFC)
 - Parsed entries for different fixture types (schema, acl, entries, integration)
 - Common test utilities and helpers
@@ -29,7 +29,6 @@ from ldap3.abstract.entry import Entry as LdapEntry
 from ldap3.core.exceptions import LDAPException
 
 from flext_ldif import (
-    FlextLdif,
     FlextLdifConversion,
     FlextLdifParser,
     FlextLdifServer,
@@ -37,6 +36,7 @@ from flext_ldif import (
     FlextLdifServersBaseSchema,
     FlextLdifServersBaseSchemaAcl,
     FlextLdifWriter,
+    ldif,
     m,
 )
 from tests import FlextLdifFixtures, t
@@ -108,19 +108,19 @@ def _wait_for_ldap_ready(
 
 
 @pytest.fixture
-def api() -> FlextLdif:
-    """Create FlextLdif API instance for testing.
+def api() -> ldif:
+    """Create ldif API instance for testing.
 
     Returns:
-        FlextLdif: Configured API instance ready for parsing and writing.
+        ldif: Configured API instance ready for parsing and writing.
 
     """
-    return FlextLdif.get_instance()
+    return ldif.get_instance()
 
 
 @pytest.fixture
 def parser() -> FlextLdifParser:
-    """Create FlextLdif parser service for testing.
+    """Create ldif parser service for testing.
 
     Returns:
         FlextLdifParser: Configured parser service.
@@ -131,7 +131,7 @@ def parser() -> FlextLdifParser:
 
 @pytest.fixture
 def writer() -> FlextLdifWriter:
-    """Create FlextLdif writer service for testing.
+    """Create ldif writer service for testing.
 
     Returns:
         FlextLdifWriter: Configured writer service.
@@ -190,13 +190,13 @@ def oid_integration_fixture() -> str:
 
 @pytest.fixture
 def oid_schema_entries(
-    api: FlextLdif,
+    api: ldif,
     oid_schema_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse OID schema fixture into Entry models.
 
     Args:
-        api: FlextLdif API instance.
+        api: ldif API instance.
         oid_schema_fixture: OID schema fixture data.
 
     Returns:
@@ -212,11 +212,11 @@ def oid_schema_entries(
 
 
 @pytest.fixture
-def oid_entries(api: FlextLdif, oid_entries_fixture: str) -> Sequence[m.Ldif.Entry]:
+def oid_entries(api: ldif, oid_entries_fixture: str) -> Sequence[m.Ldif.Entry]:
     """Parse OID entries fixture into Entry models.
 
     Args:
-        api: FlextLdif API instance.
+        api: ldif API instance.
         oid_entries_fixture: OID entries fixture data.
 
     Returns:
@@ -281,13 +281,13 @@ def oud_integration_fixture() -> str:
 
 @pytest.fixture
 def oud_schema_entries(
-    api: FlextLdif,
+    api: ldif,
     oud_schema_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse OUD schema fixture into Entry models.
 
     Args:
-        api: FlextLdif API instance.
+        api: ldif API instance.
         oud_schema_fixture: OUD schema fixture data.
 
     Returns:
@@ -303,11 +303,11 @@ def oud_schema_entries(
 
 
 @pytest.fixture
-def oud_entries(api: FlextLdif, oud_entries_fixture: str) -> Sequence[m.Ldif.Entry]:
+def oud_entries(api: ldif, oud_entries_fixture: str) -> Sequence[m.Ldif.Entry]:
     """Parse OUD entries fixture into Entry models.
 
     Args:
-        api: FlextLdif API instance.
+        api: ldif API instance.
         oud_entries_fixture: OUD entries fixture data.
 
     Returns:
@@ -372,13 +372,13 @@ def openldap_integration_fixture() -> str:
 
 @pytest.fixture
 def openldap_schema_entries(
-    api: FlextLdif,
+    api: ldif,
     openldap_schema_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse OpenLDAP schema fixture into Entry models.
 
     Args:
-        api: FlextLdif API instance.
+        api: ldif API instance.
         openldap_schema_fixture: OpenLDAP schema fixture data.
 
     Returns:
@@ -395,13 +395,13 @@ def openldap_schema_entries(
 
 @pytest.fixture
 def openldap_entries(
-    api: FlextLdif,
+    api: ldif,
     openldap_entries_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse OpenLDAP entries fixture into Entry models.
 
     Args:
-        api: FlextLdif API instance.
+        api: ldif API instance.
         openldap_entries_fixture: OpenLDAP entries fixture data.
 
     Returns:
@@ -430,13 +430,13 @@ def rfc_schema_fixture() -> str:
 
 @pytest.fixture
 def rfc_schema_entries(
-    api: FlextLdif,
+    api: ldif,
     rfc_schema_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse RFC schema fixture into Entry models.
 
     Args:
-        api: FlextLdif API instance.
+        api: ldif API instance.
         rfc_schema_fixture: RFC schema fixture data.
 
     Returns:

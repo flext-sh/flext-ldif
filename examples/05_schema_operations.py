@@ -22,7 +22,7 @@ from typing import TypedDict
 
 from flext_core import r
 
-from flext_ldif import FlextLdif, FlextLdifModels, m, t, u
+from flext_ldif import FlextLdifModels, ldif, m, t, u
 
 
 class _InvalidScenario(TypedDict):
@@ -32,7 +32,7 @@ class _InvalidScenario(TypedDict):
 
 def intelligent_schema_building() -> r[MutableSequence[m.Ldif.Entry]]:
     """Intelligent schema building with automatic type detection and validation."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     schema_entries: list[FlextLdifModels.Ldif.Entry] = []
     schema_root_result = api.create_entry(
         dn="cn=schema",
@@ -150,7 +150,7 @@ def intelligent_schema_building() -> r[MutableSequence[m.Ldif.Entry]]:
 
 def parallel_schema_validation() -> r[t.ContainerMapping]:
     """Parallel schema validation with comprehensive error analysis."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     test_entries: list[m.Ldif.Entry] = []
     for i in range(30):
         if i % 3 == 0:
@@ -248,7 +248,7 @@ def parallel_schema_validation() -> r[t.ContainerMapping]:
 
 def schema_migration_pipeline() -> r[t.ContainerMapping]:
     """Schema-aware migration pipeline with validation."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     migration_dir = Path("examples/schema_migration")
     source_dir = migration_dir / "source"
     migrated_dir = migration_dir / "migrated"
@@ -343,7 +343,7 @@ def schema_migration_pipeline() -> r[t.ContainerMapping]:
 
 def batch_schema_operations() -> r[t.ContainerMapping]:
     """Batch schema operations with parallel processing."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     schema_batches: list[tuple[str, list[FlextLdifModels.Ldif.Entry]]] = []
     core_attrs: list[FlextLdifModels.Ldif.Entry] = []
     core_attribute_definitions = [
@@ -447,7 +447,7 @@ def batch_schema_operations() -> r[t.ContainerMapping]:
 
 def railway_schema_pipeline() -> r[t.ContainerMapping]:
     """Railway-oriented schema pipeline with integrated validation."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     schema_build_result = intelligent_schema_building()
     if schema_build_result.is_failure:
         return r[t.ContainerMapping].fail(

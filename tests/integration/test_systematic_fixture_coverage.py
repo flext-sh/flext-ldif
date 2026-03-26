@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 
 
 class TestSystematicFixtureCoverage:
@@ -32,9 +32,9 @@ class TestSystematicFixtureCoverage:
     """
 
     @pytest.fixture(scope="class")
-    def api(self) -> FlextLdif:
-        """FlextLdif API instance."""
-        return FlextLdif.get_instance()
+    def api(self) -> ldif:
+        """Ldif API instance."""
+        return ldif.get_instance()
 
     @staticmethod
     def _limit_schema_fixture_content(
@@ -82,7 +82,7 @@ class TestSystematicFixtureCoverage:
     )
     def test_schema_fixture_coverage(
         self,
-        api: FlextLdif,
+        api: ldif,
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
@@ -124,7 +124,7 @@ class TestSystematicFixtureCoverage:
     )
     def test_acl_fixture_coverage(
         self,
-        api: FlextLdif,
+        api: ldif,
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
@@ -159,7 +159,7 @@ class TestSystematicFixtureCoverage:
     )
     def test_entries_fixture_coverage(
         self,
-        api: FlextLdif,
+        api: ldif,
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
@@ -203,7 +203,7 @@ class TestSystematicFixtureCoverage:
     )
     def test_integration_fixture_coverage(
         self,
-        api: FlextLdif,
+        api: ldif,
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
@@ -286,7 +286,7 @@ class TestSystematicFixtureCoverage:
                         f"Fixture {fixture_name} ({fixture_type}) not available: {e}",
                     )
 
-    def test_all_servers_support_basic_ldif_operations(self, api: FlextLdif) -> None:
+    def test_all_servers_support_basic_ldif_operations(self, api: ldif) -> None:
         """Baseline test that all server types support basic LDIF operations.
 
         Creates simple LDIF content and validates it can be parsed and written

@@ -136,9 +136,8 @@ src/flext_ldif/
 **Before**:
 
 ```python
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 
-ldif = FlextLdif()
 processor = ldif.processors  # Unnecessary wrapper
 result = processor.batch_process(entries, func)
 ```
@@ -166,13 +165,12 @@ result = processor.batch_process(entries, func)
 **Rationale**:
 
 - No added value - pure delegation
-- Forces indirection (must have `FlextLdif` instance)
+- Forces indirection (must have `ldif` instance)
 - Domain models already provide these operations
 
 **Before**:
 
 ```python
-ldif = FlextLdif()
 dn = ldif.get_entry_dn(entry)  # Wrapper
 attrs = ldif.get_entry_attributes(entry)  # Wrapper
 ```
@@ -424,7 +422,7 @@ ______________________________________________________________________
 
 1. **Public API Stability**
 
-   - `from flext_ldif import FlextLdif` unchanged
+   - `from flext_ldif import ldif` unchanged
    - Main API methods unchanged
    - No breaking changes for typical users
 
@@ -472,7 +470,7 @@ ______________________________________________________________________
 ## Validation Criteria
 
 - ✅ Complete documentation before code changes
-- ✅ Public API unchanged (`from flext_ldif import FlextLdif`)
+- ✅ Public API unchanged (`from flext_ldif import ldif`)
 - ✅ 0 Pyrefly errors maintained
 - ✅ 0 Ruff violations maintained
 - ✅ 1766/1766 tests passing

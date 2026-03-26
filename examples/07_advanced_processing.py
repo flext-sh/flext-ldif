@@ -3,13 +3,13 @@
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-Demonstrates FlextLdif advanced functionality:
+Demonstrates ldif advanced functionality:
 - Batch processing with direct API methods (no manual setup!)
 - Parallel processing for performance (simplified)
 - Utility functions (DN parsing, validation, encoding, file)
 - Processing pipelines (streamlined)
 
-All functionality accessed through FlextLdif facade using direct methods.
+All functionality accessed through ldif facade using direct methods.
 No manual processor creation or conversion loops required.
 """
 
@@ -18,12 +18,12 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_ldif import FlextLdif, FlextLdifDn, FlextLdifModels, u
+from flext_ldif import FlextLdifDn, FlextLdifModels, ldif, u
 
 
 def basic_batch_processing() -> None:
     """Process entries in batches using direct API method."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     ldif_content = "dn: cn=User1,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User1\nsn: One\n\ndn: cn=User2,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User2\nsn: Two\n\ndn: cn=User3,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User3\nsn: Three\n"
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
@@ -42,7 +42,7 @@ def parallel_processing() -> None:
     Supports 'transform' (convert to dict) and 'validate' (validate entries).
     Results may be in different order due to parallel execution.
     """
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     entries: list[FlextLdifModels.Ldif.Entry] = []
     for i in range(10):
         result = api.create_entry(
@@ -111,7 +111,7 @@ def use_validation_utilities() -> None:
 
 def use_ldif_utilities() -> None:
     """Use LDIF-specific utilities."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     ldif_content = (
         "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
     )
@@ -158,7 +158,7 @@ def use_file_utilities() -> None:
 
 def complete_processing_pipeline() -> None:
     """Complete pipeline using utilities and direct processing methods."""
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     ldif_content = "dn: cn=Pipeline,ou=People,dc=example,dc=com\nobjectClass: person\ncn: Pipeline\nsn: User\n"
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:

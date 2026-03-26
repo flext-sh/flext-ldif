@@ -169,17 +169,17 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
         """Run configured entry operation."""
         if not self._operation:
             return r[MutableSequence[m.Ldif.Entry]].fail("No operation specified")
-        if self._operation == "remove_operational_attributes":
-            return self.remove_operational_attributes_batch(self._entries)
         if self._operation == "remove_attributes":
             if not self._attributes_to_remove:
                 return r[MutableSequence[m.Ldif.Entry]].fail(
                     "No attributes_to_remove specified for remove_attributes operation",
                 )
-            return self.remove_attributes_batch(
-                self._entries,
-                self._attributes_to_remove,
-            )
+            results: MutableSequence[m.Ldif.Entry] = []
+            for entry in self._entries:
+                result = self.remove_attributes(entry, self._attributes_to_remove)
+                if result.is_success:
+                    results.append(result.value)
+            return r[MutableSequence[m.Ldif.Entry]].ok(results)
         return r[MutableSequence[m.Ldif.Entry]].fail(
             f"Unknown operation: {self._operation}",
         )

@@ -17,7 +17,7 @@ System_Ext(cloud_infrastructure, "Cloud Infrastructure", "AWS, Azure, GCP direct
 System_Ext(enterprise_systems, "Enterprise Systems", "HR systems, identity management, access control")
 
 Rel(user, flext_ldif, "Uses for", "LDIF processing and server migrations")
-Rel(developer, flext_ldif, "Integrates via", "FlextLdif facade API")
+Rel(developer, flext_ldif, "Integrates via", "ldif facade API")
 
 Rel(flext_ldif, flext_core, "Depends on", "r[T], FlextContainer, FlextModels")
 Rel(flext_ldif, ldap_servers, "Processes data for/from", "RFC 2849/4512 compliant operations")

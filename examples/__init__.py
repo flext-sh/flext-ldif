@@ -1,7 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make gen
 #
-"""FlextLdif Examples - Demonstrating LDIF processing capabilities."""
+"""ldif Examples - Demonstrating LDIF processing capabilities."""
 
 from __future__ import annotations
 

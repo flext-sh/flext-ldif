@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdif, FlextLdifServersOid, FlextLdifServersOud
+from flext_ldif import FlextLdifServersOid, FlextLdifServersOud, ldif
 
 
 @pytest.fixture(scope="module")
@@ -51,12 +51,12 @@ class TestOidQuirksTransformations:
         return FlextLdifServersOid()
 
     @pytest.fixture(scope="class")
-    def api(self) -> FlextLdif:
-        return FlextLdif.get_instance()
+    def api(self) -> ldif:
+        return ldif.get_instance()
 
     def test_oid_parse_and_transform_schema(
         self,
-        api: FlextLdif,
+        api: ldif,
         fixtures_dir: Path,
         tmp_path: Path,
     ) -> None:
@@ -74,7 +74,7 @@ class TestOidQuirksTransformations:
 
     def test_oid_parse_and_transform_acl(
         self,
-        api: FlextLdif,
+        api: ldif,
         fixtures_dir: Path,
         tmp_path: Path,
     ) -> None:
@@ -92,7 +92,7 @@ class TestOidQuirksTransformations:
 
     def test_oid_to_openldap_migration(
         self,
-        api: FlextLdif,
+        api: ldif,
         migration_inputs: Mapping[str, Path],
         tmp_path: Path,
     ) -> None:
@@ -116,12 +116,12 @@ class TestOudQuirksTransformations:
         return FlextLdifServersOud()
 
     @pytest.fixture(scope="class")
-    def api(self) -> FlextLdif:
-        return FlextLdif.get_instance()
+    def api(self) -> ldif:
+        return ldif.get_instance()
 
     def test_oud_parse_and_transform_schema(
         self,
-        api: FlextLdif,
+        api: ldif,
         fixtures_dir: Path,
         tmp_path: Path,
     ) -> None:
@@ -139,7 +139,7 @@ class TestOudQuirksTransformations:
 
     def test_oud_parse_and_transform_acl(
         self,
-        api: FlextLdif,
+        api: ldif,
         fixtures_dir: Path,
         tmp_path: Path,
     ) -> None:
@@ -157,7 +157,7 @@ class TestOudQuirksTransformations:
 
     def test_oid_to_oud_migration(
         self,
-        api: FlextLdif,
+        api: ldif,
         migration_inputs: Mapping[str, Path],
         tmp_path: Path,
     ) -> None:
@@ -174,7 +174,7 @@ class TestOudQuirksTransformations:
 
     def test_oud_to_openldap_migration(
         self,
-        api: FlextLdif,
+        api: ldif,
         migration_inputs: Mapping[str, Path],
         tmp_path: Path,
     ) -> None:

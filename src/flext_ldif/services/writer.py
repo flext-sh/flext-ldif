@@ -10,19 +10,14 @@ from typing import override
 from flext_ldif import FlextLdifServer, m, r, s, t, u
 
 
-class FlextLdifWriter(s[m.Ldif.WriteResponse]):
-    """Direct LDIF writing service using flext-core APIs."""
+class FlextLdifWriterMixin:
+    """Writer methods for MRO composition on FlextLdif.
+
+    Expects ``self._server: FlextLdifServer`` to be provided by the
+    instantiated class (either FlextLdifWriter or FlextLdif).
+    """
 
     _server: FlextLdifServer
-
-    def __init__(self, server: FlextLdifServer | None = None) -> None:
-        """Initialize writer with optional server instance."""
-        super().__init__()
-        object.__setattr__(
-            self,
-            "_server",
-            server if server is not None else FlextLdifServer.get_global_instance(),
-        )
 
     @staticmethod
     def _normalize_format_options(
@@ -38,11 +33,13 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
         elif isinstance(format_options, m.Ldif.WriteFormatOptions):
             result_raw = format_options
         elif isinstance(format_options, m.Ldif.WriteOptions):
-            result_raw = FlextLdifWriter._to_format_options(format_options)
+            result_raw = FlextLdifWriterMixin._to_format_options(format_options)
         elif not isinstance(format_options, Mapping):
             result_raw = m.Ldif.WriteFormatOptions()
         else:
-            result_raw = m.Ldif.WriteFormatOptions.model_validate(dict(format_options))
+            result_raw = m.Ldif.WriteFormatOptions.model_validate(
+                dict(format_options),
+            )
         return m.Ldif.WriteFormatOptions.model_validate(result_raw)
 
     @staticmethod
@@ -61,11 +58,132 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
         write_options: m.Ldif.WriteOptions,
     ) -> m.Ldif.WriteFormatOptions:
         dumped = write_options.model_dump(exclude_none=True)
-        normalized = FlextLdifWriter._normalize_write_format(dumped)
+        normalized = FlextLdifWriterMixin._normalize_write_format(dumped)
         return m.Ldif.WriteFormatOptions.model_validate(normalized)
 
+    def write(
+        self,
+        entries: MutableSequence[m.Ldif.Entry],
+        *,
+        server_type: str | None = None,
+        format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
+    ) -> r[str]:
+        """Write entries to LDIF format string."""
+        effective_type = server_type or self._get_effective_server_type_value()
+        server_type_typed: str = str(effective_type)
+        return self.write_to_string(
+            entries,
+            server_type_typed,
+            format_options,
+        )
+
+    def write_ldif_file(
+        self,
+        entries: MutableSequence[m.Ldif.Entry],
+        path: Path,
+        *,
+        server_type: str | None = None,
+        format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
+    ) -> r[bool]:
+        """Write entries to LDIF file."""
+        write_result = self.write(
+            entries,
+            server_type=server_type,
+            format_options=format_options,
+        )
+        if write_result.is_failure:
+            return r[bool].fail(str(write_result.error))
+        content = write_result.value
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            _ = path.write_text(content, encoding="utf-8")
+            return r[bool].ok(value=True)
+        except OSError as e:
+            return r[bool].fail(f"Failed to write file: {e}")
+
+    def write_to_file(
+        self,
+        entries: MutableSequence[m.Ldif.Entry],
+        path: Path,
+        server_type: str | None = None,
+        format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
+    ) -> r[m.Ldif.WriteResponse]:
+        """Write entries to LDIF file with WriteResponse."""
+        string_result = self.write_to_string(entries, server_type, format_options)
+        if string_result.is_failure:
+            return r[m.Ldif.WriteResponse].fail(
+                string_result.error or "Failed to generate LDIF content",
+            )
+        ldif_content = string_result.value
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            return r[m.Ldif.WriteResponse].fail(
+                f"Failed to create parent directories for {path}: {e}",
+            )
+        try:
+            _ = path.write_text(ldif_content, encoding="utf-8")
+        except (OSError, UnicodeEncodeError) as e:
+            return r[m.Ldif.WriteResponse].fail(
+                f"Failed to write LDIF file {path}: {e}",
+            )
+        response = m.Ldif.WriteResponse(
+            content=ldif_content,
+            statistics=m.Ldif.Statistics(
+                total_entries=u.count(entries),
+                processed_entries=u.count(entries),
+            ),
+        )
+        return r[m.Ldif.WriteResponse].ok(response)
+
+    def write_to_string(
+        self,
+        entries: MutableSequence[m.Ldif.Entry],
+        server_type: str | None = None,
+        format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
+    ) -> r[str]:
+        """Write entries to LDIF string format."""
+        effective_server_type = server_type or "rfc"
+        try:
+            entry_quirk = self._server.entry(effective_server_type)
+        except ValueError as e:
+            return r[str].fail(
+                f"Invalid server type: {effective_server_type}. {e!s}",
+            )
+        if entry_quirk is None:
+            return r[str].fail(
+                f"No entry quirk found for server type: {effective_server_type}",
+            )
+        options = self._normalize_format_options(format_options)
+        return entry_quirk.write(entries, options).fold(
+            on_failure=lambda e: r[str].fail(e or "LDIF writing failed"),
+            on_success=lambda v: r[str].ok(v),
+        )
+
+    def _get_effective_server_type_value(self) -> str:
+        """Resolve effective server type (default: rfc, overridden by DetectorMixin)."""
+        return "rfc"
+
+
+class FlextLdifWriter(FlextLdifWriterMixin, s[m.Ldif.WriteResponse]):
+    """Standalone writer service (also usable outside FlextLdif MRO)."""
+
+    _server: FlextLdifServer
+
+    def __init__(self, server: FlextLdifServer | None = None) -> None:
+        """Initialize writer with optional server instance."""
+        super().__init__()
+        object.__setattr__(
+            self,
+            "_server",
+            server if server is not None else FlextLdifServer.get_global_instance(),
+        )
+
     @override
-    def execute(self, params: t.ValueOrModel | None = None) -> r[m.Ldif.WriteResponse]:
+    def execute(
+        self,
+        params: t.ValueOrModel | None = None,
+    ) -> r[m.Ldif.WriteResponse]:
         """Execute write operation with parameters."""
         params_mapping: MutableMapping[str, t.NormalizedValue] = {}
         if isinstance(params, Mapping):
@@ -123,15 +241,28 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
                         format_options_raw,
                     )
                 format_options = validated_write_options
-        write_result = self.write(
-            entries=entries,
-            target_server_type=target_server_type,
-            output_path=output_path,
-            format_options=format_options,
+        if output_path is not None:
+            file_result = self.write_to_file(
+                entries,
+                output_path,
+                target_server_type,
+                format_options,
+            )
+            if file_result.is_failure:
+                return r[m.Ldif.WriteResponse].fail(
+                    file_result.error or "File write failed",
+                )
+            return r[m.Ldif.WriteResponse].ok(file_result.value)
+        string_result = self.write_to_string(
+            entries,
+            target_server_type,
+            format_options,
         )
-        if write_result.is_failure:
-            return r[m.Ldif.WriteResponse].fail(write_result.error)
-        result_value = write_result.value
+        if string_result.is_failure:
+            return r[m.Ldif.WriteResponse].fail(
+                string_result.error or "String write failed",
+            )
+        result_value = string_result.value
         with suppress(Exception):
             result_response = m.Ldif.WriteResponse.model_validate(result_value)
             return r[m.Ldif.WriteResponse].ok(result_response)
@@ -145,95 +276,5 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
             ),
         )
 
-    def write(
-        self,
-        entries: MutableSequence[m.Ldif.Entry],
-        target_server_type: str | None = None,
-        _output_target: str | None = None,
-        output_path: Path | None = None,
-        format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
-        _template_data: MutableMapping[str, t.Ldif.TemplateValue] | None = None,
-    ) -> r[str | m.Ldif.WriteResponse]:
-        """Write entries to LDIF format (string or file)."""
-        if output_path is not None:
-            file_result = self.write_to_file(
-                entries,
-                output_path,
-                target_server_type,
-                format_options,
-            )
-            if file_result.is_failure:
-                return r[str | m.Ldif.WriteResponse].fail(
-                    file_result.error or "File write failed",
-                )
-            return r[str | m.Ldif.WriteResponse].ok(file_result.value)
-        string_result = self.write_to_string(
-            entries,
-            target_server_type,
-            format_options,
-        )
-        if string_result.is_failure:
-            return r[str | m.Ldif.WriteResponse].fail(
-                string_result.error or "String write failed",
-            )
-        return r[str | m.Ldif.WriteResponse].ok(string_result.value)
 
-    def write_to_file(
-        self,
-        entries: MutableSequence[m.Ldif.Entry],
-        path: Path,
-        server_type: str | None = None,
-        format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
-    ) -> r[m.Ldif.WriteResponse]:
-        """Write entries to LDIF file."""
-        string_result = self.write_to_string(entries, server_type, format_options)
-        if string_result.is_failure:
-            return r[m.Ldif.WriteResponse].fail(
-                string_result.error or "Failed to generate LDIF content",
-            )
-        ldif_content = string_result.value
-        try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-        except OSError as e:
-            return r[m.Ldif.WriteResponse].fail(
-                f"Failed to create parent directories for {path}: {e}",
-            )
-        try:
-            _ = path.write_text(ldif_content, encoding="utf-8")
-        except (OSError, UnicodeEncodeError) as e:
-            return r[m.Ldif.WriteResponse].fail(
-                f"Failed to write LDIF file {path}: {e}",
-            )
-        response = m.Ldif.WriteResponse(
-            content=ldif_content,
-            statistics=m.Ldif.Statistics(
-                total_entries=u.count(entries),
-                processed_entries=u.count(entries),
-            ),
-        )
-        return r[m.Ldif.WriteResponse].ok(response)
-
-    def write_to_string(
-        self,
-        entries: MutableSequence[m.Ldif.Entry],
-        server_type: str | None = None,
-        format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
-    ) -> r[str]:
-        """Write entries to LDIF string format."""
-        effective_server_type = server_type or "rfc"
-        try:
-            entry_quirk = self._server.entry(effective_server_type)
-        except ValueError as e:
-            return r[str].fail(f"Invalid server type: {effective_server_type}. {e!s}")
-        if entry_quirk is None:
-            return r[str].fail(
-                f"No entry quirk found for server type: {effective_server_type}",
-            )
-        options = self._normalize_format_options(format_options)
-        return entry_quirk.write(entries, options).fold(
-            on_failure=lambda e: r[str].fail(e or "LDIF writing failed"),
-            on_success=lambda v: r[str].ok(v),
-        )
-
-
-__all__ = ["FlextLdifWriter"]
+__all__ = ["FlextLdifWriter", "FlextLdifWriterMixin"]

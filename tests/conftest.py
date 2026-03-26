@@ -17,7 +17,7 @@ from typing import Annotated, ClassVar, Final
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifWriter
+from flext_ldif import FlextLdifParser, FlextLdifWriter, ldif
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -31,9 +31,9 @@ def pytest_configure(config: pytest.Config) -> None:
 
 
 @pytest.fixture(scope="session")
-def flext_ldif() -> FlextLdif:
-    """Provide FlextLdif instance for tests."""
-    return FlextLdif.get_instance()
+def flext_ldif() -> ldif:
+    """Provide ldif instance for tests."""
+    return ldif.get_instance()
 
 
 @pytest.fixture

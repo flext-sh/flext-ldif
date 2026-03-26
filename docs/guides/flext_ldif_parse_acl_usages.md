@@ -16,7 +16,7 @@
   - [Test Pattern](#test-pattern)
 - [5. INTEGRATION POINTS](#5-integration-points)
   - [FlextLdifCategorizedMigrationPipeline](#flextldifcategorizedmigrationpipeline)
-  - [FlextLdif High-Level API](#flextldif-high-level-api)
+  - [ldif High-Level API](#flextldif-high-level-api)
 - [6. CURRENT DATA FLOW](#6-current-data-flow)
 - [7. AFFECTED CODE LOCATIONS (SUMMARY)](#7-affected-code-locations-summary)
   - [Must Be Updated (High Impact)](#must-be-updated-high-impact)
@@ -211,13 +211,13 @@ ______________________________________________________________________
 
 **Impact**: HIGH - Core migration pipeline uses parse()
 
-### FlextLdif High-Level API
+### ldif High-Level API
 
 **File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/__init__.py`
 
 **Exposure**:
 
-- `FlextLdif.parse()` uses quirks internally but doesn't expose parse()
+- `ldif.parse()` uses quirks internally but doesn't expose parse()
 - Higher-level API returns Entry models (not Acl models)
 - flext-oud-mig uses this API (already compatible with Entry return)
 
@@ -228,7 +228,7 @@ ______________________________________________________________________
 ```
 Input LDIF with OID ACL (orclaci:)
     ↓
-FlextLdif.parse() → FlextLdifModels.Entry[]
+ldif.parse() → FlextLdifModels.Entry[]
     ↓ (internal quirks usage)
 parse(acl_line: str) → r[FlextLdifModels.Acl]
     ↓
@@ -318,7 +318,7 @@ ______________________________________________________________________
 
 **Dependent on parse()/format_acl()**:
 
-1. flext-oud-mig - Uses via FlextLdif.parse() (COMPATIBLE)
+1. flext-oud-mig - Uses via ldif.parse() (COMPATIBLE)
 1. Any other projects importing from flext-ldif
 
 **Risk Assessment**:
@@ -333,7 +333,7 @@ ______________________________________________________________________
 
 The parse() and format_acl() return type change requires **significant refactoring** within flext-ldif but does **NOT impact flext-oud-mig** because:
 
-1. flext-oud-mig uses `FlextLdif.parse()` (high-level API) which returns Entry models
+1. flext-oud-mig uses `ldif.parse()` (high-level API) which returns Entry models
 1. flext-oud-mig does not directly call parse() or format_acl()
 1. The change is internal to flext-ldif's quirks system
 

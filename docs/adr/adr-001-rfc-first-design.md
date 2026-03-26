@@ -38,7 +38,6 @@ parser = RfcLdifParserService(
 )
 
 # All operations through facade
-ldif = FlextLdif()
 result = ldif.parse(file_path)  # No direct parser access
 ```
 

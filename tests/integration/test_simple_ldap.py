@@ -7,7 +7,7 @@ from collections.abc import Callable, MutableMapping, MutableSequence
 
 from ldap3 import Connection
 
-from flext_ldif import FlextLdif, m
+from flext_ldif import ldif, m
 from tests import GenericFieldsDict
 
 
@@ -51,7 +51,7 @@ def test_create_and_export_entry(
     )
     assert len(ldap_connection.entries) == 1
     ldap_entry = ldap_connection.entries[0]
-    api = FlextLdif.get_instance()
+    api = ldif.get_instance()
     attrs: MutableMapping[str, MutableSequence[str] | str] = {
         attr: [str(v) for v in ldap_entry[attr].values]
         for attr in ldap_entry.entry_attributes

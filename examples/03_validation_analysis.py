@@ -19,7 +19,7 @@ from collections.abc import Mapping, MutableSequence
 
 from flext_core import r
 
-from flext_ldif import FlextLdif, m
+from flext_ldif import ldif, m
 
 
 class DRYValidationAnalysis:
@@ -45,7 +45,7 @@ class DRYValidationAnalysis:
         error_rate: float = 0.0,
     ) -> MutableSequence[m.Ldif.Entry]:
         """DRY test dataset generation with configurable errors."""
-        api = FlextLdif.get_instance()
+        api = ldif.get_instance()
         return [
             api.create_entry(
                 dn=f"cn=Test User {i},ou=People,dc=example,dc=com",
@@ -81,7 +81,7 @@ class DRYValidationAnalysis:
     @staticmethod
     def parallel_validation() -> r[m.Ldif.ValidationResult]:
         """DRY parallel validation: generate dataset → validate → analyze."""
-        api = FlextLdif.get_instance()
+        api = ldif.get_instance()
         entries = DRYValidationAnalysis._generate_test_dataset(100, error_rate=0.1)
         validate_result = api.validate_entries(entries)
         total_entries = len(entries)
@@ -107,7 +107,7 @@ class DRYValidationAnalysis:
     @staticmethod
     def statistical_analysis() -> r[Mapping[str, int | float]]:
         """DRY statistical analysis: comprehensive metrics in one pipeline."""
-        api = FlextLdif.get_instance()
+        api = ldif.get_instance()
         entries = DRYValidationAnalysis._generate_test_dataset(500, error_rate=0.05)
         validate_result = api.validate_entries(entries)
         if validate_result.is_failure:

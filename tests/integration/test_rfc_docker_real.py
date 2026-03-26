@@ -130,10 +130,10 @@ class TestRfcDockerRealData:
         ]
         output_file = tmp_path / "roundtrip.ldif"
         writer = FlextLdifWriter()
-        write_result = writer.write(
-            entries=typed_entries,
-            target_server_type="oid",
-            output_path=output_file,
+        write_result = writer.write_ldif_file(
+            typed_entries,
+            output_file,
+            server_type="oid",
         )
         assert write_result.is_success, f"Failed to write: {write_result.error}"
         assert output_file.exists()
@@ -198,10 +198,10 @@ class TestRfcDockerRealData:
                 ),
             )
             writer = FlextLdifWriter()
-            result = writer.write(
-                entries=[test_entry],
-                target_server_type="rfc",
-                output_path=output_file,
+            result = writer.write_ldif_file(
+                [test_entry],
+                output_file,
+                server_type="rfc",
             )
             if not result.is_success:
                 assert result.error is not None
@@ -307,10 +307,10 @@ class TestRfcIntegrationRealWorld:
         ]
         output_file = tmp_path / "large_output.ldif"
         writer = FlextLdifWriter(server=quirk_registry)
-        result = writer.write(
+        result = writer.write_ldif_file(
             entry_models,
-            target_server_type="rfc",
-            output_path=output_file,
+            output_file,
+            server_type="rfc",
         )
         assert result.is_success, f"Failed to write large dataset: {result.error}"
         assert output_file.exists()

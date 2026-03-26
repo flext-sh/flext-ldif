@@ -34,11 +34,11 @@ from flext_tests import tk
 from ldap3 import ALL, Connection, Server
 
 from flext_ldif import (
-    FlextLdif,
     FlextLdifParser,
     FlextLdifServer,
     FlextLdifServersBase,
     FlextLdifWriter,
+    ldif,
 )
 from tests import p, t
 
@@ -246,12 +246,12 @@ class FlextLdifTestConftest:
         FlextSettings.reset_for_testing()
 
     def reset_flextldif_singleton(self) -> Generator[None]:
-        """Reset FlextLdif singleton for test isolation.
+        """Reset ldif singleton for test isolation.
 
-        Note: FlextLdif may not have _reset_instance method (Pydantic models).
+        Note: ldif may not have _reset_instance method (Pydantic models).
         Use getattr with noop fallback to handle missing method gracefully.
         """
-        reset_fn = getattr(FlextLdif, "_reset_instance", lambda: None)
+        reset_fn = getattr(ldif, "_reset_instance", lambda: None)
         reset_fn()
         yield
         reset_fn()
@@ -515,9 +515,9 @@ class FlextLdifTestConftest:
         """Quirk registry."""
         return FlextLdifServer()
 
-    def ldif_api(self) -> FlextLdif:
-        """FlextLdif API instance."""
-        return FlextLdif()
+    def ldif_api(self) -> ldif:
+        """Ldif API instance."""
+        return ldif()
 
     def real_parser_service(self, quirk_registry: FlextLdifServer) -> FlextLdifParser:
         """Real parser service."""

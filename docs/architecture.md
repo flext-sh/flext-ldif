@@ -56,7 +56,7 @@ Supporting modules live under `_models/` (domain/config/processing/results) and
 
 ### Facade (`api.py`)
 
-`FlextLdif` is the single public entry point. It registers factories for filter
+`ldif` is the single public entry point. It registers factories for filter
 and categorization services, maps service types to concrete classes via
 `SERVICE_MAPPING`, and lazily instantiates services on first access. The facade
 inherits flext-core `FlextService`, exposing configuration (`FlextLdifSettings`),
@@ -125,7 +125,7 @@ encodings.
 
 ### Parsing LDIF Text
 
-1. Caller invokes `FlextLdif.parse` or `FlextLdifParser.parse`.
+1. Caller invokes `ldif.parse` or `FlextLdifParser.parse`.
 1. The parser resolves the effective server type (default `rfc`) and requests the
    entry quirk from `FlextLdifServer`.
 1. The quirk parses the content and returns entries; the parser wraps them in
@@ -133,7 +133,7 @@ encodings.
 
 ### Writing LDIF Text
 
-1. Caller invokes `FlextLdif.write` with entries and optional format overrides.
+1. Caller invokes `ldif.write` with entries and optional format overrides.
 1. Writer options are merged through `u.build_options_from_kwargs`
    to combine defaults and explicit values.
 1. The writer uses the shared quirk registry to format entries for the chosen
@@ -159,7 +159,7 @@ encodings.
 
 The architecture favors discoverability and small, composable services so that
 new behaviours can be added without widening the public API beyond the
-`FlextLdif` facade.
+`ldif` facade.
 
 ## Related Documentation
 
