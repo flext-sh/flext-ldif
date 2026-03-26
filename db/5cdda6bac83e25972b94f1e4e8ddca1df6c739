@@ -1,0 +1,49 @@
+examples/05_schema_operations.py
+  43dc6a2981f84745 7,12,17,25-31,36-37,45-51,53-55,58-62,65-68,70,74-75,81-82,84-85,87-89,91-97,102,107,113,115,123,125,130-131,134-137,140-141,148-149,157,159-160,205-206,208-209,211-212,222-223,238,240,258,260-262,268-269,279-280,282-283,301-302,312-314,362-363,365,372,374,383-386
+pyproject.toml
+  43dc6a2981f84745 262
+src/flext_ldif/api.py
+  43dc6a2981f84745 40,44-45
+examples/06_acl_processing.py
+  43dc6a2981f84745 12,19,22-24,38,49,57,63-64,66,72,77-78,84,101,104,118,124-125
+examples/08_complete_workflow.py
+  43dc6a2981f84745 8,26,50-51,59-68,70,75-80,87-96,98,110-111,119-128,130-133,138-143,145-146
+tests/integration/test_dn_case_handling.py
+  43dc6a2981f84745 18
+examples/07_advanced_processing.py
+  43dc6a2981f84745 8,17,21,32-34,38,40,43,45-54,56-59,65,69,98-100,159-163,165-168,183
+examples/02_entry_operations.py
+  43dc6a2981f84745 7-9,22,35-48,51-52,54-63,75-87,89
+src/flext_ldif/_utilities/dn.py
+  43dc6a2981f84745 777
+tests/unit/__init__/test_version.py
+  43dc6a2981f84745 19
+examples/01_basic_usage.py
+  43dc6a2981f84745 36,45-55,57,60-62,64,70,85,110-112,133,164
+examples/04_server_migration.py
+  43dc6a2981f84745 67
+src/flext_ldif/_models/settings.py
+  43dc6a2981f84745 979,981
+examples/03_validation_analysis.py
+  43dc6a2981f84745 49-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.19",
+  "base_commit_sha": "db5cdda6bac83e25972b94f1e4e8ddca1df6c739",
+  "prompts": {
+    "43dc6a2981f84745": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b396244f-3047-49d4-aba7-fb4025e6cf57",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 363,
+      "total_deletions": 736,
+      "accepted_lines": 313,
+      "overriden_lines": 2
+    }
+  }
+}
