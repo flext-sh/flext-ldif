@@ -22,25 +22,6 @@ class FlextLdifUtilitiesAttribute:
     )
 
     @classmethod
-    def validate_attribute_description(
-        cls,
-        attribute_description: str,
-    ) -> tuple[bool, MutableSequence[str]]:
-        """Validate complete attribute description (base + options)."""
-        violations: MutableSequence[str] = []
-        base_attr, options = cls.split_attribute_description(attribute_description)
-        if not cls.validate_attribute_name(base_attr):
-            violations.append(
-                f"Invalid base attribute '{base_attr}' - must start with letter and contain only letters, digits, hyphens",
-            )
-        violations.extend(
-            f"Invalid option '{option}' - must start with letter and contain only letters, digits, hyphens, underscores"
-            for option in options
-            if not cls.validate_attribute_option(option)
-        )
-        return (not violations, violations)
-
-    @classmethod
     def validate_attribute_name(cls, attribute_name: str) -> bool:
         """Validate base attribute name against RFC 4512 § 2.5."""
         if not attribute_name:
@@ -48,15 +29,6 @@ class FlextLdifUtilitiesAttribute:
         if len(attribute_name) > c.Ldif.MAX_ATTRIBUTE_NAME_LENGTH:
             return False
         return cls._ATTRIBUTE_NAME_PATTERN.match(attribute_name) is not None
-
-    @classmethod
-    def validate_attribute_option(cls, option: str) -> bool:
-        """Validate attribute option against RFC 4512 § 2.5 + RFC 3066."""
-        if not option:
-            return False
-        option_name = option.split("=", maxsplit=1)[0] if "=" in option else option
-        option_pattern = re.compile(r"^[a-zA-Z][a-zA-Z0-9-_]*$")
-        return option_pattern.match(option_name) is not None
 
     @staticmethod
     def resolve_attribute(

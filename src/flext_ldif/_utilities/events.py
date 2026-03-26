@@ -32,27 +32,6 @@ class FlextLdifUtilitiesEvents:
         )
 
     @staticmethod
-    def _build_operation_event_logging(
-        event: FlextLdifModelsEvents.MigrationEvent,
-        config: FlextLdifModelsEvents.MigrationEventConfig,
-    ) -> tuple[MutableMapping[str, t.Scalar], str]:
-        return (
-            {
-                "aggregate_id": event.aggregate_id,
-                "migration_operation": config.migration_operation,
-                "source_server": config.source_server,
-                "target_server": config.target_server,
-                "entries_processed": config.entries_processed,
-                "entries_migrated": config.entries_migrated,
-                "entries_failed": config.entries_failed,
-                "migration_duration_ms": config.migration_duration_ms,
-                "success_rate_pct": event.migration_success_rate,
-                "throughput_entries_per_sec": event.throughput_entries_per_sec,
-            },
-            f"Migration '{config.migration_operation}' from {config.source_server} to {config.target_server} completed",
-        )
-
-    @staticmethod
     def _log_and_emit_generic_event(
         logger: p.Logger,
         log_context: MutableMapping[str, t.Scalar],
@@ -137,43 +116,6 @@ class FlextLdifUtilitiesEvents:
             "output_dn": config.output_dn,
             "dn_duration_ms": config.operation_duration_ms,
             "validation_result": config.validation_result,
-        })
-
-    @staticmethod
-    def create_migration_event(
-        config: FlextLdifModelsEvents.MigrationEventConfig,
-    ) -> FlextLdifModelsEvents.MigrationEvent:
-        """Create MigrationEvent with standardized fields from config Model."""
-        aggregate_id = f"{config.source_server}_to_{config.target_server}_{config.migration_operation}"
-        error_details_list = FlextLdifUtilitiesEvents._to_error_details_list(
-            list(config.error_details) if config.error_details is not None else None,
-        )
-        return FlextLdifModelsEvents.MigrationEvent.model_validate({
-            "event_type": "ldif.migration",
-            "aggregate_id": aggregate_id,
-            "migration_operation": config.migration_operation,
-            "source_server": config.source_server,
-            "target_server": config.target_server,
-            "entries_migrated": config.entries_migrated,
-            "entries_failed": config.entries_failed,
-            "migration_duration_ms": config.migration_duration_ms,
-            "error_details": error_details_list,
-        })
-
-    @staticmethod
-    def create_schema_event(
-        config: FlextLdifModelsEvents.SchemaEventConfig,
-    ) -> FlextLdifModelsEvents.SchemaEvent:
-        """Create SchemaEvent with standardized fields from config Model."""
-        aggregate_id = f"{config.server_type}_schema_{config.schema_operation}"
-        return FlextLdifModelsEvents.SchemaEvent.model_validate({
-            "event_type": "ldif.schema",
-            "aggregate_id": aggregate_id,
-            "schema_operation": config.schema_operation,
-            "items_processed": config.items_processed,
-            "items_succeeded": config.items_succeeded,
-            "items_failed": config.items_failed,
-            "schema_duration_ms": config.operation_duration_ms,
         })
 
     @staticmethod

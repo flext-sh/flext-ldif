@@ -237,43 +237,6 @@ class FlextLdifModelsDomainsEntries:
                 )
             )
 
-    class ExclusionInfo(m.ArbitraryTypesModel):
-        """Metadata for excluded entries/schema items.
-
-        Stored in QuirkMetadata.extensions['exclusion_info'] to track why
-        an entry was excluded during filtering operations.
-
-        Example:
-            exclusion = ExclusionInfo(
-                excluded=True,
-                exclusion_reason="DN outside base context",
-                filter_criteria=FilterCriteria(
-                    filter_type="dn_pattern", pattern="*,dc=old,dc=com"
-                ),
-                timestamp="2025-10-09T12:34:56Z"
-            )
-
-        """
-
-        excluded: Annotated[
-            bool,
-            Field(description="Whether the item is excluded"),
-        ] = False
-        exclusion_reason: Annotated[
-            str | None,
-            Field(description="Human-readable reason for exclusion"),
-        ] = None
-        filter_criteria: Annotated[
-            str | None,
-            Field(
-                description="Filter criteria that caused the exclusion",
-            ),
-        ] = None
-        timestamp: Annotated[
-            str,
-            Field(..., description="ISO 8601 timestamp when exclusion was marked"),
-        ]
-
     class SchemaAttribute(FlextLdifModelsBases.SchemaElement):
         """LDAP schema attribute definition model (RFC 4512 compliant).
 
@@ -1008,42 +971,6 @@ class FlextLdifModelsDomainsEntries:
             """Get attribute values lists."""
             return self.attributes.values()
 
-    class ErrorDetail(m.FrozenStrictModel):
-        """Error detail information for failed operations."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            strict=True,
-            frozen=True,
-            extra="forbid",
-            validate_default=True,
-            use_enum_values=True,
-            str_strip_whitespace=True,
-        )
-        item: Annotated[str, Field(..., description="Item that failed")]
-        error: Annotated[str, Field(..., description="Error message")]
-        error_code: Annotated[str | None, Field(description="Error code")] = None
-        context: Annotated[
-            FlextLdifModelsMetadata.DynamicMetadata,
-            Field(
-                description="Context",
-            ),
-        ]
-
-    class NormalizedEntryData(FlextLdifModelsBases.Base):
-        """BaseModel for entry data with normalized DN references.
-
-        Represents entry attributes and fields after DN normalization.
-        Used as return type for DN normalization operations.
-        Allows arbitrary additional fields via extra="allow".
-        """
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-            extra="forbid",
-            use_enum_values=True,
-            str_strip_whitespace=True,
-        )
-
     class DnRegistry(FlextLdifModelsBases.Base):
         """Registry for tracking canonical DN case during conversions.
 
@@ -1297,40 +1224,6 @@ class FlextLdifModelsDomainsEntries:
             if canonical:
                 return canonical
             return self._normalize_dn(dn)
-
-    class QuirkCollection(m.Value):
-        """Collection of all quirks (Schema, ACL, Entry) for a single server type.
-
-        Stores all three quirk types together for unified access and management.
-        """
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            arbitrary_types_allowed=True,
-            frozen=True,
-            validate_default=True,
-        )
-        server_type: Annotated[
-            c.Ldif.ServerTypeLiteral,
-            Field(description="Server type identifier (e.g., 'oid', 'oud')"),
-        ]
-        schemas: Annotated[
-            MutableSequence[str],
-            Field(
-                description="List of Schema quirk model instances",
-            ),
-        ]
-        acls: Annotated[
-            MutableSequence[str],
-            Field(
-                description="List of ACL quirk model instances",
-            ),
-        ]
-        entrys: Annotated[
-            MutableSequence[str],
-            Field(
-                description="List of Entry quirk model instances",
-            ),
-        ]
 
     class AclPermissions(m.ArbitraryTypesModel):
         """ACL permissions for LDAP operations.

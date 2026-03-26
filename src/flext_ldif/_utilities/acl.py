@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import MutableMapping, MutableSequence
 from typing import TypeIs
 
 from flext_core import FlextLogger, r, u
@@ -194,13 +194,6 @@ class FlextLdifUtilitiesACL:
         return (version, acl_name)
 
     @staticmethod
-    def _format_batch_errors(
-        errors: MutableSequence[tuple[int, str]],
-    ) -> MutableSequence[str]:
-        """Format batch error tuples to strings."""
-        return [f"ACL {idx}: {msg}" for idx, msg in errors]
-
-    @staticmethod
     def _is_metadata_scalar_or_container(value: t.NormalizedValue) -> bool:
         """Check supported metadata extension value shape."""
         return u.is_primitive(value) or isinstance(value, (list, dict))
@@ -214,30 +207,6 @@ class FlextLdifUtilitiesACL:
         if not permission_map:
             return perm
         return permission_map.get(perm, perm)
-
-    @staticmethod
-    def _parse_single_acl_with_config(
-        acl_line: str,
-        config: FlextLdifModelsSettings.AciParserConfig,
-        *,
-        fail_fast: bool = False,
-    ) -> m.Ldif.Acl | None:
-        """Parse single ACL line, return None on error."""
-        try:
-            result = FlextLdifUtilitiesACL.parse_aci(acl_line, config)
-        except (ValueError, TypeError) as exc:
-            logger.warning(
-                "Failed to parse single ACL line",
-                error=str(exc),
-                error_type=type(exc).__name__,
-            )
-            return None
-        if not result.is_success:
-            if fail_fast:
-                error_msg = f"ACL parse failed: {result.error}"
-                raise ValueError(error_msg)
-            return None
-        return result.value
 
     @staticmethod
     def _process_permission_list(
@@ -256,55 +225,6 @@ class FlextLdifUtilitiesACL:
                 )
                 result[normalized] = is_allow
         return result
-
-    @staticmethod
-    def build_aci_bind_rule(
-        subject_type: str,
-        subject_value: str,
-        bind_operators: MutableMapping[str, str] | None = None,
-        self_value: str = "ldap:///self",
-        anonymous_value: str = "ldap:///anyone",
-    ) -> str:
-        """Build ACI bind rule (subject) clause."""
-        default_operators = {
-            "user": "userdn",
-            "group": "groupdn",
-            "role": "roledn",
-            "self": "userdn",
-            "anonymous": "userdn",
-        }
-        operators = bind_operators or default_operators
-        if subject_type == "self":
-            op = operators.get("self", "userdn")
-            return f'{op}="{self_value}"'
-        if subject_type == "anonymous":
-            op = operators.get("anonymous", "userdn")
-            return f'{op}="{anonymous_value}"'
-        op = operators.get(subject_type, "userdn")
-        value = subject_value.replace(", ", ",")
-        if not value.startswith("ldap:///"):
-            value = f"ldap:///{value}"
-        return f'{op}="{value}"'
-
-    @staticmethod
-    def build_aci_permissions_clause(
-        permissions: MutableSequence[str],
-        allow_prefix: str = "(allow (",
-        supported_permissions: set[str] | frozenset[str] | None = None,
-    ) -> str | None:
-        """Build ACI permissions clause."""
-        if supported_permissions:
-            filtered: MutableSequence[str] = (
-                FlextLdifUtilitiesACL.filter_supported_permissions(
-                    permissions,
-                    supported_permissions,
-                )
-            )
-        else:
-            filtered = permissions
-        if filtered:
-            return f"{allow_prefix}{','.join(filtered)})"
-        return None
 
     @staticmethod
     def build_aci_subject(
@@ -521,121 +441,6 @@ class FlextLdifUtilitiesACL:
         return (
             FlextLdifUtilitiesACL._extract_from_match(match, group) if match else None
         )
-
-    @staticmethod
-    def extract_components_batch(
-        content: str,
-        patterns: MutableMapping[str, str | tuple[str, int]],
-        *,
-        defaults: t.MutableContainerMapping | None = None,
-    ) -> t.MutableContainerMapping:
-        r"""Extract multiple ACL components in one call.
-
-        Replaces repetitive extract_component() calls with a single batch call.
-
-        Example - BEFORE (9 calls in oid.py):
-            bindmode = extract_component(acl, r'bindmode=([^,;]+)', None)
-            filter = extract_component(acl, r'filter="([^"]*)"', None)
-            constraint = extract_component(acl, r'constraint="([^"]*)"', None)
-
-        AFTER (1 call):
-            components = extract_components_batch(
-                acl_string,
-                {
-                    'bindmode': r'bindmode=([^,;]+)',
-                    'filter': r'filter="([^"]*)"',
-                    'constraint': r'constraint="([^"]*)"',
-                },
-                defaults={'bindmode': None, 'filter': None, 'constraint': None}
-            )
-
-        Args:
-            content: ACL content string to extract from
-            patterns: Mapping of component names to regex patterns.
-                      Pattern can be str or (pattern, group_index) tuple.
-            defaults: Default values for components not found
-
-        Returns:
-            Dictionary of extracted component values
-
-        Examples:
-            >>> components = FlextLdifUtilitiesACL.extract_components_batch(
-            ...     "target=ldap:///dc=example;bindmode=all;filter=(*)",
-            ...     {
-            ...         "target": r"target=([^;]+)",
-            ...         "bindmode": r"bindmode=([^;]+)",
-            ...         "filter": r"filter=\\\\(([^)]*)\\\\)",
-            ...     },
-            ...     defaults={"filter": "*"},
-            ... )
-            >>> components["target"]
-            'ldap:///dc=example'
-
-        """
-        effective_defaults = defaults or {}
-
-        def extract_component_batch(
-            name: str,
-            pattern_spec: str | tuple[str, int],
-        ) -> tuple[str, t.NormalizedValue | None]:
-            """Extract component from pattern spec."""
-            if isinstance(pattern_spec, tuple):
-                pattern, group_idx = pattern_spec
-            else:
-                pattern = pattern_spec
-                group_idx = 1
-            value = FlextLdifUtilitiesACL.extract_component(content, pattern, group_idx)
-            raw_default = effective_defaults.get(name) if effective_defaults else None
-            default_value: t.NormalizedValue | None
-            if raw_default is None:
-                default_value = None
-            elif u.is_primitive(raw_default):
-                default_value = raw_default
-            elif isinstance(raw_default, list):
-                normalized_list: Sequence[t.Scalar] = [
-                    item if isinstance(item, t.SCALAR_TYPES) else str(item)
-                    for item in raw_default
-                ]
-                default_value = normalized_list
-            elif isinstance(raw_default, Mapping):
-                normalized_mapping: MutableMapping[
-                    str,
-                    t.Scalar | MutableSequence[t.Scalar],
-                ] = {}
-                for key, item in raw_default.items():
-                    if isinstance(item, t.SCALAR_TYPES):
-                        normalized_mapping[key] = item
-                        continue
-                    if isinstance(item, list):
-                        nested_list: MutableSequence[t.Scalar] = [
-                            nested_item
-                            if isinstance(nested_item, t.SCALAR_TYPES)
-                            else str(nested_item)
-                            for nested_item in item
-                        ]
-                        normalized_mapping[key] = nested_list
-                        continue
-                    normalized_mapping[key] = str(item)
-                default_value = normalized_mapping
-            else:
-                default_value = str(raw_default)
-            final_value: t.NormalizedValue | None = (
-                value if value is not None else default_value
-            )
-            return (name, final_value)
-
-        result_dict: MutableMapping[str, tuple[str, t.NormalizedValue | None]] = {}
-        for key, pattern in patterns.items():
-            try:
-                result = extract_component_batch(key, pattern)
-                result_dict[key] = result
-            except (ValueError, TypeError, AttributeError):
-                continue
-        final_result: t.MutableContainerMapping = {}
-        for key, value_item in result_dict.items():
-            if len(value_item) == TUPLE_LENGTH_PAIR and value_item[1] is not None:
-                final_result[key] = value_item[1]
-        return final_result
 
     @staticmethod
     def extract_permissions(
@@ -973,18 +778,6 @@ class FlextLdifUtilitiesACL:
         return ([], "*")
 
     @staticmethod
-    def parser(acl_string: str) -> MutableMapping[str, str] | None:
-        """Detect ACL format and return format information."""
-        if not acl_string or not acl_string.strip():
-            return None
-        first_line = acl_string.split("\n", maxsplit=1)[0].strip()
-        if first_line.startswith(("orclaci:", "orclentrylevelaci:")):
-            return {"format": "oid"}
-        if first_line.startswith("aci:"):
-            return {"format": "oud"}
-        return None
-
-    @staticmethod
     def sanitize_acl_name(raw_name: str, max_length: int = 128) -> tuple[str, bool]:
         """Sanitize ACL name for ACI format."""
         if not raw_name or not raw_name.strip():
@@ -1057,35 +850,6 @@ class FlextLdifUtilitiesACL:
         else:
             aci_content = acl_line.split(":", 1)[1].strip()
         return (True, aci_content)
-
-    @staticmethod
-    def validate_acl_batch(
-        acl_lines: MutableSequence[str],
-        *,
-        collect_errors: bool = True,
-    ) -> r[MutableSequence[tuple[str, bool, str | None]]]:
-        """Validate multiple ACL lines."""
-
-        def validate_single_acl(acl_line: str) -> tuple[str, bool, str | None]:
-            """Validate single ACL line."""
-            is_valid, aci_content = FlextLdifUtilitiesACL.validate_aci_format(acl_line)
-            if is_valid:
-                return (acl_line, True, None)
-            error_msg = aci_content or "Invalid ACI format"
-            return (acl_line, False, error_msg)
-
-        results: MutableSequence[tuple[str, bool, str | None]] = []
-        if collect_errors:
-            for acl_line in acl_lines:
-                result_tuple = validate_single_acl(acl_line)
-                results.append(result_tuple)
-        else:
-            for acl_line in acl_lines:
-                result_tuple = validate_single_acl(acl_line)
-                results.append(result_tuple)
-                if not result_tuple[1]:
-                    break
-        return r[MutableSequence[tuple[str, bool, str | None]]].ok(results)
 
 
 __all__ = ["FlextLdifUtilitiesACL"]

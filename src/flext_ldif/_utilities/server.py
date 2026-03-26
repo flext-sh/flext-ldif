@@ -136,6 +136,19 @@ class FlextLdifUtilitiesServer:
         return [s.value for s in c.Ldif.ServerTypes.__members__.values()]
 
     @staticmethod
+    def get_server_type_value(name: str) -> str:
+        """Get the enum value for a server type by its member name.
+
+        Args:
+            name: The ServerTypes enum member name (e.g., "RFC", "OID", "AD").
+
+        Returns:
+            The string value of the corresponding ServerTypes enum member.
+
+        """
+        return c.Ldif.ServerTypes[name].value
+
+    @staticmethod
     def get_parent_server_type(
         nested_class_instance_or_type: type | t.Container,
     ) -> c.Ldif.ServerTypeLiteral:
@@ -168,33 +181,6 @@ class FlextLdifUtilitiesServer:
     def get_server_detection_default_max_lines() -> int:
         """Get default max lines for server detection."""
         return c.Ldif.DEFAULT_MAX_LINES
-
-    @staticmethod
-    def get_server_type_value(server_type: str) -> str:
-        """Get server type enum value by name."""
-        server_enum = c.Ldif.ServerTypes.__members__.get(server_type.upper())
-        if server_enum is None:
-            error_msg = f"Server type {server_type} not found"
-            raise AttributeError(error_msg)
-        return server_enum.value
-
-    @staticmethod
-    def get_sort_strategy_value(name: str) -> str:
-        """Get sort strategy enum value by name."""
-        sort_strategy_enum = c.Ldif.SortStrategy.__members__.get(name.upper())
-        if sort_strategy_enum is None:
-            error_msg = f"Sort strategy {name} not found"
-            raise AttributeError(error_msg)
-        return sort_strategy_enum.value
-
-    @staticmethod
-    def get_sort_target_value(name: str) -> str:
-        """Get sort target enum value by name."""
-        sort_target_enum = c.Ldif.SortTarget.__members__.get(name.upper())
-        if sort_target_enum is None:
-            error_msg = f"Sort target {name} not found"
-            raise AttributeError(error_msg)
-        return sort_target_enum.value
 
     @staticmethod
     def matches(server_type: str, *allowed_types: str) -> bool:

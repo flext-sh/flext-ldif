@@ -128,30 +128,6 @@ class FlextLdifUtilitiesMetadata:
         })
 
     @staticmethod
-    def _convert_transformation_to_metadata_value() -> t.MutableConfigurationMapping:
-        """Convert TransformationInfo Pydantic model to MetadataAttributeValue-compatible dict."""
-        return {}
-
-    @staticmethod
-    def _copy_violations_to_target(
-        source_attributes: FlextLdifModelsMetadata.DynamicMetadata,
-        target_attributes: FlextLdifModelsMetadata.DynamicMetadata,
-    ) -> None:
-        """Copy violation fields from source to target metadata attributes."""
-        for violation_key in [
-            "rfc_violations",
-            "dn_violations",
-            "attribute_violations",
-            "server_specific_violations",
-        ]:
-            if violation_key in source_attributes:
-                target_attributes[violation_key] = source_attributes[violation_key]
-        if "validation_context" in source_attributes:
-            target_attributes["validation_context"] = source_attributes[
-                "validation_context"
-            ]
-
-    @staticmethod
     def _extract_all_schema_details(
         definition: str,
     ) -> t.MutableContainerMapping:
@@ -456,20 +432,6 @@ class FlextLdifUtilitiesMetadata:
         return details
 
     @staticmethod
-    def _extract_source_metadata(
-        model: p.Ldif.ModelWithValidationMetadata,
-    ) -> FlextLdifModelsMetadata.DynamicMetadata | None:
-        """Extract validation metadata from a model."""
-        source_metadata_obj = getattr(model, "validation_metadata", None)
-        if source_metadata_obj is None:
-            return None
-        if not isinstance(source_metadata_obj, m.Metadata):
-            return None
-        return FlextLdifModelsMetadata.DynamicMetadata.model_validate(
-            source_metadata_obj.attributes,
-        )
-
-    @staticmethod
     def _extract_spacing_between_fields(
         definition: str,
         field_order: MutableSequence[str],
@@ -595,21 +557,6 @@ class FlextLdifUtilitiesMetadata:
         return {}
 
     @staticmethod
-    def _get_or_create_target_metadata(
-        model: p.Ldif.ModelWithValidationMetadata,
-    ) -> FlextLdifModelsMetadata.DynamicMetadata:
-        """Get or create validation metadata for a model."""
-        target_metadata_obj = getattr(model, "validation_metadata", None)
-        if target_metadata_obj is None or not isinstance(
-            target_metadata_obj,
-            m.Metadata,
-        ):
-            target_metadata_obj = m.Metadata(attributes={})
-        return FlextLdifModelsMetadata.DynamicMetadata.model_validate(
-            target_metadata_obj.attributes,
-        )
-
-    @staticmethod
     def _is_metadata_scalar(value: t.NormalizedValue) -> bool:
         return value is None or u.is_scalar(value)
 
@@ -629,15 +576,6 @@ class FlextLdifUtilitiesMetadata:
                 normalized.append(item)
             elif item is not None:
                 normalized.append(str(item))
-        return normalized
-
-    @staticmethod
-    def _normalize_mapping_list(
-        values: t.MutableContainerList,
-    ) -> MutableSequence[t.Scalar]:
-        normalized: MutableSequence[t.Scalar] = [
-            item for item in values if isinstance(item, t.SCALAR_TYPES)
-        ]
         return normalized
 
     @staticmethod
@@ -675,45 +613,6 @@ class FlextLdifUtilitiesMetadata:
             )
         except (AttributeError, TypeError, ValueError):
             pass
-
-    @staticmethod
-    def _track_metadata_item(
-        model: p.Ldif.ModelWithValidationMetadata,
-        metadata_key: str,
-        item_data: t.NormalizedValue,
-        *,
-        append_to_list: bool = True,
-        update_conversion_path: str | None = None,
-    ) -> p.Ldif.ModelWithValidationMetadata:
-        """Generic helper to track items in model validation_metadata."""
-        metadata = FlextLdifUtilitiesMetadata._get_metadata_dict(model)
-        if metadata_key not in metadata:
-            metadata[metadata_key] = [] if append_to_list else {}
-        if append_to_list:
-            FlextLdifUtilitiesMetadata._add_to_list_metadata(
-                metadata,
-                metadata_key,
-                item_data,
-            )
-        else:
-            FlextLdifUtilitiesMetadata._add_to_dict_metadata(
-                metadata,
-                metadata_key,
-                item_data,
-            )
-        if update_conversion_path:
-            FlextLdifUtilitiesMetadata._update_conversion_path(
-                metadata,
-                update_conversion_path,
-            )
-        metadata_typed = {
-            key: u.normalize_to_metadata(value) for key, value in metadata.items()
-        }
-        dynamic_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-            metadata_typed,
-        )
-        FlextLdifUtilitiesMetadata._set_model_metadata(model, dynamic_metadata)
-        return model
 
     @staticmethod
     def _update_conversion_path(

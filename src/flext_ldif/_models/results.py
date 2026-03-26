@@ -17,15 +17,7 @@ from flext_ldif import (
 
 
 def _events_list_factory() -> list[
-    FlextLdifModelsEvents.AclEvent
-    | FlextLdifModelsEvents.CategoryEvent
-    | FlextLdifModelsEvents.ConversionEvent
-    | FlextLdifModelsEvents.DnEvent
-    | FlextLdifModelsEvents.FilterEvent
-    | FlextLdifModelsEvents.MigrationEvent
-    | FlextLdifModelsEvents.ParseEvent
-    | FlextLdifModelsEvents.SchemaEvent
-    | FlextLdifModelsEvents.WriteEvent
+    FlextLdifModelsEvents.ConversionEvent | FlextLdifModelsEvents.DnEvent
 ]:
     return []
 
@@ -36,15 +28,7 @@ class FlextLdifModelsResults:
         return FlextLdifModelsResults.Statistics()
 
     type EventType = (
-        FlextLdifModelsEvents.AclEvent
-        | FlextLdifModelsEvents.CategoryEvent
-        | FlextLdifModelsEvents.ConversionEvent
-        | FlextLdifModelsEvents.DnEvent
-        | FlextLdifModelsEvents.FilterEvent
-        | FlextLdifModelsEvents.MigrationEvent
-        | FlextLdifModelsEvents.ParseEvent
-        | FlextLdifModelsEvents.SchemaEvent
-        | FlextLdifModelsEvents.WriteEvent
+        FlextLdifModelsEvents.ConversionEvent | FlextLdifModelsEvents.DnEvent
     )
 
     class StatisticsSummary(FlextLdifModelsBases.Base):
@@ -403,62 +387,6 @@ class FlextLdifModelsResults:
         def output_file_count(self) -> int:
             return len(self.output_files)
 
-    class MigrationComparisonResult(FlextLdifModelsBases.Base):
-        """Result of a migration comparison between source and target."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-        )  # validate_default inherited from Base
-        total_oid: t.NonNegativeInt
-        total_target: t.NonNegativeInt
-        status: Annotated[str, Field()]
-        details: Annotated[str, Field()]
-        id: Annotated[str, Field()]
-        timestamp: Annotated[str, Field()]
-        is_synchronized: Annotated[bool, Field()]
-
-    class MigrationWorkflowResult(FlextLdifModelsBases.Base):
-        """Result of a comprehensive migration workflow."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-        )  # validate_default inherited from Base
-        intermediate_migration: Annotated[str, Field()]
-        final_migration: Annotated[str, Field()]
-        final_entry_count: t.NonNegativeInt
-        source_server_detected: Annotated[str, Field()]
-        migration_pipeline: Annotated[str, Field()]
-        parallel_processing: Annotated[bool, Field()]
-        validation_performed: Annotated[bool, Field()]
-        detection_confidence: t.DecimalFraction
-        detected_server: Annotated[str, Field()]
-
-    class AutoDetectionResult(FlextLdifModelsBases.Base):
-        """Result of an auto-detection migration pipeline."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-        )  # validate_default inherited from Base
-        detected_server: Annotated[str, Field()]
-        confidence: t.DecimalFraction
-        patterns_found: Annotated[MutableSequence[str], Field()]
-        total_entries: t.NonNegativeInt
-        migration_success: Annotated[bool, Field()]
-
-    class ServerComparisonSummary(FlextLdifModelsBases.Base):
-        """Summary of batch server comparisons."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-        )  # validate_default inherited from Base
-        servers_tested: t.NonNegativeInt
-        successful_parses: t.NonNegativeInt
-        success_rate: t.NonNegativeFloat
-        server_results: Annotated[
-            MutableMapping[str, t.Ldif.MetadataValue],
-            Field(),
-        ]
-
     class ClientStatus(m.Value):
         # model_config: frozen + validate_default fully inherited from m.Value
         status: Annotated[str, Field()]
@@ -588,11 +516,6 @@ class FlextLdifModelsResults:
                 return extra[key]
             raise KeyError(key)
 
-    class ServiceStatus(DictAccessibleValue):
-        service: Annotated[str, Field()]
-        status: Annotated[str, Field()]
-        rfc_compliance: Annotated[str, Field()]
-
     class SchemaServiceStatus(DictAccessibleValue):
         service: Annotated[str, Field()]
         server_type: Annotated[c.Ldif.ServerTypeLiteral, Field()]
@@ -617,34 +540,6 @@ class FlextLdifModelsResults:
         service: Annotated[str, Field()]
         status: Annotated[str, Field()]
         rfc_compliance: Annotated[str, Field()]
-        validation_types: Annotated[MutableSequence[str], Field()]
-
-    class BatchValidationResult(FlextLdifModelsBases.Base):
-        valid: Annotated[bool, Field()]
-        errors: Annotated[MutableSequence[str], Field()]
-        failed_entries: Annotated[int, Field()]
-
-    class ParsingSummary(FlextLdifModelsBases.Base):
-        total_parsed: Annotated[int, Field()]
-        total_failed: Annotated[int, Field()]
-        error_distribution: Annotated[
-            FlextLdifModelsCollections.DynamicCounts,
-            Field(),
-        ]
-
-    class RdbmsTableSummary(FlextLdifModelsBases.Base):
-        table_name: Annotated[str, Field()]
-        row_count: Annotated[int, Field()]
-        columns: Annotated[MutableSequence[str], Field()]
-
-    class LdapConversionResult(FlextLdifModelsBases.Base):
-        success: Annotated[bool, Field()]
-        errors: Annotated[MutableSequence[str], Field()]
-        converted_count: Annotated[int, Field()]
-
-    class RfcValidationResult(FlextLdifModelsBases.Base):
-        is_valid: Annotated[bool, Field()]
-        violations: Annotated[MutableSequence[str], Field()]
         validation_types: Annotated[MutableSequence[str], Field()]
 
     class ValidationBatchResult(FlextLdifModelsBases.Base):

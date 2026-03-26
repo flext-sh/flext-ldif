@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import copy
 import re
 import struct
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
@@ -77,121 +76,6 @@ class FlextLdifUtilitiesSchema:
                     parts.append(f"SUP ( {sup_str} )")
             else:
                 parts.append(f"SUP {oc_data.sup}")
-
-    @staticmethod
-    def _apply_field_transformation(
-        transformed: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        field_name: str,
-        transform_fn: Callable[
-            ...,
-            t.Container | r[t.Container] | None,
-        ],
-    ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
-        """Apply single field transformation with monadic error handling."""
-        try:
-            old_value = getattr(transformed, field_name, None)
-            new_value = transform_fn(old_value)
-            if isinstance(new_value, r):
-                if new_value.is_failure:
-                    return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
-                        f"Transformation of '{field_name}' failed: {new_value.error}",
-                    )
-                resolved_value: t.Container = new_value.value
-                setattr(transformed, field_name, resolved_value)
-            else:
-                setattr(transformed, field_name, new_value)
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(transformed)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            logger.exception(
-                "Schema field transformation failed",
-                field_name=field_name,
-            )
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
-                f"Transformation of '{field_name}' error: {e}",
-            )
-
-    @staticmethod
-    def _apply_field_transforms(
-        transformed: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        field_transforms: MutableMapping[
-            str,
-            Callable[
-                ...,
-                t.Container | r[t.Container] | None,
-            ]
-            | str
-            | MutableSequence[str]
-            | None,
-        ],
-        schema_obj: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-    ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
-        """Apply all field transformations."""
-        current: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass = transformed
-        for field_name, transform_fn in field_transforms.items():
-            if field_name not in current.__class__.model_fields:
-                continue
-            if transform_fn is None:
-                continue
-            if isinstance(transform_fn, (str, list)):
-                continue
-            if not callable(transform_fn):
-                continue
-            result = FlextLdifUtilitiesSchema._apply_field_transformation(
-                current,
-                field_name,
-                transform_fn,
-            )
-            if result.is_failure:
-                return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
-                    result.error or "Field transformation failed",
-                )
-            unwrapped = result.value
-            validation_result = (
-                FlextLdifUtilitiesSchema._validate_transformation_result(
-                    unwrapped,
-                    schema_obj,
-                )
-            )
-            if validation_result.is_failure:
-                return validation_result
-            unwrapped_validated = validation_result.value
-            try:
-                current = m.Ldif.SchemaAttribute.model_validate(
-                    unwrapped_validated,
-                )
-                continue
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as exc:
-                logger.debug(
-                    f"SchemaAttribute cast failed after transformation: : {exc}"
-                )
-            try:
-                current = m.Ldif.SchemaObjectClass.model_validate(
-                    unwrapped_validated,
-                )
-                continue
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ):
-                return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
-                    f"Unexpected type after transformation: {type(unwrapped_validated).__name__}",
-                )
-        return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(current)
 
     @staticmethod
     def _apply_trailing_spaces(
@@ -447,16 +331,6 @@ class FlextLdifUtilitiesSchema:
         return [str(item) for item in seq]
 
     @staticmethod
-    def _create_schema_copy(
-        schema_obj: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-    ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
-        """Create a copy of the schema t.NormalizedValue."""
-        try:
-            return schema_obj.model_copy()
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
-            return copy.copy(schema_obj)
-
-    @staticmethod
     def _extract_attribute_basic_fields(
         attr_definition: str,
     ) -> r[tuple[str, str, str | None]]:
@@ -681,35 +555,6 @@ class FlextLdifUtilitiesSchema:
         return None
 
     @staticmethod
-    def _return_result(
-        transformed: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        _original_type: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-    ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
-        """Wrap transformation result with proper type."""
-        try:
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(
-                m.Ldif.SchemaAttribute.model_validate(transformed),
-            )
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as exc:
-            logger.debug(
-                f"SchemaAttribute validation failed while returning result: : {exc}"
-            )
-        try:
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(
-                m.Ldif.SchemaObjectClass.model_validate(transformed),
-            )
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
-                f"Unknown schema t.NormalizedValue type: {type(transformed).__name__}",
-            )
-
-    @staticmethod
     def _split_schema_values(value: str) -> MutableSequence[str]:
         return [item.strip() for item in value.strip().split("$")]
 
@@ -793,41 +638,6 @@ class FlextLdifUtilitiesSchema:
         return result_dict
 
     @staticmethod
-    def _validate_transformation_result(
-        unwrapped: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        schema_obj: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-    ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
-        """Validate that transformation result matches input type."""
-        try:
-            _ = m.Ldif.SchemaAttribute.model_validate(schema_obj)
-            validated_attr = m.Ldif.SchemaAttribute.model_validate(
-                unwrapped,
-            )
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(
-                validated_attr,
-            )
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as exc:
-            logger.debug(
-                f"SchemaAttribute validation failed after transformation: {exc}"
-            )
-        try:
-            _ = m.Ldif.SchemaObjectClass.model_validate(schema_obj)
-            validated_oc = m.Ldif.SchemaObjectClass.model_validate(
-                unwrapped,
-            )
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(validated_oc)
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
-                f"Unknown schema t.NormalizedValue type: {type(schema_obj).__name__}",
-            )
-
-    @staticmethod
     def _write_schema_element(
         data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         expected_type: (type[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]),
@@ -844,47 +654,6 @@ class FlextLdifUtilitiesSchema:
             raise ValueError(msg)
         parts = parts_builder(validated_data)
         return " ".join(parts)
-
-    @staticmethod
-    def apply_transformations(
-        schema_obj: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        *,
-        field_transforms: MutableMapping[
-            str,
-            Callable[
-                ...,
-                t.Container | r[t.Container] | None,
-            ]
-            | str
-            | MutableSequence[str]
-            | None,
-        ]
-        | None = None,
-    ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
-        """Apply transformation pipeline to schema t.NormalizedValue."""
-        try:
-            transformed = FlextLdifUtilitiesSchema._create_schema_copy(schema_obj)
-            if field_transforms:
-                transform_result = FlextLdifUtilitiesSchema._apply_field_transforms(
-                    transformed,
-                    field_transforms,
-                    schema_obj,
-                )
-                if transform_result.is_failure:
-                    return transform_result
-                transformed = transform_result.value
-            return FlextLdifUtilitiesSchema._return_result(transformed, schema_obj)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            logger.exception("Transformation pipeline error")
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
-                f"Transformation pipeline error: {e}",
-            )
 
     @staticmethod
     def build_attribute_parts_with_metadata(
@@ -1114,27 +883,6 @@ class FlextLdifUtilitiesSchema:
             "objectclasses:",
             m.Ldif.SchemaObjectClass,
         )
-
-    @staticmethod
-    def find_missing_attributes(
-        attr_list: MutableSequence[str] | str | None,
-        available_attributes: set[str],
-    ) -> MutableSequence[str]:
-        """Find attributes missing from available set."""
-        if not attr_list:
-            return []
-        if isinstance(attr_list, str):
-            attrs = [attr_list]
-        else:
-            attrs = [str(a) for a in attr_list]
-        return [
-            a
-            for a in attrs
-            if not FlextLdifUtilitiesSchema.is_attribute_in_list(
-                a,
-                available_attributes,
-            )
-        ]
 
     @staticmethod
     def is_attribute_in_list(

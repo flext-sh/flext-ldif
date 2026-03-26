@@ -29,7 +29,6 @@ if TYPE_CHECKING:
     from flext_ldif._models.collections import FlextLdifModelsCollections
     from flext_ldif._models.domain import FlextLdifModelsDomains
     from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
-    from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema
     from flext_ldif._models.events import FlextLdifModelsEvents
     from flext_ldif._models.metadata import FlextLdifModelsMetadata
     from flext_ldif._models.processing import FlextLdifModelsProcessing
@@ -176,10 +175,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdifModelsCollections": [
         "flext_ldif._models.collections",
         "FlextLdifModelsCollections",
-    ],
-    "FlextLdifModelsDomainSchema": [
-        "flext_ldif._models.domain_schema",
-        "FlextLdifModelsDomainSchema",
     ],
     "FlextLdifModelsDomains": ["flext_ldif._models.domain", "FlextLdifModelsDomains"],
     "FlextLdifModelsDomainsEntries": [
@@ -475,7 +470,6 @@ __all__ = [
     "FlextLdifModels",
     "FlextLdifModelsBases",
     "FlextLdifModelsCollections",
-    "FlextLdifModelsDomainSchema",
     "FlextLdifModelsDomains",
     "FlextLdifModelsDomainsEntries",
     "FlextLdifModelsEvents",

@@ -187,19 +187,6 @@ class FlextLdifUtilitiesDN:
         return (result, transformations, flags)
 
     @staticmethod
-    def _get_changed_attr_names(
-        original: MutableMapping[str, MutableSequence[str]],
-        transformed: MutableMapping[str, MutableSequence[str]],
-        dn_attributes: set[str],
-    ) -> MutableSequence[str]:
-        """Get list of attribute names that changed using dict comprehension."""
-        return [
-            k
-            for k, v in transformed.items()
-            if k.lower() in dn_attributes and v != original.get(k, [])
-        ]
-
-    @staticmethod
     def _has_double_unescaped_commas(dn_str: str) -> bool:
         """Check for consecutive unescaped commas in DN string."""
         i = 0
@@ -282,60 +269,6 @@ class FlextLdifUtilitiesDN:
                 return (current_val + rdn[i : i + 3], i + 3)
             return (current_val + next_char, i + 2)
         return (current_val, i + 1)
-
-    @staticmethod
-    def _transform_attrs_with_dn(
-        attrs: MutableMapping[str, MutableSequence[str]],
-        dn_attributes: set[str],
-        source_dn: str,
-        target_dn: str,
-    ) -> MutableMapping[str, MutableSequence[str]]:
-        """Transform DN-valued attributes using u.map()."""
-        return {
-            k: [
-                FlextLdifUtilitiesDN.transform_dn_attribute(val, source_dn, target_dn)
-                for val in v
-            ]
-            if k.lower() in dn_attributes
-            else v
-            for k, v in attrs.items()
-        }
-
-    @staticmethod
-    def _update_metadata_for_transformation(
-        metadata: m.Ldif.QuirkMetadata,
-        config: FlextLdifModelsSettings.MetadataTransformationConfig,
-    ) -> None:
-        """Update metadata with transformation tracking."""
-        if config.transformed_dn != config.original_dn:
-            _ = metadata.track_dn_transformation(
-                original_dn=config.original_dn,
-                transformed_dn=config.transformed_dn,
-                transformation_type=c.Ldif.TransformationType.DN_NORMALIZED,
-            )
-
-        def track_attr(attr_name: str) -> None:
-            """Track single attribute transformation."""
-            _ = metadata.track_attribute_transformation(
-                original_name=attr_name,
-                new_name=attr_name,
-                transformation_type=c.Ldif.TransformationType.MODIFIED,
-                original_values=list(config.original_attrs.get(attr_name, [])),
-                new_values=config.transformed_attrs[attr_name],
-                reason=f"BaseDN transformation: {config.source_dn} → {config.target_dn}",
-            )
-
-        _ = u.process(
-            config.transformed_attr_names,
-            processor=track_attr,
-            on_error="skip",
-        )
-        _ = metadata.add_conversion_note(
-            operation="basedn_transform",
-            description=f"Transformed BaseDN from {config.source_dn} to {config.target_dn}",
-        )
-        metadata.extensions[c.Ldif.ENTRY_SOURCE_DN_CASE] = config.original_dn
-        metadata.extensions[c.Ldif.ENTRY_TARGET_DN_CASE] = config.transformed_dn
 
     @staticmethod
     def _validate_basic_format(dn_str: str) -> bool:
@@ -573,60 +506,11 @@ class FlextLdifUtilitiesDN:
         return "".join(mapped_result)
 
     @staticmethod
-    def extract_parent_dn(dn: str) -> r[str]:
-        """Extract parent DN (remove leftmost RDN)."""
-        if not dn or "=" not in dn:
-            return r[str].fail(f"Invalid DN format: missing '=' separator in '{dn}'")
-        try:
-            components = FlextLdifUtilitiesDN.split(dn)
-            if len(components) <= 1:
-                return r[str].fail(
-                    f"Cannot extract parent DN: DN has only one component '{dn}'",
-                )
-            return r[str].ok(",".join(components[1:]))
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            return r[str].fail(f"Parent DN extraction error: {e}")
-
-    @staticmethod
-    def extract_rdn(dn: str) -> r[str]:
-        """Extract leftmost RDN from DN."""
-        if not dn or "=" not in dn:
-            return r[str].fail(f"Invalid DN format: missing '=' separator in '{dn}'")
-        try:
-            components = FlextLdifUtilitiesDN.split(dn)
-            if not components:
-                return r[str].fail(
-                    f"Failed to extract RDN: no components found in '{dn}'",
-                )
-            return r[str].ok(components[0])
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            return r[str].fail(f"RDN extraction error: {e}")
-
-    @staticmethod
     def get_dn_value(dn: m.Ldif.DN | FlextLdifModelsDomains.DN | str) -> str:
         """Extract DN string value from DN model or string (public utility method)."""
         if isinstance(dn, str):
             return dn
         return dn.value
-
-    @staticmethod
-    def is_config_dn(dn: str) -> bool:
-        """Check if DN is in cn=config tree (OpenLDAP dynamic config)."""
-        if not dn:
-            return False
-        return "cn=config" in dn.lower()
 
     @staticmethod
     def is_lutf1_char(char: str) -> bool:
@@ -782,52 +666,6 @@ class FlextLdifUtilitiesDN:
             return r[str].fail(f"DN normalization error: {e}")
 
     @staticmethod
-    def norm_batch(
-        dns: MutableSequence[str],
-        *,
-        fallback: Literal["lower", "upper", "original", "skip"] = "lower",
-        fail_fast: bool = False,
-    ) -> r[MutableSequence[str]]:
-        """Normalize multiple DNs in one call."""
-
-        def normalize_dn(dn: str) -> r[str]:
-            """Normalize single DN with fallback."""
-            result = FlextLdifUtilitiesDN.norm(dn)
-            if result.is_success:
-                return result
-            if fallback == "skip":
-                return r[str].fail("Skipped")
-            if fallback == "lower":
-                return r[str].ok(dn.lower())
-            if fallback == "upper":
-                return r[str].ok(dn.upper())
-            return r[str].ok(dn)
-
-        normalized_results: MutableSequence[str] = []
-        if fail_fast:
-            for dn in dns:
-                result = normalize_dn(dn)
-                if result.is_failure:
-                    return r[MutableSequence[str]].fail(
-                        result.error or f"Failed to normalize DN: {dn}",
-                    )
-                normalized_results.append(result.value)
-            return r[MutableSequence[str]].ok(normalized_results)
-        for dn in dns:
-            result = normalize_dn(dn)
-            if result.is_success:
-                normalized_results.append(result.value)
-        return r[MutableSequence[str]].ok(normalized_results)
-
-    @staticmethod
-    def norm_component(component: str) -> str:
-        """Normalize single DN component (e.g., 'cn = John' → 'cn=John')."""
-        if "=" not in component:
-            return component
-        parts = component.split("=", 1)
-        return f"{parts[0].strip()}={parts[1].strip()}"
-
-    @staticmethod
     def norm_or_fallback(
         dn: str | None,
         *,
@@ -873,22 +711,6 @@ class FlextLdifUtilitiesDN:
         if fallback == "upper":
             return dn.upper()
         return dn
-
-    @overload
-    @staticmethod
-    def norm_string(dn: str) -> str: ...
-
-    @overload
-    @staticmethod
-    def norm_string(dn: m.Ldif.DN) -> str: ...
-
-    @staticmethod
-    def norm_string(dn: str | m.Ldif.DN) -> str:
-        """Normalize full DN to RFC 4514 format."""
-        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
-        components = FlextLdifUtilitiesDN.split(dn_str)
-        normalized = u.map(components, mapper=FlextLdifUtilitiesDN.norm_component)
-        return ",".join(normalized)
 
     @overload
     @staticmethod
@@ -1002,152 +824,6 @@ class FlextLdifUtilitiesDN:
         ) as e:
             return r[MutableSequence[tuple[str, str]]].fail(f"RDN parsing error: {e}")
 
-    @staticmethod
-    def process_complete(
-        dn: str,
-        *,
-        clean: bool = True,
-        validate: bool = True,
-        normalize: bool = True,
-        parse: bool = False,
-    ) -> r[str | MutableSequence[tuple[str, str]]]:
-        """Complete DN processing pipeline in one call."""
-        current_dn = dn
-        if clean:
-            try:
-                current_dn = FlextLdifUtilitiesDN.clean_dn(current_dn)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as exc:
-                return r[str | MutableSequence[tuple[str, str]]].fail(
-                    f"Clean failed: {exc}",
-                )
-        if validate:
-            is_valid, errors = FlextLdifUtilitiesDN.is_valid_dn_string(current_dn)
-            if not is_valid:
-                return r[str | MutableSequence[tuple[str, str]]].fail(
-                    f"Validation failed: {', '.join(errors)}",
-                )
-        if normalize:
-            norm_result = FlextLdifUtilitiesDN.norm(current_dn)
-            if norm_result.is_failure:
-                return r[str | MutableSequence[tuple[str, str]]].fail(
-                    f"Normalization failed: {norm_result.error}",
-                )
-            current_dn = norm_result.value
-        if parse:
-            parse_result = FlextLdifUtilitiesDN.parse_dn(current_dn)
-            if parse_result.is_failure:
-                return r[str | MutableSequence[tuple[str, str]]].fail(
-                    f"Parse failed: {parse_result.error}",
-                )
-            return r[str | MutableSequence[tuple[str, str]]].ok(parse_result.value)
-        return r[str | MutableSequence[tuple[str, str]]].ok(current_dn)
-
-    @staticmethod
-    def replace_base_batch(
-        dns: MutableSequence[str],
-        old_base: str,
-        new_base: str,
-        *,
-        fail_fast: bool = False,
-    ) -> r[MutableSequence[str]]:
-        """Replace base DN in multiple DNs."""
-        old_base_lower = old_base.lower()
-
-        def replace_dn(dn: str) -> str:
-            """Replace base DN in single DN."""
-            try:
-                dn_lower = dn.lower()
-                if dn_lower.endswith(old_base_lower):
-                    prefix = dn[: len(dn) - len(old_base)]
-                    return prefix + new_base
-                return dn
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ):
-                if fail_fast:
-                    raise
-                return dn
-
-        results: MutableSequence[str] = []
-        for dn in dns:
-            try:
-                results.append(replace_dn(dn))
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as exc:
-                if fail_fast:
-                    return r[MutableSequence[str]].fail(
-                        f"Base replacement failed: {exc}",
-                    )
-        return r[MutableSequence[str]].ok(results)
-
-    @staticmethod
-    def replace_base_dn(
-        entries: MutableSequence[m.Ldif.Entry],
-        source_dn: str,
-        target_dn: str,
-    ) -> MutableSequence[m.Ldif.Entry]:
-        """Replace base DN in all entries and DN-valued attributes."""
-        if not entries or not source_dn or (not target_dn):
-            return entries
-        dn_attributes = {
-            "member",
-            "uniquemember",
-            "manager",
-            "owner",
-            "seealso",
-            "memberof",
-            "distinguishedname",
-        }
-
-        def transform_entry(entry: m.Ldif.Entry) -> m.Ldif.Entry | r[m.Ldif.Entry]:
-            """Transform single entry."""
-            if entry.dn is None or entry.attributes is None:
-                return r[m.Ldif.Entry].fail("Entry has no DN or attributes")
-            dn_value = FlextLdifUtilitiesDN.get_dn_value(entry.dn)
-            if not dn_value:
-                return r[m.Ldif.Entry].fail("Entry DN is empty")
-            transformed_dn = FlextLdifUtilitiesDN.transform_dn_attribute(
-                dn_value,
-                source_dn,
-                target_dn,
-            )
-            transformed_attrs = FlextLdifUtilitiesDN._transform_attrs_with_dn(
-                entry.attributes.attributes,
-                dn_attributes,
-                source_dn,
-                target_dn,
-            )
-            return entry.model_copy(
-                update={
-                    "dn": transformed_dn,
-                    "attributes": m.Ldif.Attributes.model_validate({
-                        "attributes": transformed_attrs,
-                    }),
-                },
-            )
-
-        transformed: MutableSequence[m.Ldif.Entry] = []
-        for entry in entries:
-            result = transform_entry(entry)
-            if isinstance(result, m.Ldif.Entry):
-                transformed.append(result)
-        return transformed
-
     @overload
     @staticmethod
     def split(dn: str) -> MutableSequence[str]: ...
@@ -1236,73 +912,6 @@ class FlextLdifUtilitiesDN:
         return result
 
     @staticmethod
-    def transform_dn_with_metadata(
-        entry: m.Ldif.Entry,
-        source_dn: str,
-        target_dn: str,
-    ) -> m.Ldif.Entry:
-        """Transform DN and DN-valued attributes with metadata tracking."""
-        if not source_dn or not target_dn:
-            return entry
-        if entry.dn is None or entry.attributes is None:
-            return entry
-        dn_attributes = {
-            "member",
-            "uniquemember",
-            "manager",
-            "owner",
-            "seealso",
-            "memberof",
-            "distinguishedname",
-        }
-        original_dn_str = FlextLdifUtilitiesDN.get_dn_value(entry.dn)
-        dn_value = FlextLdifUtilitiesDN.get_dn_value(entry.dn)
-        if not dn_value:
-            return entry
-        transformed_dn = FlextLdifUtilitiesDN.transform_dn_attribute(
-            dn_value,
-            source_dn,
-            target_dn,
-        )
-        attrs_dict = entry.attributes.attributes
-        transformed_attrs = FlextLdifUtilitiesDN._transform_attrs_with_dn(
-            attrs_dict,
-            dn_attributes,
-            source_dn,
-            target_dn,
-        )
-        transformed_attr_names = FlextLdifUtilitiesDN._get_changed_attr_names(
-            attrs_dict,
-            transformed_attrs,
-            dn_attributes,
-        )
-        metadata: m.Ldif.QuirkMetadata
-        if entry.metadata:
-            metadata = m.Ldif.QuirkMetadata.model_validate(entry.metadata)
-        else:
-            metadata = m.Ldif.QuirkMetadata.create_for()
-        transform_config = FlextLdifModelsSettings.MetadataTransformationConfig(
-            original_dn=original_dn_str,
-            transformed_dn=transformed_dn,
-            source_dn=source_dn,
-            target_dn=target_dn,
-            transformed_attr_names=transformed_attr_names,
-            original_attrs=attrs_dict,
-            transformed_attrs=transformed_attrs,
-        )
-        FlextLdifUtilitiesDN._update_metadata_for_transformation(
-            metadata,
-            transform_config,
-        )
-        return entry.model_copy(
-            update={
-                "dn": transformed_dn,
-                "attributes": transformed_attrs,
-                "metadata": metadata,
-            },
-        )
-
-    @staticmethod
     def unesc(value: str) -> str:
         r"""Unescape special characters in DN value per RFC 4514 Section 3.
 
@@ -1361,33 +970,6 @@ class FlextLdifUtilitiesDN:
             )
         except (ValueError, TypeError):
             return False
-
-    @staticmethod
-    def validate_dn_batch(
-        dns: MutableSequence[str],
-        *,
-        collect_errors: bool = True,
-    ) -> r[MutableSequence[tuple[str, bool, MutableSequence[str]]]]:
-        """Validate multiple DNs, returning validation status for each."""
-
-        def validate_dn(dn: str) -> tuple[str, bool, MutableSequence[str]]:
-            """Validate single DN."""
-            is_valid, dn_errors = FlextLdifUtilitiesDN.is_valid_dn_string(dn)
-            return (dn, is_valid, dn_errors)
-
-        batch_result = u.batch(list(dns), validate_dn, on_error="skip")
-        if batch_result.is_failure:
-            return r[MutableSequence[tuple[str, bool, MutableSequence[str]]]].fail(
-                batch_result.error or "Validation failed",
-            )
-        results: MutableSequence[tuple[str, bool, MutableSequence[str]]] = [
-            validate_dn(dn) for dn in dns
-        ]
-        if not collect_errors:
-            invalid_results = [item for item in results if not item[1]]
-            if invalid_results:
-                results = results[: results.index(invalid_results[0]) + 1]
-        return r[MutableSequence[tuple[str, bool, MutableSequence[str]]]].ok(results)
 
 
 __all__ = ["FlextLdifUtilitiesDN"]

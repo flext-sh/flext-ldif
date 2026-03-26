@@ -145,16 +145,5 @@ class FlextLdifModelsMetadata:
         def _extra(self) -> MutableMapping[str, t.Ldif.MetadataValue]:
             return self.__pydantic_extra__ or {}
 
-    class TransformationInfo(FlextModels.ArbitraryTypesModel):
-        """Transformation step information stored in metadata."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid",
-            validate_assignment=True,
-        )
-        step: str | None = None
-        server: str | None = None
-        changes: ClassVar[MutableSequence[str]] = []
-
 
 __all__ = ["FlextLdifModelsMetadata"]
