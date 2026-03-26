@@ -1085,7 +1085,9 @@ class FlextLdifModelsSettings:
 
         requires_binary_option: Annotated[
             bool,
-            Field(description="Whether server requires ;binary option for non-ASCII values"),
+            Field(
+                description="Whether server requires ;binary option for non-ASCII values"
+            ),
         ] = False
         requires_naming_attr: Annotated[
             bool,
