@@ -561,7 +561,7 @@ class TestsTestFlextLdifApacheQuirks:
         assert acl_data is not None
         tm.that(acl_data, is_=m.Ldif.Tests.Acl)
         if isinstance(acl_data, m.Ldif.Tests.Acl):
-            tm.that(acl_data.get_acl_format(), eq=c.Ldif.AclKeys.ACI)
+            tm.that(acl_data.get_acl_format(), eq=c.Ldif.DEFAULT_ACL_FORMAT)
             tm.that(acl_data.server_type, eq=c.Ldif.ServerTypes.APACHE)
 
     def test_acl_parse_with_aci_attribute(self) -> None:

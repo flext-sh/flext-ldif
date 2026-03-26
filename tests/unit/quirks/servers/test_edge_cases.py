@@ -39,14 +39,14 @@ class TestsFlextLdifEdgeCases:
         result = ldif_api.parse_source(unicode_ldif, server_type="rfc")
         _ = tm.that(result.is_success, eq=True)
         entries = result.value
-        tm.that(entries, eq=True)
+        tm.that(len(entries) > 0, eq=True)
         for entry in entries:
             tm.that(entry.dn, none=False)
             if entry.dn is not None:
-                tm.that(entry.dn.value, eq=True)
+                tm.that(len(entry.dn.value) > 0, eq=True)
                 has_unicode = any(ord(c) > 127 for c in entry.dn.value)
                 if has_unicode:
-                    tm.that(entry.dn.value, eq=True)
+                    tm.that(len(entry.dn.value) > 0, eq=True)
 
     def test_deep_dn(self, ldif_api: FlextLdif) -> None:
         """Test parsing of entries with very deep DN hierarchies."""
@@ -54,7 +54,7 @@ class TestsFlextLdifEdgeCases:
         result = ldif_api.parse_source(deep_dn_ldif, server_type="rfc")
         _ = tm.that(result.is_success, eq=True)
         entries = result.value
-        tm.that(entries, eq=True)
+        tm.that(len(entries) > 0, eq=True)
         max_depth = 0
         for entry in entries:
             if entry.dn is not None:
@@ -75,7 +75,7 @@ class TestsFlextLdifEdgeCases:
         result = ldif_api.parse_source(fixture_path, server_type="rfc")
         _ = tm.that(result.is_success, eq=True)
         entries = result.value
-        tm.that(entries, eq=True)
+        tm.that(len(entries) > 0, eq=True)
         max_values = 0
         for entry in entries:
             if entry.attributes is None:
