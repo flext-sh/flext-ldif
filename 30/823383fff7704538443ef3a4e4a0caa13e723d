@@ -1,0 +1,23 @@
+src/flext_ldif/_models/domain_entries.py
+  68dbd4878595068b 959
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.20",
+  "base_commit_sha": "30823383fff7704538443ef3a4e4a0caa13e723d",
+  "prompts": {
+    "68dbd4878595068b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e713beea-5d5d-4f90-bbc7-9650893a58f6",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
