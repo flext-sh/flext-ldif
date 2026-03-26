@@ -13,12 +13,10 @@ from importlib import import_module
 
 from flext_tests import tm
 
-from tests import s
-
 version_module = import_module("flext_ldif.__version__")
 
 
-class TestsFlextLdifVersion(s):
+class TestsFlextLdifVersion:
     """Test version module metadata loading and exports."""
 
     def test_version_exported(self) -> None:

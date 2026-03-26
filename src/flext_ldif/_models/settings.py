@@ -83,31 +83,19 @@ class FlextLdifModelsSettings:
         ] = None
         bind_patterns: Annotated[
             MutableMapping[str, str],
-            Field(
-                default_factory=dict,
-                description="Mapping of bind type names to regex patterns",
-            ),
+            Field(description="Mapping of bind type names to regex patterns"),
         ] = Field(default_factory=dict)
         permission_map: Annotated[
             MutableMapping[str, str],
-            Field(
-                default_factory=dict,
-                description="Permission name normalization map",
-            ),
+            Field(description="Permission name normalization map"),
         ] = Field(default_factory=dict)
         special_subjects: Annotated[
             MutableMapping[str, tuple[str, str]],
-            Field(
-                default_factory=dict,
-                description="Special subject value mappings",
-            ),
+            Field(description="Special subject value mappings"),
         ] = Field(default_factory=dict)
         extra_patterns: Annotated[
             MutableMapping[str, str],
-            Field(
-                default_factory=dict,
-                description="Additional extraction patterns for extensions",
-            ),
+            Field(description="Additional extraction patterns for extensions"),
         ] = Field(default_factory=dict)
         default_name: Annotated[
             str,
@@ -746,7 +734,6 @@ class FlextLdifModelsSettings:
         acl_attribute_names: Annotated[
             frozenset[str],
             Field(
-                default_factory=frozenset,
                 description="Set of ACL attribute names (e.g., {'orclaci', 'orclentrylevelaci'}). Used to identify ACL attributes.",
             ),
         ] = Field(default_factory=frozenset)
@@ -765,7 +752,6 @@ class FlextLdifModelsSettings:
         rfc_order_priority_attributes: Annotated[
             MutableSequence[str],
             Field(
-                default_factory=lambda: ["objectClass"],
                 description="Attributes to write first after DN, in order. Default: ['objectClass']. Remaining attributes sorted alphabetically.",
             ),
         ] = Field(default_factory=lambda: ["objectClass"])
@@ -808,7 +794,6 @@ class FlextLdifModelsSettings:
         statistics_categories: Annotated[
             MutableMapping[str, int],
             Field(
-                default_factory=dict,
                 description="Dictionary of category names to entry counts for statistics summary. Example: {'users': 150, 'groups': 25, 'acl': 42}.",
             ),
         ] = Field(default_factory=dict)
@@ -991,12 +976,9 @@ class FlextLdifModelsSettings:
             Field(description="Whether parser is inside the value portion"),
         ] = False
         pairs: Annotated[
-            MutableSequence[tuple[str, str]],
-            Field(
-                default_factory=list,
-                description="Accumulated (attr, value) pairs",
-            ),
-        ] = Field(default_factory=list)
+            list[tuple[str, str]],
+            Field(description="Accumulated (attr, value) pairs"),
+        ] = Field(default_factory=lambda: list[tuple[str, str]]())
 
     class SchemaAttributeConversionPipelineConfig(FlextModels.Value):
         """Config for schema attribute conversion pipeline (discriminated union)."""

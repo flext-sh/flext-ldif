@@ -46,37 +46,23 @@ class DRYValidationAnalysis:
     ) -> MutableSequence[m.Ldif.Entry]:
         """DRY test dataset generation with configurable errors."""
         api = ldif.get_instance()
-        return [
-            api.create_entry(
-                dn=f"cn=Test User {i},ou=People,dc=example,dc=com",
-                attributes={
-                    "objectClass": ["person", "inetOrgPerson"],
-                    "cn": [f"Test User {i}"],
-                    "sn": [f"User{i}"],
-                    "mail": [
-                        f"user{i}@example.com"
-                        if i % int(1 / error_rate) != 0
-                        else "invalid",
-                    ],
-                    **({} if i % int(1 / error_rate) != 0 else {"sn": []}),
-                },
-            ).value
-            for i in range(count)
-            if api.create_entry(
-                dn=f"cn=Test User {i},ou=People,dc=example,dc=com",
-                attributes={
-                    "objectClass": ["person", "inetOrgPerson"],
-                    "cn": [f"Test User {i}"],
-                    "sn": [f"User{i}"],
-                    "mail": [
-                        f"user{i}@example.com"
-                        if i % int(1 / error_rate) != 0
-                        else "invalid",
-                    ],
-                    **({} if i % int(1 / error_rate) != 0 else {"sn": []}),
-                },
-            ).is_success
-        ]
+        entries: MutableSequence[m.Ldif.Entry] = []
+        error_mod = int(1 / error_rate) if error_rate > 0 else 0
+        for i in range(count):
+            is_error = error_mod > 0 and i % error_mod == 0
+            mail = "invalid" if is_error else f"user{i}@example.com"
+            sn_line = "" if is_error else f"\nsn: User{i}"
+            ldif_text = (
+                f"dn: cn=Test User {i},ou=People,dc=example,dc=com\n"
+                f"objectClass: person\n"
+                f"objectClass: inetOrgPerson\n"
+                f"cn: Test User {i}{sn_line}\n"
+                f"mail: {mail}\n"
+            )
+            parse_result = api.parse_ldif(ldif_text)
+            if parse_result.is_success:
+                entries.extend(parse_result.value)
+        return entries
 
     @staticmethod
     def parallel_validation() -> r[m.Ldif.ValidationResult]:

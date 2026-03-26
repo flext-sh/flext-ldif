@@ -5,6 +5,7 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -22,10 +23,7 @@ def complete_ldif_processing_workflow() -> None:
     validation_result = api.validate_entries(entries)
     if validation_result.is_failure:
         return
-    stats_result = api.get_entry_statistics(entries)
-    if stats_result.is_failure:
-        return
-    _ = stats_result.value.total_entries
+    _ = validation_result.value.total_entries
     _ = api.write_ldif_file(entries, Path("examples/workflow_output.ldif"))
 
 
@@ -49,8 +47,8 @@ def server_migration_workflow() -> None:
     )
     if migration_result.is_failure:
         return
-    for path in migration_result.value.output_files:
-        _ = api.parse_ldif(Path(path), server_type="rfc")
+    for entry in migration_result.value.entries:
+        _ = entry.dn
 
 
 def entry_building_and_processing_workflow() -> None:
@@ -58,41 +56,46 @@ def entry_building_and_processing_workflow() -> None:
     api = ldif.get_instance()
     created: list[m.Ldif.Entry] = []
     for idx in range(2):
-        create_result = api.create_entry(
-            dn=f"cn=User{idx},ou=People,dc=example,dc=com",
-            attributes={
-                "objectClass": ["person"],
-                "cn": [f"User{idx}"],
-                "sn": ["User"],
-            },
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DN(value=f"cn=User{idx},ou=People,dc=example,dc=com"),
+            attributes=m.Ldif.Attributes(
+                attributes={
+                    "objectClass": ["person"],
+                    "cn": [f"User{idx}"],
+                    "sn": ["User"],
+                },
+                attribute_metadata={},
+            ),
         )
-        if create_result.is_success:
-            created.append(create_result.value)
+        created.append(entry)
     if not created:
         return
     if api.validate_entries(created).is_failure:
         return
-    persons_result = api.filter_persons(created)
-    if persons_result.is_failure:
-        return
-    _ = api.write(persons_result.value)
+    persons: MutableSequence[m.Ldif.Entry] = [
+        e
+        for e in created
+        if e.attributes is not None and "person" in e.attributes["objectClass"]
+    ]
+    _ = api.write(persons)
 
 
 def schema_driven_workflow() -> None:
     """Run a schema driven workflow."""
-    api = ldif.get_instance()
     entries: list[m.Ldif.Entry] = []
     for idx in range(5):
-        created = api.create_entry(
-            dn=f"cn=Schema User {idx},ou=People,dc=example,dc=com",
-            attributes={
-                "objectClass": ["person"],
-                "cn": [f"Schema User {idx}"],
-                "sn": ["User"],
-            },
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DN(value=f"cn=Schema User {idx},ou=People,dc=example,dc=com"),
+            attributes=m.Ldif.Attributes(
+                attributes={
+                    "objectClass": ["person"],
+                    "cn": [f"Schema User {idx}"],
+                    "sn": ["User"],
+                },
+                attribute_metadata={},
+            ),
         )
-        if created.is_success:
-            entries.append(created.value)
+        entries.append(entry)
     _ = entries
 
 
@@ -104,9 +107,8 @@ def acl_processing_workflow() -> None:
     if parse_result.is_failure:
         return
     for entry in parse_result.value:
-        acl_result = api.extract_acls(entry)
-        if acl_result.is_success:
-            _ = acl_result.value.acls
+        if entry.attributes is not None and "aci" in entry.attributes.attributes:
+            _ = entry.attributes["aci"]
 
 
 def batch_processing_workflow() -> None:
@@ -114,34 +116,36 @@ def batch_processing_workflow() -> None:
     api = ldif.get_instance()
     entries: list[m.Ldif.Entry] = []
     for idx in range(10):
-        result = api.create_entry(
-            dn=f"cn=BatchUser{idx},ou=People,dc=example,dc=com",
-            attributes={
-                "objectClass": ["person"],
-                "cn": [f"BatchUser{idx}"],
-                "sn": ["User"],
-            },
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DN(value=f"cn=BatchUser{idx},ou=People,dc=example,dc=com"),
+            attributes=m.Ldif.Attributes(
+                attributes={
+                    "objectClass": ["person"],
+                    "cn": [f"BatchUser{idx}"],
+                    "sn": ["User"],
+                },
+                attribute_metadata={},
+            ),
         )
-        if result.is_success:
-            entries.append(result.value)
-    if api.validate_entries(entries).is_success:
-        _ = api.process_ldif("validate", entries, parallel=False)
+        entries.append(entry)
+    validation_result = api.validate_entries(entries)
+    if validation_result.is_success:
+        _ = validation_result.value.total_entries
 
 
 def access_all_namespace_classes() -> None:
     """Access all namespace classes."""
-    api = ldif.get_instance()
-    entry_result = m.Ldif.Entry.create(
-        dn="cn=test,dc=example,dc=com",
-        attributes={"objectClass": ["person"], "cn": ["test"], "sn": ["user"]},
+    entry = m.Ldif.Entry(
+        dn=m.Ldif.DN(value="cn=test,dc=example,dc=com"),
+        attributes=m.Ldif.Attributes(
+            attributes={"objectClass": ["person"], "cn": ["test"], "sn": ["user"]},
+            attribute_metadata={},
+        ),
     )
-    if entry_result.is_failure:
-        return
-    _ = entry_result.value
-    _ = c.Ldif.MAX_LINE_WIDTH
+    _ = entry
+    _ = c.Ldif.DEFAULT_LINE_WIDTH
     _ = c.Ldif.Encoding.UTF8
     _ = datetime.now(UTC).timestamp()
-    _ = api.ldif_config.ldif_encoding
 
 
 def error_handling_and_recovery() -> None:

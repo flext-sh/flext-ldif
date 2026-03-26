@@ -5,8 +5,7 @@ SPDX-License-Identifier: MIT
 
 Demonstrates ldif advanced functionality:
 - Batch processing with direct API methods (no manual setup!)
-- Parallel processing for performance (simplified)
-- Utility functions (DN parsing, validation, encoding, file)
+- Utility functions (DN parsing, validation)
 - Processing pipelines (streamlined)
 
 All functionality accessed through ldif facade using direct methods.
@@ -15,10 +14,11 @@ No manual processor creation or conversion loops required.
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_ldif import FlextLdifDn, FlextLdifModels, ldif, u
+from flext_ldif import ldif, m, u
 
 
 def basic_batch_processing() -> None:
@@ -29,50 +29,44 @@ def basic_batch_processing() -> None:
     if parse_result.is_failure:
         return
     entries = parse_result.value
-    batch_result = api.process_ldif("transform", entries, parallel=False)
-    if batch_result.is_success:
-        processed = batch_result.value
-        _ = len(processed)
+    validation_result = api.validate_entries(entries)
+    if validation_result.is_success:
+        _ = validation_result.value.total_entries
 
 
 def parallel_processing() -> None:
-    """Process entries in parallel using direct API method.
+    """Process multiple entries by building and validating them.
 
-    Uses LdifParallelProcessor with ThreadPoolExecutor for true parallel execution.
-    Supports 'transform' (convert to dict) and 'validate' (validate entries).
-    Results may be in different order due to parallel execution.
+    Demonstrates creating entries directly via models and validating in batch.
     """
     api = ldif.get_instance()
-    entries: list[FlextLdifModels.Ldif.Entry] = []
+    entries: list[m.Ldif.Entry] = []
     for i in range(10):
-        result = api.create_entry(
-            dn=f"cn=User{i},ou=People,dc=example,dc=com",
-            attributes={
-                "objectClass": ["person"],
-                "cn": [f"User{i}"],
-                "sn": [f"User{i}"],
-            },
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DN(value=f"cn=User{i},ou=People,dc=example,dc=com"),
+            attributes=m.Ldif.Attributes(
+                attributes={
+                    "objectClass": ["person"],
+                    "cn": [f"User{i}"],
+                    "sn": [f"User{i}"],
+                },
+                attribute_metadata={},
+            ),
         )
-        if result.is_success:
-            entries.append(result.value)
-    parallel_result = api.process_ldif("validate", entries, parallel=True)
-    if parallel_result.is_success:
-        processed = parallel_result.value
-        _ = len(processed)
+        entries.append(entry)
+    validation_result = api.validate_entries(entries)
+    if validation_result.is_success:
+        _ = validation_result.value.total_entries
 
 
 def use_dn_utilities() -> None:
     """Use DN (Distinguished Name) utilities."""
     dn = "cn=John Doe,ou=People,dc=example,dc=com"
-    parse_result = FlextLdifDn.parse_components(dn)
+    parse_result = u.Ldif.parse_dn(dn)
     if parse_result.is_success:
         components = parse_result.value
         _ = len(components)
-    validation_result = FlextLdifDn.validate_format(dn)
-    if validation_result.is_success:
-        is_valid = validation_result.value
-        _ = is_valid
-    normalize_result = FlextLdifDn.normalize_dn(dn)
+    normalize_result = u.Ldif.norm(dn)
     if normalize_result.is_success:
         normalized = normalize_result.value
         _ = normalized
@@ -101,12 +95,9 @@ def use_time_utilities() -> None:
 
 def use_validation_utilities() -> None:
     """Use validation utilities."""
-    attr_valid = True
-    _ = attr_valid
-    attr_valid = True
-    _ = attr_valid
-    oc_valid = True
-    _ = oc_valid
+    oid_result = u.Ldif.validate_format("2.5.4.3")
+    if oid_result.is_success:
+        _ = oid_result.value
 
 
 def use_ldif_utilities() -> None:
@@ -165,19 +156,16 @@ def complete_processing_pipeline() -> None:
         return
     entries = parse_result.value
 
-    def validate_entry(entry: FlextLdifModels.Ldif.Entry) -> bool:
-        """Validate entry DN."""
-        dn_result = FlextLdifDn.validate_format(str(entry.dn))
-        return dn_result.is_success
+    valid_entries: MutableSequence[m.Ldif.Entry] = []
+    for entry in entries:
+        dn_result = u.Ldif.parse_dn(str(entry.dn.value) if entry.dn else "")
+        if dn_result.is_success:
+            valid_entries.append(entry)
 
-    _ = u.process(entries, validate_entry, on_error="skip")
-    batch_result = api.process_ldif("transform", entries, parallel=False)
-    if batch_result.is_success:
-        processed = batch_result.value
-        analysis_result = api.get_entry_statistics(entries)
-        if analysis_result.is_success:
-            stats = analysis_result.value
-            _ = (len(processed), stats)
+    validation_result = api.validate_entries(valid_entries)
+    if validation_result.is_success:
+        report = validation_result.value
+        _ = (len(valid_entries), report.total_entries)
 
 
 def access_all_utilities() -> None:
@@ -192,5 +180,5 @@ def access_all_utilities() -> None:
         size_bytes /= 1024.0
     else:
         formatted_size = f"{size_bytes:.1f} PB"
-    dn_result = FlextLdifDn.validate_format("cn=test,dc=example,dc=com")
+    dn_result = u.Ldif.parse_dn("cn=test,dc=example,dc=com")
     _ = (timestamp, formatted_size, dn_result)

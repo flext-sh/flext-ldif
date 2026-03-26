@@ -774,7 +774,7 @@ class FlextLdifUtilitiesDN:
                 "RDN must be a non-empty string",
             )
         try:
-            pairs: MutableSequence[tuple[str, str]] = []
+            pairs: list[tuple[str, str]] = []
             current_attr = ""
             current_val = ""
             in_value = False

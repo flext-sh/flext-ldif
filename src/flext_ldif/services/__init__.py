@@ -21,18 +21,18 @@ if TYPE_CHECKING:
     from flext_ldif.services.analysis import FlextLdifAnalysis
     from flext_ldif.services.categorization import FlextLdifCategorization
     from flext_ldif.services.conversion import FlextLdifConversion
-    from flext_ldif.services.detector import FlextLdifDetector
+    from flext_ldif.services.detector import FlextLdifDetector, FlextLdifDetectorMixin
     from flext_ldif.services.entries import FlextLdifEntries
     from flext_ldif.services.filters import FlextLdifFilters
     from flext_ldif.services.migration import FlextLdifMigrationPipeline
-    from flext_ldif.services.parser import FlextLdifParser
+    from flext_ldif.services.parser import FlextLdifParser, FlextLdifParserMixin
     from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
     from flext_ldif.services.processing import FlextLdifProcessing
     from flext_ldif.services.rfc_validation import FlextLdifValidation
     from flext_ldif.services.server import FlextLdifServer
     from flext_ldif.services.statistics import FlextLdifStatistics
     from flext_ldif.services.transformers import FlextLdifTransformer
-    from flext_ldif.services.writer import FlextLdifWriter
+    from flext_ldif.services.writer import FlextLdifWriter, FlextLdifWriterMixin
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdifAcl": ["flext_ldif.services.acl", "FlextLdifAcl"],
@@ -43,6 +43,10 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     ],
     "FlextLdifConversion": ["flext_ldif.services.conversion", "FlextLdifConversion"],
     "FlextLdifDetector": ["flext_ldif.services.detector", "FlextLdifDetector"],
+    "FlextLdifDetectorMixin": [
+        "flext_ldif.services.detector",
+        "FlextLdifDetectorMixin",
+    ],
     "FlextLdifEntries": ["flext_ldif.services.entries", "FlextLdifEntries"],
     "FlextLdifFilters": ["flext_ldif.services.filters", "FlextLdifFilters"],
     "FlextLdifMigrationPipeline": [
@@ -50,6 +54,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "FlextLdifMigrationPipeline",
     ],
     "FlextLdifParser": ["flext_ldif.services.parser", "FlextLdifParser"],
+    "FlextLdifParserMixin": ["flext_ldif.services.parser", "FlextLdifParserMixin"],
     "FlextLdifProcessing": ["flext_ldif.services.processing", "FlextLdifProcessing"],
     "FlextLdifProcessingPipeline": [
         "flext_ldif.services.pipeline",
@@ -70,6 +75,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "FlextLdifValidation",
     ],
     "FlextLdifWriter": ["flext_ldif.services.writer", "FlextLdifWriter"],
+    "FlextLdifWriterMixin": ["flext_ldif.services.writer", "FlextLdifWriterMixin"],
     "_services": ["flext_ldif.services._services", ""],
 }
 
@@ -79,10 +85,12 @@ __all__ = [
     "FlextLdifCategorization",
     "FlextLdifConversion",
     "FlextLdifDetector",
+    "FlextLdifDetectorMixin",
     "FlextLdifEntries",
     "FlextLdifFilters",
     "FlextLdifMigrationPipeline",
     "FlextLdifParser",
+    "FlextLdifParserMixin",
     "FlextLdifProcessing",
     "FlextLdifProcessingPipeline",
     "FlextLdifProcessingPipelineService",
@@ -91,6 +99,7 @@ __all__ = [
     "FlextLdifTransformer",
     "FlextLdifValidation",
     "FlextLdifWriter",
+    "FlextLdifWriterMixin",
     "_services",
 ]
 

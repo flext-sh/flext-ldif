@@ -33,44 +33,41 @@ logger: Final = FlextLogger(__name__)
 
 
 class BasicUsageDry:
-    """DRY railway pattern: auto-detect → parse → validate → process."""
+    """DRY railway pattern: auto-detect -> parse -> validate -> process."""
 
     SAMPLE_LDIF = "dn: cn=John Doe,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: John Doe\nsn: Doe\nmail: john.doe@example.com\n\ndn: cn=Jane Smith,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Jane Smith\nsn: Smith\nmail: jane.smith@example.com\n"
 
     @staticmethod
     def batch_transform() -> r[MutableSequence[m.Ldif.Entry]]:
         """DRY batch transformation - returns created entries."""
-        api = ldif.get_instance()
         entries: list[m.Ldif.Entry] = []
         for i in range(10):
-            result = api.create_entry(
-                dn=f"cn=User{i},ou=People,dc=example,dc=com",
-                attributes={
-                    "objectClass": ["person", "inetOrgPerson"],
-                    "cn": [f"User{i}"],
-                    "sn": [f"Name{i}"],
-                    "mail": [f"user{i}@example.com"],
-                },
+            entry = m.Ldif.Entry(
+                dn=m.Ldif.DN(value=f"cn=User{i},ou=People,dc=example,dc=com"),
+                attributes=m.Ldif.Attributes(
+                    attributes={
+                        "objectClass": ["person", "inetOrgPerson"],
+                        "cn": [f"User{i}"],
+                        "sn": [f"Name{i}"],
+                        "mail": [f"user{i}@example.com"],
+                    },
+                    attribute_metadata={},
+                ),
             )
-            if result.is_success:
-                entries.append(result.value)
+            entries.append(entry)
         if not entries:
             return r[MutableSequence[m.Ldif.Entry]].fail("Failed to create entries")
-        transform_result = api.process_ldif(
-            "transform",
-            entries,
-            parallel=True,
-            max_workers=6,
-        )
-        if transform_result.is_failure:
+        api = ldif.get_instance()
+        validate_result = api.validate_entries(entries)
+        if validate_result.is_failure:
             return r[MutableSequence[m.Ldif.Entry]].fail(
-                transform_result.error or "Transform failed",
+                validate_result.error or "Validation failed",
             )
         return r[MutableSequence[m.Ldif.Entry]].ok(entries)
 
     @staticmethod
     def file_pipeline() -> r[str]:
-        """DRY file processing: detect → parse → validate → write.
+        """DRY file processing: detect -> parse -> validate -> write.
 
         Returns:
             r with processing result or error.
@@ -85,13 +82,7 @@ class BasicUsageDry:
         if detect_result.is_failure:
             return r[str].fail(detect_result.error or "Server detection failed")
 
-        detected = detect_result.value
-        detected_server_type: str | None = getattr(
-            detected,
-            "detected_server_type",
-            None,
-        )
-        server_type = detected_server_type or "rfc"
+        server_type = detect_result.value.detected_server_type
         parse_result = api.parse_ldif(sample_file, server_type=server_type)
         if parse_result.is_failure:
             return r[str].fail(parse_result.error or "Parse failed")
@@ -116,7 +107,9 @@ class BasicUsageDry:
         """
         api = ldif.get_instance()
         with FlextContext.Correlation.new_correlation("req-123-dry"):
-            server_result = api.get_effective_server_type()
+            server_result = api.get_effective_server_type(
+                ldif_content=self.SAMPLE_LDIF,
+            )
             if server_result.is_failure:
                 return r[MutableSequence[m.Ldif.Entry]].fail(
                     server_result.error or "Server detection failed",
@@ -137,7 +130,7 @@ class BasicUsageDry:
             return r[MutableSequence[m.Ldif.Entry]].ok(parse_result.value)
 
     def process_pipeline(self) -> r[MutableSequence[m.Ldif.Entry]]:
-        """DRY railway: detect → parse → validate → parallel process.
+        """DRY railway: detect -> parse -> validate.
 
         Python 3.13+ Features:
         - Advanced type narrowing with structural pattern matching
@@ -168,11 +161,4 @@ class BasicUsageDry:
             return r[MutableSequence[m.Ldif.Entry]].fail(
                 validate_result.error or "Validation failed",
             )
-        process_result = api.process_ldif(
-            "transform", entries, parallel=True, max_workers=4
-        )
-        if process_result.is_success:
-            return r[MutableSequence[m.Ldif.Entry]].ok(entries)
-        return r[MutableSequence[m.Ldif.Entry]].fail(
-            process_result.error or "Process failed"
-        )
+        return r[MutableSequence[m.Ldif.Entry]].ok(entries)

@@ -230,7 +230,7 @@ if TYPE_CHECKING:
         FlextLdifTestTypes as t,
         GenericFieldsDict,
     )
-    from tests.unit import constants, models, protocols, services, utilities
+    from tests.unit import constants, protocols, services, utilities
     from tests.unit.__init__.test_version import TestsFlextLdifVersion, version_module
     from tests.unit._utilities.oid.test_oid_utilities import TestFlextLdifUtilitiesOID
     from tests.unit._utilities.parser.test_parser_utilities import (
@@ -246,7 +246,6 @@ if TYPE_CHECKING:
         IsAclAttributeType,
         TestsTestFlextLdifAclAttributeRegistry,
     )
-    from tests.unit.models.test_models import TestFlextLdifModels
     from tests.unit.protocols.test_protocols import TestsTestFlextLdifProtocols
     from tests.unit.quirks.servers.test_apache_quirks import (
         TestsTestFlextLdifApacheQuirks,
@@ -471,7 +470,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.integration.test_pipeline_integration",
         "TestFlextLdifFacadeWorkflows",
     ],
-    "TestFlextLdifModels": ["tests.unit.models.test_models", "TestFlextLdifModels"],
     "TestFlextLdifSettingsIntegration": [
         "tests.integration.test_config_integration",
         "TestFlextLdifSettingsIntegration",
@@ -878,7 +876,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.integration.test_quirks_transformations",
         "migration_inputs",
     ],
-    "models": ["tests.unit.models", ""],
     "novell_server": ["tests.unit.quirks.servers.test_novell_quirks", "novell_server"],
     "oid_acl_fixture": ["tests.integration.conftest", "oid_acl_fixture"],
     "oid_acl_quirk": ["tests.integration.conftest", "oid_acl_quirk"],
@@ -1032,7 +1029,6 @@ __all__ = [
     "TestEncodingErrors",
     "TestFlextLdifAPIIntegration",
     "TestFlextLdifFacadeWorkflows",
-    "TestFlextLdifModels",
     "TestFlextLdifSettingsIntegration",
     "TestFlextLdifTypesStructure",
     "TestFlextLdifUtilitiesComprehensive",
@@ -1162,7 +1158,6 @@ __all__ = [
     "make_test_username",
     "meta_keys",
     "migration_inputs",
-    "models",
     "novell_server",
     "oid_acl_fixture",
     "oid_acl_quirk",

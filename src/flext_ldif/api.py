@@ -35,34 +35,14 @@ class FlextLdifMigrationMixin:
         source_server: str = "rfc",
         target_server: str = "rfc",
         options: m.Ldif.MigrateOptions | None = None,
-        **kwargs: str | float | bool | None,
     ) -> r[m.Ldif.MigrationPipelineResult]:
         """Migrate LDIF data between servers."""
-        if (
-            options
-            and getattr(options, "write_options", None) is not None
-            and options.write_options
-        ):
-            _ = kwargs.setdefault("fold_lines", options.write_options.fold_lines)
-            if options.write_options.attr_order:
-                _ = kwargs.setdefault(
-                    "attr_order",
-                    ",".join(options.write_options.attr_order),
-                )
-        source_server_typed: str = str(source_server)
-        target_server_typed: str = str(target_server)
-        output_filename_raw = kwargs.get("output_filename")
-        output_filename: str | None
-        match output_filename_raw:
-            case str() as filename:
-                output_filename = filename
-            case _:
-                output_filename = None
+        output_filename = options.output_filename if options else None
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type=source_server_typed,
-            target_server_type=target_server_typed,
+            source_server_type=source_server,
+            target_server_type=target_server,
             output_filename=output_filename,
         )
         return pipeline.execute()

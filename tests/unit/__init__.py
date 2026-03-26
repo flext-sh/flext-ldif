@@ -13,7 +13,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from tests.unit import constants, models, protocols, services, utilities
+    from tests.unit import constants, protocols, services, utilities
     from tests.unit.__init__.test_version import TestsFlextLdifVersion, version_module
     from tests.unit._utilities.oid.test_oid_utilities import TestFlextLdifUtilitiesOID
     from tests.unit._utilities.parser.test_parser_utilities import (
@@ -29,7 +29,6 @@ if TYPE_CHECKING:
         IsAclAttributeType,
         TestsTestFlextLdifAclAttributeRegistry,
     )
-    from tests.unit.models.test_models import TestFlextLdifModels
     from tests.unit.protocols.test_protocols import TestsTestFlextLdifProtocols
     from tests.unit.quirks.servers.test_apache_quirks import (
         TestsTestFlextLdifApacheQuirks,
@@ -183,7 +182,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit.utilities.test_utilities_core",
         "TestDnObjectClassMethods",
     ],
-    "TestFlextLdifModels": ["tests.unit.models.test_models", "TestFlextLdifModels"],
     "TestFlextLdifTypesStructure": [
         "tests.unit.test_typings",
         "TestFlextLdifTypesStructure",
@@ -333,7 +331,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "entry_quirk": ["tests.unit.quirks.servers.test_novell_quirks", "entry_quirk"],
     "ldif_api": ["tests.unit.quirks.servers.test_edge_cases", "ldif_api"],
     "meta_keys": ["tests.unit.quirks.servers.test_relaxed_quirks", "meta_keys"],
-    "models": ["tests.unit.models", ""],
     "novell_server": ["tests.unit.quirks.servers.test_novell_quirks", "novell_server"],
     "protocols": ["tests.unit.protocols", ""],
     "schema_quirk": ["tests.unit.quirks.servers.test_novell_quirks", "schema_quirk"],
@@ -366,7 +363,6 @@ __all__ = [
     "TestAttributeFixer",
     "TestDeduplicationHelpers",
     "TestDnObjectClassMethods",
-    "TestFlextLdifModels",
     "TestFlextLdifTypesStructure",
     "TestFlextLdifUtilitiesComprehensive",
     "TestFlextLdifUtilitiesOID",
@@ -411,7 +407,6 @@ __all__ = [
     "entry_quirk",
     "ldif_api",
     "meta_keys",
-    "models",
     "novell_server",
     "protocols",
     "schema_quirk",

@@ -13,10 +13,9 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import m
-from tests import s
 
 
-class TestDnCaseRegistry(s):
+class TestDnCaseRegistry:
     """Test DN case registry functionality."""
 
     @pytest.fixture

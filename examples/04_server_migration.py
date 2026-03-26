@@ -64,7 +64,7 @@ class ExampleServerMigration:
     ) -> tuple[str, t.ContainerMapping]:
         """Detect server type from source data."""
         sample_file = source_dir / "data_00.ldif"
-        detect_result = api.detect_server_type(ldif_content=sample_file)
+        detect_result = api.detect_server_type(ldif_content=sample_file.read_text())
         detection_data: dict[str, str | float | None] = {}
         if detect_result.is_success:
             detection = detect_result.value
@@ -201,11 +201,6 @@ class ExampleServerMigration:
             output_dir=intermediate_dir,
             source_server=source_server_typed,
             target_server="oud",
-            options=m.Ldif.MigrateOptions(
-                write_options=m.Ldif.WriteConfig(
-                    fold_lines=False,
-                ),
-            ),
         )
         if intermediate_migration.is_failure:
             return r[t.ContainerMapping].fail(
@@ -252,11 +247,6 @@ class ExampleServerMigration:
             output_dir=output_dir,
             source_server="oid",
             target_server="oud",
-            options=m.Ldif.MigrateOptions(
-                write_options=m.Ldif.WriteConfig(
-                    fold_lines=False,
-                ),
-            ),
         )
         if migration_result.is_failure:
             return r[m.Ldif.MigrationPipelineResult].fail(

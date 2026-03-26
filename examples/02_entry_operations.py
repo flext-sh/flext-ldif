@@ -4,9 +4,9 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
 flext-ldif enables intelligent operations with ZERO manual work:
-- Auto-detect entry types from attributes (mail → inetOrgPerson, member → groupOfNames)
-- Railway composition: build → filter → process → validate in ONE pipeline
-- Batch operations with parallel processing and error aggregation
+- Auto-detect entry types from attributes (mail -> inetOrgPerson, member -> groupOfNames)
+- Railway composition: build -> filter -> process -> validate in ONE pipeline
+- Batch operations with validation and error aggregation
 - Advanced filtering with type-safe predicates
 
 Original: 235 lines | DRY Advanced: ~60 lines (75% reduction)
@@ -19,7 +19,7 @@ from collections.abc import MutableSequence
 
 from flext_core import r
 
-from flext_ldif import ldif, m, t
+from flext_ldif import ldif, m
 
 
 class DRYEntryOperations:
@@ -28,49 +28,43 @@ class DRYEntryOperations:
     @staticmethod
     def advanced_filtering() -> r[MutableSequence[m.Ldif.Entry]]:
         """DRY advanced filtering: type-safe predicates + composition."""
-        api = ldif.get_instance()
         entries_result = DRYEntryOperations.intelligent_builders()
         if entries_result.is_failure:
             return entries_result
         entries = entries_result.value
-        filtered_it = api.filter_entries(
-            entries,
-            filter_func=lambda item: (
-                item.attributes is not None
-                and "IT" in item.attributes.get("departmentNumber", [])
-            ),
-        )
-        if filtered_it.is_failure:
-            return filtered_it
-        return api.filter_entries(
-            filtered_it.value,
-            filter_func=lambda item: (
-                item.attributes is not None
-                and "@example.com"
-                in (
-                    item.attributes.get("mail", [""])[0]
-                    if item.attributes.get("mail")
-                    else ""
-                )
-            ),
-        )
+        filtered_it = [
+            entry
+            for entry in entries
+            if entry.attributes is not None
+            and "IT" in entry.attributes.get("departmentNumber", [])
+        ]
+        filtered_mail = [
+            entry
+            for entry in filtered_it
+            if entry.attributes is not None
+            and entry.attributes.get("mail")
+            and "@example.com" in entry.attributes.get("mail", [""])[0]
+        ]
+        return r[MutableSequence[m.Ldif.Entry]].ok(filtered_mail)
 
     @staticmethod
-    def batch_processing() -> r[MutableSequence[t.ContainerMapping]]:
-        """DRY batch processing: parallel transformation pipeline."""
+    def batch_processing() -> r[MutableSequence[m.Ldif.Entry]]:
+        """DRY batch processing: validate entries pipeline."""
         api = ldif.get_instance()
-        return DRYEntryOperations.advanced_filtering().flat_map(
-            lambda e: api.process_ldif(
-                "transform", e, parallel=True, max_workers=4
-            ).map(
-                lambda res: [entry.model_dump() for entry in res],
-            ),
-        )
+        filter_result = DRYEntryOperations.advanced_filtering()
+        if filter_result.is_failure:
+            return filter_result
+        entries = filter_result.value
+        validate_result = api.validate_entries(entries)
+        if validate_result.is_failure:
+            return r[MutableSequence[m.Ldif.Entry]].fail(
+                validate_result.error or "Validation failed",
+            )
+        return r[MutableSequence[m.Ldif.Entry]].ok(entries)
 
     @staticmethod
     def intelligent_builders() -> r[MutableSequence[m.Ldif.Entry]]:
         """DRY intelligent builders: auto-detect types from attributes."""
-        api = ldif.get_instance()
         created_entries: list[m.Ldif.Entry] = []
         people_data: list[tuple[str, str, str, str]] = [
             ("Alice Johnson", "Johnson", "alice@example.com", "+1-555-0101"),
@@ -78,17 +72,21 @@ class DRYEntryOperations:
             ("Carol Davis", "Davis", "carol@example.com", "+1-555-0103"),
         ]
         for name, surname, email, phone in people_data:
-            create_result = api.create_entry(
-                dn=f"cn={name},ou=People,dc=example,dc=com",
-                attributes={
-                    "cn": name,
-                    "sn": surname,
-                    "mail": email,
-                    "telephoneNumber": phone,
-                },
+            entry = m.Ldif.Entry(
+                dn=m.Ldif.DN(value=f"cn={name},ou=People,dc=example,dc=com"),
+                attributes=m.Ldif.Attributes(
+                    attributes={
+                        "objectClass": ["person", "inetOrgPerson"],
+                        "cn": [name],
+                        "sn": [surname],
+                        "mail": [email],
+                        "telephoneNumber": [phone],
+                        "departmentNumber": ["IT"],
+                    },
+                    attribute_metadata={},
+                ),
             )
-            if create_result.is_success:
-                created_entries.append(create_result.value)
+            created_entries.append(entry)
 
         if not created_entries:
             return r[MutableSequence[m.Ldif.Entry]].fail("No entries were created")

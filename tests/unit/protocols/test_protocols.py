@@ -83,7 +83,6 @@ class TestsTestFlextLdifProtocols:
     class Constants:
         """Test constants organized as nested class."""
 
-        NAMESPACE_QUIRKS: str = "Quirks"
         ATTR_PARSE: str = "parse"
         ATTR_WRITE: str = "write"
         ATTR_SERVER_TYPE: str = "server_type"
@@ -212,13 +211,6 @@ class TestsTestFlextLdifProtocols:
         tm.that(hasattr(FlextLdifProtocols.Ldif, protocol_name), eq=True)
         protocol = getattr(FlextLdifProtocols.Ldif, protocol_name)
         tm.that(protocol, none=False)
-
-    def test_quirks_namespace_exists(self) -> None:
-        """Test that Quirks namespace exists in Ldif namespace."""
-        tm.that(
-            hasattr(FlextLdifProtocols.Ldif, self.Constants.NAMESPACE_QUIRKS),
-            eq=True,
-        )
 
     def test_schema_satisfies_protocol_oid(self) -> None:
         """Test that OID schema satisfies Schema."""

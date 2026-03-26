@@ -9,14 +9,19 @@ Demonstrates ldif ACL-related functionality:
 - Evaluating ACLs against context
 - Working with ACL components
 
-All functionality accessed through ldif facade.
+All functionality accessed through ldif facade and FlextLdifAcl service.
 """
 
 from __future__ import annotations
 
 from collections.abc import MutableMapping
 
-from flext_ldif import ldif, m, t, u
+from flext_ldif import FlextLdifAcl, ldif, m
+
+
+def _get_acl_service() -> FlextLdifAcl:
+    """Create an ACL service instance."""
+    return FlextLdifAcl()
 
 
 def extract_acls_from_entry() -> None:
@@ -30,7 +35,7 @@ def extract_acls_from_entry() -> None:
     if not entries:
         return
     entry = entries[0]
-    acl_service = api.acl_service
+    acl_service = _get_acl_service()
     acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
     if acl_result.is_success:
         acl_response = acl_result.value
@@ -41,7 +46,7 @@ def extract_acls_from_entry() -> None:
 def parse_and_evaluate_acls() -> None:
     """Parse ACL attributes and evaluate against context."""
     api = ldif.get_instance()
-    ldif_content = 'dn: ou=People,dc=example,dc=com\nobjectClass: organizationalUnit\nou: People\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="cn || sn")(version 3.0; acl "Allow self write"; allow (write) userdn="ldap:///self";)\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Allow REDACTED_LDAP_BIND_PASSWORD all"; allow (all) userdn="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com";)\n'
+    ldif_content = 'dn: ou=People,dc=example,dc=com\nobjectClass: organizationalUnit\nou: People\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="cn || sn")(version 3.0; acl "Allow self write"; allow (write) userdn="ldap:///self";)\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Allow admin all"; allow (all) userdn="ldap:///cn=admin,dc=example,dc=com";)\n'
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
@@ -49,60 +54,38 @@ def parse_and_evaluate_acls() -> None:
     if not entries:
         return
     entry = entries[0]
-    acl_service = api.acl_service
+    acl_service = _get_acl_service()
     acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
     if acl_result.is_failure:
         return
     acl_response = acl_result.value
     acls = acl_response.acls
-    eval_context: t.ContainerMapping = {
-        "subject_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-        "target_dn": "ou=People,dc=example,dc=com",
-        "permissions": {"read": True, "write": True},
-    }
-    required_perms: MutableMapping[str, bool] = {}
-    if "permissions" in eval_context:
-        perms_raw = eval_context["permissions"]
-        if isinstance(perms_raw, dict):
-            for k, v in perms_raw.items():
-                if isinstance(v, bool):
-                    required_perms[k] = v
-    acls_for_eval = [m.Ldif.Acl.model_validate(acl) for acl in acls]
-    evaluation_result = api.acl_service.evaluate_acl_context(
-        acls_for_eval,
-        required_perms,
-    )
+    required_perms: MutableMapping[str, bool] = {"read": True, "write": True}
+    evaluation_result = acl_service.evaluate_acl_context(acls, required_perms)
     if evaluation_result.is_success:
-        allowed = evaluation_result.value
-        _ = allowed
+        _ = evaluation_result.value
 
 
 def process_entries_with_acls() -> None:
     """Process entries that contain ACL information."""
     api = ldif.get_instance()
-    ldif_content = 'dn: ou=People,dc=example,dc=com\nobjectClass: organizationalUnit\nou: People\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Read access"; allow (read) userdn="ldap:///anyone";)\n\ndn: ou=Groups,dc=example,dc=com\nobjectClass: organizationalUnit\nou: Groups\naci: (target="ldap:///ou=Groups,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Admin access"; allow (all) userdn="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com";)\n\ndn: cn=user,ou=People,dc=example,dc=com\nobjectClass: person\ncn: user\nsn: test\n'
+    ldif_content = 'dn: ou=People,dc=example,dc=com\nobjectClass: organizationalUnit\nou: People\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Read access"; allow (read) userdn="ldap:///anyone";)\n\ndn: ou=Groups,dc=example,dc=com\nobjectClass: organizationalUnit\nou: Groups\naci: (target="ldap:///ou=Groups,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Admin access"; allow (all) userdn="ldap:///cn=admin,dc=example,dc=com";)\n\ndn: cn=user,ou=People,dc=example,dc=com\nobjectClass: person\ncn: user\nsn: test\n'
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
     entries = parse_result.value
-    acl_service = api.acl_service
-
-    def process_entry_acls(entry: m.Ldif.Entry) -> tuple[str, int] | None:
-        """Extract ACLs from entry."""
+    acl_service = _get_acl_service()
+    for entry in entries:
         acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
         if acl_result.is_success:
             acl_response = acl_result.value
             acls = acl_response.acls
             if acls:
-                return (str(entry.dn), len(acls))
-        return None
-
-    _ = u.process(entries, process_entry_acls, on_error="skip")
+                _ = (str(entry.dn), len(acls))
 
 
 def execute_acl_service() -> None:
     """Execute ACL service with entry data."""
-    api = ldif.get_instance()
     entry_result = m.Ldif.Entry.create(
         dn="ou=Test,dc=example,dc=com",
         attributes={
@@ -115,11 +98,10 @@ def execute_acl_service() -> None:
     )
     if entry_result.is_failure:
         return
-    acl_service = api.acl_service
+    acl_service = _get_acl_service()
     exec_result = acl_service.execute()
     if exec_result.is_success:
-        acl_data = exec_result.value
-        _ = acl_data
+        _ = exec_result.value
 
 
 def acl_pipeline() -> None:
@@ -133,25 +115,14 @@ def acl_pipeline() -> None:
     if not entries:
         return
     entry = entries[0]
-    acl_service = api.acl_service
+    acl_service = _get_acl_service()
     acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
     if acl_result.is_failure:
         return
     acl_response = acl_result.value
     acls = acl_response.acls
-    eval_context: t.ContainerMapping = {
-        "subject_dn": "cn=anonymous",
-        "permissions": {"read": True},
-    }
-    acls_typed = [m.Ldif.Acl.model_validate(acl) for acl in acls]
-    required_perms: MutableMapping[str, bool] = {}
-    if "permissions" in eval_context:
-        perms_raw = eval_context["permissions"]
-        if isinstance(perms_raw, dict):
-            for k, v in perms_raw.items():
-                if isinstance(v, bool):
-                    required_perms[k] = v
-    eval_result = api.acl_service.evaluate_acl_context(acls_typed, required_perms)
+    required_perms: MutableMapping[str, bool] = {"read": True}
+    eval_result = acl_service.evaluate_acl_context(acls, required_perms)
     if eval_result.is_success:
         validation_result = api.validate_entries([entry])
         if validation_result.is_success:
