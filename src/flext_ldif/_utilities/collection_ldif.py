@@ -19,73 +19,6 @@ class FlextLdifUtilitiesCollectionLdif:
     type VariadicCallable[T] = Callable[..., T]
 
     @classmethod
-    def defaults(
-        cls,
-        *dicts: t.MutableContainerMapping | None,
-    ) -> t.MutableContainerMapping:
-        """Defaults merge - first wins using FlextUtilities.flow() DSL (mnemonic: df)."""
-        if not dicts:
-            return {}
-
-        def apply_defaults(
-            acc: t.NormalizedValue,
-            d: t.NormalizedValue,
-        ) -> t.NormalizedValue:
-            """Apply defaults using fold() pattern: first wins, later fill missing/None."""
-            match (acc, d):
-                case [dict() as acc_dict, dict() as d_dict]:
-                    pass
-                case _:
-                    return acc
-            filtered = cls.map_dict(
-                d_dict,
-                predicate=lambda k, _v: k not in acc_dict or acc_dict.get(k) is None,
-            )
-            acc_dict.update(filtered)
-            return acc_dict
-
-        dict_list = [dict_item for dict_item in dicts if isinstance(dict_item, dict)]
-        if dict_list:
-            result = cls.fold(dict_list, folder=apply_defaults, initial={})
-            return result if isinstance(result, dict) else {}
-        return {}
-
-    d = defaults
-
-    @classmethod
-    def deep_merge(
-        cls,
-        *dicts: t.MutableContainerMapping | None,
-    ) -> t.MutableContainerMapping:
-        """Deep merge using FlextUtilities.merge_mappings() with deep strategy (mnemonic: dm)."""
-        if not dicts:
-            return {}
-        mapping_list: MutableSequence[t.MutableContainerMapping] = [
-            dict_item for dict_item in dicts if isinstance(dict_item, dict)
-        ]
-        if not mapping_list:
-            return {}
-        merged: t.MutableContainerMapping = {
-            key: FlextLdifUtilitiesCollectionLdif.to_config_map_value(value)
-            for key, value in dict(mapping_list[0]).items()
-        }
-        for mapping in mapping_list[1:]:
-            mapping_dict: t.MutableContainerMapping = {
-                key: FlextLdifUtilitiesCollectionLdif.to_config_map_value(value)
-                for key, value in dict(mapping).items()
-            }
-            merge_result = FlextUtilities.merge_mappings(
-                merged,
-                mapping_dict,
-                strategy="deep",
-            )
-            if merge_result.is_success:
-                merged = dict(merge_result.value)
-        return merged
-
-    dm = deep_merge
-
-    @classmethod
     def update_inplace(
         cls,
         obj: t.MutableContainerMapping,
@@ -98,127 +31,6 @@ class FlextLdifUtilitiesCollectionLdif:
         return obj
 
     ui = update_inplace
-
-    @classmethod
-    def _apply_deep_defaults_recursive(
-        cls,
-        acc: t.NormalizedValue,
-        d: t.NormalizedValue,
-    ) -> t.NormalizedValue:
-        """Apply deep defaults recursively: first wins, recurse nested."""
-        match (acc, d):
-            case [dict() as acc_dict, dict() as d_dict]:
-                pass
-            case _:
-                return acc
-        for k, v in d_dict.items():
-            if k not in acc_dict:
-                acc_dict[k] = v
-            else:
-                current = acc_dict[k]
-                match (current, v):
-                    case [dict() as current_dict, dict() as v_dict]:
-                        acc_dict[k] = cls.defaults_deep(current_dict, v_dict)
-                    case _:
-                        pass
-        return acc_dict
-
-    @classmethod
-    def defaults_deep(
-        cls,
-        *dicts: t.MutableContainerMapping | None,
-    ) -> t.MutableContainerMapping:
-        """Deep defaults using FlextUtilities.merge_mappings() deep strategy + first wins (mnemonic: dd)."""
-        if not dicts:
-            return {}
-        dict_list = [
-            dict_item for dict_item in reversed(dicts) if isinstance(dict_item, dict)
-        ]
-        if not dict_list:
-            return {}
-        result = FlextLdifUtilitiesCollectionLdif.fold(
-            dict_list,
-            folder=cls._apply_deep_defaults_recursive,
-            initial={},
-        )
-        return result if isinstance(result, dict) else {}
-
-    dd = defaults_deep
-
-    @staticmethod
-    def merge_dicts(
-        *dicts: t.MutableContainerMapping,
-        strategy: str = "deep",
-        filter_none: bool = False,
-        filter_empty: bool = False,
-    ) -> r[t.MutableContainerMapping]:
-        """Merge multiple dicts with filtering options (mnemonic: mg)."""
-        dicts_typed: tuple[t.MutableContainerMapping, ...] = dicts
-        if not dicts_typed:
-            return r[t.MutableContainerMapping].ok({})
-        merged: t.MutableContainerMapping = {}
-        for dict_item in dicts_typed:
-            dict_item_dict: t.MutableContainerMapping = dict(dict_item)
-            merge_result = FlextUtilities.merge_mappings(
-                merged,
-                dict_item_dict,
-                strategy=strategy,
-            )
-            if merge_result.is_failure:
-                return r[t.MutableContainerMapping].fail(
-                    merge_result.error or "Merge failed",
-                )
-            merged = dict(merge_result.value)
-        if filter_none or filter_empty:
-            filtered: t.MutableContainerMapping = {}
-            for key, value in merged.items():
-                if filter_empty and FlextLdifUtilitiesCollectionLdif.is_empty_value(
-                    value,
-                ):
-                    continue
-                filtered[key] = value
-            merged = filtered
-        return r[t.MutableContainerMapping].ok(merged)
-
-    mg = merge_dicts
-
-    @classmethod
-    def group_by(
-        cls,
-        items: t.MutableContainerList,
-        *,
-        key: Callable[..., t.NormalizedValue],
-    ) -> MutableMapping[t.NormalizedValue, t.MutableContainerList]:
-        """Group by key function (generalized, mnemonic: gb)."""
-        items_list = list(items)
-        result: MutableMapping[t.NormalizedValue, t.MutableContainerList] = {}
-        for item in items_list:
-            k = key(item)
-            if k not in result:
-                result[k] = list[t.NormalizedValue]()
-            result[k].append(item)
-        return result
-
-    gb = group_by
-
-    @classmethod
-    def partition(
-        cls,
-        items: t.MutableContainerList,
-        *,
-        predicate: Callable[..., bool],
-    ) -> tuple[t.MutableContainerList, t.MutableContainerList]:
-        """Partition items by predicate into (matches, non-matches) (mnemonic: pt)."""
-        matches: t.MutableContainerList = []
-        non_matches: t.MutableContainerList = []
-        for item in items:
-            if predicate(item):
-                matches.append(item)
-            else:
-                non_matches.append(item)
-        return (matches, non_matches)
-
-    pt = partition
 
     @classmethod
     def get_ldif[T](
@@ -235,150 +47,6 @@ class FlextLdifUtilitiesCollectionLdif:
             case _:
                 pass
         return default
-
-    @classmethod
-    def pluck(
-        cls,
-        items: t.MutableContainerList,
-        *,
-        key: str | int | Callable[..., t.NormalizedValue],
-    ) -> t.MutableContainerList:
-        """Extract values from sequence by key/index/function (mnemonic: pk)."""
-        result: t.MutableContainerList = []
-        for item in items:
-            if callable(key):
-                result.append(key(item))
-            elif isinstance(key, str):
-                match item:
-                    case Mapping() as item_mapping:
-                        result.append(item_mapping.get(key))
-                    case _:
-                        if getattr(item, str(key), None) is not None:
-                            result.append(getattr(item, str(key)))
-                        else:
-                            result.append(None)
-            else:
-                match item:
-                    case Sequence() as item_sequence:
-                        result.append(
-                            item_sequence[key] if len(item_sequence) > key else None,
-                        )
-                    case _:
-                        if getattr(item, str(key), None) is not None:
-                            result.append(getattr(item, str(key)))
-                        else:
-                            result.append(None)
-        return result
-
-    pk = pluck
-
-    @staticmethod
-    def count[T](
-        items: MutableSequence[T] | tuple[T, ...],
-        predicate: Callable[[T], bool] | None = None,
-    ) -> int:
-        """Count items (generalized: uses count from base, mnemonic: ct)."""
-        if predicate is not None:
-            filtered_items = [item for item in items if predicate(item)]
-            return FlextUtilities.count(filtered_items)
-        return FlextUtilities.count(items)
-
-    ct = count
-
-    @classmethod
-    def omit(
-        cls,
-        data: t.MutableContainerMapping,
-        *keys: str,
-    ) -> t.MutableContainerMapping:
-        """Omit keys using FlextUtilities.map_dict() DSL (mnemonic: om)."""
-        if not data or not keys:
-            return dict(data) if data else {}
-        keys_set = set(keys)
-        return cls.map_dict(data, predicate=lambda k, _: k not in keys_set)
-
-    om = omit
-
-    @staticmethod
-    def is_empty_value(value: t.NormalizedValue) -> bool:
-        """Check if value is empty (empty string, list, or dict)."""
-        match value:
-            case str() as value_str if not value_str:
-                return True
-            case list() as value_list if not value_list:
-                return True
-            case dict() as value_dict:
-                return not value_dict
-            case _:
-                return False
-
-    @staticmethod
-    def take(
-        data_or_items: t.NormalizedValue,
-        key_or_n: str | int,
-        *,
-        as_type: type | None = None,
-        default: t.NormalizedValue | None = None,
-        from_start: bool = True,
-    ) -> t.MutableContainerMapping | t.MutableContainerList | t.NormalizedValue | None:
-        """Take value from data with type guard (mnemonic: tk)."""
-        if isinstance(key_or_n, str):
-            value: t.NormalizedValue = None
-            match data_or_items:
-                case Mapping() as mapping_items:
-                    raw_value = mapping_items.get(key_or_n, default)
-                    value = FlextLdifUtilitiesCollectionLdif.to_config_map_value(
-                        raw_value,
-                    )
-                case _ if getattr(data_or_items, key_or_n, None) is not None:
-                    raw_attr = getattr(data_or_items, key_or_n, default)
-                    value = FlextLdifUtilitiesCollectionLdif.to_config_map_value(
-                        raw_attr,
-                    )
-                case _:
-                    value = default
-            if as_type is not None and value is not None:
-                if FlextUtilities.is_type(value, as_type):
-                    return value
-                return default
-            return value
-        n: int = key_or_n
-        match data_or_items:
-            case dict() as dict_items:
-                items = list(dict_items.items())
-                sliced = items[:n] if from_start else items[-n:]
-                sliced_dict: t.MutableContainerMapping = {
-                    key: FlextLdifUtilitiesCollectionLdif.to_config_map_value(value)
-                    for key, value in sliced
-                }
-                return sliced_dict
-            case list() | tuple() as seq_items:
-                if from_start:
-                    return list(seq_items[:n])
-                return list(seq_items[-n:])
-            case _:
-                pass
-        return default
-
-    tk = take
-
-    @classmethod
-    def try_[T](
-        cls,
-        func: Callable[[], T],
-        *,
-        default: T | None = None,
-        catch: type[Exception] | tuple[type[Exception], ...] = Exception,
-    ) -> T | None:
-        """Try executing function, return default on exception (mnemonic: tr)."""
-        try:
-            return func()
-        except Exception as exc:
-            if isinstance(exc, catch):
-                return default
-            raise
-
-    tr = try_
 
     @staticmethod
     def find(
@@ -437,149 +105,17 @@ class FlextLdifUtilitiesCollectionLdif:
     zw = zip_with
 
     @staticmethod
-    def pipe_ldif(
-        value: t.NormalizedValue,
-        *ops: t.MutableContainerMapping | Callable[..., t.NormalizedValue],
-    ) -> t.NormalizedValue:
-        """LDIF-specific pipe - supports dict operations via flow()."""
-        result: t.NormalizedValue = value
-        for op in ops:
-            match op:
-                case dict() as op_dict:
-                    current: t.NormalizedValue = result
-                    match current:
-                        case dict() as current_dict:
-                            result = {**current_dict, **op_dict}
-                        case _:
-                            result = op_dict
-                case _ if callable(op):
-                    result = op(result)
-                case _:
-                    pass
-        return result
-
-    @staticmethod
-    def pp(
-        value: t.NormalizedValue,
-        *ops: t.MutableContainerMapping | Callable[..., t.NormalizedValue],
-    ) -> t.NormalizedValue:
-        """Alias for pipe_ldif (mnemonic: pp)."""
-        return FlextLdifUtilitiesCollectionLdif.pipe_ldif(value, *ops)
-
-    @classmethod
-    def guard_simple[T](
-        cls,
-        value: T,
-        *,
-        check: Callable[[T], bool] | bool,
-        default: T | None = None,
-    ) -> T | None:
-        """Simple guard using check pattern (mnemonic: gd)."""
-        check_result = check(value) if callable(check) else bool(check)
-        return value if check_result else default
-
-    gd = guard_simple
-
-    @classmethod
-    def let(
-        cls,
-        value: t.NormalizedValue,
-        *,
-        fn: Callable[..., t.NormalizedValue],
-    ) -> t.NormalizedValue:
-        """Let using chain() (mnemonic: lt)."""
-        return FlextLdifUtilitiesCollectionLdif.chain(value, fn)
-
-    lt = let
-
-    @classmethod
-    def apply(
-        cls,
-        fn: FlextLdifUtilitiesCollectionLdif.VariadicCallable[t.NormalizedValue]
-        | t.NormalizedValue,
-        *args: t.NormalizedValue,
-        **kwargs: t.Scalar,
-    ) -> t.NormalizedValue:
-        """Apply function (mnemonic: ap)."""
-        if callable(fn):
-            return fn(*args, **kwargs)
-        return fn
-
-    ap = apply
-
-    @classmethod
-    def bind(
-        cls,
-        value: t.NormalizedValue,
-        *fns: Callable[..., t.NormalizedValue],
-    ) -> t.NormalizedValue:
-        """Bind using chain() (mnemonic: bd)."""
-        return FlextLdifUtilitiesCollectionLdif.chain(value, *fns)
-
-    bd = bind
-
-    @classmethod
-    def lift(
-        cls,
-        fn: Callable[..., t.NormalizedValue],
-    ) -> Callable[..., t.NormalizedValue | None]:
-        """Lift function for optionals (mnemonic: lf)."""
-
-        def lifted_fn(v: t.NormalizedValue) -> t.NormalizedValue | None:
-            """Lifted function with safe None handling using DSL."""
-            return FlextLdifUtilitiesCollectionLdif.maybe(
-                cls.tr(lambda: fn(v), default=None),
-                default=None,
-            )
-
-        return lifted_fn
-
-    lf = lift
-
-    @classmethod
-    def seq(cls, *values: t.NormalizedValue) -> t.MutableContainerList:
-        """Sequence constructor (mnemonic: sq)."""
-        return list(values)
-
-    sq = seq
-
-    @classmethod
-    def assoc(
-        cls,
-        data: t.MutableContainerMapping,
-        key: str,
-        value: t.NormalizedValue,
-    ) -> t.MutableContainerMapping:
-        """Associate key-value using FlextUtilities.merge_mappings() DSL (mnemonic: ac)."""
-        updated = dict(data)
-        updated[key] = value
-        return updated
-
-    ac = assoc
-
-    @classmethod
-    def dissoc(
-        cls,
-        data: t.MutableContainerMapping,
-        *keys: str,
-    ) -> t.MutableContainerMapping:
-        """Dissociate keys using omit DSL (mnemonic: ds)."""
-        return {k: v for k, v in data.items() if k not in keys}
-
-    ds = dissoc
-
-    @classmethod
-    def update(
-        cls,
-        data: t.MutableContainerMapping,
-        updates: t.MutableContainerMapping,
-    ) -> t.MutableContainerMapping:
-        """Update dict using FlextUtilities.merge_mappings() (mnemonic: ud)."""
-        updated = dict(data)
-        updated.update(updates)
-        return updated
-
-    ud = update
+    def is_empty_value(value: t.NormalizedValue) -> bool:
+        """Check if value is empty (empty string, list, or dict)."""
+        match value:
+            case str() as value_str if not value_str:
+                return True
+            case list() as value_list if not value_list:
+                return True
+            case dict() as value_dict:
+                return not value_dict
+            case _:
+                return False
 
     @classmethod
     def keys[T](
@@ -803,123 +339,17 @@ class FlextLdifUtilitiesCollectionLdif:
     sw = switch
 
     @classmethod
-    def when[T](
+    def update(
         cls,
-        *,
-        condition: bool = False,
-        then_value: T | None = None,
-        else_value: T | None = None,
-    ) -> T | None:
-        """Functional conditional (DSL pattern)."""
-        return then_value if condition else else_value
-
-    @classmethod
-    def thru(
-        cls,
-        value: t.NormalizedValue,
-        *,
-        fn: Callable[..., t.NormalizedValue],
-    ) -> t.NormalizedValue:
-        """Thru using direct call (mnemonic: th)."""
-        return fn(value)
-
-    th = thru
-
-    @classmethod
-    def comp(
-        cls,
-        *fns: Callable[..., t.NormalizedValue],
-    ) -> Callable[..., t.NormalizedValue]:
-        """Compose using FlextUtilities.chain() (mnemonic: cp)."""
-        if not fns:
-
-            def _identity(x: t.NormalizedValue) -> t.NormalizedValue:
-                return x
-
-            return _identity
-
-        def _composed(value: t.NormalizedValue) -> t.NormalizedValue:
-            return cls.chain(value, *fns)
-
-        return _composed
-
-    cp = comp
-
-    @classmethod
-    def juxt(
-        cls,
-        *fns: Callable[..., t.NormalizedValue],
-    ) -> Callable[..., tuple[t.NormalizedValue, ...]]:
-        """Juxtapose functions (mnemonic: jx)."""
-        if not fns:
-
-            def _empty(_x: t.NormalizedValue) -> tuple[t.NormalizedValue, ...]:
-                return ()
-
-            return _empty
-
-        def _juxtaposed(value: t.NormalizedValue) -> tuple[t.NormalizedValue, ...]:
-            return tuple(fn(value) for fn in fns)
-
-        return _juxtaposed
-
-    jx = juxt
-
-    @classmethod
-    def curry(
-        cls,
-        fn: Callable[..., t.NormalizedValue],
-        *args: t.NormalizedValue,
-    ) -> Callable[..., t.NormalizedValue]:
-        """Curry function (mnemonic: cy)."""
-
-        def curried(
-            *more_args: t.NormalizedValue,
-            **_kwargs: t.Scalar,
-        ) -> t.NormalizedValue:
-            combined_args: tuple[t.NormalizedValue, ...] = args + more_args
-            converted_args: t.MutableContainerList = []
-            for arg in combined_args:
-                match arg:
-                    case None:
-                        converted_args.append(None)
-                    case list() | tuple() | dict() | Mapping():
-                        converted_args.append(arg)
-                    case _:
-                        converted_args.append(str(arg))
-            if not converted_args:
-                result = fn()
-            elif len(converted_args) == 1:
-                result = fn(converted_args[0])
-            else:
-                result = fn(*converted_args)
-            return result
-
-        return curried
-
-    cy = curry
-
-    @classmethod
-    def evolve(
-        cls,
-        obj: t.MutableContainerMapping,
-        *transforms: t.MutableContainerMapping
-        | Callable[
-            [t.MutableContainerMapping],
-            t.MutableContainerMapping,
-        ],
+        data: t.MutableContainerMapping,
+        updates: t.MutableContainerMapping,
     ) -> t.MutableContainerMapping:
-        """Evolve using FlextUtilities.flow() pattern (mnemonic: ev)."""
-        result: t.MutableContainerMapping = dict(obj)
-        for transform in transforms:
-            if callable(transform) and (not isinstance(transform, Mapping)):
-                transformed = transform(result)
-                result = FlextLdifUtilitiesCollectionLdif.normalize_mapping(transformed)
-            else:
-                continue
-        return result
+        """Update dict using FlextUtilities.merge_mappings() (mnemonic: ud)."""
+        updated = dict(data)
+        updated.update(updates)
+        return updated
 
-    ev = evolve
+    ud = update
 
     @staticmethod
     def or_[T: t.NormalizedValue](
@@ -933,75 +363,6 @@ class FlextLdifUtilitiesCollectionLdif:
         return default
 
     oo = or_
-
-    @staticmethod
-    def maybe(
-        value: t.NormalizedValue | None,
-        *,
-        default: t.NormalizedValue | None = None,
-        mapper: Callable[..., t.NormalizedValue] | None = None,
-    ) -> t.NormalizedValue | None:
-        """Maybe monad pattern (mnemonic: mb)."""
-        if value is None:
-            return default
-        if mapper:
-            return mapper(value)
-        return value
-
-    mb = maybe
-
-    @staticmethod
-    def chain(
-        value: t.NormalizedValue,
-        *funcs: Callable[..., t.NormalizedValue],
-    ) -> t.NormalizedValue:
-        """Chain function calls (DSL helper, mnemonic: ch)."""
-        result = value
-        for func in funcs:
-            result = func(result)
-        return result
-
-    ch = chain
-
-    @staticmethod
-    def pick(
-        data: t.NormalizedValue,
-        *keys: str,
-        as_dict: bool = True,
-    ) -> t.MutableContainerMapping | t.MutableContainerList:
-        """Pick keys from dict (DSL helper, mnemonic: pc)."""
-        if not isinstance(data, Mapping):
-            return {} if as_dict else []
-
-        data_mapping: t.MutableContainerMapping = {
-            str(key): FlextLdifUtilitiesCollectionLdif.to_config_map_value(value)
-            for key, value in data.items()
-        }
-        if as_dict:
-            return {k: data_mapping[k] for k in keys if k in data_mapping}
-        return [data_mapping[k] for k in keys if k in data_mapping]
-
-    pc = pick
-
-    @staticmethod
-    def map_dict(
-        obj: t.MutableContainerMapping,
-        *,
-        mapper: Callable[[str, t.NormalizedValue], t.NormalizedValue] | None = None,
-        key_mapper: Callable[[str], str] | None = None,
-        predicate: Callable[[str, t.NormalizedValue], bool] | None = None,
-    ) -> t.MutableContainerMapping:
-        """Map dict with optional transformations (mnemonic: md)."""
-        result: t.MutableContainerMapping = {}
-        for k, v in obj.items():
-            if predicate and (not predicate(k, v)):
-                continue
-            new_k = key_mapper(k) if key_mapper else k
-            new_v: t.NormalizedValue = mapper(k, v) if mapper else v
-            result[new_k] = new_v
-        return result
-
-    md = map_dict
 
     @staticmethod
     def reduce_dict(
@@ -1047,35 +408,6 @@ class FlextLdifUtilitiesCollectionLdif:
         return result
 
     rd = reduce_dict
-
-    @staticmethod
-    def fold(
-        items: t.NormalizedValue,
-        *,
-        initial: t.NormalizedValue,
-        folder: Callable[[t.NormalizedValue, t.NormalizedValue], t.NormalizedValue]
-        | None = None,
-        predicate: Callable[..., bool] | None = None,
-    ) -> t.NormalizedValue:
-        """Fold items using folder function (mnemonic: fd)."""
-        if not folder:
-            return initial
-        items_list: t.MutableContainerList
-        if isinstance(items, Sequence) and not isinstance(items, (str, bytes)):
-            items_list = [
-                FlextLdifUtilitiesCollectionLdif.to_config_map_value(item)
-                for item in items
-            ]
-        else:
-            items_list = [FlextLdifUtilitiesCollectionLdif.to_config_map_value(items)]
-        if predicate:
-            items_list = [item for item in items_list if predicate(item)]
-        result: t.NormalizedValue = initial
-        for item in items_list:
-            result = folder(result, item)
-        return result
-
-    fd = fold
 
     @staticmethod
     def map_filter(
@@ -1192,55 +524,6 @@ class FlextLdifUtilitiesCollectionLdif:
 
     pr = pairs
 
-    @staticmethod
-    def is_type(
-        value: t.NormalizedValue,
-        type_spec: str | type | tuple[type, ...],
-    ) -> bool:
-        """Type check using FlextUtilities.build() DSL (mnemonic: it)."""
-        types_tuple: tuple[str | type, ...] = (
-            type_spec if isinstance(type_spec, tuple) else (type_spec,)
-        )
-        type_map = {
-            "list": list,
-            "dict": dict,
-            "str": str,
-            "int": int,
-            "bool": bool,
-            "tuple": tuple,
-        }
-        for tuple_ in types_tuple:
-            resolved_type: type | None = (
-                type_map.get(tuple_) if isinstance(tuple_, str) else tuple_
-            )
-            if resolved_type is not None and FlextUtilities.is_type(
-                value,
-                resolved_type,
-            ):
-                return True
-        return False
-
-    @classmethod
-    def prop(cls, key: str) -> Callable[..., t.NormalizedValue]:
-        """Property accessor using FlextUtilities.get() (mnemonic: pp)."""
-
-        def getter(obj: t.NormalizedValue) -> t.NormalizedValue:
-            """Get value from t.NormalizedValue by key."""
-            match obj:
-                case Mapping() as obj_mapping:
-                    return FlextLdifUtilitiesCollectionLdif.to_config_map_value(
-                        obj_mapping.get(key),
-                    )
-                case _:
-                    pass
-            if getattr(obj, key, None) is not None:
-                return getattr(obj, key)
-            return None
-
-        return getter
-
-    prop_get = prop
-
     @classmethod
     def props(cls, *keys: str) -> Callable[..., t.MutableContainerMapping]:
         """Props accessor using FlextUtilities.pick() directly (mnemonic: ps)."""
@@ -1274,7 +557,7 @@ class FlextLdifUtilitiesCollectionLdif:
 
     @classmethod
     def path(cls, *keys: str) -> Callable[..., t.NormalizedValue]:
-        """Path accessor using FlextUtilities.chain() DSL (mnemonic: ph)."""
+        """Path accessor using chain DSL (mnemonic: ph)."""
 
         def make_getter(
             key: str,
@@ -1307,6 +590,61 @@ class FlextLdifUtilitiesCollectionLdif:
         return _path_getter
 
     ph = path
+
+    @staticmethod
+    def chain(
+        value: t.NormalizedValue,
+        *funcs: Callable[..., t.NormalizedValue],
+    ) -> t.NormalizedValue:
+        """Chain function calls (DSL helper, mnemonic: ch)."""
+        result = value
+        for func in funcs:
+            result = func(result)
+        return result
+
+    ch = chain
+
+    @classmethod
+    def normalize_ldif(
+        cls,
+        value: str | MutableSequence[str] | tuple[str, ...] | set[str] | frozenset[str],
+        other: str
+        | MutableSequence[str]
+        | tuple[str, ...]
+        | set[str]
+        | frozenset[str]
+        | None = None,
+        *,
+        case: str = "lower",
+    ) -> str | MutableSequence[str] | set[str] | bool:
+        """Normalize for LDIF comparison (mnemonic: nz)."""
+
+        def normalize_single(v: str) -> str:
+            if case == "lower":
+                return v.lower()
+            if case == "upper":
+                return v.upper()
+            return v
+
+        if other is not None:
+            match (value, other):
+                case [str() as value_str, str() as other_str]:
+                    return normalize_single(value_str) == normalize_single(
+                        other_str,
+                    )
+                case _:
+                    pass
+        match value:
+            case str() as value_str:
+                return normalize_single(value_str)
+            case list() | tuple() as seq_value:
+                return [normalize_single(str(v)) for v in seq_value]
+            case set() | frozenset() as set_value:
+                return {normalize_single(str(v)) for v in set_value}
+            case _:
+                return [normalize_single(str(v)) for v in value]
+
+    nz = normalize_ldif
 
     @staticmethod
     def to_config_map_value(value: t.NormalizedValue) -> t.NormalizedValue:

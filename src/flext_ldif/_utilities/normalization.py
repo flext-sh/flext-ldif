@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Callable, MutableSequence
+from collections.abc import MutableSequence
 from typing import Self
 
-from flext_core import FlextUtilities, r
+from flext_core import FlextUtilities
 
 from flext_ldif import t
 
@@ -123,142 +123,6 @@ class FlextLdifUtilitiesNormalization:
             self._target_type = "to_str"
             return self
 
-    @classmethod
-    def normalize_list(
-        cls,
-        value: t.NormalizedValue | r[t.NormalizedValue],
-        *,
-        default: t.MutableContainerList | None = None,
-    ) -> t.MutableContainerList:
-        """Normalize to list using FlextUtilities.build() DSL (mnemonic: nl)."""
-        extracted_value: t.NormalizedValue | None
-        match value:
-            case r() as result_value:
-                extracted_value = (
-                    result_value.value if not result_value.is_failure else None
-                )
-            case _:
-                extracted_value = value
-        default_list: t.MutableContainerList = default if default is not None else []
-        extracted: t.NormalizedValue = (
-            extracted_value if extracted_value is not None else default_list
-        )
-        ops: t.MutableContainerMapping = {
-            "ensure": "list",
-            "ensure_default": default_list,
-        }
-        result = cls.build(
-            extracted,
-            ops=ops,
-        )
-        match result:
-            case list() as result_list:
-                return [cls.to_config_map_value(item) for item in result_list]
-            case tuple() as result_tuple:
-                return [cls.to_config_map_value(item) for item in result_tuple]
-            case _:
-                pass
-        result_typed = cls.to_config_map_value(result)
-        return [result_typed]
-
-    @classmethod
-    def normalize_ldif(
-        cls,
-        value: str | MutableSequence[str] | tuple[str, ...] | set[str] | frozenset[str],
-        other: str
-        | MutableSequence[str]
-        | tuple[str, ...]
-        | set[str]
-        | frozenset[str]
-        | None = None,
-        *,
-        case: str = "lower",
-    ) -> str | MutableSequence[str] | set[str] | bool:
-        """Normalize for LDIF comparison (mnemonic: nz)."""
-
-        def normalize_single(v: str) -> str:
-            if case == "lower":
-                return v.lower()
-            if case == "upper":
-                return v.upper()
-            return v
-
-        if other is not None:
-            match (value, other):
-                case [str() as value_str, str() as other_str]:
-                    return normalize_single(value_str) == normalize_single(
-                        other_str,
-                    )
-                case _:
-                    pass
-        match value:
-            case str() as value_str:
-                return normalize_single(value_str)
-            case list() | tuple() as seq_value:
-                return [normalize_single(str(v)) for v in seq_value]
-            case set() | frozenset() as set_value:
-                return {normalize_single(str(v)) for v in set_value}
-            case _:
-                return [normalize_single(str(v)) for v in value]
-
-    nz = normalize_ldif
-
-    @classmethod
-    def smart_convert(
-        cls,
-        value: t.NormalizedValue | r[t.NormalizedValue],
-        *,
-        target_type: str,
-        predicate: Callable[..., bool] | None = None,
-        default: t.NormalizedValue = None,
-    ) -> t.NormalizedValue:
-        """Smart convert using FlextUtilities.build() DSL (mnemonic: sc)."""
-        match value:
-            case r() as result_value:
-                extracted: t.NormalizedValue = (
-                    result_value.value if not result_value.is_failure else default
-                )
-            case _:
-                extracted = value
-        if extracted is None:
-            return default
-        conv_builder = cls.conv(extracted)
-        conv_result: t.NormalizedValue = None
-        if target_type == "str":
-            str_default = default if isinstance(default, str) else ""
-            conv_result = conv_builder.to_str(default=str_default).build()
-        elif target_type == "int":
-            int_default = default if isinstance(default, int) else 0
-            conv_result = conv_builder.to_int(default=int_default).build()
-        elif target_type == "bool":
-            bool_default = default if isinstance(default, bool) else False
-            conv_result = conv_builder.to_bool(default=bool_default).build()
-        elif target_type == "list":
-            list_default: MutableSequence[str] = []
-            match default:
-                case list() | tuple() as default_seq:
-                    list_default = [str(item) for item in default_seq]
-                case _:
-                    pass
-            conv_result = conv_builder.str_list(default=list_default).build()
-            if predicate and isinstance(conv_result, list):
-                filtered = [item for item in conv_result if predicate(item)]
-                return filtered or conv_result
-        else:
-            ops: t.MutableContainerMapping = {
-                "ensure": target_type,
-                "ensure_default": default,
-            }
-            if predicate:
-                pass
-            conv_result = cls.build(
-                extracted,
-                ops=ops,
-            )
-        return conv_result if conv_result is not None else default
-
-    sc = smart_convert
-
     @staticmethod
     def conv(value: t.NormalizedValue) -> FlextLdifUtilitiesNormalization.ConvBuilder:
         """Create conversion builder (DSL entry point)."""
@@ -274,53 +138,6 @@ class FlextLdifUtilitiesNormalization:
         if ops is None:
             return value
         return value
-
-    @classmethod
-    def as_type(
-        cls,
-        value: t.NormalizedValue,
-        *,
-        target: type | str,
-        default: t.NormalizedValue | None = None,
-    ) -> t.NormalizedValue:
-        """Safe cast using FlextUtilities.convert() or FlextUtilities.ensure() (mnemonic: at)."""
-        type_map = {
-            "list": list,
-            "dict": dict,
-            "str": str,
-            "int": int,
-            "bool": bool,
-            "tuple": tuple,
-        }
-        target_type = type_map.get(target) if isinstance(target, str) else target
-        if target_type is None:
-            return default
-        if target_type is str:
-            str_default = default if isinstance(default, str) else ""
-            return cls.conv(value).to_str(default=str_default).safe().build()
-        if target_type is int:
-            int_default = default if isinstance(default, int) else 0
-            return cls.conv(value).to_int(default=int_default).safe().build()
-        if target_type is bool:
-            bool_default = default if isinstance(default, bool) else False
-            return cls.conv(value).to_bool(default=bool_default).safe().build()
-        if target_type is list:
-            list_default: MutableSequence[str] = []
-            match default:
-                case list() | tuple() as default_seq:
-                    list_default = [str(item) for item in default_seq]
-                case _:
-                    pass
-            return cls.conv(value).str_list(default=list_default).safe().build()
-        ops: t.MutableContainerMapping = {}
-        result = cls.build(
-            value,
-            ops=ops,
-        )
-        result_typed = cls.to_config_map_value(result)
-        return result_typed if result_typed is not None else default
-
-    at = as_type
 
 
 __all__ = ["FlextLdifUtilitiesNormalization"]

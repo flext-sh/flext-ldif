@@ -2,14 +2,9 @@
 
 from __future__ import annotations
 
-import base64
-from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
-from pathlib import Path
-from typing import IO, Self, override
+from typing import override
 
 from flext_core import FlextModelsResult, r
-
-from flext_ldif import FlextLdifUtilitiesWriter, m, t
 
 
 class FlextLdifUtilitiesResult[T]:
@@ -47,104 +42,6 @@ class FlextLdifUtilitiesResult[T]:
     def __bool__(self) -> bool:
         """Return True if result is success."""
         return self.is_success
-
-    def __and__(
-        self,
-        other: FlextLdifUtilitiesResult[T],
-    ) -> FlextLdifUtilitiesResult[MutableSequence[T]]:
-        """Combine operator: result1 & result2."""
-        if self.is_failure:
-            return FlextLdifUtilitiesResult[MutableSequence[T]].fail(self.error)
-        if other.is_failure:
-            return FlextLdifUtilitiesResult[MutableSequence[T]].fail(other.error)
-        return FlextLdifUtilitiesResult.ok([self.value, other.value])
-
-    def __matmul__(
-        self,
-        metadata: MutableMapping[str, t.Scalar | MutableSequence[str] | None],
-    ) -> FlextLdifUtilitiesResult[T]:
-        """Metadata operator: result @ metadata."""
-        if self.is_failure:
-            return FlextLdifUtilitiesResult[T].fail(self.error)
-        value = self.value
-        if isinstance(value, Sequence) and (not isinstance(value, str)):
-            return FlextLdifUtilitiesResult[T].fail(
-                "attach_metadata not yet implemented for sequences",
-            )
-        return FlextLdifUtilitiesResult[T].fail(
-            "attach_metadata not yet implemented for single entry",
-        )
-
-    def __or__(
-        self,
-        transformer: Callable[[T], T],
-    ) -> FlextLdifUtilitiesResult[T]:
-        """Pipe operator: result | transformer."""
-        if self.is_failure:
-            return FlextLdifUtilitiesResult[T].fail(self.error)
-        transformed = transformer(self.value)
-        return FlextLdifUtilitiesResult.ok(transformed)
-
-    @staticmethod
-    def _extract_entries(
-        seq: Sequence[object],
-    ) -> MutableSequence[m.Ldif.Entry] | None:
-        """Extract Entry objects from a sequence, returning None if any non-Entry found."""
-        entries: MutableSequence[m.Ldif.Entry] = []
-        for item in seq:
-            if not isinstance(item, m.Ldif.Entry):
-                return None
-            entries.append(item)
-        return entries
-
-    def __rshift__(self, output: Path | str | IO[str]) -> FlextLdifUtilitiesResult[str]:
-        """Write operator: result >> output."""
-        if self.is_failure:
-            return FlextLdifUtilitiesResult[str].fail(self.error)
-        entry_payload: m.Ldif.Entry | MutableSequence[m.Ldif.Entry]
-        val_raw = self.value
-        if isinstance(val_raw, m.Ldif.Entry):
-            entry_payload = val_raw
-        else:
-            if not isinstance(val_raw, Sequence):
-                return FlextLdifUtilitiesResult[str].fail(
-                    "Entry serialization failed: value must be Entry or sequence of Entry",
-                )
-            seq_as_objects: Sequence[object] = list.__call__(val_raw)
-            entry_list_result = FlextLdifUtilitiesResult._extract_entries(
-                seq_as_objects
-            )
-            if entry_list_result is None:
-                return FlextLdifUtilitiesResult[str].fail(
-                    "Entry serialization failed: sequence contains non-entry value",
-                )
-            entry_payload = entry_list_result
-        serialized = FlextLdifUtilitiesResult._serialize_entries_to_ldif(entry_payload)
-        if serialized.is_failure:
-            serialized_error = serialized.error
-            if serialized_error is None:
-                return FlextLdifUtilitiesResult[str].fail("Entry serialization failed")
-            return FlextLdifUtilitiesResult[str].fail(serialized_error)
-        ldif_content = serialized.value
-        if isinstance(output, str):
-            output = Path(output)
-        if isinstance(output, Path):
-            write_result = FlextLdifUtilitiesWriter.write_file(ldif_content, output)
-            if write_result.is_failure:
-                write_error = write_result.error
-                if write_error is None:
-                    return FlextLdifUtilitiesResult[str].fail(
-                        "write_entries_to_file failed",
-                    )
-                return FlextLdifUtilitiesResult[str].fail(write_error)
-            return FlextLdifUtilitiesResult.ok(ldif_content)
-        try:
-            _ = output.write(ldif_content)
-        except (ValueError, AttributeError, OSError, TypeError) as exc:
-            return FlextLdifUtilitiesResult[str].fail(
-                f"write_entries_to_string failed: {exc}",
-            )
-        return FlextLdifUtilitiesResult.ok(ldif_content)
 
     @property
     def error(self) -> str:
@@ -189,100 +86,6 @@ class FlextLdifUtilitiesResult[T]:
     ) -> FlextLdifUtilitiesResult[TResult]:
         """Create a successful result with the given value."""
         return FlextLdifUtilitiesResult(r[TResult].ok(value))
-
-    @staticmethod
-    def _encode_dn_line(dn_value: str) -> str:
-        if FlextLdifUtilitiesWriter.needs_base64_encoding(dn_value):
-            encoded_dn = base64.b64encode(dn_value.encode("utf-8")).decode("ascii")
-            return f"dn:: {encoded_dn}"
-        return f"dn: {dn_value}"
-
-    @staticmethod
-    def _serialize_entries_to_ldif(
-        value: MutableSequence[m.Ldif.Entry] | m.Ldif.Entry,
-    ) -> r[str]:
-        entries: MutableSequence[m.Ldif.Entry] = (
-            [value] if isinstance(value, m.Ldif.Entry) else list(value)
-        )
-        all_lines: MutableSequence[str] = []
-        for entry in entries:
-            entry_lines_result = FlextLdifUtilitiesResult._serialize_single_entry(entry)
-            if entry_lines_result.is_failure:
-                entry_error = entry_lines_result.error
-                if entry_error is None:
-                    return r[str].fail("Entry serialization failed")
-                return r[str].fail(entry_error)
-            all_lines.extend(entry_lines_result.value)
-        ldif_text = "\n".join(all_lines)
-        if ldif_text and (not ldif_text.endswith("\n")):
-            ldif_text += "\n"
-        return r[str].ok(ldif_text)
-
-    @staticmethod
-    def _serialize_single_entry(entry: m.Ldif.Entry) -> r[MutableSequence[str]]:
-        if entry.dn is None:
-            return r[MutableSequence[str]].fail(
-                "Entry serialization failed: missing DN",
-            )
-        dn_value = entry.dn.value
-        if not dn_value:
-            return r[MutableSequence[str]].fail("Entry serialization failed: empty DN")
-        lines: MutableSequence[str] = [
-            FlextLdifUtilitiesResult._encode_dn_line(dn_value),
-        ]
-        entry_attributes: MutableMapping[str, MutableSequence[str]] = (
-            entry.attributes.attributes if entry.attributes else {}
-        )
-        for attr_name, values in entry_attributes.items():
-            for value in values:
-                attr_line = FlextLdifUtilitiesWriter.encode_attribute_value(
-                    attr_name,
-                    value,
-                )
-                lines.extend(FlextLdifUtilitiesWriter.fold_line(attr_line))
-        lines.append("")
-        return r[MutableSequence[str]].ok(lines)
-
-    def filter(self, predicate: Callable[[T], bool]) -> FlextLdifUtilitiesResult[T]:
-        """Filter the result value using a predicate."""
-        if self.is_failure:
-            return FlextLdifUtilitiesResult[T].fail(self.error)
-        value = self.value
-        if predicate(value):
-            return FlextLdifUtilitiesResult.ok(value)
-        return FlextLdifUtilitiesResult[T].fail("Value did not match filter predicate")
-
-    def flat_map[U](
-        self,
-        func: Callable[[T], r[U]],
-    ) -> FlextLdifUtilitiesResult[U]:
-        """Flat map a function that returns r[U]."""
-        mapped_result = self._inner.flat_map(func)
-        return FlextLdifUtilitiesResult(mapped_result)
-
-    def map[U](
-        self,
-        func: Callable[[T], U],
-    ) -> FlextLdifUtilitiesResult[U]:
-        """Map a function over the success value."""
-        mapped_result = self._inner.map(func)
-        return FlextLdifUtilitiesResult(mapped_result)
-
-    def on_failure(self, func: Callable[[str], None]) -> Self:
-        """Execute a function on error without changing result."""
-        if self.is_failure:
-            func(self.error)
-        return self
-
-    def on_success(self, func: Callable[[T], None]) -> Self:
-        """Execute a function on success value without changing result."""
-        if self.is_success:
-            func(self.value)
-        return self
-
-    def unwrap(self) -> T:
-        """Unwrap the success value or raise an exception."""
-        return self._inner.value
 
     def unwrap_or(self, default: T) -> T:
         """Unwrap the success value or return a default."""
