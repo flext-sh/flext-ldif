@@ -18,7 +18,6 @@ from flext_ldif import (
     FlextLdifUtilitiesDN,
     FlextLdifUtilitiesEntry,
     FlextLdifUtilitiesEvents,
-    FlextLdifUtilitiesFluent,
     FlextLdifUtilitiesMetadata,
     FlextLdifUtilitiesNormalization,
     FlextLdifUtilitiesObjectClass,
@@ -28,12 +27,10 @@ from flext_ldif import (
     FlextLdifUtilitiesProcessing,
     FlextLdifUtilitiesSchema,
     FlextLdifUtilitiesServer,
-    FlextLdifUtilitiesTypeGuards,
     FlextLdifUtilitiesValidation,
     FlextLdifUtilitiesWriter,
     FlextLdifUtilitiesWriters,
     c,
-    m,
     t,
 )
 
@@ -60,7 +57,6 @@ class FlextLdifUtilities(FlextUtilities):
         FlextLdifUtilitiesParsers,
         FlextLdifUtilitiesSchema,
         FlextLdifUtilitiesServer,
-        FlextLdifUtilitiesTypeGuards,
         FlextLdifUtilitiesValidation,
         FlextLdifUtilitiesWriter,
         FlextLdifUtilitiesWriters,
@@ -141,16 +137,6 @@ class FlextLdifUtilities(FlextUtilities):
 
         TWO_ARG_THRESHOLD: int = 2
         """Minimum parameter count for 2-argument functions."""
-
-        @classmethod
-        def dn(cls, dn: str) -> FlextLdifUtilitiesFluent.DnOps:
-            """Create fluent DN operations."""
-            return FlextLdifUtilitiesFluent.DnOps(dn)
-
-        @classmethod
-        def entry(cls, entry: m.Ldif.Entry) -> FlextLdifUtilitiesFluent.EntryOps:
-            """Create fluent entry operations."""
-            return FlextLdifUtilitiesFluent.EntryOps(entry)
 
         # Methods inherited via MRO from mixin classes (no explicit overrides needed)
 

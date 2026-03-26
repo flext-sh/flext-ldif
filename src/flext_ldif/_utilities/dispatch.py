@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
-from pathlib import Path
-from typing import Literal, TypeIs, overload
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
+from typing import overload
 
 from flext_core import r
 
@@ -12,15 +11,10 @@ from flext_ldif import (
     FlextLdifUtilitiesAttribute,
     FlextLdifUtilitiesCollectionLdif,
     FlextLdifUtilitiesDN,
-    FlextLdifUtilitiesEntry,
-    FlextLdifUtilitiesFilters,
     FlextLdifUtilitiesNormalization,
     FlextLdifUtilitiesPipeline,
-    FlextLdifUtilitiesProcessing,
-    FlextLdifUtilitiesResult,
     FlextLdifUtilitiesServer,
     FlextLdifUtilitiesValidation,
-    FlextLdifUtilitiesWriter,
     m,
     p,
     t,
@@ -29,43 +23,6 @@ from flext_ldif import (
 
 class FlextLdifUtilitiesDispatch:
     """Override dispatchers that route between parent classes."""
-
-    @staticmethod
-    def extract_rdn(dn: str) -> r[str]:
-        return FlextLdifUtilitiesDN.extract_rdn(dn)
-
-    @staticmethod
-    @overload
-    def split(dn: str) -> MutableSequence[str]: ...
-
-    @staticmethod
-    @overload
-    def split(dn: m.Ldif.DN) -> MutableSequence[str]: ...
-
-    @staticmethod
-    def split(dn: str | m.Ldif.DN) -> MutableSequence[str]:
-        return FlextLdifUtilitiesDN.split(dn)
-
-    @staticmethod
-    def has_objectclass(
-        entry: m.Ldif.Entry,
-        objectclasses: str | tuple[str, ...],
-    ) -> bool:
-        return FlextLdifUtilitiesEntry.has_objectclass(entry, objectclasses)
-
-    @staticmethod
-    def validate_batch(
-        values: MutableSequence[str],
-        *,
-        collect_errors: bool = True,
-    ) -> (
-        r[MutableSequence[tuple[str, bool, MutableSequence[str]]]]
-        | r[MutableSequence[tuple[str, bool, str | None]]]
-    ):
-        return FlextLdifUtilitiesDN.validate_dn_batch(
-            values,
-            collect_errors=collect_errors,
-        )
 
     @staticmethod
     @overload
@@ -219,7 +176,7 @@ class FlextLdifUtilitiesDispatch:
             and isinstance(value_or_entries, Sequence)
             and not isinstance(value_or_entries, (str, bytes))
         ):
-            return FlextLdifUtilitiesDispatch.validate_entries(
+            return FlextLdifUtilitiesDispatch._validate_entries(
                 value_or_entries,
                 strict=strict,
                 collect_all=collect_all,
@@ -245,7 +202,7 @@ class FlextLdifUtilitiesDispatch:
         )
 
     @staticmethod
-    def validate_entries(
+    def _validate_entries(
         entries: MutableSequence[m.Ldif.Entry],
         *,
         strict: bool,
@@ -261,98 +218,17 @@ class FlextLdifUtilitiesDispatch:
         return pipeline.validate(entries)
 
     @staticmethod
-    def _is_entry_sequence(
-        obj: object,
-    ) -> bool:
+    def _is_entry_sequence(obj: object) -> bool:
         """Check if value is a Sequence of Entry objects (dispatch helper)."""
         if isinstance(obj, (str, bytes)):
             return False
         if isinstance(obj, list):
-            if not obj:
-                return True
-            return isinstance(obj[0], m.Ldif.Entry)
+            return not obj or isinstance(obj[0], m.Ldif.Entry)
         if isinstance(obj, tuple):
-            if not obj:
-                return True
-            return isinstance(obj[0], m.Ldif.Entry)
+            return not obj or isinstance(obj[0], m.Ldif.Entry)
         return False
 
-    # --- MRO conflict resolution: filter (Processing vs Filters vs Result) ---
-
-    @staticmethod
-    def filter[T: t.NormalizedValue, R: t.NormalizedValue](
-        items_or_entries: T
-        | MutableSequence[T]
-        | tuple[T, ...]
-        | MutableMapping[str, T]
-        | MutableSequence[m.Ldif.Entry],
-        predicate_or_filter1: Callable[..., bool]
-        | FlextLdifUtilitiesFilters[m.Ldif.Entry],
-        *filters: FlextLdifUtilitiesFilters[m.Ldif.Entry],
-        _mapper: Callable[..., R] | None = None,
-        mode: Literal["all", "any"] = "all",
-    ) -> (
-        t.MutableContainerList
-        | t.MutableContainerMapping
-        | FlextLdifUtilitiesResult[MutableSequence[m.Ldif.Entry]]
-    ):
-        """Route to Processing.filter (resolves Processing vs Filters vs Result)."""
-        return FlextLdifUtilitiesProcessing.filter_with_predicates(
-            items_or_entries,
-            predicate_or_filter1,
-            *filters,
-            _mapper=_mapper,
-            mode=mode,
-        )
-
-    # --- MRO conflict resolution: fold (CollectionLdif vs Writer) ---
-
-    @staticmethod
-    def fold(
-        items: t.NormalizedValue,
-        *,
-        initial: t.NormalizedValue,
-        folder: Callable[[t.NormalizedValue, t.NormalizedValue], t.NormalizedValue]
-        | None = None,
-        predicate: Callable[..., bool] | None = None,
-    ) -> t.NormalizedValue:
-        """Route to CollectionLdif.fold (resolves CollectionLdif vs Writer)."""
-        return FlextLdifUtilitiesCollectionLdif.fold(
-            items,
-            initial=initial,
-            folder=folder,
-            predicate=predicate,
-        )
-
-    # --- MRO conflict resolution: is_entry_sequence (Processing vs TypeGuards) ---
-
-    @staticmethod
-    def is_entry_sequence(
-        obj: object,
-    ) -> TypeIs[MutableSequence[m.Ldif.Entry]]:
-        """Route to Processing.is_entry_sequence (resolves Processing vs TypeGuards)."""
-        return FlextLdifUtilitiesProcessing.is_entry_sequence(obj)
-
     # --- MRO conflict resolution: Collection methods (CollectionLdif vs FlextUtilities) ---
-
-    @staticmethod
-    def or_[T: t.NormalizedValue](
-        *values: T | None,
-        default: T | None = None,
-    ) -> T | None:
-        """Route to CollectionLdif.or_ (resolves CollectionLdif vs core)."""
-        return FlextLdifUtilitiesCollectionLdif.or_(*values, default=default)
-
-    @classmethod
-    def try_[TResult](
-        cls,
-        func: Callable[[], TResult],
-        *,
-        default: TResult | None = None,
-        catch: type[Exception] | tuple[type[Exception], ...] = Exception,
-    ) -> TResult | None:
-        """Route to CollectionLdif.try_ (resolves CollectionLdif vs core)."""
-        return FlextLdifUtilitiesCollectionLdif.try_(func, default=default, catch=catch)
 
     @classmethod
     def update(
@@ -363,73 +239,6 @@ class FlextLdifUtilitiesDispatch:
         """Route to CollectionLdif.update (resolves CollectionLdif vs core)."""
         return FlextLdifUtilitiesCollectionLdif.update(data, updates)
 
-    @classmethod
-    def omit(
-        cls,
-        data: t.MutableContainerMapping,
-        *keys: str,
-    ) -> t.MutableContainerMapping:
-        """Route to CollectionLdif.omit (resolves CollectionLdif vs core)."""
-        return FlextLdifUtilitiesCollectionLdif.omit(data, *keys)
-
-    @staticmethod
-    def pick(
-        data: t.NormalizedValue,
-        *keys: str,
-        as_dict: bool = True,
-    ) -> t.MutableContainerMapping | t.MutableContainerList:
-        """Route to CollectionLdif.pick (resolves CollectionLdif vs core)."""
-        return FlextLdifUtilitiesCollectionLdif.pick(data, *keys, as_dict=as_dict)
-
-    @classmethod
-    def pluck(
-        cls,
-        items: t.MutableContainerList,
-        *,
-        key: str | int | Callable[..., t.NormalizedValue],
-    ) -> t.MutableContainerList:
-        """Route to CollectionLdif.pluck (resolves CollectionLdif vs core)."""
-        return FlextLdifUtilitiesCollectionLdif.pluck(items, key=key)
-
-    @classmethod
-    def prop(cls, key: str) -> Callable[..., t.NormalizedValue]:
-        """Route to CollectionLdif.prop (resolves CollectionLdif vs core)."""
-        return FlextLdifUtilitiesCollectionLdif.prop(key)
-
-    @staticmethod
-    def take(
-        data_or_items: t.NormalizedValue,
-        key_or_n: str | int,
-        *,
-        as_type: type | None = None,
-        default: t.NormalizedValue | None = None,
-        from_start: bool = True,
-    ) -> t.MutableContainerMapping | t.MutableContainerList | t.NormalizedValue | None:
-        """Route to CollectionLdif.take (resolves CollectionLdif vs core)."""
-        return FlextLdifUtilitiesCollectionLdif.take(
-            data_or_items,
-            key_or_n,
-            as_type=as_type,
-            default=default,
-            from_start=from_start,
-        )
-
-    @staticmethod
-    def is_type(
-        value: t.NormalizedValue,
-        type_spec: str | type | tuple[type, ...],
-    ) -> bool:
-        """Route to CollectionLdif.is_type (resolves CollectionLdif vs core)."""
-        return FlextLdifUtilitiesCollectionLdif.is_type(value, type_spec)
-
-    @staticmethod
-    def count[T](
-        items: MutableSequence[T] | tuple[T, ...],
-        predicate: Callable[[T], bool] | None = None,
-    ) -> int:
-        """Route to CollectionLdif.count (resolves CollectionLdif vs core)."""
-        return FlextLdifUtilitiesCollectionLdif.count(items, predicate)
-
     @staticmethod
     def find(
         items: t.ContainerList,
@@ -439,26 +248,6 @@ class FlextLdifUtilitiesDispatch:
         """Route to CollectionLdif.find (resolves CollectionLdif vs core)."""
         return FlextLdifUtilitiesCollectionLdif.find(items, predicate=predicate)
 
-    @classmethod
-    def group_by(
-        cls,
-        items: t.MutableContainerList,
-        *,
-        key: Callable[..., t.NormalizedValue],
-    ) -> MutableMapping[t.NormalizedValue, t.MutableContainerList]:
-        """Route to CollectionLdif.group_by (resolves CollectionLdif vs core)."""
-        return FlextLdifUtilitiesCollectionLdif.group_by(items, key=key)
-
-    @classmethod
-    def partition(
-        cls,
-        items: t.MutableContainerList,
-        *,
-        predicate: Callable[..., bool],
-    ) -> tuple[t.MutableContainerList, t.MutableContainerList]:
-        """Route to CollectionLdif.partition (resolves CollectionLdif vs core)."""
-        return FlextLdifUtilitiesCollectionLdif.partition(items, predicate=predicate)
-
     @staticmethod
     def build(
         value: t.NormalizedValue,
@@ -467,30 +256,6 @@ class FlextLdifUtilitiesDispatch:
     ) -> t.NormalizedValue:
         """Route to Normalization.build (resolves Normalization vs core)."""
         return FlextLdifUtilitiesNormalization.build(value, ops=ops)
-
-    @staticmethod
-    def write_file(
-        content: str,
-        file_path: str | Path,
-        encoding: str = "utf-8",
-    ) -> r[MutableMapping[str, str | int]]:
-        """Route to Writer.write_file (resolves Writer vs core)."""
-        path = file_path if isinstance(file_path, Path) else Path(file_path)
-        return FlextLdifUtilitiesWriter.write_file(content, path, encoding)
-
-    @staticmethod
-    def _is_object_mapping(
-        value: t.NormalizedValue,
-    ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
-        """Route to Schema._is_object_mapping (resolves Schema vs core)."""
-        return isinstance(value, Mapping)
-
-    @staticmethod
-    def _is_object_sequence(
-        value: t.NormalizedValue,
-    ) -> TypeIs[t.MutableContainerList]:
-        """Route to Schema._is_object_sequence (resolves Schema vs core)."""
-        return isinstance(value, Sequence) and not isinstance(value, (str, bytes))
 
 
 __all__ = ["FlextLdifUtilitiesDispatch"]
