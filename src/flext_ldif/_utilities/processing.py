@@ -4,17 +4,14 @@ from __future__ import annotations
 
 import inspect
 import struct
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
-from typing import Literal, TypeIs, overload
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
+from typing import TypeIs, overload
 
 from flext_core import FlextLogger, FlextUtilities, r
 
 from flext_ldif import (
     FlextLdifUtilitiesEntry,
-    FlextLdifUtilitiesFilters,
-    FlextLdifUtilitiesPipeline,
     FlextLdifUtilitiesResult,
-    FlextLdifUtilitiesTransformer,
     c,
     m,
     t,
@@ -60,39 +57,6 @@ class FlextLdifUtilitiesProcessing:
         return True
 
     @staticmethod
-    def is_ldif_process_call(
-        items: MutableSequence[m.Ldif.Entry]
-        | t.MutableContainerMapping
-        | str
-        | bytes
-        | None,
-        processor_normalized: m.Ldif.ProcessConfig | None,
-        processor: Callable[..., t.NormalizedValue] | None,
-        config: m.Ldif.ProcessConfig | None,
-        _source_server: c.Ldif.ServerTypes,
-        target_server: c.Ldif.ServerTypes | None,
-    ) -> bool:
-        """Check if this is an LDIF-specific process call."""
-        is_sequence_entry = bool(items)
-        match items:
-            case str() | bytes() | Mapping():
-                is_sequence_entry = False
-            case _:
-                pass
-        if is_sequence_entry and items:
-            first_item = next(iter(items), None)
-            if first_item is not None and (
-                not getattr(first_item, "dn", None) is not None
-            ):
-                return False
-        has_ldif_config = (
-            (processor_normalized is None and processor is None)
-            or config is not None
-            or target_server is not None
-        )
-        return bool(is_sequence_entry and has_ldif_config)
-
-    @staticmethod
     def should_skip_key(
         key: str,
         filter_keys: set[str] | None,
@@ -111,52 +75,6 @@ class FlextLdifUtilitiesProcessing:
     ) -> R:
         """Call 2-arg processor function."""
         return processor_func(key, value)
-
-    @staticmethod
-    def call_single_item_processor[R](
-        processor_func: Callable[..., R],
-        item: t.NormalizedValue,
-    ) -> r[MutableSequence[R]]:
-        """Call processor with single item, handling signature detection."""
-        try:
-            sig = inspect.signature(processor_func)
-            params = [
-                p_
-                for p_ in sig.parameters.values()
-                if p_.default is inspect.Parameter.empty
-                and p_.kind
-                in {
-                    inspect.Parameter.POSITIONAL_ONLY,
-                    inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                }
-            ]
-            if len(params) == 1:
-                result: R = processor_func(item)
-                return r[MutableSequence[R]].ok([result])
-            return r[MutableSequence[R]].fail(
-                "Processor requires 2 arguments but single item provided",
-            )
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            return r[MutableSequence[R]].fail(f"Processing failed: {e}")
-
-    @staticmethod
-    def is_no_arg_callable[R](
-        func: Callable[..., R] | t.NormalizedValue,
-    ) -> TypeIs[Callable[[], R]]:
-        """Check if callable accepts 0 arguments."""
-        if not callable(func):
-            return False
-        try:
-            sig = inspect.signature(func)
-            return not sig.parameters
-        except (ValueError, TypeError):
-            return False
 
     @staticmethod
     def is_object_arg_callable[R](
@@ -396,141 +314,6 @@ class FlextLdifUtilitiesProcessing:
         return r[MutableSequence[R]].ok(results)
 
     @staticmethod
-    def transform_entries(
-        entries: MutableSequence[m.Ldif.Entry],
-        *transformers: FlextLdifUtilitiesTransformer[m.Ldif.Entry],
-        fail_fast: bool = True,
-    ) -> FlextLdifUtilitiesResult[MutableSequence[m.Ldif.Entry]]:
-        """Apply entry transformers to LDIF entries using pipeline semantics."""
-        pipeline = FlextLdifUtilitiesPipeline.Pipeline(fail_fast=fail_fast)
-        for transformer in transformers:
-            _ = pipeline.add(transformer)
-        return FlextLdifUtilitiesResult[MutableSequence[m.Ldif.Entry]].from_result(
-            pipeline.execute(entries),
-        )
-
-    @staticmethod
-    def batch_process[T, U](
-        items: MutableSequence[T],
-        func: Callable[[T], r[U]],
-    ) -> r[MutableSequence[U]]:
-        """Execute batch of operations with r (simplified)."""
-        results: MutableSequence[U] = []
-        for item in items:
-            result = func(item)
-            if result.is_failure:
-                return r[MutableSequence[U]].fail(
-                    result.error or "Batch operation failed",
-                )
-            results.append(result.value)
-        return r[MutableSequence[U]].ok(results)
-
-    @staticmethod
-    def filter_with_predicates[T: t.NormalizedValue, R: t.NormalizedValue](
-        items_or_entries: T
-        | MutableSequence[T]
-        | tuple[T, ...]
-        | MutableMapping[str, T]
-        | MutableSequence[m.Ldif.Entry],
-        predicate_or_filter1: Callable[..., bool]
-        | FlextLdifUtilitiesFilters[m.Ldif.Entry],
-        *filters: FlextLdifUtilitiesFilters[m.Ldif.Entry],
-        _mapper: Callable[..., R] | None = None,
-        mode: Literal["all", "any"] = "all",
-    ) -> (
-        t.MutableContainerList
-        | t.MutableContainerMapping
-        | FlextLdifUtilitiesResult[MutableSequence[m.Ldif.Entry]]
-    ):
-        """Filter entries using composable filter predicates."""
-        match predicate_or_filter1:
-            case FlextLdifUtilitiesFilters():
-                pass
-            case _:
-                predicate: Callable[..., bool] = predicate_or_filter1
-
-                def predicate_callable(item: t.NormalizedValue) -> bool:
-                    return predicate(item)
-
-                return FlextLdifUtilitiesProcessing.filter_base_class(
-                    items_or_entries,
-                    predicate_callable,
-                )
-        if isinstance(items_or_entries, Sequence) and (
-            not isinstance(items_or_entries, (str, bytes))
-        ):
-            seq_items = items_or_entries
-            if seq_items and isinstance(seq_items[0], m.Ldif.Entry):
-                entries_list: MutableSequence[m.Ldif.Entry] = [
-                    e for e in seq_items if isinstance(e, m.Ldif.Entry)
-                ]
-                filter_entry = predicate_or_filter1
-                return FlextLdifUtilitiesProcessing.filter_ldif_entries(
-                    entries_list,
-                    filter_entry,
-                    filters,
-                    mode,
-                )
-
-        entry_filter: FlextLdifUtilitiesFilters[m.Ldif.Entry] = predicate_or_filter1
-
-        def predicate_wrapper(item: t.Ldif.NormalizedValue) -> bool:
-            """Wrap FlextLdifUtilitiesFilters as VariadicCallable for base class compatibility."""
-            match item:
-                case m.Ldif.Entry() as entry_item:
-                    return entry_filter.matches(entry_item)
-                case _:
-                    return False
-
-        return FlextLdifUtilitiesProcessing.filter_base_class(
-            items_or_entries,
-            predicate_wrapper,
-        )
-
-    @staticmethod
-    def filter_base_class(
-        items_or_entries: t.NormalizedValue | MutableSequence[m.Ldif.Entry],
-        predicate: Callable[..., bool],
-        _mapper: Callable[..., t.NormalizedValue] | None = None,
-    ) -> t.MutableContainerList | t.MutableContainerMapping:
-        """Filter using base class Collection.filter (internal helper)."""
-        if isinstance(items_or_entries, (list, tuple)):
-            items_list: t.MutableContainerList = [
-                x if not isinstance(x, m.Ldif.Entry) else str(x)
-                for x in items_or_entries
-            ]
-            list_filter_result = FlextUtilities.filter(items_list, predicate)
-            return list(list_filter_result) if list_filter_result else []
-        if isinstance(items_or_entries, dict):
-            items_dict: t.MutableContainerMapping = dict(items_or_entries)
-            dict_filter_result = FlextUtilities.filter(items_dict, predicate)
-            return dict(dict_filter_result) if dict_filter_result else {}
-        items_single_list: t.MutableContainerList = []
-        single_filter_result = FlextUtilities.filter(items_single_list, predicate)
-        return list(single_filter_result) if single_filter_result else []
-
-    @staticmethod
-    def filter_ldif_entries(
-        entries: MutableSequence[m.Ldif.Entry],
-        predicate_or_filter1: FlextLdifUtilitiesFilters[m.Ldif.Entry],
-        filters: tuple[FlextLdifUtilitiesFilters[m.Ldif.Entry], ...],
-        mode: Literal["all", "any"],
-    ) -> FlextLdifUtilitiesResult[MutableSequence[m.Ldif.Entry]]:
-        """Filter LDIF entries using FlextLdifUtilitiesFilters (internal helper)."""
-        filter_list: MutableSequence[FlextLdifUtilitiesFilters[m.Ldif.Entry]] = [
-            predicate_or_filter1,
-        ] + list(filters)
-        if not filter_list:
-            return FlextLdifUtilitiesResult[MutableSequence[m.Ldif.Entry]].ok(
-                list(entries),
-            )
-        combined: FlextLdifUtilitiesFilters[m.Ldif.Entry] = filter_list[0]
-        for f in filter_list[1:]:
-            combined = combined & f if mode == "all" else combined | f
-        filtered = [entry for entry in entries if combined.matches(entry)]
-        return FlextLdifUtilitiesResult[MutableSequence[m.Ldif.Entry]].ok(filtered)
-
-    @staticmethod
     def is_entry_sequence(
         obj: object,
     ) -> TypeIs[MutableSequence[m.Ldif.Entry]]:
@@ -550,13 +333,6 @@ class FlextLdifUtilitiesProcessing:
     @staticmethod
     def normalize_container(value: t.NormalizedValue) -> t.NormalizedValue:
         """Normalize a t.NormalizedValue to a canonical form."""
-        if FlextUtilities.is_general_value_type(value):
-            return value
-        return str(value)
-
-    @staticmethod
-    def to_config_map_value(value: t.NormalizedValue) -> t.NormalizedValue:
-        """Convert value to t.NormalizedValue (general value or str)."""
         if FlextUtilities.is_general_value_type(value):
             return value
         return str(value)

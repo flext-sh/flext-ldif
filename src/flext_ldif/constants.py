@@ -1155,18 +1155,6 @@ class FlextLdifConstants(FlextConstants):
             BASIC = "basic"
             FULL = "full"
 
-        @unique
-        class ConversionTargetType(StrEnum):
-            """Conversion target type enumeration."""
-
-            STR = "str"
-            INT = "int"
-            FLOAT = "float"
-            BOOL = "bool"
-            LIST = "list"
-            TUPLE = "tuple"
-            DICT = "dict"
-
 
 c = FlextLdifConstants
 

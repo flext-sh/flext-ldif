@@ -64,15 +64,6 @@ class FlextLdifUtilitiesResult[T]:
         """Get the success value. Raises if result is a failure."""
         return self._inner.value
 
-    @classmethod
-    def fail(
-        cls: type[FlextLdifUtilitiesResult[T]],
-        error: str | Exception,
-    ) -> FlextLdifUtilitiesResult[T]:
-        """Create a failed result with the given error."""
-        error_msg = str(error) if isinstance(error, Exception) else error
-        return cls(r[T].fail(error_msg))
-
     @staticmethod
     def from_result[TResult](
         result: r[TResult],
@@ -86,10 +77,6 @@ class FlextLdifUtilitiesResult[T]:
     ) -> FlextLdifUtilitiesResult[TResult]:
         """Create a successful result with the given value."""
         return FlextLdifUtilitiesResult(r[TResult].ok(value))
-
-    def unwrap_or(self, default: T) -> T:
-        """Unwrap the success value or return a default."""
-        return self._inner.unwrap_or(default)
 
 
 __all__ = ["FlextLdifUtilitiesResult"]
