@@ -7,7 +7,7 @@ from typing import ClassVar, Self, override
 
 from flext_core import r
 
-from flext_ldif import FlextLdifUtilitiesFilters, FlextLdifUtilitiesTransformer, m
+from flext_ldif import FlextLdifUtilitiesTransformer, m
 
 
 class FlextLdifUtilitiesPipeline:
@@ -19,26 +19,6 @@ class FlextLdifUtilitiesPipeline:
         __slots__: ClassVar[tuple[str, ...]] = ()
 
     FILTERED = _Filtered()
-
-    class PipelineStep[TIn, TOut]:
-        """A single step in a pipeline."""
-
-        __slots__ = ("_func", "_name")
-
-        def __init__(self, name: str, func: Callable[[TIn], r[TOut]]) -> None:
-            """Initialize pipeline step."""
-            super().__init__()
-            self._name = name
-            self._func = func
-
-        @property
-        def name(self) -> str:
-            """Get step name."""
-            return self._name
-
-        def execute(self, input_data: TIn) -> r[TOut]:
-            """Execute this step."""
-            return self._func(input_data)
 
     class Pipeline:
         """Pipeline for executing a sequence of transformations."""
@@ -82,39 +62,6 @@ class FlextLdifUtilitiesPipeline:
                 )
 
             self._steps.append((step_name, wrapped_transformer))
-            return self
-
-        def custom(
-            self,
-            func: Callable[[m.Ldif.Entry], m.Ldif.Entry | r[m.Ldif.Entry] | None],
-            *,
-            name: str = "custom",
-        ) -> Self:
-            """Add a custom function to the pipeline."""
-
-            def wrapped_func(
-                entry: m.Ldif.Entry,
-            ) -> r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered]:
-                """Wrap function to match pipeline filter signature."""
-                func_result = func(entry)
-                if func_result is None:
-                    return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(
-                        FlextLdifUtilitiesPipeline.FILTERED,
-                    )
-                if isinstance(func_result, r):
-                    if func_result.is_success:
-                        entry_value = func_result.value
-                        return r[
-                            m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered
-                        ].ok(entry_value)
-                    return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].fail(
-                        func_result.error,
-                    )
-                return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(
-                    func_result,
-                )
-
-            self._steps.append((name, wrapped_func))
             return self
 
         def execute(
@@ -166,29 +113,6 @@ class FlextLdifUtilitiesPipeline:
                 unwrapped = result.value
                 current = unwrapped
             return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(current)
-
-        def filter(
-            self,
-            entry_filter: FlextLdifUtilitiesFilters[m.Ldif.Entry],
-            *,
-            name: str | None = None,
-        ) -> Self:
-            """Add a filter to the pipeline."""
-            step_name = name or entry_filter.__class__.__name__
-
-            def filter_func(
-                entry: m.Ldif.Entry,
-            ) -> r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered]:
-                if entry_filter.matches(entry):
-                    return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(
-                        entry,
-                    )
-                return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(
-                    FlextLdifUtilitiesPipeline.FILTERED,
-                )
-
-            self._steps.append((step_name, filter_func))
-            return self
 
     class ValidationResult:
         """Result of entry validation."""

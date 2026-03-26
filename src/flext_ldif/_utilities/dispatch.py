@@ -229,15 +229,6 @@ class FlextLdifUtilitiesDispatch:
 
     # --- MRO conflict resolution: Collection methods (CollectionLdif vs FlextUtilities) ---
 
-    @classmethod
-    def update(
-        cls,
-        data: t.MutableContainerMapping,
-        updates: t.MutableContainerMapping,
-    ) -> t.MutableContainerMapping:
-        """Route to CollectionLdif.update (resolves CollectionLdif vs core)."""
-        return FlextLdifUtilitiesCollectionLdif.update(data, updates)
-
     @staticmethod
     def find(
         items: t.ContainerList,

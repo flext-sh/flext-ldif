@@ -397,7 +397,7 @@ class FlextLdifServersBaseEntry(
             for char in value:
                 char_ord = ord(char)
                 if (
-                    char_ord < c.Ldif.ASCII_SPACE_CHAR
+                    char_ord < c.Ldif.ASCII_PRINTABLE_MIN
                     or char_ord > ascii_printable_limit
                 ):
                     return True

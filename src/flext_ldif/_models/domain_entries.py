@@ -1987,8 +1987,8 @@ class FlextLdifModelsDomainsEntries:
                     continue
                 for value in attr_values:
                     if any(
-                        ord(char) < c.Ldif.ASCII_SPACE_CHAR
-                        or ord(char) > c.Ldif.ASCII_TILDE_CHAR
+                        ord(char) < c.Ldif.ASCII_PRINTABLE_MIN
+                        or ord(char) > c.Ldif.ASCII_PRINTABLE_MAX
                         for char in value
                     ):
                         violations.append(

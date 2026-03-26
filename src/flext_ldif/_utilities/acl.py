@@ -12,7 +12,6 @@ from flext_core import FlextLogger, r, u
 from flext_ldif import (
     FlextLdifModelsMetadata,
     FlextLdifModelsSettings,
-    FlextLdifUtilitiesFunctional,
     c,
     m,
     t,
@@ -319,7 +318,7 @@ class FlextLdifUtilitiesACL:
                 permission_map,
                 is_allow=False,
             )
-        return FlextLdifUtilitiesFunctional.merge(allow_dict, deny_dict)
+        return {**allow_dict, **deny_dict}
 
     @staticmethod
     def extract_bind_rules(
@@ -482,12 +481,7 @@ class FlextLdifUtilitiesACL:
                 continue
             if ops:
                 split_ops = ops.split(ops_separator)
-                filtered_perms_list = FlextLdifUtilitiesFunctional.map_filter(
-                    split_ops,
-                    mapper=str.strip,
-                    predicate=bool,
-                )
-                permissions.extend(filtered_perms_list)
+                permissions.extend(s for op in split_ops if (s := op.strip()))
         return permissions
 
     @staticmethod
@@ -576,18 +570,12 @@ class FlextLdifUtilitiesACL:
         """Format ACL subject into ACI bind rule format."""
         cleaned_value = subject_value.replace(", ", ",")
         default_value = f'by dn="{cleaned_value}"'
-        result: str = (
-            FlextLdifUtilitiesFunctional.switch(
-                bind_operator,
-                {
-                    "userdn": f'userdn="ldap:///{cleaned_value}"',
-                    "groupdn": f'groupdn="ldap:///{cleaned_value}"',
-                    "roledn": f'roledn="ldap:///{cleaned_value}"',
-                },
-                default=default_value,
-            )
-            or default_value
-        )
+        bind_rules: MutableMapping[str, str] = {
+            "userdn": f'userdn="ldap:///{cleaned_value}"',
+            "groupdn": f'groupdn="ldap:///{cleaned_value}"',
+            "roledn": f'roledn="ldap:///{cleaned_value}"',
+        }
+        result: str = bind_rules.get(bind_operator, default_value)
         return result
 
     @staticmethod

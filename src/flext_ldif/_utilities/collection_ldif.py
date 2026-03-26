@@ -10,19 +10,6 @@ from flext_ldif import t
 class FlextLdifUtilitiesCollectionLdif:
     """LDIF-specific collection, merge, and DSL methods."""
 
-    @classmethod
-    def update(
-        cls,
-        data: t.MutableContainerMapping,
-        updates: t.MutableContainerMapping,
-    ) -> t.MutableContainerMapping:
-        """Update dict using FlextUtilities.merge_mappings() (mnemonic: ud)."""
-        updated = dict(data)
-        updated.update(updates)
-        return updated
-
-    ud = update
-
     @staticmethod
     def find(
         items: t.ContainerList,
@@ -34,19 +21,6 @@ class FlextLdifUtilitiesCollectionLdif:
             if predicate(elem):
                 return elem
         return None
-
-    @staticmethod
-    def or_[T: t.NormalizedValue](
-        *values: T | None,
-        default: T | None = None,
-    ) -> T | None:
-        """Return first non-None value (mnemonic: oo)."""
-        for v in values:
-            if v is not None:
-                return v
-        return default
-
-    oo = or_
 
     @classmethod
     def normalize_ldif(

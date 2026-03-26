@@ -47,27 +47,6 @@ class FlextLdifModels(FlextModels):
     ):
         """LDIF namespace for cross-project access."""
 
-        class FlexibleCategories(FlextLdifModelsCollections.FlexibleCategories):
-            """Flexible categories."""
-
-            def get_entries(
-                self,
-                category: str,
-            ) -> MutableSequence[FlextLdifModelsDomains.Entry]:
-                """Backward-compatible accessor for category entries."""
-                return [
-                    FlextLdifModelsDomains.Entry.model_validate(value)
-                    for value in self.get(category)
-                ]
-
-            def set_entries(
-                self,
-                category: str,
-                entries: MutableSequence[FlextLdifModelsDomains.Entry],
-            ) -> None:
-                """Backward-compatible setter for full category replacement."""
-                self.categories[category] = list(entries)
-
         # =================================================================
         # COMPOSITE MODELS — defined here, not in _models
         # =================================================================
@@ -100,35 +79,6 @@ class FlextLdifModels(FlextModels):
             append_to_all: Annotated[bool, Field()] = False
             bind_ip_filter: Annotated[str, Field()] = ""
             constrain_to_added_object: Annotated[str, Field()] = ""
-
-        class QuirksByServerDict(FlextModels.ArbitraryTypesModel):
-            """Quirks by server dictionary model."""
-
-            schema_type: Annotated[
-                str | None,
-                Field(alias="schema", description="Schema quirk type"),
-            ] = None
-            acl_type: Annotated[
-                str | None,
-                Field(alias="acl", description="ACL quirk type"),
-            ] = None
-            entry_type: Annotated[
-                str | None,
-                Field(alias="entry", description="Entry quirk type"),
-            ] = None
-
-        class RegistryStatsDict(FlextModels.ArbitraryTypesModel):
-            """Registry statistics dictionary model."""
-
-            total_servers: Annotated[t.NonNegativeInt, Field()] = 0
-            quirks_by_server: Annotated[
-                MutableMapping[str, FlextLdifModels.Ldif.QuirksByServerDict],
-                Field(default_factory=dict),
-            ]
-            server_priorities: Annotated[
-                MutableMapping[str, int],
-                Field(default_factory=dict),
-            ]
 
 
 __all__ = ["FlextLdifModels", "m"]

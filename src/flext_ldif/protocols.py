@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping, MutableSequence
-from pathlib import Path
+from collections.abc import MutableMapping, MutableSequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core import FlextProtocols
 
-from flext_ldif import c, r, t
+from flext_ldif import r, t
 
 if TYPE_CHECKING:
     from flext_ldif import m
@@ -19,30 +18,6 @@ class FlextLdifProtocols(FlextProtocols):
 
     class Ldif:
         """LDIF-specific protocol namespace."""
-
-        @runtime_checkable
-        class Entry(Protocol):
-            """Protocol for LDIF Entry models."""
-
-            dn: str | None
-            attributes: MutableMapping[str, MutableSequence[str]] | None
-            metadata: t.ConfigMap | None
-
-            def get_objectclass_names(self) -> MutableSequence[str]:
-                """Get list of objectClass values from entry."""
-                ...
-
-        @runtime_checkable
-        class EntryWithDn(Protocol):
-            """Protocol for objects that have a DN attribute."""
-
-            dn: str | None
-
-        @runtime_checkable
-        class AttributeValue(Protocol):
-            """Protocol for objects that have attribute values."""
-
-            values: MutableSequence[str] | str
 
         @runtime_checkable
         class SchemaMetadata(Protocol):
@@ -64,14 +39,6 @@ class FlextLdifProtocols(FlextProtocols):
             ) -> m.Ldif.SchemaFormatDetails | None:
                 """Get original schema formatting details."""
                 ...
-
-        @runtime_checkable
-        class Acl(Protocol):
-            """Protocol for LDIF ACL models."""
-
-            name: str
-            raw_acl: str
-            server_type: c.Ldif.ServerTypeLiteral
 
         @runtime_checkable
         class SchemaAttribute(Protocol):
@@ -188,84 +155,6 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
             ) -> FlextLdifProtocols.Ldif.SchemaMetadata | None:
                 """Get quirk-specific metadata."""
-                ...
-
-        @runtime_checkable
-        class HasParseMethod(Protocol):
-            """Protocol for objects with parse method."""
-
-            def parse(
-                self,
-                ldif_input: str | Path,
-                server_type: str | None = None,
-            ) -> r[MutableSequence[FlextLdifProtocols.Ldif.Entry]]:
-                """Parse LDIF content."""
-                ...
-
-        @runtime_checkable
-        class HasEntries(Protocol):
-            """Protocol for objects that have an entries attribute."""
-
-            entries: MutableSequence[FlextLdifProtocols.Ldif.Entry]
-
-        @runtime_checkable
-        class SchemaConversionPipelineConfig(Protocol):
-            """Protocol for schema conversion pipeline configuration objects."""
-
-            @property
-            def item_name(self) -> str:
-                """Name of the schema item being converted."""
-                ...
-
-            @property
-            def parse_method(
-                self,
-            ) -> Callable[
-                ...,
-                r[
-                    FlextLdifProtocols.Ldif.SchemaAttribute
-                    | FlextLdifProtocols.Ldif.SchemaObjectClass
-                ],
-            ]:
-                """Method to parse LDIF into schema t.NormalizedValue."""
-                ...
-
-            @property
-            def source_schema(
-                self,
-            ) -> (
-                FlextLdifProtocols.Ldif.SchemaAttribute
-                | FlextLdifProtocols.Ldif.SchemaObjectClass
-                | FlextLdifProtocols.Ldif.SchemaQuirk
-            ):
-                """Source schema t.NormalizedValue to convert."""
-                ...
-
-            @property
-            def target_schema(
-                self,
-            ) -> (
-                FlextLdifProtocols.Ldif.SchemaAttribute
-                | FlextLdifProtocols.Ldif.SchemaObjectClass
-                | FlextLdifProtocols.Ldif.SchemaQuirk
-            ):
-                """Target schema t.NormalizedValue template."""
-                ...
-
-            @property
-            def write_method(self) -> Callable[..., r[str]]:
-                """Method to write schema t.NormalizedValue to LDIF."""
-                ...
-
-        @runtime_checkable
-        class EntryResult(Protocol):
-            """Protocol for EntryResult model."""
-
-            entries: MutableSequence[FlextLdifProtocols.Ldif.Entry]
-            content: MutableSequence[FlextLdifProtocols.Ldif.Entry]
-
-            def __len__(self) -> int:
-                """Return the number of entries."""
                 ...
 
         @runtime_checkable
@@ -391,152 +280,12 @@ class FlextLdifProtocols(FlextProtocols):
             validation_metadata: t.ConfigMap | None
 
         @runtime_checkable
-        class Transformer[T](Protocol):
-            """Protocol for transformers in pipelines."""
-
-            def apply(self, item: T) -> T | r[T]:
-                """Apply the transformation."""
-                ...
-
-        @runtime_checkable
-        class BatchTransformer[T](Protocol):
-            """Protocol for batch transformers."""
-
-            def apply_batch(self, items: MutableSequence[T]) -> r[MutableSequence[T]]:
-                """Apply transformation to batch."""
-                ...
-
-        @runtime_checkable
-        class Filter[T](Protocol):
-            """Protocol for filters in pipelines."""
-
-            def __and__(
-                self,
-                other: FlextLdifProtocols.Ldif.Filter[T],
-            ) -> FlextLdifProtocols.Ldif.Filter[T]:
-                """AND combination."""
-                ...
-
-            def __invert__(self) -> FlextLdifProtocols.Ldif.Filter[T]:
-                """NOT negation."""
-                ...
-
-            def __or__(
-                self,
-                other: FlextLdifProtocols.Ldif.Filter[T],
-            ) -> FlextLdifProtocols.Ldif.Filter[T]:
-                """OR combination."""
-                ...
-
-            def matches(self, item: T) -> bool:
-                """Check if item matches filter criteria."""
-                ...
-
-        @runtime_checkable
-        class Validator[T](Protocol):
-            """Protocol for validators."""
-
-            def validate(self, item: T) -> r[T]:
-                """Validate an item."""
-                ...
-
-        @runtime_checkable
-        class ValidationRule[T](Protocol):
-            """Protocol for validation rules."""
-
-            name: str
-
-            def check(self, item: T) -> tuple[bool, str | None]:
-                """Check an item against this rule."""
-                ...
-
-        @runtime_checkable
-        class PipelineStep[TIn, TOut](Protocol):
-            """Protocol for pipeline steps."""
-
-            name: str
-
-            def execute(self, input_data: TIn) -> r[TOut]:
-                """Execute pipeline step."""
-                ...
-
-        @runtime_checkable
-        class FluentBuilder[TConfig](Protocol):
-            """Protocol for fluent builders."""
-
-            def build(self) -> TConfig:
-                """Build the final configuration t.NormalizedValue."""
-                ...
-
-        @runtime_checkable
-        class FluentOps[T](Protocol):
-            """Protocol for fluent operation chains."""
-
-            def build(self) -> r[T]:
-                """Build/finalize and return the result."""
-                ...
-
-        @runtime_checkable
-        class ServerBase(Protocol):
-            """Protocol for LDIF/LDAP server quirk implementations."""
-
-            server_type: str
-            priority: int
-
-            def parse(self, ldif_text: str) -> r[t.NormalizedValue]:
-                """Parse LDIF text to Entry models."""
-                ...
-
-            def write(
-                self,
-                entries: MutableSequence[FlextLdifProtocols.Ldif.Entry],
-            ) -> r[str]:
-                """Write Entry models to LDIF text."""
-                ...
-
-            def execute(
-                self,
-                *,
-                ldif_text: str | None = None,
-                entries: (MutableSequence[FlextLdifProtocols.Ldif.Entry] | None),
-                _operation: str | None = None,
-            ) -> r[FlextLdifProtocols.Ldif.Entry]:
-                """Execute quirk operation with auto-detection."""
-                ...
-
-        @runtime_checkable
-        class Loadable[T](Protocol):
-            """Protocol for loadable data sources."""
-
-            def load(self) -> r[T]:
-                """Load and return the data."""
-                ...
-
-        @runtime_checkable
         class Predicate[T](Protocol):
             """Protocol for predicate functions that test items."""
 
             def __call__(self, item: T) -> bool:
                 """Test if item matches criteria, return True if it does."""
                 ...
-
-        @runtime_checkable
-        class ValuePredicate(Protocol):
-            """Protocol for predicates that tesobject values."""
-
-            def __call__(self, value: t.NormalizedValue, /) -> bool:
-                """Test if value matches predicate condition."""
-                ...
-
-        @runtime_checkable
-        class Detection(Protocol):
-            """Protocol for server Constants classes with detection attributes."""
-
-            DETECTION_PATTERN: str
-            DETECTION_WEIGHT: int
-            DETECTION_ATTRIBUTES: frozenset[str] | MutableSequence[str]
-            DETECTION_OID_PATTERN: str | None
-            DETECTION_OBJECTCLASS_NAMES: frozenset[str] | MutableSequence[str] | None
 
 
 p = FlextLdifProtocols
