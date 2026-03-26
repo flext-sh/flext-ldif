@@ -13,18 +13,10 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from tests.unit.utilities.test_utilities import TestsTestFlextLdifServiceAPIs
     from tests.unit.utilities.test_utilities_comprehensive import (
         TestFlextLdifUtilitiesComprehensive,
     )
-    from tests.unit.utilities.test_utilities_constants import (
-        GetValidValuesType,
-        IsValidTestType,
-        TestsTestFlextLdifConstants,
-        ValidateManyType,
-    )
     from tests.unit.utilities.test_utilities_core import (
-        TestAclParser,
         TestAttributeFixer,
         TestDnObjectClassMethods,
         TestLdifParser,
@@ -34,15 +26,6 @@ if TYPE_CHECKING:
     )
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "GetValidValuesType": [
-        "tests.unit.utilities.test_utilities_constants",
-        "GetValidValuesType",
-    ],
-    "IsValidTestType": [
-        "tests.unit.utilities.test_utilities_constants",
-        "IsValidTestType",
-    ],
-    "TestAclParser": ["tests.unit.utilities.test_utilities_core", "TestAclParser"],
     "TestAttributeFixer": [
         "tests.unit.utilities.test_utilities_core",
         "TestAttributeFixer",
@@ -65,24 +48,9 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit.utilities.test_utilities_core",
         "TestsFlextLdifDnOperationsPure",
     ],
-    "TestsTestFlextLdifConstants": [
-        "tests.unit.utilities.test_utilities_constants",
-        "TestsTestFlextLdifConstants",
-    ],
-    "TestsTestFlextLdifServiceAPIs": [
-        "tests.unit.utilities.test_utilities",
-        "TestsTestFlextLdifServiceAPIs",
-    ],
-    "ValidateManyType": [
-        "tests.unit.utilities.test_utilities_constants",
-        "ValidateManyType",
-    ],
 }
 
 __all__ = [
-    "GetValidValuesType",
-    "IsValidTestType",
-    "TestAclParser",
     "TestAttributeFixer",
     "TestDnObjectClassMethods",
     "TestFlextLdifUtilitiesComprehensive",
@@ -90,9 +58,6 @@ __all__ = [
     "TestObjectClassUtilities",
     "TestServerTypes",
     "TestsFlextLdifDnOperationsPure",
-    "TestsTestFlextLdifConstants",
-    "TestsTestFlextLdifServiceAPIs",
-    "ValidateManyType",
 ]
 
 

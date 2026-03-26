@@ -76,8 +76,6 @@ if TYPE_CHECKING:
         meta_keys,
     )
     from tests.unit.quirks.servers.test_schema_transformer import (
-        TestSchemaTransformerApplyAttributeTransformations,
-        TestSchemaTransformerApplyObjectClassTransformations,
         TestSchemaTransformerNormalizeMatchingRule,
         TestSchemaTransformerNormalizeSyntaxOid,
         TestsFlextLdifSchemaTransformerNormalizeAttributeName,
@@ -91,30 +89,6 @@ if TYPE_CHECKING:
         TestQuirksWithRealLdifFixtures,
         TestsFlextLdifQuirksStandardizedConstants,
     )
-    from tests.unit.services.test_schema_service import (
-        TestSchemaServiceBuilder,
-        TestSchemaServiceCanHandleAttribute,
-        TestSchemaServiceIntegration,
-        TestSchemaServiceParseAttribute,
-        TestSchemaServiceParseObjectClass,
-        TestSchemaServiceRepr,
-        TestSchemaServiceValidateAttribute,
-        TestSchemaServiceValidateObjectClass,
-        TestSchemaServiceWriteAttribute,
-        TestSchemaServiceWriteObjectClass,
-        TestsFlextLdifSchemaServiceExecute,
-        complex_attribute_definition,
-        complex_objectclass_definition,
-        schema_service,
-        schema_service_oud,
-        simple_attribute_definition,
-        simple_objectclass_definition,
-    )
-    from tests.unit.services.test_writer_dn_normalization import (
-        TestsFlextLdifsFlextLdifWriterDnNormalization,
-    )
-    from tests.unit.test_filters import TestAclAttributes
-    from tests.unit.test_helpers import TestFlextLdifDeduplicationHelpers
     from tests.unit.test_migration_pipeline import TestsFlextLdifMigrationPipeline
     from tests.unit.test_migration_pipeline_quirks import (
         OidTestConstants,
@@ -128,18 +102,10 @@ if TYPE_CHECKING:
         TestRemovalOfOverEngineering,
         TestsFlextLdifCommonDictionaryTypes,
     )
-    from tests.unit.utilities.test_utilities import TestsTestFlextLdifServiceAPIs
     from tests.unit.utilities.test_utilities_comprehensive import (
         TestFlextLdifUtilitiesComprehensive,
     )
-    from tests.unit.utilities.test_utilities_constants import (
-        GetValidValuesType,
-        IsValidTestType,
-        TestsTestFlextLdifConstants,
-        ValidateManyType,
-    )
     from tests.unit.utilities.test_utilities_core import (
-        TestAclParser,
         TestAttributeFixer,
         TestDnObjectClassMethods,
         TestLdifParser,
@@ -174,17 +140,9 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit.constants.test_acl_registry",
         "GetAclAttributesServerType",
     ],
-    "GetValidValuesType": [
-        "tests.unit.utilities.test_utilities_constants",
-        "GetValidValuesType",
-    ],
     "IsAclAttributeType": [
         "tests.unit.constants.test_acl_registry",
         "IsAclAttributeType",
-    ],
-    "IsValidTestType": [
-        "tests.unit.utilities.test_utilities_constants",
-        "IsValidTestType",
     ],
     "OBJECTCLASS_TEST_CASES": [
         "tests.unit.quirks.servers.test_novell_quirks",
@@ -209,8 +167,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit.quirks.servers.test_novell_quirks",
         "RfcTestHelpers",
     ],
-    "TestAclAttributes": ["tests.unit.test_filters", "TestAclAttributes"],
-    "TestAclParser": ["tests.unit.utilities.test_utilities_core", "TestAclParser"],
     "TestAliasDiscovery": [
         "tests.unit.services.test_quirks_standardization",
         "TestAliasDiscovery",
@@ -226,10 +182,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "TestDnObjectClassMethods": [
         "tests.unit.utilities.test_utilities_core",
         "TestDnObjectClassMethods",
-    ],
-    "TestFlextLdifDeduplicationHelpers": [
-        "tests.unit.test_helpers",
-        "TestFlextLdifDeduplicationHelpers",
     ],
     "TestFlextLdifModels": ["tests.unit.models.test_models", "TestFlextLdifModels"],
     "TestFlextLdifTypesStructure": [
@@ -302,54 +254,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit.test_typings",
         "TestRemovalOfOverEngineering",
     ],
-    "TestSchemaServiceBuilder": [
-        "tests.unit.services.test_schema_service",
-        "TestSchemaServiceBuilder",
-    ],
-    "TestSchemaServiceCanHandleAttribute": [
-        "tests.unit.services.test_schema_service",
-        "TestSchemaServiceCanHandleAttribute",
-    ],
-    "TestSchemaServiceIntegration": [
-        "tests.unit.services.test_schema_service",
-        "TestSchemaServiceIntegration",
-    ],
-    "TestSchemaServiceParseAttribute": [
-        "tests.unit.services.test_schema_service",
-        "TestSchemaServiceParseAttribute",
-    ],
-    "TestSchemaServiceParseObjectClass": [
-        "tests.unit.services.test_schema_service",
-        "TestSchemaServiceParseObjectClass",
-    ],
-    "TestSchemaServiceRepr": [
-        "tests.unit.services.test_schema_service",
-        "TestSchemaServiceRepr",
-    ],
-    "TestSchemaServiceValidateAttribute": [
-        "tests.unit.services.test_schema_service",
-        "TestSchemaServiceValidateAttribute",
-    ],
-    "TestSchemaServiceValidateObjectClass": [
-        "tests.unit.services.test_schema_service",
-        "TestSchemaServiceValidateObjectClass",
-    ],
-    "TestSchemaServiceWriteAttribute": [
-        "tests.unit.services.test_schema_service",
-        "TestSchemaServiceWriteAttribute",
-    ],
-    "TestSchemaServiceWriteObjectClass": [
-        "tests.unit.services.test_schema_service",
-        "TestSchemaServiceWriteObjectClass",
-    ],
-    "TestSchemaTransformerApplyAttributeTransformations": [
-        "tests.unit.quirks.servers.test_schema_transformer",
-        "TestSchemaTransformerApplyAttributeTransformations",
-    ],
-    "TestSchemaTransformerApplyObjectClassTransformations": [
-        "tests.unit.quirks.servers.test_schema_transformer",
-        "TestSchemaTransformerApplyObjectClassTransformations",
-    ],
     "TestSchemaTransformerNormalizeMatchingRule": [
         "tests.unit.quirks.servers.test_schema_transformer",
         "TestSchemaTransformerNormalizeMatchingRule",
@@ -387,10 +291,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit.services.test_quirks_standardization",
         "TestsFlextLdifQuirksStandardizedConstants",
     ],
-    "TestsFlextLdifSchemaServiceExecute": [
-        "tests.unit.services.test_schema_service",
-        "TestsFlextLdifSchemaServiceExecute",
-    ],
     "TestsFlextLdifSchemaTransformerNormalizeAttributeName": [
         "tests.unit.quirks.servers.test_schema_transformer",
         "TestsFlextLdifSchemaTransformerNormalizeAttributeName",
@@ -399,10 +299,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit.__init__.test_version",
         "TestsFlextLdifVersion",
     ],
-    "TestsFlextLdifsFlextLdifWriterDnNormalization": [
-        "tests.unit.services.test_writer_dn_normalization",
-        "TestsFlextLdifsFlextLdifWriterDnNormalization",
-    ],
     "TestsTestFlextLdifAclAttributeRegistry": [
         "tests.unit.constants.test_acl_registry",
         "TestsTestFlextLdifAclAttributeRegistry",
@@ -410,10 +306,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "TestsTestFlextLdifApacheQuirks": [
         "tests.unit.quirks.servers.test_apache_quirks",
         "TestsTestFlextLdifApacheQuirks",
-    ],
-    "TestsTestFlextLdifConstants": [
-        "tests.unit.utilities.test_utilities_constants",
-        "TestsTestFlextLdifConstants",
     ],
     "TestsTestFlextLdifDs389Quirks": [
         "tests.unit.quirks.servers.test_ds389_quirks",
@@ -435,24 +327,8 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit.quirks.servers.test_relaxed_quirks",
         "TestsTestFlextLdifRelaxedQuirks",
     ],
-    "TestsTestFlextLdifServiceAPIs": [
-        "tests.unit.utilities.test_utilities",
-        "TestsTestFlextLdifServiceAPIs",
-    ],
-    "ValidateManyType": [
-        "tests.unit.utilities.test_utilities_constants",
-        "ValidateManyType",
-    ],
     "WriteScenario": ["tests.unit.quirks.servers.test_relaxed_quirks", "WriteScenario"],
     "cleanup_state": ["tests.unit.quirks.servers.test_edge_cases", "cleanup_state"],
-    "complex_attribute_definition": [
-        "tests.unit.services.test_schema_service",
-        "complex_attribute_definition",
-    ],
-    "complex_objectclass_definition": [
-        "tests.unit.services.test_schema_service",
-        "complex_objectclass_definition",
-    ],
     "constants": ["tests.unit.constants", ""],
     "entry_quirk": ["tests.unit.quirks.servers.test_novell_quirks", "entry_quirk"],
     "ldif_api": ["tests.unit.quirks.servers.test_edge_cases", "ldif_api"],
@@ -461,20 +337,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "novell_server": ["tests.unit.quirks.servers.test_novell_quirks", "novell_server"],
     "protocols": ["tests.unit.protocols", ""],
     "schema_quirk": ["tests.unit.quirks.servers.test_novell_quirks", "schema_quirk"],
-    "schema_service": ["tests.unit.services.test_schema_service", "schema_service"],
-    "schema_service_oud": [
-        "tests.unit.services.test_schema_service",
-        "schema_service_oud",
-    ],
     "services": ["tests.unit.services", ""],
-    "simple_attribute_definition": [
-        "tests.unit.services.test_schema_service",
-        "simple_attribute_definition",
-    ],
-    "simple_objectclass_definition": [
-        "tests.unit.services.test_schema_service",
-        "simple_objectclass_definition",
-    ],
     "utilities": ["tests.unit.utilities", ""],
     "version_module": ["tests.unit.__init__.test_version", "version_module"],
 }
@@ -491,9 +354,7 @@ __all__ = [
     "EntryScenario",
     "EntryTestCase",
     "GetAclAttributesServerType",
-    "GetValidValuesType",
     "IsAclAttributeType",
-    "IsValidTestType",
     "ObjectClassScenario",
     "ObjectClassTestCase",
     "OidServer",
@@ -501,13 +362,10 @@ __all__ = [
     "OudServer",
     "ParseScenario",
     "RfcTestHelpers",
-    "TestAclAttributes",
-    "TestAclParser",
     "TestAliasDiscovery",
     "TestAttributeFixer",
     "TestDeduplicationHelpers",
     "TestDnObjectClassMethods",
-    "TestFlextLdifDeduplicationHelpers",
     "TestFlextLdifModels",
     "TestFlextLdifTypesStructure",
     "TestFlextLdifUtilitiesComprehensive",
@@ -528,18 +386,6 @@ __all__ = [
     "TestQuirksAutoInterchange",
     "TestQuirksWithRealLdifFixtures",
     "TestRemovalOfOverEngineering",
-    "TestSchemaServiceBuilder",
-    "TestSchemaServiceCanHandleAttribute",
-    "TestSchemaServiceIntegration",
-    "TestSchemaServiceParseAttribute",
-    "TestSchemaServiceParseObjectClass",
-    "TestSchemaServiceRepr",
-    "TestSchemaServiceValidateAttribute",
-    "TestSchemaServiceValidateObjectClass",
-    "TestSchemaServiceWriteAttribute",
-    "TestSchemaServiceWriteObjectClass",
-    "TestSchemaTransformerApplyAttributeTransformations",
-    "TestSchemaTransformerApplyObjectClassTransformations",
     "TestSchemaTransformerNormalizeMatchingRule",
     "TestSchemaTransformerNormalizeSyntaxOid",
     "TestServerTypes",
@@ -550,24 +396,17 @@ __all__ = [
     "TestsFlextLdifMigrationPipelineQuirks",
     "TestsFlextLdifNovellInitialization",
     "TestsFlextLdifQuirksStandardizedConstants",
-    "TestsFlextLdifSchemaServiceExecute",
     "TestsFlextLdifSchemaTransformerNormalizeAttributeName",
     "TestsFlextLdifVersion",
-    "TestsFlextLdifsFlextLdifWriterDnNormalization",
     "TestsTestFlextLdifAclAttributeRegistry",
     "TestsTestFlextLdifApacheQuirks",
-    "TestsTestFlextLdifConstants",
     "TestsTestFlextLdifDs389Quirks",
     "TestsTestFlextLdifMigrationPipeline",
     "TestsTestFlextLdifOidQuirks",
     "TestsTestFlextLdifProtocols",
     "TestsTestFlextLdifRelaxedQuirks",
-    "TestsTestFlextLdifServiceAPIs",
-    "ValidateManyType",
     "WriteScenario",
     "cleanup_state",
-    "complex_attribute_definition",
-    "complex_objectclass_definition",
     "constants",
     "entry_quirk",
     "ldif_api",
@@ -576,11 +415,7 @@ __all__ = [
     "novell_server",
     "protocols",
     "schema_quirk",
-    "schema_service",
-    "schema_service_oud",
     "services",
-    "simple_attribute_definition",
-    "simple_objectclass_definition",
     "utilities",
     "version_module",
 ]

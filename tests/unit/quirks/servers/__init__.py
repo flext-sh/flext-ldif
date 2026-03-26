@@ -57,8 +57,6 @@ if TYPE_CHECKING:
         meta_keys,
     )
     from tests.unit.quirks.servers.test_schema_transformer import (
-        TestSchemaTransformerApplyAttributeTransformations,
-        TestSchemaTransformerApplyObjectClassTransformations,
         TestSchemaTransformerNormalizeMatchingRule,
         TestSchemaTransformerNormalizeSyntaxOid,
         TestsFlextLdifSchemaTransformerNormalizeAttributeName,
@@ -131,14 +129,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit.quirks.servers.test_novell_quirks",
         "TestNovellSchemaObjectClassParsing",
     ],
-    "TestSchemaTransformerApplyAttributeTransformations": [
-        "tests.unit.quirks.servers.test_schema_transformer",
-        "TestSchemaTransformerApplyAttributeTransformations",
-    ],
-    "TestSchemaTransformerApplyObjectClassTransformations": [
-        "tests.unit.quirks.servers.test_schema_transformer",
-        "TestSchemaTransformerApplyObjectClassTransformations",
-    ],
     "TestSchemaTransformerNormalizeMatchingRule": [
         "tests.unit.quirks.servers.test_schema_transformer",
         "TestSchemaTransformerNormalizeMatchingRule",
@@ -206,8 +196,6 @@ __all__ = [
     "TestNovellSchemaAttributeParsing",
     "TestNovellSchemaObjectClassDetection",
     "TestNovellSchemaObjectClassParsing",
-    "TestSchemaTransformerApplyAttributeTransformations",
-    "TestSchemaTransformerApplyObjectClassTransformations",
     "TestSchemaTransformerNormalizeMatchingRule",
     "TestSchemaTransformerNormalizeSyntaxOid",
     "TestsFlextLdifEdgeCases",
