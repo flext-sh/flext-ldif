@@ -29,7 +29,7 @@ from typing import (
 )
 
 import pytest
-from flext_core import FlextConstants, FlextLogger, FlextSettings, r
+from flext_core import FlextLogger, FlextSettings, r
 from flext_tests import tk
 from ldap3 import ALL, Connection, Server
 
@@ -40,7 +40,7 @@ from flext_ldif import (
     FlextLdifWriter,
     ldif,
 )
-from tests import p, t
+from tests import c, p, t
 
 from ..conftest import FlextLdifFixtures
 from .ldif_data import LdifTestData
@@ -434,7 +434,7 @@ class FlextLdifTestConftest:
     def ldif_processor_config(self) -> t.ContainerMapping:
         """LDIF processor configuration."""
         return {
-            "encoding": FlextConstants.DEFAULT_ENCODING,
+            "encoding": c.DEFAULT_ENCODING,
             "strict_parsing": True,
             "max_entries": 10000,
             "validate_dn": True,

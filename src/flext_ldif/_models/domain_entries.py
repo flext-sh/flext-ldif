@@ -956,7 +956,7 @@ class FlextLdifModelsDomainsEntries:
                     "ACL is defined (has target/subject/permissions) but raw_acl is empty",
                 )
             if violations:
-                object.__setattr__(self, "validation_violations", violations)
+                object.__setattr__(self, "validation_violations", violations)  # noqa: PLC2801 - bypass validate_assignment to prevent recursion
             return self
 
     class AclWriteMetadata(FlextLdifModelsBases.Base):

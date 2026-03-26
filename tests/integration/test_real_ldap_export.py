@@ -26,7 +26,7 @@ from pathlib import Path
 import pytest
 from ldap3 import Connection
 
-from flext_ldif import FlextLdifModels, ldif, m
+from flext_ldif import ldif, m
 
 
 @pytest.fixture
@@ -110,7 +110,7 @@ class TestRealLdapExport:
             )
         ldap_connection.search(clean_test_ou, "(objectClass=person)", attributes=["*"])
         assert len(ldap_connection.entries) == 5
-        entries: MutableSequence[FlextLdifModels.Ldif.Entry] = []
+        entries: MutableSequence[m.Ldif.Entry] = []
         for entry in ldap_connection.entries:
             attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
             for attr_name in entry.entry_attributes:
@@ -185,7 +185,7 @@ class TestRealLdapExport:
             search_scope="SUBTREE",
             attributes=["*"],
         )
-        entries: MutableSequence[FlextLdifModels.Ldif.Entry] = []
+        entries: MutableSequence[m.Ldif.Entry] = []
         for entry in ldap_connection.entries:
             attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
             for attr_name in entry.entry_attributes:
