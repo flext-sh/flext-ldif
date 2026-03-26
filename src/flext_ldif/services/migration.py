@@ -141,7 +141,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                     )
             converted_all_entries: MutableSequence[m.Ldif.Entry] = list(all_entries)
             pipeline_result = m.Ldif.MigrationPipelineResult(
-                migrated_schema=m.Ldif.SchemaContent.model_validate({}),
+                migrated_schema=m.Ldif.SchemaContent(attributes=[], object_classes=[]),
                 entries=converted_all_entries,
                 output_files=output_files,
                 stats=m.Ldif.Statistics(
@@ -253,7 +253,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             logger.debug("Wrote migrated file to: %s", output_file)
             converted_entries: MutableSequence[m.Ldif.Entry] = list(migrated)
             result = m.Ldif.MigrationPipelineResult(
-                migrated_schema=m.Ldif.SchemaContent.model_validate({}),
+                migrated_schema=m.Ldif.SchemaContent(attributes=[], object_classes=[]),
                 entries=converted_entries,
                 output_files=[str(output_file)],
                 stats=m.Ldif.Statistics(

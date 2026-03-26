@@ -35,9 +35,6 @@ class FlextLdifProcessingPipelineService:
                 target_server=target_server_type,
                 dn_config=None,
                 attr_config=None,
-                acl_config=None,
-                validation_config=None,
-                metadata_config=None,
             )
             config = m.Ldif.TransformConfig(
                 fail_fast=False,

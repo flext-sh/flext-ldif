@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from tests import s
 
-
-class TestsTestFlextLdifOidQuirks(s):
+class TestsTestFlextLdifOidQuirks:
     """Test OID-specific quirks and behavior."""
 
     def test_oracle_guid_attribute(self) -> None:

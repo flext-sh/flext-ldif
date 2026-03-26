@@ -13,7 +13,7 @@ from typing import Annotated, ClassVar
 import pytest
 from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
-from tests import c, m, s
+from tests import c, m
 
 from flext_ldif import FlextLdifServersNovell
 
@@ -256,7 +256,7 @@ def entry_quirk(novell_server: FlextLdifServersNovell) -> FlextLdifServersNovell
     return quirk
 
 
-class TestsFlextLdifNovellInitialization(s):
+class TestsFlextLdifNovellInitialization:
     """Test initialization of Novell quirks."""
 
     def test_server_initialization(self) -> None:

@@ -13,7 +13,7 @@ from typing import Annotated, ClassVar
 import pytest
 from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
-from tests import c, m, s
+from tests import c, m
 
 from flext_ldif import FlextLdifServersApache
 
@@ -253,7 +253,7 @@ ENTRY_TEST_CASES = (
 )
 
 
-class TestsTestFlextLdifApacheQuirks(s):
+class TestsTestFlextLdifApacheQuirks:
     """Test Apache Directory Server quirks implementation."""
 
     ATTRIBUTE_DATA: ClassVar = ATTRIBUTE_TEST_CASES
@@ -474,7 +474,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_line,
-            parse_method="parse",
+            parse_method="parse_input",
             expected_type=m.Ldif.Tests.Acl,
         )
         assert acl_model is not None
@@ -483,7 +483,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
                 acl_quirk,
                 acl_model.raw_acl or str(acl_model),
-                parse_method="parse",
+                parse_method="parse_input",
             )
             assert roundtrip_result is not None
             tm.that(roundtrip_result, none=False)
@@ -496,7 +496,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_line,
-            parse_method="parse",
+            parse_method="parse_input",
             expected_type=m.Ldif.Tests.Acl,
         )
         assert acl_model is not None
@@ -505,7 +505,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
                 acl_quirk,
                 acl_model.raw_acl or str(acl_model),
-                parse_method="parse",
+                parse_method="parse_input",
             )
             assert roundtrip_result is not None
             tm.that(roundtrip_result, none=False)
@@ -518,7 +518,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_line,
-            parse_method="parse",
+            parse_method="parse_input",
             expected_type=m.Ldif.Tests.Acl,
         )
         assert acl_model is not None
@@ -527,7 +527,7 @@ class TestsTestFlextLdifApacheQuirks(s):
             roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
                 acl_quirk,
                 acl_model.raw_acl or str(acl_model),
-                parse_method="parse",
+                parse_method="parse_input",
             )
             assert roundtrip_result is not None
             tm.that(roundtrip_result, none=False)
@@ -555,7 +555,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_line,
-            parse_method="parse",
+            parse_method="parse_input",
             expected_type=m.Ldif.Tests.Acl,
         )
         assert acl_data is not None
@@ -572,7 +572,7 @@ class TestsTestFlextLdifApacheQuirks(s):
         acl_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_line,
-            parse_method="parse",
+            parse_method="parse_input",
             expected_type=m.Ldif.Tests.Acl,
         )
         assert acl_data is not None
@@ -672,4 +672,4 @@ class TestsTestFlextLdifApacheQuirks(s):
         entry_quirk = server.entry_quirk
         ldif = self._build_ldif(test_case.entry_dn, test_case.attributes)
         result = entry_quirk.parse_input(ldif)
-        tm.that(hasattr(result, "is_success"), eq=True)
+        tm.that(result is not None, eq=True)

@@ -13,7 +13,7 @@ from typing import ClassVar
 import pytest
 from flext_core import r
 from flext_tests import tm
-from tests import c, m, s
+from tests import c, m
 
 from flext_ldif import FlextLdifServersRelaxed
 
@@ -44,7 +44,7 @@ class WriteScenario(StrEnum):
 
 
 @pytest.mark.unit
-class TestsTestFlextLdifRelaxedQuirks(s):
+class TestsTestFlextLdifRelaxedQuirks:
     """Consolidated test suite for Relaxed quirk functionality.
 
     Merges 16 original test classes into one parametrized test class for:
@@ -145,7 +145,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
             tm.that(hasattr(parsed, "name"), eq=True)
             if scenario in {ParseScenario.VALID, ParseScenario.MALFORMED}:
                 tm.that(parsed.oid, none=False)
-                tm.that(parsed.metadata, eq=True)
+                tm.that(parsed.metadata is not None, eq=True)
                 assert parsed.metadata is not None
                 tm.that(
                     (
@@ -202,7 +202,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         result = schema_quirk.parse_attribute(original)
         tm.that(result.is_success, eq=True)
         parsed = result.value
-        tm.that(parsed.metadata, eq=True)
+        tm.that(parsed.metadata is not None, eq=True)
         assert parsed.metadata is not None
         tm.that(parsed.metadata.extensions.original_format, eq=original)
 
@@ -232,7 +232,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
         tm.that(result.is_success, eq=True)
         written = result.value
         tm.that(written, is_=str)
-        tm.that(written, eq=True)
+        tm.that(len(written) > 0, eq=True)
 
     def test_acl_initialization(self, acl_quirk: FlextLdifServersRelaxed.Acl) -> None:
         """Test relaxed ACL quirk initialization."""
@@ -315,7 +315,7 @@ class TestsTestFlextLdifRelaxedQuirks(s):
             result = schema_quirk.parse_objectclass(bad_input)
         tm.that(result.is_success, eq=True)
         parsed = result.value
-        tm.that(parsed.metadata, eq=True)
+        tm.that(parsed.metadata is not None, eq=True)
         assert parsed.metadata is not None
         tm.that(
             (

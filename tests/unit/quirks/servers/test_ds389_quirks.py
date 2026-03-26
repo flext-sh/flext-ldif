@@ -13,7 +13,7 @@ from typing import Annotated, ClassVar
 import pytest
 from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
-from tests import c, m, s
+from tests import c, m
 
 from flext_ldif import FlextLdifServersDs389
 
@@ -292,7 +292,7 @@ ENTRY_TEST_CASES = (
 )
 
 
-class TestsTestFlextLdifDs389Quirks(s):
+class TestsTestFlextLdifDs389Quirks:
     """Test FlextLdif DS389 server quirks."""
 
     ATTRIBUTE_DATA: ClassVar[tuple[AttributeTestCase, ...]] = ATTRIBUTE_TEST_CASES

@@ -10,7 +10,6 @@ from pathlib import Path
 
 import pytest
 from flext_tests import tm
-from tests import s
 
 from flext_ldif import FlextLdif
 
@@ -31,7 +30,7 @@ def ldif_api() -> FlextLdif:
     return FlextLdif()
 
 
-class TestsFlextLdifEdgeCases(s):
+class TestsFlextLdifEdgeCases:
     """Test edge cases with real fixture files."""
 
     def test_unicode_names(self, ldif_api: FlextLdif) -> None:
