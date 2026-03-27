@@ -212,7 +212,11 @@ exclude = [
   ".venv",
 ]
 extraPaths = [ ".", "../typings", "../typings/generated", "src" ]
-ignore = [ "../typings", "../typings/generated" ]
+ignore = [
+  "**/*.pyi",
+  "../typings",
+  "../typings/generated",
+]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
 reportCallIssue = "none"

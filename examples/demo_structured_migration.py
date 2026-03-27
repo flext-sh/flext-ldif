@@ -44,10 +44,7 @@ def main() -> None:
                 _lines = len(file_path.read_text(encoding="utf-8").splitlines())
         user_file = output_dir / "02-users.ldif"
         if user_file.exists():
-            content = user_file.read_text()
-            content.splitlines()[:30]
-            if len(content.splitlines()) > 30:
-                pass
+            _content = user_file.read_text(encoding="utf-8")
 
 
 if __name__ == "__main__":

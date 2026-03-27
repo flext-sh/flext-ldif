@@ -124,9 +124,7 @@ def acl_pipeline() -> None:
     required_perms: MutableMapping[str, bool] = {"read": True}
     eval_result = acl_service.evaluate_acl_context(acls, required_perms)
     if eval_result.is_success:
-        validation_result = api.validate_entries([entry])
-        if validation_result.is_success:
-            pass
+        api.validate_entries([entry])
 
 
 def main() -> None:
