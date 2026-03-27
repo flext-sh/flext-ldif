@@ -168,12 +168,12 @@ class FlextLdifUtilitiesServer:
         raise AttributeError(msg)
 
     @staticmethod
-    def get_server_detection_attribute_match_score() -> int:
+    def get_attribute_match_score() -> int:
         """Get attribute match score for server detection."""
         return c.Ldif.ATTRIBUTE_MATCH_SCORE
 
     @staticmethod
-    def get_server_detection_confidence_threshold() -> float:
+    def get_confidence_threshold() -> float:
         """Get confidence threshold for server detection."""
         return c.Ldif.CONFIDENCE_THRESHOLD
 

@@ -99,7 +99,7 @@ class FlextLdifDetectorMixin:
             scores=scores_model,
             patterns_found=patterns_found,
             is_confident=confidence
-            >= u.Ldif.get_server_detection_confidence_threshold(),
+            >= u.Ldif.get_confidence_threshold(),
         )
         return r[m.Ldif.ServerDetectionResult].ok(detection_result)
 
@@ -238,7 +238,7 @@ class FlextLdifDetectorMixin:
             return ("rfc", 0.0)
         confidence = max_score / total_score if total_score > 0 else 0.0
         detected_key: str = max(scores, key=lambda k: scores[k])
-        if confidence < u.Ldif.get_server_detection_confidence_threshold():
+        if confidence < u.Ldif.get_confidence_threshold():
             return ("rfc", confidence)
         if detected_key == "generic":
             return ("rfc", confidence)
@@ -489,7 +489,7 @@ class FlextLdifDetectorMixin:
         search_content = content if case_sensitive else content_lower
         if re.search(pattern, search_content) and server_type:
             scores[server_type] += weight
-        score_attr_match = u.Ldif.get_server_detection_attribute_match_score()
+        score_attr_match = u.Ldif.get_attribute_match_score()
         for item in (*attributes, *(objectclasses or [])):
             server_type_lower = server_type.lower() if server_type else ""
             item_lower = item.lower()

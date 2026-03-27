@@ -62,7 +62,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             validate_dependencies=validate_dependencies,
         )
 
-    def _apply_attribute_matching_rule_transforms(
+    def _transform_by_matching_rules(
         self,
         attr_data: m.Ldif.SchemaAttribute,
     ) -> tuple[str | None, str | None]:
@@ -229,7 +229,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         attr_data: m.Ldif.SchemaAttribute,
     ) -> m.Ldif.SchemaAttribute:
         """Apply OUD-specific attribute transformations before writing."""
-        fixed_equality, fixed_substr = self._apply_attribute_matching_rule_transforms(
+        fixed_equality, fixed_substr = self._transform_by_matching_rules(
             attr_data,
         )
         is_boolean = FlextLdifUtilitiesSchema.is_boolean_attribute(

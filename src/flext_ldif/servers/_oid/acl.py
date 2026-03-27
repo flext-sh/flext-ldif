@@ -624,7 +624,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             )
             return r[m.Ldif.Acl].fail(f"OID ACL parsing failed: {e}")
 
-    def _prepare_subject_and_permissions_for_write(
+    def _authorize_write_permissions(
         self,
         acl_subject: m.Ldif.AclSubject | t.MutableConfigurationMapping,
         acl_permissions: m.Ldif.AclPermissions | MutableMapping[str, bool] | None,
@@ -743,7 +743,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             else:
                 metadata_public = None
             subject_clause, permissions_clause = (
-                self._prepare_subject_and_permissions_for_write(
+                self._authorize_write_permissions(
                     subject_public,
                     permissions_public,
                     metadata_public,

@@ -632,7 +632,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 constrain_to_added
             )
 
-    def _extract_boolean_conversions_from_metadata(
+    def _parse_metadata_boolean_flags(
         self,
         entry_data: m.Ldif.Entry,
     ) -> MutableMapping[str, MutableMapping[str, str | MutableSequence[str]]]:
@@ -984,7 +984,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         """Restore OID boolean format from RFC format (RFC → OID: TRUE/FALSE → 0/1)."""
         if not entry_data.attributes:
             return entry_data
-        boolean_conversions = self._extract_boolean_conversions_from_metadata(
+        boolean_conversions = self._parse_metadata_boolean_flags(
             entry_data,
         )
         boolean_attr_names = {
