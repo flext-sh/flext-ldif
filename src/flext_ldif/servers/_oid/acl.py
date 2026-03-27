@@ -742,12 +742,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 metadata_public = m.Ldif.QuirkMetadata.model_validate(acl_data.metadata)
             else:
                 metadata_public = None
-            subject_clause, permissions_clause = (
-                self._authorize_write_permissions(
-                    subject_public,
-                    permissions_public,
-                    metadata_public,
-                )
+            subject_clause, permissions_clause = self._authorize_write_permissions(
+                subject_public,
+                permissions_public,
+                metadata_public,
             )
             acl_parts.extend([
                 FlextLdifServersOidConstants.ACL_BY,

@@ -98,8 +98,7 @@ class FlextLdifDetectorMixin:
             confidence=confidence,
             scores=scores_model,
             patterns_found=patterns_found,
-            is_confident=confidence
-            >= u.Ldif.get_confidence_threshold(),
+            is_confident=confidence >= u.Ldif.get_confidence_threshold(),
         )
         return r[m.Ldif.ServerDetectionResult].ok(detection_result)
 
