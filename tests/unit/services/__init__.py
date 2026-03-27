@@ -24,11 +24,26 @@ if TYPE_CHECKING:
     )
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "TestAliasDiscovery": ["tests.unit.services.test_quirks_standardization", "TestAliasDiscovery"],
-    "TestQuirksAutoInterchange": ["tests.unit.services.test_quirks_standardization", "TestQuirksAutoInterchange"],
-    "TestQuirksWithRealLdifFixtures": ["tests.unit.services.test_quirks_standardization", "TestQuirksWithRealLdifFixtures"],
-    "TestsFlextLdifQuirksStandardizedConstants": ["tests.unit.services.test_quirks_standardization", "TestsFlextLdifQuirksStandardizedConstants"],
-    "TestsTestFlextLdifMigrationPipeline": ["tests.unit.services.test_migration_pipeline", "TestsTestFlextLdifMigrationPipeline"],
+    "TestAliasDiscovery": [
+        "tests.unit.services.test_quirks_standardization",
+        "TestAliasDiscovery",
+    ],
+    "TestQuirksAutoInterchange": [
+        "tests.unit.services.test_quirks_standardization",
+        "TestQuirksAutoInterchange",
+    ],
+    "TestQuirksWithRealLdifFixtures": [
+        "tests.unit.services.test_quirks_standardization",
+        "TestQuirksWithRealLdifFixtures",
+    ],
+    "TestsFlextLdifQuirksStandardizedConstants": [
+        "tests.unit.services.test_quirks_standardization",
+        "TestsFlextLdifQuirksStandardizedConstants",
+    ],
+    "TestsTestFlextLdifMigrationPipeline": [
+        "tests.unit.services.test_migration_pipeline",
+        "TestsTestFlextLdifMigrationPipeline",
+    ],
 }
 
 __all__ = [
