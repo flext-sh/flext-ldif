@@ -17,6 +17,7 @@ from flext_core import FlextModels
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif import (
+    FlextLdifModelsBases,
     FlextLdifModelsCollections,
     FlextLdifModelsDomains,
     FlextLdifModelsEvents,
@@ -44,6 +45,7 @@ class FlextLdifModels(FlextModels):
         FlextLdifModelsResults,
         FlextLdifModelsCollections,
         FlextLdifModelsProcessing,
+        FlextLdifModelsBases,
     ):
         """LDIF namespace for cross-project access."""
 

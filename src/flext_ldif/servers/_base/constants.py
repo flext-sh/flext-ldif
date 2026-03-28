@@ -7,7 +7,7 @@ from typing import ClassVar
 
 from flext_core import FlextLogger
 
-from flext_ldif import FlextLdifUtilitiesServer, c, p, t
+from flext_ldif import FlextLdifConstants, FlextLdifUtilitiesServer, p, t
 
 logger = FlextLogger(__name__)
 
@@ -71,7 +71,7 @@ class FlextLdifServersBaseQuirkHelpers:
     @staticmethod
     def get_server_type_from_utilities(
         quirk_class: type[FlextLdifQuirkMethodsMixin],
-    ) -> c.Ldif.ServerTypeLiteral:
+    ) -> FlextLdifConstants.Ldif.ServerTypeLiteral:
         """Get server type from utilities using type-safe access pattern."""
         return FlextLdifUtilitiesServer.get_parent_server_type(quirk_class)
 
@@ -88,7 +88,7 @@ class FlextLdifQuirkMethodsMixin:
         parent = self._get_parent_quirk_safe()
         return FlextLdifServersBaseQuirkHelpers.get_priority_from_parent(parent)
 
-    def _get_server_type(self) -> c.Ldif.ServerTypeLiteral:
+    def _get_server_type(self) -> FlextLdifConstants.Ldif.ServerTypeLiteral:
         """Get server_type from parent server class via __qualname__."""
         return FlextLdifServersBaseQuirkHelpers.get_server_type_from_utilities(
             type(self),
