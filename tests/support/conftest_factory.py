@@ -331,7 +331,7 @@ class FlextLdifTestConftest:
                     waited += wait_interval
                     continue
                 break
-            except Exception:
+            except (ConnectionError, OSError, ValueError):
                 pass
             time.sleep(wait_interval)
             waited += wait_interval
@@ -401,7 +401,7 @@ class FlextLdifTestConftest:
                 for dn in reversed(dns_to_delete):
                     with contextlib.suppress(Exception):
                         _ = self._ldap_delete(ldap_connection, dn)
-        except Exception:
+        except (ConnectionError, OSError, ValueError):
             pass
         with contextlib.suppress(Exception):
             _ = self._ldap_add(
@@ -428,7 +428,7 @@ class FlextLdifTestConftest:
                 for dn in reversed(dns_to_delete):
                     with contextlib.suppress(Exception):
                         _ = self._ldap_delete(ldap_connection, dn)
-        except Exception:
+        except (ConnectionError, OSError, ValueError):
             pass
 
     def ldif_processor_config(self) -> t.ContainerMapping:
