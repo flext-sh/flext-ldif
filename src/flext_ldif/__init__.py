@@ -51,7 +51,6 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.result import FlextLdifUtilitiesResult
     from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
     from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-    from flext_ldif._utilities.shared import FlextLdifShared
     from flext_ldif._utilities.transformers import (
         FlextLdifUtilitiesTransformer,
         FlextLdifUtilitiesTransformers,
@@ -117,6 +116,7 @@ if TYPE_CHECKING:
     from flext_ldif.services.transformers import FlextLdifTransformer
     from flext_ldif.services.writer import FlextLdifWriter, FlextLdifWriterMixin
     from flext_ldif.settings import FlextLdifSettings
+    from flext_ldif.shared import FlextLdifShared
     from flext_ldif.typings import FlextLdifTypes, FlextLdifTypes as t
     from flext_ldif.utilities import FlextLdifUtilities, FlextLdifUtilities as u
 
@@ -269,7 +269,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdifServersTivoli": ["flext_ldif.servers.tivoli", "FlextLdifServersTivoli"],
     "FlextLdifServiceBase": ["flext_ldif.base", "FlextLdifServiceBase"],
     "FlextLdifSettings": ["flext_ldif.settings", "FlextLdifSettings"],
-    "FlextLdifShared": ["flext_ldif._utilities.shared", "FlextLdifShared"],
+    "FlextLdifShared": ["flext_ldif.shared", "FlextLdifShared"],
     "FlextLdifStatistics": ["flext_ldif.services.statistics", "FlextLdifStatistics"],
     "FlextLdifTransformer": [
         "flext_ldif.services.transformers",

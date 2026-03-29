@@ -30,7 +30,6 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.result import FlextLdifUtilitiesResult
     from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
     from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-    from flext_ldif._utilities.shared import FlextLdifShared
     from flext_ldif._utilities.transformers import (
         FlextLdifUtilitiesTransformer,
         FlextLdifUtilitiesTransformers,
@@ -40,7 +39,6 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters, logger
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "FlextLdifShared": ["flext_ldif._utilities.shared", "FlextLdifShared"],
     "FlextLdifUtilitiesACL": ["flext_ldif._utilities.acl", "FlextLdifUtilitiesACL"],
     "FlextLdifUtilitiesAttribute": [
         "flext_ldif._utilities.attribute",
@@ -124,7 +122,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
 }
 
 __all__ = [
-    "FlextLdifShared",
     "FlextLdifUtilitiesACL",
     "FlextLdifUtilitiesAttribute",
     "FlextLdifUtilitiesCollectionLdif",
