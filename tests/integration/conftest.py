@@ -23,10 +23,8 @@ from collections.abc import Callable, Generator, Mapping, Sequence
 from pathlib import Path
 
 import pytest
+from flext_ldap import p, u
 from flext_tests import FlextTestsDocker
-from ldap3 import ALL, Connection, Server
-from ldap3.abstract.entry import Entry as LdapEntry
-from ldap3.core.exceptions import LDAPException
 
 from flext_ldif import (
     FlextLdifConversion,
@@ -89,9 +87,9 @@ def _wait_for_ldap_ready(
     interval = 1.0
     while waited < max_wait:
         with contextlib.suppress(Exception):
-            server = Server(server_url, get_info=ALL)
+            server = u.Ldap.create_server_from_url(server_url)
             for bind_dn, password in _candidate_bind_credentials():
-                conn = Connection(
+                conn = u.Ldap.create_connection(
                     server,
                     user=bind_dn,
                     password=password,
@@ -675,20 +673,25 @@ def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
 @pytest.fixture
 def ldap_connection(
     ldap_container: t.ContainerMapping,
-) -> Generator[Connection]:
+) -> Generator[p.Ldap.Ldap3Connection]:
     """Provide a bound LDAP connection or skip when unavailable."""
     server_url = str(ldap_container.get("server_url", f"ldap://localhost:{LDAP_PORT}"))
     bind_dn = str(ldap_container.get("bind_dn", LDAP_ADMIN_DN))
     password = str(ldap_container.get("password", LDAP_ADMIN_PASSWORD))
-    server = Server(server_url, get_info=ALL)
-    conn = Connection(server, user=bind_dn, password=password, auto_bind=False)
+    server = u.Ldap.create_server_from_url(server_url)
+    conn = u.Ldap.create_connection(
+        server,
+        user=bind_dn,
+        password=password,
+        auto_bind=False,
+    )
     try:
         bind_ok: bool = bool(conn.bind())
         if not bind_ok:
             pytest.skip(
                 f"LDAP server not available at {server_url} for bind_dn={bind_dn}",
             )
-    except (LDAPException, ConnectionError, TimeoutError, OSError) as exc:
+    except (u.Ldap.LDAPException, ConnectionError, TimeoutError, OSError) as exc:
         pytest.skip(f"LDAP server not available: {exc}")
     yield conn
     conn.unbind()
@@ -696,14 +699,14 @@ def ldap_connection(
 
 @pytest.fixture
 def clean_test_ou(
-    ldap_connection: Connection,
+    ldap_connection: p.Ldap.Ldap3Connection,
     make_test_base_dn: Callable[[str], str],
 ) -> Generator[str]:
     """Create and clean up an isolated OU for integration tests."""
     test_ou_dn = make_test_base_dn("FlextLdifTests")
     with contextlib.suppress(Exception):
         ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
-        entries: Sequence[LdapEntry] = list(ldap_connection.entries)
+        entries: Sequence[p.Ldap.Ldap3Entry] = list(ldap_connection.entries)
         if entries:
             dns_to_delete: Sequence[str] = [str(entry.entry_dn) for entry in entries]
             for dn in reversed(dns_to_delete):
@@ -718,7 +721,7 @@ def clean_test_ou(
     yield test_ou_dn
     with contextlib.suppress(Exception):
         ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
-        entries2: Sequence[LdapEntry] = list(ldap_connection.entries)
+        entries2: Sequence[p.Ldap.Ldap3Entry] = list(ldap_connection.entries)
         if entries2:
             dns_to_delete2: Sequence[str] = [str(entry.entry_dn) for entry in entries2]
             for dn in reversed(dns_to_delete2):

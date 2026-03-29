@@ -24,7 +24,7 @@ from collections.abc import (
 from pathlib import Path
 
 import pytest
-from ldap3 import Connection
+from flext_ldap import p
 
 from flext_ldif import ldif, m
 
@@ -43,7 +43,7 @@ class TestRealLdapExport:
 
     def test_export_single_entry(
         self,
-        ldap_connection: Connection,
+        ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
         flext_api: ldif,
         make_test_username: Callable[[str], str],
@@ -90,7 +90,7 @@ class TestRealLdapExport:
 
     def test_export_multiple_entries(
         self,
-        ldap_connection: Connection,
+        ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
         flext_api: ldif,
         make_test_username: Callable[[str], str],
@@ -155,7 +155,7 @@ class TestRealLdapExport:
 
     def test_export_hierarchical_structure(
         self,
-        ldap_connection: Connection,
+        ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
         flext_api: ldif,
         make_test_username: Callable[[str], str],
@@ -232,7 +232,7 @@ class TestRealLdapExport:
 
     def test_export_to_file(
         self,
-        ldap_connection: Connection,
+        ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
         flext_api: ldif,
         tmp_path: Path,

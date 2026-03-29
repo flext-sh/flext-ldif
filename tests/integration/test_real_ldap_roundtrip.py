@@ -25,7 +25,7 @@ from collections.abc import (
 )
 
 import pytest
-from ldap3 import Connection
+from flext_ldap import p
 
 from flext_ldif import ldif, m
 
@@ -44,7 +44,7 @@ class TestRealLdapRoundtrip:
 
     def test_roundtrip_preserves_data(
         self,
-        ldap_connection: Connection,
+        ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
         flext_api: ldif,
         make_test_username: Callable[[str], str],

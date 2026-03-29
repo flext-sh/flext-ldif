@@ -22,7 +22,7 @@ from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
 from pathlib import Path
 
 import pytest
-from ldap3 import Connection
+from flext_ldap import p
 
 from flext_ldif import ldif, m
 
@@ -41,7 +41,7 @@ class TestRealLdapCRUD:
 
     def test_complete_crud_cycle(
         self,
-        ldap_connection: Connection,
+        ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
         make_test_username: Callable[[str], str],
     ) -> None:
@@ -99,7 +99,7 @@ class TestRealLdapBatchOperations:
 
     def test_batch_entry_creation_via_api(
         self,
-        ldap_connection: Connection,
+        ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
         flext_api: ldif,
         make_test_username: Callable[[str], str],
@@ -154,7 +154,7 @@ class TestRealLdapBatchOperations:
 
     def test_batch_ldif_export_import(
         self,
-        ldap_connection: Connection,
+        ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
         flext_api: ldif,
         tmp_path: Path,

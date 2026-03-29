@@ -30,8 +30,8 @@ from typing import (
 
 import pytest
 from flext_core import FlextLogger, FlextSettings, r
+from flext_ldap import u
 from flext_tests import tk
-from ldap3 import ALL, Connection, Server
 
 from flext_ldif import (
     FlextLdifParser,
@@ -104,21 +104,21 @@ class FlextLdifTestConftest:
         return entries
 
     @staticmethod
-    def _ldap_bind(connection: Connection) -> bool:
+    def _ldap_bind(connection: p.Ldap.Ldap3Connection) -> bool:
         bind_method = getattr(connection, "bind", None)
         if callable(bind_method):
             return bool(bind_method())
         return False
 
     @staticmethod
-    def _ldap_unbind(connection: Connection) -> None:
+    def _ldap_unbind(connection: p.Ldap.Ldap3Connection) -> None:
         unbind_method = getattr(connection, "unbind", None)
         if callable(unbind_method):
             _ = unbind_method()
 
     @staticmethod
     def _ldap_search(
-        connection: Connection,
+        connection: p.Ldap.Ldap3Connection,
         search_base: str,
         search_filter: str,
         *,
@@ -137,7 +137,7 @@ class FlextLdifTestConftest:
 
     @staticmethod
     def _ldap_add(
-        connection: Connection,
+        connection: p.Ldap.Ldap3Connection,
         dn: str,
         object_class: Sequence[str],
         attributes: Mapping[str, str | Sequence[str]],
@@ -148,14 +148,16 @@ class FlextLdifTestConftest:
         return False
 
     @staticmethod
-    def _ldap_delete(connection: Connection, dn: str) -> bool:
+    def _ldap_delete(connection: p.Ldap.Ldap3Connection, dn: str) -> bool:
         delete_method = getattr(connection, "delete", None)
         if callable(delete_method):
             return bool(delete_method(dn))
         return False
 
     @staticmethod
-    def _ldap_entries(connection: Connection) -> Sequence[p.Ldap.Ldap3Entry]:
+    def _ldap_entries(
+        connection: p.Ldap.Ldap3Connection,
+    ) -> Sequence[p.Ldap.Ldap3Entry]:
         entries = getattr(connection, "entries", [])
         return [entry for entry in entries if isinstance(entry, p.Ldap.Ldap3Entry)]
 
@@ -311,9 +313,9 @@ class FlextLdifTestConftest:
         active_password = self.LDAP_ADMIN_PASSWORD
         while waited < max_wait:
             try:
-                server = Server(f"ldap://localhost:{self.LDAP_PORT}", get_info=ALL)
+                server = u.Ldap.create_server(host="localhost", port=self.LDAP_PORT)
                 for bind_dn, password in self._ldap_bind_candidates():
-                    conn = Connection(
+                    conn = u.Ldap.create_connection(
                         server,
                         user=bind_dn,
                         password=password,
@@ -356,18 +358,19 @@ class FlextLdifTestConftest:
     def ldap_connection(
         self,
         ldap_container: t.ContainerMapping,
-    ) -> Generator[Connection]:
+    ) -> Generator[p.Ldap.Ldap3Connection]:
         """Create LDAP connection."""
         host = str(ldap_container.get("host", "localhost"))
         raw_port = ldap_container.get("port", self.LDAP_PORT)
         port = raw_port if isinstance(raw_port, int) else self.LDAP_PORT
         bind_dn = str(ldap_container.get("bind_dn", self.LDAP_ADMIN_DN))
         password = str(ldap_container.get("password", self.LDAP_ADMIN_PASSWORD))
-        server = Server(f"ldap://{host}:{port}", get_info=ALL)
-        conn = Connection(
+        server = u.Ldap.create_server(host=host, port=port)
+        conn = u.Ldap.create_connection(
             server,
             user=bind_dn,
             password=password,
+            auto_bind=False,
         )
         try:
             if not self._ldap_bind(conn):
@@ -379,7 +382,7 @@ class FlextLdifTestConftest:
 
     def clean_test_ou(
         self,
-        ldap_connection: Connection,
+        ldap_connection: p.Ldap.Ldap3Connection,
         make_test_base_dn: Callable[[str], str],
     ) -> Generator[str]:
         """Create and clean isolated test OU."""

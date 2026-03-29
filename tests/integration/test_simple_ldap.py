@@ -5,13 +5,13 @@ from __future__ import annotations
 import contextlib
 from collections.abc import Callable, MutableMapping, MutableSequence
 
-from ldap3 import Connection
+from flext_ldap import p
 
 from flext_ldif import ldif, m
 from tests import GenericFieldsDict
 
 
-def test_ldap_connection(ldap_connection: Connection) -> None:
+def test_ldap_connection(ldap_connection: p.Ldap.Ldap3Connection) -> None:
     """Test basic LDAP connection."""
     assert ldap_connection.bound
     server_info = getattr(ldap_connection.server, "info", None)
@@ -21,7 +21,7 @@ def test_ldap_connection(ldap_connection: Connection) -> None:
 
 
 def test_simple_ldap_search(
-    ldap_connection: Connection,
+    ldap_connection: p.Ldap.Ldap3Connection,
     ldap_container: GenericFieldsDict,
 ) -> None:
     """Test simple LDAP search."""
@@ -32,7 +32,7 @@ def test_simple_ldap_search(
 
 
 def test_create_and_export_entry(
-    ldap_connection: Connection,
+    ldap_connection: p.Ldap.Ldap3Connection,
     ldap_container: GenericFieldsDict,
     make_test_username: Callable[[str], str],
 ) -> None:
