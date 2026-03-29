@@ -720,6 +720,35 @@ class FlextLdifConstants(FlextConstants):
             ACL = "acl"
             REJECTED = "rejected"
 
+        class EntryDefaults:
+            """Entry processing default values (RFC 2849 LDIF domain)."""
+
+            UNKNOWN_VALUE = "unknown"
+            ASCII_THRESHOLD = 127
+
+        class OperationalAttributes:
+            """Operational attributes to ignore in LDIF entry processing."""
+
+            IGNORE_SET: ClassVar[set[str]] = {
+                "createTimestamp",
+                "modifyTimestamp",
+                "creatorsName",
+                "modifiersName",
+                "entryUUID",
+                "entryCSN",
+                "hasSubordinates",
+                "numSubordinates",
+                "subschemaSubentry",
+                "dseType",
+            }
+
+        class ChangeTypeOperations:
+            """RFC 2849 LDIF changetype operations."""
+
+            ADD = "add"
+            MODIFY = "modify"
+            DELETE = "delete"
+
 
 c = FlextLdifConstants
 
