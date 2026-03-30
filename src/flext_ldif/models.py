@@ -70,8 +70,8 @@ class FlextLdifModels(FlextModels):
             oid_subject_value: Annotated[str, Field()] = ""
             perms_dict: Annotated[
                 MutableMapping[str, bool],
-                Field(default_factory=dict),
-            ]
+                Field(),
+            ] = Field(default_factory=dict)
             target_dn: Annotated[str, Field()] = "entry"
             target_attrs: MutableSequence[str] = Field(default_factory=list)
             acl_filter: Annotated[str, Field()] = ""
