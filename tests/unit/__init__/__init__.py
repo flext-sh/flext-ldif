@@ -13,6 +13,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
+    from tests.unit.__init__ import test_version
     from tests.unit.__init__.test_version import TestsFlextLdifVersion, version_module
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
@@ -20,11 +21,13 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit.__init__.test_version",
         "TestsFlextLdifVersion",
     ],
+    "test_version": ["tests.unit.__init__.test_version", ""],
     "version_module": ["tests.unit.__init__.test_version", "version_module"],
 }
 
 __all__ = [
     "TestsFlextLdifVersion",
+    "test_version",
     "version_module",
 ]
 

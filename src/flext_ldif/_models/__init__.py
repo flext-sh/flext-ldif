@@ -13,6 +13,17 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
+    from flext_ldif._models import (
+        base,
+        collections,
+        domain,
+        domain_entries,
+        events,
+        metadata,
+        processing,
+        results,
+        settings,
+    )
     from flext_ldif._models.base import FlextLdifModelsBases
     from flext_ldif._models.collections import FlextLdifModelsCollections
     from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -48,6 +59,15 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "flext_ldif._models.settings",
         "FlextLdifModelsSettings",
     ],
+    "base": ["flext_ldif._models.base", ""],
+    "collections": ["flext_ldif._models.collections", ""],
+    "domain": ["flext_ldif._models.domain", ""],
+    "domain_entries": ["flext_ldif._models.domain_entries", ""],
+    "events": ["flext_ldif._models.events", ""],
+    "metadata": ["flext_ldif._models.metadata", ""],
+    "processing": ["flext_ldif._models.processing", ""],
+    "results": ["flext_ldif._models.results", ""],
+    "settings": ["flext_ldif._models.settings", ""],
 }
 
 __all__ = [
@@ -60,6 +80,15 @@ __all__ = [
     "FlextLdifModelsProcessing",
     "FlextLdifModelsResults",
     "FlextLdifModelsSettings",
+    "base",
+    "collections",
+    "domain",
+    "domain_entries",
+    "events",
+    "metadata",
+    "processing",
+    "results",
+    "settings",
 ]
 
 

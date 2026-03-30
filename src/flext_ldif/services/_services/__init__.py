@@ -13,6 +13,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
+    from flext_ldif.services._services import processing_pipeline_service
     from flext_ldif.services._services.processing_pipeline_service import (
         FlextLdifProcessingPipelineService,
     )
@@ -22,10 +23,15 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "flext_ldif.services._services.processing_pipeline_service",
         "FlextLdifProcessingPipelineService",
     ],
+    "processing_pipeline_service": [
+        "flext_ldif.services._services.processing_pipeline_service",
+        "",
+    ],
 }
 
 __all__ = [
     "FlextLdifProcessingPipelineService",
+    "processing_pipeline_service",
 ]
 
 

@@ -13,6 +13,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
+    from tests.unit.utilities import test_utilities_comprehensive, test_utilities_core
     from tests.unit.utilities.test_utilities_comprehensive import (
         TestFlextLdifUtilitiesComprehensive,
     )
@@ -48,6 +49,11 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit.utilities.test_utilities_core",
         "TestsFlextLdifDnOperationsPure",
     ],
+    "test_utilities_comprehensive": [
+        "tests.unit.utilities.test_utilities_comprehensive",
+        "",
+    ],
+    "test_utilities_core": ["tests.unit.utilities.test_utilities_core", ""],
 }
 
 __all__ = [
@@ -58,6 +64,8 @@ __all__ = [
     "TestObjectClassUtilities",
     "TestServerTypes",
     "TestsFlextLdifDnOperationsPure",
+    "test_utilities_comprehensive",
+    "test_utilities_core",
 ]
 
 

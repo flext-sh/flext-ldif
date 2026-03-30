@@ -18,6 +18,13 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
+    from tests.support import (
+        conftest_factory,
+        ldif_data,
+        real_services,
+        test_files,
+        validators,
+    )
     from tests.support.conftest_factory import FlextLdifTestConftest, tk
     from tests.support.ldif_data import LdifSample, LdifTestData
     from tests.support.real_services import FlextLdifTestServiceFactory
@@ -46,7 +53,12 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     ],
     "MockMatchers": ["tests.support.validators", "MockMatchers"],
     "TestValidators": ["tests.support.validators", "TestValidators"],
+    "conftest_factory": ["tests.support.conftest_factory", ""],
+    "ldif_data": ["tests.support.ldif_data", ""],
+    "real_services": ["tests.support.real_services", ""],
+    "test_files": ["tests.support.test_files", ""],
     "tk": ["tests.support.conftest_factory", "tk"],
+    "validators": ["tests.support.validators", ""],
 }
 
 __all__ = [
@@ -58,7 +70,12 @@ __all__ = [
     "MockFlextUtilitiesResultHelpers",
     "MockMatchers",
     "TestValidators",
+    "conftest_factory",
+    "ldif_data",
+    "real_services",
+    "test_files",
     "tk",
+    "validators",
 ]
 
 

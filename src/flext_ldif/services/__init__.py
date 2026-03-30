@@ -13,7 +13,26 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from flext_ldif.services import _services
+    from flext_ldif.services import (
+        _services,
+        acl,
+        analysis,
+        categorization,
+        conversion,
+        detector,
+        entries,
+        filters,
+        migration,
+        parser,
+        pipeline,
+        processing,
+        rfc_validation,
+        server,
+        statistics,
+        transformers,
+        writer,
+    )
+    from flext_ldif.services._services import processing_pipeline_service
     from flext_ldif.services._services.processing_pipeline_service import (
         FlextLdifProcessingPipelineService,
     )
@@ -77,6 +96,26 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdifWriter": ["flext_ldif.services.writer", "FlextLdifWriter"],
     "FlextLdifWriterMixin": ["flext_ldif.services.writer", "FlextLdifWriterMixin"],
     "_services": ["flext_ldif.services._services", ""],
+    "acl": ["flext_ldif.services.acl", ""],
+    "analysis": ["flext_ldif.services.analysis", ""],
+    "categorization": ["flext_ldif.services.categorization", ""],
+    "conversion": ["flext_ldif.services.conversion", ""],
+    "detector": ["flext_ldif.services.detector", ""],
+    "entries": ["flext_ldif.services.entries", ""],
+    "filters": ["flext_ldif.services.filters", ""],
+    "migration": ["flext_ldif.services.migration", ""],
+    "parser": ["flext_ldif.services.parser", ""],
+    "pipeline": ["flext_ldif.services.pipeline", ""],
+    "processing": ["flext_ldif.services.processing", ""],
+    "processing_pipeline_service": [
+        "flext_ldif.services._services.processing_pipeline_service",
+        "",
+    ],
+    "rfc_validation": ["flext_ldif.services.rfc_validation", ""],
+    "server": ["flext_ldif.services.server", ""],
+    "statistics": ["flext_ldif.services.statistics", ""],
+    "transformers": ["flext_ldif.services.transformers", ""],
+    "writer": ["flext_ldif.services.writer", ""],
 }
 
 __all__ = [
@@ -101,6 +140,23 @@ __all__ = [
     "FlextLdifWriter",
     "FlextLdifWriterMixin",
     "_services",
+    "acl",
+    "analysis",
+    "categorization",
+    "conversion",
+    "detector",
+    "entries",
+    "filters",
+    "migration",
+    "parser",
+    "pipeline",
+    "processing",
+    "processing_pipeline_service",
+    "rfc_validation",
+    "server",
+    "statistics",
+    "transformers",
+    "writer",
 ]
 
 

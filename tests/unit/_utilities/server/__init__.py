@@ -12,6 +12,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
+    from tests.unit._utilities.server import test_server_utilities
     from tests.unit._utilities.server.test_server_utilities import (
         OidServer,
         OudServer,
@@ -25,12 +26,14 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit._utilities.server.test_server_utilities",
         "TestFlextLdifUtilitiesServer",
     ],
+    "test_server_utilities": ["tests.unit._utilities.server.test_server_utilities", ""],
 }
 
 __all__ = [
     "OidServer",
     "OudServer",
     "TestFlextLdifUtilitiesServer",
+    "test_server_utilities",
 ]
 
 

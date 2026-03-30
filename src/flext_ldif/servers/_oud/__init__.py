@@ -13,6 +13,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
+    from flext_ldif.servers._oud import acl, constants, entry, schema, utilities
     from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
     from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants, c
     from flext_ldif.servers._oud.entry import FlextLdifServersOudEntry
@@ -37,8 +38,13 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "flext_ldif.servers._oud.utilities",
         "FlextLdifServersOudUtilities",
     ],
+    "acl": ["flext_ldif.servers._oud.acl", ""],
     "c": ["flext_ldif.servers._oud.constants", "c"],
+    "constants": ["flext_ldif.servers._oud.constants", ""],
+    "entry": ["flext_ldif.servers._oud.entry", ""],
     "logger": ["flext_ldif.servers._oud.schema", "logger"],
+    "schema": ["flext_ldif.servers._oud.schema", ""],
+    "utilities": ["flext_ldif.servers._oud.utilities", ""],
 }
 
 __all__ = [
@@ -47,8 +53,13 @@ __all__ = [
     "FlextLdifServersOudEntry",
     "FlextLdifServersOudSchema",
     "FlextLdifServersOudUtilities",
+    "acl",
     "c",
+    "constants",
+    "entry",
     "logger",
+    "schema",
+    "utilities",
 ]
 
 

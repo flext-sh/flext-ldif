@@ -12,6 +12,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
+    from tests.unit._utilities.parser import test_parser_utilities
     from tests.unit._utilities.parser.test_parser_utilities import (
         TestFlextLdifUtilitiesParser,
     )
@@ -21,10 +22,12 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit._utilities.parser.test_parser_utilities",
         "TestFlextLdifUtilitiesParser",
     ],
+    "test_parser_utilities": ["tests.unit._utilities.parser.test_parser_utilities", ""],
 }
 
 __all__ = [
     "TestFlextLdifUtilitiesParser",
+    "test_parser_utilities",
 ]
 
 

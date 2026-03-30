@@ -12,6 +12,15 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
+    from tests.unit.quirks.servers import (
+        test_apache_quirks,
+        test_ds389_quirks,
+        test_edge_cases,
+        test_novell_quirks,
+        test_oid_quirks,
+        test_relaxed_quirks,
+        test_schema_transformer,
+    )
     from tests.unit.quirks.servers.test_apache_quirks import (
         TestsTestFlextLdifApacheQuirks,
     )
@@ -172,6 +181,16 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "meta_keys": ["tests.unit.quirks.servers.test_relaxed_quirks", "meta_keys"],
     "novell_server": ["tests.unit.quirks.servers.test_novell_quirks", "novell_server"],
     "schema_quirk": ["tests.unit.quirks.servers.test_novell_quirks", "schema_quirk"],
+    "test_apache_quirks": ["tests.unit.quirks.servers.test_apache_quirks", ""],
+    "test_ds389_quirks": ["tests.unit.quirks.servers.test_ds389_quirks", ""],
+    "test_edge_cases": ["tests.unit.quirks.servers.test_edge_cases", ""],
+    "test_novell_quirks": ["tests.unit.quirks.servers.test_novell_quirks", ""],
+    "test_oid_quirks": ["tests.unit.quirks.servers.test_oid_quirks", ""],
+    "test_relaxed_quirks": ["tests.unit.quirks.servers.test_relaxed_quirks", ""],
+    "test_schema_transformer": [
+        "tests.unit.quirks.servers.test_schema_transformer",
+        "",
+    ],
 }
 
 __all__ = [
@@ -212,6 +231,13 @@ __all__ = [
     "meta_keys",
     "novell_server",
     "schema_quirk",
+    "test_apache_quirks",
+    "test_ds389_quirks",
+    "test_edge_cases",
+    "test_novell_quirks",
+    "test_oid_quirks",
+    "test_relaxed_quirks",
+    "test_schema_transformer",
 ]
 
 

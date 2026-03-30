@@ -13,13 +13,16 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
+    from examples import demo_structured_migration
     from examples.demo_structured_migration import main
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "demo_structured_migration": ["examples.demo_structured_migration", ""],
     "main": ["examples.demo_structured_migration", "main"],
 }
 
 __all__ = [
+    "demo_structured_migration",
     "main",
 ]
 

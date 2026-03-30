@@ -13,6 +13,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
+    from tests.unit.services import test_migration_pipeline, test_quirks_standardization
     from tests.unit.services.test_migration_pipeline import (
         TestsTestFlextLdifMigrationPipeline,
     )
@@ -44,6 +45,11 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit.services.test_migration_pipeline",
         "TestsTestFlextLdifMigrationPipeline",
     ],
+    "test_migration_pipeline": ["tests.unit.services.test_migration_pipeline", ""],
+    "test_quirks_standardization": [
+        "tests.unit.services.test_quirks_standardization",
+        "",
+    ],
 }
 
 __all__ = [
@@ -52,6 +58,8 @@ __all__ = [
     "TestQuirksWithRealLdifFixtures",
     "TestsFlextLdifQuirksStandardizedConstants",
     "TestsTestFlextLdifMigrationPipeline",
+    "test_migration_pipeline",
+    "test_quirks_standardization",
 ]
 
 

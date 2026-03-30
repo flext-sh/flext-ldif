@@ -13,7 +13,16 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from tests.unit import constants, protocols, services, utilities
+    from tests.unit import (
+        constants,
+        protocols,
+        services,
+        test_migration_pipeline,
+        test_migration_pipeline_quirks,
+        test_typings,
+        utilities,
+    )
+    from tests.unit.__init__ import test_version
     from tests.unit.__init__.test_version import TestsFlextLdifVersion, version_module
     from tests.unit._utilities.oid.test_oid_utilities import TestFlextLdifUtilitiesOID
     from tests.unit._utilities.parser.test_parser_utilities import (
@@ -24,11 +33,13 @@ if TYPE_CHECKING:
         OudServer,
         TestFlextLdifUtilitiesServer,
     )
+    from tests.unit.constants import test_acl_registry
     from tests.unit.constants.test_acl_registry import (
         GetAclAttributesServerType,
         IsAclAttributeType,
         TestsTestFlextLdifAclAttributeRegistry,
     )
+    from tests.unit.protocols import test_protocols
     from tests.unit.protocols.test_protocols import TestsTestFlextLdifProtocols
     from tests.unit.quirks.servers.test_apache_quirks import (
         TestsTestFlextLdifApacheQuirks,
@@ -79,6 +90,7 @@ if TYPE_CHECKING:
         TestSchemaTransformerNormalizeSyntaxOid,
         TestsFlextLdifSchemaTransformerNormalizeAttributeName,
     )
+    from tests.unit.services import test_quirks_standardization
     from tests.unit.services.test_migration_pipeline import (
         TestsTestFlextLdifMigrationPipeline,
     )
@@ -101,6 +113,7 @@ if TYPE_CHECKING:
         TestRemovalOfOverEngineering,
         TestsFlextLdifCommonDictionaryTypes,
     )
+    from tests.unit.utilities import test_utilities_comprehensive, test_utilities_core
     from tests.unit.utilities.test_utilities_comprehensive import (
         TestFlextLdifUtilitiesComprehensive,
     )
@@ -335,6 +348,21 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "protocols": ["tests.unit.protocols", ""],
     "schema_quirk": ["tests.unit.quirks.servers.test_novell_quirks", "schema_quirk"],
     "services": ["tests.unit.services", ""],
+    "test_acl_registry": ["tests.unit.constants.test_acl_registry", ""],
+    "test_migration_pipeline": ["tests.unit.test_migration_pipeline", ""],
+    "test_migration_pipeline_quirks": ["tests.unit.test_migration_pipeline_quirks", ""],
+    "test_protocols": ["tests.unit.protocols.test_protocols", ""],
+    "test_quirks_standardization": [
+        "tests.unit.services.test_quirks_standardization",
+        "",
+    ],
+    "test_typings": ["tests.unit.test_typings", ""],
+    "test_utilities_comprehensive": [
+        "tests.unit.utilities.test_utilities_comprehensive",
+        "",
+    ],
+    "test_utilities_core": ["tests.unit.utilities.test_utilities_core", ""],
+    "test_version": ["tests.unit.__init__.test_version", ""],
     "utilities": ["tests.unit.utilities", ""],
     "version_module": ["tests.unit.__init__.test_version", "version_module"],
 }
@@ -411,6 +439,15 @@ __all__ = [
     "protocols",
     "schema_quirk",
     "services",
+    "test_acl_registry",
+    "test_migration_pipeline",
+    "test_migration_pipeline_quirks",
+    "test_protocols",
+    "test_quirks_standardization",
+    "test_typings",
+    "test_utilities_comprehensive",
+    "test_utilities_core",
+    "test_version",
     "utilities",
     "version_module",
 ]

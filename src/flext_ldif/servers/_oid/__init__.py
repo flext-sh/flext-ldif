@@ -13,6 +13,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
+    from flext_ldif.servers._oid import acl, constants, entry, schema
     from flext_ldif.servers._oid.acl import FlextLdifServersOidAcl
     from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants, c
     from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
@@ -32,8 +33,12 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "flext_ldif.servers._oid.schema",
         "FlextLdifServersOidSchema",
     ],
+    "acl": ["flext_ldif.servers._oid.acl", ""],
     "c": ["flext_ldif.servers._oid.constants", "c"],
+    "constants": ["flext_ldif.servers._oid.constants", ""],
+    "entry": ["flext_ldif.servers._oid.entry", ""],
     "logger": ["flext_ldif.servers._oid.schema", "logger"],
+    "schema": ["flext_ldif.servers._oid.schema", ""],
 }
 
 __all__ = [
@@ -41,8 +46,12 @@ __all__ = [
     "FlextLdifServersOidConstants",
     "FlextLdifServersOidEntry",
     "FlextLdifServersOidSchema",
+    "acl",
     "c",
+    "constants",
+    "entry",
     "logger",
+    "schema",
 ]
 
 

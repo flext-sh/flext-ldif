@@ -13,6 +13,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
+    from flext_ldif.servers._base import acl, constants, entry, schema
     from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
     from flext_ldif.servers._base.constants import (
         FlextLdifQuirkMethodsMixin,
@@ -47,7 +48,11 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "flext_ldif.servers._base.acl",
         "FlextLdifServersBaseSchemaAcl",
     ],
+    "acl": ["flext_ldif.servers._base.acl", ""],
+    "constants": ["flext_ldif.servers._base.constants", ""],
+    "entry": ["flext_ldif.servers._base.entry", ""],
     "logger": ["flext_ldif.servers._base.schema", "logger"],
+    "schema": ["flext_ldif.servers._base.schema", ""],
 }
 
 __all__ = [
@@ -57,7 +62,11 @@ __all__ = [
     "FlextLdifServersBaseQuirkHelpers",
     "FlextLdifServersBaseSchema",
     "FlextLdifServersBaseSchemaAcl",
+    "acl",
+    "constants",
+    "entry",
     "logger",
+    "schema",
 ]
 
 

@@ -13,6 +13,29 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
+    from flext_ldif._utilities import (
+        acl,
+        attribute,
+        collection_ldif,
+        detection,
+        dispatch,
+        dn,
+        entry,
+        events,
+        metadata,
+        object_class,
+        oid,
+        parser,
+        parsers,
+        pipeline,
+        result,
+        schema,
+        server,
+        transformers,
+        validation,
+        writer,
+        writers,
+    )
     from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
     from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
     from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
@@ -118,7 +141,28 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "flext_ldif._utilities.writers",
         "FlextLdifUtilitiesWriters",
     ],
+    "acl": ["flext_ldif._utilities.acl", ""],
+    "attribute": ["flext_ldif._utilities.attribute", ""],
+    "collection_ldif": ["flext_ldif._utilities.collection_ldif", ""],
+    "detection": ["flext_ldif._utilities.detection", ""],
+    "dispatch": ["flext_ldif._utilities.dispatch", ""],
+    "dn": ["flext_ldif._utilities.dn", ""],
+    "entry": ["flext_ldif._utilities.entry", ""],
+    "events": ["flext_ldif._utilities.events", ""],
     "logger": ["flext_ldif._utilities.writers", "logger"],
+    "metadata": ["flext_ldif._utilities.metadata", ""],
+    "object_class": ["flext_ldif._utilities.object_class", ""],
+    "oid": ["flext_ldif._utilities.oid", ""],
+    "parser": ["flext_ldif._utilities.parser", ""],
+    "parsers": ["flext_ldif._utilities.parsers", ""],
+    "pipeline": ["flext_ldif._utilities.pipeline", ""],
+    "result": ["flext_ldif._utilities.result", ""],
+    "schema": ["flext_ldif._utilities.schema", ""],
+    "server": ["flext_ldif._utilities.server", ""],
+    "transformers": ["flext_ldif._utilities.transformers", ""],
+    "validation": ["flext_ldif._utilities.validation", ""],
+    "writer": ["flext_ldif._utilities.writer", ""],
+    "writers": ["flext_ldif._utilities.writers", ""],
 }
 
 __all__ = [
@@ -144,7 +188,28 @@ __all__ = [
     "FlextLdifUtilitiesValidation",
     "FlextLdifUtilitiesWriter",
     "FlextLdifUtilitiesWriters",
+    "acl",
+    "attribute",
+    "collection_ldif",
+    "detection",
+    "dispatch",
+    "dn",
+    "entry",
+    "events",
     "logger",
+    "metadata",
+    "object_class",
+    "oid",
+    "parser",
+    "parsers",
+    "pipeline",
+    "result",
+    "schema",
+    "server",
+    "transformers",
+    "validation",
+    "writer",
+    "writers",
 ]
 
 

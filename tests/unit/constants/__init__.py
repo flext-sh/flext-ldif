@@ -13,6 +13,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
+    from tests.unit.constants import test_acl_registry
     from tests.unit.constants.test_acl_registry import (
         GetAclAttributesServerType,
         IsAclAttributeType,
@@ -32,12 +33,14 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit.constants.test_acl_registry",
         "TestsTestFlextLdifAclAttributeRegistry",
     ],
+    "test_acl_registry": ["tests.unit.constants.test_acl_registry", ""],
 }
 
 __all__ = [
     "GetAclAttributesServerType",
     "IsAclAttributeType",
     "TestsTestFlextLdifAclAttributeRegistry",
+    "test_acl_registry",
 ]
 
 

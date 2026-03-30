@@ -13,7 +13,25 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from flext_ldif.servers import _base, _oid, _oud, _rfc
+    from flext_ldif.servers import (
+        _base,
+        _oid,
+        _oud,
+        _rfc,
+        ad,
+        apache,
+        base,
+        ds389,
+        novell,
+        oid,
+        openldap,
+        openldap1,
+        oud,
+        relaxed,
+        rfc,
+        tivoli,
+    )
+    from flext_ldif.servers._base import acl, constants, entry, schema
     from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
     from flext_ldif.servers._base.constants import (
         FlextLdifQuirkMethodsMixin,
@@ -26,6 +44,7 @@ if TYPE_CHECKING:
     from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
     from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
     from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema
+    from flext_ldif.servers._oud import utilities
     from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
     from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
     from flext_ldif.servers._oud.entry import FlextLdifServersOudEntry
@@ -141,8 +160,25 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "_oid": ["flext_ldif.servers._oid", ""],
     "_oud": ["flext_ldif.servers._oud", ""],
     "_rfc": ["flext_ldif.servers._rfc", ""],
+    "acl": ["flext_ldif.servers._base.acl", ""],
+    "ad": ["flext_ldif.servers.ad", ""],
+    "apache": ["flext_ldif.servers.apache", ""],
+    "base": ["flext_ldif.servers.base", ""],
     "c": ["flext_ldif.servers._rfc.constants", "c"],
+    "constants": ["flext_ldif.servers._base.constants", ""],
+    "ds389": ["flext_ldif.servers.ds389", ""],
+    "entry": ["flext_ldif.servers._base.entry", ""],
     "logger": ["flext_ldif.servers.oid", "logger"],
+    "novell": ["flext_ldif.servers.novell", ""],
+    "oid": ["flext_ldif.servers.oid", ""],
+    "openldap": ["flext_ldif.servers.openldap", ""],
+    "openldap1": ["flext_ldif.servers.openldap1", ""],
+    "oud": ["flext_ldif.servers.oud", ""],
+    "relaxed": ["flext_ldif.servers.relaxed", ""],
+    "rfc": ["flext_ldif.servers.rfc", ""],
+    "schema": ["flext_ldif.servers._base.schema", ""],
+    "tivoli": ["flext_ldif.servers.tivoli", ""],
+    "utilities": ["flext_ldif.servers._oud.utilities", ""],
 }
 
 __all__ = [
@@ -181,8 +217,25 @@ __all__ = [
     "_oid",
     "_oud",
     "_rfc",
+    "acl",
+    "ad",
+    "apache",
+    "base",
     "c",
+    "constants",
+    "ds389",
+    "entry",
     "logger",
+    "novell",
+    "oid",
+    "openldap",
+    "openldap1",
+    "oud",
+    "relaxed",
+    "rfc",
+    "schema",
+    "tivoli",
+    "utilities",
 ]
 
 
