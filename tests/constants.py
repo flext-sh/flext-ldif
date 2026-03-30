@@ -52,6 +52,25 @@ class FlextLdifTestConstants(FlextTestsConstants):
     class Ldif(FlextLdifConstants.Ldif):
         """Domain namespace for flext-ldif test constants."""
 
+        class Docker:
+            """Docker container infrastructure constants for integration tests.
+
+            Mirrors c.Ldap.Tests.Docker from flext-ldap tests to avoid
+            cross-project test imports while keeping values in sync.
+            """
+
+            CONTAINER_NAME: Final[str] = "flext-openldap-test"
+            COMPOSE_FILE_REL: Final[str] = "docker/docker-compose.openldap.yml"
+            SERVICE_NAME: Final[str] = "openldap"
+            PORT: Final[int] = 3390
+            BASE_DN: Final[str] = "dc=flext,dc=local"
+            ADMIN_DN: Final[str] = "cn=admin,dc=flext,dc=local"
+            ADMIN_PASSWORD: Final[str] = "admin123"
+            LEGACY_ADMIN_DN: Final[str] = (
+                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
+            )
+            LEGACY_ADMIN_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD123"
+
         class Schema:
             """Schema constants wrapper for test convenience."""
 

@@ -258,22 +258,21 @@ class FlextLdifTestConftest:
         yield
         reset_fn()
 
-    LDAP_CONTAINER_NAME = "flext-openldap-test"
-    LDAP_COMPOSE_FILE = "docker/docker-compose.openldap.yml"
-    LDAP_SERVICE_NAME = "openldap"
-    LDAP_PORT = 3390
-    LDAP_BASE_DN = "dc=flext,dc=local"
-    LDAP_ADMIN_DN = "cn=admin,dc=flext,dc=local"
-    LDAP_ADMIN_PASSWORD = "admin123"
+    # Centralized Docker constants from c.Ldif.Docker
+    LDAP_CONTAINER_NAME = c.Ldif.Docker.CONTAINER_NAME
+    LDAP_COMPOSE_FILE = c.Ldif.Docker.COMPOSE_FILE_REL
+    LDAP_SERVICE_NAME = c.Ldif.Docker.SERVICE_NAME
+    LDAP_PORT = c.Ldif.Docker.PORT
+    LDAP_BASE_DN = c.Ldif.Docker.BASE_DN
+    LDAP_ADMIN_DN = c.Ldif.Docker.ADMIN_DN
+    LDAP_ADMIN_PASSWORD = c.Ldif.Docker.ADMIN_PASSWORD
 
     def _ldap_bind_candidates(self) -> tuple[tuple[str, str], ...]:
+        d = c.Ldif.Docker
         return (
-            ("cn=admin,dc=flext,dc=local", "admin123"),
-            ("cn=admin,dc=flext,dc=local", "REDACTED_LDAP_BIND_PASSWORD123"),
-            (
-                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-                "REDACTED_LDAP_BIND_PASSWORD123",
-            ),
+            (d.ADMIN_DN, d.ADMIN_PASSWORD),
+            (d.ADMIN_DN, d.LEGACY_ADMIN_PASSWORD),
+            (d.LEGACY_ADMIN_DN, d.LEGACY_ADMIN_PASSWORD),
         )
 
     def ldap_container(self, docker_control: tk, worker_id: str) -> t.ContainerMapping:

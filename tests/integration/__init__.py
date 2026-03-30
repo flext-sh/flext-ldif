@@ -19,13 +19,6 @@ if TYPE_CHECKING:
     from flext_core import FlextTypes
 
     from tests.integration.conftest import (
-        LDAP_ADMIN_DN,
-        LDAP_ADMIN_PASSWORD,
-        LDAP_BASE_DN,
-        LDAP_COMPOSE_FILE,
-        LDAP_CONTAINER_NAME,
-        LDAP_PORT,
-        LDAP_SERVICE_NAME,
         WORKSPACE_ROOT,
         all_acl_fixtures,
         all_entries_fixtures,
@@ -189,13 +182,6 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "APIScenarios": ["tests.integration.test_api_integration", "APIScenarios"],
     "ConfigTestData": ["tests.integration.test_config_integration", "ConfigTestData"],
-    "LDAP_ADMIN_DN": ["tests.integration.conftest", "LDAP_ADMIN_DN"],
-    "LDAP_ADMIN_PASSWORD": ["tests.integration.conftest", "LDAP_ADMIN_PASSWORD"],
-    "LDAP_BASE_DN": ["tests.integration.conftest", "LDAP_BASE_DN"],
-    "LDAP_COMPOSE_FILE": ["tests.integration.conftest", "LDAP_COMPOSE_FILE"],
-    "LDAP_CONTAINER_NAME": ["tests.integration.conftest", "LDAP_CONTAINER_NAME"],
-    "LDAP_PORT": ["tests.integration.conftest", "LDAP_PORT"],
-    "LDAP_SERVICE_NAME": ["tests.integration.conftest", "LDAP_SERVICE_NAME"],
     "TestAclRoundTripPreservation": [
         "tests.integration.test_acl_metadata_preservation",
         "TestAclRoundTripPreservation",
@@ -537,13 +523,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
 }
 
 __all__ = [
-    "LDAP_ADMIN_DN",
-    "LDAP_ADMIN_PASSWORD",
-    "LDAP_BASE_DN",
-    "LDAP_COMPOSE_FILE",
-    "LDAP_CONTAINER_NAME",
-    "LDAP_PORT",
-    "LDAP_SERVICE_NAME",
     "WORKSPACE_ROOT",
     "APIScenarios",
     "ConfigTestData",
