@@ -183,7 +183,6 @@ search-path = [
   "../flext-core/examples",
   "../flext-core/src",
   "../flext-infra/src",
-  "../flext-ldap/src",
   "../flext-tests/src",
   "src",
 ]
