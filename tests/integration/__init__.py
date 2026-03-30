@@ -10,203 +10,213 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypes
-
     from tests.integration import (
-        conftest,
-        test_acl_metadata_preservation,
-        test_api_integration,
-        test_categorization_real_data,
-        test_config_integration,
-        test_cross_quirk_conversion,
-        test_dn_case_handling,
-        test_edge_cases,
-        test_error_recovery,
-        test_ldif_fixtures_integration,
-        test_minimal_differences_metadata,
-        test_oid_integration,
-        test_oud_integration,
-        test_oud_to_oid_migration,
-        test_pipeline_integration,
-        test_quirks_transformations,
-        test_real_ldap_config,
-        test_real_ldap_crud,
-        test_real_ldap_export,
-        test_real_ldap_import,
-        test_real_ldap_roundtrip,
-        test_rfc_docker_real,
-        test_rfc_docker_real_integration,
-        test_simple_ldap,
-        test_systematic_fixture_coverage,
-        test_zero_data_loss_oid_oud,
-        test_zero_data_loss_schema,
-        typings,
+        conftest as conftest,
+        test_acl_metadata_preservation as test_acl_metadata_preservation,
+        test_api_integration as test_api_integration,
+        test_categorization_real_data as test_categorization_real_data,
+        test_config_integration as test_config_integration,
+        test_cross_quirk_conversion as test_cross_quirk_conversion,
+        test_dn_case_handling as test_dn_case_handling,
+        test_edge_cases as test_edge_cases,
+        test_error_recovery as test_error_recovery,
+        test_ldif_fixtures_integration as test_ldif_fixtures_integration,
+        test_minimal_differences_metadata as test_minimal_differences_metadata,
+        test_oid_integration as test_oid_integration,
+        test_oud_integration as test_oud_integration,
+        test_oud_to_oid_migration as test_oud_to_oid_migration,
+        test_pipeline_integration as test_pipeline_integration,
+        test_quirks_transformations as test_quirks_transformations,
+        test_real_ldap_config as test_real_ldap_config,
+        test_real_ldap_crud as test_real_ldap_crud,
+        test_real_ldap_export as test_real_ldap_export,
+        test_real_ldap_import as test_real_ldap_import,
+        test_real_ldap_roundtrip as test_real_ldap_roundtrip,
+        test_rfc_docker_real as test_rfc_docker_real,
+        test_rfc_docker_real_integration as test_rfc_docker_real_integration,
+        test_simple_ldap as test_simple_ldap,
+        test_systematic_fixture_coverage as test_systematic_fixture_coverage,
+        test_zero_data_loss_oid_oud as test_zero_data_loss_oid_oud,
+        test_zero_data_loss_schema as test_zero_data_loss_schema,
+        typings as typings,
     )
     from tests.integration.conftest import (
-        WORKSPACE_ROOT,
-        all_acl_fixtures,
-        all_entries_fixtures,
-        all_integration_fixtures,
-        all_schema_fixtures,
-        api,
-        clean_test_ou,
-        conversion_matrix,
-        ldap_connection,
-        ldap_container,
-        ldap_container_shared,
-        make_test_base_dn,
-        make_test_username,
-        oid_acl_fixture,
-        oid_acl_quirk,
-        oid_entries,
-        oid_entries_fixture,
-        oid_integration_fixture,
-        oid_quirk,
-        oid_schema_entries,
-        oid_schema_fixture,
-        oid_schema_quirk,
-        openldap_acl_fixture,
-        openldap_entries,
-        openldap_entries_fixture,
-        openldap_integration_fixture,
-        openldap_schema_entries,
-        openldap_schema_fixture,
-        oud_acl_fixture,
-        oud_acl_quirk,
-        oud_entries,
-        oud_entries_fixture,
-        oud_integration_fixture,
-        oud_quirk,
-        oud_schema_entries,
-        oud_schema_fixture,
-        oud_schema_quirk,
-        parser,
-        rfc_schema_entries,
-        rfc_schema_fixture,
-        server,
-        tmp_ldif_path,
-        unique_dn_suffix,
-        writer,
+        WORKSPACE_ROOT as WORKSPACE_ROOT,
+        all_acl_fixtures as all_acl_fixtures,
+        all_entries_fixtures as all_entries_fixtures,
+        all_integration_fixtures as all_integration_fixtures,
+        all_schema_fixtures as all_schema_fixtures,
+        api as api,
+        clean_test_ou as clean_test_ou,
+        conversion_matrix as conversion_matrix,
+        ldap_connection as ldap_connection,
+        ldap_container as ldap_container,
+        ldap_container_shared as ldap_container_shared,
+        make_test_base_dn as make_test_base_dn,
+        make_test_username as make_test_username,
+        oid_acl_fixture as oid_acl_fixture,
+        oid_acl_quirk as oid_acl_quirk,
+        oid_entries as oid_entries,
+        oid_entries_fixture as oid_entries_fixture,
+        oid_integration_fixture as oid_integration_fixture,
+        oid_quirk as oid_quirk,
+        oid_schema_entries as oid_schema_entries,
+        oid_schema_fixture as oid_schema_fixture,
+        oid_schema_quirk as oid_schema_quirk,
+        openldap_acl_fixture as openldap_acl_fixture,
+        openldap_entries as openldap_entries,
+        openldap_entries_fixture as openldap_entries_fixture,
+        openldap_integration_fixture as openldap_integration_fixture,
+        openldap_schema_entries as openldap_schema_entries,
+        openldap_schema_fixture as openldap_schema_fixture,
+        oud_acl_fixture as oud_acl_fixture,
+        oud_acl_quirk as oud_acl_quirk,
+        oud_entries as oud_entries,
+        oud_entries_fixture as oud_entries_fixture,
+        oud_integration_fixture as oud_integration_fixture,
+        oud_quirk as oud_quirk,
+        oud_schema_entries as oud_schema_entries,
+        oud_schema_fixture as oud_schema_fixture,
+        oud_schema_quirk as oud_schema_quirk,
+        parser as parser,
+        rfc_schema_entries as rfc_schema_entries,
+        rfc_schema_fixture as rfc_schema_fixture,
+        server as server,
+        tmp_ldif_path as tmp_ldif_path,
+        unique_dn_suffix as unique_dn_suffix,
+        writer as writer,
     )
     from tests.integration.test_acl_metadata_preservation import (
-        TestAclRoundTripPreservation,
-        TestOidAclMetadataPreservation,
-        TestOudAciMetadataPreservation,
+        TestAclRoundTripPreservation as TestAclRoundTripPreservation,
+        TestOidAclMetadataPreservation as TestOidAclMetadataPreservation,
+        TestOudAciMetadataPreservation as TestOudAciMetadataPreservation,
     )
     from tests.integration.test_api_integration import (
-        APIScenarios,
-        TestData,
-        TestFlextLdifAPIIntegration,
+        APIScenarios as APIScenarios,
+        TestData as TestData,
+        TestFlextLdifAPIIntegration as TestFlextLdifAPIIntegration,
     )
     from tests.integration.test_categorization_real_data import (
-        TestCategorizationRealData,
+        TestCategorizationRealData as TestCategorizationRealData,
     )
     from tests.integration.test_config_integration import (
-        ConfigTestData,
-        TestFlextLdifSettingsIntegration,
-        logger,
+        ConfigTestData as ConfigTestData,
+        TestFlextLdifSettingsIntegration as TestFlextLdifSettingsIntegration,
+        logger as logger,
     )
     from tests.integration.test_cross_quirk_conversion import (
-        TestOidToOudAclConversion,
-        TestOidToOudIntegrationConversion,
-        TestOidToOudSchemaConversion,
-        TestQuirksConversionMatrixFacade,
+        TestOidToOudAclConversion as TestOidToOudAclConversion,
+        TestOidToOudIntegrationConversion as TestOidToOudIntegrationConversion,
+        TestOidToOudSchemaConversion as TestOidToOudSchemaConversion,
+        TestQuirksConversionMatrixFacade as TestQuirksConversionMatrixFacade,
     )
     from tests.integration.test_dn_case_handling import (
-        TestDnCaseNormalizationScenarios,
-        TestDnCaseRegistry,
+        TestDnCaseNormalizationScenarios as TestDnCaseNormalizationScenarios,
+        TestDnCaseRegistry as TestDnCaseRegistry,
     )
     from tests.integration.test_edge_cases import (
-        TestBoundaryValues,
-        TestEmptyAndMinimalCases,
-        TestLargeAndComplexCases,
-        TestRoundtripEdgeCases,
-        TestUnicodeBoundaries,
+        TestBoundaryValues as TestBoundaryValues,
+        TestEmptyAndMinimalCases as TestEmptyAndMinimalCases,
+        TestLargeAndComplexCases as TestLargeAndComplexCases,
+        TestRoundtripEdgeCases as TestRoundtripEdgeCases,
+        TestUnicodeBoundaries as TestUnicodeBoundaries,
     )
     from tests.integration.test_error_recovery import (
-        TestEncodingErrors,
-        TestIncompleteEntries,
-        TestInvalidSchemaDefinitions,
-        TestMalformedLdifHandling,
+        TestEncodingErrors as TestEncodingErrors,
+        TestIncompleteEntries as TestIncompleteEntries,
+        TestInvalidSchemaDefinitions as TestInvalidSchemaDefinitions,
+        TestMalformedLdifHandling as TestMalformedLdifHandling,
     )
-    from tests.integration.test_ldif_fixtures_integration import TestsFlextLdifFixtures
+    from tests.integration.test_ldif_fixtures_integration import (
+        TestsFlextLdifFixtures as TestsFlextLdifFixtures,
+    )
     from tests.integration.test_minimal_differences_metadata import (
-        TestMinimalDifferencesOidOud,
+        TestMinimalDifferencesOidOud as TestMinimalDifferencesOidOud,
     )
     from tests.integration.test_oid_integration import (
-        TestOidEntryIntegration,
-        TestOidRoundTripIntegration,
-        TestOidSchemaIntegration,
+        TestOidEntryIntegration as TestOidEntryIntegration,
+        TestOidRoundTripIntegration as TestOidRoundTripIntegration,
+        TestOidSchemaIntegration as TestOidSchemaIntegration,
     )
     from tests.integration.test_oud_integration import (
-        TestOudAclIntegration,
-        TestOudEntryIntegration,
-        TestOudMetadataPreservation,
-        TestOudRoundTripIntegration,
-        TestOudSchemaIntegration,
+        TestOudAclIntegration as TestOudAclIntegration,
+        TestOudEntryIntegration as TestOudEntryIntegration,
+        TestOudMetadataPreservation as TestOudMetadataPreservation,
+        TestOudRoundTripIntegration as TestOudRoundTripIntegration,
+        TestOudSchemaIntegration as TestOudSchemaIntegration,
     )
     from tests.integration.test_oud_to_oid_migration import (
-        TestOudToOidAclMigration,
-        TestOudToOidEntryMigration,
-        TestOudToOidFullMigration,
-        TestOudToOidSchemaMigration,
+        TestOudToOidAclMigration as TestOudToOidAclMigration,
+        TestOudToOidEntryMigration as TestOudToOidEntryMigration,
+        TestOudToOidFullMigration as TestOudToOidFullMigration,
+        TestOudToOidSchemaMigration as TestOudToOidSchemaMigration,
     )
-    from tests.integration.test_pipeline_integration import TestFlextLdifFacadeWorkflows
+    from tests.integration.test_pipeline_integration import (
+        TestFlextLdifFacadeWorkflows as TestFlextLdifFacadeWorkflows,
+    )
     from tests.integration.test_quirks_transformations import (
-        TestOidQuirksTransformations,
-        TestOudQuirksTransformations,
-        TestQuirksPropertyValidation,
-        fixtures_dir,
-        migration_inputs,
+        TestOidQuirksTransformations as TestOidQuirksTransformations,
+        TestOudQuirksTransformations as TestOudQuirksTransformations,
+        TestQuirksPropertyValidation as TestQuirksPropertyValidation,
+        fixtures_dir as fixtures_dir,
+        migration_inputs as migration_inputs,
     )
     from tests.integration.test_real_ldap_config import (
-        TestRealLdapConfigurationFromEnv,
-        TestRealLdapRailwayComposition,
+        TestRealLdapConfigurationFromEnv as TestRealLdapConfigurationFromEnv,
+        TestRealLdapRailwayComposition as TestRealLdapRailwayComposition,
     )
     from tests.integration.test_real_ldap_crud import (
-        TestRealLdapBatchOperations,
-        TestRealLdapCRUD,
+        TestRealLdapBatchOperations as TestRealLdapBatchOperations,
+        TestRealLdapCRUD as TestRealLdapCRUD,
     )
-    from tests.integration.test_real_ldap_export import TestRealLdapExport
-    from tests.integration.test_real_ldap_import import TestRealLdapImport
-    from tests.integration.test_real_ldap_roundtrip import TestRealLdapRoundtrip
+    from tests.integration.test_real_ldap_export import (
+        TestRealLdapExport as TestRealLdapExport,
+    )
+    from tests.integration.test_real_ldap_import import (
+        TestRealLdapImport as TestRealLdapImport,
+    )
+    from tests.integration.test_real_ldap_roundtrip import (
+        TestRealLdapRoundtrip as TestRealLdapRoundtrip,
+    )
     from tests.integration.test_rfc_docker_real import (
-        TestRfcDockerRealData,
-        TestRfcIntegrationRealWorld,
+        TestRfcDockerRealData as TestRfcDockerRealData,
+        TestRfcIntegrationRealWorld as TestRfcIntegrationRealWorld,
     )
     from tests.integration.test_rfc_docker_real_integration import (
-        TestRfcExceptionHandlingRealScenarios,
-        TestRfcParserRealFixtures,
-        TestRfcSchemaParserRealFixtures,
-        TestRfcWriterRealFixtures,
+        TestRfcExceptionHandlingRealScenarios as TestRfcExceptionHandlingRealScenarios,
+        TestRfcParserRealFixtures as TestRfcParserRealFixtures,
+        TestRfcSchemaParserRealFixtures as TestRfcSchemaParserRealFixtures,
+        TestRfcWriterRealFixtures as TestRfcWriterRealFixtures,
     )
     from tests.integration.test_simple_ldap import (
-        test_create_and_export_entry,
-        test_ldap_connection,
-        test_simple_ldap_search,
+        test_create_and_export_entry as test_create_and_export_entry,
+        test_ldap_connection as test_ldap_connection,
+        test_simple_ldap_search as test_simple_ldap_search,
     )
     from tests.integration.test_systematic_fixture_coverage import (
-        TestSystematicFixtureCoverage,
+        TestSystematicFixtureCoverage as TestSystematicFixtureCoverage,
     )
-    from tests.integration.test_zero_data_loss_oid_oud import TestZeroDataLossOidOud
+    from tests.integration.test_zero_data_loss_oid_oud import (
+        TestZeroDataLossOidOud as TestZeroDataLossOidOud,
+    )
     from tests.integration.test_zero_data_loss_schema import (
-        TestSchemaDeviationsAttributeKeyCasing,
-        TestSchemaDeviationsComplete,
-        TestSchemaDeviationsMissingSpaces,
-        TestSchemaDeviationsNameAliases,
-        TestSchemaDeviationsObsolete,
-        TestSchemaDeviationsOriginalString,
-        TestSchemaDeviationsRoundTrip,
-        TestSchemaDeviationsSpacing,
-        TestSchemaDeviationsSyntaxQuotes,
-        TestSchemaDeviationsUtilities,
-        TestSchemaDeviationsXOrigin,
+        TestSchemaDeviationsAttributeKeyCasing as TestSchemaDeviationsAttributeKeyCasing,
+        TestSchemaDeviationsComplete as TestSchemaDeviationsComplete,
+        TestSchemaDeviationsMissingSpaces as TestSchemaDeviationsMissingSpaces,
+        TestSchemaDeviationsNameAliases as TestSchemaDeviationsNameAliases,
+        TestSchemaDeviationsObsolete as TestSchemaDeviationsObsolete,
+        TestSchemaDeviationsOriginalString as TestSchemaDeviationsOriginalString,
+        TestSchemaDeviationsRoundTrip as TestSchemaDeviationsRoundTrip,
+        TestSchemaDeviationsSpacing as TestSchemaDeviationsSpacing,
+        TestSchemaDeviationsSyntaxQuotes as TestSchemaDeviationsSyntaxQuotes,
+        TestSchemaDeviationsUtilities as TestSchemaDeviationsUtilities,
+        TestSchemaDeviationsXOrigin as TestSchemaDeviationsXOrigin,
     )
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
@@ -607,8 +617,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "writer": ["tests.integration.conftest", "writer"],
 }
 
-__all__ = [
-    "WORKSPACE_ROOT",
+_EXPORTS: Sequence[str] = [
     "APIScenarios",
     "ConfigTestData",
     "TestAclRoundTripPreservation",
@@ -677,6 +686,7 @@ __all__ = [
     "TestUnicodeBoundaries",
     "TestZeroDataLossOidOud",
     "TestsFlextLdifFixtures",
+    "WORKSPACE_ROOT",
     "all_acl_fixtures",
     "all_entries_fixtures",
     "all_integration_fixtures",
@@ -757,41 +767,4 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: MutableMapping[str, FlextTypes.ModuleExport] = {}
-
-
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562).
-
-    A local cache ``_LAZY_CACHE`` persists resolved objects across repeated
-    accesses during process lifetime.
-
-    Args:
-        name: Attribute name requested by dir()/import.
-
-    Returns:
-        Lazy-loaded module export type.
-
-    Raises:
-        AttributeError: If attribute not registered.
-
-    """
-    if name in _LAZY_CACHE:
-        return _LAZY_CACHE[name]
-
-    value = lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-    _LAZY_CACHE[name] = value
-    return value
-
-
-def __dir__() -> Sequence[str]:
-    """Return list of available attributes for dir() and autocomplete.
-
-    Returns:
-        List of public names from module exports.
-
-    """
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)

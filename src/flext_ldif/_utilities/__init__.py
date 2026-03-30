@@ -5,61 +5,94 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypes
-
     from flext_ldif._utilities import (
-        acl,
-        attribute,
-        collection_ldif,
-        detection,
-        dispatch,
-        dn,
-        entry,
-        events,
-        metadata,
-        object_class,
-        oid,
-        parser,
-        parsers,
-        pipeline,
-        result,
-        schema,
-        server,
-        transformers,
-        validation,
-        writer,
-        writers,
+        acl as acl,
+        attribute as attribute,
+        collection_ldif as collection_ldif,
+        detection as detection,
+        dispatch as dispatch,
+        dn as dn,
+        entry as entry,
+        events as events,
+        metadata as metadata,
+        object_class as object_class,
+        oid as oid,
+        parser as parser,
+        parsers as parsers,
+        pipeline as pipeline,
+        result as result,
+        schema as schema,
+        server as server,
+        transformers as transformers,
+        validation as validation,
+        writer as writer,
+        writers as writers,
     )
-    from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
-    from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
-    from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
-    from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
-    from flext_ldif._utilities.dispatch import FlextLdifUtilitiesDispatch
-    from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-    from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
-    from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
-    from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
-    from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
-    from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
-    from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
-    from flext_ldif._utilities.parsers import FlextLdifUtilitiesParsers
-    from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
-    from flext_ldif._utilities.result import FlextLdifUtilitiesResult
-    from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
-    from flext_ldif._utilities.server import FlextLdifUtilitiesServer
+    from flext_ldif._utilities.acl import FlextLdifUtilitiesACL as FlextLdifUtilitiesACL
+    from flext_ldif._utilities.attribute import (
+        FlextLdifUtilitiesAttribute as FlextLdifUtilitiesAttribute,
+    )
+    from flext_ldif._utilities.collection_ldif import (
+        FlextLdifUtilitiesCollectionLdif as FlextLdifUtilitiesCollectionLdif,
+    )
+    from flext_ldif._utilities.detection import (
+        FlextLdifUtilitiesDetection as FlextLdifUtilitiesDetection,
+    )
+    from flext_ldif._utilities.dispatch import (
+        FlextLdifUtilitiesDispatch as FlextLdifUtilitiesDispatch,
+    )
+    from flext_ldif._utilities.dn import FlextLdifUtilitiesDN as FlextLdifUtilitiesDN
+    from flext_ldif._utilities.entry import (
+        FlextLdifUtilitiesEntry as FlextLdifUtilitiesEntry,
+    )
+    from flext_ldif._utilities.events import (
+        FlextLdifUtilitiesEvents as FlextLdifUtilitiesEvents,
+    )
+    from flext_ldif._utilities.metadata import (
+        FlextLdifUtilitiesMetadata as FlextLdifUtilitiesMetadata,
+    )
+    from flext_ldif._utilities.object_class import (
+        FlextLdifUtilitiesObjectClass as FlextLdifUtilitiesObjectClass,
+    )
+    from flext_ldif._utilities.oid import FlextLdifUtilitiesOID as FlextLdifUtilitiesOID
+    from flext_ldif._utilities.parser import (
+        FlextLdifUtilitiesParser as FlextLdifUtilitiesParser,
+    )
+    from flext_ldif._utilities.parsers import (
+        FlextLdifUtilitiesParsers as FlextLdifUtilitiesParsers,
+    )
+    from flext_ldif._utilities.pipeline import (
+        FlextLdifUtilitiesPipeline as FlextLdifUtilitiesPipeline,
+    )
+    from flext_ldif._utilities.result import (
+        FlextLdifUtilitiesResult as FlextLdifUtilitiesResult,
+    )
+    from flext_ldif._utilities.schema import (
+        FlextLdifUtilitiesSchema as FlextLdifUtilitiesSchema,
+    )
+    from flext_ldif._utilities.server import (
+        FlextLdifUtilitiesServer as FlextLdifUtilitiesServer,
+    )
     from flext_ldif._utilities.transformers import (
-        FlextLdifUtilitiesTransformer,
-        FlextLdifUtilitiesTransformers,
+        FlextLdifUtilitiesTransformer as FlextLdifUtilitiesTransformer,
+        FlextLdifUtilitiesTransformers as FlextLdifUtilitiesTransformers,
     )
-    from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
-    from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
-    from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters, logger
+    from flext_ldif._utilities.validation import (
+        FlextLdifUtilitiesValidation as FlextLdifUtilitiesValidation,
+    )
+    from flext_ldif._utilities.writer import (
+        FlextLdifUtilitiesWriter as FlextLdifUtilitiesWriter,
+    )
+    from flext_ldif._utilities.writers import (
+        FlextLdifUtilitiesWriters as FlextLdifUtilitiesWriters,
+        logger as logger,
+    )
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdifUtilitiesACL": ["flext_ldif._utilities.acl", "FlextLdifUtilitiesACL"],
@@ -165,7 +198,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "writers": ["flext_ldif._utilities.writers", ""],
 }
 
-__all__ = [
+_EXPORTS: Sequence[str] = [
     "FlextLdifUtilitiesACL",
     "FlextLdifUtilitiesAttribute",
     "FlextLdifUtilitiesCollectionLdif",
@@ -213,41 +246,4 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: MutableMapping[str, FlextTypes.ModuleExport] = {}
-
-
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562).
-
-    A local cache ``_LAZY_CACHE`` persists resolved objects across repeated
-    accesses during process lifetime.
-
-    Args:
-        name: Attribute name requested by dir()/import.
-
-    Returns:
-        Lazy-loaded module export type.
-
-    Raises:
-        AttributeError: If attribute not registered.
-
-    """
-    if name in _LAZY_CACHE:
-        return _LAZY_CACHE[name]
-
-    value = lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-    _LAZY_CACHE[name] = value
-    return value
-
-
-def __dir__() -> Sequence[str]:
-    """Return list of available attributes for dir() and autocomplete.
-
-    Returns:
-        List of public names from module exports.
-
-    """
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)

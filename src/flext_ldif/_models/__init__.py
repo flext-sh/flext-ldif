@@ -5,34 +5,46 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypes
-
     from flext_ldif._models import (
-        base,
-        collections,
-        domain,
-        domain_entries,
-        events,
-        metadata,
-        processing,
-        results,
-        settings,
+        base as base,
+        collections as collections,
+        domain as domain,
+        domain_entries as domain_entries,
+        events as events,
+        metadata as metadata,
+        processing as processing,
+        results as results,
+        settings as settings,
     )
-    from flext_ldif._models.base import FlextLdifModelsBases
-    from flext_ldif._models.collections import FlextLdifModelsCollections
-    from flext_ldif._models.domain import FlextLdifModelsDomains
-    from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
-    from flext_ldif._models.events import FlextLdifModelsEvents
-    from flext_ldif._models.metadata import FlextLdifModelsMetadata
-    from flext_ldif._models.processing import FlextLdifModelsProcessing
-    from flext_ldif._models.results import FlextLdifModelsResults
-    from flext_ldif._models.settings import FlextLdifModelsSettings
+    from flext_ldif._models.base import FlextLdifModelsBases as FlextLdifModelsBases
+    from flext_ldif._models.collections import (
+        FlextLdifModelsCollections as FlextLdifModelsCollections,
+    )
+    from flext_ldif._models.domain import (
+        FlextLdifModelsDomains as FlextLdifModelsDomains,
+    )
+    from flext_ldif._models.domain_entries import (
+        FlextLdifModelsDomainsEntries as FlextLdifModelsDomainsEntries,
+    )
+    from flext_ldif._models.events import FlextLdifModelsEvents as FlextLdifModelsEvents
+    from flext_ldif._models.metadata import (
+        FlextLdifModelsMetadata as FlextLdifModelsMetadata,
+    )
+    from flext_ldif._models.processing import (
+        FlextLdifModelsProcessing as FlextLdifModelsProcessing,
+    )
+    from flext_ldif._models.results import (
+        FlextLdifModelsResults as FlextLdifModelsResults,
+    )
+    from flext_ldif._models.settings import (
+        FlextLdifModelsSettings as FlextLdifModelsSettings,
+    )
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdifModelsBases": ["flext_ldif._models.base", "FlextLdifModelsBases"],
@@ -70,7 +82,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "settings": ["flext_ldif._models.settings", ""],
 }
 
-__all__ = [
+_EXPORTS: Sequence[str] = [
     "FlextLdifModelsBases",
     "FlextLdifModelsCollections",
     "FlextLdifModelsDomains",
@@ -92,41 +104,4 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: MutableMapping[str, FlextTypes.ModuleExport] = {}
-
-
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562).
-
-    A local cache ``_LAZY_CACHE`` persists resolved objects across repeated
-    accesses during process lifetime.
-
-    Args:
-        name: Attribute name requested by dir()/import.
-
-    Returns:
-        Lazy-loaded module export type.
-
-    Raises:
-        AttributeError: If attribute not registered.
-
-    """
-    if name in _LAZY_CACHE:
-        return _LAZY_CACHE[name]
-
-    value = lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-    _LAZY_CACHE[name] = value
-    return value
-
-
-def __dir__() -> Sequence[str]:
-    """Return list of available attributes for dir() and autocomplete.
-
-    Returns:
-        List of public names from module exports.
-
-    """
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)

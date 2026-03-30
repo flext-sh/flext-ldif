@@ -5,53 +5,78 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypes
-
     from flext_ldif.services import (
-        _services,
-        acl,
-        analysis,
-        categorization,
-        conversion,
-        detector,
-        entries,
-        filters,
-        migration,
-        parser,
-        pipeline,
-        processing,
-        rfc_validation,
-        server,
-        statistics,
-        transformers,
-        writer,
+        _services as _services,
+        acl as acl,
+        analysis as analysis,
+        categorization as categorization,
+        conversion as conversion,
+        detector as detector,
+        entries as entries,
+        filters as filters,
+        migration as migration,
+        parser as parser,
+        pipeline as pipeline,
+        processing as processing,
+        rfc_validation as rfc_validation,
+        server as server,
+        statistics as statistics,
+        transformers as transformers,
+        writer as writer,
     )
-    from flext_ldif.services._services import processing_pipeline_service
+    from flext_ldif.services._services import (
+        processing_pipeline_service as processing_pipeline_service,
+    )
     from flext_ldif.services._services.processing_pipeline_service import (
-        FlextLdifProcessingPipelineService,
+        FlextLdifProcessingPipelineService as FlextLdifProcessingPipelineService,
     )
-    from flext_ldif.services.acl import FlextLdifAcl
-    from flext_ldif.services.analysis import FlextLdifAnalysis
-    from flext_ldif.services.categorization import FlextLdifCategorization
-    from flext_ldif.services.conversion import FlextLdifConversion
-    from flext_ldif.services.detector import FlextLdifDetector, FlextLdifDetectorMixin
-    from flext_ldif.services.entries import FlextLdifEntries
-    from flext_ldif.services.filters import FlextLdifFilters
-    from flext_ldif.services.migration import FlextLdifMigrationPipeline
-    from flext_ldif.services.parser import FlextLdifParser, FlextLdifParserMixin
-    from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
-    from flext_ldif.services.processing import FlextLdifProcessing
-    from flext_ldif.services.rfc_validation import FlextLdifValidation
-    from flext_ldif.services.server import FlextLdifServer
-    from flext_ldif.services.statistics import FlextLdifStatistics
-    from flext_ldif.services.transformers import FlextLdifTransformer
-    from flext_ldif.services.writer import FlextLdifWriter, FlextLdifWriterMixin
+    from flext_ldif.services.acl import FlextLdifAcl as FlextLdifAcl
+    from flext_ldif.services.analysis import FlextLdifAnalysis as FlextLdifAnalysis
+    from flext_ldif.services.categorization import (
+        FlextLdifCategorization as FlextLdifCategorization,
+    )
+    from flext_ldif.services.conversion import (
+        FlextLdifConversion as FlextLdifConversion,
+    )
+    from flext_ldif.services.detector import (
+        FlextLdifDetector as FlextLdifDetector,
+        FlextLdifDetectorMixin as FlextLdifDetectorMixin,
+    )
+    from flext_ldif.services.entries import FlextLdifEntries as FlextLdifEntries
+    from flext_ldif.services.filters import FlextLdifFilters as FlextLdifFilters
+    from flext_ldif.services.migration import (
+        FlextLdifMigrationPipeline as FlextLdifMigrationPipeline,
+    )
+    from flext_ldif.services.parser import (
+        FlextLdifParser as FlextLdifParser,
+        FlextLdifParserMixin as FlextLdifParserMixin,
+    )
+    from flext_ldif.services.pipeline import (
+        FlextLdifProcessingPipeline as FlextLdifProcessingPipeline,
+    )
+    from flext_ldif.services.processing import (
+        FlextLdifProcessing as FlextLdifProcessing,
+    )
+    from flext_ldif.services.rfc_validation import (
+        FlextLdifValidation as FlextLdifValidation,
+    )
+    from flext_ldif.services.server import FlextLdifServer as FlextLdifServer
+    from flext_ldif.services.statistics import (
+        FlextLdifStatistics as FlextLdifStatistics,
+    )
+    from flext_ldif.services.transformers import (
+        FlextLdifTransformer as FlextLdifTransformer,
+    )
+    from flext_ldif.services.writer import (
+        FlextLdifWriter as FlextLdifWriter,
+        FlextLdifWriterMixin as FlextLdifWriterMixin,
+    )
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdifAcl": ["flext_ldif.services.acl", "FlextLdifAcl"],
@@ -118,7 +143,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "writer": ["flext_ldif.services.writer", ""],
 }
 
-__all__ = [
+_EXPORTS: Sequence[str] = [
     "FlextLdifAcl",
     "FlextLdifAnalysis",
     "FlextLdifCategorization",
@@ -160,41 +185,4 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: MutableMapping[str, FlextTypes.ModuleExport] = {}
-
-
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562).
-
-    A local cache ``_LAZY_CACHE`` persists resolved objects across repeated
-    accesses during process lifetime.
-
-    Args:
-        name: Attribute name requested by dir()/import.
-
-    Returns:
-        Lazy-loaded module export type.
-
-    Raises:
-        AttributeError: If attribute not registered.
-
-    """
-    if name in _LAZY_CACHE:
-        return _LAZY_CACHE[name]
-
-    value = lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-    _LAZY_CACHE[name] = value
-    return value
-
-
-def __dir__() -> Sequence[str]:
-    """Return list of available attributes for dir() and autocomplete.
-
-    Returns:
-        List of public names from module exports.
-
-    """
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)

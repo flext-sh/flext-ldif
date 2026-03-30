@@ -5,188 +5,320 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import install_lazy_exports
 
 from flext_ldif.__version__ import (
-    __author__,
-    __author_email__,
-    __description__,
-    __license__,
-    __title__,
-    __url__,
-    __version__,
-    __version_info__,
+    __author__ as __author__,
+    __author_email__ as __author_email__,
+    __description__ as __description__,
+    __license__ as __license__,
+    __title__ as __title__,
+    __url__ as __url__,
+    __version__ as __version__,
+    __version_info__ as __version_info__,
 )
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypes, d, e, h, r, x
-
     from flext_ldif import (
-        _models,
-        _utilities,
-        api,
-        base,
-        constants,
-        models,
-        protocols,
-        servers,
-        services,
-        settings,
-        shared,
-        typings,
-        utilities,
+        _models as _models,
+        _utilities as _utilities,
+        api as api,
+        base as base,
+        constants as constants,
+        models as models,
+        protocols as protocols,
+        servers as servers,
+        services as services,
+        settings as settings,
+        shared as shared,
+        typings as typings,
+        utilities as utilities,
     )
     from flext_ldif._models import (
-        collections,
-        domain,
-        domain_entries,
-        events,
-        metadata,
-        processing,
-        results,
+        collections as collections,
+        domain as domain,
+        domain_entries as domain_entries,
+        events as events,
+        metadata as metadata,
+        processing as processing,
+        results as results,
     )
-    from flext_ldif._models.base import FlextLdifModelsBases
-    from flext_ldif._models.collections import FlextLdifModelsCollections
-    from flext_ldif._models.domain import FlextLdifModelsDomains
-    from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
-    from flext_ldif._models.events import FlextLdifModelsEvents
-    from flext_ldif._models.metadata import FlextLdifModelsMetadata
-    from flext_ldif._models.processing import FlextLdifModelsProcessing
-    from flext_ldif._models.results import FlextLdifModelsResults
-    from flext_ldif._models.settings import FlextLdifModelsSettings
+    from flext_ldif._models.base import FlextLdifModelsBases as FlextLdifModelsBases
+    from flext_ldif._models.collections import (
+        FlextLdifModelsCollections as FlextLdifModelsCollections,
+    )
+    from flext_ldif._models.domain import (
+        FlextLdifModelsDomains as FlextLdifModelsDomains,
+    )
+    from flext_ldif._models.domain_entries import (
+        FlextLdifModelsDomainsEntries as FlextLdifModelsDomainsEntries,
+    )
+    from flext_ldif._models.events import FlextLdifModelsEvents as FlextLdifModelsEvents
+    from flext_ldif._models.metadata import (
+        FlextLdifModelsMetadata as FlextLdifModelsMetadata,
+    )
+    from flext_ldif._models.processing import (
+        FlextLdifModelsProcessing as FlextLdifModelsProcessing,
+    )
+    from flext_ldif._models.results import (
+        FlextLdifModelsResults as FlextLdifModelsResults,
+    )
+    from flext_ldif._models.settings import (
+        FlextLdifModelsSettings as FlextLdifModelsSettings,
+    )
     from flext_ldif._utilities import (
-        acl,
-        attribute,
-        collection_ldif,
-        detection,
-        dispatch,
-        dn,
-        entry,
-        object_class,
-        oid,
-        parser,
-        parsers,
-        pipeline,
-        result,
-        schema,
-        server,
-        transformers,
-        validation,
-        writer,
-        writers,
+        acl as acl,
+        attribute as attribute,
+        collection_ldif as collection_ldif,
+        detection as detection,
+        dispatch as dispatch,
+        dn as dn,
+        entry as entry,
+        object_class as object_class,
+        oid as oid,
+        parser as parser,
+        parsers as parsers,
+        pipeline as pipeline,
+        result as result,
+        schema as schema,
+        server as server,
+        transformers as transformers,
+        validation as validation,
+        writer as writer,
+        writers as writers,
     )
-    from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
-    from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
-    from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
-    from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
-    from flext_ldif._utilities.dispatch import FlextLdifUtilitiesDispatch
-    from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-    from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
-    from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
-    from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
-    from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
-    from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
-    from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
-    from flext_ldif._utilities.parsers import FlextLdifUtilitiesParsers
-    from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
-    from flext_ldif._utilities.result import FlextLdifUtilitiesResult
-    from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
-    from flext_ldif._utilities.server import FlextLdifUtilitiesServer
+    from flext_ldif._utilities.acl import FlextLdifUtilitiesACL as FlextLdifUtilitiesACL
+    from flext_ldif._utilities.attribute import (
+        FlextLdifUtilitiesAttribute as FlextLdifUtilitiesAttribute,
+    )
+    from flext_ldif._utilities.collection_ldif import (
+        FlextLdifUtilitiesCollectionLdif as FlextLdifUtilitiesCollectionLdif,
+    )
+    from flext_ldif._utilities.detection import (
+        FlextLdifUtilitiesDetection as FlextLdifUtilitiesDetection,
+    )
+    from flext_ldif._utilities.dispatch import (
+        FlextLdifUtilitiesDispatch as FlextLdifUtilitiesDispatch,
+    )
+    from flext_ldif._utilities.dn import FlextLdifUtilitiesDN as FlextLdifUtilitiesDN
+    from flext_ldif._utilities.entry import (
+        FlextLdifUtilitiesEntry as FlextLdifUtilitiesEntry,
+    )
+    from flext_ldif._utilities.events import (
+        FlextLdifUtilitiesEvents as FlextLdifUtilitiesEvents,
+    )
+    from flext_ldif._utilities.metadata import (
+        FlextLdifUtilitiesMetadata as FlextLdifUtilitiesMetadata,
+    )
+    from flext_ldif._utilities.object_class import (
+        FlextLdifUtilitiesObjectClass as FlextLdifUtilitiesObjectClass,
+    )
+    from flext_ldif._utilities.oid import FlextLdifUtilitiesOID as FlextLdifUtilitiesOID
+    from flext_ldif._utilities.parser import (
+        FlextLdifUtilitiesParser as FlextLdifUtilitiesParser,
+    )
+    from flext_ldif._utilities.parsers import (
+        FlextLdifUtilitiesParsers as FlextLdifUtilitiesParsers,
+    )
+    from flext_ldif._utilities.pipeline import (
+        FlextLdifUtilitiesPipeline as FlextLdifUtilitiesPipeline,
+    )
+    from flext_ldif._utilities.result import (
+        FlextLdifUtilitiesResult as FlextLdifUtilitiesResult,
+    )
+    from flext_ldif._utilities.schema import (
+        FlextLdifUtilitiesSchema as FlextLdifUtilitiesSchema,
+    )
+    from flext_ldif._utilities.server import (
+        FlextLdifUtilitiesServer as FlextLdifUtilitiesServer,
+    )
     from flext_ldif._utilities.transformers import (
-        FlextLdifUtilitiesTransformer,
-        FlextLdifUtilitiesTransformers,
+        FlextLdifUtilitiesTransformer as FlextLdifUtilitiesTransformer,
+        FlextLdifUtilitiesTransformers as FlextLdifUtilitiesTransformers,
     )
-    from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
-    from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
-    from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
-    from flext_ldif.api import FlextLdif, ldif
-    from flext_ldif.base import FlextLdifServiceBase, s
-    from flext_ldif.constants import FlextLdifConstants, FlextLdifConstants as c
-    from flext_ldif.models import FlextLdifModels, FlextLdifModels as m
-    from flext_ldif.protocols import FlextLdifProtocols, FlextLdifProtocols as p
+    from flext_ldif._utilities.validation import (
+        FlextLdifUtilitiesValidation as FlextLdifUtilitiesValidation,
+    )
+    from flext_ldif._utilities.writer import (
+        FlextLdifUtilitiesWriter as FlextLdifUtilitiesWriter,
+    )
+    from flext_ldif._utilities.writers import (
+        FlextLdifUtilitiesWriters as FlextLdifUtilitiesWriters,
+    )
+    from flext_ldif.api import FlextLdif as FlextLdif, ldif as ldif
+    from flext_ldif.base import FlextLdifServiceBase as FlextLdifServiceBase, s as s
+    from flext_ldif.constants import (
+        FlextLdifConstants as FlextLdifConstants,
+        FlextLdifConstants as c,
+    )
+    from flext_ldif.models import (
+        FlextLdifModels as FlextLdifModels,
+        FlextLdifModels as m,
+    )
+    from flext_ldif.protocols import (
+        FlextLdifProtocols as FlextLdifProtocols,
+        FlextLdifProtocols as p,
+    )
     from flext_ldif.servers import (
-        ad,
-        apache,
-        ds389,
-        novell,
-        openldap,
-        openldap1,
-        oud,
-        relaxed,
-        rfc,
-        tivoli,
+        ad as ad,
+        apache as apache,
+        ds389 as ds389,
+        novell as novell,
+        openldap as openldap,
+        openldap1 as openldap1,
+        oud as oud,
+        relaxed as relaxed,
+        rfc as rfc,
+        tivoli as tivoli,
     )
-    from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
+    from flext_ldif.servers._base.acl import (
+        FlextLdifServersBaseSchemaAcl as FlextLdifServersBaseSchemaAcl,
+    )
     from flext_ldif.servers._base.constants import (
-        FlextLdifQuirkMethodsMixin,
-        FlextLdifServersBaseConstants,
-        FlextLdifServersBaseQuirkHelpers,
+        FlextLdifQuirkMethodsMixin as FlextLdifQuirkMethodsMixin,
+        FlextLdifServersBaseConstants as FlextLdifServersBaseConstants,
+        FlextLdifServersBaseQuirkHelpers as FlextLdifServersBaseQuirkHelpers,
     )
-    from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
-    from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
-    from flext_ldif.servers._oid.acl import FlextLdifServersOidAcl
-    from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
-    from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
-    from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema
-    from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
-    from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
-    from flext_ldif.servers._oud.entry import FlextLdifServersOudEntry
-    from flext_ldif.servers._oud.schema import FlextLdifServersOudSchema
-    from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
-    from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
-    from flext_ldif.servers._rfc.constants import FlextLdifServersRfcConstants
-    from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
-    from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
-    from flext_ldif.servers.ad import FlextLdifServersAd
-    from flext_ldif.servers.apache import FlextLdifServersApache
-    from flext_ldif.servers.base import FlextLdifServersBase
-    from flext_ldif.servers.ds389 import FlextLdifServersDs389
-    from flext_ldif.servers.novell import FlextLdifServersNovell
-    from flext_ldif.servers.oid import FlextLdifServersOid, logger
-    from flext_ldif.servers.openldap import FlextLdifServersOpenldap
-    from flext_ldif.servers.openldap1 import FlextLdifServersOpenldap1
-    from flext_ldif.servers.oud import FlextLdifServersOud
-    from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
-    from flext_ldif.servers.rfc import FlextLdifServersRfc
-    from flext_ldif.servers.tivoli import FlextLdifServersTivoli
+    from flext_ldif.servers._base.entry import (
+        FlextLdifServersBaseEntry as FlextLdifServersBaseEntry,
+    )
+    from flext_ldif.servers._base.schema import (
+        FlextLdifServersBaseSchema as FlextLdifServersBaseSchema,
+    )
+    from flext_ldif.servers._oid.acl import (
+        FlextLdifServersOidAcl as FlextLdifServersOidAcl,
+    )
+    from flext_ldif.servers._oid.constants import (
+        FlextLdifServersOidConstants as FlextLdifServersOidConstants,
+    )
+    from flext_ldif.servers._oid.entry import (
+        FlextLdifServersOidEntry as FlextLdifServersOidEntry,
+    )
+    from flext_ldif.servers._oid.schema import (
+        FlextLdifServersOidSchema as FlextLdifServersOidSchema,
+    )
+    from flext_ldif.servers._oud.acl import (
+        FlextLdifServersOudAcl as FlextLdifServersOudAcl,
+    )
+    from flext_ldif.servers._oud.constants import (
+        FlextLdifServersOudConstants as FlextLdifServersOudConstants,
+    )
+    from flext_ldif.servers._oud.entry import (
+        FlextLdifServersOudEntry as FlextLdifServersOudEntry,
+    )
+    from flext_ldif.servers._oud.schema import (
+        FlextLdifServersOudSchema as FlextLdifServersOudSchema,
+    )
+    from flext_ldif.servers._oud.utilities import (
+        FlextLdifServersOudUtilities as FlextLdifServersOudUtilities,
+    )
+    from flext_ldif.servers._rfc.acl import (
+        FlextLdifServersRfcAcl as FlextLdifServersRfcAcl,
+    )
+    from flext_ldif.servers._rfc.constants import (
+        FlextLdifServersRfcConstants as FlextLdifServersRfcConstants,
+    )
+    from flext_ldif.servers._rfc.entry import (
+        FlextLdifServersRfcEntry as FlextLdifServersRfcEntry,
+    )
+    from flext_ldif.servers._rfc.schema import (
+        FlextLdifServersRfcSchema as FlextLdifServersRfcSchema,
+    )
+    from flext_ldif.servers.ad import FlextLdifServersAd as FlextLdifServersAd
+    from flext_ldif.servers.apache import (
+        FlextLdifServersApache as FlextLdifServersApache,
+    )
+    from flext_ldif.servers.base import FlextLdifServersBase as FlextLdifServersBase
+    from flext_ldif.servers.ds389 import FlextLdifServersDs389 as FlextLdifServersDs389
+    from flext_ldif.servers.novell import (
+        FlextLdifServersNovell as FlextLdifServersNovell,
+    )
+    from flext_ldif.servers.oid import (
+        FlextLdifServersOid as FlextLdifServersOid,
+        logger as logger,
+    )
+    from flext_ldif.servers.openldap import (
+        FlextLdifServersOpenldap as FlextLdifServersOpenldap,
+    )
+    from flext_ldif.servers.openldap1 import (
+        FlextLdifServersOpenldap1 as FlextLdifServersOpenldap1,
+    )
+    from flext_ldif.servers.oud import FlextLdifServersOud as FlextLdifServersOud
+    from flext_ldif.servers.relaxed import (
+        FlextLdifServersRelaxed as FlextLdifServersRelaxed,
+    )
+    from flext_ldif.servers.rfc import FlextLdifServersRfc as FlextLdifServersRfc
+    from flext_ldif.servers.tivoli import (
+        FlextLdifServersTivoli as FlextLdifServersTivoli,
+    )
     from flext_ldif.services import (
-        analysis,
-        categorization,
-        conversion,
-        detector,
-        entries,
-        filters,
-        migration,
-        rfc_validation,
-        statistics,
+        analysis as analysis,
+        categorization as categorization,
+        conversion as conversion,
+        detector as detector,
+        entries as entries,
+        filters as filters,
+        migration as migration,
+        rfc_validation as rfc_validation,
+        statistics as statistics,
     )
-    from flext_ldif.services._services import processing_pipeline_service
+    from flext_ldif.services._services import (
+        processing_pipeline_service as processing_pipeline_service,
+    )
     from flext_ldif.services._services.processing_pipeline_service import (
-        FlextLdifProcessingPipelineService,
+        FlextLdifProcessingPipelineService as FlextLdifProcessingPipelineService,
     )
-    from flext_ldif.services.acl import FlextLdifAcl
-    from flext_ldif.services.analysis import FlextLdifAnalysis
-    from flext_ldif.services.categorization import FlextLdifCategorization
-    from flext_ldif.services.conversion import FlextLdifConversion
-    from flext_ldif.services.detector import FlextLdifDetector, FlextLdifDetectorMixin
-    from flext_ldif.services.entries import FlextLdifEntries
-    from flext_ldif.services.filters import FlextLdifFilters
-    from flext_ldif.services.migration import FlextLdifMigrationPipeline
-    from flext_ldif.services.parser import FlextLdifParser, FlextLdifParserMixin
-    from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
-    from flext_ldif.services.processing import FlextLdifProcessing
-    from flext_ldif.services.rfc_validation import FlextLdifValidation
-    from flext_ldif.services.server import FlextLdifServer
-    from flext_ldif.services.statistics import FlextLdifStatistics
-    from flext_ldif.services.transformers import FlextLdifTransformer
-    from flext_ldif.services.writer import FlextLdifWriter, FlextLdifWriterMixin
-    from flext_ldif.settings import FlextLdifSettings
-    from flext_ldif.shared import FlextLdifShared
-    from flext_ldif.typings import FlextLdifTypes, FlextLdifTypes as t
-    from flext_ldif.utilities import FlextLdifUtilities, FlextLdifUtilities as u
+    from flext_ldif.services.acl import FlextLdifAcl as FlextLdifAcl
+    from flext_ldif.services.analysis import FlextLdifAnalysis as FlextLdifAnalysis
+    from flext_ldif.services.categorization import (
+        FlextLdifCategorization as FlextLdifCategorization,
+    )
+    from flext_ldif.services.conversion import (
+        FlextLdifConversion as FlextLdifConversion,
+    )
+    from flext_ldif.services.detector import (
+        FlextLdifDetector as FlextLdifDetector,
+        FlextLdifDetectorMixin as FlextLdifDetectorMixin,
+    )
+    from flext_ldif.services.entries import FlextLdifEntries as FlextLdifEntries
+    from flext_ldif.services.filters import FlextLdifFilters as FlextLdifFilters
+    from flext_ldif.services.migration import (
+        FlextLdifMigrationPipeline as FlextLdifMigrationPipeline,
+    )
+    from flext_ldif.services.parser import (
+        FlextLdifParser as FlextLdifParser,
+        FlextLdifParserMixin as FlextLdifParserMixin,
+    )
+    from flext_ldif.services.pipeline import (
+        FlextLdifProcessingPipeline as FlextLdifProcessingPipeline,
+    )
+    from flext_ldif.services.processing import (
+        FlextLdifProcessing as FlextLdifProcessing,
+    )
+    from flext_ldif.services.rfc_validation import (
+        FlextLdifValidation as FlextLdifValidation,
+    )
+    from flext_ldif.services.server import FlextLdifServer as FlextLdifServer
+    from flext_ldif.services.statistics import (
+        FlextLdifStatistics as FlextLdifStatistics,
+    )
+    from flext_ldif.services.transformers import (
+        FlextLdifTransformer as FlextLdifTransformer,
+    )
+    from flext_ldif.services.writer import (
+        FlextLdifWriter as FlextLdifWriter,
+        FlextLdifWriterMixin as FlextLdifWriterMixin,
+    )
+    from flext_ldif.settings import FlextLdifSettings as FlextLdifSettings
+    from flext_ldif.shared import FlextLdifShared as FlextLdifShared
+    from flext_ldif.typings import FlextLdifTypes as FlextLdifTypes, FlextLdifTypes as t
+    from flext_ldif.utilities import (
+        FlextLdifUtilities as FlextLdifUtilities,
+        FlextLdifUtilities as u,
+    )
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdif": ["flext_ldif.api", "FlextLdif"],
@@ -507,7 +639,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "x": ["flext_core", "x"],
 }
 
-__all__ = [
+_EXPORTS: Sequence[str] = [
     "FlextLdif",
     "FlextLdifAcl",
     "FlextLdifAnalysis",
@@ -682,41 +814,4 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: MutableMapping[str, FlextTypes.ModuleExport] = {}
-
-
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562).
-
-    A local cache ``_LAZY_CACHE`` persists resolved objects across repeated
-    accesses during process lifetime.
-
-    Args:
-        name: Attribute name requested by dir()/import.
-
-    Returns:
-        Lazy-loaded module export type.
-
-    Raises:
-        AttributeError: If attribute not registered.
-
-    """
-    if name in _LAZY_CACHE:
-        return _LAZY_CACHE[name]
-
-    value = lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-    _LAZY_CACHE[name] = value
-    return value
-
-
-def __dir__() -> Sequence[str]:
-    """Return list of available attributes for dir() and autocomplete.
-
-    Returns:
-        List of public names from module exports.
-
-    """
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)

@@ -5,71 +5,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
-from typing import TYPE_CHECKING
+from collections.abc import Mapping, Sequence
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
-
-if TYPE_CHECKING:
-    from flext_core import FlextTypes
-    from tests.unit.quirks.servers import (
-        test_apache_quirks,
-        test_ds389_quirks,
-        test_edge_cases,
-        test_novell_quirks,
-        test_oid_quirks,
-        test_relaxed_quirks,
-        test_schema_transformer,
-    )
-    from tests.unit.quirks.servers.test_apache_quirks import (
-        TestsTestFlextLdifApacheQuirks,
-    )
-    from tests.unit.quirks.servers.test_ds389_quirks import (
-        ACL_TEST_CASES,
-        AclScenario,
-        AclTestCase,
-        TestsTestFlextLdifDs389Quirks,
-    )
-    from tests.unit.quirks.servers.test_edge_cases import (
-        TestsFlextLdifEdgeCases,
-        cleanup_state,
-        ldif_api,
-    )
-    from tests.unit.quirks.servers.test_novell_quirks import (
-        ATTRIBUTE_TEST_CASES,
-        ENTRY_TEST_CASES,
-        OBJECTCLASS_TEST_CASES,
-        AttributeScenario,
-        AttributeTestCase,
-        EntryScenario,
-        EntryTestCase,
-        ObjectClassScenario,
-        ObjectClassTestCase,
-        RfcTestHelpers,
-        TestDeduplicationHelpers,
-        TestNovellAcls,
-        TestNovellEntryDetection,
-        TestNovellSchemaAttributeDetection,
-        TestNovellSchemaAttributeParsing,
-        TestNovellSchemaObjectClassDetection,
-        TestNovellSchemaObjectClassParsing,
-        TestsFlextLdifNovellInitialization,
-        entry_quirk,
-        novell_server,
-        schema_quirk,
-    )
-    from tests.unit.quirks.servers.test_oid_quirks import TestsTestFlextLdifOidQuirks
-    from tests.unit.quirks.servers.test_relaxed_quirks import (
-        ParseScenario,
-        TestsTestFlextLdifRelaxedQuirks,
-        WriteScenario,
-        meta_keys,
-    )
-    from tests.unit.quirks.servers.test_schema_transformer import (
-        TestSchemaTransformerNormalizeMatchingRule,
-        TestSchemaTransformerNormalizeSyntaxOid,
-        TestsFlextLdifSchemaTransformerNormalizeAttributeName,
-    )
+from flext_core.lazy import install_lazy_exports
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "ACL_TEST_CASES": ["tests.unit.quirks.servers.test_ds389_quirks", "ACL_TEST_CASES"],
@@ -193,17 +131,17 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     ],
 }
 
-__all__ = [
+_EXPORTS: Sequence[str] = [
     "ACL_TEST_CASES",
     "ATTRIBUTE_TEST_CASES",
-    "ENTRY_TEST_CASES",
-    "OBJECTCLASS_TEST_CASES",
     "AclScenario",
     "AclTestCase",
     "AttributeScenario",
     "AttributeTestCase",
+    "ENTRY_TEST_CASES",
     "EntryScenario",
     "EntryTestCase",
+    "OBJECTCLASS_TEST_CASES",
     "ObjectClassScenario",
     "ObjectClassTestCase",
     "ParseScenario",
@@ -241,41 +179,4 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: MutableMapping[str, FlextTypes.ModuleExport] = {}
-
-
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562).
-
-    A local cache ``_LAZY_CACHE`` persists resolved objects across repeated
-    accesses during process lifetime.
-
-    Args:
-        name: Attribute name requested by dir()/import.
-
-    Returns:
-        Lazy-loaded module export type.
-
-    Raises:
-        AttributeError: If attribute not registered.
-
-    """
-    if name in _LAZY_CACHE:
-        return _LAZY_CACHE[name]
-
-    value = lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-    _LAZY_CACHE[name] = value
-    return value
-
-
-def __dir__() -> Sequence[str]:
-    """Return list of available attributes for dir() and autocomplete.
-
-    Returns:
-        List of public names from module exports.
-
-    """
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)
