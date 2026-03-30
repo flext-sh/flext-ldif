@@ -18,127 +18,27 @@ if TYPE_CHECKING:
         conftest,
         conftest_shared,
         constants,
-        e2e,
-        helpers,
-        integration,
         models,
         protocols,
-        support,
         test_factory,
         test_helpers,
         typings,
-        unit,
         utilities,
     )
     from tests.base import *
     from tests.conftest import *
     from tests.conftest_shared import *
     from tests.constants import *
-    from tests.e2e import test_enterprise
-    from tests.helpers import example_refactoring
-    from tests.integration import (
-        test_acl_metadata_preservation,
-        test_api_integration,
-        test_categorization_real_data,
-        test_config_integration,
-        test_cross_quirk_conversion,
-        test_dn_case_handling,
-        test_edge_cases,
-        test_error_recovery,
-        test_ldif_fixtures_integration,
-        test_minimal_differences_metadata,
-        test_oid_integration,
-        test_oud_integration,
-        test_oud_to_oid_migration,
-        test_pipeline_integration,
-        test_quirks_transformations,
-        test_real_ldap_config,
-        test_real_ldap_crud,
-        test_real_ldap_export,
-        test_real_ldap_import,
-        test_real_ldap_roundtrip,
-        test_rfc_docker_real,
-        test_rfc_docker_real_integration,
-        test_simple_ldap,
-        test_systematic_fixture_coverage,
-        test_zero_data_loss_oid_oud,
-        test_zero_data_loss_schema,
-    )
-    from tests.integration.conftest import *
-    from tests.integration.test_acl_metadata_preservation import *
-    from tests.integration.test_api_integration import *
-    from tests.integration.test_categorization_real_data import *
-    from tests.integration.test_config_integration import *
-    from tests.integration.test_cross_quirk_conversion import *
-    from tests.integration.test_dn_case_handling import *
-    from tests.integration.test_edge_cases import *
-    from tests.integration.test_error_recovery import *
-    from tests.integration.test_ldif_fixtures_integration import *
-    from tests.integration.test_minimal_differences_metadata import *
-    from tests.integration.test_oid_integration import *
-    from tests.integration.test_oud_integration import *
-    from tests.integration.test_oud_to_oid_migration import *
-    from tests.integration.test_pipeline_integration import *
-    from tests.integration.test_quirks_transformations import *
-    from tests.integration.test_real_ldap_config import *
-    from tests.integration.test_real_ldap_crud import *
-    from tests.integration.test_real_ldap_export import *
-    from tests.integration.test_real_ldap_import import *
-    from tests.integration.test_real_ldap_roundtrip import *
-    from tests.integration.test_rfc_docker_real import *
-    from tests.integration.test_rfc_docker_real_integration import *
-    from tests.integration.test_simple_ldap import *
-    from tests.integration.test_systematic_fixture_coverage import *
-    from tests.integration.test_zero_data_loss_oid_oud import *
-    from tests.integration.test_zero_data_loss_schema import *
+    from tests.e2e import *
+    from tests.helpers import *
+    from tests.integration import *
     from tests.models import *
     from tests.protocols import *
-    from tests.support import (
-        conftest_factory,
-        ldif_data,
-        real_services,
-        test_files,
-        validators,
-    )
-    from tests.support.conftest_factory import *
-    from tests.support.ldif_data import *
-    from tests.support.real_services import *
-    from tests.support.test_files import *
-    from tests.support.validators import *
+    from tests.support import *
     from tests.test_factory import *
     from tests.test_helpers import *
     from tests.typings import *
-    from tests.unit import (
-        services,
-        test_migration_pipeline,
-        test_migration_pipeline_quirks,
-        test_typings,
-    )
-    from tests.unit.__init__ import test_version
-    from tests.unit.__init__.test_version import *
-    from tests.unit._utilities.oid.test_oid_utilities import *
-    from tests.unit._utilities.parser.test_parser_utilities import *
-    from tests.unit._utilities.server.test_server_utilities import *
-    from tests.unit.constants import test_acl_registry
-    from tests.unit.constants.test_acl_registry import *
-    from tests.unit.protocols import test_protocols
-    from tests.unit.protocols.test_protocols import *
-    from tests.unit.quirks.servers.test_apache_quirks import *
-    from tests.unit.quirks.servers.test_ds389_quirks import *
-    from tests.unit.quirks.servers.test_edge_cases import *
-    from tests.unit.quirks.servers.test_novell_quirks import *
-    from tests.unit.quirks.servers.test_oid_quirks import *
-    from tests.unit.quirks.servers.test_relaxed_quirks import *
-    from tests.unit.quirks.servers.test_schema_transformer import *
-    from tests.unit.services import test_quirks_standardization
-    from tests.unit.services.test_migration_pipeline import *
-    from tests.unit.services.test_quirks_standardization import *
-    from tests.unit.test_migration_pipeline import *
-    from tests.unit.test_migration_pipeline_quirks import *
-    from tests.unit.test_typings import *
-    from tests.unit.utilities import test_utilities_comprehensive, test_utilities_core
-    from tests.unit.utilities.test_utilities_comprehensive import *
-    from tests.unit.utilities.test_utilities_core import *
+    from tests.unit import *
     from tests.utilities import *
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
