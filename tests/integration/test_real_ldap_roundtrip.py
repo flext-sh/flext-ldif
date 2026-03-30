@@ -72,6 +72,7 @@ class TestRealLdapRoundtrip:
             else:
                 values = [str(attr_obj)]
             attrs_dict[attr_name] = values
+        assert ldap_entry.entry_dn is not None
         entry_result = m.Ldif.Entry.create(
             dn=ldap_entry.entry_dn,
             attributes=attrs_dict,

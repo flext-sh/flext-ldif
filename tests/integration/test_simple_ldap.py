@@ -56,6 +56,7 @@ def test_create_and_export_entry(
         attr: [str(v) for v in ldap_entry[attr].values]
         for attr in ldap_entry.entry_attributes
     }
+    assert ldap_entry.entry_dn is not None
     entry_result = m.Ldif.Entry.create(
         dn=ldap_entry.entry_dn,
         attributes=attrs,

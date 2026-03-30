@@ -195,6 +195,7 @@ class TestRealLdapBatchOperations:
                 ]
                 values: list[str] = raw_values
                 attrs_dict[attr_name] = values
+            assert entry.entry_dn is not None
             result = m.Ldif.Entry.create(
                 dn=entry.entry_dn,
                 attributes=attrs_dict,

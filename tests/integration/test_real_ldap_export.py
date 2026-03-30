@@ -73,6 +73,7 @@ class TestRealLdapExport:
             attr_obj = ldap_entry[attr_name]
             values: list[str] = [v.decode("utf-8") for v in attr_obj.raw_values]
             attrs_dict[attr_name] = values
+        assert ldap_entry.entry_dn is not None
         entry_result = m.Ldif.Entry.create(
             dn=ldap_entry.entry_dn,
             attributes=attrs_dict,
@@ -131,6 +132,7 @@ class TestRealLdapExport:
                 else:
                     values = [str(attr_obj)]
                 attrs_dict[attr_name] = values
+            assert entry.entry_dn is not None
             result = m.Ldif.Entry.create(
                 dn=entry.entry_dn,
                 attributes=attrs_dict,
@@ -206,6 +208,7 @@ class TestRealLdapExport:
                 else:
                     values = [str(attr_obj)]
                 attrs_dict[attr_name] = values
+            assert entry.entry_dn is not None
             result = m.Ldif.Entry.create(
                 dn=entry.entry_dn,
                 attributes=attrs_dict,
@@ -258,6 +261,7 @@ class TestRealLdapExport:
             else:
                 values = [str(attr_obj)]
             attrs_dict[attr_name] = values
+        assert ldap_entry.entry_dn is not None
         entry_result = m.Ldif.Entry.create(
             dn=ldap_entry.entry_dn,
             attributes=attrs_dict,
