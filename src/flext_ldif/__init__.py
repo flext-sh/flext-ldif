@@ -10,20 +10,21 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
+from flext_ldif.__version__ import (
+    __author__,
+    __author_email__,
+    __description__,
+    __license__,
+    __title__,
+    __url__,
+    __version__,
+    __version_info__,
+)
+
 if TYPE_CHECKING:
     from flext_core import FlextTypes, d, e, h, r, x
 
     from flext_ldif import _models, _utilities, servers, services
-    from flext_ldif.__version__ import (
-        __author__,
-        __author_email__,
-        __description__,
-        __license__,
-        __title__,
-        __url__,
-        __version__,
-        __version_info__,
-    )
     from flext_ldif._models.base import FlextLdifModelsBases
     from flext_ldif._models.collections import FlextLdifModelsCollections
     from flext_ldif._models.domain import FlextLdifModelsDomains
@@ -361,14 +362,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     ],
     "FlextLdifWriter": ["flext_ldif.services.writer", "FlextLdifWriter"],
     "FlextLdifWriterMixin": ["flext_ldif.services.writer", "FlextLdifWriterMixin"],
-    "__author__": ["flext_ldif.__version__", "__author__"],
-    "__author_email__": ["flext_ldif.__version__", "__author_email__"],
-    "__description__": ["flext_ldif.__version__", "__description__"],
-    "__license__": ["flext_ldif.__version__", "__license__"],
-    "__title__": ["flext_ldif.__version__", "__title__"],
-    "__url__": ["flext_ldif.__version__", "__url__"],
-    "__version__": ["flext_ldif.__version__", "__version__"],
-    "__version_info__": ["flext_ldif.__version__", "__version_info__"],
     "_models": ["flext_ldif._models", ""],
     "_utilities": ["flext_ldif._utilities", ""],
     "c": ["flext_ldif.constants", "FlextLdifConstants"],

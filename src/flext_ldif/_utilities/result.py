@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextModelsResult, r
+from flext_core import p, r
 
 
 class FlextLdifUtilitiesResult[T]:
@@ -13,7 +13,7 @@ class FlextLdifUtilitiesResult[T]:
     __slots__ = ("_inner",)
     _inner: r[T]
 
-    def __init__(self, inner: r[T] | FlextModelsResult.RuntimeResult[T]) -> None:
+    def __init__(self, inner: r[T] | p.Result[T]) -> None:
         """Initialize FlextLdifUtilitiesResult wrapping r[T] or RuntimeResult."""
         super().__init__()
         inner_result: r[T]
