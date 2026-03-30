@@ -16,36 +16,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from tests.integration import (
-        conftest,
-        test_acl_metadata_preservation,
-        test_api_integration,
-        test_categorization_real_data,
-        test_config_integration,
-        test_cross_quirk_conversion,
-        test_dn_case_handling,
-        test_edge_cases,
-        test_error_recovery,
-        test_ldif_fixtures_integration,
-        test_minimal_differences_metadata,
-        test_oid_integration,
-        test_oud_integration,
-        test_oud_to_oid_migration,
-        test_pipeline_integration,
-        test_quirks_transformations,
-        test_real_ldap_config,
-        test_real_ldap_crud,
-        test_real_ldap_export,
-        test_real_ldap_import,
-        test_real_ldap_roundtrip,
-        test_rfc_docker_real,
-        test_rfc_docker_real_integration,
-        test_simple_ldap,
-        test_systematic_fixture_coverage,
-        test_zero_data_loss_oid_oud,
-        test_zero_data_loss_schema,
-        typings,
-    )
     from tests.integration.conftest import *
     from tests.integration.test_acl_metadata_preservation import *
     from tests.integration.test_api_integration import *
@@ -224,4 +194,4 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
 }
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

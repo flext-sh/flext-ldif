@@ -11,17 +11,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif._models import (
-        base,
-        collections,
-        domain,
-        domain_entries,
-        events,
-        metadata,
-        processing,
-        results,
-        settings,
-    )
     from flext_ldif._models.base import *
     from flext_ldif._models.collections import *
     from flext_ldif._models.domain import *
@@ -54,4 +43,4 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
 }
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

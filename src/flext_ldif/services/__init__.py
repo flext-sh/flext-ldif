@@ -10,25 +10,9 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports
 
+from flext_ldif.services._services import _LAZY_IMPORTS as _CHILD_LAZY_0
+
 if TYPE_CHECKING:
-    from flext_ldif.services import (
-        acl,
-        analysis,
-        categorization,
-        conversion,
-        detector,
-        entries,
-        filters,
-        migration,
-        parser,
-        pipeline,
-        processing,
-        rfc_validation,
-        server,
-        statistics,
-        transformers,
-        writer,
-    )
     from flext_ldif.services._services import *
     from flext_ldif.services.acl import *
     from flext_ldif.services.analysis import *
@@ -48,6 +32,7 @@ if TYPE_CHECKING:
     from flext_ldif.services.writer import *
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+    **_CHILD_LAZY_0,
     "FlextLdifAcl": "flext_ldif.services.acl",
     "FlextLdifAnalysis": "flext_ldif.services.analysis",
     "FlextLdifCategorization": "flext_ldif.services.categorization",
@@ -61,7 +46,6 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "FlextLdifParserMixin": "flext_ldif.services.parser",
     "FlextLdifProcessing": "flext_ldif.services.processing",
     "FlextLdifProcessingPipeline": "flext_ldif.services.pipeline",
-    "FlextLdifProcessingPipelineService": "flext_ldif.services._services.processing_pipeline_service",
     "FlextLdifServer": "flext_ldif.services.server",
     "FlextLdifStatistics": "flext_ldif.services.statistics",
     "FlextLdifTransformer": "flext_ldif.services.transformers",
@@ -80,7 +64,6 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "parser": "flext_ldif.services.parser",
     "pipeline": "flext_ldif.services.pipeline",
     "processing": "flext_ldif.services.processing",
-    "processing_pipeline_service": "flext_ldif.services._services.processing_pipeline_service",
     "rfc_validation": "flext_ldif.services.rfc_validation",
     "server": "flext_ldif.services.server",
     "statistics": "flext_ldif.services.statistics",
@@ -89,4 +72,4 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
 }
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

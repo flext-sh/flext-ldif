@@ -34,12 +34,9 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports
 
-if TYPE_CHECKING:
-    from tests.helpers import example_refactoring
-
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "example_refactoring": "tests.helpers.example_refactoring",
 }
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

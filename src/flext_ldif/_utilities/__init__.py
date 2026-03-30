@@ -11,29 +11,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif._utilities import (
-        acl,
-        attribute,
-        collection_ldif,
-        detection,
-        dispatch,
-        dn,
-        entry,
-        events,
-        metadata,
-        object_class,
-        oid,
-        parser,
-        parsers,
-        pipeline,
-        result,
-        schema,
-        server,
-        transformers,
-        validation,
-        writer,
-        writers,
-    )
     from flext_ldif._utilities.acl import *
     from flext_ldif._utilities.attribute import *
     from flext_ldif._utilities.collection_ldif import *
@@ -104,4 +81,4 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
 }
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
