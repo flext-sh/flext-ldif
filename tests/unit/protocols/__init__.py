@@ -11,23 +11,13 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from tests.unit.protocols import test_protocols as test_protocols
-    from tests.unit.protocols.test_protocols import (
-        TestsTestFlextLdifProtocols as TestsTestFlextLdifProtocols,
-    )
+    from tests.unit.protocols import test_protocols
+    from tests.unit.protocols.test_protocols import *
 
-_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "TestsTestFlextLdifProtocols": [
-        "tests.unit.protocols.test_protocols",
-        "TestsTestFlextLdifProtocols",
-    ],
-    "test_protocols": ["tests.unit.protocols.test_protocols", ""],
+_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+    "TestsTestFlextLdifProtocols": "tests.unit.protocols.test_protocols",
+    "test_protocols": "tests.unit.protocols.test_protocols",
 }
 
-_EXPORTS: Sequence[str] = [
-    "TestsTestFlextLdifProtocols",
-    "test_protocols",
-]
 
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))

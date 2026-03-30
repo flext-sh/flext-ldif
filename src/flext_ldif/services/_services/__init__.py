@@ -11,28 +11,13 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif.services._services import (
-        processing_pipeline_service as processing_pipeline_service,
-    )
-    from flext_ldif.services._services.processing_pipeline_service import (
-        FlextLdifProcessingPipelineService as FlextLdifProcessingPipelineService,
-    )
+    from flext_ldif.services._services import processing_pipeline_service
+    from flext_ldif.services._services.processing_pipeline_service import *
 
-_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "FlextLdifProcessingPipelineService": [
-        "flext_ldif.services._services.processing_pipeline_service",
-        "FlextLdifProcessingPipelineService",
-    ],
-    "processing_pipeline_service": [
-        "flext_ldif.services._services.processing_pipeline_service",
-        "",
-    ],
+_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+    "FlextLdifProcessingPipelineService": "flext_ldif.services._services.processing_pipeline_service",
+    "processing_pipeline_service": "flext_ldif.services._services.processing_pipeline_service",
 }
 
-_EXPORTS: Sequence[str] = [
-    "FlextLdifProcessingPipelineService",
-    "processing_pipeline_service",
-]
 
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))

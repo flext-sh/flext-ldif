@@ -6,21 +6,18 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports
 
-_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "TestFlextLdifUtilitiesParser": [
-        "tests.unit._utilities.parser.test_parser_utilities",
-        "TestFlextLdifUtilitiesParser",
-    ],
-    "test_parser_utilities": ["tests.unit._utilities.parser.test_parser_utilities", ""],
+if TYPE_CHECKING:
+    from tests.unit._utilities.parser import test_parser_utilities
+    from tests.unit._utilities.parser.test_parser_utilities import *
+
+_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+    "TestFlextLdifUtilitiesParser": "tests.unit._utilities.parser.test_parser_utilities",
+    "test_parser_utilities": "tests.unit._utilities.parser.test_parser_utilities",
 }
 
-_EXPORTS: Sequence[str] = [
-    "TestFlextLdifUtilitiesParser",
-    "test_parser_utilities",
-]
 
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))

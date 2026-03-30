@@ -16,15 +16,11 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from tests.e2e import test_enterprise as test_enterprise
+    from tests.e2e import test_enterprise
 
-_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "test_enterprise": ["tests.e2e.test_enterprise", ""],
+_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+    "test_enterprise": "tests.e2e.test_enterprise",
 }
 
-_EXPORTS: Sequence[str] = [
-    "test_enterprise",
-]
 
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))

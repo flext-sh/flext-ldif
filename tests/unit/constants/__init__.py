@@ -11,35 +11,15 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from tests.unit.constants import test_acl_registry as test_acl_registry
-    from tests.unit.constants.test_acl_registry import (
-        GetAclAttributesServerType as GetAclAttributesServerType,
-        IsAclAttributeType as IsAclAttributeType,
-        TestsTestFlextLdifAclAttributeRegistry as TestsTestFlextLdifAclAttributeRegistry,
-    )
+    from tests.unit.constants import test_acl_registry
+    from tests.unit.constants.test_acl_registry import *
 
-_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "GetAclAttributesServerType": [
-        "tests.unit.constants.test_acl_registry",
-        "GetAclAttributesServerType",
-    ],
-    "IsAclAttributeType": [
-        "tests.unit.constants.test_acl_registry",
-        "IsAclAttributeType",
-    ],
-    "TestsTestFlextLdifAclAttributeRegistry": [
-        "tests.unit.constants.test_acl_registry",
-        "TestsTestFlextLdifAclAttributeRegistry",
-    ],
-    "test_acl_registry": ["tests.unit.constants.test_acl_registry", ""],
+_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+    "GetAclAttributesServerType": "tests.unit.constants.test_acl_registry",
+    "IsAclAttributeType": "tests.unit.constants.test_acl_registry",
+    "TestsTestFlextLdifAclAttributeRegistry": "tests.unit.constants.test_acl_registry",
+    "test_acl_registry": "tests.unit.constants.test_acl_registry",
 }
 
-_EXPORTS: Sequence[str] = [
-    "GetAclAttributesServerType",
-    "IsAclAttributeType",
-    "TestsTestFlextLdifAclAttributeRegistry",
-    "test_acl_registry",
-]
 
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))
