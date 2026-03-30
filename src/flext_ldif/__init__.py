@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 
     from flext_ldif import _models, _utilities, servers, services
     from flext_ldif.__version__ import (
-        __all__,
         __author__,
         __author_email__,
         __description__,
@@ -362,7 +361,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     ],
     "FlextLdifWriter": ["flext_ldif.services.writer", "FlextLdifWriter"],
     "FlextLdifWriterMixin": ["flext_ldif.services.writer", "FlextLdifWriterMixin"],
-    "__all__": ["flext_ldif.__version__", "__all__"],
     "__author__": ["flext_ldif.__version__", "__author__"],
     "__author_email__": ["flext_ldif.__version__", "__author_email__"],
     "__description__": ["flext_ldif.__version__", "__description__"],
@@ -482,7 +480,6 @@ __all__ = [
     "FlextLdifValidation",
     "FlextLdifWriter",
     "FlextLdifWriterMixin",
-    "__all__",
     "__author__",
     "__author_email__",
     "__description__",

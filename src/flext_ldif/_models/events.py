@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_core._models.domain_event import FlextModelsDomainEvent
+from flext_core import FlextModelsDomainEvent
 
 from flext_ldif import FlextLdifModelsBases
 
