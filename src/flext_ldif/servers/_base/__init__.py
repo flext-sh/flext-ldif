@@ -13,10 +13,15 @@ from flext_core.lazy import install_lazy_exports
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from flext_ldif.servers._base.acl import *
-    from flext_ldif.servers._base.constants import *
-    from flext_ldif.servers._base.entry import *
-    from flext_ldif.servers._base.schema import *
+    from flext_ldif.servers._base import acl, constants, entry, schema
+    from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
+    from flext_ldif.servers._base.constants import (
+        FlextLdifQuirkMethodsMixin,
+        FlextLdifServersBaseConstants,
+        FlextLdifServersBaseQuirkHelpers,
+    )
+    from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
+    from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema, logger
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "FlextLdifQuirkMethodsMixin": "flext_ldif.servers._base.constants",

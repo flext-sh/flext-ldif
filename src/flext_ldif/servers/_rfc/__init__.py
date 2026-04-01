@@ -13,10 +13,11 @@ from flext_core.lazy import install_lazy_exports
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from flext_ldif.servers._rfc.acl import *
-    from flext_ldif.servers._rfc.constants import *
-    from flext_ldif.servers._rfc.entry import *
-    from flext_ldif.servers._rfc.schema import *
+    from flext_ldif.servers._rfc import acl, constants, entry, schema
+    from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
+    from flext_ldif.servers._rfc.constants import FlextLdifServersRfcConstants, c
+    from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+    from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema, logger
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "FlextLdifServersRfcAcl": "flext_ldif.servers._rfc.acl",

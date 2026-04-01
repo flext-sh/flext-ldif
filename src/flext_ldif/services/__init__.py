@@ -13,23 +13,45 @@ from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from flext_ldif.services._services import *
-    from flext_ldif.services.acl import *
-    from flext_ldif.services.analysis import *
-    from flext_ldif.services.categorization import *
-    from flext_ldif.services.conversion import *
-    from flext_ldif.services.detector import *
-    from flext_ldif.services.entries import *
-    from flext_ldif.services.filters import *
-    from flext_ldif.services.migration import *
-    from flext_ldif.services.parser import *
-    from flext_ldif.services.pipeline import *
-    from flext_ldif.services.processing import *
-    from flext_ldif.services.rfc_validation import *
-    from flext_ldif.services.server import *
-    from flext_ldif.services.statistics import *
-    from flext_ldif.services.transformers import *
-    from flext_ldif.services.writer import *
+    from flext_ldif.services import (
+        _services,
+        acl,
+        analysis,
+        categorization,
+        conversion,
+        detector,
+        entries,
+        filters,
+        migration,
+        parser,
+        pipeline,
+        processing,
+        rfc_validation,
+        server,
+        statistics,
+        transformers,
+        writer,
+    )
+    from flext_ldif.services._services import (
+        FlextLdifProcessingPipelineService,
+        processing_pipeline_service,
+    )
+    from flext_ldif.services.acl import FlextLdifAcl
+    from flext_ldif.services.analysis import FlextLdifAnalysis
+    from flext_ldif.services.categorization import FlextLdifCategorization
+    from flext_ldif.services.conversion import FlextLdifConversion
+    from flext_ldif.services.detector import FlextLdifDetector, FlextLdifDetectorMixin
+    from flext_ldif.services.entries import FlextLdifEntries
+    from flext_ldif.services.filters import FlextLdifFilters
+    from flext_ldif.services.migration import FlextLdifMigrationPipeline
+    from flext_ldif.services.parser import FlextLdifParser, FlextLdifParserMixin
+    from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
+    from flext_ldif.services.processing import FlextLdifProcessing
+    from flext_ldif.services.rfc_validation import FlextLdifValidation
+    from flext_ldif.services.server import FlextLdifServer
+    from flext_ldif.services.statistics import FlextLdifStatistics
+    from flext_ldif.services.transformers import FlextLdifTransformer
+    from flext_ldif.services.writer import FlextLdifWriter, FlextLdifWriterMixin
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
     ("flext_ldif.services._services",),

@@ -13,7 +13,8 @@ from flext_core.lazy import install_lazy_exports
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from examples.demo_structured_migration import *
+    from examples import demo_structured_migration
+    from examples.demo_structured_migration import main
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "demo_structured_migration": "examples.demo_structured_migration",

@@ -12,6 +12,7 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
+    from tests.unit._utilities.oid import test_oid_utilities
     from tests.unit._utilities.oid.test_oid_utilities import TestFlextLdifUtilitiesOID
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {

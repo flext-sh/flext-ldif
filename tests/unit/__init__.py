@@ -13,14 +13,77 @@ from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from tests.unit.__init__ import *
-    from tests.unit._utilities.oid import *
-    from tests.unit._utilities.parser import *
-    from tests.unit._utilities.server import *
-    from tests.unit.constants import *
-    from tests.unit.protocols import *
-    from tests.unit.quirks.servers import *
-    from tests.unit.services import *
+    from tests.unit import (
+        constants,
+        protocols,
+        services,
+        test_migration_pipeline,
+        test_migration_pipeline_quirks,
+        test_typings,
+        utilities,
+    )
+    from tests.unit.__init__ import TestsFlextLdifVersion, test_version, version_module
+    from tests.unit._utilities.oid import TestFlextLdifUtilitiesOID
+    from tests.unit._utilities.parser import TestFlextLdifUtilitiesParser
+    from tests.unit._utilities.server import (
+        OidServer,
+        OudServer,
+        TestFlextLdifUtilitiesServer,
+    )
+    from tests.unit.constants import (
+        GetAclAttributesServerType,
+        IsAclAttributeType,
+        TestsTestFlextLdifAclAttributeRegistry,
+        test_acl_registry,
+    )
+    from tests.unit.protocols import TestsTestFlextLdifProtocols, test_protocols
+    from tests.unit.quirks.servers import (
+        ACL_TEST_CASES,
+        ATTRIBUTE_TEST_CASES,
+        ENTRY_TEST_CASES,
+        OBJECTCLASS_TEST_CASES,
+        AclScenario,
+        AclTestCase,
+        AttributeScenario,
+        AttributeTestCase,
+        EntryScenario,
+        EntryTestCase,
+        ObjectClassScenario,
+        ObjectClassTestCase,
+        ParseScenario,
+        RfcTestHelpers,
+        TestDeduplicationHelpers,
+        TestNovellAcls,
+        TestNovellEntryDetection,
+        TestNovellSchemaAttributeDetection,
+        TestNovellSchemaAttributeParsing,
+        TestNovellSchemaObjectClassDetection,
+        TestNovellSchemaObjectClassParsing,
+        TestSchemaTransformerNormalizeMatchingRule,
+        TestSchemaTransformerNormalizeSyntaxOid,
+        TestsFlextLdifEdgeCases,
+        TestsFlextLdifNovellInitialization,
+        TestsFlextLdifSchemaTransformerNormalizeAttributeName,
+        TestsTestFlextLdifApacheQuirks,
+        TestsTestFlextLdifDs389Quirks,
+        TestsTestFlextLdifOidQuirks,
+        TestsTestFlextLdifRelaxedQuirks,
+        WriteScenario,
+        cleanup_state,
+        entry_quirk,
+        ldif_api,
+        meta_keys,
+        novell_server,
+        schema_quirk,
+    )
+    from tests.unit.services import (
+        TestAliasDiscovery,
+        TestQuirksAutoInterchange,
+        TestQuirksWithRealLdifFixtures,
+        TestsFlextLdifQuirksStandardizedConstants,
+        TestsTestFlextLdifMigrationPipeline,
+        test_quirks_standardization,
+    )
     from tests.unit.test_migration_pipeline import TestsFlextLdifMigrationPipeline
     from tests.unit.test_migration_pipeline_quirks import (
         OidTestConstants,
@@ -34,7 +97,17 @@ if _TYPE_CHECKING:
         TestRemovalOfOverEngineering,
         TestsFlextLdifCommonDictionaryTypes,
     )
-    from tests.unit.utilities import *
+    from tests.unit.utilities import (
+        TestAttributeFixer,
+        TestDnObjectClassMethods,
+        TestFlextLdifUtilitiesComprehensive,
+        TestLdifParser,
+        TestObjectClassUtilities,
+        TestServerTypes,
+        TestsFlextLdifDnOperationsPure,
+        test_utilities_comprehensive,
+        test_utilities_core,
+    )
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
     (

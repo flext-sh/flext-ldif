@@ -12,6 +12,15 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
+    from tests.unit.quirks.servers import (
+        test_apache_quirks,
+        test_ds389_quirks,
+        test_edge_cases,
+        test_novell_quirks,
+        test_oid_quirks,
+        test_relaxed_quirks,
+        test_schema_transformer,
+    )
     from tests.unit.quirks.servers.test_apache_quirks import (
         TestsTestFlextLdifApacheQuirks,
     )

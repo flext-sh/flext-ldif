@@ -14,16 +14,211 @@ if _TYPE_CHECKING:
     from flext_core import FlextTypes
     from flext_tests import d, e, h, r, x
 
-    from tests.base import *
-    from tests.conftest import *
-    from tests.conftest_shared import *
-    from tests.constants import *
-    from tests.e2e import *
-    from tests.helpers import *
-    from tests.integration import *
-    from tests.models import *
-    from tests.protocols import *
-    from tests.support import *
+    from tests import (
+        base,
+        conftest,
+        conftest_shared,
+        constants,
+        e2e,
+        helpers,
+        integration,
+        models,
+        protocols,
+        support,
+        test_factory,
+        test_helpers,
+        typings,
+        unit,
+        utilities,
+    )
+    from tests.base import FlextLdifTestsServiceBase, s
+    from tests.conftest import (
+        FIXTURES_DIR,
+        OID_FIXTURES_DIR,
+        FlextLdifFixtures,
+        flext_ldif,
+        ldif_parser,
+        ldif_writer,
+        pytest_configure,
+        real_ldif_group_entry,
+        real_ldif_multiple_entries,
+        real_ldif_user_entry,
+        sample_ldif_entries,
+        temp_file,
+    )
+    from tests.conftest_shared import (
+        large_test_dataset,
+        parametrized_real_data,
+        real_entry,
+        real_ldif_content,
+    )
+    from tests.constants import FlextLdifTestConstants, FlextLdifTestConstants as c
+    from tests.e2e import test_enterprise
+    from tests.helpers import example_refactoring
+    from tests.integration import (
+        WORKSPACE_ROOT,
+        APIScenarios,
+        ConfigTestData,
+        TestAclRoundTripPreservation,
+        TestBoundaryValues,
+        TestCategorizationRealData,
+        TestData,
+        TestDnCaseNormalizationScenarios,
+        TestDnCaseRegistry,
+        TestEmptyAndMinimalCases,
+        TestEncodingErrors,
+        TestFlextLdifAPIIntegration,
+        TestFlextLdifFacadeWorkflows,
+        TestFlextLdifSettingsIntegration,
+        TestIncompleteEntries,
+        TestInvalidSchemaDefinitions,
+        TestLargeAndComplexCases,
+        TestMalformedLdifHandling,
+        TestMinimalDifferencesOidOud,
+        TestOidAclMetadataPreservation,
+        TestOidEntryIntegration,
+        TestOidQuirksTransformations,
+        TestOidRoundTripIntegration,
+        TestOidSchemaIntegration,
+        TestOidToOudAclConversion,
+        TestOidToOudIntegrationConversion,
+        TestOidToOudSchemaConversion,
+        TestOudAciMetadataPreservation,
+        TestOudAclIntegration,
+        TestOudEntryIntegration,
+        TestOudMetadataPreservation,
+        TestOudQuirksTransformations,
+        TestOudRoundTripIntegration,
+        TestOudSchemaIntegration,
+        TestOudToOidAclMigration,
+        TestOudToOidEntryMigration,
+        TestOudToOidFullMigration,
+        TestOudToOidSchemaMigration,
+        TestQuirksConversionMatrixFacade,
+        TestQuirksPropertyValidation,
+        TestRealLdapBatchOperations,
+        TestRealLdapConfigurationFromEnv,
+        TestRealLdapCRUD,
+        TestRealLdapExport,
+        TestRealLdapImport,
+        TestRealLdapRailwayComposition,
+        TestRealLdapRoundtrip,
+        TestRfcDockerRealData,
+        TestRfcExceptionHandlingRealScenarios,
+        TestRfcIntegrationRealWorld,
+        TestRfcParserRealFixtures,
+        TestRfcSchemaParserRealFixtures,
+        TestRfcWriterRealFixtures,
+        TestRoundtripEdgeCases,
+        TestSchemaDeviationsAttributeKeyCasing,
+        TestSchemaDeviationsComplete,
+        TestSchemaDeviationsMissingSpaces,
+        TestSchemaDeviationsNameAliases,
+        TestSchemaDeviationsObsolete,
+        TestSchemaDeviationsOriginalString,
+        TestSchemaDeviationsRoundTrip,
+        TestSchemaDeviationsSpacing,
+        TestSchemaDeviationsSyntaxQuotes,
+        TestSchemaDeviationsUtilities,
+        TestSchemaDeviationsXOrigin,
+        TestsFlextLdifFixtures,
+        TestSystematicFixtureCoverage,
+        TestUnicodeBoundaries,
+        TestZeroDataLossOidOud,
+        all_acl_fixtures,
+        all_entries_fixtures,
+        all_integration_fixtures,
+        all_schema_fixtures,
+        api,
+        clean_test_ou,
+        conversion_matrix,
+        fixtures_dir,
+        ldap_connection,
+        ldap_container,
+        ldap_container_shared,
+        logger,
+        make_test_base_dn,
+        make_test_username,
+        migration_inputs,
+        oid_acl_fixture,
+        oid_acl_quirk,
+        oid_entries,
+        oid_entries_fixture,
+        oid_integration_fixture,
+        oid_quirk,
+        oid_schema_entries,
+        oid_schema_fixture,
+        oid_schema_quirk,
+        openldap_acl_fixture,
+        openldap_entries,
+        openldap_entries_fixture,
+        openldap_integration_fixture,
+        openldap_schema_entries,
+        openldap_schema_fixture,
+        oud_acl_fixture,
+        oud_acl_quirk,
+        oud_entries,
+        oud_entries_fixture,
+        oud_integration_fixture,
+        oud_quirk,
+        oud_schema_entries,
+        oud_schema_fixture,
+        oud_schema_quirk,
+        parser,
+        rfc_schema_entries,
+        rfc_schema_fixture,
+        server,
+        test_acl_metadata_preservation,
+        test_api_integration,
+        test_categorization_real_data,
+        test_config_integration,
+        test_create_and_export_entry,
+        test_cross_quirk_conversion,
+        test_dn_case_handling,
+        test_edge_cases,
+        test_error_recovery,
+        test_ldap_connection,
+        test_ldif_fixtures_integration,
+        test_minimal_differences_metadata,
+        test_oid_integration,
+        test_oud_integration,
+        test_oud_to_oid_migration,
+        test_pipeline_integration,
+        test_quirks_transformations,
+        test_real_ldap_config,
+        test_real_ldap_crud,
+        test_real_ldap_export,
+        test_real_ldap_import,
+        test_real_ldap_roundtrip,
+        test_rfc_docker_real,
+        test_rfc_docker_real_integration,
+        test_simple_ldap,
+        test_simple_ldap_search,
+        test_systematic_fixture_coverage,
+        test_zero_data_loss_oid_oud,
+        test_zero_data_loss_schema,
+        tmp_ldif_path,
+        unique_dn_suffix,
+        writer,
+    )
+    from tests.models import FlextLdifTestModels, FlextLdifTestModels as m
+    from tests.protocols import FlextLdifTestProtocols, FlextLdifTestProtocols as p
+    from tests.support import (
+        FileManager,
+        FlextLdifTestConftest,
+        FlextLdifTestServiceFactory,
+        LdifSample,
+        LdifTestData,
+        MockFlextUtilitiesResultHelpers,
+        MockMatchers,
+        TestValidators,
+        conftest_factory,
+        ldif_data,
+        real_services,
+        test_files,
+        tk,
+        validators,
+    )
     from tests.test_factory import FlextLdifTestFactory
     from tests.test_helpers import (
         TestsFlextLdifMatchers,
@@ -34,18 +229,100 @@ if _TYPE_CHECKING:
         tt,
         tv,
     )
-    from tests.typings import *
-    from tests.unit import *
-    from tests.unit.__init__ import *
-    from tests.unit._utilities.oid import *
-    from tests.unit._utilities.parser import *
-    from tests.unit._utilities.server import *
-    from tests.unit.constants import *
-    from tests.unit.protocols import *
-    from tests.unit.quirks.servers import *
-    from tests.unit.services import *
-    from tests.unit.utilities import *
-    from tests.utilities import *
+    from tests.typings import (
+        FlextLdifTestTypes,
+        FlextLdifTestTypes as t,
+        GenericFieldsDict,
+    )
+    from tests.unit import (
+        OidTestConstants,
+        TestFlextLdifTypesStructure,
+        TestIntegrationWithLdifFixtures,
+        TestModelsNamespace,
+        TestPhase1StandardizationResults,
+        TestRemovalOfOverEngineering,
+        TestsFlextLdifCommonDictionaryTypes,
+        TestsFlextLdifMigrationPipeline,
+        TestsFlextLdifMigrationPipelineQuirks,
+        services,
+        test_migration_pipeline,
+        test_migration_pipeline_quirks,
+        test_typings,
+    )
+    from tests.unit.__init__ import TestsFlextLdifVersion, test_version, version_module
+    from tests.unit._utilities.oid import TestFlextLdifUtilitiesOID
+    from tests.unit._utilities.parser import TestFlextLdifUtilitiesParser
+    from tests.unit._utilities.server import (
+        OidServer,
+        OudServer,
+        TestFlextLdifUtilitiesServer,
+    )
+    from tests.unit.constants import (
+        GetAclAttributesServerType,
+        IsAclAttributeType,
+        TestsTestFlextLdifAclAttributeRegistry,
+        test_acl_registry,
+    )
+    from tests.unit.protocols import TestsTestFlextLdifProtocols, test_protocols
+    from tests.unit.quirks.servers import (
+        ACL_TEST_CASES,
+        ATTRIBUTE_TEST_CASES,
+        ENTRY_TEST_CASES,
+        OBJECTCLASS_TEST_CASES,
+        AclScenario,
+        AclTestCase,
+        AttributeScenario,
+        AttributeTestCase,
+        EntryScenario,
+        EntryTestCase,
+        ObjectClassScenario,
+        ObjectClassTestCase,
+        ParseScenario,
+        RfcTestHelpers,
+        TestDeduplicationHelpers,
+        TestNovellAcls,
+        TestNovellEntryDetection,
+        TestNovellSchemaAttributeDetection,
+        TestNovellSchemaAttributeParsing,
+        TestNovellSchemaObjectClassDetection,
+        TestNovellSchemaObjectClassParsing,
+        TestSchemaTransformerNormalizeMatchingRule,
+        TestSchemaTransformerNormalizeSyntaxOid,
+        TestsFlextLdifEdgeCases,
+        TestsFlextLdifNovellInitialization,
+        TestsFlextLdifSchemaTransformerNormalizeAttributeName,
+        TestsTestFlextLdifApacheQuirks,
+        TestsTestFlextLdifDs389Quirks,
+        TestsTestFlextLdifOidQuirks,
+        TestsTestFlextLdifRelaxedQuirks,
+        WriteScenario,
+        cleanup_state,
+        entry_quirk,
+        ldif_api,
+        meta_keys,
+        novell_server,
+        schema_quirk,
+    )
+    from tests.unit.services import (
+        TestAliasDiscovery,
+        TestQuirksAutoInterchange,
+        TestQuirksWithRealLdifFixtures,
+        TestsFlextLdifQuirksStandardizedConstants,
+        TestsTestFlextLdifMigrationPipeline,
+        test_quirks_standardization,
+    )
+    from tests.unit.utilities import (
+        TestAttributeFixer,
+        TestDnObjectClassMethods,
+        TestFlextLdifUtilitiesComprehensive,
+        TestLdifParser,
+        TestObjectClassUtilities,
+        TestServerTypes,
+        TestsFlextLdifDnOperationsPure,
+        test_utilities_comprehensive,
+        test_utilities_core,
+    )
+    from tests.utilities import FlextLdifTestUtilities, FlextLdifTestUtilities as u
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
     (
