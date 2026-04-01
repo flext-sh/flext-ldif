@@ -13,7 +13,11 @@ from flext_core.lazy import install_lazy_exports
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from tests.unit.constants.test_acl_registry import *
+    from tests.unit.constants.test_acl_registry import (
+        GetAclAttributesServerType,
+        IsAclAttributeType,
+        TestsTestFlextLdifAclAttributeRegistry,
+    )
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "GetAclAttributesServerType": "tests.unit.constants.test_acl_registry",

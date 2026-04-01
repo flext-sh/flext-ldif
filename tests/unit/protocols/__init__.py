@@ -13,7 +13,7 @@ from flext_core.lazy import install_lazy_exports
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from tests.unit.protocols.test_protocols import *
+    from tests.unit.protocols.test_protocols import TestsTestFlextLdifProtocols
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "TestsTestFlextLdifProtocols": "tests.unit.protocols.test_protocols",

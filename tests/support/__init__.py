@@ -21,7 +21,7 @@ if _TYPE_CHECKING:
     from tests.support.conftest_factory import *
     from tests.support.ldif_data import *
     from tests.support.real_services import *
-    from tests.support.test_files import *
+    from tests.support.test_files import FileManager
     from tests.support.validators import *
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {

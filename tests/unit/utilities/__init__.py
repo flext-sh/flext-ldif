@@ -13,8 +13,17 @@ from flext_core.lazy import install_lazy_exports
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from tests.unit.utilities.test_utilities_comprehensive import *
-    from tests.unit.utilities.test_utilities_core import *
+    from tests.unit.utilities.test_utilities_comprehensive import (
+        TestFlextLdifUtilitiesComprehensive,
+    )
+    from tests.unit.utilities.test_utilities_core import (
+        TestAttributeFixer,
+        TestDnObjectClassMethods,
+        TestLdifParser,
+        TestObjectClassUtilities,
+        TestServerTypes,
+        TestsFlextLdifDnOperationsPure,
+    )
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "TestAttributeFixer": "tests.unit.utilities.test_utilities_core",

@@ -12,13 +12,55 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-    from tests.unit.quirks.servers.test_apache_quirks import *
-    from tests.unit.quirks.servers.test_ds389_quirks import *
-    from tests.unit.quirks.servers.test_edge_cases import *
-    from tests.unit.quirks.servers.test_novell_quirks import *
-    from tests.unit.quirks.servers.test_oid_quirks import *
-    from tests.unit.quirks.servers.test_relaxed_quirks import *
-    from tests.unit.quirks.servers.test_schema_transformer import *
+    from tests.unit.quirks.servers.test_apache_quirks import (
+        TestsTestFlextLdifApacheQuirks,
+    )
+    from tests.unit.quirks.servers.test_ds389_quirks import (
+        ACL_TEST_CASES,
+        AclScenario,
+        AclTestCase,
+        TestsTestFlextLdifDs389Quirks,
+    )
+    from tests.unit.quirks.servers.test_edge_cases import (
+        TestsFlextLdifEdgeCases,
+        cleanup_state,
+        ldif_api,
+    )
+    from tests.unit.quirks.servers.test_novell_quirks import (
+        ATTRIBUTE_TEST_CASES,
+        ENTRY_TEST_CASES,
+        OBJECTCLASS_TEST_CASES,
+        AttributeScenario,
+        AttributeTestCase,
+        EntryScenario,
+        EntryTestCase,
+        ObjectClassScenario,
+        ObjectClassTestCase,
+        RfcTestHelpers,
+        TestDeduplicationHelpers,
+        TestNovellAcls,
+        TestNovellEntryDetection,
+        TestNovellSchemaAttributeDetection,
+        TestNovellSchemaAttributeParsing,
+        TestNovellSchemaObjectClassDetection,
+        TestNovellSchemaObjectClassParsing,
+        TestsFlextLdifNovellInitialization,
+        entry_quirk,
+        novell_server,
+        schema_quirk,
+    )
+    from tests.unit.quirks.servers.test_oid_quirks import TestsTestFlextLdifOidQuirks
+    from tests.unit.quirks.servers.test_relaxed_quirks import (
+        ParseScenario,
+        TestsTestFlextLdifRelaxedQuirks,
+        WriteScenario,
+        meta_keys,
+    )
+    from tests.unit.quirks.servers.test_schema_transformer import (
+        TestSchemaTransformerNormalizeMatchingRule,
+        TestSchemaTransformerNormalizeSyntaxOid,
+        TestsFlextLdifSchemaTransformerNormalizeAttributeName,
+    )
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "ACL_TEST_CASES": "tests.unit.quirks.servers.test_ds389_quirks",

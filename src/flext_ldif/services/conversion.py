@@ -773,7 +773,9 @@ class FlextLdifConversion(
         converted_has_permissions: bool = False,
     ) -> m.Ldif.Acl:
         """Apply permission mapping based on server types."""
-        if config is None:
+        if config is not None:
+            resolved_config = config
+        else:
             if original_acl is None or converted_acl is None:
                 if converted_acl is not None:
                     return converted_acl
@@ -790,7 +792,7 @@ class FlextLdifConversion(
                     raw_acl="",
                     metadata=None,
                 )
-            config = m.Ldif.PermissionMappingConfig(
+            resolved_config = m.Ldif.PermissionMappingConfig(
                 original_acl=original_acl,
                 converted_acl=converted_acl,
                 orig_perms_dict=dict(orig_perms_dict or {}),
@@ -798,16 +800,15 @@ class FlextLdifConversion(
                 target_server_type=target_server_type,
                 converted_has_permissions=converted_has_permissions,
             )
-        assert config is not None  # narrowed: either passed in or constructed above
         normalized_source = (
-            u.Ldif.normalize_server_type(config.source_server_type)
-            if isinstance(config.source_server_type, str)
-            else config.source_server_type
+            u.Ldif.normalize_server_type(resolved_config.source_server_type)
+            if isinstance(resolved_config.source_server_type, str)
+            else resolved_config.source_server_type
         )
         normalized_target = (
-            u.Ldif.normalize_server_type(config.target_server_type)
-            if isinstance(config.target_server_type, str)
-            else config.target_server_type
+            u.Ldif.normalize_server_type(resolved_config.target_server_type)
+            if isinstance(resolved_config.target_server_type, str)
+            else resolved_config.target_server_type
         )
         mapping_type = "none"
         pair = (normalized_source, normalized_target)
@@ -816,8 +817,8 @@ class FlextLdifConversion(
         elif pair == ("oud", "oid"):
             mapping_type = "oud_to_oid"
         elif (
-            not config.converted_has_permissions
-            and config.original_acl.permissions is not None
+            not resolved_config.converted_has_permissions
+            and resolved_config.original_acl.permissions is not None
         ):
             mapping_type = "preserve_original"
         logger.debug(
@@ -826,21 +827,21 @@ class FlextLdifConversion(
             normalized_source=str(normalized_source),
             normalized_target=str(normalized_target),
         )
-        converted_acl_typed: m.Ldif.Acl = config.converted_acl
+        converted_acl_typed: m.Ldif.Acl = resolved_config.converted_acl
         if mapping_type == "oid_to_oud":
             return FlextLdifConversion._apply_oid_to_oud_mapping(
-                config.orig_perms_dict,
+                resolved_config.orig_perms_dict,
                 converted_acl_typed,
                 self._perms_dict_to_model,
             )
         if mapping_type == "oud_to_oid":
             return FlextLdifConversion._apply_oud_to_oid_mapping(
-                config.orig_perms_dict,
+                resolved_config.orig_perms_dict,
                 converted_acl_typed,
                 self._perms_dict_to_model,
             )
         if mapping_type == "preserve_original":
-            original_acl_typed: m.Ldif.Acl = config.original_acl
+            original_acl_typed: m.Ldif.Acl = resolved_config.original_acl
             return converted_acl_typed.model_copy(
                 update={
                     "permissions": original_acl_typed.permissions.model_copy(deep=True)

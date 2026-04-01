@@ -19,32 +19,120 @@ if _TYPE_CHECKING:
     from flext_core import FlextTypes
 
     from tests.integration.conftest import *
-    from tests.integration.test_acl_metadata_preservation import *
-    from tests.integration.test_api_integration import *
-    from tests.integration.test_categorization_real_data import *
-    from tests.integration.test_config_integration import *
-    from tests.integration.test_cross_quirk_conversion import *
-    from tests.integration.test_dn_case_handling import *
-    from tests.integration.test_edge_cases import *
-    from tests.integration.test_error_recovery import *
-    from tests.integration.test_ldif_fixtures_integration import *
-    from tests.integration.test_minimal_differences_metadata import *
-    from tests.integration.test_oid_integration import *
-    from tests.integration.test_oud_integration import *
-    from tests.integration.test_oud_to_oid_migration import *
-    from tests.integration.test_pipeline_integration import *
-    from tests.integration.test_quirks_transformations import *
-    from tests.integration.test_real_ldap_config import *
-    from tests.integration.test_real_ldap_crud import *
-    from tests.integration.test_real_ldap_export import *
-    from tests.integration.test_real_ldap_import import *
-    from tests.integration.test_real_ldap_roundtrip import *
-    from tests.integration.test_rfc_docker_real import *
-    from tests.integration.test_rfc_docker_real_integration import *
-    from tests.integration.test_simple_ldap import *
-    from tests.integration.test_systematic_fixture_coverage import *
-    from tests.integration.test_zero_data_loss_oid_oud import *
-    from tests.integration.test_zero_data_loss_schema import *
+    from tests.integration.test_acl_metadata_preservation import (
+        TestAclRoundTripPreservation,
+        TestOidAclMetadataPreservation,
+        TestOudAciMetadataPreservation,
+    )
+    from tests.integration.test_api_integration import (
+        APIScenarios,
+        TestData,
+        TestFlextLdifAPIIntegration,
+    )
+    from tests.integration.test_categorization_real_data import (
+        TestCategorizationRealData,
+    )
+    from tests.integration.test_config_integration import (
+        ConfigTestData,
+        TestFlextLdifSettingsIntegration,
+        logger,
+    )
+    from tests.integration.test_cross_quirk_conversion import (
+        TestOidToOudAclConversion,
+        TestOidToOudIntegrationConversion,
+        TestOidToOudSchemaConversion,
+        TestQuirksConversionMatrixFacade,
+    )
+    from tests.integration.test_dn_case_handling import (
+        TestDnCaseNormalizationScenarios,
+        TestDnCaseRegistry,
+    )
+    from tests.integration.test_edge_cases import (
+        TestBoundaryValues,
+        TestEmptyAndMinimalCases,
+        TestLargeAndComplexCases,
+        TestRoundtripEdgeCases,
+        TestUnicodeBoundaries,
+    )
+    from tests.integration.test_error_recovery import (
+        TestEncodingErrors,
+        TestIncompleteEntries,
+        TestInvalidSchemaDefinitions,
+        TestMalformedLdifHandling,
+    )
+    from tests.integration.test_ldif_fixtures_integration import TestsFlextLdifFixtures
+    from tests.integration.test_minimal_differences_metadata import (
+        TestMinimalDifferencesOidOud,
+    )
+    from tests.integration.test_oid_integration import (
+        TestOidEntryIntegration,
+        TestOidRoundTripIntegration,
+        TestOidSchemaIntegration,
+    )
+    from tests.integration.test_oud_integration import (
+        TestOudAclIntegration,
+        TestOudEntryIntegration,
+        TestOudMetadataPreservation,
+        TestOudRoundTripIntegration,
+        TestOudSchemaIntegration,
+    )
+    from tests.integration.test_oud_to_oid_migration import (
+        TestOudToOidAclMigration,
+        TestOudToOidEntryMigration,
+        TestOudToOidFullMigration,
+        TestOudToOidSchemaMigration,
+    )
+    from tests.integration.test_pipeline_integration import TestFlextLdifFacadeWorkflows
+    from tests.integration.test_quirks_transformations import (
+        TestOidQuirksTransformations,
+        TestOudQuirksTransformations,
+        TestQuirksPropertyValidation,
+        fixtures_dir,
+        migration_inputs,
+    )
+    from tests.integration.test_real_ldap_config import (
+        TestRealLdapConfigurationFromEnv,
+        TestRealLdapRailwayComposition,
+    )
+    from tests.integration.test_real_ldap_crud import (
+        TestRealLdapBatchOperations,
+        TestRealLdapCRUD,
+    )
+    from tests.integration.test_real_ldap_export import TestRealLdapExport
+    from tests.integration.test_real_ldap_import import TestRealLdapImport
+    from tests.integration.test_real_ldap_roundtrip import TestRealLdapRoundtrip
+    from tests.integration.test_rfc_docker_real import (
+        TestRfcDockerRealData,
+        TestRfcIntegrationRealWorld,
+    )
+    from tests.integration.test_rfc_docker_real_integration import (
+        TestRfcExceptionHandlingRealScenarios,
+        TestRfcParserRealFixtures,
+        TestRfcSchemaParserRealFixtures,
+        TestRfcWriterRealFixtures,
+    )
+    from tests.integration.test_simple_ldap import (
+        test_create_and_export_entry,
+        test_ldap_connection,
+        test_simple_ldap_search,
+    )
+    from tests.integration.test_systematic_fixture_coverage import (
+        TestSystematicFixtureCoverage,
+    )
+    from tests.integration.test_zero_data_loss_oid_oud import TestZeroDataLossOidOud
+    from tests.integration.test_zero_data_loss_schema import (
+        TestSchemaDeviationsAttributeKeyCasing,
+        TestSchemaDeviationsComplete,
+        TestSchemaDeviationsMissingSpaces,
+        TestSchemaDeviationsNameAliases,
+        TestSchemaDeviationsObsolete,
+        TestSchemaDeviationsOriginalString,
+        TestSchemaDeviationsRoundTrip,
+        TestSchemaDeviationsSpacing,
+        TestSchemaDeviationsSyntaxQuotes,
+        TestSchemaDeviationsUtilities,
+        TestSchemaDeviationsXOrigin,
+    )
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "APIScenarios": "tests.integration.test_api_integration",

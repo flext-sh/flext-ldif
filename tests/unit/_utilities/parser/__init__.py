@@ -12,7 +12,9 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-    from tests.unit._utilities.parser.test_parser_utilities import *
+    from tests.unit._utilities.parser.test_parser_utilities import (
+        TestFlextLdifUtilitiesParser,
+    )
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "TestFlextLdifUtilitiesParser": "tests.unit._utilities.parser.test_parser_utilities",

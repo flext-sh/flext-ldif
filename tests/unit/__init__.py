@@ -21,9 +21,19 @@ if _TYPE_CHECKING:
     from tests.unit.protocols import *
     from tests.unit.quirks.servers import *
     from tests.unit.services import *
-    from tests.unit.test_migration_pipeline import *
-    from tests.unit.test_migration_pipeline_quirks import *
-    from tests.unit.test_typings import *
+    from tests.unit.test_migration_pipeline import TestsFlextLdifMigrationPipeline
+    from tests.unit.test_migration_pipeline_quirks import (
+        OidTestConstants,
+        TestsFlextLdifMigrationPipelineQuirks,
+    )
+    from tests.unit.test_typings import (
+        TestFlextLdifTypesStructure,
+        TestIntegrationWithLdifFixtures,
+        TestModelsNamespace,
+        TestPhase1StandardizationResults,
+        TestRemovalOfOverEngineering,
+        TestsFlextLdifCommonDictionaryTypes,
+    )
     from tests.unit.utilities import *
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
