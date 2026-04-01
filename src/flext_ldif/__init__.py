@@ -10,10 +10,20 @@ from typing import TYPE_CHECKING as _TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
-if _TYPE_CHECKING:
-    from flext_core import d, e, h, r, x
+from flext_ldif.__version__ import (
+    __author__,
+    __author_email__,
+    __description__,
+    __license__,
+    __title__,
+    __url__,
+    __version__,
+    __version_info__,
+)
 
-    from flext_ldif.__version__ import *
+if _TYPE_CHECKING:
+    from flext_core import FlextTypes, d, e, h, r, x
+
     from flext_ldif._models import *
     from flext_ldif._utilities import *
     from flext_ldif.api import *
@@ -50,14 +60,6 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
         "FlextLdifShared": "flext_ldif.shared",
         "FlextLdifTypes": "flext_ldif.typings",
         "FlextLdifUtilities": "flext_ldif.utilities",
-        "__author__": "flext_ldif.__version__",
-        "__author_email__": "flext_ldif.__version__",
-        "__description__": "flext_ldif.__version__",
-        "__license__": "flext_ldif.__version__",
-        "__title__": "flext_ldif.__version__",
-        "__url__": "flext_ldif.__version__",
-        "__version__": "flext_ldif.__version__",
-        "__version_info__": "flext_ldif.__version__",
         "_models": "flext_ldif._models",
         "_utilities": "flext_ldif._utilities",
         "api": "flext_ldif.api",
@@ -87,4 +89,18 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
 )
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
+install_lazy_exports(
+    __name__,
+    globals(),
+    _LAZY_IMPORTS,
+    [
+        "__author__",
+        "__author_email__",
+        "__description__",
+        "__license__",
+        "__title__",
+        "__url__",
+        "__version__",
+        "__version_info__",
+    ],
+)

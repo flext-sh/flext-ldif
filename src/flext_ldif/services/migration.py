@@ -84,9 +84,10 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         try:
             return c.Ldif.ServerTypes(val)
         except ValueError:
-            for member in c.Ldif.ServerTypes:
-                if member.value == val.lower():
-                    return member
+            if isinstance(val, str):
+                for member in c.Ldif.ServerTypes:
+                    if member.value == val.lower():
+                        return member
             return c.Ldif.ServerTypes.RFC
 
     @property
@@ -98,9 +99,10 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         try:
             return c.Ldif.ServerTypes(val)
         except ValueError:
-            for member in c.Ldif.ServerTypes:
-                if member.value == val.lower():
-                    return member
+            if isinstance(val, str):
+                for member in c.Ldif.ServerTypes:
+                    if member.value == val.lower():
+                        return member
             return c.Ldif.ServerTypes.RFC
 
     @override

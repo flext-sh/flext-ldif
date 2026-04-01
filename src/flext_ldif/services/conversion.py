@@ -798,6 +798,7 @@ class FlextLdifConversion(
                 target_server_type=target_server_type,
                 converted_has_permissions=converted_has_permissions,
             )
+        assert config is not None  # narrowed: either passed in or constructed above  # noqa: S101
         normalized_source = (
             u.Ldif.normalize_server_type(config.source_server_type)
             if isinstance(config.source_server_type, str)
@@ -1013,7 +1014,7 @@ class FlextLdifConversion(
                 source_server_type,
                 extensions=None,
             )
-            entry_metadata.acls = [acl.raw_acl] if acl.raw_acl else []
+            entry_metadata.acls = [acl.raw_acl] if acl.raw_acl else list[str]()
             rfc_entry = m.Ldif.Entry.model_validate({
                 "dn": entry_dn,
                 "attributes": entry_attributes,

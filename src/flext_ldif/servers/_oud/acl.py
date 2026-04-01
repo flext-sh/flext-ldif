@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence
-from typing import ClassVar, override
+from typing import ClassVar, Self, override
 
 from flext_core import FlextLogger, r
 
@@ -43,8 +43,8 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     def __init__(
         self,
         acl_service: p.Ldif.AclQuirk | None = None,
-        _parent_quirk: p.Ldif.SchemaQuirk | None = None,
-        **kwargs: str | float | bool | None,
+        parent_quirk: Self | None = None,
+        **kwargs: t.Scalar,
     ) -> None:
         """Initialize OUD ACL quirk."""
         filtered_kwargs: MutableMapping[str, str | float | bool] = {
@@ -56,8 +56,8 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             acl_service if acl_service is not None else None
         )
         parent_quirk_typed: FlextLdifServersBaseSchemaAcl | None = (
-            _parent_quirk
-            if isinstance(_parent_quirk, FlextLdifServersBaseSchemaAcl)
+            parent_quirk
+            if isinstance(parent_quirk, FlextLdifServersBaseSchemaAcl)
             else None
         )
         FlextLdifServersBaseSchemaAcl.__init__(

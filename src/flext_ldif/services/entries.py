@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import MutableMapping, MutableSequence
 from typing import Self, override
 
 from flext_ldif import FlextLdifServiceBase, FlextLdifUtilitiesDN, m, r, t
@@ -125,7 +125,7 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
         entry: m.Ldif.Entry | MutableMapping[str, str | MutableSequence[str]],
     ) -> r[str]:
         """Read DN from model or dictionary entry."""
-        if isinstance(entry, Mapping):
+        if isinstance(entry, MutableMapping):
             return FlextLdifEntries._extract_dn_from_dict(entry)
         return FlextLdifEntries._extract_dn_from_object(entry)
 

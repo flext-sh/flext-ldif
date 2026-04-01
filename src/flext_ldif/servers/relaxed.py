@@ -5,15 +5,13 @@ from __future__ import annotations
 import re
 import struct
 from collections.abc import MutableMapping, MutableSequence
-from typing import ClassVar, TypeVar, override
+from typing import ClassVar, override
 
 from flext_core import FlextLogger
 
 from flext_ldif import FlextLdifModelsDomains, FlextLdifServersRfc, c, m, r, t, u
 
 logger = FlextLogger(__name__)
-
-_SchemaItemT = TypeVar("_SchemaItemT", m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass)
 
 
 class FlextLdifServersRelaxed(FlextLdifServersRfc):
@@ -54,9 +52,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         def _enhance_schema_item_metadata(
             self,
-            schema_item: _SchemaItemT,
+            schema_item: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
             original_definition: str,
-        ) -> _SchemaItemT:
+        ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
             if not schema_item.metadata:
                 schema_item.metadata = m.Ldif.QuirkMetadata.model_validate({
                     "quirk_type": self._get_server_type(),

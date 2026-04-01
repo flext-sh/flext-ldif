@@ -15,6 +15,7 @@ from flext_ldif import (
     c,
     m,
     p,
+    t,
     u,
 )
 
@@ -28,8 +29,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
     def __init__(
         self,
         schema_service: p.Ldif.SchemaQuirk | None = None,
-        _parent_quirk: FlextLdifServersRfc | None = None,
-        **kwargs: str | float | bool | None,
+        parent_quirk: p.Ldif.SchemaQuirk | None = None,
+        **kwargs: t.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize OID schema quirk."""
         filtered_kwargs: MutableMapping[str, str | float | bool] = {
@@ -47,8 +48,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             _parent_quirk=None,
             **filtered_kwargs,
         )
-        if _parent_quirk is not None:
-            object.__setattr__(self, "_parent_quirk", _parent_quirk)
+        if parent_quirk is not None:
+            object.__setattr__(self, "_parent_quirk", parent_quirk)
 
     @override
     def extract_schemas_from_ldif(

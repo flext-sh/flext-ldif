@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import TypeIs, TypeVar
 
 from flext_core import FlextLogger, r, u
+from pydantic import BaseModel
 
 from flext_ldif import (
     FlextLdifUtilitiesOID,
@@ -21,11 +22,7 @@ from flext_ldif import (
 )
 
 logger = FlextLogger(__name__)
-SchemaModelT = TypeVar(
-    "SchemaModelT",
-    m.Ldif.SchemaAttribute,
-    m.Ldif.SchemaObjectClass,
-)
+SchemaModelT = TypeVar("SchemaModelT", bound=BaseModel)
 
 
 class FlextLdifUtilitiesSchema:

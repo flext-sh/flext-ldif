@@ -18,6 +18,10 @@ from flext_ldif import (
     p,
     t,
 )
+from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
+
+_Entry = FlextLdifModelsDomainsEntries.Entry
+_DN = FlextLdifModelsDomainsEntries.DN
 
 
 class FlextLdifUtilitiesDispatch:
@@ -125,16 +129,6 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     @overload
     def validate(
-        value_or_entries: MutableSequence[m.Ldif.Entry],
-        *,
-        strict: bool = True,
-        collect_all: bool = True,
-        max_errors: int = 0,
-    ) -> r[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]: ...
-
-    @staticmethod
-    @overload
-    def validate(
         value_or_entries: t.Container,
         validator_first: p.ValidatorSpec,
         *validators_rest: p.ValidatorSpec,
@@ -146,7 +140,17 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     @overload
     def validate(
-        value_or_entries: str | m.Ldif.DN,
+        value_or_entries: list[_Entry],
+        *,
+        strict: bool = True,
+        collect_all: bool = True,
+        max_errors: int = 0,
+    ) -> r[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]: ...
+
+    @staticmethod
+    @overload
+    def validate(
+        value_or_entries: str | _DN,
         *,
         strict: bool = True,
         collect_all: bool = True,
@@ -155,7 +159,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def validate(
-        value_or_entries: MutableSequence[m.Ldif.Entry] | t.Container | str | m.Ldif.DN,
+        value_or_entries: list[_Entry] | t.Container | str | _DN,
         validator_first: p.ValidatorSpec | None = None,
         *validators_rest: p.ValidatorSpec,
         strict: bool = True,
@@ -167,13 +171,12 @@ class FlextLdifUtilitiesDispatch:
         | bool
     ):
         """Validate entries against rules."""
-        if isinstance(value_or_entries, str | m.Ldif.DN) and validator_first is None:
+        if isinstance(value_or_entries, str | _DN) and validator_first is None:
             return FlextLdifUtilitiesDN.validate_dn(value_or_entries)
         if (
             FlextLdifUtilitiesDispatch._is_entry_sequence(value_or_entries)
             and validator_first is None
-            and isinstance(value_or_entries, Sequence)
-            and not isinstance(value_or_entries, (str, bytes))
+            and isinstance(value_or_entries, list)
         ):
             return FlextLdifUtilitiesDispatch._validate_entries(
                 value_or_entries,
@@ -190,11 +193,14 @@ class FlextLdifUtilitiesDispatch:
             return r[t.Container].fail(
                 "validator call requires scalar, not entry sequence",
             )
-        if isinstance(value_or_entries, m.Ldif.DN):
+        if isinstance(value_or_entries, _DN):
             return FlextLdifUtilitiesValidation.validate_value(
                 value_or_entries.value,
                 *validators,
             )
+        if isinstance(value_or_entries, bytes):
+            return r[t.Container].fail("bytes value not supported for validation")
+        assert not isinstance(value_or_entries, _DN)  # noqa: S101  # narrowed at L196
         return FlextLdifUtilitiesValidation.validate_value(
             value_or_entries,
             *validators,
@@ -202,7 +208,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def _validate_entries(
-        entries: MutableSequence[m.Ldif.Entry],
+        entries: list[m.Ldif.Entry],
         *,
         strict: bool,
         collect_all: bool,

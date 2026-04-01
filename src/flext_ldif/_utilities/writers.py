@@ -34,6 +34,7 @@ class FlextLdifUtilitiesWriters:
         """Write entry to LDIF string using hooks."""
         if config is None:
             config = m.Ldif.EntryWriteConfig.model_validate(kwargs)
+        assert config is not None  # noqa: S101
         try:
             lines: MutableSequence[str] = []
             entry: m.Ldif.Entry = config.entry
@@ -177,6 +178,7 @@ class FlextLdifUtilitiesWriters:
         """Write multiple entries to LDIF string."""
         if config is None:
             config = m.Ldif.BatchWriteConfig.model_validate(kwargs)
+        assert config is not None  # noqa: S101
         try:
             parts: MutableSequence[str] = []
             if config.include_header and config.write_header_hook:

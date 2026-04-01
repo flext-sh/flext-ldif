@@ -6,7 +6,7 @@ import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from typing import override
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger, FlextTypes, r
 from pydantic import RootModel
 
 from flext_ldif import (
@@ -32,7 +32,7 @@ class _OidStringListJson(RootModel[MutableSequence[str]]):
     pass
 
 
-class _OidObjectListJson(RootModel[t.MutableContainerList]):
+class _OidObjectListJson(RootModel[MutableSequence[FlextTypes.NormalizedValue]]):
     pass
 
 

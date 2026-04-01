@@ -7,114 +7,13 @@
 
 ______________________________________________________________________
 
-## 🔧 Multi-Agent Development Coordination
+## Multi-Agent Coordination
 
-### Purpose
+See [../AGENTS.md §10 Multi-Agent Parallel Execution Law](../AGENTS.md#10-multi-agent-parallel-execution-law).
 
-Ensure smooth collaboration in multi-agent development environments by preventing simultaneous modifications that could cause conflicts.
+## Architecture Layering
 
-### Coordination Protocol
-
-**Exclusive Access** establishes controlled file modification to maintain code integrity during collaborative development.
-
-### Access Coordination
-
-1. **Check coordination status** before modifying critical files
-1. **Establish access**: `FLOCK_[AGENT_NAME]_[TARGET_FILE]`
-1. **Re-verify content** after establishing access (other agents may have modified)
-1. **Apply changes** to the verified content
-1. **Validate changes** ensure functionality is maintained
-1. **Release access**: Clear coordination status
-
-### Coordination Format
-
-```bash
-# Establish access
-FLOCK_[AGENT_NAME]_[TARGET_FILE]
-
-# Example
-FLOCK_AGENT_PLAN_EXECUTOR_flext_ldif/models.py
-
-# Release access
-RELEASE_[AGENT_NAME]_[TARGET_FILE]
-```
-
-### Coordination Rules
-
-- **🔴 NEVER modify files with active coordination from other agents**
-- **🔄 ALWAYS verify content after establishing coordination**
-- **⚡ RELEASE coordination immediately after validation**
-- **🤝 COORDINATE with team members when conflicts detected**
-- **📝 DOCUMENT coordination purpose for transparency**
-
-______________________________________________________________________
-
-## ⚠️ CRITICAL: Architecture Layering (Zero Tolerance)
-
-### Module Import Hierarchy (MANDATORY)
-
-**ABSOLUTELY FORBIDDEN IMPORT PATTERNS**:
-
-```
-NEVER IMPORT (regardless of method - direct, lazy, function-local, proxy):
-
-Foundation Modules (constants.py, typings.py, protocols.py, models.py, utilities.py):
-  ❌ NEVER import services/*.py
-  ❌ NEVER import servers/*.py
-  ❌ NEVER import api.py
-  ❌ NEVER import _models/*.py (EXCEPTION: models.py can import _models/*.py)
-  ❌ NEVER import _utilities/*.py (EXCEPTION: utilities.py can import _utilities/*.py)
-
-Infrastructure Modules (servers/*.py):
-  ❌ NEVER import services/*.py
-  ❌ NEVER import api.py
-```
-
-**CORRECT ARCHITECTURE LAYERING**:
-
-```
-Tier 0 - Foundation (ZERO cross-tier dependencies):
-  ├── constants.py    # FlextLdifConstants - only StrEnum, Final, Literal
-  ├── typings.py      # FlextLdifTypes - only TypeAlias, TypeVar, complex types
-  └── protocols.py    # FlextLdifProtocols - only Protocol definitions
-
-Tier 1 - Domain Foundation:
-  ├── models.py       # FlextLdifModels facade → constants, typings, protocols
-  └── utilities.py    # FlextLdifUtilities facade → constants, typings, protocols, models
-
-Tier 2 - Infrastructure:
-  └── servers/*.py    # Server implementations → Tier 0, Tier 1 only
-                      # NEVER import services/, api.py
-
-Tier 3 - Application (Top Layer):
-  ├── services/*.py   # Business logic → All lower tiers
-  └── api.py          # ldif facade → All lower tiers
-```
-
-**WHY THIS MATTERS**:
-
-- Circular imports cause runtime failures
-- Lazy imports are a band-aid, not a solution
-- Proper layering ensures testability and maintainability
-- Each tier only depends on lower tiers, NEVER on higher tiers
-
-______________________________________________________________________
-
-### Architecture Violation Quick Check
-
-**Run before committing:**
-
-```bash
-# Quick check for this project
-grep -rEn "(from flext_.*\.(services|api) import)" \
-  src/*/models.py src/*/protocols.py src/*/utilities.py \
-  src/*/constants.py src/*/typings.py src/*/servers/*.py 2>/dev/null
-
-# Expected: ZERO results
-# If violations found: Do NOT commit, fix architecture first
-```
-
-**See [Ecosystem Standards](../AGENTS.md) for complete prohibited patterns and remediation examples.**
+See [../AGENTS.md §2 Architecture Law](../AGENTS.md#2-architecture-law). flext-ldif specific tier mapping is in the [Import Guidelines](#import-and-namespace-guidelines) section below.
 
 ______________________________________________________________________
 
@@ -150,134 +49,14 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
-## Regras Unificadas do Ecossistema FLEXT
+## Regras do Ecossistema FLEXT
 
-### Zero Tolerância (Proibido Completamente)
+For full zero-tolerance rules, code examples, and anti-patterns, see [../AGENTS.md §3 Code Law](../AGENTS.md#3-code-law).
 
-1. **Hacks**: ❌ PROIBIDO - `model_rebuild()`, `eval()`, `exec()`.
-1. **Inline/Lazy Imports**: ❌ PROIBIDO - Sem imports dentro de funções ou `.try / except ImportError:`.
-1. **# type: ignore**: ❌ PROIBIDO COMPLETAMENTE - ZERO tolerância, sem exceções.
-1. **Metaclasses**: ❌ PROIBIDAS COMPLETAMENTE - (Com exceção do `__getattr__` no `__init__.py` para lazy-load de módulo).
-1. **Root Aliases**: ❌ PROIBIDO COMPLETAMENTE - Sempre namespace completo (m.Ldif.Entry, não m.Entry).
-1. **Atribuições Dinâmicas**: ❌ PROIBIDO COMPLETAMENTE - Remover todas, usar apenas namespace completo.
-1. **Functions em constants.py**: ❌ PROIBIDO - constants.py apenas constantes, sem funções/metaclasses/código.
-1. **cast()**: ❌ PROIBIDO - substituir todos por Models/Protocols/TypeGuards com tipagem correta.
-1. **Any**: ❌ PROIBIDO - substituir todos por tipos específicos (código, docstrings, comentários).
-1. **Importação**: ❌ Sem root aliases, lazy imports genéricos ou fallbacks de ImportError; imports sempre no topo.
-1. **TYPE_CHECKING**: Allowed for non-Pydantic, type-only imports to avoid circular dependencies. NEVER use with Pydantic models (they require runtime type resolution).
-1. **Testes**: ✅ Implementações reais (sem mocks/monkeypatch), fixtures/dados reais, expectativa de 100% de cobertura, sem perda de funcionalidade.
-
-### Exemplos de Correções
-
-#### TYPE_CHECKING
-
-```python
-# ❌ PROIBIDO - Importações Inline e Try/Except Hacks
-def my_func():
-    from flext_ldif import p  # PROIBIDO
-
-
-try:
-    import pandas  # PROIBIDO
-except ImportError:
-    pass
-
-# ✅ CORRETO - TYPE_CHECKING apenas para resolver ciclos em módulos não-Pydantic
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from flext_ldif import p
-```
-
-from typing import ClassVar
-TypeClassVar = ClassVar
-
-````
-
-#### # type: ignore
-
-```python
-# ❌ PROIBIDO
-Field(default="lower")
-
-# ✅ CORRETO - Usar model_config ou type hints adequados
-from pydantic import ConfigDict
-model_config = ConfigDict(...)
-````
-
-#### Metaclasses
-
-```python
-# ❌ PROIBIDO
-class _FlextLdifConstantsMeta(type):
-    def __getattr__(cls, name: str) -> t.Container:
-        if name == "LiteralTypes":
-            return cls.Ldif
-        ...
-
-
-class FlextLdifConstants(metaclass=_FlextLdifConstantsMeta): ...
-
-
-# ✅ CORRETO - Sempre usar namespace completo
-c.Ldif  # Não c.LiteralTypes
-```
-
-#### Atribuições Dinâmicas
-
-```python
-# ❌ PROIBIDO
-FlextLdifModels.Entry = FlextLdifModels.Ldif.Entry
-
-# ✅ CORRETO - Sempre usar namespace completo
-m.Ldif.Entry  # Não m.Entry
-```
-
-#### Functions em constants.py
-
-```python
-# ❌ PROIBIDO - constants.py
-class FlextLdifConstants:
-    @staticmethod
-    def normalize_server_type(server_type: str) -> str: ...
-
-
-# ✅ CORRETO - Mover para utilities.py ou _utilities/server.py
-# utilities.py ou _utilities/server.py
-def normalize_server_type(server_type: str) -> str: ...
-```
-
-#### cast()
-
-```python
-# ❌ PROIBIDO - Uso excessivo de cast()
-value = cast(MyModel, data)
-
-# ✅ CORRETO - Usar Models/Protocols/TypeGuards
-if isinstance(data, MyModel):
-    value = data
-
-
-# ou
-def is_my_model(obj: t.Container) -> TypeGuard[MyModel]:
-    return isinstance(obj, MyModel)
-```
-
-#### Any
-
-```python
-# ❌ PROIBIDO
-def process(data):
-    """Process generic data without strong typing."""
-
-
-# ✅ CORRETO - Usar tipos específicos
-from flext_core import FlextTypes
-
-
-def process(data: t.Container) -> t.Container:
-    """Process general typed value data."""
-```
+**flext-ldif specific rules:**
+- **Root Aliases**: Always use full namespace: `m.Ldif.Entry`, not `m.Entry`
+- **Namespace constants**: `c.Ldif.ServerTypes`, not `c.ServerTypes`
+- **TYPE_CHECKING**: Allowed for non-Pydantic type-only imports to resolve circular deps
 
 ______________________________________________________________________
 
@@ -384,243 +163,11 @@ src/flext_ldif/
 
 ______________________________________________________________________
 
-## 📦 Import and Namespace Guidelines (Critical Architecture)
+## Import and Namespace Guidelines
 
-This section defines **mandatory patterns** for imports, namespaces, and module aggregation. These rules prevent circular imports and ensure maintainability.
+For full import law, aliases, circular import strategies, and module aggregation rules, see [../AGENTS.md §2 Architecture Law](../AGENTS.md#2-architecture-law) and [§4 Import Law](../AGENTS.md#4-import-law).
 
-### 1. Runtime Import Access (Short Aliases)
-
-**MANDATORY**: Use short aliases at runtime for type annotations and class instantiation:
-
-```python
-# ✅ CORRECT - Runtime short aliases (src/ and tests/)
-from flext_ldif import t  # FlextLdifTypes
-from flext_ldif import c  # FlextLdifConstants
-from flext_ldif import m  # FlextLdifModels
-from flext_ldif import p  # FlextLdifProtocols
-from flext_ldif import u  # FlextLdifUtilities
-
-# flext_core aliases (also available)
-from flext_core import r  # r
-from flext_core import e  # FlextExceptions
-from flext_core import d  # FlextDecorators
-from flext_core import mx  # FlextMixins
-
-# Usage with full namespace (MANDATORY)
-result: r[str] = r[str].ok("value")
-config: t.Types.ConfigurationDict = {}
-server: c.Ldif.ServerTypes = c.Ldif.ServerTypes.OID
-entry: m.Ldif.Entry = m.Ldif.Entry(dn="cn=test")
-service: p.Ldif.Service[str] = my_service
-
-# ❌ FORBIDDEN - Root aliases
-server: c.ServerTypes  # WRONG - must use c.Ldif.ServerTypes
-entry: m.Entry  # WRONG - must use m.Ldif.Entry
-```
-
-### 2. Module Aggregation Rules (Facades)
-
-**Facade modules** (models.py, utilities.py, protocols.py) aggregate internal submodules:
-
-```python
-# =========================================================
-# models.py (Facade) - Aggregates _models/*.py
-# =========================================================
-from flext_ldif import LdifEntry
-from flext_ldif import ProcessConfig
-
-
-class FlextLdifModels:
-    """Facade aggregating all model classes."""
-
-    class Ldif:
-        Entry = LdifEntry
-
-        class Config:
-            ProcessConfig = ProcessConfig
-            # ... other config models
-
-
-# Short alias for runtime access
-m = FlextLdifModels
-
-# =========================================================
-# IMPORT RULES FOR AGGREGATION
-# =========================================================
-
-# ✅ CORRECT - Internal modules (_models/) can import from:
-#   - Other _models/* modules
-#   - Tier 0 modules (constants, typings, protocols)
-#   - NOT from services/, servers/, api.py
-
-# ✅ CORRECT - Facade (models.py) imports from:
-#   - All internal _models/* modules
-#   - Tier 0 modules
-
-# ❌ FORBIDDEN - Internal modules importing from higher tiers
-# _models/base.py importing services/api.py = ARCHITECTURE VIOLATION
-```
-
-### 3. Circular Import Avoidance Strategies
-
-**Strategy 1: Forward References with `from **future** import annotations
-
-from collections.abc import Mapping, Sequence`**
-
-```python
-from __future__ import annotations
-
-from collections.abc import Mapping, Sequence
-from typing import Self
-
-
-class QuirkBase:
-    def clone(self) -> Self:
-        """Self reference works with forward annotations."""
-        return type(self)()
-```
-
-**Strategy 2: Protocol-Based Decoupling**
-
-```python
-# protocols.py (Tier 0 - no internal imports except flext_core)
-from flext_core import FlextProtocols
-
-
-class FlextLdifProtocols(FlextProtocols):
-    class Ldif:
-        class Parser(Protocol):
-            def parse(self, content: str) -> Sequence[Entry]: ...
-
-
-# services/parser.py (Tier 3 - can import protocols)
-from flext_ldif import p
-
-
-class ParserService:
-    def process(self, parser: p.Ldif.Parser) -> r[Sequence[Entry]]:
-        """Use protocol types to avoid importing concrete classes."""
-        pass
-```
-
-**Strategy 3: Dependency Injection**
-
-```python
-# Instead of importing services directly, inject them
-from flext_core import FlextContainer
-
-
-class MigrationHandler:
-    def __init__(self, container: FlextContainer) -> None:
-        self._container = container
-
-    def process(self) -> None:
-        # Get service at runtime instead of importing
-        parser_result = self._container.get("ldif_parser")
-        if parser_result.is_success:
-            parser_result.value.parse(content)
-```
-
-### 4. When Modules Can Import Submodules Directly
-
-**ALLOWED**: Internal modules importing from other internal modules at same tier:
-
-```python
-# =========================================================
-# EXCEPTION: _utilities/builders.py importing from models
-# =========================================================
-
-# _utilities/builders.py
-from flext_ldif import FlextLdifModels  # ✅ ALLOWED
-
-m = FlextLdifModels
-
-# WHY: _utilities (Tier 1) can import from models (Tier 1)
-# Both are below services/ and api.py
-# No circular dependency created
-
-# =========================================================
-# EXCEPTION: quirks/servers/*.py importing from quirks/base.py
-# =========================================================
-
-# quirks/servers/oid_quirks.py
-from flext_ldif import QuirkBase  # ✅ ALLOWED
-
-# WHY: Same tier, both quirks modules
-```
-
-**FORBIDDEN**: Higher tier importing lower tier that imports back:
-
-```python
-# ❌ FORBIDDEN PATTERN - Creates circular import
-# api.py
-from flext_ldif import ParserService
-
-# services/parser.py
-from flext_ldif import ldif  # CIRCULAR!
-
-# ✅ CORRECT - Services use protocols, not concrete api.py
-# services/parser.py
-from flext_ldif import p
-# No import of api.py
-```
-
-### 5. Test Import Patterns
-
-```python
-# tests/unit/test_my_module.py
-
-# ✅ CORRECT - Import from package root
-from flext_ldif import ldif
-from flext_ldif import m
-from flext_ldif import c
-
-# ✅ CORRECT - Import test helpers
-from tests import tm, tf  # TestsFlextLdifMatchers, TestsFlextLdifFixtures
-
-# ✅ ALLOWED - Tests can import internal modules for testing
-from flext_ldif import ProcessConfigBuilder
-
-
-# ✅ CORRECT - Use pytest fixtures
-@pytest.fixture
-def ldif_client() -> ldif:
-    return ldif()
-
-
-# ❌ FORBIDDEN - Don't use TYPE_CHECKING in tests unnecessarily
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from flext_ldif import ldif
-```
-
-### 6. Complete Import Hierarchy Reference
-
-```
-Tier 0 - Foundation (ZERO internal imports except flext_core):
-├── constants.py    → imports: FlextConstants from flext_core
-├── typings.py      → imports: FlextTypes from flext_core
-└── protocols.py    → imports: FlextProtocols from flext_core, constants, typings
-
-Tier 1 - Domain Foundation:
-├── _models/*.py    → imports: Tier 0, other _models/*
-├── models.py       → imports: _models/*, Tier 0
-├── _utilities/*.py → imports: _models/*, models, Tier 0
-└── utilities.py    → imports: _utilities/*, models, Tier 0
-
-Tier 2 - Infrastructure:
-├── servers/*.py    → imports: Tier 0, Tier 1
-├── quirks/*.py     → imports: Tier 0, Tier 1
-└── rfc/*.py        → imports: Tier 0, Tier 1
-                    → NEVER: services/, api.py
-
-Tier 3 - Application:
-├── services/*.py   → imports: ALL lower tiers
-└── api.py          → imports: ALL lower tiers (Facade for external use)
-```
-
-### 7. Module-Specific Import Rules
+### flext-ldif Tier Mapping
 
 | Source Module     | Can Import From                          | Cannot Import From                          |
 | ----------------- | ---------------------------------------- | ------------------------------------------- |
@@ -639,31 +186,53 @@ Tier 3 - Application:
 
 ______________________________________________________________________
 
-## Automated Fix Scripts
-
-For batch corrections (missing imports, undefined names), use `/tmp/fix_*.sh` scripts with 4 modes: `dry-run`, `backup`, `exec`, `rollback`. **See [../AGENTS.md](../AGENTS.md#automated-fix-scripts-batch-corrections)** for template and rules.
-
-______________________________________________________________________
-
 ## Essential Commands
 
-```bash
-# Setup and validation
-make setup          # Development environment setup
-make validate       # Complete validation (lint + type + security + test)
-make lint           # Ruff linting (ZERO TOLERANCE)
-make type-check     # Pyrefly type checking (ZERO TOLERANCE)
-make security       # Bandit + pip-audit security scanning
-make test           # Run test suite with 65% coverage minimum
-make format         # Auto-format code with Ruff
+All commands run from `flext-ldif/` directory. RTK hook intercepts automatically — saves 60-90% tokens.
 
-# Testing
-PYTHONPATH=src poetry run pytest tests/unit/test_oid_quirks.py -v
-PYTHONPATH=src poetry run pytest -k "test_quirk" -v
-pytest -m unit                    # Unit tests only
-pytest -m integration            # Integration tests
-pytest -m ldif                   # LDIF-specific tests
+### Linters (direct via RTK — preferred, fast, token-efficient)
+
+```bash
+# Individual linters (RTK intercepts automatically)
+ruff check src/                        # Ruff lint
+ruff check src/ --fix                  # Ruff lint + auto-fix
+pyright src/                           # Pyright strict
+mypy src/                              # MyPy with pydantic plugin
+pyrefly check src/ tests/             # Pyrefly type checking
+pytest tests/                          # Full test suite
+pytest tests/ -k test_quirk -x        # Filter + fail-fast
+pytest tests/ -vv -s                   # Verbose output
+
+# Single file / targeted
+ruff check src/flext_ldif/base.py
+pyright src/flext_ldif/base.py
+mypy src/flext_ldif/base.py
 ```
+
+### Make targets (full gates with preflight + reports)
+
+```bash
+make check                             # ALL gates (ruff + format + pyrefly + mypy + pyright)
+make check CHECK_GATES=lint            # Ruff via make (with flext_infra wrapper)
+make check CHECK_GATES=pyrefly         # Pyrefly via make
+make check CHECK_GATES=lint,mypy       # Combine gates
+make check CHANGED_ONLY=1             # Git-changed files only
+make fmt                               # Auto-format (ruff format + markdownlint)
+make test                              # Pytest with coverage + reports
+make scan                              # Bandit + pip-audit
+make val                               # Validate gates (complexity, docstring)
+make help                              # Show all targets
+```
+
+### When to use which
+
+| Scenario | Use |
+|----------|-----|
+| Quick lint check during dev | `ruff check src/` (RTK) |
+| Type-check a single file | `pyright src/flext_ldif/foo.py` (RTK) |
+| Run all 4 type checkers at once | `make check` |
+| Pre-commit full validation | `make check && make test` |
+| CI/CD pipeline | `make check && make test && make scan` |
 
 ## Test Helpers and Unified Methods
 
@@ -912,28 +481,6 @@ ______________________________________________________________________
 - [flext-core Patterns](../flext-core/AGENTS.md)
 - [flext-ldap Patterns](../flext-ldap/AGENTS.md)
 
-## Landing the Plane (Session Completion)
+## Session Completion
 
-**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
-
-**MANDATORY WORKFLOW:**
-
-1. **File issues for remaining work** - Create issues for anything that needs follow-up
-2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Update issue status** - Close finished work, update in-progress items
-4. **PUSH TO REMOTE** - This is MANDATORY:
-   ```bash
-   git pull --rebase
-   bd sync
-   git push
-   git status  # MUST show "up to date with origin"
-   ```
-5. **Clean up** - Clear stashes, prune remote branches
-6. **Verify** - All changes committed AND pushed
-7. **Hand off** - Provide context for next session
-
-**CRITICAL RULES:**
-- Work is NOT complete until `git push` succeeds
-- NEVER stop before pushing - that leaves work stranded locally
-- NEVER say "ready to push when you are" - YOU must push
-- If push fails, resolve and retry until it succeeds
+See [../CLAUDE.md § Landing the Plane](../CLAUDE.md#landing-the-plane-session-completion).

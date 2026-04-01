@@ -954,7 +954,7 @@ class FlextLdifModelsDomainsEntries:
                     "ACL is defined (has target/subject/permissions) but raw_acl is empty",
                 )
             if violations:
-                setattr(self, "validation_violations", violations)
+                self.__dict__["validation_violations"] = violations
             return self
 
     class AclWriteMetadata(FlextLdifModelsBases.Base):

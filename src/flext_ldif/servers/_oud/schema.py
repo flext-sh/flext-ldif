@@ -15,6 +15,7 @@ from flext_ldif import (
     c,
     m,
     p,
+    t,
     u,
 )
 
@@ -27,7 +28,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
     def __init__(
         self,
         schema_service: p.Ldif.SchemaQuirk | None = None,
-        **kwargs: str | float | bool | None,
+        parent_quirk: p.Ldif.SchemaQuirk | None = None,
+        **kwargs: t.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize OUD schema quirk."""
         filtered_kwargs: MutableMapping[str, str | float | bool] = {
@@ -42,6 +44,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             _parent_quirk=None,
             **filtered_kwargs,
         )
+        if parent_quirk is not None:
+            object.__setattr__(self, "_parent_quirk", parent_quirk)
 
     @override
     def extract_schemas_from_ldif(
