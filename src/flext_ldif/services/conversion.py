@@ -798,7 +798,7 @@ class FlextLdifConversion(
                 target_server_type=target_server_type,
                 converted_has_permissions=converted_has_permissions,
             )
-        assert config is not None  # narrowed: either passed in or constructed above  # noqa: S101
+        assert config is not None  # narrowed: either passed in or constructed above
         normalized_source = (
             u.Ldif.normalize_server_type(config.source_server_type)
             if isinstance(config.source_server_type, str)
