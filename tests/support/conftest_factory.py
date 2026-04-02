@@ -30,7 +30,7 @@ from typing import (
 
 import pytest
 from flext_core import FlextLogger, FlextSettings, r
-from flext_ldap import u
+from flext_ldap import FlextLdapUtilities as ldap_u
 from flext_tests import tk
 
 from flext_ldif import (
@@ -312,9 +312,11 @@ class FlextLdifTestConftest:
         active_password = self.LDAP_ADMIN_PASSWORD
         while waited < max_wait:
             try:
-                server = u.Ldap.create_server(host="localhost", port=self.LDAP_PORT)
+                server = ldap_u.Ldap.create_server(
+                    host="localhost", port=self.LDAP_PORT
+                )
                 for bind_dn, password in self._ldap_bind_candidates():
-                    conn = u.Ldap.create_connection(
+                    conn = ldap_u.Ldap.create_connection(
                         server,
                         user=bind_dn,
                         password=password,
@@ -364,8 +366,8 @@ class FlextLdifTestConftest:
         port = raw_port if isinstance(raw_port, int) else self.LDAP_PORT
         bind_dn = str(ldap_container.get("bind_dn", self.LDAP_ADMIN_DN))
         password = str(ldap_container.get("password", self.LDAP_ADMIN_PASSWORD))
-        server = u.Ldap.create_server(host=host, port=port)
-        conn = u.Ldap.create_connection(
+        server = ldap_u.Ldap.create_server(host=host, port=port)
+        conn = ldap_u.Ldap.create_connection(
             server,
             user=bind_dn,
             password=password,

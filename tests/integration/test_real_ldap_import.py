@@ -27,9 +27,9 @@ from collections.abc import (
 from pathlib import Path
 
 import pytest
-from flext_ldap import p
 
 from flext_ldif import ldif
+from tests import p
 
 
 @pytest.fixture

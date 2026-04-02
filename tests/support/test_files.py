@@ -16,7 +16,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Self
 
-from flext_ldif import t
+from tests import t
 
 from .ldif_data import LdifSample, LdifTestData
 

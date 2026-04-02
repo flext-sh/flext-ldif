@@ -23,7 +23,8 @@ from typing import Final
 import pytest
 from flext_core import FlextLogger
 
-from flext_ldif import FlextLdifSettings, c, ldif, t
+from flext_ldif import FlextLdifSettings, ldif
+from tests import c, t
 
 logger = FlextLogger(__name__)
 

@@ -16,7 +16,8 @@ from typing import Final
 
 import pytest
 
-from flext_ldif import FlextLdifParser, FlextLdifServer, FlextLdifWriter, m
+from flext_ldif import FlextLdifParser, FlextLdifServer, FlextLdifWriter
+from tests import m
 from tests.test_helpers import TestsFlextLdifMatchers as tm
 
 _FIXTURES_DIR: Final[Path] = Path(__file__).resolve().parent.parent / "fixtures"

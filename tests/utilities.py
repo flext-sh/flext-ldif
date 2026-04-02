@@ -9,8 +9,9 @@ from pathlib import Path
 from typing import ClassVar, TextIO
 
 from flext_core import FlextLogger
-from flext_ldap import FlextLdapLdap3Wrappers, u as ldap_u
 from flext_tests import FlextTestsDocker, FlextTestsUtilities
+from ldap3 import Connection as Ldap3Connection, Server as Ldap3Server
+from ldap3.core.exceptions import LDAPException
 
 from flext_ldif import FlextLdifUtilities
 from tests.constants import FlextLdifTestConstants
@@ -30,7 +31,7 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
             class FileLock:
                 """File-based locking for pytest-xdist parallel test isolation.
 
-                Mirrors u.Ldap.Tests.FileLock from flext-ldap tests.
+                Provides file-level serialization for parallel test workers.
                 """
 
                 def __init__(self, lock_file: Path) -> None:
@@ -72,10 +73,7 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
 
             @staticmethod
             def get_admin_credentials() -> tuple[str, str]:
-                """Resolve LDAP admin credentials, trying env vars then known defaults.
-
-                Mirrors u.Ldap.Tests.get_admin_credentials from flext-ldap tests.
-                """
+                """Resolve LDAP admin credentials, trying env vars then known defaults."""
                 cache = FlextLdifTestUtilities.Ldif.Tests._resolved_admin_credentials
                 if cache[0] is not None:
                     return cache[0]
@@ -91,11 +89,12 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
                 ])
                 for candidate_dn, candidate_password in candidates:
                     try:
-                        server = ldap_u.Ldap.create_bare_server(
+                        server = Ldap3Server(
                             "localhost",
                             port=d.PORT,
+                            get_info="NO_INFO",
                         )
-                        test_conn = ldap_u.Ldap.create_connection(
+                        test_conn = Ldap3Connection(
                             server,
                             user=candidate_dn,
                             password=candidate_password,
@@ -103,10 +102,10 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
                             receive_timeout=1,
                         )
                         if test_conn.bound:
-                            FlextLdapLdap3Wrappers.unbind(test_conn)
+                            test_conn.unbind()
                             cache[0] = (candidate_dn, candidate_password)
                             return (candidate_dn, candidate_password)
-                    except (ConnectionError, OSError, ValueError):
+                    except (ConnectionError, LDAPException, OSError, ValueError):
                         continue
                 cache[0] = (d.ADMIN_DN, d.ADMIN_PASSWORD)
                 return (d.ADMIN_DN, d.ADMIN_PASSWORD)

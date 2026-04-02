@@ -13,7 +13,8 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdifParser, c, ldif, m, t, u
+from flext_ldif import FlextLdifParser, ldif
+from tests import c, m, t, u
 
 
 class TestMinimalDifferencesOidOud:

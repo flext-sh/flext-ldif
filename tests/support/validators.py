@@ -9,8 +9,7 @@ from collections.abc import Mapping
 
 from flext_core import r
 
-from flext_ldif import p, t
-from tests import u
+from tests import p, t, u
 
 
 class MockFlextUtilitiesResultHelpers:

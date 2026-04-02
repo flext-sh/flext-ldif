@@ -5,10 +5,8 @@ from __future__ import annotations
 import contextlib
 from collections.abc import Callable, MutableMapping, MutableSequence
 
-from flext_ldap import p
-
-from flext_ldif import ldif, m
-from tests import GenericFieldsDict
+from flext_ldif import ldif
+from tests import GenericFieldsDict, m, p
 
 
 def test_ldap_connection(ldap_connection: p.Ldap.Ldap3Connection) -> None:

@@ -16,7 +16,8 @@ from pathlib import Path
 import pytest
 from flext_core import FlextSettings
 
-from flext_ldif import FlextLdifSettings, ldif, m
+from flext_ldif import FlextLdifSettings, ldif
+from tests import m
 
 
 @pytest.fixture

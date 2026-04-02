@@ -21,7 +21,7 @@ from collections.abc import Callable, Generator, Mapping, Sequence
 from pathlib import Path
 
 import pytest
-from flext_ldap import p, u as ldap_u
+from flext_ldap import FlextLdapUtilities as ldap_u
 
 from flext_ldif import (
     FlextLdifConversion,
@@ -32,9 +32,8 @@ from flext_ldif import (
     FlextLdifServersBaseSchemaAcl,
     FlextLdifWriter,
     ldif,
-    m,
 )
-from tests import FlextLdifFixtures, c, t, u
+from tests import FlextLdifFixtures, c, m, p, t, u
 
 # Centralized Docker constants — single source of truth
 _D = c.Ldif.Docker

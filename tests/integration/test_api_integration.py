@@ -16,8 +16,8 @@ from typing import Final
 
 import pytest
 
-from flext_ldif import FlextLdifStatistics, ldif, m
-from tests import c
+from flext_ldif import FlextLdifStatistics, ldif
+from tests import c, m
 
 
 @unique

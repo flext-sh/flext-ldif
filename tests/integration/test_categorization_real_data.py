@@ -17,7 +17,8 @@ from collections.abc import MutableSequence
 from pathlib import Path
 from typing import TextIO
 
-from flext_ldif import FlextLdifUtilities, c, ldif, m
+from flext_ldif import FlextLdifUtilities, ldif
+from tests import c, m
 
 
 def _write_entry_to_file(

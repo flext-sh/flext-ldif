@@ -14,7 +14,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import ldif, m
+from flext_ldif import ldif
+from tests import m
 
 
 class TestOidSchemaIntegration:

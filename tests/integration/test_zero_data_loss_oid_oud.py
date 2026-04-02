@@ -15,8 +15,8 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import ldif, t
-from tests import FlextLdifFixtures, m
+from flext_ldif import ldif
+from tests import FlextLdifFixtures, m, t
 
 
 def _verify_soft_deleted_attributes(entry: m.Ldif.Entry) -> None:

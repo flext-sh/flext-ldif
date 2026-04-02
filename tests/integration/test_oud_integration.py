@@ -18,8 +18,8 @@ import re
 
 import pytest
 
-from flext_ldif import ldif, t
-from tests import FlextLdifFixtures
+from flext_ldif import ldif
+from tests import FlextLdifFixtures, t
 
 
 class TestOudSchemaIntegration:
