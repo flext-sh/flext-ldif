@@ -1,0 +1,45 @@
+src/flext_ldif/services/entries.py
+  e1d2767e43e21b6f 33,79,125
+examples/05_schema_operations.py
+  e1d2767e43e21b6f 26,84,106,133,221,299,362
+tests/constants.py
+  e1d2767e43e21b6f 624,814,1344,1482
+src/flext_ldif/servers/_oud/entry.py
+  e1d2767e43e21b6f 378,419
+tests/base.py
+  e1d2767e43e21b6f 97
+tests/integration/test_real_ldap_roundtrip.py
+  e1d2767e43e21b6f 30,55,65
+src/flext_ldif/servers/_oid/entry.py
+  e1d2767e43e21b6f 48,67,160,164,281,288,544,577,633,638,656,810,819
+src/flext_ldif/_utilities/metadata.py
+  e1d2767e43e21b6f 300,304,782,787
+tests/test_helpers.py
+  e1d2767e43e21b6f 624
+src/flext_ldif/servers/_oid/acl.py
+  e1d2767e43e21b6f 167,271,328,625
+src/flext_ldif/_models/domain_entries.py
+  e1d2767e43e21b6f 519,1846,1946,2002
+tests/integration/test_real_ldap_export.py
+  e1d2767e43e21b6f 28,70,115,191,253
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "89559c760283238435c8420c9de69e78d4d87d29",
+  "prompts": {
+    "e1d2767e43e21b6f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b88f5b43-f2ee-4bd5-8e49-f0bc2c3099ed",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 51,
+      "total_deletions": 51,
+      "accepted_lines": 51,
+      "overriden_lines": 0
+    }
+  }
+}
