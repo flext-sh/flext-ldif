@@ -9,11 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from importlib import import_module
-
 from flext_tests import tm
 
-version_module = import_module("flext_ldif.__version__")
+import flext_ldif.__version__ as version_module
 
 
 class TestsFlextLdifVersion:

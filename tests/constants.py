@@ -770,7 +770,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 return value
 
             @staticmethod
-            def test_result_success_and_unwrap[TResult: t.Ldif.NormalizedValue](
+            def test_result_success_and_unwrap[TResult: t.Ldif.RecursiveContainer](
                 result: r[TResult],
                 expected_type: type | None = None,
                 expected_count: int | None = None,

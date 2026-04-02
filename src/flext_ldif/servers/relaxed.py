@@ -100,10 +100,14 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             original_definition: str,
         ) -> m.Ldif.SchemaObjectClass:
             """Enhance objectClass metadata to indicate relaxed mode parsing."""
-            return self._enhance_schema_item_metadata(
+            result = self._enhance_schema_item_metadata(
                 schema_item=objectclass,
                 original_definition=original_definition,
             )
+            # _enhance_schema_item_metadata preserves the concrete type at runtime
+            if isinstance(result, m.Ldif.SchemaObjectClass):
+                return result
+            return objectclass
 
         def _extract_must_may_from_objectclass(
             self,

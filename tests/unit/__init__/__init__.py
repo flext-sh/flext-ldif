@@ -14,12 +14,11 @@ if _TYPE_CHECKING:
     from flext_core import FlextTypes
 
     from tests.unit.__init__ import test_version
-    from tests.unit.__init__.test_version import TestsFlextLdifVersion, version_module
+    from tests.unit.__init__.test_version import TestsFlextLdifVersion
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "TestsFlextLdifVersion": "tests.unit.__init__.test_version",
     "test_version": "tests.unit.__init__.test_version",
-    "version_module": "tests.unit.__init__.test_version",
 }
 
 

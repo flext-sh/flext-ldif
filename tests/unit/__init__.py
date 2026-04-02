@@ -22,7 +22,7 @@ if _TYPE_CHECKING:
         test_typings,
         utilities,
     )
-    from tests.unit.__init__ import TestsFlextLdifVersion, test_version, version_module
+    from tests.unit.__init__ import TestsFlextLdifVersion, test_version
     from tests.unit._utilities.oid import TestFlextLdifUtilitiesOID
     from tests.unit._utilities.parser import TestFlextLdifUtilitiesParser
     from tests.unit._utilities.server import (

@@ -74,7 +74,7 @@ class TestValidators:
 
     @staticmethod
     def validate_result_success(
-        result: r[t.Ldif.NormalizedValue],
+        result: r[t.Ldif.RecursiveContainer],
     ) -> Mapping[str, bool]:
         """Validate r success characteristics."""
         return {
