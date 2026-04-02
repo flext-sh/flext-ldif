@@ -175,7 +175,7 @@ class FlextLdifUtilitiesEntry:
         """Check multiple entry criteria in one call."""
         if config is None:
             config = FlextLdifModelsSettings.EntryCriteriaConfig.model_validate(kwargs)
-        assert config is not None  # noqa: S101
+        assert config is not None
         checks: MutableSequence[bool] = []
         if config.is_schema is not None:
             checks.append(
@@ -285,7 +285,7 @@ class FlextLdifUtilitiesEntry:
         """Transform multiple entries with common operations."""
         if config is None:
             config = FlextLdifModelsSettings.EntryTransformConfig.model_validate(kwargs)
-        assert config is not None  # noqa: S101
+        assert config is not None
 
         def transform_entry(entry: m.Ldif.Entry) -> m.Ldif.Entry:
             """Transform single entry with all operations."""
