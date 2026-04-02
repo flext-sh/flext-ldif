@@ -21,8 +21,8 @@ from __future__ import annotations
 from typing import Final
 
 import pytest
-from flext_core import FlextLogger
 
+from flext_core import FlextLogger
 from flext_ldif import FlextLdifSettings, ldif
 from tests import c, t
 

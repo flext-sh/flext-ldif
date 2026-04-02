@@ -6,9 +6,9 @@ import re
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from typing import TypeIs
 
-from flext_core import FlextLogger, u
 from pydantic import BaseModel
 
+from flext_core import FlextLogger, u
 from flext_ldif import (
     FlextLdifModelsDomains,
     FlextLdifModelsMetadata,
@@ -194,9 +194,9 @@ class FlextLdifUtilitiesMetadata:
         return combined
 
     @staticmethod
-    def _extract_desc_details(definition: str) -> MutableMapping[str, str | bool]:
+    def _extract_desc_details(definition: str) -> t.MutableFeatureFlagMapping:
         """Extract DESC details."""
-        details: MutableMapping[str, str | bool] = {}
+        details: t.MutableFeatureFlagMapping = {}
         desc_match = re.search(
             r"DESC\s+([\"']?)([^\"']+)([\"']?)",
             definition,
@@ -259,9 +259,9 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _extract_matching_rule_details(
         definition: str,
-    ) -> MutableMapping[str, bool | str]:
+    ) -> t.MutableFeatureFlagMapping:
         """Extract EQUALITY/SUBSTR/ORDERING details."""
-        details: MutableMapping[str, bool | str] = {}
+        details: t.MutableFeatureFlagMapping = {}
         equality_match = re.search(r"\bEQUALITY\b", definition, re.IGNORECASE)
         if equality_match:
             details["equality_presence"] = True
@@ -297,11 +297,11 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _extract_name_details(
         definition: str,
-    ) -> MutableMapping[str, str | MutableSequence[str]]:
+    ) -> t.MutableAttributeMapping:
         """Extract NAME format details."""
         empty_name_values: MutableSequence[str] = []
         empty_name_quotes: MutableSequence[str] = []
-        details: MutableMapping[str, str | MutableSequence[str]] = {
+        details: t.MutableAttributeMapping = {
             "name_format": "single",
             "name_values": empty_name_values,
             "name_quotes": empty_name_quotes,
@@ -416,9 +416,9 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _extract_single_value_details(
         definition: str,
-    ) -> MutableMapping[str, bool | str]:
+    ) -> t.MutableFeatureFlagMapping:
         """Extract SINGLE-VALUE details."""
-        details: MutableMapping[str, bool | str] = {}
+        details: t.MutableFeatureFlagMapping = {}
         single_value_match = re.search(r"SINGLE-VALUE", definition, re.IGNORECASE)
         if single_value_match:
             details["single_value_presence"] = True
@@ -458,9 +458,9 @@ class FlextLdifUtilitiesMetadata:
         return spacing_between
 
     @staticmethod
-    def _extract_sup_details(definition: str) -> MutableMapping[str, bool | str]:
+    def _extract_sup_details(definition: str) -> t.MutableFeatureFlagMapping:
         """Extract SUP details."""
-        details: MutableMapping[str, bool | str] = {}
+        details: t.MutableFeatureFlagMapping = {}
         sup_match = re.search(r"SUP\s+([^\s]+)", definition, re.IGNORECASE)
         if sup_match:
             details["sup_presence"] = True
@@ -479,9 +479,9 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _extract_syntax_details(
         definition: str,
-    ) -> MutableMapping[str, bool | str | None]:
+    ) -> t.MutableOptionalFeatureFlagMapping:
         """Extract SYNTAX formatting details."""
-        details: MutableMapping[str, bool | str | None] = {
+        details: t.MutableOptionalFeatureFlagMapping = {
             "syntax_quotes": False,
             "syntax_quote_char": "",
             "syntax_oid": None,
@@ -517,9 +517,9 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _extract_x_origin_details(
         definition: str,
-    ) -> MutableMapping[str, str | bool | None]:
+    ) -> t.MutableOptionalFeatureFlagMapping:
         """Extract X-ORIGIN details."""
-        details: MutableMapping[str, str | bool | None] = {}
+        details: t.MutableOptionalFeatureFlagMapping = {}
         x_origin_match = re.search(
             r"X-ORIGIN\s+([\"']?)([^\"']+)([\"']?)",
             definition,
@@ -779,18 +779,12 @@ class FlextLdifUtilitiesMetadata:
         **extra: t.Scalar,
     ) -> MutableMapping[
         str,
-        str
-        | bool
-        | MutableSequence[str]
-        | MutableMapping[str, str | MutableSequence[str]],
+        str | bool | MutableSequence[str] | t.MutableAttributeMapping,
     ]:
         """Build RFC compliance metadata as a dictionary."""
         result: MutableMapping[
             str,
-            str
-            | bool
-            | MutableSequence[str]
-            | MutableMapping[str, str | MutableSequence[str]],
+            str | bool | MutableSequence[str] | t.MutableAttributeMapping,
         ] = {
             "quirk_type": quirk_type,
             "source_server": quirk_type,

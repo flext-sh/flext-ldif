@@ -8,11 +8,11 @@ import types
 from pathlib import Path
 from typing import ClassVar, TextIO
 
-from flext_core import FlextLogger
 from flext_tests import FlextTestsDocker, FlextTestsUtilities
 from ldap3 import Connection as Ldap3Connection, Server as Ldap3Server
 from ldap3.core.exceptions import LDAPException
 
+from flext_core import FlextLogger
 from flext_ldif import FlextLdifUtilities
 from tests.constants import FlextLdifTestConstants
 

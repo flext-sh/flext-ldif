@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import FlextUtilities, r
-
 from flext_ldif import (
     FlextLdifUtilitiesACL,
     FlextLdifUtilitiesAttribute,

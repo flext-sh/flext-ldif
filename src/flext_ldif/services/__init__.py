@@ -12,7 +12,6 @@ from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from flext_ldif.services import (
         _services,
         acl,
@@ -53,7 +52,7 @@ if _TYPE_CHECKING:
     from flext_ldif.services.transformers import FlextLdifTransformer
     from flext_ldif.services.writer import FlextLdifWriter, FlextLdifWriterMixin
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
     ("flext_ldif.services._services",),
     {
         "FlextLdifAcl": "flext_ldif.services.acl",

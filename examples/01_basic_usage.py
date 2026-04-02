@@ -26,7 +26,6 @@ from pathlib import Path
 from typing import Final
 
 from flext_core import FlextContext, FlextLogger, r
-
 from flext_ldif import ldif, m
 
 logger: Final = FlextLogger(__name__)

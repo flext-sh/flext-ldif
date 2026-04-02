@@ -15,9 +15,9 @@ from typing import (
     override,
 )
 
-from flext_core import FlextLogger
 from pydantic import Field
 
+from flext_core import FlextLogger
 from flext_ldif import (
     FlextLdifServer,
     FlextLdifServersBase,
@@ -231,11 +231,11 @@ class FlextLdifConversion(
     def _analyze_metadata_for_conversion(
         source_metadata: m.Ldif.QuirkMetadata | m.Ldif.DynamicMetadata | None,
         target_server_type: str,
-    ) -> MutableMapping[str, str | MutableMapping[str, str | t.NormalizedValue]]:
+    ) -> MutableMapping[str, str | t.MutableContainerMapping]:
         """Analyze source metadata for intelligent conversion to target server."""
         conversion_analysis: MutableMapping[
             str,
-            str | MutableMapping[str, str | t.NormalizedValue],
+            str | t.MutableContainerMapping,
         ] = {}
         if not source_metadata or not FlextLdifConversion._has_attr(
             source_metadata,
@@ -256,7 +256,7 @@ class FlextLdifConversion(
         )
         acc_typed: MutableMapping[
             str,
-            str | MutableMapping[str, str | t.NormalizedValue],
+            str | t.MutableContainerMapping,
         ] = {}
         for key, value in boolean_analysis.items():
             if isinstance(value, str):
@@ -297,7 +297,7 @@ class FlextLdifConversion(
         orig_perms_dict: MutableMapping[str, bool],
         converted_acl: m.Ldif.Acl,
         perms_to_model: Callable[
-            [MutableMapping[str, bool | None]],
+            [t.MutableOptionalBoolMapping],
             m.Ldif.AclPermissions,
         ],
     ) -> m.Ldif.Acl:
@@ -316,7 +316,7 @@ class FlextLdifConversion(
         orig_perms_dict: MutableMapping[str, bool],
         converted_acl: m.Ldif.Acl,
         perms_to_model: Callable[
-            [MutableMapping[str, bool | None]],
+            [t.MutableOptionalBoolMapping],
             m.Ldif.AclPermissions,
         ],
     ) -> m.Ldif.Acl:
@@ -329,9 +329,9 @@ class FlextLdifConversion(
     @staticmethod
     def _build_permissions_dict(
         mapped_perms: MutableMapping[str, bool],
-    ) -> MutableMapping[str, bool | None]:
+    ) -> t.MutableOptionalBoolMapping:
         """Build permissions dict with standard keys."""
-        result: MutableMapping[str, bool | None] = {}
+        result: t.MutableOptionalBoolMapping = {}
         for (
             source_key,
             mapped_key,
@@ -530,7 +530,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _perms_dict_to_model(
-        perms_dict: MutableMapping[str, bool | None],
+        perms_dict: t.MutableOptionalBoolMapping,
     ) -> m.Ldif.AclPermissions:
         """Convert permissions dict to AclPermissions model."""
         clean_dict: MutableMapping[str, bool] = {
@@ -744,7 +744,7 @@ class FlextLdifConversion(
         quirk: FlextLdifServersBase,
     ) -> MutableMapping[str, bool]:
         """Check which data types a quirk supports for conversion."""
-        support: t.Ldif.DistributionDict = {
+        support: t.Ldif.MutableDistributionDict = {
             "attribute": 0,
             "objectclass": 0,
             "acl": 0,
@@ -859,8 +859,8 @@ class FlextLdifConversion(
     def _check_acl_support(
         self,
         quirk: FlextLdifServersBase,
-        support: t.Ldif.DistributionDict,
-    ) -> t.Ldif.DistributionDict:
+        support: t.Ldif.MutableDistributionDict,
+    ) -> t.Ldif.MutableDistributionDict:
         """Check ACL support."""
         acl = getattr(quirk, "acl_quirk", None)
         if acl is None:
@@ -876,8 +876,8 @@ class FlextLdifConversion(
         self,
         quirk_schema: t.NormalizedValue | FlextLdifServersBase,
         test_attr_def: str,
-        support: t.Ldif.DistributionDict,
-    ) -> t.Ldif.DistributionDict:
+        support: t.Ldif.MutableDistributionDict,
+    ) -> t.Ldif.MutableDistributionDict:
         """Check attribute support for schema quirk."""
         if not FlextLdifConversion._has_attr(quirk_schema, "can_handle_attribute"):
             return support
@@ -922,8 +922,8 @@ class FlextLdifConversion(
     def _check_entry_support(
         self,
         quirk: FlextLdifServersBase,
-        support: t.Ldif.DistributionDict,
-    ) -> t.Ldif.DistributionDict:
+        support: t.Ldif.MutableDistributionDict,
+    ) -> t.Ldif.MutableDistributionDict:
         """Check Entry support."""
         entry = getattr(quirk, "entry_quirk", None)
         if entry is None:
@@ -942,8 +942,8 @@ class FlextLdifConversion(
         self,
         quirk_schema: t.NormalizedValue | FlextLdifServersBase,
         test_oc_def: str,
-        support: t.Ldif.DistributionDict,
-    ) -> t.Ldif.DistributionDict:
+        support: t.Ldif.MutableDistributionDict,
+    ) -> t.Ldif.MutableDistributionDict:
         """Check objectClass support for schema quirk."""
         if not FlextLdifConversion._has_attr(quirk_schema, "can_handle_objectclass"):
             return support
@@ -965,8 +965,8 @@ class FlextLdifConversion(
     def _check_schema_support(
         self,
         quirk: FlextLdifServersBase,
-        support: t.Ldif.DistributionDict,
-    ) -> t.Ldif.DistributionDict:
+        support: t.Ldif.MutableDistributionDict,
+    ) -> t.Ldif.MutableDistributionDict:
         """Check schema (attribute and objectClass) support."""
         quirk_schema = self._get_schema_quirk_for_support_check(quirk)
         if quirk_schema is None:

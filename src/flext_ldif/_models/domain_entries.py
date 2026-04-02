@@ -23,9 +23,8 @@ from collections.abc import (
 )
 from contextlib import suppress
 from datetime import datetime
-from typing import Annotated, ClassVar, Self, TypedDict, TypeIs, override
+from typing import Annotated, ClassVar, Self, TypeIs, override
 
-from flext_core import FlextLogger, m, r
 from pydantic import (
     ConfigDict,
     Field,
@@ -35,6 +34,7 @@ from pydantic import (
     model_validator,
 )
 
+from flext_core import FlextLogger, m, r
 from flext_ldif import (
     FlextLdifModelsBases,
     FlextLdifModelsMetadata,
@@ -68,17 +68,61 @@ class FlextLdifModelsDomainsEntries:
     def _conversion_history_factory() -> MutableSequence[MutableMapping[str, str]]:
         return []
 
-    class _DNStatisticsFlags(TypedDict, total=False):
-        had_tab_chars: bool
-        had_trailing_spaces: bool
-        had_leading_spaces: bool
-        had_extra_spaces: bool
-        was_base64_encoded: bool
-        had_utf8_chars: bool
-        had_escape_sequences: bool
-        validation_status: str
-        validation_warnings: MutableSequence[str]
-        validation_errors: MutableSequence[str]
+    class DNStatisticsFlags(FlextLdifModelsBases.Base):
+        """Flags capturing DN transformation quirks and validation state.
+
+        All fields default to False/empty since flags are optionally set
+        during DN processing (equivalent to former total=False TypedDict).
+        """
+
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            frozen=True,
+            extra="forbid",
+        )
+        had_tab_chars: Annotated[
+            bool,
+            Field(description="DN contained TAB characters"),
+        ] = False
+        had_trailing_spaces: Annotated[
+            bool,
+            Field(description="DN had trailing spaces"),
+        ] = False
+        had_leading_spaces: Annotated[
+            bool,
+            Field(description="DN had leading spaces"),
+        ] = False
+        had_extra_spaces: Annotated[
+            bool,
+            Field(description="DN had multiple consecutive spaces"),
+        ] = False
+        was_base64_encoded: Annotated[
+            bool,
+            Field(description="DN was base64 encoded in LDIF (dn::)"),
+        ] = False
+        had_utf8_chars: Annotated[
+            bool,
+            Field(
+                description="DN contained UTF-8 multi-byte characters",
+            ),
+        ] = False
+        had_escape_sequences: Annotated[
+            bool,
+            Field(description="DN contained LDAP escape sequences"),
+        ] = False
+        validation_status: Annotated[
+            str,
+            Field(
+                description="Validation status (use ValidationStatus constants)",
+            ),
+        ] = "valid"
+        validation_warnings: Annotated[
+            MutableSequence[str],
+            Field(description="Non-fatal validation warnings"),
+        ] = Field(default_factory=list)
+        validation_errors: Annotated[
+            MutableSequence[str],
+            Field(description="Fatal validation errors"),
+        ] = Field(default_factory=list)
 
     class DN(m.Value):
         """Distinguished Name value t.NormalizedValue."""
@@ -472,7 +516,7 @@ class FlextLdifModelsDomainsEntries:
             Field(description="Attribute name to values list"),
         ]
         attribute_metadata: Annotated[
-            MutableMapping[str, MutableMapping[str, str | MutableSequence[str]]],
+            MutableMapping[str, t.MutableAttributeMapping],
             Field(
                 description="Metadata for each attribute, like category or hidden status.",
             ),
@@ -1799,8 +1843,7 @@ class FlextLdifModelsDomainsEntries:
             )
             dn: Annotated[str | FlextLdifModelsDomainsEntries.DN, Field(...)]
             attributes: Annotated[
-                MutableMapping[str, str | MutableSequence[str]]
-                | FlextLdifModelsDomainsEntries.Attributes,
+                t.MutableAttributeMapping | FlextLdifModelsDomainsEntries.Attributes,
                 Field(...),
             ]
             metadata: Annotated[
@@ -1900,7 +1943,7 @@ class FlextLdifModelsDomainsEntries:
         @classmethod
         def _normalize_attributes(
             cls,
-            attributes: MutableMapping[str, str | MutableSequence[str]]
+            attributes: t.MutableAttributeMapping
             | FlextLdifModelsDomainsEntries.Attributes,
         ) -> FlextLdifModelsDomainsEntries.Attributes:
             """Normalize attributes to Attributes t.NormalizedValue.
@@ -1956,7 +1999,7 @@ class FlextLdifModelsDomainsEntries:
         def create(
             cls,
             dn: str | FlextLdifModelsDomainsEntries.DN,
-            attributes: MutableMapping[str, str | MutableSequence[str]]
+            attributes: t.MutableAttributeMapping
             | FlextLdifModelsDomainsEntries.Attributes,
             metadata: FlextLdifModelsDomainsEntries.QuirkMetadata | None = None,
             acls: MutableSequence[FlextLdifModelsDomainsEntries.Acl] | None = None,
@@ -2154,8 +2197,6 @@ class FlextLdifModelsDomainsEntries:
             str,
             Field(description="Human-readable reason for transformation"),
         ] = ""
-
-    DNStatisticsFlags = _DNStatisticsFlags
 
     class DNStatistics(FlextLdifModelsBases.Base):
         """Statistics tracking for DN transformations and validation.

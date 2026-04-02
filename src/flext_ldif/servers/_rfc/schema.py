@@ -9,7 +9,6 @@ from datetime import datetime
 from typing import Self, overload, override
 
 from flext_core import FlextLogger, r
-
 from flext_ldif import FlextLdifServersBase, FlextLdifServersBaseSchema, c, m, p, t, u
 
 logger = FlextLogger(__name__)
@@ -254,8 +253,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     @staticmethod
     def _convert_extensions_for_quirk(
         metadata: m.Ldif.DynamicMetadata,
-    ) -> MutableMapping[str, MutableSequence[str] | str | bool | None]:
-        extensions: MutableMapping[str, MutableSequence[str] | str | bool | None] = {}
+    ) -> t.Ldif.SchemaExtensionsMapping:
+        extensions: t.Ldif.SchemaExtensionsMapping = {}
         for key, value in metadata.items():
             if isinstance(value, bool):
                 extensions[key] = value

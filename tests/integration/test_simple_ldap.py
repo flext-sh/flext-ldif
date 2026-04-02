@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Callable, MutableMapping, MutableSequence
+from collections.abc import Callable
 
 from flext_ldif import ldif
-from tests import GenericFieldsDict, m, p
+from tests import GenericFieldsDict, m, p, t
 
 
 def test_ldap_connection(ldap_connection: p.Ldap.Ldap3Connection) -> None:
@@ -50,7 +50,7 @@ def test_create_and_export_entry(
     assert len(ldap_connection.entries) == 1
     ldap_entry = ldap_connection.entries[0]
     api = ldif.get_instance()
-    attrs: MutableMapping[str, MutableSequence[str] | str] = {
+    attrs: t.MutableAttributeMapping = {
         attr: [str(v) for v in ldap_entry[attr].values]
         for attr in ldap_entry.entry_attributes
     }

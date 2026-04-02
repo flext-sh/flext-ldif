@@ -6,8 +6,8 @@ from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from typing import overload
 
 from flext_core import r
-
 from flext_ldif import (
+    FlextLdifModelsDomainsEntries,
     FlextLdifUtilitiesAttribute,
     FlextLdifUtilitiesCollectionLdif,
     FlextLdifUtilitiesDN,
@@ -18,7 +18,6 @@ from flext_ldif import (
     p,
     t,
 )
-from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
 
 _Entry = FlextLdifModelsDomainsEntries.Entry
 _DN = FlextLdifModelsDomainsEntries.DN

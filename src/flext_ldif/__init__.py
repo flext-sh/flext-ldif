@@ -9,7 +9,6 @@ from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING as _TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
-
 from flext_ldif.__version__ import (
     __author__,
     __author_email__,
@@ -23,7 +22,6 @@ from flext_ldif.__version__ import (
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes, d, e, h, r, x
-
     from flext_ldif import (
         _models,
         _utilities,
@@ -196,7 +194,7 @@ if _TYPE_CHECKING:
     from flext_ldif.typings import FlextLdifTypes, FlextLdifTypes as t
     from flext_ldif.utilities import FlextLdifUtilities, FlextLdifUtilities as u
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
     (
         "flext_ldif._models",
         "flext_ldif._utilities",

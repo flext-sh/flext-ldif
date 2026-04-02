@@ -5,9 +5,9 @@ from __future__ import annotations
 import base64
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 
-from flext_core import FlextLogger, r
 from pydantic import BaseModel
 
+from flext_core import FlextLogger, r
 from flext_ldif import c, m, t
 
 logger = FlextLogger(__name__)

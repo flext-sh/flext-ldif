@@ -12,7 +12,6 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from flext_ldif._models import (
         base,
         collections,
@@ -34,7 +33,7 @@ if _TYPE_CHECKING:
     from flext_ldif._models.results import FlextLdifModelsResults
     from flext_ldif._models.settings import FlextLdifModelsSettings
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "FlextLdifModelsBases": "flext_ldif._models.base",
     "FlextLdifModelsCollections": "flext_ldif._models.collections",
     "FlextLdifModelsDomains": "flext_ldif._models.domain",

@@ -13,9 +13,9 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from typing import Annotated, ClassVar
 
-from flext_core import FlextModels
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_core import FlextModels
 from flext_ldif import (
     FlextLdifModelsBases,
     FlextLdifModelsCollections,

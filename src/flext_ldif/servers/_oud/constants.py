@@ -6,8 +6,7 @@ from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
 from flext_core import FlextLogger
-
-from flext_ldif import FlextLdifServersRfc
+from flext_ldif import FlextLdifServersRfc, t
 
 logger = FlextLogger(__name__)
 
@@ -209,7 +208,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     OUD_TO_RFC_SUBJECTS: ClassVar[MutableMapping[str, tuple[str, str]]] = {
         "bind_rules": ("group_membership", "{value}"),
     }
-    INVALID_SUBSTR_RULES: ClassVar[MutableMapping[str, str | None]] = {
+    INVALID_SUBSTR_RULES: ClassVar[t.MutableOptionalStrMapping] = {
         "caseIgnoreMatch": "caseIgnoreSubstringsMatch",
         "distinguishedNameMatch": None,
         "caseIgnoreOrderingMatch": None,

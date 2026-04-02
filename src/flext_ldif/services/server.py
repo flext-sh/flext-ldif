@@ -6,9 +6,8 @@ import inspect
 from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
-from flext_core import FlextLogger, FlextRegistry
-
 import flext_ldif.servers as servers_package
+from flext_core import FlextLogger, FlextRegistry
 from flext_ldif import (
     FlextLdifServersBase,
     FlextLdifServersBaseEntry,
@@ -97,7 +96,7 @@ class FlextLdifServer(FlextRegistry):
     def get_registry_stats(self) -> t.MutableContainerMapping:
         """Get comprehensive registry statistics."""
         servers = self.list_registered_servers()
-        quirks_by_server: MutableMapping[str, MutableMapping[str, str | None]] = {}
+        quirks_by_server: MutableMapping[str, t.MutableOptionalStrMapping] = {}
         priorities: MutableMapping[str, int] = {}
         for st in servers:
             base = self.quirk(st).map_or(None)

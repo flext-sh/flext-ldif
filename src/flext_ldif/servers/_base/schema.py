@@ -6,9 +6,9 @@ import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import FlextLogger, r, s
 from pydantic import Field
 
+from flext_core import FlextLogger, r, s
 from flext_ldif import (
     FlextLdifQuirkMethodsMixin,
     FlextLdifUtilitiesMetadata,
@@ -124,7 +124,7 @@ class FlextLdifServersBaseSchema(
     @staticmethod
     def _extract_metadata_extensions(
         attr_definition: str,
-    ) -> MutableMapping[str, MutableSequence[str] | str | bool | None]:
+    ) -> t.Ldif.SchemaExtensionsMapping:
         """Extract metadata extensions from attribute definition."""
         parser_util = FlextLdifUtilitiesParser
         extract_method = getattr(parser_util, "extract_extensions", None)
@@ -134,7 +134,7 @@ class FlextLdifServersBaseSchema(
         if not isinstance(extensions_raw, Mapping):
             return {}
         extensions_map = m.Ldif.DynamicMetadata.model_validate(extensions_raw)
-        extracted: MutableMapping[str, MutableSequence[str] | str | bool | None] = {}
+        extracted: t.Ldif.SchemaExtensionsMapping = {}
         for raw_key, raw_value in extensions_map.items():
             if isinstance(raw_value, str | bool):
                 extracted[raw_key] = raw_value

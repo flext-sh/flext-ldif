@@ -6,7 +6,6 @@ from collections.abc import MutableMapping, MutableSequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core import FlextProtocols
-
 from flext_ldif import r, t
 
 if TYPE_CHECKING:

@@ -15,14 +15,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Sequence
 from itertools import starmap
 from typing import ClassVar, override
 
 from _pytest.fixtures import FixtureFunctionDefinition
-from flext_core import FlextService, r
 from pydantic import ConfigDict
 
+from flext_core import FlextService, r
 from flext_ldif import FlextLdifEntries
 from tests.models import m
 from tests.typings import t
@@ -94,7 +94,7 @@ class FlextLdifTestsServiceBase(FlextService[m.Ldif.Entry]):
     def create_entry(
         cls,
         dn: str,
-        attributes: MutableMapping[str, str | MutableSequence[str]] | None = None,
+        attributes: t.MutableAttributeMapping | None = None,
     ) -> m.Ldif.Entry:
         """Create test entry using real FlextLdifEntries service.
 
@@ -121,7 +121,7 @@ class FlextLdifTestsServiceBase(FlextService[m.Ldif.Entry]):
     @classmethod
     def create_entries(
         cls,
-        entries_data: Sequence[tuple[str, Mapping[str, str | t.StrSequence]]],
+        entries_data: Sequence[tuple[str, t.Ldif.AttributeDictGeneric]],
     ) -> Sequence[m.Ldif.Entry]:
         """Create multiple test entries.
 

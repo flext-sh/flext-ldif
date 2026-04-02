@@ -7,7 +7,6 @@ from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import override
 
 from flext_core import FlextLogger, r
-
 from flext_ldif import (
     FlextLdifServersBaseSchema,
     FlextLdifServersOidConstants,
@@ -33,7 +32,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         **kwargs: t.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize OID schema quirk."""
-        filtered_kwargs: MutableMapping[str, str | float | bool] = {
+        filtered_kwargs: t.MutableConfigValueMapping = {
             k: v
             for k, v in kwargs.items()
             if k not in {"_parent_quirk", "_schema_service"}
@@ -73,7 +72,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
     def _add_target_metadata(
         self,
         attr_data: m.Ldif.SchemaAttribute,
-        target_values: MutableMapping[str, str | None],
+        target_values: t.MutableOptionalStrMapping,
     ) -> None:
         """Add target metadata to attribute."""
         if not attr_data.metadata:
@@ -106,7 +105,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
     def _capture_attribute_values(
         self,
         attr_data: m.Ldif.SchemaAttribute,
-    ) -> MutableMapping[str, str | None]:
+    ) -> t.MutableOptionalStrMapping:
         """Capture attribute values for metadata tracking."""
         return {
             "syntax_oid": str(attr_data.syntax) if attr_data.syntax else None,

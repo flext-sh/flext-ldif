@@ -6,9 +6,9 @@ import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from typing import override
 
-from flext_core import FlextLogger, FlextTypes, r
 from pydantic import RootModel
 
+from flext_core import FlextLogger, FlextTypes, r
 from flext_ldif import (
     FlextLdifModelsMetadata,
     FlextLdifModelsSettings,
@@ -45,7 +45,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     ) -> tuple[
         MutableMapping[str, MutableSequence[str]],
         set[str],
-        MutableMapping[str, MutableMapping[str, str | MutableSequence[str]]],
+        MutableMapping[str, t.MutableAttributeMapping],
     ]:
         """Convert OID boolean attribute values to RFC format."""
         boolean_attributes = FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES
@@ -64,7 +64,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         converted_attrs: set[str] = set()
         boolean_conversions: MutableMapping[
             str,
-            MutableMapping[str, str | MutableSequence[str]],
+            t.MutableAttributeMapping,
         ] = {}
         for attr_name, attr_values in entry_attributes.items():
             if attr_name.lower() in boolean_attr_names:
@@ -157,13 +157,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         converted_attrs: set[str],
         boolean_conversions: MutableMapping[
             str,
-            MutableMapping[str, str | MutableSequence[str]],
+            t.MutableAttributeMapping,
         ],
         acl_transformations: MutableMapping[str, m.Ldif.AttributeTransformation],
         rfc_violations: MutableSequence[str],
-        attribute_conflicts: MutableSequence[
-            MutableMapping[str, str | MutableSequence[str]]
-        ],
+        attribute_conflicts: MutableSequence[t.MutableAttributeMapping],
         converted_attributes: MutableMapping[str, MutableSequence[str]],
         original_entry: m.Ldif.Entry,
     ) -> r[m.Ldif.Entry]:
@@ -280,15 +278,14 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         )
         boolean_conversions_dict: MutableMapping[
             str,
-            MutableMapping[str, str | MutableSequence[str]],
+            t.MutableAttributeMapping,
         ] = {
             attr_name: dict(conversion_data)
             for attr_name, conversion_data in boolean_conversions.items()
         }
         converted_attrs_data: MutableMapping[
             str,
-            MutableMapping[str, MutableMapping[str, str | MutableSequence[str]]]
-            | MutableMapping[str, str],
+            MutableMapping[str, t.MutableAttributeMapping] | MutableMapping[str, str],
         ] = {
             c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions_dict,
             c.Ldif.CONVERSION_ATTRIBUTE_NAME_CONVERSIONS: attr_name_conversions,
@@ -544,7 +541,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         converted_attributes: MutableMapping[str, MutableSequence[str]],
     ) -> tuple[
         MutableSequence[str],
-        MutableSequence[MutableMapping[str, str | MutableSequence[str]]],
+        MutableSequence[t.MutableAttributeMapping],
     ]:
         """Detect RFC compliance violations in entry."""
         object_classes_raw = converted_attributes.get("objectClass", [])
@@ -577,9 +574,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             "orclversion",
             "orclgroupcreatedate",
         }
-        attribute_conflicts: MutableSequence[
-            MutableMapping[str, str | MutableSequence[str]]
-        ] = [
+        attribute_conflicts: MutableSequence[t.MutableAttributeMapping] = [
             {
                 "attribute": attr_name,
                 "values": converted_attributes[attr_name],
@@ -635,12 +630,12 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     def _parse_metadata_boolean_flags(
         self,
         entry_data: m.Ldif.Entry,
-    ) -> MutableMapping[str, MutableMapping[str, str | MutableSequence[str]]]:
+    ) -> MutableMapping[str, t.MutableAttributeMapping]:
         """Extract boolean conversions from entry metadata."""
         mk = c.Ldif
         boolean_conversions: MutableMapping[
             str,
-            MutableMapping[str, str | MutableSequence[str]],
+            t.MutableAttributeMapping,
         ] = {}
         if not (entry_data.metadata and entry_data.metadata.extensions):
             return boolean_conversions
@@ -658,7 +653,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 for key, value in boolean_conversions_obj.items():
                     if isinstance(value, Mapping):
                         value_metadata = m.Ldif.DynamicMetadata.model_validate(value)
-                        typed_dict: MutableMapping[str, str | MutableSequence[str]] = {}
+                        typed_dict: t.MutableAttributeMapping = {}
                         for key_str, raw_value in value_metadata.items():
                             if isinstance(raw_value, str):
                                 typed_dict[key_str] = raw_value
@@ -812,7 +807,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 if boolean_conversions:
                     boolean_conversions_dict: MutableMapping[
                         str,
-                        MutableMapping[str, str | MutableSequence[str]],
+                        t.MutableAttributeMapping,
                     ] = {
                         attr_name: dict(conversion_data)
                         for attr_name, conversion_data in boolean_conversions.items()
@@ -821,7 +816,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                         str,
                         MutableMapping[
                             str,
-                            MutableMapping[str, str | MutableSequence[str]],
+                            t.MutableAttributeMapping,
                         ]
                         | MutableSequence[t.Ldif.MetadataValue],
                     ] = {
@@ -955,7 +950,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     def _restore_boolean_attribute_from_metadata(
         self,
         attr_name: str,
-        conv_data: MutableMapping[str, MutableSequence[str] | str],
+        conv_data: t.MutableAttributeMapping,
         restored_attrs: MutableMapping[str, MutableSequence[str]],
     ) -> bool:
         """Restore single boolean attribute from conversion metadata."""

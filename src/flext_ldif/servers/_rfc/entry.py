@@ -7,7 +7,6 @@ from collections.abc import MutableMapping, MutableSequence
 from typing import override
 
 from flext_core import FlextLogger, r
-
 from flext_ldif import FlextLdifServersBase, m, u
 
 logger = FlextLogger(__name__)

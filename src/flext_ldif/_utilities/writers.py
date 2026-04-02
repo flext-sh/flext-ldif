@@ -6,7 +6,6 @@ import struct
 from collections.abc import Callable, MutableSequence
 
 from flext_core import FlextLogger, r
-
 from flext_ldif import m, t
 
 logger = FlextLogger.create_module_logger(__name__)

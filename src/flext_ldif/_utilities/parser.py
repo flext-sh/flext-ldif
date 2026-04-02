@@ -8,8 +8,7 @@ import re
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import TypeIs
 
-from flext_core import FlextLogger, r, u
-
+from flext_core import FlextLogger, r
 from flext_ldif import (
     FlextLdifModelsMetadata,
     FlextLdifUtilitiesOID,
@@ -67,9 +66,9 @@ class FlextLdifUtilitiesParser:
     def _process_ldif_line(
         line: str,
         current_dn: str | None,
-        current_attrs: t.Ldif.EntryAttributesDict,
-        entries: MutableSequence[tuple[str, t.Ldif.EntryAttributesDict]],
-    ) -> tuple[str | None, t.Ldif.EntryAttributesDict]:
+        current_attrs: t.Ldif.MutableEntryAttributesDict,
+        entries: MutableSequence[tuple[str, t.Ldif.MutableEntryAttributesDict]],
+    ) -> tuple[str | None, t.Ldif.MutableEntryAttributesDict]:
         """Process single LDIF line with RFC 2849 base64 detection."""
         if not line:
             if current_dn is not None:
@@ -95,7 +94,7 @@ class FlextLdifUtilitiesParser:
         if key.lower() == "dn":
             if current_dn is not None:
                 entries.append((current_dn, current_attrs))
-            new_attrs: t.Ldif.EntryAttributesDict = {}
+            new_attrs: t.Ldif.MutableEntryAttributesDict = {}
             if is_base64:
                 new_attrs["_base64_dn"] = ["true"]
             new_attrs["_original_dn_line"] = [original_line]
@@ -251,7 +250,7 @@ class FlextLdifUtilitiesParser:
     def finalize_pending_attribute(
         current_attr: str | None,
         current_values: MutableSequence[str],
-        entry_dict: t.Ldif.RawEntryDict,
+        entry_dict: t.Ldif.MutableRawEntryDict,
     ) -> None:
         """Finalize and save pending attribute to entry dictionary."""
         if not current_attr or not current_values:
@@ -267,7 +266,7 @@ class FlextLdifUtilitiesParser:
     def handle_multivalued_attribute(
         attr_name: str,
         attr_value: str,
-        entry_dict: t.Ldif.RawEntryDict,
+        entry_dict: t.Ldif.MutableRawEntryDict,
     ) -> bool:
         """Handle multi-valued attribute accumulation."""
         if attr_name not in entry_dict or attr_name == "_base64_attrs":
@@ -276,7 +275,7 @@ class FlextLdifUtilitiesParser:
         if isinstance(existing, set):
             entry_dict[attr_name] = [*existing, attr_value]
             return True
-        if not u.is_list_like(existing):
+        if isinstance(existing, str):
             entry_dict[attr_name] = [existing, attr_value]
         else:
             existing_list: MutableSequence[str]
@@ -302,7 +301,9 @@ class FlextLdifUtilitiesParser:
         return r[tuple[str, str, bool]].ok((attr_name, attr_value, is_base64))
 
     @staticmethod
-    def track_base64_attribute(attr_name: str, entry_dict: t.Ldif.RawEntryDict) -> None:
+    def track_base64_attribute(
+        attr_name: str, entry_dict: t.Ldif.MutableRawEntryDict
+    ) -> None:
         """Track attribute that uses base64 encoding."""
         if "_base64_attrs" not in entry_dict:
             entry_dict["_base64_attrs"] = set[str]()

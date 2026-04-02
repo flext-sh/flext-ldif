@@ -17,7 +17,6 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from tests.support import (
         conftest_factory,
         ldif_data,
@@ -35,7 +34,7 @@ if _TYPE_CHECKING:
         TestValidators,
     )
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "FileManager": "tests.support.test_files",
     "FlextLdifTestConftest": "tests.support.conftest_factory",
     "FlextLdifTestServiceFactory": "tests.support.real_services",

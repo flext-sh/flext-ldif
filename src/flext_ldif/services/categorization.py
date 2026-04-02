@@ -6,9 +6,9 @@ import struct
 from collections.abc import MutableMapping, MutableSequence
 from typing import Final, override
 
-from flext_core import FlextLogger
 from pydantic import BaseModel, ValidationError
 
+from flext_core import FlextLogger
 from flext_ldif import (
     FlextLdifFilters,
     FlextLdifServer,

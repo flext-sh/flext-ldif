@@ -7,7 +7,6 @@ from collections.abc import Callable, MutableSequence
 from typing import Final
 
 from flext_core import r
-
 from flext_ldif import FlextLdifUtilitiesSchema, c, t
 
 

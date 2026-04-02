@@ -6,7 +6,6 @@ from collections.abc import MutableMapping, MutableSequence
 from typing import override
 
 from flext_core import FlextLogger, r
-
 from flext_ldif import (
     FlextLdifServersBaseSchema,
     FlextLdifServersOudConstants,
@@ -32,7 +31,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         **kwargs: t.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize OUD schema quirk."""
-        filtered_kwargs: MutableMapping[str, str | float | bool] = {
+        filtered_kwargs: t.MutableConfigValueMapping = {
             k: v
             for k, v in kwargs.items()
             if k not in {"_parent_quirk", "_schema_service"}

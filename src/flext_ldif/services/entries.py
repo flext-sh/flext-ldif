@@ -30,7 +30,7 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
 
     @staticmethod
     def _extract_dn_from_dict(
-        entry: MutableMapping[str, str | MutableSequence[str]],
+        entry: t.MutableAttributeMapping,
     ) -> r[str]:
         dn_value = entry.get("dn")
         if dn_value is None:
@@ -76,7 +76,7 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
     @staticmethod
     def create_entry(
         dn: str,
-        attributes: MutableMapping[str, str | MutableSequence[str]],
+        attributes: t.MutableAttributeMapping,
         objectclasses: MutableSequence[str] | None = None,
     ) -> r[m.Ldif.Entry]:
         """Create a validated entry from DN and attributes."""
@@ -122,7 +122,7 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
 
     @staticmethod
     def get_entry_dn(
-        entry: m.Ldif.Entry | MutableMapping[str, str | MutableSequence[str]],
+        entry: m.Ldif.Entry | t.MutableAttributeMapping,
     ) -> r[str]:
         """Read DN from model or dictionary entry."""
         if isinstance(entry, MutableMapping):

@@ -7,9 +7,9 @@ from collections.abc import MutableSequence
 from pathlib import Path
 from typing import Final, override
 
-from flext_core import FlextLogger
 from pydantic import PrivateAttr
 
+from flext_core import FlextLogger
 from flext_ldif import (
     FlextLdifParser,
     FlextLdifProcessingPipeline,

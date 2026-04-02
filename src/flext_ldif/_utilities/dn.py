@@ -14,7 +14,6 @@ from collections.abc import (
 from typing import Literal, overload
 
 from flext_core import r, u
-
 from flext_ldif import FlextLdifModelsDomains, FlextLdifModelsSettings, c, m
 
 

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from flext_core import FlextLogger
-
 from flext_ldif import (
     FlextLdifServersBase,
     FlextLdifServersRfcAcl,

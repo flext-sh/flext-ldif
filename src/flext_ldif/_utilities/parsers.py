@@ -6,8 +6,7 @@ import struct
 from collections.abc import Callable, MutableMapping, MutableSequence
 
 from flext_core import FlextLogger, r
-
-from flext_ldif import m
+from flext_ldif import m, t
 
 logger = FlextLogger.create_module_logger(__name__)
 
@@ -70,7 +69,7 @@ class FlextLdifUtilitiesParsers:
     def parse_attribute_definition(
         definition: str,
         server_type: str,
-        parse_parts_hook: Callable[[str], MutableMapping[str, str | bool | None]],
+        parse_parts_hook: Callable[[str], t.MutableOptionalFeatureFlagMapping],
         *,
         transform_hook: Callable[[m.Ldif.SchemaAttribute], m.Ldif.SchemaAttribute]
         | None = None,

@@ -8,7 +8,6 @@ from collections.abc import MutableSequence
 from typing import TypeIs
 
 from flext_core import r
-
 from flext_ldif import FlextLdifModelsDomains, FlextLdifShared, c, t
 
 _VALID_SERVER_TYPES: frozenset[str] = frozenset({

@@ -12,14 +12,13 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from flext_ldif.servers._oid import acl, constants, entry, schema
     from flext_ldif.servers._oid.acl import FlextLdifServersOidAcl
     from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants, c
     from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
     from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema, logger
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "FlextLdifServersOidAcl": "flext_ldif.servers._oid.acl",
     "FlextLdifServersOidConstants": "flext_ldif.servers._oid.constants",
     "FlextLdifServersOidEntry": "flext_ldif.servers._oid.entry",

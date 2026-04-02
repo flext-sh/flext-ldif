@@ -14,17 +14,16 @@ This example shows how flext-ldif enables ADVANCED schema operations through typ
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping, MutableSequence, Sequence
+from collections.abc import MutableSequence, Sequence
 from pathlib import Path
 
 from flext_core import r
-
 from flext_ldif import ldif, m, t
 
 
 def _create_entry_or_none(
     dn: str,
-    attributes: MutableMapping[str, str | MutableSequence[str]],
+    attributes: t.MutableAttributeMapping,
 ) -> m.Ldif.Entry | None:
     """Create an entry, returning None on failure."""
     result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
@@ -82,7 +81,7 @@ def intelligent_schema_building() -> r[MutableSequence[m.Ldif.Entry]]:
         ("groupOfNames", "Group of names", "top", ["cn", "member"], ["description"]),
     ]
     for name, desc, sup, must_attrs, may_attrs in object_classes:
-        attrs: MutableMapping[str, str | MutableSequence[str]] = {
+        attrs: t.MutableAttributeMapping = {
             "objectClass": ["top", "ldapSubentry", "objectClassDescription"],
             "cn": [name],
             "description": [desc],
@@ -104,7 +103,7 @@ def parallel_schema_validation() -> r[t.ContainerMapping]:
     test_entries: list[m.Ldif.Entry] = []
     for i in range(30):
         if i % 3 == 0:
-            attrs: MutableMapping[str, str | MutableSequence[str]] = {
+            attrs: t.MutableAttributeMapping = {
                 "objectClass": ["person", "inetOrgPerson"],
                 "cn": [f"Person{i}"],
                 "sn": [f"LastName{i}"],
@@ -131,9 +130,7 @@ def parallel_schema_validation() -> r[t.ContainerMapping]:
         entry_result = m.Ldif.Entry.create(dn=dn, attributes=attrs)
         if entry_result.is_success:
             test_entries.append(entry_result.value)
-    invalid_scenarios: Sequence[
-        tuple[str, MutableMapping[str, str | MutableSequence[str]]]
-    ] = [
+    invalid_scenarios: Sequence[tuple[str, t.MutableAttributeMapping]] = [
         (
             "cn=Invalid Person,ou=People,dc=example,dc=com",
             {"objectClass": ["person"], "cn": ["Invalid Person"]},
@@ -221,7 +218,7 @@ def schema_migration_pipeline() -> r[t.ContainerMapping]:
         }
     migrated_entries: list[m.Ldif.Entry] = []
     for ldif_entry in all_entries:
-        attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
+        attrs_dict: t.MutableAttributeMapping = {}
         if ldif_entry.attributes is not None:
             for attr_name, attr_values in ldif_entry.attributes.attributes.items():
                 if attr_name == "emailAddress":
@@ -299,7 +296,7 @@ def batch_schema_operations() -> r[t.ContainerMapping]:
         ),
     ]
     for name, desc, sup, must_attrs, may_attrs in oc_definitions:
-        attrs: MutableMapping[str, str | MutableSequence[str]] = {
+        attrs: t.MutableAttributeMapping = {
             "objectClass": ["top", "ldapSubentry", "objectClassDescription"],
             "cn": [name],
             "description": [desc],
@@ -362,7 +359,7 @@ def railway_schema_pipeline() -> r[t.ContainerMapping]:
     test_entries: list[m.Ldif.Entry] = []
     for i in range(10):
         if i % 2 == 0:
-            attrs: MutableMapping[str, str | MutableSequence[str]] = {
+            attrs: t.MutableAttributeMapping = {
                 "objectClass": ["person", "inetOrgPerson"],
                 "cn": [f"Schema Test User{i}"],
                 "sn": [f"TestUser{i}"],

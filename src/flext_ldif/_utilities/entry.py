@@ -7,7 +7,6 @@ import struct
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 
 from flext_core import FlextLogger, r
-
 from flext_ldif import (
     FlextLdifModelsSettings,
     FlextLdifUtilitiesDN,

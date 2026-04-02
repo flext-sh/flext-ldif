@@ -6,12 +6,20 @@ All model-based unions belong in consuming modules, NOT here.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence, Set as AbstractSet
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+    Set as AbstractSet,
+)
 from datetime import datetime
 from typing import TYPE_CHECKING, Annotated
 
-from flext_core import FlextTypes, r
 from pydantic import BaseModel, StringConstraints
+
+from flext_core import FlextTypes, r
 
 if TYPE_CHECKING:
     from flext_ldif import m
@@ -55,7 +63,11 @@ class FlextLdifTypes(FlextTypes):
         type ValueList = Sequence[ValueType]
         type AttributeValue = str | bytes
         type EntryAttributesDict = Mapping[str, Sequence[str]]
+        type MutableEntryAttributesDict = MutableMapping[str, MutableSequence[str]]
         type RawEntryDict = Mapping[str, str | Sequence[str] | AbstractSet[str]]
+        type MutableRawEntryDict = MutableMapping[
+            str, str | MutableSequence[str] | AbstractSet[str]
+        ]
 
         type Rfc4512Descriptor = Annotated[
             str,
@@ -105,7 +117,12 @@ class FlextLdifTypes(FlextTypes):
         ]
         type SafeMethodDecorator = Callable[[SafeMethod], SafeMethod]
 
+        type SchemaExtensionsMapping = MutableMapping[
+            str, MutableSequence[str] | str | bool | None
+        ]
+
         type DistributionDict = Mapping[str, int]
+        type MutableDistributionDict = MutableMapping[str, int]
         type AttributeDict = Mapping[str, Sequence[str]]
         type AttributeDictGeneric = Mapping[str, Sequence[str] | str]
 

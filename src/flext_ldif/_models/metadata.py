@@ -12,9 +12,9 @@ from collections.abc import (
 )
 from typing import ClassVar, Self, override
 
-from flext_core import FlextModels
 from pydantic import ConfigDict
 
+from flext_core import FlextModels
 from flext_ldif import t
 
 

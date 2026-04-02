@@ -24,7 +24,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import ldif
-from tests import m, p
+from tests import m, p, t
 
 
 @pytest.fixture
@@ -183,7 +183,7 @@ class TestRealLdapBatchOperations:
         assert actual_count > 0, "No entries found in LDAP"
         entries: MutableSequence[m.Ldif.Entry] = []
         for entry in ldap_connection.entries:
-            attrs_dict: MutableMapping[str, MutableSequence[str] | str] = {}
+            attrs_dict: t.MutableAttributeMapping = {}
             for attr_name in entry.entry_attributes:
                 raw_values: list[str] = [
                     str(v)

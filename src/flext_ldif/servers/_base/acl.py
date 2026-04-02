@@ -6,9 +6,9 @@ import re
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import FlextLogger, FlextService, r
 from pydantic import Field, ValidationError
 
+from flext_core import FlextLogger, FlextService, r
 from flext_ldif import (
     FlextLdifQuirkMethodsMixin,
     FlextLdifUtilitiesACL,

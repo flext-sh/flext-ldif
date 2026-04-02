@@ -11,10 +11,10 @@ from enum import StrEnum, unique
 from typing import ClassVar
 
 import pytest
-from flext_core import r
 from flext_tests import tm
 from tests import c, m
 
+from flext_core import r
 from flext_ldif import FlextLdifServersRelaxed
 
 meta_keys = c.Ldif

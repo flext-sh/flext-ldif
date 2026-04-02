@@ -8,7 +8,6 @@ from collections.abc import MutableMapping, MutableSequence
 from typing import TypeIs
 
 from flext_core import FlextLogger, r, u
-
 from flext_ldif import (
     FlextLdifModelsMetadata,
     FlextLdifModelsSettings,
@@ -80,7 +79,7 @@ class FlextLdifUtilitiesACL:
                 group=1,
             )
 
-        extra_dict: MutableMapping[str, str | None] = {}
+        extra_dict: t.MutableOptionalStrMapping = {}
         for k, v in extra_patterns.items():
             if bool(v):
                 result = extract_extra(k, v)

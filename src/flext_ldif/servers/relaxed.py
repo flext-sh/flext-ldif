@@ -8,7 +8,6 @@ from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar, override
 
 from flext_core import FlextLogger
-
 from flext_ldif import FlextLdifModelsDomains, FlextLdifServersRfc, c, m, r, t, u
 
 logger = FlextLogger(__name__)

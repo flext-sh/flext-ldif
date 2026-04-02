@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING as _TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
-    from flext_core import FlextTypes
     from tests.unit.quirks.servers import (
         test_apache_quirks,
         test_ds389_quirks,
@@ -71,7 +70,9 @@ if _TYPE_CHECKING:
         TestsFlextLdifSchemaTransformerNormalizeAttributeName,
     )
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+    from flext_core import FlextTypes
+
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "ACL_TEST_CASES": "tests.unit.quirks.servers.test_ds389_quirks",
     "ATTRIBUTE_TEST_CASES": "tests.unit.quirks.servers.test_novell_quirks",
     "AclScenario": "tests.unit.quirks.servers.test_ds389_quirks",

@@ -12,13 +12,12 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from flext_ldif.services._services import processing_pipeline_service
     from flext_ldif.services._services.processing_pipeline_service import (
         FlextLdifProcessingPipelineService,
     )
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "FlextLdifProcessingPipelineService": "flext_ldif.services._services.processing_pipeline_service",
     "processing_pipeline_service": "flext_ldif.services._services.processing_pipeline_service",
 }

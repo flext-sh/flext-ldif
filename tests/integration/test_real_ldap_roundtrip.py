@@ -27,7 +27,7 @@ from collections.abc import (
 import pytest
 
 from flext_ldif import ldif
-from tests import m, p
+from tests import m, p, t
 
 
 @pytest.fixture
@@ -52,7 +52,7 @@ class TestRealLdapRoundtrip:
         """Verify LDAP → LDIF → LDAP preserves data integrity."""
         unique_username = make_test_username("RoundtripTest")
         original_dn = f"cn={unique_username},{clean_test_ou}"
-        original_attrs: MutableMapping[str, str | MutableSequence[str]] = {
+        original_attrs: t.MutableAttributeMapping = {
             "cn": unique_username,
             "sn": "Test",
             "mail": "roundtrip@example.com",
@@ -62,7 +62,7 @@ class TestRealLdapRoundtrip:
         ldap_connection.add(original_dn, ["person", "inetOrgPerson"], original_attrs)
         ldap_connection.search(original_dn, "(objectClass=*)", attributes=["*"])
         ldap_entry = ldap_connection.entries[0]
-        attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
+        attrs_dict: t.MutableAttributeMapping = {}
         for attr_name in ldap_entry.entry_attributes:
             attr_obj = ldap_entry[attr_name]
             if hasattr(attr_obj, "values"):

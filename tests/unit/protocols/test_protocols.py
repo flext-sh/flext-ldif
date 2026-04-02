@@ -11,10 +11,10 @@ from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
 import pytest
-from flext_core import r
 from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_core import r
 from flext_ldif import (
     FlextLdifProtocols,
     FlextLdifServer,

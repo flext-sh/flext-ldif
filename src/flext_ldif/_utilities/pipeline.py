@@ -6,7 +6,6 @@ from collections.abc import Callable, MutableMapping, MutableSequence
 from typing import ClassVar, Self, override
 
 from flext_core import r
-
 from flext_ldif import FlextLdifUtilitiesTransformer, m
 
 

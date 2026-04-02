@@ -14,16 +14,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from pathlib import Path
 from typing import TypeVar
 
-from flext_core import r
 from flext_tests import (
     tm as _base_tm,
     tv as _base_tv,
 )
 
+from flext_core import r
 from flext_ldif import FlextLdifEntries, ldif
 from tests import m, t
 
@@ -76,8 +76,8 @@ class TestsFlextLdifMatchers(_base_tm):
         dn_ends: str | None = None,
         has_attr: str | t.StrSequence | None = None,
         not_has_attr: str | t.StrSequence | None = None,
-        attr_equals: Mapping[str, str | t.StrSequence] | None = None,
-        attr_contains: Mapping[str, str | t.StrSequence] | None = None,
+        attr_equals: t.Ldif.AttributeDictGeneric | None = None,
+        attr_contains: t.Ldif.AttributeDictGeneric | None = None,
         has_oc: str | t.StrSequence | None = None,
         not_has_oc: str | t.StrSequence | None = None,
         attr_count: int | None = None,
@@ -445,8 +445,8 @@ class TestsFlextLdifMatchers(_base_tm):
         dn_ends: str | None = None,
         has_attr: str | t.StrSequence | None = None,
         not_has_attr: str | t.StrSequence | None = None,
-        attr_equals: Mapping[str, str | t.StrSequence] | None = None,
-        attr_contains: Mapping[str, str | t.StrSequence] | None = None,
+        attr_equals: t.Ldif.AttributeDictGeneric | None = None,
+        attr_contains: t.Ldif.AttributeDictGeneric | None = None,
         has_oc: str | t.StrSequence | None = None,
         not_has_oc: str | t.StrSequence | None = None,
         attr_count: int | None = None,
@@ -621,7 +621,7 @@ class TestsFlextLdifFixtures(_base_tt):
 
         """
         service = FlextLdifEntries()
-        attrs_typed: MutableMapping[str, str | MutableSequence[str]] = {
+        attrs_typed: t.MutableAttributeMapping = {
             k: ([v] if isinstance(v, str) else list(v)) for k, v in attributes.items()
         }
         result = service.create_entry(dn=dn, attributes=attrs_typed)
@@ -633,7 +633,7 @@ class TestsFlextLdifFixtures(_base_tt):
     @classmethod
     def create_entries(
         cls,
-        entries_data: Sequence[tuple[str, Mapping[str, str | t.StrSequence]]],
+        entries_data: Sequence[tuple[str, t.Ldif.AttributeDictGeneric]],
     ) -> Sequence[m.Ldif.Entry]:
         """Create multiple test entries.
 

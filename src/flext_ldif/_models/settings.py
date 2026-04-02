@@ -12,9 +12,9 @@ from __future__ import annotations
 from collections.abc import Callable, MutableMapping, MutableSequence
 from typing import TYPE_CHECKING, Annotated, ClassVar, Literal
 
-from flext_core import FlextModels, r
 from pydantic import ConfigDict, Field
 
+from flext_core import FlextModels, r
 from flext_ldif import c, p, t
 
 if TYPE_CHECKING:

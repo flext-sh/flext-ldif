@@ -17,7 +17,6 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from tests.integration import (
         conftest,
         test_acl_metadata_preservation,
@@ -209,7 +208,7 @@ if _TYPE_CHECKING:
         TestSchemaDeviationsXOrigin,
     )
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "APIScenarios": "tests.integration.test_api_integration",
     "ConfigTestData": "tests.integration.test_config_integration",
     "TestAclRoundTripPreservation": "tests.integration.test_acl_metadata_preservation",

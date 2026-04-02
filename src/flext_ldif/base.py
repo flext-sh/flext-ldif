@@ -7,7 +7,6 @@ from collections.abc import Sequence
 from typing import override
 
 from flext_core import FlextService, FlextSettings, FlextTypes
-
 from flext_ldif import FlextLdifSettings, m
 
 

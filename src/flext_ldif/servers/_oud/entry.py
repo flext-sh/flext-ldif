@@ -13,7 +13,6 @@ from collections.abc import Callable, Mapping, MutableMapping, MutableSequence
 from typing import override
 
 from flext_core import FlextLogger, r
-
 from flext_ldif import (
     FlextLdifModelsDomains,
     FlextLdifModelsMetadata,
@@ -376,10 +375,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         entry: m.Ldif.Entry,
         corrected_data: MutableMapping[
             str,
-            t.Scalar
-            | MutableSequence[str]
-            | MutableMapping[str, str | MutableSequence[str]]
-            | None,
+            t.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ],
         syntax_corrections: MutableSequence[str] | MutableMapping[str, str] | None,
     ) -> r[m.Ldif.Entry]:
@@ -420,11 +416,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         corrected_data = corrected_result.value
         corrected_data_typed: MutableMapping[
             str,
-            t.Scalar
-            | MutableSequence[str]
-            | MutableMapping[str, str | MutableSequence[str]]
-            | None,
-        ] = dict(corrected_data)
+            t.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
+        ] = {k: list(v) for k, v in corrected_data.items()}
         syntax_corrections_raw = corrected_data_typed.get("syntax_corrections")
         syntax_corrections_typed: (
             MutableSequence[str] | MutableMapping[str, str] | None
@@ -1379,7 +1372,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _find_aci_in_dict(
         self,
-        attrs: Mapping[str, MutableSequence[str] | str] | None,
+        attrs: t.AttributeMapping | None,
     ) -> MutableSequence[str] | str | None:
         """Find ACI value in dictionary (case-insensitive)."""
         if not attrs:
@@ -1394,7 +1387,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _find_aci_values(
         self,
         entry: m.Ldif.Entry,
-        original_attrs: Mapping[str, MutableSequence[str] | str],
+        original_attrs: t.AttributeMapping,
     ) -> MutableSequence[str] | str | None:
         """Find ACI values from entry or original_attrs."""
         aci_values: MutableSequence[str] | str | None = None
@@ -1449,7 +1442,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         self,
         entry: m.Ldif.Entry,
         original_dn: str,
-        original_attrs: Mapping[str, MutableSequence[str] | str],
+        original_attrs: t.AttributeMapping,
     ) -> r[m.Ldif.Entry]:
         """Hook: Process ACLs and propagate their extensions to entry metadata.
 

@@ -12,7 +12,6 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from flext_ldif._utilities import (
         acl,
         attribute,
@@ -61,7 +60,7 @@ if _TYPE_CHECKING:
     from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
     from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters, logger
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "FlextLdifUtilitiesACL": "flext_ldif._utilities.acl",
     "FlextLdifUtilitiesAttribute": "flext_ldif._utilities.attribute",
     "FlextLdifUtilitiesCollectionLdif": "flext_ldif._utilities.collection_ldif",

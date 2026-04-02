@@ -12,7 +12,6 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from tests.unit.services import test_migration_pipeline, test_quirks_standardization
     from tests.unit.services.test_migration_pipeline import (
         TestsTestFlextLdifMigrationPipeline,
@@ -24,7 +23,7 @@ if _TYPE_CHECKING:
         TestsFlextLdifQuirksStandardizedConstants,
     )
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "TestAliasDiscovery": "tests.unit.services.test_quirks_standardization",
     "TestQuirksAutoInterchange": "tests.unit.services.test_quirks_standardization",
     "TestQuirksWithRealLdifFixtures": "tests.unit.services.test_quirks_standardization",

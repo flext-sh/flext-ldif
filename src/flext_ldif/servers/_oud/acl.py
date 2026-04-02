@@ -8,7 +8,6 @@ from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import ClassVar, Self, override
 
 from flext_core import FlextLogger, r
-
 from flext_ldif import (
     FlextLdifModelsDomains,
     FlextLdifModelsMetadata,
@@ -47,7 +46,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         **kwargs: t.Scalar,
     ) -> None:
         """Initialize OUD ACL quirk."""
-        filtered_kwargs: MutableMapping[str, str | float | bool] = {
+        filtered_kwargs: t.MutableConfigValueMapping = {
             k: v
             for k, v in kwargs.items()
             if k != "_parent_quirk" and isinstance(v, (str, float, bool))

@@ -29,10 +29,10 @@ from typing import (
 )
 
 import pytest
-from flext_core import FlextLogger, FlextSettings, r
 from flext_ldap import FlextLdapUtilities as ldap_u
 from flext_tests import tk
 
+from flext_core import FlextLogger, FlextSettings, r
 from flext_ldif import (
     FlextLdifParser,
     FlextLdifServer,
@@ -140,7 +140,7 @@ class FlextLdifTestConftest:
         connection: p.Ldap.Ldap3Connection,
         dn: str,
         object_class: Sequence[str],
-        attributes: Mapping[str, str | Sequence[str]],
+        attributes: t.Ldif.AttributeDictGeneric,
     ) -> bool:
         add_method = getattr(connection, "add", None)
         if callable(add_method):

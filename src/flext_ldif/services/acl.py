@@ -6,7 +6,6 @@ from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import override
 
 from flext_core import FlextLogger
-
 from flext_ldif import (
     FlextLdifModelsDomains,
     FlextLdifServer,

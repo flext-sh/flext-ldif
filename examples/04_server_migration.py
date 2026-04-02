@@ -19,7 +19,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_core import r
-
 from flext_ldif import ldif, m, t, u
 
 

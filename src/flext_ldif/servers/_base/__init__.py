@@ -12,7 +12,6 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from flext_ldif.servers._base import acl, constants, entry, schema
     from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
     from flext_ldif.servers._base.constants import (
@@ -23,7 +22,7 @@ if _TYPE_CHECKING:
     from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
     from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema, logger
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "FlextLdifQuirkMethodsMixin": "flext_ldif.servers._base.constants",
     "FlextLdifServersBaseConstants": "flext_ldif.servers._base.constants",
     "FlextLdifServersBaseEntry": "flext_ldif.servers._base.entry",

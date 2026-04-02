@@ -8,9 +8,9 @@ from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, 
 from datetime import datetime
 from typing import TypeIs, TypeVar
 
-from flext_core import FlextLogger, r, u
 from pydantic import BaseModel
 
+from flext_core import FlextLogger, r, u
 from flext_ldif import (
     FlextLdifUtilitiesOID,
     FlextLdifUtilitiesParser,
@@ -1101,7 +1101,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def replace_invalid_substr_rule(
         substr: str | None,
-        invalid_rules: MutableMapping[str, str | None],
+        invalid_rules: t.MutableOptionalStrMapping,
     ) -> str | None:
         """Replace invalid SUBSTR rule with valid replacement."""
         if not substr or not invalid_rules:

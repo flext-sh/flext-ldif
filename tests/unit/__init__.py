@@ -12,7 +12,6 @@ from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from tests.unit import (
         constants,
         protocols,
@@ -109,7 +108,7 @@ if _TYPE_CHECKING:
         test_utilities_core,
     )
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
     (
         "tests.unit.__init__",
         "tests.unit.constants",

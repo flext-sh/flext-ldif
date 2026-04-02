@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Final
 
-from flext_core import r
 from pydantic import TypeAdapter, ValidationError
 
+from flext_core import r
 from flext_ldif import p, t
 
 

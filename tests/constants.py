@@ -28,10 +28,10 @@ from collections.abc import (
 from pathlib import Path
 from typing import Final
 
-from flext_core import r
 from flext_tests import FlextTestsConstants
 from pydantic import BaseModel
 
+from flext_core import r
 from flext_ldif import (
     FlextLdifConstants,
     FlextLdifEntries,
@@ -621,7 +621,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             @staticmethod
             def test_entry_create_and_unwrap(
                 dn: str,
-                attributes: MutableMapping[str, str | MutableSequence[str]],
+                attributes: t.MutableAttributeMapping,
             ) -> m.Ldif.Entry:
                 """Create an entry and unwrap the result.
 
@@ -811,8 +811,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             @staticmethod
             def test_create_entry_and_unwrap(
                 dn: str,
-                attributes: MutableMapping[str, str | MutableSequence[str]]
-                | None = None,
+                attributes: t.MutableAttributeMapping | None = None,
             ) -> m.Ldif.Entry:
                 """Create an entry and unwrap the result.
 
@@ -1342,7 +1341,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             @staticmethod
             def test_create_entry(
                 dn: str,
-                attributes: MutableMapping[str, str | MutableSequence[str]],
+                attributes: t.MutableAttributeMapping,
             ) -> m.Ldif.Entry:
                 """Create an entry for testing.
 
@@ -1480,7 +1479,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     dn = str(data.get("dn", ""))
                     raw_attributes = data.get("attributes", {})
                     if not isinstance(raw_attributes, dict):
-                        attributes: MutableMapping[str, str | MutableSequence[str]] = {}
+                        attributes: t.MutableAttributeMapping = {}
                     else:
                         attributes = {
                             str(k): (

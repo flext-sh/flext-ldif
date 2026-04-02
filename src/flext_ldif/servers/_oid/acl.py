@@ -7,9 +7,9 @@ import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import ClassVar, Literal, override
 
-from flext_core import FlextLogger, r
 from pydantic import RootModel
 
+from flext_core import FlextLogger, r
 from flext_ldif import (
     FlextLdifModelsDomains,
     FlextLdifModelsMetadata,
@@ -164,10 +164,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         | t.MutableConfigurationMapping
         | MutableMapping[
             str,
-            t.Scalar
-            | MutableSequence[str]
-            | MutableMapping[str, str | MutableSequence[str]]
-            | None,
+            t.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ]
         | str
         | None,
@@ -271,10 +268,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         metadata: m.Ldif.QuirkMetadata
         | MutableMapping[
             str,
-            t.Scalar
-            | MutableSequence[str]
-            | MutableMapping[str, str | MutableSequence[str]]
-            | None,
+            t.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ]
         | None,
     ) -> MutableSequence[str]:
@@ -331,10 +325,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         metadata: m.Ldif.QuirkMetadata
         | MutableMapping[
             str,
-            t.Scalar
-            | MutableSequence[str]
-            | MutableMapping[str, str | MutableSequence[str]]
-            | None,
+            t.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ],
     ) -> MutableMapping[str, t.Scalar | MutableSequence[str] | None]:
         """Extract extensions dict from metadata, converting types if needed."""
@@ -631,10 +622,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         metadata: m.Ldif.QuirkMetadata
         | MutableMapping[
             str,
-            t.Scalar
-            | MutableSequence[str]
-            | MutableMapping[str, str | MutableSequence[str]]
-            | None,
+            t.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ]
         | None,
     ) -> tuple[str, str]:

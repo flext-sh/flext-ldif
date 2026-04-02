@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
 from typing import ClassVar, Self, overload, override
 
-from flext_core import FlextLogger
 from pydantic import ConfigDict
 
+from flext_core import FlextLogger
 from flext_ldif import (
     FlextLdifModelsResults,
     FlextLdifServersBaseEntry,
@@ -103,7 +103,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     def __new__(cls, **kwargs: t.Scalar) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         instance: Self = object.__new__(cls)
-        filtered_kwargs: MutableMapping[str, str | float | bool] = {}
+        filtered_kwargs: t.MutableConfigValueMapping = {}
         execute_kwargs: t.MutableContainerMapping = {}
         for k, v in kwargs.items():
             value = v

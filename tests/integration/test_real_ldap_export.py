@@ -18,7 +18,6 @@ from __future__ import annotations
 
 from collections.abc import (
     Callable,
-    MutableMapping,
     MutableSequence,
 )
 from pathlib import Path
@@ -26,7 +25,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import ldif
-from tests import m, p
+from tests import m, p, t
 
 
 @pytest.fixture
@@ -68,7 +67,7 @@ class TestRealLdapExport:
         )
         assert len(ldap_connection.entries) == 1
         ldap_entry = ldap_connection.entries[0]
-        attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
+        attrs_dict: t.MutableAttributeMapping = {}
         for attr_name in ldap_entry.entry_attributes:
             attr_obj = ldap_entry[attr_name]
             values: list[str] = [v.decode("utf-8") for v in attr_obj.raw_values]
@@ -113,7 +112,7 @@ class TestRealLdapExport:
         assert len(ldap_connection.entries) == 5
         entries: MutableSequence[m.Ldif.Entry] = []
         for entry in ldap_connection.entries:
-            attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
+            attrs_dict: t.MutableAttributeMapping = {}
             for attr_name in entry.entry_attributes:
                 attr_obj = entry[attr_name]
                 if hasattr(attr_obj, "raw_values"):
@@ -189,7 +188,7 @@ class TestRealLdapExport:
         )
         entries: MutableSequence[m.Ldif.Entry] = []
         for entry in ldap_connection.entries:
-            attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
+            attrs_dict: t.MutableAttributeMapping = {}
             for attr_name in entry.entry_attributes:
                 attr_obj = entry[attr_name]
                 if hasattr(attr_obj, "raw_values"):
@@ -251,7 +250,7 @@ class TestRealLdapExport:
         )
         ldap_connection.search(person_dn, "(objectClass=*)", attributes=["*"])
         ldap_entry = ldap_connection.entries[0]
-        attrs_dict: MutableMapping[str, str | MutableSequence[str]] = {}
+        attrs_dict: t.MutableAttributeMapping = {}
         for attr_name in ldap_entry.entry_attributes:
             attr_obj = ldap_entry[attr_name]
             if hasattr(attr_obj, "values"):

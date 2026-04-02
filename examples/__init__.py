@@ -11,12 +11,11 @@ from typing import TYPE_CHECKING as _TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
-    from flext_core import FlextTypes
-
     from examples import demo_structured_migration
     from examples.demo_structured_migration import main
+    from flext_core import FlextTypes
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "demo_structured_migration": "examples.demo_structured_migration",
     "main": "examples.demo_structured_migration",
 }

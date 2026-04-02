@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING as _TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
-    from flext_core import FlextTypes
     from tests.unit._utilities.server import test_server_utilities
     from tests.unit._utilities.server.test_server_utilities import (
         OidServer,
@@ -19,7 +18,9 @@ if _TYPE_CHECKING:
         TestFlextLdifUtilitiesServer,
     )
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+    from flext_core import FlextTypes
+
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "OidServer": "tests.unit._utilities.server.test_server_utilities",
     "OudServer": "tests.unit._utilities.server.test_server_utilities",
     "TestFlextLdifUtilitiesServer": "tests.unit._utilities.server.test_server_utilities",

@@ -12,7 +12,6 @@ from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from flext_ldif.servers import (
         _base,
         _oid,
@@ -77,7 +76,7 @@ if _TYPE_CHECKING:
     from flext_ldif.servers.rfc import FlextLdifServersRfc
     from flext_ldif.servers.tivoli import FlextLdifServersTivoli
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
     (
         "flext_ldif.servers._base",
         "flext_ldif.servers._oid",
