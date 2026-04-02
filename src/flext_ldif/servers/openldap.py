@@ -83,7 +83,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS | frozenset(["auth"])
         )
         ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["x_origin", "ordering"])
-        OBJECTCLASS_REQUIREMENTS: ClassVar[MutableMapping[str, bool]] = {
+        OBJECTCLASS_REQUIREMENTS: ClassVar[t.MutableBoolMapping] = {
             "requires_sup_for_auxiliary": True,
             "allows_multiple_sup": True,
             "requires_explicit_structural": False,
@@ -429,7 +429,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: MutableMapping[str, MutableSequence[str]],
+            attributes: t.MutableStrSequenceMapping,
         ) -> bool:
             """Check if this quirk should handle the entry (PRIVATE)."""
             if not entry_dn:

@@ -191,7 +191,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
 
     @staticmethod
     def _merge_category_from_constants(
-        category_map: MutableMapping[str, frozenset[str]],
+        category_map: t.MutableFrozensetMapping,
         server_map: MutableMapping[str, frozenset[str] | str],
         *,
         override_existing: bool,
@@ -206,7 +206,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
 
     @staticmethod
     def _merge_one_category(
-        category_map: MutableMapping[str, frozenset[str]],
+        category_map: t.MutableFrozensetMapping,
         key_str: str,
         value: frozenset[str] | str,
         *,
@@ -230,7 +230,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
             return categories
         filtered = m.Ldif.FlexibleCategories()
         excluded_entries: MutableSequence[m.Ldif.Entry] = []
-        filterable_categories: MutableMapping[str, bool] = {
+        filterable_categories: t.MutableBoolMapping = {
             c.Ldif.Category.HIERARCHY: True,
             c.Ldif.Category.USERS: True,
             c.Ldif.Category.GROUPS: True,
@@ -521,7 +521,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         """Filter schema entries by OID whitelist."""
         if not self._schema_whitelist_rules:
             return r[MutableSequence[m.Ldif.Entry]].ok(schema_entries)
-        allowed_oids: MutableMapping[str, frozenset[str]] = {
+        allowed_oids: t.MutableFrozensetMapping = {
             "allowed_attribute_oids": frozenset(
                 self._schema_whitelist_rules.allowed_attribute_oids,
             ),
@@ -562,7 +562,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         }
         if entry.attributes is None:
             return False
-        attrs_dict: MutableMapping[str, MutableSequence[str]] = (
+        attrs_dict: t.MutableStrSequenceMapping = (
             entry.attributes.attributes
             if hasattr(entry.attributes, "attributes")
             else {}
@@ -637,9 +637,9 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
     def _build_category_map_from_rules(
         self,
         rules: m.Ldif.CategoryRules,
-    ) -> MutableMapping[str, frozenset[str]]:
+    ) -> t.MutableFrozensetMapping:
         """Build category map from rules."""
-        category_map: MutableMapping[str, frozenset[str]] = {}
+        category_map: t.MutableFrozensetMapping = {}
         if rules.hierarchy_objectclasses:
             mapped = u.map(rules.hierarchy_objectclasses, mapper=lambda oc: oc.lower())
             category_map[c.Ldif.Category.HIERARCHY] = frozenset(mapped)
@@ -728,7 +728,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         self,
         entry: m.Ldif.Entry,
         priority_order: MutableSequence[str],
-        category_map: MutableMapping[str, frozenset[str]],
+        category_map: t.MutableFrozensetMapping,
     ) -> tuple[str, str | None]:
         """Match entry to category using priority order and category map."""
         entry_ocs = {oc.lower() for oc in entry.get_objectclass_names()}
@@ -749,14 +749,14 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
 
     def _merge_server_constants_to_map(
         self,
-        category_map: MutableMapping[str, frozenset[str]],
+        category_map: t.MutableFrozensetMapping,
         constants: type[FlextLdifServersBaseConstants],
         *,
         override_existing: bool = False,
-    ) -> MutableMapping[str, frozenset[str]]:
+    ) -> t.MutableFrozensetMapping:
         """Merge server constants into category map."""
-        empty_category_map: MutableMapping[str, frozenset[str]] = {}
-        category_objectclasses: MutableMapping[str, frozenset[str]] = getattr(
+        empty_category_map: t.MutableFrozensetMapping = {}
+        category_objectclasses: t.MutableFrozensetMapping = getattr(
             constants,
             "CATEGORY_OBJECTCLASSES",
             empty_category_map,

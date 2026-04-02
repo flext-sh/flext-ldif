@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from contextlib import suppress
 from pathlib import Path
 from typing import override
@@ -185,7 +185,7 @@ class FlextLdifWriter(FlextLdifWriterMixin, s[m.Ldif.WriteResponse]):
         params: t.ValueOrModel | None = None,
     ) -> r[m.Ldif.WriteResponse]:
         """Execute write operation with parameters."""
-        params_mapping: MutableMapping[str, t.NormalizedValue] = {}
+        params_mapping: t.MutableContainerMapping = {}
         if isinstance(params, Mapping):
             params_mapping = {str(k): v for k, v in params.items()}
         params_data = params_mapping

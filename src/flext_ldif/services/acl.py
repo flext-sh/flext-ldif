@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import Mapping, MutableSequence
 from typing import override
 
 from flext_core import FlextLogger
@@ -15,6 +15,7 @@ from flext_ldif import (
     m,
     r,
     s,
+    t,
     u,
 )
 
@@ -57,7 +58,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
     @staticmethod
     def evaluate_acl_context(
         acls: MutableSequence[m.Ldif.Acl],
-        required_permissions: m.Ldif.AclPermissions | MutableMapping[str, bool],
+        required_permissions: m.Ldif.AclPermissions | t.MutableBoolMapping,
     ) -> r[m.Ldif.AclEvaluationResult]:
         """Evaluate if ACLs grant required permissions."""
         if isinstance(required_permissions, Mapping):

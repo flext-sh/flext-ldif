@@ -220,7 +220,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _extract_field_order(
         definition: str,
-    ) -> tuple[MutableSequence[str], MutableMapping[str, int]]:
+    ) -> tuple[MutableSequence[str], t.MutableIntMapping]:
         """Extract field order and positions."""
         field_patterns = {
             "OID": "\\(\\s*([0-9.]+)",
@@ -236,7 +236,7 @@ class FlextLdifUtilitiesMetadata:
             "X-ORIGIN": "X-ORIGIN",
         }
         field_order: MutableSequence[str] = []
-        field_positions: MutableMapping[str, int] = {}
+        field_positions: t.MutableIntMapping = {}
         for field_name, pattern in field_patterns.items():
             match = re.search(pattern, definition, re.IGNORECASE)
             if match:
@@ -245,9 +245,9 @@ class FlextLdifUtilitiesMetadata:
         return (field_order, field_positions)
 
     @staticmethod
-    def _extract_leading_trailing_spaces(definition: str) -> MutableMapping[str, str]:
+    def _extract_leading_trailing_spaces(definition: str) -> t.MutableStrMapping:
         """Extract leading and trailing spaces."""
-        details: MutableMapping[str, str] = {}
+        details: t.MutableStrMapping = {}
         trailing_match = re.search(r"\)\s*$", definition)
         details["trailing_spaces"] = (
             definition[trailing_match.end() :] if trailing_match else ""
@@ -370,9 +370,9 @@ class FlextLdifUtilitiesMetadata:
         return details
 
     @staticmethod
-    def _extract_oid_details(definition: str) -> MutableMapping[str, str]:
+    def _extract_oid_details(definition: str) -> t.MutableStrMapping:
         """Extract OID and spacing details."""
-        details: MutableMapping[str, str] = {}
+        details: t.MutableStrMapping = {}
         oid_match = re.search(r"\(\s*([0-9.]+)(\s*)", definition)
         if oid_match:
             details["oid_value"] = oid_match.group(1)
@@ -380,9 +380,9 @@ class FlextLdifUtilitiesMetadata:
         return details
 
     @staticmethod
-    def _extract_prefix_details(definition: str) -> MutableMapping[str, str]:
+    def _extract_prefix_details(definition: str) -> t.MutableStrMapping:
         """Extract attribute/ObjectClass prefix details."""
-        details: MutableMapping[str, str] = {}
+        details: t.MutableStrMapping = {}
         if "attributetypes:" in definition.lower():
             attr_match = re.search(
                 r"(attributetypes|attributeTypes):",
@@ -435,11 +435,11 @@ class FlextLdifUtilitiesMetadata:
     def _extract_spacing_between_fields(
         definition: str,
         field_order: MutableSequence[str],
-        field_positions: MutableMapping[str, int],
-        field_patterns: MutableMapping[str, str],
-    ) -> MutableMapping[str, str]:
+        field_positions: t.MutableIntMapping,
+        field_patterns: t.MutableStrMapping,
+    ) -> t.MutableStrMapping:
         """Extract spacing between fields."""
-        spacing_between: MutableMapping[str, str] = {}
+        spacing_between: t.MutableStrMapping = {}
         for i in range(len(field_order) - 1):
             field1 = field_order[i]
             field2 = field_order[i + 1]
@@ -810,7 +810,7 @@ class FlextLdifUtilitiesMetadata:
         if write_opts is None:
             return None
         key = c.Ldif.WRITE_OPTIONS
-        raw_extras: MutableMapping[str, t.NormalizedValue] | None = None
+        raw_extras: t.MutableContainerMapping | None = None
         if isinstance(write_opts, BaseModel):
             model_extra_val = write_opts.model_extra
             if isinstance(model_extra_val, dict):

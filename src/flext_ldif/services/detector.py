@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import re
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 from pathlib import Path
 from typing import override
 
-from flext_ldif import FlextLdifServer, m, p, r, s, u
+from flext_ldif import FlextLdifServer, m, p, r, s, t, u
 
 
 class FlextLdifDetectorMixin:
@@ -124,9 +124,9 @@ class FlextLdifDetectorMixin:
             return result.value
         return "rfc"
 
-    def _calculate_scores(self, content: str) -> MutableMapping[str, int]:
+    def _calculate_scores(self, content: str) -> t.MutableIntMapping:
         """Calculate detection scores for each server type."""
-        scores: MutableMapping[str, int] = dict.fromkeys(
+        scores: t.MutableIntMapping = dict.fromkeys(
             self._get_all_server_types(),
             0,
         )
@@ -225,7 +225,7 @@ class FlextLdifDetectorMixin:
 
     def _determine_server_type(
         self,
-        scores: MutableMapping[str, int],
+        scores: t.MutableIntMapping,
     ) -> tuple[str, float]:
         """Determine the most likely server type from scores."""
         if not scores:
@@ -241,7 +241,7 @@ class FlextLdifDetectorMixin:
             return ("rfc", confidence)
         if detected_key == "generic":
             return ("rfc", confidence)
-        server_type_map: MutableMapping[str, str] = {
+        server_type_map: t.MutableStrMapping = {
             "oid": "oid",
             "oud": "oud",
             "openldap": "openldap",
@@ -432,7 +432,7 @@ class FlextLdifDetectorMixin:
         constants: type[p.Ldif.ServerDetectionConstants] | None,
         content: str,
         content_lower: str,
-        scores: MutableMapping[str, int],
+        scores: t.MutableIntMapping,
         *,
         case_sensitive: bool = False,
     ) -> None:
@@ -459,7 +459,7 @@ class FlextLdifDetectorMixin:
         server_type: str,
         constants: type[p.Ldif.ServerDetectionConstants] | None,
         content_lower: str,
-        scores: MutableMapping[str, int],
+        scores: t.MutableIntMapping,
         *,
         pattern_attr: str = "DETECTION_PATTERN",
     ) -> None:
@@ -479,7 +479,7 @@ class FlextLdifDetectorMixin:
         attributes: MutableSequence[str] | frozenset[str],
         content: str,
         content_lower: str,
-        scores: MutableMapping[str, int],
+        scores: t.MutableIntMapping,
         *,
         case_sensitive: bool = False,
         objectclasses: MutableSequence[str] | frozenset[str] | None = None,

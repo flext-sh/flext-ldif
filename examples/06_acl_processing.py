@@ -14,9 +14,7 @@ All functionality accessed through ldif facade and FlextLdifAcl service.
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
-
-from flext_ldif import FlextLdifAcl, ldif, m
+from flext_ldif import FlextLdifAcl, ldif, m, t
 
 
 def _get_acl_service() -> FlextLdifAcl:
@@ -60,7 +58,7 @@ def parse_and_evaluate_acls() -> None:
         return
     acl_response = acl_result.value
     acls = acl_response.acls
-    required_perms: MutableMapping[str, bool] = {"read": True, "write": True}
+    required_perms: t.MutableBoolMapping = {"read": True, "write": True}
     evaluation_result = acl_service.evaluate_acl_context(acls, required_perms)
     if evaluation_result.is_success:
         _ = evaluation_result.value
@@ -121,7 +119,7 @@ def acl_pipeline() -> None:
         return
     acl_response = acl_result.value
     acls = acl_response.acls
-    required_perms: MutableMapping[str, bool] = {"read": True}
+    required_perms: t.MutableBoolMapping = {"read": True}
     eval_result = acl_service.evaluate_acl_context(acls, required_perms)
     if eval_result.is_success:
         api.validate_entries([entry])

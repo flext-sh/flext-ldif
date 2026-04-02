@@ -139,7 +139,7 @@ class FlextLdifTestConftest:
     def _ldap_add(
         connection: p.Ldap.Ldap3Connection,
         dn: str,
-        object_class: Sequence[str],
+        object_class: t.StrSequence,
         attributes: t.Ldif.AttributeDictGeneric,
     ) -> bool:
         add_method = getattr(connection, "add", None)
@@ -555,10 +555,10 @@ class FlextLdifTestConftest:
 
     def validate_flext_result_success(
         self,
-    ) -> Callable[..., Mapping[str, bool]]:
+    ) -> Callable[..., t.BoolMapping]:
         """Validate success result."""
 
-        def validator(result: r[t.NormalizedValue]) -> Mapping[str, bool]:
+        def validator(result: r[t.NormalizedValue]) -> t.BoolMapping:
             return {
                 "is_success": result.is_success,
                 "has_value": result.is_success and result.value is not None,
@@ -571,10 +571,10 @@ class FlextLdifTestConftest:
 
     def validate_flext_result_failure(
         self,
-    ) -> Callable[..., Mapping[str, bool]]:
+    ) -> Callable[..., t.BoolMapping]:
         """Validate failure result."""
 
-        def validator(result: r[t.NormalizedValue]) -> Mapping[str, bool]:
+        def validator(result: r[t.NormalizedValue]) -> t.BoolMapping:
             return {
                 "is_failure": result.is_failure,
                 "has_error": result.error is not None,
@@ -633,7 +633,7 @@ class FlextLdifTestConftest:
         self,
     ) -> Mapping[
         str,
-        Mapping[str, str | Callable[[str | float | None], str] | Mapping[str, str]],
+        Mapping[str, str | Callable[[str | float | None], str] | t.StrMapping],
     ]:
         """Transformation rules."""
 

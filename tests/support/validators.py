@@ -53,7 +53,7 @@ class TestValidators:
     @staticmethod
     def validate_ldif_entry(
         entry: p.Entry,
-    ) -> Mapping[str, bool]:
+    ) -> t.BoolMapping:
         """Validate a real LDIF entry t.NormalizedValue.
 
         Args:
@@ -74,7 +74,7 @@ class TestValidators:
     @staticmethod
     def validate_result_success(
         result: r[t.Ldif.RecursiveContainer],
-    ) -> Mapping[str, bool]:
+    ) -> t.BoolMapping:
         """Validate r success characteristics."""
         return {
             "is_success": result.is_success,

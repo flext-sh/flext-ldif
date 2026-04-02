@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping, MutableSequence
+from collections.abc import Callable, MutableSequence
 from typing import ClassVar, Self, override
 
 from flext_core import r
-from flext_ldif import FlextLdifUtilitiesTransformer, m
+from flext_ldif import FlextLdifUtilitiesTransformer, m, t
 
 
 class FlextLdifUtilitiesPipeline:
@@ -221,7 +221,7 @@ class FlextLdifUtilitiesPipeline:
             if entry.attributes is None:
                 errors.append("Entry has no attributes (RFC 2849 violation)")
             else:
-                attrs: MutableMapping[str, MutableSequence[str]] = (
+                attrs: t.MutableStrSequenceMapping = (
                     entry.attributes.attributes
                     if getattr(entry.attributes, "attributes", None) is not None
                     else {}

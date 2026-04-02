@@ -59,12 +59,12 @@ class FlextLdifTypes(FlextTypes):
             ]
         )
 
-        type ValueType = Scalar | Sequence[str]
+        type ValueType = Scalar | t.StrSequence
         type ValueList = Sequence[ValueType]
         type AttributeValue = str | bytes
-        type EntryAttributesDict = Mapping[str, Sequence[str]]
-        type MutableEntryAttributesDict = MutableMapping[str, MutableSequence[str]]
-        type RawEntryDict = Mapping[str, str | Sequence[str] | AbstractSet[str]]
+        type EntryAttributesDict = t.StrSequenceMapping
+        type MutableEntryAttributesDict = t.MutableStrSequenceMapping
+        type RawEntryDict = Mapping[str, str | t.StrSequence | AbstractSet[str]]
         type MutableRawEntryDict = MutableMapping[
             str, str | MutableSequence[str] | AbstractSet[str]
         ]
@@ -93,18 +93,18 @@ class FlextLdifTypes(FlextTypes):
         ]
 
         type ParseMethodArg = str
-        type ParseMethodReturn = r[FlextTypes.Scalar | Sequence[str] | None]
+        type ParseMethodReturn = r[FlextTypes.Scalar | t.StrSequence | None]
         type ParseMethod = Callable[
             [RecursiveContainer, str],
             ParseMethodReturn,
         ]
         type ParseMethodDecorator = Callable[[ParseMethod], ParseMethod]
-        type WriteMethodArg = FlextTypes.Scalar | Sequence[str] | None
+        type WriteMethodArg = FlextTypes.Scalar | t.StrSequence | None
         type WriteMethodReturn = (
             FlextTypes.Scalar
-            | Sequence[str]
+            | t.StrSequence
             | None
-            | r[FlextTypes.Scalar | Sequence[str] | None]
+            | r[FlextTypes.Scalar | t.StrSequence | None]
         )
         type WriteMethod = Callable[
             [RecursiveContainer, WriteMethodArg],
@@ -113,7 +113,7 @@ class FlextLdifTypes(FlextTypes):
         type WriteMethodDecorator = Callable[[WriteMethod], WriteMethod]
         type SafeMethod = Callable[
             [RecursiveContainer, ParseMethodArg],
-            FlextTypes.Scalar | Sequence[str] | None,
+            FlextTypes.Scalar | t.StrSequence | None,
         ]
         type SafeMethodDecorator = Callable[[SafeMethod], SafeMethod]
 
@@ -121,10 +121,8 @@ class FlextLdifTypes(FlextTypes):
             str, MutableSequence[str] | str | bool | None
         ]
 
-        type DistributionDict = Mapping[str, int]
-        type MutableDistributionDict = MutableMapping[str, int]
-        type AttributeDict = Mapping[str, Sequence[str]]
-        type AttributeDictGeneric = Mapping[str, Sequence[str] | str]
+        type AttributeDict = t.StrSequenceMapping
+        type AttributeDictGeneric = Mapping[str, t.StrSequence | str]
 
         type TemplateValue = FlextTypes.Scalar | None
         type DN = str

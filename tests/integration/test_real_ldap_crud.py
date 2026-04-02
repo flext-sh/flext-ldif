@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
+from collections.abc import Callable, MutableMapping, MutableSequence
 from pathlib import Path
 
 import pytest
@@ -136,7 +136,7 @@ class TestRealLdapBatchOperations:
             object_classes: list[str] = (
                 list(object_classes_raw) if object_classes_raw else []
             )
-            attrs_dict: MutableMapping[str, Sequence[str]] = {}
+            attrs_dict: MutableMapping[str, t.StrSequence] = {}
             assert entry.attributes is not None
             for attr_name, attr_values in entry.attributes.attributes.items():
                 if attr_name.lower() == "objectclass":

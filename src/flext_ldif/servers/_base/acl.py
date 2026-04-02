@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
 from pydantic import Field, ValidationError
@@ -93,12 +93,12 @@ class FlextLdifServersBaseSchemaAcl(
 
     def convert_rfc_acl_to_aci(
         self,
-        rfc_acl_attrs: MutableMapping[str, MutableSequence[str]],
+        rfc_acl_attrs: t.MutableStrSequenceMapping,
         target_server: str,
-    ) -> r[MutableMapping[str, MutableSequence[str]]]:
+    ) -> r[t.MutableStrSequenceMapping]:
         """Convert RFC ACL format to server-specific ACI format."""
         _ = target_server
-        return r[MutableMapping[str, MutableSequence[str]]].ok(rfc_acl_attrs)
+        return r[t.MutableStrSequenceMapping].ok(rfc_acl_attrs)
 
     def create_metadata(
         self,
@@ -284,7 +284,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _resolve_data(
         self,
         data: str | m.Ldif.Acl | None,
-        kwargs: Mapping[str, t.NormalizedValue],
+        kwargs: t.ContainerMapping,
     ) -> str | m.Ldif.Acl | None:
         """Resolve data from parameter or kwargs."""
         if data is not None:
@@ -295,7 +295,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _resolve_operation(
         self,
         operation: str | None,
-        kwargs: Mapping[str, t.NormalizedValue],
+        kwargs: t.ContainerMapping,
     ) -> str | None:
         """Resolve operation from parameter or kwargs."""
         if operation is not None:

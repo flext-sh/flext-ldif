@@ -98,13 +98,13 @@ class TestsFlextLdifCommonDictionaryTypes:
 
     def test_distribution_dict_with_entry_counts(self) -> None:
         """DistributionDict must work with entry type statistics."""
-        dist: t.Ldif.DistributionDict = self.SAMPLE_DISTRIBUTION
+        dist: t.IntMapping = self.SAMPLE_DISTRIBUTION
         tm.that(dist[c.Ldif.Names.INETORGPERSON], eq=1245)
         tm.that(sum(dist.values()), eq=1371)
 
     def test_distribution_dict_from_schema_stats(self) -> None:
         """DistributionDict works for schema statistics."""
-        dist: t.Ldif.DistributionDict = {
+        dist: t.IntMapping = {
             "attributeTypes": 156,
             "objectClasses": 78,
             "dITContentRules": 23,
@@ -267,7 +267,7 @@ class TestPhase1StandardizationResults:
             c.Ldif.Names.CN: ["Jane Doe"],
             c.Ldif.Names.OBJECTCLASS: [c.Ldif.Names.PERSON, c.Ldif.Names.INETORGPERSON],
         }
-        distribution: t.Ldif.DistributionDict = {
+        distribution: t.IntMapping = {
             c.Ldif.Names.INETORGPERSON: 2,
             c.Ldif.Names.PERSON: 1,
         }

@@ -306,7 +306,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             r[Entry] - entry with corrected syntax, fail() if syntax errors
 
         """
-        attrs_dict_raw: MutableMapping[str, MutableSequence[str]] = (
+        attrs_dict_raw: t.MutableStrSequenceMapping = (
             entry.attributes.attributes if entry.attributes else {}
         )
         attrs_dict: t.Ldif.AttributeDict = {
@@ -377,13 +377,13 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             str,
             t.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ],
-        syntax_corrections: MutableSequence[str] | MutableMapping[str, str] | None,
+        syntax_corrections: MutableSequence[str] | t.MutableStrMapping | None,
     ) -> r[m.Ldif.Entry]:
         """Apply syntax corrections to entry."""
         corrected_attrs_raw = corrected_data.get("corrected_attributes")
         if not isinstance(corrected_attrs_raw, Mapping):
             return r[m.Ldif.Entry].ok(entry)
-        attrs_for_model: MutableMapping[str, MutableSequence[str]] = {}
+        attrs_for_model: t.MutableStrSequenceMapping = {}
         for raw_key, raw_value in corrected_attrs_raw.items():
             if isinstance(raw_value, list):
                 attrs_for_model[raw_key] = [str(item) for item in raw_value]
@@ -419,13 +419,13 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             t.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ] = {k: list(v) for k, v in corrected_data.items()}
         syntax_corrections_raw = corrected_data_typed.get("syntax_corrections")
-        syntax_corrections_typed: (
-            MutableSequence[str] | MutableMapping[str, str] | None
-        ) = None
+        syntax_corrections_typed: MutableSequence[str] | t.MutableStrMapping | None = (
+            None
+        )
         if isinstance(syntax_corrections_raw, list):
             syntax_corrections_typed = [str(v) for v in syntax_corrections_raw]
         elif isinstance(syntax_corrections_raw, Mapping):
-            syntax_corrections_dict: MutableMapping[str, str] = {}
+            syntax_corrections_dict: t.MutableStrMapping = {}
             for k, v in syntax_corrections_raw.items():
                 syntax_corrections_dict[str(k)] = str(v)
             syntax_corrections_typed = syntax_corrections_dict
@@ -439,11 +439,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def extract_and_remove_acl_attributes(
-        attributes_dict: MutableMapping[str, MutableSequence[str]],
+        attributes_dict: t.MutableStrSequenceMapping,
         acl_attribute_names: MutableSequence[str],
     ) -> tuple[
-        MutableMapping[str, MutableSequence[str]],
-        MutableMapping[str, MutableSequence[str]],
+        t.MutableStrSequenceMapping,
+        t.MutableStrSequenceMapping,
         set[str],
     ]:
         """Extract ACL attributes and remove from active dict.
@@ -456,8 +456,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             Tuple of (new_attributes_dict, commented_acl_values, hidden_attrs)
 
         """
-        new_attrs: MutableMapping[str, MutableSequence[str]] = dict(attributes_dict)
-        commented_vals: MutableMapping[str, MutableSequence[str]] = {}
+        new_attrs: t.MutableStrSequenceMapping = dict(attributes_dict)
+        commented_vals: t.MutableStrSequenceMapping = {}
         hidden_attrs: set[str] = set()
         for acl_attr in acl_attribute_names:
             if acl_attr in new_attrs:
@@ -474,9 +474,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def update_metadata_with_commented_acls(
         metadata: m.Ldif.QuirkMetadata,
         acl_attribute_names: MutableSequence[str],
-        commented_acl_values: MutableMapping[str, MutableSequence[str]],
+        commented_acl_values: t.MutableStrSequenceMapping,
         hidden_attrs: set[str],
-        entry_attributes_dict: MutableMapping[str, MutableSequence[str]],
+        entry_attributes_dict: t.MutableStrSequenceMapping,
     ) -> m.Ldif.QuirkMetadata:
         """Update metadata with commented ACL information.
 
@@ -554,7 +554,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def can_handle(
         self,
         entry_dn: str,
-        attributes: MutableMapping[str, MutableSequence[str]],
+        attributes: t.MutableStrSequenceMapping,
     ) -> bool:
         """Check if OUD should handle this entry using pattern matching.
 
@@ -645,7 +645,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 )
             entry_after_post: m.Ldif.Entry = post_parse_result.value
             original_dn = entry_after_post.dn.value if entry_after_post.dn else ""
-            original_attrs: MutableMapping[str, MutableSequence[str]] = (
+            original_attrs: t.MutableStrSequenceMapping = (
                 entry_after_post.attributes.attributes
                 if entry_after_post.attributes
                 and entry_after_post.attributes.attributes
@@ -667,7 +667,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def parse_entry(
         self,
         entry_dn: str,
-        entry_attrs: MutableMapping[str, MutableSequence[str]] | m.Ldif.Entry,
+        entry_attrs: t.MutableStrSequenceMapping | m.Ldif.Entry,
     ) -> r[m.Ldif.Entry]:
         """Parse entry with OUD-specific metadata population.
 
@@ -715,7 +715,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             - Oracle OUD LDIF Format: https://docs.oracle.com/cd/E22289_01/html/821-1273/understanding-ldif-files.html
 
         """
-        entry_attrs_dict: MutableMapping[str, MutableSequence[str]] = {}
+        entry_attrs_dict: t.MutableStrSequenceMapping = {}
         if isinstance(entry_attrs, Mapping):
             for key, values in entry_attrs.items():
                 entry_attrs_dict[str(key)] = [str(v) for v in values]
@@ -728,7 +728,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if result.is_failure:
             return result
         entry = result.value
-        original_attribute_case: MutableMapping[str, str] = {}
+        original_attribute_case: t.MutableStrMapping = {}
         if isinstance(entry_attrs, Mapping):
             for attr_name in entry_attrs:
                 original_attribute_case[attr_name.lower()] = attr_name
@@ -883,7 +883,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         acl_attr_names_to_skip: set[str] = set()
         if not entry.metadata:
             return acl_attr_names_to_skip
-        acl_comments_dict: MutableMapping[str, MutableSequence[str]] = {}
+        acl_comments_dict: t.MutableStrSequenceMapping = {}
         self._collect_acl_from_transformations(
             entry,
             acl_comments_dict,
@@ -1073,7 +1073,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _collect_acl_from_extensions(
         self,
         entry: m.Ldif.Entry,
-        acl_comments_dict: MutableMapping[str, MutableSequence[str]],
+        acl_comments_dict: t.MutableStrSequenceMapping,
         acl_attr_names_to_skip: set[str],
     ) -> None:
         """Collect ACL comments from extensions.commented_attribute_values."""
@@ -1106,7 +1106,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _collect_acl_from_transformations(
         self,
         entry: m.Ldif.Entry,
-        acl_comments_dict: MutableMapping[str, MutableSequence[str]],
+        acl_comments_dict: t.MutableStrSequenceMapping,
         acl_attr_names_to_skip: set[str],
     ) -> None:
         """Collect ACL comments from attribute_transformations with SKIP_TO_04."""
@@ -1192,7 +1192,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     ) -> None:
         """Extract ACL metadata from dict extensions."""
         mk = c.Ldif
-        key_mapping: MutableMapping[str, str] = {
+        key_mapping: t.MutableStrMapping = {
             "extop": mk.ACL_EXTOP,
             "ip": mk.ACL_BIND_IP_FILTER,
             "bind_ip": mk.ACL_BIND_IP_FILTER,
@@ -1235,7 +1235,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     ) -> None:
         """Extract ACL metadata from DynamicMetadata extensions."""
         mk = c.Ldif
-        key_mapping: MutableMapping[str, str] = {
+        key_mapping: t.MutableStrMapping = {
             "extop": mk.ACL_EXTOP,
             "ip": mk.ACL_BIND_IP_FILTER,
             "bind_ip": mk.ACL_BIND_IP_FILTER,
@@ -1293,7 +1293,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return
         dn = str(entry_dict.pop("dn"))
         original_entry_dict = dict(entry_dict)
-        entry_attrs: MutableMapping[str, MutableSequence[str]] = {}
+        entry_attrs: t.MutableStrSequenceMapping = {}
         for k, v in entry_dict.items():
             match v:
                 case list():
@@ -1313,7 +1313,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entry = result.value
             original_dn = dn
             parsed_dn = entry.dn.value if entry.dn else None
-            parsed_attrs: MutableMapping[str, MutableSequence[str]] = (
+            parsed_attrs: t.MutableStrSequenceMapping = (
                 {**entry.attributes.attributes} if entry.attributes else {}
             )
             converted_attrs: MutableMapping[str, MutableSequence[str | bytes]] = {
@@ -1321,7 +1321,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             }
             entry_attrs_for_diff: MutableMapping[
                 str,
-                t.Scalar | MutableSequence[str] | MutableMapping[str, str] | None,
+                t.Scalar | MutableSequence[str] | t.MutableStrMapping | None,
             ] = {}
             for raw_key, raw_value in original_entry_dict.items():
                 key_str = str(raw_key)
@@ -1568,7 +1568,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             - Oracle OUD ACI Macros: https://docs.oracle.com/cd/E22289_01/html/821-1277/aci-syntax.html
 
         """
-        attrs_dict: MutableMapping[str, MutableSequence[str]] = (
+        attrs_dict: t.MutableStrSequenceMapping = (
             entry.attributes.attributes if entry.attributes is not None else {}
         )
         aci_attrs = attrs_dict.get("aci")
@@ -1780,7 +1780,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     ) -> None:
         """Process parsed ACL extensions and add to current extensions."""
         mk = c.Ldif
-        key_mapping: MutableMapping[str, str] = {
+        key_mapping: t.MutableStrMapping = {
             "targattrfilters": mk.ACL_TARGETATTR_FILTERS,
             "targetcontrol": mk.ACL_TARGET_CONTROL,
             "extop": mk.ACL_EXTOP,
@@ -1954,7 +1954,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             and isinstance(original_case_map_raw, Mapping)
             and isinstance(original_attributes_raw, Mapping)
         ):
-            restored: MutableMapping[str, MutableSequence[str]] = {}
+            restored: t.MutableStrSequenceMapping = {}
             for attr_name, attr_values in entry_data.attributes.attributes.items():
                 orig_case_raw = original_case_map_raw.get(attr_name.lower(), attr_name)
                 orig_case: str = (

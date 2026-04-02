@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 import re
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import FlextLdifServersRfc, c, m, r, t, u
@@ -233,13 +233,13 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def _build_novell_permissions_from_rights(
             self,
             rights: MutableSequence[str],
-            permission_name_map: MutableMapping[str, str],
-        ) -> MutableMapping[str, bool]:
+            permission_name_map: t.MutableStrMapping,
+        ) -> t.MutableBoolMapping:
             """Build AclPermissions dict from parsed rights list."""
-            reverse_map: MutableMapping[str, str] = {
+            reverse_map: t.MutableStrMapping = {
                 v: k for k, v in permission_name_map.items()
             }
-            perms_dict: MutableMapping[str, bool] = {
+            perms_dict: t.MutableBoolMapping = {
                 "read": False,
                 "write": False,
                 "add": False,
@@ -285,7 +285,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     > FlextLdifServersNovell.Constants.NOVELL_SEGMENT_INDEX_RIGHTS
                     else ""
                 )
-                char_mapping: MutableMapping[str, MutableSequence[str]] = {
+                char_mapping: t.MutableStrSequenceMapping = {
                     "B": [c.Ldif.RfcAclPermission.SEARCH],
                     "C": [c.Ldif.RfcAclPermission.COMPARE],
                     "D": [c.Ldif.RfcAclPermission.DELETE],
@@ -396,7 +396,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: MutableMapping[str, MutableSequence[str]],
+            attributes: t.MutableStrSequenceMapping,
         ) -> bool:
             """Detect eDirectory-specific entries."""
             if not entry_dn:
@@ -436,12 +436,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             """Normalise eDirectory entries and expose metadata."""
             if not entry.attributes:
                 return r[m.Ldif.Entry].ok(entry)
-            attributes: MutableMapping[str, MutableSequence[str]] = {
+            attributes: t.MutableStrSequenceMapping = {
                 **entry.attributes.attributes,
             }
             try:
                 object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
-                processed_attributes: MutableMapping[str, MutableSequence[str]] = {}
+                processed_attributes: t.MutableStrSequenceMapping = {}
                 for attr_name, attr_values in attributes.items():
                     processed_values: MutableSequence[str] = []
                     value: bytes | str

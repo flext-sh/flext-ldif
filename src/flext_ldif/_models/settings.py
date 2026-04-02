@@ -82,11 +82,11 @@ class FlextLdifModelsSettings:
             Field(description="Only include permissions for this action"),
         ] = None
         bind_patterns: Annotated[
-            MutableMapping[str, str],
+            t.MutableStrMapping,
             Field(description="Mapping of bind type names to regex patterns"),
         ] = Field(default_factory=dict)
         permission_map: Annotated[
-            MutableMapping[str, str],
+            t.MutableStrMapping,
             Field(description="Permission name normalization map"),
         ] = Field(default_factory=dict)
         special_subjects: Annotated[
@@ -94,7 +94,7 @@ class FlextLdifModelsSettings:
             Field(description="Special subject value mappings"),
         ] = Field(default_factory=dict)
         extra_patterns: Annotated[
-            MutableMapping[str, str],
+            t.MutableStrMapping,
             Field(description="Additional extraction patterns for extensions"),
         ] = Field(default_factory=dict)
         default_name: Annotated[
@@ -306,7 +306,7 @@ class FlextLdifModelsSettings:
             Field(description="Whether DN was base64 encoded"),
         ] = False
         original_attribute_case: Annotated[
-            MutableMapping[str, str] | None,
+            t.MutableStrMapping | None,
             Field(
                 description="Mapping of attribute names to original case",
             ),
@@ -440,7 +440,7 @@ class FlextLdifModelsSettings:
         """
 
         migration_config: Annotated[
-            MutableMapping[str, t.Scalar] | None,
+            t.MutableScalarMapping | None,
             Field(
                 description="Structured migration config with 6-file output and tracking",
             ),
@@ -792,7 +792,7 @@ class FlextLdifModelsSettings:
             ),
         ] = False
         statistics_categories: Annotated[
-            MutableMapping[str, int],
+            t.MutableIntMapping,
             Field(
                 description="Dictionary of category names to entry counts for statistics summary. Example: {'users': 150, 'groups': 25, 'acl': 42}.",
             ),
@@ -946,7 +946,7 @@ class FlextLdifModelsSettings:
             Field(description="Traversal order"),
         ] = "depth-first"
         predicate: Annotated[
-            Callable[[FlextLdifModelsDomains.Entry], str | int | float] | None,
+            Callable[[FlextLdifModelsDomains.Entry], str | t.Numeric] | None,
             Field(description="Custom predicate function"),
         ] = None
         sort_attributes: Annotated[
@@ -1046,7 +1046,7 @@ class FlextLdifModelsSettings:
             Field(..., description="Converted ACL model (modified in-place)"),
         ]
         orig_perms_dict: Annotated[
-            MutableMapping[str, bool],
+            t.MutableBoolMapping,
             Field(..., description="Original permissions dict"),
         ]
         source_server_type: Annotated[

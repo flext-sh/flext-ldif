@@ -109,16 +109,16 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
     @staticmethod
     def get_entry_attributes(
         entry: m.Ldif.Entry,
-    ) -> r[MutableMapping[str, MutableSequence[str]]]:
+    ) -> r[t.MutableStrSequenceMapping]:
         """Get entry attributes mapping."""
         if entry.attributes is None:
-            return r[MutableMapping[str, MutableSequence[str]]].fail(
+            return r[t.MutableStrSequenceMapping].fail(
                 "Entry has no attributes",
             )
-        attrs: MutableMapping[str, MutableSequence[str]] = dict(
+        attrs: t.MutableStrSequenceMapping = dict(
             entry.attributes.attributes,
         )
-        return r[MutableMapping[str, MutableSequence[str]]].ok(attrs)
+        return r[t.MutableStrSequenceMapping].ok(attrs)
 
     @staticmethod
     def get_entry_dn(

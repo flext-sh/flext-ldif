@@ -5,7 +5,7 @@ from __future__ import annotations
 import base64
 import contextlib
 import re
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import Mapping, MutableSequence
 from typing import TypeIs
 
 from flext_core import FlextLogger, r
@@ -51,7 +51,7 @@ class FlextLdifUtilitiesParser:
             else FlextLdifUtilitiesServer.normalize_server_type("rfc")
         )
         if metadata_extensions:
-            extensions_typed: MutableMapping[str, MutableSequence[str]] = {}
+            extensions_typed: t.MutableStrSequenceMapping = {}
             for key, val in metadata_extensions.items():
                 extensions_typed[key] = list(val)
             return m.Ldif.QuirkMetadata(
@@ -121,7 +121,7 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def ext(
         metadata: m.Ldif.DynamicMetadata,
-    ) -> MutableMapping[str, MutableSequence[str]]:
+    ) -> t.MutableStrSequenceMapping:
         """Extract extension information from parsed metadata."""
 
         def _is_metadata_value(
@@ -144,7 +144,7 @@ class FlextLdifUtilitiesParser:
 
         result = metadata.get("extensions")
         if not isinstance(result, Mapping):
-            extensions: MutableMapping[str, MutableSequence[str]] = {}
+            extensions: t.MutableStrSequenceMapping = {}
             for key, value in metadata.items():
                 if not _is_metadata_value(value):
                     continue
@@ -153,7 +153,7 @@ class FlextLdifUtilitiesParser:
                     extensions[key] = str_list
             return extensions
         extensions_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(result)
-        strict_result: MutableMapping[str, MutableSequence[str]] = {}
+        strict_result: t.MutableStrSequenceMapping = {}
         for key, value in extensions_metadata.items():
             if not _is_metadata_value(value):
                 continue
@@ -174,11 +174,11 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def extract_extensions(
         definition: str,
-    ) -> MutableMapping[str, MutableSequence[str]]:
+    ) -> t.MutableStrSequenceMapping:
         """Extract extension information from schema definition string."""
         if not definition:
             return {}
-        extensions: MutableMapping[str, MutableSequence[str]] = {}
+        extensions: t.MutableStrSequenceMapping = {}
         x_pattern = re.compile(
             r"X-([A-Z0-9_-]+)\s+[\"']?([^\"']*)[\"']?(?:\s|$)",
             re.IGNORECASE,

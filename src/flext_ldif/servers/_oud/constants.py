@@ -96,7 +96,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         ("targetcontrol", '(targetcontrol="{value}")'),
         ("extop", '(extop="{value}")'),
     ]
-    ACL_BIND_PATTERNS: ClassVar[MutableMapping[str, str]] = {
+    ACL_BIND_PATTERNS: ClassVar[t.MutableStrMapping] = {
         ACL_BIND_RULE_TYPE_USERDN: ACL_USERDN_PATTERN,
         ACL_BIND_RULE_TYPE_GROUPDN: ACL_GROUPDN_PATTERN,
     }
@@ -116,7 +116,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         SCHEMA_FIELD_LDAP_SYNTAXES,
     ])
     ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["x_origin"])
-    OBJECTCLASS_REQUIREMENTS: ClassVar[MutableMapping[str, bool]] = {
+    OBJECTCLASS_REQUIREMENTS: ClassVar[t.MutableBoolMapping] = {
         "requires_sup_for_auxiliary": True,
         "allows_multiple_sup": False,
         "requires_explicit_structural": True,
@@ -173,7 +173,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "pwdmaxlength",
         "pwdminlength",
     ])
-    ATTRIBUTE_CASE_MAP: ClassVar[MutableMapping[str, str]] = {
+    ATTRIBUTE_CASE_MAP: ClassVar[t.MutableStrMapping] = {
         "uniquemember": "uniqueMember",
         "displayname": "displayName",
         "distinguishedname": "distinguishedName",
@@ -182,17 +182,17 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "seealsodescription": "seeAlsoDescription",
         "acl": "aci",
     }
-    ATTRIBUTE_TRANSFORMATION_OUD_TO_RFC: ClassVar[MutableMapping[str, str]] = {
+    ATTRIBUTE_TRANSFORMATION_OUD_TO_RFC: ClassVar[t.MutableStrMapping] = {
         "ds-sync-hist": "dsyncHist",
         "ds-pwp-account-disabled": "accountDisabled",
         "entryUUID": "entryUUID",
     }
-    ATTRIBUTE_TRANSFORMATION_RFC_TO_OUD: ClassVar[MutableMapping[str, str]] = {
+    ATTRIBUTE_TRANSFORMATION_RFC_TO_OUD: ClassVar[t.MutableStrMapping] = {
         "dsyncHist": "ds-sync-hist",
         "accountDisabled": "ds-pwp-account-disabled",
         "entryUUID": "entryUUID",
     }
-    ATTRIBUTE_ALIASES: ClassVar[MutableMapping[str, MutableSequence[str]]] = {
+    ATTRIBUTE_ALIASES: ClassVar[t.MutableStrSequenceMapping] = {
         "cn": ["commonName"],
         "sn": ["surname"],
         "givenName": ["gn"],
@@ -214,11 +214,11 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "caseIgnoreOrderingMatch": None,
         "numericStringMatch": "numericStringSubstringsMatch",
     }
-    MATCHING_RULE_REPLACEMENTS: ClassVar[MutableMapping[str, str]] = {
+    MATCHING_RULE_REPLACEMENTS: ClassVar[t.MutableStrMapping] = {
         "caseIgnoreMatch": "caseIgnoreMatch",
         "caseIgnoreSubstringsMatch": "caseIgnoreSubstringsMatch",
     }
-    CATEGORY_OBJECTCLASSES: ClassVar[MutableMapping[str, frozenset[str]]] = {
+    CATEGORY_OBJECTCLASSES: ClassVar[t.MutableFrozensetMapping] = {
         "users": frozenset(["person", "inetOrgPerson", "organizationalPerson"]),
         "hierarchy": frozenset([
             "organizationalUnit",

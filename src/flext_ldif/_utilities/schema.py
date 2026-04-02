@@ -256,7 +256,7 @@ class FlextLdifUtilitiesSchema:
         | datetime
         | t.MutableContainerList
         | MutableMapping[t.NormalizedValue, t.NormalizedValue]
-        | Mapping[str, t.NormalizedValue],
+        | t.ContainerMapping,
     ) -> (
         t.Scalar
         | MutableSequence[str]
@@ -311,7 +311,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _is_object_mapping(
         value: t.NormalizedValue,
-    ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
+    ) -> TypeIs[t.ContainerMapping]:
         return isinstance(value, Mapping)
 
     @staticmethod
@@ -930,9 +930,9 @@ class FlextLdifUtilitiesSchema:
         equality: str | None,
         substr: str | None = None,
         *,
-        replacements: MutableMapping[str, str] | None = None,
-        substr_rules_in_equality: MutableMapping[str, str] | None = None,
-        normalized_substr_values: MutableMapping[str, str] | None = None,
+        replacements: t.MutableStrMapping | None = None,
+        substr_rules_in_equality: t.MutableStrMapping | None = None,
+        normalized_substr_values: t.MutableStrMapping | None = None,
     ) -> tuple[str | None, str | None]:
         """Normalize EQUALITY and SUBSTR matching rules."""
         result_equality = equality
@@ -958,7 +958,7 @@ class FlextLdifUtilitiesSchema:
     def normalize_name(
         name_value: str | None,
         suffixes_to_remove: MutableSequence[str] | None = None,
-        char_replacements: MutableMapping[str, str] | None = None,
+        char_replacements: t.MutableStrMapping | None = None,
     ) -> str | None:
         """Normalize attribute NAME field."""
         if not name_value:
@@ -980,7 +980,7 @@ class FlextLdifUtilitiesSchema:
     def normalize_syntax_oid(
         syntax: str | None,
         *,
-        replacements: MutableMapping[str, str] | None = None,
+        replacements: t.MutableStrMapping | None = None,
     ) -> str | None:
         """Normalize SYNTAX OID field."""
         if not syntax:

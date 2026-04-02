@@ -552,7 +552,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: MutableMapping[str, MutableSequence[str]],
+            attributes: t.MutableStrSequenceMapping,
         ) -> bool:
             """Accept any entry in relaxed mode."""
             _ = entry_dn
@@ -652,7 +652,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "value": entry_dn.strip(),
                     "metadata": m.Ldif.EntryMetadata.model_validate({}),
                 })
-                attr_dict: MutableMapping[str, MutableSequence[str]] = {}
+                attr_dict: t.MutableStrSequenceMapping = {}
                 attr_key: str
                 attr_value: MutableSequence[str | bytes]
                 for attr_key, attr_value in entry_attrs.items():
@@ -673,7 +673,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "attribute_metadata": {},
                     "metadata": None,
                 })
-                original_attribute_case: MutableMapping[str, str] = {}
+                original_attribute_case: t.MutableStrMapping = {}
                 for attr_name in entry_attrs:
                     attr_str = str(attr_name)
                     if attr_str.lower() == "objectclass":

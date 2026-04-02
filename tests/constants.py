@@ -748,7 +748,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                             f"Expected SUP '{expected_sup}', got '{actual_sup}'",
                         )
                 if expected_must is not None:
-                    actual_must: Sequence[str] = (
+                    actual_must: t.StrSequence = (
                         list(value.must or [])
                         if isinstance(value, m.Ldif.SchemaObjectClass)
                         else []
@@ -758,7 +758,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                             f"Expected MUST {expected_must}, got {actual_must}",
                         )
                 if expected_may is not None:
-                    actual_may: Sequence[str] = (
+                    actual_may: t.StrSequence = (
                         list(value.may or [])
                         if isinstance(value, m.Ldif.SchemaObjectClass)
                         else []

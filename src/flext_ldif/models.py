@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -69,7 +69,7 @@ class FlextLdifModels(FlextModels):
             rfc_subject_type: Annotated[str, Field()] = ""
             oid_subject_value: Annotated[str, Field()] = ""
             perms_dict: Annotated[
-                MutableMapping[str, bool],
+                t.MutableBoolMapping,
                 Field(),
             ] = Field(default_factory=dict)
             target_dn: Annotated[str, Field()] = "entry"

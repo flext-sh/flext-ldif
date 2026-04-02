@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import contextlib
 import time
-from collections.abc import Callable, Generator, Mapping, Sequence
+from collections.abc import Callable, Generator, Sequence
 from pathlib import Path
 
 import pytest
@@ -221,7 +221,7 @@ def rfc_schema_entries(
 
 
 @pytest.fixture
-def all_schema_fixtures() -> Mapping[str, str]:
+def all_schema_fixtures() -> t.StrMapping:
     """Provide all schema fixtures by server type."""
     return {
         "oid": FlextLdifFixtures.OID().schema(),
@@ -232,7 +232,7 @@ def all_schema_fixtures() -> Mapping[str, str]:
 
 
 @pytest.fixture
-def all_entries_fixtures() -> Mapping[str, str]:
+def all_entries_fixtures() -> t.StrMapping:
     """Provide all entries fixtures by server type."""
     return {
         "oid": FlextLdifFixtures.OID().entries(),
@@ -242,7 +242,7 @@ def all_entries_fixtures() -> Mapping[str, str]:
 
 
 @pytest.fixture
-def all_acl_fixtures() -> Mapping[str, str]:
+def all_acl_fixtures() -> t.StrMapping:
     """Provide all ACL fixtures by server type."""
     return {
         "oid": FlextLdifFixtures.OID().acl(),
@@ -252,7 +252,7 @@ def all_acl_fixtures() -> Mapping[str, str]:
 
 
 @pytest.fixture
-def all_integration_fixtures() -> Mapping[str, str]:
+def all_integration_fixtures() -> t.StrMapping:
     """Provide all integration fixtures by server type."""
     return {
         "oid": FlextLdifFixtures.OID().integration(),
@@ -483,7 +483,7 @@ def clean_test_ou(
         ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
         entries: Sequence[p.Ldap.Ldap3Entry] = list(ldap_connection.entries)
         if entries:
-            dns_to_delete: Sequence[str] = [str(entry.entry_dn) for entry in entries]
+            dns_to_delete: t.StrSequence = [str(entry.entry_dn) for entry in entries]
             for dn in reversed(dns_to_delete):
                 with contextlib.suppress(Exception):
                     ldap_connection.delete(dn)
@@ -498,7 +498,7 @@ def clean_test_ou(
         ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
         entries2: Sequence[p.Ldap.Ldap3Entry] = list(ldap_connection.entries)
         if entries2:
-            dns_to_delete2: Sequence[str] = [str(entry.entry_dn) for entry in entries2]
+            dns_to_delete2: t.StrSequence = [str(entry.entry_dn) for entry in entries2]
             for dn in reversed(dns_to_delete2):
                 with contextlib.suppress(Exception):
                     ldap_connection.delete(dn)

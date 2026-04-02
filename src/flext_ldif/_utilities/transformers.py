@@ -129,7 +129,7 @@ class FlextLdifUtilitiesTransformers:
             """Apply attribute normalization to an entry."""
             if item.attributes is None:
                 return r[m.Ldif.Entry].fail("Entry has no attributes")
-            attrs: MutableMapping[str, MutableSequence[str]] = (
+            attrs: t.MutableStrSequenceMapping = (
                 item.attributes.attributes
                 if getattr(item.attributes, "attributes", None) is not None
                 else {}

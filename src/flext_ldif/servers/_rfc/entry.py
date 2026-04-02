@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 from typing import override
 
 from flext_core import FlextLogger, r
-from flext_ldif import FlextLdifServersBase, m, u
+from flext_ldif import FlextLdifServersBase, m, t, u
 
 logger = FlextLogger(__name__)
 
@@ -25,7 +25,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
     def can_handle(
         self,
         entry_dn: str,
-        attributes: MutableMapping[str, MutableSequence[str]],
+        attributes: t.MutableStrSequenceMapping,
     ) -> bool:
         """Check if this RFC quirk can handle the entry."""
         if not entry_dn or not entry_dn.strip():
@@ -48,14 +48,14 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
     def _create_entry(
         self,
         dn: str,
-        attributes: MutableMapping[str, MutableSequence[str]],
+        attributes: t.MutableStrSequenceMapping,
     ) -> r[m.Ldif.Entry]:
         """Create Entry from DN and attributes."""
         if not dn or not u.is_type(dn, str):
             return r[m.Ldif.Entry].fail(f"Invalid DN: {dn}")
         if not isinstance(attributes, dict):
             return r[m.Ldif.Entry].fail(f"Invalid attributes: {attributes}")
-        attributes_dict: MutableMapping[str, MutableSequence[str]] = attributes
+        attributes_dict: t.MutableStrSequenceMapping = attributes
         try:
             entry = m.Ldif.Entry(
                 dn=m.Ldif.DN(value=dn.strip()),
@@ -111,7 +111,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
     def _parse_entry_from_lines(self, lines: MutableSequence[str]) -> r[m.Ldif.Entry]:
         """Parse entry from LDIF lines."""
         dn: str = ""
-        attrs: MutableMapping[str, MutableSequence[str]] = {}
+        attrs: t.MutableStrSequenceMapping = {}
         original_content_lines: MutableSequence[str] = []
         for raw_line in lines:
             line = raw_line.rstrip()

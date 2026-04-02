@@ -20,14 +20,14 @@ class FlextLdifUtilitiesParsers:
         server_type: str,
         parse_attributes_hook: Callable[
             [MutableSequence[str]],
-            MutableMapping[str, MutableSequence[str]],
+            t.MutableStrSequenceMapping,
         ],
         *,
         parse_dn_hook: Callable[[str], str | None] | None = None,
         transform_entry_hook: Callable[[m.Ldif.Entry], m.Ldif.Entry] | None = None,
         parse_comments_hook: Callable[
             [MutableSequence[str]],
-            MutableMapping[str, MutableSequence[str]],
+            t.MutableStrSequenceMapping,
         ]
         | None = None,
     ) -> r[m.Ldif.Entry]:
@@ -35,7 +35,7 @@ class FlextLdifUtilitiesParsers:
         try:
             lines = ldif_content.strip().split("\n")
             dn: str | None = None
-            attributes: MutableMapping[str, MutableSequence[str]] = {}
+            attributes: t.MutableStrSequenceMapping = {}
             for line in lines:
                 if line.lower().startswith("dn:"):
                     if parse_dn_hook:
@@ -173,7 +173,7 @@ class FlextLdifUtilitiesParsers:
         server_type: str,
         parse_entry_hook: Callable[[str], r[m.Ldif.Entry]],
         *,
-        _parse_header_hook: Callable[[str], MutableMapping[str, str]] | None = None,
+        _parse_header_hook: Callable[[str], t.MutableStrMapping] | None = None,
     ) -> r[MutableSequence[m.Ldif.Entry]]:
         """Parse multiple entries from LDIF content."""
         try:

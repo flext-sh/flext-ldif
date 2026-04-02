@@ -101,7 +101,7 @@ class FlextLdifConversion(
     @staticmethod
     def _is_mapping_value(
         value: t.NormalizedValue,
-    ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
+    ) -> TypeIs[t.ContainerMapping]:
         return isinstance(value, Mapping)
 
     @staticmethod
@@ -125,7 +125,7 @@ class FlextLdifConversion(
             raise TypeError(msg)
         return quirk
 
-    _PERMISSION_KEY_MAPPING: ClassVar[MutableMapping[str, str]] = {
+    _PERMISSION_KEY_MAPPING: ClassVar[t.MutableStrMapping] = {
         "read": "read",
         "write": "write",
         "add": "add",
@@ -180,7 +180,7 @@ class FlextLdifConversion(
     def _analyze_boolean_conversions(
         boolean_conversions: t.NormalizedValue,
         target_server_type: str,
-    ) -> MutableMapping[str, MutableMapping[str, str]]:
+    ) -> MutableMapping[str, t.MutableStrMapping]:
         """Analyze boolean conversions for target compatibility."""
         if not boolean_conversions or not FlextLdifConversion._is_mapping_value(
             boolean_conversions,
@@ -189,7 +189,7 @@ class FlextLdifConversion(
         typed_boolean_conversions: t.MutableContainerMapping = {}
         for raw_attr_name, raw_conv_info in boolean_conversions.items():
             typed_boolean_conversions[str(raw_attr_name)] = raw_conv_info
-        result: MutableMapping[str, MutableMapping[str, str]] = {}
+        result: MutableMapping[str, t.MutableStrMapping] = {}
         for attr_name, conv_info in typed_boolean_conversions.items():
             source_format = ""
             if FlextLdifConversion._is_mapping_value(conv_info):
@@ -294,7 +294,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _apply_oid_to_oud_mapping(
-        orig_perms_dict: MutableMapping[str, bool],
+        orig_perms_dict: t.MutableBoolMapping,
         converted_acl: m.Ldif.Acl,
         perms_to_model: Callable[
             [t.MutableOptionalBoolMapping],
@@ -302,7 +302,7 @@ class FlextLdifConversion(
         ],
     ) -> m.Ldif.Acl:
         """Apply OID to OUD permission mapping."""
-        normalized_orig_perms: MutableMapping[str, bool] = {
+        normalized_orig_perms: t.MutableBoolMapping = {
             FlextLdifConversion._normalize_permission_key(k): v
             for k, v in orig_perms_dict.items()
         }
@@ -313,7 +313,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _apply_oud_to_oid_mapping(
-        orig_perms_dict: MutableMapping[str, bool],
+        orig_perms_dict: t.MutableBoolMapping,
         converted_acl: m.Ldif.Acl,
         perms_to_model: Callable[
             [t.MutableOptionalBoolMapping],
@@ -328,7 +328,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _build_permissions_dict(
-        mapped_perms: MutableMapping[str, bool],
+        mapped_perms: t.MutableBoolMapping,
     ) -> t.MutableOptionalBoolMapping:
         """Build permissions dict with standard keys."""
         result: t.MutableOptionalBoolMapping = {}
@@ -533,7 +533,7 @@ class FlextLdifConversion(
         perms_dict: t.MutableOptionalBoolMapping,
     ) -> m.Ldif.AclPermissions:
         """Convert permissions dict to AclPermissions model."""
-        clean_dict: MutableMapping[str, bool] = {
+        clean_dict: t.MutableBoolMapping = {
             k: v for k, v in perms_dict.items() if v is not None
         }
         return m.Ldif.AclPermissions.model_validate(clean_dict)
@@ -742,9 +742,9 @@ class FlextLdifConversion(
     def get_supported_conversions(
         self,
         quirk: FlextLdifServersBase,
-    ) -> MutableMapping[str, bool]:
+    ) -> t.MutableBoolMapping:
         """Check which data types a quirk supports for conversion."""
-        support: t.Ldif.MutableDistributionDict = {
+        support: t.MutableIntMapping = {
             "attribute": 0,
             "objectclass": 0,
             "acl": 0,
@@ -767,7 +767,7 @@ class FlextLdifConversion(
         *,
         original_acl: m.Ldif.Acl | None = None,
         converted_acl: m.Ldif.Acl | None = None,
-        orig_perms_dict: MutableMapping[str, bool] | None = None,
+        orig_perms_dict: t.MutableBoolMapping | None = None,
         source_server_type: str | None = None,
         target_server_type: str | None = None,
         converted_has_permissions: bool = False,
@@ -859,8 +859,8 @@ class FlextLdifConversion(
     def _check_acl_support(
         self,
         quirk: FlextLdifServersBase,
-        support: t.Ldif.MutableDistributionDict,
-    ) -> t.Ldif.MutableDistributionDict:
+        support: t.MutableIntMapping,
+    ) -> t.MutableIntMapping:
         """Check ACL support."""
         acl = getattr(quirk, "acl_quirk", None)
         if acl is None:
@@ -876,8 +876,8 @@ class FlextLdifConversion(
         self,
         quirk_schema: t.NormalizedValue | FlextLdifServersBase,
         test_attr_def: str,
-        support: t.Ldif.MutableDistributionDict,
-    ) -> t.Ldif.MutableDistributionDict:
+        support: t.MutableIntMapping,
+    ) -> t.MutableIntMapping:
         """Check attribute support for schema quirk."""
         if not FlextLdifConversion._has_attr(quirk_schema, "can_handle_attribute"):
             return support
@@ -922,8 +922,8 @@ class FlextLdifConversion(
     def _check_entry_support(
         self,
         quirk: FlextLdifServersBase,
-        support: t.Ldif.MutableDistributionDict,
-    ) -> t.Ldif.MutableDistributionDict:
+        support: t.MutableIntMapping,
+    ) -> t.MutableIntMapping:
         """Check Entry support."""
         entry = getattr(quirk, "entry_quirk", None)
         if entry is None:
@@ -942,8 +942,8 @@ class FlextLdifConversion(
         self,
         quirk_schema: t.NormalizedValue | FlextLdifServersBase,
         test_oc_def: str,
-        support: t.Ldif.MutableDistributionDict,
-    ) -> t.Ldif.MutableDistributionDict:
+        support: t.MutableIntMapping,
+    ) -> t.MutableIntMapping:
         """Check objectClass support for schema quirk."""
         if not FlextLdifConversion._has_attr(quirk_schema, "can_handle_objectclass"):
             return support
@@ -965,8 +965,8 @@ class FlextLdifConversion(
     def _check_schema_support(
         self,
         quirk: FlextLdifServersBase,
-        support: t.Ldif.MutableDistributionDict,
-    ) -> t.Ldif.MutableDistributionDict:
+        support: t.MutableIntMapping,
+    ) -> t.MutableIntMapping:
         """Check schema (attribute and objectClass) support."""
         quirk_schema = self._get_schema_quirk_for_support_check(quirk)
         if quirk_schema is None:
@@ -1324,7 +1324,7 @@ class FlextLdifConversion(
                 and converted_entry.attributes.attributes
             ):
                 current_attrs = dict(converted_entry.attributes.attributes)
-                updated_attrs: MutableMapping[str, MutableSequence[str]] = {}
+                updated_attrs: t.MutableStrSequenceMapping = {}
                 mapping = (
                     FlextLdifServersOidConstants.ATTRIBUTE_TRANSFORMATION_OID_TO_RFC
                 )
@@ -1359,7 +1359,7 @@ class FlextLdifConversion(
                 and converted_entry.attributes.attributes
             ):
                 current_attrs = dict(converted_entry.attributes.attributes)
-                updated_attrs_rfc_to_oid: MutableMapping[str, MutableSequence[str]] = {}
+                updated_attrs_rfc_to_oid: t.MutableStrSequenceMapping = {}
                 mapping = (
                     FlextLdifServersOidConstants.ATTRIBUTE_TRANSFORMATION_RFC_TO_OID
                 )
@@ -1517,7 +1517,7 @@ class FlextLdifConversion(
         if u.is_primitive(value):
             return value
         if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-            converted_list: Sequence[t.Scalar] = [
+            converted_list: t.ScalarList = [
                 item if isinstance(item, t.SCALAR_TYPES) else str(item)
                 for item in value
             ]
@@ -1717,7 +1717,7 @@ class FlextLdifConversion(
         if not original_acl.permissions:
             return converted_acl
         orig_perms_dict_raw = original_acl.permissions.model_dump(exclude_unset=True)
-        orig_perms_dict: MutableMapping[str, bool] = {
+        orig_perms_dict: t.MutableBoolMapping = {
             k: v for k, v in orig_perms_dict_raw.items() if v is True
         }
         logger.debug(

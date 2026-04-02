@@ -10,12 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
 from typing import Final
 
 from flext_tests import FlextTestsModels
 
 from flext_ldif import FlextLdifModels, FlextLdifModelsSettings
+from tests import t
 
 
 class FlextLdifTestModels(FlextTestsModels, FlextLdifModels):
@@ -80,7 +80,7 @@ class FlextLdifTestModels(FlextTestsModels, FlextLdifModels):
                 id: str
                 server_type: str
                 dn: str
-                attributes: Mapping[str, Sequence[str]]
+                attributes: t.StrSequenceMapping
 
 
 m = FlextLdifTestModels

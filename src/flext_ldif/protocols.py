@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core import FlextProtocols
@@ -213,7 +213,7 @@ class FlextLdifProtocols(FlextProtocols):
             def parse_entry(
                 self,
                 entry_dn: str,
-                entry_attrs: MutableMapping[str, MutableSequence[str]],
+                entry_attrs: t.MutableStrSequenceMapping,
             ) -> r[m.Ldif.Entry]:
                 """Parse single entry from DN and attributes."""
                 ...
@@ -260,7 +260,7 @@ class FlextLdifProtocols(FlextProtocols):
             DETECTION_DN_MARKERS: frozenset[str] | None
             ACL_ATTRIBUTE_NAME: str | None
             CATEGORIZATION_PRIORITY: MutableSequence[str]
-            CATEGORY_OBJECTCLASSES: MutableMapping[str, frozenset[str]]
+            CATEGORY_OBJECTCLASSES: t.MutableFrozensetMapping
 
         @runtime_checkable
         class ServerDetectionConstants(Protocol):

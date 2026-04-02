@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 from typing import Final
 
 from flext_core import FlextLogger
-from flext_ldif import m, r
+from flext_ldif import m, r, t
 
 logger: Final = FlextLogger(__name__)
 
@@ -18,7 +18,7 @@ class FlextLdifFilters:
     @classmethod
     def _check_schema_oid(
         cls,
-        attrs: MutableMapping[str, MutableSequence[str]],
+        attrs: t.MutableStrSequenceMapping,
         attr_keys: tuple[str, str],
         allowed_set: frozenset[str],
     ) -> tuple[bool, bool]:
@@ -34,7 +34,7 @@ class FlextLdifFilters:
     @classmethod
     def _extract_allowed_oids(
         cls,
-        allowed_oids: MutableMapping[str, frozenset[str]],
+        allowed_oids: t.MutableFrozensetMapping,
     ) -> tuple[frozenset[str], frozenset[str], frozenset[str], frozenset[str]]:
         """Extract allowed OID sets from mapping."""
         return (
@@ -73,7 +73,7 @@ class FlextLdifFilters:
         if attrs is None:
             return True
         if getattr(attrs, "attributes", None) is not None:
-            attrs_dict: MutableMapping[str, MutableSequence[str]] = attrs.attributes
+            attrs_dict: t.MutableStrSequenceMapping = attrs.attributes
         else:
             return True
         is_attr, include_attr = cls._check_schema_oid(
@@ -104,7 +104,7 @@ class FlextLdifFilters:
     def filter_schema_by_oids(
         cls,
         entries: MutableSequence[m.Ldif.Entry],
-        allowed_oids: MutableMapping[str, frozenset[str]],
+        allowed_oids: t.MutableFrozensetMapping,
     ) -> r[MutableSequence[m.Ldif.Entry]]:
         """Filter schema entries by allowed OIDs."""
         try:

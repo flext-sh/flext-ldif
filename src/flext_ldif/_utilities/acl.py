@@ -63,7 +63,7 @@ class FlextLdifUtilitiesACL:
         aci_content: str,
         version: str,
         acl_line: str,
-        extra_patterns: MutableMapping[str, str],
+        extra_patterns: t.MutableStrMapping,
     ) -> t.MutableContainerMapping:
         """Build metadata extensions dict."""
         extensions: t.MutableContainerMapping = {
@@ -86,7 +86,7 @@ class FlextLdifUtilitiesACL:
                 if result is not None:
                     extra_dict[k] = result
         if extra_dict:
-            filtered_extensions: MutableMapping[str, str] = {
+            filtered_extensions: t.MutableStrMapping = {
                 k: v for k, v in extra_dict.items() if isinstance(v, str)
             }
             if filtered_extensions:
@@ -97,7 +97,7 @@ class FlextLdifUtilitiesACL:
     def _build_subject_and_permissions(
         aci_content: str,
         config: FlextLdifModelsSettings.AciParserConfig,
-    ) -> tuple[str, str, MutableMapping[str, bool]]:
+    ) -> tuple[str, str, t.MutableBoolMapping]:
         """Build subject and permissions from ACI content."""
         permissions_list = FlextLdifUtilitiesACL.extract_permissions(
             aci_content,
@@ -119,7 +119,7 @@ class FlextLdifUtilitiesACL:
             permissions_list,
             config.permission_map,
         )
-        permissions_dict: MutableMapping[str, bool] = {
+        permissions_dict: t.MutableBoolMapping = {
             k: bool(v) for k, v in dict(permissions_dict_raw).items()
         }
         return (subject_type, subject_value, permissions_dict)
@@ -199,7 +199,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _normalize_permission(
         perm: str,
-        permission_map: MutableMapping[str, str] | None,
+        permission_map: t.MutableStrMapping | None,
     ) -> str:
         """Normalize permission name using map if available."""
         if not permission_map:
@@ -209,12 +209,12 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _process_permission_list(
         perm_list: MutableSequence[str],
-        permission_map: MutableMapping[str, str] | None,
+        permission_map: t.MutableStrMapping | None,
         *,
         is_allow: bool,
-    ) -> MutableMapping[str, bool]:
+    ) -> t.MutableBoolMapping:
         """Process permission list into dictionary."""
-        result: MutableMapping[str, bool] = {}
+        result: t.MutableBoolMapping = {}
         for perm in perm_list:
             if perm:
                 normalized = FlextLdifUtilitiesACL._normalize_permission(
@@ -226,8 +226,8 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def build_aci_subject(
-        bind_rules_data: MutableSequence[MutableMapping[str, str]],
-        subject_type_map: MutableMapping[str, str],
+        bind_rules_data: MutableSequence[t.MutableStrMapping],
+        subject_type_map: t.MutableStrMapping,
         special_values: MutableMapping[str, tuple[str, str]],
     ) -> tuple[str, str]:
         """Build ACL subject from bind rules using configurable maps."""
@@ -299,18 +299,18 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def build_permissions_dict(
         allow_permissions: MutableSequence[str],
-        permission_map: MutableMapping[str, str] | None = None,
+        permission_map: t.MutableStrMapping | None = None,
         deny_permissions: MutableSequence[str] | None = None,
-    ) -> MutableMapping[str, bool]:
+    ) -> t.MutableBoolMapping:
         """Build permissions dictionary from allow/deny lists."""
-        allow_dict: MutableMapping[str, bool] = {}
+        allow_dict: t.MutableBoolMapping = {}
         if allow_permissions:
             allow_dict = FlextLdifUtilitiesACL._process_permission_list(
                 allow_permissions,
                 permission_map,
                 is_allow=True,
             )
-        deny_dict: MutableMapping[str, bool] = {}
+        deny_dict: t.MutableBoolMapping = {}
         if deny_permissions:
             deny_dict = FlextLdifUtilitiesACL._process_permission_list(
                 deny_permissions,
@@ -322,8 +322,8 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def extract_bind_rules(
         content: str,
-        bind_patterns: MutableMapping[str, str] | None = None,
-    ) -> MutableSequence[MutableMapping[str, str]]:
+        bind_patterns: t.MutableStrMapping | None = None,
+    ) -> MutableSequence[t.MutableStrMapping]:
         """Extract bind rules from ACL content.
 
         Finds userdn, groupdn, or other bind rule specifications.
@@ -340,13 +340,13 @@ class FlextLdifUtilitiesACL:
         """
         if not content:
             return []
-        default_patterns: MutableMapping[str, str] = {
+        default_patterns: t.MutableStrMapping = {
             "userdn": 'userdn\\s*=\\s*"([^"]*)"',
             "groupdn": 'groupdn\\s*=\\s*"([^"]*)"',
             "roledn": 'roledn\\s*=\\s*"([^"]*)"',
         }
         patterns = bind_patterns or default_patterns
-        all_bind_rules: MutableSequence[MutableMapping[str, str]] = []
+        all_bind_rules: MutableSequence[t.MutableStrMapping] = []
         for bind_type, pattern in dict(patterns).items():
             matches = re.findall(pattern, content, re.IGNORECASE)
             all_bind_rules.extend([
@@ -569,7 +569,7 @@ class FlextLdifUtilitiesACL:
         """Format ACL subject into ACI bind rule format."""
         cleaned_value = subject_value.replace(", ", ",")
         default_value = f'by dn="{cleaned_value}"'
-        bind_rules: MutableMapping[str, str] = {
+        bind_rules: t.MutableStrMapping = {
             "userdn": f'userdn="ldap:///{cleaned_value}"',
             "groupdn": f'groupdn="ldap:///{cleaned_value}"',
             "roledn": f'roledn="ldap:///{cleaned_value}"',
@@ -632,8 +632,8 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def map_oid_to_oud_permissions(
-        oid_permissions: MutableMapping[str, bool],
-    ) -> MutableMapping[str, bool]:
+        oid_permissions: t.MutableBoolMapping,
+    ) -> t.MutableBoolMapping:
         """Map OID-specific permissions to OUD-equivalent permissions."""
         pass_through_perms = {
             "read",
@@ -645,7 +645,7 @@ class FlextLdifUtilitiesACL:
             "all",
         }
 
-        def map_perm(perm_name: str, *, perm_value: bool) -> MutableMapping[str, bool]:
+        def map_perm(perm_name: str, *, perm_value: bool) -> t.MutableBoolMapping:
             """Map single permission."""
             if perm_name == "browse":
                 return {"read": perm_value, "search": perm_value}
@@ -655,14 +655,14 @@ class FlextLdifUtilitiesACL:
                 return {perm_name: perm_value}
             return {}
 
-        mapped_dicts: MutableSequence[MutableMapping[str, bool]] = [
+        mapped_dicts: MutableSequence[t.MutableBoolMapping] = [
             map_perm(perm_name, perm_value=perm_value)
             for perm_name, perm_value in oid_permissions.items()
         ]
-        filtered_dicts: MutableSequence[MutableMapping[str, bool]] = [
+        filtered_dicts: MutableSequence[t.MutableBoolMapping] = [
             d for d in mapped_dicts if d
         ]
-        result: MutableMapping[str, bool] = {}
+        result: t.MutableBoolMapping = {}
         for d in filtered_dicts:
             for k, v in d.items():
                 result[k] = result.get(k, False) or v
@@ -670,8 +670,8 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def map_oud_to_oid_permissions(
-        oud_permissions: MutableMapping[str, bool],
-    ) -> MutableMapping[str, bool]:
+        oud_permissions: t.MutableBoolMapping,
+    ) -> t.MutableBoolMapping:
         """Map OUD-specific permissions to OID-equivalent permissions."""
         pass_through_perms = {
             "read",
@@ -684,15 +684,15 @@ class FlextLdifUtilitiesACL:
         }
         has_read = oud_permissions.get("read", False)
         has_search = oud_permissions.get("search", False)
-        browse_dict: MutableMapping[str, bool] = (
+        browse_dict: t.MutableBoolMapping = (
             {"browse": has_read and has_search} if has_read or has_search else {}
         )
-        pass_through: MutableMapping[str, bool] = {
+        pass_through: t.MutableBoolMapping = {
             k: v
             for k, v in oud_permissions.items()
             if k in pass_through_perms and k not in {"read", "search"}
         }
-        result: MutableMapping[str, bool] = {**browse_dict, **pass_through}
+        result: t.MutableBoolMapping = {**browse_dict, **pass_through}
         return result
 
     @staticmethod

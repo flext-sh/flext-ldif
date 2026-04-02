@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 import re
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import (
@@ -14,6 +14,7 @@ from flext_ldif import (
     c,
     m,
     r,
+    t,
     u,
 )
 
@@ -312,7 +313,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: MutableMapping[str, MutableSequence[str]],
+            attributes: t.MutableStrSequenceMapping,
         ) -> bool:
             """Detect Tivoli DS-specific entries."""
             if not entry_dn:
@@ -366,14 +367,14 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                         "Entry attributes are required for Tivoli DS normalization",
                     )
                 entry_dn = entry.dn.value
-                attributes: MutableMapping[str, MutableSequence[str]] = {
+                attributes: t.MutableStrSequenceMapping = {
                     **entry.attributes.attributes,
                 }
                 dn_lower = entry_dn.lower()
                 object_classes = [
                     str(oc) for oc in attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
                 ]
-                processed_attributes: MutableMapping[str, MutableSequence[str]] = {
+                processed_attributes: t.MutableStrSequenceMapping = {
                     **attributes,
                 }
                 for attr_name, attr_values in processed_attributes.items():

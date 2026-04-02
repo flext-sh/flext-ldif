@@ -6,14 +6,13 @@ Directory Server-specific attributes, t.NormalizedValue classes, and entries in 
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping, MutableSequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
 import pytest
 from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
-from tests import c, m
+from tests import c, m, t
 
 from flext_ldif import FlextLdifServersDs389
 
@@ -150,7 +149,7 @@ class EntryTestCase(BaseModel):
     ]
     entry_dn: Annotated[str, Field(description="Entry distinguished name")]
     attributes: Annotated[
-        MutableMapping[str, MutableSequence[str]],
+        t.MutableStrSequenceMapping,
         Field(
             description="Entry attributes mapped by name",
         ),

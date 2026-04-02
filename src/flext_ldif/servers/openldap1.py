@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 from typing import ClassVar, override
 
-from flext_ldif import FlextLdifModelsDomains, FlextLdifServersRfc, c, m, r
+from flext_ldif import FlextLdifModelsDomains, FlextLdifServersRfc, c, m, r, t
 
 
 class FlextLdifServersOpenldap1(FlextLdifServersRfc):
@@ -395,7 +395,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: MutableMapping[str, MutableSequence[str]],
+            attributes: t.MutableStrSequenceMapping,
         ) -> bool:
             """Check if this quirk should handle the entry."""
             if not entry_dn:

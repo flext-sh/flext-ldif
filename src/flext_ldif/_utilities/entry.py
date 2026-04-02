@@ -32,7 +32,7 @@ class FlextLdifUtilitiesEntry:
         t.MutableContainerMapping,
         MutableMapping[str, t.MutableContainerMapping],
         t.MutableContainerMapping,
-        MutableMapping[str, str],
+        t.MutableStrMapping,
     ]:
         """Analyze DN and attribute differences for round-trip support (DRY utility)."""
 
@@ -52,7 +52,7 @@ class FlextLdifUtilitiesEntry:
             canonical = normalize(attr_str)
             return (canonical, attr_str) if canonical != attr_str else None
 
-        original_attribute_case: MutableMapping[str, str] = {}
+        original_attribute_case: t.MutableStrMapping = {}
         for attr_name in entry_attrs:
             try:
                 result = extract_case_mapping(attr_name)
@@ -105,7 +105,7 @@ class FlextLdifUtilitiesEntry:
         *,
         source_format: str = "0/1",
         target_format: str = "TRUE/FALSE",
-    ) -> MutableMapping[str, MutableSequence[str]]:
+    ) -> t.MutableStrSequenceMapping:
         """Convert boolean attribute values between formats."""
 
         def _stringify(value: str | bytes | float) -> str:
@@ -123,7 +123,7 @@ class FlextLdifUtilitiesEntry:
         if not attributes or not boolean_attr_names:
             if not attributes:
                 return {}
-            normalized_result: MutableMapping[str, MutableSequence[str]] = {}
+            normalized_result: t.MutableStrSequenceMapping = {}
             for attr_name in attributes:
                 raw_values = attributes[attr_name]
                 if isinstance(raw_values, str | bytes):
@@ -131,7 +131,7 @@ class FlextLdifUtilitiesEntry:
                 else:
                     normalized_result[attr_name] = [_stringify(v) for v in raw_values]
             return normalized_result
-        result: MutableMapping[str, MutableSequence[str]] = {}
+        result: t.MutableStrSequenceMapping = {}
         for attr_name in attributes:
             attr_raw_values = attributes[attr_name]
             str_values: MutableSequence[str]
@@ -226,7 +226,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def matches_entry_server_patterns(
         entry_dn: str,
-        attributes: Mapping[str, Sequence[str]],
+        attributes: t.StrSequenceMapping,
         config: FlextLdifModelsSettings.ServerPatternsConfig,
     ) -> bool:
         """Check if entry matches server-specific patterns."""
@@ -266,7 +266,7 @@ class FlextLdifUtilitiesEntry:
         if not attributes or entry.attributes is None or entry.dn is None:
             return entry
         attrs_to_remove = {attr.lower() for attr in attributes}
-        filtered: MutableMapping[str, MutableSequence[str]] = {
+        filtered: t.MutableStrSequenceMapping = {
             k: v
             for k, v in entry.attributes.attributes.items()
             if k.lower() not in attrs_to_remove

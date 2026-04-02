@@ -164,7 +164,7 @@ def parallel_schema_validation() -> r[t.ContainerMapping]:
         )
     validation_report = validation_result.value
     error_analysis: dict[str, int] = {}
-    analysis: dict[str, int | float | dict[str, int]] = {
+    analysis: dict[str, t.Numeric | dict[str, int]] = {
         "total_entries": len(test_entries),
         "valid_entries": validation_report.valid_entries,
         "invalid_entries": validation_report.invalid_entries,

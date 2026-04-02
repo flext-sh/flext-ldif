@@ -97,7 +97,7 @@ class FlextLdifServer(FlextRegistry):
         """Get comprehensive registry statistics."""
         servers = self.list_registered_servers()
         quirks_by_server: MutableMapping[str, t.MutableOptionalStrMapping] = {}
-        priorities: MutableMapping[str, int] = {}
+        priorities: t.MutableIntMapping = {}
         for st in servers:
             base = self.quirk(st).map_or(None)
             if base is None:

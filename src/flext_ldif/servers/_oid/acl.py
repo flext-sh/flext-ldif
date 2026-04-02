@@ -133,8 +133,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _normalize_permissions_to_dict(
-        permissions: m.Ldif.AclPermissions | MutableMapping[str, bool] | None,
-    ) -> MutableMapping[str, bool]:
+        permissions: m.Ldif.AclPermissions | t.MutableBoolMapping | None,
+    ) -> t.MutableBoolMapping:
         """Normalize permissions to dict for formatting."""
         if not permissions:
             return {}
@@ -188,9 +188,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         }
 
     @staticmethod
-    def _parse_oid_permissions(content: str) -> MutableMapping[str, bool]:
+    def _parse_oid_permissions(content: str) -> t.MutableBoolMapping:
         """Parse OID ACL permissions clause."""
-        permissions: MutableMapping[str, bool] = {}
+        permissions: t.MutableBoolMapping = {}
         const = _OidConstants
         perm_match = re.search(const.ACL_PERMS_EXTRACT_OID, content, re.IGNORECASE)
         if perm_match:
@@ -256,12 +256,12 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     @override
     def convert_rfc_acl_to_aci(
         self,
-        rfc_acl_attrs: MutableMapping[str, MutableSequence[str]],
+        rfc_acl_attrs: t.MutableStrSequenceMapping,
         target_server: str = "oid",
-    ) -> r[MutableMapping[str, MutableSequence[str]]]:
+    ) -> r[t.MutableStrSequenceMapping]:
         """Convert RFC ACL format to Oracle OID orclaci format."""
         _ = target_server
-        return r[MutableMapping[str, MutableSequence[str]]].ok(rfc_acl_attrs)
+        return r[t.MutableStrSequenceMapping].ok(rfc_acl_attrs)
 
     def _build_metadata_extensions(
         self,
@@ -618,7 +618,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _authorize_write_permissions(
         self,
         acl_subject: m.Ldif.AclSubject | t.MutableConfigurationMapping,
-        acl_permissions: m.Ldif.AclPermissions | MutableMapping[str, bool] | None,
+        acl_permissions: m.Ldif.AclPermissions | t.MutableBoolMapping | None,
         metadata: m.Ldif.QuirkMetadata
         | MutableMapping[
             str,

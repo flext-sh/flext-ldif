@@ -22,14 +22,13 @@ import base64
 from collections.abc import (
     Callable,
     MutableMapping,
-    Sequence,
 )
 from pathlib import Path
 
 import pytest
 
 from flext_ldif import ldif
-from tests import p
+from tests import p, t
 
 
 @pytest.fixture
@@ -63,7 +62,7 @@ class TestRealLdapImport:
         object_classes: list[str] = (
             list(object_classes_raw) if object_classes_raw else []
         )
-        attrs_dict: MutableMapping[str, Sequence[str]] = {}
+        attrs_dict: MutableMapping[str, t.StrSequence] = {}
         assert entry.attributes is not None
         for attr_name, attr_values in entry.attributes.attributes.items():
             if attr_name.lower() == "objectclass":
@@ -102,7 +101,7 @@ class TestRealLdapImport:
         entries = parse_result.value
         entry = entries[0]
         assert entry.attributes is not None
-        attrs_dict: MutableMapping[str, Sequence[str] | bytes] = {
+        attrs_dict: MutableMapping[str, t.StrSequence | bytes] = {
             attr_name: attr_values
             for attr_name, attr_values in entry.attributes.attributes.items()
             if attr_name.lower() != "objectclass"
@@ -146,7 +145,7 @@ class TestRealLdapImport:
         object_classes: list[str] = (
             list(object_classes_raw) if object_classes_raw else []
         )
-        attrs_dict: MutableMapping[str, Sequence[str]] = {}
+        attrs_dict: MutableMapping[str, t.StrSequence] = {}
         assert entry.attributes is not None
         for attr_name, attr_values in entry.attributes.attributes.items():
             if attr_name.lower() == "objectclass":

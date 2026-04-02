@@ -5,7 +5,7 @@ from __future__ import annotations
 import base64
 import binascii
 import re
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import (
@@ -16,6 +16,7 @@ from flext_ldif import (
     c,
     m,
     r,
+    t,
 )
 
 
@@ -340,7 +341,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: MutableMapping[str, MutableSequence[str]],
+            attributes: t.MutableStrSequenceMapping,
         ) -> bool:
             """Detect Active Directory entries based on DN, attributes, or classes."""
             if not entry_dn:

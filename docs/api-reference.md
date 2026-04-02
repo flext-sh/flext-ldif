@@ -288,7 +288,7 @@ Generate statistics about LDIF entries.
 ```python
 def get_entry_statistics(
     self, entries: Sequence[FlextLdifModels.Entry]
-) -> r[Mapping[str, int]]:
+) -> r[t.IntMapping]:
     """Get statistics about LDIF entries.
 
     Args:
@@ -450,7 +450,7 @@ class DnCaseRegistry:
 
         """
 
-    def get_stats(self) -> Mapping[str, int]:
+    def get_stats(self) -> t.IntMapping:
         """Get registry statistics.
 
         Returns:

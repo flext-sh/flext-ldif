@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 import re
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self, override
@@ -94,7 +94,7 @@ class FlextLdifServersBaseEntry(
     def can_handle(
         self,
         entry_dn: str,
-        attributes: MutableMapping[str, MutableSequence[str]],
+        attributes: t.MutableStrSequenceMapping,
     ) -> bool:
         """Check if this quirk can handle the entry."""
         _ = entry_dn
@@ -142,7 +142,7 @@ class FlextLdifServersBaseEntry(
     def parse_entry(
         self,
         entry_dn: str,
-        entry_attrs: MutableMapping[str, MutableSequence[str]],
+        entry_attrs: t.MutableStrSequenceMapping,
     ) -> r[m.Ldif.Entry]:
         """Parse a single entry from DN and attributes."""
         attrs_dict = dict(entry_attrs)
@@ -190,9 +190,9 @@ class FlextLdifServersBaseEntry(
     def _convert_raw_attributes(
         self,
         entry_attrs: MutableMapping[str, MutableSequence[str | bytes]],
-    ) -> MutableMapping[str, MutableSequence[str]]:
-        """Convert raw LDIF attributes to MutableMapping[str, MutableSequence[str]] format."""
-        converted_attrs: MutableMapping[str, MutableSequence[str]] = {}
+    ) -> t.MutableStrSequenceMapping:
+        """Convert raw LDIF attributes to t.MutableStrSequenceMapping format."""
+        converted_attrs: t.MutableStrSequenceMapping = {}
         for attr_name, attr_values in entry_attrs.items():
             canonical_attr_name = self._normalize_attribute_name(attr_name)
             string_values = [
@@ -467,7 +467,7 @@ class FlextLdifServersBaseEntry(
         opts = self._resolve_write_options_for_header(write_options)
         header_lines = self._build_header_lines(opts, len(entries))
 
-        def format_output(results: Sequence[str]) -> str:
+        def format_output(results: t.StrSequence) -> str:
             all_lines = [*header_lines, *results]
             ldif_output = "\n".join(all_lines) if all_lines else ""
             if header_lines and (not ldif_output.endswith("\n")):

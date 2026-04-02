@@ -18,7 +18,7 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableSequence
 
 from flext_core import r
-from flext_ldif import ldif, m
+from flext_ldif import ldif, m, t
 
 
 class DRYValidationAnalysis:
@@ -90,18 +90,18 @@ class DRYValidationAnalysis:
         return DRYValidationAnalysis._analyze_validation_results(validation_result)
 
     @staticmethod
-    def statistical_analysis() -> r[Mapping[str, int | float]]:
+    def statistical_analysis() -> r[Mapping[str, t.Numeric]]:
         """DRY statistical analysis: comprehensive metrics in one pipeline."""
         api = ldif.get_instance()
         entries = DRYValidationAnalysis._generate_test_dataset(500, error_rate=0.05)
         validate_result = api.validate_entries(entries)
         if validate_result.is_failure:
-            return r[Mapping[str, int | float]].fail(validate_result.error)
+            return r[Mapping[str, t.Numeric]].fail(validate_result.error)
         total_entries = len(entries)
         valid_result = validate_result.value
         valid_entries = valid_result.valid_entries
         invalid_entries = valid_result.invalid_entries
-        return r[Mapping[str, int | float]].ok({
+        return r[Mapping[str, t.Numeric]].ok({
             "total_entries": total_entries,
             "valid_entries": valid_entries,
             "invalid_entries": invalid_entries,

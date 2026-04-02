@@ -21,21 +21,21 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     ORCLENTRYLEVELACI: ClassVar[str] = "orclentrylevelaci"
     ACL_FORMAT: ClassVar[str] = "orclaci"
     ACL_ATTRIBUTE_NAME: ClassVar[str] = "orclaci"
-    MATCHING_RULE_TO_RFC: ClassVar[MutableMapping[str, str]] = {
+    MATCHING_RULE_TO_RFC: ClassVar[t.MutableStrMapping] = {
         "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch",
         "accessDirectiveMatch": "caseIgnoreMatch",
     }
-    MATCHING_RULE_RFC_TO_OID: ClassVar[MutableMapping[str, str]] = {
+    MATCHING_RULE_RFC_TO_OID: ClassVar[t.MutableStrMapping] = {
         "caseIgnoreSubstringsMatch": "caseIgnoreSubStringsMatch",
         "caseIgnoreMatch": "accessDirectiveMatch",
     }
-    SYNTAX_OID_TO_RFC: ClassVar[MutableMapping[str, str]] = {
+    SYNTAX_OID_TO_RFC: ClassVar[t.MutableStrMapping] = {
         "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15",
     }
-    SYNTAX_RFC_TO_OID: ClassVar[MutableMapping[str, str]] = {
+    SYNTAX_RFC_TO_OID: ClassVar[t.MutableStrMapping] = {
         "1.3.6.1.4.1.1466.115.121.1.15": "1.3.6.1.4.1.1466.115.121.1.1",
     }
-    ATTR_NAME_CASE_MAP: ClassVar[MutableMapping[str, str]] = {
+    ATTR_NAME_CASE_MAP: ClassVar[t.MutableStrMapping] = {
         "middlename": "middleName",
     }
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = (
@@ -96,7 +96,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "pwdallowuserchange",
     ])
     ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["usage", "x_origin"])
-    OBJECTCLASS_REQUIREMENTS: ClassVar[MutableMapping[str, bool]] = {
+    OBJECTCLASS_REQUIREMENTS: ClassVar[t.MutableBoolMapping] = {
         "requires_sup_for_auxiliary": True,
         "allows_multiple_sup": True,
         "requires_explicit_structural": False,
@@ -143,7 +143,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "hierarchy",
         "groups",
     ]
-    CATEGORY_OBJECTCLASSES: ClassVar[MutableMapping[str, frozenset[str]]] = {
+    CATEGORY_OBJECTCLASSES: ClassVar[t.MutableFrozensetMapping] = {
         "users": frozenset(["person", "inetOrgPerson", "orclUser", "orclUserV2"]),
         "hierarchy": frozenset([
             "organizationalUnit",
@@ -225,13 +225,13 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     ACL_PATTERN_KEY_CONSTRAINT: ClassVar[str] = "constraint"
     ONE_OID: ClassVar[str] = "1"
     ZERO_OID: ClassVar[str] = "0"
-    OID_TO_RFC: ClassVar[MutableMapping[str, str]] = {
+    OID_TO_RFC: ClassVar[t.MutableStrMapping] = {
         ONE_OID: "TRUE",
         ZERO_OID: "FALSE",
         "true": "TRUE",
         "false": "FALSE",
     }
-    RFC_TO_OID: ClassVar[MutableMapping[str, str]] = {
+    RFC_TO_OID: ClassVar[t.MutableStrMapping] = {
         "TRUE": ONE_OID,
         "FALSE": ZERO_OID,
         "true": ONE_OID,
@@ -289,7 +289,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "guid_attr": ("guidattr=({0})", False),
         "group_attr": ("groupattr=({0})", False),
     }
-    ACL_PERMISSION_MAPPING: ClassVar[MutableMapping[str, MutableSequence[str]]] = {
+    ACL_PERMISSION_MAPPING: ClassVar[t.MutableStrSequenceMapping] = {
         "all": ["read", "write", "add", "delete", "search", "compare", "proxy"],
         "browse": ["read", "search"],
         "read": ["read"],
@@ -307,7 +307,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "nobrowse": ["no_browse"],
         "noselfwrite": ["no_self_write"],
     }
-    ACL_PERMISSION_NAMES: ClassVar[MutableMapping[str, str]] = {
+    ACL_PERMISSION_NAMES: ClassVar[t.MutableStrMapping] = {
         "read": "read",
         "write": "write",
         "add": "add",
@@ -344,12 +344,12 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "no_browse",
         "no_self_write",
     ])
-    ATTRIBUTE_TRANSFORMATION_OID_TO_RFC: ClassVar[MutableMapping[str, str]] = {
+    ATTRIBUTE_TRANSFORMATION_OID_TO_RFC: ClassVar[t.MutableStrMapping] = {
         "orclguid": "entryUUID",
         "orclaci": "aci",
         "orclentrylevelaci": "aci",
     }
-    ATTRIBUTE_TRANSFORMATION_RFC_TO_OID: ClassVar[MutableMapping[str, str]] = {
+    ATTRIBUTE_TRANSFORMATION_RFC_TO_OID: ClassVar[t.MutableStrMapping] = {
         "entryUUID": "orclguid",
         "aci": "orclaci",
     }

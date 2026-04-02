@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import (
@@ -15,6 +15,7 @@ from flext_ldif import (
     c,
     m,
     r,
+    t,
 )
 
 
@@ -460,7 +461,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: MutableMapping[str, MutableSequence[str]],
+            attributes: t.MutableStrSequenceMapping,
         ) -> bool:
             """Detect 389 DS-specific entries."""
             if not entry_dn:
@@ -497,7 +498,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             try:
                 if not entry.attributes or not entry.dn:
                     return r[m.Ldif.Entry].ok(entry)
-                attributes: MutableMapping[str, MutableSequence[str]] = {
+                attributes: t.MutableStrSequenceMapping = {
                     **entry.attributes.attributes,
                 }
                 entry_dn = entry.dn.value

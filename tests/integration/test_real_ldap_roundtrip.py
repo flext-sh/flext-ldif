@@ -20,8 +20,6 @@ from __future__ import annotations
 
 from collections.abc import (
     Callable,
-    MutableMapping,
-    MutableSequence,
 )
 
 import pytest
@@ -98,7 +96,7 @@ class TestRealLdapRoundtrip:
         }
         attrs = reimport_entry.attributes
         assert attrs is not None
-        reimport_attrs: MutableMapping[str, MutableSequence[str]] = {
+        reimport_attrs: t.MutableStrSequenceMapping = {
             attr_name: list(attr_values)
             for attr_name, attr_values in attrs.attributes.items()
             if attr_name.lower() not in ldif_special_attrs

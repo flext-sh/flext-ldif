@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 from typing import override
 
-from flext_ldif import FlextLdifValidation, m, r, s, u
+from flext_ldif import FlextLdifValidation, m, r, s, t, u
 
 
 class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
@@ -58,7 +58,7 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
         """Validate entry objectClass values."""
         errors: MutableSequence[str] = []
         is_valid = True
-        attrs: MutableMapping[str, MutableSequence[str]] = (
+        attrs: t.MutableStrSequenceMapping = (
             entry.attributes.attributes if entry.attributes else {}
         )
         oc_values_raw: MutableSequence[str] = attrs.get("objectClass", [])

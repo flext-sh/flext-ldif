@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
+from collections.abc import Callable, MutableSequence
 from typing import ClassVar, Self, overload, override
 
 from pydantic import ConfigDict
@@ -36,7 +36,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     def __init__(self, **kwargs: t.Scalar) -> None:
         """Initialize base quirk and its nested quirks."""
-        init_kwargs: MutableMapping[str, t.Scalar] = {}
+        init_kwargs: t.MutableScalarMapping = {}
         for key, value in kwargs.items():
             if u.is_primitive(value):
                 init_kwargs[key] = value
@@ -426,7 +426,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 return result
             return r[str].fail("No entry quirk found")
 
-        def format_ldif_output(ldif_lines: Sequence[str]) -> str:
+        def format_ldif_output(ldif_lines: t.StrSequence) -> str:
             """Format LDIF output with proper newline handling."""
             ldif = "\n".join(ldif_lines)
             if ldif and (not ldif.endswith("\n")):

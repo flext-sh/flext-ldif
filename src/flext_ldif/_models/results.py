@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 from typing import Annotated, ClassVar, Self
 
 from pydantic import ConfigDict, Field, computed_field
@@ -157,7 +157,7 @@ class FlextLdifModelsResults:
             self,
             other: FlextLdifModelsResults.Statistics,
         ) -> FlextLdifModelsResults.Statistics:
-            merged_reasons: MutableMapping[str, int] = dict(
+            merged_reasons: t.MutableIntMapping = dict(
                 self.rejection_reasons.items(),
             )
             for reason, count in other.rejection_reasons.items():

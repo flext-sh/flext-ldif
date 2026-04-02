@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import ClassVar, Final
 
 from flext_core import FlextConstants
+from flext_ldif import t
 
 
 class FlextLdifConstants(FlextConstants):
@@ -490,13 +491,13 @@ class FlextLdifConstants(FlextConstants):
             "novell",
             "ibm_tivoli",
         )
-        _LONG_NAMES_DICT: ClassVar[MutableMapping[str, str]] = {
+        _LONG_NAMES_DICT: ClassVar[t.MutableStrMapping] = {
             name: name for name in _CANONICAL_SERVER_NAMES
         }
-        _FROM_LONG_DICT: ClassVar[MutableMapping[str, str]] = {
+        _FROM_LONG_DICT: ClassVar[t.MutableStrMapping] = {
             v: k for k, v in _LONG_NAMES_DICT.items()
         }
-        FROM_LONG: Final[Mapping[str, str]] = MappingProxyType(_FROM_LONG_DICT)
+        FROM_LONG: Final[t.StrMapping] = MappingProxyType(_FROM_LONG_DICT)
         DN_COMPONENT: Final[str] = "^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\\\,]|\\\\.)*$"
         ATTRIBUTE_NAME: Final[str] = "^[a-zA-Z][a-zA-Z0-9-]*$"
         ATTRIBUTE_OPTION: Final[str] = ";[a-zA-Z][a-zA-Z0-9-_]*"
@@ -548,7 +549,7 @@ class FlextLdifConstants(FlextConstants):
 
         DEFAULT_MAX_ATTR_VALUE_LENGTH: Final[int] = 1048576
 
-        OID_TO_NAME: ClassVar[Mapping[str, str]] = MappingProxyType({
+        OID_TO_NAME: ClassVar[t.StrMapping] = MappingProxyType({
             "2.5.5.5": "integer",
             "1.3.6.1.4.1.1466.115.121.1.1": "aci",
             "1.3.6.1.4.1.1466.115.121.1.2": "access_point",
@@ -604,10 +605,8 @@ class FlextLdifConstants(FlextConstants):
             "1.3.6.1.4.1.1466.115.121.1.57": "uui",
             "1.3.6.1.4.1.1466.115.121.1.58": "substring_assertion",
         })
-        NAME_TO_OID: Final[MutableMapping[str, str]] = {
-            v: k for k, v in OID_TO_NAME.items()
-        }
-        NAME_TO_TYPE_CATEGORY: Final[MutableMapping[str, str]] = {
+        NAME_TO_OID: Final[t.MutableStrMapping] = {v: k for k, v in OID_TO_NAME.items()}
+        NAME_TO_TYPE_CATEGORY: Final[t.MutableStrMapping] = {
             "integer": "integer",
             "boolean": "boolean",
             "distinguished_name": "dn",

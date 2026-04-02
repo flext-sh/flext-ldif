@@ -6,14 +6,13 @@ Directory Server-specific attributes, t.NormalizedValue classes, entries, and AC
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
 import pytest
 from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
-from tests import c, m
+from tests import c, m, t
 
 from flext_ldif import FlextLdifServersApache
 
@@ -124,7 +123,7 @@ class EntryTestCase(BaseModel):
     ]
     entry_dn: Annotated[str, Field(description="Entry distinguished name")]
     attributes: Annotated[
-        MutableMapping[str, MutableSequence[str]],
+        t.MutableStrSequenceMapping,
         Field(
             description="Entry attributes mapped by name",
         ),
@@ -651,7 +650,7 @@ class TestsTestFlextLdifApacheQuirks:
         tm.that(result is test_case.expected_can_handle, eq=True)
 
     @staticmethod
-    def _build_ldif(entry_dn: str, attributes: Mapping[str, Sequence[str]]) -> str:
+    def _build_ldif(entry_dn: str, attributes: t.StrSequenceMapping) -> str:
         """Build LDIF string from DN and attributes."""
         ldif = f"dn: {entry_dn}\n"
         for attr, values in attributes.items():

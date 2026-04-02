@@ -6,7 +6,7 @@ import re
 from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar, override
 
-from flext_ldif import FlextLdifModelsDomains, FlextLdifServersRfc, c, m, r, u
+from flext_ldif import FlextLdifModelsDomains, FlextLdifServersRfc, c, m, r, t, u
 
 
 class FlextLdifServersApache(FlextLdifServersRfc):
@@ -213,7 +213,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def can_handle(
             self,
             entry_dn: str,
-            attributes: MutableMapping[str, MutableSequence[str]],
+            attributes: t.MutableStrSequenceMapping,
         ) -> bool:
             """Check if this quirk can handle the entry."""
             _ = entry_dn
@@ -226,7 +226,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             entry_attrs: MutableMapping[str, MutableSequence[str | bytes]],
         ) -> r[m.Ldif.Entry]:
             """Parse raw LDIF entry data into Entry model."""
-            str_attrs: MutableMapping[str, MutableSequence[str]] = {
+            str_attrs: t.MutableStrSequenceMapping = {
                 k: [v.decode() if isinstance(v, bytes) else v for v in vals]
                 for k, vals in entry_attrs.items()
             }

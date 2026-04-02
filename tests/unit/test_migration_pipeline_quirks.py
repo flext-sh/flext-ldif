@@ -8,7 +8,6 @@ conversions and other server-specific attribute transformations during migration
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
 from pathlib import Path
 from typing import Final
 
@@ -19,14 +18,14 @@ from flext_ldif import (
     FlextLdifServersOidConstants,
     FlextLdifServersRfc,
 )
-from tests import c
+from tests import c, t
 
 
 class OidTestConstants:
     """Constants for OID boolean conversion tests."""
 
-    RFC_TO_OID_BOOLEAN: Final[Mapping[str, str]] = {"TRUE": "1", "FALSE": "0"}
-    OID_TO_RFC_BOOLEAN: Final[Mapping[str, str]] = {"1": "TRUE", "0": "FALSE"}
+    RFC_TO_OID_BOOLEAN: Final[t.StrMapping] = {"TRUE": "1", "FALSE": "0"}
+    OID_TO_RFC_BOOLEAN: Final[t.StrMapping] = {"1": "TRUE", "0": "FALSE"}
 
 
 class TestsFlextLdifMigrationPipelineQuirks:

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import override
 
 from pydantic import RootModel
@@ -41,16 +41,16 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _convert_boolean_attributes_to_rfc(
         self,
-        entry_attributes: MutableMapping[str, MutableSequence[str]],
+        entry_attributes: t.MutableStrSequenceMapping,
     ) -> tuple[
-        MutableMapping[str, MutableSequence[str]],
+        t.MutableStrSequenceMapping,
         set[str],
         MutableMapping[str, t.MutableAttributeMapping],
     ]:
         """Convert OID boolean attribute values to RFC format."""
         boolean_attributes = FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES
         boolean_attr_names = {attr.lower() for attr in boolean_attributes}
-        converted_attrs_for_util: MutableMapping[str, MutableSequence[str]] = dict(
+        converted_attrs_for_util: t.MutableStrSequenceMapping = dict(
             entry_attributes.items(),
         )
         source_format = f"{FlextLdifServersOidConstants.ZERO_OID}/{FlextLdifServersOidConstants.ONE_OID}"
@@ -100,7 +100,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         self,
         attr_name: str,
         current_values: MutableSequence[str],
-        restored_attrs: MutableMapping[str, MutableSequence[str]],
+        restored_attrs: t.MutableStrSequenceMapping,
     ) -> None:
         """Convert RFC boolean values to OID format for an attribute."""
         new_values: MutableSequence[str] = []
@@ -162,11 +162,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         acl_transformations: MutableMapping[str, m.Ldif.AttributeTransformation],
         rfc_violations: MutableSequence[str],
         attribute_conflicts: MutableSequence[t.MutableAttributeMapping],
-        converted_attributes: MutableMapping[str, MutableSequence[str]],
+        converted_attributes: t.MutableStrSequenceMapping,
         original_entry: m.Ldif.Entry,
     ) -> r[m.Ldif.Entry]:
         """Create entry result with complete metadata."""
-        original_attrs: MutableMapping[str, MutableSequence[str]] = (
+        original_attrs: t.MutableStrSequenceMapping = (
             original_entry.attributes.attributes if original_entry.attributes else {}
         )
         mk = c.Ldif
@@ -268,7 +268,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         if operational_attributes_str:
             generic_metadata["operational_attributes"] = operational_attributes_str
         mk = c.Ldif
-        attr_name_conversions: MutableMapping[str, str] = (
+        attr_name_conversions: t.MutableStrMapping = (
             {
                 FlextLdifServersOidConstants.ORCLACI: FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME,
             }
@@ -285,7 +285,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         }
         converted_attrs_data: MutableMapping[
             str,
-            MutableMapping[str, t.MutableAttributeMapping] | MutableMapping[str, str],
+            MutableMapping[str, t.MutableAttributeMapping] | t.MutableStrMapping,
         ] = {
             c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions_dict,
             c.Ldif.CONVERSION_ATTRIBUTE_NAME_CONVERSIONS: attr_name_conversions,
@@ -333,7 +333,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             self._get_server_type(),
             extensions=m.Ldif.DynamicMetadata.from_dict(extensions_data),
         )
-        original_strings_data: MutableMapping[str, str] = {}
+        original_strings_data: t.MutableStrMapping = {}
         if original_entry.metadata:
             original_strings_data.update({
                 key: value
@@ -477,9 +477,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _denormalize_oid_attributes_for_output(
         self,
-        attrs: MutableMapping[str, MutableSequence[str]],
+        attrs: t.MutableStrSequenceMapping,
         metadata: m.Ldif.QuirkMetadata | None,
-    ) -> MutableMapping[str, MutableSequence[str]]:
+    ) -> t.MutableStrSequenceMapping:
         """Denormalize RFC attributes to OID format."""
         mk = c.Ldif
         original_attrs_raw = (
@@ -487,16 +487,16 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if metadata and metadata.extensions
             else None
         )
-        original_attrs: MutableMapping[str, MutableSequence[str]] | None = None
+        original_attrs: t.MutableStrSequenceMapping | None = None
         if isinstance(original_attrs_raw, Mapping):
-            result_attrs: MutableMapping[str, MutableSequence[str]] = {}
+            result_attrs: t.MutableStrSequenceMapping = {}
             for k, v in original_attrs_raw.items():
                 if isinstance(v, list):
                     result_attrs[k] = [str(item) for item in v]
                 else:
                     result_attrs[k] = [str(v)]
             original_attrs = result_attrs
-        denormalized: MutableMapping[str, MutableSequence[str]] = {}
+        denormalized: t.MutableStrSequenceMapping = {}
         for attr_name, attr_values in attrs.items():
             restored_name, restored_values = self._restore_single_attribute(
                 attr_name,
@@ -508,11 +508,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _detect_entry_acl_transformations(
         self,
-        entry_attrs: MutableMapping[str, MutableSequence[str]],
-        converted_attributes: MutableMapping[str, MutableSequence[str]],
+        entry_attrs: t.MutableStrSequenceMapping,
+        converted_attributes: t.MutableStrSequenceMapping,
     ) -> MutableMapping[str, m.Ldif.AttributeTransformation]:
         """Detect ACL attribute transformations (orclaci→aci)."""
-        original_attr_names: MutableMapping[str, str] = {
+        original_attr_names: t.MutableStrMapping = {
             normalized.lower(): str(raw_attr_name)
             for raw_attr_name in entry_attrs
             if (
@@ -538,7 +538,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _detect_rfc_violations(
         self,
-        converted_attributes: MutableMapping[str, MutableSequence[str]],
+        converted_attributes: t.MutableStrSequenceMapping,
     ) -> tuple[
         MutableSequence[str],
         MutableSequence[t.MutableAttributeMapping],
@@ -706,7 +706,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         self,
         entry: m.Ldif.Entry,
         original_dn: str,
-        original_attrs: MutableMapping[str, MutableSequence[str]],
+        original_attrs: t.MutableStrSequenceMapping,
     ) -> r[m.Ldif.Entry]:
         """Finalize OID entry with ACL and RFC violation metadata."""
         _ = original_dn
@@ -790,7 +790,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             )
             logger.debug("converted_attrs", attrs=",".join(converted_attrs))
             logger.debug("boolean_conversions", count=len(boolean_conversions))
-            normalized_attributes: MutableMapping[str, MutableSequence[str]] = {}
+            normalized_attributes: t.MutableStrSequenceMapping = {}
             for attr_name, attr_values in converted_attributes.items():
                 normalized_name = self._normalize_attribute_name(attr_name)
                 normalized_attributes[normalized_name] = attr_values
@@ -951,14 +951,14 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         self,
         attr_name: str,
         conv_data: t.MutableAttributeMapping,
-        restored_attrs: MutableMapping[str, MutableSequence[str]],
+        restored_attrs: t.MutableStrSequenceMapping,
     ) -> bool:
         """Restore single boolean attribute from conversion metadata."""
         mk = c.Ldif
         converted_val = conv_data.get(mk.CONVERSION_CONVERTED_VALUE)
         match converted_val:
             case str() as s:
-                converted_val_list: Sequence[str] = [s]
+                converted_val_list: t.StrSequence = [s]
             case list() as items:
                 converted_val_list = [str(item) for item in items]
             case _:
@@ -1027,7 +1027,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         self,
         attr_name: str,
         attr_values: MutableSequence[str],
-        original_attrs: MutableMapping[str, MutableSequence[str]] | None,
+        original_attrs: t.MutableStrSequenceMapping | None,
     ) -> tuple[str, MutableSequence[str]]:
         """Restore attribute from metadata or apply denormalization."""
         if original_attrs:

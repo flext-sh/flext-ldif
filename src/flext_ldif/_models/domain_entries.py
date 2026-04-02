@@ -45,7 +45,7 @@ from flext_ldif import (
 )
 
 
-def _empty_conversion_history_factory() -> MutableSequence[MutableMapping[str, str]]:
+def _empty_conversion_history_factory() -> MutableSequence[t.MutableStrMapping]:
     return []
 
 
@@ -65,7 +65,7 @@ class FlextLdifModelsDomainsEntries:
     _logger = FlextLogger(__name__)
 
     @staticmethod
-    def _conversion_history_factory() -> MutableSequence[MutableMapping[str, str]]:
+    def _conversion_history_factory() -> MutableSequence[t.MutableStrMapping]:
         return []
 
     class DNStatisticsFlags(FlextLdifModelsBases.Base):
@@ -512,7 +512,7 @@ class FlextLdifModelsDomainsEntries:
             str_strip_whitespace=True,
         )
         attributes: Annotated[
-            MutableMapping[str, MutableSequence[str]],
+            t.MutableStrSequenceMapping,
             Field(description="Attribute name to values list"),
         ]
         attribute_metadata: Annotated[
@@ -840,8 +840,8 @@ class FlextLdifModelsDomainsEntries:
 
         @staticmethod
         def get_rfc_compliant_permissions(
-            perms_dict: MutableMapping[str, bool],
-        ) -> MutableMapping[str, bool]:
+            perms_dict: t.MutableBoolMapping,
+        ) -> t.MutableBoolMapping:
             """Filter permissions dict to RFC-compliant fields only.
 
             Architecture: Server-specific permissions (like OID's "none") are excluded
@@ -1202,7 +1202,7 @@ class FlextLdifModelsDomainsEntries:
         ] = None
 
         @computed_field
-        def attributes_dict(self) -> MutableMapping[str, MutableSequence[str]]:
+        def attributes_dict(self) -> t.MutableStrSequenceMapping:
             """Protocol compliance: p.Ldif.Entry.Entry requires attributes: dict[str, list[str]].
 
             Returns the attributes as a dict for protocol compatibility.
@@ -1455,7 +1455,7 @@ class FlextLdifModelsDomainsEntries:
                 violations.extend(self._validate_changetype())
             if violations and self.metadata is not None:
                 attribute_count = len(self.attributes) if self.attributes else 0
-                old_context: MutableMapping[str, str] = {}
+                old_context: t.MutableStrMapping = {}
                 if self.metadata.validation_results is not None:
                     old_context = {
                         key: str(value)
@@ -1961,7 +1961,7 @@ class FlextLdifModelsDomainsEntries:
             """
             if isinstance(attributes, FlextLdifModelsDomainsEntries.Attributes):
                 return attributes
-            attrs_dict: MutableMapping[str, MutableSequence[str]] = {}
+            attrs_dict: t.MutableStrSequenceMapping = {}
             for attr_name, attr_values in attributes.items():
                 if isinstance(attr_values, list):
                     values_list: MutableSequence[str] = [str(v) for v in attr_values]
@@ -2426,7 +2426,7 @@ class FlextLdifModelsDomainsEntries:
             ),
         ]
         filter_results: Annotated[
-            MutableMapping[str, bool],
+            t.MutableBoolMapping,
             Field(
                 description="Filter results: {filter_name: passed}",
             ),
@@ -2592,7 +2592,7 @@ class FlextLdifModelsDomainsEntries:
             Field(description="Non-fatal validation warnings"),
         ]
         context: Annotated[
-            MutableMapping[str, str],
+            t.MutableStrMapping,
             Field(description="Validation context information"),
         ]
         server_specific_violations: Annotated[
@@ -2898,7 +2898,7 @@ class FlextLdifModelsDomainsEntries:
             ),
         ] = Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
         conversion_history: Annotated[
-            MutableSequence[MutableMapping[str, str]],
+            MutableSequence[t.MutableStrMapping],
             Field(
                 description="Complete conversion history for audit trail: [{'step': 'parse_oid_entry', 'timestamp': '2025-01-01T00:00:00Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'oid', 'operation': 'parse'}, {'step': 'normalize_to_rfc', 'timestamp': '2025-01-01T00:00:01Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'rfc', 'operation': 'normalize'}, ...]",
             ),

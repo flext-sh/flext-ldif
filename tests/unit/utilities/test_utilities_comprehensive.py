@@ -5,12 +5,12 @@ Tests all 830 uncovered lines in utilities.py with real data and automation.
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 
 import pytest
 from flext_tests import tm
 
-from tests import FlextLdifTestFactory, m, u
+from tests import FlextLdifTestFactory, m, t, u
 
 
 class TestFlextLdifUtilitiesComprehensive:
@@ -27,7 +27,7 @@ class TestFlextLdifUtilitiesComprehensive:
         for line in lines:
             if line.startswith("dn:"):
                 current_dn = line[4:].strip()
-                current_attrs: MutableMapping[str, MutableSequence[str]] = {}
+                current_attrs: t.MutableStrSequenceMapping = {}
                 entries.append(
                     m.Ldif.Tests.LdifTestData(
                         id=f"entry_{len(entries)}",
@@ -42,7 +42,7 @@ class TestFlextLdifUtilitiesComprehensive:
                 key, value = line.split(":", 1)
                 key = key.strip()
                 value = value.strip()
-                attrs: MutableMapping[str, MutableSequence[str]] = {
+                attrs: t.MutableStrSequenceMapping = {
                     k: list(v) for k, v in entries[-1].attributes.items()
                 }
                 if key not in attrs:
