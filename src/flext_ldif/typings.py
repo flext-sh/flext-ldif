@@ -17,9 +17,10 @@ from collections.abc import (
 from datetime import datetime
 from typing import TYPE_CHECKING, Annotated
 
-from pydantic import BaseModel, StringConstraints
+from pydantic import BaseModel, StringConstraints, TypeAdapter
 
-from flext_core import FlextTypes, r
+from flext_core import FlextTypes
+from flext_ldif import r
 
 if TYPE_CHECKING:
     from flext_ldif import m
@@ -91,6 +92,17 @@ class FlextLdifTypes(FlextTypes):
                 max_length=4096,
             ),
         ]
+        RFC4512_DESCRIPTOR_ADAPTER: TypeAdapter[Rfc4512Descriptor] = TypeAdapter(
+            Rfc4512Descriptor,
+        )
+        RFC4514_DN_COMPONENT_ADAPTER: TypeAdapter[Rfc4514DnComponent] = TypeAdapter(
+            Rfc4514DnComponent,
+        )
+        RFC2849_ATTRIBUTE_VALUE_ADAPTER: TypeAdapter[Rfc2849AttributeValue] = (
+            TypeAdapter(
+                Rfc2849AttributeValue,
+            )
+        )
 
         type ParseMethodArg = str
         type ParseMethodReturn = r[FlextTypes.Scalar | t.StrSequence | None]

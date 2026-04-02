@@ -21,7 +21,12 @@ from flext_ldif.__version__ import (
 )
 
 if _TYPE_CHECKING:
-    from flext_core import FlextTypes, d, e, h, r, x
+    from flext_core import FlextTypes
+    from flext_core.decorators import FlextDecorators as d
+    from flext_core.exceptions import FlextExceptions as e
+    from flext_core.handlers import FlextHandlers as h
+    from flext_core.mixins import FlextMixins as x
+    from flext_core.result import FlextResult as r
     from flext_ldif import (
         _models,
         _utilities,
@@ -217,15 +222,15 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "base": "flext_ldif.base",
         "c": ("flext_ldif.constants", "FlextLdifConstants"),
         "constants": "flext_ldif.constants",
-        "d": "flext_core",
-        "e": "flext_core",
-        "h": "flext_core",
+        "d": ("flext_core.decorators", "FlextDecorators"),
+        "e": ("flext_core.exceptions", "FlextExceptions"),
+        "h": ("flext_core.handlers", "FlextHandlers"),
         "ldif": "flext_ldif.api",
         "m": ("flext_ldif.models", "FlextLdifModels"),
         "models": "flext_ldif.models",
         "p": ("flext_ldif.protocols", "FlextLdifProtocols"),
         "protocols": "flext_ldif.protocols",
-        "r": "flext_core",
+        "r": ("flext_core.result", "FlextResult"),
         "s": "flext_ldif.base",
         "servers": "flext_ldif.servers",
         "services": "flext_ldif.services",
@@ -235,7 +240,7 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "typings": "flext_ldif.typings",
         "u": ("flext_ldif.utilities", "FlextLdifUtilities"),
         "utilities": "flext_ldif.utilities",
-        "x": "flext_core",
+        "x": ("flext_core.mixins", "FlextMixins"),
     },
 )
 

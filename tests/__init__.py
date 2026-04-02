@@ -11,9 +11,12 @@ from typing import TYPE_CHECKING as _TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 if _TYPE_CHECKING:
-    from flext_tests import d, e, h, r, x
-
     from flext_core import FlextTypes
+    from flext_core.decorators import FlextDecorators as d
+    from flext_core.exceptions import FlextExceptions as e
+    from flext_core.handlers import FlextHandlers as h
+    from flext_core.mixins import FlextMixins as x
+    from flext_core.result import FlextResult as r
     from tests import (
         base,
         conftest,
@@ -352,11 +355,11 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "conftest": "tests.conftest",
         "conftest_shared": "tests.conftest_shared",
         "constants": "tests.constants",
-        "d": "flext_tests",
-        "e": "flext_tests",
+        "d": ("flext_core.decorators", "FlextDecorators"),
+        "e": ("flext_core.exceptions", "FlextExceptions"),
         "e2e": "tests.e2e",
         "flext_ldif": "tests.conftest",
-        "h": "flext_tests",
+        "h": ("flext_core.handlers", "FlextHandlers"),
         "helpers": "tests.helpers",
         "integration": "tests.integration",
         "large_test_dataset": "tests.conftest_shared",
@@ -368,7 +371,7 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "parametrized_real_data": "tests.conftest_shared",
         "protocols": "tests.protocols",
         "pytest_configure": "tests.conftest",
-        "r": "flext_tests",
+        "r": ("flext_core.result", "FlextResult"),
         "real_entry": "tests.conftest_shared",
         "real_ldif_content": "tests.conftest_shared",
         "real_ldif_group_entry": "tests.conftest",
@@ -389,7 +392,7 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "u": ("tests.utilities", "FlextLdifTestUtilities"),
         "unit": "tests.unit",
         "utilities": "tests.utilities",
-        "x": "flext_tests",
+        "x": ("flext_core.mixins", "FlextMixins"),
     },
 )
 

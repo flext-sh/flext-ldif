@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-from typing import Final
+from pydantic import ValidationError
 
-from pydantic import TypeAdapter, ValidationError
-
-from flext_core import r
-from flext_ldif import p, t
+from flext_ldif import p, r, t
 
 
 class FlextLdifUtilitiesValidation:
@@ -20,20 +17,10 @@ class FlextLdifUtilitiesValidation:
     class Rfc:
         """RFC validation helpers."""
 
-        _DESCRIPTOR_ADAPTER: Final[TypeAdapter[t.Ldif.Rfc4512Descriptor]] = TypeAdapter(
-            t.Ldif.Rfc4512Descriptor,
-        )
-        _DN_COMPONENT_ADAPTER: Final[TypeAdapter[t.Ldif.Rfc4514DnComponent]] = (
-            TypeAdapter(t.Ldif.Rfc4514DnComponent)
-        )
-        _ATTRIBUTE_VALUE_ADAPTER: Final[TypeAdapter[t.Ldif.Rfc2849AttributeValue]] = (
-            TypeAdapter(t.Ldif.Rfc2849AttributeValue)
-        )
-
         @classmethod
         def is_valid_rfc2849_attribute_value(cls, value: str) -> bool:
             try:
-                _ = cls._ATTRIBUTE_VALUE_ADAPTER.validate_python(value)
+                _ = t.Ldif.RFC2849_ATTRIBUTE_VALUE_ADAPTER.validate_python(value)
                 return True
             except ValidationError:
                 return False
@@ -41,7 +28,7 @@ class FlextLdifUtilitiesValidation:
         @classmethod
         def is_valid_rfc4512_descriptor(cls, value: str) -> bool:
             try:
-                _ = cls._DESCRIPTOR_ADAPTER.validate_python(value)
+                _ = t.Ldif.RFC4512_DESCRIPTOR_ADAPTER.validate_python(value)
                 return True
             except ValidationError:
                 return False
@@ -49,7 +36,7 @@ class FlextLdifUtilitiesValidation:
         @classmethod
         def is_valid_rfc4514_dn_component(cls, attribute_name: str, value: str) -> bool:
             try:
-                _ = cls._DN_COMPONENT_ADAPTER.validate_python(
+                _ = t.Ldif.RFC4514_DN_COMPONENT_ADAPTER.validate_python(
                     f"{attribute_name}={value}",
                 )
                 return True

@@ -62,7 +62,7 @@ class FlextLdifModelsCollections:
 
         @staticmethod
         def _to_count(value: t.MetadataValue) -> int:
-            if isinstance(value, t.Numeric):
+            if isinstance(value, t.NUMERIC_TYPES) and not isinstance(value, bool):
                 return int(value)
             if isinstance(value, str):
                 try:
