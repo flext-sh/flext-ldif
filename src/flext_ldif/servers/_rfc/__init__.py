@@ -1,7 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make gen
 #
-"""RFC 4512 Compliant Server Classes for LDIF/LDAP processing."""
+"""Rfc package."""
 
 from __future__ import annotations
 
@@ -12,23 +12,23 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-    from flext_ldif.servers._rfc import acl, constants, entry, schema
-    from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
-    from flext_ldif.servers._rfc.constants import FlextLdifServersRfcConstants, c
-    from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
-    from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema, logger
+    from flext_ldif import acl, constants, entry, schema
+    from flext_ldif.acl import FlextLdifServersRfcAcl
+    from flext_ldif.constants import FlextLdifServersRfcConstants, c
+    from flext_ldif.entry import FlextLdifServersRfcEntry
+    from flext_ldif.schema import FlextLdifServersRfcSchema, logger
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
-    "FlextLdifServersRfcAcl": "flext_ldif.servers._rfc.acl",
-    "FlextLdifServersRfcConstants": "flext_ldif.servers._rfc.constants",
-    "FlextLdifServersRfcEntry": "flext_ldif.servers._rfc.entry",
-    "FlextLdifServersRfcSchema": "flext_ldif.servers._rfc.schema",
-    "acl": "flext_ldif.servers._rfc.acl",
-    "c": "flext_ldif.servers._rfc.constants",
-    "constants": "flext_ldif.servers._rfc.constants",
-    "entry": "flext_ldif.servers._rfc.entry",
-    "logger": "flext_ldif.servers._rfc.schema",
-    "schema": "flext_ldif.servers._rfc.schema",
+    "FlextLdifServersRfcAcl": "flext_ldif.acl",
+    "FlextLdifServersRfcConstants": "flext_ldif.constants",
+    "FlextLdifServersRfcEntry": "flext_ldif.entry",
+    "FlextLdifServersRfcSchema": "flext_ldif.schema",
+    "acl": "flext_ldif.acl",
+    "c": "flext_ldif.constants",
+    "constants": "flext_ldif.constants",
+    "entry": "flext_ldif.entry",
+    "logger": "flext_ldif.schema",
+    "schema": "flext_ldif.schema",
 }
 
 

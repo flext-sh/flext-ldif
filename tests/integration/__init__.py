@@ -1,12 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make gen
 #
-"""Integration tests for FLEXT-LDIF service interactions.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
+"""Integration package."""
 
 from __future__ import annotations
 
@@ -17,7 +12,18 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-    from tests.integration import (
+    from flext_core.constants import FlextConstants as c
+    from flext_core.decorators import FlextDecorators as d
+    from flext_core.exceptions import FlextExceptions as e
+    from flext_core.handlers import FlextHandlers as h
+    from flext_core.mixins import FlextMixins as x
+    from flext_core.models import FlextModels as m
+    from flext_core.protocols import FlextProtocols as p
+    from flext_core.result import FlextResult as r
+    from flext_core.service import FlextService as s
+    from flext_core.typings import FlextTypes as t
+    from flext_core.utilities import FlextUtilities as u
+    from flext_ldif import (
         conftest,
         test_acl_metadata_preservation,
         test_api_integration,
@@ -47,15 +53,22 @@ if _TYPE_CHECKING:
         test_zero_data_loss_schema,
         typings,
     )
-    from tests.integration.conftest import (
+    from flext_ldif.conftest import (
         WORKSPACE_ROOT,
         all_acl_fixtures,
         all_entries_fixtures,
         all_integration_fixtures,
         all_schema_fixtures,
-        api,
+        auto_bind,
+        bind_dn,
+        bind_ok,
         clean_test_ou,
+        conn,
         conversion_matrix,
+        dns_to_delete,
+        dns_to_delete2,
+        entries,
+        entries2,
         ldap_connection,
         ldap_container,
         ldap_container_shared,
@@ -86,275 +99,254 @@ if _TYPE_CHECKING:
         oud_schema_fixture,
         oud_schema_quirk,
         parser,
+        password,
         rfc_schema_entries,
         rfc_schema_fixture,
         server,
+        server_url,
+        srv,
+        test_ou_dn,
         tmp_ldif_path,
         unique_dn_suffix,
+        user,
         writer,
     )
-    from tests.integration.test_acl_metadata_preservation import (
-        TestAclRoundTripPreservation,
-        TestOidAclMetadataPreservation,
-        TestOudAciMetadataPreservation,
-    )
-    from tests.integration.test_api_integration import (
-        APIScenarios,
-        TestData,
-        TestFlextLdifAPIIntegration,
-    )
-    from tests.integration.test_categorization_real_data import (
+    from flext_ldif.test_api_integration import APIScenarios
+    from flext_ldif.test_categorization_real_data import (
         TestCategorizationRealData,
+        attr_line,
+        cat_entries,
+        categories,
+        category_header,
+        entry_line,
+        filtered,
+        filtered_line,
+        include_attributes,
+        rejected,
+        rejected_line,
+        stats,
     )
-    from tests.integration.test_config_integration import (
-        ConfigTestData,
-        TestFlextLdifSettingsIntegration,
-        logger,
-    )
-    from tests.integration.test_cross_quirk_conversion import (
-        TestOidToOudAclConversion,
-        TestOidToOudIntegrationConversion,
+    from flext_ldif.test_config_integration import ConfigTestData, logger
+    from flext_ldif.test_cross_quirk_conversion import (
+        CROSS_QUIRK_CONVERSION_CONSTANTS,
+        CrossQuirkConversionConstants,
         TestOidToOudSchemaConversion,
-        TestQuirksConversionMatrixFacade,
     )
-    from tests.integration.test_dn_case_handling import (
+    from flext_ldif.test_dn_case_handling import (
         TestDnCaseNormalizationScenarios,
         TestDnCaseRegistry,
     )
-    from tests.integration.test_edge_cases import (
-        TestBoundaryValues,
-        TestEmptyAndMinimalCases,
-        TestLargeAndComplexCases,
-        TestRoundtripEdgeCases,
-        TestUnicodeBoundaries,
-    )
-    from tests.integration.test_error_recovery import (
-        TestEncodingErrors,
-        TestIncompleteEntries,
-        TestInvalidSchemaDefinitions,
-        TestMalformedLdifHandling,
-    )
-    from tests.integration.test_ldif_fixtures_integration import TestsFlextLdifFixtures
-    from tests.integration.test_minimal_differences_metadata import (
+    from flext_ldif.test_edge_cases import TestEmptyAndMinimalCases
+    from flext_ldif.test_error_recovery import TestMalformedLdifHandling
+    from flext_ldif.test_ldif_fixtures_integration import TestsFlextLdifFixtures
+    from flext_ldif.test_minimal_differences_metadata import (
         TestMinimalDifferencesOidOud,
     )
-    from tests.integration.test_oid_integration import (
-        TestOidEntryIntegration,
-        TestOidRoundTripIntegration,
-        TestOidSchemaIntegration,
-    )
-    from tests.integration.test_oud_integration import (
-        TestOudAclIntegration,
-        TestOudEntryIntegration,
-        TestOudMetadataPreservation,
-        TestOudRoundTripIntegration,
-        TestOudSchemaIntegration,
-    )
-    from tests.integration.test_oud_to_oid_migration import (
-        TestOudToOidAclMigration,
-        TestOudToOidEntryMigration,
-        TestOudToOidFullMigration,
-        TestOudToOidSchemaMigration,
-    )
-    from tests.integration.test_pipeline_integration import TestFlextLdifFacadeWorkflows
-    from tests.integration.test_quirks_transformations import (
+    from flext_ldif.test_oid_integration import TestOidSchemaIntegration
+    from flext_ldif.test_oud_integration import TestOudSchemaIntegration
+    from flext_ldif.test_oud_to_oid_migration import TestOudToOidSchemaMigration
+    from flext_ldif.test_pipeline_integration import TestFlextLdifFacadeWorkflows
+    from flext_ldif.test_quirks_transformations import (
         TestOidQuirksTransformations,
-        TestOudQuirksTransformations,
-        TestQuirksPropertyValidation,
+        base_dir,
         fixtures_dir,
         migration_inputs,
+        oid_input_dir,
+        oud_input_dir,
     )
-    from tests.integration.test_real_ldap_config import (
+    from flext_ldif.test_real_ldap_config import (
         TestRealLdapConfigurationFromEnv,
         TestRealLdapRailwayComposition,
     )
-    from tests.integration.test_real_ldap_crud import (
+    from flext_ldif.test_real_ldap_crud import (
         TestRealLdapBatchOperations,
         TestRealLdapCRUD,
     )
-    from tests.integration.test_real_ldap_export import TestRealLdapExport
-    from tests.integration.test_real_ldap_import import TestRealLdapImport
-    from tests.integration.test_real_ldap_roundtrip import TestRealLdapRoundtrip
-    from tests.integration.test_rfc_docker_real import (
-        TestRfcDockerRealData,
-        TestRfcIntegrationRealWorld,
-    )
-    from tests.integration.test_rfc_docker_real_integration import (
-        TestRfcExceptionHandlingRealScenarios,
-        TestRfcParserRealFixtures,
-        TestRfcSchemaParserRealFixtures,
-        TestRfcWriterRealFixtures,
-    )
-    from tests.integration.test_simple_ldap import (
+    from flext_ldif.test_real_ldap_export import TestRealLdapExport
+    from flext_ldif.test_real_ldap_import import TestRealLdapImport
+    from flext_ldif.test_real_ldap_roundtrip import TestRealLdapRoundtrip
+    from flext_ldif.test_rfc_docker_real import TestRfcDockerRealData
+    from flext_ldif.test_rfc_docker_real_integration import TestRfcParserRealFixtures
+    from flext_ldif.test_simple_ldap import (
+        api,
+        attributes,
+        attrs,
+        base_dn,
+        dn,
+        entry_result,
+        flext_entry,
+        ldap_entry,
+        ldif_output,
+        result,
+        search_scope,
         test_create_and_export_entry,
+        test_dn,
         test_ldap_connection,
-        test_simple_ldap_search,
+        unique_username,
+        write_result,
     )
-    from tests.integration.test_systematic_fixture_coverage import (
+    from flext_ldif.test_systematic_fixture_coverage import (
         TestSystematicFixtureCoverage,
     )
-    from tests.integration.test_zero_data_loss_oid_oud import TestZeroDataLossOidOud
-    from tests.integration.test_zero_data_loss_schema import (
-        TestSchemaDeviationsAttributeKeyCasing,
-        TestSchemaDeviationsComplete,
-        TestSchemaDeviationsMissingSpaces,
-        TestSchemaDeviationsNameAliases,
-        TestSchemaDeviationsObsolete,
-        TestSchemaDeviationsOriginalString,
-        TestSchemaDeviationsRoundTrip,
-        TestSchemaDeviationsSpacing,
-        TestSchemaDeviationsSyntaxQuotes,
-        TestSchemaDeviationsUtilities,
-        TestSchemaDeviationsXOrigin,
-    )
+    from flext_ldif.test_zero_data_loss_schema import TestSchemaDeviationsSyntaxQuotes
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
-    "APIScenarios": "tests.integration.test_api_integration",
-    "ConfigTestData": "tests.integration.test_config_integration",
-    "TestAclRoundTripPreservation": "tests.integration.test_acl_metadata_preservation",
-    "TestBoundaryValues": "tests.integration.test_edge_cases",
-    "TestCategorizationRealData": "tests.integration.test_categorization_real_data",
-    "TestData": "tests.integration.test_api_integration",
-    "TestDnCaseNormalizationScenarios": "tests.integration.test_dn_case_handling",
-    "TestDnCaseRegistry": "tests.integration.test_dn_case_handling",
-    "TestEmptyAndMinimalCases": "tests.integration.test_edge_cases",
-    "TestEncodingErrors": "tests.integration.test_error_recovery",
-    "TestFlextLdifAPIIntegration": "tests.integration.test_api_integration",
-    "TestFlextLdifFacadeWorkflows": "tests.integration.test_pipeline_integration",
-    "TestFlextLdifSettingsIntegration": "tests.integration.test_config_integration",
-    "TestIncompleteEntries": "tests.integration.test_error_recovery",
-    "TestInvalidSchemaDefinitions": "tests.integration.test_error_recovery",
-    "TestLargeAndComplexCases": "tests.integration.test_edge_cases",
-    "TestMalformedLdifHandling": "tests.integration.test_error_recovery",
-    "TestMinimalDifferencesOidOud": "tests.integration.test_minimal_differences_metadata",
-    "TestOidAclMetadataPreservation": "tests.integration.test_acl_metadata_preservation",
-    "TestOidEntryIntegration": "tests.integration.test_oid_integration",
-    "TestOidQuirksTransformations": "tests.integration.test_quirks_transformations",
-    "TestOidRoundTripIntegration": "tests.integration.test_oid_integration",
-    "TestOidSchemaIntegration": "tests.integration.test_oid_integration",
-    "TestOidToOudAclConversion": "tests.integration.test_cross_quirk_conversion",
-    "TestOidToOudIntegrationConversion": "tests.integration.test_cross_quirk_conversion",
-    "TestOidToOudSchemaConversion": "tests.integration.test_cross_quirk_conversion",
-    "TestOudAciMetadataPreservation": "tests.integration.test_acl_metadata_preservation",
-    "TestOudAclIntegration": "tests.integration.test_oud_integration",
-    "TestOudEntryIntegration": "tests.integration.test_oud_integration",
-    "TestOudMetadataPreservation": "tests.integration.test_oud_integration",
-    "TestOudQuirksTransformations": "tests.integration.test_quirks_transformations",
-    "TestOudRoundTripIntegration": "tests.integration.test_oud_integration",
-    "TestOudSchemaIntegration": "tests.integration.test_oud_integration",
-    "TestOudToOidAclMigration": "tests.integration.test_oud_to_oid_migration",
-    "TestOudToOidEntryMigration": "tests.integration.test_oud_to_oid_migration",
-    "TestOudToOidFullMigration": "tests.integration.test_oud_to_oid_migration",
-    "TestOudToOidSchemaMigration": "tests.integration.test_oud_to_oid_migration",
-    "TestQuirksConversionMatrixFacade": "tests.integration.test_cross_quirk_conversion",
-    "TestQuirksPropertyValidation": "tests.integration.test_quirks_transformations",
-    "TestRealLdapBatchOperations": "tests.integration.test_real_ldap_crud",
-    "TestRealLdapCRUD": "tests.integration.test_real_ldap_crud",
-    "TestRealLdapConfigurationFromEnv": "tests.integration.test_real_ldap_config",
-    "TestRealLdapExport": "tests.integration.test_real_ldap_export",
-    "TestRealLdapImport": "tests.integration.test_real_ldap_import",
-    "TestRealLdapRailwayComposition": "tests.integration.test_real_ldap_config",
-    "TestRealLdapRoundtrip": "tests.integration.test_real_ldap_roundtrip",
-    "TestRfcDockerRealData": "tests.integration.test_rfc_docker_real",
-    "TestRfcExceptionHandlingRealScenarios": "tests.integration.test_rfc_docker_real_integration",
-    "TestRfcIntegrationRealWorld": "tests.integration.test_rfc_docker_real",
-    "TestRfcParserRealFixtures": "tests.integration.test_rfc_docker_real_integration",
-    "TestRfcSchemaParserRealFixtures": "tests.integration.test_rfc_docker_real_integration",
-    "TestRfcWriterRealFixtures": "tests.integration.test_rfc_docker_real_integration",
-    "TestRoundtripEdgeCases": "tests.integration.test_edge_cases",
-    "TestSchemaDeviationsAttributeKeyCasing": "tests.integration.test_zero_data_loss_schema",
-    "TestSchemaDeviationsComplete": "tests.integration.test_zero_data_loss_schema",
-    "TestSchemaDeviationsMissingSpaces": "tests.integration.test_zero_data_loss_schema",
-    "TestSchemaDeviationsNameAliases": "tests.integration.test_zero_data_loss_schema",
-    "TestSchemaDeviationsObsolete": "tests.integration.test_zero_data_loss_schema",
-    "TestSchemaDeviationsOriginalString": "tests.integration.test_zero_data_loss_schema",
-    "TestSchemaDeviationsRoundTrip": "tests.integration.test_zero_data_loss_schema",
-    "TestSchemaDeviationsSpacing": "tests.integration.test_zero_data_loss_schema",
-    "TestSchemaDeviationsSyntaxQuotes": "tests.integration.test_zero_data_loss_schema",
-    "TestSchemaDeviationsUtilities": "tests.integration.test_zero_data_loss_schema",
-    "TestSchemaDeviationsXOrigin": "tests.integration.test_zero_data_loss_schema",
-    "TestSystematicFixtureCoverage": "tests.integration.test_systematic_fixture_coverage",
-    "TestUnicodeBoundaries": "tests.integration.test_edge_cases",
-    "TestZeroDataLossOidOud": "tests.integration.test_zero_data_loss_oid_oud",
-    "TestsFlextLdifFixtures": "tests.integration.test_ldif_fixtures_integration",
-    "WORKSPACE_ROOT": "tests.integration.conftest",
-    "all_acl_fixtures": "tests.integration.conftest",
-    "all_entries_fixtures": "tests.integration.conftest",
-    "all_integration_fixtures": "tests.integration.conftest",
-    "all_schema_fixtures": "tests.integration.conftest",
-    "api": "tests.integration.conftest",
-    "clean_test_ou": "tests.integration.conftest",
-    "conftest": "tests.integration.conftest",
-    "conversion_matrix": "tests.integration.conftest",
-    "fixtures_dir": "tests.integration.test_quirks_transformations",
-    "ldap_connection": "tests.integration.conftest",
-    "ldap_container": "tests.integration.conftest",
-    "ldap_container_shared": "tests.integration.conftest",
-    "logger": "tests.integration.test_config_integration",
-    "make_test_base_dn": "tests.integration.conftest",
-    "make_test_username": "tests.integration.conftest",
-    "migration_inputs": "tests.integration.test_quirks_transformations",
-    "oid_acl_fixture": "tests.integration.conftest",
-    "oid_acl_quirk": "tests.integration.conftest",
-    "oid_entries": "tests.integration.conftest",
-    "oid_entries_fixture": "tests.integration.conftest",
-    "oid_integration_fixture": "tests.integration.conftest",
-    "oid_quirk": "tests.integration.conftest",
-    "oid_schema_entries": "tests.integration.conftest",
-    "oid_schema_fixture": "tests.integration.conftest",
-    "oid_schema_quirk": "tests.integration.conftest",
-    "openldap_acl_fixture": "tests.integration.conftest",
-    "openldap_entries": "tests.integration.conftest",
-    "openldap_entries_fixture": "tests.integration.conftest",
-    "openldap_integration_fixture": "tests.integration.conftest",
-    "openldap_schema_entries": "tests.integration.conftest",
-    "openldap_schema_fixture": "tests.integration.conftest",
-    "oud_acl_fixture": "tests.integration.conftest",
-    "oud_acl_quirk": "tests.integration.conftest",
-    "oud_entries": "tests.integration.conftest",
-    "oud_entries_fixture": "tests.integration.conftest",
-    "oud_integration_fixture": "tests.integration.conftest",
-    "oud_quirk": "tests.integration.conftest",
-    "oud_schema_entries": "tests.integration.conftest",
-    "oud_schema_fixture": "tests.integration.conftest",
-    "oud_schema_quirk": "tests.integration.conftest",
-    "parser": "tests.integration.conftest",
-    "rfc_schema_entries": "tests.integration.conftest",
-    "rfc_schema_fixture": "tests.integration.conftest",
-    "server": "tests.integration.conftest",
-    "test_acl_metadata_preservation": "tests.integration.test_acl_metadata_preservation",
-    "test_api_integration": "tests.integration.test_api_integration",
-    "test_categorization_real_data": "tests.integration.test_categorization_real_data",
-    "test_config_integration": "tests.integration.test_config_integration",
-    "test_create_and_export_entry": "tests.integration.test_simple_ldap",
-    "test_cross_quirk_conversion": "tests.integration.test_cross_quirk_conversion",
-    "test_dn_case_handling": "tests.integration.test_dn_case_handling",
-    "test_edge_cases": "tests.integration.test_edge_cases",
-    "test_error_recovery": "tests.integration.test_error_recovery",
-    "test_ldap_connection": "tests.integration.test_simple_ldap",
-    "test_ldif_fixtures_integration": "tests.integration.test_ldif_fixtures_integration",
-    "test_minimal_differences_metadata": "tests.integration.test_minimal_differences_metadata",
-    "test_oid_integration": "tests.integration.test_oid_integration",
-    "test_oud_integration": "tests.integration.test_oud_integration",
-    "test_oud_to_oid_migration": "tests.integration.test_oud_to_oid_migration",
-    "test_pipeline_integration": "tests.integration.test_pipeline_integration",
-    "test_quirks_transformations": "tests.integration.test_quirks_transformations",
-    "test_real_ldap_config": "tests.integration.test_real_ldap_config",
-    "test_real_ldap_crud": "tests.integration.test_real_ldap_crud",
-    "test_real_ldap_export": "tests.integration.test_real_ldap_export",
-    "test_real_ldap_import": "tests.integration.test_real_ldap_import",
-    "test_real_ldap_roundtrip": "tests.integration.test_real_ldap_roundtrip",
-    "test_rfc_docker_real": "tests.integration.test_rfc_docker_real",
-    "test_rfc_docker_real_integration": "tests.integration.test_rfc_docker_real_integration",
-    "test_simple_ldap": "tests.integration.test_simple_ldap",
-    "test_simple_ldap_search": "tests.integration.test_simple_ldap",
-    "test_systematic_fixture_coverage": "tests.integration.test_systematic_fixture_coverage",
-    "test_zero_data_loss_oid_oud": "tests.integration.test_zero_data_loss_oid_oud",
-    "test_zero_data_loss_schema": "tests.integration.test_zero_data_loss_schema",
-    "tmp_ldif_path": "tests.integration.conftest",
-    "typings": "tests.integration.typings",
-    "unique_dn_suffix": "tests.integration.conftest",
-    "writer": "tests.integration.conftest",
+    "APIScenarios": "flext_ldif.test_api_integration",
+    "CROSS_QUIRK_CONVERSION_CONSTANTS": "flext_ldif.test_cross_quirk_conversion",
+    "ConfigTestData": "flext_ldif.test_config_integration",
+    "CrossQuirkConversionConstants": "flext_ldif.test_cross_quirk_conversion",
+    "TestCategorizationRealData": "flext_ldif.test_categorization_real_data",
+    "TestDnCaseNormalizationScenarios": "flext_ldif.test_dn_case_handling",
+    "TestDnCaseRegistry": "flext_ldif.test_dn_case_handling",
+    "TestEmptyAndMinimalCases": "flext_ldif.test_edge_cases",
+    "TestFlextLdifFacadeWorkflows": "flext_ldif.test_pipeline_integration",
+    "TestMalformedLdifHandling": "flext_ldif.test_error_recovery",
+    "TestMinimalDifferencesOidOud": "flext_ldif.test_minimal_differences_metadata",
+    "TestOidQuirksTransformations": "flext_ldif.test_quirks_transformations",
+    "TestOidSchemaIntegration": "flext_ldif.test_oid_integration",
+    "TestOidToOudSchemaConversion": "flext_ldif.test_cross_quirk_conversion",
+    "TestOudSchemaIntegration": "flext_ldif.test_oud_integration",
+    "TestOudToOidSchemaMigration": "flext_ldif.test_oud_to_oid_migration",
+    "TestRealLdapBatchOperations": "flext_ldif.test_real_ldap_crud",
+    "TestRealLdapCRUD": "flext_ldif.test_real_ldap_crud",
+    "TestRealLdapConfigurationFromEnv": "flext_ldif.test_real_ldap_config",
+    "TestRealLdapExport": "flext_ldif.test_real_ldap_export",
+    "TestRealLdapImport": "flext_ldif.test_real_ldap_import",
+    "TestRealLdapRailwayComposition": "flext_ldif.test_real_ldap_config",
+    "TestRealLdapRoundtrip": "flext_ldif.test_real_ldap_roundtrip",
+    "TestRfcDockerRealData": "flext_ldif.test_rfc_docker_real",
+    "TestRfcParserRealFixtures": "flext_ldif.test_rfc_docker_real_integration",
+    "TestSchemaDeviationsSyntaxQuotes": "flext_ldif.test_zero_data_loss_schema",
+    "TestSystematicFixtureCoverage": "flext_ldif.test_systematic_fixture_coverage",
+    "TestsFlextLdifFixtures": "flext_ldif.test_ldif_fixtures_integration",
+    "WORKSPACE_ROOT": "flext_ldif.conftest",
+    "all_acl_fixtures": "flext_ldif.conftest",
+    "all_entries_fixtures": "flext_ldif.conftest",
+    "all_integration_fixtures": "flext_ldif.conftest",
+    "all_schema_fixtures": "flext_ldif.conftest",
+    "api": "flext_ldif.test_simple_ldap",
+    "attr_line": "flext_ldif.test_categorization_real_data",
+    "attributes": "flext_ldif.test_simple_ldap",
+    "attrs": "flext_ldif.test_simple_ldap",
+    "auto_bind": "flext_ldif.conftest",
+    "base_dir": "flext_ldif.test_quirks_transformations",
+    "base_dn": "flext_ldif.test_simple_ldap",
+    "bind_dn": "flext_ldif.conftest",
+    "bind_ok": "flext_ldif.conftest",
+    "c": ("flext_core.constants", "FlextConstants"),
+    "cat_entries": "flext_ldif.test_categorization_real_data",
+    "categories": "flext_ldif.test_categorization_real_data",
+    "category_header": "flext_ldif.test_categorization_real_data",
+    "clean_test_ou": "flext_ldif.conftest",
+    "conftest": "flext_ldif.conftest",
+    "conn": "flext_ldif.conftest",
+    "conversion_matrix": "flext_ldif.conftest",
+    "d": ("flext_core.decorators", "FlextDecorators"),
+    "dn": "flext_ldif.test_simple_ldap",
+    "dns_to_delete": "flext_ldif.conftest",
+    "dns_to_delete2": "flext_ldif.conftest",
+    "e": ("flext_core.exceptions", "FlextExceptions"),
+    "entries": "flext_ldif.conftest",
+    "entries2": "flext_ldif.conftest",
+    "entry_line": "flext_ldif.test_categorization_real_data",
+    "entry_result": "flext_ldif.test_simple_ldap",
+    "filtered": "flext_ldif.test_categorization_real_data",
+    "filtered_line": "flext_ldif.test_categorization_real_data",
+    "fixtures_dir": "flext_ldif.test_quirks_transformations",
+    "flext_entry": "flext_ldif.test_simple_ldap",
+    "h": ("flext_core.handlers", "FlextHandlers"),
+    "include_attributes": "flext_ldif.test_categorization_real_data",
+    "ldap_connection": "flext_ldif.conftest",
+    "ldap_container": "flext_ldif.conftest",
+    "ldap_container_shared": "flext_ldif.conftest",
+    "ldap_entry": "flext_ldif.test_simple_ldap",
+    "ldif_output": "flext_ldif.test_simple_ldap",
+    "logger": "flext_ldif.test_config_integration",
+    "m": ("flext_core.models", "FlextModels"),
+    "make_test_base_dn": "flext_ldif.conftest",
+    "make_test_username": "flext_ldif.conftest",
+    "migration_inputs": "flext_ldif.test_quirks_transformations",
+    "oid_acl_fixture": "flext_ldif.conftest",
+    "oid_acl_quirk": "flext_ldif.conftest",
+    "oid_entries": "flext_ldif.conftest",
+    "oid_entries_fixture": "flext_ldif.conftest",
+    "oid_input_dir": "flext_ldif.test_quirks_transformations",
+    "oid_integration_fixture": "flext_ldif.conftest",
+    "oid_quirk": "flext_ldif.conftest",
+    "oid_schema_entries": "flext_ldif.conftest",
+    "oid_schema_fixture": "flext_ldif.conftest",
+    "oid_schema_quirk": "flext_ldif.conftest",
+    "openldap_acl_fixture": "flext_ldif.conftest",
+    "openldap_entries": "flext_ldif.conftest",
+    "openldap_entries_fixture": "flext_ldif.conftest",
+    "openldap_integration_fixture": "flext_ldif.conftest",
+    "openldap_schema_entries": "flext_ldif.conftest",
+    "openldap_schema_fixture": "flext_ldif.conftest",
+    "oud_acl_fixture": "flext_ldif.conftest",
+    "oud_acl_quirk": "flext_ldif.conftest",
+    "oud_entries": "flext_ldif.conftest",
+    "oud_entries_fixture": "flext_ldif.conftest",
+    "oud_input_dir": "flext_ldif.test_quirks_transformations",
+    "oud_integration_fixture": "flext_ldif.conftest",
+    "oud_quirk": "flext_ldif.conftest",
+    "oud_schema_entries": "flext_ldif.conftest",
+    "oud_schema_fixture": "flext_ldif.conftest",
+    "oud_schema_quirk": "flext_ldif.conftest",
+    "p": ("flext_core.protocols", "FlextProtocols"),
+    "parser": "flext_ldif.conftest",
+    "password": "flext_ldif.conftest",
+    "r": ("flext_core.result", "FlextResult"),
+    "rejected": "flext_ldif.test_categorization_real_data",
+    "rejected_line": "flext_ldif.test_categorization_real_data",
+    "result": "flext_ldif.test_simple_ldap",
+    "rfc_schema_entries": "flext_ldif.conftest",
+    "rfc_schema_fixture": "flext_ldif.conftest",
+    "s": ("flext_core.service", "FlextService"),
+    "search_scope": "flext_ldif.test_simple_ldap",
+    "server": "flext_ldif.conftest",
+    "server_url": "flext_ldif.conftest",
+    "srv": "flext_ldif.conftest",
+    "stats": "flext_ldif.test_categorization_real_data",
+    "t": ("flext_core.typings", "FlextTypes"),
+    "test_acl_metadata_preservation": "flext_ldif.test_acl_metadata_preservation",
+    "test_api_integration": "flext_ldif.test_api_integration",
+    "test_categorization_real_data": "flext_ldif.test_categorization_real_data",
+    "test_config_integration": "flext_ldif.test_config_integration",
+    "test_create_and_export_entry": "flext_ldif.test_simple_ldap",
+    "test_cross_quirk_conversion": "flext_ldif.test_cross_quirk_conversion",
+    "test_dn": "flext_ldif.test_simple_ldap",
+    "test_dn_case_handling": "flext_ldif.test_dn_case_handling",
+    "test_edge_cases": "flext_ldif.test_edge_cases",
+    "test_error_recovery": "flext_ldif.test_error_recovery",
+    "test_ldap_connection": "flext_ldif.test_simple_ldap",
+    "test_ldif_fixtures_integration": "flext_ldif.test_ldif_fixtures_integration",
+    "test_minimal_differences_metadata": "flext_ldif.test_minimal_differences_metadata",
+    "test_oid_integration": "flext_ldif.test_oid_integration",
+    "test_ou_dn": "flext_ldif.conftest",
+    "test_oud_integration": "flext_ldif.test_oud_integration",
+    "test_oud_to_oid_migration": "flext_ldif.test_oud_to_oid_migration",
+    "test_pipeline_integration": "flext_ldif.test_pipeline_integration",
+    "test_quirks_transformations": "flext_ldif.test_quirks_transformations",
+    "test_real_ldap_config": "flext_ldif.test_real_ldap_config",
+    "test_real_ldap_crud": "flext_ldif.test_real_ldap_crud",
+    "test_real_ldap_export": "flext_ldif.test_real_ldap_export",
+    "test_real_ldap_import": "flext_ldif.test_real_ldap_import",
+    "test_real_ldap_roundtrip": "flext_ldif.test_real_ldap_roundtrip",
+    "test_rfc_docker_real": "flext_ldif.test_rfc_docker_real",
+    "test_rfc_docker_real_integration": "flext_ldif.test_rfc_docker_real_integration",
+    "test_simple_ldap": "flext_ldif.test_simple_ldap",
+    "test_systematic_fixture_coverage": "flext_ldif.test_systematic_fixture_coverage",
+    "test_zero_data_loss_oid_oud": "flext_ldif.test_zero_data_loss_oid_oud",
+    "test_zero_data_loss_schema": "flext_ldif.test_zero_data_loss_schema",
+    "tmp_ldif_path": "flext_ldif.conftest",
+    "typings": "flext_ldif.typings",
+    "u": ("flext_core.utilities", "FlextUtilities"),
+    "unique_dn_suffix": "flext_ldif.conftest",
+    "unique_username": "flext_ldif.test_simple_ldap",
+    "user": "flext_ldif.conftest",
+    "write_result": "flext_ldif.test_simple_ldap",
+    "writer": "flext_ldif.conftest",
+    "x": ("flext_core.mixins", "FlextMixins"),
 }
 
 

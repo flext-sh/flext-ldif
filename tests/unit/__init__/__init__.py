@@ -12,12 +12,12 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-    from tests.unit.__init__ import test_version
-    from tests.unit.__init__.test_version import TestsFlextLdifVersion
+    from flext_ldif import test_version
+    from flext_ldif.test_version import TestsFlextLdifVersion
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
-    "TestsFlextLdifVersion": "tests.unit.__init__.test_version",
-    "test_version": "tests.unit.__init__.test_version",
+    "TestsFlextLdifVersion": "flext_ldif.test_version",
+    "test_version": "flext_ldif.test_version",
 }
 
 
