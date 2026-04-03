@@ -5,24 +5,38 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING as _TYPE_CHECKING
+import typing as _t
 
 from flext_core.lazy import install_lazy_exports
 
-if _TYPE_CHECKING:
-    from flext_core import FlextTypes
-    from flext_ldif.servers._base import acl, constants, entry, schema
-    from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
-    from flext_ldif.servers._base.constants import (
+if _t.TYPE_CHECKING:
+    import flext_ldif.servers._base.acl as _flext_ldif_servers__base_acl
+
+    acl = _flext_ldif_servers__base_acl
+    import flext_ldif.servers._base.constants as _flext_ldif_servers__base_constants
+
+    constants = _flext_ldif_servers__base_constants
+    import flext_ldif.servers._base.entry as _flext_ldif_servers__base_entry
+
+    entry = _flext_ldif_servers__base_entry
+    import flext_ldif.servers._base.schema as _flext_ldif_servers__base_schema
+
+    schema = _flext_ldif_servers__base_schema
+
+    _ = (
         FlextLdifQuirkMethodsMixin,
         FlextLdifServersBaseConstants,
+        FlextLdifServersBaseEntry,
         FlextLdifServersBaseQuirkHelpers,
+        FlextLdifServersBaseSchema,
+        FlextLdifServersBaseSchemaAcl,
+        acl,
+        constants,
+        entry,
+        logger,
+        schema,
     )
-    from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
-    from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema, logger
-
-_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
+_LAZY_IMPORTS = {
     "FlextLdifQuirkMethodsMixin": "flext_ldif.servers._base.constants",
     "FlextLdifServersBaseConstants": "flext_ldif.servers._base.constants",
     "FlextLdifServersBaseEntry": "flext_ldif.servers._base.entry",
@@ -35,6 +49,20 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "logger": "flext_ldif.servers._base.schema",
     "schema": "flext_ldif.servers._base.schema",
 }
+
+__all__ = [
+    "FlextLdifQuirkMethodsMixin",
+    "FlextLdifServersBaseConstants",
+    "FlextLdifServersBaseEntry",
+    "FlextLdifServersBaseQuirkHelpers",
+    "FlextLdifServersBaseSchema",
+    "FlextLdifServersBaseSchemaAcl",
+    "acl",
+    "constants",
+    "entry",
+    "logger",
+    "schema",
+]
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

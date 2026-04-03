@@ -5,14 +5,49 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING as _TYPE_CHECKING
+import typing as _t
 
 from flext_core.lazy import install_lazy_exports
 
-if _TYPE_CHECKING:
-    from flext_core import FlextTypes
-    from flext_ldif._models import (
+if _t.TYPE_CHECKING:
+    import flext_ldif._models.base as _flext_ldif__models_base
+
+    base = _flext_ldif__models_base
+    import flext_ldif._models.collections as _flext_ldif__models_collections
+
+    collections = _flext_ldif__models_collections
+    import flext_ldif._models.domain as _flext_ldif__models_domain
+
+    domain = _flext_ldif__models_domain
+    import flext_ldif._models.domain_entries as _flext_ldif__models_domain_entries
+
+    domain_entries = _flext_ldif__models_domain_entries
+    import flext_ldif._models.events as _flext_ldif__models_events
+
+    events = _flext_ldif__models_events
+    import flext_ldif._models.metadata as _flext_ldif__models_metadata
+
+    metadata = _flext_ldif__models_metadata
+    import flext_ldif._models.processing as _flext_ldif__models_processing
+
+    processing = _flext_ldif__models_processing
+    import flext_ldif._models.results as _flext_ldif__models_results
+
+    results = _flext_ldif__models_results
+    import flext_ldif._models.settings as _flext_ldif__models_settings
+
+    settings = _flext_ldif__models_settings
+
+    _ = (
+        FlextLdifModelsBases,
+        FlextLdifModelsCollections,
+        FlextLdifModelsDomains,
+        FlextLdifModelsDomainsEntries,
+        FlextLdifModelsEvents,
+        FlextLdifModelsMetadata,
+        FlextLdifModelsProcessing,
+        FlextLdifModelsResults,
+        FlextLdifModelsSettings,
         base,
         collections,
         domain,
@@ -23,17 +58,7 @@ if _TYPE_CHECKING:
         results,
         settings,
     )
-    from flext_ldif._models.base import FlextLdifModelsBases
-    from flext_ldif._models.collections import FlextLdifModelsCollections
-    from flext_ldif._models.domain import FlextLdifModelsDomains
-    from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
-    from flext_ldif._models.events import FlextLdifModelsEvents
-    from flext_ldif._models.metadata import FlextLdifModelsMetadata
-    from flext_ldif._models.processing import FlextLdifModelsProcessing
-    from flext_ldif._models.results import FlextLdifModelsResults
-    from flext_ldif._models.settings import FlextLdifModelsSettings
-
-_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
+_LAZY_IMPORTS = {
     "FlextLdifModelsBases": "flext_ldif._models.base",
     "FlextLdifModelsCollections": "flext_ldif._models.collections",
     "FlextLdifModelsDomains": "flext_ldif._models.domain",
@@ -53,6 +78,27 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "results": "flext_ldif._models.results",
     "settings": "flext_ldif._models.settings",
 }
+
+__all__ = [
+    "FlextLdifModelsBases",
+    "FlextLdifModelsCollections",
+    "FlextLdifModelsDomains",
+    "FlextLdifModelsDomainsEntries",
+    "FlextLdifModelsEvents",
+    "FlextLdifModelsMetadata",
+    "FlextLdifModelsProcessing",
+    "FlextLdifModelsResults",
+    "FlextLdifModelsSettings",
+    "base",
+    "collections",
+    "domain",
+    "domain_entries",
+    "events",
+    "metadata",
+    "processing",
+    "results",
+    "settings",
+]
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

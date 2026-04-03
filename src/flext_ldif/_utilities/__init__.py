@@ -5,14 +5,98 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING as _TYPE_CHECKING
+import typing as _t
 
 from flext_core.lazy import install_lazy_exports
 
-if _TYPE_CHECKING:
-    from flext_core import FlextTypes
-    from flext_ldif._utilities import (
+if _t.TYPE_CHECKING:
+    import flext_ldif._utilities.acl as _flext_ldif__utilities_acl
+
+    acl = _flext_ldif__utilities_acl
+    import flext_ldif._utilities.attribute as _flext_ldif__utilities_attribute
+
+    attribute = _flext_ldif__utilities_attribute
+    import flext_ldif._utilities.collection_ldif as _flext_ldif__utilities_collection_ldif
+
+    collection_ldif = _flext_ldif__utilities_collection_ldif
+    import flext_ldif._utilities.detection as _flext_ldif__utilities_detection
+
+    detection = _flext_ldif__utilities_detection
+    import flext_ldif._utilities.dispatch as _flext_ldif__utilities_dispatch
+
+    dispatch = _flext_ldif__utilities_dispatch
+    import flext_ldif._utilities.dn as _flext_ldif__utilities_dn
+
+    dn = _flext_ldif__utilities_dn
+    import flext_ldif._utilities.entry as _flext_ldif__utilities_entry
+
+    entry = _flext_ldif__utilities_entry
+    import flext_ldif._utilities.events as _flext_ldif__utilities_events
+
+    events = _flext_ldif__utilities_events
+    import flext_ldif._utilities.metadata as _flext_ldif__utilities_metadata
+
+    metadata = _flext_ldif__utilities_metadata
+    import flext_ldif._utilities.object_class as _flext_ldif__utilities_object_class
+
+    object_class = _flext_ldif__utilities_object_class
+    import flext_ldif._utilities.oid as _flext_ldif__utilities_oid
+
+    oid = _flext_ldif__utilities_oid
+    import flext_ldif._utilities.parser as _flext_ldif__utilities_parser
+
+    parser = _flext_ldif__utilities_parser
+    import flext_ldif._utilities.parsers as _flext_ldif__utilities_parsers
+
+    parsers = _flext_ldif__utilities_parsers
+    import flext_ldif._utilities.pipeline as _flext_ldif__utilities_pipeline
+
+    pipeline = _flext_ldif__utilities_pipeline
+    import flext_ldif._utilities.result as _flext_ldif__utilities_result
+
+    result = _flext_ldif__utilities_result
+    import flext_ldif._utilities.schema as _flext_ldif__utilities_schema
+
+    schema = _flext_ldif__utilities_schema
+    import flext_ldif._utilities.server as _flext_ldif__utilities_server
+
+    server = _flext_ldif__utilities_server
+    import flext_ldif._utilities.transformers as _flext_ldif__utilities_transformers
+
+    transformers = _flext_ldif__utilities_transformers
+    import flext_ldif._utilities.validation as _flext_ldif__utilities_validation
+
+    validation = _flext_ldif__utilities_validation
+    import flext_ldif._utilities.writer as _flext_ldif__utilities_writer
+
+    writer = _flext_ldif__utilities_writer
+    import flext_ldif._utilities.writers as _flext_ldif__utilities_writers
+
+    writers = _flext_ldif__utilities_writers
+
+    _ = (
+        FlextLdifUtilitiesACL,
+        FlextLdifUtilitiesAttribute,
+        FlextLdifUtilitiesCollectionLdif,
+        FlextLdifUtilitiesDN,
+        FlextLdifUtilitiesDetection,
+        FlextLdifUtilitiesDispatch,
+        FlextLdifUtilitiesEntry,
+        FlextLdifUtilitiesEvents,
+        FlextLdifUtilitiesMetadata,
+        FlextLdifUtilitiesOID,
+        FlextLdifUtilitiesObjectClass,
+        FlextLdifUtilitiesParser,
+        FlextLdifUtilitiesParsers,
+        FlextLdifUtilitiesPipeline,
+        FlextLdifUtilitiesResult,
+        FlextLdifUtilitiesSchema,
+        FlextLdifUtilitiesServer,
+        FlextLdifUtilitiesTransformer,
+        FlextLdifUtilitiesTransformers,
+        FlextLdifUtilitiesValidation,
+        FlextLdifUtilitiesWriter,
+        FlextLdifUtilitiesWriters,
         acl,
         attribute,
         collection_ldif,
@@ -21,6 +105,7 @@ if _TYPE_CHECKING:
         dn,
         entry,
         events,
+        logger,
         metadata,
         object_class,
         oid,
@@ -35,32 +120,7 @@ if _TYPE_CHECKING:
         writer,
         writers,
     )
-    from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
-    from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
-    from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
-    from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
-    from flext_ldif._utilities.dispatch import FlextLdifUtilitiesDispatch
-    from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-    from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
-    from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
-    from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
-    from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
-    from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
-    from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
-    from flext_ldif._utilities.parsers import FlextLdifUtilitiesParsers
-    from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
-    from flext_ldif._utilities.result import FlextLdifUtilitiesResult
-    from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
-    from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-    from flext_ldif._utilities.transformers import (
-        FlextLdifUtilitiesTransformer,
-        FlextLdifUtilitiesTransformers,
-    )
-    from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
-    from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
-    from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters, logger
-
-_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
+_LAZY_IMPORTS = {
     "FlextLdifUtilitiesACL": "flext_ldif._utilities.acl",
     "FlextLdifUtilitiesAttribute": "flext_ldif._utilities.attribute",
     "FlextLdifUtilitiesCollectionLdif": "flext_ldif._utilities.collection_ldif",
@@ -106,6 +166,53 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "writer": "flext_ldif._utilities.writer",
     "writers": "flext_ldif._utilities.writers",
 }
+
+__all__ = [
+    "FlextLdifUtilitiesACL",
+    "FlextLdifUtilitiesAttribute",
+    "FlextLdifUtilitiesCollectionLdif",
+    "FlextLdifUtilitiesDN",
+    "FlextLdifUtilitiesDetection",
+    "FlextLdifUtilitiesDispatch",
+    "FlextLdifUtilitiesEntry",
+    "FlextLdifUtilitiesEvents",
+    "FlextLdifUtilitiesMetadata",
+    "FlextLdifUtilitiesOID",
+    "FlextLdifUtilitiesObjectClass",
+    "FlextLdifUtilitiesParser",
+    "FlextLdifUtilitiesParsers",
+    "FlextLdifUtilitiesPipeline",
+    "FlextLdifUtilitiesResult",
+    "FlextLdifUtilitiesSchema",
+    "FlextLdifUtilitiesServer",
+    "FlextLdifUtilitiesTransformer",
+    "FlextLdifUtilitiesTransformers",
+    "FlextLdifUtilitiesValidation",
+    "FlextLdifUtilitiesWriter",
+    "FlextLdifUtilitiesWriters",
+    "acl",
+    "attribute",
+    "collection_ldif",
+    "detection",
+    "dispatch",
+    "dn",
+    "entry",
+    "events",
+    "logger",
+    "metadata",
+    "object_class",
+    "oid",
+    "parser",
+    "parsers",
+    "pipeline",
+    "result",
+    "schema",
+    "server",
+    "transformers",
+    "validation",
+    "writer",
+    "writers",
+]
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

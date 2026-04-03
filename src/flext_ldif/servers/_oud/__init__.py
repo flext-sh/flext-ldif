@@ -5,21 +5,42 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING as _TYPE_CHECKING
+import typing as _t
 
 from flext_core.lazy import install_lazy_exports
 
-if _TYPE_CHECKING:
-    from flext_core import FlextTypes
-    from flext_ldif.servers._oud import acl, constants, entry, schema, utilities
-    from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
-    from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants, c
-    from flext_ldif.servers._oud.entry import FlextLdifServersOudEntry
-    from flext_ldif.servers._oud.schema import FlextLdifServersOudSchema, logger
-    from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
+if _t.TYPE_CHECKING:
+    import flext_ldif.servers._oud.acl as _flext_ldif_servers__oud_acl
 
-_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
+    acl = _flext_ldif_servers__oud_acl
+    import flext_ldif.servers._oud.constants as _flext_ldif_servers__oud_constants
+
+    constants = _flext_ldif_servers__oud_constants
+    import flext_ldif.servers._oud.entry as _flext_ldif_servers__oud_entry
+
+    entry = _flext_ldif_servers__oud_entry
+    import flext_ldif.servers._oud.schema as _flext_ldif_servers__oud_schema
+
+    schema = _flext_ldif_servers__oud_schema
+    import flext_ldif.servers._oud.utilities as _flext_ldif_servers__oud_utilities
+
+    utilities = _flext_ldif_servers__oud_utilities
+
+    _ = (
+        FlextLdifServersOudAcl,
+        FlextLdifServersOudConstants,
+        FlextLdifServersOudEntry,
+        FlextLdifServersOudSchema,
+        FlextLdifServersOudUtilities,
+        acl,
+        c,
+        constants,
+        entry,
+        logger,
+        schema,
+        utilities,
+    )
+_LAZY_IMPORTS = {
     "FlextLdifServersOudAcl": "flext_ldif.servers._oud.acl",
     "FlextLdifServersOudConstants": "flext_ldif.servers._oud.constants",
     "FlextLdifServersOudEntry": "flext_ldif.servers._oud.entry",
@@ -33,6 +54,21 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "schema": "flext_ldif.servers._oud.schema",
     "utilities": "flext_ldif.servers._oud.utilities",
 }
+
+__all__ = [
+    "FlextLdifServersOudAcl",
+    "FlextLdifServersOudConstants",
+    "FlextLdifServersOudEntry",
+    "FlextLdifServersOudSchema",
+    "FlextLdifServersOudUtilities",
+    "acl",
+    "c",
+    "constants",
+    "entry",
+    "logger",
+    "schema",
+    "utilities",
+]
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

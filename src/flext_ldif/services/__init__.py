@@ -5,65 +5,131 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING as _TYPE_CHECKING
+import typing as _t
 
+from flext_core.constants import FlextConstants as c
+from flext_core.decorators import FlextDecorators as d
+from flext_core.exceptions import FlextExceptions as e
+from flext_core.handlers import FlextHandlers as h
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
+from flext_core.mixins import FlextMixins as x
+from flext_core.models import FlextModels as m
+from flext_core.protocols import FlextProtocols as p
+from flext_core.result import FlextResult as r
+from flext_core.service import FlextService as s
+from flext_core.typings import FlextTypes as t
+from flext_core.utilities import FlextUtilities as u
 
-if _TYPE_CHECKING:
-    from flext_core import FlextTypes
-    from flext_core.constants import FlextConstants as c
-    from flext_core.decorators import FlextDecorators as d
-    from flext_core.exceptions import FlextExceptions as e
-    from flext_core.handlers import FlextHandlers as h
-    from flext_core.mixins import FlextMixins as x
-    from flext_core.models import FlextModels as m
-    from flext_core.protocols import FlextProtocols as p
-    from flext_core.result import FlextResult as r
-    from flext_core.service import FlextService as s
-    from flext_core.typings import FlextTypes as t
-    from flext_core.utilities import FlextUtilities as u
-    from flext_ldif.services import (
+if _t.TYPE_CHECKING:
+    import flext_ldif.services._services as _flext_ldif_services__services
+
+    _services = _flext_ldif_services__services
+    import flext_ldif.services._services.processing_pipeline_service as _flext_ldif_services__services_processing_pipeline_service
+
+    processing_pipeline_service = (
+        _flext_ldif_services__services_processing_pipeline_service
+    )
+    import flext_ldif.services.acl as _flext_ldif_services_acl
+
+    acl = _flext_ldif_services_acl
+    import flext_ldif.services.analysis as _flext_ldif_services_analysis
+
+    analysis = _flext_ldif_services_analysis
+    import flext_ldif.services.categorization as _flext_ldif_services_categorization
+
+    categorization = _flext_ldif_services_categorization
+    import flext_ldif.services.conversion as _flext_ldif_services_conversion
+
+    conversion = _flext_ldif_services_conversion
+    import flext_ldif.services.detector as _flext_ldif_services_detector
+
+    detector = _flext_ldif_services_detector
+    import flext_ldif.services.entries as _flext_ldif_services_entries
+
+    entries = _flext_ldif_services_entries
+    import flext_ldif.services.filters as _flext_ldif_services_filters
+
+    filters = _flext_ldif_services_filters
+    import flext_ldif.services.migration as _flext_ldif_services_migration
+
+    migration = _flext_ldif_services_migration
+    import flext_ldif.services.parser as _flext_ldif_services_parser
+
+    parser = _flext_ldif_services_parser
+    import flext_ldif.services.pipeline as _flext_ldif_services_pipeline
+
+    pipeline = _flext_ldif_services_pipeline
+    import flext_ldif.services.processing as _flext_ldif_services_processing
+
+    processing = _flext_ldif_services_processing
+    import flext_ldif.services.rfc_validation as _flext_ldif_services_rfc_validation
+
+    rfc_validation = _flext_ldif_services_rfc_validation
+    import flext_ldif.services.server as _flext_ldif_services_server
+
+    server = _flext_ldif_services_server
+    import flext_ldif.services.statistics as _flext_ldif_services_statistics
+
+    statistics = _flext_ldif_services_statistics
+    import flext_ldif.services.transformers as _flext_ldif_services_transformers
+
+    transformers = _flext_ldif_services_transformers
+    import flext_ldif.services.writer as _flext_ldif_services_writer
+
+    writer = _flext_ldif_services_writer
+
+    _ = (
+        FlextLdifAcl,
+        FlextLdifAnalysis,
+        FlextLdifCategorization,
+        FlextLdifConversion,
+        FlextLdifDetector,
+        FlextLdifDetectorMixin,
+        FlextLdifEntries,
+        FlextLdifFilters,
+        FlextLdifMigrationPipeline,
+        FlextLdifParser,
+        FlextLdifParserMixin,
+        FlextLdifProcessing,
+        FlextLdifProcessingPipeline,
+        FlextLdifProcessingPipelineService,
+        FlextLdifServer,
+        FlextLdifStatistics,
+        FlextLdifTransformer,
+        FlextLdifValidation,
+        FlextLdifWriter,
+        FlextLdifWriterMixin,
         _services,
         acl,
         analysis,
+        c,
         categorization,
         conversion,
+        d,
         detector,
+        e,
         entries,
         filters,
+        h,
+        m,
         migration,
+        p,
         parser,
         pipeline,
         processing,
+        processing_pipeline_service,
+        r,
         rfc_validation,
+        s,
         server,
         statistics,
+        t,
         transformers,
+        u,
         writer,
+        x,
     )
-    from flext_ldif.services._services import (
-        FlextLdifProcessingPipelineService,
-        processing_pipeline_service,
-    )
-    from flext_ldif.services.acl import FlextLdifAcl
-    from flext_ldif.services.analysis import FlextLdifAnalysis
-    from flext_ldif.services.categorization import FlextLdifCategorization
-    from flext_ldif.services.conversion import FlextLdifConversion
-    from flext_ldif.services.detector import FlextLdifDetector, FlextLdifDetectorMixin
-    from flext_ldif.services.entries import FlextLdifEntries
-    from flext_ldif.services.filters import FlextLdifFilters
-    from flext_ldif.services.migration import FlextLdifMigrationPipeline
-    from flext_ldif.services.parser import FlextLdifParser, FlextLdifParserMixin
-    from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
-    from flext_ldif.services.processing import FlextLdifProcessing
-    from flext_ldif.services.rfc_validation import FlextLdifValidation
-    from flext_ldif.services.server import FlextLdifServer
-    from flext_ldif.services.statistics import FlextLdifStatistics
-    from flext_ldif.services.transformers import FlextLdifTransformer
-    from flext_ldif.services.writer import FlextLdifWriter, FlextLdifWriterMixin
-
-_LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
+_LAZY_IMPORTS = merge_lazy_imports(
     ("flext_ldif.services._services",),
     {
         "FlextLdifAcl": "flext_ldif.services.acl",
@@ -115,6 +181,58 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "x": ("flext_core.mixins", "FlextMixins"),
     },
 )
+
+__all__ = [
+    "FlextLdifAcl",
+    "FlextLdifAnalysis",
+    "FlextLdifCategorization",
+    "FlextLdifConversion",
+    "FlextLdifDetector",
+    "FlextLdifDetectorMixin",
+    "FlextLdifEntries",
+    "FlextLdifFilters",
+    "FlextLdifMigrationPipeline",
+    "FlextLdifParser",
+    "FlextLdifParserMixin",
+    "FlextLdifProcessing",
+    "FlextLdifProcessingPipeline",
+    "FlextLdifProcessingPipelineService",
+    "FlextLdifServer",
+    "FlextLdifStatistics",
+    "FlextLdifTransformer",
+    "FlextLdifValidation",
+    "FlextLdifWriter",
+    "FlextLdifWriterMixin",
+    "_services",
+    "acl",
+    "analysis",
+    "c",
+    "categorization",
+    "conversion",
+    "d",
+    "detector",
+    "e",
+    "entries",
+    "filters",
+    "h",
+    "m",
+    "migration",
+    "p",
+    "parser",
+    "pipeline",
+    "processing",
+    "processing_pipeline_service",
+    "r",
+    "rfc_validation",
+    "s",
+    "server",
+    "statistics",
+    "t",
+    "transformers",
+    "u",
+    "writer",
+    "x",
+]
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

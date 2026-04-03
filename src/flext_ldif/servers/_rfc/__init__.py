@@ -5,20 +5,37 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING as _TYPE_CHECKING
+import typing as _t
 
 from flext_core.lazy import install_lazy_exports
 
-if _TYPE_CHECKING:
-    from flext_core import FlextTypes
-    from flext_ldif.servers._rfc import acl, constants, entry, schema
-    from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
-    from flext_ldif.servers._rfc.constants import FlextLdifServersRfcConstants, c
-    from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
-    from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema, logger
+if _t.TYPE_CHECKING:
+    import flext_ldif.servers._rfc.acl as _flext_ldif_servers__rfc_acl
 
-_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
+    acl = _flext_ldif_servers__rfc_acl
+    import flext_ldif.servers._rfc.constants as _flext_ldif_servers__rfc_constants
+
+    constants = _flext_ldif_servers__rfc_constants
+    import flext_ldif.servers._rfc.entry as _flext_ldif_servers__rfc_entry
+
+    entry = _flext_ldif_servers__rfc_entry
+    import flext_ldif.servers._rfc.schema as _flext_ldif_servers__rfc_schema
+
+    schema = _flext_ldif_servers__rfc_schema
+
+    _ = (
+        FlextLdifServersRfcAcl,
+        FlextLdifServersRfcConstants,
+        FlextLdifServersRfcEntry,
+        FlextLdifServersRfcSchema,
+        acl,
+        c,
+        constants,
+        entry,
+        logger,
+        schema,
+    )
+_LAZY_IMPORTS = {
     "FlextLdifServersRfcAcl": "flext_ldif.servers._rfc.acl",
     "FlextLdifServersRfcConstants": "flext_ldif.servers._rfc.constants",
     "FlextLdifServersRfcEntry": "flext_ldif.servers._rfc.entry",
@@ -30,6 +47,19 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "logger": "flext_ldif.servers._rfc.schema",
     "schema": "flext_ldif.servers._rfc.schema",
 }
+
+__all__ = [
+    "FlextLdifServersRfcAcl",
+    "FlextLdifServersRfcConstants",
+    "FlextLdifServersRfcEntry",
+    "FlextLdifServersRfcSchema",
+    "acl",
+    "c",
+    "constants",
+    "entry",
+    "logger",
+    "schema",
+]
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
