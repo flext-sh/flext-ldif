@@ -14,27 +14,18 @@ if _t.TYPE_CHECKING:
 
     acl = _flext_ldif_servers__rfc_acl
     import flext_ldif.servers._rfc.constants as _flext_ldif_servers__rfc_constants
+    from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
 
     constants = _flext_ldif_servers__rfc_constants
     import flext_ldif.servers._rfc.entry as _flext_ldif_servers__rfc_entry
+    from flext_ldif.servers._rfc.constants import FlextLdifServersRfcConstants, c
 
     entry = _flext_ldif_servers__rfc_entry
     import flext_ldif.servers._rfc.schema as _flext_ldif_servers__rfc_schema
+    from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
 
     schema = _flext_ldif_servers__rfc_schema
-
-    _ = (
-        FlextLdifServersRfcAcl,
-        FlextLdifServersRfcConstants,
-        FlextLdifServersRfcEntry,
-        FlextLdifServersRfcSchema,
-        acl,
-        c,
-        constants,
-        entry,
-        logger,
-        schema,
-    )
+    from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema, logger
 _LAZY_IMPORTS = {
     "FlextLdifServersRfcAcl": "flext_ldif.servers._rfc.acl",
     "FlextLdifServersRfcConstants": "flext_ldif.servers._rfc.constants",

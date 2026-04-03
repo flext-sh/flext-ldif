@@ -14,28 +14,22 @@ if _t.TYPE_CHECKING:
 
     acl = _flext_ldif_servers__base_acl
     import flext_ldif.servers._base.constants as _flext_ldif_servers__base_constants
+    from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 
     constants = _flext_ldif_servers__base_constants
     import flext_ldif.servers._base.entry as _flext_ldif_servers__base_entry
+    from flext_ldif.servers._base.constants import (
+        FlextLdifQuirkMethodsMixin,
+        FlextLdifServersBaseConstants,
+        FlextLdifServersBaseQuirkHelpers,
+    )
 
     entry = _flext_ldif_servers__base_entry
     import flext_ldif.servers._base.schema as _flext_ldif_servers__base_schema
+    from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
 
     schema = _flext_ldif_servers__base_schema
-
-    _ = (
-        FlextLdifQuirkMethodsMixin,
-        FlextLdifServersBaseConstants,
-        FlextLdifServersBaseEntry,
-        FlextLdifServersBaseQuirkHelpers,
-        FlextLdifServersBaseSchema,
-        FlextLdifServersBaseSchemaAcl,
-        acl,
-        constants,
-        entry,
-        logger,
-        schema,
-    )
+    from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema, logger
 _LAZY_IMPORTS = {
     "FlextLdifQuirkMethodsMixin": "flext_ldif.servers._base.constants",
     "FlextLdifServersBaseConstants": "flext_ldif.servers._base.constants",

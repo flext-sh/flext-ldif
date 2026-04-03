@@ -8,17 +8,12 @@ from __future__ import annotations
 import typing as _t
 
 from flext_core.lazy import install_lazy_exports
-from tests.unit.__init__.test_version import TestsFlextLdifVersion
 
 if _t.TYPE_CHECKING:
     import tests.unit.__init__.test_version as _tests_unit___init___test_version
 
     test_version = _tests_unit___init___test_version
-
-    _ = (
-        TestsFlextLdifVersion,
-        test_version,
-    )
+    from tests.unit.__init__.test_version import TestsFlextLdifVersion
 _LAZY_IMPORTS = {
     "TestsFlextLdifVersion": "tests.unit.__init__.test_version",
     "test_version": "tests.unit.__init__.test_version",

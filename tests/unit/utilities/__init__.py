@@ -7,59 +7,36 @@ from __future__ import annotations
 
 import typing as _t
 
-from flext_core.constants import FlextConstants as c
-from flext_core.decorators import FlextDecorators as d
-from flext_core.exceptions import FlextExceptions as e
-from flext_core.handlers import FlextHandlers as h
 from flext_core.lazy import install_lazy_exports
-from flext_core.mixins import FlextMixins as x
-from flext_core.models import FlextModels as m
-from flext_core.protocols import FlextProtocols as p
-from flext_core.result import FlextResult as r
-from flext_core.service import FlextService as s
-from flext_core.typings import FlextTypes as t
-from flext_core.utilities import FlextUtilities as u
-from tests.unit.utilities.test_utilities_comprehensive import (
-    TestFlextLdifUtilitiesComprehensive,
-)
-from tests.unit.utilities.test_utilities_core import (
-    TestAttributeFixer,
-    TestDnObjectClassMethods,
-    TestLdifParser,
-    TestObjectClassUtilities,
-    TestServerTypes,
-    TestsFlextLdifDnOperationsPure,
-)
 
 if _t.TYPE_CHECKING:
     import tests.unit.utilities.test_utilities_comprehensive as _tests_unit_utilities_test_utilities_comprehensive
 
     test_utilities_comprehensive = _tests_unit_utilities_test_utilities_comprehensive
     import tests.unit.utilities.test_utilities_core as _tests_unit_utilities_test_utilities_core
+    from tests.unit.utilities.test_utilities_comprehensive import (
+        TestFlextLdifUtilitiesComprehensive,
+    )
 
     test_utilities_core = _tests_unit_utilities_test_utilities_core
-
-    _ = (
+    from flext_core.constants import FlextConstants as c
+    from flext_core.decorators import FlextDecorators as d
+    from flext_core.exceptions import FlextExceptions as e
+    from flext_core.handlers import FlextHandlers as h
+    from flext_core.mixins import FlextMixins as x
+    from flext_core.models import FlextModels as m
+    from flext_core.protocols import FlextProtocols as p
+    from flext_core.result import FlextResult as r
+    from flext_core.service import FlextService as s
+    from flext_core.typings import FlextTypes as t
+    from flext_core.utilities import FlextUtilities as u
+    from tests.unit.utilities.test_utilities_core import (
         TestAttributeFixer,
         TestDnObjectClassMethods,
-        TestFlextLdifUtilitiesComprehensive,
         TestLdifParser,
         TestObjectClassUtilities,
         TestServerTypes,
         TestsFlextLdifDnOperationsPure,
-        c,
-        d,
-        e,
-        h,
-        m,
-        p,
-        r,
-        s,
-        t,
-        test_utilities_comprehensive,
-        test_utilities_core,
-        u,
-        x,
     )
 _LAZY_IMPORTS = {
     "TestAttributeFixer": "tests.unit.utilities.test_utilities_core",
