@@ -420,22 +420,22 @@ if result.is_success:
     print("Migration completed successfully")
 ```
 
-### MANDATORY: Use FlextUtilities/FlextRuntime Instead of Custom Helpers
+### MANDATORY: Use FlextUtilities/u Instead of Custom Helpers
 
-**ALWAYS use FlextUtilities/FlextRuntime from flext-core instead of custom helpers**:
+**ALWAYS use FlextUtilities/u from flext-core instead of custom helpers**:
 
 ```python
-from flext_core import FlextRuntime, FlextUtilities
+from flext_core import u, FlextUtilities
 
 # Phone validation
-if FlextRuntime.is_valid_phone(value):
+if u.is_valid_phone(value):
     ...
 
 # Email validation
 result = FlextUtilities.Validation.validate_pattern(email, email_pattern)
 
 # Type guards
-if FlextRuntime.is_list_like(values):
+if u.is_list_like(values):
     ...
 ```
 
