@@ -23,9 +23,11 @@ if _TYPE_CHECKING:
     from flext_core.service import FlextService as s
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
-    from flext_ldif import test_protocols
+    from tests.unit.protocols import test_protocols
+    from tests.unit.protocols.test_protocols import TestsTestFlextLdifProtocols
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
+    "TestsTestFlextLdifProtocols": "tests.unit.protocols.test_protocols",
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),
@@ -35,7 +37,7 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "r": ("flext_core.result", "FlextResult"),
     "s": ("flext_core.service", "FlextService"),
     "t": ("flext_core.typings", "FlextTypes"),
-    "test_protocols": "flext_ldif.test_protocols",
+    "test_protocols": "tests.unit.protocols.test_protocols",
     "u": ("flext_core.utilities", "FlextUtilities"),
     "x": ("flext_core.mixins", "FlextMixins"),
 }

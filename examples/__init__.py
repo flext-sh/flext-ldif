@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING as _TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
+    from examples import demo_structured_migration
+    from examples.demo_structured_migration import main
     from flext_core import FlextTypes
     from flext_core.constants import FlextConstants as c
     from flext_core.decorators import FlextDecorators as d
@@ -23,17 +25,15 @@ if _TYPE_CHECKING:
     from flext_core.service import FlextService as s
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
-    from flext_ldif import demo_structured_migration
-    from flext_ldif.demo_structured_migration import main
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
-    "demo_structured_migration": "flext_ldif.demo_structured_migration",
+    "demo_structured_migration": "examples.demo_structured_migration",
     "e": ("flext_core.exceptions", "FlextExceptions"),
     "h": ("flext_core.handlers", "FlextHandlers"),
     "m": ("flext_core.models", "FlextModels"),
-    "main": "flext_ldif.demo_structured_migration",
+    "main": "examples.demo_structured_migration",
     "p": ("flext_core.protocols", "FlextProtocols"),
     "r": ("flext_core.result", "FlextResult"),
     "s": ("flext_core.service", "FlextService"),

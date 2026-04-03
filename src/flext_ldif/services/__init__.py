@@ -23,7 +23,7 @@ if _TYPE_CHECKING:
     from flext_core.service import FlextService as s
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
-    from flext_ldif import (
+    from flext_ldif.services import (
         _services,
         acl,
         analysis,
@@ -36,81 +36,82 @@ if _TYPE_CHECKING:
         parser,
         pipeline,
         processing,
-        processing_pipeline_service,
         rfc_validation,
         server,
         statistics,
         transformers,
         writer,
     )
-    from flext_ldif._services import FlextLdifProcessingPipelineService
-    from flext_ldif.acl import FlextLdifAcl
-    from flext_ldif.analysis import FlextLdifAnalysis
-    from flext_ldif.categorization import FlextLdifCategorization
-    from flext_ldif.conversion import FlextLdifConversion
-    from flext_ldif.detector import FlextLdifDetector, FlextLdifDetectorMixin
-    from flext_ldif.entries import FlextLdifEntries
-    from flext_ldif.filters import FlextLdifFilters
-    from flext_ldif.migration import FlextLdifMigrationPipeline
-    from flext_ldif.parser import FlextLdifParser, FlextLdifParserMixin
-    from flext_ldif.pipeline import FlextLdifProcessingPipeline
-    from flext_ldif.processing import FlextLdifProcessing
-    from flext_ldif.rfc_validation import FlextLdifValidation
-    from flext_ldif.server import FlextLdifServer
-    from flext_ldif.statistics import FlextLdifStatistics
-    from flext_ldif.transformers import FlextLdifTransformer
-    from flext_ldif.writer import FlextLdifWriter, FlextLdifWriterMixin
+    from flext_ldif.services._services import (
+        FlextLdifProcessingPipelineService,
+        processing_pipeline_service,
+    )
+    from flext_ldif.services.acl import FlextLdifAcl
+    from flext_ldif.services.analysis import FlextLdifAnalysis
+    from flext_ldif.services.categorization import FlextLdifCategorization
+    from flext_ldif.services.conversion import FlextLdifConversion
+    from flext_ldif.services.detector import FlextLdifDetector, FlextLdifDetectorMixin
+    from flext_ldif.services.entries import FlextLdifEntries
+    from flext_ldif.services.filters import FlextLdifFilters
+    from flext_ldif.services.migration import FlextLdifMigrationPipeline
+    from flext_ldif.services.parser import FlextLdifParser, FlextLdifParserMixin
+    from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
+    from flext_ldif.services.processing import FlextLdifProcessing
+    from flext_ldif.services.rfc_validation import FlextLdifValidation
+    from flext_ldif.services.server import FlextLdifServer
+    from flext_ldif.services.statistics import FlextLdifStatistics
+    from flext_ldif.services.transformers import FlextLdifTransformer
+    from flext_ldif.services.writer import FlextLdifWriter, FlextLdifWriterMixin
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
-    ("flext_ldif._services",),
+    ("flext_ldif.services._services",),
     {
-        "FlextLdifAcl": "flext_ldif.acl",
-        "FlextLdifAnalysis": "flext_ldif.analysis",
-        "FlextLdifCategorization": "flext_ldif.categorization",
-        "FlextLdifConversion": "flext_ldif.conversion",
-        "FlextLdifDetector": "flext_ldif.detector",
-        "FlextLdifDetectorMixin": "flext_ldif.detector",
-        "FlextLdifEntries": "flext_ldif.entries",
-        "FlextLdifFilters": "flext_ldif.filters",
-        "FlextLdifMigrationPipeline": "flext_ldif.migration",
-        "FlextLdifParser": "flext_ldif.parser",
-        "FlextLdifParserMixin": "flext_ldif.parser",
-        "FlextLdifProcessing": "flext_ldif.processing",
-        "FlextLdifProcessingPipeline": "flext_ldif.pipeline",
-        "FlextLdifServer": "flext_ldif.server",
-        "FlextLdifStatistics": "flext_ldif.statistics",
-        "FlextLdifTransformer": "flext_ldif.transformers",
-        "FlextLdifValidation": "flext_ldif.rfc_validation",
-        "FlextLdifWriter": "flext_ldif.writer",
-        "FlextLdifWriterMixin": "flext_ldif.writer",
-        "_services": "flext_ldif._services",
-        "acl": "flext_ldif.acl",
-        "analysis": "flext_ldif.analysis",
+        "FlextLdifAcl": "flext_ldif.services.acl",
+        "FlextLdifAnalysis": "flext_ldif.services.analysis",
+        "FlextLdifCategorization": "flext_ldif.services.categorization",
+        "FlextLdifConversion": "flext_ldif.services.conversion",
+        "FlextLdifDetector": "flext_ldif.services.detector",
+        "FlextLdifDetectorMixin": "flext_ldif.services.detector",
+        "FlextLdifEntries": "flext_ldif.services.entries",
+        "FlextLdifFilters": "flext_ldif.services.filters",
+        "FlextLdifMigrationPipeline": "flext_ldif.services.migration",
+        "FlextLdifParser": "flext_ldif.services.parser",
+        "FlextLdifParserMixin": "flext_ldif.services.parser",
+        "FlextLdifProcessing": "flext_ldif.services.processing",
+        "FlextLdifProcessingPipeline": "flext_ldif.services.pipeline",
+        "FlextLdifServer": "flext_ldif.services.server",
+        "FlextLdifStatistics": "flext_ldif.services.statistics",
+        "FlextLdifTransformer": "flext_ldif.services.transformers",
+        "FlextLdifValidation": "flext_ldif.services.rfc_validation",
+        "FlextLdifWriter": "flext_ldif.services.writer",
+        "FlextLdifWriterMixin": "flext_ldif.services.writer",
+        "_services": "flext_ldif.services._services",
+        "acl": "flext_ldif.services.acl",
+        "analysis": "flext_ldif.services.analysis",
         "c": ("flext_core.constants", "FlextConstants"),
-        "categorization": "flext_ldif.categorization",
-        "conversion": "flext_ldif.conversion",
+        "categorization": "flext_ldif.services.categorization",
+        "conversion": "flext_ldif.services.conversion",
         "d": ("flext_core.decorators", "FlextDecorators"),
-        "detector": "flext_ldif.detector",
+        "detector": "flext_ldif.services.detector",
         "e": ("flext_core.exceptions", "FlextExceptions"),
-        "entries": "flext_ldif.entries",
-        "filters": "flext_ldif.filters",
+        "entries": "flext_ldif.services.entries",
+        "filters": "flext_ldif.services.filters",
         "h": ("flext_core.handlers", "FlextHandlers"),
         "m": ("flext_core.models", "FlextModels"),
-        "migration": "flext_ldif.migration",
+        "migration": "flext_ldif.services.migration",
         "p": ("flext_core.protocols", "FlextProtocols"),
-        "parser": "flext_ldif.parser",
-        "pipeline": "flext_ldif.pipeline",
-        "processing": "flext_ldif.processing",
-        "processing_pipeline_service": "flext_ldif.processing_pipeline_service",
+        "parser": "flext_ldif.services.parser",
+        "pipeline": "flext_ldif.services.pipeline",
+        "processing": "flext_ldif.services.processing",
         "r": ("flext_core.result", "FlextResult"),
-        "rfc_validation": "flext_ldif.rfc_validation",
+        "rfc_validation": "flext_ldif.services.rfc_validation",
         "s": ("flext_core.service", "FlextService"),
-        "server": "flext_ldif.server",
-        "statistics": "flext_ldif.statistics",
+        "server": "flext_ldif.services.server",
+        "statistics": "flext_ldif.services.statistics",
         "t": ("flext_core.typings", "FlextTypes"),
-        "transformers": "flext_ldif.transformers",
+        "transformers": "flext_ldif.services.transformers",
         "u": ("flext_core.utilities", "FlextUtilities"),
-        "writer": "flext_ldif.writer",
+        "writer": "flext_ldif.services.writer",
         "x": ("flext_core.mixins", "FlextMixins"),
     },
 )

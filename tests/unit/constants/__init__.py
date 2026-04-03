@@ -23,17 +23,17 @@ if _TYPE_CHECKING:
     from flext_core.service import FlextService as s
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
-    from flext_ldif import test_acl_registry
-    from flext_ldif.test_acl_registry import (
+    from tests.unit.constants import test_acl_registry
+    from tests.unit.constants.test_acl_registry import (
         GetAclAttributesServerType,
         IsAclAttributeType,
         TestsTestFlextLdifAclAttributeRegistry,
     )
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
-    "GetAclAttributesServerType": "flext_ldif.test_acl_registry",
-    "IsAclAttributeType": "flext_ldif.test_acl_registry",
-    "TestsTestFlextLdifAclAttributeRegistry": "flext_ldif.test_acl_registry",
+    "GetAclAttributesServerType": "tests.unit.constants.test_acl_registry",
+    "IsAclAttributeType": "tests.unit.constants.test_acl_registry",
+    "TestsTestFlextLdifAclAttributeRegistry": "tests.unit.constants.test_acl_registry",
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),
@@ -43,7 +43,7 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "r": ("flext_core.result", "FlextResult"),
     "s": ("flext_core.service", "FlextService"),
     "t": ("flext_core.typings", "FlextTypes"),
-    "test_acl_registry": "flext_ldif.test_acl_registry",
+    "test_acl_registry": "tests.unit.constants.test_acl_registry",
     "u": ("flext_core.utilities", "FlextUtilities"),
     "x": ("flext_core.mixins", "FlextMixins"),
 }

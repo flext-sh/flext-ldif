@@ -23,9 +23,11 @@ if _TYPE_CHECKING:
     from flext_core.service import FlextService as s
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
-    from flext_ldif import test_migration_pipeline, test_quirks_standardization
-    from flext_ldif.test_migration_pipeline import TestsTestFlextLdifMigrationPipeline
-    from flext_ldif.test_quirks_standardization import (
+    from tests.unit.services import test_migration_pipeline, test_quirks_standardization
+    from tests.unit.services.test_migration_pipeline import (
+        TestsTestFlextLdifMigrationPipeline,
+    )
+    from tests.unit.services.test_quirks_standardization import (
         TestAliasDiscovery,
         TestQuirksAutoInterchange,
         TestQuirksWithRealLdifFixtures,
@@ -33,11 +35,11 @@ if _TYPE_CHECKING:
     )
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
-    "TestAliasDiscovery": "flext_ldif.test_quirks_standardization",
-    "TestQuirksAutoInterchange": "flext_ldif.test_quirks_standardization",
-    "TestQuirksWithRealLdifFixtures": "flext_ldif.test_quirks_standardization",
-    "TestsFlextLdifQuirksStandardizedConstants": "flext_ldif.test_quirks_standardization",
-    "TestsTestFlextLdifMigrationPipeline": "flext_ldif.test_migration_pipeline",
+    "TestAliasDiscovery": "tests.unit.services.test_quirks_standardization",
+    "TestQuirksAutoInterchange": "tests.unit.services.test_quirks_standardization",
+    "TestQuirksWithRealLdifFixtures": "tests.unit.services.test_quirks_standardization",
+    "TestsFlextLdifQuirksStandardizedConstants": "tests.unit.services.test_quirks_standardization",
+    "TestsTestFlextLdifMigrationPipeline": "tests.unit.services.test_migration_pipeline",
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),
@@ -47,8 +49,8 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "r": ("flext_core.result", "FlextResult"),
     "s": ("flext_core.service", "FlextService"),
     "t": ("flext_core.typings", "FlextTypes"),
-    "test_migration_pipeline": "flext_ldif.test_migration_pipeline",
-    "test_quirks_standardization": "flext_ldif.test_quirks_standardization",
+    "test_migration_pipeline": "tests.unit.services.test_migration_pipeline",
+    "test_quirks_standardization": "tests.unit.services.test_quirks_standardization",
     "u": ("flext_core.utilities", "FlextUtilities"),
     "x": ("flext_core.mixins", "FlextMixins"),
 }

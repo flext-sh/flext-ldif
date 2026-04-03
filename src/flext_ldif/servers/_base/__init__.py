@@ -12,36 +12,28 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-    from flext_ldif import acl, constants, entry, schema
-    from flext_ldif.acl import FlextLdifServersBaseSchemaAcl, acl_attribute_name
-    from flext_ldif.constants import FlextLdifServersBaseConstants
-    from flext_ldif.entry import FlextLdifServersBaseEntry
-    from flext_ldif.schema import (
-        FlextLdifServersBaseSchema,
-        description,
-        exclude,
-        logger,
-        priority,
-        repr as repr_,
-        server_type,
+    from flext_ldif.servers._base import acl, constants, entry, schema
+    from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
+    from flext_ldif.servers._base.constants import (
+        FlextLdifQuirkMethodsMixin,
+        FlextLdifServersBaseConstants,
+        FlextLdifServersBaseQuirkHelpers,
     )
+    from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
+    from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema, logger
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
-    "FlextLdifServersBaseConstants": "flext_ldif.constants",
-    "FlextLdifServersBaseEntry": "flext_ldif.entry",
-    "FlextLdifServersBaseSchema": "flext_ldif.schema",
-    "FlextLdifServersBaseSchemaAcl": "flext_ldif.acl",
-    "acl": "flext_ldif.acl",
-    "acl_attribute_name": "flext_ldif.acl",
-    "constants": "flext_ldif.constants",
-    "description": "flext_ldif.schema",
-    "entry": "flext_ldif.entry",
-    "exclude": "flext_ldif.schema",
-    "logger": "flext_ldif.schema",
-    "priority": "flext_ldif.schema",
-    "repr": "flext_ldif.schema",
-    "schema": "flext_ldif.schema",
-    "server_type": "flext_ldif.schema",
+    "FlextLdifQuirkMethodsMixin": "flext_ldif.servers._base.constants",
+    "FlextLdifServersBaseConstants": "flext_ldif.servers._base.constants",
+    "FlextLdifServersBaseEntry": "flext_ldif.servers._base.entry",
+    "FlextLdifServersBaseQuirkHelpers": "flext_ldif.servers._base.constants",
+    "FlextLdifServersBaseSchema": "flext_ldif.servers._base.schema",
+    "FlextLdifServersBaseSchemaAcl": "flext_ldif.servers._base.acl",
+    "acl": "flext_ldif.servers._base.acl",
+    "constants": "flext_ldif.servers._base.constants",
+    "entry": "flext_ldif.servers._base.entry",
+    "logger": "flext_ldif.servers._base.schema",
+    "schema": "flext_ldif.servers._base.schema",
 }
 
 

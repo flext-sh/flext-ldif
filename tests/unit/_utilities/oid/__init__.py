@@ -11,6 +11,9 @@ from typing import TYPE_CHECKING as _TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
+    from tests.unit._utilities.oid import test_oid_utilities
+    from tests.unit._utilities.oid.test_oid_utilities import TestFlextLdifUtilitiesOID
+
     from flext_core import FlextTypes
     from flext_core.constants import FlextConstants as c
     from flext_core.decorators import FlextDecorators as d
@@ -23,11 +26,9 @@ if _TYPE_CHECKING:
     from flext_core.service import FlextService as s
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
-    from flext_ldif import test_oid_utilities
-    from flext_ldif.test_oid_utilities import TestFlextLdifUtilitiesOID
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
-    "TestFlextLdifUtilitiesOID": "flext_ldif.test_oid_utilities",
+    "TestFlextLdifUtilitiesOID": "tests.unit._utilities.oid.test_oid_utilities",
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),
@@ -37,7 +38,7 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "r": ("flext_core.result", "FlextResult"),
     "s": ("flext_core.service", "FlextService"),
     "t": ("flext_core.typings", "FlextTypes"),
-    "test_oid_utilities": "flext_ldif.test_oid_utilities",
+    "test_oid_utilities": "tests.unit._utilities.oid.test_oid_utilities",
     "u": ("flext_core.utilities", "FlextUtilities"),
     "x": ("flext_core.mixins", "FlextMixins"),
 }

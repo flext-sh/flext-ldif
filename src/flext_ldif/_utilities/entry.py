@@ -381,12 +381,12 @@ class FlextLdifUtilitiesEntry:
                 UnicodeDecodeError,
                 struct.error,
             ) as exc:
-                if config.fail_fast:
+                if resolved_config.fail_fast:
                     return r[MutableSequence[m.Ldif.Entry]].fail(
                         f"Transform failed at entry {i}: {exc}",
                     )
                 errors.append((i, f"Transform failed at entry {i}: {exc}"))
-        if errors and config.fail_fast:
+        if errors and resolved_config.fail_fast:
             error_msg = errors[0][1]
             return r[MutableSequence[m.Ldif.Entry]].fail(error_msg)
         return r[MutableSequence[m.Ldif.Entry]].ok(transformed_list)

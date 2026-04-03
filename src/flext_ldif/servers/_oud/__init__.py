@@ -12,26 +12,26 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-    from flext_ldif import acl, constants, entry, schema, utilities
-    from flext_ldif.acl import FlextLdifServersOudAcl
-    from flext_ldif.constants import FlextLdifServersOudConstants, c
-    from flext_ldif.entry import FlextLdifServersOudEntry
-    from flext_ldif.schema import FlextLdifServersOudSchema, logger
-    from flext_ldif.utilities import FlextLdifServersOudUtilities
+    from flext_ldif.servers._oud import acl, constants, entry, schema, utilities
+    from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
+    from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants, c
+    from flext_ldif.servers._oud.entry import FlextLdifServersOudEntry
+    from flext_ldif.servers._oud.schema import FlextLdifServersOudSchema, logger
+    from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
-    "FlextLdifServersOudAcl": "flext_ldif.acl",
-    "FlextLdifServersOudConstants": "flext_ldif.constants",
-    "FlextLdifServersOudEntry": "flext_ldif.entry",
-    "FlextLdifServersOudSchema": "flext_ldif.schema",
-    "FlextLdifServersOudUtilities": "flext_ldif.utilities",
-    "acl": "flext_ldif.acl",
-    "c": "flext_ldif.constants",
-    "constants": "flext_ldif.constants",
-    "entry": "flext_ldif.entry",
-    "logger": "flext_ldif.schema",
-    "schema": "flext_ldif.schema",
-    "utilities": "flext_ldif.utilities",
+    "FlextLdifServersOudAcl": "flext_ldif.servers._oud.acl",
+    "FlextLdifServersOudConstants": "flext_ldif.servers._oud.constants",
+    "FlextLdifServersOudEntry": "flext_ldif.servers._oud.entry",
+    "FlextLdifServersOudSchema": "flext_ldif.servers._oud.schema",
+    "FlextLdifServersOudUtilities": "flext_ldif.servers._oud.utilities",
+    "acl": "flext_ldif.servers._oud.acl",
+    "c": "flext_ldif.servers._oud.constants",
+    "constants": "flext_ldif.servers._oud.constants",
+    "entry": "flext_ldif.servers._oud.entry",
+    "logger": "flext_ldif.servers._oud.schema",
+    "schema": "flext_ldif.servers._oud.schema",
+    "utilities": "flext_ldif.servers._oud.utilities",
 }
 
 
