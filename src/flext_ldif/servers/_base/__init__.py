@@ -22,7 +22,7 @@ if _TYPE_CHECKING:
         exclude,
         logger,
         priority,
-        repr,
+        repr as repr_,
         server_type,
     )
 

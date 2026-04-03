@@ -173,15 +173,18 @@ class FlextLdifUtilitiesEntry:
         **kwargs: str | float | bool | None,
     ) -> bool:
         """Check multiple entry criteria in one call."""
-        if config is None:
-            config = FlextLdifModelsSettings.EntryCriteriaConfig.model_validate(kwargs)
-        assert config is not None
+        resolved_config = (
+            config
+            if config is not None
+            else FlextLdifModelsSettings.EntryCriteriaConfig.model_validate(kwargs)
+        )
         checks: MutableSequence[bool] = []
-        if config.is_schema is not None:
+        if resolved_config.is_schema is not None:
             checks.append(
-                FlextLdifUtilitiesEntry.is_schema_entry(entry) == config.is_schema,
+                FlextLdifUtilitiesEntry.is_schema_entry(entry)
+                == resolved_config.is_schema,
             )
-        if config.objectclasses:
+        if resolved_config.objectclasses:
             entry_ocs = (
                 entry.attributes.get("objectClass", [])
                 if entry.attributes
@@ -189,30 +192,38 @@ class FlextLdifUtilitiesEntry:
             )
             entry_ocs_lower = {oc.lower() for oc in entry_ocs}
             matching = [
-                oc for oc in config.objectclasses if oc.lower() in entry_ocs_lower
+                oc
+                for oc in resolved_config.objectclasses
+                if oc.lower() in entry_ocs_lower
             ]
             checks.append(
                 bool(matching)
-                if config.objectclass_mode == "any"
-                else len(matching) == len(config.objectclasses),
+                if resolved_config.objectclass_mode == "any"
+                else len(matching) == len(resolved_config.objectclasses),
             )
-        if config.required_attrs:
+        if resolved_config.required_attrs:
             if not entry.attributes:
                 checks.append(False)
             else:
                 entry_attrs_lower = {k.lower() for k in entry.attributes.attributes}
                 checks.append(
-                    all(a.lower() in entry_attrs_lower for a in config.required_attrs),
+                    all(
+                        a.lower() in entry_attrs_lower
+                        for a in resolved_config.required_attrs
+                    ),
                 )
-        if config.any_attrs:
+        if resolved_config.any_attrs:
             if not entry.attributes:
                 checks.append(False)
             else:
                 entry_attrs_lower = {k.lower() for k in entry.attributes.attributes}
                 checks.append(
-                    any(a.lower() in entry_attrs_lower for a in config.any_attrs),
+                    any(
+                        a.lower() in entry_attrs_lower
+                        for a in resolved_config.any_attrs
+                    ),
                 )
-        if config.dn_pattern:
+        if resolved_config.dn_pattern:
             dn_value = (
                 entry.dn.value
                 if entry.dn and getattr(entry.dn, "value", None) is not None
@@ -220,7 +231,15 @@ class FlextLdifUtilitiesEntry:
                 if entry.dn
                 else ""
             )
-            checks.append(bool(re.search(config.dn_pattern, dn_value, re.IGNORECASE)))
+            checks.append(
+                bool(
+                    re.search(
+                        resolved_config.dn_pattern,
+                        dn_value,
+                        re.IGNORECASE,
+                    ),
+                ),
+            )
         return all(checks)
 
     @staticmethod
@@ -283,14 +302,16 @@ class FlextLdifUtilitiesEntry:
         **kwargs: str | float | bool | None,
     ) -> r[MutableSequence[m.Ldif.Entry]]:
         """Transform multiple entries with common operations."""
-        if config is None:
-            config = FlextLdifModelsSettings.EntryTransformConfig.model_validate(kwargs)
-        assert config is not None
+        resolved_config = (
+            config
+            if config is not None
+            else FlextLdifModelsSettings.EntryTransformConfig.model_validate(kwargs)
+        )
 
         def transform_entry(entry: m.Ldif.Entry) -> m.Ldif.Entry:
             """Transform single entry with all operations."""
             current = entry
-            if config.normalize_dns and current.dn:
+            if resolved_config.normalize_dns and current.dn:
                 dn_value = (
                     current.dn.value
                     if getattr(current.dn, "value", None) is not None
@@ -301,13 +322,13 @@ class FlextLdifUtilitiesEntry:
                     current = current.model_copy(
                         update={"dn": m.Ldif.DN(value=norm_result.value)},
                     )
-            if config.normalize_attrs and current.attributes:
+            if resolved_config.normalize_attrs and current.attributes:
                 attrs = current.attributes.attributes
                 new_attrs = (
                     {k.lower(): v for k, v in attrs.items()}
-                    if config.attr_case == "lower"
+                    if resolved_config.attr_case == "lower"
                     else {k.upper(): v for k, v in attrs.items()}
-                    if config.attr_case == "upper"
+                    if resolved_config.attr_case == "upper"
                     else attrs
                 )
                 current = current.model_copy(
@@ -317,8 +338,8 @@ class FlextLdifUtilitiesEntry:
                         }),
                     },
                 )
-            if config.convert_booleans and current.attributes:
-                source_format, target_format = config.convert_booleans
+            if resolved_config.convert_booleans and current.attributes:
+                source_format, target_format = resolved_config.convert_booleans
                 boolean_attrs = {
                     "userpassword",
                     "pwdaccountlocked",
@@ -340,10 +361,10 @@ class FlextLdifUtilitiesEntry:
                         }),
                     },
                 )
-            if config.remove_attrs:
+            if resolved_config.remove_attrs:
                 current = FlextLdifUtilitiesEntry.remove_attributes(
                     current,
-                    list(config.remove_attrs),
+                    list(resolved_config.remove_attrs),
                 )
             return current
 

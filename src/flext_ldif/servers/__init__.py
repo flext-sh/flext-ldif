@@ -54,7 +54,7 @@ if _TYPE_CHECKING:
         description,
         exclude,
         priority,
-        repr,
+        repr as repr_,
         server_type,
     )
     from flext_ldif._oid import FlextLdifServersOidConstants, FlextLdifServersOidSchema

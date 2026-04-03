@@ -216,7 +216,6 @@ class FlextLdifServersBaseEntry(
         if isinstance(write_options, FlextLdifModelsDomains.WriteOptions):
             return write_options
         if isinstance(write_options, FlextLdifModelsSettings.WriteFormatOptions):
-            assert write_options is not None
             write_options_payload = write_options.model_dump(exclude_none=True)
             return FlextLdifModelsDomains.WriteOptions.model_validate({
                 "sort_entries": write_options_payload.get("sort_attributes", False),

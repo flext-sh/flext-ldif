@@ -199,7 +199,6 @@ class FlextLdifUtilitiesDispatch:
             )
         if isinstance(value_or_entries, bytes):
             return r[t.Container].fail("bytes value not supported for validation")
-        assert not isinstance(value_or_entries, _DN)
         return FlextLdifUtilitiesValidation.validate_value(
             value_or_entries,
             *validators,

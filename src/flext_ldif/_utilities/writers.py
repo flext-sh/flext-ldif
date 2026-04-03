@@ -31,15 +31,21 @@ class FlextLdifUtilitiesWriters:
         **kwargs: t.Scalar,
     ) -> r[str]:
         """Write entry to LDIF string using hooks."""
-        if config is None:
-            config = m.Ldif.EntryWriteConfig.model_validate(kwargs)
-        assert config is not None
+        resolved_config = (
+            config
+            if config is not None
+            else m.Ldif.EntryWriteConfig.model_validate(kwargs)
+        )
         try:
             lines: MutableSequence[str] = []
-            entry: m.Ldif.Entry = config.entry
-            if config.transform_entry_hook:
-                entry = config.transform_entry_hook(entry)
-            FlextLdifUtilitiesWriters.write_entry_parts(entry, config, lines)
+            entry: m.Ldif.Entry = resolved_config.entry
+            if resolved_config.transform_entry_hook:
+                entry = resolved_config.transform_entry_hook(entry)
+            FlextLdifUtilitiesWriters.write_entry_parts(
+                entry,
+                resolved_config,
+                lines,
+            )
             ldif_str = "\n".join(lines) + "\n"
             return r[str].ok(ldif_str)
         except (
@@ -49,7 +55,7 @@ class FlextLdifUtilitiesWriters:
             UnicodeDecodeError,
             struct.error,
         ) as e:
-            entry_for_error: m.Ldif.Entry | None = config.entry
+            entry_for_error: m.Ldif.Entry | None = resolved_config.entry
             dn_for_error: str | None = None
             try:
                 entry_dn = entry_for_error.dn if entry_for_error else None
@@ -64,7 +70,7 @@ class FlextLdifUtilitiesWriters:
             dn_error: str = dn_error_raw[:50] if dn_error_raw else ""
             logger.exception(
                 "Failed to write entry",
-                server_type=config.server_type,
+                server_type=resolved_config.server_type,
                 dn=dn_error,
             )
             return r[str].fail(f"Failed to write entry: {e}")
@@ -175,28 +181,30 @@ class FlextLdifUtilitiesWriters:
         **kwargs: t.Scalar,
     ) -> r[str]:
         """Write multiple entries to LDIF string."""
-        if config is None:
-            config = m.Ldif.BatchWriteConfig.model_validate(kwargs)
-        assert config is not None
+        resolved_config = (
+            config
+            if config is not None
+            else m.Ldif.BatchWriteConfig.model_validate(kwargs)
+        )
         try:
             parts: MutableSequence[str] = []
-            if config.include_header and config.write_header_hook:
-                header = config.write_header_hook()
+            if resolved_config.include_header and resolved_config.write_header_hook:
+                header = resolved_config.write_header_hook()
                 if header:
                     parts.append(header)
             stats = m.Ldif.Stats(
-                total_entries=len(config.entries),
+                total_entries=len(resolved_config.entries),
             )
-            entries_typed: MutableSequence[m.Ldif.Entry] = list(config.entries)
+            entries_typed: MutableSequence[m.Ldif.Entry] = list(resolved_config.entries)
             for entry in entries_typed:
                 result = FlextLdifUtilitiesWriters.write_single_entry_with_stats(
                     entry,
-                    config.write_entry_hook,
+                    resolved_config.write_entry_hook,
                     stats,
                 )
                 if result is not None:
                     parts.append(result)
-            content = config.entry_separator.join(parts)
+            content = resolved_config.entry_separator.join(parts)
             return r[str].ok(content)
         except (
             ValueError,
@@ -207,7 +215,7 @@ class FlextLdifUtilitiesWriters:
         ) as e:
             logger.exception(
                 "Failed to write content",
-                server_type=config.server_type,
+                server_type=resolved_config.server_type,
             )
             return r[str].fail(f"Failed to write content: {e}")
 
