@@ -11,6 +11,7 @@ requires = [ "hatchling" ]
 # [CUSTOM] project metadata
 [project]
 
+
 authors = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -115,6 +116,8 @@ dev = [
   "vulture>=2.13",
 ]
 
+
+
 # [MANAGED] coverage
 [tool.coverage.report]
 fail_under = 15
@@ -127,6 +130,7 @@ omit = [
   "*/dependency_injector/providers.pyx",
 ]
 
+
 # [MANAGED] deptry
 [tool.deptry]
 known_first_party = [
@@ -135,8 +139,10 @@ known_first_party = [
 ]
 pep621_dev_dependency_groups = [ "dev" ]
 
+
 [tool.hatch.metadata]
 allow-direct-references = true
+
 
 # [MANAGED] mypy
 [tool.mypy]
@@ -155,39 +161,30 @@ plugins = [ "pydantic.mypy" ]
 python_version = "3.13"
 
 [[tool.mypy.overrides]]
-disable_error_code = [
-  "arg-type",
-  "assignment",
-  "attr-defined",
-  "call-arg",
-  "has-type",
-  "misc",
-  "no-redef",
-  "return-value",
-  "valid-type",
-  "var-annotated",
-]
-module = [ "tests", "tests.*", "tests.integration.*", "tests.unit.*" ]
+disable_error_code = ["arg-type", "assignment", "attr-defined", "call-arg", "has-type", "misc", "no-redef", "return-value", "valid-type", "var-annotated"]
+module = ["tests", "tests.*", "tests.integration.*", "tests.unit.*"]
 
 [[tool.mypy.overrides]]
-disable_error_code = [ "attr-defined", "call-arg", "return-value" ]
-module = [ "tests.helpers.*" ]
+disable_error_code = ["attr-defined", "call-arg", "return-value"]
+module = ["tests.helpers.*"]
 
 [[tool.mypy.overrides]]
-disable_error_code = [ "assignment", "attr-defined" ]
-module = [ "tests.integration.patterns.*" ]
+disable_error_code = ["assignment", "attr-defined"]
+module = ["tests.integration.patterns.*"]
 
 [[tool.mypy.overrides]]
-disable_error_code = [ "assignment" ]
-module = [ "tests.fixtures.*" ]
+disable_error_code = ["assignment"]
+module = ["tests.fixtures.*"]
 
 [tool.poetry]
+
 
 # [MANAGED] pydantic-mypy
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
+
 
 # [MANAGED] pyrefly
 [tool.pyrefly]
@@ -308,6 +305,7 @@ unused-coroutine = true
 unused-ignore = true
 variance-mismatch = true
 
+
 # [MANAGED] pyright
 [tool.pyright]
 exclude = [
@@ -333,8 +331,8 @@ extraPaths = [
   "src",
 ]
 ignore = [
-  "**/*.pyi",
-  "../typings",
+    "../typings",
+    "**/*.pyi",
 ]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
@@ -360,7 +358,7 @@ venv = ".venv"
 venvPath = ".."
 
 [[tool.pyright.executionEnvironments]]
-extraPaths = [ "src" ]
+extraPaths = ["src"]
 reportAttributeAccessIssue = "none"
 reportGeneralTypeIssues = "none"
 reportPrivateImportUsage = "none"
@@ -376,7 +374,7 @@ reportUnusedImport = "none"
 root = "src"
 
 [[tool.pyright.executionEnvironments]]
-extraPaths = [ ".", "src" ]
+extraPaths = [".", "src"]
 reportArgumentType = "none"
 reportAttributeAccessIssue = "none"
 reportPrivateImportUsage = "none"
@@ -391,7 +389,7 @@ reportUnusedImport = "none"
 root = "tests"
 
 [[tool.pyright.executionEnvironments]]
-extraPaths = [ ".", "src" ]
+extraPaths = [".", "src"]
 reportArgumentType = "none"
 reportAttributeAccessIssue = "none"
 reportPrivateImportUsage = "none"
@@ -423,6 +421,7 @@ markers = [
 minversion = "8.0"
 python_classes = [ "Test*" ]
 python_files = [ "*_test.py", "*_tests.py", "test_*.py" ]
+
 
 # [MANAGED] ruff
 [tool.ruff]
@@ -525,7 +524,7 @@ split-on-trailing-comma = true
 
 [tool.ruff.lint.per-file-ignores]
 
-"**/.vulture_whitelist.py" = [ "ALL" ]
+
 "**/*_pb2*.py" = [ "ALL" ]
 "**/*docs*" = [ "INP001", "S404", "S603", "T201" ]
 "**/*examples*" = [
@@ -649,6 +648,7 @@ split-on-trailing-comma = true
 ]
 "**/*typings*" = [ "ANN401" ]
 "**/*utilities*" = [ "C901", "E402", "PLC2801", "PLW1510", "S404", "S603" ]
+"**/.vulture_whitelist.py" = [ "ALL" ]
 "**/__init__.py" = [
   "A004",
   "ANN401",
@@ -680,7 +680,6 @@ split-on-trailing-comma = true
 "**/settings.py" = [ "ANN401", "PLC0415", "S105" ]
 "**/singer/*.py" = [ "S404", "S603" ]
 "**/subprocess.py" = [ "S404", "S603" ]
-"**/tools/*.py" = [ "FBT001", "FBT002", "N802", "S404", "S603", "S607", "T201" ]
 "**/tools/**/*.py" = [
   "FBT001",
   "FBT002",
@@ -690,6 +689,7 @@ split-on-trailing-comma = true
   "S607",
   "T201",
 ]
+"**/tools/*.py" = [ "FBT001", "FBT002", "N802", "S404", "S603", "S607", "T201" ]
 "**/typings.py" = [ "RUF036" ]
 "**/workspace/*.py" = [ "PLC0415", "S404", "S603", "S607" ]
 
@@ -701,6 +701,7 @@ sort_first = [ "build-system", "dependency-groups", "project", "tool" ]
 
 [tool.uv.sources.flext-core]
 workspace = true
+
 
 # [MANAGED] yamlfix
 [tool.yamlfix]
