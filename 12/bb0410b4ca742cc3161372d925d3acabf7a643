@@ -1,0 +1,101 @@
+src/flext_ldif/_models/domain.py
+  e1d2767e43e21b6f 3
+src/flext_ldif/_models/domain_entries.py
+  cdbb584679205432 1,9-25
+src/flext_ldif/_utilities/dn.py
+  e1d2767e43e21b6f 14,17-27,30-31,421,424,447
+src/flext_ldif/typings.py
+  e1d2767e43e21b6f 138
+src/flext_ldif/_utilities/attribute.py
+  e1d2767e43e21b6f 10-12
+src/flext_ldif/_models/domain_entry.py
+  e1d2767e43e21b6f 33-35,545-551,593-595,937,941,945,949,953,961
+  cdbb584679205432 1-16,18-27,36,38-39,41-42,46-53,216,253,261,264,268,270-271,280-281,284,294-295,311,317,339,349-350,352,354,356,365-366,423,430,465,488,491-492,510-512,514,520,523,526,530,544,560,574,588,610,616-617,621,700,703,714,726,728,740,742,746,748,756,758,770-772,774,800,834,836-837,839,844-845,847-848,850-854,933,935-936,938-940,942-944,946-948,950-952,954-956,958-960,976-978
+tests/unit/__init__/test_version.py
+  e1d2767e43e21b6f 14-16
+src/flext_ldif/_utilities/entry.py
+  e1d2767e43e21b6f 8,13-20,35-36,73,98,110,118,132,150-151,213,231,261,284,307,321,351,378,402,424,613,635,743,745,763,766,776,836,856-857
+  cdbb584679205432 10,25-34,37-40,42,46-72,74-97,99-109,111-117,119-131,133-149,152-212,214-230,232-260,262-283,285-306,308-320,322-350,352-377,379-401,403-423,425-486,755-756,758,774-775,788,801,824
+src/flext_ldif/_models/base.py
+  e1d2767e43e21b6f 11-13
+src/flext_ldif/_models/collections.py
+  e1d2767e43e21b6f 12,15-17,22-23
+src/flext_ldif/_models/settings.py
+  e1d2767e43e21b6f 18-20
+src/flext_ldif/_utilities/validation.py
+  e1d2767e43e21b6f 5-7
+src/flext_ldif/servers/_base/acl.py
+  e1d2767e43e21b6f 50
+src/flext_ldif/_models/domain_metadata.py
+  cdbb584679205432 1-16,18-20,25-30,37-64,73-102,111-130,139-141,144-146,148-174,186-188,190-192,194-196,198-201,205-235,237-269,271-276,279-287,289-291,293-337,339-348,350-358,360-362,366-385,390-392,397-403,406-407,410,416-417
+  e1d2767e43e21b6f 21-24
+src/flext_ldif/protocols.py
+  cdbb584679205432 277-342
+src/flext_ldif/_models/domain_acl.py
+  cdbb584679205432 1-14,24-28,31-80,82-86,88-90,97-117,125-129,135-139,145-151,162-165,167-169,171-173,180-181,183,186,189-192,195,199,203,205-225,230,245-249,253-254,260-262,264-272,274-277,291-294,298-299,302,304-305,307-315,317-318,324,332,338-340
+  e1d2767e43e21b6f 15,17-18,232
+src/flext_ldif/_models/domain_dn.py
+  e1d2767e43e21b6f 16
+  cdbb584679205432 1-15,17-18,20,22-57,61,96-99,101-111,119,123,126-129,131-134,136-142,144-152,155-162,164-172,180-184,186,190-196,199-200,202-204,206-210,212-229,232,238-240,245-246,248-251,253-256,258-267,269-282,292-294
+src/flext_ldif/_models/processing.py
+  e1d2767e43e21b6f 10
+src/flext_ldif/api.py
+  e1d2767e43e21b6f 92
+pyproject.toml
+  cdbb584679205432 664
+src/flext_ldif/servers/base.py
+  e1d2767e43e21b6f 43
+src/flext_ldif/_models/domain_schema.py
+  e1d2767e43e21b6f 20
+  cdbb584679205432 1-19,31-36,38-143,154-159,161-164,166-171,173-176,178-216,221-227,232-234,236-251,256-282,284-291,300-305,307-328,336-340,344-345
+src/flext_ldif/_utilities/detection.py
+  e1d2767e43e21b6f 7
+src/flext_ldif/_models/domain_attributes.py
+  e1d2767e43e21b6f 20-22
+  cdbb584679205432 1-19,23-24,26,28-49,51,62,65,68,72,75,79,83,86,90,93,105-106,112,119,126,130,133,136,139,142-143,145,148,151-152,154,157,160,163,166,170,173,176,179,192-194,213,244-245,248,251-253
+tests/unit/protocols/test_protocols.py
+  e1d2767e43e21b6f 86
+src/flext_ldif/servers/_base/schema.py
+  e1d2767e43e21b6f 117
+src/flext_ldif/services/migration.py
+  e1d2767e43e21b6f 49
+src/flext_ldif/services/conversion.py
+  e1d2767e43e21b6f 941-942,945-948,1599,1613
+src/flext_ldif/servers/_base/entry.py
+  e1d2767e43e21b6f 55
+src/flext_ldif/_models/metadata.py
+  e1d2767e43e21b6f 17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "12bb0410b4ca742cc3161372d925d3acabf7a643",
+  "prompts": {
+    "cdbb584679205432": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "deb21ed0-98e4-498f-8592-3944a588496c",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 4536,
+      "total_deletions": 4367,
+      "accepted_lines": 1781,
+      "overriden_lines": 349
+    },
+    "e1d2767e43e21b6f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b88f5b43-f2ee-4bd5-8e49-f0bc2c3099ed",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 170,
+      "total_deletions": 130,
+      "accepted_lines": 130,
+      "overriden_lines": 1
+    }
+  }
+}
