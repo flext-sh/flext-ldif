@@ -1088,7 +1088,9 @@ class FlextLdifModelsDomainsEntries:
         - attributes field (Attributes) which has .attributes property returning FlextLdifModelsDomains.UnconvertedAttributes
         """
 
-        _flext_enforcement_exempt: ClassVar[bool] = True  # extra="allow" for LDIF dynamic attrs
+        _flext_enforcement_exempt: ClassVar[bool] = (
+            True  # extra="allow" for LDIF dynamic attrs
+        )
         model_config: ClassVar[ConfigDict] = ConfigDict(
             strict=True,
             validate_default=True,
@@ -1809,40 +1811,62 @@ class FlextLdifModelsDomainsEntries:
                 validate_assignment=True,
             )
             dn: str | FlextLdifModelsDomainsEntries.DN = Field(
-                ..., description="Distinguished Name as string or DN object",
+                ...,
+                description="Distinguished Name as string or DN object",
             )
-            attributes: t.MutableAttributeMapping | FlextLdifModelsDomainsEntries.Attributes = Field(
-                ..., description="Entry attributes as dict or Attributes object",
+            attributes: (
+                t.MutableAttributeMapping | FlextLdifModelsDomainsEntries.Attributes
+            ) = Field(
+                ...,
+                description="Entry attributes as dict or Attributes object",
             )
             metadata: FlextLdifModelsDomainsEntries.QuirkMetadata | None = Field(
-                default=None, description="Quirk-specific metadata for the entry",
+                default=None,
+                description="Quirk-specific metadata for the entry",
             )
             acls: MutableSequence[FlextLdifModelsDomainsEntries.Acl] | None = Field(
-                default=None, description="Access Control Lists for the entry",
+                default=None,
+                description="Access Control Lists for the entry",
             )
-            objectclasses: MutableSequence[FlextLdifModelsDomainsEntries.SchemaObjectClass] | None = Field(
-                default=None, description="Schema object class definitions",
+            objectclasses: (
+                MutableSequence[FlextLdifModelsDomainsEntries.SchemaObjectClass] | None
+            ) = Field(
+                default=None,
+                description="Schema object class definitions",
             )
-            attributes_schema: MutableSequence[FlextLdifModelsDomainsEntries.SchemaAttribute] | None = Field(
-                default=None, description="Schema attribute definitions",
+            attributes_schema: (
+                MutableSequence[FlextLdifModelsDomainsEntries.SchemaAttribute] | None
+            ) = Field(
+                default=None,
+                description="Schema attribute definitions",
             )
             entry_metadata: FlextLdifModelsMetadata.EntryMetadata | None = Field(
-                default=None, description="Entry-level metadata for processing details",
+                default=None,
+                description="Entry-level metadata for processing details",
             )
-            validation_metadata: FlextLdifModelsDomainsEntries.ValidationMetadata | None = Field(
-                default=None, description="Validation results from entry processing",
+            validation_metadata: (
+                FlextLdifModelsDomainsEntries.ValidationMetadata | None
+            ) = Field(
+                default=None,
+                description="Validation results from entry processing",
             )
             server_type: c.Ldif.ServerTypeLiteral | None = Field(
-                default=None, description="LDAP server type identifier",
+                default=None,
+                description="LDAP server type identifier",
             )
             source_entry: str | None = Field(
-                default=None, description="Original LDIF source entry string",
+                default=None,
+                description="Original LDIF source entry string",
             )
-            unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None = Field(
-                default=None, description="Attributes preserved in original format",
+            unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None = (
+                Field(
+                    default=None,
+                    description="Attributes preserved in original format",
+                )
             )
             statistics: FlextLdifModelsDomainsEntries.EntryStatistics | None = Field(
-                default=None, description="Entry processing statistics",
+                default=None,
+                description="Entry processing statistics",
             )
 
         @classmethod
@@ -2187,7 +2211,7 @@ class FlextLdifModelsDomainsEntries:
             Field(..., description="Final normalized DN (RFC 4514 compliant)"),
         ]
         transformations: Annotated[
-            MutableSequence[str],
+            Sequence[str],
             Field(
                 description="Ordered list of transformations applied (use TransformationType constants)",
             ),
@@ -2229,11 +2253,11 @@ class FlextLdifModelsDomainsEntries:
             ),
         ] = "valid"
         validation_warnings: Annotated[
-            MutableSequence[str],
+            Sequence[str],
             Field(description="Non-fatal validation warnings"),
         ]
         validation_errors: Annotated[
-            MutableSequence[str],
+            Sequence[str],
             Field(description="Fatal validation errors"),
         ]
 
@@ -2723,7 +2747,9 @@ class FlextLdifModelsDomainsEntries:
                 description="Map of conversion operation name → human-readable description",
             ),
         ] = Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
-        attribute_transformations: MutableMapping[str, FlextLdifModelsDomainsEntries.AttributeTransformation] = Field(
+        attribute_transformations: MutableMapping[
+            str, FlextLdifModelsDomainsEntries.AttributeTransformation
+        ] = Field(
             default_factory=dict,
             description="Detailed transformation records keyed by original attribute name",
         )
@@ -2757,9 +2783,11 @@ class FlextLdifModelsDomainsEntries:
                 description="ObjectClass definitions for schema validation (not RFC LDIF data)",
             ),
         ] = Field(default_factory=list)
-        validation_results: FlextLdifModelsDomainsEntries.ValidationMetadata | None = Field(
-            default=None,
-            description="Validation results with RFC violations, errors, warnings, and context",
+        validation_results: FlextLdifModelsDomainsEntries.ValidationMetadata | None = (
+            Field(
+                default=None,
+                description="Validation results with RFC violations, errors, warnings, and context",
+            )
         )
         processing_stats: FlextLdifModelsDomainsEntries.EntryStatistics | None = Field(
             default=None,
@@ -2775,11 +2803,15 @@ class FlextLdifModelsDomainsEntries:
                 description="Attributes removed during conversion (was entry_metadata.removed_attributes_with_values)",
             ),
         ] = Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
-        original_format_details: FlextLdifModelsDomainsEntries.FormatDetails | None = Field(
-            default=None,
-            description="Original formatting details for round-trip preservation (DN line, syntax, encoding, spacing)",
+        original_format_details: FlextLdifModelsDomainsEntries.FormatDetails | None = (
+            Field(
+                default=None,
+                description="Original formatting details for round-trip preservation (DN line, syntax, encoding, spacing)",
+            )
         )
-        schema_format_details: FlextLdifModelsDomainsEntries.SchemaFormatDetails | None = Field(
+        schema_format_details: (
+            FlextLdifModelsDomainsEntries.SchemaFormatDetails | None
+        ) = Field(
             default=None,
             description="Schema formatting details for round-trip preservation",
         )

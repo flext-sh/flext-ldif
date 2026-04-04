@@ -124,7 +124,12 @@ class FlextLdifModelsCollections:
             return bool(extra[key])
 
     class FlexibleCategories(m.DynamicModel):
-        categories: MutableMapping[str, MutableSequence[FlextLdifModelsDomains.Entry]] = Field(default_factory=dict, description="Mapping of category names to their LDIF entries")
+        categories: MutableMapping[
+            str, MutableSequence[FlextLdifModelsDomains.Entry]
+        ] = Field(
+            default_factory=dict,
+            description="Mapping of category names to their LDIF entries",
+        )
 
         @override
         def __eq__(self, other: object) -> bool:

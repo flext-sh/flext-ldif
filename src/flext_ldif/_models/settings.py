@@ -129,63 +129,99 @@ class FlextLdifModelsSettings:
     class DnNormalizationConfig(FlextModels.Value):
         """Configuration for DN normalization."""
 
-        case_sensitive: bool = Field(default=False, description="Whether DN comparison is case-sensitive")
-        remove_spaces: bool = Field(default=True, description="Remove spaces around DN component separators")
-        case_fold: str | None = Field(default=None, description="Case folding strategy for DN comparison")
-        space_handling: str | None = Field(default=None, description="Strategy for handling spaces in DN values")
-        escape_handling: str | None = Field(default=None, description="Strategy for handling escape sequences in DN")
-        validate_before: bool = Field(default=True, description="Validate DN format before normalization")
+        case_sensitive: bool = Field(
+            default=False, description="Whether DN comparison is case-sensitive"
+        )
+        remove_spaces: bool = Field(
+            default=True, description="Remove spaces around DN component separators"
+        )
+        case_fold: str | None = Field(
+            default=None, description="Case folding strategy for DN comparison"
+        )
+        space_handling: str | None = Field(
+            default=None, description="Strategy for handling spaces in DN values"
+        )
+        escape_handling: str | None = Field(
+            default=None, description="Strategy for handling escape sequences in DN"
+        )
+        validate_before: bool = Field(
+            default=True, description="Validate DN format before normalization"
+        )
 
     class AttrNormalizationConfig(FlextModels.Value):
         """Configuration for attribute normalization."""
 
-        lowercase_keys: bool = Field(default=True, description="Convert attribute names to lowercase")
-        sort_values: bool = Field(default=True, description="Sort attribute values alphabetically")
-        sort_attributes: str | None = Field(default=None, description="Attribute sorting strategy")
-        normalize_whitespace: bool = Field(default=True, description="Normalize whitespace in attribute values")
-        case_fold_names: bool = Field(default=True, description="Case-fold attribute names for comparison")
-        trim_values: bool = Field(default=True, description="Trim leading and trailing whitespace from values")
-        remove_empty: bool = Field(default=False, description="Remove attributes with empty values")
+        lowercase_keys: bool = Field(
+            default=True, description="Convert attribute names to lowercase"
+        )
+        sort_values: bool = Field(
+            default=True, description="Sort attribute values alphabetically"
+        )
+        sort_attributes: str | None = Field(
+            default=None, description="Attribute sorting strategy"
+        )
+        normalize_whitespace: bool = Field(
+            default=True, description="Normalize whitespace in attribute values"
+        )
+        case_fold_names: bool = Field(
+            default=True, description="Case-fold attribute names for comparison"
+        )
+        trim_values: bool = Field(
+            default=True, description="Trim leading and trailing whitespace from values"
+        )
+        remove_empty: bool = Field(
+            default=False, description="Remove attributes with empty values"
+        )
 
     class ProcessConfig(FlextModels.Value):
         """Configuration for processing operations."""
 
-        batch_size: int = Field(default=100, description="Number of entries to process per batch")
-        timeout_seconds: int = Field(default=300, description="Maximum processing time in seconds")
-        max_retries: int = Field(default=3, description="Maximum retry attempts on failure")
-        source_server: str | None = Field(default=None, description="Source LDAP server type identifier")
-        target_server: str | None = Field(default=None, description="Target LDAP server type identifier")
-        dn_config: FlextLdifModelsSettings.DnNormalizationConfig | None = Field(default=None, description="DN normalization configuration")
-        attr_config: FlextLdifModelsSettings.AttrNormalizationConfig | None = Field(default=None, description="Attribute normalization configuration")
+        batch_size: int = Field(
+            default=100, description="Number of entries to process per batch"
+        )
+        timeout_seconds: int = Field(
+            default=300, description="Maximum processing time in seconds"
+        )
+        max_retries: int = Field(
+            default=3, description="Maximum retry attempts on failure"
+        )
+        source_server: str | None = Field(
+            default=None, description="Source LDAP server type identifier"
+        )
+        target_server: str | None = Field(
+            default=None, description="Target LDAP server type identifier"
+        )
+        dn_config: FlextLdifModelsSettings.DnNormalizationConfig | None = Field(
+            default=None, description="DN normalization configuration"
+        )
+        attr_config: FlextLdifModelsSettings.AttrNormalizationConfig | None = Field(
+            default=None, description="Attribute normalization configuration"
+        )
 
     class TransformConfig(FlextModels.Value):
         """Configuration for transformation operations."""
 
-        fail_fast: bool = Field(default=False, description="Stop on first transformation error")
-        preserve_order: bool = Field(default=True, description="Preserve original entry ordering")
-        track_changes: bool = Field(default=False, description="Track attribute-level changes for audit")
-        normalize_dns: bool = Field(default=False, description="Normalize DNs during transformation")
-        normalize_attrs: bool = Field(default=False, description="Normalize attributes during transformation")
-        process_config: FlextLdifModelsSettings.ProcessConfig | None = Field(default=None, description="Processing configuration for batch operations")
+        fail_fast: bool = Field(
+            default=False, description="Stop on first transformation error"
+        )
+        preserve_order: bool = Field(
+            default=True, description="Preserve original entry ordering"
+        )
+        track_changes: bool = Field(
+            default=False, description="Track attribute-level changes for audit"
+        )
+        normalize_dns: bool = Field(
+            default=False, description="Normalize DNs during transformation"
+        )
+        normalize_attrs: bool = Field(
+            default=False, description="Normalize attributes during transformation"
+        )
+        process_config: FlextLdifModelsSettings.ProcessConfig | None = Field(
+            default=None, description="Processing configuration for batch operations"
+        )
 
     class ServerPatternsConfig(FlextModels.Value):
-        """Configuration for server pattern matching.
-
-        Consolidates parameters for matches_server_patterns utility function.
-        Reduces function signature from 6 parameters to 1 model.
-
-        Example:
-            config = FlextLdifModelsSettings.ServerPatternsConfig(
-                dn_patterns=(("ou=users",), ("cn=REDACTED_LDAP_BIND_PASSWORD",)),
-                attr_prefixes=("orcl", "oracle"),
-                attr_names={"orclaci", "orclentrylevelaci"},
-                keyword_patterns=("orcl", "oracle"),
-            )
-            matches = FlextLdifUtilitiesEntry.matches_entry_server_patterns(
-                entry_dn, attributes, config
-            )
-
-        """
+        """Configuration for server pattern matching."""
 
         dn_patterns: Annotated[
             tuple[tuple[str, ...], ...],
@@ -854,16 +890,26 @@ class FlextLdifModelsSettings:
 
         """
 
-        entry: FlextLdifModelsDomains.Entry = Field(..., description="Entry model to write")
-        server_type: Annotated[str, Field(..., description="Server type identifier")]
-        write_attributes_hook: Callable[[FlextLdifModelsDomains.Entry, MutableSequence[str]], None] = Field(
-            ..., description="Core attributes writing",
+        entry: FlextLdifModelsDomains.Entry = Field(
+            ..., description="Entry model to write"
         )
-        write_comments_hook: Callable[[FlextLdifModelsDomains.Entry, MutableSequence[str]], None] | None = Field(
+        server_type: Annotated[str, Field(..., description="Server type identifier")]
+        write_attributes_hook: Callable[
+            [FlextLdifModelsDomains.Entry, MutableSequence[str]], None
+        ] = Field(
+            ...,
+            description="Core attributes writing",
+        )
+        write_comments_hook: (
+            Callable[[FlextLdifModelsDomains.Entry, MutableSequence[str]], None] | None
+        ) = Field(
             default=None,
             description="Optional comments writing",
         )
-        transform_entry_hook: Callable[[FlextLdifModelsDomains.Entry], FlextLdifModelsDomains.Entry] | None = Field(
+        transform_entry_hook: (
+            Callable[[FlextLdifModelsDomains.Entry], FlextLdifModelsDomains.Entry]
+            | None
+        ) = Field(
             default=None,
             description="Optional entry transformation",
         )
@@ -885,11 +931,13 @@ class FlextLdifModelsSettings:
         """
 
         entries: MutableSequence[FlextLdifModelsDomains.Entry] = Field(
-            ..., description="List of entries to write",
+            ...,
+            description="List of entries to write",
         )
         server_type: Annotated[str, Field(..., description="Server type identifier")]
         write_entry_hook: Callable[[FlextLdifModelsDomains.Entry], r[str]] = Field(
-            ..., description="Entry writing logic",
+            ...,
+            description="Entry writing logic",
         )
         write_header_hook: Annotated[
             Callable[[], str] | None,
@@ -913,18 +961,30 @@ class FlextLdifModelsSettings:
         """
 
         entries: MutableSequence[FlextLdifModelsDomains.Entry] = Field(
-            ..., description="List of entries to sort",
+            ...,
+            description="List of entries to sort",
         )
-        target: str = Field(default="entries", description="Sort target (entries, attributes, acl)")
+        target: str = Field(
+            default="entries", description="Sort target (entries, attributes, acl)"
+        )
         by: str = Field(default="hierarchy", description="Sort strategy")
         traversal: str = Field(default="depth-first", description="Traversal order")
-        predicate: Callable[[FlextLdifModelsDomains.Entry], str | t.Numeric] | None = Field(
-            default=None, description="Custom predicate function",
+        predicate: Callable[[FlextLdifModelsDomains.Entry], str | t.Numeric] | None = (
+            Field(
+                default=None,
+                description="Custom predicate function",
+            )
         )
-        sort_attributes: bool = Field(default=False, description="Sort attributes within entries")
-        attribute_order: MutableSequence[str] | None = Field(default=None, description="Custom attribute order")
+        sort_attributes: bool = Field(
+            default=False, description="Sort attributes within entries"
+        )
+        attribute_order: MutableSequence[str] | None = Field(
+            default=None, description="Custom attribute order"
+        )
         sort_acl: bool = Field(default=False, description="Sort ACL attributes")
-        acl_attributes: MutableSequence[str] | None = Field(default=None, description="ACL attributes to sort")
+        acl_attributes: MutableSequence[str] | None = Field(
+            default=None, description="ACL attributes to sort"
+        )
 
     class RdnProcessingConfig(FlextModels.ArbitraryTypesModel):
         """Mutable state for RDN character-by-character parsing."""
@@ -956,7 +1016,8 @@ class FlextLdifModelsSettings:
             Field(description="Discriminator"),
         ] = "attribute"
         item: FlextLdifModelsDomains.SchemaAttribute = Field(
-            ..., description="Schema attribute to convert",
+            ...,
+            description="Schema attribute to convert",
         )
         item_name: Annotated[
             str,
@@ -979,7 +1040,8 @@ class FlextLdifModelsSettings:
             Field(description="Discriminator"),
         ] = "objectclass"
         item: FlextLdifModelsDomains.SchemaObjectClass = Field(
-            ..., description="Schema objectclass to convert",
+            ...,
+            description="Schema objectclass to convert",
         )
         item_name: Annotated[
             str,
@@ -996,10 +1058,12 @@ class FlextLdifModelsSettings:
         """
 
         original_acl: FlextLdifModelsDomains.Acl = Field(
-            ..., description="Original ACL model",
+            ...,
+            description="Original ACL model",
         )
         converted_acl: FlextLdifModelsDomains.Acl = Field(
-            ..., description="Converted ACL model (modified in-place)",
+            ...,
+            description="Converted ACL model (modified in-place)",
         )
         orig_perms_dict: Annotated[
             t.MutableBoolMapping,

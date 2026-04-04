@@ -18,7 +18,6 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
         attributes_to_remove: MutableSequence[str] | None = None,
     ) -> None:
         """Initialize entry operation builder state."""
-        super().__init__()
         self._entries = entries or []
         self._operation = operation
         self._attributes_to_remove = attributes_to_remove or []
