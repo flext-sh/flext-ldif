@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
 from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import ClassVar, Final
@@ -355,11 +354,11 @@ class FlextLdifConstants(FlextConstants):
         ATTRIBUTE_TYPES: Final[str] = "attributeTypes"
         OBJECT_CLASSES: Final[str] = "objectClasses"
 
-        DEFAULT_ACL_ATTRIBUTES: Final[MutableSequence[str]] = [
+        DEFAULT_ACL_ATTRIBUTES: Final[t.StrSequence] = (
             "acl",
             "aci",
             "olcAccess",
-        ]
+        )
 
         @unique
         class DnValuedAttribute(StrEnum):
@@ -605,8 +604,10 @@ class FlextLdifConstants(FlextConstants):
             "1.3.6.1.4.1.1466.115.121.1.57": "uui",
             "1.3.6.1.4.1.1466.115.121.1.58": "substring_assertion",
         })
-        NAME_TO_OID: Final[t.MutableStrMapping] = {v: k for k, v in OID_TO_NAME.items()}
-        NAME_TO_TYPE_CATEGORY: Final[t.MutableStrMapping] = {
+        NAME_TO_OID: Final[t.StrMapping] = MappingProxyType({
+            v: k for k, v in OID_TO_NAME.items()
+        })
+        NAME_TO_TYPE_CATEGORY: Final[t.StrMapping] = MappingProxyType({
             "integer": "integer",
             "boolean": "boolean",
             "distinguished_name": "dn",
@@ -671,7 +672,7 @@ class FlextLdifConstants(FlextConstants):
             "utf8_string": "string",
             "unicode_string": "string",
             "uui": "string",
-        }
+        })
         COMMON_SYNTAXES: Final[frozenset[str]] = frozenset({
             "1.3.6.1.4.1.1466.115.121.1.7",
             "1.3.6.1.4.1.1466.115.121.1.12",
@@ -728,7 +729,7 @@ class FlextLdifConstants(FlextConstants):
         class OperationalAttributes:
             """Operational attributes to ignore in LDIF entry processing."""
 
-            IGNORE_SET: ClassVar[set[str]] = {
+            IGNORE_SET: ClassVar[frozenset[str]] = frozenset({
                 "createTimestamp",
                 "modifyTimestamp",
                 "creatorsName",
@@ -739,7 +740,7 @@ class FlextLdifConstants(FlextConstants):
                 "numSubordinates",
                 "subschemaSubentry",
                 "dseType",
-            }
+            })
 
         class ChangeTypeOperations:
             """RFC 2849 LDIF changetype operations."""
