@@ -8,7 +8,10 @@ from collections.abc import MutableSequence
 from typing import TypeIs
 
 from flext_core import r
-from flext_ldif import FlextLdifModelsDomains, FlextLdifShared, c, t
+from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema
+from flext_ldif.constants import FlextLdifConstants as c
+from flext_ldif.shared import FlextLdifShared
+from flext_ldif.typings import FlextLdifTypes as t
 
 _VALID_SERVER_TYPES: frozenset[str] = frozenset({
     "oid",
@@ -190,8 +193,8 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def matches_server_patterns(
         value: str
-        | FlextLdifModelsDomains.SchemaAttribute
-        | FlextLdifModelsDomains.SchemaObjectClass,
+        | FlextLdifModelsDomainSchema.SchemaAttribute
+        | FlextLdifModelsDomainSchema.SchemaObjectClass,
         oid_pattern: str,
         detection_names: frozenset[str],
         detection_string: str | None = None,
@@ -234,8 +237,8 @@ class FlextLdifUtilitiesServer:
             return bool(name and name.lower() in detection_names)
 
         def check_model_patterns(
-            model: FlextLdifModelsDomains.SchemaAttribute
-            | FlextLdifModelsDomains.SchemaObjectClass,
+            model: FlextLdifModelsDomainSchema.SchemaAttribute
+            | FlextLdifModelsDomainSchema.SchemaObjectClass,
         ) -> bool:
             """Check patterns for model types."""
             if check_oid_pattern(model.oid) or check_name_in_set(model.name):
@@ -257,7 +260,7 @@ class FlextLdifUtilitiesServer:
                 detection_string,
                 use_prefix_match=use_prefix_match,
             )
-        if isinstance(value, FlextLdifModelsDomains.SchemaAttribute):
+        if isinstance(value, FlextLdifModelsDomainSchema.SchemaAttribute):
             return check_model_patterns(value)
         return check_model_patterns(value)
 

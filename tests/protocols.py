@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Protocol, runtime_checkable
+
 from flext_ldap import FlextLdapProtocols
 from flext_tests import FlextTestsProtocols
 
@@ -39,8 +41,18 @@ class FlextLdifTestProtocols(
             """Project-specific test protocols for flext-ldif.
 
             Separated from FlextTestsProtocols.Tests to avoid bad-override.
-            Access via FlextLdifTestProtocols.LdifTests.* for flext-ldif-specific protocols.
+            Access via p.Ldif.Tests.* for flext-ldif-specific protocols.
             """
+
+            @runtime_checkable
+            class LdapConnectionLike(Protocol):
+                """Typed ldap3 connection contract used by test helpers."""
+
+                bound: bool
+
+                def unbind(self) -> bool:
+                    """Close the LDAP connection."""
+                    ...
 
 
 p = FlextLdifTestProtocols

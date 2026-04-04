@@ -638,3 +638,6 @@ class FlextLdifFixtures:
 
 FIXTURES_DIR: Final[Path] = Path(__file__).parent / "fixtures"
 OID_FIXTURES_DIR: Final[Path] = FIXTURES_DIR / "oid"
+
+# Canonical aliases — prefer c.Ldif.Paths.FIXTURES_DIR in new code
+# These module-level names are kept for backward compat with auto-generated __init__.py

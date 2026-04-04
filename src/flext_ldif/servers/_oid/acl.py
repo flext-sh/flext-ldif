@@ -11,7 +11,7 @@ from pydantic import RootModel
 
 from flext_core import FlextLogger, r
 from flext_ldif import (
-    FlextLdifModelsDomains,
+    FlextLdifModelsDomainsEntries,
     FlextLdifModelsMetadata,
     FlextLdifServersOidConstants,
     FlextLdifServersRfc,
@@ -696,7 +696,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     @override
     def _write_acl(
         self,
-        acl_data: FlextLdifModelsDomains.Acl,
+        acl_data: FlextLdifModelsDomainsEntries.Acl,
         _format_option: str | None = None,
     ) -> r[str]:
         """Write ACL to OID orclaci format (Phase 2: Denormalization)."""

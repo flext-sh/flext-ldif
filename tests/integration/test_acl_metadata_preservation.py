@@ -26,7 +26,7 @@ def _entry_extensions(entry: m.Ldif.Entry) -> t.ContainerMapping:
     extensions = metadata.extensions
     assert extensions is not None
     if isinstance(extensions, Mapping):
-        return dict(extensions)
+        return {str(k): v for k, v in extensions.items()}
     return dict(extensions.model_dump())
 
 

@@ -12,15 +12,11 @@ Tests validate RFC 2849 compliance with real LDAP data.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Final
 
 import pytest
 
 from flext_ldif import FlextLdifParser, FlextLdifServer, FlextLdifWriter
-from tests import m
-from tests.test_helpers import TestsFlextLdifMatchers as tm
-
-_FIXTURES_DIR: Final[Path] = Path(__file__).resolve().parent.parent / "fixtures"
+from tests import TestsFlextLdifMatchers as tm, c, m
 
 
 class TestRfcParserRealFixtures:
@@ -33,7 +29,7 @@ class TestRfcParserRealFixtures:
 
     def test_parse_oid_entries_fixture(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing real OID entries from fixtures."""
-        entries_file = _FIXTURES_DIR / "oid" / "oid_entries_fixtures.ldif"
+        entries_file = c.Ldif.Paths.FIXTURES_DIR / "oid" / "oid_entries_fixtures.ldif"
         if not entries_file.exists():
             pytest.skip(f"Fixture not found: {entries_file}")
         parser = FlextLdifParser()
@@ -52,7 +48,7 @@ class TestRfcParserRealFixtures:
 
     def test_parse_oud_entries_fixture(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing real OUD entries from fixtures."""
-        entries_file = _FIXTURES_DIR / "oud" / "oud_entries_fixtures.ldif"
+        entries_file = c.Ldif.Paths.FIXTURES_DIR / "oud" / "oud_entries_fixtures.ldif"
         if not entries_file.exists():
             pytest.skip(f"Fixture not found: {entries_file}")
         parser = FlextLdifParser()
@@ -66,7 +62,9 @@ class TestRfcParserRealFixtures:
         quirk_registry: FlextLdifServer,
     ) -> None:
         """Test parsing real OpenLDAP entries from fixtures."""
-        entries_file = _FIXTURES_DIR / "openldap2" / "openldap2_entries_fixtures.ldif"
+        entries_file = (
+            c.Ldif.Paths.FIXTURES_DIR / "openldap2" / "openldap2_entries_fixtures.ldif"
+        )
         if not entries_file.exists():
             pytest.skip(f"Fixture not found: {entries_file}")
         parser = FlextLdifParser()
@@ -86,7 +84,7 @@ class TestRfcSchemaParserRealFixtures:
 
     def test_parse_oid_schema_fixture(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing real OID schema from fixtures."""
-        schema_file = _FIXTURES_DIR / "oid" / "oid_schema_fixtures.ldif"
+        schema_file = c.Ldif.Paths.FIXTURES_DIR / "oid" / "oid_schema_fixtures.ldif"
         if not schema_file.exists():
             pytest.skip(f"Fixture not found: {schema_file}")
         parser = FlextLdifParser()
@@ -97,7 +95,7 @@ class TestRfcSchemaParserRealFixtures:
 
     def test_parse_oud_schema_fixture(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing real OUD schema from fixtures."""
-        schema_file = _FIXTURES_DIR / "oud" / "oud_schema_fixtures.ldif"
+        schema_file = c.Ldif.Paths.FIXTURES_DIR / "oud" / "oud_schema_fixtures.ldif"
         if not schema_file.exists():
             pytest.skip(f"Fixture not found: {schema_file}")
         parser = FlextLdifParser()
@@ -119,7 +117,7 @@ class TestRfcWriterRealFixtures:
         tmp_path: Path,
     ) -> None:
         """Test roundtrip: parse OID fixture, write, and re-parse."""
-        source_file = _FIXTURES_DIR / "oid" / "oid_entries_fixtures.ldif"
+        source_file = c.Ldif.Paths.FIXTURES_DIR / "oid" / "oid_entries_fixtures.ldif"
         if not source_file.exists():
             pytest.skip(f"Fixture not found: {source_file}")
         parser = FlextLdifParser()
@@ -157,7 +155,7 @@ class TestRfcWriterRealFixtures:
         tmp_path: Path,
     ) -> None:
         """Test writing OUD ACL entries to file."""
-        acl_file = _FIXTURES_DIR / "oud" / "oud_acl_fixtures.ldif"
+        acl_file = c.Ldif.Paths.FIXTURES_DIR / "oud" / "oud_acl_fixtures.ldif"
         if not acl_file.exists():
             pytest.skip(f"Fixture not found: {acl_file}")
         parser = FlextLdifParser()

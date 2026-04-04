@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from flext_core import FlextLogger
-from flext_ldif import FlextLdifModelsDomains, c
+from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
+from flext_ldif.constants import FlextLdifConstants as c
 
 logger = FlextLogger(__name__)
 
@@ -33,7 +34,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def fix_kind_mismatch(
-        schema_oc: FlextLdifModelsDomains.SchemaObjectClass,
+        schema_oc: FlextLdifModelsDomainsEntries.SchemaObjectClass,
         _server_type: str = "oid",
     ) -> None:
         """Fix objectClass kind mismatches with superior classes (server-specific)."""
@@ -64,7 +65,9 @@ class FlextLdifUtilitiesObjectClass:
             object.__setattr__(schema_oc, "kind", schema_constants.auxiliary)
 
     @staticmethod
-    def fix_missing_sup(schema_oc: FlextLdifModelsDomains.SchemaObjectClass) -> None:
+    def fix_missing_sup(
+        schema_oc: FlextLdifModelsDomainsEntries.SchemaObjectClass,
+    ) -> None:
         """Fix AUXILIARY ObjectClass missing SUP (superior) attribute."""
         schema_constants = FlextLdifUtilitiesObjectClass._SchemaConstants.get_instance()
         if schema_oc.kind == schema_constants.auxiliary and (not schema_oc.sup):

@@ -6,258 +6,21 @@ Directory Server-specific attributes, t.NormalizedValue classes, entries, and AC
 
 from __future__ import annotations
 
-from enum import StrEnum, unique
-from typing import Annotated, ClassVar
+from typing import ClassVar
 
 import pytest
 from flext_tests import tm
-from pydantic import BaseModel, ConfigDict, Field
 from tests import c, m, t
 
 from flext_ldif import FlextLdifServersApache
-
-TestDeduplicationHelpers = c.Ldif.TestDeduplicationHelpers
-
-
-@unique
-class AttributeScenario(StrEnum):
-    """Apache attribute detection scenarios."""
-
-    APACHE_OID = "apache_oid"
-    ADS_PREFIX = "ads_prefix"
-    APACHEDS_NAME = "apacheds_name"
-    STANDARD_RFC = "standard_rfc"
-
-
-@unique
-class ObjectClassScenario(StrEnum):
-    """Apache objectClass detection scenarios."""
-
-    APACHE_OID = "apache_oid"
-    ADS_NAME = "ads_name"
-    STANDARD_RFC = "standard_rfc"
-
-
-@unique
-class EntryScenario(StrEnum):
-    """Apache entry detection scenarios."""
-
-    OU_CONFIG = "ou_config"
-    OU_SERVICES = "ou_services"
-    OU_SYSTEM = "ou_system"
-    OU_PARTITIONS = "ou_partitions"
-    ADS_ATTRIBUTE = "ads_attribute"
-    APACHEDS_ATTRIBUTE = "apacheds_attribute"
-    ADS_OBJECTCLASS = "ads_objectclass"
-    STANDARD_RFC = "standard_rfc"
-
-
-@unique
-class AclScenario(StrEnum):
-    """Apache ACL handling scenarios."""
-
-    ADS_ACI = "ads_aci"
-    ACI_ATTRIBUTE = "aci_attribute"
-    VERSION_PREFIX = "version_prefix"
-    NEGATIVE = "negative"
-    EMPTY_LINE = "empty_line"
-    WRITE_WITH_CONTENT = "write_with_content"
-    WRITE_CLAUSES_ONLY = "write_clauses_only"
-    WRITE_EMPTY = "write_empty"
-
-
-class AttributeTestCase(BaseModel):
-    """Test case for attribute detection and parsing."""
-
-    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-
-    scenario: Annotated[
-        AttributeScenario,
-        Field(description="Attribute scenario identifier"),
-    ]
-    attr_definition: Annotated[
-        str,
-        Field(description="Schema attribute definition string"),
-    ]
-    expected_can_handle: Annotated[
-        bool,
-        Field(description="Expected can_handle result"),
-    ]
-    expected_name: Annotated[
-        str | None,
-        Field(description="Expected parsed attribute name"),
-    ] = None
-
-
-class ObjectClassTestCase(BaseModel):
-    """Test case for objectClass detection and parsing."""
-
-    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-
-    scenario: Annotated[
-        ObjectClassScenario,
-        Field(description="ObjectClass scenario identifier"),
-    ]
-    oc_definition: Annotated[
-        str,
-        Field(description="Schema objectClass definition string"),
-    ]
-    expected_can_handle: Annotated[
-        bool,
-        Field(description="Expected can_handle result"),
-    ]
-    expected_name: Annotated[
-        str | None,
-        Field(description="Expected parsed objectClass name"),
-    ] = None
-
-
-class EntryTestCase(BaseModel):
-    """Test case for entry detection."""
-
-    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-
-    scenario: Annotated[
-        EntryScenario,
-        Field(description="Entry detection scenario identifier"),
-    ]
-    entry_dn: Annotated[str, Field(description="Entry distinguished name")]
-    attributes: Annotated[
-        t.MutableStrSequenceMapping,
-        Field(
-            description="Entry attributes mapped by name",
-        ),
-    ]
-    expected_can_handle: Annotated[
-        bool,
-        Field(description="Expected can_handle result"),
-    ]
-
-
-class AclTestCase(BaseModel):
-    """Test case for ACL handling."""
-
-    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-
-    scenario: Annotated[AclScenario, Field(description="ACL scenario identifier")]
-    acl_line: Annotated[
-        str | None,
-        Field(description="ACL line under test"),
-    ] = None
-    expected_can_handle: Annotated[
-        bool,
-        Field(description="Expected can_handle result"),
-    ] = False
-    expected_success: Annotated[
-        bool,
-        Field(description="Expected parse success state"),
-    ] = False
-
-
-ATTRIBUTE_TEST_CASES = (
-    AttributeTestCase(
-        scenario=AttributeScenario.APACHE_OID,
-        attr_definition="( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )",
-        expected_can_handle=True,
-        expected_name="ads-enabled",
-    ),
-    AttributeTestCase(
-        scenario=AttributeScenario.ADS_PREFIX,
-        attr_definition="( 2.16.840.1.113730.3.1.1 NAME 'ads-searchBaseDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
-        expected_can_handle=True,
-        expected_name="ads-searchBaseDN",
-    ),
-    AttributeTestCase(
-        scenario=AttributeScenario.APACHEDS_NAME,
-        attr_definition="( 1.2.3.4 NAME 'apachedsSystemId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
-        expected_can_handle=True,
-        expected_name="apachedsSystemId",
-    ),
-    AttributeTestCase(
-        scenario=AttributeScenario.STANDARD_RFC,
-        attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
-        expected_can_handle=False,
-        expected_name="cn",
-    ),
-)
-OBJECTCLASS_TEST_CASES = (
-    ObjectClassTestCase(
-        scenario=ObjectClassScenario.APACHE_OID,
-        oc_definition="( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' SUP top STRUCTURAL )",
-        expected_can_handle=True,
-        expected_name="ads-directoryService",
-    ),
-    ObjectClassTestCase(
-        scenario=ObjectClassScenario.ADS_NAME,
-        oc_definition="( 2.5.6.0 NAME 'ads-base' SUP top ABSTRACT )",
-        expected_can_handle=True,
-        expected_name="ads-base",
-    ),
-    ObjectClassTestCase(
-        scenario=ObjectClassScenario.STANDARD_RFC,
-        oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
-        expected_can_handle=False,
-        expected_name="posixAccount",
-    ),
-)
-ENTRY_TEST_CASES = (
-    EntryTestCase(
-        scenario=EntryScenario.OU_CONFIG,
-        entry_dn="ou=config,dc=example,dc=com",
-        attributes={"objectClass": ["organizationalUnit"]},
-        expected_can_handle=True,
-    ),
-    EntryTestCase(
-        scenario=EntryScenario.OU_SERVICES,
-        entry_dn="ou=services,dc=example,dc=com",
-        attributes={"objectClass": ["organizationalUnit"]},
-        expected_can_handle=True,
-    ),
-    EntryTestCase(
-        scenario=EntryScenario.OU_SYSTEM,
-        entry_dn="ou=system,dc=example,dc=com",
-        attributes={"objectClass": ["organizationalUnit"]},
-        expected_can_handle=True,
-    ),
-    EntryTestCase(
-        scenario=EntryScenario.OU_PARTITIONS,
-        entry_dn="ou=partitions,dc=example,dc=com",
-        attributes={"objectClass": ["organizationalUnit"]},
-        expected_can_handle=True,
-    ),
-    EntryTestCase(
-        scenario=EntryScenario.ADS_ATTRIBUTE,
-        entry_dn="cn=test,dc=example,dc=com",
-        attributes={"ads-enabled": ["TRUE"], "objectClass": ["top"]},
-        expected_can_handle=True,
-    ),
-    EntryTestCase(
-        scenario=EntryScenario.APACHEDS_ATTRIBUTE,
-        entry_dn="cn=test,dc=example,dc=com",
-        attributes={"apachedsSystemId": ["test"], "objectClass": ["top"]},
-        expected_can_handle=True,
-    ),
-    EntryTestCase(
-        scenario=EntryScenario.ADS_OBJECTCLASS,
-        entry_dn="cn=test,dc=example,dc=com",
-        attributes={"objectClass": ["top", "ads-directory"]},
-        expected_can_handle=True,
-    ),
-    EntryTestCase(
-        scenario=EntryScenario.STANDARD_RFC,
-        entry_dn="cn=user,dc=example,dc=com",
-        attributes={"objectClass": ["person"], "cn": ["user"]},
-        expected_can_handle=True,
-    ),
-)
 
 
 class TestsTestFlextLdifApacheQuirks:
     """Test Apache Directory Server quirks implementation."""
 
-    ATTRIBUTE_DATA: ClassVar = ATTRIBUTE_TEST_CASES
-    OBJECTCLASS_DATA: ClassVar = OBJECTCLASS_TEST_CASES
-    ENTRY_DATA: ClassVar = ENTRY_TEST_CASES
+    ATTRIBUTE_DATA: ClassVar = c.Ldif.TestCases.Apache.ATTRIBUTE_TEST_CASES
+    OBJECTCLASS_DATA: ClassVar = c.Ldif.TestCases.Apache.OBJECTCLASS_TEST_CASES
+    ENTRY_DATA: ClassVar = c.Ldif.TestCases.Apache.ENTRY_TEST_CASES
 
     def test_server_initialization(self) -> None:
         """Test Apache Directory Server initialization."""
@@ -280,8 +43,10 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         tm.that(server.entry_quirk, none=False)
 
-    @pytest.mark.parametrize("test_case", ATTRIBUTE_TEST_CASES)
-    def test_schema_attribute_can_handle(self, test_case: AttributeTestCase) -> None:
+    @pytest.mark.parametrize("test_case", c.Ldif.TestCases.Apache.ATTRIBUTE_TEST_CASES)
+    def test_schema_attribute_can_handle(
+        self, test_case: m.Ldif.Tests.AttributeTestCase
+    ) -> None:
         """Test attribute detection for various scenarios."""
         server = FlextLdifServersApache()
         schema_quirk = server.schema_quirk
@@ -294,7 +59,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         schema = server.schema_quirk
         attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' DESC 'Enable flag' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 SINGLE-VALUE )"
-        attr_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        attr_data = c.Ldif.TestDeduplicationHelpers.quirk_parse_and_unwrap(
             schema,
             attr_def,
             parse_method="parse_attribute",
@@ -313,7 +78,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         schema = server.schema_quirk
         attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.1 NAME 'ads-directoryServiceId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
-        attr_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        attr_data = c.Ldif.TestDeduplicationHelpers.quirk_parse_and_unwrap(
             schema,
             attr_def,
             parse_method="parse_attribute",
@@ -329,17 +94,19 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         schema = server.schema_quirk
         attr_def = "NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7"
-        TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        c.Ldif.TestDeduplicationHelpers.quirk_parse_and_unwrap(
             schema,
             attr_def,
             parse_method="parse_attribute",
             should_succeed=False,
         )
 
-    @pytest.mark.parametrize("test_case", OBJECTCLASS_TEST_CASES)
+    @pytest.mark.parametrize(
+        "test_case", c.Ldif.TestCases.Apache.OBJECTCLASS_TEST_CASES
+    )
     def test_schema_objectclass_can_handle(
         self,
-        test_case: ObjectClassTestCase,
+        test_case: m.Ldif.Tests.ObjectClassTestCase,
     ) -> None:
         """Test objectClass detection for various scenarios."""
         server = FlextLdifServersApache()
@@ -353,7 +120,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         schema = server.schema_quirk
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' DESC 'Directory service' SUP top STRUCTURAL MUST ( cn $ ads-directoryServiceId ) MAY ( ads-enabled ) )"
-        oc_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        oc_data = c.Ldif.TestDeduplicationHelpers.quirk_parse_and_unwrap(
             schema,
             oc_def,
             parse_method="parse_objectclass",
@@ -378,7 +145,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         schema = server.schema_quirk
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.200 NAME 'ads-partition' AUXILIARY MAY ( ads-partitionSuffix $ ads-contextEntry ) )"
-        oc_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        oc_data = c.Ldif.TestDeduplicationHelpers.quirk_parse_and_unwrap(
             schema,
             oc_def,
             parse_method="parse_objectclass",
@@ -393,7 +160,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         schema = server.schema_quirk
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.1 NAME 'ads-base' ABSTRACT )"
-        oc_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        oc_data = c.Ldif.TestDeduplicationHelpers.quirk_parse_and_unwrap(
             schema,
             oc_def,
             parse_method="parse_objectclass",
@@ -408,7 +175,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         schema = server.schema_quirk
         oc_def = "NAME 'ads-directoryService' SUP top STRUCTURAL"
-        TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        c.Ldif.TestDeduplicationHelpers.quirk_parse_and_unwrap(
             schema,
             oc_def,
             parse_method="parse_objectclass",
@@ -426,7 +193,7 @@ class TestsTestFlextLdifApacheQuirks:
             syntax="1.3.6.1.4.1.1466.115.121.1.7",
             single_value=True,
         )
-        TestDeduplicationHelpers.quirk_write_and_unwrap(
+        c.Ldif.TestDeduplicationHelpers.quirk_write_and_unwrap(
             schema,
             attr_data,
             write_method="_write_attribute",
@@ -449,7 +216,7 @@ class TestsTestFlextLdifApacheQuirks:
             must=["cn", "ads-directoryServiceId"],
             may=["ads-enabled"],
         )
-        TestDeduplicationHelpers.quirk_write_and_unwrap(
+        c.Ldif.TestDeduplicationHelpers.quirk_write_and_unwrap(
             schema,
             oc_data,
             write_method="_write_objectclass",
@@ -465,7 +232,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
-        acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        acl_model = c.Ldif.TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_line,
             parse_method="parse_input",
@@ -473,7 +240,7 @@ class TestsTestFlextLdifApacheQuirks:
         )
         assert acl_model is not None
         assert isinstance(acl_model, m.Ldif.Tests.Acl)
-        roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        roundtrip_result = c.Ldif.TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_model.raw_acl or str(acl_model),
             parse_method="parse_input",
@@ -485,7 +252,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
         acl_line = "aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
-        acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        acl_model = c.Ldif.TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_line,
             parse_method="parse_input",
@@ -493,7 +260,7 @@ class TestsTestFlextLdifApacheQuirks:
         )
         assert acl_model is not None
         assert isinstance(acl_model, m.Ldif.Tests.Acl)
-        roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        roundtrip_result = c.Ldif.TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_model.raw_acl or str(acl_model),
             parse_method="parse_input",
@@ -505,7 +272,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
         acl_line = "(version 3.0) (deny grantAdd) (grantRemove)"
-        acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        acl_model = c.Ldif.TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_line,
             parse_method="parse_input",
@@ -513,7 +280,7 @@ class TestsTestFlextLdifApacheQuirks:
         )
         assert acl_model is not None
         assert isinstance(acl_model, m.Ldif.Tests.Acl)
-        roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        roundtrip_result = c.Ldif.TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_model.raw_acl or str(acl_model),
             parse_method="parse_input",
@@ -540,7 +307,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
-        acl_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        acl_data = c.Ldif.TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_line,
             parse_method="parse_input",
@@ -556,7 +323,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
         acl_line = "aci: ( deny grantAdd )"
-        acl_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+        acl_data = c.Ldif.TestDeduplicationHelpers.quirk_parse_and_unwrap(
             acl_quirk,
             acl_line,
             parse_method="parse_input",
@@ -579,7 +346,7 @@ class TestsTestFlextLdifApacheQuirks:
             server_type=c.Ldif.ServerTypes.APACHE,
             raw_acl="( version 3.0 ) ( deny grantAdd )",
         )
-        TestDeduplicationHelpers.quirk_write_and_unwrap(
+        c.Ldif.TestDeduplicationHelpers.quirk_write_and_unwrap(
             acl_quirk,
             acl_model,
             write_method="_write_acl",
@@ -600,7 +367,7 @@ class TestsTestFlextLdifApacheQuirks:
             server_type=c.Ldif.ServerTypes.APACHE,
             raw_acl="( version 3.0 ) ( deny grantAdd )",
         )
-        TestDeduplicationHelpers.quirk_write_and_unwrap(
+        c.Ldif.TestDeduplicationHelpers.quirk_write_and_unwrap(
             acl_quirk,
             acl_model,
             write_method="write",
@@ -621,15 +388,15 @@ class TestsTestFlextLdifApacheQuirks:
             server_type=c.Ldif.ServerTypes.APACHE,
             raw_acl="",
         )
-        TestDeduplicationHelpers.quirk_write_and_unwrap(
+        c.Ldif.TestDeduplicationHelpers.quirk_write_and_unwrap(
             acl_quirk,
             acl_model,
             write_method="write",
             must_contain=["ads-aci", "aci:"],
         )
 
-    @pytest.mark.parametrize("test_case", ENTRY_TEST_CASES)
-    def test_entry_can_handle(self, test_case: EntryTestCase) -> None:
+    @pytest.mark.parametrize("test_case", c.Ldif.TestCases.Apache.ENTRY_TEST_CASES)
+    def test_entry_can_handle(self, test_case: m.Ldif.Tests.EntryTestCase) -> None:
         """Test entry detection for various scenarios."""
         server = FlextLdifServersApache()
         entry_quirk = server.entry_quirk
@@ -651,9 +418,13 @@ class TestsTestFlextLdifApacheQuirks:
 
     @pytest.mark.parametrize(
         "test_case",
-        [c for c in ENTRY_TEST_CASES if c.expected_can_handle],
+        [
+            tc
+            for tc in c.Ldif.TestCases.Apache.ENTRY_TEST_CASES
+            if tc.expected_can_handle
+        ],
     )
-    def test_entry_parse_ldif(self, test_case: EntryTestCase) -> None:
+    def test_entry_parse_ldif(self, test_case: m.Ldif.Tests.EntryTestCase) -> None:
         """Test entry parsing via LDIF for Apache-detectable entries."""
         server = FlextLdifServersApache()
         entry_quirk = server.entry_quirk

@@ -6,41 +6,12 @@ accepting entries that don't conform strictly to RFC standards while preserving 
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from enum import StrEnum, unique
-from typing import ClassVar
-
 import pytest
 from flext_tests import tm
 from tests import c, m
 
 from flext_core import r
 from flext_ldif import FlextLdifServersRelaxed
-
-meta_keys = c.Ldif
-
-
-@unique
-class ParseScenario(StrEnum):
-    """Scenarios for parsing tests."""
-
-    VALID = "valid"
-    MALFORMED = "malformed"
-    MISSING_NAME = "missing_name"
-    NO_OID = "no_oid"
-    EMPTY = "empty"
-    WHITESPACE = "whitespace"
-    BINARY_DATA = "binary_data"
-    UNICODE = "unicode"
-    LONG_DEFINITION = "long_definition"
-
-
-@unique
-class WriteScenario(StrEnum):
-    """Scenarios for write tests."""
-
-    VALID = "valid"
-    PRESERVE_RAW = "preserve_raw"
 
 
 @pytest.mark.unit
@@ -53,49 +24,6 @@ class TestsTestFlextLdifRelaxedQuirks:
     - Entry quirks (lenient DN/attribute handling)
     - Error recovery and edge cases
     """
-
-    ATTRIBUTE_DEFINITIONS: ClassVar[Mapping[ParseScenario, tuple[str, bool]]] = {
-        ParseScenario.VALID: (
-            "( 1.2.3.4 NAME 'testAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
-            True,
-        ),
-        ParseScenario.MALFORMED: ("( 2.5.4.3 NAME 'broken'", True),
-        ParseScenario.MISSING_NAME: ("( 1.2.3.4 )", True),
-        ParseScenario.NO_OID: ("NAME 'onlyName'", False),
-        ParseScenario.EMPTY: ("", False),
-        ParseScenario.WHITESPACE: ("   ", False),
-        ParseScenario.BINARY_DATA: (
-            "( 1.2.3.4 NAME 'test' \x00\x01 )".encode("latin1").decode("latin1"),
-            True,
-        ),
-        ParseScenario.UNICODE: ("( 1.2.3.4 NAME 'тест' 😀 )", True),
-        ParseScenario.LONG_DEFINITION: (
-            "( 1.2.3.4 " + "NAME 'test' " * 100 + ")",
-            True,
-        ),
-    }
-    OBJECTCLASS_DEFINITIONS: ClassVar[Mapping[ParseScenario, tuple[str, bool]]] = {
-        ParseScenario.VALID: ("( 1.2.3 NAME 'testOc' STRUCTURAL )", True),
-        ParseScenario.MALFORMED: ("( 2.5.6.0 NAME 'broken'", True),
-        ParseScenario.MISSING_NAME: ("( 1.2.3.4 STRUCTURAL )", True),
-        ParseScenario.NO_OID: ("BROKEN CLASS", False),
-        ParseScenario.EMPTY: ("", False),
-        ParseScenario.WHITESPACE: ("   ", False),
-        ParseScenario.UNICODE: ("( 1.2.3.4 NAME 'тест' 😀 )", True),
-    }
-    NAME_FORMAT_VARIATIONS: ClassVar[Sequence[tuple[str, bool]]] = [
-        ("( 1.2.3.4 NAME 'quoted' )", True),
-        ("( 1.2.3.4 NAME unquoted )", True),
-        ('( 1.2.3.4 NAME "doublequoted" )', True),
-    ]
-    ACL_DEFINITIONS: ClassVar[Mapping[str, tuple[str, bool]]] = {
-        "valid": (
-            '(targetentry="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")(version 3.0;acl "REDACTED_LDAP_BIND_PASSWORD";allow(all)',
-            True,
-        ),
-        "malformed": ("(targetentry incomplete", True),
-        "broken": ("(targetentry invalid) broken", True),
-    }
 
     @pytest.fixture
     def schema_quirk(self) -> FlextLdifServersRelaxed.Schema:
@@ -127,13 +55,13 @@ class TestsTestFlextLdifRelaxedQuirks:
 
     @pytest.mark.parametrize(
         ("scenario", "definition_data"),
-        list(ATTRIBUTE_DEFINITIONS.items()),
-        ids=[s.value for s in ATTRIBUTE_DEFINITIONS],
+        list(c.Ldif.TestData.Relaxed.ATTRIBUTE_DEFINITIONS.items()),
+        ids=list(c.Ldif.TestData.Relaxed.ATTRIBUTE_DEFINITIONS.keys()),
     )
     def test_parse_attribute_scenarios(
         self,
         schema_quirk: FlextLdifServersRelaxed.Schema,
-        scenario: ParseScenario,
+        scenario: c.Ldif.Scenarios.Relaxed.Parse,
         definition_data: tuple[str, bool],
     ) -> None:
         """Test parse_attribute with various scenarios."""
@@ -143,7 +71,10 @@ class TestsTestFlextLdifRelaxedQuirks:
             _ = tm.that(result.is_success, eq=True)
             parsed = result.value
             tm.that(hasattr(parsed, "name"), eq=True)
-            if scenario in {ParseScenario.VALID, ParseScenario.MALFORMED}:
+            if scenario in {
+                c.Ldif.Scenarios.Relaxed.Parse.VALID,
+                c.Ldif.Scenarios.Relaxed.Parse.MALFORMED,
+            }:
                 tm.that(parsed.oid, none=False)
                 tm.that(parsed.metadata is not None, eq=True)
                 assert parsed.metadata is not None
@@ -159,13 +90,13 @@ class TestsTestFlextLdifRelaxedQuirks:
 
     @pytest.mark.parametrize(
         ("scenario", "definition_data"),
-        list(OBJECTCLASS_DEFINITIONS.items()),
-        ids=[s.value for s in OBJECTCLASS_DEFINITIONS],
+        list(c.Ldif.TestData.Relaxed.OBJECTCLASS_DEFINITIONS.items()),
+        ids=list(c.Ldif.TestData.Relaxed.OBJECTCLASS_DEFINITIONS.keys()),
     )
     def test_parse_objectclass_scenarios(
         self,
         schema_quirk: FlextLdifServersRelaxed.Schema,
-        scenario: ParseScenario,
+        scenario: c.Ldif.Scenarios.Relaxed.Parse,
         definition_data: tuple[str, bool],
     ) -> None:
         """Test parse_objectclass with various scenarios."""
@@ -180,7 +111,7 @@ class TestsTestFlextLdifRelaxedQuirks:
 
     @pytest.mark.parametrize(
         ("definition", "expected_success"),
-        NAME_FORMAT_VARIATIONS,
+        c.Ldif.TestData.Relaxed.NAME_FORMAT_VARIATIONS,
         ids=["quoted", "unquoted", "double_quoted"],
     )
     def test_parse_attribute_name_formats(
@@ -241,8 +172,8 @@ class TestsTestFlextLdifRelaxedQuirks:
 
     @pytest.mark.parametrize(
         ("name", "acl_data"),
-        list(ACL_DEFINITIONS.items()),
-        ids=list(ACL_DEFINITIONS.keys()),
+        list(c.Ldif.TestData.Relaxed.ACL_DEFINITIONS.items()),
+        ids=list(c.Ldif.TestData.Relaxed.ACL_DEFINITIONS.keys()),
     )
     def test_parse_acl_scenarios(
         self,

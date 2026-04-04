@@ -6,7 +6,7 @@ import struct
 from collections.abc import Callable, MutableSequence
 
 from flext_core import FlextLogger, r
-from flext_ldif import m, t
+from flext_ldif import m, p, t
 
 logger = FlextLogger.create_module_logger(__name__)
 
@@ -15,7 +15,7 @@ class FlextLdifUtilitiesWriters:
     """Master class for all LDIF writing utilities — flat MRO methods."""
 
     @staticmethod
-    def get_entry_dn_string(entry: m.Ldif.Entry) -> str:
+    def get_entry_dn_string(entry: p.Ldif.Entry) -> str:
         """Extract DN string from entry."""
         dn = entry.dn
         if dn is None:
@@ -38,7 +38,7 @@ class FlextLdifUtilitiesWriters:
         )
         try:
             lines: MutableSequence[str] = []
-            entry: m.Ldif.Entry = resolved_config.entry
+            entry: p.Ldif.Entry = resolved_config.entry
             if resolved_config.transform_entry_hook:
                 entry = resolved_config.transform_entry_hook(entry)
             FlextLdifUtilitiesWriters.write_entry_parts(
@@ -55,7 +55,7 @@ class FlextLdifUtilitiesWriters:
             UnicodeDecodeError,
             struct.error,
         ) as e:
-            entry_for_error: m.Ldif.Entry | None = resolved_config.entry
+            entry_for_error: p.Ldif.Entry | None = resolved_config.entry
             dn_for_error: str | None = None
             try:
                 entry_dn = entry_for_error.dn if entry_for_error else None
@@ -77,7 +77,7 @@ class FlextLdifUtilitiesWriters:
 
     @staticmethod
     def write_entry_parts(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         config: m.Ldif.EntryWriteConfig,
         lines: MutableSequence[str],
     ) -> None:
@@ -163,7 +163,7 @@ class FlextLdifUtilitiesWriters:
             return r[str].fail(f"Failed to write objectClass: {e}")
 
     @staticmethod
-    def get_entry_dn_for_error(entry: m.Ldif.Entry) -> str | None:
+    def get_entry_dn_for_error(entry: p.Ldif.Entry) -> str | None:
         """Get DN string for error logging."""
         dn_attr = entry.dn
         if dn_attr is None:
@@ -195,7 +195,7 @@ class FlextLdifUtilitiesWriters:
             stats = m.Ldif.Stats(
                 total_entries=len(resolved_config.entries),
             )
-            entries_typed: MutableSequence[m.Ldif.Entry] = list(resolved_config.entries)
+            entries_typed: MutableSequence[p.Ldif.Entry] = list(resolved_config.entries)
             for entry in entries_typed:
                 result = FlextLdifUtilitiesWriters.write_single_entry_with_stats(
                     entry,
@@ -221,8 +221,8 @@ class FlextLdifUtilitiesWriters:
 
     @staticmethod
     def write_single_entry_with_stats(
-        entry: m.Ldif.Entry,
-        write_entry_hook: Callable[[m.Ldif.Entry], r[str]],
+        entry: p.Ldif.Entry,
+        write_entry_hook: Callable[[p.Ldif.Entry], r[str]],
         stats: m.Ldif.Stats,
     ) -> str | None:
         """Write single entry with stats tracking."""

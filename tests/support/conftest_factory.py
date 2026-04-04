@@ -58,11 +58,7 @@ class FlextLdifTestConftest:
     Reduces conftest.py from 1400+ lines to ~20 lines using DRY principles.
     """
 
-    _TEST_USERS: ClassVar[Sequence[t.StrMapping]] = [
-        {"name": "Test User 1", "email": "user1@example.com"},
-        {"name": "Test User 2", "email": "user2@example.com"},
-        {"name": "Test User 3", "email": "user3@example.com"},
-    ]
+    _TEST_USERS: ClassVar[Sequence[t.StrMapping]] = c.Ldif.ConftestFactory.TEST_USERS
     _LDIF_TEST_ENTRIES: ClassVar[
         Sequence[Mapping[str, Mapping[str, Collection[str]] | str]]
     ]
@@ -829,24 +825,11 @@ class FlextLdifTestConftest:
             filtered_items.append(item)
         items[:] = filtered_items
 
-    class LDIFTestConstants:
-        """Test constants."""
+    LDIFTestConstants = c.Ldif.ConftestFactory
 
-        SAMPLE_LDIF_FILE = "tests/fixtures/sample_basic.ldif"
-        COMPLEX_LDIF_FILE = "tests/fixtures/sample_complex.ldif"
-        INVALID_LDIF_FILE = "tests/fixtures/sample_invalid.ldif"
-        SAMPLE_DN = "cn=test,ou=users,dc=example,dc=com"
-        SAMPLE_ATTRIBUTE = "cn"
-        SAMPLE_VALUE = "test user"
-        MAX_TEST_ENTRIES = 100
-        MAX_TEST_ATTRIBUTES = 50
-        MAX_TEST_VALUES = 20
-        DEFAULT_TIMEOUT_MS = 5000
-        MAX_PARSE_TIME_PER_ENTRY = 1000
-
-    def ldif_test_constants(self) -> LDIFTestConstants:
+    def ldif_test_constants(self) -> type[c.Ldif.ConftestFactory]:
         """Test constants."""
-        return self.LDIFTestConstants()
+        return c.Ldif.ConftestFactory
 
     def fixtures_loader(self) -> FlextLdifFixtures.Loader:
         """Generic fixture loader."""

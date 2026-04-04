@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from flext_tests import tm
-from tests import u
-from tests.base import FlextLdifTestsServiceBase as s
+from tests import FlextLdifTestsServiceBase as s, u
 
 
 class TestFlextLdifUtilitiesParser:

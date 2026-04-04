@@ -25,8 +25,9 @@ from collections.abc import (
     Sequence,
     Sized,
 )
+from enum import StrEnum, unique
 from pathlib import Path
-from typing import Final
+from typing import ClassVar, Final
 
 from flext_tests import FlextTestsConstants
 from pydantic import BaseModel
@@ -44,6 +45,7 @@ from flext_ldif import (
     p,
     t,
 )
+from tests.models import FlextLdifTestModels
 
 
 class FlextLdifTestConstants(FlextTestsConstants):
@@ -51,6 +53,13 @@ class FlextLdifTestConstants(FlextTestsConstants):
 
     class Ldif(FlextLdifConstants.Ldif):
         """Domain namespace for flext-ldif test constants."""
+
+        class Paths:
+            """Test directory path constants."""
+
+            FIXTURES_DIR: Final[Path] = Path(__file__).parent / "fixtures"
+            OID_FIXTURES_DIR: Final[Path] = Path(__file__).parent / "fixtures" / "oid"
+            WORKSPACE_ROOT: Final[Path] = Path(__file__).resolve().parents[2]
 
         class Docker:
             """Docker container infrastructure constants for integration tests.
@@ -227,6 +236,277 @@ class FlextLdifTestConstants(FlextTestsConstants):
             SAMPLE_LDIF_ENTRY: Final[str] = (
                 "dn: cn=Test User,dc=test,dc=local\nobjectClass: inetOrgPerson\nobjectClass: organizationalPerson\nobjectClass: person\nobjectClass: top\ncn: Test User\nsn: User\nmail: test@example.com\nuid: testuser\n"
             )
+
+            class Relaxed:
+                """Test data for relaxed quirks tests."""
+
+                ATTRIBUTE_DEFINITIONS: Final[
+                    Mapping[
+                        str,
+                        tuple[str, bool],
+                    ]
+                ] = {
+                    "valid": (
+                        "( 1.2.3.4 NAME 'testAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                        True,
+                    ),
+                    "malformed": (
+                        "( 2.5.4.3 NAME 'broken'",
+                        True,
+                    ),
+                    "missing_name": (
+                        "( 1.2.3.4 )",
+                        True,
+                    ),
+                    "no_oid": (
+                        "NAME 'onlyName'",
+                        False,
+                    ),
+                    "empty": ("", False),
+                    "whitespace": (
+                        "   ",
+                        False,
+                    ),
+                    "binary_data": (
+                        "( 1.2.3.4 NAME 'test' \x00\x01 )".encode("latin1").decode(
+                            "latin1"
+                        ),
+                        True,
+                    ),
+                    "unicode": (
+                        "( 1.2.3.4 NAME 'тест' 😀 )",
+                        True,
+                    ),
+                    "long_definition": (
+                        "( 1.2.3.4 " + "NAME 'test' " * 100 + ")",
+                        True,
+                    ),
+                }
+                OBJECTCLASS_DEFINITIONS: Final[
+                    Mapping[
+                        str,
+                        tuple[str, bool],
+                    ]
+                ] = {
+                    "valid": (
+                        "( 1.2.3 NAME 'testOc' STRUCTURAL )",
+                        True,
+                    ),
+                    "malformed": (
+                        "( 2.5.6.0 NAME 'broken'",
+                        True,
+                    ),
+                    "missing_name": (
+                        "( 1.2.3.4 STRUCTURAL )",
+                        True,
+                    ),
+                    "no_oid": (
+                        "BROKEN CLASS",
+                        False,
+                    ),
+                    "empty": ("", False),
+                    "whitespace": (
+                        "   ",
+                        False,
+                    ),
+                    "unicode": (
+                        "( 1.2.3.4 NAME 'тест' 😀 )",
+                        True,
+                    ),
+                }
+                NAME_FORMAT_VARIATIONS: Final[Sequence[tuple[str, bool]]] = [
+                    ("( 1.2.3.4 NAME 'quoted' )", True),
+                    ("( 1.2.3.4 NAME unquoted )", True),
+                    ('( 1.2.3.4 NAME "doublequoted" )', True),
+                ]
+                ACL_DEFINITIONS: Final[Mapping[str, tuple[str, bool]]] = {
+                    "valid": (
+                        '(targetentry="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")(version 3.0;acl "REDACTED_LDAP_BIND_PASSWORD";allow(all)',
+                        True,
+                    ),
+                    "malformed": ("(targetentry incomplete", True),
+                    "broken": ("(targetentry invalid) broken", True),
+                }
+
+            class AclRegistry:
+                """Test data for ACL registry tests."""
+
+                GET_ACL_ATTRIBUTES_DATA: Final[
+                    Mapping[
+                        str,
+                        tuple[
+                            str,
+                            str | None,
+                            t.StrSequence,
+                            t.StrSequence,
+                        ],
+                    ]
+                ] = {
+                    "get_acl_attributes_rfc_foundation": (
+                        "rfc",
+                        None,
+                        ["aci", "acl", "olcAccess", "aclRights", "aclEntry"],
+                        list[str](),
+                    ),
+                    "get_acl_attributes_oid_quirks": (
+                        "oid",
+                        "oid",
+                        ["orclaci", "orclentrylevelaci", "aci", "acl"],
+                        list[str](),
+                    ),
+                    "get_acl_attributes_oud_quirks": (
+                        "oud",
+                        "oud",
+                        ["orclaci", "orclentrylevelaci", "aci"],
+                        list[str](),
+                    ),
+                    "get_acl_attributes_ad_quirks": (
+                        "ad",
+                        "ad",
+                        ["nTSecurityDescriptor", "aci"],
+                        list[str](),
+                    ),
+                    "get_acl_attributes_generic": (
+                        "generic",
+                        "generic",
+                        ["aci", "acl"],
+                        ["orclaci", "nTSecurityDescriptor"],
+                    ),
+                    "get_acl_attributes_unknown": (
+                        "unknown_server",
+                        "unknown_server",
+                        ["aci", "acl"],
+                        ["orclaci", "nTSecurityDescriptor"],
+                    ),
+                    "get_acl_attributes_none": (
+                        "none",
+                        None,
+                        ["aci", "acl"],
+                        ["orclaci"],
+                    ),
+                }
+                IS_ACL_ATTRIBUTE_DATA: Final[
+                    Mapping[
+                        str,
+                        tuple[
+                            str,
+                            str,
+                            str | None,
+                            bool,
+                        ],
+                    ]
+                ] = {
+                    "is_acl_attribute_rfc_aci": (
+                        "valid_rfc",
+                        "aci",
+                        None,
+                        True,
+                    ),
+                    "is_acl_attribute_rfc_acl": (
+                        "valid_rfc",
+                        "acl",
+                        None,
+                        True,
+                    ),
+                    "is_acl_attribute_rfc_olcAccess": (
+                        "valid_rfc",
+                        "olcAccess",
+                        None,
+                        True,
+                    ),
+                    "is_acl_attribute_oid_orclaci": (
+                        "valid_server_specific",
+                        "orclaci",
+                        "oid",
+                        True,
+                    ),
+                    "is_acl_attribute_oud_orclaci": (
+                        "valid_server_specific",
+                        "orclaci",
+                        "oud",
+                        True,
+                    ),
+                    "is_acl_attribute_invalid_cn": (
+                        "invalid",
+                        "cn",
+                        None,
+                        False,
+                    ),
+                    "is_acl_attribute_invalid_uid": (
+                        "invalid",
+                        "uid",
+                        None,
+                        False,
+                    ),
+                    "is_acl_attribute_case_insensitive_aci": (
+                        "case_insensitive",
+                        "ACI",
+                        None,
+                        True,
+                    ),
+                    "is_acl_attribute_case_insensitive_acl": (
+                        "case_insensitive",
+                        "Acl",
+                        None,
+                        True,
+                    ),
+                    "is_acl_attribute_case_insensitive_olcAccess": (
+                        "case_insensitive",
+                        "OLCACCESS",
+                        None,
+                        True,
+                    ),
+                    "is_acl_attribute_case_insensitive_orclaci": (
+                        "case_insensitive",
+                        "OrclAci",
+                        "oid",
+                        True,
+                    ),
+                }
+
+            class Typings:
+                """Test data for typings tests."""
+
+                SAMPLE_ATTR_DICT: Final[dict[str, list[str]]] = {
+                    "cn": ["John Doe"],
+                    "sn": ["Doe"],
+                    "mail": ["john@example.com", "john.doe@example.com"],
+                    "objectClass": ["person", "inetOrgPerson"],
+                }
+                SAMPLE_DISTRIBUTION: Final[dict[str, int]] = {
+                    "inetOrgPerson": 1245,
+                    "groupOfNames": 89,
+                    "organizationalUnit": 34,
+                    "domain": 1,
+                    "country": 1,
+                    "dcObject": 1,
+                }
+                REMOVED_NAMESPACES: Final[Sequence[str]] = [
+                    "Parser",
+                    "Writer",
+                    "LdifValidation",
+                    "LdifProcessing",
+                    "Analytics",
+                    "ServerTypes",
+                    "Functional",
+                    "Streaming",
+                    "AnnotatedLdif",
+                    "ModelAliases",
+                    "LdifProject",
+                    "Project",
+                ]
+                REMOVED_COMMON_DICT: Final[Sequence[str]] = [
+                    "ChangeDict",
+                    "CategorizedDict",
+                    "TreeDict",
+                    "HierarchyDict",
+                ]
+                REMOVED_ENTRY: Final[Sequence[str]] = [
+                    "EntryConfiguration",
+                    "EntryValidation",
+                    "EntryTransformation",
+                    "EntryProcessing",
+                ]
 
         class General:
             """General test constants (from fixtures/general_constants.py)."""
@@ -499,6 +779,79 @@ class FlextLdifTestConstants(FlextTestsConstants):
             OUD_OBJECTCLASS_ORCLCONTEXT: Final[str] = (
                 "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
             )
+
+        class Migration:
+            """Migration pipeline test constants."""
+
+            class Oid:
+                """Constants for OID boolean conversion tests."""
+
+                RFC_TO_OID_BOOLEAN: Final[Mapping[str, str]] = {
+                    "TRUE": "1",
+                    "FALSE": "0",
+                }
+                OID_TO_RFC_BOOLEAN: Final[Mapping[str, str]] = {
+                    "1": "TRUE",
+                    "0": "FALSE",
+                }
+
+        class ProtocolTest:
+            """Protocol test constants."""
+
+            ATTR_PARSE: str = "parse_attribute"
+            ATTR_WRITE: str = "write"
+            ATTR_SERVER_TYPE: str = "server_type"
+            ATTR_PRIORITY: str = "priority"
+            ATTR_CAN_HANDLE_ATTRIBUTE: str = "can_handle_attribute"
+            ATTR_CAN_HANDLE_OBJECTCLASS: str = "can_handle_objectclass"
+            ATTR_SCHEMA: str = "schema"
+            ATTR_ACL: str = "acl"
+            ATTR_ENTRY: str = "entry"
+            ATTR_IS_SUCCESS: str = "is_success"
+            SAMPLE_ATTR_DEF: str = (
+                "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+            )
+            SAMPLE_ATTR_DEF_SIMPLE: str = "( 2.5.4.3 NAME 'cn' )"
+            SAMPLE_OC_DEF: str = "( 2.5.6.0 NAME 'top' ABSTRACT )"
+
+        class CrossQuirk:
+            """Cross-quirk conversion test constants."""
+
+            OID_ATTRIBUTE_ORCLGUID: Final[str] = (
+                "( 2.16.840.1.113894.1.1.1 NAME 'orclguid' DESC 'Oracle GUID' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
+            )
+            OID_OBJECTCLASS_ORCLCONTAINER: Final[str] = (
+                "( 2.16.840.1.113894.2.1.1 NAME 'orclContainer' DESC 'Oracle Container' SUP top STRUCTURAL MUST cn MAY description )"
+            )
+            OID_ACL_ANONYMOUS: Final[str] = "orclaci: access to entry by * (browse)"
+            OUD_ACI_ANONYMOUS: Final[str] = (
+                'aci: (targetattr="*")(version 3.0; acl "Test ACL"; allow (read,search) userdn="ldap:///anyone";)'
+            )
+            OUD_ATTRIBUTE_ORCLGUID: Final[str] = (
+                "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
+            )
+            OID_OBJECTCLASS_ORCLCONTEXT: Final[str] = (
+                "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
+            )
+
+        class ConfigIntegration:
+            """Config integration test constants."""
+
+            SERVER_TYPES: ClassVar[t.StrSequence] = ("oid", "oud", "openldap", "rfc")
+            BASIC_ENTRY: Final[str] = (
+                "dn: cn=Test,dc=example,dc=com\ncn: Test\nobjectClass: person\n"
+            )
+            MULTIPLE_ENTRIES: Final[str] = (
+                "dn: cn=User1,dc=example,dc=com\ncn: User1\nobjectClass: person\n\n"
+                "dn: cn=User2,dc=example,dc=com\ncn: User2\nobjectClass: person\n\n"
+                "dn: cn=User3,dc=example,dc=com\ncn: User3\nobjectClass: person\n"
+            )
+            SERVER_CONTENT: ClassVar[t.StrMapping] = {
+                "oid": "dn: cn=OID Test,dc=example,dc=com\ncn: OID Test\nobjectClass: person\n",
+                "oud": "dn: cn=OUD Test,dc=example,dc=com\ncn: OUD Test\nobjectClass: person\n",
+                "openldap": "dn: cn=OpenLDAP Test,dc=example,dc=com\ncn: OpenLDAP Test\nobjectClass: person\n",
+                "rfc": "dn: cn=RFC Test,dc=example,dc=com\ncn: RFC Test\nobjectClass: person\n",
+            }
 
         class Filters:
             """Test filter constants and server types for categorization tests."""
@@ -1963,6 +2316,580 @@ class FlextLdifTestConstants(FlextTestsConstants):
                                 f"'{substring}' not found in output: {output[:200]}...",
                             )
                 return output
+
+        class Scenarios:
+            """Test scenario enums for parametrized quirk testing."""
+
+            class Apache:
+                """Apache Directory Server test scenarios."""
+
+                @unique
+                class Attribute(StrEnum):
+                    APACHE_OID = "apache_oid"
+                    ADS_PREFIX = "ads_prefix"
+                    APACHEDS_NAME = "apacheds_name"
+                    STANDARD_RFC = "standard_rfc"
+
+                @unique
+                class ObjectClass(StrEnum):
+                    APACHE_OID = "apache_oid"
+                    ADS_NAME = "ads_name"
+                    STANDARD_RFC = "standard_rfc"
+
+                @unique
+                class Entry(StrEnum):
+                    OU_CONFIG = "ou_config"
+                    OU_SERVICES = "ou_services"
+                    OU_SYSTEM = "ou_system"
+                    OU_PARTITIONS = "ou_partitions"
+                    ADS_ATTRIBUTE = "ads_attribute"
+                    APACHEDS_ATTRIBUTE = "apacheds_attribute"
+                    ADS_OBJECTCLASS = "ads_objectclass"
+                    STANDARD_RFC = "standard_rfc"
+
+                @unique
+                class Acl(StrEnum):
+                    ADS_ACI = "ads_aci"
+                    ACI_ATTRIBUTE = "aci_attribute"
+                    VERSION_PREFIX = "version_prefix"
+                    NEGATIVE = "negative"
+                    EMPTY_LINE = "empty_line"
+                    WRITE_WITH_CONTENT = "write_with_content"
+                    WRITE_CLAUSES_ONLY = "write_clauses_only"
+                    WRITE_EMPTY = "write_empty"
+
+            class Ds389:
+                """389 Directory Server test scenarios."""
+
+                @unique
+                class Attribute(StrEnum):
+                    DS389_OID = "ds389_oid"
+                    DS389_PREFIX = "ds389_prefix"
+                    NSSLAPD_PREFIX = "nsslapd_prefix"
+                    NSDS_PREFIX = "nsds_prefix"
+                    NSUNIQUEID_PREFIX = "nsuniqueid_prefix"
+                    NSUNIQUE = "nsunique"
+                    STANDARD_RFC = "standard_rfc"
+                    FEDORA_PREFIX = "fedora_prefix"
+
+                @unique
+                class ObjectClass(StrEnum):
+                    DS389_OID = "ds389_oid"
+                    DS389_NAME = "ds389_name"
+                    NS_NAME = "ns_name"
+                    STANDARD_RFC = "standard_rfc"
+
+                @unique
+                class Acl(StrEnum):
+                    ACI_ATTRIBUTE = "aci_attribute"
+                    VERSION_PREFIX = "version_prefix"
+                    OPENLDAP_FORMAT = "openldap_format"
+                    NEGATIVE = "negative"
+                    EMPTY_LINE = "empty_line"
+
+                @unique
+                class Entry(StrEnum):
+                    CN_CONFIG = "cn_config"
+                    CN_MONITOR = "cn_monitor"
+                    CN_CHANGELOG = "cn_changelog"
+                    OU_CONFIG = "ou_config"
+                    OU_REPLICATION = "ou_replication"
+                    NSSLAPD_ATTRIBUTE = "nsslapd_attribute"
+                    NSDS_ATTRIBUTE = "nsds_attribute"
+                    NSUNIQUEID_ATTRIBUTE = "nsuniqueid_attribute"
+                    NS_OBJECTCLASS = "ns_objectclass"
+                    DS389_OBJECTCLASS = "ds389_objectclass"
+                    MEMBEROF_PLUGIN = "memberof_plugin"
+                    SCHEMA_ATTRIBUTE = "schema_attribute"
+                    STANDARD_RFC = "standard_rfc"
+
+            class Novell:
+                """Novell eDirectory test scenarios."""
+
+                @unique
+                class Attribute(StrEnum):
+                    NOVELL_OID = "novell_oid"
+                    NDS_PREFIX = "nds_prefix"
+                    NSPM_PREFIX = "nspm_prefix"
+                    LOGIN_PREFIX = "login_prefix"
+                    DIRXML_PREFIX = "dirxml_prefix"
+                    EDIR_PREFIX = "edir_prefix"
+                    NOVELL_PREFIX = "novell_prefix"
+                    STANDARD_RFC = "standard_rfc"
+
+                @unique
+                class ObjectClass(StrEnum):
+                    NOVELL_OID = "novell_oid"
+                    NDS_NAME = "nds_name"
+                    STANDARD_RFC = "standard_rfc"
+
+                @unique
+                class Entry(StrEnum):
+                    NDS_PARTITION = "nds_partition"
+                    TREE_ROOT = "tree_root"
+                    OU_SERVICES = "ou_services"
+                    OU_APPS = "ou_apps"
+                    OU_SYSTEM = "ou_system"
+                    NSPM_ATTRIBUTE = "nspm_attribute"
+                    LOGIN_ATTRIBUTE = "login_attribute"
+                    NDS_OBJECTCLASS = "nds_objectclass"
+                    NDS_ATTRIBUTE = "nds_attribute"
+                    EDIR_OBJECTCLASS = "edir_objectclass"
+                    NOVELL_OBJECTCLASS = "novell_objectclass"
+                    STANDARD_RFC = "standard_rfc"
+
+            class Relaxed:
+                """Relaxed quirk test scenarios."""
+
+                @unique
+                class Parse(StrEnum):
+                    VALID = "valid"
+                    MALFORMED = "malformed"
+                    MISSING_NAME = "missing_name"
+                    NO_OID = "no_oid"
+                    EMPTY = "empty"
+                    WHITESPACE = "whitespace"
+                    BINARY_DATA = "binary_data"
+                    UNICODE = "unicode"
+                    LONG_DEFINITION = "long_definition"
+
+                @unique
+                class Write(StrEnum):
+                    VALID = "valid"
+                    PRESERVE_RAW = "preserve_raw"
+
+            class Api:
+                """API integration test scenarios."""
+
+                @unique
+                class Scenario(StrEnum):
+                    SIMPLE_LDIF = "simple_ldif"
+                    BUILD_ENTRY = "build_entry"
+                    VALIDATE_ENTRIES = "validate_entries"
+                    MULTIPLE_INSTANCES = "multiple_instances"
+                    API_FACADE_PROPERTIES = "api_facade_properties"
+                    END_TO_END_WORKFLOW = "end_to_end_workflow"
+
+            class AclRegistry:
+                """ACL registry test scenarios."""
+
+                @unique
+                class GetAclAttributes(StrEnum):
+                    RFC = "rfc"
+                    OID = "oid"
+                    OUD = "oud"
+                    AD = "ad"
+                    GENERIC = "generic"
+                    UNKNOWN = "unknown_server"
+                    NONE = "none"
+
+                @unique
+                class IsAclAttribute(StrEnum):
+                    VALID_RFC = "valid_rfc"
+                    VALID_SERVER_SPECIFIC = "valid_server_specific"
+                    INVALID = "invalid"
+                    CASE_INSENSITIVE = "case_insensitive"
+
+            class Protocol:
+                """Protocol test scenarios."""
+
+                @unique
+                class Names(StrEnum):
+                    """Protocol names in FlextLdifProtocols.Ldif namespace."""
+
+                    __test__ = False  # type: ignore[assignment]
+                    SCHEMA = "SchemaQuirk"
+                    ACL = "AclQuirk"
+                    ENTRY = "EntryQuirk"
+
+                @unique
+                class ServerTypes(StrEnum):
+                    """Server types implementing schema protocol."""
+
+                    __test__ = False  # type: ignore[assignment]
+                    OID = "oid"
+                    OUD = "oud"
+                    OPENLDAP = "openldap"
+                    RELAXED = "relaxed"
+
+        class TestCases:
+            """Parametrized test case data for quirk server tests."""
+
+            class Apache:
+                """Apache quirk test cases."""
+
+                ATTRIBUTE_TEST_CASES = (
+                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                        scenario="apache_oid",
+                        attr_definition="( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )",
+                        expected_can_handle=True,
+                        expected_name="ads-enabled",
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                        scenario="ads_prefix",
+                        attr_definition="( 2.16.840.1.113730.3.1.1 NAME 'ads-searchBaseDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
+                        expected_can_handle=True,
+                        expected_name="ads-searchBaseDN",
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                        scenario="apacheds_name",
+                        attr_definition="( 1.2.3.4 NAME 'apachedsSystemId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                        expected_can_handle=True,
+                        expected_name="apachedsSystemId",
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                        scenario="standard_rfc",
+                        attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                        expected_can_handle=False,
+                        expected_name="cn",
+                    ),
+                )
+                OBJECTCLASS_TEST_CASES = (
+                    FlextLdifTestModels.Ldif.Tests.ObjectClassTestCase(
+                        scenario="apache_oid",
+                        oc_definition="( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' SUP top STRUCTURAL )",
+                        expected_can_handle=True,
+                        expected_name="ads-directoryService",
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.ObjectClassTestCase(
+                        scenario="ads_name",
+                        oc_definition="( 2.5.6.0 NAME 'ads-base' SUP top ABSTRACT )",
+                        expected_can_handle=True,
+                        expected_name="ads-base",
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.ObjectClassTestCase(
+                        scenario="standard_rfc",
+                        oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
+                        expected_can_handle=False,
+                        expected_name="posixAccount",
+                    ),
+                )
+                ENTRY_TEST_CASES = (
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="ou_config",
+                        entry_dn="ou=config,dc=example,dc=com",
+                        attributes={"objectClass": ["organizationalUnit"]},
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="ou_services",
+                        entry_dn="ou=services,dc=example,dc=com",
+                        attributes={"objectClass": ["organizationalUnit"]},
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="ou_system",
+                        entry_dn="ou=system,dc=example,dc=com",
+                        attributes={"objectClass": ["organizationalUnit"]},
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="ou_partitions",
+                        entry_dn="ou=partitions,dc=example,dc=com",
+                        attributes={"objectClass": ["organizationalUnit"]},
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="ads_attribute",
+                        entry_dn="cn=test,dc=example,dc=com",
+                        attributes={"ads-enabled": ["TRUE"], "objectClass": ["top"]},
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="apacheds_attribute",
+                        entry_dn="cn=test,dc=example,dc=com",
+                        attributes={
+                            "apachedsSystemId": ["test"],
+                            "objectClass": ["top"],
+                        },
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="ads_objectclass",
+                        entry_dn="cn=test,dc=example,dc=com",
+                        attributes={"objectClass": ["top", "ads-directory"]},
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="standard_rfc",
+                        entry_dn="cn=user,dc=example,dc=com",
+                        attributes={"objectClass": ["person"], "cn": ["user"]},
+                        expected_can_handle=True,
+                    ),
+                )
+
+            class Ds389:
+                """DS389 quirk test cases."""
+
+                ATTRIBUTE_TEST_CASES = (
+                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                        scenario="ds389_oid",
+                        attr_definition="( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
+                        expected_can_handle=True,
+                        expected_oid="2.16.840.1.113730.3.1.1",
+                        expected_name="nsslapd-suffix",
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                        scenario="nsslapd_prefix",
+                        attr_definition="( 1.2.3.4 NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )",
+                        expected_can_handle=True,
+                        expected_name="nsslapd-port",
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                        scenario="nsds_prefix",
+                        attr_definition="( 1.2.3.4 NAME 'nsds5ReplicaId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )",
+                        expected_can_handle=True,
+                        expected_name="nsds5ReplicaId",
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                        scenario="nsuniqueid_prefix",
+                        attr_definition="( 1.2.3.4 NAME 'nsuniqueid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                        expected_can_handle=True,
+                        expected_name="nsuniqueid",
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                        scenario="standard_rfc",
+                        attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                        expected_can_handle=False,
+                    ),
+                )
+                OBJECTCLASS_TEST_CASES = (
+                    FlextLdifTestModels.Ldif.Tests.ObjectClassTestCase(
+                        scenario="ds389_oid",
+                        oc_definition="( 2.16.840.1.113730.3.2.1 NAME 'nscontainer' SUP top STRUCTURAL )",
+                        expected_can_handle=True,
+                        expected_oid="2.16.840.1.113730.3.2.1",
+                        expected_name="nscontainer",
+                        expected_kind="STRUCTURAL",
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.ObjectClassTestCase(
+                        scenario="ns_name",
+                        oc_definition="( 2.5.6.0 NAME 'nsperson' SUP top STRUCTURAL )",
+                        expected_can_handle=True,
+                        expected_name="nsperson",
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.ObjectClassTestCase(
+                        scenario="standard_rfc",
+                        oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
+                        expected_can_handle=False,
+                    ),
+                )
+                ACL_TEST_CASES = (
+                    FlextLdifTestModels.Ldif.Tests.AclTestCase(
+                        scenario="aci_attribute",
+                        acl_line='aci: (version 3.0; acl "Admin Access"; allow (all) userdn = "ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com";)',
+                        expected_can_handle=True,
+                        expected_success=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.AclTestCase(
+                        scenario="version_prefix",
+                        acl_line='(version 3.0; acl "Admin Access"; allow (all) userdn = "ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com";)',
+                        expected_can_handle=True,
+                        expected_success=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.AclTestCase(
+                        scenario="openldap_format",
+                        acl_line="access to * by * read",
+                        expected_can_handle=False,
+                        expected_success=False,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.AclTestCase(
+                        scenario="empty_line",
+                        acl_line="",
+                        expected_can_handle=False,
+                        expected_success=False,
+                    ),
+                )
+                ENTRY_TEST_CASES = (
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="cn_config",
+                        entry_dn="cn=config",
+                        attributes={
+                            FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS: [
+                                "nscontainer"
+                            ]
+                        },
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="cn_monitor",
+                        entry_dn="cn=monitor",
+                        attributes={
+                            FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS: ["top"]
+                        },
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="cn_changelog",
+                        entry_dn="cn=changelog",
+                        attributes={
+                            FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS: ["top"]
+                        },
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="nsslapd_attribute",
+                        entry_dn="cn=test,dc=example,dc=com",
+                        attributes={"nsslapd-port": ["389"], "objectclass": ["top"]},
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="nsds_attribute",
+                        entry_dn="cn=test,dc=example,dc=com",
+                        attributes={"nsds5ReplicaId": ["1"], "objectclass": ["top"]},
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="nsuniqueid_attribute",
+                        entry_dn="cn=test,dc=example,dc=com",
+                        attributes={"nsuniqueid": ["12345"], "objectclass": ["top"]},
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="ns_objectclass",
+                        entry_dn="cn=test,dc=example,dc=com",
+                        attributes={
+                            FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS: [
+                                "top",
+                                "nscontainer",
+                            ]
+                        },
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="standard_rfc",
+                        entry_dn="cn=user,dc=example,dc=com",
+                        attributes={
+                            FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS: ["person"],
+                            "cn": ["user"],
+                        },
+                        expected_can_handle=False,
+                    ),
+                )
+
+            class Novell:
+                """Novell quirk test cases."""
+
+                ATTRIBUTE_TEST_CASES = (
+                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                        scenario="novell_oid",
+                        attr_definition="( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
+                        expected_can_handle=True,
+                        expected_oid="2.16.840.1.113719.1.1.4.1.501",
+                        expected_name="nspmPasswordPolicyDN",
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                        scenario="nspm_prefix",
+                        attr_definition="( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                        expected_can_handle=True,
+                        expected_name="nspmPasswordPolicy",
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                        scenario="login_prefix",
+                        attr_definition="( 1.2.3.4 NAME 'loginDisabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )",
+                        expected_can_handle=True,
+                        expected_name="loginDisabled",
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                        scenario="dirxml_prefix",
+                        attr_definition="( 1.2.3.4 NAME 'dirxml-associations' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                        expected_can_handle=True,
+                        expected_name="dirxml-associations",
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                        scenario="standard_rfc",
+                        attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                        expected_can_handle=False,
+                    ),
+                )
+                OBJECTCLASS_TEST_CASES = (
+                    FlextLdifTestModels.Ldif.Tests.ObjectClassTestCase(
+                        scenario="novell_oid",
+                        oc_definition="( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' SUP top STRUCTURAL )",
+                        expected_can_handle=True,
+                        expected_oid="2.16.840.1.113719.2.2.6.1",
+                        expected_name="ndsPerson",
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.ObjectClassTestCase(
+                        scenario="nds_name",
+                        oc_definition="( 2.5.6.0 NAME 'ndsserver' SUP top STRUCTURAL )",
+                        expected_can_handle=True,
+                        expected_name="ndsserver",
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.ObjectClassTestCase(
+                        scenario="standard_rfc",
+                        oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
+                        expected_can_handle=False,
+                    ),
+                )
+                ENTRY_TEST_CASES = (
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="ou_services",
+                        entry_dn="ou=services,o=Example",
+                        attributes={"objectClass": ["organizationalUnit"]},
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="ou_apps",
+                        entry_dn="ou=apps,o=Example",
+                        attributes={"objectClass": ["organizationalUnit"]},
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="ou_system",
+                        entry_dn="ou=system,o=Example",
+                        attributes={"objectClass": ["organizationalUnit"]},
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="nspm_attribute",
+                        entry_dn="cn=user,o=Example",
+                        attributes={
+                            "nspmpasswordpolicy": ["policy1"],
+                            "objectClass": ["top"],
+                        },
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="login_attribute",
+                        entry_dn="cn=user,o=Example",
+                        attributes={"logindisabled": ["TRUE"], "objectClass": ["top"]},
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="nds_objectclass",
+                        entry_dn="cn=user,o=Example",
+                        attributes={"objectClass": ["top", "ndsperson"]},
+                        expected_can_handle=True,
+                    ),
+                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                        scenario="standard_rfc",
+                        entry_dn="cn=user,dc=example,dc=com",
+                        attributes={"objectClass": ["person"], "cn": ["user"]},
+                        expected_can_handle=False,
+                    ),
+                )
+
+        class ConftestFactory:
+            """Constants for FlextLdifTestConftest factory."""
+
+            SAMPLE_LDIF_FILE: Final[str] = "tests/fixtures/sample_basic.ldif"
+            COMPLEX_LDIF_FILE: Final[str] = "tests/fixtures/sample_complex.ldif"
+            INVALID_LDIF_FILE: Final[str] = "tests/fixtures/sample_invalid.ldif"
+            SAMPLE_DN: Final[str] = "cn=test,ou=users,dc=example,dc=com"
+            SAMPLE_ATTRIBUTE: Final[str] = "cn"
+            SAMPLE_VALUE: Final[str] = "test user"
+            MAX_TEST_ENTRIES: Final[int] = 100
+            MAX_TEST_ATTRIBUTES: Final[int] = 50
+            MAX_TEST_VALUES: Final[int] = 20
+            DEFAULT_TIMEOUT_MS: Final[int] = 5000
+            MAX_PARSE_TIME_PER_ENTRY: Final[int] = 1000
+
+            TEST_USERS: Final[Sequence[Mapping[str, str]]] = [
+                {"name": "Test User 1", "email": "user1@example.com"},
+                {"name": "Test User 2", "email": "user2@example.com"},
+                {"name": "Test User 3", "email": "user3@example.com"},
+            ]
 
 
 c = FlextLdifTestConstants

@@ -18,33 +18,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final
-
 import pytest
 
 from flext_core import FlextLogger
 from flext_ldif import FlextLdifSettings, ldif
-from tests import c, t
+from tests import c
 
 logger = FlextLogger(__name__)
 
 
-class ConfigTestData:
-    """Test data constants and mappings for config integration tests."""
-
-    SERVER_TYPES: Final[t.StrSequence] = ["oid", "oud", "openldap", "rfc"]
-    BASIC_ENTRY: Final[str] = (
-        "dn: cn=Test,dc=example,dc=com\ncn: Test\nobjectClass: person\n"
-    )
-    MULTIPLE_ENTRIES: Final[str] = (
-        "dn: cn=User1,dc=example,dc=com\ncn: User1\nobjectClass: person\n\ndn: cn=User2,dc=example,dc=com\ncn: User2\nobjectClass: person\n\ndn: cn=User3,dc=example,dc=com\ncn: User3\nobjectClass: person\n"
-    )
-    SERVER_CONTENT: Final[t.StrMapping] = {
-        "oid": "dn: cn=OID Test,dc=example,dc=com\ncn: OID Test\nobjectClass: person\n",
-        "oud": "dn: cn=OUD Test,dc=example,dc=com\ncn: OUD Test\nobjectClass: person\n",
-        "openldap": "dn: cn=OpenLDAP Test,dc=example,dc=com\ncn: OpenLDAP Test\nobjectClass: person\n",
-        "rfc": "dn: cn=RFC Test,dc=example,dc=com\ncn: RFC Test\nobjectClass: person\n",
-    }
+ConfigTestData = c.Ldif.ConfigIntegration
 
 
 class TestFlextLdifSettingsIntegration:

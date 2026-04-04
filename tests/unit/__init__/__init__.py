@@ -13,15 +13,17 @@ if _t.TYPE_CHECKING:
     import tests.unit.__init__.test_version as _tests_unit___init___test_version
 
     test_version = _tests_unit___init___test_version
-    from tests.unit.__init__.test_version import TestsFlextLdifVersion
+    from tests.unit.__init__.test_version import TestsFlextLdifVersion, version_module
 _LAZY_IMPORTS = {
     "TestsFlextLdifVersion": "tests.unit.__init__.test_version",
     "test_version": "tests.unit.__init__.test_version",
+    "version_module": "tests.unit.__init__.test_version",
 }
 
 __all__ = [
     "TestsFlextLdifVersion",
     "test_version",
+    "version_module",
 ]
 
 

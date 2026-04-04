@@ -15,7 +15,6 @@ if _t.TYPE_CHECKING:
     conftest = _tests_integration_conftest
     import tests.integration.test_acl_metadata_preservation as _tests_integration_test_acl_metadata_preservation
     from tests.integration.conftest import (
-        WORKSPACE_ROOT,
         all_acl_fixtures,
         all_entries_fixtures,
         all_integration_fixtures,
@@ -71,11 +70,7 @@ if _t.TYPE_CHECKING:
 
     test_api_integration = _tests_integration_test_api_integration
     import tests.integration.test_categorization_real_data as _tests_integration_test_categorization_real_data
-    from tests.integration.test_api_integration import (
-        APIScenarios,
-        TestData,
-        TestFlextLdifAPIIntegration,
-    )
+    from tests.integration.test_api_integration import TestFlextLdifAPIIntegration
 
     test_categorization_real_data = _tests_integration_test_categorization_real_data
     import tests.integration.test_config_integration as _tests_integration_test_config_integration
@@ -272,12 +267,10 @@ if _t.TYPE_CHECKING:
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
 _LAZY_IMPORTS = {
-    "APIScenarios": "tests.integration.test_api_integration",
     "ConfigTestData": "tests.integration.test_config_integration",
     "TestAclRoundTripPreservation": "tests.integration.test_acl_metadata_preservation",
     "TestBoundaryValues": "tests.integration.test_edge_cases",
     "TestCategorizationRealData": "tests.integration.test_categorization_real_data",
-    "TestData": "tests.integration.test_api_integration",
     "TestDnCaseNormalizationScenarios": "tests.integration.test_dn_case_handling",
     "TestDnCaseRegistry": "tests.integration.test_dn_case_handling",
     "TestEmptyAndMinimalCases": "tests.integration.test_edge_cases",
@@ -340,7 +333,6 @@ _LAZY_IMPORTS = {
     "TestUnicodeBoundaries": "tests.integration.test_edge_cases",
     "TestZeroDataLossOidOud": "tests.integration.test_zero_data_loss_oid_oud",
     "TestsFlextLdifFixtures": "tests.integration.test_ldif_fixtures_integration",
-    "WORKSPACE_ROOT": "tests.integration.conftest",
     "all_acl_fixtures": "tests.integration.conftest",
     "all_entries_fixtures": "tests.integration.conftest",
     "all_integration_fixtures": "tests.integration.conftest",
@@ -432,13 +424,10 @@ _LAZY_IMPORTS = {
 }
 
 __all__ = [
-    "WORKSPACE_ROOT",
-    "APIScenarios",
     "ConfigTestData",
     "TestAclRoundTripPreservation",
     "TestBoundaryValues",
     "TestCategorizationRealData",
-    "TestData",
     "TestDnCaseNormalizationScenarios",
     "TestDnCaseRegistry",
     "TestEmptyAndMinimalCases",

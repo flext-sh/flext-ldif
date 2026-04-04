@@ -661,7 +661,6 @@ split-on-trailing-comma = true
   "T201",
 ]
 "**/typings.py" = [ "RUF036" ]
-"**/domain_entry.py" = [ "PLC0415" ]
 "**/workspace/*.py" = [ "PLC0415", "S404", "S603", "S607" ]
 
 # [MANAGED] tomlsort

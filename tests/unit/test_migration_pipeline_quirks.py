@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Final
 
 from flext_tests import tm
 
@@ -18,14 +17,7 @@ from flext_ldif import (
     FlextLdifServersOidConstants,
     FlextLdifServersRfc,
 )
-from tests import c, t
-
-
-class OidTestConstants:
-    """Constants for OID boolean conversion tests."""
-
-    RFC_TO_OID_BOOLEAN: Final[t.StrMapping] = {"TRUE": "1", "FALSE": "0"}
-    OID_TO_RFC_BOOLEAN: Final[t.StrMapping] = {"1": "TRUE", "0": "FALSE"}
+from tests import c
 
 
 class TestsFlextLdifMigrationPipelineQuirks:
@@ -39,8 +31,8 @@ class TestsFlextLdifMigrationPipelineQuirks:
         output_dir.mkdir()
         attr_enabled = "orclIsEnabled"
         attr_locked = "orclAccountLocked"
-        val_true_oid = OidTestConstants.RFC_TO_OID_BOOLEAN["TRUE"]
-        val_false_oid = OidTestConstants.RFC_TO_OID_BOOLEAN["FALSE"]
+        val_true_oid = c.Ldif.Migration.Oid.RFC_TO_OID_BOOLEAN["TRUE"]
+        val_false_oid = c.Ldif.Migration.Oid.RFC_TO_OID_BOOLEAN["FALSE"]
         ldif_content = f"dn: {c.Ldif.DNs.TEST_USER}\n{c.Ldif.Names.OBJECTCLASS}: {c.Ldif.Names.TOP}\n{c.Ldif.Names.OBJECTCLASS}: {c.Ldif.Names.PERSON}\n{c.Ldif.Names.OBJECTCLASS}: orcluser\n{c.Ldif.Names.CN}: test\n{c.Ldif.Names.SN}: test\n{attr_enabled}: {val_true_oid}\n{attr_locked}: {val_false_oid}\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
         pipeline = FlextLdifMigrationPipeline(
@@ -56,8 +48,8 @@ class TestsFlextLdifMigrationPipelineQuirks:
         output_file = output_dir / "migrated.ldif"
         _ = tm.that(output_file.exists(), eq=True)
         content = output_file.read_text(encoding="utf-8")
-        val_true_rfc = OidTestConstants.OID_TO_RFC_BOOLEAN[val_true_oid]
-        val_false_rfc = OidTestConstants.OID_TO_RFC_BOOLEAN[val_false_oid]
+        val_true_rfc = c.Ldif.Migration.Oid.OID_TO_RFC_BOOLEAN[val_true_oid]
+        val_false_rfc = c.Ldif.Migration.Oid.OID_TO_RFC_BOOLEAN[val_false_oid]
         tm.that(content, has=f"{attr_enabled.lower()}: {val_true_rfc}")
         tm.that(content, has=f"{attr_locked.lower()}: {val_false_rfc}")
         tm.that(f"{attr_enabled.lower()}: {val_true_oid}" not in content, eq=True)
@@ -88,8 +80,8 @@ class TestsFlextLdifMigrationPipelineQuirks:
         output_file = output_dir / "migrated.ldif"
         _ = tm.that(output_file.exists(), eq=True)
         content = output_file.read_text(encoding="utf-8")
-        val_true_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_true_rfc]
-        val_false_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_false_rfc]
+        val_true_oid = c.Ldif.Migration.Oid.RFC_TO_OID_BOOLEAN[val_true_rfc]
+        val_false_oid = c.Ldif.Migration.Oid.RFC_TO_OID_BOOLEAN[val_false_rfc]
         tm.that(content, has=f"{attr_enabled.lower()}: {val_true_oid}")
         tm.that(content, has=f"{attr_locked.lower()}: {val_false_oid}")
         tm.that(f"{attr_enabled.lower()}: {val_true_rfc}" not in content, eq=True)
@@ -200,5 +192,5 @@ class TestsFlextLdifMigrationPipelineQuirks:
         tm.ok(result)
         output_file = output_dir / "migrated.ldif"
         content = output_file.read_text(encoding="utf-8")
-        val_true_oid = OidTestConstants.RFC_TO_OID_BOOLEAN[val_true_rfc]
+        val_true_oid = c.Ldif.Migration.Oid.RFC_TO_OID_BOOLEAN[val_true_rfc]
         tm.that(content, has=f"{attr_enabled.lower()}: {val_true_oid}")

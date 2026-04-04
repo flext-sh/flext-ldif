@@ -11,20 +11,14 @@ from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 if _t.TYPE_CHECKING:
     import tests.unit.constants as _tests_unit_constants
-    from tests.unit.__init__ import TestsFlextLdifVersion, test_version
+    from tests.unit.__init__ import TestsFlextLdifVersion, test_version, version_module
     from tests.unit._utilities.oid import TestFlextLdifUtilitiesOID
     from tests.unit._utilities.parser import TestFlextLdifUtilitiesParser
-    from tests.unit._utilities.server import (
-        OidServer,
-        OudServer,
-        TestFlextLdifUtilitiesServer,
-    )
+    from tests.unit._utilities.server import TestFlextLdifUtilitiesServer
 
     constants = _tests_unit_constants
     import tests.unit.protocols as _tests_unit_protocols
     from tests.unit.constants import (
-        GetAclAttributesServerType,
-        IsAclAttributeType,
         TestsTestFlextLdifAclAttributeRegistry,
         test_acl_registry,
     )
@@ -33,21 +27,6 @@ if _t.TYPE_CHECKING:
     import tests.unit.services as _tests_unit_services
     from tests.unit.protocols import TestsTestFlextLdifProtocols, test_protocols
     from tests.unit.quirks.servers import (
-        ACL_TEST_CASES,
-        ATTRIBUTE_TEST_CASES,
-        ENTRY_TEST_CASES,
-        OBJECTCLASS_TEST_CASES,
-        AclScenario,
-        AclTestCase,
-        AttributeScenario,
-        AttributeTestCase,
-        EntryScenario,
-        EntryTestCase,
-        ObjectClassScenario,
-        ObjectClassTestCase,
-        ParseScenario,
-        RfcTestHelpers,
-        TestDeduplicationHelpers,
         TestNovellAcls,
         TestNovellEntryDetection,
         TestNovellSchemaAttributeDetection,
@@ -63,11 +42,9 @@ if _t.TYPE_CHECKING:
         TestsTestFlextLdifDs389Quirks,
         TestsTestFlextLdifOidQuirks,
         TestsTestFlextLdifRelaxedQuirks,
-        WriteScenario,
         cleanup_state,
         entry_quirk,
         ldif_api,
-        meta_keys,
         novell_server,
         schema_quirk,
     )
@@ -90,7 +67,6 @@ if _t.TYPE_CHECKING:
     test_migration_pipeline_quirks = _tests_unit_test_migration_pipeline_quirks
     import tests.unit.test_typings as _tests_unit_test_typings
     from tests.unit.test_migration_pipeline_quirks import (
-        OidTestConstants,
         TestsFlextLdifMigrationPipelineQuirks,
     )
 
@@ -137,24 +113,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "tests.unit.utilities",
     ),
     {
-        "ACL_TEST_CASES": "tests.unit.quirks.servers.test_ds389_quirks",
-        "ATTRIBUTE_TEST_CASES": "tests.unit.quirks.servers.test_novell_quirks",
-        "AclScenario": "tests.unit.quirks.servers.test_ds389_quirks",
-        "AclTestCase": "tests.unit.quirks.servers.test_ds389_quirks",
-        "AttributeScenario": "tests.unit.quirks.servers.test_novell_quirks",
-        "AttributeTestCase": "tests.unit.quirks.servers.test_novell_quirks",
-        "ENTRY_TEST_CASES": "tests.unit.quirks.servers.test_novell_quirks",
-        "EntryScenario": "tests.unit.quirks.servers.test_novell_quirks",
-        "EntryTestCase": "tests.unit.quirks.servers.test_novell_quirks",
-        "OBJECTCLASS_TEST_CASES": "tests.unit.quirks.servers.test_novell_quirks",
-        "ObjectClassScenario": "tests.unit.quirks.servers.test_novell_quirks",
-        "ObjectClassTestCase": "tests.unit.quirks.servers.test_novell_quirks",
-        "OidServer": "tests.unit._utilities.server.test_server_utilities",
-        "OidTestConstants": "tests.unit.test_migration_pipeline_quirks",
-        "OudServer": "tests.unit._utilities.server.test_server_utilities",
-        "ParseScenario": "tests.unit.quirks.servers.test_relaxed_quirks",
-        "RfcTestHelpers": "tests.unit.quirks.servers.test_novell_quirks",
-        "TestDeduplicationHelpers": "tests.unit.quirks.servers.test_novell_quirks",
         "TestFlextLdifTypesStructure": "tests.unit.test_typings",
         "TestFlextLdifUtilitiesOID": "tests.unit._utilities.oid.test_oid_utilities",
         "TestFlextLdifUtilitiesParser": "tests.unit._utilities.parser.test_parser_utilities",
@@ -181,7 +139,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "TestsTestFlextLdifDs389Quirks": "tests.unit.quirks.servers.test_ds389_quirks",
         "TestsTestFlextLdifOidQuirks": "tests.unit.quirks.servers.test_oid_quirks",
         "TestsTestFlextLdifRelaxedQuirks": "tests.unit.quirks.servers.test_relaxed_quirks",
-        "WriteScenario": "tests.unit.quirks.servers.test_relaxed_quirks",
         "c": ("flext_core.constants", "FlextConstants"),
         "cleanup_state": "tests.unit.quirks.servers.test_edge_cases",
         "constants": "tests.unit.constants",
@@ -191,7 +148,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "h": ("flext_core.handlers", "FlextHandlers"),
         "ldif_api": "tests.unit.quirks.servers.test_edge_cases",
         "m": ("flext_core.models", "FlextModels"),
-        "meta_keys": "tests.unit.quirks.servers.test_relaxed_quirks",
         "novell_server": "tests.unit.quirks.servers.test_novell_quirks",
         "p": ("flext_core.protocols", "FlextProtocols"),
         "protocols": "tests.unit.protocols",
@@ -210,28 +166,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
 )
 
 __all__ = [
-    "ACL_TEST_CASES",
-    "ATTRIBUTE_TEST_CASES",
-    "ENTRY_TEST_CASES",
-    "OBJECTCLASS_TEST_CASES",
-    "AclScenario",
-    "AclTestCase",
-    "AttributeScenario",
-    "AttributeTestCase",
-    "EntryScenario",
-    "EntryTestCase",
-    "GetAclAttributesServerType",
-    "IsAclAttributeType",
-    "ObjectClassScenario",
-    "ObjectClassTestCase",
-    "OidServer",
-    "OidTestConstants",
-    "OudServer",
-    "ParseScenario",
-    "RfcTestHelpers",
     "TestAliasDiscovery",
     "TestAttributeFixer",
-    "TestDeduplicationHelpers",
     "TestDnObjectClassMethods",
     "TestFlextLdifTypesStructure",
     "TestFlextLdifUtilitiesComprehensive",
@@ -271,7 +207,6 @@ __all__ = [
     "TestsTestFlextLdifOidQuirks",
     "TestsTestFlextLdifProtocols",
     "TestsTestFlextLdifRelaxedQuirks",
-    "WriteScenario",
     "c",
     "cleanup_state",
     "constants",
@@ -281,7 +216,6 @@ __all__ = [
     "h",
     "ldif_api",
     "m",
-    "meta_keys",
     "novell_server",
     "p",
     "protocols",
@@ -301,6 +235,7 @@ __all__ = [
     "test_version",
     "u",
     "utilities",
+    "version_module",
     "x",
 ]
 

@@ -8,7 +8,7 @@ from collections.abc import MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import (
-    FlextLdifModelsDomains,
+    FlextLdifModelsDomainsEntries,
     FlextLdifServersRfc,
     FlextLdifUtilitiesACL,
     c,
@@ -261,7 +261,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 return r[m.Ldif.Acl].fail(f"IBM Tivoli DS ACL parsing failed: {exc}")
 
         @override
-        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
+        def _write_acl(self, acl_data: FlextLdifModelsDomainsEntries.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
                 acl_attribute = (

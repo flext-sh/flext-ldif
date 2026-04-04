@@ -8,9 +8,7 @@ from typing import Annotated
 from pydantic import Field, computed_field, field_validator
 
 from flext_core import m
-from flext_ldif.constants import FlextLdifConstants as c
-from flext_ldif.shared import FlextLdifShared
-from flext_ldif.typings import FlextLdifTypes as t
+from flext_ldif import FlextLdifConstants as c, FlextLdifShared, FlextLdifTypes as t
 
 
 class FlextLdifModelsBases:

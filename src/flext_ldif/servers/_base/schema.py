@@ -408,20 +408,25 @@ class FlextLdifServersBaseSchema(
 
     def write(
         self,
-        model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        model: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
     ) -> r[str]:
         """Write schema model to string format."""
-        if isinstance(model, m.Ldif.SchemaAttribute):
-            return self.write_attribute(model)
-        return self.write_objectclass(model)
+        try:
+            attribute_model = m.Ldif.SchemaAttribute.model_validate(model)
+        except (ValueError, TypeError, AttributeError):
+            objectclass_model = m.Ldif.SchemaObjectClass.model_validate(model)
+            return self.write_objectclass(objectclass_model)
+        return self.write_attribute(attribute_model)
 
-    def write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> r[str]:
+    def write_attribute(self, attr_data: p.Ldif.SchemaAttribute) -> r[str]:
         """Write attribute to RFC-compliant string format (public API)."""
-        return self._write_attribute(attr_data)
+        validated_attr = m.Ldif.SchemaAttribute.model_validate(attr_data)
+        return self._write_attribute(validated_attr)
 
-    def write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> r[str]:
+    def write_objectclass(self, oc_data: p.Ldif.SchemaObjectClass) -> r[str]:
         """Write objectClass to RFC-compliant string format (public API)."""
-        return self._write_objectclass(oc_data)
+        validated_oc = m.Ldif.SchemaObjectClass.model_validate(oc_data)
+        return self._write_objectclass(validated_oc)
 
     def _auto_detect_operation(
         self,

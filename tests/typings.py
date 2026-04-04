@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from flext_tests import FlextTestsTypes
 
 from flext_ldif import FlextLdifTypes
@@ -40,6 +42,9 @@ class FlextLdifTestTypes(FlextTestsTypes, FlextLdifTypes):
             """
 
             type GenericFieldsDict = FlextLdifTypes.StrMapping
+            type DnRefData = Mapping[
+                str, FlextLdifTypes.StrMapping | FlextLdifTypes.StrSequence | str
+            ]
 
             class Fixtures:
                 """TypedDict definitions for LDIF test fixtures."""

@@ -6,7 +6,7 @@ import re
 from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar, override
 
-from flext_ldif import FlextLdifModelsDomains, FlextLdifServersRfc, c, m, r, t, u
+from flext_ldif import FlextLdifModelsDomainsEntries, FlextLdifServersRfc, c, m, r, t, u
 
 
 class FlextLdifServersApache(FlextLdifServersRfc):
@@ -196,7 +196,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             )
 
         @override
-        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
+        def _write_acl(self, acl_data: FlextLdifModelsDomainsEntries.Acl) -> r[str]:
             """Write ACL data to Apache Directory Server ACI format."""
             parent_result = super()._write_acl(acl_data)
             if parent_result.is_success:

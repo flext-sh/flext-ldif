@@ -7,12 +7,10 @@ server implementations, ACL handling, and service contracts.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from enum import StrEnum, unique
-from typing import Annotated, ClassVar
+from typing import ClassVar
 
 import pytest
 from flext_tests import tm
-from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r
 from flext_ldif import (
@@ -26,6 +24,7 @@ from flext_ldif import (
     p,
     t,
 )
+from tests import c, m
 
 
 def _create_server_implementations() -> Sequence[tuple[str, type, type]]:
@@ -45,59 +44,11 @@ class TestsTestFlextLdifProtocols:
     Constants, Helpers, and test method groups.
     """
 
-    @unique
-    class ProtocolNames(StrEnum):
-        """Protocol names in FlextLdifProtocols.Ldif namespace organized as nested enum."""
-
-        __test__ = False
-        SCHEMA = "SchemaQuirk"
-        ACL = "AclQuirk"
-        ENTRY = "EntryQuirk"
-
     _PROTOCOL_NAMES: ClassVar[t.StrSequence] = [
-        ProtocolNames.SCHEMA.value,
-        ProtocolNames.ACL.value,
-        ProtocolNames.ENTRY.value,
+        c.Ldif.Scenarios.Protocol.Names.SCHEMA.value,
+        c.Ldif.Scenarios.Protocol.Names.ACL.value,
+        c.Ldif.Scenarios.Protocol.Names.ENTRY.value,
     ]
-
-    @unique
-    class ServerTypes(StrEnum):
-        """Server types implementing schema protocol organized as nested enum."""
-
-        __test__ = False
-        OID = "oid"
-        OUD = "oud"
-        OPENLDAP = "openldap"
-        RELAXED = "relaxed"
-
-    class ProtocolServer(BaseModel):
-        """Server implementation for schema protocol testing."""
-
-        __test__ = False
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-
-        name: Annotated[str, Field(description="Protocol server implementation name")]
-        server_class: Annotated[type, Field(description="Server implementation class")]
-        schema_class: Annotated[type, Field(description="Schema implementation class")]
-
-    class Constants:
-        """Test constants organized as nested class."""
-
-        ATTR_PARSE: str = "parse_attribute"
-        ATTR_WRITE: str = "write"
-        ATTR_SERVER_TYPE: str = "server_type"
-        ATTR_PRIORITY: str = "priority"
-        ATTR_CAN_HANDLE_ATTRIBUTE: str = "can_handle_attribute"
-        ATTR_CAN_HANDLE_OBJECTCLASS: str = "can_handle_objectclass"
-        ATTR_SCHEMA: str = "schema"
-        ATTR_ACL: str = "acl"
-        ATTR_ENTRY: str = "entry"
-        ATTR_IS_SUCCESS: str = "is_success"
-        SAMPLE_ATTR_DEF: str = (
-            "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        )
-        SAMPLE_ATTR_DEF_SIMPLE: str = "( 2.5.4.3 NAME 'cn' )"
-        SAMPLE_OC_DEF: str = "( 2.5.6.0 NAME 'top' ABSTRACT )"
 
     class Helpers:
         """Helper methods organized as nested class."""
@@ -108,29 +59,29 @@ class TestsTestFlextLdifProtocols:
         ) -> None:
             """Verify schema has all required protocol methods."""
             tm.that(
-                hasattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_PARSE),
+                hasattr(schema, c.Ldif.ProtocolTest.ATTR_PARSE),
                 eq=True,
             )
             tm.that(
                 callable(
-                    getattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_PARSE),
+                    getattr(schema, c.Ldif.ProtocolTest.ATTR_PARSE),
                 ),
                 eq=True,
             )
             tm.that(
-                hasattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_WRITE),
+                hasattr(schema, c.Ldif.ProtocolTest.ATTR_WRITE),
                 eq=True,
             )
             tm.that(
                 callable(
-                    getattr(schema, TestsTestFlextLdifProtocols.Constants.ATTR_WRITE),
+                    getattr(schema, c.Ldif.ProtocolTest.ATTR_WRITE),
                 ),
                 eq=True,
             )
             tm.that(
                 hasattr(
                     schema,
-                    TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_ATTRIBUTE,
+                    c.Ldif.ProtocolTest.ATTR_CAN_HANDLE_ATTRIBUTE,
                 ),
                 eq=True,
             )
@@ -138,7 +89,7 @@ class TestsTestFlextLdifProtocols:
                 callable(
                     getattr(
                         schema,
-                        TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_ATTRIBUTE,
+                        c.Ldif.ProtocolTest.ATTR_CAN_HANDLE_ATTRIBUTE,
                     ),
                 ),
                 eq=True,
@@ -146,7 +97,7 @@ class TestsTestFlextLdifProtocols:
             tm.that(
                 hasattr(
                     schema,
-                    TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_OBJECTCLASS,
+                    c.Ldif.ProtocolTest.ATTR_CAN_HANDLE_OBJECTCLASS,
                 ),
                 eq=True,
             )
@@ -154,7 +105,7 @@ class TestsTestFlextLdifProtocols:
                 callable(
                     getattr(
                         schema,
-                        TestsTestFlextLdifProtocols.Constants.ATTR_CAN_HANDLE_OBJECTCLASS,
+                        c.Ldif.ProtocolTest.ATTR_CAN_HANDLE_OBJECTCLASS,
                     ),
                 ),
                 eq=True,
@@ -185,19 +136,19 @@ class TestsTestFlextLdifProtocols:
         ) -> None:
             """Verify registry has required retrieval methods."""
             methods = [
-                TestsTestFlextLdifProtocols.Constants.ATTR_SCHEMA,
-                TestsTestFlextLdifProtocols.Constants.ATTR_ACL,
-                TestsTestFlextLdifProtocols.Constants.ATTR_ENTRY,
+                c.Ldif.ProtocolTest.ATTR_SCHEMA,
+                c.Ldif.ProtocolTest.ATTR_ACL,
+                c.Ldif.ProtocolTest.ATTR_ENTRY,
             ]
             for method in methods:
                 tm.that(hasattr(registry, method), eq=True)
                 tm.that(callable(getattr(registry, method)), eq=True)
 
     @classmethod
-    def get_server_implementations(cls) -> Sequence[ProtocolServer]:
+    def get_server_implementations(cls) -> Sequence[m.Ldif.Tests.ProtocolServer]:
         """Get all server implementations for testing."""
         return [
-            cls.ProtocolServer(
+            m.Ldif.Tests.ProtocolServer(
                 name=name,
                 server_class=server_class,
                 schema_class=schema_class,
@@ -265,7 +216,7 @@ class TestsTestFlextLdifProtocols:
         oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test parse method returns r."""
-        result = oid_schema.parse_attribute(self.Constants.SAMPLE_ATTR_DEF)
+        result = oid_schema.parse_attribute(c.Ldif.ProtocolTest.SAMPLE_ATTR_DEF)
         tm.that(result, is_=r)
 
     def test_can_handle_returns_bool(
@@ -274,10 +225,10 @@ class TestsTestFlextLdifProtocols:
     ) -> None:
         """Test can_handle methods return bool."""
         attr_result = oid_schema.can_handle_attribute(
-            self.Constants.SAMPLE_ATTR_DEF_SIMPLE,
+            c.Ldif.ProtocolTest.SAMPLE_ATTR_DEF_SIMPLE,
         )
         tm.that(attr_result, is_=bool)
-        oc_result = oid_schema.can_handle_objectclass(self.Constants.SAMPLE_OC_DEF)
+        oc_result = oid_schema.can_handle_objectclass(c.Ldif.ProtocolTest.SAMPLE_OC_DEF)
         tm.that(oc_result, is_=bool)
 
     @pytest.fixture
@@ -291,8 +242,10 @@ class TestsTestFlextLdifProtocols:
 
     def test_registry_schema_retrieval(self, registry: FlextLdifServer) -> None:
         """Test registry can retrieve schema quirks."""
-        result = registry.get_schema_quirk(self.ServerTypes.OID)
-        tm.that(result is None or hasattr(result, self.Constants.ATTR_PARSE), eq=True)
+        result = registry.get_schema_quirk(c.Ldif.Scenarios.Protocol.ServerTypes.OID)
+        tm.that(
+            result is None or hasattr(result, c.Ldif.ProtocolTest.ATTR_PARSE), eq=True
+        )
 
     def test_registry_global_instance(self) -> None:
         """Test registry global instance is accessible."""
@@ -302,9 +255,9 @@ class TestsTestFlextLdifProtocols:
     def test_protocol_type_checking(self) -> None:
         """Test protocol can be used for type checking."""
         oid_schema: p.Ldif.SchemaQuirk = FlextLdifServersOid.Schema()
-        is_schema = hasattr(oid_schema, self.Constants.ATTR_PARSE) and hasattr(
+        is_schema = hasattr(oid_schema, c.Ldif.ProtocolTest.ATTR_PARSE) and hasattr(
             oid_schema,
-            self.Constants.ATTR_WRITE,
+            c.Ldif.ProtocolTest.ATTR_WRITE,
         )
         tm.that(is_schema, eq=True)
 
@@ -318,15 +271,17 @@ class TestsTestFlextLdifProtocols:
         schemas = [
             s
             for s in schemas_list
-            if hasattr(s, self.Constants.ATTR_PARSE)
-            and hasattr(s, self.Constants.ATTR_WRITE)
+            if hasattr(s, c.Ldif.ProtocolTest.ATTR_PARSE)
+            and hasattr(s, c.Ldif.ProtocolTest.ATTR_WRITE)
         ]
         tm.that(len(schemas), eq=3)
 
     def test_protocol_method_calls(self) -> None:
         """Test calling protocol methods on implementations."""
         schema = FlextLdifServersOid.Schema()
-        result = schema.can_handle_attribute(self.Constants.SAMPLE_ATTR_DEF_SIMPLE)
+        result = schema.can_handle_attribute(c.Ldif.ProtocolTest.SAMPLE_ATTR_DEF_SIMPLE)
         tm.that(result, is_=bool)
-        parse_result = schema.parse_attribute(self.Constants.SAMPLE_ATTR_DEF_SIMPLE)
-        tm.that(hasattr(parse_result, self.Constants.ATTR_IS_SUCCESS), eq=True)
+        parse_result = schema.parse_attribute(
+            c.Ldif.ProtocolTest.SAMPLE_ATTR_DEF_SIMPLE
+        )
+        tm.that(hasattr(parse_result, c.Ldif.ProtocolTest.ATTR_IS_SUCCESS), eq=True)

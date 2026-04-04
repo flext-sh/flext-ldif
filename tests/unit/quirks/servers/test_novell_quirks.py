@@ -6,229 +6,11 @@ eDirectory-specific attributes, t.NormalizedValue classes, and entries in LDIF f
 
 from __future__ import annotations
 
-from enum import StrEnum, unique
-from typing import Annotated, ClassVar
-
 import pytest
 from flext_tests import tm
-from pydantic import BaseModel, ConfigDict, Field
-from tests import c, m, t
+from tests import c, m
 
 from flext_ldif import FlextLdifServersNovell
-
-RfcTestHelpers = c.Ldif.RfcTestHelpers
-TestDeduplicationHelpers = c.Ldif.TestDeduplicationHelpers
-
-
-@unique
-class AttributeScenario(StrEnum):
-    """Novell attribute detection scenarios."""
-
-    NOVELL_OID = "novell_oid"
-    NSPM_PREFIX = "nspm_prefix"
-    LOGIN_PREFIX = "login_prefix"
-    DIRXML_PREFIX = "dirxml_prefix"
-    STANDARD_RFC = "standard_rfc"
-
-
-@unique
-class ObjectClassScenario(StrEnum):
-    """Novell objectClass detection scenarios."""
-
-    NOVELL_OID = "novell_oid"
-    NDS_NAME = "nds_name"
-    STANDARD_RFC = "standard_rfc"
-
-
-@unique
-class EntryScenario(StrEnum):
-    """Novell entry detection scenarios."""
-
-    OU_SERVICES = "ou_services"
-    OU_APPS = "ou_apps"
-    OU_SYSTEM = "ou_system"
-    NSPM_ATTRIBUTE = "nspm_attribute"
-    LOGIN_ATTRIBUTE = "login_attribute"
-    NDS_OBJECTCLASS = "nds_objectclass"
-    STANDARD_RFC = "standard_rfc"
-
-
-class AttributeTestCase(BaseModel):
-    """Test case for attribute detection and parsing."""
-
-    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-
-    scenario: Annotated[
-        AttributeScenario,
-        Field(description="Attribute scenario identifier"),
-    ]
-    attr_definition: Annotated[
-        str,
-        Field(description="Schema attribute definition string"),
-    ]
-    expected_can_handle: Annotated[
-        bool,
-        Field(description="Expected can_handle result"),
-    ]
-    expected_oid: Annotated[
-        str | None,
-        Field(description="Expected parsed OID"),
-    ] = None
-    expected_name: Annotated[
-        str | None,
-        Field(description="Expected parsed attribute name"),
-    ] = None
-
-
-class ObjectClassTestCase(BaseModel):
-    """Test case for objectClass detection and parsing."""
-
-    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-
-    scenario: Annotated[
-        ObjectClassScenario,
-        Field(description="ObjectClass scenario identifier"),
-    ]
-    oc_definition: Annotated[
-        str,
-        Field(description="Schema objectClass definition string"),
-    ]
-    expected_can_handle: Annotated[
-        bool,
-        Field(description="Expected can_handle result"),
-    ]
-    expected_oid: Annotated[
-        str | None,
-        Field(description="Expected parsed OID"),
-    ] = None
-    expected_name: Annotated[
-        str | None,
-        Field(description="Expected parsed objectClass name"),
-    ] = None
-    expected_kind: Annotated[
-        str | None,
-        Field(description="Expected parsed objectClass kind"),
-    ] = None
-
-
-class EntryTestCase(BaseModel):
-    """Test case for entry detection."""
-
-    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-
-    scenario: Annotated[
-        EntryScenario,
-        Field(description="Entry detection scenario identifier"),
-    ]
-    entry_dn: Annotated[str, Field(description="Entry distinguished name")]
-    attributes: Annotated[
-        t.MutableStrSequenceMapping,
-        Field(
-            description="Entry attributes mapped by name",
-        ),
-    ]
-    expected_can_handle: Annotated[
-        bool,
-        Field(description="Expected can_handle result"),
-    ]
-
-
-ATTRIBUTE_TEST_CASES = (
-    AttributeTestCase(
-        scenario=AttributeScenario.NOVELL_OID,
-        attr_definition="( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
-        expected_can_handle=True,
-        expected_oid="2.16.840.1.113719.1.1.4.1.501",
-        expected_name="nspmPasswordPolicyDN",
-    ),
-    AttributeTestCase(
-        scenario=AttributeScenario.NSPM_PREFIX,
-        attr_definition="( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
-        expected_can_handle=True,
-        expected_name="nspmPasswordPolicy",
-    ),
-    AttributeTestCase(
-        scenario=AttributeScenario.LOGIN_PREFIX,
-        attr_definition="( 1.2.3.4 NAME 'loginDisabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )",
-        expected_can_handle=True,
-        expected_name="loginDisabled",
-    ),
-    AttributeTestCase(
-        scenario=AttributeScenario.DIRXML_PREFIX,
-        attr_definition="( 1.2.3.4 NAME 'dirxml-associations' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
-        expected_can_handle=True,
-        expected_name="dirxml-associations",
-    ),
-    AttributeTestCase(
-        scenario=AttributeScenario.STANDARD_RFC,
-        attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
-        expected_can_handle=False,
-    ),
-)
-OBJECTCLASS_TEST_CASES = (
-    ObjectClassTestCase(
-        scenario=ObjectClassScenario.NOVELL_OID,
-        oc_definition="( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' SUP top STRUCTURAL )",
-        expected_can_handle=True,
-        expected_oid="2.16.840.1.113719.2.2.6.1",
-        expected_name="ndsPerson",
-    ),
-    ObjectClassTestCase(
-        scenario=ObjectClassScenario.NDS_NAME,
-        oc_definition="( 2.5.6.0 NAME 'ndsserver' SUP top STRUCTURAL )",
-        expected_can_handle=True,
-        expected_name="ndsserver",
-    ),
-    ObjectClassTestCase(
-        scenario=ObjectClassScenario.STANDARD_RFC,
-        oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
-        expected_can_handle=False,
-    ),
-)
-ENTRY_TEST_CASES = (
-    EntryTestCase(
-        scenario=EntryScenario.OU_SERVICES,
-        entry_dn="ou=services,o=Example",
-        attributes={"objectClass": ["organizationalUnit"]},
-        expected_can_handle=True,
-    ),
-    EntryTestCase(
-        scenario=EntryScenario.OU_APPS,
-        entry_dn="ou=apps,o=Example",
-        attributes={"objectClass": ["organizationalUnit"]},
-        expected_can_handle=True,
-    ),
-    EntryTestCase(
-        scenario=EntryScenario.OU_SYSTEM,
-        entry_dn="ou=system,o=Example",
-        attributes={"objectClass": ["organizationalUnit"]},
-        expected_can_handle=True,
-    ),
-    EntryTestCase(
-        scenario=EntryScenario.NSPM_ATTRIBUTE,
-        entry_dn="cn=user,o=Example",
-        attributes={"nspmpasswordpolicy": ["policy1"], "objectClass": ["top"]},
-        expected_can_handle=True,
-    ),
-    EntryTestCase(
-        scenario=EntryScenario.LOGIN_ATTRIBUTE,
-        entry_dn="cn=user,o=Example",
-        attributes={"logindisabled": ["TRUE"], "objectClass": ["top"]},
-        expected_can_handle=True,
-    ),
-    EntryTestCase(
-        scenario=EntryScenario.NDS_OBJECTCLASS,
-        entry_dn="cn=user,o=Example",
-        attributes={"objectClass": ["top", "ndsperson"]},
-        expected_can_handle=True,
-    ),
-    EntryTestCase(
-        scenario=EntryScenario.STANDARD_RFC,
-        entry_dn="cn=user,dc=example,dc=com",
-        attributes={"objectClass": ["person"], "cn": ["user"]},
-        expected_can_handle=False,
-    ),
-)
 
 
 @pytest.fixture
@@ -275,10 +57,10 @@ class TestsFlextLdifNovellInitialization:
 class TestNovellSchemaAttributeDetection:
     """Test schema attribute detection."""
 
-    @pytest.mark.parametrize("test_case", ATTRIBUTE_TEST_CASES)
+    @pytest.mark.parametrize("test_case", c.Ldif.TestCases.Novell.ATTRIBUTE_TEST_CASES)
     def test_can_handle_attribute(
         self,
-        test_case: AttributeTestCase,
+        test_case: m.Ldif.Tests.AttributeTestCase,
         schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test attribute detection for various scenarios."""
@@ -295,7 +77,7 @@ class TestNovellSchemaAttributeParsing:
     ) -> None:
         """Test parsing Novell eDirectory attribute definition."""
         attr_def = "( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' DESC 'Password Policy DN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE )"
-        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+        c.Ldif.RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             schema_quirk,
             attr_def,
             expected_oid="2.16.840.1.113719.1.1.4.1.501",
@@ -311,7 +93,7 @@ class TestNovellSchemaAttributeParsing:
     ) -> None:
         """Test parsing attribute with syntax length specification."""
         attr_def = "( 2.16.840.1.113719.1.1.4.1.1 NAME 'nspmAdminGroup' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
-        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+        c.Ldif.RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             schema_quirk,
             attr_def,
             expected_syntax="1.3.6.1.4.1.1466.115.121.1.15",
@@ -334,10 +116,12 @@ class TestNovellSchemaAttributeParsing:
 class TestNovellSchemaObjectClassDetection:
     """Test schema objectClass detection."""
 
-    @pytest.mark.parametrize("test_case", OBJECTCLASS_TEST_CASES)
+    @pytest.mark.parametrize(
+        "test_case", c.Ldif.TestCases.Novell.OBJECTCLASS_TEST_CASES
+    )
     def test_can_handle_objectclass(
         self,
-        test_case: ObjectClassTestCase,
+        test_case: m.Ldif.Tests.ObjectClassTestCase,
         schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test objectClass detection for various scenarios."""
@@ -354,7 +138,7 @@ class TestNovellSchemaObjectClassParsing:
     ) -> None:
         """Test parsing STRUCTURAL objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' DESC 'NDS Person' SUP top STRUCTURAL MUST ( cn ) MAY ( loginDisabled ) )"
-        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+        c.Ldif.RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             schema_quirk,
             oc_def,
             expected_oid="2.16.840.1.113719.2.2.6.1",
@@ -371,7 +155,7 @@ class TestNovellSchemaObjectClassParsing:
     ) -> None:
         """Test parsing AUXILIARY objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.2 NAME 'nspmPasswordPolicy' AUXILIARY MAY ( nspmPasswordPolicyDN ) )"
-        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+        c.Ldif.RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             schema_quirk,
             oc_def,
             expected_kind="AUXILIARY",
@@ -383,7 +167,7 @@ class TestNovellSchemaObjectClassParsing:
     ) -> None:
         """Test parsing ABSTRACT objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.3 NAME 'ndsbase' ABSTRACT )"
-        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+        c.Ldif.RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
             schema_quirk,
             oc_def,
             expected_kind="ABSTRACT",
@@ -414,7 +198,7 @@ class TestNovellSchemaObjectClassParsing:
             syntax="1.3.6.1.4.1.1466.115.121.1.12",
             single_value=True,
         )
-        TestDeduplicationHelpers.quirk_write_and_unwrap(
+        c.Ldif.TestDeduplicationHelpers.quirk_write_and_unwrap(
             schema_quirk,
             attr_data,
             write_method="_write_attribute",
@@ -438,7 +222,7 @@ class TestNovellSchemaObjectClassParsing:
             must=["cn"],
             may=["loginDisabled"],
         )
-        TestDeduplicationHelpers.quirk_write_and_unwrap(
+        c.Ldif.TestDeduplicationHelpers.quirk_write_and_unwrap(
             schema_quirk,
             oc_data,
             write_method="_write_objectclass",
@@ -464,10 +248,10 @@ class TestNovellEntryDetection:
         """Test entry quirk is initialized."""
         tm.that(bool(entry_quirk), eq=True)
 
-    @pytest.mark.parametrize("test_case", ENTRY_TEST_CASES)
+    @pytest.mark.parametrize("test_case", c.Ldif.TestCases.Novell.ENTRY_TEST_CASES)
     def test_can_handle_entry(
         self,
-        test_case: EntryTestCase,
+        test_case: m.Ldif.Tests.EntryTestCase,
         entry_quirk: FlextLdifServersNovell.Entry,
     ) -> None:
         """Test entry detection for various scenarios."""

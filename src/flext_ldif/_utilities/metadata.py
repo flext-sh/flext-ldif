@@ -9,16 +9,14 @@ from typing import TypeIs
 from pydantic import BaseModel
 
 from flext_core import FlextLogger, u
-from flext_ldif import (
-    FlextLdifModelsDomains,
-    FlextLdifModelsMetadata,
-    FlextLdifModelsSettings,
-    FlextLdifUtilitiesServer,
-    c,
-    m,
-    p,
-    t,
-)
+from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif._models.settings import FlextLdifModelsSettings
+from flext_ldif._utilities.server import FlextLdifUtilitiesServer
+from flext_ldif.constants import FlextLdifConstants as c
+from flext_ldif.models import FlextLdifModels as m
+from flext_ldif.protocols import FlextLdifProtocols as p
+from flext_ldif.typings import FlextLdifTypes as t
 
 logger = FlextLogger(__name__)
 
@@ -802,7 +800,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def extract_write_options(
-        entry_data: m.Ldif.Entry | FlextLdifModelsDomains.Entry,
+        entry_data: p.Ldif.EntryWithMetadata,
     ) -> FlextLdifModelsSettings.WriteFormatOptions | None:
         """Extract write options from entry metadata."""
         if not entry_data.metadata:
@@ -835,7 +833,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def preserve_schema_formatting(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModelsDomainMetadata.QuirkMetadata,
         definition: str,
     ) -> None:
         """Preserve complete schema formatting details for round-trip."""
@@ -851,7 +849,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def store_minimal_differences(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModelsDomainMetadata.QuirkMetadata,
         **extra: t.Scalar,
     ) -> None:
         """Store minimal differences in metadata for delta tracking."""
@@ -860,7 +858,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def track_boolean_conversion(
-        metadata: FlextLdifModelsDomains.QuirkMetadata,
+        metadata: FlextLdifModelsDomainMetadata.QuirkMetadata,
         attr_name: str,
         original_value: str,
         converted_value: str,

@@ -7,9 +7,11 @@ from collections.abc import Callable, MutableSequence
 from typing import Final
 
 from flext_core import r
-from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
-from flext_ldif.constants import FlextLdifConstants as c
-from flext_ldif.typings import FlextLdifTypes as t
+from flext_ldif import (
+    FlextLdifConstants as c,
+    FlextLdifTypes as t,
+    FlextLdifUtilitiesSchema,
+)
 
 
 class FlextLdifUtilitiesAttribute:

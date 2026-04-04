@@ -8,7 +8,7 @@ from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import ClassVar, override
 
 from flext_core import FlextLogger
-from flext_ldif import FlextLdifModelsDomains, FlextLdifServersRfc, c, m, r, t
+from flext_ldif import FlextLdifModelsDomainsEntries, FlextLdifServersRfc, c, m, r, t
 
 logger = FlextLogger(__name__)
 
@@ -385,7 +385,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             return acl_content
 
         @override
-        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
+        def _write_acl(self, acl_data: FlextLdifModelsDomainsEntries.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format (internal)."""
             try:
                 if acl_data.raw_acl:

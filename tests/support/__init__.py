@@ -18,7 +18,7 @@ if _t.TYPE_CHECKING:
 
     ldif_data = _tests_support_ldif_data
     import tests.support.real_services as _tests_support_real_services
-    from tests.support.ldif_data import LdifSample, LdifTestData
+    from tests.support.ldif_data import LdifTestData
 
     real_services = _tests_support_real_services
     import tests.support.test_files as _tests_support_test_files
@@ -49,7 +49,6 @@ _LAZY_IMPORTS = {
     "FileManager": "tests.support.test_files",
     "FlextLdifTestConftest": "tests.support.conftest_factory",
     "FlextLdifTestServiceFactory": "tests.support.real_services",
-    "LdifSample": "tests.support.ldif_data",
     "LdifTestData": "tests.support.ldif_data",
     "MockFlextUtilitiesResultHelpers": "tests.support.validators",
     "MockMatchers": "tests.support.validators",
@@ -77,7 +76,6 @@ __all__ = [
     "FileManager",
     "FlextLdifTestConftest",
     "FlextLdifTestServiceFactory",
-    "LdifSample",
     "LdifTestData",
     "MockFlextUtilitiesResultHelpers",
     "MockMatchers",

@@ -10,9 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final
+from typing import Annotated, ClassVar, Final
 
 from flext_tests import FlextTestsModels
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldif import FlextLdifModels, FlextLdifModelsSettings
 from tests import t
@@ -81,6 +82,155 @@ class FlextLdifTestModels(FlextTestsModels, FlextLdifModels):
                 server_type: str
                 dn: str
                 attributes: t.StrSequenceMapping
+
+            class LdifSample(BaseModel):
+                """LDIF sample with metadata for test data generation."""
+
+                model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+                content: Annotated[str, Field(description="LDIF content as string")]
+                description: Annotated[
+                    str,
+                    Field(description="Human-readable description of the sample"),
+                ]
+                expected_entries: Annotated[
+                    int,
+                    Field(description="Expected number of entries in the LDIF"),
+                ]
+                has_binary: Annotated[
+                    bool,
+                    Field(description="Whether the sample contains binary data"),
+                ] = False
+                has_changes: Annotated[
+                    bool,
+                    Field(description="Whether the sample contains change records"),
+                ] = False
+
+            class AttributeTestCase(BaseModel):
+                """Unified test case for attribute detection and parsing across all quirk servers."""
+
+                model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+                scenario: Annotated[
+                    str, Field(description="Attribute scenario identifier")
+                ]
+                attr_definition: Annotated[
+                    str,
+                    Field(description="Schema attribute definition string"),
+                ]
+                expected_can_handle: Annotated[
+                    bool,
+                    Field(description="Expected can_handle result"),
+                ]
+                expected_oid: Annotated[
+                    str | None,
+                    Field(description="Expected parsed OID"),
+                ] = None
+                expected_name: Annotated[
+                    str | None,
+                    Field(description="Expected parsed attribute name"),
+                ] = None
+
+            class ObjectClassTestCase(BaseModel):
+                """Unified test case for objectClass detection and parsing across all quirk servers."""
+
+                model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+                scenario: Annotated[
+                    str, Field(description="ObjectClass scenario identifier")
+                ]
+                oc_definition: Annotated[
+                    str,
+                    Field(description="Schema objectClass definition string"),
+                ]
+                expected_can_handle: Annotated[
+                    bool,
+                    Field(description="Expected can_handle result"),
+                ]
+                expected_oid: Annotated[
+                    str | None,
+                    Field(description="Expected parsed OID"),
+                ] = None
+                expected_name: Annotated[
+                    str | None,
+                    Field(description="Expected parsed objectClass name"),
+                ] = None
+                expected_kind: Annotated[
+                    str | None,
+                    Field(description="Expected parsed objectClass kind"),
+                ] = None
+
+            class EntryTestCase(BaseModel):
+                """Unified test case for entry detection across all quirk servers."""
+
+                model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+                scenario: Annotated[
+                    str, Field(description="Entry detection scenario identifier")
+                ]
+                entry_dn: Annotated[str, Field(description="Entry distinguished name")]
+                attributes: Annotated[
+                    t.MutableStrSequenceMapping,
+                    Field(description="Entry attributes mapped by name"),
+                ]
+                expected_can_handle: Annotated[
+                    bool,
+                    Field(description="Expected can_handle result"),
+                ]
+
+            class ProtocolServer(BaseModel):
+                """Server implementation for schema protocol testing."""
+
+                __test__ = False
+                model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+                name: Annotated[
+                    str, Field(description="Protocol server implementation name")
+                ]
+                server_class: Annotated[
+                    type, Field(description="Server implementation class")
+                ]
+                schema_class: Annotated[
+                    type, Field(description="Schema implementation class")
+                ]
+
+            class OidServerStub:
+                """Stub OID server for testing."""
+
+                class Constants:
+                    """OID server constants."""
+
+                    SERVER_TYPE = "oid"
+
+                class Entry:
+                    """OID entry stub."""
+
+            class OudServerStub:
+                """Stub OUD server for testing."""
+
+                class Constants:
+                    """OUD server constants."""
+
+                    SERVER_TYPE = "oud"
+
+            class AclTestCase(BaseModel):
+                """Unified test case for ACL handling across all quirk servers."""
+
+                model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+                scenario: Annotated[str, Field(description="ACL scenario identifier")]
+                acl_line: Annotated[
+                    str | None,
+                    Field(description="ACL line under test"),
+                ] = None
+                expected_can_handle: Annotated[
+                    bool,
+                    Field(description="Expected can_handle result"),
+                ] = False
+                expected_success: Annotated[
+                    bool,
+                    Field(description="Expected parse success state"),
+                ] = False
 
 
 m = FlextLdifTestModels

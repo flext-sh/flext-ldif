@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
-from typing import overload
+from typing import TypeGuard, overload
 
 from flext_core import r
 from flext_ldif import (
-    FlextLdifModelsDomainsEntries,
     FlextLdifUtilitiesAttribute,
     FlextLdifUtilitiesCollectionLdif,
     FlextLdifUtilitiesDN,
@@ -18,9 +17,6 @@ from flext_ldif import (
     p,
     t,
 )
-
-_Entry = FlextLdifModelsDomainsEntries.Entry
-_DN = FlextLdifModelsDomainsEntries.DN
 
 
 class FlextLdifUtilitiesDispatch:
@@ -139,7 +135,7 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     @overload
     def validate(
-        value_or_entries: MutableSequence[_Entry],
+        value_or_entries: MutableSequence[m.Ldif.Entry],
         *,
         strict: bool = True,
         collect_all: bool = True,
@@ -149,7 +145,7 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     @overload
     def validate(
-        value_or_entries: str | _DN,
+        value_or_entries: str | m.Ldif.DN,
         *,
         strict: bool = True,
         collect_all: bool = True,
@@ -158,7 +154,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def validate(
-        value_or_entries: MutableSequence[_Entry] | t.Container | str | _DN,
+        value_or_entries: MutableSequence[m.Ldif.Entry] | t.Container | str | m.Ldif.DN,
         validator_first: p.ValidatorSpec | None = None,
         *validators_rest: p.ValidatorSpec,
         strict: bool = True,
@@ -170,12 +166,11 @@ class FlextLdifUtilitiesDispatch:
         | bool
     ):
         """Validate entries against rules."""
-        if isinstance(value_or_entries, str | _DN) and validator_first is None:
+        if isinstance(value_or_entries, (str, m.Ldif.DN)) and validator_first is None:
             return FlextLdifUtilitiesDN.validate_dn(value_or_entries)
         if (
             FlextLdifUtilitiesDispatch._is_entry_sequence(value_or_entries)
             and validator_first is None
-            and isinstance(value_or_entries, list)
         ):
             return FlextLdifUtilitiesDispatch._validate_entries(
                 value_or_entries,
@@ -192,7 +187,7 @@ class FlextLdifUtilitiesDispatch:
             return r[t.Container].fail(
                 "validator call requires scalar, not entry sequence",
             )
-        if isinstance(value_or_entries, _DN):
+        if isinstance(value_or_entries, m.Ldif.DN):
             return FlextLdifUtilitiesValidation.validate_value(
                 value_or_entries.value,
                 *validators,
@@ -222,8 +217,8 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def _is_entry_sequence(
-        obj: MutableSequence[_Entry] | t.Container | str | _DN,
-    ) -> bool:
+        obj: object,
+    ) -> TypeGuard[MutableSequence[m.Ldif.Entry]]:
         """Check if value is a Sequence of Entry objects (dispatch helper)."""
         if isinstance(obj, (str, bytes)):
             return False

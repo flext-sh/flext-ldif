@@ -19,7 +19,7 @@ from flext_core import FlextModels
 from flext_ldif import (
     FlextLdifModelsBases,
     FlextLdifModelsCollections,
-    FlextLdifModelsDomains,
+    FlextLdifModelsDomainsEntries,
     FlextLdifModelsEvents,
     FlextLdifModelsMetadata,
     FlextLdifModelsProcessing,
@@ -38,7 +38,7 @@ class FlextLdifModels(FlextModels):
     """
 
     class Ldif(
-        FlextLdifModelsDomains,
+        FlextLdifModelsDomainsEntries,
         FlextLdifModelsMetadata,
         FlextLdifModelsSettings,
         FlextLdifModelsEvents,

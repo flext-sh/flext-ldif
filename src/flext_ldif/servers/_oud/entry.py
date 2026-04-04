@@ -14,7 +14,7 @@ from typing import override
 
 from flext_core import FlextLogger, r
 from flext_ldif import (
-    FlextLdifModelsDomains,
+    FlextLdifModelsDomainsEntries,
     FlextLdifModelsMetadata,
     FlextLdifServersBase,
     FlextLdifServersBaseEntry,
@@ -228,7 +228,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _create_write_options_with_hidden_attrs(
-        write_opts: FlextLdifModelsDomains.WriteOptions
+        write_opts: FlextLdifModelsDomainsEntries.WriteOptions
         | t.MutableContainerMapping
         | None,
         hidden_attrs: set[str],
@@ -250,7 +250,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if u.is_type(hidden_attrs_raw, (list, tuple, frozenset, set)):
             hidden_attrs_set = {str(item) for item in hidden_attrs_raw}
         hidden_attrs_set.update(hidden_attrs)
-        if isinstance(write_opts, FlextLdifModelsDomains.WriteOptions):
+        if isinstance(write_opts, FlextLdifModelsDomainsEntries.WriteOptions):
             write_opts_data: t.MutableContainerMapping = write_opts.model_dump()
             write_opts_data["hidden_attrs"] = list(hidden_attrs_set)
             return m.Ldif.WriteOptions.model_validate(write_opts_data)
@@ -501,7 +501,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 hidden_attrs,
             )
         )
-        update_dict: MutableMapping[str, FlextLdifModelsDomains.WriteOptions | None] = {
+        update_dict: MutableMapping[
+            str, FlextLdifModelsDomainsEntries.WriteOptions | None
+        ] = {
             "write_options": new_write_options,
         }
         metadata_typed = metadata_typed.model_copy(update=update_dict)
@@ -528,7 +530,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             current_extensions["acl_commented_attributes"] = commented_attrs_typed
         update_dict_final: MutableMapping[
             str,
-            t.MutableContainerMapping | FlextLdifModelsDomains.WriteOptions | None,
+            t.MutableContainerMapping
+            | FlextLdifModelsDomainsEntries.WriteOptions
+            | None,
         ] = {
             "extensions": current_extensions,
             "write_options": new_write_options,
@@ -772,7 +776,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         self,
         comment_lines: MutableSequence[str],
         attr_name: str,
-        _transformation: FlextLdifModelsDomains.AttributeTransformation,
+        _transformation: FlextLdifModelsDomainsEntries.AttributeTransformation,
         comment_type: str,
     ) -> None:
         """Add comment for attribute transformation.

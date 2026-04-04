@@ -13,7 +13,7 @@ from pydantic import Field, ValidationError
 
 from flext_core import FlextLogger, FlextService, r
 from flext_ldif import (
-    FlextLdifModelsDomains,
+    FlextLdifModelsDomainsEntries,
     FlextLdifModelsSettings,
     FlextLdifQuirkMethodsMixin,
     c,
@@ -61,7 +61,7 @@ class FlextLdifServersBaseEntry(
 
     @staticmethod
     def _extract_write_format_options(
-        metadata: FlextLdifModelsDomains.QuirkMetadata | None,
+        metadata: FlextLdifModelsDomainsEntries.QuirkMetadata | None,
     ) -> FlextLdifModelsSettings.WriteFormatOptions | None:
         if metadata is None:
             return None
@@ -210,14 +210,14 @@ class FlextLdifServersBaseEntry(
     def _convert_write_options(
         self,
         write_options: FlextLdifModelsSettings.WriteFormatOptions
-        | FlextLdifModelsDomains.WriteOptions
+        | FlextLdifModelsDomainsEntries.WriteOptions
         | t.NormalizedValue,
-    ) -> FlextLdifModelsDomains.WriteOptions:
-        if isinstance(write_options, FlextLdifModelsDomains.WriteOptions):
+    ) -> FlextLdifModelsDomainsEntries.WriteOptions:
+        if isinstance(write_options, FlextLdifModelsDomainsEntries.WriteOptions):
             return write_options
         if isinstance(write_options, FlextLdifModelsSettings.WriteFormatOptions):
             write_options_payload = write_options.model_dump(exclude_none=True)
-            return FlextLdifModelsDomains.WriteOptions.model_validate({
+            return FlextLdifModelsDomainsEntries.WriteOptions.model_validate({
                 "sort_entries": write_options_payload.get("sort_attributes", False),
                 "include_comments": write_options_payload.get(
                     "include_dn_comments",
@@ -229,8 +229,8 @@ class FlextLdifServersBaseEntry(
                 ),
             })
         if not isinstance(write_options, Mapping):
-            return FlextLdifModelsDomains.WriteOptions()
-        return FlextLdifModelsDomains.WriteOptions.model_validate(write_options)
+            return FlextLdifModelsDomainsEntries.WriteOptions()
+        return FlextLdifModelsDomainsEntries.WriteOptions.model_validate(write_options)
 
     def _denormalize_entry(
         self,

@@ -10,20 +10,21 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, MutableMapping, MutableSequence
-from typing import TYPE_CHECKING, Annotated, ClassVar, Literal
+from typing import Annotated, ClassVar, Literal
 
 from pydantic import ConfigDict, Field
 
 from flext_core import FlextModels, r
-from flext_ldif.constants import FlextLdifConstants as c
-from flext_ldif.protocols import FlextLdifProtocols as p
-from flext_ldif.typings import FlextLdifTypes as t
+from flext_ldif import (
+    FlextLdifConstants as c,
+    FlextLdifModelsDomainAcl,
+    FlextLdifModelsDomainSchema,
+    FlextLdifProtocols as p,
+    FlextLdifTypes as t,
+)
 
-if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModelsDomains
 
-
-class _AciLineFormatConfig(FlextModels.Value):
+class AciLineFormatConfig(FlextModels.Value):
     """Configuration for formatting a complete ACI line from components."""
 
     name: Annotated[str, Field(..., description="ACL name")]
@@ -43,7 +44,7 @@ class _AciLineFormatConfig(FlextModels.Value):
     version: Annotated[str, Field(description="ACI version")] = "3.0"
 
 
-class _AciParserConfig(FlextModels.Value):
+class AciParserConfig(FlextModels.Value):
     """Configuration for server-specific ACI parsing."""
 
     server_type: Annotated[
@@ -99,7 +100,7 @@ class _AciParserConfig(FlextModels.Value):
     ] = "unnamed-acl"
 
 
-class _AclMetadataConfig(FlextModels.Value):
+class AclMetadataConfig(FlextModels.Value):
     """Configuration for building ACL metadata extensions."""
 
     line_breaks: Annotated[
@@ -124,7 +125,7 @@ class _AclMetadataConfig(FlextModels.Value):
     ] = None
 
 
-class _DnNormalizationConfig(FlextModels.Value):
+class DnNormalizationConfig(FlextModels.Value):
     """Configuration for DN normalization."""
 
     case_sensitive: bool = Field(
@@ -147,7 +148,7 @@ class _DnNormalizationConfig(FlextModels.Value):
     )
 
 
-class _AttrNormalizationConfig(FlextModels.Value):
+class AttrNormalizationConfig(FlextModels.Value):
     """Configuration for attribute normalization."""
 
     lowercase_keys: bool = Field(
@@ -173,7 +174,7 @@ class _AttrNormalizationConfig(FlextModels.Value):
     )
 
 
-class _ProcessConfig(FlextModels.Value):
+class ProcessConfig(FlextModels.Value):
     """Configuration for processing operations."""
 
     batch_size: int = Field(
@@ -189,15 +190,15 @@ class _ProcessConfig(FlextModels.Value):
     target_server: str | None = Field(
         default=None, description="Target LDAP server type identifier"
     )
-    dn_config: _DnNormalizationConfig | None = Field(
+    dn_config: DnNormalizationConfig | None = Field(
         default=None, description="DN normalization configuration"
     )
-    attr_config: _AttrNormalizationConfig | None = Field(
+    attr_config: AttrNormalizationConfig | None = Field(
         default=None, description="Attribute normalization configuration"
     )
 
 
-class _TransformConfig(FlextModels.Value):
+class TransformConfig(FlextModels.Value):
     """Configuration for transformation operations."""
 
     fail_fast: bool = Field(
@@ -215,12 +216,12 @@ class _TransformConfig(FlextModels.Value):
     normalize_attrs: bool = Field(
         default=False, description="Normalize attributes during transformation"
     )
-    process_config: _ProcessConfig | None = Field(
+    process_config: ProcessConfig | None = Field(
         default=None, description="Processing configuration for batch operations"
     )
 
 
-class _ServerPatternsConfig(FlextModels.Value):
+class ServerPatternsConfig(FlextModels.Value):
     """Configuration for server pattern matching."""
 
     dn_patterns: Annotated[
@@ -245,14 +246,14 @@ class _ServerPatternsConfig(FlextModels.Value):
     ] = ()
 
 
-class _EntryCriteriaConfig(FlextModels.Value):
+class EntryCriteriaConfig(FlextModels.Value):
     """Configuration for entry criteria matching.
 
     Consolidates parameters for matches_criteria utility function.
     Reduces function signature from 7 parameters to 1 model.
 
     Example:
-        config = _EntryCriteriaConfig(
+        config = EntryCriteriaConfig(
             objectclasses=["inetOrgPerson", "person"],
             objectclass_mode="any",
             required_attrs=["cn", "sn"],
@@ -291,14 +292,14 @@ class _EntryCriteriaConfig(FlextModels.Value):
     ] = None
 
 
-class _EntryParseMetadataConfig(FlextModels.Value):
+class EntryParseMetadataConfig(FlextModels.Value):
     """Configuration for building entry parse metadata.
 
     Consolidates parameters for build_entry_parse_metadata utility function.
     Reduces function signature from 7 parameters to 1 model.
 
     Example:
-        config = _EntryParseMetadataConfig(
+        config = EntryParseMetadataConfig(
             quirk_type="oid",
             original_entry_dn="cn=test,dc=example",
             cleaned_dn="cn=test,dc=example",
@@ -342,7 +343,7 @@ class _EntryParseMetadataConfig(FlextModels.Value):
     ] = None
 
 
-class _EntryTransformConfig(FlextModels.Value):
+class EntryTransformConfig(FlextModels.Value):
     """Configuration for batch entry transformation operations."""
 
     normalize_dns: Annotated[
@@ -373,7 +374,7 @@ class _EntryTransformConfig(FlextModels.Value):
     ] = False
 
 
-class _CategoryRules(FlextModels.Rules):
+class CategoryRules(FlextModels.Rules):
     """Rules for entry categorization.
 
     Contains DN patterns and objectClass lists for each category.
@@ -432,7 +433,7 @@ class _CategoryRules(FlextModels.Rules):
     ]
 
 
-class _LogContextExtras(FlextModels.Value):
+class LogContextExtras(FlextModels.Value):
     """Extra context fields for structured event logging."""
 
     user_id: Annotated[str | None, Field(description="User identifier")] = None
@@ -455,7 +456,7 @@ class _LogContextExtras(FlextModels.Value):
     trace_id: Annotated[str | None, Field(description="Trace identifier")] = None
 
 
-class _WhitelistRules(FlextModels.Rules):
+class WhitelistRules(FlextModels.Rules):
     """Whitelist rules for entry validation.
 
     Defines blocked objectClasses and validation rules.
@@ -516,7 +517,7 @@ class _WhitelistRules(FlextModels.Rules):
     ]
 
 
-class _MigrateOptions(FlextModels.Value):
+class MigrateOptions(FlextModels.Value):
     """Options for FlextLdif.migrate() operation.
 
     Consolidates 12+ optional parameters into single typed Model.
@@ -539,7 +540,7 @@ class _MigrateOptions(FlextModels.Value):
             description="Structured migration config with 6-file output and tracking",
         ),
     ] = None
-    categorization_rules: _CategoryRules | None = Field(
+    categorization_rules: CategoryRules | None = Field(
         default=None,
         description="Entry categorization rules (enables categorized mode)",
     )
@@ -555,7 +556,7 @@ class _MigrateOptions(FlextModels.Value):
             description="Category to filename mapping (categorized mode)",
         ),
     ] = None
-    schema_whitelist_rules: _WhitelistRules | None = Field(
+    schema_whitelist_rules: WhitelistRules | None = Field(
         default=None,
         description="Allowed schema elements whitelist (categorized mode)",
     )
@@ -593,7 +594,7 @@ class _MigrateOptions(FlextModels.Value):
     ] = False
 
 
-class _WriteFormatOptions(FlextModels.Value):
+class WriteFormatOptions(FlextModels.Value):
     """Formatting options for LDIF serialization.
 
     .. deprecated:: 0.9.0
@@ -828,7 +829,7 @@ class _WriteFormatOptions(FlextModels.Value):
     ] = Field(default_factory=dict)
 
 
-class _WriteOutputOptions(FlextModels.ArbitraryTypesModel):
+class WriteOutputOptions(FlextModels.ArbitraryTypesModel):
     """Output visibility options for attributes based on their marker status.
 
     This class controls how attributes are rendered in LDIF output based on
@@ -890,7 +891,7 @@ class _WriteOutputOptions(FlextModels.ArbitraryTypesModel):
     ] = "comment"
 
 
-class _EntryWriteConfig(FlextModels.Value):
+class EntryWriteConfig(FlextModels.Value):
     """Configuration for entry writing.
 
     Consolidates parameters for Entry.write method.
@@ -898,23 +899,22 @@ class _EntryWriteConfig(FlextModels.Value):
 
     """
 
-    entry: FlextLdifModelsDomains.Entry = Field(..., description="Entry model to write")
+    entry: p.Ldif.Entry = Field(..., description="Entry model to write")
     server_type: Annotated[str, Field(..., description="Server type identifier")]
     write_attributes_hook: Callable[
-        [FlextLdifModelsDomains.Entry, MutableSequence[str]], None
+        [p.Ldif.Entry, MutableSequence[str]],
+        None,
     ] = Field(
         ...,
         description="Core attributes writing",
     )
-    write_comments_hook: (
-        Callable[[FlextLdifModelsDomains.Entry, MutableSequence[str]], None] | None
-    ) = Field(
-        default=None,
-        description="Optional comments writing",
+    write_comments_hook: Callable[[p.Ldif.Entry, MutableSequence[str]], None] | None = (
+        Field(
+            default=None,
+            description="Optional comments writing",
+        )
     )
-    transform_entry_hook: (
-        Callable[[FlextLdifModelsDomains.Entry], FlextLdifModelsDomains.Entry] | None
-    ) = Field(
+    transform_entry_hook: Callable[[p.Ldif.Entry], p.Ldif.Entry] | None = Field(
         default=None,
         description="Optional entry transformation",
     )
@@ -928,7 +928,7 @@ class _EntryWriteConfig(FlextModels.Value):
     )
 
 
-class _BatchWriteConfig(FlextModels.Value):
+class BatchWriteConfig(FlextModels.Value):
     """Configuration for batch entry writing.
 
     Consolidates parameters for Batch.write method.
@@ -936,12 +936,12 @@ class _BatchWriteConfig(FlextModels.Value):
 
     """
 
-    entries: MutableSequence[FlextLdifModelsDomains.Entry] = Field(
+    entries: MutableSequence[p.Ldif.Entry] = Field(
         ...,
         description="List of entries to write",
     )
     server_type: Annotated[str, Field(..., description="Server type identifier")]
-    write_entry_hook: Callable[[FlextLdifModelsDomains.Entry], r[str]] = Field(
+    write_entry_hook: Callable[[p.Ldif.Entry], r[str]] = Field(
         ...,
         description="Entry writing logic",
     )
@@ -959,7 +959,7 @@ class _BatchWriteConfig(FlextModels.Value):
     ] = "\n"
 
 
-class _SortConfig(FlextModels.Value):
+class SortConfig(FlextModels.Value):
     """Configuration for entry sorting.
 
     Consolidates parameters for FlextLdifSorting.sort method.
@@ -967,7 +967,7 @@ class _SortConfig(FlextModels.Value):
 
     """
 
-    entries: MutableSequence[FlextLdifModelsDomains.Entry] = Field(
+    entries: MutableSequence[p.Ldif.Entry] = Field(
         ...,
         description="List of entries to sort",
     )
@@ -976,7 +976,7 @@ class _SortConfig(FlextModels.Value):
     )
     by: str = Field(default="hierarchy", description="Sort strategy")
     traversal: str = Field(default="depth-first", description="Traversal order")
-    predicate: Callable[[FlextLdifModelsDomains.Entry], str | t.Numeric] | None = Field(
+    predicate: Callable[[p.Ldif.Entry], str | t.Numeric] | None = Field(
         default=None,
         description="Custom predicate function",
     )
@@ -992,7 +992,7 @@ class _SortConfig(FlextModels.Value):
     )
 
 
-class _RdnProcessingConfig(FlextModels.ArbitraryTypesModel):
+class RdnProcessingConfig(FlextModels.ArbitraryTypesModel):
     """Mutable state for RDN character-by-character parsing."""
 
     current_attr: Annotated[str, Field(description="Current attribute name")] = ""
@@ -1007,7 +1007,7 @@ class _RdnProcessingConfig(FlextModels.ArbitraryTypesModel):
     ] = Field(default_factory=lambda: list[tuple[str, str]]())
 
 
-class _SchemaAttributeConversionPipelineConfig(FlextModels.Value):
+class SchemaAttributeConversionPipelineConfig(FlextModels.Value):
     """Config for schema attribute conversion pipeline (discriminated union)."""
 
     source_schema: Annotated[
@@ -1022,7 +1022,7 @@ class _SchemaAttributeConversionPipelineConfig(FlextModels.Value):
         Literal["attribute"],
         Field(description="Discriminator"),
     ] = "attribute"
-    item: FlextLdifModelsDomains.SchemaAttribute = Field(
+    item: FlextLdifModelsDomainSchema.SchemaAttribute = Field(
         ...,
         description="Schema attribute to convert",
     )
@@ -1032,7 +1032,7 @@ class _SchemaAttributeConversionPipelineConfig(FlextModels.Value):
     ] = "attribute"
 
 
-class _SchemaObjectClassConversionPipelineConfig(FlextModels.Value):
+class SchemaObjectClassConversionPipelineConfig(FlextModels.Value):
     """Config for schema objectclass conversion pipeline (discriminated union)."""
 
     source_schema: Annotated[
@@ -1047,7 +1047,7 @@ class _SchemaObjectClassConversionPipelineConfig(FlextModels.Value):
         Literal["objectclass"],
         Field(description="Discriminator"),
     ] = "objectclass"
-    item: FlextLdifModelsDomains.SchemaObjectClass = Field(
+    item: FlextLdifModelsDomainSchema.SchemaObjectClass = Field(
         ...,
         description="Schema objectclass to convert",
     )
@@ -1057,7 +1057,7 @@ class _SchemaObjectClassConversionPipelineConfig(FlextModels.Value):
     ] = "objectclass"
 
 
-class _PermissionMappingConfig(FlextModels.Value):
+class PermissionMappingConfig(FlextModels.Value):
     """Configuration for permission mapping during ACL conversion.
 
     Consolidates parameters for
@@ -1066,11 +1066,11 @@ class _PermissionMappingConfig(FlextModels.Value):
 
     """
 
-    original_acl: FlextLdifModelsDomains.Acl = Field(
+    original_acl: FlextLdifModelsDomainAcl.Acl = Field(
         ...,
         description="Original ACL model",
     )
-    converted_acl: FlextLdifModelsDomains.Acl = Field(
+    converted_acl: FlextLdifModelsDomainAcl.Acl = Field(
         ...,
         description="Converted ACL model (modified in-place)",
     )
@@ -1092,7 +1092,7 @@ class _PermissionMappingConfig(FlextModels.Value):
     ] = False
 
 
-class _ServerValidationRules(FlextModels.Value):
+class ServerValidationRules(FlextModels.Value):
     """Server-specific validation rules for LDIF entries."""
 
     requires_binary_option: Annotated[
@@ -1118,30 +1118,81 @@ class FlextLdifModelsSettings:
     All nested classes are accessed via FlextModels.* in the main models.py.
     """
 
-    AciLineFormatConfig = _AciLineFormatConfig
-    AciParserConfig = _AciParserConfig
-    AclMetadataConfig = _AclMetadataConfig
-    DnNormalizationConfig = _DnNormalizationConfig
-    AttrNormalizationConfig = _AttrNormalizationConfig
-    ProcessConfig = _ProcessConfig
-    TransformConfig = _TransformConfig
-    ServerPatternsConfig = _ServerPatternsConfig
-    EntryCriteriaConfig = _EntryCriteriaConfig
-    EntryParseMetadataConfig = _EntryParseMetadataConfig
-    EntryTransformConfig = _EntryTransformConfig
-    CategoryRules = _CategoryRules
-    LogContextExtras = _LogContextExtras
-    MigrateOptions = _MigrateOptions
-    WhitelistRules = _WhitelistRules
-    WriteFormatOptions = _WriteFormatOptions
-    WriteOutputOptions = _WriteOutputOptions
-    EntryWriteConfig = _EntryWriteConfig
-    BatchWriteConfig = _BatchWriteConfig
-    SortConfig = _SortConfig
-    RdnProcessingConfig = _RdnProcessingConfig
-    SchemaAttributeConversionPipelineConfig = _SchemaAttributeConversionPipelineConfig
-    SchemaObjectClassConversionPipelineConfig = (
-        _SchemaObjectClassConversionPipelineConfig
-    )
-    PermissionMappingConfig = _PermissionMappingConfig
-    ServerValidationRules = _ServerValidationRules
+    class AciLineFormatConfig(AciLineFormatConfig):
+        """Nested namespace alias for ACI line formatting."""
+
+    class AciParserConfig(AciParserConfig):
+        """Nested namespace alias for ACI parser config."""
+
+    class AclMetadataConfig(AclMetadataConfig):
+        """Nested namespace alias for ACL metadata config."""
+
+    class DnNormalizationConfig(DnNormalizationConfig):
+        """Nested namespace alias for DN normalization config."""
+
+    class AttrNormalizationConfig(AttrNormalizationConfig):
+        """Nested namespace alias for attribute normalization config."""
+
+    class ProcessConfig(ProcessConfig):
+        """Nested namespace alias for processing config."""
+
+    class TransformConfig(TransformConfig):
+        """Nested namespace alias for transform config."""
+
+    class ServerPatternsConfig(ServerPatternsConfig):
+        """Nested namespace alias for server pattern config."""
+
+    class EntryCriteriaConfig(EntryCriteriaConfig):
+        """Nested namespace alias for entry criteria config."""
+
+    class EntryParseMetadataConfig(EntryParseMetadataConfig):
+        """Nested namespace alias for entry parse metadata config."""
+
+    class EntryTransformConfig(EntryTransformConfig):
+        """Nested namespace alias for entry transform config."""
+
+    class CategoryRules(CategoryRules):
+        """Nested namespace alias for category rules."""
+
+    class LogContextExtras(LogContextExtras):
+        """Nested namespace alias for log context extras."""
+
+    class MigrateOptions(MigrateOptions):
+        """Nested namespace alias for migrate options."""
+
+    class WhitelistRules(WhitelistRules):
+        """Nested namespace alias for whitelist rules."""
+
+    class WriteFormatOptions(WriteFormatOptions):
+        """Nested namespace alias for write format options."""
+
+    class WriteOutputOptions(WriteOutputOptions):
+        """Nested namespace alias for write output options."""
+
+    class EntryWriteConfig(EntryWriteConfig):
+        """Nested namespace alias for entry write config."""
+
+    class BatchWriteConfig(BatchWriteConfig):
+        """Nested namespace alias for batch write config."""
+
+    class SortConfig(SortConfig):
+        """Nested namespace alias for sort config."""
+
+    class RdnProcessingConfig(RdnProcessingConfig):
+        """Nested namespace alias for RDN processing config."""
+
+    class SchemaAttributeConversionPipelineConfig(
+        SchemaAttributeConversionPipelineConfig
+    ):
+        """Nested namespace alias for schema attribute conversion config."""
+
+    class SchemaObjectClassConversionPipelineConfig(
+        SchemaObjectClassConversionPipelineConfig
+    ):
+        """Nested namespace alias for schema objectClass conversion config."""
+
+    class PermissionMappingConfig(PermissionMappingConfig):
+        """Nested namespace alias for permission mapping config."""
+
+    class ServerValidationRules(ServerValidationRules):
+        """Nested namespace alias for server validation rules."""

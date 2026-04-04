@@ -5,6 +5,8 @@ from __future__ import annotations
 import fcntl
 import os
 import types
+import uuid
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import ClassVar, TextIO
 
@@ -15,6 +17,8 @@ from ldap3.core.exceptions import LDAPException
 from flext_core import FlextLogger
 from flext_ldif import FlextLdifUtilities
 from tests.constants import FlextLdifTestConstants
+from tests.models import FlextLdifTestModels
+from tests.protocols import FlextLdifTestProtocols
 
 
 class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
@@ -28,11 +32,104 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
 
             Docker = FlextTestsDocker
 
-            class FileLock:
-                """File-based locking for pytest-xdist parallel test isolation.
+            LdapConnectionLike = FlextLdifTestProtocols.Ldif.Tests.LdapConnectionLike
 
-                Provides file-level serialization for parallel test workers.
-                """
+            class Factory:
+                """Automated factory for generating real test data."""
+
+                @staticmethod
+                def create_real_entry(
+                    dn: str | None = None,
+                    attributes: Mapping[str, Sequence[str]] | None = None,
+                    server_type: str = "generic",
+                ) -> FlextLdifTestModels.Ldif.Entry:
+                    """Create a real Entry model with valid data."""
+                    if dn is None:
+                        dn = (
+                            f"cn=test-{uuid.uuid4().hex[:8]},ou=users,dc=example,dc=com"
+                        )
+                    if attributes is None:
+                        attributes = {
+                            "cn": [f"test-{uuid.uuid4().hex[:8]}"],
+                            "sn": ["Test"],
+                            "mail": [f"test-{uuid.uuid4().hex[:8]}@example.com"],
+                            "objectClass": [
+                                "person",
+                                "organizationalPerson",
+                                "inetOrgPerson",
+                            ],
+                        }
+                    mutable_attrs: dict[str, list[str]] = {
+                        k: list(v) for k, v in attributes.items()
+                    }
+                    attrs = FlextLdifTestModels.Ldif.Attributes.model_validate({
+                        "attributes": mutable_attrs
+                    })
+                    return FlextLdifTestModels.Ldif.Entry.model_validate({
+                        "dn": FlextLdifTestModels.Ldif.DN(value=dn),
+                        "attributes": attrs,
+                        "server_type": server_type,
+                    })
+
+                @staticmethod
+                def create_real_ldif_content(
+                    entries_count: int = 3,
+                    *,
+                    include_schema: bool = False,
+                ) -> str:
+                    """Create real LDIF content for testing."""
+                    lines: list[str] = []
+                    if include_schema:
+                        lines.extend([
+                            "dn: cn=schema",
+                            "objectClass: top",
+                            "objectClass: ldapSubentry",
+                            "objectClass: subschema",
+                            "",
+                            "attributeTypes: ( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                            "",
+                        ])
+                    for i in range(entries_count):
+                        entry_id = uuid.uuid4().hex[:8]
+                        lines.extend([
+                            f"dn: cn=user-{entry_id},ou=users,dc=example,dc=com",
+                            "objectClass: person",
+                            "objectClass: organizationalPerson",
+                            "objectClass: inetOrgPerson",
+                            f"cn: User {entry_id}",
+                            f"sn: Test{i}",
+                            f"mail: user{entry_id}@example.com",
+                            "",
+                        ])
+                    return "\n".join(lines)
+
+                @staticmethod
+                def parametrize_real_data() -> Sequence[
+                    FlextLdifTestModels.Ldif.Tests.LdifTestData
+                ]:
+                    """Generate parametrized test data for comprehensive coverage."""
+                    return [
+                        FlextLdifTestModels.Ldif.Tests.LdifTestData(
+                            id=f"entry_{server_type}",
+                            server_type=server_type,
+                            dn=f"cn=test-{server_type},ou=users,dc=example,dc=com",
+                            attributes={
+                                "cn": [f"test-{server_type}"],
+                                "objectClass": ["person", "organizationalPerson"],
+                            },
+                        )
+                        for server_type in ["generic", "openldap", "ad", "oid", "oud"]
+                    ]
+
+            @staticmethod
+            def _unbind_connection(
+                connection: FlextLdifTestProtocols.Ldif.Tests.LdapConnectionLike,
+            ) -> None:
+                """Close a typed LDAP connection."""
+                connection.unbind()
+
+            class FileLock:
+                """File-based locking for pytest-xdist parallel test isolation."""
 
                 def __init__(self, lock_file: Path) -> None:
                     self.lock_file = lock_file
@@ -94,7 +191,7 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
                             port=d.PORT,
                             get_info="NO_INFO",
                         )
-                        test_conn = Ldap3Connection(
+                        test_conn: FlextLdifTestUtilities.Ldif.Tests.LdapConnectionLike = Ldap3Connection(
                             server,
                             user=candidate_dn,
                             password=candidate_password,
@@ -102,7 +199,9 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
                             receive_timeout=1,
                         )
                         if test_conn.bound:
-                            test_conn.unbind()
+                            FlextLdifTestUtilities.Ldif.Tests._unbind_connection(
+                                test_conn
+                            )
                             cache[0] = (candidate_dn, candidate_password)
                             return (candidate_dn, candidate_password)
                     except (ConnectionError, LDAPException, OSError, ValueError):

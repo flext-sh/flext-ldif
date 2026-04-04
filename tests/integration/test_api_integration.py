@@ -11,32 +11,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum, unique
-from typing import Final
-
 import pytest
 
 from flext_ldif import FlextLdifStatistics, ldif
 from tests import c, m
-
-
-@unique
-class APIScenarios(StrEnum):
-    """Test scenarios for API integration testing."""
-
-    SIMPLE_LDIF = "simple_ldif"
-    BUILD_ENTRY = "build_entry"
-    VALIDATE_ENTRIES = "validate_entries"
-    MULTIPLE_INSTANCES = "multiple_instances"
-    API_FACADE_PROPERTIES = "api_facade_properties"
-    END_TO_END_WORKFLOW = "end_to_end_workflow"
-
-
-class TestData:
-    """Test data constants for API integration tests."""
-
-    SIMPLE_LDIF: Final[str] = c.Ldif.RFC.SAMPLE_LDIF_BASIC
-    MULTI_ENTRY_LDIF: Final[str] = c.Ldif.RFC.SAMPLE_LDIF_MULTIPLE
 
 
 class TestFlextLdifAPIIntegration:
@@ -50,18 +28,24 @@ class TestFlextLdifAPIIntegration:
     - Builder pattern for complex test setup
     """
 
-    _SIMPLE_LDIF: Final[str] = c.Ldif.RFC.SAMPLE_LDIF_BASIC
-
     @pytest.mark.parametrize(
         ("scenario", "ldif_content", "expected_entries"),
         [
-            (APIScenarios.SIMPLE_LDIF, TestData.SIMPLE_LDIF, 1),
-            (APIScenarios.MULTIPLE_INSTANCES, TestData.MULTI_ENTRY_LDIF, 2),
+            (
+                c.Ldif.Scenarios.Api.Scenario.SIMPLE_LDIF,
+                c.Ldif.RFC.SAMPLE_LDIF_BASIC,
+                1,
+            ),
+            (
+                c.Ldif.Scenarios.Api.Scenario.MULTIPLE_INSTANCES,
+                c.Ldif.RFC.SAMPLE_LDIF_MULTIPLE,
+                2,
+            ),
         ],
     )
     def test_parse_ldif_scenarios(
         self,
-        scenario: APIScenarios,
+        scenario: c.Ldif.Scenarios.Api.Scenario,
         ldif_content: str,
         expected_entries: int,
     ) -> None:
@@ -103,7 +87,7 @@ class TestFlextLdifAPIIntegration:
     def test_validate_entries_workflow(self) -> None:
         """Test complete validation workflow."""
         api = ldif()
-        parse_result = api.parse_ldif(self._SIMPLE_LDIF)
+        parse_result = api.parse_ldif(c.Ldif.RFC.SAMPLE_LDIF_BASIC)
         assert parse_result.is_success
         entries = parse_result.value
         validate_result = api.validate_entries(entries)
@@ -113,8 +97,8 @@ class TestFlextLdifAPIIntegration:
         """Test that multiple ldif instances work independently."""
         ldif1 = ldif()
         ldif2 = ldif()
-        result1 = ldif1.parse_ldif(self._SIMPLE_LDIF)
-        result2 = ldif2.parse_ldif(self._SIMPLE_LDIF)
+        result1 = ldif1.parse_ldif(c.Ldif.RFC.SAMPLE_LDIF_BASIC)
+        result2 = ldif2.parse_ldif(c.Ldif.RFC.SAMPLE_LDIF_BASIC)
         assert result1.is_success
         assert result2.is_success
         entries1 = result1.value
@@ -144,7 +128,7 @@ class TestFlextLdifAPIIntegration:
     def test_end_to_end_workflow_complete(self) -> None:
         """Test complete end-to-end workflow from parse to filter."""
         api = ldif()
-        parse_result = api.parse_ldif(self._SIMPLE_LDIF)
+        parse_result = api.parse_ldif(c.Ldif.RFC.SAMPLE_LDIF_BASIC)
         assert parse_result.is_success
         entries = parse_result.value
         analyze_result = FlextLdifStatistics().calculate_for_entries(entries)

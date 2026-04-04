@@ -2,29 +2,7 @@ from __future__ import annotations
 
 import pytest
 from flext_tests import tm
-from tests import u
-from tests.base import FlextLdifTestsServiceBase as s
-
-
-class OidServer:
-    """Stub OID server for testing."""
-
-    class Constants:
-        """OID server constants."""
-
-        SERVER_TYPE = "oid"
-
-    class Entry:
-        """OID entry stub."""
-
-
-class OudServer:
-    """Stub OUD server for testing."""
-
-    class Constants:
-        """OUD server constants."""
-
-        SERVER_TYPE = "oud"
+from tests import FlextLdifTestsServiceBase as s, m, u
 
 
 class TestFlextLdifUtilitiesServer:
@@ -61,12 +39,12 @@ class TestFlextLdifUtilitiesServer:
         tm.that(result, none=True)
 
     def test_get_type_from_nested_class_success_from_parent_constants(self) -> None:
-        result = u.Ldif._get_type_from_nested_class(OidServer.Entry)
+        result = u.Ldif._get_type_from_nested_class(m.Ldif.Tests.OidServerStub.Entry)
 
         tm.that(result, eq="oid")
 
     def test_extract_server_type_from_constants_success(self) -> None:
-        result = u.Ldif.extract_server_type_from_constants(OudServer)
+        result = u.Ldif.extract_server_type_from_constants(m.Ldif.Tests.OudServerStub)
 
         tm.that(result, eq="oud")
 

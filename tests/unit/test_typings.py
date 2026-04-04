@@ -6,7 +6,7 @@ import ast
 import inspect
 from collections.abc import Mapping
 from pathlib import Path
-from typing import ClassVar, cast
+from typing import cast
 
 import pytest
 from flext_tests import tm
@@ -69,24 +69,9 @@ class TestFlextLdifTypesStructure:
 class TestsFlextLdifCommonDictionaryTypes:
     """Test common dictionary type definitions with REAL data."""
 
-    SAMPLE_ATTR_DICT: ClassVar[dict[str, list[str]]] = {
-        c.Ldif.Names.CN: ["John Doe"],
-        c.Ldif.Names.SN: ["Doe"],
-        c.Ldif.Names.MAIL: ["john@example.com", "john.doe@example.com"],
-        c.Ldif.Names.OBJECTCLASS: [c.Ldif.Names.PERSON, c.Ldif.Names.INETORGPERSON],
-    }
-    SAMPLE_DISTRIBUTION: ClassVar[dict[str, int]] = {
-        c.Ldif.Names.INETORGPERSON: 1245,
-        "groupOfNames": 89,
-        "organizationalUnit": 34,
-        "domain": 1,
-        "country": 1,
-        "dcObject": 1,
-    }
-
     def test_attribute_dict_with_ldif_entry(self) -> None:
         """AttributeDict must work with real LDIF entry attributes."""
-        attr_dict: t.Ldif.AttributeDict = self.SAMPLE_ATTR_DICT
+        attr_dict: t.Ldif.AttributeDict = c.Ldif.TestData.Typings.SAMPLE_ATTR_DICT
         tm.that(attr_dict, is_=dict)
         tm.that(attr_dict[c.Ldif.Names.CN], eq=["John Doe"])
         tm.that(len(attr_dict[c.Ldif.Names.MAIL]), eq=2)
@@ -98,7 +83,7 @@ class TestsFlextLdifCommonDictionaryTypes:
 
     def test_distribution_dict_with_entry_counts(self) -> None:
         """DistributionDict must work with entry type statistics."""
-        dist: t.IntMapping = self.SAMPLE_DISTRIBUTION
+        dist: t.IntMapping = c.Ldif.TestData.Typings.SAMPLE_DISTRIBUTION
         tm.that(dist[c.Ldif.Names.INETORGPERSON], eq=1245)
         tm.that(sum(dist.values()), eq=1371)
 
@@ -201,44 +186,17 @@ class TestModelsNamespace:
 class TestRemovalOfOverEngineering:
     """Test that over-engineered types were properly removed."""
 
-    REMOVED_NAMESPACES: ClassVar[t.StrSequence] = [
-        "Parser",
-        "Writer",
-        "LdifValidation",
-        "LdifProcessing",
-        "Analytics",
-        "ServerTypes",
-        "Functional",
-        "Streaming",
-        "AnnotatedLdif",
-        "ModelAliases",
-        "LdifProject",
-        "Project",
-    ]
-    REMOVED_COMMON_DICT: ClassVar[t.StrSequence] = [
-        "ChangeDict",
-        "CategorizedDict",
-        "TreeDict",
-        "HierarchyDict",
-    ]
-    REMOVED_ENTRY: ClassVar[t.StrSequence] = [
-        "EntryConfiguration",
-        "EntryValidation",
-        "EntryTransformation",
-        "EntryProcessing",
-    ]
-
-    @pytest.mark.parametrize("namespace", REMOVED_NAMESPACES)
+    @pytest.mark.parametrize("namespace", c.Ldif.TestData.Typings.REMOVED_NAMESPACES)
     def test_removed_namespaces(self, namespace: str) -> None:
         """Over-engineered namespaces must be removed."""
         tm.that(not hasattr(t, namespace), eq=True)
 
-    @pytest.mark.parametrize("type_name", REMOVED_COMMON_DICT)
+    @pytest.mark.parametrize("type_name", c.Ldif.TestData.Typings.REMOVED_COMMON_DICT)
     def test_removed_common_dict_types(self, type_name: str) -> None:
         """Unused CommonDict types must be removed."""
         tm.that(not hasattr(t.Ldif, type_name), eq=True)
 
-    @pytest.mark.parametrize("type_name", REMOVED_ENTRY)
+    @pytest.mark.parametrize("type_name", c.Ldif.TestData.Typings.REMOVED_ENTRY)
     def test_removed_entry_types(self, type_name: str) -> None:
         """Unused Entry types must be removed."""
         tm.that(not hasattr(t.Ldif, "Entry"), eq=True)

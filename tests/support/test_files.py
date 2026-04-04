@@ -16,9 +16,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Self
 
-from tests import t
+from tests import m, t
 
-from .ldif_data import LdifSample, LdifTestData
+from .ldif_data import LdifTestData
 
 
 class FileManager:
@@ -51,7 +51,7 @@ class FileManager:
 
     def create_sample_file(
         self,
-        sample: LdifSample,
+        sample: m.Ldif.Tests.LdifSample,
         filename: str | None = None,
         directory: Path | None = None,
     ) -> Path:

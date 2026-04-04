@@ -12,7 +12,7 @@ from typing import Annotated, override
 from pydantic import ConfigDict, Field
 
 from flext_core import m
-from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.typings import FlextLdifTypes as t
 
@@ -85,11 +85,11 @@ class FlextLdifModelsCollections:
 
     class SchemaContent(m.FrozenModel):
         attributes: Annotated[
-            MutableSequence[FlextLdifModelsDomains.SchemaAttribute],
+            MutableSequence[FlextLdifModelsDomainsEntries.SchemaAttribute],
             Field(description="Schema attribute definitions extracted from LDIF"),
         ]
         object_classes: Annotated[
-            MutableSequence[FlextLdifModelsDomains.SchemaObjectClass],
+            MutableSequence[FlextLdifModelsDomainsEntries.SchemaObjectClass],
             Field(description="Schema object class definitions extracted from LDIF"),
         ]
 
@@ -125,7 +125,7 @@ class FlextLdifModelsCollections:
 
     class FlexibleCategories(m.DynamicModel):
         categories: MutableMapping[
-            str, MutableSequence[FlextLdifModelsDomains.Entry]
+            str, MutableSequence[FlextLdifModelsDomainsEntries.Entry]
         ] = Field(
             default_factory=dict,
             description="Mapping of category names to their LDIF entries",
@@ -146,15 +146,15 @@ class FlextLdifModelsCollections:
         def __getitem__(
             self,
             category: str,
-        ) -> MutableSequence[FlextLdifModelsDomains.Entry]:
+        ) -> MutableSequence[FlextLdifModelsDomainsEntries.Entry]:
             return self._entry_categories()[category]
 
         def __setitem__(
             self,
             category: str,
-            entries: MutableSequence[FlextLdifModelsDomains.Entry],
+            entries: MutableSequence[FlextLdifModelsDomainsEntries.Entry],
         ) -> None:
-            domains = FlextLdifModelsDomains
+            domains = FlextLdifModelsDomainsEntries
             updated_categories = self._entry_categories()
             updated_categories[category] = [
                 domains.Entry.model_validate(entry) for entry in entries
@@ -164,10 +164,10 @@ class FlextLdifModelsCollections:
         def add_entries(
             self,
             category: str,
-            entries: MutableSequence[FlextLdifModelsDomains.Entry]
+            entries: MutableSequence[FlextLdifModelsDomainsEntries.Entry]
             | t.MutableContainerList,
         ) -> None:
-            domains = FlextLdifModelsDomains
+            domains = FlextLdifModelsDomainsEntries
             existing = self._entry_categories().get(category, [])
             normalized_entries = [
                 domains.Entry.model_validate(entry) for entry in entries
@@ -179,8 +179,8 @@ class FlextLdifModelsCollections:
 
         def items(
             self,
-        ) -> Iterator[tuple[str, MutableSequence[FlextLdifModelsDomains.Entry]]]:
-            domains = FlextLdifModelsDomains
+        ) -> Iterator[tuple[str, MutableSequence[FlextLdifModelsDomainsEntries.Entry]]]:
+            domains = FlextLdifModelsDomainsEntries
             for category, values in self.categories.items():
                 yield (
                     category,
@@ -193,22 +193,24 @@ class FlextLdifModelsCollections:
         def get(
             self,
             category: str,
-            default: MutableSequence[FlextLdifModelsDomains.Entry] | None = None,
-        ) -> MutableSequence[FlextLdifModelsDomains.Entry]:
+            default: MutableSequence[FlextLdifModelsDomainsEntries.Entry] | None = None,
+        ) -> MutableSequence[FlextLdifModelsDomainsEntries.Entry]:
             entries = self._entry_categories().get(category)
             if entries is not None:
                 return entries
             return default if default is not None else []
 
-        def values(self) -> Iterator[MutableSequence[FlextLdifModelsDomains.Entry]]:
-            domains = FlextLdifModelsDomains
+        def values(
+            self,
+        ) -> Iterator[MutableSequence[FlextLdifModelsDomainsEntries.Entry]]:
+            domains = FlextLdifModelsDomainsEntries
             for values in self._entry_categories().values():
                 yield [domains.Entry.model_validate(v) for v in values]
 
         def _entry_categories(
             self,
-        ) -> MutableMapping[str, MutableSequence[FlextLdifModelsDomains.Entry]]:
-            domains = FlextLdifModelsDomains
+        ) -> MutableMapping[str, MutableSequence[FlextLdifModelsDomainsEntries.Entry]]:
+            domains = FlextLdifModelsDomainsEntries
             return {
                 str(category): [domains.Entry.model_validate(value) for value in values]
                 for category, values in self.categories.items()

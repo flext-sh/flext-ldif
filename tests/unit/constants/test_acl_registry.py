@@ -6,147 +6,15 @@ attribute mappings and validation.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from enum import StrEnum, unique
-from typing import ClassVar
-
 import pytest
 from flext_tests import tm
 
-from tests import t, u
-
-
-@unique
-class GetAclAttributesServerType(StrEnum):
-    """Server types for get_acl_attributes tests."""
-
-    RFC = "rfc"
-    OID = "oid"
-    OUD = "oud"
-    AD = "ad"
-    GENERIC = "generic"
-    UNKNOWN = "unknown_server"
-    NONE = "none"
-
-
-@unique
-class IsAclAttributeType(StrEnum):
-    """Is ACL attribute test scenarios."""
-
-    VALID_RFC = "valid_rfc"
-    VALID_SERVER_SPECIFIC = "valid_server_specific"
-    INVALID = "invalid"
-    CASE_INSENSITIVE = "case_insensitive"
+from tests import c, t, u
 
 
 @pytest.mark.unit
 class TestsTestFlextLdifAclAttributeRegistry:
     """Test suite for AclAttributeRegistry."""
-
-    GET_ACL_ATTRIBUTES_DATA: ClassVar[
-        Mapping[
-            str,
-            tuple[GetAclAttributesServerType, str | None, t.StrSequence, t.StrSequence],
-        ]
-    ] = {
-        "get_acl_attributes_rfc_foundation": (
-            GetAclAttributesServerType.RFC,
-            None,
-            ["aci", "acl", "olcAccess", "aclRights", "aclEntry"],
-            list[str](),
-        ),
-        "get_acl_attributes_oid_quirks": (
-            GetAclAttributesServerType.OID,
-            "oid",
-            ["orclaci", "orclentrylevelaci", "aci", "acl"],
-            list[str](),
-        ),
-        "get_acl_attributes_oud_quirks": (
-            GetAclAttributesServerType.OUD,
-            "oud",
-            ["orclaci", "orclentrylevelaci", "aci"],
-            list[str](),
-        ),
-        "get_acl_attributes_ad_quirks": (
-            GetAclAttributesServerType.AD,
-            "ad",
-            ["nTSecurityDescriptor", "aci"],
-            list[str](),
-        ),
-        "get_acl_attributes_generic": (
-            GetAclAttributesServerType.GENERIC,
-            "generic",
-            ["aci", "acl"],
-            ["orclaci", "nTSecurityDescriptor"],
-        ),
-        "get_acl_attributes_unknown": (
-            GetAclAttributesServerType.UNKNOWN,
-            "unknown_server",
-            ["aci", "acl"],
-            ["orclaci", "nTSecurityDescriptor"],
-        ),
-        "get_acl_attributes_none": (
-            GetAclAttributesServerType.NONE,
-            None,
-            ["aci", "acl"],
-            ["orclaci"],
-        ),
-    }
-    IS_ACL_ATTRIBUTE_DATA: ClassVar[
-        Mapping[str, tuple[IsAclAttributeType, str, str | None, bool]]
-    ] = {
-        "is_acl_attribute_rfc_aci": (IsAclAttributeType.VALID_RFC, "aci", None, True),
-        "is_acl_attribute_rfc_acl": (IsAclAttributeType.VALID_RFC, "acl", None, True),
-        "is_acl_attribute_rfc_olcAccess": (
-            IsAclAttributeType.VALID_RFC,
-            "olcAccess",
-            None,
-            True,
-        ),
-        "is_acl_attribute_oid_orclaci": (
-            IsAclAttributeType.VALID_SERVER_SPECIFIC,
-            "orclaci",
-            "oid",
-            True,
-        ),
-        "is_acl_attribute_oud_orclaci": (
-            IsAclAttributeType.VALID_SERVER_SPECIFIC,
-            "orclaci",
-            "oud",
-            True,
-        ),
-        "is_acl_attribute_invalid_cn": (IsAclAttributeType.INVALID, "cn", None, False),
-        "is_acl_attribute_invalid_uid": (
-            IsAclAttributeType.INVALID,
-            "uid",
-            None,
-            False,
-        ),
-        "is_acl_attribute_case_insensitive_aci": (
-            IsAclAttributeType.CASE_INSENSITIVE,
-            "ACI",
-            None,
-            True,
-        ),
-        "is_acl_attribute_case_insensitive_acl": (
-            IsAclAttributeType.CASE_INSENSITIVE,
-            "Acl",
-            None,
-            True,
-        ),
-        "is_acl_attribute_case_insensitive_olcAccess": (
-            IsAclAttributeType.CASE_INSENSITIVE,
-            "OLCACCESS",
-            None,
-            True,
-        ),
-        "is_acl_attribute_case_insensitive_orclaci": (
-            IsAclAttributeType.CASE_INSENSITIVE,
-            "OrclAci",
-            "oid",
-            True,
-        ),
-    }
 
     @pytest.mark.parametrize(
         (
@@ -158,13 +26,13 @@ class TestsTestFlextLdifAclAttributeRegistry:
         ),
         [
             (name, data[0], data[1], data[2], data[3])
-            for name, data in GET_ACL_ATTRIBUTES_DATA.items()
+            for name, data in c.Ldif.TestData.AclRegistry.GET_ACL_ATTRIBUTES_DATA.items()
         ],
     )
     def test_get_acl_attributes(
         self,
         scenario: str,
-        server_type: GetAclAttributesServerType,
+        server_type: c.Ldif.Scenarios.AclRegistry.GetAclAttributes,
         param_server_type: str | None,
         required_attrs: t.StrSequence,
         forbidden_attrs: t.StrSequence,
@@ -180,13 +48,13 @@ class TestsTestFlextLdifAclAttributeRegistry:
         ("scenario", "test_type", "attr_name", "server_type", "expected_result"),
         [
             (name, data[0], data[1], data[2], data[3])
-            for name, data in IS_ACL_ATTRIBUTE_DATA.items()
+            for name, data in c.Ldif.TestData.AclRegistry.IS_ACL_ATTRIBUTE_DATA.items()
         ],
     )
     def test_is_acl_attribute(
         self,
         scenario: str,
-        test_type: IsAclAttributeType,
+        test_type: c.Ldif.Scenarios.AclRegistry.IsAclAttribute,
         attr_name: str,
         server_type: str | None,
         expected_result: bool,

@@ -14,8 +14,6 @@ if _t.TYPE_CHECKING:
 
     test_server_utilities = _tests_unit__utilities_server_test_server_utilities
     from tests.unit._utilities.server.test_server_utilities import (
-        OidServer,
-        OudServer,
         TestFlextLdifUtilitiesServer,
     )
 
@@ -31,8 +29,6 @@ if _t.TYPE_CHECKING:
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
 _LAZY_IMPORTS = {
-    "OidServer": "tests.unit._utilities.server.test_server_utilities",
-    "OudServer": "tests.unit._utilities.server.test_server_utilities",
     "TestFlextLdifUtilitiesServer": "tests.unit._utilities.server.test_server_utilities",
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
@@ -49,8 +45,6 @@ _LAZY_IMPORTS = {
 }
 
 __all__ = [
-    "OidServer",
-    "OudServer",
     "TestFlextLdifUtilitiesServer",
     "c",
     "d",

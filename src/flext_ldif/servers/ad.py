@@ -9,7 +9,7 @@ from collections.abc import MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import (
-    FlextLdifModelsDomains,
+    FlextLdifModelsDomainsEntries,
     FlextLdifServersRfc,
     FlextLdifUtilitiesObjectClass,
     FlextLdifUtilitiesServer,
@@ -316,7 +316,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 return r[m.Ldif.Acl].fail(f"Active Directory ACL parsing failed: {exc}")
 
         @override
-        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
+        def _write_acl(self, acl_data: FlextLdifModelsDomainsEntries.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
                 if not acl_data.raw_acl:

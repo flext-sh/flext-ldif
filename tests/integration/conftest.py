@@ -35,10 +35,6 @@ from flext_ldif import (
 )
 from tests import FlextLdifFixtures, c, m, p, t, u
 
-# Centralized Docker constants — single source of truth
-_D = c.Ldif.Docker
-WORKSPACE_ROOT = Path(__file__).resolve().parents[3]
-
 
 @pytest.fixture
 def api() -> ldif:
@@ -338,25 +334,31 @@ def ldap_container(worker_id: str) -> t.ContainerMapping:
     for credential resolution.
     """
     docker_control = u.Ldif.Tests.get_docker_control(worker_id)
-    server_url = f"ldap://localhost:{_D.PORT}"
+    server_url = f"ldap://localhost:{c.Ldif.Docker.PORT}"
     lock = u.Ldif.Tests.FileLock(
-        Path.home() / ".flext" / f"{_D.CONTAINER_NAME}.lock",
+        Path.home() / ".flext" / f"{c.Ldif.Docker.CONTAINER_NAME}.lock",
     )
     with lock:
-        start_result = docker_control.start_existing_container(_D.CONTAINER_NAME)
+        start_result = docker_control.start_existing_container(
+            c.Ldif.Docker.CONTAINER_NAME
+        )
         if start_result.is_failure:
-            compose_file = str(WORKSPACE_ROOT / _D.COMPOSE_FILE_REL)
+            compose_file = str(
+                c.Ldif.Paths.WORKSPACE_ROOT / c.Ldif.Docker.COMPOSE_FILE_REL
+            )
             compose_result = docker_control.compose_up(
                 compose_file,
-                _D.SERVICE_NAME,
+                c.Ldif.Docker.SERVICE_NAME,
             )
             if compose_result.is_failure:
                 pytest.skip(
                     f"Could not start shared OpenLDAP container: {compose_result.error}",
                 )
-        port_result = docker_control.wait_for_port_ready("localhost", _D.PORT, 15)
+        port_result = docker_control.wait_for_port_ready(
+            "localhost", c.Ldif.Docker.PORT, 15
+        )
         if port_result.is_failure or not port_result.value:
-            pytest.skip(f"LDAP container port {_D.PORT} is not ready")
+            pytest.skip(f"LDAP container port {c.Ldif.Docker.PORT} is not ready")
         admin_dn, admin_password = u.Ldif.Tests.get_admin_credentials()
         # Verify LDAP bind readiness
         waited = 0.0
@@ -391,8 +393,8 @@ def ldap_container(worker_id: str) -> t.ContainerMapping:
         "host": "localhost",
         "bind_dn": admin_dn,
         "password": admin_password,
-        "base_dn": _D.BASE_DN,
-        "port": _D.PORT,
+        "base_dn": c.Ldif.Docker.BASE_DN,
+        "port": c.Ldif.Docker.PORT,
         "use_ssl": False,
         "worker_id": worker_id,
     }
@@ -401,7 +403,7 @@ def ldap_container(worker_id: str) -> t.ContainerMapping:
 @pytest.fixture(scope="session")
 def ldap_container_shared(ldap_container: t.ContainerMapping) -> str:
     """Provide LDAP connection URL for tests requiring Docker container."""
-    default_url = f"ldap://localhost:{_D.PORT}"
+    default_url = f"ldap://localhost:{c.Ldif.Docker.PORT}"
     return str(ldap_container.get("server_url", default_url))
 
 
@@ -433,7 +435,7 @@ def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
     """Return a factory that creates unique test base DNs."""
 
     def _make(ou: str) -> str:
-        return f"ou={ou}-{unique_dn_suffix},{_D.BASE_DN}"
+        return f"ou={ou}-{unique_dn_suffix},{c.Ldif.Docker.BASE_DN}"
 
     return _make
 
@@ -444,10 +446,10 @@ def ldap_connection(
 ) -> Generator[p.Ldap.Ldap3Connection]:
     """Provide a bound LDAP connection or skip when unavailable."""
     server_url = str(
-        ldap_container.get("server_url", f"ldap://localhost:{_D.PORT}"),
+        ldap_container.get("server_url", f"ldap://localhost:{c.Ldif.Docker.PORT}"),
     )
-    bind_dn = str(ldap_container.get("bind_dn", _D.ADMIN_DN))
-    password = str(ldap_container.get("password", _D.ADMIN_PASSWORD))
+    bind_dn = str(ldap_container.get("bind_dn", c.Ldif.Docker.ADMIN_DN))
+    password = str(ldap_container.get("password", c.Ldif.Docker.ADMIN_PASSWORD))
     srv = ldap_u.Ldap.create_server_from_url(server_url)
     conn = ldap_u.Ldap.create_connection(
         srv,

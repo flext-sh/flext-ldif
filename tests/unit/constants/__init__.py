@@ -25,13 +25,9 @@ if _t.TYPE_CHECKING:
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
     from tests.unit.constants.test_acl_registry import (
-        GetAclAttributesServerType,
-        IsAclAttributeType,
         TestsTestFlextLdifAclAttributeRegistry,
     )
 _LAZY_IMPORTS = {
-    "GetAclAttributesServerType": "tests.unit.constants.test_acl_registry",
-    "IsAclAttributeType": "tests.unit.constants.test_acl_registry",
     "TestsTestFlextLdifAclAttributeRegistry": "tests.unit.constants.test_acl_registry",
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
@@ -48,8 +44,6 @@ _LAZY_IMPORTS = {
 }
 
 __all__ = [
-    "GetAclAttributesServerType",
-    "IsAclAttributeType",
     "TestsTestFlextLdifAclAttributeRegistry",
     "c",
     "d",

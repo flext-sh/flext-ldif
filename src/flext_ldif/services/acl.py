@@ -7,7 +7,7 @@ from typing import override
 
 from flext_core import FlextLogger
 from flext_ldif import (
-    FlextLdifModelsDomains,
+    FlextLdifModelsDomainsEntries,
     FlextLdifServer,
     FlextLdifUtilitiesACL,
     FlextLdifUtilitiesEntry,
@@ -35,7 +35,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
 
     @staticmethod
     def _build_acl_response(
-        acls: MutableSequence[FlextLdifModelsDomains.Acl],
+        acls: MutableSequence[FlextLdifModelsDomainsEntries.Acl],
         *,
         processed_entries: int = 1,
         failed_entries: int = 0,
@@ -135,7 +135,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
         acl_values = entry.get_attribute_values(next(iter(acl_attr_name)))
         if not acl_values:
             return r[m.Ldif.AclResponse].ok(self._build_acl_response([]))
-        acls: MutableSequence[FlextLdifModelsDomains.Acl] = []
+        acls: MutableSequence[FlextLdifModelsDomainsEntries.Acl] = []
         failed_count = 0
 
         for acl_value in acl_values:

@@ -57,13 +57,10 @@ if _t.TYPE_CHECKING:
     integration = _tests_integration
     import tests.models as _tests_models
     from tests.integration import (
-        WORKSPACE_ROOT,
-        APIScenarios,
         ConfigTestData,
         TestAclRoundTripPreservation,
         TestBoundaryValues,
         TestCategorizationRealData,
-        TestData,
         TestDnCaseNormalizationScenarios,
         TestDnCaseRegistry,
         TestEmptyAndMinimalCases,
@@ -217,7 +214,6 @@ if _t.TYPE_CHECKING:
         FileManager,
         FlextLdifTestConftest,
         FlextLdifTestServiceFactory,
-        LdifSample,
         LdifTestData,
         MockFlextUtilitiesResultHelpers,
         MockMatchers,
@@ -257,7 +253,6 @@ if _t.TYPE_CHECKING:
     unit = _tests_unit
     import tests.unit.services as _tests_unit_services
     from tests.unit import (
-        OidTestConstants,
         TestFlextLdifTypesStructure,
         TestIntegrationWithLdifFixtures,
         TestModelsNamespace,
@@ -270,37 +265,16 @@ if _t.TYPE_CHECKING:
         test_migration_pipeline_quirks,
         test_typings,
     )
-    from tests.unit.__init__ import TestsFlextLdifVersion, test_version
+    from tests.unit.__init__ import TestsFlextLdifVersion, test_version, version_module
     from tests.unit._utilities.oid import TestFlextLdifUtilitiesOID
     from tests.unit._utilities.parser import TestFlextLdifUtilitiesParser
-    from tests.unit._utilities.server import (
-        OidServer,
-        OudServer,
-        TestFlextLdifUtilitiesServer,
-    )
+    from tests.unit._utilities.server import TestFlextLdifUtilitiesServer
     from tests.unit.constants import (
-        GetAclAttributesServerType,
-        IsAclAttributeType,
         TestsTestFlextLdifAclAttributeRegistry,
         test_acl_registry,
     )
     from tests.unit.protocols import TestsTestFlextLdifProtocols, test_protocols
     from tests.unit.quirks.servers import (
-        ACL_TEST_CASES,
-        ATTRIBUTE_TEST_CASES,
-        ENTRY_TEST_CASES,
-        OBJECTCLASS_TEST_CASES,
-        AclScenario,
-        AclTestCase,
-        AttributeScenario,
-        AttributeTestCase,
-        EntryScenario,
-        EntryTestCase,
-        ObjectClassScenario,
-        ObjectClassTestCase,
-        ParseScenario,
-        RfcTestHelpers,
-        TestDeduplicationHelpers,
         TestNovellAcls,
         TestNovellEntryDetection,
         TestNovellSchemaAttributeDetection,
@@ -316,11 +290,9 @@ if _t.TYPE_CHECKING:
         TestsTestFlextLdifDs389Quirks,
         TestsTestFlextLdifOidQuirks,
         TestsTestFlextLdifRelaxedQuirks,
-        WriteScenario,
         cleanup_state,
         entry_quirk,
         ldif_api,
-        meta_keys,
         novell_server,
         schema_quirk,
     )
@@ -424,21 +396,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
 )
 
 __all__ = [
-    "ACL_TEST_CASES",
-    "ATTRIBUTE_TEST_CASES",
-    "ENTRY_TEST_CASES",
     "FIXTURES_DIR",
-    "OBJECTCLASS_TEST_CASES",
     "OID_FIXTURES_DIR",
-    "WORKSPACE_ROOT",
-    "APIScenarios",
-    "AclScenario",
-    "AclTestCase",
-    "AttributeScenario",
-    "AttributeTestCase",
     "ConfigTestData",
-    "EntryScenario",
-    "EntryTestCase",
     "FileManager",
     "FlextLdifFixtures",
     "FlextLdifTestConftest",
@@ -451,26 +411,14 @@ __all__ = [
     "FlextLdifTestUtilities",
     "FlextLdifTestsServiceBase",
     "GenericFieldsDict",
-    "GetAclAttributesServerType",
-    "IsAclAttributeType",
-    "LdifSample",
     "LdifTestData",
     "MockFlextUtilitiesResultHelpers",
     "MockMatchers",
-    "ObjectClassScenario",
-    "ObjectClassTestCase",
-    "OidServer",
-    "OidTestConstants",
-    "OudServer",
-    "ParseScenario",
-    "RfcTestHelpers",
     "TestAclRoundTripPreservation",
     "TestAliasDiscovery",
     "TestAttributeFixer",
     "TestBoundaryValues",
     "TestCategorizationRealData",
-    "TestData",
-    "TestDeduplicationHelpers",
     "TestDnCaseNormalizationScenarios",
     "TestDnCaseRegistry",
     "TestDnObjectClassMethods",
@@ -576,7 +524,6 @@ __all__ = [
     "TestsTestFlextLdifOidQuirks",
     "TestsTestFlextLdifProtocols",
     "TestsTestFlextLdifRelaxedQuirks",
-    "WriteScenario",
     "all_acl_fixtures",
     "all_entries_fixtures",
     "all_integration_fixtures",
@@ -613,7 +560,6 @@ __all__ = [
     "m",
     "make_test_base_dn",
     "make_test_username",
-    "meta_keys",
     "migration_inputs",
     "models",
     "novell_server",
@@ -717,6 +663,7 @@ __all__ = [
     "unit",
     "utilities",
     "validators",
+    "version_module",
     "writer",
     "x",
 ]

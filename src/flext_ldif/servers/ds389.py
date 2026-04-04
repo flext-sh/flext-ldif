@@ -7,7 +7,7 @@ from collections.abc import MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import (
-    FlextLdifModelsDomains,
+    FlextLdifModelsDomainsEntries,
     FlextLdifServersRfc,
     FlextLdifUtilitiesACL,
     FlextLdifUtilitiesObjectClass,
@@ -218,7 +218,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @staticmethod
         def _resolve_acl_targetattr(
-            target: m.Ldif.AclTarget | FlextLdifModelsDomains.AclTarget | None,
+            target: m.Ldif.AclTarget | FlextLdifModelsDomainsEntries.AclTarget | None,
         ) -> str:
             """Resolve target attributes to formatted string."""
             if target and target.attributes:
@@ -230,7 +230,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @staticmethod
         def _resolve_acl_userdn(
-            subject: m.Ldif.AclSubject | FlextLdifModelsDomains.AclSubject | None,
+            subject: m.Ldif.AclSubject
+            | FlextLdifModelsDomainsEntries.AclSubject
+            | None,
         ) -> str:
             """Resolve subject to userdn string."""
             if subject and subject.subject_value:
@@ -306,7 +308,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def _extract_acl_permissions(
             self,
             permissions_data: m.Ldif.AclPermissions
-            | FlextLdifModelsDomains.AclPermissions
+            | FlextLdifModelsDomainsEntries.AclPermissions
             | None,
         ) -> MutableSequence[str]:
             """Extract permission names from Permissions model flags."""
@@ -431,7 +433,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
 
         @override
-        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
+        def _write_acl(self, acl_data: FlextLdifModelsDomainsEntries.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
                 if acl_data.raw_acl:

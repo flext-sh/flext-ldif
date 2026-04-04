@@ -11,24 +11,14 @@ from collections.abc import (
     MutableMapping,
     MutableSequence,
 )
-from typing import TYPE_CHECKING, Literal, overload
+from typing import Literal, overload
 
 from flext_core import r, u
-from flext_ldif._models.settings import FlextLdifModelsSettings
-from flext_ldif.constants import FlextLdifConstants as c
-
-if TYPE_CHECKING:
-    from flext_ldif._models.domain import FlextLdifModelsDomains
-    from flext_ldif.models import FlextLdifModels as m
-
-
-def _get_domains() -> type[FlextLdifModelsDomains]:
-    """Lazy accessor to break circular import."""
-    from flext_ldif._models.domain import (  # noqa: PLC0415
-        FlextLdifModelsDomains as _cls,
-    )
-
-    return _cls
+from flext_ldif import (
+    FlextLdifConstants as c,
+    FlextLdifModelsDomainDN,
+    FlextLdifModelsSettings,
+)
 
 
 class FlextLdifUtilitiesDN:
@@ -92,7 +82,7 @@ class FlextLdifUtilitiesDN:
     Pure functions: no server-specific logic, no side effects.
 
     Supports both:
-    - m.Ldif.DN (DN model)
+    - FlextLdifModelsDomainDN.DN (DN model)
     - str (DN string value)
 
     """
@@ -370,10 +360,10 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def clean_dn(dn: m.Ldif.DN) -> str: ...
+    def clean_dn(dn: FlextLdifModelsDomainDN.DN) -> str: ...
 
     @staticmethod
-    def clean_dn(dn: str | m.Ldif.DN) -> str:
+    def clean_dn(dn: str | FlextLdifModelsDomainDN.DN) -> str:
         """Clean DN string to fix spacing and escaping issues."""
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str:
@@ -398,7 +388,7 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def clean_dn_with_statistics(
         dn: str,
-    ) -> tuple[str, FlextLdifModelsDomains.DNStatistics]:
+    ) -> tuple[str, FlextLdifModelsDomainDN.DNStatistics]:
         r"""Clean DN and track all transformations with statistics.
 
         Returns both cleaned DN and complete transformation history
@@ -418,10 +408,10 @@ class FlextLdifUtilitiesDN:
         """
         original_dn = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not original_dn:
-            stats_domain = _get_domains().DNStatistics.create_minimal(
+            stats_domain = FlextLdifModelsDomainDN.DNStatistics.create_minimal(
                 original_dn,
             )
-            stats = _get_domains().DNStatistics.model_validate(
+            stats = FlextLdifModelsDomainDN.DNStatistics.model_validate(
                 stats_domain.model_dump(),
             )
             return (original_dn, stats)
@@ -444,7 +434,7 @@ class FlextLdifUtilitiesDN:
             if isinstance(validation_errors_raw, list)
             else []
         )
-        stats_domain = _get_domains().DNStatistics(
+        stats_domain = FlextLdifModelsDomainDN.DNStatistics(
             original_dn=original_dn,
             cleaned_dn=result,
             normalized_dn=result,
@@ -521,7 +511,7 @@ class FlextLdifUtilitiesDN:
         return "".join(mapped_result)
 
     @staticmethod
-    def get_dn_value(dn: m.Ldif.DN | FlextLdifModelsDomains.DN | str) -> str:
+    def get_dn_value(dn: FlextLdifModelsDomainDN.DN | str) -> str:
         """Extract DN string value from DN model or string (public utility method)."""
         if isinstance(dn, str):
             return dn
@@ -621,10 +611,10 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm(dn: m.Ldif.DN) -> r[str]: ...
+    def norm(dn: FlextLdifModelsDomainDN.DN) -> r[str]: ...
 
     @staticmethod
-    def norm(dn: str | m.Ldif.DN | None) -> r[str]:
+    def norm(dn: str | FlextLdifModelsDomainDN.DN | None) -> r[str]:
         """Normalize DN per RFC 4514 (lowercase attrs, preserve values)."""
         if dn is None:
             return r[str].fail("DN cannot be None")
@@ -733,10 +723,14 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def parse_dn(dn: m.Ldif.DN) -> r[MutableSequence[tuple[str, str]]]: ...
+    def parse_dn(
+        dn: FlextLdifModelsDomainDN.DN,
+    ) -> r[MutableSequence[tuple[str, str]]]: ...
 
     @staticmethod
-    def parse_dn(dn: str | m.Ldif.DN | None) -> r[MutableSequence[tuple[str, str]]]:
+    def parse_dn(
+        dn: str | FlextLdifModelsDomainDN.DN | None,
+    ) -> r[MutableSequence[tuple[str, str]]]:
         """Parse DN into RFC 4514 components (attr, value pairs)."""
         if dn is None:
             return r[MutableSequence[tuple[str, str]]].fail("DN cannot be None")
@@ -845,10 +839,10 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def split(dn: m.Ldif.DN) -> MutableSequence[str]: ...
+    def split(dn: FlextLdifModelsDomainDN.DN) -> MutableSequence[str]: ...
 
     @staticmethod
-    def split(dn: str | m.Ldif.DN) -> MutableSequence[str]:
+    def split(dn: str | FlextLdifModelsDomainDN.DN) -> MutableSequence[str]:
         r"""Split DN string into individual RDN components per RFC 4514.
 
         RFC 4514 Section 2 ABNF:
@@ -893,14 +887,14 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def transform_dn_attribute(
-        value: m.Ldif.DN,
+        value: FlextLdifModelsDomainDN.DN,
         source_dn: str,
         target_dn: str,
     ) -> str: ...
 
     @staticmethod
     def transform_dn_attribute(
-        value: str | m.Ldif.DN,
+        value: str | FlextLdifModelsDomainDN.DN,
         source_dn: str,
         target_dn: str,
     ) -> str:
@@ -964,7 +958,7 @@ class FlextLdifUtilitiesDN:
         return "".join(result)
 
     @staticmethod
-    def validate_dn(dn: str | m.Ldif.DN) -> bool:
+    def validate_dn(dn: str | FlextLdifModelsDomainDN.DN) -> bool:
         r"""Validate DN format according to RFC 4514.
 
         Properly handles escaped characters. Checks for:
