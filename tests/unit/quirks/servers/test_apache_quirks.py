@@ -6,8 +6,6 @@ Directory Server-specific attributes, t.NormalizedValue classes, entries, and AC
 
 from __future__ import annotations
 
-from typing import ClassVar
-
 import pytest
 from flext_tests import tm
 from tests import c, m, t
@@ -17,10 +15,6 @@ from flext_ldif import FlextLdifServersApache
 
 class TestsTestFlextLdifApacheQuirks:
     """Test Apache Directory Server quirks implementation."""
-
-    ATTRIBUTE_DATA: ClassVar = c.Ldif.TestCases.Apache.ATTRIBUTE_TEST_CASES
-    OBJECTCLASS_DATA: ClassVar = c.Ldif.TestCases.Apache.OBJECTCLASS_TEST_CASES
-    ENTRY_DATA: ClassVar = c.Ldif.TestCases.Apache.ENTRY_TEST_CASES
 
     def test_server_initialization(self) -> None:
         """Test Apache Directory Server initialization."""

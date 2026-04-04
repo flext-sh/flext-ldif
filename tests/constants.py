@@ -553,12 +553,12 @@ class FlextLdifTestConstants(FlextTestsConstants):
         class General:
             """General test constants (from fixtures/general_constants.py)."""
 
-            SAMPLE_DN = DNs.TEST
-            SAMPLE_DN_1 = DNs.TEST1
-            SAMPLE_DN_2 = DNs.TEST2
-            SAMPLE_SCHEMA_DN = DNs.SCHEMA
+            SAMPLE_DN: Final[str] = "cn=test,dc=example,dc=com"
+            SAMPLE_DN_1: Final[str] = "cn=test1,dc=example,dc=com"
+            SAMPLE_DN_2: Final[str] = "cn=test2,dc=example,dc=com"
+            SAMPLE_SCHEMA_DN: Final[str] = "cn=schema"
             SAMPLE_USER_DN: Final[str] = "uid=testuser,ou=people,dc=example,dc=com"
-            SAMPLE_SUBSCHEMA_DN = DNs.SUBSCHEMA
+            SAMPLE_SUBSCHEMA_DN: Final[str] = "cn=subschema"
             SAMPLE_LDIF_ENTRY: Final[str] = (
                 "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
             )
@@ -572,17 +572,17 @@ class FlextLdifTestConstants(FlextTestsConstants):
             PARSE_FAILED_MSG: Final[str] = "Parse failed"
             WRITE_FAILED_MSG: Final[str] = "Write failed"
             INVALID_ATTRIBUTE: Final[str] = "this is not a valid attribute definition"
-            INVALID_DN = DNs.INVALID
+            INVALID_DN: Final[str] = "invalid-dn-format"
             INVALID_DATA_TYPE: Final[str] = "invalid_type"
-            ATTR_NAME_CN = Names.CN
-            ATTR_NAME_SN = Names.SN
-            ATTR_NAME_OBJECTCLASS = Names.OBJECT_CLASS
+            ATTR_NAME_CN: Final[str] = "cn"
+            ATTR_NAME_SN: Final[str] = "sn"
+            ATTR_NAME_OBJECTCLASS: Final[str] = "objectClass"
             ATTR_VALUE_TEST: Final[str] = "test"
             ATTR_VALUE_TEST1: Final[str] = "test1"
             ATTR_VALUE_TEST2: Final[str] = "test2"
             ATTR_VALUE_USER: Final[str] = "user"
-            OC_NAME_PERSON = Names.PERSON
-            OC_NAME_TOP = Names.TOP
+            OC_NAME_PERSON: Final[str] = "person"
+            OC_NAME_TOP: Final[str] = "top"
 
         class RFC:
             """RFC server test constants (from fixtures/rfc_constants.py)."""
@@ -591,60 +591,84 @@ class FlextLdifTestConstants(FlextTestsConstants):
             ATTR_DEF_CN_FULL: Final[str] = (
                 "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )"
             )
-            ATTR_DEF_CN_COMPLETE = Rfc.ATTR_DEF_CN
+            ATTR_DEF_CN_COMPLETE: Final[str] = (
+                "( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
+            )
             ATTR_DEF_SN: Final[str] = (
                 "( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )"
             )
-            ATTR_DEF_OBJECTCLASS = Rfc.ATTR_DEF_OBJECTCLASS
-            ATTR_OID_CN = OIDs.CN
-            ATTR_OID_OBJECTCLASS = OIDs.OBJECTCLASS
-            ATTR_NAME_CN = Names.CN
-            ATTR_OID_SN = OIDs.SN
-            ATTR_NAME_SN = Names.SN
+            ATTR_DEF_OBJECTCLASS: Final[str] = (
+                "( 2.5.4.0 NAME 'objectClass' DESC 'Object Class' SYNTAX '1.3.6.1.4.1.1466.115.121.1.38' )"
+            )
+            ATTR_OID_CN: Final[str] = "2.5.4.3"
+            ATTR_OID_OBJECTCLASS: Final[str] = "2.5.4.0"
+            ATTR_NAME_CN: Final[str] = "cn"
+            ATTR_OID_SN: Final[str] = "2.5.4.4"
+            ATTR_NAME_SN: Final[str] = "sn"
             OC_DEF_PERSON: Final[str] = "( 2.5.6.6 NAME 'person' STRUCTURAL )"
-            OC_DEF_PERSON_FULL = Rfc.OC_DEF_PERSON
-            OC_DEF_PERSON_BASIC = Rfc.OC_DEF_PERSON_BASIC
-            OC_OID_PERSON = OIDs.PERSON
-            OC_NAME_PERSON = Names.PERSON
-            TEST_DN = DNs.TEST
+            OC_DEF_PERSON_FULL: Final[str] = (
+                "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL MUST ( sn $ cn ) )"
+            )
+            OC_DEF_PERSON_BASIC: Final[str] = (
+                "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL )"
+            )
+            OC_OID_PERSON: Final[str] = "2.5.6.6"
+            OC_NAME_PERSON: Final[str] = "person"
+            TEST_DN: Final[str] = "cn=test,dc=example,dc=com"
             TEST_ORIGIN: Final[str] = "test.ldif"
-            SCHEMA_DN_SUBSCHEMA = DNs.SUBSCHEMA
-            SCHEMA_DN_SCHEMA = DNs.SCHEMA
-            SCHEMA_DN_SCHEMA_SYSTEM = DNs.SCHEMA_SYSTEM
-            ATTR_DEF_CN_MINIMAL = Rfc.ATTR_DEF_CN_MINIMAL
-            ATTR_DEF_ST = Rfc.ATTR_DEF_ST
-            ATTR_DEF_MAIL = Rfc.ATTR_DEF_MAIL
-            ATTR_OID_MAIL = OIDs.MAIL
-            ATTR_NAME_MAIL = Names.MAIL
-            ATTR_DEF_MODIFY_TIMESTAMP = Rfc.ATTR_DEF_MODIFY_TIMESTAMP
-            ATTR_DEF_OBSOLETE = Rfc.ATTR_DEF_OBSOLETE
-            ATTR_OID_O = OIDs.O
-            ATTR_NAME_O = Names.ORGANIZATION
-            SYNTAX_OID_DIRECTORY_STRING = OIDs.DIRECTORY_STRING
-            SYNTAX_OID_BOOLEAN = OIDs.BOOLEAN
-            SYNTAX_OID_INTEGER = OIDs.INTEGER
-            INVALID_ATTR_DEF = Rfc.INVALID_ATTR_DEF
-            INVALID_OC_DEF = Rfc.INVALID_OC_DEF
+            SCHEMA_DN_SUBSCHEMA: Final[str] = "cn=subschema"
+            SCHEMA_DN_SCHEMA: Final[str] = "cn=schema"
+            SCHEMA_DN_SCHEMA_SYSTEM: Final[str] = "cn=schema,o=system"
+            ATTR_DEF_CN_MINIMAL: Final[str] = "( 2.5.4.3 )"
+            ATTR_DEF_ST: Final[str] = (
+                "( 2.5.4.8 NAME 'st' DESC 'State or Province Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 EQUALITY caseIgnoreMatch ORDERING caseIgnoreOrderingMatch SUBSTR caseIgnoreSubstringsMatch )"
+            )
+            ATTR_DEF_MAIL: Final[str] = (
+                "( 0.9.2342.19200300.100.1.3 NAME 'mail' SUP name DESC 'Email address' )"
+            )
+            ATTR_OID_MAIL: Final[str] = "0.9.2342.19200300.100.1.3"
+            ATTR_NAME_MAIL: Final[str] = "mail"
+            ATTR_DEF_MODIFY_TIMESTAMP: Final[str] = (
+                "( 2.5.18.2 NAME 'modifyTimestamp' SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )"
+            )
+            ATTR_DEF_OBSOLETE: Final[str] = (
+                "( 2.5.4.10 NAME 'o' DESC 'Organization Name' OBSOLETE SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+            )
+            ATTR_OID_O: Final[str] = "2.5.4.10"
+            ATTR_NAME_O: Final[str] = "o"
+            SYNTAX_OID_DIRECTORY_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.15"
+            SYNTAX_OID_BOOLEAN: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"
+            SYNTAX_OID_INTEGER: Final[str] = "1.3.6.1.4.1.1466.115.121.1.27"
+            INVALID_ATTR_DEF: Final[str] = "NAME 'cn' DESC 'Common Name'"
+            INVALID_OC_DEF: Final[str] = "invalid objectclass definition"
             SAMPLE_LDIF_CONTENT: Final[str] = (
                 "dn: cn=schema\nattributeTypes: ( 2.5.4.3 NAME 'cn' )\nobjectClasses: ( 2.5.6.6 NAME 'person' STRUCTURAL )\n"
             )
-            SAMPLE_SCHEMA_CONTENT = Rfc.SAMPLE_SCHEMA_CONTENT
-            SAMPLE_DN = DNs.TEST
-            SAMPLE_DN_USER1 = DNs.TEST_USER1
-            SAMPLE_DN_USER2 = DNs.TEST_USER2
-            SAMPLE_DN_TEST_USER = DNs.TEST_USER_FULL
-            INVALID_DN = DNs.INVALID
-            SAMPLE_LDIF_BASIC = Rfc.SAMPLE_LDIF_BASIC
-            SAMPLE_LDIF_MULTIPLE = Rfc.SAMPLE_LDIF_MULTIPLE
-            SAMPLE_LDIF_BINARY = Rfc.SAMPLE_LDIF_BINARY
-            SAMPLE_ATTRIBUTE_CN = Names.CN
-            SAMPLE_ATTRIBUTE_SN = Names.SN
+            SAMPLE_SCHEMA_CONTENT: Final[str] = (
+                "dn: cn=subschema\nobjectClass: top\nobjectClass: subentry\nobjectClass: subschema\ncn: subschema\nattributeTypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )\nobjectClasses: ( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL MUST ( sn $ cn ) )\n"
+            )
+            SAMPLE_DN: Final[str] = "cn=test,dc=example,dc=com"
+            SAMPLE_DN_USER1: Final[str] = "cn=user1,dc=example,dc=com"
+            SAMPLE_DN_USER2: Final[str] = "cn=user2,dc=example,dc=com"
+            SAMPLE_DN_TEST_USER: Final[str] = "cn=Test User,dc=example,dc=com"
+            INVALID_DN: Final[str] = "invalid-dn-format"
+            SAMPLE_LDIF_BASIC: Final[str] = (
+                "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
+            )
+            SAMPLE_LDIF_MULTIPLE: Final[str] = (
+                "dn: cn=user1,dc=example,dc=com\nobjectClass: person\ncn: user1\n\ndn: cn=user2,dc=example,dc=com\nobjectClass: person\ncn: user2\n"
+            )
+            SAMPLE_LDIF_BINARY: Final[str] = (
+                "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nphoto:: UGhvdG8gZGF0YQ==\n"
+            )
+            SAMPLE_ATTRIBUTE_CN: Final[str] = "cn"
+            SAMPLE_ATTRIBUTE_SN: Final[str] = "sn"
             SAMPLE_ATTRIBUTE_PHOTO: Final[str] = "photo"
             SAMPLE_VALUE_TEST: Final[str] = "test"
             SAMPLE_VALUE_USER: Final[str] = "user"
             SAMPLE_VALUE_USER1: Final[str] = "user1"
             SAMPLE_VALUE_USER2: Final[str] = "user2"
-            SAMPLE_OBJECTCLASS_PERSON = Names.PERSON
+            SAMPLE_OBJECTCLASS_PERSON: Final[str] = "person"
             BASE64_PHOTO_DATA: Final[str] = "UGhvdG8gZGF0YQ=="
             ACL_LINE_SAMPLE: Final[str] = (
                 '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
@@ -682,7 +706,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
         class OUD:
             """OUD server test constants (from fixtures/oud_constants.py)."""
 
-            SCHEMA_DN = DNs.SCHEMA
+            SCHEMA_DN: Final[str] = "cn=schema"
             SCHEMA_DN_SUBSCHEMA: Final[str] = "cn=subschemasubentry"
 
         class Values:
@@ -696,7 +720,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
             EXAMPLE: Final[str] = "example"
             USER1_EMAIL: Final[str] = "user1@example.com"
             USER2_EMAIL: Final[str] = "user2@example.com"
-            ATTRIBUTE_ORCLGUID = OidServer.ATTRIBUTE_ORCLGUID
+            ATTRIBUTE_ORCLGUID: Final[str] = (
+                "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
+            )
             ATTRIBUTE_ORCLGUID_WITH_X_ORIGIN: Final[str] = (
                 "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 X-ORIGIN 'Oracle' )"
             )
@@ -710,7 +736,9 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 "( 1.2.3.4 NAME 'testAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"
             )
             ATTRIBUTE_INVALID_OID: Final[str] = "( invalid@oid!format NAME 'testAttr' )"
-            OBJECTCLASS_ORCLCONTEXT = OidServer.OBJECTCLASS_ORCLCONTEXT
+            OBJECTCLASS_ORCLCONTEXT: Final[str] = (
+                "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
+            )
             OBJECTCLASS_MULTIPLE_SUP: Final[str] = (
                 "( 1.2.3.4 NAME 'testOC' SUP ( top $ person ) STRUCTURAL )"
             )
@@ -720,8 +748,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
             SAMPLE_ATTRIBUTE_OID: Final[str] = "1.2.3.4"
             SAMPLE_ATTRIBUTE_OID_2: Final[str] = "1.2.3.5"
             SAMPLE_OBJECTCLASS_OID: Final[str] = "1.2.3.6"
-            SAMPLE_SYNTAX_OID = OIDs.DIRECTORY_STRING
-            SAMPLE_SYNTAX_OID_QUOTED = OIDs.BOOLEAN
+            SAMPLE_SYNTAX_OID: Final[str] = "1.3.6.1.4.1.1466.115.121.1.15"
+            SAMPLE_SYNTAX_OID_QUOTED: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"
             SAMPLE_ATTRIBUTE_NAME: Final[str] = "testAttr"
             SAMPLE_ATTRIBUTE_NAME_2: Final[str] = "testAttr2"
             SAMPLE_OBJECTCLASS_NAME: Final[str] = "testOC"
@@ -734,8 +762,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
             SAMPLE_OBJECTCLASS_DEF: Final[str] = (
                 "( 1.2.3.6 NAME 'testOC' SUP top STRUCTURAL )"
             )
-            SAMPLE_DN = DNs.TEST
-            SAMPLE_SCHEMA_DN = DNs.SCHEMA
+            SAMPLE_DN: Final[str] = "cn=test,dc=example,dc=com"
+            SAMPLE_SCHEMA_DN: Final[str] = "cn=schema"
             SAMPLE_ACI: Final[str] = (
                 '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
             )
@@ -760,16 +788,30 @@ class FlextLdifTestConstants(FlextTestsConstants):
         class Conversion:
             """Conversion test constants (from conftest ConversionTestConstants)."""
 
-            OID_ATTRIBUTE_ORCLGUID = OidServer.ATTRIBUTE_ORCLGUID
-            OID_ATTRIBUTE_ORCLDBNAME = OidServer.ATTRIBUTE_ORCLDBNAME
-            OID_ATTRIBUTE_ORCLGUID_COMPLEX = OidServer.ATTRIBUTE_ORCLGUID_COMPLEX
-            OUD_ATTRIBUTE_ORCLGUID = OidServer.ATTRIBUTE_ORCLGUID
-            OID_OBJECTCLASS_ORCLCONTEXT = OidServer.OBJECTCLASS_ORCLCONTEXT
-            OID_OBJECTCLASS_ORCLCONTAINER = OidServer.OBJECTCLASS_ORCLCONTAINER
-            OID_OBJECTCLASS_ORCLCONTEXT_WITH_MAY = (
-                OidServer.OBJECTCLASS_ORCLCONTEXT_WITH_MAY
+            OID_ATTRIBUTE_ORCLGUID: Final[str] = (
+                "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
             )
-            OUD_OBJECTCLASS_ORCLCONTEXT = OidServer.OBJECTCLASS_ORCLCONTEXT
+            OID_ATTRIBUTE_ORCLDBNAME: Final[str] = (
+                "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+            )
+            OID_ATTRIBUTE_ORCLGUID_COMPLEX: Final[str] = (
+                "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' DESC 'Oracle Global Unique Identifier' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 SINGLE-VALUE )"
+            )
+            OUD_ATTRIBUTE_ORCLGUID: Final[str] = (
+                "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
+            )
+            OID_OBJECTCLASS_ORCLCONTEXT: Final[str] = (
+                "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
+            )
+            OID_OBJECTCLASS_ORCLCONTAINER: Final[str] = (
+                "( 2.16.840.1.113894.1.2.2 NAME 'orclContainer' SUP top STRUCTURAL MUST cn )"
+            )
+            OID_OBJECTCLASS_ORCLCONTEXT_WITH_MAY: Final[str] = (
+                "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn MAY ( description $ orclVersion ) )"
+            )
+            OUD_OBJECTCLASS_ORCLCONTEXT: Final[str] = (
+                "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
+            )
 
         class Migration:
             """Migration pipeline test constants."""
@@ -818,8 +860,12 @@ class FlextLdifTestConstants(FlextTestsConstants):
             OUD_ACI_ANONYMOUS: Final[str] = (
                 'aci: (targetattr="*")(version 3.0; acl "Test ACL"; allow (read,search) userdn="ldap:///anyone";)'
             )
-            OUD_ATTRIBUTE_ORCLGUID = OidServer.ATTRIBUTE_ORCLGUID
-            OID_OBJECTCLASS_ORCLCONTEXT = OidServer.OBJECTCLASS_ORCLCONTEXT
+            OUD_ATTRIBUTE_ORCLGUID: Final[str] = (
+                "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
+            )
+            OID_OBJECTCLASS_ORCLCONTEXT: Final[str] = (
+                "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
+            )
 
         class ConfigIntegration:
             """Config integration test constants."""
@@ -839,53 +885,6 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 "openldap": "dn: cn=OpenLDAP Test,dc=example,dc=com\ncn: OpenLDAP Test\nobjectClass: person\n",
                 "rfc": "dn: cn=RFC Test,dc=example,dc=com\ncn: RFC Test\nobjectClass: person\n",
             }
-
-        class Filters:
-            """Test filter constants and server types for categorization tests."""
-
-            SERVER_RFC: Final[str] = FlextLdifConstants.Ldif.ServerTypes.RFC.value
-            SERVER_OID: Final[str] = FlextLdifConstants.Ldif.ServerTypes.OID.value
-            SERVER_OUD: Final[str] = FlextLdifConstants.Ldif.ServerTypes.OUD.value
-            DN_USER_JOHN: Final[str] = "cn=john.doe,ou=users,dc=example,dc=com"
-            DN_USER_JANE: Final[str] = "cn=jane.doe,ou=users,dc=example,dc=com"
-            DN_USER_ADMIN: Final[str] = (
-                "cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com"
-            )
-            DN_OU_USERS: Final[str] = "ou=users,dc=example,dc=com"
-            DN_OU_GROUPS: Final[str] = "ou=groups,dc=example,dc=com"
-            DN_ACL_POLICY: Final[str] = "cn=acl-policy,dc=example,dc=com"
-            DN_REJECTED: Final[str] = "cn=rejected,dc=example,dc=com"
-            DN_PATTERN_USERS: Final[str] = "ou=users,*"
-            DN_PATTERN_GROUPS: Final[str] = "ou=groups,*"
-            DN_PATTERN_OU: Final[str] = "ou=*,*"
-            OC_GROUP_OF_NAMES: Final[str] = "groupOfNames"
-            OC_ORGANIZATIONAL_UNIT: Final[str] = "organizationalUnit"
-            OC_INET_ORG_PERSON = Names.INETORGPERSON
-            OC_PERSON = Names.PERSON
-            OC_DOMAIN: Final[str] = "domain"
-            ATTR_MAIL = Names.MAIL
-            ATTR_SN = Names.SN
-            ATTR_CN = Names.CN
-            ATTR_OBJECTCLASS = Names.OBJECT_CLASS
-
-            class DNs:
-                """DN constants for filter testing (mirrors parent Ldif.DNs)."""
-
-                EXAMPLE: Final[str] = "dc=example,dc=com"
-                TEST_USER: Final[str] = "cn=testuser,dc=example,dc=com"
-                TEST_GROUP: Final[str] = "cn=testgroup,dc=example,dc=com"
-                SCHEMA: Final[str] = "cn=schema"
-                BASE: Final[str] = "dc=example,dc=com"
-
-            class Values:
-                """Value constants for filter testing (mirrors parent Ldif.Values)."""
-
-                TEST: Final[str] = "test"
-                USER: Final[str] = "user"
-                USER1: Final[str] = "user1"
-                USER2: Final[str] = "user2"
-                ADMIN: Final[str] = "REDACTED_LDAP_BIND_PASSWORD"
-                EXAMPLE: Final[str] = "example"
 
         class RfcTestHelpers:
             """RFC test helper utilities for LDIF testing."""
@@ -2828,7 +2827,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             COMPLEX_LDIF_FILE: Final[str] = "tests/fixtures/sample_complex.ldif"
             INVALID_LDIF_FILE: Final[str] = "tests/fixtures/sample_invalid.ldif"
             SAMPLE_DN: Final[str] = "cn=test,ou=users,dc=example,dc=com"
-            SAMPLE_ATTRIBUTE = Names.CN
+            SAMPLE_ATTRIBUTE: Final[str] = "cn"
             SAMPLE_VALUE: Final[str] = "test user"
             MAX_TEST_ENTRIES: Final[int] = 100
             MAX_TEST_ATTRIBUTES: Final[int] = 50
