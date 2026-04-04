@@ -1,0 +1,98 @@
+tests/unit/quirks/servers/test_ds389_quirks.py
+  cdd262d4e064dc50 11,43,45,61,77,96,99,115,132,182-183
+tests/integration/test_rfc_docker_real.py
+  cdd262d4e064dc50 19,33,38,43,168,218,235,264,276
+tests/integration/typings.py
+  cdd262d4e064dc50 5
+tests/unit/_utilities/server/test_server_utilities.py
+  cdd262d4e064dc50 5,42,47
+tests/models.py
+  cdd262d4e064dc50 13,86-234
+tests/integration/test_acl_metadata_preservation.py
+  cdbb584679205432 29
+tests/integration/test_cross_quirk_conversion.py
+  cdd262d4e064dc50 27,44,77,123,138,228,251,275,306
+tests/unit/test_migration_pipeline_quirks.py
+  cdd262d4e064dc50 20,34-35,51-52,83-84,195
+tests/protocols.py
+  cdd262d4e064dc50 12-13,44,47-55
+tests/support/test_files.py
+  cdd262d4e064dc50 19,21,54
+tests/integration/test_api_integration.py
+  cdd262d4e064dc50 34-41,43,48,90,100-101,131
+tests/unit/constants/test_acl_registry.py
+  cdd262d4e064dc50 12,29,35,51,57
+tests/unit/quirks/servers/test_apache_quirks.py
+  cdd262d4e064dc50 21-23,46,48,62,81,97,105,109,123,148,163,178,196,219,235,243,255,263,275,283,310,326,349,370,391,398-399,422-424,427
+tests/support/ldif_data.py
+  cdd262d4e064dc50 14,21,24,31,38,46,49,57,60,67,71,78,81,88,91,98,101,108,115,122
+tests/unit/utilities/test_utilities_comprehensive.py
+  cdd262d4e064dc50 13,21,60
+tests/unit/_utilities/oid/test_oid_utilities.py
+  cdd262d4e064dc50 7
+tests/unit/quirks/servers/test_relaxed_quirks.py
+  cdd262d4e064dc50 58-59,64,75,93-94,99,114,175-176
+tests/unit/protocols/test_protocols.py
+  cdd262d4e064dc50 27,48-50,62,67,72,77,84,92,100,108,139-141,148,151,219,228,231,245,247,258,260,274-275,282,284-287
+tests/conftest.py
+  cdd262d4e064dc50 641-643
+tests/support/conftest_factory.py
+  cdd262d4e064dc50 61,828,830,832
+tests/integration/test_config_integration.py
+  cdd262d4e064dc50 25,30
+tests/conftest_shared.py
+  cdd262d4e064dc50 10,16,22,25,34
+tests/unit/test_typings.py
+  cdd262d4e064dc50 9,74,86,189,194,199
+tests/integration/test_ldif_fixtures_integration.py
+  cdd262d4e064dc50 18,31,42,53,62,72,87-90,103
+src/flext_ldif/_utilities/entry.py
+  cdbb584679205432 15,22-26,54,79,91,99,113,131-132,194,212,223,233,242,253,260,266,281,289,303,333,360,384,406,450,465,620,642
+tests/utilities.py
+  cdd262d4e064dc50 8-9,20-21,35,37-47,49,51-58,60-122,126,132
+tests/integration/conftest.py
+  cdd262d4e064dc50 337,339,343,347,351,358,361,396-397,406,438,449,451-452
+tests/unit/quirks/servers/test_novell_quirks.py
+  cdd262d4e064dc50 60,63,80,96,120,124,141,158,170,201,225,251,254
+tests/constants.py
+  cdd262d4e064dc50 30,57-63,240-244,246-260,262-264,267-269,271-275,277-279,281-286,288-302,304-306,309-311,313-337,339-345,347-351,353-358,360-363,365-370,372-376,378-381,383-391,393-399,401-405,407-411,413-417,419-423,425-429,431-435,437-441,443-447,449-453,455-459,461-510,783-790,792-794,796-819,821,824,826,828,831,833-855,2320-2602,2604-2753,2755-2763,2765-2848,2850-2893
+tests/integration/test_rfc_docker_real_integration.py
+  cdd262d4e064dc50 19,32,51,66,87,98,120,158
+tests/typings.py
+  cdd262d4e064dc50 13-14,45-47
+tests/unit/_utilities/parser/test_parser_utilities.py
+  cdd262d4e064dc50 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "f0d3ccb8c2c730edc0e1888bb55174d4c49db7e5",
+  "prompts": {
+    "cdbb584679205432": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "deb21ed0-98e4-498f-8592-3944a588496c",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 65,
+      "total_deletions": 100,
+      "accepted_lines": 33,
+      "overriden_lines": 0
+    },
+    "cdd262d4e064dc50": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bb50d2f6-2887-49fd-99be-f714814b3981",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 1768,
+      "total_deletions": 1884,
+      "accepted_lines": 1373,
+      "overriden_lines": 43
+    }
+  }
+}
