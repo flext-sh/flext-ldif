@@ -68,17 +68,14 @@ class FlextLdifModelsDomainsEntries:
     def _conversion_history_factory() -> MutableSequence[t.MutableStrMapping]:
         return []
 
-    class DNStatisticsFlags(FlextLdifModelsBases.Base):
+    class DNStatisticsFlags(m.FrozenValidatingModel):
         """Flags capturing DN transformation quirks and validation state.
 
         All fields default to False/empty since flags are optionally set
         during DN processing (equivalent to former total=False TypedDict).
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-            extra="forbid",
-        )
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         had_tab_chars: Annotated[
             bool,
             Field(description="DN contained TAB characters"),
@@ -665,7 +662,7 @@ class FlextLdifModelsDomainsEntries:
             """Get attribute values lists."""
             return self.attributes.values()
 
-    class DnRegistry(FlextLdifModelsBases.Base):
+    class DnRegistry(m.StrictValidatingModel):
         """Registry for tracking canonical DN case during conversions.
 
         This class maintains a mapping of DNs in normalized form (lowercase, no spaces)
@@ -678,8 +675,6 @@ class FlextLdifModelsDomainsEntries:
             result = registry.get_canonical_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
 
         """
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
         def __init__(self) -> None:
             """Initialize empty DN case registry."""
@@ -1001,7 +996,7 @@ class FlextLdifModelsDomainsEntries:
                 self.validation_violations = violations
             return self
 
-    class AclWriteMetadata(FlextLdifModelsBases.Base):
+    class AclWriteMetadata(m.FrozenValidatingModel):
         """Metadata for ACL write formatting operations.
 
         This frozen model encapsulates ACL metadata extracted from QuirkMetadata.extensions
@@ -1025,11 +1020,6 @@ class FlextLdifModelsDomainsEntries:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-            strict=True,
-            validate_default=True,
-        )
         original_format: Annotated[
             str | None,
             Field(
@@ -2141,7 +2131,7 @@ class FlextLdifModelsDomainsEntries:
             ):
                 return False
 
-    class AttributeTransformation(FlextLdifModelsBases.Base):
+    class AttributeTransformation(m.FrozenValidatingModel):
         """Detailed tracking of attribute transformation operations.
 
         Records complete transformation history for LDIF attribute conversions,
@@ -2168,7 +2158,6 @@ class FlextLdifModelsDomainsEntries:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, strict=True)
         original_name: Annotated[
             str,
             Field(..., description="Original attribute name from source server"),
@@ -2198,7 +2187,7 @@ class FlextLdifModelsDomainsEntries:
             Field(description="Human-readable reason for transformation"),
         ] = ""
 
-    class DNStatistics(FlextLdifModelsBases.Base):
+    class DNStatistics(m.FrozenValidatingModel):
         """Statistics tracking for DN transformations and validation.
 
         Immutable value t.NormalizedValue capturing complete DN transformation history
@@ -2213,7 +2202,7 @@ class FlextLdifModelsDomainsEntries:
         - aggregate() classmethod (automatic statistics aggregation)
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="ignore")
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore")
         original_dn: Annotated[
             str,
             Field(..., description="Original DN as received from input"),
@@ -2321,7 +2310,7 @@ class FlextLdifModelsDomainsEntries:
                     result.append(item)
             return result
 
-    class EntryStatistics(FlextLdifModelsBases.Base):
+    class EntryStatistics(m.FrozenValidatingModel):
         """Statistics tracking for entry-level transformations and validation.
 
         Tracks complete entry lifecycle from parsing through validation,
@@ -2336,7 +2325,7 @@ class FlextLdifModelsDomainsEntries:
         - aggregate() classmethod (automatic statistics aggregation)
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="ignore")
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore")
         was_parsed: Annotated[
             bool,
             Field(description="Entry was successfully parsed from LDIF"),
@@ -2565,18 +2554,12 @@ class FlextLdifModelsDomainsEntries:
                 },
             )
 
-    class ValidationMetadata(FlextLdifModelsBases.Base):
+    class ValidationMetadata(m.FrozenValidatingModel):
         """Validation results and error tracking metadata.
 
         Composed model for QuirkMetadata.validation_results field.
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-            extra="forbid",
-            use_enum_values=True,
-            str_strip_whitespace=True,
-        )
         rfc_violations: Annotated[
             MutableSequence[str],
             Field(
@@ -2606,18 +2589,12 @@ class FlextLdifModelsDomainsEntries:
             Field(description="Server type used for validation"),
         ] = None
 
-    class WriteOptions(FlextLdifModelsBases.Base):
+    class WriteOptions(m.FrozenValidatingModel):
         """LDIF writing configuration options.
 
         Composed model for QuirkMetadata.write_options field.
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-            extra="forbid",
-            use_enum_values=True,
-            str_strip_whitespace=True,
-        )
         format: Annotated[
             str | None,
             Field(
@@ -2649,18 +2626,12 @@ class FlextLdifModelsDomainsEntries:
             ),
         ] = False
 
-    class FormatDetails(FlextLdifModelsBases.Base):
+    class FormatDetails(m.FrozenValidatingModel):
         """Original formatting details for round-trip preservation.
 
         Composed model for QuirkMetadata.original_format_details field.
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-            extra="forbid",
-            use_enum_values=True,
-            str_strip_whitespace=True,
-        )
         dn_line: Annotated[
             str | None,
             Field(description="Original DN line formatting"),
@@ -2682,18 +2653,12 @@ class FlextLdifModelsDomainsEntries:
             Field(description="Trailing comments or metadata"),
         ] = None
 
-    class SchemaFormatDetails(FlextLdifModelsBases.Base):
+    class SchemaFormatDetails(m.FrozenValidatingModel):
         """Schema formatting details for perfect round-trip conversion.
 
         Composed model for QuirkMetadata.schema_format_details field.
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-            extra="forbid",
-            use_enum_values=True,
-            str_strip_whitespace=True,
-        )
         original_string_complete: Annotated[
             str | None,
             Field(
@@ -2731,7 +2696,7 @@ class FlextLdifModelsDomainsEntries:
             ),
         ] = Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
 
-    class QuirkMetadata(FlextLdifModelsBases.Base):
+    class QuirkMetadata(m.StrippedDynamicConfigModel):
         """Universal metadata container for quirk-specific data preservation.
 
         Used to store server-specific quirks, transformations, and metadata
@@ -2759,7 +2724,6 @@ class FlextLdifModelsDomainsEntries:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow", frozen=False)
         quirk_type: Annotated[
             c.Ldif.ServerTypes | c.Ldif.ServerTypeLiteral,
             Field(

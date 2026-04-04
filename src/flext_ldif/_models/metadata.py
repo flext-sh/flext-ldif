@@ -9,25 +9,18 @@ from collections.abc import (
     MutableSequence,
     ValuesView,
 )
-from typing import ClassVar, Self, override
+from typing import Self, override
 
-from pydantic import ConfigDict
-
-from flext_core import FlextModels
+from flext_core import m
 from flext_ldif import t
 
 
 class FlextLdifModelsMetadata:
     """LDIF metadata models container."""
 
-    class DynamicMetadata(FlextModels.ArbitraryTypesModel):
+    class DynamicMetadata(m.StrippedDynamicConfigModel):
         """Model with extra='allow' for dynamic field storage."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="allow",
-            arbitrary_types_allowed=True,
-            frozen=False,
-        )
         transformations: MutableSequence[t.Scalar] | None = None
         original_format: str | None = None
         schema_source_server: str | None = None
@@ -118,15 +111,8 @@ class FlextLdifModelsMetadata:
         def _extra(self) -> MutableMapping[str, t.Ldif.MetadataValue]:
             return self.__pydantic_extra__ or {}
 
-    class EntryMetadata(FlextModels.ArbitraryTypesModel):
+    class EntryMetadata(m.FrozenDynamicConfigModel):
         """Entry metadata for tracking processing details."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-            extra="allow",
-            use_enum_values=True,
-            str_strip_whitespace=True,
-        )
 
         def __getitem__(self, key: str) -> t.Ldif.MetadataValue:
             return self._extra()[key]

@@ -148,6 +148,7 @@ class FlextLdifTypes(FlextTypes):
         type SchemaConversionValue = (
             m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str
         )
+        type EventType = m.Ldif.ConversionEvent | m.Ldif.DnEvent
 
 
 t = FlextLdifTypes

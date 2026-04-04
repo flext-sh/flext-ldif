@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import MutableSequence
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, Self
 
-from pydantic import ConfigDict, Field, computed_field
+from pydantic import Field, computed_field
 
 from flext_core import m
 from flext_ldif import (
-    FlextLdifModelsBases,
     FlextLdifModelsCollections,
     FlextLdifModelsDomains,
     FlextLdifModelsEvents,
@@ -27,14 +26,7 @@ class FlextLdifModelsResults:
     def _statistics_factory() -> FlextLdifModelsResults.Statistics:
         return FlextLdifModelsResults.Statistics()
 
-    type EventType = (
-        FlextLdifModelsEvents.ConversionEvent | FlextLdifModelsEvents.DnEvent
-    )
-
-    class StatisticsSummary(FlextLdifModelsBases.Base):
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-        )  # adds frozen; Base lacks it
+    class StatisticsSummary(m.FrozenValidatingModel):
         total_entries: int = 0
         processed_entries: int = 0
         failed_entries: int = 0
@@ -53,10 +45,7 @@ class FlextLdifModelsResults:
         parse_errors: int = 0
         entries_written: int = 0
 
-    class MigrationSummary(FlextLdifModelsBases.Base):
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-        )  # adds frozen; Base lacks it
+    class MigrationSummary(m.FrozenValidatingModel):
         statistics: FlextLdifModelsResults.StatisticsSummary | None = None
         entry_count: int = 0
         output_files: int = 0
@@ -91,7 +80,9 @@ class FlextLdifModelsResults:
             Field(default_factory=FlextLdifModelsCollections.DynamicCounts),
         ] = Field(default_factory=FlextLdifModelsCollections.DynamicCounts)
         events: Annotated[
-            MutableSequence[FlextLdifModelsResults.EventType],
+            MutableSequence[
+                FlextLdifModelsEvents.ConversionEvent | FlextLdifModelsEvents.DnEvent
+            ],
             Field(default_factory=_events_list_factory),
         ] = Field(default_factory=_events_list_factory)
 
@@ -197,10 +188,9 @@ class FlextLdifModelsResults:
                     **merged_reasons,
                 ),
             }
-            events_merged: MutableSequence[FlextLdifModelsResults.EventType] = [
-                *self.events,
-                *other.events,
-            ]
+            events_merged: MutableSequence[
+                FlextLdifModelsEvents.ConversionEvent | FlextLdifModelsEvents.DnEvent
+            ] = [*self.events, *other.events]
             updates["events"] = events_merged
             return self.model_copy(update=updates)
 
@@ -218,10 +208,7 @@ class FlextLdifModelsResults:
                 else 0.0
             )
 
-    class MigrationPipelineResult(FlextLdifModelsBases.Base):
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-        )  # validate_default inherited from Base
+    class MigrationPipelineResult(m.FrozenValidatingModel):
         migrated_schema: Annotated[
             FlextLdifModelsCollections.SchemaContent,
             Field(),
@@ -273,10 +260,7 @@ class FlextLdifModelsResults:
             Field(),
         ]
 
-    class ValidationResult(FlextLdifModelsBases.Base):
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-        )  # validate_default inherited from Base
+    class ValidationResult(m.FrozenValidatingModel):
         is_valid: Annotated[bool, Field()]
         total_entries: t.NonNegativeInt
         valid_entries: t.NonNegativeInt
@@ -289,10 +273,7 @@ class FlextLdifModelsResults:
                 return 100.0
             return self.valid_entries / self.total_entries * 100.0
 
-    class EntryAnalysisResult(FlextLdifModelsBases.Base):
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-        )  # validate_default inherited from Base
+    class EntryAnalysisResult(m.FrozenValidatingModel):
         total_entries: t.NonNegativeInt
         objectclass_distribution: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
@@ -304,10 +285,7 @@ class FlextLdifModelsResults:
         def unique_objectclasses(self) -> int:
             return len(self.objectclass_distribution)
 
-    class ServerDetectionResult(FlextLdifModelsBases.Base):
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-        )  # validate_default inherited from Base
+    class ServerDetectionResult(m.FrozenValidatingModel):
         detected_server_type: Annotated[c.Ldif.ServerTypeLiteral, Field()]
         confidence: t.DecimalFraction
         scores: Annotated[
@@ -319,7 +297,7 @@ class FlextLdifModelsResults:
         detection_error: str | None = None
         fallback_reason: str | None = None
 
-    class StatisticsResult(FlextLdifModelsBases.Base):
+    class StatisticsResult(m.StrictValidatingModel):
         total_entries: Annotated[int, Field()]
         categorized: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
@@ -419,7 +397,7 @@ class FlextLdifModelsResults:
         rfc_compliance: Annotated[str, Field()]
         validation_types: Annotated[MutableSequence[str], Field()]
 
-    class ValidationBatchResult(FlextLdifModelsBases.Base):
+    class ValidationBatchResult(m.StrictValidatingModel):
         results: Annotated[
             FlextLdifModelsCollections.BooleanFlags,
             Field(),

@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import MutableSequence
-from typing import Annotated, ClassVar
+from typing import Annotated
 
-from pydantic import ConfigDict, Field, computed_field, field_validator
+from pydantic import Field, computed_field, field_validator
 
 from flext_core import m
 from flext_ldif import FlextLdifShared, c, t
@@ -18,24 +18,13 @@ class FlextLdifModelsBases:
     a single nested class hierarchy using MRO inheritance.
 
     Usage::
+        from flext_core import m
         from flext_ldif import FlextLdifModelsBases
 
-        Base = FlextLdifModelsBases.Base
+        Base = m.StrictValidatingModel
     """
 
-    class Base(m.ArbitraryTypesModel):
-        """Base class for all FLEXT-LDIF models (events, configs, processing results)."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            strict=True,
-            validate_assignment=True,
-            extra="forbid",
-            validate_default=True,
-            use_enum_values=True,
-            str_strip_whitespace=True,
-        )
-
-    class SchemaElement(Base):
+    class SchemaElement(m.StrictValidatingModel):
         """Base class for all LDAP schema elements (attributes, objectClasses, syntaxes)."""
 
         validation_metadata: Annotated[
@@ -73,17 +62,9 @@ class FlextLdifModelsBases:
                         pass
             return "rfc"
 
-    class AclElement(m.ArbitraryTypesModel):
+    class AclElement(m.StrictValidatingModel):
         """Base class for all ACL-related models."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            strict=True,
-            frozen=False,
-            extra="forbid",
-            validate_default=True,
-            use_enum_values=True,
-            str_strip_whitespace=True,
-        )
         server_type: Annotated[
             c.Ldif.ServerTypeLiteral,
             Field(

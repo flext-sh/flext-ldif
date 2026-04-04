@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_core import FlextModelsDomainEvent
-from flext_ldif import FlextLdifModelsBases
+from flext_core import FlextModelsDomainEvent, m
 
 _DomainEventBase = FlextModelsDomainEvent.Entry
 
@@ -13,7 +12,7 @@ _DomainEventBase = FlextModelsDomainEvent.Entry
 class FlextLdifModelsEvents:
     """LDIF event and configuration models container class."""
 
-    class DnEventConfig(FlextLdifModelsBases.Base):
+    class DnEventConfig(m.StrictValidatingModel):
         dn_operation: str
         input_dn: str
         output_dn: str | None = None
@@ -21,7 +20,7 @@ class FlextLdifModelsEvents:
         validation_result: bool | None = None
         parse_components: MutableSequence[tuple[str, str]] | None = None
 
-    class ConversionEventConfig(FlextLdifModelsBases.Base):
+    class ConversionEventConfig(m.StrictValidatingModel):
         conversion_operation: str
         source_format: str
         target_format: str

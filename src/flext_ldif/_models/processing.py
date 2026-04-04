@@ -2,23 +2,20 @@
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar
+from typing import Annotated
 
-from pydantic import ConfigDict, Field
+from pydantic import Field
 
-from flext_ldif import FlextLdifModelsBases, t
+from flext_core import m
+from flext_ldif import t
 
 
 class FlextLdifModelsProcessing:
     """Processing model namespace."""
 
-    class ProcessingResult(FlextLdifModelsBases.Base):
+    class ProcessingResult(m.StrictValidatingModel):
         """Result of entry processing (transform or validate operation)."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=False,
-            validate_assignment=True,
-        )
         dn: Annotated[
             str,
             Field(..., description="Distinguished name of the processed entry"),

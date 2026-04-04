@@ -7,12 +7,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Iterator, MutableMapping, MutableSequence
-from typing import Annotated, ClassVar, override
+from typing import Annotated, override
 
-from pydantic import ConfigDict, Field
+from pydantic import Field
 
+from flext_core import m
 from flext_ldif import (
-    FlextLdifModelsBases,
     FlextLdifModelsDomains,
     FlextLdifModelsMetadata,
     t,
@@ -20,14 +20,7 @@ from flext_ldif import (
 
 
 class FlextLdifModelsCollections:
-    class DynamicCounts(FlextLdifModelsBases.Base):
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=False,
-            extra="allow",
-            use_enum_values=True,
-            str_strip_whitespace=True,
-        )
-
+    class DynamicCounts(m.StrippedDynamicConfigModel):
         @override
         def __eq__(self, other: object) -> bool:
             if isinstance(other, dict):
@@ -90,8 +83,7 @@ class FlextLdifModelsCollections:
                 return {}
             return {str(k): v for k, v in extra.items()}
 
-    class SchemaContent(FlextLdifModelsBases.Base):
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+    class SchemaContent(m.FrozenValidatingModel):
         attributes: Annotated[
             MutableSequence[FlextLdifModelsDomains.SchemaAttribute],
             Field(),
@@ -108,14 +100,7 @@ class FlextLdifModelsCollections:
         def set_setting(self, key: str, value: t.Scalar) -> None:
             self[key] = value
 
-    class BooleanFlags(FlextLdifModelsBases.Base):
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-            extra="allow",
-            use_enum_values=True,
-            str_strip_whitespace=True,
-        )
-
+    class BooleanFlags(m.FrozenDynamicConfigModel):
         @override
         def __eq__(self, other: object) -> bool:
             if isinstance(other, dict):
@@ -138,8 +123,7 @@ class FlextLdifModelsCollections:
                 raise KeyError(msg)
             return bool(extra[key])
 
-    class FlexibleCategories(FlextLdifModelsBases.Base):
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow", frozen=False)
+    class FlexibleCategories(m.StrippedDynamicConfigModel):
         categories: Annotated[
             MutableMapping[str, MutableSequence[FlextLdifModelsDomains.Entry]],
             Field(default_factory=dict),
