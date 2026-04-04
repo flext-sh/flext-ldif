@@ -12,10 +12,6 @@ from flext_ldif import FlextLdifServiceBase, d, m, r
 class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
     """Statistics service for LDIF processing pipeline."""
 
-    def __init__(self) -> None:
-        """Initialize statistics service."""
-        super().__init__()
-
     def calculate_for_entries(
         self,
         entries: MutableSequence[m.Ldif.Entry],

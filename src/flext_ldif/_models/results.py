@@ -26,7 +26,7 @@ class FlextLdifModelsResults:
     def _statistics_factory() -> FlextLdifModelsResults.Statistics:
         return FlextLdifModelsResults.Statistics()
 
-    class StatisticsSummary(m.FrozenDomainModel):
+    class StatisticsSummary(m.FrozenModel):
         total_entries: int = 0
         processed_entries: int = 0
         failed_entries: int = 0
@@ -45,7 +45,7 @@ class FlextLdifModelsResults:
         parse_errors: int = 0
         entries_written: int = 0
 
-    class MigrationSummary(m.FrozenDomainModel):
+    class MigrationSummary(m.FrozenModel):
         statistics: FlextLdifModelsResults.StatisticsSummary | None = None
         entry_count: int = 0
         output_files: int = 0
@@ -208,7 +208,7 @@ class FlextLdifModelsResults:
                 else 0.0
             )
 
-    class MigrationPipelineResult(m.FrozenDomainModel):
+    class MigrationPipelineResult(m.FrozenModel):
         migrated_schema: Annotated[
             FlextLdifModelsCollections.SchemaContent,
             Field(),
@@ -260,7 +260,7 @@ class FlextLdifModelsResults:
             Field(),
         ]
 
-    class ValidationResult(m.FrozenDomainModel):
+    class ValidationResult(m.FrozenModel):
         is_valid: Annotated[bool, Field()]
         total_entries: t.NonNegativeInt
         valid_entries: t.NonNegativeInt
@@ -273,7 +273,7 @@ class FlextLdifModelsResults:
                 return 100.0
             return self.valid_entries / self.total_entries * 100.0
 
-    class EntryAnalysisResult(m.FrozenDomainModel):
+    class EntryAnalysisResult(m.FrozenModel):
         total_entries: t.NonNegativeInt
         objectclass_distribution: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
@@ -285,7 +285,7 @@ class FlextLdifModelsResults:
         def unique_objectclasses(self) -> int:
             return len(self.objectclass_distribution)
 
-    class ServerDetectionResult(m.FrozenDomainModel):
+    class ServerDetectionResult(m.FrozenModel):
         detected_server_type: Annotated[c.Ldif.ServerTypeLiteral, Field()]
         confidence: t.DecimalFraction
         scores: Annotated[
@@ -297,7 +297,7 @@ class FlextLdifModelsResults:
         detection_error: str | None = None
         fallback_reason: str | None = None
 
-    class StatisticsResult(m.DomainModel):
+    class StatisticsResult(m.StrictModel):
         total_entries: Annotated[int, Field()]
         categorized: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
@@ -397,7 +397,7 @@ class FlextLdifModelsResults:
         rfc_compliance: Annotated[str, Field()]
         validation_types: Annotated[MutableSequence[str], Field()]
 
-    class ValidationBatchResult(m.DomainModel):
+    class ValidationBatchResult(m.StrictModel):
         results: Annotated[
             FlextLdifModelsCollections.BooleanFlags,
             Field(),

@@ -172,7 +172,6 @@ class FlextLdifWriter(FlextLdifWriterMixin, s[m.Ldif.WriteResponse]):
 
     def __init__(self, server: FlextLdifServer | None = None) -> None:
         """Initialize writer with optional server instance."""
-        super().__init__()
         object.__setattr__(
             self,
             "_server",

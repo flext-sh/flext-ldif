@@ -21,10 +21,10 @@ class FlextLdifModelsBases:
         from flext_core import m
         from flext_ldif import FlextLdifModelsBases
 
-        Base = m.DomainModel
+        Base = m.StrictModel
     """
 
-    class SchemaElement(m.DomainModel):
+    class SchemaElement(m.StrictModel):
         """Base class for all LDAP schema elements (attributes, objectClasses, syntaxes)."""
 
         validation_metadata: Annotated[
@@ -62,7 +62,7 @@ class FlextLdifModelsBases:
                         pass
             return "rfc"
 
-    class AclElement(m.DomainModel):
+    class AclElement(m.StrictModel):
         """Base class for all ACL-related models."""
 
         server_type: Annotated[

@@ -18,7 +18,7 @@ from flext_ldif import t
 class FlextLdifModelsMetadata:
     """LDIF metadata models container."""
 
-    class DynamicMetadata(m.DynamicDomainModel):
+    class DynamicMetadata(m.DynamicModel):
         """Model with extra='allow' for dynamic field storage."""
 
         transformations: MutableSequence[t.Scalar] | None = None
@@ -111,7 +111,7 @@ class FlextLdifModelsMetadata:
         def _extra(self) -> MutableMapping[str, t.Ldif.MetadataValue]:
             return self.__pydantic_extra__ or {}
 
-    class EntryMetadata(m.FrozenDynamicDomainModel):
+    class EntryMetadata(m.FrozenDynamicModel):
         """Entry metadata for tracking processing details."""
 
         def __getitem__(self, key: str) -> t.Ldif.MetadataValue:

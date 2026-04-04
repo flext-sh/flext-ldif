@@ -87,7 +87,6 @@ class FlextLdif(
         try:
             if config is not None:
                 self._set_init_config_overrides(config)
-            super().__init__()
         finally:
             self._clear_init_config_overrides()
         object.__setattr__(

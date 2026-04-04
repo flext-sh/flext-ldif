@@ -27,7 +27,6 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
 
     def __init__(self, server: FlextLdifServer | None = None) -> None:
         """Initialize ACL service with optional server instance."""
-        super().__init__()
         object.__setattr__(
             self,
             "_server",

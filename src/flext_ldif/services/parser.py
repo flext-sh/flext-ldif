@@ -134,7 +134,6 @@ class FlextLdifParser(FlextLdifParserMixin, s[m.Ldif.ParseResponse]):
 
     def __init__(self, server: FlextLdifServer | None = None) -> None:
         """Initialize the parser with an optional server registry."""
-        super().__init__()
         object.__setattr__(
             self,
             "_server",

@@ -52,7 +52,6 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         server_registry: FlextLdifServer | None = None,
     ) -> None:
         """Initialize categorization service."""
-        super().__init__()
         self._categorization_rules: m.Ldif.CategoryRules
         self._schema_whitelist_rules: m.Ldif.WhitelistRules | None
         self._forbidden_attributes: MutableSequence[str]

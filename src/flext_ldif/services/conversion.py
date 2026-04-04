@@ -154,10 +154,6 @@ class FlextLdifConversion(
             raise TypeError(msg)
         return instance
 
-    def __init__(self) -> None:
-        """Initialize the conversion facade with DN case registry."""
-        super().__init__()
-
     @staticmethod
     def _analyze_attribute_case(
         original_attribute_case: t.NormalizedValue,

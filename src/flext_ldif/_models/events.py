@@ -12,7 +12,7 @@ _DomainEventBase = FlextModelsDomainEvent.Entry
 class FlextLdifModelsEvents:
     """LDIF event and configuration models container class."""
 
-    class DnEventConfig(m.DomainModel):
+    class DnEventConfig(m.StrictModel):
         dn_operation: str
         input_dn: str
         output_dn: str | None = None
@@ -20,7 +20,7 @@ class FlextLdifModelsEvents:
         validation_result: bool | None = None
         parse_components: MutableSequence[tuple[str, str]] | None = None
 
-    class ConversionEventConfig(m.DomainModel):
+    class ConversionEventConfig(m.StrictModel):
         conversion_operation: str
         source_format: str
         target_format: str

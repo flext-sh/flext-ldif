@@ -13,7 +13,7 @@ from flext_ldif import t
 class FlextLdifModelsProcessing:
     """Processing model namespace."""
 
-    class ProcessingResult(m.DomainModel):
+    class ProcessingResult(m.StrictModel):
         """Result of entry processing (transform or validate operation)."""
 
         dn: Annotated[
