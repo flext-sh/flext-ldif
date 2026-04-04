@@ -107,6 +107,8 @@ class FlextLdifUtilitiesDN:
     ]:
         """Apply DN transformations and collect flags."""
         transformations: MutableSequence[str] = []
+        empty_warnings: MutableSequence[str] = []
+        empty_errors: MutableSequence[str] = []
         flags: MutableMapping[str, bool | str | MutableSequence[str]] = {
             "had_tab_chars": False,
             "had_trailing_spaces": False,
@@ -116,8 +118,8 @@ class FlextLdifUtilitiesDN:
             "had_utf8_chars": False,
             "had_escape_sequences": False,
             "validation_status": "",
-            "validation_warnings": list[str](),
-            "validation_errors": list[str](),
+            "validation_warnings": empty_warnings,
+            "validation_errors": empty_errors,
         }
         result = original_dn
         transform_rules: MutableSequence[tuple[str, str, str, str, str]] = [
@@ -773,7 +775,7 @@ class FlextLdifUtilitiesDN:
                 "RDN must be a non-empty string",
             )
         try:
-            pairs: list[tuple[str, str]] = []
+            pairs: MutableSequence[tuple[str, str]] = []
             current_attr = ""
             current_val = ""
             in_value = False

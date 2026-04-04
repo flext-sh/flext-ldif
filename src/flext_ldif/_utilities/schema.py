@@ -6,12 +6,11 @@ import re
 import struct
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
-from typing import TypeIs, TypeVar
-
-from pydantic import BaseModel
+from typing import TypeIs
 
 from flext_core import FlextLogger, r, u
 from flext_ldif import (
+    FlextLdifModelsBases,
     FlextLdifUtilitiesOID,
     FlextLdifUtilitiesParser,
     FlextLdifUtilitiesWriter,
@@ -22,7 +21,6 @@ from flext_ldif import (
 )
 
 logger = FlextLogger(__name__)
-SchemaModelT = TypeVar("SchemaModelT", bound=BaseModel)
 
 
 class FlextLdifUtilitiesSchema:
@@ -483,7 +481,9 @@ class FlextLdifUtilitiesSchema:
         return FlextLdifUtilitiesSchema._split_schema_values(sup_value)[0]
 
     @staticmethod
-    def _extract_schema_items_from_lines(
+    def _extract_schema_items_from_lines[
+        SchemaModelT: FlextLdifModelsBases.SchemaElement
+    ](
         ldif_content: str,
         parse_callback: Callable[[str], r[SchemaModelT]],
         line_prefix: str,

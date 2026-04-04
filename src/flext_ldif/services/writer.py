@@ -191,7 +191,7 @@ class FlextLdifWriter(FlextLdifWriterMixin, s[m.Ldif.WriteResponse]):
         params_data = params_mapping
         entries_raw = u.take(params_data, "entries")
         entries: MutableSequence[m.Ldif.Entry] = []
-        entry_candidates: tuple[t.NormalizedValue, ...] = ()
+        entry_candidates: tuple[t.ValueOrModel, ...] = ()
         with suppress(Exception):
             if isinstance(entries_raw, Sequence) and not isinstance(
                 entries_raw,

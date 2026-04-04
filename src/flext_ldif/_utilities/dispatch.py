@@ -139,7 +139,7 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     @overload
     def validate(
-        value_or_entries: list[_Entry],
+        value_or_entries: MutableSequence[_Entry],
         *,
         strict: bool = True,
         collect_all: bool = True,
@@ -158,7 +158,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def validate(
-        value_or_entries: list[_Entry] | t.Container | str | _DN,
+        value_or_entries: MutableSequence[_Entry] | t.Container | str | _DN,
         validator_first: p.ValidatorSpec | None = None,
         *validators_rest: p.ValidatorSpec,
         strict: bool = True,
@@ -206,7 +206,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def _validate_entries(
-        entries: list[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry],
         *,
         strict: bool,
         collect_all: bool,
@@ -221,7 +221,9 @@ class FlextLdifUtilitiesDispatch:
         return pipeline.validate(entries)
 
     @staticmethod
-    def _is_entry_sequence(obj: object) -> bool:
+    def _is_entry_sequence(
+        obj: MutableSequence[_Entry] | t.Container | str | _DN,
+    ) -> bool:
         """Check if value is a Sequence of Entry objects (dispatch helper)."""
         if isinstance(obj, (str, bytes)):
             return False

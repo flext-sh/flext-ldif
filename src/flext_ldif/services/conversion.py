@@ -15,7 +15,7 @@ from typing import (
     override,
 )
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from flext_core import FlextLogger
 from flext_ldif import (
@@ -266,10 +266,13 @@ class FlextLdifConversion(
                     str(k): FlextLdifConversion._normalize_metadata_value(v)
                     for k, v in value.items()
                 }
+        attr_case_raw = get_attr_case(source_metadata)
+        empty_map: t.ContainerMapping = {}
+        attr_case_val: t.NormalizedValue = empty_map
+        if FlextLdifConversion._is_normalized(attr_case_raw):
+            attr_case_val = attr_case_raw
         attr_case_analysis = FlextLdifConversion._analyze_attribute_case(
-            get_attr_case(source_metadata)
-            if get_attr_case(source_metadata) is not None
-            else {},
+            attr_case_val if attr_case_val is not None else empty_map,
             target_server_str,
         )
         for key, attr_case_value in attr_case_analysis.items():
@@ -278,10 +281,12 @@ class FlextLdifConversion(
                     str(k): FlextLdifConversion._normalize_metadata_value(v)
                     for k, v in attr_case_value.items()
                 }
+        format_raw = get_format_details(source_metadata)
+        format_val: t.NormalizedValue = empty_map
+        if FlextLdifConversion._is_normalized(format_raw):
+            format_val = format_raw
         dn_format_analysis = FlextLdifConversion._analyze_dn_format(
-            get_format_details(source_metadata)
-            if get_format_details(source_metadata) is not None
-            else {},
+            format_val if format_val is not None else empty_map,
             target_server_str,
         )
         for key, dn_format_value in dn_format_analysis.items():
@@ -479,6 +484,13 @@ class FlextLdifConversion(
         # Narrowing schema_quirk to the protocol so r[p.Ldif.SchemaQuirk].ok works
         final_quirk: p.Ldif.SchemaQuirk = schema_quirk
         return r[p.Ldif.SchemaQuirk].ok(final_quirk)
+
+    @staticmethod
+    def _is_normalized(
+        value: t.RuntimeAtomic | t.RecursiveContainer,
+    ) -> TypeIs[t.NormalizedValue]:
+        """Type guard: check if value is NormalizedValue (not a BaseModel)."""
+        return not isinstance(value, BaseModel)
 
     @staticmethod
     def _normalize_metadata_value(value: t.NormalizedValue) -> t.NormalizedValue:
@@ -1015,7 +1027,7 @@ class FlextLdifConversion(
                 source_server_type,
                 extensions=None,
             )
-            entry_metadata.acls = [acl.raw_acl] if acl.raw_acl else list[str]()
+            entry_metadata.acls = [acl.raw_acl] if acl.raw_acl else []
             rfc_entry = m.Ldif.Entry.model_validate({
                 "dn": entry_dn,
                 "attributes": entry_attributes,

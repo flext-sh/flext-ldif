@@ -16,7 +16,7 @@ from flext_ldif import (
 )
 
 
-def _events_list_factory() -> list[
+def _events_list_factory() -> MutableSequence[
     FlextLdifModelsEvents.ConversionEvent | FlextLdifModelsEvents.DnEvent
 ]:
     return []

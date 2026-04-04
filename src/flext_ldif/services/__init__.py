@@ -13,14 +13,10 @@ if _t.TYPE_CHECKING:
     import flext_ldif.services._services as _flext_ldif_services__services
 
     _services = _flext_ldif_services__services
-    import flext_ldif.services._services.processing_pipeline_service as _flext_ldif_services__services_processing_pipeline_service
-
-    processing_pipeline_service = (
-        _flext_ldif_services__services_processing_pipeline_service
-    )
     import flext_ldif.services.acl as _flext_ldif_services_acl
-    from flext_ldif.services._services.processing_pipeline_service import (
+    from flext_ldif.services._services import (
         FlextLdifProcessingPipelineService,
+        processing_pipeline_service,
     )
 
     acl = _flext_ldif_services_acl

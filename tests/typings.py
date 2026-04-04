@@ -39,10 +39,12 @@ class FlextLdifTestTypes(FlextTestsTypes, FlextLdifTypes):
             Use t.Tests.* for generic test types from FlextTestsTypes.
             """
 
+            type GenericFieldsDict = FlextLdifTypes.StrMapping
+
             class Fixtures:
                 """TypedDict definitions for LDIF test fixtures."""
 
 
 t = FlextLdifTestTypes
-type GenericFieldsDict = t.StrMapping
+GenericFieldsDict = FlextLdifTestTypes.Ldif.Tests.GenericFieldsDict
 __all__ = ["FlextLdifTestTypes", "GenericFieldsDict", "t"]

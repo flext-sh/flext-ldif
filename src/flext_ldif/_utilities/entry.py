@@ -185,10 +185,8 @@ class FlextLdifUtilitiesEntry:
                 == resolved_config.is_schema,
             )
         if resolved_config.objectclasses:
-            entry_ocs = (
-                entry.attributes.get("objectClass", [])
-                if entry.attributes
-                else list[str]()
+            entry_ocs: Sequence[str] = (
+                entry.attributes.get("objectClass", []) if entry.attributes else []
             )
             entry_ocs_lower = {oc.lower() for oc in entry_ocs}
             matching = [

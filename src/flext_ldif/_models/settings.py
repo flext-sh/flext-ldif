@@ -976,7 +976,7 @@ class FlextLdifModelsSettings:
             Field(description="Whether parser is inside the value portion"),
         ] = False
         pairs: Annotated[
-            list[tuple[str, str]],
+            MutableSequence[tuple[str, str]],
             Field(description="Accumulated (attr, value) pairs"),
         ] = Field(default_factory=lambda: list[tuple[str, str]]())
 

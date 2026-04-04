@@ -659,12 +659,13 @@ class FlextLdifUtilitiesMetadata:
     ) -> t.MutableContainerMapping:
         """Analyze minimal differences between original and converted strings."""
         mk = c.Ldif
+        empty_diffs: MutableSequence[str] = []
         differences: t.MutableContainerMapping = {
             mk.HAS_DIFFERENCES: False,
             "context": context,
             "original": original,
             "converted": converted if converted is not None else original,
-            "differences": list[str](),
+            "differences": empty_diffs,
             "original_length": len(original),
             "converted_length": len(converted) if converted else len(original),
         }

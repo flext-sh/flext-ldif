@@ -233,9 +233,7 @@ class FlextLdifUtilitiesWriter:
         ) = FlextLdifUtilitiesWriter._extract_extensions(metadata)
         if extensions_mapping is not None:
             typed_extensions = t.ConfigMap(root=extensions_mapping).root
-            raw_attr_order: t.NormalizedValue | BaseModel | None = typed_extensions.get(
-                "attribute_order",
-            )
+            raw_attr_order = typed_extensions.get("attribute_order")
             if isinstance(raw_attr_order, Sequence) and not isinstance(
                 raw_attr_order,
                 (str, bytes),
