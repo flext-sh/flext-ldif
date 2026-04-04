@@ -20,7 +20,7 @@ from flext_ldif import (
 
 
 class FlextLdifModelsCollections:
-    class DynamicCounts(m.StrippedDynamicConfigModel):
+    class DynamicCounts(m.DynamicDomainModel):
         @override
         def __eq__(self, other: object) -> bool:
             if isinstance(other, dict):
@@ -83,7 +83,7 @@ class FlextLdifModelsCollections:
                 return {}
             return {str(k): v for k, v in extra.items()}
 
-    class SchemaContent(m.FrozenValidatingModel):
+    class SchemaContent(m.FrozenDomainModel):
         attributes: Annotated[
             MutableSequence[FlextLdifModelsDomains.SchemaAttribute],
             Field(),
@@ -100,7 +100,7 @@ class FlextLdifModelsCollections:
         def set_setting(self, key: str, value: t.Scalar) -> None:
             self[key] = value
 
-    class BooleanFlags(m.FrozenDynamicConfigModel):
+    class BooleanFlags(m.FrozenDynamicDomainModel):
         @override
         def __eq__(self, other: object) -> bool:
             if isinstance(other, dict):
@@ -123,7 +123,7 @@ class FlextLdifModelsCollections:
                 raise KeyError(msg)
             return bool(extra[key])
 
-    class FlexibleCategories(m.StrippedDynamicConfigModel):
+    class FlexibleCategories(m.DynamicDomainModel):
         categories: Annotated[
             MutableMapping[str, MutableSequence[FlextLdifModelsDomains.Entry]],
             Field(default_factory=dict),

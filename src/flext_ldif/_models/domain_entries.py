@@ -68,7 +68,7 @@ class FlextLdifModelsDomainsEntries:
     def _conversion_history_factory() -> MutableSequence[t.MutableStrMapping]:
         return []
 
-    class DNStatisticsFlags(m.FrozenValidatingModel):
+    class DNStatisticsFlags(m.FrozenDomainModel):
         """Flags capturing DN transformation quirks and validation state.
 
         All fields default to False/empty since flags are optionally set
@@ -662,7 +662,7 @@ class FlextLdifModelsDomainsEntries:
             """Get attribute values lists."""
             return self.attributes.values()
 
-    class DnRegistry(m.StrictValidatingModel):
+    class DnRegistry(m.DomainModel):
         """Registry for tracking canonical DN case during conversions.
 
         This class maintains a mapping of DNs in normalized form (lowercase, no spaces)
@@ -996,7 +996,7 @@ class FlextLdifModelsDomainsEntries:
                 self.validation_violations = violations
             return self
 
-    class AclWriteMetadata(m.FrozenValidatingModel):
+    class AclWriteMetadata(m.FrozenDomainModel):
         """Metadata for ACL write formatting operations.
 
         This frozen model encapsulates ACL metadata extracted from QuirkMetadata.extensions
@@ -2131,7 +2131,7 @@ class FlextLdifModelsDomainsEntries:
             ):
                 return False
 
-    class AttributeTransformation(m.FrozenValidatingModel):
+    class AttributeTransformation(m.FrozenDomainModel):
         """Detailed tracking of attribute transformation operations.
 
         Records complete transformation history for LDIF attribute conversions,
@@ -2187,7 +2187,7 @@ class FlextLdifModelsDomainsEntries:
             Field(description="Human-readable reason for transformation"),
         ] = ""
 
-    class DNStatistics(m.FrozenValidatingModel):
+    class DNStatistics(m.FrozenDomainModel):
         """Statistics tracking for DN transformations and validation.
 
         Immutable value t.NormalizedValue capturing complete DN transformation history
@@ -2310,7 +2310,7 @@ class FlextLdifModelsDomainsEntries:
                     result.append(item)
             return result
 
-    class EntryStatistics(m.FrozenValidatingModel):
+    class EntryStatistics(m.FrozenDomainModel):
         """Statistics tracking for entry-level transformations and validation.
 
         Tracks complete entry lifecycle from parsing through validation,
@@ -2554,7 +2554,7 @@ class FlextLdifModelsDomainsEntries:
                 },
             )
 
-    class ValidationMetadata(m.FrozenValidatingModel):
+    class ValidationMetadata(m.FrozenDomainModel):
         """Validation results and error tracking metadata.
 
         Composed model for QuirkMetadata.validation_results field.
@@ -2589,7 +2589,7 @@ class FlextLdifModelsDomainsEntries:
             Field(description="Server type used for validation"),
         ] = None
 
-    class WriteOptions(m.FrozenValidatingModel):
+    class WriteOptions(m.FrozenDomainModel):
         """LDIF writing configuration options.
 
         Composed model for QuirkMetadata.write_options field.
@@ -2626,7 +2626,7 @@ class FlextLdifModelsDomainsEntries:
             ),
         ] = False
 
-    class FormatDetails(m.FrozenValidatingModel):
+    class FormatDetails(m.FrozenDomainModel):
         """Original formatting details for round-trip preservation.
 
         Composed model for QuirkMetadata.original_format_details field.
@@ -2653,7 +2653,7 @@ class FlextLdifModelsDomainsEntries:
             Field(description="Trailing comments or metadata"),
         ] = None
 
-    class SchemaFormatDetails(m.FrozenValidatingModel):
+    class SchemaFormatDetails(m.FrozenDomainModel):
         """Schema formatting details for perfect round-trip conversion.
 
         Composed model for QuirkMetadata.schema_format_details field.
@@ -2696,7 +2696,7 @@ class FlextLdifModelsDomainsEntries:
             ),
         ] = Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
 
-    class QuirkMetadata(m.StrippedDynamicConfigModel):
+    class QuirkMetadata(m.DynamicDomainModel):
         """Universal metadata container for quirk-specific data preservation.
 
         Used to store server-specific quirks, transformations, and metadata
