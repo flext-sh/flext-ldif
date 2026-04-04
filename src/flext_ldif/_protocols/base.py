@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_core import FlextTypes
 
 if TYPE_CHECKING:
-    from flext_ldif.typings import FlextLdifTypes as t
+    from flext_ldif import t
 
 
 class FlextLdifProtocolsBase(Protocol):

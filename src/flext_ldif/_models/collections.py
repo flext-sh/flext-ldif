@@ -12,9 +12,11 @@ from typing import Annotated, override
 from pydantic import ConfigDict, Field
 
 from flext_core import m
-from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif.typings import FlextLdifTypes as t
+from flext_ldif import (
+    FlextLdifModelsDomainsEntries,
+    FlextLdifModelsMetadata,
+    t,
+)
 
 
 class FlextLdifModelsCollections:

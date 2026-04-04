@@ -18,11 +18,11 @@ from pydantic import BaseModel, Field, field_validator
 
 from flext_core import m
 from flext_ldif import (
-    FlextLdifConstants as c,
     FlextLdifModelsDomainAttributes,
     FlextLdifModelsMetadata,
     FlextLdifShared,
-    FlextLdifTypes as t,
+    c,
+    t,
 )
 
 

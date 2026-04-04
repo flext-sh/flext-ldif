@@ -25,16 +25,18 @@ from pydantic import (
 )
 
 from flext_core import m, r
-from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl
-from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
-from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN
-from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata
-from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
-from flext_ldif.constants import FlextLdifConstants as c
-from flext_ldif.protocols import FlextLdifProtocols as p
-from flext_ldif.typings import FlextLdifTypes as t
+from flext_ldif import (
+    FlextLdifModelsDomainAcl,
+    FlextLdifModelsDomainAttributes,
+    FlextLdifModelsDomainDN,
+    FlextLdifModelsDomainMetadata,
+    FlextLdifModelsDomainSchema,
+    FlextLdifModelsMetadata,
+    FlextLdifProtocols as p,
+    FlextLdifUtilitiesEntry,
+    c,
+    t,
+)
 
 
 class FlextLdifModelsDomainEntry:

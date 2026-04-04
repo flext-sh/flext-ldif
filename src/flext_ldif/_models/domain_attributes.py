@@ -18,9 +18,9 @@ from pydantic import ConfigDict, Field
 
 from flext_core import m
 from flext_ldif import (
-    FlextLdifConstants as c,
     FlextLdifModelsMetadata,
-    FlextLdifTypes as t,
+    c,
+    t,
 )
 
 

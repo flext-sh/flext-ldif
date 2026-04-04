@@ -7,7 +7,6 @@ from collections.abc import MutableSequence
 from pydantic import Field
 
 from flext_core import m
-from flext_core._models.domain_event import Entry as FlextCoreDomainEventEntry
 
 
 class FlextLdifModelsEvents:
@@ -48,7 +47,7 @@ class FlextLdifModelsEvents:
             default=None, description="Error messages for failed items"
         )
 
-    class DnEvent(FlextCoreDomainEventEntry):
+    class DnEvent(m.DomainEvent):
         dn_operation: str = Field(description="DN operation type performed")
         input_dn: str = Field(description="Original DN before operation")
         output_dn: str | None = Field(
@@ -67,7 +66,7 @@ class FlextLdifModelsEvents:
             default=0, description="Number of RDN components in the DN"
         )
 
-    class ConversionEvent(FlextCoreDomainEventEntry):
+    class ConversionEvent(m.DomainEvent):
         conversion_operation: str = Field(
             description="Conversion operation type performed"
         )

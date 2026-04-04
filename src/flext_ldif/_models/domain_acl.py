@@ -13,10 +13,10 @@ from pydantic import Field, model_validator
 
 from flext_core import m
 from flext_ldif import (
-    FlextLdifConstants as c,
     FlextLdifModelsBases,
     FlextLdifModelsDomainMetadata,
-    FlextLdifTypes as t,
+    c,
+    t,
 )
 
 

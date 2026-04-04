@@ -14,7 +14,7 @@ from typing import ClassVar, Self, override
 from pydantic import ConfigDict, Field
 
 from flext_core import m
-from flext_ldif import FlextLdifTypes as t
+from flext_ldif import t
 
 
 class FlextLdifModelsMetadata:

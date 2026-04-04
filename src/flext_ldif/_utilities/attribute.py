@@ -8,9 +8,9 @@ from typing import Final
 
 from flext_core import r
 from flext_ldif import (
-    FlextLdifConstants as c,
-    FlextLdifTypes as t,
     FlextLdifUtilitiesSchema,
+    c,
+    t,
 )
 
 

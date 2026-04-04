@@ -8,11 +8,13 @@ from typing import Annotated, Self
 from pydantic import Field, computed_field
 
 from flext_core import m
-from flext_ldif._models.collections import FlextLdifModelsCollections
-from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
-from flext_ldif._models.events import FlextLdifModelsEvents
-from flext_ldif.constants import FlextLdifConstants as c
-from flext_ldif.typings import FlextLdifTypes as t
+from flext_ldif import (
+    FlextLdifModelsCollections,
+    FlextLdifModelsDomainsEntries,
+    FlextLdifModelsEvents,
+    c,
+    t,
+)
 
 
 class FlextLdifModelsResults:

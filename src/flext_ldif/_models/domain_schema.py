@@ -18,9 +18,9 @@ from typing import Annotated, Self
 from pydantic import Field, field_validator
 
 from flext_ldif import (
-    FlextLdifConstants as c,
     FlextLdifModelsBases,
     FlextLdifModelsDomainMetadata,
+    c,
 )
 
 

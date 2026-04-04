@@ -15,9 +15,9 @@ from typing import Literal, overload
 
 from flext_core import r, u
 from flext_ldif import (
-    FlextLdifConstants as c,
     FlextLdifModelsDomainDN,
     FlextLdifModelsSettings,
+    c,
 )
 
 

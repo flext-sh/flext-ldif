@@ -16,11 +16,11 @@ from pydantic import ConfigDict, Field
 
 from flext_core import FlextModels, r
 from flext_ldif import (
-    FlextLdifConstants as c,
     FlextLdifModelsDomainAcl,
     FlextLdifModelsDomainSchema,
     FlextLdifProtocols as p,
-    FlextLdifTypes as t,
+    c,
+    t,
 )
 
 

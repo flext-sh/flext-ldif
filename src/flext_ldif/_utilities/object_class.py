@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from flext_core import FlextLogger
-from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
-from flext_ldif.constants import FlextLdifConstants as c
+from flext_ldif import FlextLdifModelsDomainsEntries, c
 
 logger = FlextLogger(__name__)
 

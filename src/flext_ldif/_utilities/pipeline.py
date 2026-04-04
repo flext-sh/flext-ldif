@@ -3,14 +3,21 @@
 from __future__ import annotations
 
 from collections.abc import Callable, MutableSequence
-from typing import ClassVar, Self, override
+from typing import ClassVar, Protocol, Self, override
 
 from flext_core import r
-from flext_ldif import FlextLdifUtilitiesTransformer, m, t
+from flext_ldif import m, t
 
 
 class FlextLdifUtilitiesPipeline:
     """Pipeline orchestration utilities for LDIF entry processing."""
+
+    class _EntryTransformer(Protocol):
+        """Concrete transformer contract for LDIF entry pipelines."""
+
+        def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
+            """Transform one LDIF entry."""
+            ...
 
     class _Filtered:
         """Sentinel class to signal that an entry was filtered out."""
@@ -40,7 +47,7 @@ class FlextLdifUtilitiesPipeline:
 
         def add(
             self,
-            transformer: FlextLdifUtilitiesTransformer[m.Ldif.Entry],
+            transformer: FlextLdifUtilitiesPipeline._EntryTransformer,
             *,
             name: str | None = None,
         ) -> Self:
@@ -51,13 +58,14 @@ class FlextLdifUtilitiesPipeline:
                 entry: m.Ldif.Entry,
             ) -> r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered]:
                 """Wrap transformer to match pipeline filter signature."""
-                return transformer.apply(entry).fold(
-                    on_failure=lambda e: r[
-                        m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered
-                    ].fail(e),
-                    on_success=lambda v: r[
-                        m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered
-                    ].ok(v),
+                result = transformer.apply(entry)
+                if result.is_failure:
+                    return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].fail(
+                        result.error or "Transformer failed",
+                    )
+                transformed: m.Ldif.Entry = result.value
+                return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(
+                    transformed,
                 )
 
             self._steps.append((step_name, wrapped_transformer))

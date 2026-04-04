@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from flext_core import FlextTypes
-from flext_ldif._typings.base import FlextLdifTypesBase
-from flext_ldif._typings.domain import FlextLdifTypesDomain
+from flext_ldif import FlextLdifTypesBase, FlextLdifTypesDomain
 
 
 class FlextLdifTypes(FlextTypes):
