@@ -11,6 +11,8 @@ from collections.abc import (
 )
 from typing import Self, override
 
+from pydantic import Field
+
 from flext_core import m
 from flext_ldif import t
 
@@ -21,13 +23,13 @@ class FlextLdifModelsMetadata:
     class DynamicMetadata(m.DynamicModel):
         """Model with extra='allow' for dynamic field storage."""
 
-        transformations: MutableSequence[t.Scalar] | None = None
-        original_format: str | None = None
-        schema_source_server: str | None = None
-        server_type: str | None = None
-        relaxed_mode: bool | None = None
-        server_specific_violations: MutableSequence[t.Ldif.MetadataValue] | None = None
-        schema_transformations: MutableSequence[t.Ldif.MetadataValue] | None = None
+        transformations: MutableSequence[t.Scalar] | None = Field(default=None, description="List of transformations applied to this metadata")
+        original_format: str | None = Field(default=None, description="Original LDIF format before conversion")
+        schema_source_server: str | None = Field(default=None, description="Server type that provided the schema")
+        server_type: str | None = Field(default=None, description="LDAP server type identifier")
+        relaxed_mode: bool | None = Field(default=None, description="Whether relaxed parsing mode was used")
+        server_specific_violations: MutableSequence[t.Ldif.MetadataValue] | None = Field(default=None, description="Server-specific validation violations")
+        schema_transformations: MutableSequence[t.Ldif.MetadataValue] | None = Field(default=None, description="Schema transformations applied during processing")
 
         @override
         def __eq__(self, other: object) -> bool:

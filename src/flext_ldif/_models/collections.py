@@ -86,11 +86,11 @@ class FlextLdifModelsCollections:
     class SchemaContent(m.FrozenModel):
         attributes: Annotated[
             MutableSequence[FlextLdifModelsDomains.SchemaAttribute],
-            Field(),
+            Field(description="Schema attribute definitions extracted from LDIF"),
         ]
         object_classes: Annotated[
             MutableSequence[FlextLdifModelsDomains.SchemaObjectClass],
-            Field(),
+            Field(description="Schema object class definitions extracted from LDIF"),
         ]
 
     class CategoryPaths(FlextLdifModelsMetadata.DynamicMetadata):
@@ -124,10 +124,7 @@ class FlextLdifModelsCollections:
             return bool(extra[key])
 
     class FlexibleCategories(m.DynamicModel):
-        categories: Annotated[
-            MutableMapping[str, MutableSequence[FlextLdifModelsDomains.Entry]],
-            Field(default_factory=dict),
-        ] = Field(default_factory=dict)
+        categories: MutableMapping[str, MutableSequence[FlextLdifModelsDomains.Entry]] = Field(default_factory=dict, description="Mapping of category names to their LDIF entries")
 
         @override
         def __eq__(self, other: object) -> bool:
