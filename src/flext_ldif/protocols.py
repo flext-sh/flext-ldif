@@ -15,7 +15,8 @@ if TYPE_CHECKING:
 class FlextLdifProtocols(FlextProtocols):
     """Unified LDIF protocol definitions extending FlextProtocols."""
 
-    class Ldif:
+    @runtime_checkable
+    class Ldif(Protocol):
         """LDIF-specific protocol namespace."""
 
         @runtime_checkable
