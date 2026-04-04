@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TypeIs
 
-from flext_ldif import p
+from flext_ldif.protocols import FlextLdifProtocols as p
 
 
 class FlextLdifUtilitiesDetection:

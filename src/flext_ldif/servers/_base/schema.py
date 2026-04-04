@@ -114,6 +114,7 @@ class FlextLdifServersBaseSchema(
                 continue
             if isinstance(value, t.ConfigMap):
                 service_kwargs[key] = value
+        super().__init__()
         self._schema_service = _schema_service
         if _parent_quirk is not None:
             object.__setattr__(self, "_parent_quirk", _parent_quirk)

@@ -7,7 +7,7 @@ from typing import Annotated
 from pydantic import Field
 
 from flext_core import m
-from flext_ldif import t
+from flext_ldif.typings import FlextLdifTypes as t
 
 
 class FlextLdifModelsProcessing:

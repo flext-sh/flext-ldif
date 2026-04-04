@@ -274,6 +274,73 @@ class FlextLdifProtocols(FlextProtocols):
             DETECTION_OBJECTCLASS_NAMES: frozenset[str] | MutableSequence[str] | None
 
         @runtime_checkable
+        class DN(Protocol):
+            """Protocol for DN objects — structural interface for utilities."""
+
+            @property
+            def value(self) -> str:
+                """DN string value."""
+                ...
+
+        @runtime_checkable
+        class Attributes(Protocol):
+            """Protocol for Attributes container — structural interface for utilities."""
+
+            @property
+            def attributes(self) -> t.MutableStrSequenceMapping:
+                """Attribute name to values mapping."""
+                ...
+
+            def items(self) -> t.Ldif.MutableEntryAttributesDict:
+                """Iterate attribute items."""
+                ...
+
+            def get(
+                self,
+                key: str,
+                default: MutableSequence[str] | None = None,
+            ) -> MutableSequence[str]:
+                """Get attribute values by key."""
+                ...
+
+            def __bool__(self) -> bool:
+                """Check if attributes are non-empty."""
+                ...
+
+        @runtime_checkable
+        class Entry(Protocol):
+            """Protocol for LDIF entry models — structural interface for utilities.
+
+            Utilities accept this protocol instead of the concrete model
+            to break circular imports between _models/ and _utilities/.
+            """
+
+            @property
+            def dn(self) -> FlextLdifProtocols.Ldif.DN | None:
+                """Distinguished Name."""
+                ...
+
+            @property
+            def attributes(self) -> FlextLdifProtocols.Ldif.Attributes | None:
+                """Attributes container."""
+                ...
+
+            @property
+            def changetype(self) -> str | None:
+                """Change operation type."""
+                ...
+
+            @property
+            def metadata(self) -> t.NormalizedValue:
+                """Quirk metadata."""
+                ...
+
+            @property
+            def validation_metadata(self) -> t.ConfigMap | None:
+                """Validation metadata."""
+                ...
+
+        @runtime_checkable
         class ModelWithValidationMetadata(Protocol):
             """Protocol for models with validation_metadata attribute."""
 

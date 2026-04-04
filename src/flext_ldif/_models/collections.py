@@ -9,18 +9,18 @@ from __future__ import annotations
 from collections.abc import Iterator, MutableMapping, MutableSequence
 from typing import Annotated, override
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from flext_core import m
-from flext_ldif import (
-    FlextLdifModelsDomains,
-    FlextLdifModelsMetadata,
-    t,
-)
+from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif.typings import FlextLdifTypes as t
 
 
 class FlextLdifModelsCollections:
     class DynamicCounts(m.DynamicModel):
+        model_config = ConfigDict(extra="allow", validate_assignment=True)
+
         @override
         def __eq__(self, other: object) -> bool:
             if isinstance(other, dict):

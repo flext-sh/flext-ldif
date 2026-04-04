@@ -135,6 +135,7 @@ class FlextLdifTypes(FlextTypes):
 
         type AttributeDict = t.StrSequenceMapping
         type AttributeDictGeneric = Mapping[str, t.StrSequence | str]
+        type DistributionDict = t.IntMapping
 
         type TemplateValue = FlextTypes.Scalar | None
         type DN = str

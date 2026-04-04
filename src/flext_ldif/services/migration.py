@@ -46,6 +46,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         **_kwargs: str | float | bool | None,
     ) -> None:
         """Initialize migration pipeline."""
+        super().__init__()
         effective_source_server = source_server_type or source_server
         effective_target_server = target_server_type or target_server
         object.__setattr__(self, "_input_dir", input_dir)

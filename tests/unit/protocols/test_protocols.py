@@ -83,7 +83,7 @@ class TestsTestFlextLdifProtocols:
     class Constants:
         """Test constants organized as nested class."""
 
-        ATTR_PARSE: str = "parse"
+        ATTR_PARSE: str = "parse_attribute"
         ATTR_WRITE: str = "write"
         ATTR_SERVER_TYPE: str = "server_type"
         ATTR_PRIORITY: str = "priority"

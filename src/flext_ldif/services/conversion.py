@@ -938,11 +938,14 @@ class FlextLdifConversion(
             entry = getattr(quirk, "_entry_quirk", None)
         if (
             entry is None
-            and FlextLdifConversion._has_attr(quirk, "parse")
-            and FlextLdifConversion._has_attr(quirk, "can_handle_entry")
+            and FlextLdifConversion._has_attr(quirk, "_parse_content")
+            and FlextLdifConversion._has_attr(quirk, "can_handle")
         ):
             entry = quirk
-        if entry is not None and callable(getattr(entry, "parse", None)):
+        if entry is not None and (
+            callable(getattr(entry, "_parse_content", None))
+            or callable(getattr(entry, "can_handle", None))
+        ):
             support["entry"] = 1
         return support
 
@@ -1593,7 +1596,7 @@ class FlextLdifConversion(
             quirk,
             "parse_attribute",
         ) or FlextLdifConversion._has_attr(quirk, "parse_objectclass"):
-            required_methods = ("parse", "write")
+            required_methods = ("parse_attribute", "write")
             if all(
                 FlextLdifConversion._has_attr(quirk, method)
                 and callable(getattr(quirk, method))
@@ -1607,7 +1610,7 @@ class FlextLdifConversion(
             None,
         )
         if schema_quirk_raw is not None:
-            required_methods = ("parse", "write")
+            required_methods = ("parse_attribute", "write")
             if all(
                 FlextLdifConversion._has_attr(schema_quirk_raw, method)
                 and callable(getattr(schema_quirk_raw, method))

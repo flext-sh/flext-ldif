@@ -40,6 +40,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         for key, value in kwargs.items():
             if u.is_primitive(value):
                 init_kwargs[key] = value
+        super().__init__()
         parent_ref: FlextLdifServersBase = self
         self._schema_quirk = self.Schema()
         object.__setattr__(self._schema_quirk, "_parent_quirk", parent_ref)

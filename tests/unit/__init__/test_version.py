@@ -11,7 +11,9 @@ from __future__ import annotations
 
 from flext_tests import tm
 
-import flext_ldif.__version__ as version_module
+import importlib
+
+version_module = importlib.import_module("flext_ldif.__version__")
 
 
 class TestsFlextLdifVersion:

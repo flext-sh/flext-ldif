@@ -89,6 +89,7 @@ class FlextLdif(
                 self._set_init_config_overrides(config)
         finally:
             self._clear_init_config_overrides()
+        super().__init__()
         object.__setattr__(
             self,
             "_server",

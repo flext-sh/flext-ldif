@@ -52,6 +52,7 @@ class FlextLdifServersBaseEntry(
         **_kwargs: str | float | bool | None,
     ) -> None:
         """Initialize entry quirk service with optional DI service injection."""
+        super().__init__()
         self._entry_service = entry_service
         if _parent_quirk is not None:
             object.__setattr__(self, "_parent_quirk", _parent_quirk)

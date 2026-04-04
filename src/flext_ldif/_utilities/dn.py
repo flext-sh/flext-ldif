@@ -11,10 +11,24 @@ from collections.abc import (
     MutableMapping,
     MutableSequence,
 )
-from typing import Literal, overload
+from typing import TYPE_CHECKING, Literal, overload
 
 from flext_core import r, u
-from flext_ldif import FlextLdifModelsDomains, FlextLdifModelsSettings, c, m
+from flext_ldif._models.settings import FlextLdifModelsSettings
+from flext_ldif.constants import FlextLdifConstants as c
+
+if TYPE_CHECKING:
+    from flext_ldif._models.domain import FlextLdifModelsDomains
+    from flext_ldif.models import FlextLdifModels as m
+
+
+def _get_domains() -> type[FlextLdifModelsDomains]:
+    """Lazy accessor to break circular import."""
+    from flext_ldif._models.domain import (  # noqa: PLC0415
+        FlextLdifModelsDomains as _cls,
+    )
+
+    return _cls
 
 
 class FlextLdifUtilitiesDN:
@@ -404,10 +418,10 @@ class FlextLdifUtilitiesDN:
         """
         original_dn = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not original_dn:
-            stats_domain = FlextLdifModelsDomains.DNStatistics.create_minimal(
+            stats_domain = _get_domains().DNStatistics.create_minimal(
                 original_dn,
             )
-            stats = FlextLdifModelsDomains.DNStatistics.model_validate(
+            stats = _get_domains().DNStatistics.model_validate(
                 stats_domain.model_dump(),
             )
             return (original_dn, stats)
@@ -430,7 +444,7 @@ class FlextLdifUtilitiesDN:
             if isinstance(validation_errors_raw, list)
             else []
         )
-        stats_domain = FlextLdifModelsDomains.DNStatistics(
+        stats_domain = _get_domains().DNStatistics(
             original_dn=original_dn,
             cleaned_dn=result,
             normalized_dn=result,
