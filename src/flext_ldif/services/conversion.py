@@ -33,7 +33,7 @@ from flext_ldif import (
     u,
 )
 
-TUPLE_LENGTH_PAIR = 2
+TUPLE_LENGTH_PAIR = c.Ldif.TUPLE_LENGTH_PAIR
 logger = FlextLogger(__name__)
 
 

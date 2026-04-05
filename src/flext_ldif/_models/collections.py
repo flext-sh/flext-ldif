@@ -15,13 +15,14 @@ from flext_core import m
 from flext_ldif import (
     FlextLdifModelsDomainsEntries,
     FlextLdifModelsMetadata,
+    c,
     t,
 )
 
 
 class FlextLdifModelsCollections:
     class DynamicCounts(m.DynamicModel):
-        model_config = ConfigDict(extra="allow", validate_assignment=True)
+        model_config = ConfigDict(extra=c.EXTRA_ALLOW, validate_assignment=True)
 
         @override
         def __eq__(self, other: object) -> bool:

@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from enum import StrEnum, unique
 from pathlib import Path
 from typing import Annotated, ClassVar, Final
@@ -17,7 +17,17 @@ from typing import Annotated, ClassVar, Final
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_ldif import FlextLdifParser, FlextLdifWriter, ldif
+from flext_ldif import FlextLdifSettings, ldif
+
+pytest_plugins = ["flext_tests.conftest_plugin"]
+
+
+@pytest.fixture
+def ldif_settings(
+    settings_factory: Callable[..., FlextLdifSettings],
+) -> FlextLdifSettings:
+    """Provide clean FlextLdifSettings for tests."""
+    return settings_factory(FlextLdifSettings)
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -34,51 +44,6 @@ def pytest_configure(config: pytest.Config) -> None:
 def flext_ldif() -> ldif:
     """Provide ldif instance for tests."""
     return ldif.get_instance()
-
-
-@pytest.fixture
-def temp_file(temp_dir: Path) -> Path:
-    """Provide temporary LDIF file for tests.
-
-    Uses the consolidated temp_dir fixture from flext-core.
-    """
-    return temp_dir / "test_file.ldif"
-
-
-@pytest.fixture
-def sample_ldif_entries() -> str:
-    """Sample LDIF entries for testing."""
-    return "dn: cn=John Doe,ou=people,dc=example,dc=com\nobjectClass: inetOrgPerson\ncn: John Doe\nsn: Doe\nmail: john.doe@example.com\n\ndn: cn=Jane Smith,ou=people,dc=example,dc=com\nobjectClass: inetOrgPerson\ncn: Jane Smith\nsn: Smith\nmail: jane.smith@example.com\n\ndn: ou=groups,dc=example,dc=com\nobjectClass: organizationalUnit\nou: groups\ndescription: Groups organizational unit\n"
-
-
-@pytest.fixture
-def real_ldif_user_entry() -> str:
-    """Real LDIF entry for a user with complete attributes."""
-    return "dn: cn=John Doe,ou=people,dc=example,dc=com\nobjectClass: top\nobjectClass: person\nobjectClass: inetOrgPerson\nobjectClass: organizationalPerson\ncn: John Doe\nsn: Doe\ngivenName: John\nmail: john.doe@example.com\nuid: jdoe\ntelephoneNumber: +1-555-1234\nstreet: 123 Main St\nl: New York\nst: NY\npostalCode: 10001\nc: US\ndescription: Software Engineer\nemployeeNumber: 12345\n"
-
-
-@pytest.fixture
-def real_ldif_group_entry() -> str:
-    """Real LDIF entry for a group with complete attributes."""
-    return "dn: cn=developers,ou=groups,dc=example,dc=com\nobjectClass: top\nobjectClass: groupOfNames\nobjectClass: groupOfUniqueNames\ncn: developers\ndescription: Development team group\nmember: cn=John Doe,ou=people,dc=example,dc=com\nmember: cn=Jane Smith,ou=people,dc=example,dc=com\nuniqueMember: cn=John Doe,ou=people,dc=example,dc=com\nuniqueMember: cn=Jane Smith,ou=people,dc=example,dc=com\n"
-
-
-@pytest.fixture
-def real_ldif_multiple_entries() -> str:
-    """Real LDIF with multiple entries separated by blank lines."""
-    return "dn: dc=example,dc=com\nobjectClass: top\nobjectClass: domain\ndc: example\n\ndn: ou=people,dc=example,dc=com\nobjectClass: top\nobjectClass: organizationalUnit\nou: people\n\ndn: cn=John Doe,ou=people,dc=example,dc=com\nobjectClass: top\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: John Doe\nsn: Doe\nmail: john.doe@example.com\n\ndn: cn=Jane Smith,ou=people,dc=example,dc=com\nobjectClass: top\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Jane Smith\nsn: Smith\nmail: jane.smith@example.com\n"
-
-
-@pytest.fixture
-def ldif_parser() -> FlextLdifParser:
-    """Provide LDIF parser for tests."""
-    return FlextLdifParser()
-
-
-@pytest.fixture
-def ldif_writer() -> FlextLdifWriter:
-    """Provide LDIF writer for tests."""
-    return FlextLdifWriter()
 
 
 class FlextLdifFixtures:

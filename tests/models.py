@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar, Final
+from typing import Annotated, ClassVar
 
 from flext_tests import FlextTestsModels
 from pydantic import BaseModel, ConfigDict, Field
@@ -28,13 +28,7 @@ class FlextLdifTestModels(FlextTestsModels, FlextLdifModels):
     Access patterns:
     - FlextLdifTestModels.Ldif.* - Production domain models (delegated from FlextLdifModels.Ldif)
     - FlextLdifTestModels.Ldif.Tests.* - Test fixtures (ACL, Schema, etc.)
-    - FlextLdifTestModels.WriteFormatOptions - Root-level production models
-    - FlextLdifTestModels.StatisticsResult - Root-level production models
     """
-
-    # Root-level test aliases for common domain models
-    WriteFormatOptions: Final = FlextLdifModels.Ldif.WriteFormatOptions
-    StatisticsResult: Final = FlextLdifModels.Ldif.StatisticsResult
 
     # Production models namespace delegation
     class Ldif(FlextLdifModels.Ldif):

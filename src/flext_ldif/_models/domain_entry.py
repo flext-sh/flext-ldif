@@ -24,7 +24,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import m, r
+from flext_core import m
 from flext_ldif import (
     FlextLdifModelsDomainAcl,
     FlextLdifModelsDomainAttributes,
@@ -32,9 +32,10 @@ from flext_ldif import (
     FlextLdifModelsDomainMetadata,
     FlextLdifModelsDomainSchema,
     FlextLdifModelsMetadata,
-    FlextLdifProtocols as p,
     FlextLdifUtilitiesEntry,
     c,
+    p,
+    r,
     t,
 )
 
@@ -57,7 +58,6 @@ class FlextLdifModelsDomainEntry:
         - aggregate() classmethod (automatic statistics aggregation)
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore")
         was_parsed: Annotated[
             bool,
             Field(description="Entry was successfully parsed from LDIF"),
@@ -283,7 +283,7 @@ class FlextLdifModelsDomainEntry:
                 },
             )
 
-    class Entry(m.Entity):
+    class Entry(m.Entity, m.DynamicModel):
         """LDIF entry domain model.
 
         Implements p.Models.Entry through structural typing.
@@ -294,16 +294,15 @@ class FlextLdifModelsDomainEntry:
         This model provides these through:
         - dn field (DN) which has .value property returning str
         - attributes field (Attributes) which has .attributes property returning FlextLdifModelsDomainsEntries.UnconvertedAttributes
+
+        Inherits DynamicModel to legitimize extra='allow' for LDIF dynamic attributes.
         """
 
-        _flext_enforcement_exempt: ClassVar[bool] = (
-            True  # extra="allow" for LDIF dynamic attrs
-        )
         model_config: ClassVar[ConfigDict] = ConfigDict(
             strict=True,
             validate_default=True,
             validate_assignment=True,
-            extra="allow",
+            extra=c.EXTRA_ALLOW,
         )
         dn: FlextLdifModelsDomainDN.DN | None = Field(
             ...,

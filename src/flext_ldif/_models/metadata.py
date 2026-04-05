@@ -14,7 +14,7 @@ from typing import ClassVar, Self, override
 from pydantic import ConfigDict, Field
 
 from flext_core import m
-from flext_ldif import t
+from flext_ldif import c, t
 
 
 class FlextLdifModelsMetadata:
@@ -23,7 +23,7 @@ class FlextLdifModelsMetadata:
     class DynamicMetadata(m.DynamicModel):
         """Model with extra='allow' for dynamic field storage."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow")
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra=c.EXTRA_ALLOW)
 
         transformations: MutableSequence[t.Scalar] | None = Field(
             default=None, description="List of transformations applied to this metadata"
@@ -133,7 +133,7 @@ class FlextLdifModelsMetadata:
     class EntryMetadata(m.FrozenDynamicModel):
         """Entry metadata for tracking processing details."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow")
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra=c.EXTRA_ALLOW)
 
         def __getitem__(self, key: str) -> t.Ldif.MetadataValue:
             return self._extra()[key]

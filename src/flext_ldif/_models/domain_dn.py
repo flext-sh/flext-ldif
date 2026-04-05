@@ -22,7 +22,6 @@ class FlextLdifModelsDomainDN:
     class DNStatistics(m.FrozenDynamicModel):
         """Statistics tracking for DN transformations and validation."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore")
         original_dn: Annotated[
             str,
             Field(..., description="Original DN as received from input"),

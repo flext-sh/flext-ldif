@@ -15,22 +15,8 @@ from flext_ldif import (
     t,
 )
 
-_VALID_SERVER_TYPES: frozenset[str] = frozenset({
-    "oid",
-    "oud",
-    "rfc",
-    "openldap",
-    "openldap1",
-    "openldap2",
-    "ad",
-    "apache",
-    "ds389",
-    "novell",
-    "ibm_tivoli",
-    "relaxed",
-    "generic",
-})
-_CLASS_SUFFIXES: tuple[str, ...] = ("Acl", "Schema", "Entry", "Constants")
+_VALID_SERVER_TYPES: frozenset[str] = c.Ldif.VALID_SERVER_TYPES
+_CLASS_SUFFIXES: tuple[str, ...] = c.Ldif.CLASS_SUFFIXES
 
 
 class FlextLdifUtilitiesServer:

@@ -547,6 +547,25 @@ class FlextLdifConstants(FlextConstants):
         type TransformationTypeLiteral = TransformationType
 
         DEFAULT_MAX_ATTR_VALUE_LENGTH: Final[int] = 1048576
+        TUPLE_LENGTH_PAIR: Final[int] = 2
+
+        VALID_SERVER_TYPES: Final[frozenset[str]] = frozenset({
+            "oid",
+            "oud",
+            "rfc",
+            "openldap",
+            "openldap1",
+            "openldap2",
+            "ad",
+            "apache",
+            "ds389",
+            "novell",
+            "ibm_tivoli",
+            "relaxed",
+            "generic",
+        })
+
+        CLASS_SUFFIXES: Final[tuple[str, ...]] = ("Acl", "Schema", "Entry", "Constants")
 
         OID_TO_NAME: ClassVar[t.StrMapping] = MappingProxyType({
             "2.5.5.5": "integer",
@@ -719,6 +738,12 @@ class FlextLdifConstants(FlextConstants):
             SCHEMA = "schema"
             ACL = "acl"
             REJECTED = "rejected"
+
+        class SettingsDefaults:
+            """LDIF settings default values."""
+
+            DEFAULT_ENCODING: Final[str] = "utf-8"
+            DEFAULT_STRICT_VALIDATION: Final[bool] = True
 
         class EntryDefaults:
             """Entry processing default values (RFC 2849 LDIF domain)."""
