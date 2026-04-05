@@ -30,12 +30,12 @@ class TestRfcDockerRealData:
     @pytest.fixture
     def oid_fixtures_dir(self) -> Path:
         """Path to OID fixtures."""
-        return c.Ldif.Paths.FIXTURES_DIR / "oid"
+        return c.Ldif.Paths.FIXTURES_DIR / c.Ldif.Fixtures.OID
 
     @pytest.fixture
     def oud_fixtures_dir(self) -> Path:
         """Path to OUD fixtures."""
-        return c.Ldif.Paths.FIXTURES_DIR / "oud"
+        return c.Ldif.Paths.FIXTURES_DIR / c.Ldif.Fixtures.OUD
 
     @pytest.fixture
     def openldap_fixtures_dir(self) -> Path:
@@ -131,7 +131,7 @@ class TestRfcDockerRealData:
         write_result = writer.write_ldif_file(
             typed_entries,
             output_file,
-            server_type="oid",
+            server_type=c.Ldif.Fixtures.OID,
         )
         assert write_result.is_success, f"Failed to write: {write_result.error}"
         assert output_file.exists()
@@ -199,7 +199,7 @@ class TestRfcDockerRealData:
             result = writer.write_ldif_file(
                 [test_entry],
                 output_file,
-                server_type="rfc",
+                server_type=c.Ldif.Fixtures.RFC,
             )
             if not result.is_success:
                 assert result.error is not None
@@ -232,7 +232,9 @@ class TestRfcDockerRealData:
         quirk_registry: FlextLdifServer,
     ) -> None:
         """Test RFC schema parser with real OID schema."""
-        schema_file = c.Ldif.Paths.FIXTURES_DIR / "oid" / "oid_schema_fixtures.ldif"
+        schema_file = (
+            c.Ldif.Paths.FIXTURES_DIR / c.Ldif.Fixtures.OID / "oid_schema_fixtures.ldif"
+        )
         if not schema_file.exists():
             pytest.skip("OID schema fixtures not found")
         parser = FlextLdifParser()
@@ -261,7 +263,9 @@ class TestRfcIntegrationRealWorld:
 
     def test_large_oid_schema_parsing(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing large real OID schema (345KB fixture)."""
-        schema_file = c.Ldif.Paths.FIXTURES_DIR / "oid" / "oid_schema_fixtures.ldif"
+        schema_file = (
+            c.Ldif.Paths.FIXTURES_DIR / c.Ldif.Fixtures.OID / "oid_schema_fixtures.ldif"
+        )
         if not schema_file.exists():
             pytest.skip("OID schema fixtures not found")
         file_size = schema_file.stat().st_size
@@ -273,7 +277,9 @@ class TestRfcIntegrationRealWorld:
     def test_large_oud_integration_data(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing large real OUD integration data (31KB)."""
         integration_file = (
-            c.Ldif.Paths.FIXTURES_DIR / "oud" / "oud_integration_fixtures.ldif"
+            c.Ldif.Paths.FIXTURES_DIR
+            / c.Ldif.Fixtures.OUD
+            / "oud_integration_fixtures.ldif"
         )
         if not integration_file.exists():
             pytest.skip("OUD integration fixtures not found")
@@ -310,7 +316,7 @@ class TestRfcIntegrationRealWorld:
         result = writer.write_ldif_file(
             entry_models,
             output_file,
-            server_type="rfc",
+            server_type=c.Ldif.Fixtures.RFC,
         )
         assert result.is_success, f"Failed to write large dataset: {result.error}"
         assert output_file.exists()

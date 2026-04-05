@@ -150,7 +150,10 @@ class FlextLdifConversion(
         """Default DN registry factory function."""
         return m.Ldif.DnRegistry()
 
-    dn_registry: m.Ldif.DnRegistry = Field(default_factory=_default_dn_registry)
+    dn_registry: m.Ldif.DnRegistry = Field(
+        default_factory=_default_dn_registry,
+        description="DN registry for tracking distinguished names during conversion",
+    )
 
     def __new__(cls) -> Self:
         """Create service instance with matching signature for type checker."""

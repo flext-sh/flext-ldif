@@ -6,7 +6,11 @@ from collections.abc import MutableSequence
 
 from pydantic import Field
 
-from flext_core import m
+from flext_core import (
+    m,
+)
+
+__all__ = ["FlextLdifModelsEvents"]
 
 
 class FlextLdifModelsEvents:

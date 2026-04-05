@@ -43,8 +43,8 @@ class TestsFlextLdifMigrationPipeline:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type="oid",
-            target_server_type="oud",
+            source_server_type=c.Ldif.Fixtures.OID,
+            target_server_type=c.Ldif.Fixtures.OUD,
         )
         tm.that(pipeline, none=False)
 
@@ -59,18 +59,18 @@ class TestsFlextLdifMigrationPipeline:
             output_dir=output_dir,
         )
         tm.that(pipeline, none=False)
-        tm.that(pipeline.source_server_type, eq="rfc")
-        tm.that(pipeline.target_server_type, eq="rfc")
+        tm.that(pipeline.source_server_type, eq=c.Ldif.Fixtures.RFC)
+        tm.that(pipeline.target_server_type, eq=c.Ldif.Fixtures.RFC)
 
     @pytest.mark.parametrize(
         ("source", "target"),
         [
-            ("oid", "oud"),
-            ("oid", "openldap"),
-            ("oud", "openldap"),
-            ("openldap", "oid"),
-            ("openldap", "oud"),
-            ("rfc", "rfc"),
+            (c.Ldif.Fixtures.OID, c.Ldif.Fixtures.OUD),
+            (c.Ldif.Fixtures.OID, c.Ldif.Fixtures.OPENLDAP),
+            (c.Ldif.Fixtures.OUD, c.Ldif.Fixtures.OPENLDAP),
+            (c.Ldif.Fixtures.OPENLDAP, c.Ldif.Fixtures.OID),
+            (c.Ldif.Fixtures.OPENLDAP, c.Ldif.Fixtures.OUD),
+            (c.Ldif.Fixtures.RFC, c.Ldif.Fixtures.RFC),
         ],
     )
     def test_initialization_with_different_server_types(
@@ -103,8 +103,8 @@ class TestsFlextLdifMigrationPipeline:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=nonexistent_input,
             output_dir=output_dir,
-            source_server_type="oid",
-            target_server_type="oud",
+            source_server_type=c.Ldif.Fixtures.OID,
+            target_server_type=c.Ldif.Fixtures.OUD,
         )
         result = pipeline.execute()
         tm.that(result.is_failure, eq=True)
@@ -120,8 +120,8 @@ class TestsFlextLdifMigrationPipeline:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type="rfc",
-            target_server_type="rfc",
+            source_server_type=c.Ldif.Fixtures.RFC,
+            target_server_type=c.Ldif.Fixtures.RFC,
         )
         result = pipeline.execute()
         tm.that(result.is_success or result.is_failure, eq=True)
@@ -137,15 +137,20 @@ class TestsFlextLdifMigrationPipeline:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type="rfc",
-            target_server_type="rfc",
+            source_server_type=c.Ldif.Fixtures.RFC,
+            target_server_type=c.Ldif.Fixtures.RFC,
         )
         result = pipeline.execute()
         tm.that(result.is_success or result.is_failure, eq=True)
 
     @pytest.mark.parametrize(
         ("source", "target"),
-        [("oid", "oud"), ("oud", "oid"), ("rfc", "oid"), ("rfc", "oud")],
+        [
+            (c.Ldif.Fixtures.OID, c.Ldif.Fixtures.OUD),
+            (c.Ldif.Fixtures.OUD, c.Ldif.Fixtures.OID),
+            (c.Ldif.Fixtures.RFC, c.Ldif.Fixtures.OID),
+            (c.Ldif.Fixtures.RFC, c.Ldif.Fixtures.OUD),
+        ],
     )
     def test_server_conversion_modes(
         self,

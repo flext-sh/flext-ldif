@@ -157,7 +157,9 @@ class TestCategorizationRealData:
                 ),
             ),
         ]
-        categorization = ldif.categorization(base_dn=base_dn, server_type="oud")
+        categorization = ldif.categorization(
+            base_dn=base_dn, server_type=c.Ldif.Fixtures.OUD
+        )
         validate_result = categorization.validate_dns(entries)
         assert validate_result.is_success, (
             f"DN validation failed: {validate_result.error}"
@@ -266,7 +268,9 @@ class TestCategorizationRealData:
                 ),
             ),
         ]
-        categorization = ldif.categorization(base_dn=base_dn, server_type="oud")
+        categorization = ldif.categorization(
+            base_dn=base_dn, server_type=c.Ldif.Fixtures.OUD
+        )
         validate_result = categorization.validate_dns(acl_entries)
         assert validate_result.is_success
         categories_result = categorization.categorize_entries(validate_result.value)
@@ -343,12 +347,16 @@ class TestCategorizationRealData:
             "Input file content should match"
         )
         api = ldif()
-        parse_result = api.parse_ldif(value=ldif_content, server_type="rfc")
+        parse_result = api.parse_ldif(
+            value=ldif_content, server_type=c.Ldif.Fixtures.RFC
+        )
         assert parse_result.is_success, f"Parsing failed: {parse_result.error}"
         entries = parse_result.value
         assert len(entries) == 6, f"Should parse 6 entries, got {len(entries)}"
         base_dn = "dc=example"
-        categorization = api.categorization(base_dn=base_dn, server_type="oud")
+        categorization = api.categorization(
+            base_dn=base_dn, server_type=c.Ldif.Fixtures.OUD
+        )
         validate_result = categorization.validate_dns(entries)
         assert validate_result.is_success
         categories_result = categorization.categorize_entries(validate_result.value)

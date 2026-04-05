@@ -88,17 +88,20 @@ class FlextLdifUtilitiesServer:
         target_cls: type,
     ) -> c.Ldif.ServerTypeLiteral | None:
         """Extract server type from nested class via parent's Constants."""
-        if "." in target_cls.__qualname__:
-            parent_class_name = target_cls.__qualname__.split(".")[0]
+        qualname_parts = target_cls.__qualname__.split(".")
+        if len(qualname_parts) > 1:
             parent_module = sys.modules.get(target_cls.__module__)
             if parent_module:
-                parent_server_cls_obj: type | None = vars(parent_module).get(
-                    parent_class_name,
+                parent_obj: type | None = vars(parent_module).get(
+                    qualname_parts[0],
                 )
-                if isinstance(parent_server_cls_obj, type):
+                for part in qualname_parts[1:-1]:
+                    if isinstance(parent_obj, type):
+                        parent_obj = vars(parent_obj).get(part)
+                if isinstance(parent_obj, type):
                     srv = FlextLdifUtilitiesServer
                     result = srv.extract_server_type_from_constants(
-                        parent_server_cls_obj,
+                        parent_obj,
                     )
                     if result is not None:
                         return result

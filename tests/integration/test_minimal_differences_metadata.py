@@ -39,12 +39,14 @@ class TestMinimalDifferencesOidOud:
         fixture_path = (
             Path(__file__).parent.parent
             / "fixtures"
-            / "oid"
+            / c.Ldif.Fixtures.OID
             / "oid_entries_fixtures.ldif"
         )
         if not fixture_path.exists():
             pytest.skip(f"OID fixture not found: {fixture_path}")
-        parse_result = parser.parse_ldif_file(path=fixture_path, server_type="oid")
+        parse_result = parser.parse_ldif_file(
+            path=fixture_path, server_type=c.Ldif.Fixtures.OID
+        )
         assert parse_result.is_success, f"Parsing failed: {parse_result.error}"
         parse_response = parse_result.value
         entries = parse_response.entries
@@ -54,8 +56,8 @@ class TestMinimalDifferencesOidOud:
             assert hasattr(entry.metadata, "extensions"), (
                 f"Entry {entry.dn} missing extensions"
             )
-            assert entry.metadata.quirk_type == "oid", (
-                f"Entry {entry.dn} should have quirk_type='oid', got {entry.metadata.quirk_type}"
+            assert entry.metadata.quirk_type == c.Ldif.Fixtures.OID, (
+                f"Entry {entry.dn} should have quirk_type='{c.Ldif.Fixtures.OID}', got {entry.metadata.quirk_type}"
             )
 
     def test_oud_fixture_all_differences_captured(
@@ -67,12 +69,14 @@ class TestMinimalDifferencesOidOud:
         fixture_path = (
             Path(__file__).parent.parent
             / "fixtures"
-            / "oud"
+            / c.Ldif.Fixtures.OUD
             / "oud_entries_fixtures.ldif"
         )
         if not fixture_path.exists():
             pytest.skip(f"OUD fixture not found: {fixture_path}")
-        parse_result = parser.parse_ldif_file(path=fixture_path, server_type="oud")
+        parse_result = parser.parse_ldif_file(
+            path=fixture_path, server_type=c.Ldif.Fixtures.OUD
+        )
         assert parse_result.is_success, f"Parsing failed: {parse_result.error}"
         parse_response = parse_result.value
         entries = parse_response.entries
@@ -90,7 +94,9 @@ class TestMinimalDifferencesOidOud:
     ) -> None:
         """Test round-trip: OID -> RFC -> OID preserves ALL differences."""
         oid_ldif = "dn: cn=test, dc=example, dc=com\nobjectClass: top\nobjectClass: person\ncn: test\nsn: User\norcldasisenabled: 1\n"
-        parse_result = parser.parse_string(content=oid_ldif, server_type="oid")
+        parse_result = parser.parse_string(
+            content=oid_ldif, server_type=c.Ldif.Fixtures.OID
+        )
         assert parse_result.is_success
         entries = parse_result.value.entries
         assert len(entries) == 1
@@ -108,7 +114,9 @@ class TestMinimalDifferencesOidOud:
     def test_spacing_differences_captured(self, parser: FlextLdifParser) -> None:
         """Test that spacing differences (e.g., 'dc=example, dc=com' vs 'dc=example,dc=com') are captured."""
         ldif_with_spaces = "dn: cn=test, dc=example, dc=com\nobjectClass: top\nobjectClass: person\ncn: test\n"
-        parse_result = parser.parse_string(content=ldif_with_spaces, server_type="rfc")
+        parse_result = parser.parse_string(
+            content=ldif_with_spaces, server_type=c.Ldif.Fixtures.RFC
+        )
         assert parse_result.is_success
         entries = parse_result.value.entries
         assert len(entries) == 1
@@ -122,7 +130,9 @@ class TestMinimalDifferencesOidOud:
     def test_case_differences_captured(self, parser: FlextLdifParser) -> None:
         """Test that case differences (e.g., 'objectClass' vs 'objectclass') are captured."""
         ldif_mixed_case = "dn: cn=test,dc=example,dc=com\nobjectClass: top\nobjectClass: person\ncn: test\n"
-        parse_result = parser.parse_string(content=ldif_mixed_case, server_type="rfc")
+        parse_result = parser.parse_string(
+            content=ldif_mixed_case, server_type=c.Ldif.Fixtures.RFC
+        )
         assert parse_result.is_success
         entries = parse_result.value.entries
         assert len(entries) == 1
@@ -139,7 +149,9 @@ class TestMinimalDifferencesOidOud:
     def test_punctuation_differences_captured(self, parser: FlextLdifParser) -> None:
         """Test that punctuation differences (e.g., trailing semicolons) are captured."""
         ldif = "dn: cn=test,dc=example,dc=com\nobjectClass: top\nobjectClass: person\ncn: test\n"
-        parse_result = parser.parse_string(content=ldif, server_type="rfc")
+        parse_result = parser.parse_string(
+            content=ldif, server_type=c.Ldif.Fixtures.RFC
+        )
         assert parse_result.is_success
         entries = parse_result.value.entries
         assert len(entries) == 1
@@ -155,7 +167,9 @@ class TestMinimalDifferencesOidOud:
     def test_boolean_conversion_tracked(self, parser: FlextLdifParser) -> None:
         """Test that boolean conversions (0/1 -> TRUE/FALSE) are tracked in metadata."""
         oid_ldif = "dn: cn=test,dc=example,dc=com\nobjectClass: top\nobjectClass: person\ncn: test\norcldasisenabled: 1\npwdlockout: 0\n"
-        parse_result = parser.parse_string(content=oid_ldif, server_type="oid")
+        parse_result = parser.parse_string(
+            content=oid_ldif, server_type=c.Ldif.Fixtures.OID
+        )
         assert parse_result.is_success
         entries = parse_result.value.entries
         assert len(entries) == 1
@@ -190,7 +204,9 @@ class TestMinimalDifferencesOidOud:
     def test_soft_deleted_attributes_preserved(self, parser: FlextLdifParser) -> None:
         """Test that soft-deleted attributes are preserved in metadata."""
         ldif = "dn: cn=test,dc=example,dc=com\nobjectClass: top\nobjectClass: person\ncn: test\ncreatorsName: cn=Directory Manager\ncreateTimestamp: 20250101000000Z\n"
-        parse_result = parser.parse_string(content=ldif, server_type="rfc")
+        parse_result = parser.parse_string(
+            content=ldif, server_type=c.Ldif.Fixtures.RFC
+        )
         assert parse_result.is_success
         entries = parse_result.value.entries
         assert len(entries) == 1

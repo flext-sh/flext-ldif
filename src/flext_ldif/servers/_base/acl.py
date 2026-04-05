@@ -27,10 +27,14 @@ class FlextLdifServersBaseSchemaAcl(
     """Base class for ACL quirks - satisfies Acl (structural typing)."""
 
     acl_attribute_name: ClassVar[str] = "acl"
-    server_type: str = "rfc"
-    "Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')."
-    priority: int = 0
-    "Quirk priority (lower number = higher priority)."
+    server_type: str = Field(
+        default="rfc",
+        description="Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')",
+    )
+    priority: int = Field(
+        default=0,
+        description="Quirk priority (lower number = higher priority)",
+    )
     parent_quirk: Annotated[
         Self | None,
         Field(

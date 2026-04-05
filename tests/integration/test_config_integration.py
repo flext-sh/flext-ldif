@@ -47,7 +47,9 @@ class TestFlextLdifSettingsIntegration:
         """Test facade with custom config and server type."""
         config = FlextLdifSettings()
         api = ldif(config=config)
-        result = api.parse_ldif(ConfigTestData.BASIC_ENTRY, server_type="openldap")
+        result = api.parse_ldif(
+            ConfigTestData.BASIC_ENTRY, server_type=c.Ldif.Fixtures.OPENLDAP
+        )
         assert result.is_success
         entries = result.value
         assert len(entries) == 1
@@ -58,8 +60,12 @@ class TestFlextLdifSettingsIntegration:
         config2 = FlextLdifSettings()
         ldif1 = ldif(config=config1)
         ldif2 = ldif(config=config2)
-        result1 = ldif1.parse_ldif(ConfigTestData.BASIC_ENTRY, server_type="oid")
-        result2 = ldif2.parse_ldif(ConfigTestData.BASIC_ENTRY, server_type="openldap")
+        result1 = ldif1.parse_ldif(
+            ConfigTestData.BASIC_ENTRY, server_type=c.Ldif.Fixtures.OID
+        )
+        result2 = ldif2.parse_ldif(
+            ConfigTestData.BASIC_ENTRY, server_type=c.Ldif.Fixtures.OPENLDAP
+        )
         assert result1.is_success
         assert result2.is_success
 
@@ -76,7 +82,12 @@ class TestFlextLdifSettingsIntegration:
 
     @pytest.mark.parametrize(
         ("server_type", "expected_content_key"),
-        [("rfc", "rfc"), ("oid", "oid"), ("oud", "oud"), ("openldap", "openldap")],
+        [
+            (c.Ldif.Fixtures.RFC, c.Ldif.Fixtures.RFC),
+            (c.Ldif.Fixtures.OID, c.Ldif.Fixtures.OID),
+            (c.Ldif.Fixtures.OUD, c.Ldif.Fixtures.OUD),
+            (c.Ldif.Fixtures.OPENLDAP, c.Ldif.Fixtures.OPENLDAP),
+        ],
     )
     def test_config_with_server_type(
         self,

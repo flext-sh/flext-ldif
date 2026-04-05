@@ -29,7 +29,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     model_config: ClassVar[ConfigDict] = ConfigDict(
         arbitrary_types_allowed=True,
-        extra="allow",
+        extra="forbid",
     )
     server_type: ClassVar[str]
     priority: ClassVar[int]

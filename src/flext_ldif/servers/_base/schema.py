@@ -30,10 +30,14 @@ class FlextLdifServersBaseSchema(
 ):
     """Base class for schema quirks - s V2 with enhanced usability."""
 
-    server_type: str = "rfc"
-    "Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')."
-    priority: int = 0
-    'Quirk priority (lower number = higher priority).\n\n        **STANDARDIZED CONSTANTS REQUIRED**: Each Schema implementation MUST define\n        a Constants nested class with:\n        - CANONICAL_NAME: Unique server identifier (e.g., "oid", "oud")\n        - ALIASES: All valid names for this server including canonical\n        - PRIORITY: Selection priority (lower = higher priority)\n        - CAN_NORMALIZE_FROM: What source types this quirk can normalize\n        - CAN_DENORMALIZE_TO: What target types this quirk can denormalize to\n\n        **Protocol Compliance**: All implementations MUST satisfy\n        p.Ldif.SchemaQuirk through structural typing.\n        This means all public methods must match protocol signatures exactly.\n\n        **Validation**: Use protocol-compliant quirk interfaces for runtime\n        structural checks.\n\n        Common schema extension patterns:\n        - Vendor-specific prefixes (e.g., vendor prefix + attribute name)\n        - Enhanced schema features beyond RFC baseline\n        - Configuration-specific attributes\n        - Vendor-specific schema extensions\n        - RFC 4512 compliant baseline (no extensions)\n        '
+    server_type: str = Field(
+        default="rfc",
+        description="Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')",
+    )
+    priority: int = Field(
+        default=0,
+        description="Quirk priority (lower number = higher priority)",
+    )
     parent_quirk: Annotated[
         Self | None,
         Field(

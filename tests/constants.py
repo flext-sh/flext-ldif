@@ -157,7 +157,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
             ST: Final[str] = "2.5.4.8"
             MAIL: Final[str] = "0.9.2342.19200300.100.1.3"
             MODIFY_TIMESTAMP: Final[str] = "2.5.18.2"
-            O: Final[str] = "2.5.4.10"
+            ORGANIZATION: Final[str] = "2.5.4.10"
             OBJECTCLASS: Final[str] = "2.5.4.0"
             # ObjectClass OIDs
             PERSON: Final[str] = "2.5.6.6"

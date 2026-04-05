@@ -34,7 +34,7 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
 
             LdapConnectionLike = FlextLdifTestProtocols.Ldif.Tests.LdapConnectionLike
 
-            class Factory:
+            class Factory(FlextTestsUtilities.Tests.Factory):
                 """Automated factory for generating real test data."""
 
                 @staticmethod

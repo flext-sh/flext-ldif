@@ -32,10 +32,14 @@ class FlextLdifServersBaseEntry(
 ):
     """Base class for entry processing quirks - satisfies Entry (structural typing)."""
 
-    server_type: str = "unknown"
-    "Server type identifier."
-    priority: int = 0
-    "Quirk priority (lower number = higher priority)."
+    server_type: str = Field(
+        default="unknown",
+        description="Server type identifier",
+    )
+    priority: int = Field(
+        default=0,
+        description="Quirk priority (lower number = higher priority)",
+    )
     parent_quirk: Annotated[
         Self | None,
         Field(
