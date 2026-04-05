@@ -1,0 +1,62 @@
+tests/integration/test_config_integration.py
+  cdd262d4e064dc50 51,63-68,86-88
+tests/integration/test_categorization_real_data.py
+  cdd262d4e064dc50 161,272,351,358
+tests/constants.py
+  9a954a2992caac77 160
+tests/utilities.py
+  cdd262d4e064dc50 37
+tests/integration/test_minimal_differences_metadata.py
+  cdd262d4e064dc50 42,48,59-60,72,78,98,118,134,153,171,208
+tests/unit/services/test_migration_pipeline.py
+  cdd262d4e064dc50 16,34-35,40-41,54-55,60-65,92-93,105-106,120-121,138-139,171-172,188-189,193,217-218,227-232,272-273,289-290,306-307
+tests/integration/test_zero_data_loss_oid_oud.py
+  cdd262d4e064dc50 19,68,94,113,154,157,160,209,212,215,220,226,265,296,308,326,359,364
+src/flext_ldif/_models/events.py
+  9a954a2992caac77 10,12-13
+tests/integration/test_rfc_docker_real.py
+  cdd262d4e064dc50 33,38,134,202,236,267,281,319
+tests/integration/test_rfc_docker_real_integration.py
+  cdd262d4e064dc50 34,57,96,109,134,158,175,198,239
+tests/unit/quirks/servers/test_edge_cases.py
+  cdd262d4e064dc50 40,55,76,92,99,103,113,120,124,138,145,149
+tests/unit/test_migration_pipeline.py
+  cdd262d4e064dc50 46-47,62-63,68-73,106-107,123-124,140-141,148-153
+src/flext_ldif/_utilities/server.py
+  9a954a2992caac77 91-92,95-96,98-101,104
+tests/integration/test_acl_metadata_preservation.py
+  cdd262d4e064dc50 44,63,73,83,95,107,132,146,158,168,178,188,198,209,219,230,260,264,267,278,282,285
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "291df5d800624fc30691b1595990e0aefd4bf7b1",
+  "prompts": {
+    "9a954a2992caac77": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "96cd52da-bde6-4c41-a6a9-6cbe307afb2c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 28,
+      "total_deletions": 28,
+      "accepted_lines": 13,
+      "overriden_lines": 0
+    },
+    "cdd262d4e064dc50": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bb50d2f6-2887-49fd-99be-f714814b3981",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 213,
+      "total_deletions": 202,
+      "accepted_lines": 184,
+      "overriden_lines": 3
+    }
+  }
+}
