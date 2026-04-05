@@ -133,7 +133,7 @@ if _t.TYPE_CHECKING:
 
     base = _flext_ldif_base
     import flext_ldif.constants as _flext_ldif_constants
-    from flext_ldif.base import FlextLdifServiceBase, FlextLdifServiceBase as s
+    from flext_ldif.base import FlextLdifServiceBase, s
 
     constants = _flext_ldif_constants
     import flext_ldif.models as _flext_ldif_models
@@ -302,7 +302,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "p": ("flext_ldif.protocols", "FlextLdifProtocols"),
         "protocols": "flext_ldif.protocols",
         "r": ("flext_core.result", "FlextResult"),
-        "s": ("flext_ldif.base", "FlextLdifServiceBase"),
+        "s": "flext_ldif.base",
         "servers": "flext_ldif.servers",
         "services": "flext_ldif.services",
         "settings": "flext_ldif.settings",

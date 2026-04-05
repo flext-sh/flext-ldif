@@ -14,7 +14,7 @@ if _t.TYPE_CHECKING:
 
     base = _tests_base
     import tests.conftest as _tests_conftest
-    from tests.base import FlextLdifTestsServiceBase, FlextLdifTestsServiceBase as s
+    from tests.base import FlextLdifTestsServiceBase, s
 
     conftest = _tests_conftest
     import tests.conftest_shared as _tests_conftest_shared
@@ -368,7 +368,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "r": ("flext_core.result", "FlextResult"),
         "real_entry": "tests.conftest_shared",
         "real_ldif_content": "tests.conftest_shared",
-        "s": ("tests.base", "FlextLdifTestsServiceBase"),
+        "s": "tests.base",
         "support": "tests.support",
         "t": ("tests.typings", "FlextLdifTestTypes"),
         "test_factory": "tests.test_factory",
