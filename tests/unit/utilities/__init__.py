@@ -39,13 +39,28 @@ if _t.TYPE_CHECKING:
         TestsFlextLdifDnOperationsPure,
     )
 _LAZY_IMPORTS = {
-    "TestAttributeFixer": "tests.unit.utilities.test_utilities_core",
-    "TestDnObjectClassMethods": "tests.unit.utilities.test_utilities_core",
-    "TestFlextLdifUtilitiesComprehensive": "tests.unit.utilities.test_utilities_comprehensive",
-    "TestLdifParser": "tests.unit.utilities.test_utilities_core",
-    "TestObjectClassUtilities": "tests.unit.utilities.test_utilities_core",
-    "TestServerTypes": "tests.unit.utilities.test_utilities_core",
-    "TestsFlextLdifDnOperationsPure": "tests.unit.utilities.test_utilities_core",
+    "TestAttributeFixer": (
+        "tests.unit.utilities.test_utilities_core",
+        "TestAttributeFixer",
+    ),
+    "TestDnObjectClassMethods": (
+        "tests.unit.utilities.test_utilities_core",
+        "TestDnObjectClassMethods",
+    ),
+    "TestFlextLdifUtilitiesComprehensive": (
+        "tests.unit.utilities.test_utilities_comprehensive",
+        "TestFlextLdifUtilitiesComprehensive",
+    ),
+    "TestLdifParser": ("tests.unit.utilities.test_utilities_core", "TestLdifParser"),
+    "TestObjectClassUtilities": (
+        "tests.unit.utilities.test_utilities_core",
+        "TestObjectClassUtilities",
+    ),
+    "TestServerTypes": ("tests.unit.utilities.test_utilities_core", "TestServerTypes"),
+    "TestsFlextLdifDnOperationsPure": (
+        "tests.unit.utilities.test_utilities_core",
+        "TestsFlextLdifDnOperationsPure",
+    ),
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),

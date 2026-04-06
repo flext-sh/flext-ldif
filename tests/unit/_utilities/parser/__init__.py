@@ -29,7 +29,10 @@ if _t.TYPE_CHECKING:
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
 _LAZY_IMPORTS = {
-    "TestFlextLdifUtilitiesParser": "tests.unit._utilities.parser.test_parser_utilities",
+    "TestFlextLdifUtilitiesParser": (
+        "tests.unit._utilities.parser.test_parser_utilities",
+        "TestFlextLdifUtilitiesParser",
+    ),
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),

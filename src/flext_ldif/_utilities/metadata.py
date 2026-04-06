@@ -36,16 +36,18 @@ class FlextLdifUtilitiesMetadata:
         value = metadata.get(metadata_key)
         if isinstance(value, Mapping) and isinstance(item_data, Mapping):
             merged_value = dict(value)
-            for key, inner_value in item_data.items():
+            for c.Ldif.WRITE_OPTIONS, inner_value in item_data.items():
                 if isinstance(inner_value, list):
-                    merged_value[key] = FlextLdifUtilitiesMetadata._normalize_dict_list(
-                        inner_value,
+                    merged_value[c.Ldif.WRITE_OPTIONS] = (
+                        FlextLdifUtilitiesMetadata._normalize_dict_list(
+                            inner_value,
+                        )
                     )
                 elif FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(inner_value):
                     if inner_value is not None:
-                        merged_value[key] = inner_value
+                        merged_value[c.Ldif.WRITE_OPTIONS] = inner_value
                 else:
-                    merged_value[key] = str(inner_value)
+                    merged_value[c.Ldif.WRITE_OPTIONS] = str(inner_value)
             metadata[metadata_key] = merged_value
             return
         metadata[metadata_key] = item_data
@@ -114,11 +116,11 @@ class FlextLdifUtilitiesMetadata:
             "original_string_complete": definition,
         }
         extension_kwargs: t.MutableContainerMapping = {}
-        for key, value in combined.items():
-            if key in known_fields:
-                known_field_values[key] = value
+        for c.Ldif.WRITE_OPTIONS, value in combined.items():
+            if c.Ldif.WRITE_OPTIONS in known_fields:
+                known_field_values[c.Ldif.WRITE_OPTIONS] = value
             else:
-                extension_kwargs[key] = value
+                extension_kwargs[c.Ldif.WRITE_OPTIONS] = value
         extensions = FlextLdifModelsMetadata.DynamicMetadata.model_validate(
             extension_kwargs,
         )
@@ -152,18 +154,20 @@ class FlextLdifUtilitiesMetadata:
         ]
         for extractor in extractors:
             extracted_raw = extractor(definition)
-            for key, value in extracted_raw.items():
+            for c.Ldif.WRITE_OPTIONS, value in extracted_raw.items():
                 if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(value):
                     if value is not None:
-                        combined[key] = value
+                        combined[c.Ldif.WRITE_OPTIONS] = value
                 elif isinstance(value, list):
-                    combined[key] = FlextLdifUtilitiesMetadata._normalize_dict_list(
-                        value,
+                    combined[c.Ldif.WRITE_OPTIONS] = (
+                        FlextLdifUtilitiesMetadata._normalize_dict_list(
+                            value,
+                        )
                     )
                 elif isinstance(value, Mapping):
-                    combined[key] = str(value)
+                    combined[c.Ldif.WRITE_OPTIONS] = str(value)
                 else:
-                    combined[key] = str(value)
+                    combined[c.Ldif.WRITE_OPTIONS] = str(value)
         field_order, field_positions = FlextLdifUtilitiesMetadata._extract_field_order(
             definition,
         )
@@ -593,18 +597,20 @@ class FlextLdifUtilitiesMetadata:
         try:
             metadata_obj = metadata.to_dict()
             normalized_metadata: t.MutableContainerMapping = {}
-            for key, value in metadata_obj.items():
+            for c.Ldif.WRITE_OPTIONS, value in metadata_obj.items():
                 if u.is_primitive(value):
-                    normalized_metadata[key] = value
+                    normalized_metadata[c.Ldif.WRITE_OPTIONS] = value
                 elif isinstance(value, list):
-                    normalized_metadata[key] = [str(item) for item in value]
+                    normalized_metadata[c.Ldif.WRITE_OPTIONS] = [
+                        str(item) for item in value
+                    ]
                 elif isinstance(value, Mapping):
-                    normalized_metadata[key] = {
+                    normalized_metadata[c.Ldif.WRITE_OPTIONS] = {
                         str(inner_key): inner_value
                         for inner_key, inner_value in value.items()
                     }
                 else:
-                    normalized_metadata[key] = str(value)
+                    normalized_metadata[c.Ldif.WRITE_OPTIONS] = str(value)
             config_root: MutableMapping[str, t.NormalizedValue | BaseModel] = dict(
                 normalized_metadata,
             )
@@ -678,11 +684,11 @@ class FlextLdifUtilitiesMetadata:
     def analyze_schema_formatting(definition: str) -> m.Ldif.SchemaFormatDetails:
         """Analyze schema definition to extract ALL formatting details."""
         combined = FlextLdifUtilitiesMetadata._extract_all_schema_details(definition)
-        # preview_len = c.Ldif.DEFAULT_LINE_WIDTH
+        c.Ldif.DEFAULT_LINE_WIDTH = c.Ldif.DEFAULT_LINE_WIDTH
         logger.debug(
             "Schema formatting analyzed",
-            definition_preview=definition[:preview_len] + "..."
-            if len(definition) > preview_len
+            definition_preview=definition[: c.Ldif.DEFAULT_LINE_WIDTH] + "..."
+            if len(definition) > c.Ldif.DEFAULT_LINE_WIDTH
             else definition,
             fields_captured=len(combined),
         )
@@ -810,7 +816,7 @@ class FlextLdifUtilitiesMetadata:
         write_opts = getattr(entry_data.metadata, "write_options", None)
         if write_opts is None:
             return None
-        # key = c.Ldif.WRITE_OPTIONS
+        c.Ldif.WRITE_OPTIONS = c.Ldif.WRITE_OPTIONS
         raw_extras: t.MutableContainerMapping | None = None
         if isinstance(write_opts, BaseModel):
             model_extra_val = write_opts.model_extra
@@ -828,7 +834,7 @@ class FlextLdifUtilitiesMetadata:
                     root=config_map_root,
                 ).root.items()
             }
-        opt = extras.get(key)
+        opt = extras.get(c.Ldif.WRITE_OPTIONS)
         if isinstance(opt, Mapping):
             return FlextLdifModelsSettings.WriteFormatOptions.model_validate(opt)
         return None
@@ -868,13 +874,13 @@ class FlextLdifUtilitiesMetadata:
     ) -> None:
         """Track boolean conversion for round-trip support."""
         if format_direction == "OID->RFC":
-            key = f"{attr_name}:oid_value"
-            metadata.boolean_conversions[key] = original_value
+            c.Ldif.WRITE_OPTIONS = f"{attr_name}:oid_value"
+            metadata.boolean_conversions[c.Ldif.WRITE_OPTIONS] = original_value
             key_target = f"{attr_name}:rfc_value"
             metadata.boolean_conversions[key_target] = converted_value
         else:
-            key = f"{attr_name}:rfc_value"
-            metadata.boolean_conversions[key] = original_value
+            c.Ldif.WRITE_OPTIONS = f"{attr_name}:rfc_value"
+            metadata.boolean_conversions[c.Ldif.WRITE_OPTIONS] = original_value
             key_target = f"{attr_name}:oid_value"
             metadata.boolean_conversions[key_target] = converted_value
         logger.debug(

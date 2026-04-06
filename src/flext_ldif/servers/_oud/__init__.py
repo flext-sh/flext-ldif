@@ -31,16 +31,28 @@ if _t.TYPE_CHECKING:
     utilities = _flext_ldif_servers__oud_utilities
     from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
 _LAZY_IMPORTS = {
-    "FlextLdifServersOudAcl": "flext_ldif.servers._oud.acl",
-    "FlextLdifServersOudConstants": "flext_ldif.servers._oud.constants",
-    "FlextLdifServersOudEntry": "flext_ldif.servers._oud.entry",
-    "FlextLdifServersOudSchema": "flext_ldif.servers._oud.schema",
-    "FlextLdifServersOudUtilities": "flext_ldif.servers._oud.utilities",
+    "FlextLdifServersOudAcl": ("flext_ldif.servers._oud.acl", "FlextLdifServersOudAcl"),
+    "FlextLdifServersOudConstants": (
+        "flext_ldif.servers._oud.constants",
+        "FlextLdifServersOudConstants",
+    ),
+    "FlextLdifServersOudEntry": (
+        "flext_ldif.servers._oud.entry",
+        "FlextLdifServersOudEntry",
+    ),
+    "FlextLdifServersOudSchema": (
+        "flext_ldif.servers._oud.schema",
+        "FlextLdifServersOudSchema",
+    ),
+    "FlextLdifServersOudUtilities": (
+        "flext_ldif.servers._oud.utilities",
+        "FlextLdifServersOudUtilities",
+    ),
     "acl": "flext_ldif.servers._oud.acl",
-    "c": "flext_ldif.servers._oud.constants",
+    "c": ("flext_ldif.servers._oud.constants", "c"),
     "constants": "flext_ldif.servers._oud.constants",
     "entry": "flext_ldif.servers._oud.entry",
-    "logger": "flext_ldif.servers._oud.schema",
+    "logger": ("flext_ldif.servers._oud.schema", "logger"),
     "schema": "flext_ldif.servers._oud.schema",
     "utilities": "flext_ldif.servers._oud.utilities",
 }

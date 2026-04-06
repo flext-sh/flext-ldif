@@ -27,7 +27,10 @@ if _t.TYPE_CHECKING:
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
 _LAZY_IMPORTS = {
-    "TestFlextLdifUtilitiesOID": "tests.unit._utilities.oid.test_oid_utilities",
+    "TestFlextLdifUtilitiesOID": (
+        "tests.unit._utilities.oid.test_oid_utilities",
+        "TestFlextLdifUtilitiesOID",
+    ),
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),

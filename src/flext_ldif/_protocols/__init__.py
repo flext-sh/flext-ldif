@@ -19,8 +19,11 @@ if _t.TYPE_CHECKING:
     domain = _flext_ldif__protocols_domain
     from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
 _LAZY_IMPORTS = {
-    "FlextLdifProtocolsBase": "flext_ldif._protocols.base",
-    "FlextLdifProtocolsDomain": "flext_ldif._protocols.domain",
+    "FlextLdifProtocolsBase": ("flext_ldif._protocols.base", "FlextLdifProtocolsBase"),
+    "FlextLdifProtocolsDomain": (
+        "flext_ldif._protocols.domain",
+        "FlextLdifProtocolsDomain",
+    ),
     "base": "flext_ldif._protocols.base",
     "domain": "flext_ldif._protocols.domain",
 }

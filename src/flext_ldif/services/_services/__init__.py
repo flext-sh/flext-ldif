@@ -19,7 +19,10 @@ if _t.TYPE_CHECKING:
         FlextLdifProcessingPipelineService,
     )
 _LAZY_IMPORTS = {
-    "FlextLdifProcessingPipelineService": "flext_ldif.services._services.processing_pipeline_service",
+    "FlextLdifProcessingPipelineService": (
+        "flext_ldif.services._services.processing_pipeline_service",
+        "FlextLdifProcessingPipelineService",
+    ),
     "processing_pipeline_service": "flext_ldif.services._services.processing_pipeline_service",
 }
 

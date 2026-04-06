@@ -324,7 +324,7 @@ class FlextLdifServersBaseEntry(
         ascii_printable_limit = 127
         output_lines: MutableSequence[str] = []
         fold_long_lines = True
-        # line_width = c.Ldif.LINE_FOLD_WIDTH
+        line_width = c.Ldif.LINE_FOLD_WIDTH
         include_dn_comments = False
         normalize_attribute_names = False
         write_empty_values = True

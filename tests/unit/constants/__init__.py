@@ -28,7 +28,10 @@ if _t.TYPE_CHECKING:
         TestsTestFlextLdifAclAttributeRegistry,
     )
 _LAZY_IMPORTS = {
-    "TestsTestFlextLdifAclAttributeRegistry": "tests.unit.constants.test_acl_registry",
+    "TestsTestFlextLdifAclAttributeRegistry": (
+        "tests.unit.constants.test_acl_registry",
+        "TestsTestFlextLdifAclAttributeRegistry",
+    ),
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),

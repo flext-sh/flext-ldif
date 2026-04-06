@@ -315,11 +315,11 @@ class FlextLdifUtilitiesParser:
         """Unfold LDIF lines folded across multiple lines per RFC 2849 §3."""
         lines: MutableSequence[str] = []
         current_line = ""
-        # continuation_space = c.Ldif.LINE_CONTINUATION_SPACE
+        # c.Ldif.LINE_CONTINUATION_SPACE = c.Ldif.LINE_CONTINUATION_SPACE
         for raw_line in ldif_content.split(c.Ldif.LINE_SEPARATOR):
-            if (raw_line.startswith(continuation_space) and current_line) or (
-                raw_line.startswith("\t") and current_line
-            ):
+            if (
+                raw_line.startswith(c.Ldif.LINE_CONTINUATION_SPACE) and current_line
+            ) or (raw_line.startswith("\t") and current_line):
                 current_line += raw_line[1:]
             else:
                 if current_line:

@@ -27,15 +27,24 @@ if _t.TYPE_CHECKING:
     schema = _flext_ldif_servers__rfc_schema
     from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema, logger
 _LAZY_IMPORTS = {
-    "FlextLdifServersRfcAcl": "flext_ldif.servers._rfc.acl",
-    "FlextLdifServersRfcConstants": "flext_ldif.servers._rfc.constants",
-    "FlextLdifServersRfcEntry": "flext_ldif.servers._rfc.entry",
-    "FlextLdifServersRfcSchema": "flext_ldif.servers._rfc.schema",
+    "FlextLdifServersRfcAcl": ("flext_ldif.servers._rfc.acl", "FlextLdifServersRfcAcl"),
+    "FlextLdifServersRfcConstants": (
+        "flext_ldif.servers._rfc.constants",
+        "FlextLdifServersRfcConstants",
+    ),
+    "FlextLdifServersRfcEntry": (
+        "flext_ldif.servers._rfc.entry",
+        "FlextLdifServersRfcEntry",
+    ),
+    "FlextLdifServersRfcSchema": (
+        "flext_ldif.servers._rfc.schema",
+        "FlextLdifServersRfcSchema",
+    ),
     "acl": "flext_ldif.servers._rfc.acl",
-    "c": "flext_ldif.servers._rfc.constants",
+    "c": ("flext_ldif.servers._rfc.constants", "c"),
     "constants": "flext_ldif.servers._rfc.constants",
     "entry": "flext_ldif.servers._rfc.entry",
-    "logger": "flext_ldif.servers._rfc.schema",
+    "logger": ("flext_ldif.servers._rfc.schema", "logger"),
     "schema": "flext_ldif.servers._rfc.schema",
 }
 

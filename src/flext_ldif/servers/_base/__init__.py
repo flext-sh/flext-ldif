@@ -31,16 +31,34 @@ if _t.TYPE_CHECKING:
     schema = _flext_ldif_servers__base_schema
     from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema, logger
 _LAZY_IMPORTS = {
-    "FlextLdifQuirkMethodsMixin": "flext_ldif.servers._base.constants",
-    "FlextLdifServersBaseConstants": "flext_ldif.servers._base.constants",
-    "FlextLdifServersBaseEntry": "flext_ldif.servers._base.entry",
-    "FlextLdifServersBaseQuirkHelpers": "flext_ldif.servers._base.constants",
-    "FlextLdifServersBaseSchema": "flext_ldif.servers._base.schema",
-    "FlextLdifServersBaseSchemaAcl": "flext_ldif.servers._base.acl",
+    "FlextLdifQuirkMethodsMixin": (
+        "flext_ldif.servers._base.constants",
+        "FlextLdifQuirkMethodsMixin",
+    ),
+    "FlextLdifServersBaseConstants": (
+        "flext_ldif.servers._base.constants",
+        "FlextLdifServersBaseConstants",
+    ),
+    "FlextLdifServersBaseEntry": (
+        "flext_ldif.servers._base.entry",
+        "FlextLdifServersBaseEntry",
+    ),
+    "FlextLdifServersBaseQuirkHelpers": (
+        "flext_ldif.servers._base.constants",
+        "FlextLdifServersBaseQuirkHelpers",
+    ),
+    "FlextLdifServersBaseSchema": (
+        "flext_ldif.servers._base.schema",
+        "FlextLdifServersBaseSchema",
+    ),
+    "FlextLdifServersBaseSchemaAcl": (
+        "flext_ldif.servers._base.acl",
+        "FlextLdifServersBaseSchemaAcl",
+    ),
     "acl": "flext_ldif.servers._base.acl",
     "constants": "flext_ldif.servers._base.constants",
     "entry": "flext_ldif.servers._base.entry",
-    "logger": "flext_ldif.servers._base.schema",
+    "logger": ("flext_ldif.servers._base.schema", "logger"),
     "schema": "flext_ldif.servers._base.schema",
 }
 

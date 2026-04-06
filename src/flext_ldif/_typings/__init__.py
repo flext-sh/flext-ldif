@@ -19,8 +19,8 @@ if _t.TYPE_CHECKING:
     domain = _flext_ldif__typings_domain
     from flext_ldif._typings.domain import FlextLdifTypesDomain
 _LAZY_IMPORTS = {
-    "FlextLdifTypesBase": "flext_ldif._typings.base",
-    "FlextLdifTypesDomain": "flext_ldif._typings.domain",
+    "FlextLdifTypesBase": ("flext_ldif._typings.base", "FlextLdifTypesBase"),
+    "FlextLdifTypesDomain": ("flext_ldif._typings.domain", "FlextLdifTypesDomain"),
     "base": "flext_ldif._typings.base",
     "domain": "flext_ldif._typings.domain",
 }

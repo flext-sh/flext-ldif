@@ -46,13 +46,22 @@ if _t.TYPE_CHECKING:
         TestValidators,
     )
 _LAZY_IMPORTS = {
-    "FileManager": "tests.support.test_files",
-    "FlextLdifTestConftest": "tests.support.conftest_factory",
-    "FlextLdifTestServiceFactory": "tests.support.real_services",
-    "LdifTestData": "tests.support.ldif_data",
-    "MockFlextUtilitiesResultHelpers": "tests.support.validators",
-    "MockMatchers": "tests.support.validators",
-    "TestValidators": "tests.support.validators",
+    "FileManager": ("tests.support.test_files", "FileManager"),
+    "FlextLdifTestConftest": (
+        "tests.support.conftest_factory",
+        "FlextLdifTestConftest",
+    ),
+    "FlextLdifTestServiceFactory": (
+        "tests.support.real_services",
+        "FlextLdifTestServiceFactory",
+    ),
+    "LdifTestData": ("tests.support.ldif_data", "LdifTestData"),
+    "MockFlextUtilitiesResultHelpers": (
+        "tests.support.validators",
+        "MockFlextUtilitiesResultHelpers",
+    ),
+    "MockMatchers": ("tests.support.validators", "MockMatchers"),
+    "TestValidators": ("tests.support.validators", "TestValidators"),
     "c": ("flext_core.constants", "FlextConstants"),
     "conftest_factory": "tests.support.conftest_factory",
     "d": ("flext_core.decorators", "FlextDecorators"),
@@ -66,7 +75,7 @@ _LAZY_IMPORTS = {
     "s": ("flext_core.service", "FlextService"),
     "t": ("flext_core.typings", "FlextTypes"),
     "test_files": "tests.support.test_files",
-    "tk": "tests.support.conftest_factory",
+    "tk": ("tests.support.conftest_factory", "tk"),
     "u": ("flext_core.utilities", "FlextUtilities"),
     "validators": "tests.support.validators",
     "x": ("flext_core.mixins", "FlextMixins"),

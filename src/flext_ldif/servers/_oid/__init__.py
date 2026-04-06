@@ -27,15 +27,24 @@ if _t.TYPE_CHECKING:
     schema = _flext_ldif_servers__oid_schema
     from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema, logger
 _LAZY_IMPORTS = {
-    "FlextLdifServersOidAcl": "flext_ldif.servers._oid.acl",
-    "FlextLdifServersOidConstants": "flext_ldif.servers._oid.constants",
-    "FlextLdifServersOidEntry": "flext_ldif.servers._oid.entry",
-    "FlextLdifServersOidSchema": "flext_ldif.servers._oid.schema",
+    "FlextLdifServersOidAcl": ("flext_ldif.servers._oid.acl", "FlextLdifServersOidAcl"),
+    "FlextLdifServersOidConstants": (
+        "flext_ldif.servers._oid.constants",
+        "FlextLdifServersOidConstants",
+    ),
+    "FlextLdifServersOidEntry": (
+        "flext_ldif.servers._oid.entry",
+        "FlextLdifServersOidEntry",
+    ),
+    "FlextLdifServersOidSchema": (
+        "flext_ldif.servers._oid.schema",
+        "FlextLdifServersOidSchema",
+    ),
     "acl": "flext_ldif.servers._oid.acl",
-    "c": "flext_ldif.servers._oid.constants",
+    "c": ("flext_ldif.servers._oid.constants", "c"),
     "constants": "flext_ldif.servers._oid.constants",
     "entry": "flext_ldif.servers._oid.entry",
-    "logger": "flext_ldif.servers._oid.schema",
+    "logger": ("flext_ldif.servers._oid.schema", "logger"),
     "schema": "flext_ldif.servers._oid.schema",
 }
 

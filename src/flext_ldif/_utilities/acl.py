@@ -17,7 +17,6 @@ from flext_ldif import (
 )
 
 logger = FlextLogger(__name__)
-# TUPLE_LENGTH_PAIR = c.Ldif.TUPLE_LENGTH_PAIR
 
 
 class FlextLdifUtilitiesACL:
@@ -133,7 +132,7 @@ class FlextLdifUtilitiesACL:
         for key, value_tuple in dict(special_values).items():
             if (
                 rule_value.lower() == key.lower()
-                and len(value_tuple) == TUPLE_LENGTH_PAIR
+                and len(value_tuple) == c.Ldif.c.Ldif.TUPLE_LENGTH_PAIR
             ):
                 return value_tuple
         return None
@@ -183,10 +182,10 @@ class FlextLdifUtilitiesACL:
             else None
         ) or "3.0"
         acl_name: str = (
-            version_match.group(TUPLE_LENGTH_PAIR)
+            version_match.group(c.Ldif.c.Ldif.TUPLE_LENGTH_PAIR)
             if version_match
             and version_match.lastindex
-            and (version_match.lastindex >= TUPLE_LENGTH_PAIR)
+            and (version_match.lastindex >= c.Ldif.c.Ldif.TUPLE_LENGTH_PAIR)
             else None
         ) or default_name
         return (version, acl_name)
@@ -377,7 +376,7 @@ class FlextLdifUtilitiesACL:
             expected_tuple_length = tuple_length
             if isinstance(value_raw, tuple) and len(value_raw) == expected_tuple_length:
                 tuple_items = list(value_raw)
-                if len(tuple_items) >= TUPLE_LENGTH_PAIR:
+                if len(tuple_items) >= c.Ldif.c.Ldif.TUPLE_LENGTH_PAIR:
                     operator_val = str(tuple_items[0])
                     value_val = str(tuple_items[1])
                     if operator_placeholder in format_template:

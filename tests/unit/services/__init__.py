@@ -37,11 +37,26 @@ if _t.TYPE_CHECKING:
         TestsFlextLdifQuirksStandardizedConstants,
     )
 _LAZY_IMPORTS = {
-    "TestAliasDiscovery": "tests.unit.services.test_quirks_standardization",
-    "TestQuirksAutoInterchange": "tests.unit.services.test_quirks_standardization",
-    "TestQuirksWithRealLdifFixtures": "tests.unit.services.test_quirks_standardization",
-    "TestsFlextLdifQuirksStandardizedConstants": "tests.unit.services.test_quirks_standardization",
-    "TestsTestFlextLdifMigrationPipeline": "tests.unit.services.test_migration_pipeline",
+    "TestAliasDiscovery": (
+        "tests.unit.services.test_quirks_standardization",
+        "TestAliasDiscovery",
+    ),
+    "TestQuirksAutoInterchange": (
+        "tests.unit.services.test_quirks_standardization",
+        "TestQuirksAutoInterchange",
+    ),
+    "TestQuirksWithRealLdifFixtures": (
+        "tests.unit.services.test_quirks_standardization",
+        "TestQuirksWithRealLdifFixtures",
+    ),
+    "TestsFlextLdifQuirksStandardizedConstants": (
+        "tests.unit.services.test_quirks_standardization",
+        "TestsFlextLdifQuirksStandardizedConstants",
+    ),
+    "TestsTestFlextLdifMigrationPipeline": (
+        "tests.unit.services.test_migration_pipeline",
+        "TestsTestFlextLdifMigrationPipeline",
+    ),
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),
