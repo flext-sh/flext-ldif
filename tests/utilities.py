@@ -10,15 +10,13 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import ClassVar, TextIO
 
+from flext_ldap import FlextLdapTypes
 from flext_tests import FlextTestsDocker, FlextTestsUtilities
 from ldap3 import Connection as Ldap3Connection, Server as Ldap3Server
-from ldap3.core.exceptions import LDAPException
 
 from flext_core import FlextLogger
 from flext_ldif import FlextLdifUtilities
-from tests.constants import FlextLdifTestConstants
-from tests.models import FlextLdifTestModels
-from tests.protocols import FlextLdifTestProtocols
+from tests import c, m, p
 
 
 class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
@@ -32,7 +30,7 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
 
             Docker = FlextTestsDocker
 
-            LdapConnectionLike = FlextLdifTestProtocols.Ldif.Tests.LdapConnectionLike
+            LdapConnectionLike = p.Ldif.Tests.LdapConnectionLike
 
             class Factory(FlextTestsUtilities.Tests.Factory):
                 """Automated factory for generating real test data."""
@@ -42,7 +40,7 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
                     dn: str | None = None,
                     attributes: Mapping[str, Sequence[str]] | None = None,
                     server_type: str = "generic",
-                ) -> FlextLdifTestModels.Ldif.Entry:
+                ) -> m.Ldif.Entry:
                     """Create a real Entry model with valid data."""
                     if dn is None:
                         dn = (
@@ -62,11 +60,11 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
                     mutable_attrs: dict[str, list[str]] = {
                         k: list(v) for k, v in attributes.items()
                     }
-                    attrs = FlextLdifTestModels.Ldif.Attributes.model_validate({
+                    attrs = m.Ldif.Attributes.model_validate({
                         "attributes": mutable_attrs
                     })
-                    return FlextLdifTestModels.Ldif.Entry.model_validate({
-                        "dn": FlextLdifTestModels.Ldif.DN(value=dn),
+                    return m.Ldif.Entry.model_validate({
+                        "dn": m.Ldif.DN(value=dn),
                         "attributes": attrs,
                         "server_type": server_type,
                     })
@@ -104,12 +102,10 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
                     return "\n".join(lines)
 
                 @staticmethod
-                def parametrize_real_data() -> Sequence[
-                    FlextLdifTestModels.Ldif.Tests.LdifTestData
-                ]:
+                def parametrize_real_data() -> Sequence[m.Ldif.Tests.LdifTestData]:
                     """Generate parametrized test data for comprehensive coverage."""
                     return [
-                        FlextLdifTestModels.Ldif.Tests.LdifTestData(
+                        m.Ldif.Tests.LdifTestData(
                             id=f"entry_{server_type}",
                             server_type=server_type,
                             dn=f"cn=test-{server_type},ou=users,dc=example,dc=com",
@@ -123,7 +119,7 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
 
             @staticmethod
             def _unbind_connection(
-                connection: FlextLdifTestProtocols.Ldif.Tests.LdapConnectionLike,
+                connection: p.Ldif.Tests.LdapConnectionLike,
             ) -> None:
                 """Close a typed LDAP connection."""
                 connection.unbind()
@@ -174,7 +170,7 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
                 cache = FlextLdifTestUtilities.Ldif.Tests._resolved_admin_credentials
                 if cache[0] is not None:
                     return cache[0]
-                d = FlextLdifTestConstants.Ldif.Docker
+                d = c.Ldif.Docker
                 env_dn = os.getenv("FLEXT_LDAP_BIND_DN")
                 env_password = os.getenv("FLEXT_LDAP_BIND_PASSWORD")
                 candidates: list[tuple[str, str]] = []
@@ -204,7 +200,12 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
                             )
                             cache[0] = (candidate_dn, candidate_password)
                             return (candidate_dn, candidate_password)
-                    except (ConnectionError, LDAPException, OSError, ValueError):
+                    except (
+                        ConnectionError,
+                        FlextLdapTypes.Ldap.LDAPException,
+                        OSError,
+                        ValueError,
+                    ):
                         continue
                 cache[0] = (d.ADMIN_DN, d.ADMIN_PASSWORD)
                 return (d.ADMIN_DN, d.ADMIN_PASSWORD)

@@ -21,7 +21,7 @@ from collections.abc import Callable, Generator, Sequence
 from pathlib import Path
 
 import pytest
-from flext_ldap import FlextLdapUtilities as ldap_u
+from flext_ldap import FlextLdapTypes, FlextLdapUtilities as ldap_u
 
 from flext_ldif import (
     FlextLdifConversion,
@@ -378,7 +378,7 @@ def ldap_container(worker_id: str) -> t.ContainerMapping:
                     break
                 conn.unbind()
             except (
-                ldap_u.Ldap.LDAPException,
+                FlextLdapTypes.Ldap.LDAPException,
                 ConnectionError,
                 TimeoutError,
                 OSError,
@@ -464,7 +464,7 @@ def ldap_connection(
                 f"LDAP server not available at {server_url} for bind_dn={bind_dn}",
             )
     except (
-        ldap_u.Ldap.LDAPException,
+        FlextLdapTypes.Ldap.LDAPException,
         ConnectionError,
         TimeoutError,
         OSError,
