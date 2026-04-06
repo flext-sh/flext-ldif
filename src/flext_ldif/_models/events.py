@@ -7,9 +7,9 @@ from collections.abc import MutableSequence
 from pydantic import Field
 
 from flext_core import (
+    FlextModelsDomainEvent,
     m,
 )
-from flext_core._models.domain_event import FlextModelsDomainEvent
 
 __all__ = ["FlextLdifModelsEvents"]
 
