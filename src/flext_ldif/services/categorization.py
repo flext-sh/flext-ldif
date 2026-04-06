@@ -298,67 +298,95 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         entries: MutableSequence[m.Ldif.Entry],
     ) -> r[m.Ldif.FlexibleCategories]:
         """Categorize entries into 6 categories."""
-        categories = m.Ldif.FlexibleCategories()
-        for cat_ in (
-            c.Ldif.Category.SCHEMA,
-            c.Ldif.Category.HIERARCHY,
-            c.Ldif.Category.USERS,
-            c.Ldif.Category.GROUPS,
-            c.Ldif.Category.ACL,
-            c.Ldif.Category.REJECTED,
-        ):
-            categories[cat_] = []
+        category_lists: MutableMapping[str, list[m.Ldif.Entry]] = {
+            cat_: []
+            for cat_ in (
+                c.Ldif.Category.SCHEMA,
+                c.Ldif.Category.HIERARCHY,
+                c.Ldif.Category.USERS,
+                c.Ldif.Category.GROUPS,
+                c.Ldif.Category.ACL,
+                c.Ldif.Category.REJECTED,
+            )
+        }
 
-        def categorize_single_entry(entry: m.Ldif.Entry) -> tuple[str, m.Ldif.Entry]:
-            """Categorize single entry."""
-            category, reason = self.categorize_entry(entry)
-            rejection_reason = reason if reason is not None else "No category match"
+        for entry in entries:
+            category, match_reason = self.categorize_entry(entry)
             is_rejected = category == c.Ldif.Category.REJECTED
-            category_literal: str | None = None
-            if category == c.Ldif.Category.USERS:
-                category_literal = c.Ldif.Category.USERS
-            elif category == c.Ldif.Category.GROUPS:
-                category_literal = c.Ldif.Category.GROUPS
-            elif category == c.Ldif.Category.HIERARCHY:
-                category_literal = c.Ldif.Category.HIERARCHY
-            elif category == c.Ldif.Category.SCHEMA:
-                category_literal = c.Ldif.Category.SCHEMA
-            elif category == c.Ldif.Category.ACL:
-                category_literal = c.Ldif.Category.ACL
-            elif category == c.Ldif.Category.REJECTED:
-                category_literal = c.Ldif.Category.REJECTED
-            entry_to_append = u.Ldif.update_entry_statistics(
+            updated_entry = u.Ldif.update_entry_statistics(
                 entry,
-                category=category_literal,
+                category=category,
                 mark_rejected=(
                     c.Ldif.RejectionCategory.NO_CATEGORY_MATCH.value,
-                    rejection_reason,
+                    match_reason if match_reason is not None else "No category match",
                 )
                 if is_rejected
                 else None,
             )
-            return (category, entry_to_append)
+            category_lists[category].append(updated_entry)
+            if is_rejected:
+                self._rejection_tracker["categorization_rejected"].append(updated_entry)
 
-        for entry in entries:
-            category, reason = categorize_single_entry(entry)
-            if category == c.Ldif.Category.REJECTED:
-                self._rejection_tracker["categorization_rejected"].append(reason)
-                logger.debug(
-                    "Entry rejected during categorization",
-                    entry_dn=str(reason.dn) if reason.dn else "",
-                    rejection_reason="",
-                )
-            updated_entries = [*categories[category], reason]
-            categories[category] = updated_entries
-        for cat, cat_entries in categories.items():
+        self._apply_post_categorization_filters(category_lists)
+
+        categories = m.Ldif.FlexibleCategories()
+        for cat, cat_entries in category_lists.items():
+            categories[cat] = cat_entries
             if cat_entries:
-                entries_count = u.count(cat_entries)
                 logger.info(
                     "Category entries",
                     category=cat,
-                    entries_count=entries_count,
+                    entries_count=len(cat_entries),
                 )
         return r[m.Ldif.FlexibleCategories].ok(categories)
+
+    def _apply_post_categorization_filters(
+        self,
+        category_lists: MutableMapping[str, list[m.Ldif.Entry]],
+    ) -> None:
+        """Apply forbidden attribute/objectClass and schema OID value filters.
+
+        Mutates ``category_lists`` in place. Uses ``_forbidden_attributes``,
+        ``_forbidden_objectclasses``, and ``_schema_whitelist_rules`` stored
+        during ``__init__``.
+        """
+        has_forbidden = bool(
+            self._forbidden_attributes or self._forbidden_objectclasses
+        )
+        has_schema_rules = self._schema_whitelist_rules is not None
+
+        if not has_forbidden and not has_schema_rules:
+            return
+
+        for cat, entries in category_lists.items():
+            if cat == c.Ldif.Category.REJECTED or not entries:
+                continue
+            if cat == c.Ldif.Category.SCHEMA and has_schema_rules:
+                rules = self._schema_whitelist_rules
+                assert rules is not None  # noqa: S101
+                allowed_oids: MutableMapping[str, frozenset[str]] = {
+                    "attributetypes": frozenset(rules.allowed_attribute_oids),
+                    "objectclasses": frozenset(rules.allowed_objectclass_oids),
+                    "matchingrules": frozenset(rules.allowed_matchingrule_oids),
+                    "matchingruleuse": frozenset(rules.allowed_matchingruleuse_oids),
+                    "ldapsyntaxes": frozenset(rules.allowed_ldapsyntax_oids),
+                }
+                if any(allowed_oids.values()):
+                    category_lists[cat] = [
+                        FlextLdifFilters.filter_schema_attribute_values(
+                            entry, allowed_oids
+                        )
+                        for entry in entries
+                    ]
+            elif has_forbidden and cat != c.Ldif.Category.SCHEMA:
+                category_lists[cat] = [
+                    FlextLdifFilters.filter_entry_attributes(
+                        entry,
+                        self._forbidden_attributes,
+                        self._forbidden_objectclasses,
+                    )
+                    for entry in entries
+                ]
 
     def categorize_entry(
         self,

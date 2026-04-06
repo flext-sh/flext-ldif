@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import MutableSequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from typing import Final
 
 from flext_core import FlextLogger
@@ -141,6 +141,109 @@ class FlextLdifFilters:
             return r[MutableSequence[m.Ldif.Entry]].fail(
                 f"Schema OID filter failed: {e}",
             )
+
+    @classmethod
+    def filter_entry_attributes(
+        cls,
+        entry: m.Ldif.Entry,
+        forbidden_attrs: Sequence[str],
+        forbidden_ocs: Sequence[str],
+    ) -> m.Ldif.Entry:
+        """Strip forbidden attributes and objectClasses from an entry.
+
+        Case-insensitive matching for both attribute names and objectClass values.
+        Returns a new entry with filtered attributes; original is not modified.
+        """
+        filtered_entry = entry
+        if entry.attributes and forbidden_attrs:
+            attrs_dict = entry.attributes.attributes
+            forbidden_set = {attr.lower() for attr in forbidden_attrs}
+            attrs_to_remove: Sequence[str] = [
+                k for k in attrs_dict if k.lower() in forbidden_set
+            ]
+            if attrs_to_remove:
+                filtered_attrs = {
+                    k: v for k, v in attrs_dict.items() if k not in attrs_to_remove
+                }
+                filtered_entry = filtered_entry.model_copy(
+                    update={
+                        "attributes": m.Ldif.Attributes.model_validate({
+                            "attributes": filtered_attrs
+                        }),
+                    },
+                )
+        if forbidden_ocs and filtered_entry.attributes is not None:
+            oc_attrs = filtered_entry.attributes.attributes
+            forbidden_ocs_lower = {oc.lower() for oc in forbidden_ocs}
+            oc_key: str | None = next(
+                (k for k in oc_attrs if k.lower() == "objectclass"), None
+            )
+            if oc_key is not None:
+                filtered_ocs: list[str] = [
+                    v for v in oc_attrs[oc_key] if v.lower() not in forbidden_ocs_lower
+                ]
+                updated = dict(oc_attrs)
+                if filtered_ocs:
+                    updated[oc_key] = filtered_ocs
+                else:
+                    updated.pop(oc_key, None)
+                filtered_entry = filtered_entry.model_copy(
+                    update={
+                        "attributes": m.Ldif.Attributes.model_validate({
+                            "attributes": updated
+                        }),
+                    },
+                )
+        return filtered_entry
+
+    @classmethod
+    def filter_schema_attribute_values(
+        cls,
+        entry: m.Ldif.Entry,
+        allowed_oids: Mapping[str, frozenset[str]],
+    ) -> m.Ldif.Entry:
+        """Filter individual OID values within schema entry attributes.
+
+        For each schema field (attributeTypes, objectClasses, matchingRules, etc.),
+        keep only values whose OID is in the corresponding allowed set.
+        Removes empty attributes after filtering.
+
+        ``allowed_oids`` maps lowercase attribute names to their allowed OID frozensets,
+        e.g. ``{"attributetypes": frozenset(["2.5.4.0", ...]), ...}``.
+        """
+        if entry.attributes is None:
+            return entry
+        attrs_dict = entry.attributes.attributes
+        updated_attrs: dict[str, list[str]] = {
+            k: list(v) for k, v in attrs_dict.items()
+        }
+        changed = False
+        for attr_name in list(updated_attrs):
+            oid_set = allowed_oids.get(attr_name.lower())
+            if oid_set is None:
+                continue
+            original = updated_attrs[attr_name]
+            filtered: list[str] = [
+                value
+                for value in original
+                if (oid := cls._extract_oid_from_schema_attr([value])) is None
+                or oid in oid_set
+            ]
+            if filtered != original:
+                changed = True
+            if filtered:
+                updated_attrs[attr_name] = filtered
+            else:
+                del updated_attrs[attr_name]
+        if not changed:
+            return entry
+        return entry.model_copy(
+            update={
+                "attributes": m.Ldif.Attributes.model_validate({
+                    "attributes": updated_attrs
+                }),
+            },
+        )
 
 
 __all__ = ["FlextLdifFilters"]

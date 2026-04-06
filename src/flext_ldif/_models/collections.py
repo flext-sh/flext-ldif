@@ -150,19 +150,17 @@ class FlextLdifModelsCollections:
             self,
             category: str,
         ) -> MutableSequence[FlextLdifModelsDomainsEntries.Entry]:
-            return self._entry_categories()[category]
+            key = str(category)
+            if key not in self.categories:
+                self.categories[key] = []
+            return self.categories[key]
 
         def __setitem__(
             self,
             category: str,
             entries: MutableSequence[FlextLdifModelsDomainsEntries.Entry],
         ) -> None:
-            domains = FlextLdifModelsDomainsEntries
-            updated_categories = self._entry_categories()
-            updated_categories[category] = [
-                domains.Entry.model_validate(entry) for entry in entries
-            ]
-            object.__setattr__(self, "categories", updated_categories)
+            self.categories[str(category)] = list(entries)
 
         def add_entries(
             self,
@@ -170,25 +168,18 @@ class FlextLdifModelsCollections:
             entries: MutableSequence[FlextLdifModelsDomainsEntries.Entry]
             | t.MutableContainerList,
         ) -> None:
-            domains = FlextLdifModelsDomainsEntries
-            existing = self._entry_categories().get(category, [])
-            normalized_entries = [
-                domains.Entry.model_validate(entry) for entry in entries
-            ]
-            self[category] = [*existing, *normalized_entries]
+            key = str(category)
+            existing = self.categories.get(key, [])
+            existing.extend(entries)
+            self.categories[key] = existing
 
         def __contains__(self, category: str) -> bool:
-            return category in self.categories
+            return str(category) in self.categories
 
         def items(
             self,
         ) -> Iterator[tuple[str, MutableSequence[FlextLdifModelsDomainsEntries.Entry]]]:
-            domains = FlextLdifModelsDomainsEntries
-            for category, values in self.categories.items():
-                yield (
-                    category,
-                    [domains.Entry.model_validate(v) for v in values],
-                )
+            yield from self.categories.items()
 
         def keys(self) -> Iterator[str]:
             return iter(self.categories.keys())
@@ -198,7 +189,7 @@ class FlextLdifModelsCollections:
             category: str,
             default: MutableSequence[FlextLdifModelsDomainsEntries.Entry] | None = None,
         ) -> MutableSequence[FlextLdifModelsDomainsEntries.Entry]:
-            entries = self._entry_categories().get(category)
+            entries = self.categories.get(str(category))
             if entries is not None:
                 return entries
             return default if default is not None else []
@@ -206,18 +197,7 @@ class FlextLdifModelsCollections:
         def values(
             self,
         ) -> Iterator[MutableSequence[FlextLdifModelsDomainsEntries.Entry]]:
-            domains = FlextLdifModelsDomainsEntries
-            for values in self._entry_categories().values():
-                yield [domains.Entry.model_validate(v) for v in values]
-
-        def _entry_categories(
-            self,
-        ) -> MutableMapping[str, MutableSequence[FlextLdifModelsDomainsEntries.Entry]]:
-            domains = FlextLdifModelsDomainsEntries
-            return {
-                str(category): [domains.Entry.model_validate(value) for value in values]
-                for category, values in self.categories.items()
-            }
+            yield from self.categories.values()
 
 
 __all__ = ["FlextLdifModelsCollections"]
