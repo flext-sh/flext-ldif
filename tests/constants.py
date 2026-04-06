@@ -2447,7 +2447,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 class Names(StrEnum):
                     """Protocol names in FlextLdifProtocols.Ldif namespace."""
 
-                    __test__ = False  # type: ignore[assignment]
+                    __test__ = False
                     SCHEMA = "SchemaQuirk"
                     ACL = "AclQuirk"
                     ENTRY = "EntryQuirk"
@@ -2456,7 +2456,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 class ServerTypes(StrEnum):
                     """Server types implementing schema protocol."""
 
-                    __test__ = False  # type: ignore[assignment]
+                    __test__ = False
                     OID = "oid"
                     OUD = "oud"
                     OPENLDAP = "openldap"
