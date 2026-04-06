@@ -678,7 +678,7 @@ class FlextLdifUtilitiesMetadata:
     def analyze_schema_formatting(definition: str) -> m.Ldif.SchemaFormatDetails:
         """Analyze schema definition to extract ALL formatting details."""
         combined = FlextLdifUtilitiesMetadata._extract_all_schema_details(definition)
-        preview_len = c.Ldif.DEFAULT_LINE_WIDTH
+        # preview_len = c.Ldif.DEFAULT_LINE_WIDTH
         logger.debug(
             "Schema formatting analyzed",
             definition_preview=definition[:preview_len] + "..."
@@ -810,7 +810,7 @@ class FlextLdifUtilitiesMetadata:
         write_opts = getattr(entry_data.metadata, "write_options", None)
         if write_opts is None:
             return None
-        key = c.Ldif.WRITE_OPTIONS
+        # key = c.Ldif.WRITE_OPTIONS
         raw_extras: t.MutableContainerMapping | None = None
         if isinstance(write_opts, BaseModel):
             model_extra_val = write_opts.model_extra

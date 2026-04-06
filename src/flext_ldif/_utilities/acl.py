@@ -17,7 +17,7 @@ from flext_ldif import (
 )
 
 logger = FlextLogger(__name__)
-TUPLE_LENGTH_PAIR = c.Ldif.TUPLE_LENGTH_PAIR
+# TUPLE_LENGTH_PAIR = c.Ldif.TUPLE_LENGTH_PAIR
 
 
 class FlextLdifUtilitiesACL:

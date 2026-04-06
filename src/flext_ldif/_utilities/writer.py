@@ -336,9 +336,9 @@ class FlextLdifUtilitiesWriter:
         if not char or len(char) != 1:
             return False
         code = ord(char)
-        safe_min = c.Ldif.SAFE_CHAR_MIN
-        safe_max = c.Ldif.SAFE_CHAR_MAX
-        safe_exclude = c.Ldif.SAFE_CHAR_EXCLUDE
+        # safe_min = c.Ldif.SAFE_CHAR_MIN
+        # safe_max = c.Ldif.SAFE_CHAR_MAX
+        # safe_exclude = c.Ldif.SAFE_CHAR_EXCLUDE
         return safe_min <= code <= safe_max and code not in safe_exclude
 
     @staticmethod
@@ -372,9 +372,9 @@ class FlextLdifUtilitiesWriter:
             return True
         if check_trailing_space and value[-1] == " ":
             return True
-        safe_min = c.Ldif.SAFE_CHAR_MIN
-        safe_max = c.Ldif.SAFE_CHAR_MAX
-        safe_exclude = c.Ldif.SAFE_CHAR_EXCLUDE
+        # safe_min = c.Ldif.SAFE_CHAR_MIN
+        # safe_max = c.Ldif.SAFE_CHAR_MAX
+        # safe_exclude = c.Ldif.SAFE_CHAR_EXCLUDE
         for char in value:
             byte_val = ord(char)
             if byte_val < safe_min or byte_val > safe_max or byte_val in safe_exclude:
