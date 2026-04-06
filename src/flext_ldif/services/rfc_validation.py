@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import struct
 from collections.abc import MutableSequence
-from typing import Annotated, Self, override
+from typing import Annotated, override
 
 from pydantic import Field
 
@@ -18,7 +18,9 @@ from flext_ldif import (
 )
 
 
-class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
+class FlextLdifValidation(
+    FlextLdifServiceBase[m.Ldif.ValidationServiceStatus],
+):
     """FlextLdifValidation class."""
 
     attribute_names: Annotated[
@@ -39,11 +41,6 @@ class FlextLdifValidation(FlextLdifServiceBase[m.Ldif.ValidationServiceStatus]):
         int | None,
         Field(description="Maximum allowed attribute value length for validation"),
     ] = None
-
-    @classmethod
-    def builder(cls) -> Self:
-        """Builder method."""
-        return cls()
 
     @override
     @d.track_operation("validation_service_check")

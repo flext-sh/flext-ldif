@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import MutableMapping, MutableSequence
-from typing import Self, override
+from typing import override
 
 from flext_ldif import FlextLdifServiceBase, FlextLdifUtilitiesDN, m, r, t
 
 
-class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
+class FlextLdifEntries(
+    FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]],
+):
     """Entry operations with strict contracts."""
 
     def __init__(
@@ -21,11 +23,6 @@ class FlextLdifEntries(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
         self._entries = entries or []
         self._operation = operation
         self._attributes_to_remove = attributes_to_remove or []
-
-    @classmethod
-    def builder(cls) -> Self:
-        """Create a new entries service builder."""
-        return cls()
 
     @staticmethod
     def _extract_dn_from_dict(
