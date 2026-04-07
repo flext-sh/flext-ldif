@@ -346,6 +346,8 @@ class FlextLdifServersBaseEntry(
         if isinstance(acl_original_raw, str):
             acl_original_format = acl_original_raw
         format_options = self._extract_write_format_options(entry_data.metadata)
+        ldif_changetype: str | None = None
+        ldif_modify_operation: str = "add"
         if format_options is not None:
             fold_long_lines = bool(format_options.fold_long_lines)
             line_width = int(format_options.line_width)
@@ -359,10 +361,14 @@ class FlextLdifServersBaseEntry(
             use_original_acl_format_as_name = bool(
                 format_options.use_original_acl_format_as_name,
             )
+            ldif_changetype = format_options.ldif_changetype
+            ldif_modify_operation = format_options.ldif_modify_operation or "add"
 
         def fold_line(line: str) -> MutableSequence[str]:
             """Fold a line per RFC 2849 if fold_long_lines is enabled."""
-            effective_width = line_width if fold_long_lines else c.Ldif.LINE_FOLD_WIDTH
+            effective_width = (
+                line_width if fold_long_lines else max(line_width, 1_000_000)
+            )
             if len(line.encode("utf-8")) <= effective_width:
                 return [line]
             folded: MutableSequence[str] = []
@@ -446,6 +452,23 @@ class FlextLdifServersBaseEntry(
             output_lines.extend(fold_line(dn_line))
         else:
             return r[str].fail("Entry DN is None")
+        if ldif_changetype == "modify":
+            output_lines.append("changetype: modify")
+            modify_excluded = {"objectclass", "cn", "changetype", "dn"}
+            if hasattr(entry_data, "attributes") and entry_data.attributes:
+                for attr_name, values in entry_data.attributes.items():
+                    if attr_name.lower() in modify_excluded:
+                        continue
+                    non_empty = [str(v) for v in values if str(v)]
+                    if not non_empty:
+                        continue
+                    output_lines.append(f"{ldif_modify_operation}: {attr_name}")
+                    for value in non_empty:
+                        attr_line = emit_attribute_line(attr_name, value)
+                        append_attribute_line(attr_name, attr_line)
+                    output_lines.append("-")
+            output_lines.append("")
+            return r[str].ok("\n".join(output_lines))
         if hasattr(entry_data, "attributes") and entry_data.attributes:
             for attr_name, values in entry_data.attributes.items():
                 attr_is_hidden = attr_name.lower() in hidden_attributes

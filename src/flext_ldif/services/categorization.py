@@ -361,24 +361,38 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         for cat, entries in category_lists.items():
             if cat == c.Ldif.Category.REJECTED or not entries:
                 continue
-            if cat == c.Ldif.Category.SCHEMA and has_schema_rules:
-                rules = self._schema_whitelist_rules
-                assert rules is not None  # noqa: S101
-                allowed_oids: MutableMapping[str, frozenset[str]] = {
-                    "attributetypes": frozenset(rules.allowed_attribute_oids),
-                    "objectclasses": frozenset(rules.allowed_objectclass_oids),
-                    "matchingrules": frozenset(rules.allowed_matchingrule_oids),
-                    "matchingruleuse": frozenset(rules.allowed_matchingruleuse_oids),
-                    "ldapsyntaxes": frozenset(rules.allowed_ldapsyntax_oids),
-                }
-                if any(allowed_oids.values()):
-                    category_lists[cat] = [
-                        FlextLdifFilters.filter_schema_attribute_values(
-                            entry, allowed_oids
+            if cat == c.Ldif.Category.SCHEMA:
+                filtered = list(entries)
+                if has_schema_rules:
+                    rules = self._schema_whitelist_rules
+                    assert rules is not None  # noqa: S101
+                    allowed_oids: MutableMapping[str, frozenset[str]] = {
+                        "attributetypes": frozenset(rules.allowed_attribute_oids),
+                        "objectclasses": frozenset(rules.allowed_objectclass_oids),
+                        "matchingrules": frozenset(rules.allowed_matchingrule_oids),
+                        "matchingruleuse": frozenset(
+                            rules.allowed_matchingruleuse_oids
+                        ),
+                        "ldapsyntaxes": frozenset(rules.allowed_ldapsyntax_oids),
+                    }
+                    if any(allowed_oids.values()):
+                        filtered = [
+                            FlextLdifFilters.filter_schema_attribute_values(
+                                entry, allowed_oids
+                            )
+                            for entry in filtered
+                        ]
+                if has_forbidden:
+                    filtered = [
+                        FlextLdifFilters.filter_entry_attributes(
+                            entry,
+                            self._forbidden_attributes,
+                            self._forbidden_objectclasses,
                         )
-                        for entry in entries
+                        for entry in filtered
                     ]
-            elif has_forbidden and cat != c.Ldif.Category.SCHEMA:
+                category_lists[cat] = filtered
+            elif has_forbidden:
                 category_lists[cat] = [
                     FlextLdifFilters.filter_entry_attributes(
                         entry,

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import override
@@ -791,9 +792,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             logger.debug("converted_attrs", attrs=",".join(converted_attrs))
             logger.debug("boolean_conversions", count=len(boolean_conversions))
             normalized_attributes: t.MutableStrSequenceMapping = {}
+            name_renames: MutableMapping[str, str] = {}
             for attr_name, attr_values in converted_attributes.items():
                 normalized_name = self._normalize_attribute_name(attr_name)
                 normalized_attributes[normalized_name] = attr_values
+                if normalized_name != attr_name:
+                    name_renames[normalized_name] = attr_name
+            self._normalize_schema_values(normalized_attributes)
             entry.attributes.attributes = normalized_attributes
             mk = c.Ldif
             if entry.metadata:
@@ -836,6 +841,12 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                         entry.metadata.extensions,
                         mk.CONVERTED_ATTRIBUTES,
                         converted_attrs_list,
+                    )
+                if name_renames:
+                    setattr(
+                        entry.metadata.extensions,
+                        "attribute_name_renames",
+                        dict(name_renames),
                     )
             return r[m.Ldif.Entry].ok(entry)
         except (
@@ -898,6 +909,65 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             logger.debug("Failed to parse ACL extension metadata", exc_info=True)
 
+    @staticmethod
+    def _normalize_schema_values(
+        attrs: t.MutableStrSequenceMapping,
+    ) -> None:
+        """Normalize OID matching rules and syntax OIDs in schema definition strings.
+
+        Applies MATCHING_RULE_TO_RFC and SYNTAX_OID_TO_RFC conversions to the raw
+        attributeTypes/objectClasses/matchingRules value strings. Handles context-aware
+        replacement: ``caseIgnoreSubStringsMatch`` in EQUALITY context is replaced with
+        ``caseIgnoreMatch`` (not a substring matching rule), while in SUBSTR context it
+        becomes ``caseIgnoreSubstringsMatch`` (lowercase 's').
+        """
+        equality_map: dict[str, str] = {
+            "caseIgnoreSubStringsMatch": "caseIgnoreMatch",
+            "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
+        }
+        substr_map = FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC
+        syntax_map = FlextLdifServersOidConstants.SYNTAX_OID_TO_RFC
+        schema_fields = {"attributetypes", "objectclasses", "matchingrules"}
+        for attr_name in list(attrs):
+            if attr_name.lower() not in schema_fields:
+                continue
+            values = attrs[attr_name]
+            updated: list[str] = []
+            changed = False
+            for value in values:
+                new_value = value
+                for oid_rule, rfc_rule in equality_map.items():
+                    eq_token = f"EQUALITY {oid_rule}"
+                    if eq_token in new_value:
+                        new_value = new_value.replace(eq_token, f"EQUALITY {rfc_rule}")
+                        changed = True
+                for oid_rule, rfc_rule in substr_map.items():
+                    substr_token = f"SUBSTR {oid_rule}"
+                    if substr_token in new_value:
+                        new_value = new_value.replace(
+                            substr_token, f"SUBSTR {rfc_rule}"
+                        )
+                        changed = True
+                for oid_syntax, rfc_syntax in syntax_map.items():
+                    token = f"'{oid_syntax}'"
+                    replacement = f"'{rfc_syntax}'"
+                    if token in new_value:
+                        new_value = new_value.replace(token, replacement)
+                        changed = True
+                    elif f" {oid_syntax} " in new_value:
+                        new_value = new_value.replace(
+                            f" {oid_syntax} ", f" {rfc_syntax} "
+                        )
+                        changed = True
+                if attr_name.lower() in {"objectclasses", "attributetypes"}:
+                    sup_quoted = re.sub(r"SUP\s+'([^']+)'", r"SUP \1", new_value)
+                    if sup_quoted != new_value:
+                        new_value = sup_quoted
+                        changed = True
+                updated.append(new_value)
+            if changed:
+                attrs[attr_name] = updated
+
     @override
     def _normalize_attribute_name(self, attr_name: str) -> str:
         """Normalize OID attribute names to RFC-canonical format."""
@@ -912,14 +982,25 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     @override
     def _parse_entry_from_lines(self, lines: MutableSequence[str]) -> r[m.Ldif.Entry]:
-        """Parse entry from LDIF lines and finalize with OID metadata (original_dn_complete)."""
+        """Parse entry from LDIF lines, apply OID→RFC normalization, finalize metadata."""
         result = super()._parse_entry_from_lines(lines)
         if result.is_failure:
             return result
         entry = result.value
+        if entry.dn and entry.dn.value:
+            cleaned_dn, _ = FlextLdifUtilitiesDN.clean_dn_with_statistics(
+                entry.dn.value
+            )
+            if cleaned_dn != entry.dn.value:
+                entry.dn = m.Ldif.DN.model_validate({"value": cleaned_dn})
         original_dn = entry.dn.value if entry.dn else ""
         original_attrs = dict(entry.attributes.attributes) if entry.attributes else {}
-        return self._hook_finalize_entry_parse(entry, original_dn, original_attrs)
+        finalize_result = self._hook_finalize_entry_parse(
+            entry, original_dn, original_attrs
+        )
+        if finalize_result.is_failure:
+            return finalize_result
+        return self._hook_post_parse_entry(finalize_result.value)
 
     def _process_orclaci_values(
         self,
@@ -1021,7 +1102,44 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _restore_entry_from_metadata(self, entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
         """Restore OID-specific formats from metadata (RFC → OID denormalization)."""
-        return self._restore_boolean_values_to_oid(entry_data)
+        restored_entry = self._restore_boolean_values_to_oid(entry_data)
+        metadata = restored_entry.metadata
+        attributes = restored_entry.attributes
+        if metadata is None or attributes is None:
+            return restored_entry
+        extensions = metadata.extensions
+        if extensions is None or not hasattr(extensions, "get"):
+            return restored_entry
+        rename_map = extensions.get("attribute_name_renames")
+        if not isinstance(rename_map, Mapping) or not rename_map:
+            return restored_entry
+        restored_attrs = dict(attributes.attributes)
+        changed = False
+        for current_name, original_name in rename_map.items():
+            if not isinstance(current_name, str) or not isinstance(original_name, str):
+                continue
+            current_values = restored_attrs.pop(current_name, None)
+            if current_values is None or original_name in restored_attrs:
+                continue
+            restored_attrs[original_name] = [str(value) for value in current_values]
+            changed = True
+        if not changed:
+            return restored_entry
+        return restored_entry.model_copy(
+            update={
+                "attributes": m.Ldif.Attributes.model_validate({
+                    "attributes": restored_attrs,
+                    "attribute_metadata": attributes.attribute_metadata,
+                    "metadata": attributes.metadata,
+                }),
+            },
+        )
+
+    @override
+    def _write_entry(self, entry_data: m.Ldif.Entry) -> r[str]:
+        """Write OID entry preserving OID-specific denormalized attribute names."""
+        entry_to_write = self._restore_entry_from_metadata(entry_data)
+        return super()._write_entry(entry_to_write)
 
     def _restore_single_attribute(
         self,

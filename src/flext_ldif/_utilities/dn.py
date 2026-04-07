@@ -11,13 +11,16 @@ from collections.abc import (
     MutableMapping,
     MutableSequence,
 )
+from pathlib import Path
 from typing import Literal, overload
 
 from flext_core import r, u
 from flext_ldif import (
     FlextLdifModelsDomainDN,
+    FlextLdifModelsDomainEntry,
     FlextLdifModelsSettings,
     c,
+    m,
 )
 
 
@@ -956,6 +959,96 @@ class FlextLdifUtilitiesDN:
                 result.append(value[i])
                 i += 1
         return "".join(result)
+
+    @staticmethod
+    def transform_entry_base_dn(
+        entry: FlextLdifModelsDomainEntry.Entry,
+        source_dn: str,
+        target_dn: str,
+        dn_valued_attributes: frozenset[str] | None = None,
+    ) -> FlextLdifModelsDomainEntry.Entry:
+        """Transform an entry's DN and DN-valued attributes from source to target base DN.
+
+        Rewrites:
+        - The entry's own DN
+        - All attributes whose name is in dn_valued_attributes (member, uniqueMember, etc.)
+
+        Returns a model_copy with transformed values. Original entry is not mutated.
+        """
+        attrs_to_transform = dn_valued_attributes or c.Ldif.ALL_DN_VALUED
+        updates: MutableMapping[str, object] = {}
+        entry_dn = entry.dn
+        if entry_dn is not None:
+            dn_str = FlextLdifUtilitiesDN.get_dn_value(entry_dn)
+            if dn_str:
+                new_dn_str = FlextLdifUtilitiesDN.transform_dn_attribute(
+                    dn_str, source_dn, target_dn
+                )
+                if new_dn_str != dn_str:
+                    updates["dn"] = m.Ldif.DN(value=new_dn_str)
+        entry_attrs = entry.attributes
+        if entry_attrs is not None:
+            attr_dict = entry_attrs.attributes
+            changed_attrs: MutableMapping[str, MutableSequence[str]] = {}
+            for attr_name, values in attr_dict.items():
+                if attr_name.lower() in {a.lower() for a in attrs_to_transform}:
+                    new_values: MutableSequence[str] = []
+                    attr_changed = False
+                    for val in values:
+                        new_val = FlextLdifUtilitiesDN.transform_dn_attribute(
+                            val, source_dn, target_dn
+                        )
+                        new_values.append(new_val)
+                        if new_val != val:
+                            attr_changed = True
+                    if attr_changed:
+                        changed_attrs[attr_name] = new_values
+            if changed_attrs:
+                new_attr_dict = dict(attr_dict)
+                new_attr_dict.update(changed_attrs)
+                new_attrs = entry_attrs.model_copy(update={"attributes": new_attr_dict})
+                updates["attributes"] = new_attrs
+        if updates:
+            return entry.model_copy(update=updates)
+        return entry
+
+    @staticmethod
+    def transform_ldif_files_in_directory(
+        ldif_dir: str | object,
+        source_basedn: str,
+        target_basedn: str,
+    ) -> MutableMapping[str, int | MutableSequence[str]]:
+        """Transform base DN in all LDIF files in a directory.
+
+        Reads each .ldif file, replaces source_basedn with target_basedn
+        in all DN lines and DN-valued attribute values, and writes back.
+
+        Returns dict with total_count (files transformed) and transformed_files list.
+        """
+        directory = Path(str(ldif_dir))
+        transformed_files: MutableSequence[str] = []
+        for ldif_file in sorted(directory.glob("*.ldif")):
+            content = ldif_file.read_text(encoding="utf-8")
+            new_content = FlextLdifUtilitiesDN._transform_ldif_content(
+                content, source_basedn, target_basedn
+            )
+            if new_content != content:
+                _ = ldif_file.write_text(new_content, encoding="utf-8")
+                transformed_files.append(ldif_file.name)
+        return {
+            "total_count": len(transformed_files),
+            "transformed_files": transformed_files,
+        }
+
+    @staticmethod
+    def _transform_ldif_content(content: str, source_dn: str, target_dn: str) -> str:
+        """Transform all DN references in raw LDIF content string."""
+        return re.sub(
+            re.escape(source_dn),
+            target_dn,
+            content,
+            flags=re.IGNORECASE,
+        )
 
     @staticmethod
     def validate_dn(dn: str | FlextLdifModelsDomainDN.DN) -> bool:

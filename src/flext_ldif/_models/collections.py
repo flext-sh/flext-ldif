@@ -165,11 +165,13 @@ class FlextLdifModelsCollections:
         def add_entries(
             self,
             category: str,
-            entries: MutableSequence[FlextLdifModelsDomainsEntries.Entry]
-            | t.MutableContainerList,
+            entries: MutableSequence[FlextLdifModelsDomainsEntries.Entry],
         ) -> None:
             key = str(category)
-            existing = self.categories.get(key, [])
+            existing = self.categories.get(key)
+            if existing is None:
+                existing_entries: list[FlextLdifModelsDomainsEntries.Entry] = []
+                existing = existing_entries
             existing.extend(entries)
             self.categories[key] = existing
 

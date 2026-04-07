@@ -215,9 +215,8 @@ project-excludes = [
 project-includes = [ "examples/**/*.py*", "src/**/*.py*", "tests/**/*.py*" ]
 python-version = "3.13"
 search-path = [
-  "examples",
+  ".",
   "src",
-  "tests",
 ]
 use-ignore-files = false
 
