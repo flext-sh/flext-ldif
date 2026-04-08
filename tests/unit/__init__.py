@@ -11,75 +11,24 @@ from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 if _t.TYPE_CHECKING:
     import tests.unit.constants as _tests_unit_constants
-    from tests.unit.__init__ import TestsFlextLdifVersion, test_version, version_module
-    from tests.unit._utilities.oid import TestFlextLdifUtilitiesOID
-    from tests.unit._utilities.parser import TestFlextLdifUtilitiesParser
-    from tests.unit._utilities.server import TestFlextLdifUtilitiesServer
 
     constants = _tests_unit_constants
     import tests.unit.protocols as _tests_unit_protocols
-    from tests.unit.constants import (
-        TestsTestFlextLdifAclAttributeRegistry,
-        test_acl_registry,
-    )
 
     protocols = _tests_unit_protocols
     import tests.unit.services as _tests_unit_services
-    from tests.unit.protocols import TestsTestFlextLdifProtocols, test_protocols
-    from tests.unit.quirks.servers import (
-        TestNovellAcls,
-        TestNovellEntryDetection,
-        TestNovellSchemaAttributeDetection,
-        TestNovellSchemaAttributeParsing,
-        TestNovellSchemaObjectClassDetection,
-        TestNovellSchemaObjectClassParsing,
-        TestSchemaTransformerNormalizeMatchingRule,
-        TestSchemaTransformerNormalizeSyntaxOid,
-        TestsFlextLdifEdgeCases,
-        TestsFlextLdifNovellInitialization,
-        TestsFlextLdifSchemaTransformerNormalizeAttributeName,
-        TestsTestFlextLdifApacheQuirks,
-        TestsTestFlextLdifDs389Quirks,
-        TestsTestFlextLdifOidQuirks,
-        TestsTestFlextLdifRelaxedQuirks,
-        cleanup_state,
-        entry_quirk,
-        ldif_api,
-        novell_server,
-        schema_quirk,
-    )
 
     services = _tests_unit_services
     import tests.unit.test_migration_pipeline as _tests_unit_test_migration_pipeline
-    from tests.unit.services import (
-        TestAliasDiscovery,
-        TestQuirksAutoInterchange,
-        TestQuirksWithRealLdifFixtures,
-        TestsFlextLdifQuirksStandardizedConstants,
-        TestsTestFlextLdifMigrationPipeline,
-        test_quirks_standardization,
-    )
 
     test_migration_pipeline = _tests_unit_test_migration_pipeline
     import tests.unit.test_migration_pipeline_quirks as _tests_unit_test_migration_pipeline_quirks
-    from tests.unit.test_migration_pipeline import TestsFlextLdifMigrationPipeline
 
     test_migration_pipeline_quirks = _tests_unit_test_migration_pipeline_quirks
     import tests.unit.test_typings as _tests_unit_test_typings
-    from tests.unit.test_migration_pipeline_quirks import (
-        TestsFlextLdifMigrationPipelineQuirks,
-    )
 
     test_typings = _tests_unit_test_typings
     import tests.unit.utilities as _tests_unit_utilities
-    from tests.unit.test_typings import (
-        TestFlextLdifTypesStructure,
-        TestIntegrationWithLdifFixtures,
-        TestModelsNamespace,
-        TestPhase1StandardizationResults,
-        TestRemovalOfOverEngineering,
-        TestsFlextLdifCommonDictionaryTypes,
-    )
 
     utilities = _tests_unit_utilities
     from flext_core.constants import FlextConstants as c
@@ -93,17 +42,6 @@ if _t.TYPE_CHECKING:
     from flext_core.service import FlextService as s
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
-    from tests.unit.utilities import (
-        TestAttributeFixer,
-        TestDnObjectClassMethods,
-        TestFlextLdifUtilitiesComprehensive,
-        TestLdifParser,
-        TestObjectClassUtilities,
-        TestServerTypes,
-        TestsFlextLdifDnOperationsPure,
-        test_utilities_comprehensive,
-        test_utilities_core,
-    )
 _LAZY_IMPORTS = merge_lazy_imports(
     (
         "tests.unit.__init__",
@@ -113,128 +51,16 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "tests.unit.utilities",
     ),
     {
-        "TestFlextLdifTypesStructure": (
-            "tests.unit.test_typings",
-            "TestFlextLdifTypesStructure",
-        ),
-        "TestFlextLdifUtilitiesOID": (
-            "tests.unit._utilities.oid.test_oid_utilities",
-            "TestFlextLdifUtilitiesOID",
-        ),
-        "TestFlextLdifUtilitiesParser": (
-            "tests.unit._utilities.parser.test_parser_utilities",
-            "TestFlextLdifUtilitiesParser",
-        ),
-        "TestFlextLdifUtilitiesServer": (
-            "tests.unit._utilities.server.test_server_utilities",
-            "TestFlextLdifUtilitiesServer",
-        ),
-        "TestIntegrationWithLdifFixtures": (
-            "tests.unit.test_typings",
-            "TestIntegrationWithLdifFixtures",
-        ),
-        "TestModelsNamespace": ("tests.unit.test_typings", "TestModelsNamespace"),
-        "TestNovellAcls": (
-            "tests.unit.quirks.servers.test_novell_quirks",
-            "TestNovellAcls",
-        ),
-        "TestNovellEntryDetection": (
-            "tests.unit.quirks.servers.test_novell_quirks",
-            "TestNovellEntryDetection",
-        ),
-        "TestNovellSchemaAttributeDetection": (
-            "tests.unit.quirks.servers.test_novell_quirks",
-            "TestNovellSchemaAttributeDetection",
-        ),
-        "TestNovellSchemaAttributeParsing": (
-            "tests.unit.quirks.servers.test_novell_quirks",
-            "TestNovellSchemaAttributeParsing",
-        ),
-        "TestNovellSchemaObjectClassDetection": (
-            "tests.unit.quirks.servers.test_novell_quirks",
-            "TestNovellSchemaObjectClassDetection",
-        ),
-        "TestNovellSchemaObjectClassParsing": (
-            "tests.unit.quirks.servers.test_novell_quirks",
-            "TestNovellSchemaObjectClassParsing",
-        ),
-        "TestPhase1StandardizationResults": (
-            "tests.unit.test_typings",
-            "TestPhase1StandardizationResults",
-        ),
-        "TestRemovalOfOverEngineering": (
-            "tests.unit.test_typings",
-            "TestRemovalOfOverEngineering",
-        ),
-        "TestSchemaTransformerNormalizeMatchingRule": (
-            "tests.unit.quirks.servers.test_schema_transformer",
-            "TestSchemaTransformerNormalizeMatchingRule",
-        ),
-        "TestSchemaTransformerNormalizeSyntaxOid": (
-            "tests.unit.quirks.servers.test_schema_transformer",
-            "TestSchemaTransformerNormalizeSyntaxOid",
-        ),
-        "TestsFlextLdifCommonDictionaryTypes": (
-            "tests.unit.test_typings",
-            "TestsFlextLdifCommonDictionaryTypes",
-        ),
-        "TestsFlextLdifEdgeCases": (
-            "tests.unit.quirks.servers.test_edge_cases",
-            "TestsFlextLdifEdgeCases",
-        ),
-        "TestsFlextLdifMigrationPipeline": (
-            "tests.unit.test_migration_pipeline",
-            "TestsFlextLdifMigrationPipeline",
-        ),
-        "TestsFlextLdifMigrationPipelineQuirks": (
-            "tests.unit.test_migration_pipeline_quirks",
-            "TestsFlextLdifMigrationPipelineQuirks",
-        ),
-        "TestsFlextLdifNovellInitialization": (
-            "tests.unit.quirks.servers.test_novell_quirks",
-            "TestsFlextLdifNovellInitialization",
-        ),
-        "TestsFlextLdifSchemaTransformerNormalizeAttributeName": (
-            "tests.unit.quirks.servers.test_schema_transformer",
-            "TestsFlextLdifSchemaTransformerNormalizeAttributeName",
-        ),
-        "TestsTestFlextLdifApacheQuirks": (
-            "tests.unit.quirks.servers.test_apache_quirks",
-            "TestsTestFlextLdifApacheQuirks",
-        ),
-        "TestsTestFlextLdifDs389Quirks": (
-            "tests.unit.quirks.servers.test_ds389_quirks",
-            "TestsTestFlextLdifDs389Quirks",
-        ),
-        "TestsTestFlextLdifOidQuirks": (
-            "tests.unit.quirks.servers.test_oid_quirks",
-            "TestsTestFlextLdifOidQuirks",
-        ),
-        "TestsTestFlextLdifRelaxedQuirks": (
-            "tests.unit.quirks.servers.test_relaxed_quirks",
-            "TestsTestFlextLdifRelaxedQuirks",
-        ),
         "c": ("flext_core.constants", "FlextConstants"),
-        "cleanup_state": ("tests.unit.quirks.servers.test_edge_cases", "cleanup_state"),
         "constants": "tests.unit.constants",
         "d": ("flext_core.decorators", "FlextDecorators"),
         "e": ("flext_core.exceptions", "FlextExceptions"),
-        "entry_quirk": ("tests.unit.quirks.servers.test_novell_quirks", "entry_quirk"),
         "h": ("flext_core.handlers", "FlextHandlers"),
-        "ldif_api": ("tests.unit.quirks.servers.test_edge_cases", "ldif_api"),
         "m": ("flext_core.models", "FlextModels"),
-        "novell_server": (
-            "tests.unit.quirks.servers.test_novell_quirks",
-            "novell_server",
-        ),
         "p": ("flext_core.protocols", "FlextProtocols"),
         "protocols": "tests.unit.protocols",
         "r": ("flext_core.result", "FlextResult"),
         "s": ("flext_core.service", "FlextService"),
-        "schema_quirk": (
-            "tests.unit.quirks.servers.test_novell_quirks",
-            "schema_quirk",
-        ),
         "services": "tests.unit.services",
         "t": ("flext_core.typings", "FlextTypes"),
         "test_migration_pipeline": "tests.unit.test_migration_pipeline",
@@ -248,81 +74,29 @@ _LAZY_IMPORTS = merge_lazy_imports(
 _ = _LAZY_IMPORTS.pop("cleanup_submodule_namespace", None)
 _ = _LAZY_IMPORTS.pop("install_lazy_exports", None)
 _ = _LAZY_IMPORTS.pop("lazy_getattr", None)
+_ = _LAZY_IMPORTS.pop("logger", None)
 _ = _LAZY_IMPORTS.pop("merge_lazy_imports", None)
 _ = _LAZY_IMPORTS.pop("output", None)
 _ = _LAZY_IMPORTS.pop("output_reporting", None)
 
 __all__ = [
-    "TestAliasDiscovery",
-    "TestAttributeFixer",
-    "TestDnObjectClassMethods",
-    "TestFlextLdifTypesStructure",
-    "TestFlextLdifUtilitiesComprehensive",
-    "TestFlextLdifUtilitiesOID",
-    "TestFlextLdifUtilitiesParser",
-    "TestFlextLdifUtilitiesServer",
-    "TestIntegrationWithLdifFixtures",
-    "TestLdifParser",
-    "TestModelsNamespace",
-    "TestNovellAcls",
-    "TestNovellEntryDetection",
-    "TestNovellSchemaAttributeDetection",
-    "TestNovellSchemaAttributeParsing",
-    "TestNovellSchemaObjectClassDetection",
-    "TestNovellSchemaObjectClassParsing",
-    "TestObjectClassUtilities",
-    "TestPhase1StandardizationResults",
-    "TestQuirksAutoInterchange",
-    "TestQuirksWithRealLdifFixtures",
-    "TestRemovalOfOverEngineering",
-    "TestSchemaTransformerNormalizeMatchingRule",
-    "TestSchemaTransformerNormalizeSyntaxOid",
-    "TestServerTypes",
-    "TestsFlextLdifCommonDictionaryTypes",
-    "TestsFlextLdifDnOperationsPure",
-    "TestsFlextLdifEdgeCases",
-    "TestsFlextLdifMigrationPipeline",
-    "TestsFlextLdifMigrationPipelineQuirks",
-    "TestsFlextLdifNovellInitialization",
-    "TestsFlextLdifQuirksStandardizedConstants",
-    "TestsFlextLdifSchemaTransformerNormalizeAttributeName",
-    "TestsFlextLdifVersion",
-    "TestsTestFlextLdifAclAttributeRegistry",
-    "TestsTestFlextLdifApacheQuirks",
-    "TestsTestFlextLdifDs389Quirks",
-    "TestsTestFlextLdifMigrationPipeline",
-    "TestsTestFlextLdifOidQuirks",
-    "TestsTestFlextLdifProtocols",
-    "TestsTestFlextLdifRelaxedQuirks",
     "c",
-    "cleanup_state",
     "constants",
     "d",
     "e",
-    "entry_quirk",
     "h",
-    "ldif_api",
     "m",
-    "novell_server",
     "p",
     "protocols",
     "r",
     "s",
-    "schema_quirk",
     "services",
     "t",
-    "test_acl_registry",
     "test_migration_pipeline",
     "test_migration_pipeline_quirks",
-    "test_protocols",
-    "test_quirks_standardization",
     "test_typings",
-    "test_utilities_comprehensive",
-    "test_utilities_core",
-    "test_version",
     "u",
     "utilities",
-    "version_module",
     "x",
 ]
 

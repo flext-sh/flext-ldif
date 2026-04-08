@@ -25,7 +25,7 @@ if _t.TYPE_CHECKING:
     from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
 
     schema = _flext_ldif_servers__rfc_schema
-    from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema, logger
+    from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
 _LAZY_IMPORTS = {
     "FlextLdifServersRfcAcl": ("flext_ldif.servers._rfc.acl", "FlextLdifServersRfcAcl"),
     "FlextLdifServersRfcConstants": (
@@ -44,7 +44,6 @@ _LAZY_IMPORTS = {
     "c": ("flext_ldif.servers._rfc.constants", "c"),
     "constants": "flext_ldif.servers._rfc.constants",
     "entry": "flext_ldif.servers._rfc.entry",
-    "logger": ("flext_ldif.servers._rfc.schema", "logger"),
     "schema": "flext_ldif.servers._rfc.schema",
 }
 
@@ -57,7 +56,6 @@ __all__ = [
     "c",
     "constants",
     "entry",
-    "logger",
     "schema",
 ]
 

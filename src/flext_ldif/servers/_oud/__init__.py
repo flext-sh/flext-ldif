@@ -26,7 +26,7 @@ if _t.TYPE_CHECKING:
 
     schema = _flext_ldif_servers__oud_schema
     import flext_ldif.servers._oud.utilities as _flext_ldif_servers__oud_utilities
-    from flext_ldif.servers._oud.schema import FlextLdifServersOudSchema, logger
+    from flext_ldif.servers._oud.schema import FlextLdifServersOudSchema
 
     utilities = _flext_ldif_servers__oud_utilities
     from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
@@ -52,7 +52,6 @@ _LAZY_IMPORTS = {
     "c": ("flext_ldif.servers._oud.constants", "c"),
     "constants": "flext_ldif.servers._oud.constants",
     "entry": "flext_ldif.servers._oud.entry",
-    "logger": ("flext_ldif.servers._oud.schema", "logger"),
     "schema": "flext_ldif.servers._oud.schema",
     "utilities": "flext_ldif.servers._oud.utilities",
 }
@@ -67,7 +66,6 @@ __all__ = [
     "c",
     "constants",
     "entry",
-    "logger",
     "schema",
     "utilities",
 ]

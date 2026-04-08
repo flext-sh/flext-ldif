@@ -5,10 +5,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
-from flext_core import FlextLogger
 from flext_ldif import FlextLdifServersRfc, t
-
-logger = FlextLogger(__name__)
 
 
 class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):

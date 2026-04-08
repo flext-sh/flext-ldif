@@ -19,15 +19,15 @@ from flext_ldif import FlextLdifModels, FlextLdifModelsSettings
 from tests import t
 
 
-class FlextLdifTestModels(FlextTestsModels, FlextLdifModels):
-    """Test models - composition of FlextTestsModels + FlextLdifModels.
+class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
+    """Test models - composition of TestsFlextModels + FlextLdifModels.
 
     Uses composition instead of inheritance to avoid deprecation warnings
-    from FlextTestsModels.__init_subclass__ and FlextLdifModels.__init_subclass__.
+    from TestsFlextModels.__init_subclass__ and FlextLdifModels.__init_subclass__.
 
     Access patterns:
-    - FlextLdifTestModels.Ldif.* - Production domain models (delegated from FlextLdifModels.Ldif)
-    - FlextLdifTestModels.Ldif.Tests.* - Test fixtures (ACL, Schema, etc.)
+    - TestsFlextLdifModels.Ldif.* - Production domain models (delegated from FlextLdifModels.Ldif)
+    - TestsFlextLdifModels.Ldif.Tests.* - Test fixtures (ACL, Schema, etc.)
     """
 
     # Production models namespace delegation
@@ -227,9 +227,9 @@ class FlextLdifTestModels(FlextTestsModels, FlextLdifModels):
                 ] = False
 
 
-m = FlextLdifTestModels
+m = TestsFlextLdifModels
 
 __all__ = [
-    "FlextLdifTestModels",
+    "TestsFlextLdifModels",
     "m",
 ]

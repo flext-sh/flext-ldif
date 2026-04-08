@@ -13,8 +13,6 @@ if _t.TYPE_CHECKING:
     import tests.unit._utilities.oid.test_oid_utilities as _tests_unit__utilities_oid_test_oid_utilities
 
     test_oid_utilities = _tests_unit__utilities_oid_test_oid_utilities
-    from tests.unit._utilities.oid.test_oid_utilities import TestFlextLdifUtilitiesOID
-
     from flext_core.constants import FlextConstants as c
     from flext_core.decorators import FlextDecorators as d
     from flext_core.exceptions import FlextExceptions as e
@@ -27,10 +25,6 @@ if _t.TYPE_CHECKING:
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
 _LAZY_IMPORTS = {
-    "TestFlextLdifUtilitiesOID": (
-        "tests.unit._utilities.oid.test_oid_utilities",
-        "TestFlextLdifUtilitiesOID",
-    ),
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),
@@ -46,7 +40,6 @@ _LAZY_IMPORTS = {
 }
 
 __all__ = [
-    "TestFlextLdifUtilitiesOID",
     "c",
     "d",
     "e",

@@ -8,13 +8,22 @@ from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar, override
 
 from flext_core import FlextLogger
-from flext_ldif import FlextLdifModelsDomainsEntries, FlextLdifServersRfc, c, m, r, t, u
-
-logger = FlextLogger(__name__)
+from flext_ldif import (
+    FlextLdifModelsDomainsEntries,
+    FlextLdifServersRfc,
+    c,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
 
 
 class FlextLdifServersRelaxed(FlextLdifServersRfc):
     """Relaxed mode server quirks for non-compliant LDIF."""
+
+    _logger: ClassVar[p.Logger] = FlextLogger(__name__)
 
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for Relaxed (lenient) quirk."""
@@ -239,7 +248,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     original_definition=attr_definition,
                 )
                 return r[m.Ldif.SchemaAttribute].ok(attribute)
-            logger.debug(
+            FlextLdifServersRelaxed._logger.debug(
                 f"RFC parser failed, using best-effort parsing: {parent_result.error}",
             )
             try:
@@ -293,7 +302,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                logger.debug("Relaxed attribute parse exception: {e}")
+                FlextLdifServersRelaxed._logger.debug(
+                    f"Relaxed attribute parse exception: {e}",
+                )
                 return r[m.Ldif.SchemaAttribute].fail(
                     f"Failed to parse attribute definition: {e}",
                 )
@@ -311,7 +322,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return r[m.Ldif.SchemaObjectClass].ok(
                     self._enhance_objectclass_metadata(objectclass, oc_definition),
                 )
-            logger.debug(
+            FlextLdifServersRelaxed._logger.debug(
                 f"RFC parser failed, using best-effort parsing: {parent_result.error}",
             )
             return self._parse_objectclass_relaxed(oc_definition)
@@ -527,7 +538,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                logger.debug("Relaxed ACL parse failed: {e}")
+                FlextLdifServersRelaxed._logger.debug(
+                    f"Relaxed ACL parse failed: {e}",
+                )
                 return r[m.Ldif.Acl].fail(f"Failed to parse ACL: {e}")
 
         @override
@@ -589,7 +602,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                logger.debug("DN normalization exception: {e}")
+                FlextLdifServersRelaxed._logger.debug(
+                    f"DN normalization exception: {e}",
+                )
                 return r[str].fail(f"DN normalization failed: {e}")
 
         def process_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
@@ -630,7 +645,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             parent_result = super()._parse_content(ldif_content)
             if parent_result.is_success:
                 return parent_result
-            logger.debug(
+            FlextLdifServersRelaxed._logger.debug(
                 f"RFC parser failed, using relaxed mode: {parent_result.error}",
             )
             return u.Ldif.parse_content(
@@ -711,7 +726,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                logger.debug(f"Relaxed entry creation failed: {e}")
+                FlextLdifServersRelaxed._logger.debug(
+                    f"Relaxed entry creation failed: {e}",
+                )
                 return r[m.Ldif.Entry].fail(f"Failed to parse entry: {e}")
 
         @override
@@ -720,7 +737,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             parent_result = super()._write_entry(entry_data)
             if parent_result.is_success:
                 return parent_result
-            logger.debug(
+            FlextLdifServersRelaxed._logger.debug(
                 f"RFC write failed, using relaxed mode: {parent_result.error}",
             )
             try:
@@ -756,7 +773,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                logger.debug(f"Write entry failed: {e}")
+                FlextLdifServersRelaxed._logger.debug(f"Write entry failed: {e}")
                 return r[str].fail(f"Failed to write entry: {e}")
 
 

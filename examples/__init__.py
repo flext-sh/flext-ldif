@@ -13,7 +13,7 @@ if _t.TYPE_CHECKING:
     import examples.demo_structured_migration as _examples_demo_structured_migration
 
     demo_structured_migration = _examples_demo_structured_migration
-    from examples.demo_structured_migration import main
+
     from flext_core.constants import FlextConstants as c
     from flext_core.decorators import FlextDecorators as d
     from flext_core.exceptions import FlextExceptions as e
@@ -32,7 +32,6 @@ _LAZY_IMPORTS = {
     "e": ("flext_core.exceptions", "FlextExceptions"),
     "h": ("flext_core.handlers", "FlextHandlers"),
     "m": ("flext_core.models", "FlextModels"),
-    "main": ("examples.demo_structured_migration", "main"),
     "p": ("flext_core.protocols", "FlextProtocols"),
     "r": ("flext_core.result", "FlextResult"),
     "s": ("flext_core.service", "FlextService"),
@@ -48,7 +47,6 @@ __all__ = [
     "e",
     "h",
     "m",
-    "main",
     "p",
     "r",
     "s",

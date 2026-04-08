@@ -7,7 +7,6 @@ from typing import ClassVar, Self, overload, override
 
 from pydantic import ConfigDict
 
-from flext_core import FlextLogger
 from flext_ldif import (
     FlextLdifModelsResults,
     FlextLdifServersBaseEntry,
@@ -21,8 +20,6 @@ from flext_ldif import (
     u,
 )
 
-logger = FlextLogger(__name__)
-
 
 class FlextLdifServersBase(s[m.Ldif.Entry]):
     """Base class for LDIF/LDAP server quirks as FlextService V2."""
@@ -31,8 +28,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         arbitrary_types_allowed=True,
         extra="forbid",
     )
-    server_type: ClassVar[str]
-    priority: ClassVar[int]
+    server_type: ClassVar[str] = "unknown"
+    priority: ClassVar[int] = 0
 
     def __init__(self, **kwargs: t.Scalar) -> None:
         """Initialize base quirk and its nested quirks."""
@@ -465,6 +462,4 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         return attr_name
 
 
-FlextLdifServersBase.server_type = "unknown"
-FlextLdifServersBase.priority = 0
 __all__ = ["FlextLdifServersBase"]

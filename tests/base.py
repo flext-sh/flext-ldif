@@ -2,11 +2,11 @@
 
 Extends s from flext_tests with LDIF-specific test utilities.
 
-All test classes should inherit from FlextLdifTestsServiceBase to leverage
+All test classes should inherit from TestsFlextLdifServiceBase to leverage
 unified entry creation, assertions, and fixture management from flext_tests
 plus LDIF-specific helpers.
 
-Naming convention: FlextLdifTestsServiceBase
+Naming convention: TestsFlextLdifServiceBase
 Short name 's' for convenient access in tests (from tests import s).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -27,7 +27,7 @@ from flext_ldif import FlextLdifEntries
 from tests import m, t
 
 
-class FlextLdifTestsServiceBase(FlextService[m.Ldif.Entry]):
+class TestsFlextLdifServiceBase(FlextService[m.Ldif.Entry]):
     """Base class for all test services in flext-ldif.
 
     Extends s from flext_tests with LDIF-specific utilities:
@@ -134,5 +134,4 @@ class FlextLdifTestsServiceBase(FlextService[m.Ldif.Entry]):
         return list(starmap(cls.create_entry, entries_data))
 
 
-s = FlextLdifTestsServiceBase
-__all__ = ["FlextLdifTestsServiceBase", "s"]
+__all__ = ["TestsFlextLdifServiceBase"]

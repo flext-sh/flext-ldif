@@ -8,13 +8,23 @@ from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import ClassVar, override
 
 from flext_core import FlextLogger
-from flext_ldif import FlextLdifModelsDomainsEntries, FlextLdifServersRfc, c, m, r, t
+from flext_ldif import (
+    FlextLdifModelsDomainsEntries,
+    FlextLdifServersRfc,
+    c,
+    m,
+    p,
+    r,
+    t,
+)
 
 logger = FlextLogger(__name__)
 
 
 class FlextLdifServersOpenldap(FlextLdifServersRfc):
     """OpenLDAP 2.x Quirks - Complete Implementation."""
+
+    _logger: ClassVar[p.Logger] = FlextLogger(__name__)
 
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for OpenLDAP 2.x quirk."""
@@ -510,7 +520,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 if isinstance(acl_format_rules, Mapping)
                 else ""
             )
-            logger.debug(
+            FlextLdifServersOpenldap._logger.debug(
                 "Injected OpenLDAP validation rules into Entry metadata",
                 entry_dn=entry.dn.value if entry.dn else "",
                 requires_objectclass=bool(validation_rules["requires_objectclass"]),

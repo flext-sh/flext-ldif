@@ -14,56 +14,23 @@ if _t.TYPE_CHECKING:
 
     test_apache_quirks = _tests_unit_quirks_servers_test_apache_quirks
     import tests.unit.quirks.servers.test_ds389_quirks as _tests_unit_quirks_servers_test_ds389_quirks
-    from tests.unit.quirks.servers.test_apache_quirks import (
-        TestsTestFlextLdifApacheQuirks,
-    )
 
     test_ds389_quirks = _tests_unit_quirks_servers_test_ds389_quirks
     import tests.unit.quirks.servers.test_edge_cases as _tests_unit_quirks_servers_test_edge_cases
-    from tests.unit.quirks.servers.test_ds389_quirks import (
-        TestsTestFlextLdifDs389Quirks,
-    )
 
     test_edge_cases = _tests_unit_quirks_servers_test_edge_cases
     import tests.unit.quirks.servers.test_novell_quirks as _tests_unit_quirks_servers_test_novell_quirks
-    from tests.unit.quirks.servers.test_edge_cases import (
-        TestsFlextLdifEdgeCases,
-        cleanup_state,
-        ldif_api,
-    )
 
     test_novell_quirks = _tests_unit_quirks_servers_test_novell_quirks
     import tests.unit.quirks.servers.test_oid_quirks as _tests_unit_quirks_servers_test_oid_quirks
-    from tests.unit.quirks.servers.test_novell_quirks import (
-        TestNovellAcls,
-        TestNovellEntryDetection,
-        TestNovellSchemaAttributeDetection,
-        TestNovellSchemaAttributeParsing,
-        TestNovellSchemaObjectClassDetection,
-        TestNovellSchemaObjectClassParsing,
-        TestsFlextLdifNovellInitialization,
-        entry_quirk,
-        novell_server,
-        schema_quirk,
-    )
 
     test_oid_quirks = _tests_unit_quirks_servers_test_oid_quirks
     import tests.unit.quirks.servers.test_relaxed_quirks as _tests_unit_quirks_servers_test_relaxed_quirks
-    from tests.unit.quirks.servers.test_oid_quirks import TestsTestFlextLdifOidQuirks
 
     test_relaxed_quirks = _tests_unit_quirks_servers_test_relaxed_quirks
     import tests.unit.quirks.servers.test_schema_transformer as _tests_unit_quirks_servers_test_schema_transformer
-    from tests.unit.quirks.servers.test_relaxed_quirks import (
-        TestsTestFlextLdifRelaxedQuirks,
-    )
 
     test_schema_transformer = _tests_unit_quirks_servers_test_schema_transformer
-    from tests.unit.quirks.servers.test_schema_transformer import (
-        TestSchemaTransformerNormalizeMatchingRule,
-        TestSchemaTransformerNormalizeSyntaxOid,
-        TestsFlextLdifSchemaTransformerNormalizeAttributeName,
-    )
-
     from flext_core.constants import FlextConstants as c
     from flext_core.decorators import FlextDecorators as d
     from flext_core.exceptions import FlextExceptions as e
@@ -76,79 +43,14 @@ if _t.TYPE_CHECKING:
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
 _LAZY_IMPORTS = {
-    "TestNovellAcls": (
-        "tests.unit.quirks.servers.test_novell_quirks",
-        "TestNovellAcls",
-    ),
-    "TestNovellEntryDetection": (
-        "tests.unit.quirks.servers.test_novell_quirks",
-        "TestNovellEntryDetection",
-    ),
-    "TestNovellSchemaAttributeDetection": (
-        "tests.unit.quirks.servers.test_novell_quirks",
-        "TestNovellSchemaAttributeDetection",
-    ),
-    "TestNovellSchemaAttributeParsing": (
-        "tests.unit.quirks.servers.test_novell_quirks",
-        "TestNovellSchemaAttributeParsing",
-    ),
-    "TestNovellSchemaObjectClassDetection": (
-        "tests.unit.quirks.servers.test_novell_quirks",
-        "TestNovellSchemaObjectClassDetection",
-    ),
-    "TestNovellSchemaObjectClassParsing": (
-        "tests.unit.quirks.servers.test_novell_quirks",
-        "TestNovellSchemaObjectClassParsing",
-    ),
-    "TestSchemaTransformerNormalizeMatchingRule": (
-        "tests.unit.quirks.servers.test_schema_transformer",
-        "TestSchemaTransformerNormalizeMatchingRule",
-    ),
-    "TestSchemaTransformerNormalizeSyntaxOid": (
-        "tests.unit.quirks.servers.test_schema_transformer",
-        "TestSchemaTransformerNormalizeSyntaxOid",
-    ),
-    "TestsFlextLdifEdgeCases": (
-        "tests.unit.quirks.servers.test_edge_cases",
-        "TestsFlextLdifEdgeCases",
-    ),
-    "TestsFlextLdifNovellInitialization": (
-        "tests.unit.quirks.servers.test_novell_quirks",
-        "TestsFlextLdifNovellInitialization",
-    ),
-    "TestsFlextLdifSchemaTransformerNormalizeAttributeName": (
-        "tests.unit.quirks.servers.test_schema_transformer",
-        "TestsFlextLdifSchemaTransformerNormalizeAttributeName",
-    ),
-    "TestsTestFlextLdifApacheQuirks": (
-        "tests.unit.quirks.servers.test_apache_quirks",
-        "TestsTestFlextLdifApacheQuirks",
-    ),
-    "TestsTestFlextLdifDs389Quirks": (
-        "tests.unit.quirks.servers.test_ds389_quirks",
-        "TestsTestFlextLdifDs389Quirks",
-    ),
-    "TestsTestFlextLdifOidQuirks": (
-        "tests.unit.quirks.servers.test_oid_quirks",
-        "TestsTestFlextLdifOidQuirks",
-    ),
-    "TestsTestFlextLdifRelaxedQuirks": (
-        "tests.unit.quirks.servers.test_relaxed_quirks",
-        "TestsTestFlextLdifRelaxedQuirks",
-    ),
     "c": ("flext_core.constants", "FlextConstants"),
-    "cleanup_state": ("tests.unit.quirks.servers.test_edge_cases", "cleanup_state"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),
-    "entry_quirk": ("tests.unit.quirks.servers.test_novell_quirks", "entry_quirk"),
     "h": ("flext_core.handlers", "FlextHandlers"),
-    "ldif_api": ("tests.unit.quirks.servers.test_edge_cases", "ldif_api"),
     "m": ("flext_core.models", "FlextModels"),
-    "novell_server": ("tests.unit.quirks.servers.test_novell_quirks", "novell_server"),
     "p": ("flext_core.protocols", "FlextProtocols"),
     "r": ("flext_core.result", "FlextResult"),
     "s": ("flext_core.service", "FlextService"),
-    "schema_quirk": ("tests.unit.quirks.servers.test_novell_quirks", "schema_quirk"),
     "t": ("flext_core.typings", "FlextTypes"),
     "test_apache_quirks": "tests.unit.quirks.servers.test_apache_quirks",
     "test_ds389_quirks": "tests.unit.quirks.servers.test_ds389_quirks",
@@ -162,34 +64,14 @@ _LAZY_IMPORTS = {
 }
 
 __all__ = [
-    "TestNovellAcls",
-    "TestNovellEntryDetection",
-    "TestNovellSchemaAttributeDetection",
-    "TestNovellSchemaAttributeParsing",
-    "TestNovellSchemaObjectClassDetection",
-    "TestNovellSchemaObjectClassParsing",
-    "TestSchemaTransformerNormalizeMatchingRule",
-    "TestSchemaTransformerNormalizeSyntaxOid",
-    "TestsFlextLdifEdgeCases",
-    "TestsFlextLdifNovellInitialization",
-    "TestsFlextLdifSchemaTransformerNormalizeAttributeName",
-    "TestsTestFlextLdifApacheQuirks",
-    "TestsTestFlextLdifDs389Quirks",
-    "TestsTestFlextLdifOidQuirks",
-    "TestsTestFlextLdifRelaxedQuirks",
     "c",
-    "cleanup_state",
     "d",
     "e",
-    "entry_quirk",
     "h",
-    "ldif_api",
     "m",
-    "novell_server",
     "p",
     "r",
     "s",
-    "schema_quirk",
     "t",
     "test_apache_quirks",
     "test_ds389_quirks",

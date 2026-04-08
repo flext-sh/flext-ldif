@@ -19,7 +19,7 @@ from flext_ldif import FlextLdifUtilities
 from tests import c, m, p
 
 
-class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
+class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
     """Project test utility namespace extension."""
 
     class Ldif(FlextLdifUtilities.Ldif):
@@ -157,17 +157,17 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
             _resolved_admin_credentials: ClassVar[list[tuple[str, str] | None]] = [None]
 
             @staticmethod
-            def get_docker_control(worker_id: str = "master") -> FlextTestsDocker:
+            def get_docker_control(worker_id: str = "master") -> TestsFlextDocker:
                 """Create tk instance for Docker container management."""
-                return FlextTestsDocker(
-                    workspace_root=FlextLdifTestUtilities.Ldif.Tests._workspace_root,
+                return TestsFlextDocker(
+                    workspace_root=TestsFlextLdifUtilities.Ldif.Tests._workspace_root,
                     worker_id=worker_id,
                 )
 
             @staticmethod
             def get_admin_credentials() -> tuple[str, str]:
                 """Resolve LDAP admin credentials, trying env vars then known defaults."""
-                cache = FlextLdifTestUtilities.Ldif.Tests._resolved_admin_credentials
+                cache = TestsFlextLdifUtilities.Ldif.Tests._resolved_admin_credentials
                 if cache[0] is not None:
                     return cache[0]
                 d = c.Ldif.Docker
@@ -187,7 +187,7 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
                             port=d.PORT,
                             get_info="NO_INFO",
                         )
-                        test_conn: FlextLdifTestUtilities.Ldif.Tests.LdapConnectionLike = Ldap3Connection(
+                        test_conn: TestsFlextLdifUtilities.Ldif.Tests.LdapConnectionLike = Ldap3Connection(
                             server,
                             user=candidate_dn,
                             password=candidate_password,
@@ -195,7 +195,7 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
                             receive_timeout=1,
                         )
                         if test_conn.bound:
-                            FlextLdifTestUtilities.Ldif.Tests._unbind_connection(
+                            TestsFlextLdifUtilities.Ldif.Tests._unbind_connection(
                                 test_conn
                             )
                             cache[0] = (candidate_dn, candidate_password)
@@ -211,6 +211,6 @@ class FlextLdifTestUtilities(FlextTestsUtilities, FlextLdifUtilities):
                 return (d.ADMIN_DN, d.ADMIN_PASSWORD)
 
 
-u = FlextLdifTestUtilities
+u = TestsFlextLdifUtilities
 
-__all__ = ["FlextLdifTestUtilities", "u"]
+__all__ = ["TestsFlextLdifUtilities", "u"]

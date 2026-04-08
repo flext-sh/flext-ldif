@@ -14,9 +14,6 @@ if _t.TYPE_CHECKING:
 
     test_migration_pipeline = _tests_unit_services_test_migration_pipeline
     import tests.unit.services.test_quirks_standardization as _tests_unit_services_test_quirks_standardization
-    from tests.unit.services.test_migration_pipeline import (
-        TestsTestFlextLdifMigrationPipeline,
-    )
 
     test_quirks_standardization = _tests_unit_services_test_quirks_standardization
     from flext_core.constants import FlextConstants as c
@@ -30,33 +27,7 @@ if _t.TYPE_CHECKING:
     from flext_core.service import FlextService as s
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
-    from tests.unit.services.test_quirks_standardization import (
-        TestAliasDiscovery,
-        TestQuirksAutoInterchange,
-        TestQuirksWithRealLdifFixtures,
-        TestsFlextLdifQuirksStandardizedConstants,
-    )
 _LAZY_IMPORTS = {
-    "TestAliasDiscovery": (
-        "tests.unit.services.test_quirks_standardization",
-        "TestAliasDiscovery",
-    ),
-    "TestQuirksAutoInterchange": (
-        "tests.unit.services.test_quirks_standardization",
-        "TestQuirksAutoInterchange",
-    ),
-    "TestQuirksWithRealLdifFixtures": (
-        "tests.unit.services.test_quirks_standardization",
-        "TestQuirksWithRealLdifFixtures",
-    ),
-    "TestsFlextLdifQuirksStandardizedConstants": (
-        "tests.unit.services.test_quirks_standardization",
-        "TestsFlextLdifQuirksStandardizedConstants",
-    ),
-    "TestsTestFlextLdifMigrationPipeline": (
-        "tests.unit.services.test_migration_pipeline",
-        "TestsTestFlextLdifMigrationPipeline",
-    ),
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),
@@ -73,11 +44,6 @@ _LAZY_IMPORTS = {
 }
 
 __all__ = [
-    "TestAliasDiscovery",
-    "TestQuirksAutoInterchange",
-    "TestQuirksWithRealLdifFixtures",
-    "TestsFlextLdifQuirksStandardizedConstants",
-    "TestsTestFlextLdifMigrationPipeline",
     "c",
     "d",
     "e",

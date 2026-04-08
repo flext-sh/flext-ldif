@@ -14,10 +14,7 @@ if _t.TYPE_CHECKING:
 
     _services = _flext_ldif_services__services
     import flext_ldif.services.acl as _flext_ldif_services_acl
-    from flext_ldif.services._services import (
-        FlextLdifProcessingPipelineService,
-        processing_pipeline_service,
-    )
+    from flext_ldif.services._services import FlextLdifProcessingPipelineService
 
     acl = _flext_ldif_services_acl
     import flext_ldif.services.analysis as _flext_ldif_services_analysis
@@ -174,6 +171,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
 _ = _LAZY_IMPORTS.pop("cleanup_submodule_namespace", None)
 _ = _LAZY_IMPORTS.pop("install_lazy_exports", None)
 _ = _LAZY_IMPORTS.pop("lazy_getattr", None)
+_ = _LAZY_IMPORTS.pop("logger", None)
 _ = _LAZY_IMPORTS.pop("merge_lazy_imports", None)
 _ = _LAZY_IMPORTS.pop("output", None)
 _ = _LAZY_IMPORTS.pop("output_reporting", None)
@@ -217,7 +215,6 @@ __all__ = [
     "parser",
     "pipeline",
     "processing",
-    "processing_pipeline_service",
     "r",
     "rfc_validation",
     "s",

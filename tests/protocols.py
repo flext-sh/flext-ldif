@@ -1,6 +1,6 @@
 """Protocol definitions for flext-ldif tests.
 
-Provides FlextLdifTestProtocols, extending FlextTestsProtocols with flext-ldif-specific
+Provides TestsFlextLdifProtocols, extending TestsFlextProtocols with flext-ldif-specific
 protocols. All generic test protocols come from flext_tests.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -15,7 +15,7 @@ from flext_ldap import FlextLdapProtocols
 from flext_tests import FlextTestsProtocols
 
 
-class FlextLdifTestProtocols(
+class TestsFlextLdifProtocols(
     FlextTestsProtocols,
     FlextLdapProtocols,
 ):
@@ -38,6 +38,6 @@ class FlextLdifTestProtocols(
                     ...
 
 
-p = FlextLdifTestProtocols
+p = TestsFlextLdifProtocols
 
-__all__ = ["FlextLdifTestProtocols", "p"]
+__all__ = ["TestsFlextLdifProtocols", "p"]

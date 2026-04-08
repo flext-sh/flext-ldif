@@ -25,7 +25,7 @@ if _t.TYPE_CHECKING:
     from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
 
     schema = _flext_ldif_servers__oid_schema
-    from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema, logger
+    from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema
 _LAZY_IMPORTS = {
     "FlextLdifServersOidAcl": ("flext_ldif.servers._oid.acl", "FlextLdifServersOidAcl"),
     "FlextLdifServersOidConstants": (
@@ -44,7 +44,6 @@ _LAZY_IMPORTS = {
     "c": ("flext_ldif.servers._oid.constants", "c"),
     "constants": "flext_ldif.servers._oid.constants",
     "entry": "flext_ldif.servers._oid.entry",
-    "logger": ("flext_ldif.servers._oid.schema", "logger"),
     "schema": "flext_ldif.servers._oid.schema",
 }
 
@@ -57,7 +56,6 @@ __all__ = [
     "c",
     "constants",
     "entry",
-    "logger",
     "schema",
 ]
 

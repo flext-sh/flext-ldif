@@ -598,7 +598,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         Implementation Pattern
         ----------------------
 
-        **Constants Used** (from ``FlextLdifServersOudConstants``):
+        **Constants Used** (from ``FlextLdifConstantsServersOud``):
 
         - ``DN_DETECTION_PATTERNS`` - DN patterns for OUD detection
         - ``DETECTION_ATTRIBUTE_PREFIXES`` - Attribute prefixes (ds-cfg-, orcl, etc.)
@@ -1547,7 +1547,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         Implementation Pattern
         ----------------------
 
-        **Constants Used** (from ``FlextLdifServersOudConstants``):
+        **Constants Used** (from ``FlextLdifConstantsServersOud``):
 
         - ``MAX_LOG_LINE_LENGTH`` - Truncation limit for log messages
 

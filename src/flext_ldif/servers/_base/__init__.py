@@ -18,21 +18,21 @@ if _t.TYPE_CHECKING:
 
     constants = _flext_ldif_servers__base_constants
     import flext_ldif.servers._base.entry as _flext_ldif_servers__base_entry
-    from flext_ldif.servers._base.constants import (
-        FlextLdifQuirkMethodsMixin,
-        FlextLdifServersBaseConstants,
-        FlextLdifServersBaseQuirkHelpers,
-    )
+    from flext_ldif.servers._base.constants import FlextLdifServersBaseConstants
 
     entry = _flext_ldif_servers__base_entry
-    import flext_ldif.servers._base.schema as _flext_ldif_servers__base_schema
+    import flext_ldif.servers._base.mixins as _flext_ldif_servers__base_mixins
     from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
 
+    mixins = _flext_ldif_servers__base_mixins
+    import flext_ldif.servers._base.schema as _flext_ldif_servers__base_schema
+    from flext_ldif.servers._base.mixins import FlextLdifQuirkMethodsMixin
+
     schema = _flext_ldif_servers__base_schema
-    from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema, logger
+    from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 _LAZY_IMPORTS = {
     "FlextLdifQuirkMethodsMixin": (
-        "flext_ldif.servers._base.constants",
+        "flext_ldif.servers._base.mixins",
         "FlextLdifQuirkMethodsMixin",
     ),
     "FlextLdifServersBaseConstants": (
@@ -42,10 +42,6 @@ _LAZY_IMPORTS = {
     "FlextLdifServersBaseEntry": (
         "flext_ldif.servers._base.entry",
         "FlextLdifServersBaseEntry",
-    ),
-    "FlextLdifServersBaseQuirkHelpers": (
-        "flext_ldif.servers._base.constants",
-        "FlextLdifServersBaseQuirkHelpers",
     ),
     "FlextLdifServersBaseSchema": (
         "flext_ldif.servers._base.schema",
@@ -58,7 +54,7 @@ _LAZY_IMPORTS = {
     "acl": "flext_ldif.servers._base.acl",
     "constants": "flext_ldif.servers._base.constants",
     "entry": "flext_ldif.servers._base.entry",
-    "logger": ("flext_ldif.servers._base.schema", "logger"),
+    "mixins": "flext_ldif.servers._base.mixins",
     "schema": "flext_ldif.servers._base.schema",
 }
 
@@ -66,13 +62,12 @@ __all__ = [
     "FlextLdifQuirkMethodsMixin",
     "FlextLdifServersBaseConstants",
     "FlextLdifServersBaseEntry",
-    "FlextLdifServersBaseQuirkHelpers",
     "FlextLdifServersBaseSchema",
     "FlextLdifServersBaseSchemaAcl",
     "acl",
     "constants",
     "entry",
-    "logger",
+    "mixins",
     "schema",
 ]
 

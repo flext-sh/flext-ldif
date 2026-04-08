@@ -17,16 +17,16 @@ from flext_tests import FlextTestsTypes
 from flext_ldif import FlextLdifTypes
 
 
-class FlextLdifTestTypes(FlextTestsTypes, FlextLdifTypes):
-    """Test types extending FlextTestsTypes and FlextLdifTypes.
+class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
+    """Test types extending TestsFlextTypes and FlextLdifTypes.
 
     Provides test-specific type extensions without duplicating parent functionality.
     All parent types are accessible via inheritance hierarchy.
 
     Hierarchy:
-    - FlextTestsTypes.Tests.* (generic test types from flext_tests)
+    - TestsFlextTypes.Tests.* (generic test types from flext_tests)
     - FlextLdifTypes.Ldif.* (source types from flext_ldif)
-    - FlextLdifTestTypes.Tests.* (flext-ldif-specific test types)
+    - TestsFlextLdifTypes.Tests.* (flext-ldif-specific test types)
 
     Naming convention: Flext[Project]Test* where Project is the project name.
     Short name 't' for convenient access in tests.
@@ -38,7 +38,7 @@ class FlextLdifTestTypes(FlextTestsTypes, FlextLdifTypes):
         class Tests(FlextTestsTypes.Tests):
             """flext-ldif-specific test type definitions namespace.
 
-            Use t.Tests.* for generic test types from FlextTestsTypes.
+            Use t.Tests.* for generic test types from TestsFlextTypes.
             """
 
             type GenericFieldsDict = FlextLdifTypes.StrMapping
@@ -50,6 +50,6 @@ class FlextLdifTestTypes(FlextTestsTypes, FlextLdifTypes):
                 """TypedDict definitions for LDIF test fixtures."""
 
 
-t = FlextLdifTestTypes
-GenericFieldsDict = FlextLdifTestTypes.Ldif.Tests.GenericFieldsDict
-__all__ = ["FlextLdifTestTypes", "GenericFieldsDict", "t"]
+t = TestsFlextLdifTypes
+type GenericFieldsDict = TestsFlextLdifTypes.Ldif.Tests.GenericFieldsDict
+__all__ = ["GenericFieldsDict", "TestsFlextLdifTypes", "t"]

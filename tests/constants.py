@@ -45,10 +45,10 @@ from flext_ldif import (
     p,
     t,
 )
-from tests import FlextLdifTestModels
+from tests import TestsFlextLdifModels
 
 
-class FlextLdifTestConstants(FlextTestsConstants):
+class TestsFlextLdifConstants(FlextTestsConstants):
     """Constants for flext-ldif tests using COMPOSITION INHERITANCE."""
 
     class Ldif(FlextLdifConstants.Ldif):
@@ -1525,7 +1525,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     AssertionError: If parsing/writing fails or validations don't pass
 
                 """
-                attr = FlextLdifTestConstants.Ldif.RfcTestHelpers.test_schema_parse_attribute(
+                attr = TestsFlextLdifConstants.Ldif.RfcTestHelpers.test_schema_parse_attribute(
                     schema_quirk,
                     attr_def,
                     expected_oid,
@@ -2094,7 +2094,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 """
                 assert isinstance(api, ldif)
                 assert isinstance(output_file, Path)
-                ldif_string = FlextLdifTestConstants.Ldif.TestDeduplicationHelpers.helper_api_write_and_unwrap(
+                ldif_string = TestsFlextLdifConstants.Ldif.TestDeduplicationHelpers.helper_api_write_and_unwrap(
                     api,
                     entries,
                     must_contain=must_contain,
@@ -2118,7 +2118,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     must_contain: List of strings that must appear in output
 
                 """
-                FlextLdifTestConstants.Ldif.TestDeduplicationHelpers.helper_api_write_and_unwrap(
+                TestsFlextLdifConstants.Ldif.TestDeduplicationHelpers.helper_api_write_and_unwrap(
                     api,
                     entries,
                     must_contain=must_contain,
@@ -2467,25 +2467,25 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 """Apache quirk test cases."""
 
                 ATTRIBUTE_TEST_CASES = (
-                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.AttributeTestCase(
                         scenario="apache_oid",
                         attr_definition="( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )",
                         expected_can_handle=True,
                         expected_name="ads-enabled",
                     ),
-                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.AttributeTestCase(
                         scenario="ads_prefix",
                         attr_definition="( 2.16.840.1.113730.3.1.1 NAME 'ads-searchBaseDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
                         expected_can_handle=True,
                         expected_name="ads-searchBaseDN",
                     ),
-                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.AttributeTestCase(
                         scenario="apacheds_name",
                         attr_definition="( 1.2.3.4 NAME 'apachedsSystemId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
                         expected_can_handle=True,
                         expected_name="apachedsSystemId",
                     ),
-                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.AttributeTestCase(
                         scenario="standard_rfc",
                         attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
                         expected_can_handle=False,
@@ -2493,19 +2493,19 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     ),
                 )
                 OBJECTCLASS_TEST_CASES = (
-                    FlextLdifTestModels.Ldif.Tests.ObjectClassTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.ObjectClassTestCase(
                         scenario="apache_oid",
                         oc_definition="( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' SUP top STRUCTURAL )",
                         expected_can_handle=True,
                         expected_name="ads-directoryService",
                     ),
-                    FlextLdifTestModels.Ldif.Tests.ObjectClassTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.ObjectClassTestCase(
                         scenario="ads_name",
                         oc_definition="( 2.5.6.0 NAME 'ads-base' SUP top ABSTRACT )",
                         expected_can_handle=True,
                         expected_name="ads-base",
                     ),
-                    FlextLdifTestModels.Ldif.Tests.ObjectClassTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.ObjectClassTestCase(
                         scenario="standard_rfc",
                         oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
                         expected_can_handle=False,
@@ -2513,37 +2513,37 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     ),
                 )
                 ENTRY_TEST_CASES = (
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="ou_config",
                         entry_dn="ou=config,dc=example,dc=com",
                         attributes={"objectClass": ["organizationalUnit"]},
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="ou_services",
                         entry_dn="ou=services,dc=example,dc=com",
                         attributes={"objectClass": ["organizationalUnit"]},
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="ou_system",
                         entry_dn="ou=system,dc=example,dc=com",
                         attributes={"objectClass": ["organizationalUnit"]},
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="ou_partitions",
                         entry_dn="ou=partitions,dc=example,dc=com",
                         attributes={"objectClass": ["organizationalUnit"]},
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="ads_attribute",
                         entry_dn="cn=test,dc=example,dc=com",
                         attributes={"ads-enabled": ["TRUE"], "objectClass": ["top"]},
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="apacheds_attribute",
                         entry_dn="cn=test,dc=example,dc=com",
                         attributes={
@@ -2552,13 +2552,13 @@ class FlextLdifTestConstants(FlextTestsConstants):
                         },
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="ads_objectclass",
                         entry_dn="cn=test,dc=example,dc=com",
                         attributes={"objectClass": ["top", "ads-directory"]},
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="standard_rfc",
                         entry_dn="cn=user,dc=example,dc=com",
                         attributes={"objectClass": ["person"], "cn": ["user"]},
@@ -2570,39 +2570,39 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 """DS389 quirk test cases."""
 
                 ATTRIBUTE_TEST_CASES = (
-                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.AttributeTestCase(
                         scenario="ds389_oid",
                         attr_definition="( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
                         expected_can_handle=True,
                         expected_oid="2.16.840.1.113730.3.1.1",
                         expected_name="nsslapd-suffix",
                     ),
-                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.AttributeTestCase(
                         scenario="nsslapd_prefix",
                         attr_definition="( 1.2.3.4 NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )",
                         expected_can_handle=True,
                         expected_name="nsslapd-port",
                     ),
-                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.AttributeTestCase(
                         scenario="nsds_prefix",
                         attr_definition="( 1.2.3.4 NAME 'nsds5ReplicaId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )",
                         expected_can_handle=True,
                         expected_name="nsds5ReplicaId",
                     ),
-                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.AttributeTestCase(
                         scenario="nsuniqueid_prefix",
                         attr_definition="( 1.2.3.4 NAME 'nsuniqueid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
                         expected_can_handle=True,
                         expected_name="nsuniqueid",
                     ),
-                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.AttributeTestCase(
                         scenario="standard_rfc",
                         attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
                         expected_can_handle=False,
                     ),
                 )
                 OBJECTCLASS_TEST_CASES = (
-                    FlextLdifTestModels.Ldif.Tests.ObjectClassTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.ObjectClassTestCase(
                         scenario="ds389_oid",
                         oc_definition="( 2.16.840.1.113730.3.2.1 NAME 'nscontainer' SUP top STRUCTURAL )",
                         expected_can_handle=True,
@@ -2610,38 +2610,38 @@ class FlextLdifTestConstants(FlextTestsConstants):
                         expected_name="nscontainer",
                         expected_kind="STRUCTURAL",
                     ),
-                    FlextLdifTestModels.Ldif.Tests.ObjectClassTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.ObjectClassTestCase(
                         scenario="ns_name",
                         oc_definition="( 2.5.6.0 NAME 'nsperson' SUP top STRUCTURAL )",
                         expected_can_handle=True,
                         expected_name="nsperson",
                     ),
-                    FlextLdifTestModels.Ldif.Tests.ObjectClassTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.ObjectClassTestCase(
                         scenario="standard_rfc",
                         oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
                         expected_can_handle=False,
                     ),
                 )
                 ACL_TEST_CASES = (
-                    FlextLdifTestModels.Ldif.Tests.AclTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.AclTestCase(
                         scenario="aci_attribute",
                         acl_line='aci: (version 3.0; acl "Admin Access"; allow (all) userdn = "ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com";)',
                         expected_can_handle=True,
                         expected_success=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.AclTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.AclTestCase(
                         scenario="version_prefix",
                         acl_line='(version 3.0; acl "Admin Access"; allow (all) userdn = "ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com";)',
                         expected_can_handle=True,
                         expected_success=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.AclTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.AclTestCase(
                         scenario="openldap_format",
                         acl_line="access to * by * read",
                         expected_can_handle=False,
                         expected_success=False,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.AclTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.AclTestCase(
                         scenario="empty_line",
                         acl_line="",
                         expected_can_handle=False,
@@ -2649,7 +2649,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     ),
                 )
                 ENTRY_TEST_CASES = (
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="cn_config",
                         entry_dn="cn=config",
                         attributes={
@@ -2659,7 +2659,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                         },
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="cn_monitor",
                         entry_dn="cn=monitor",
                         attributes={
@@ -2667,7 +2667,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                         },
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="cn_changelog",
                         entry_dn="cn=changelog",
                         attributes={
@@ -2675,25 +2675,25 @@ class FlextLdifTestConstants(FlextTestsConstants):
                         },
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="nsslapd_attribute",
                         entry_dn="cn=test,dc=example,dc=com",
                         attributes={"nsslapd-port": ["389"], "objectclass": ["top"]},
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="nsds_attribute",
                         entry_dn="cn=test,dc=example,dc=com",
                         attributes={"nsds5ReplicaId": ["1"], "objectclass": ["top"]},
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="nsuniqueid_attribute",
                         entry_dn="cn=test,dc=example,dc=com",
                         attributes={"nsuniqueid": ["12345"], "objectclass": ["top"]},
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="ns_objectclass",
                         entry_dn="cn=test,dc=example,dc=com",
                         attributes={
@@ -2704,7 +2704,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                         },
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="standard_rfc",
                         entry_dn="cn=user,dc=example,dc=com",
                         attributes={
@@ -2719,77 +2719,77 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 """Novell quirk test cases."""
 
                 ATTRIBUTE_TEST_CASES = (
-                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.AttributeTestCase(
                         scenario="novell_oid",
                         attr_definition="( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
                         expected_can_handle=True,
                         expected_oid="2.16.840.1.113719.1.1.4.1.501",
                         expected_name="nspmPasswordPolicyDN",
                     ),
-                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.AttributeTestCase(
                         scenario="nspm_prefix",
                         attr_definition="( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
                         expected_can_handle=True,
                         expected_name="nspmPasswordPolicy",
                     ),
-                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.AttributeTestCase(
                         scenario="login_prefix",
                         attr_definition="( 1.2.3.4 NAME 'loginDisabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )",
                         expected_can_handle=True,
                         expected_name="loginDisabled",
                     ),
-                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.AttributeTestCase(
                         scenario="dirxml_prefix",
                         attr_definition="( 1.2.3.4 NAME 'dirxml-associations' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
                         expected_can_handle=True,
                         expected_name="dirxml-associations",
                     ),
-                    FlextLdifTestModels.Ldif.Tests.AttributeTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.AttributeTestCase(
                         scenario="standard_rfc",
                         attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
                         expected_can_handle=False,
                     ),
                 )
                 OBJECTCLASS_TEST_CASES = (
-                    FlextLdifTestModels.Ldif.Tests.ObjectClassTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.ObjectClassTestCase(
                         scenario="novell_oid",
                         oc_definition="( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' SUP top STRUCTURAL )",
                         expected_can_handle=True,
                         expected_oid="2.16.840.1.113719.2.2.6.1",
                         expected_name="ndsPerson",
                     ),
-                    FlextLdifTestModels.Ldif.Tests.ObjectClassTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.ObjectClassTestCase(
                         scenario="nds_name",
                         oc_definition="( 2.5.6.0 NAME 'ndsserver' SUP top STRUCTURAL )",
                         expected_can_handle=True,
                         expected_name="ndsserver",
                     ),
-                    FlextLdifTestModels.Ldif.Tests.ObjectClassTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.ObjectClassTestCase(
                         scenario="standard_rfc",
                         oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
                         expected_can_handle=False,
                     ),
                 )
                 ENTRY_TEST_CASES = (
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="ou_services",
                         entry_dn="ou=services,o=Example",
                         attributes={"objectClass": ["organizationalUnit"]},
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="ou_apps",
                         entry_dn="ou=apps,o=Example",
                         attributes={"objectClass": ["organizationalUnit"]},
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="ou_system",
                         entry_dn="ou=system,o=Example",
                         attributes={"objectClass": ["organizationalUnit"]},
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="nspm_attribute",
                         entry_dn="cn=user,o=Example",
                         attributes={
@@ -2798,19 +2798,19 @@ class FlextLdifTestConstants(FlextTestsConstants):
                         },
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="login_attribute",
                         entry_dn="cn=user,o=Example",
                         attributes={"logindisabled": ["TRUE"], "objectClass": ["top"]},
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="nds_objectclass",
                         entry_dn="cn=user,o=Example",
                         attributes={"objectClass": ["top", "ndsperson"]},
                         expected_can_handle=True,
                     ),
-                    FlextLdifTestModels.Ldif.Tests.EntryTestCase(
+                    TestsFlextLdifModels.Ldif.Tests.EntryTestCase(
                         scenario="standard_rfc",
                         entry_dn="cn=user,dc=example,dc=com",
                         attributes={"objectClass": ["person"], "cn": ["user"]},
@@ -2840,6 +2840,6 @@ class FlextLdifTestConstants(FlextTestsConstants):
             ]
 
 
-c = FlextLdifTestConstants
+c = TestsFlextLdifConstants
 
-__all__ = ["FlextLdifTestConstants", "c"]
+__all__ = ["TestsFlextLdifConstants", "c"]

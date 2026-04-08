@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from flext_core import FlextLogger
 from flext_ldif import (
     FlextLdifServersOudAcl,
     FlextLdifServersOudConstants,
@@ -10,8 +9,6 @@ from flext_ldif import (
     FlextLdifServersOudSchema,
     FlextLdifServersRfc,
 )
-
-logger = FlextLogger(__name__)
 
 
 class FlextLdifServersOud(FlextLdifServersRfc):

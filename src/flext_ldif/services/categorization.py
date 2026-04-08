@@ -12,7 +12,6 @@ from flext_core import FlextLogger
 from flext_ldif import (
     FlextLdifFilters,
     FlextLdifServer,
-    FlextLdifServersBaseConstants,
     FlextLdifUtilitiesDN,
     c,
     m,
@@ -704,7 +703,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
     def _check_hierarchy_priority(
         self,
         entry: m.Ldif.Entry,
-        constants: type[FlextLdifServersBaseConstants],
+        constants: type[FlextLdifConstantsServersBase],
     ) -> bool:
         """Check if entry matches HIERARCHY_PRIORITY_OBJECTCLASSES."""
         priority_classes_raw: frozenset[str] = getattr(
@@ -727,7 +726,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
 
     def _get_priority_order_from_constants(
         self,
-        constants: type[FlextLdifServersBaseConstants] | None,
+        constants: type[FlextLdifConstantsServersBase] | None,
     ) -> MutableSequence[str]:
         """Get priority order from constants or use default."""
         if constants is not None and hasattr(constants, "CATEGORIZATION_PRIORITY"):
@@ -761,11 +760,11 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
     def _get_server_constants(
         self,
         server_type: str,
-    ) -> r[type[FlextLdifServersBaseConstants]]:
+    ) -> r[type[FlextLdifConstantsServersBase]]:
         """Get and validate server constants via FlextLdifServer registry."""
         return self._server_registry.get_constants(server_type).fold(
-            on_failure=lambda e: r[type[FlextLdifServersBaseConstants]].fail(e),
-            on_success=lambda v: r[type[FlextLdifServersBaseConstants]].ok(v),
+            on_failure=lambda e: r[type[FlextLdifConstantsServersBase]].fail(e),
+            on_success=lambda v: r[type[FlextLdifConstantsServersBase]].ok(v),
         )
 
     def _match_entry_to_category(
@@ -795,7 +794,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
     def _merge_server_constants_to_map(
         self,
         category_map: t.MutableFrozensetMapping,
-        constants: type[FlextLdifServersBaseConstants],
+        constants: type[FlextLdifConstantsServersBase],
         *,
         override_existing: bool = False,
     ) -> t.MutableFrozensetMapping:

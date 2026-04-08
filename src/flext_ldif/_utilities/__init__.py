@@ -96,7 +96,7 @@ if _t.TYPE_CHECKING:
     from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 
     writers = _flext_ldif__utilities_writers
-    from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters, logger
+    from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
 _LAZY_IMPORTS = {
     "FlextLdifUtilitiesACL": ("flext_ldif._utilities.acl", "FlextLdifUtilitiesACL"),
     "FlextLdifUtilitiesAttribute": (
@@ -185,7 +185,6 @@ _LAZY_IMPORTS = {
     "dn": "flext_ldif._utilities.dn",
     "entry": "flext_ldif._utilities.entry",
     "events": "flext_ldif._utilities.events",
-    "logger": ("flext_ldif._utilities.writers", "logger"),
     "metadata": "flext_ldif._utilities.metadata",
     "object_class": "flext_ldif._utilities.object_class",
     "oid": "flext_ldif._utilities.oid",
@@ -232,7 +231,6 @@ __all__ = [
     "dn",
     "entry",
     "events",
-    "logger",
     "metadata",
     "object_class",
     "oid",

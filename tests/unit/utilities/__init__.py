@@ -14,9 +14,6 @@ if _t.TYPE_CHECKING:
 
     test_utilities_comprehensive = _tests_unit_utilities_test_utilities_comprehensive
     import tests.unit.utilities.test_utilities_core as _tests_unit_utilities_test_utilities_core
-    from tests.unit.utilities.test_utilities_comprehensive import (
-        TestFlextLdifUtilitiesComprehensive,
-    )
 
     test_utilities_core = _tests_unit_utilities_test_utilities_core
     from flext_core.constants import FlextConstants as c
@@ -30,37 +27,7 @@ if _t.TYPE_CHECKING:
     from flext_core.service import FlextService as s
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
-    from tests.unit.utilities.test_utilities_core import (
-        TestAttributeFixer,
-        TestDnObjectClassMethods,
-        TestLdifParser,
-        TestObjectClassUtilities,
-        TestServerTypes,
-        TestsFlextLdifDnOperationsPure,
-    )
 _LAZY_IMPORTS = {
-    "TestAttributeFixer": (
-        "tests.unit.utilities.test_utilities_core",
-        "TestAttributeFixer",
-    ),
-    "TestDnObjectClassMethods": (
-        "tests.unit.utilities.test_utilities_core",
-        "TestDnObjectClassMethods",
-    ),
-    "TestFlextLdifUtilitiesComprehensive": (
-        "tests.unit.utilities.test_utilities_comprehensive",
-        "TestFlextLdifUtilitiesComprehensive",
-    ),
-    "TestLdifParser": ("tests.unit.utilities.test_utilities_core", "TestLdifParser"),
-    "TestObjectClassUtilities": (
-        "tests.unit.utilities.test_utilities_core",
-        "TestObjectClassUtilities",
-    ),
-    "TestServerTypes": ("tests.unit.utilities.test_utilities_core", "TestServerTypes"),
-    "TestsFlextLdifDnOperationsPure": (
-        "tests.unit.utilities.test_utilities_core",
-        "TestsFlextLdifDnOperationsPure",
-    ),
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),
@@ -77,13 +44,6 @@ _LAZY_IMPORTS = {
 }
 
 __all__ = [
-    "TestAttributeFixer",
-    "TestDnObjectClassMethods",
-    "TestFlextLdifUtilitiesComprehensive",
-    "TestLdifParser",
-    "TestObjectClassUtilities",
-    "TestServerTypes",
-    "TestsFlextLdifDnOperationsPure",
     "c",
     "d",
     "e",

@@ -19,13 +19,8 @@ if _t.TYPE_CHECKING:
         FlextLdifServersBaseConstants,
         FlextLdifServersBaseConstants as c,
         FlextLdifServersBaseEntry,
-        FlextLdifServersBaseQuirkHelpers,
         FlextLdifServersBaseSchema,
         FlextLdifServersBaseSchemaAcl,
-        acl,
-        constants,
-        entry,
-        schema,
     )
 
     _oid = _flext_ldif_servers__oid
@@ -46,7 +41,6 @@ if _t.TYPE_CHECKING:
         FlextLdifServersOudSchema,
         FlextLdifServersOudUtilities,
         FlextLdifServersOudUtilities as u,
-        utilities,
     )
 
     _rfc = _flext_ldif_servers__rfc
@@ -80,7 +74,7 @@ if _t.TYPE_CHECKING:
 
     oid = _flext_ldif_servers_oid
     import flext_ldif.servers.openldap as _flext_ldif_servers_openldap
-    from flext_ldif.servers.oid import FlextLdifServersOid, logger
+    from flext_ldif.servers.oid import FlextLdifServersOid
 
     openldap = _flext_ldif_servers_openldap
     import flext_ldif.servers.openldap1 as _flext_ldif_servers_openldap1
@@ -162,7 +156,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "ds389": "flext_ldif.servers.ds389",
         "e": ("flext_core.exceptions", "FlextExceptions"),
         "h": ("flext_core.handlers", "FlextHandlers"),
-        "logger": ("flext_ldif.servers.oid", "logger"),
         "m": ("flext_core.models", "FlextModels"),
         "novell": "flext_ldif.servers.novell",
         "oid": "flext_ldif.servers.oid",
@@ -182,6 +175,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
 _ = _LAZY_IMPORTS.pop("cleanup_submodule_namespace", None)
 _ = _LAZY_IMPORTS.pop("install_lazy_exports", None)
 _ = _LAZY_IMPORTS.pop("lazy_getattr", None)
+_ = _LAZY_IMPORTS.pop("logger", None)
 _ = _LAZY_IMPORTS.pop("merge_lazy_imports", None)
 _ = _LAZY_IMPORTS.pop("output", None)
 _ = _LAZY_IMPORTS.pop("output_reporting", None)
@@ -193,7 +187,6 @@ __all__ = [
     "FlextLdifServersBase",
     "FlextLdifServersBaseConstants",
     "FlextLdifServersBaseEntry",
-    "FlextLdifServersBaseQuirkHelpers",
     "FlextLdifServersBaseSchema",
     "FlextLdifServersBaseSchemaAcl",
     "FlextLdifServersDs389",
@@ -222,18 +215,14 @@ __all__ = [
     "_oid",
     "_oud",
     "_rfc",
-    "acl",
     "ad",
     "apache",
     "base",
     "c",
-    "constants",
     "d",
     "ds389",
     "e",
-    "entry",
     "h",
-    "logger",
     "m",
     "novell",
     "oid",
@@ -245,11 +234,9 @@ __all__ = [
     "relaxed",
     "rfc",
     "s",
-    "schema",
     "t",
     "tivoli",
     "u",
-    "utilities",
     "x",
 ]
 

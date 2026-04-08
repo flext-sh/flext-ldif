@@ -49,19 +49,19 @@
 
 1. **Parâmetros `server_type` Atualizados**:
 
-   - De `str | None` → `FlextLdifTestConstants.TestLiterals.ServerTypeLiteral | str | None`
+   - De `str | None` → `TestsFlextLdifConstants.TestLiterals.ServerTypeLiteral | str | None`
    - Mantém compatibilidade retroativa com `str`
    - 9 ocorrências atualizadas
 
 1. **Parâmetros `target_server_type` Atualizados**:
 
-   - De `str` → `FlextLdifTestConstants.TestLiterals.ServerTypeLiteral | str`
+   - De `str` → `TestsFlextLdifConstants.TestLiterals.ServerTypeLiteral | str`
    - Mantém compatibilidade retroativa com `str`
    - 3 ocorrências atualizadas
 
 1. **Import Adicionado**:
 
-   - Import de `FlextLdifTestConstants` para usar os Literals
+   - Import de `FlextLdifConstantsTest` para usar os Literals
 
 **Benefícios**:
 

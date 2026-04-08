@@ -5,10 +5,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import ClassVar
 
-from flext_core import FlextLogger
 from flext_ldif import FlextLdifServersBaseConstants, t
-
-logger = FlextLogger(__name__)
 
 
 class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
