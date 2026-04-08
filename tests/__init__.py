@@ -10,65 +10,37 @@ import typing as _t
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 if _t.TYPE_CHECKING:
-    import tests.base as _tests_base
-
-    base = _tests_base
-    import tests.conftest as _tests_conftest
-    from tests.base import TestsFlextLdifServiceBase, TestsFlextLdifServiceBase as s
-
-    conftest = _tests_conftest
-    import tests.conftest_shared as _tests_conftest_shared
-
-    conftest_shared = _tests_conftest_shared
-    import tests.constants as _tests_constants
-
-    constants = _tests_constants
-    import tests.e2e as _tests_e2e
-    from tests.constants import TestsFlextLdifConstants, TestsFlextLdifConstants as c
-
-    e2e = _tests_e2e
-    import tests.helpers as _tests_helpers
-
-    helpers = _tests_helpers
-    import tests.integration as _tests_integration
-
-    integration = _tests_integration
-    import tests.models as _tests_models
-
-    models = _tests_models
-    import tests.protocols as _tests_protocols
-    from tests.models import TestsFlextLdifModels, TestsFlextLdifModels as m
-
-    protocols = _tests_protocols
-    import tests.support as _tests_support
-    from tests.protocols import TestsFlextLdifProtocols, TestsFlextLdifProtocols as p
-
-    support = _tests_support
-    import tests.test_factory as _tests_test_factory
-
-    test_factory = _tests_test_factory
-    import tests.test_helpers as _tests_test_helpers
-
-    test_helpers = _tests_test_helpers
-    import tests.typings as _tests_typings
-
-    typings = _tests_typings
-    import tests.unit as _tests_unit
-    from tests.typings import (
-        GenericFieldsDict,
-        TestsFlextLdifTypes,
-        TestsFlextLdifTypes as t,
-    )
-
-    unit = _tests_unit
-    import tests.utilities as _tests_utilities
-
-    utilities = _tests_utilities
     from flext_core.decorators import FlextDecorators as d
     from flext_core.exceptions import FlextExceptions as e
     from flext_core.handlers import FlextHandlers as h
     from flext_core.mixins import FlextMixins as x
     from flext_core.result import FlextResult as r
+    from tests import (
+        base,
+        conftest,
+        conftest_shared,
+        constants,
+        e2e,
+        helpers,
+        integration,
+        models,
+        protocols,
+        support,
+        test_factory,
+        test_helpers,
+        typings,
+        unit,
+        utilities,
+    )
+    from tests.base import TestsFlextLdifServiceBase, TestsFlextLdifServiceBase as s
+    from tests.constants import TestsFlextLdifConstants, TestsFlextLdifConstants as c
+    from tests.models import TestsFlextLdifModels, TestsFlextLdifModels as m
+    from tests.protocols import TestsFlextLdifProtocols, TestsFlextLdifProtocols as p
+    from tests.typings import (
+        GenericFieldsDict,
+        TestsFlextLdifTypes,
+        TestsFlextLdifTypes as t,
+    )
     from tests.utilities import TestsFlextLdifUtilities, TestsFlextLdifUtilities as u
 _LAZY_IMPORTS = merge_lazy_imports(
     (

@@ -5,34 +5,8 @@
 
 from __future__ import annotations
 
-import typing as _t
-
 from flext_core.lazy import install_lazy_exports
 
-if _t.TYPE_CHECKING:
-    import tests.support.conftest_factory as _tests_support_conftest_factory
-
-    conftest_factory = _tests_support_conftest_factory
-    import tests.support.ldif_data as _tests_support_ldif_data
-
-    ldif_data = _tests_support_ldif_data
-    import tests.support.test_files as _tests_support_test_files
-
-    test_files = _tests_support_test_files
-    import tests.support.validators as _tests_support_validators
-
-    validators = _tests_support_validators
-    from flext_core.constants import FlextConstants as c
-    from flext_core.decorators import FlextDecorators as d
-    from flext_core.exceptions import FlextExceptions as e
-    from flext_core.handlers import FlextHandlers as h
-    from flext_core.mixins import FlextMixins as x
-    from flext_core.models import FlextModels as m
-    from flext_core.protocols import FlextProtocols as p
-    from flext_core.result import FlextResult as r
-    from flext_core.service import FlextService as s
-    from flext_core.typings import FlextTypes as t
-    from flext_core.utilities import FlextUtilities as u
 _LAZY_IMPORTS = {
     "c": ("flext_core.constants", "FlextConstants"),
     "conftest_factory": "tests.support.conftest_factory",
@@ -51,23 +25,5 @@ _LAZY_IMPORTS = {
     "x": ("flext_core.mixins", "FlextMixins"),
 }
 
-__all__ = [
-    "c",
-    "conftest_factory",
-    "d",
-    "e",
-    "h",
-    "ldif_data",
-    "m",
-    "p",
-    "r",
-    "s",
-    "t",
-    "test_files",
-    "u",
-    "validators",
-    "x",
-]
 
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

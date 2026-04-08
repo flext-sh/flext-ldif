@@ -5,27 +5,8 @@
 
 from __future__ import annotations
 
-import typing as _t
-
 from flext_core.lazy import install_lazy_exports
 
-if _t.TYPE_CHECKING:
-    import flext_ldif.servers._rfc.acl as _flext_ldif_servers__rfc_acl
-
-    acl = _flext_ldif_servers__rfc_acl
-    import flext_ldif.servers._rfc.constants as _flext_ldif_servers__rfc_constants
-    from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
-
-    constants = _flext_ldif_servers__rfc_constants
-    import flext_ldif.servers._rfc.entry as _flext_ldif_servers__rfc_entry
-    from flext_ldif.servers._rfc.constants import FlextLdifServersRfcConstants, c
-
-    entry = _flext_ldif_servers__rfc_entry
-    import flext_ldif.servers._rfc.schema as _flext_ldif_servers__rfc_schema
-    from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
-
-    schema = _flext_ldif_servers__rfc_schema
-    from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
 _LAZY_IMPORTS = {
     "FlextLdifServersRfcAcl": ("flext_ldif.servers._rfc.acl", "FlextLdifServersRfcAcl"),
     "FlextLdifServersRfcConstants": (
@@ -47,17 +28,5 @@ _LAZY_IMPORTS = {
     "schema": "flext_ldif.servers._rfc.schema",
 }
 
-__all__ = [
-    "FlextLdifServersRfcAcl",
-    "FlextLdifServersRfcConstants",
-    "FlextLdifServersRfcEntry",
-    "FlextLdifServersRfcSchema",
-    "acl",
-    "c",
-    "constants",
-    "entry",
-    "schema",
-]
 
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

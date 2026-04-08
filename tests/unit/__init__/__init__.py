@@ -5,21 +5,11 @@
 
 from __future__ import annotations
 
-import typing as _t
-
 from flext_core.lazy import install_lazy_exports
 
-if _t.TYPE_CHECKING:
-    import tests.unit.__init__.test_version as _tests_unit___init___test_version
-
-    test_version = _tests_unit___init___test_version
 _LAZY_IMPORTS = {
     "test_version": "tests.unit.__init__.test_version",
 }
 
-__all__ = [
-    "test_version",
-]
 
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)
