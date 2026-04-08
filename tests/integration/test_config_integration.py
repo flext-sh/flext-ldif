@@ -51,7 +51,7 @@ class TestFlextLdifSettingsIntegration:
             ConfigTestData.BASIC_ENTRY, server_type=c.Ldif.Fixtures.OPENLDAP
         )
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert len(entries) == 1
 
     def test_config_independence_between_instances(self) -> None:
@@ -100,7 +100,7 @@ class TestFlextLdifSettingsIntegration:
         content = ConfigTestData.SERVER_CONTENT[expected_content_key]
         result = api.parse_ldif(content, server_type=server_type)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert len(entries) == 1
 
     def test_config_consistency_across_operations(self) -> None:
@@ -120,7 +120,7 @@ class TestFlextLdifSettingsIntegration:
         api = ldif(config=config)
         result = api.parse_ldif(ConfigTestData.MULTIPLE_ENTRIES)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert len(entries) == 3
 
 

@@ -351,7 +351,7 @@ class TestCategorizationRealData:
             value=ldif_content, server_type=c.Ldif.Fixtures.RFC
         )
         assert parse_result.is_success, f"Parsing failed: {parse_result.error}"
-        entries = parse_result.value
+        entries = parse_result.value.entries
         assert len(entries) == 6, f"Should parse 6 entries, got {len(entries)}"
         base_dn = "dc=example"
         categorization = api.categorization(

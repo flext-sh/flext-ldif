@@ -375,7 +375,12 @@ root = "examples"
 
 # [MANAGED] pytest
 [tool.pytest.ini_options]
+
 addopts = [ "--strict-markers" ]
+filterwarnings = [
+  "ignore:tagMap is deprecated\\. Please use TAG_MAP instead\\.:DeprecationWarning",
+  "ignore:typeMap is deprecated\\. Please use TYPE_MAP instead\\.:DeprecationWarning",
+]
 markers = [
   "docker: tests requiring Docker",
   "e2e: end-to-end integration tests",

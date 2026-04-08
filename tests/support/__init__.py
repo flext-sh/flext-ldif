@@ -17,12 +17,8 @@ if _t.TYPE_CHECKING:
     from tests.support.conftest_factory import FlextLdifTestConftest, tk
 
     ldif_data = _tests_support_ldif_data
-    import tests.support.real_services as _tests_support_real_services
-    from tests.support.ldif_data import LdifTestData
-
-    real_services = _tests_support_real_services
     import tests.support.test_files as _tests_support_test_files
-    from tests.support.real_services import FlextLdifTestServiceFactory
+    from tests.support.ldif_data import LdifTestData
 
     test_files = _tests_support_test_files
     import tests.support.validators as _tests_support_validators
@@ -51,10 +47,6 @@ _LAZY_IMPORTS = {
         "tests.support.conftest_factory",
         "FlextLdifTestConftest",
     ),
-    "FlextLdifTestServiceFactory": (
-        "tests.support.real_services",
-        "FlextLdifTestServiceFactory",
-    ),
     "LdifTestData": ("tests.support.ldif_data", "LdifTestData"),
     "MockFlextUtilitiesResultHelpers": (
         "tests.support.validators",
@@ -71,7 +63,6 @@ _LAZY_IMPORTS = {
     "m": ("flext_core.models", "FlextModels"),
     "p": ("flext_core.protocols", "FlextProtocols"),
     "r": ("flext_core.result", "FlextResult"),
-    "real_services": "tests.support.real_services",
     "s": ("flext_core.service", "FlextService"),
     "t": ("flext_core.typings", "FlextTypes"),
     "test_files": "tests.support.test_files",
@@ -84,7 +75,6 @@ _LAZY_IMPORTS = {
 __all__ = [
     "FileManager",
     "FlextLdifTestConftest",
-    "FlextLdifTestServiceFactory",
     "LdifTestData",
     "MockFlextUtilitiesResultHelpers",
     "MockMatchers",
@@ -98,7 +88,6 @@ __all__ = [
     "m",
     "p",
     "r",
-    "real_services",
     "s",
     "t",
     "test_files",

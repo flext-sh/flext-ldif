@@ -215,12 +215,14 @@ class FlextLdifWriterMixin:
                 or metadata.quirk_type
             )
             current_server_text = str(current_server_raw)
+
+            def normalize_current_server(
+                current_server_text: str = current_server_text,
+            ) -> str:
+                return u.Ldif.normalize_server_type(current_server_text)
+
             normalized_current = u.try_(
-                lambda current_server_text=current_server_text: (
-                    u.Ldif.normalize_server_type(
-                        current_server_text,
-                    )
-                ),
+                normalize_current_server,
                 default=None,
             ).map_or(None)
             if normalized_current is None or normalized_current == normalized_target:

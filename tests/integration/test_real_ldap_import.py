@@ -28,7 +28,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import ldif
-from tests import p, t
+from tests import p, t, u
 
 
 @pytest.fixture
@@ -55,10 +55,10 @@ class TestRealLdapImport:
         ldif_content = f"dn: cn={unique_username},{clean_test_ou}\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: {unique_username}\nsn: Test\nmail: import@example.com\n"
         parse_result = flext_api.parse_ldif(ldif_content)
         assert parse_result.is_success
-        entries = parse_result.value
+        entries = parse_result.value.entries
         assert len(entries) == 1
         entry = entries[0]
-        object_classes_raw = entry.get_attribute_values("objectclass")
+        object_classes_raw = u.Ldif.get_attribute_values(entry, "objectclass")
         object_classes: list[str] = (
             list(object_classes_raw) if object_classes_raw else []
         )
@@ -98,7 +98,7 @@ class TestRealLdapImport:
         ldif_content = f"dn: cn={unique_username},{clean_test_ou}\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: {unique_username}\nsn: Test\njpegPhoto:: {encoded_photo}\n"
         parse_result = flext_api.parse_ldif(ldif_content)
         assert parse_result.is_success
-        entries = parse_result.value
+        entries = parse_result.value.entries
         entry = entries[0]
         assert entry.attributes is not None
         attrs_dict: MutableMapping[str, t.StrSequence | bytes] = {
@@ -108,10 +108,10 @@ class TestRealLdapImport:
         }
         if "jpegPhoto" in attrs_dict:
             attrs_dict["jpegPhoto"] = binary_data
-        attrs_dict["objectClass"] = entry.get_attribute_values("objectclass")
+        attrs_dict["objectClass"] = u.Ldif.get_attribute_values(entry, "objectclass")
         ldap_connection.add(
             str(entry.dn),
-            entry.get_attribute_values("objectclass"),
+            u.Ldif.get_attribute_values(entry, "objectclass"),
             attributes=attrs_dict,
         )
         assert ldap_connection.search(
@@ -138,10 +138,10 @@ class TestRealLdapImport:
         ldif_file.write_text(ldif_content)
         parse_result = flext_api.parse_ldif(ldif_file)
         assert parse_result.is_success
-        entries = parse_result.value
+        entries = parse_result.value.entries
         assert len(entries) == 1
         entry = entries[0]
-        object_classes_raw = entry.get_attribute_values("objectclass")
+        object_classes_raw = u.Ldif.get_attribute_values(entry, "objectclass")
         object_classes: list[str] = (
             list(object_classes_raw) if object_classes_raw else []
         )

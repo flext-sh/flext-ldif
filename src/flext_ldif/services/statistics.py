@@ -6,7 +6,7 @@ from collections import Counter
 from collections.abc import MutableSequence
 from typing import override
 
-from flext_ldif import FlextLdifServiceBase, d, m, r
+from flext_ldif import FlextLdifServiceBase, d, m, r, u
 
 
 class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
@@ -23,7 +23,7 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
         object_class_distribution: Counter[str] = Counter()
         server_type_distribution: Counter[str] = Counter()
         for entry in normalized_entries:
-            object_class_distribution.update(entry.get_objectclass_names())
+            object_class_distribution.update(u.Ldif.get_objectclass_names(entry))
             metadata = entry.metadata
             if metadata is not None:
                 server_type_value = metadata.extensions.get("server_type")

@@ -713,7 +713,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
             frozenset(),
         )
         priority_classes = frozenset(map(str, priority_classes_raw))
-        entry_ocs = {oc.lower() for oc in entry.get_objectclass_names()}
+        entry_ocs = {oc.lower() for oc in u.Ldif.get_objectclass_names(entry)}
         return any(oc.lower() in entry_ocs for oc in priority_classes)
 
     def _get_default_priority_order(self) -> MutableSequence[str]:
@@ -775,7 +775,8 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         category_map: t.MutableFrozensetMapping,
     ) -> tuple[str, str | None]:
         """Match entry to category using priority order and category map."""
-        entry_ocs = {oc.lower() for oc in entry.get_objectclass_names()}
+        objectclass_names: MutableSequence[str] = u.Ldif.get_objectclass_names(entry)
+        entry_ocs: set[str] = {oc.lower() for oc in objectclass_names}
         for category in priority_order:
             if category not in category_map:
                 continue
@@ -785,7 +786,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 for attr_marker in category_ocs:
                     if attr_marker.startswith("attr:"):
                         attr_name = attr_marker[5:]
-                        if entry.has_attribute(attr_name):
+                        if u.Ldif.has_attribute(entry, attr_name):
                             return (c.Ldif.Category.ACL, None)
             elif any(oc in category_ocs_lower for oc in entry_ocs):
                 return (category, None)

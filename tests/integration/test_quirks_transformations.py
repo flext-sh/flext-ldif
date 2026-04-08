@@ -66,7 +66,7 @@ class TestOidQuirksTransformations:
             pytest.skip(f"Fixture not found: {fixture_path}")
         parse_result = api.parse_ldif(fixture_path)
         if parse_result.is_success:
-            entries = parse_result.value
+            entries = parse_result.value.entries
             write_result = api.write_ldif_file(
                 entries, tmp_path / "oid_schema_output.ldif"
             )
@@ -84,7 +84,7 @@ class TestOidQuirksTransformations:
             pytest.skip(f"Fixture not found: {fixture_path}")
         parse_result = api.parse_ldif(fixture_path)
         if parse_result.is_success:
-            entries = parse_result.value
+            entries = parse_result.value.entries
             write_result = api.write_ldif_file(
                 entries, tmp_path / "oid_acl_output.ldif"
             )
@@ -131,7 +131,7 @@ class TestOudQuirksTransformations:
             pytest.skip(f"Fixture not found: {fixture_path}")
         parse_result = api.parse_ldif(fixture_path)
         if parse_result.is_success:
-            entries = parse_result.value
+            entries = parse_result.value.entries
             write_result = api.write_ldif_file(
                 entries, tmp_path / "oud_schema_output.ldif"
             )
@@ -149,7 +149,7 @@ class TestOudQuirksTransformations:
             pytest.skip(f"Fixture not found: {fixture_path}")
         parse_result = api.parse_ldif(fixture_path)
         if parse_result.is_success:
-            entries = parse_result.value
+            entries = parse_result.value.entries
             write_result = api.write_ldif_file(
                 entries, tmp_path / "oud_acl_output.ldif"
             )

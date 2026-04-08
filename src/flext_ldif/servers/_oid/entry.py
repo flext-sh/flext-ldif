@@ -1107,16 +1107,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         attributes = restored_entry.attributes
         if metadata is None or attributes is None:
             return restored_entry
-        extensions = metadata.extensions
-        if extensions is None or not hasattr(extensions, "get"):
-            return restored_entry
-        rename_map = extensions.get("attribute_name_renames")
+        rename_map = metadata.extensions.get("attribute_name_renames")
         if not isinstance(rename_map, Mapping) or not rename_map:
             return restored_entry
         restored_attrs = dict(attributes.attributes)
         changed = False
         for current_name, original_name in rename_map.items():
-            if not isinstance(current_name, str) or not isinstance(original_name, str):
+            if not isinstance(original_name, str):
                 continue
             current_values = restored_attrs.pop(current_name, None)
             if current_values is None or original_name in restored_attrs:

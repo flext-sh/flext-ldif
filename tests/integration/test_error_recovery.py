@@ -115,7 +115,7 @@ class TestMalformedLdifHandling:
         ldif_content = "dn: cn=Duplicate,dc=example,dc=com\nobjectClass: person\ncn: Duplicate\nmail: test1@example.com\nmail: test2@example.com\nmail: test3@example.com\n"
         result = api.parse_ldif(ldif_content)
         if result.is_success:
-            entries = result.value
+            entries = result.value.entries
             assert entries
 
     def test_special_characters_in_values(self, api: ldif) -> None:
@@ -301,7 +301,7 @@ class TestEncodingErrors:
         ldif_content = "dn: cn=UTF8Test,dc=example,dc=com\nobjectClass: person\ncn: UTF8Test\ndescription: Contains UTF-8: café, naïve, résumé\n"
         result = api.parse_ldif(ldif_content)
         if result.is_success:
-            entries = result.value
+            entries = result.value.entries
             assert len(entries) >= 0
 
     def test_invalid_base64_binary(self, api: ldif) -> None:

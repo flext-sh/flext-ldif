@@ -25,7 +25,7 @@ from collections.abc import (
 import pytest
 
 from flext_ldif import ldif
-from tests import m, p, t
+from tests import m, p, t, u
 
 
 @pytest.fixture
@@ -97,14 +97,7 @@ class TestRealLdapRoundtrip:
         }
         attrs = reimport_entry.attributes
         assert attrs is not None
-        reimport_attrs: t.MutableStrSequenceMapping = {
-            attr_name: list(attr_values)
-            for attr_name, attr_values in attrs.attributes.items()
-            if attr_name.lower() not in ldif_special_attrs
-            and attr_name.lower() != "objectclass"
-        }
-        reimport_attrs["cn"] = [unique_username_copy]
-        obj_class_values = reimport_entry.get_attribute_values("objectclass")
+        obj_class_values = u.Ldif.get_attribute_values(reimport_entry, "objectclass")
         assert isinstance(obj_class_values, list)
         ldap_connection.add(
             reimport_dn,

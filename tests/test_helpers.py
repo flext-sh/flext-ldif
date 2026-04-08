@@ -14,14 +14,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableSequence, Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TypeVar
 
 from flext_tests import tm, tv
 
 from flext_ldif import FlextLdifEntries, ldif
-from tests import m, r, t
+from tests import m, r, t, u
 
 
 class _TestsBase:
@@ -136,24 +136,14 @@ class TestsFlextLdifMatchers(tm):
             if entry.is_failure:
                 error_msg = msg or str(entry.error)
                 raise AssertionError(error_msg)
-            entry_value = entry.value
-            entry = entry_value
-        if not hasattr(entry, "attributes"):
-            raise AssertionError(msg or "Entry has no 'attributes' attribute")
-        attrs_obj = entry.attributes
-        attrs: Mapping[str, t.StrSequence] = (
-            dict(attrs_obj) if isinstance(attrs_obj, dict) else {}
-        )
-        if not hasattr(entry, "dn"):
-            raise AssertionError(msg or "Entry has no 'dn' attribute")
-        dn_obj = entry.dn
-        if dn_obj is None:
+            entry = entry.value
+        if entry.attributes is None:
+            raise AssertionError(msg or "Entry has no attributes")
+        attrs = entry.attributes.attributes
+        if entry.dn is None:
             raise AssertionError(msg or "Entry has no DN value")
-        dn_value = dn_obj.value if hasattr(dn_obj, "value") else str(dn_obj)
-        oc_seq: t.StrSequence | None = attrs.get("objectClass") or attrs.get(
-            "objectclass",
-        )
-        objectclasses: t.StrSequence = list(oc_seq) if oc_seq else []
+        dn_value = entry.dn.value
+        objectclasses = u.Ldif.get_objectclass_names(entry)
         if dn is not None:
             TestsFlextLdifMatchers.that(dn_value, msg=msg, eq=dn)
         if dn_contains is not None:
@@ -177,15 +167,7 @@ class TestsFlextLdifMatchers(tm):
         if attr_equals is not None:
             for attr, expected in attr_equals.items():
                 TestsFlextLdifMatchers.that(attrs, msg=msg, contains=attr)
-                if hasattr(entry, "get_attribute_values"):
-                    values: t.StrSequence = list(entry.get_attribute_values(attr))
-                else:
-                    raw_values = attrs.get(attr, [])
-                    values = (
-                        [raw_values]
-                        if isinstance(raw_values, str)
-                        else list(raw_values)
-                    )
+                values: t.StrSequence = list(u.Ldif.get_attribute_values(entry, attr))
                 expected_list = (
                     [expected] if isinstance(expected, str) else list(expected)
                 )
@@ -193,15 +175,7 @@ class TestsFlextLdifMatchers(tm):
         if attr_contains is not None:
             for attr, substring in attr_contains.items():
                 TestsFlextLdifMatchers.that(attrs, msg=msg, contains=attr)
-                if hasattr(entry, "get_attribute_values"):
-                    values = list(entry.get_attribute_values(attr))
-                else:
-                    raw_values = attrs.get(attr, [])
-                    values = (
-                        [raw_values]
-                        if isinstance(raw_values, str)
-                        else list(raw_values)
-                    )
+                values = list(u.Ldif.get_attribute_values(entry, attr))
                 if isinstance(substring, str):
                     if not any(substring in str(v) for v in values):
                         error_msg = (
@@ -351,16 +325,9 @@ class TestsFlextLdifMatchers(tm):
             )
             found = False
             for entry in entries_list:
-                if hasattr(entry, "attributes"):
-                    attrs_obj = entry.attributes
-                    if attrs_obj is None:
-                        continue
-                    attrs_dict: Mapping[str, object] = (
-                        dict(attrs_obj) if isinstance(attrs_obj, dict) else {}
-                    )
-                    if all(attr in attrs_dict for attr in attr_list):
-                        found = True
-                        break
+                if all(u.Ldif.has_attribute(entry, attr) for attr in attr_list):
+                    found = True
+                    break
             if not found:
                 error_msg = msg or f"No entry has all attributes: {attr_list}"
                 raise AssertionError(error_msg)
@@ -368,23 +335,9 @@ class TestsFlextLdifMatchers(tm):
             oc_list = [any_has_oc] if isinstance(any_has_oc, str) else list(any_has_oc)
             found = False
             for entry in entries_list:
-                if hasattr(entry, "attributes"):
-                    attrs_obj = entry.attributes
-                    if attrs_obj is None:
-                        continue
-                    oc_attrs: Mapping[str, MutableSequence[str]] = (
-                        dict(attrs_obj) if isinstance(attrs_obj, dict) else {}
-                    )
-                    if oc_attrs:
-                        oc_seq_raw: MutableSequence[str] | None = oc_attrs.get(
-                            "objectClass",
-                        ) or oc_attrs.get("objectclass")
-                        objectclasses_parsed: t.StrSequence = (
-                            list(oc_seq_raw) if oc_seq_raw else []
-                        )
-                        if all(oc in objectclasses_parsed for oc in oc_list):
-                            found = True
-                            break
+                if all(u.Ldif.has_object_class(entry, oc) for oc in oc_list):
+                    found = True
+                    break
             if not found:
                 error_msg = msg or f"No entry has all objectClasses: {oc_list}"
                 raise AssertionError(error_msg)

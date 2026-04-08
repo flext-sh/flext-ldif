@@ -132,7 +132,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
         acl_attr_name = FlextLdifUtilitiesACL.get_acl_attributes()
         if not acl_attr_name:
             return r[m.Ldif.AclResponse].ok(self._build_acl_response([]))
-        acl_values = entry.get_attribute_values(next(iter(acl_attr_name)))
+        acl_values = u.Ldif.get_attribute_values(entry, next(iter(acl_attr_name)))
         if not acl_values:
             return r[m.Ldif.AclResponse].ok(self._build_acl_response([]))
         acls: MutableSequence[FlextLdifModelsDomainsEntries.Acl] = []

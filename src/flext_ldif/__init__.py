@@ -11,7 +11,15 @@ from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 from flext_ldif.__version__ import *
 
 if _t.TYPE_CHECKING:
+    import flext_ldif._constants as _flext_ldif__constants
+
+    _constants = _flext_ldif__constants
     import flext_ldif._models as _flext_ldif__models
+    from flext_ldif._constants import (
+        FlextLdifConstantsBase,
+        FlextLdifConstantsEnums,
+        enums,
+    )
 
     _models = _flext_ldif__models
     import flext_ldif._protocols as _flext_ldif__protocols
@@ -260,6 +268,7 @@ if _t.TYPE_CHECKING:
     from flext_ldif.utilities import FlextLdifUtilities, FlextLdifUtilities as u
 _LAZY_IMPORTS = merge_lazy_imports(
     (
+        "flext_ldif._constants",
         "flext_ldif._models",
         "flext_ldif._protocols",
         "flext_ldif._typings",
@@ -285,6 +294,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "__url__": ("flext_ldif.__version__", "__url__"),
         "__version__": ("flext_ldif.__version__", "__version__"),
         "__version_info__": ("flext_ldif.__version__", "__version_info__"),
+        "_constants": "flext_ldif._constants",
         "_models": "flext_ldif._models",
         "_protocols": "flext_ldif._protocols",
         "_typings": "flext_ldif._typings",
@@ -338,6 +348,8 @@ __all__ = [
     "FlextLdifAnalysis",
     "FlextLdifCategorization",
     "FlextLdifConstants",
+    "FlextLdifConstantsBase",
+    "FlextLdifConstantsEnums",
     "FlextLdifConversion",
     "FlextLdifDetector",
     "FlextLdifDetectorMixin",
@@ -455,6 +467,7 @@ __all__ = [
     "__url__",
     "__version__",
     "__version_info__",
+    "_constants",
     "_models",
     "_protocols",
     "_typings",
@@ -489,6 +502,7 @@ __all__ = [
     "e",
     "entries",
     "entry",
+    "enums",
     "events",
     "filters",
     "h",

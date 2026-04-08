@@ -34,17 +34,14 @@ from flext_tests import tk
 
 from flext_core import FlextLogger, FlextSettings, r
 from flext_ldif import (
-    FlextLdifParser,
     FlextLdifServer,
     FlextLdifServersBase,
-    FlextLdifWriter,
     ldif,
 )
 from tests import c, p, t
 
 from ..conftest import FlextLdifFixtures
 from .ldif_data import LdifTestData
-from .real_services import FlextLdifTestServiceFactory, _ServiceMapping
 from .test_files import FileManager
 from .validators import TestValidators
 
@@ -441,18 +438,6 @@ class FlextLdifTestConftest:
             "normalize_attributes": True,
         }
 
-    def real_ldif_api(self) -> _ServiceMapping:
-        """Real LDIF API services."""
-        return FlextLdifTestServiceFactory.create_api()
-
-    def strict_ldif_api(self) -> _ServiceMapping:
-        """Strict LDIF API services."""
-        return FlextLdifTestServiceFactory.create_strict_api()
-
-    def lenient_ldif_api(self) -> _ServiceMapping:
-        """Lenient LDIF API services."""
-        return FlextLdifTestServiceFactory.create_lenient_api()
-
     def ldif_test_data(self) -> LdifTestData:
         """LDIF test data provider."""
         return LdifTestData()
@@ -518,18 +503,6 @@ class FlextLdifTestConftest:
     def ldif_api(self) -> ldif:
         """Ldif API instance."""
         return ldif()
-
-    def real_parser_service(self, quirk_registry: FlextLdifServer) -> FlextLdifParser:
-        """Real parser service."""
-        return FlextLdifTestServiceFactory.create_parser()
-
-    def real_writer_service(self, quirk_registry: FlextLdifServer) -> FlextLdifWriter:
-        """Real writer service."""
-        return FlextLdifTestServiceFactory.create_writer(quirk_registry=quirk_registry)
-
-    def integration_services(self) -> _ServiceMapping:
-        """Integration services."""
-        return FlextLdifTestServiceFactory.services_for_integration_test()
 
     def assert_result_success(self) -> Callable[..., None]:
         """Result success assertion."""

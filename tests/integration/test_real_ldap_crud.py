@@ -24,7 +24,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import ldif
-from tests import m, p, t
+from tests import m, p, t, u
 
 
 @pytest.fixture
@@ -60,7 +60,9 @@ class TestRealLdapCRUD:
         )
         assert person_result.is_success
         person_entry = person_result.value
-        obj_class_values = list(person_entry.get_attribute_values("objectclass"))
+        obj_class_values = list(
+            u.Ldif.get_attribute_values(person_entry, "objectclass")
+        )
         assert person_entry.attributes is not None
         ldap_connection.add(
             str(person_entry.dn),
@@ -119,20 +121,11 @@ class TestRealLdapBatchOperations:
                 },
             )
             if result.is_success:
-                unwrapped_entry = result.value
-                if hasattr(unwrapped_entry, "dn") and hasattr(
-                    unwrapped_entry,
-                    "attributes",
-                ):
-                    entries.append(unwrapped_entry)
-                else:
-                    entry_dict = unwrapped_entry.model_dump()
-                    facade_entry = m.Ldif.Entry.model_validate(entry_dict)
-                    entries.append(facade_entry)
+                entries.append(result.value)
         assert len(entries) == 20
         ldap_entries: MutableSequence[m.Ldif.DN | None] = []
         for entry in entries:
-            object_classes_raw = entry.get_attribute_values("objectclass")
+            object_classes_raw = u.Ldif.get_attribute_values(entry, "objectclass")
             object_classes: list[str] = (
                 list(object_classes_raw) if object_classes_raw else []
             )
@@ -202,16 +195,7 @@ class TestRealLdapBatchOperations:
                 metadata=None,
             )
             assert result.is_success
-            unwrapped_entry = result.value
-            if hasattr(unwrapped_entry, "dn") and hasattr(
-                unwrapped_entry,
-                "attributes",
-            ):
-                entries.append(unwrapped_entry)
-            else:
-                entry_dict = unwrapped_entry.model_dump()
-                facade_entry = m.Ldif.Entry.model_validate(entry_dict)
-                entries.append(facade_entry)
+            entries.append(result.value)
         export_file = tmp_path / "batch_export.ldif"
         write_result = flext_api.write_ldif_file(entries, export_file)
         assert write_result.is_success

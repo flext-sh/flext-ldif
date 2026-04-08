@@ -6,12 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-)
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from contextlib import suppress
 from datetime import datetime
 from typing import Annotated, ClassVar, Self, override
@@ -34,7 +29,6 @@ from flext_ldif import (
     FlextLdifModelsMetadata,
     FlextLdifUtilitiesEntry,
     c,
-    p,
     r,
     t,
 )
@@ -1127,35 +1121,6 @@ class FlextLdifModelsDomainEntry:
                 statistics=statistics,
             )
             return cls._create_entry(params=params)
-
-        # Thin delegation methods for backward compatibility with callers using entry.method()
-
-        def get_attribute_values(self, attribute_name: str) -> MutableSequence[str]:
-            """Get all values for a specific attribute. Delegates to utility."""
-            return FlextLdifUtilitiesEntry.get_attribute_values(self, attribute_name)
-
-        def get_dn_components(self) -> MutableSequence[str]:
-            """Get DN components (RDN parts). Delegates to utility."""
-            return FlextLdifUtilitiesEntry.get_dn_components(self)
-
-        def get_objectclass_names(self) -> MutableSequence[str]:
-            """Get list of objectClass attribute values. Delegates to utility."""
-            return FlextLdifUtilitiesEntry.get_objectclass_names(self)
-
-        def has_attribute(self, attribute_name: str) -> bool:
-            """Check if entry has a specific attribute. Delegates to utility."""
-            return FlextLdifUtilitiesEntry.has_attribute(self, attribute_name)
-
-        def has_object_class(self, object_class: str) -> bool:
-            """Check if entry has specified object class. Delegates to utility."""
-            return FlextLdifUtilitiesEntry.has_object_class(self, object_class)
-
-        def matches_filter(
-            self,
-            filter_func: Callable[[p.Ldif.Entry], bool] | None = None,
-        ) -> bool:
-            """Check if entry matches a filter function. Delegates to utility."""
-            return FlextLdifUtilitiesEntry.matches_filter(self, filter_func)
 
 
 __all__ = ["FlextLdifModelsDomainEntry"]
