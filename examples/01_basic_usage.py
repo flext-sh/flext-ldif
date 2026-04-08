@@ -86,7 +86,7 @@ class BasicUsageDry:
         if parse_result.is_failure:
             return r[str].fail(parse_result.error or "Parse failed")
 
-        parsed_entries = parse_result.value
+        parsed_entries = parse_result.value.entries
         validate_result = api.validate_entries(parsed_entries)
         if validate_result.is_failure:
             return r[str].fail(validate_result.error or "Validation failed")
@@ -121,12 +121,12 @@ class BasicUsageDry:
                 return r[MutableSequence[m.Ldif.Entry]].fail(
                     parse_result.error or "Parse failed",
                 )
-            validate_result = api.validate_entries(parse_result.value)
+            validate_result = api.validate_entries(parse_result.value.entries)
             if validate_result.is_failure:
                 return r[MutableSequence[m.Ldif.Entry]].fail(
                     validate_result.error or "Validation failed",
                 )
-            return r[MutableSequence[m.Ldif.Entry]].ok(parse_result.value)
+            return r[MutableSequence[m.Ldif.Entry]].ok(parse_result.value.entries)
 
     def process_pipeline(self) -> r[MutableSequence[m.Ldif.Entry]]:
         """DRY railway: detect -> parse -> validate.
@@ -154,7 +154,7 @@ class BasicUsageDry:
             return r[MutableSequence[m.Ldif.Entry]].fail(
                 parse_result.error or "Parse failed"
             )
-        entries = parse_result.value
+        entries = parse_result.value.entries
         validate_result = api.validate_entries(entries)
         if validate_result.is_failure:
             return r[MutableSequence[m.Ldif.Entry]].fail(

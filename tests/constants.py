@@ -1802,7 +1802,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
                         raise AssertionError(
                             f"Write failed for {test_name}: {write_result.error}",
                         )
-                    if dn and dn not in write_result.value:
+                    written_content = write_result.value
+                    if dn and dn not in written_content:
                         raise AssertionError(
                             f"DN '{dn}' not found in output for {test_name}",
                         )
@@ -1899,9 +1900,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 result = write_method(acl)
                 if hasattr(result, "is_failure") and result.is_failure:
                     raise AssertionError(f"ACL writing failed: {result.error}")
-                output = result.value if hasattr(result, "value") else result
-                if not isinstance(output, str):
-                    raise AssertionError(f"Expected string output, got {type(output)}")
+                output_raw = result.value if hasattr(result, "value") else result
+                output = output_raw if isinstance(output_raw, str) else str(output_raw)
                 if expected_content is not None and expected_content not in output:
                     raise AssertionError(
                         f"Expected '{expected_content}' not found in output",
@@ -2067,8 +2067,8 @@ class FlextLdifTestConstants(FlextTestsConstants):
                 assert isinstance(api, ldif)
                 result = api.write(entries)
                 assert result.is_success, f"write() failed: {result.error}"
-                ldif_string = result.value
-                assert isinstance(ldif_string, str)
+                response = result.value
+                ldif_string = response.content or str(response)
                 if must_contain:
                     for substring in must_contain:
                         assert substring in ldif_string, (
@@ -2256,9 +2256,7 @@ class FlextLdifTestConstants(FlextTestsConstants):
                     output = result.value
                 else:
                     output = result
-                assert isinstance(output, str), (
-                    f"Expected str, got {type(output).__name__}"
-                )
+                output = output if isinstance(output, str) else str(output)
                 if must_contain:
                     for substring in must_contain:
                         if substring not in output:

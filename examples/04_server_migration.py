@@ -107,7 +107,7 @@ class ExampleServerMigration:
         parse_result = api.parse_ldif(mixed_ldif, server_type=detected_server)
         if parse_result.is_failure:
             return r[t.ContainerMapping].fail(f"Parse failed: {parse_result.error}")
-        entries = parse_result.value
+        entries = parse_result.value.entries
         migration_dir = Path("examples/auto_migration")
         migration_dir.mkdir(exist_ok=True, parents=True)
         (migration_dir / "source.ldif").write_text(mixed_ldif)
@@ -143,7 +143,7 @@ class ExampleServerMigration:
             server_type = server
             parse_result = api.parse_ldif(test_ldif, server_type=server_type)
             if parse_result.is_success:
-                entries = parse_result.value
+                entries = parse_result.value.entries
                 comparison_results[server] = {
                     "parsed_successfully": True,
                     "entry_count": len(entries),

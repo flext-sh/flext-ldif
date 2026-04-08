@@ -42,7 +42,7 @@ class TestEmptyAndMinimalCases:
         ldif_content = ""
         result = api.parse_ldif(ldif_content)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert not entries
 
     def test_only_whitespace(self, api: ldif) -> None:
@@ -56,7 +56,7 @@ class TestEmptyAndMinimalCases:
         ldif_content = "   \n\n  \t\n  "
         result = api.parse_ldif(ldif_content)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert not entries
 
     def test_only_comments(self, api: ldif) -> None:
@@ -70,7 +70,7 @@ class TestEmptyAndMinimalCases:
         ldif_content = "# Comment line 1\n# Comment line 2\n# Comment line 3\n"
         result = api.parse_ldif(ldif_content)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert not entries
 
     def test_single_entry_minimal(self, api: ldif) -> None:
@@ -84,7 +84,7 @@ class TestEmptyAndMinimalCases:
         ldif_content = "dn: cn=Single,dc=example,dc=com\n"
         result = api.parse_ldif(ldif_content)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert len(entries) == 1
         assert str(entries[0].dn).lower() == "cn=single,dc=example,dc=com"
 
@@ -99,7 +99,7 @@ class TestEmptyAndMinimalCases:
         ldif_content = "dn: cn=OneAttr,dc=example,dc=com\ncn: OneAttr\n"
         result = api.parse_ldif(ldif_content)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert len(entries) == 1
 
 
@@ -123,7 +123,7 @@ class TestLargeAndComplexCases:
         ldif_content = f"dn: cn=ManyAttrs,dc=example,dc=com\nobjectClass: person\ncn: ManyAttrs\n{attributes}"
         result = api.parse_ldif(ldif_content)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert len(entries) == 1
         assert entries[0].attributes is not None
         assert entries[0].attributes.attributes
@@ -140,7 +140,7 @@ class TestLargeAndComplexCases:
         ldif_content = f"dn: cn=ManyValues,dc=example,dc=com\nobjectClass: person\ncn: ManyValues\n{values}"
         result = api.parse_ldif(ldif_content)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert len(entries) == 1
 
     def test_very_long_single_value(self, api: ldif) -> None:
@@ -155,7 +155,7 @@ class TestLargeAndComplexCases:
         ldif_content = f"dn: cn=LongValue,dc=example,dc=com\nobjectClass: person\ncn: LongValue\ndescription: {long_value}\n"
         result = api.parse_ldif(ldif_content)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert len(entries) == 1
 
     def test_deeply_nested_dn_hierarchy(self, api: ldif) -> None:
@@ -171,7 +171,7 @@ class TestLargeAndComplexCases:
         ldif_content = f"dn: cn=DeepNest,{deep_dn}\nobjectClass: person\ncn: DeepNest\n"
         result = api.parse_ldif(ldif_content)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert len(entries) == 1
 
 
@@ -194,7 +194,7 @@ class TestBoundaryValues:
         ldif_content = "dn: cn=A,dc=B\nobjectClass: X\ncn: A\nsn: B\n"
         result = api.parse_ldif(ldif_content)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert len(entries) == 1
 
     def test_special_single_characters(self, api: ldif) -> None:
@@ -208,7 +208,7 @@ class TestBoundaryValues:
         ldif_content = "dn: cn=Special,dc=example,dc=com\ncn: Special\nsn: *\nmail: +\ndescription: -\n"
         result = api.parse_ldif(ldif_content)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert len(entries) == 1
 
     def test_maximum_rdn_components(self, api: ldif) -> None:
@@ -227,7 +227,7 @@ class TestBoundaryValues:
         )
         result = api.parse_ldif(ldif_content)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert len(entries) == 1
 
     def test_minimum_valid_dn(self, api: ldif) -> None:
@@ -319,11 +319,12 @@ class TestRoundtripEdgeCases:
         ldif_content = ""
         result = api.parse_ldif(ldif_content)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert not entries
         write_result = api.write(entries)
         assert write_result.is_success
-        written = write_result.value
+        written = write_result.value.content
+        assert written is not None
         assert not written or written.isspace() or written.strip() == "version: 1"
 
     def test_roundtrip_single_minimal_entry(self, api: ldif) -> None:
@@ -337,13 +338,15 @@ class TestRoundtripEdgeCases:
         ldif_content = "dn: cn=Test,dc=example,dc=com\ncn: Test\n"
         result = api.parse_ldif(ldif_content)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert len(entries) == 1
         write_result = api.write(entries)
         assert write_result.is_success
-        roundtrip_result = api.parse_ldif(write_result.value)
+        written_content = write_result.value.content
+        assert written_content is not None
+        roundtrip_result = api.parse_ldif(written_content)
         assert roundtrip_result.is_success
-        roundtrip_entries = roundtrip_result.value
+        roundtrip_entries = roundtrip_result.value.entries
         assert len(roundtrip_entries) == 1
 
     def test_roundtrip_with_many_entries(self, api: ldif) -> None:
@@ -360,13 +363,15 @@ class TestRoundtripEdgeCases:
         )
         result = api.parse_ldif(entries_ldif)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         initial_count = len(entries)
         write_result = api.write(entries)
         assert write_result.is_success
-        roundtrip_result = api.parse_ldif(write_result.value)
+        written_content = write_result.value.content
+        assert written_content is not None
+        roundtrip_result = api.parse_ldif(written_content)
         assert roundtrip_result.is_success
-        roundtrip_entries = roundtrip_result.value
+        roundtrip_entries = roundtrip_result.value.entries
         assert len(roundtrip_entries) == initial_count
 
 

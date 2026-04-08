@@ -79,11 +79,17 @@ if _t.TYPE_CHECKING:
     )
 
     test_config_integration = _tests_integration_test_config_integration
-    import tests.integration.test_cross_quirk_conversion as _tests_integration_test_cross_quirk_conversion
+    import tests.integration.test_cross_direction_conversion as _tests_integration_test_cross_direction_conversion
     from tests.integration.test_config_integration import (
         ConfigTestData,
         TestFlextLdifSettingsIntegration,
         logger,
+    )
+
+    test_cross_direction_conversion = _tests_integration_test_cross_direction_conversion
+    import tests.integration.test_cross_quirk_conversion as _tests_integration_test_cross_quirk_conversion
+    from tests.integration.test_cross_direction_conversion import (
+        TestsTestFlextLdifCrossDirectionConversion,
     )
 
     test_cross_quirk_conversion = _tests_integration_test_cross_quirk_conversion
@@ -522,6 +528,10 @@ _LAZY_IMPORTS = {
         "tests.integration.test_ldif_fixtures_integration",
         "TestsFlextLdifFixtures",
     ),
+    "TestsTestFlextLdifCrossDirectionConversion": (
+        "tests.integration.test_cross_direction_conversion",
+        "TestsTestFlextLdifCrossDirectionConversion",
+    ),
     "all_acl_fixtures": ("tests.integration.conftest", "all_acl_fixtures"),
     "all_entries_fixtures": ("tests.integration.conftest", "all_entries_fixtures"),
     "all_integration_fixtures": (
@@ -607,6 +617,7 @@ _LAZY_IMPORTS = {
         "tests.integration.test_simple_ldap",
         "test_create_and_export_entry",
     ),
+    "test_cross_direction_conversion": "tests.integration.test_cross_direction_conversion",
     "test_cross_quirk_conversion": "tests.integration.test_cross_quirk_conversion",
     "test_dn_case_handling": "tests.integration.test_dn_case_handling",
     "test_edge_cases": "tests.integration.test_edge_cases",
@@ -712,6 +723,7 @@ __all__ = [
     "TestUnicodeBoundaries",
     "TestZeroDataLossOidOud",
     "TestsFlextLdifFixtures",
+    "TestsTestFlextLdifCrossDirectionConversion",
     "all_acl_fixtures",
     "all_entries_fixtures",
     "all_integration_fixtures",
@@ -770,6 +782,7 @@ __all__ = [
     "test_categorization_real_data",
     "test_config_integration",
     "test_create_and_export_entry",
+    "test_cross_direction_conversion",
     "test_cross_quirk_conversion",
     "test_dn_case_handling",
     "test_edge_cases",

@@ -19,7 +19,7 @@ def complete_ldif_processing_workflow() -> None:
     parse_result = api.parse_ldif(content, server_type="rfc")
     if parse_result.is_failure:
         return
-    entries = parse_result.value
+    entries = parse_result.value.entries
     validation_result = api.validate_entries(entries)
     if validation_result.is_failure:
         return
@@ -106,7 +106,7 @@ def acl_processing_workflow() -> None:
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
-    for entry in parse_result.value:
+    for entry in parse_result.value.entries:
         if entry.attributes is not None and "aci" in entry.attributes.attributes:
             _ = entry.attributes["aci"]
 
@@ -156,7 +156,7 @@ def error_handling_and_recovery() -> None:
     )
     if parse_result.is_failure:
         return
-    entries = parse_result.value
+    entries = parse_result.value.entries
     validation_result = api.validate_entries(entries)
     if validation_result.is_failure:
         return

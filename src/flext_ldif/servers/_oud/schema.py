@@ -164,6 +164,25 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         """Hook: Validate OUD-specific attribute features after RFC parsing."""
         if not attr or not attr.oid:
             return r[m.Ldif.SchemaAttribute].ok(attr)
+        normalized_equality, normalized_substr = u.Ldif.normalize_matching_rules(
+            attr.equality,
+            attr.substr,
+            replacements=FlextLdifServersOudConstants.MATCHING_RULE_TO_RFC,
+            normalized_substr_values=FlextLdifServersOudConstants.MATCHING_RULE_TO_RFC,
+        )
+        normalized_ordering = attr.ordering
+        if attr.ordering:
+            normalized_ordering = FlextLdifServersOudConstants.MATCHING_RULE_TO_RFC.get(
+                attr.ordering,
+                attr.ordering,
+            )
+        attr = attr.model_copy(
+            update={
+                "equality": normalized_equality,
+                "substr": normalized_substr,
+                "ordering": normalized_ordering,
+            },
+        )
         oid = str(attr.oid)
         oid_validation = self._validate_attribute_oid(oid)
         if oid_validation.is_failure:

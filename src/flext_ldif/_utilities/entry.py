@@ -199,6 +199,11 @@ class FlextLdifUtilitiesEntry:
         Note: entry.attributes may be None when using model_construct (bypasses validation).
         """
         violations: MutableSequence[str] = []
+        if entry.changetype in {"delete", "moddn", "modrdn"}:
+            return violations
+        change_operations = getattr(entry, "change_operations", [])
+        if entry.changetype == "modify" and change_operations:
+            return violations
         if entry.attributes is None:
             violations.append(
                 "RFC 2849 § 2: Entry must have at least one attribute (missing)",
@@ -310,6 +315,8 @@ class FlextLdifUtilitiesEntry:
         Note: entry.attributes may be None when using model_construct (bypasses validation).
         """
         violations: MutableSequence[str] = []
+        if entry.changetype:
+            return violations
         if not dn_value or entry.attributes is None or (not entry.attributes):
             return violations
         first_rdn = (
@@ -340,6 +347,8 @@ class FlextLdifUtilitiesEntry:
         Note: entry.attributes may be None when using model_construct (bypasses validation).
         """
         violations: MutableSequence[str] = []
+        if entry.changetype:
+            return violations
         is_schema_entry = dn_value.lower().startswith(
             "cn=schema",
         ) or dn_value.lower().startswith("cn=subschema")

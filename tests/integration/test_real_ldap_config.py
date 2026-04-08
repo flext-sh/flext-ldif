@@ -89,7 +89,7 @@ class TestRealLdapRailwayComposition:
             )
         )
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert len(entries) == 1
 
 

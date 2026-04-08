@@ -578,6 +578,10 @@ class FlextLdifModelsResults:
         content: str | None = Field(
             default=None, description="Serialized LDIF content string"
         )
+        output_path: str | None = Field(
+            default=None,
+            description="Target file path when the write operation persisted content",
+        )
         statistics: FlextLdifModelsResults.Statistics = Field(
             ...,
             description="Write operation statistics",

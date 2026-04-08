@@ -14,12 +14,15 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
 
     def calculate_for_entries(
         self,
-        entries: MutableSequence[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
     ) -> r[m.Ldif.EntriesStatistics]:
         """Calculate general-purpose statistics for a list of Entry models."""
+        normalized_entries = (
+            entries.entries if isinstance(entries, m.Ldif.ParseResponse) else entries
+        )
         object_class_distribution: Counter[str] = Counter()
         server_type_distribution: Counter[str] = Counter()
-        for entry in entries:
+        for entry in normalized_entries:
             object_class_distribution.update(entry.get_objectclass_names())
             metadata = entry.metadata
             if metadata is not None:
@@ -33,7 +36,7 @@ class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
         for server_type, count in server_type_distribution.items():
             server_type_model.set_count(server_type, count)
         entries_stats = m.Ldif.EntriesStatistics(
-            total_entries=len(entries),
+            total_entries=len(normalized_entries),
             object_class_distribution=obj_class_model,
             server_type_distribution=server_type_model,
         )

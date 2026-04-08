@@ -214,7 +214,15 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "caseIgnoreOrderingMatch": None,
         "numericStringMatch": "numericStringSubstringsMatch",
     }
+    MATCHING_RULE_TO_RFC: ClassVar[t.MutableStrMapping] = {
+        "distinguishedNAMEMatch": "distinguishedNameMatch",
+        "DistinguishedNameMatch": "distinguishedNameMatch",
+        "caseIgnoreSubstringMatch": "caseIgnoreSubstringsMatch",
+        "CaseIgnoreMatch": "caseIgnoreMatch",
+        "CaseExactMatch": "caseExactMatch",
+    }
     MATCHING_RULE_REPLACEMENTS: ClassVar[t.MutableStrMapping] = {
+        **MATCHING_RULE_TO_RFC,
         "caseIgnoreMatch": "caseIgnoreMatch",
         "caseIgnoreSubstringsMatch": "caseIgnoreSubstringsMatch",
     }

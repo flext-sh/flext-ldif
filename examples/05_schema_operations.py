@@ -206,7 +206,7 @@ def schema_migration_pipeline() -> r[t.ContainerMapping]:
     for ldif_file in source_dir.glob("*.ldif"):
         parse_result = api.parse_ldif(ldif_file)
         if parse_result.is_success:
-            all_entries.extend(parse_result.value)
+            all_entries.extend(parse_result.value.entries)
     migration_results["source_entries_parsed"] = len(all_entries)
     pre_validation = api.validate_entries(all_entries)
     if pre_validation.is_success:

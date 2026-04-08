@@ -52,7 +52,7 @@ class FlextLdifValidationMixin:
 
     def validate_entries(
         self,
-        entries: MutableSequence[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
     ) -> r[m.Ldif.ValidationResult]:
         """Validate list of entries."""
         validation_service = FlextLdifValidation()

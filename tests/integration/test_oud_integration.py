@@ -43,7 +43,7 @@ class TestOudSchemaIntegration:
         """
         result = api.parse_ldif(oud_schema_fixture)
         assert result.is_success, f"Schema parsing failed: {result.error}"
-        entries = result.value
+        entries = result.value.entries
         assert entries is not None
 
     def test_oracle_attributes_in_parsed_schema(
@@ -54,7 +54,7 @@ class TestOudSchemaIntegration:
         """Test that Oracle attributes are detected in parsed schema."""
         result = api.parse_ldif(oud_schema_fixture)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         if not entries or len(entries) == 0:
             assert True
             return
@@ -82,7 +82,7 @@ class TestOudSchemaIntegration:
         """Test that Oracle objectClasses are detected in parsed schema."""
         result = api.parse_ldif(oud_schema_fixture)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         if not entries or len(entries) == 0:
             assert True
             return
@@ -129,14 +129,14 @@ class TestOudAclIntegration:
         """Test parsing complete OUD ACL fixture."""
         result = api.parse_ldif(acl_fixture)
         assert result.is_success, f"ACL parsing failed: {result.error}"
-        entries = result.value
+        entries = result.value.entries
         assert entries, "No ACL entries parsed"
 
     def test_multiline_acis_preserved(self, api: ldif, acl_fixture: str) -> None:
         """Test that multi-line ACIs are preserved during parsing."""
         result = api.parse_ldif(acl_fixture)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         entries_with_aci = sum(
             1
             for entry in entries
@@ -182,7 +182,7 @@ class TestOudEntryIntegration:
         """Test parsing complete OUD entry fixture."""
         result = api.parse_ldif(entry_fixture)
         assert result.is_success, f"Entry fixture parsing failed: {result.error}"
-        entries = result.value
+        entries = result.value.entries
         min_expected_entries = 10
         assert len(entries) >= min_expected_entries, (
             f"Expected >= {min_expected_entries} entries, got {len(entries)}"
@@ -196,7 +196,7 @@ class TestOudEntryIntegration:
         """Test that Oracle objectClasses are preserved during parsing."""
         result = api.parse_ldif(entry_fixture)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         oracle_oc_patterns = ["orclContext", "orclContainer", "orclPrivilegeGroup"]
         entries_with_oracle_oc = 0
         for entry in entries:
@@ -251,15 +251,16 @@ class TestOudRoundTripIntegration:
         """Test complete round-trip: parse → write → parse."""
         parse1_result = api.parse_ldif(oud_integration_fixture)
         assert parse1_result.is_success, f"Initial parse failed: {parse1_result.error}"
-        entries1 = parse1_result.value
+        entries1 = parse1_result.value.entries
         assert entries1, "No entries parsed from fixture"
         write_result = api.write(entries1)
         assert write_result.is_success, f"Write failed: {write_result.error}"
-        written_ldif = write_result.value
+        written_ldif = write_result.value.content
+        assert written_ldif is not None
         assert written_ldif, "Empty LDIF output"
         parse2_result = api.parse_ldif(written_ldif)
         assert parse2_result.is_success, f"Second parse failed: {parse2_result.error}"
-        entries2 = parse2_result.value
+        entries2 = parse2_result.value.entries
         assert len(entries1) == len(entries2), (
             f"Entry count mismatch: {len(entries1)} vs {len(entries2)}"
         )
@@ -275,7 +276,7 @@ class TestOudRoundTripIntegration:
         """Test that DNs with spaces after commas are preserved."""
         parse_result = api.parse_ldif(oud_integration_fixture)
         assert parse_result.is_success
-        entries = parse_result.value
+        entries = parse_result.value.entries
         entries_with_dn_spaces = [
             entry
             for entry in entries
@@ -287,10 +288,11 @@ class TestOudRoundTripIntegration:
             original_dn = test_entry.dn.value
             write_result = api.write([test_entry])
             assert write_result.is_success
-            written_ldif = write_result.value
+            written_ldif = write_result.value.content
+            assert written_ldif is not None
             parse2_result = api.parse_ldif(written_ldif)
             assert parse2_result.is_success
-            entries2 = parse2_result.value
+            entries2 = parse2_result.value.entries
             assert len(entries2) == 1
             assert entries2[0].dn is not None
             parsed_dn = entries2[0].dn.value
@@ -313,7 +315,7 @@ class TestOudMetadataPreservation:
         api = ldif.get_instance()
         result = api.parse_ldif(test_ldif)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert len(entries) == 1
         entry = entries[0]
         assert hasattr(entry, "metadata"), "Entry should have metadata attribute"

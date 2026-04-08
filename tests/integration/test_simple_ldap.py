@@ -63,7 +63,8 @@ def test_create_and_export_entry(
     flext_entry = entry_result.value
     write_result = api.write([flext_entry])
     assert write_result.is_success
-    ldif_output = write_result.value
+    ldif_output = write_result.value.content
+    assert ldif_output is not None
     assert f"cn: {unique_username}" in ldif_output
     assert "sn: Test" in ldif_output
     ldap_connection.delete(test_dn)

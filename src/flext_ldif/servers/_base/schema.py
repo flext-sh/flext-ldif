@@ -223,6 +223,7 @@ class FlextLdifServersBaseSchema(
         metadata_extensions["original_format"] = attr_definition.strip()
         metadata_extensions["schema_original_string_complete"] = attr_definition
         quirk_type = FlextLdifServersBaseSchema._resolve_quirk_type(server_type)
+        metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = quirk_type.value
         extensions_typed: t.MutableContainerMapping = {}
         for key, val in metadata_extensions.items():
             if isinstance(val, list):
@@ -237,6 +238,8 @@ class FlextLdifServersBaseSchema(
             )
             if extensions_typed
             else m.Ldif.DynamicMetadata(),
+            original_server_type=quirk_type,
+            target_server_type=quirk_type,
         )
         FlextLdifServersBaseSchema._preserve_formatting(metadata, attr_definition)
         preview_len = 100

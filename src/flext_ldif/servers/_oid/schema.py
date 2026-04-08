@@ -166,9 +166,13 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
     ) -> r[m.Ldif.SchemaObjectClass]:
         """Hook: Transform parsed objectClass using OID-specific normalizations."""
         try:
-            key = c.Ldif.SCHEMA_ORIGINAL_FORMAT
             original_format_str = (
-                str(oc.metadata.extensions.get(key, ""))
+                str(
+                    oc.metadata.extensions.get(
+                        c.Ldif.SCHEMA_ORIGINAL_FORMAT,
+                        oc.metadata.extensions.get(c.Ldif.ORIGINAL_FORMAT, ""),
+                    ),
+                )
                 if oc.metadata and oc.metadata.extensions
                 else ""
             )

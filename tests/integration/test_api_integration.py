@@ -53,7 +53,7 @@ class TestFlextLdifAPIIntegration:
         api = ldif()
         result = api.parse_ldif(ldif_content)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         assert len(entries) == expected_entries
         for entry in entries:
             assert hasattr(entry, "dn") and hasattr(entry, "attributes")
@@ -89,7 +89,7 @@ class TestFlextLdifAPIIntegration:
         api = ldif()
         parse_result = api.parse_ldif(c.Ldif.RFC.SAMPLE_LDIF_BASIC)
         assert parse_result.is_success
-        entries = parse_result.value
+        entries = parse_result.value.entries
         validate_result = api.validate_entries(entries)
         assert validate_result.is_success
 
@@ -101,8 +101,8 @@ class TestFlextLdifAPIIntegration:
         result2 = ldif2.parse_ldif(c.Ldif.RFC.SAMPLE_LDIF_BASIC)
         assert result1.is_success
         assert result2.is_success
-        entries1 = result1.value
-        entries2 = result2.value
+        entries1 = result1.value.entries
+        entries2 = result2.value.entries
         assert len(entries1) == len(entries2) == 1
         assert entries1[0].dn is not None
         assert entries2[0].dn is not None
@@ -130,7 +130,7 @@ class TestFlextLdifAPIIntegration:
         api = ldif()
         parse_result = api.parse_ldif(c.Ldif.RFC.SAMPLE_LDIF_BASIC)
         assert parse_result.is_success
-        entries = parse_result.value
+        entries = parse_result.value.entries
         analyze_result = FlextLdifStatistics().calculate_for_entries(entries)
         assert analyze_result.is_success
         stats = analyze_result.value

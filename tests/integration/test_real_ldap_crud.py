@@ -218,7 +218,7 @@ class TestRealLdapBatchOperations:
         assert export_file.exists()
         parse_result = flext_api.parse_ldif(export_file)
         assert parse_result.is_success
-        parsed_entries = parse_result.value
+        parsed_entries = parse_result.value.entries
         assert len(parsed_entries) == actual_count
 
 

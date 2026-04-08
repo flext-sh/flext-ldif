@@ -18,14 +18,10 @@ from collections.abc import Mapping, MutableSequence, Sequence
 from pathlib import Path
 from typing import TypeVar
 
-from flext_tests import (
-    tm as _base_tm,
-    tv as _base_tv,
-)
+from flext_tests import tm, tv
 
-from flext_core import r
 from flext_ldif import FlextLdifEntries, ldif
-from tests import m, t
+from tests import m, r, t
 
 
 class _TestsBase:
@@ -57,7 +53,7 @@ def _unwrap_result[TResult](
     return value
 
 
-class TestsFlextLdifMatchers(_base_tm):
+class TestsFlextLdifMatchers(tm):
     """Enhanced matchers for flext-ldif tests.
 
     Consolidates entry and entries validation into unified, highly parameterized methods.
@@ -544,7 +540,7 @@ class TestsFlextLdifMatchers(_base_tm):
         )
 
 
-class TestsFlextLdifValidators(_base_tv):
+class TestsFlextLdifValidators(tv):
     """Enhanced validators for flext-ldif tests.
 
     Extends tv with flext-ldif specific validation methods.
@@ -667,11 +663,14 @@ class TestsFlextLdifFixtures(_base_tt):
         """
         api = ldif.get_instance()
         parse_result = api.parse_ldif(fixture_path)
-        entries = _unwrap_result(parse_result, msg=msg)
+        entries = _unwrap_result(parse_result, msg=msg).entries
         write_result = api.write(entries)
-        ldif_content = _unwrap_result(write_result, msg=msg)
+        write_response = _unwrap_result(write_result, msg=msg)
+        ldif_content = write_response.content
+        if ldif_content is None:
+            raise AssertionError(msg or "write returned no content")
         roundtrip_result = api.parse_ldif(ldif_content)
-        roundtrip_entries = _unwrap_result(roundtrip_result, msg=msg)
+        roundtrip_entries = _unwrap_result(roundtrip_result, msg=msg).entries
         return list(roundtrip_entries)
 
     @staticmethod
@@ -691,7 +690,7 @@ class TestsFlextLdifFixtures(_base_tt):
         """
         api = ldif.get_instance()
         result = api.parse_ldif(fixture_path)
-        unwrapped = _unwrap_result(result, msg=msg)
+        unwrapped = _unwrap_result(result, msg=msg).entries
         return list(unwrapped)
 
     @staticmethod
@@ -711,7 +710,7 @@ class TestsFlextLdifFixtures(_base_tt):
         """
         api = ldif.get_instance()
         result = api.parse_ldif(fixture_path)
-        entries = _unwrap_result(result, msg=msg)
+        entries = _unwrap_result(result, msg=msg).entries
         TestsFlextLdifMatchers.entries(entries, msg=msg)
         return entries
 

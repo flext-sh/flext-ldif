@@ -39,7 +39,7 @@ class TestsFlextLdifEdgeCases:
         unicode_ldif = "dn: cn=José,ou=Users,dc=example,dc=com\ncn: José\nsn: García\nobjectClass: person\n\n"
         result = ldif_api.parse_ldif(unicode_ldif, server_type=c.Ldif.Fixtures.RFC)
         _ = tm.that(result.is_success, eq=True)
-        entries = result.value
+        entries = result.value.entries
         tm.that(len(entries) > 0, eq=True)
         for entry in entries:
             tm.that(entry.dn, none=False)
@@ -54,7 +54,7 @@ class TestsFlextLdifEdgeCases:
         deep_dn_ldif = "dn: cn=level1,ou=level2,ou=level3,ou=level4,ou=level5,ou=level6,dc=example,dc=com\ncn: level1\nobjectClass: person\n\n"
         result = ldif_api.parse_ldif(deep_dn_ldif, server_type=c.Ldif.Fixtures.RFC)
         _ = tm.that(result.is_success, eq=True)
-        entries = result.value
+        entries = result.value.entries
         tm.that(len(entries) > 0, eq=True)
         max_depth = 0
         for entry in entries:
@@ -75,7 +75,7 @@ class TestsFlextLdifEdgeCases:
             )
         result = ldif_api.parse_ldif(fixture_path, server_type=c.Ldif.Fixtures.RFC)
         _ = tm.that(result.is_success, eq=True)
-        entries = result.value
+        entries = result.value.entries
         tm.that(len(entries) > 0, eq=True)
         max_values = 0
         for entry in entries:
@@ -92,7 +92,7 @@ class TestsFlextLdifEdgeCases:
             unicode_ldif, server_type=c.Ldif.Fixtures.RFC
         )
         _ = tm.that(parse_result.is_success, eq=True)
-        entries = parse_result.value
+        entries = parse_result.value.entries
         tm.that(len(entries), eq=1)
         output_path = tmp_path / "unicode_roundtrip.ldif"
         write_result = ldif_api.write_ldif_file(
@@ -103,7 +103,7 @@ class TestsFlextLdifEdgeCases:
             output_path, server_type=c.Ldif.Fixtures.RFC
         )
         _ = tm.that(roundtrip_result.is_success, eq=True)
-        roundtrip_entries = roundtrip_result.value
+        roundtrip_entries = roundtrip_result.value.entries
         tm.that(len(roundtrip_entries), eq=1)
 
     def test_roundtrip_deep_dn(self, ldif_api: ldif, tmp_path: Path) -> None:
@@ -113,7 +113,7 @@ class TestsFlextLdifEdgeCases:
             deep_dn_ldif, server_type=c.Ldif.Fixtures.RFC
         )
         _ = tm.that(parse_result.is_success, eq=True)
-        entries = parse_result.value
+        entries = parse_result.value.entries
         tm.that(len(entries), eq=1)
         output_path = tmp_path / "deep_dn_roundtrip.ldif"
         write_result = ldif_api.write_ldif_file(
@@ -124,7 +124,7 @@ class TestsFlextLdifEdgeCases:
             output_path, server_type=c.Ldif.Fixtures.RFC
         )
         _ = tm.that(roundtrip_result.is_success, eq=True)
-        roundtrip_entries = roundtrip_result.value
+        roundtrip_entries = roundtrip_result.value.entries
         tm.that(len(roundtrip_entries), eq=1)
 
     def test_roundtrip_large_multivalue(
@@ -138,7 +138,7 @@ class TestsFlextLdifEdgeCases:
             large_multivalue_ldif, server_type=c.Ldif.Fixtures.RFC
         )
         _ = tm.that(parse_result.is_success, eq=True)
-        entries = parse_result.value
+        entries = parse_result.value.entries
         tm.that(len(entries), eq=1)
         output_path = tmp_path / "large_multivalue_roundtrip.ldif"
         write_result = ldif_api.write_ldif_file(
@@ -149,5 +149,5 @@ class TestsFlextLdifEdgeCases:
             output_path, server_type=c.Ldif.Fixtures.RFC
         )
         _ = tm.that(roundtrip_result.is_success, eq=True)
-        roundtrip_entries = roundtrip_result.value
+        roundtrip_entries = roundtrip_result.value.entries
         tm.that(len(roundtrip_entries), eq=1)

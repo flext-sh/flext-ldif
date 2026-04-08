@@ -29,7 +29,7 @@ def extract_acls_from_entry() -> None:
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
-    entries = parse_result.value
+    entries = parse_result.value.entries
     if not entries:
         return
     entry = entries[0]
@@ -48,7 +48,7 @@ def parse_and_evaluate_acls() -> None:
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
-    entries = parse_result.value
+    entries = parse_result.value.entries
     if not entries:
         return
     entry = entries[0]
@@ -71,7 +71,7 @@ def process_entries_with_acls() -> None:
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
-    entries = parse_result.value
+    entries = parse_result.value.entries
     acl_service = _get_acl_service()
     for entry in entries:
         acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
@@ -109,7 +109,7 @@ def acl_pipeline() -> None:
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
-    entries = parse_result.value
+    entries = parse_result.value.entries
     if not entries:
         return
     entry = entries[0]

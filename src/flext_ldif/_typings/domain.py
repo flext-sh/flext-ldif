@@ -15,6 +15,9 @@ class FlextLdifTypesDomain:
     type EntryLike = p.Ldif.Entry
     type EntrySequence = MutableSequence[p.Ldif.Entry]
     type EntryOrEntries = p.Ldif.Entry | EntrySequence
+    type ControlLike = p.Ldif.Control
+    type ChangeOperationValueLike = p.Ldif.ChangeOperationValue
+    type ChangeOperationLike = p.Ldif.ChangeOperation
     type EntryPredicate = Callable[[p.Ldif.Entry], bool]
     type EntryTransformHook = Callable[
         [p.Ldif.Entry],

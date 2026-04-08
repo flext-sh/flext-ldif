@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
 from pathlib import Path
 from typing import override
 
@@ -27,17 +26,12 @@ class FlextLdifParserMixin:
         value: str | Path,
         *,
         server_type: str | None = None,
-    ) -> r[MutableSequence[m.Ldif.Entry]]:
+    ) -> r[m.Ldif.ParseResponse]:
         """Parse LDIF content from string or file."""
         effective_type = server_type or self._get_effective_server_type_value()
         if isinstance(value, Path):
             return self._parse_ldif_path(value, server_type=effective_type)
-        parse_result = self.parse_string(value, server_type=effective_type)
-        if parse_result.is_failure:
-            return r[MutableSequence[m.Ldif.Entry]].fail(str(parse_result.error))
-        response = parse_result.value
-        entries_list: MutableSequence[m.Ldif.Entry] = list(response.entries)
-        return r[MutableSequence[m.Ldif.Entry]].ok(entries_list)
+        return self.parse_string(value, server_type=effective_type)
 
     def parse_ldif_file(
         self,
@@ -106,8 +100,8 @@ class FlextLdifParserMixin:
         path: Path,
         *,
         server_type: str | None = None,
-    ) -> r[MutableSequence[m.Ldif.Entry]]:
-        """Parse LDIF file and return entries list."""
+    ) -> r[m.Ldif.ParseResponse]:
+        """Parse LDIF file and return parse response."""
         resolved_path = path
         if not resolved_path.exists() and (not resolved_path.is_absolute()):
             project_root = Path(__file__).resolve().parents[2]
@@ -115,13 +109,13 @@ class FlextLdifParserMixin:
             if candidate_path.exists():
                 resolved_path = candidate_path
         if not resolved_path.exists():
-            return r[MutableSequence[m.Ldif.Entry]].fail(
+            return r[m.Ldif.ParseResponse].fail(
                 f"File not found: {path}",
             )
         try:
             content = resolved_path.read_text(encoding="utf-8")
         except OSError as e:
-            return r[MutableSequence[m.Ldif.Entry]].fail(
+            return r[m.Ldif.ParseResponse].fail(
                 f"Failed to read file: {e}",
             )
         return self.parse_ldif(value=content, server_type=server_type)

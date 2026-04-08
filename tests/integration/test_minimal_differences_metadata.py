@@ -107,8 +107,9 @@ class TestMinimalDifferencesOidOud:
             entries=[m.Ldif.Entry.model_validate(original_entry)],
         )
         assert write_result.is_success
-        written_ldif = write_result.value
-        assert isinstance(written_ldif, str)
+        written_ldif = write_result.value.content
+        assert written_ldif is not None
+        assert written_ldif
         assert "original_dn_complete" in original_entry.metadata.extensions
 
     def test_spacing_differences_captured(self, parser: FlextLdifParser) -> None:

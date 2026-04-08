@@ -19,30 +19,13 @@ class FlextLdifTestProtocols(
     FlextTestsProtocols,
     FlextLdapProtocols,
 ):
-    """Protocol definitions for flext-ldif tests.
-
-    Extends both FlextTestsProtocols and FlextLdifProtocols with flext-ldif-specific
-    protocol definitions.
-
-    Provides access to:
-    - FlextTestsProtocols.Tests.Docker.* (from FlextTestsProtocols)
-    - FlextTestsProtocols.Tests.Factory.* (from FlextTestsProtocols)
-    - FlextLdifProtocols.Ldif.* (from FlextLdifProtocols)
-
-    Rules:
-    - NEVER redeclare protocols from parent classes
-    - Only flext-ldif-specific test protocols allowed
-    """
+    """Protocol definitions for flext-ldif tests."""
 
     class Ldif(FlextLdapProtocols.Ldif):
         """Flext-ldif-specific test protocols."""
 
         class Tests:
-            """Project-specific test protocols for flext-ldif.
-
-            Separated from FlextTestsProtocols.Tests to avoid bad-override.
-            Access via p.Ldif.Tests.* for flext-ldif-specific protocols.
-            """
+            """Project-specific test protocols for flext-ldif."""
 
             @runtime_checkable
             class LdapConnectionLike(Protocol):

@@ -67,7 +67,7 @@ class TestZeroDataLossOidOud:
         """Test that OID parsing preserves original LDIF in metadata."""
         result = api.parse_ldif(oid_fixture, server_type=c.Ldif.Fixtures.OID)
         assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.value
+        entries = result.value.entries
         assert entries, "No entries parsed"
         for entry in entries:
             assert entry.metadata is not None, "Entry missing metadata"
@@ -93,7 +93,7 @@ class TestZeroDataLossOidOud:
         """Test that OUD parsing preserves original LDIF in metadata."""
         result = api.parse_ldif(oud_fixture, server_type=c.Ldif.Fixtures.OUD)
         assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.value
+        entries = result.value.entries
         assert entries, "No entries parsed"
         for entry in entries:
             assert entry.metadata is not None, "Entry missing metadata"
@@ -112,7 +112,7 @@ class TestZeroDataLossOidOud:
         """Test that boolean conversions are tracked in metadata."""
         result = api.parse_ldif(oid_fixture, server_type=c.Ldif.Fixtures.OID)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         boolean_entries = [
             e
             for e in entries
@@ -153,13 +153,14 @@ class TestZeroDataLossOidOud:
         """Test OID→OUD conversion preserves ALL data in metadata."""
         parse_result = api.parse_ldif(oid_fixture, server_type=c.Ldif.Fixtures.OID)
         assert parse_result.is_success
-        oid_entries = parse_result.value
+        oid_entries = parse_result.value.entries
         write_result = api.write(oid_entries, server_type=c.Ldif.Fixtures.RFC)
         assert write_result.is_success
-        rfc_ldif = write_result.value
+        rfc_ldif = write_result.value.content
+        assert rfc_ldif is not None
         parse_oud_result = api.parse_ldif(rfc_ldif, server_type=c.Ldif.Fixtures.OUD)
         assert parse_oud_result.is_success
-        oud_entries = parse_oud_result.value
+        oud_entries = parse_oud_result.value.entries
         assert len(oid_entries) == len(oud_entries), "Entry count mismatch"
         for oid_entry, oud_entry in zip(oid_entries, oud_entries, strict=False):
             assert oid_entry.metadata is not None
@@ -208,25 +209,27 @@ class TestZeroDataLossOidOud:
         """Test OID→OUD→OID round-trip preserves ALL formatting."""
         parse_oid = api.parse_ldif(oid_fixture, server_type=c.Ldif.Fixtures.OID)
         assert parse_oid.is_success
-        original_entries = parse_oid.value
+        original_entries = parse_oid.value.entries
         write_oud = api.write(original_entries, server_type=c.Ldif.Fixtures.OUD)
         assert write_oud.is_success
-        oud_ldif = write_oud.value
+        oud_ldif = write_oud.value.content
+        assert oud_ldif is not None
         parse_oud = api.parse_ldif(oud_ldif, server_type=c.Ldif.Fixtures.OUD)
         assert parse_oud.is_success
-        oud_entries = parse_oud.value
+        oud_entries = parse_oud.value.entries
         write_oid = api.write(
             oud_entries,
             server_type=c.Ldif.Fixtures.OID,
             format_options=m.Ldif.WriteFormatOptions(restore_original_format=True),
         )
         assert write_oid.is_success
-        roundtrip_ldif = write_oid.value
+        roundtrip_ldif = write_oid.value.content
+        assert roundtrip_ldif is not None
         parse_roundtrip = api.parse_ldif(
             roundtrip_ldif, server_type=c.Ldif.Fixtures.OID
         )
         assert parse_roundtrip.is_success
-        roundtrip_entries = parse_roundtrip.value
+        roundtrip_entries = parse_roundtrip.value.entries
         assert len(original_entries) == len(roundtrip_entries)
         for orig, roundtrip in zip(original_entries, roundtrip_entries, strict=False):
             if (
@@ -264,7 +267,7 @@ class TestZeroDataLossOidOud:
         """Test that minimal differences are tracked for all conversions."""
         result = api.parse_ldif(oid_fixture, server_type=c.Ldif.Fixtures.OID)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         for entry in entries:
             if entry.metadata:
                 if not isinstance(entry.metadata.minimal_differences, dict):
@@ -295,7 +298,7 @@ class TestZeroDataLossOidOud:
         """Test that soft-deleted attributes are tracked in metadata."""
         result = api.parse_ldif(oid_fixture, server_type=c.Ldif.Fixtures.OID)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         for entry in entries:
             _verify_soft_deleted_attributes(entry)
 
@@ -307,7 +310,7 @@ class TestZeroDataLossOidOud:
         """Test that conversion history is tracked in metadata."""
         result = api.parse_ldif(oid_fixture, server_type=c.Ldif.Fixtures.OID)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         for entry in entries:
             if entry.metadata:
                 assert hasattr(entry.metadata, "conversion_history"), (
@@ -325,7 +328,7 @@ class TestZeroDataLossOidOud:
         """Test that ALL original strings are preserved in metadata."""
         result = api.parse_ldif(oid_fixture, server_type=c.Ldif.Fixtures.OID)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         for entry in entries:
             assert entry.metadata is not None
             assert entry.metadata.original_strings is not None
@@ -358,14 +361,15 @@ class TestZeroDataLossOidOud:
         """Test that restore_original_format option restores exact original."""
         parse_result = api.parse_ldif(oid_fixture, server_type=c.Ldif.Fixtures.OID)
         assert parse_result.is_success
-        entries = parse_result.value
+        entries = parse_result.value.entries
         write_result = api.write(
             entries,
             server_type=c.Ldif.Fixtures.OID,
             format_options=m.Ldif.WriteFormatOptions(restore_original_format=True),
         )
         assert write_result.is_success
-        restored_ldif = write_result.value
+        restored_ldif = write_result.value.content
+        assert restored_ldif is not None
         for entry in entries:
             if (
                 entry.metadata

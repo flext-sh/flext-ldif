@@ -24,10 +24,14 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     MATCHING_RULE_TO_RFC: ClassVar[t.MutableStrMapping] = {
         "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch",
         "accessDirectiveMatch": "caseIgnoreMatch",
+        "distinguishedNAMEMatch": "distinguishedNameMatch",
+        "DistinguishedNameMatch": "distinguishedNameMatch",
+        "caseIgnoreSubstringMatch": "caseIgnoreSubstringsMatch",
+        "CaseIgnoreMatch": "caseIgnoreMatch",
+        "CaseExactMatch": "caseExactMatch",
     }
     MATCHING_RULE_RFC_TO_OID: ClassVar[t.MutableStrMapping] = {
         "caseIgnoreSubstringsMatch": "caseIgnoreSubStringsMatch",
-        "caseIgnoreMatch": "accessDirectiveMatch",
     }
     SYNTAX_OID_TO_RFC: ClassVar[t.MutableStrMapping] = {
         "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15",

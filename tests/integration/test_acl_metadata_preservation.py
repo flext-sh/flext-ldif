@@ -43,7 +43,7 @@ class TestOidAclMetadataPreservation:
         oid_ldif = "dn: cn=test,dc=example,dc=com\norclaci: access to entry by * (browse) bindmode=(Simple)\nobjectClass: person\ncn: test\n"
         result = api.parse_ldif(oid_ldif, server_type=c.Ldif.Fixtures.OID)
         assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.value
+        entries = result.value.entries
         assert len(entries) == 1
         entry = entries[0]
         extensions = _entry_extensions(entry)
@@ -62,7 +62,7 @@ class TestOidAclMetadataPreservation:
         oid_ldif = "dn: cn=test,dc=example,dc=com\norclaci: access to entry by * (browse) DenyGroupOverride\nobjectClass: person\ncn: test\n"
         result = api.parse_ldif(oid_ldif, server_type=c.Ldif.Fixtures.OID)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         entry = entries[0]
         deny_override = _entry_extensions(entry).get(c.Ldif.ACL_DENY_GROUP_OVERRIDE)
         assert deny_override is True, "DenyGroupOverride not preserved"
@@ -72,7 +72,7 @@ class TestOidAclMetadataPreservation:
         oid_ldif = "dn: cn=test,dc=example,dc=com\norclaci: access to entry by * (browse) AppendToAll\nobjectClass: person\ncn: test\n"
         result = api.parse_ldif(oid_ldif, server_type=c.Ldif.Fixtures.OID)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         entry = entries[0]
         append_to_all = _entry_extensions(entry).get(c.Ldif.ACL_APPEND_TO_ALL)
         assert append_to_all is True, "AppendToAll not preserved"
@@ -82,7 +82,7 @@ class TestOidAclMetadataPreservation:
         oid_ldif = "dn: cn=test,dc=example,dc=com\norclaci: access to entry by * (browse) bindipfilter=(orclipaddress=192.168.1.*)\nobjectClass: person\ncn: test\n"
         result = api.parse_ldif(oid_ldif, server_type=c.Ldif.Fixtures.OID)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         entry = entries[0]
         bind_ip_filter = _entry_extensions(entry).get(c.Ldif.ACL_BIND_IP_FILTER)
         assert bind_ip_filter == "orclipaddress=192.168.1.*", (
@@ -94,7 +94,7 @@ class TestOidAclMetadataPreservation:
         oid_ldif = "dn: cn=test,dc=example,dc=com\norclaci: access to entry by * (add) constraintonaddedobject=(objectclass=person)\nobjectClass: person\ncn: test\n"
         result = api.parse_ldif(oid_ldif, server_type=c.Ldif.Fixtures.OID)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         entry = entries[0]
         constrain = _entry_extensions(entry).get(c.Ldif.ACL_CONSTRAIN_TO_ADDED_OBJECT)
         assert constrain == "objectclass=person", (
@@ -106,7 +106,7 @@ class TestOidAclMetadataPreservation:
         oid_ldif = "dn: cn=test,dc=example,dc=com\norclaci: access to entry by * (browse) bindmode=(Simple) DenyGroupOverride AppendToAll bindipfilter=(orclipaddress=192.168.1.*) constraintonaddedobject=(objectclass=person)\nobjectClass: person\ncn: test\n"
         result = api.parse_ldif(oid_ldif, server_type=c.Ldif.Fixtures.OID)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         entry = entries[0]
         extensions = _entry_extensions(entry)
         assert extensions.get(c.Ldif.ACL_BINDMODE) == "Simple"
@@ -131,7 +131,7 @@ class TestOudAciMetadataPreservation:
         oud_ldif = 'dn: cn=test,dc=example,dc=com\naci: (targetattr="cn")(targattrfilters="add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)\nobjectClass: person\ncn: test\n'
         result = api.parse_ldif(oud_ldif, server_type=c.Ldif.Fixtures.OUD)
         assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.value
+        entries = result.value.entries
         assert len(entries) == 1
         entry = entries[0]
         extensions = _entry_extensions(entry)
@@ -145,7 +145,7 @@ class TestOudAciMetadataPreservation:
         oud_ldif = 'dn: cn=test,dc=example,dc=com\naci: (targetattr="*")(targetcontrol="1.3.6.1.4.1.42.2.27.9.5.2")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)\nobjectClass: person\ncn: test\n'
         result = api.parse_ldif(oud_ldif, server_type=c.Ldif.Fixtures.OUD)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         entry = entries[0]
         targetcontrol = _entry_extensions(entry).get(c.Ldif.ACL_TARGET_CONTROL)
         assert targetcontrol == "1.3.6.1.4.1.42.2.27.9.5.2", (
@@ -157,7 +157,7 @@ class TestOudAciMetadataPreservation:
         oud_ldif = 'dn: cn=test,dc=example,dc=com\naci: (targetattr="*")(extop="1.3.6.1.4.1.26027.1.6.1")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)\nobjectClass: person\ncn: test\n'
         result = api.parse_ldif(oud_ldif, server_type=c.Ldif.Fixtures.OUD)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         entry = entries[0]
         extop = _entry_extensions(entry).get(c.Ldif.ACL_EXTOP)
         assert extop == "1.3.6.1.4.1.26027.1.6.1", "extop not preserved"
@@ -167,7 +167,7 @@ class TestOudAciMetadataPreservation:
         oud_ldif = 'dn: cn=test,dc=example,dc=com\naci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self" and ip="192.168.1.0/24";)\nobjectClass: person\ncn: test\n'
         result = api.parse_ldif(oud_ldif, server_type=c.Ldif.Fixtures.OUD)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         entry = entries[0]
         bind_ip = _entry_extensions(entry).get(c.Ldif.ACL_BIND_IP_FILTER)
         assert bind_ip == "192.168.1.0/24", "bind_ip not preserved"
@@ -177,7 +177,7 @@ class TestOudAciMetadataPreservation:
         oud_ldif = 'dn: cn=test,dc=example,dc=com\naci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self" and dns="*.example.com";)\nobjectClass: person\ncn: test\n'
         result = api.parse_ldif(oud_ldif, server_type=c.Ldif.Fixtures.OUD)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         entry = entries[0]
         bind_dns = _entry_extensions(entry).get(c.Ldif.ACL_BIND_DNS)
         assert bind_dns == "*.example.com", "bind_dns not preserved"
@@ -187,7 +187,7 @@ class TestOudAciMetadataPreservation:
         oud_ldif = 'dn: cn=test,dc=example,dc=com\naci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self" and dayofweek="Mon,Tue,Wed";)\nobjectClass: person\ncn: test\n'
         result = api.parse_ldif(oud_ldif, server_type=c.Ldif.Fixtures.OUD)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         entry = entries[0]
         bind_dayofweek = _entry_extensions(entry).get(c.Ldif.ACL_BIND_DAYOFWEEK)
         assert bind_dayofweek == "Mon,Tue,Wed", "bind_dayofweek not preserved"
@@ -197,7 +197,7 @@ class TestOudAciMetadataPreservation:
         oud_ldif = 'dn: cn=test,dc=example,dc=com\naci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self" and timeofday >= "0800";)\nobjectClass: person\ncn: test\n'
         result = api.parse_ldif(oud_ldif, server_type=c.Ldif.Fixtures.OUD)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         entry = entries[0]
         bind_timeofday = _entry_extensions(entry).get(c.Ldif.ACL_BIND_TIMEOFDAY)
         assert bind_timeofday is not None, "bind_timeofday not preserved"
@@ -208,7 +208,7 @@ class TestOudAciMetadataPreservation:
         oud_ldif = 'dn: cn=test,dc=example,dc=com\naci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self" and authmethod = "ssl";)\nobjectClass: person\ncn: test\n'
         result = api.parse_ldif(oud_ldif, server_type=c.Ldif.Fixtures.OUD)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         entry = entries[0]
         authmethod = _entry_extensions(entry).get(c.Ldif.ACL_AUTHMETHOD)
         assert authmethod == "ssl", "authmethod not preserved"
@@ -218,7 +218,7 @@ class TestOudAciMetadataPreservation:
         oud_ldif = 'dn: cn=test,dc=example,dc=com\naci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self" and ssf >= "128";)\nobjectClass: person\ncn: test\n'
         result = api.parse_ldif(oud_ldif, server_type=c.Ldif.Fixtures.OUD)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         entry = entries[0]
         ssf = _entry_extensions(entry).get(c.Ldif.ACL_SSF)
         assert ssf is not None, "ssf not preserved"
@@ -229,7 +229,7 @@ class TestOudAciMetadataPreservation:
         oud_ldif = 'dn: cn=test,dc=example,dc=com\naci: (targetattr="cn")(targattrfilters="add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)")(targetcontrol="1.3.6.1.4.1.42.2.27.9.5.2")(extop="1.3.6.1.4.1.26027.1.6.1")(version 3.0; acl "test"; allow (read) userdn="ldap:///self" and ip="192.168.1.0/24" and dns="*.example.com" and dayofweek="Mon,Tue,Wed" and timeofday >= "0800" and authmethod = "ssl" and ssf >= "128";)\nobjectClass: person\ncn: test\n'
         result = api.parse_ldif(oud_ldif, server_type=c.Ldif.Fixtures.OUD)
         assert result.is_success
-        entries = result.value
+        entries = result.value.entries
         entry = entries[0]
         extensions = _entry_extensions(entry)
         assert (
@@ -259,14 +259,15 @@ class TestAclRoundTripPreservation:
         original_ldif = "dn: cn=test,dc=example,dc=com\norclaci: access to entry by * (browse) bindmode=(Simple) DenyGroupOverride\nobjectClass: person\ncn: test\n"
         parse_result = api.parse_ldif(original_ldif, server_type=c.Ldif.Fixtures.OID)
         assert parse_result.is_success
-        entries = parse_result.value
+        entries = parse_result.value.entries
         entry = entries[0]
         write_result = api.write([entry], server_type=c.Ldif.Fixtures.OID)
         assert write_result.is_success
-        written_ldif = write_result.value
+        written_ldif = write_result.value.content
+        assert written_ldif is not None
         reparse_result = api.parse_ldif(written_ldif, server_type=c.Ldif.Fixtures.OID)
         assert reparse_result.is_success
-        reparsed_entries = reparse_result.value
+        reparsed_entries = reparse_result.value.entries
         reparsed_entry = reparsed_entries[0]
         reparsed_extensions = _entry_extensions(reparsed_entry)
         assert reparsed_extensions.get(c.Ldif.ACL_BINDMODE) == "Simple"
@@ -277,14 +278,15 @@ class TestAclRoundTripPreservation:
         original_ldif = 'dn: cn=test,dc=example,dc=com\naci: (targetattr="*")(targattrfilters="add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)")(version 3.0; acl "test"; allow (read) userdn="ldap:///self" and ip="192.168.1.0/24";)\nobjectClass: person\ncn: test\n'
         parse_result = api.parse_ldif(original_ldif, server_type=c.Ldif.Fixtures.OUD)
         assert parse_result.is_success
-        entries = parse_result.value
+        entries = parse_result.value.entries
         entry = entries[0]
         write_result = api.write([entry], server_type=c.Ldif.Fixtures.OUD)
         assert write_result.is_success
-        written_ldif = write_result.value
+        written_ldif = write_result.value.content
+        assert written_ldif is not None
         reparse_result = api.parse_ldif(written_ldif, server_type=c.Ldif.Fixtures.OUD)
         assert reparse_result.is_success
-        reparsed_entries = reparse_result.value
+        reparsed_entries = reparse_result.value.entries
         reparsed_entry = reparsed_entries[0]
         reparsed_extensions = _entry_extensions(reparsed_entry)
         assert (

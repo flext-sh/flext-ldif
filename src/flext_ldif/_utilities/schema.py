@@ -13,6 +13,7 @@ from flext_ldif import (
     FlextLdifModelsBases,
     FlextLdifUtilitiesOID,
     FlextLdifUtilitiesParser,
+    FlextLdifUtilitiesServer,
     FlextLdifUtilitiesWriter,
     c,
     m,
@@ -477,7 +478,7 @@ class FlextLdifUtilitiesSchema:
         sup_match = re.search(c.Ldif.SCHEMA_OBJECTCLASS_SUP, oc_definition)
         if not sup_match:
             return None
-        sup_value = sup_match.group(1) or sup_match.group(2)
+        sup_value = sup_match.group(1) or sup_match.group(2) or sup_match.group(3)
         return FlextLdifUtilitiesSchema._split_schema_values(sup_value)[0]
 
     @staticmethod
@@ -601,6 +602,34 @@ class FlextLdifUtilitiesSchema:
             return None
         definition_match = re.search(r"\(.*\)", original, re.DOTALL)
         return [definition_match.group(0)] if definition_match else None
+
+    @staticmethod
+    def should_restore_schema_original_format(
+        metadata: m.Ldif.QuirkMetadata | None,
+        target_server_type: str | None,
+    ) -> bool:
+        """Restore original schema text only for same-server round-trips."""
+        if metadata is None:
+            return False
+        source_server_type = metadata.original_server_type
+        if source_server_type is None and metadata.extensions:
+            source_server_raw = metadata.extensions.get(c.Ldif.SCHEMA_SOURCE_SERVER)
+            if isinstance(source_server_raw, str):
+                source_server_type = source_server_raw
+        if source_server_type is None:
+            source_server_type = str(metadata.quirk_type)
+        if not source_server_type or not target_server_type:
+            return True
+        try:
+            normalized_source = FlextLdifUtilitiesServer.normalize_server_type(
+                str(source_server_type),
+            )
+            normalized_target = FlextLdifUtilitiesServer.normalize_server_type(
+                target_server_type,
+            )
+        except (TypeError, ValueError):
+            return str(source_server_type).lower() == target_server_type.lower()
+        return normalized_source == normalized_target
 
     @staticmethod
     def _validate_attribute_syntax(

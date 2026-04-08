@@ -505,7 +505,7 @@ class FlextLdifConstants(FlextConstants):
         SCHEMA_EQUALITY: Final[str] = "EQUALITY\\s+([^\\s)]+)"
         SCHEMA_SUBSTR: Final[str] = "SUBSTR\\s+([^\\s)]+)"
         SCHEMA_ORDERING: Final[str] = "ORDERING\\s+([^\\s)]+)"
-        SCHEMA_SUP: Final[str] = "SUP\\s+(\\w+)"
+        SCHEMA_SUP: Final[str] = "SUP\\s+'?(\\w+)'?"
         SCHEMA_USAGE: Final[str] = "USAGE\\s+(\\w+)"
         SCHEMA_SYNTAX_LENGTH: Final[str] = (
             "SYNTAX\\s+(?:')?([0-9.]+)(?:')?(?:\\{(\\d+)\\})?"
@@ -513,7 +513,9 @@ class FlextLdifConstants(FlextConstants):
         SCHEMA_SINGLE_VALUE: Final[str] = "\\bSINGLE-VALUE\\b"
         SCHEMA_NO_USER_MODIFICATION: Final[str] = "\\bNO-USER-MODIFICATION\\b"
         SCHEMA_OBJECTCLASS_KIND: Final[str] = "\\b(ABSTRACT|STRUCTURAL|AUXILIARY)\\b"
-        SCHEMA_OBJECTCLASS_SUP: Final[str] = "SUP\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))"
+        SCHEMA_OBJECTCLASS_SUP: Final[str] = (
+            "SUP\\s+(?:\\(\\s*([^)]+)\\s*\\)|'(\\w+)'|(\\w+))"
+        )
         SCHEMA_OBJECTCLASS_MUST: Final[str] = "MUST\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))"
         SCHEMA_OBJECTCLASS_MAY: Final[str] = "MAY\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))"
 
@@ -531,6 +533,41 @@ class FlextLdifConstants(FlextConstants):
             FILTERED = "filtered"
 
         @unique
+        class ChangeOperation(StrEnum):
+            """RFC 2849 modify operation names."""
+
+            ADD = "add"
+            DELETE = "delete"
+            REPLACE = "replace"
+            INCREMENT = "increment"
+
+        @unique
+        class LdifChangeType(StrEnum):
+            """RFC 2849 changetype names."""
+
+            ADD = "add"
+            DELETE = "delete"
+            MODIFY = "modify"
+            MODDN = "moddn"
+            MODRDN = "modrdn"
+
+        @unique
+        class RecordKind(StrEnum):
+            """High-level LDIF record kinds preserved in Entry."""
+
+            CONTENT = "content"
+            CHANGE = "change"
+
+        @unique
+        class ValueOrigin(StrEnum):
+            """Original LDIF value encoding/source markers."""
+
+            PLAIN = "plain"
+            BASE64 = "base64"
+            URL = "url"
+            FILE = "file"
+
+        @unique
         class SchemaKind(StrEnum):
             """RFC 4512 objectClass kind types."""
 
@@ -540,11 +577,15 @@ class FlextLdifConstants(FlextConstants):
 
         # Keep these aliases — referenced from frozen _utilities/ files
         type AclSubjectTypeLiteral = AclSubjectType
+        type ChangeOperationLiteral = ChangeOperation
         type AttributeMarkerStatusLiteral = AttributeMarkerStatus
         type ChangeTypeLiteral = ChangeType
         type EncodingLiteral = Encoding
+        type LdifChangeTypeLiteral = LdifChangeType
+        type RecordKindLiteral = RecordKind
         type ServerTypeLiteral = ServerTypes
         type TransformationTypeLiteral = TransformationType
+        type ValueOriginLiteral = ValueOrigin
 
         DEFAULT_MAX_ATTR_VALUE_LENGTH: Final[int] = 1048576
         TUPLE_LENGTH_PAIR: Final[int] = 2
@@ -773,6 +814,8 @@ class FlextLdifConstants(FlextConstants):
             ADD = "add"
             MODIFY = "modify"
             DELETE = "delete"
+            MODDN = "moddn"
+            MODRDN = "modrdn"
 
 
 c = FlextLdifConstants

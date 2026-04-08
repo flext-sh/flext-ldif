@@ -90,7 +90,7 @@ def oid_schema_entries(
     """Parse OID schema fixture into Entry models."""
     result = api.parse_ldif(oid_schema_fixture)
     assert result.is_success, f"OID schema parsing failed: {result.error}"
-    return result.value
+    return result.value.entries
 
 
 @pytest.fixture
@@ -98,7 +98,7 @@ def oid_entries(api: ldif, oid_entries_fixture: str) -> Sequence[m.Ldif.Entry]:
     """Parse OID entries fixture into Entry models."""
     result = api.parse_ldif(oid_entries_fixture)
     assert result.is_success, f"OID entries parsing failed: {result.error}"
-    return result.value
+    return result.value.entries
 
 
 @pytest.fixture
@@ -137,7 +137,7 @@ def oud_schema_entries(
     """Parse OUD schema fixture into Entry models."""
     result = api.parse_ldif(oud_schema_fixture)
     assert result.is_success, f"OUD schema parsing failed: {result.error}"
-    return result.value
+    return result.value.entries
 
 
 @pytest.fixture
@@ -145,7 +145,7 @@ def oud_entries(api: ldif, oud_entries_fixture: str) -> Sequence[m.Ldif.Entry]:
     """Parse OUD entries fixture into Entry models."""
     result = api.parse_ldif(oud_entries_fixture)
     assert result.is_success, f"OUD entries parsing failed: {result.error}"
-    return result.value
+    return result.value.entries
 
 
 @pytest.fixture
@@ -184,7 +184,7 @@ def openldap_schema_entries(
     """Parse OpenLDAP schema fixture into Entry models."""
     result = api.parse_ldif(openldap_schema_fixture)
     assert result.is_success, f"OpenLDAP schema parsing failed: {result.error}"
-    return result.value
+    return result.value.entries
 
 
 @pytest.fixture
@@ -195,7 +195,7 @@ def openldap_entries(
     """Parse OpenLDAP entries fixture into Entry models."""
     result = api.parse_ldif(openldap_entries_fixture)
     assert result.is_success, f"OpenLDAP entries parsing failed: {result.error}"
-    return result.value
+    return result.value.entries
 
 
 @pytest.fixture
@@ -213,7 +213,7 @@ def rfc_schema_entries(
     """Parse RFC schema fixture into Entry models."""
     result = api.parse_ldif(rfc_schema_fixture)
     assert result.is_success, f"RFC schema parsing failed: {result.error}"
-    return result.value
+    return result.value.entries
 
 
 @pytest.fixture

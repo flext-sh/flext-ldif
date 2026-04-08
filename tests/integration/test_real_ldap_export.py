@@ -82,7 +82,8 @@ class TestRealLdapExport:
         flext_entry = entry_result.value
         write_result = flext_api.write([flext_entry])
         assert write_result.is_success
-        ldif_output = write_result.value
+        ldif_output = write_result.value.content
+        assert ldif_output is not None
         assert f"dn: cn={unique_username}" in ldif_output
         assert f"cn: {unique_username}" in ldif_output
         assert "sn: User" in ldif_output
@@ -150,7 +151,8 @@ class TestRealLdapExport:
                 entries.append(facade_entry)
         write_result = flext_api.write(entries)
         assert write_result.is_success
-        ldif_output = write_result.value
+        ldif_output = write_result.value.content
+        assert ldif_output is not None
         for unique_username in unique_usernames:
             assert f"cn: {unique_username}" in ldif_output
 
@@ -226,7 +228,8 @@ class TestRealLdapExport:
                 entries.append(facade_entry)
         write_result = flext_api.write(entries)
         assert write_result.is_success
-        ldif_output = write_result.value
+        ldif_output = write_result.value.content
+        assert ldif_output is not None
         assert "ou=Groups" in ldif_output
         assert "ou=People" in ldif_output
         assert f"cn={unique_person_name}" in ldif_output

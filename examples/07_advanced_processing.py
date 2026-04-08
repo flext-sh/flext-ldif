@@ -28,7 +28,7 @@ def basic_batch_processing() -> None:
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
-    entries = parse_result.value
+    entries = parse_result.value.entries
     validation_result = api.validate_entries(entries)
     if validation_result.is_success:
         _ = validation_result.value.total_entries
@@ -109,7 +109,7 @@ def use_ldif_utilities() -> None:
     syntax_result = api.parse_ldif(ldif_content)
     _ = syntax_result.is_success
     if syntax_result.is_success:
-        entries = syntax_result.value
+        entries = syntax_result.value.entries
         _ = len(entries)
 
 
@@ -154,7 +154,7 @@ def complete_processing_pipeline() -> None:
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
-    entries = parse_result.value
+    entries = parse_result.value.entries
 
     valid_entries: MutableSequence[m.Ldif.Entry] = []
     for entry in entries:

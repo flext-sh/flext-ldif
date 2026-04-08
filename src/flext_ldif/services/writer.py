@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import override
 
 from flext_ldif import FlextLdifServer, m, r, s, t, u
+from flext_ldif.services.conversion import FlextLdifConversion
 
 
 class FlextLdifWriterMixin:
@@ -63,53 +64,64 @@ class FlextLdifWriterMixin:
 
     def write(
         self,
-        entries: MutableSequence[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
         *,
         server_type: str | None = None,
         format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
-    ) -> r[str]:
-        """Write entries to LDIF format string."""
+    ) -> r[m.Ldif.WriteResponse]:
+        """Write entries to LDIF format string with statistics."""
         effective_type = server_type or self._get_effective_server_type_value()
         server_type_typed: str = str(effective_type)
-        return self.write_to_string(
-            entries,
+        normalized_entries = self._normalize_entries(entries)
+        string_result = self.write_to_string(
+            normalized_entries,
             server_type_typed,
             format_options,
+        )
+        if string_result.is_failure:
+            return r[m.Ldif.WriteResponse].fail(
+                string_result.error or "LDIF writing failed",
+            )
+        return r[m.Ldif.WriteResponse].ok(
+            m.Ldif.WriteResponse(
+                content=string_result.value,
+                statistics=m.Ldif.Statistics(
+                    total_entries=u.count(normalized_entries),
+                    processed_entries=u.count(normalized_entries),
+                ),
+            ),
         )
 
     def write_ldif_file(
         self,
-        entries: MutableSequence[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
         path: Path,
         *,
         server_type: str | None = None,
         format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
-    ) -> r[bool]:
-        """Write entries to LDIF file."""
-        write_result = self.write(
+    ) -> r[m.Ldif.WriteResponse]:
+        """Write entries to LDIF file with statistics."""
+        return self.write_to_file(
             entries,
-            server_type=server_type,
-            format_options=format_options,
+            path,
+            server_type,
+            format_options,
         )
-        if write_result.is_failure:
-            return r[bool].fail(str(write_result.error))
-        content = write_result.value
-        try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            _ = path.write_text(content, encoding="utf-8")
-            return r[bool].ok(value=True)
-        except OSError as e:
-            return r[bool].fail(f"Failed to write file: {e}")
 
     def write_to_file(
         self,
-        entries: MutableSequence[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
         path: Path,
         server_type: str | None = None,
         format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
     ) -> r[m.Ldif.WriteResponse]:
         """Write entries to LDIF file with WriteResponse."""
-        string_result = self.write_to_string(entries, server_type, format_options)
+        normalized_entries = self._normalize_entries(entries)
+        string_result = self.write_to_string(
+            normalized_entries,
+            server_type,
+            format_options,
+        )
         if string_result.is_failure:
             return r[m.Ldif.WriteResponse].fail(
                 string_result.error or "Failed to generate LDIF content",
@@ -129,21 +141,23 @@ class FlextLdifWriterMixin:
             )
         response = m.Ldif.WriteResponse(
             content=ldif_content,
+            output_path=str(path),
             statistics=m.Ldif.Statistics(
-                total_entries=u.count(entries),
-                processed_entries=u.count(entries),
+                total_entries=u.count(normalized_entries),
+                processed_entries=u.count(normalized_entries),
             ),
         )
         return r[m.Ldif.WriteResponse].ok(response)
 
     def write_to_string(
         self,
-        entries: MutableSequence[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
         server_type: str | None = None,
         format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
     ) -> r[str]:
         """Write entries to LDIF string format."""
         effective_server_type = server_type or "rfc"
+        normalized_entries = self._normalize_entries(entries)
         try:
             entry_quirk = self._server.entry(effective_server_type)
         except ValueError as e:
@@ -155,14 +169,79 @@ class FlextLdifWriterMixin:
                 f"No entry quirk found for server type: {effective_server_type}",
             )
         options = self._normalize_format_options(format_options)
-        return entry_quirk.write(entries, options).fold(
+        prepared_entries_result = self._prepare_entries_for_target_write(
+            normalized_entries,
+            effective_server_type,
+        )
+        if prepared_entries_result.is_failure:
+            return r[str].fail(
+                prepared_entries_result.error or "LDIF entry preparation failed",
+            )
+        return entry_quirk.write(prepared_entries_result.value, options).fold(
             on_failure=lambda e: r[str].fail(e or "LDIF writing failed"),
             on_success=lambda v: r[str].ok(v),
         )
 
+    @staticmethod
+    def _normalize_entries(
+        entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
+    ) -> MutableSequence[m.Ldif.Entry]:
+        """Accept rich parse responses while keeping entry writing canonical."""
+        if isinstance(entries, m.Ldif.ParseResponse):
+            return entries.entries
+        return entries
+
     def _get_effective_server_type_value(self) -> str:
         """Resolve effective server type (default: rfc, overridden by DetectorMixin)."""
         return "rfc"
+
+    def _prepare_entries_for_target_write(
+        self,
+        entries: MutableSequence[m.Ldif.Entry],
+        target_server_type: str,
+    ) -> r[MutableSequence[m.Ldif.Entry]]:
+        """Convert entries to target semantics when caller requests cross-server write."""
+        normalized_target = u.Ldif.normalize_server_type(target_server_type)
+        conversion_service = FlextLdifConversion()
+        prepared_entries: MutableSequence[m.Ldif.Entry] = []
+        for entry in entries:
+            metadata = entry.metadata
+            if metadata is None:
+                prepared_entries.append(entry)
+                continue
+            current_server_raw = (
+                metadata.target_server_type
+                or metadata.original_server_type
+                or metadata.quirk_type
+            )
+            current_server_text = str(current_server_raw)
+            normalized_current = u.try_(
+                lambda current_server_text=current_server_text: (
+                    u.Ldif.normalize_server_type(
+                        current_server_text,
+                    )
+                ),
+                default=None,
+            ).map_or(None)
+            if normalized_current is None or normalized_current == normalized_target:
+                prepared_entries.append(entry)
+                continue
+            conversion_result = conversion_service.convert_entry(
+                normalized_current,
+                normalized_target,
+                entry,
+            )
+            if conversion_result.is_failure:
+                return r[MutableSequence[m.Ldif.Entry]].fail(
+                    conversion_result.error or "Entry conversion failed before write",
+                )
+            converted_entry = conversion_result.value
+            if not isinstance(converted_entry, m.Ldif.Entry):
+                return r[MutableSequence[m.Ldif.Entry]].fail(
+                    f"Expected converted Entry, got {type(converted_entry).__name__}",
+                )
+            prepared_entries.append(converted_entry)
+        return r[MutableSequence[m.Ldif.Entry]].ok(prepared_entries)
 
 
 class FlextLdifWriter(FlextLdifWriterMixin, s[m.Ldif.WriteResponse]):

@@ -613,9 +613,12 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
 
     def validate_dns(
         self,
-        entries: MutableSequence[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
     ) -> r[MutableSequence[m.Ldif.Entry]]:
         """Validate and normalize all DNs to RFC 4514."""
+        normalized_entries = (
+            entries.entries if isinstance(entries, m.Ldif.ParseResponse) else entries
+        )
 
         def validate_entry(entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
             """Validate and normalize entry DN."""
@@ -650,7 +653,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
 
         validated: MutableSequence[m.Ldif.Entry] = [
             validation_result.value
-            for entry in entries
+            for entry in normalized_entries
             if (validation_result := validate_entry(entry)).is_success
         ]
         logger.info(

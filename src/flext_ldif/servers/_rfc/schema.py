@@ -461,7 +461,10 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         """Build RFC attribute definition parts."""
         return u.Ldif.build_attribute_parts_with_metadata(
             attr_data,
-            restore_original=True,
+            restore_original=u.Ldif.should_restore_schema_original_format(
+                attr_data.metadata,
+                self._get_server_type(),
+            ),
         )
 
     def _build_objectclass_metadata(
@@ -473,11 +476,15 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         ],
     ) -> m.Ldif.QuirkMetadata:
         """Build objectClass metadata with extensions."""
+        server_type = self._get_server_type()
+        metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = server_type
         metadata = m.Ldif.QuirkMetadata(
-            quirk_type=c.Ldif.ServerTypes.RFC,
+            quirk_type=server_type,
             extensions=m.Ldif.DynamicMetadata.model_validate(metadata_extensions)
             if metadata_extensions
             else m.Ldif.DynamicMetadata(),
+            original_server_type=server_type,
+            target_server_type=server_type,
         )
         u.Ldif.preserve_schema_formatting(metadata, oc_definition)
         return metadata
@@ -489,7 +496,10 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         """Build RFC objectClass definition parts."""
         return u.Ldif.build_objectclass_parts_with_metadata(
             oc_data,
-            restore_original=True,
+            restore_original=u.Ldif.should_restore_schema_original_format(
+                oc_data.metadata,
+                self._get_server_type(),
+            ),
         )
 
     def _ensure_x_origin(

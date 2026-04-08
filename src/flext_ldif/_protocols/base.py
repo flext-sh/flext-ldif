@@ -120,6 +120,32 @@ class FlextLdifProtocolsBase(Protocol):
         reason: str
 
     @runtime_checkable
+    class Control(Protocol):
+        """Structured LDIF control line."""
+
+        control_type: str
+        criticality: bool | None
+        value: str | None
+        value_origin: str | None
+        raw_value: str | None
+
+    @runtime_checkable
+    class ChangeOperationValue(Protocol):
+        """Single decoded value in a modify block."""
+
+        value: str
+        value_origin: str
+        raw_value: str | None
+
+    @runtime_checkable
+    class ChangeOperation(Protocol):
+        """Structured modify block."""
+
+        operation: str
+        attribute: str
+        values: Sequence[FlextLdifProtocolsBase.ChangeOperationValue]
+
+    @runtime_checkable
     class AclPermissions(Protocol):
         """ACL permission flag set."""
 
@@ -377,6 +403,38 @@ class FlextLdifProtocolsBase(Protocol):
             """Return changetype when present."""
             ...
 
+        @property
+        def record_kind(self) -> str:
+            """Return whether the record is content or change."""
+            ...
+
+        @property
+        def controls(self) -> Sequence[object]:
+            """Return parsed LDIF controls."""
+            ...
+
+        @property
+        def change_operations(
+            self,
+        ) -> Sequence[object]:
+            """Return parsed modify blocks."""
+            ...
+
+        @property
+        def newrdn(self) -> str | None:
+            """Return newrdn for moddn/modrdn records."""
+            ...
+
+        @property
+        def deleteoldrdn(self) -> bool | None:
+            """Return deleteoldrdn for moddn/modrdn records."""
+            ...
+
+        @property
+        def newsuperior(self) -> str | None:
+            """Return newsuperior for moddn records."""
+            ...
+
     @runtime_checkable
     class EntryWithMetadata(Protocol):
         """Entry-like value that exposes write-capable metadata."""
@@ -429,6 +487,7 @@ class FlextLdifProtocolsBase(Protocol):
         """Write response payload."""
 
         content: str | None
+        output_path: str | None
         statistics: FlextLdifProtocolsBase.Statistics
 
     @runtime_checkable

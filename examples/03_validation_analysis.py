@@ -60,7 +60,7 @@ class DRYValidationAnalysis:
             )
             parse_result = api.parse_ldif(ldif_text)
             if parse_result.is_success:
-                entries.extend(parse_result.value)
+                entries.extend(parse_result.value.entries)
         return entries
 
     @staticmethod

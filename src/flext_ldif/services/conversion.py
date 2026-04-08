@@ -99,9 +99,10 @@ class FlextLdifConversion(
         ),
     ) -> TypeIs[p.Ldif.SchemaQuirk]:
         return (
-            FlextLdifConversion._has_attr(obj, "parse")
-            and FlextLdifConversion._has_attr(obj, "write")
+            FlextLdifConversion._has_attr(obj, "parse_attribute")
+            and FlextLdifConversion._has_attr(obj, "parse_objectclass")
             and FlextLdifConversion._has_attr(obj, "write_attribute")
+            and FlextLdifConversion._has_attr(obj, "write_objectclass")
         )
 
     @staticmethod
@@ -122,7 +123,7 @@ class FlextLdifConversion(
     ) -> p.Ldif.SchemaQuirk:
         if not FlextLdifConversion._has_attr(
             quirk,
-            "parse",
+            "parse_attribute",
         ) or not FlextLdifConversion._has_attr(quirk, "write_attribute"):
             msg = f"Expected Schema quirk, got {type(quirk)}"
             raise TypeError(msg)
@@ -1220,6 +1221,102 @@ class FlextLdifConversion(
                 conversion_failure_message,
             )
 
+    def _convert_schema_entry_value(
+        self,
+        source_schema: p.Ldif.SchemaQuirk,
+        target_schema: p.Ldif.SchemaQuirk,
+        value: str,
+        *,
+        schema_item_kind: Literal["attribute", "objectclass"],
+        field_name: str,
+    ) -> r[str]:
+        """Convert a schema definition string embedded inside an LDIF entry."""
+        parsed_result = self._parse_schema_item_with_schema(
+            source_schema,
+            value,
+            parse_error_message=f"Failed to parse {field_name} definition",
+            schema_item_kind=schema_item_kind,
+        )
+        if parsed_result.is_failure:
+            return r[str].fail(parsed_result.error or f"Failed to parse {field_name}")
+        parsed_item = parsed_result.value
+        if schema_item_kind == "attribute":
+            if not isinstance(parsed_item, m.Ldif.SchemaAttribute):
+                return r[str].fail(
+                    f"Expected SchemaAttribute for {field_name}, got {type(parsed_item).__name__}",
+                )
+            write_result = target_schema.write_attribute(parsed_item)
+        else:
+            if not isinstance(parsed_item, m.Ldif.SchemaObjectClass):
+                return r[str].fail(
+                    f"Expected SchemaObjectClass for {field_name}, got {type(parsed_item).__name__}",
+                )
+            write_result = target_schema.write_objectclass(parsed_item)
+        if write_result.is_failure:
+            return r[str].fail(
+                write_result.error or f"Failed to write converted {field_name}",
+            )
+        return r[str].ok(write_result.value)
+
+    def _convert_schema_entry_attributes(
+        self,
+        source_quirk: FlextLdifServersBase,
+        target_quirk: FlextLdifServersBase,
+        entry: m.Ldif.Entry,
+    ) -> r[m.Ldif.Entry]:
+        """Convert schema definition attributes embedded in a schema entry."""
+        if entry.attributes is None or not u.Ldif.is_schema_entry(entry):
+            return r[m.Ldif.Entry].ok(entry)
+        source_schema_result = self._resolve_schema_quirk(source_quirk, role="Source")
+        if source_schema_result.is_failure:
+            return r[m.Ldif.Entry].fail(
+                source_schema_result.error or "Source schema not available",
+            )
+        target_schema_result = self._resolve_schema_quirk(target_quirk, role="Target")
+        if target_schema_result.is_failure:
+            return r[m.Ldif.Entry].fail(
+                target_schema_result.error or "Target schema not available",
+            )
+        schema_field_kinds: dict[str, Literal["attribute", "objectclass"]] = {
+            c.Ldif.ATTRIBUTE_TYPES.lower(): "attribute",
+            c.Ldif.OBJECT_CLASSES.lower(): "objectclass",
+        }
+        updated_attributes = dict(entry.attributes.attributes)
+        changed = False
+        for attr_name, values in entry.attributes.attributes.items():
+            schema_item_kind = schema_field_kinds.get(attr_name.lower())
+            if schema_item_kind is None:
+                continue
+            converted_values: MutableSequence[str] = []
+            for value in values:
+                converted_value_result = self._convert_schema_entry_value(
+                    source_schema_result.value,
+                    target_schema_result.value,
+                    value,
+                    schema_item_kind=schema_item_kind,
+                    field_name=attr_name,
+                )
+                if converted_value_result.is_failure:
+                    return r[m.Ldif.Entry].fail(
+                        converted_value_result.error
+                        or f"Failed converting schema field {attr_name}",
+                    )
+                converted_values.append(converted_value_result.value)
+            updated_attributes[attr_name] = converted_values
+            changed = True
+        if not changed:
+            return r[m.Ldif.Entry].ok(entry)
+        updated_entry = entry.model_copy(
+            update={
+                "attributes": entry.attributes.model_copy(
+                    update={"attributes": updated_attributes},
+                    deep=True,
+                ),
+            },
+            deep=True,
+        )
+        return r[m.Ldif.Entry].ok(updated_entry)
+
     def _convert_entry(
         self,
         source_quirk: FlextLdifServersBase,
@@ -1280,14 +1377,18 @@ class FlextLdifConversion(
                 str(conversion_analysis) if conversion_analysis else None,
                 str(source_quirk_name),
             )
-            source_type_norm = str(source_quirk_name).lower()
-            target_type_norm = str(target_server_type_str).lower()
-            converted_entry = self._update_entry_metadata(
-                converted_entry,
-                validated_quirk_type,
-                str(conversion_analysis) if conversion_analysis else None,
-                str(source_quirk_name),
-            )
+            if source_type_norm != target_type_norm:
+                schema_entry_result = self._convert_schema_entry_attributes(
+                    source_quirk,
+                    target_quirk,
+                    converted_entry,
+                )
+                if schema_entry_result.is_failure:
+                    return r[t.Ldif.ConvertedModel].fail(
+                        schema_entry_result.error
+                        or "Failed to convert schema attributes in entry",
+                    )
+                converted_entry = schema_entry_result.value
             if (
                 source_type_norm == "oid"
                 and target_type_norm == "rfc"
@@ -1742,6 +1843,12 @@ class FlextLdifConversion(
             )
         entry_metadata = current_entry.metadata
         if entry_metadata and get_metadata(current_entry):
+            normalized_source_server: c.Ldif.ServerTypeLiteral | None = None
+            if source_quirk_name != c.IDENTIFIER_UNKNOWN:
+                normalized_source_server = u.try_(
+                    lambda: u.Ldif.normalize_server_type(source_quirk_name),
+                    default=None,
+                ).map_or(None)
             extensions_update: t.MutableContainerMapping = {
                 "converted_from_server": source_quirk_name,
             }
@@ -1751,7 +1858,14 @@ class FlextLdifConversion(
                 entry_metadata.extensions or m.Ldif.DynamicMetadata()
             ).model_copy(update=extensions_update, deep=True)
             updated_metadata = entry_metadata.model_copy(
-                update={"extensions": updated_extensions},
+                update={
+                    "quirk_type": validated_quirk_type,
+                    "extensions": updated_extensions,
+                    "original_server_type": (
+                        entry_metadata.original_server_type or normalized_source_server
+                    ),
+                    "target_server_type": validated_quirk_type,
+                },
                 deep=True,
             )
             current_entry = current_entry.model_copy(
