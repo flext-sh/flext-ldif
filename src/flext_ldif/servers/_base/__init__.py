@@ -3,15 +3,17 @@
 
 from __future__ import annotations
 
-from flext_core.lazy import install_lazy_exports
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
-_LAZY_IMPORTS = {
-    "FlextLdifQuirkMethodsMixin": ".mixins",
-    "FlextLdifServersBaseConstants": ".constants",
-    "FlextLdifServersBaseEntry": ".entry",
-    "FlextLdifServersBaseSchema": ".schema",
-    "FlextLdifServersBaseSchemaAcl": ".acl",
-}
+_LAZY_IMPORTS = build_lazy_import_map(
+    {
+        ".acl": ("FlextLdifServersBaseSchemaAcl",),
+        ".constants": ("FlextLdifServersBaseConstants",),
+        ".entry": ("FlextLdifServersBaseEntry",),
+        ".mixins": ("FlextLdifQuirkMethodsMixin",),
+        ".schema": ("FlextLdifServersBaseSchema",),
+    },
+)
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import typing as _t
 
-from flext_core.lazy import install_lazy_exports
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if _t.TYPE_CHECKING:
     from flext_core.decorators import FlextDecorators as d
@@ -23,26 +23,32 @@ if _t.TYPE_CHECKING:
         TestsFlextLdifTypes as t,
     )
     from tests.utilities import TestsFlextLdifUtilities, TestsFlextLdifUtilities as u
-_LAZY_IMPORTS = {
-    "GenericFieldsDict": ".typings",
-    "TestsFlextLdifConstants": ".constants",
-    "TestsFlextLdifModels": ".models",
-    "TestsFlextLdifProtocols": ".protocols",
-    "TestsFlextLdifServiceBase": ".base",
-    "TestsFlextLdifTypes": ".typings",
-    "TestsFlextLdifUtilities": ".utilities",
-    "c": (".constants", "TestsFlextLdifConstants"),
-    "d": ("flext_core.decorators", "FlextDecorators"),
-    "e": ("flext_core.exceptions", "FlextExceptions"),
-    "h": ("flext_core.handlers", "FlextHandlers"),
-    "m": (".models", "TestsFlextLdifModels"),
-    "p": (".protocols", "TestsFlextLdifProtocols"),
-    "r": ("flext_core.result", "FlextResult"),
-    "s": (".base", "TestsFlextLdifServiceBase"),
-    "t": (".typings", "TestsFlextLdifTypes"),
-    "u": (".utilities", "TestsFlextLdifUtilities"),
-    "x": ("flext_core.mixins", "FlextMixins"),
-}
+_LAZY_IMPORTS = build_lazy_import_map(
+    {
+        ".base": ("TestsFlextLdifServiceBase",),
+        ".constants": ("TestsFlextLdifConstants",),
+        ".models": ("TestsFlextLdifModels",),
+        ".protocols": ("TestsFlextLdifProtocols",),
+        ".typings": (
+            "GenericFieldsDict",
+            "TestsFlextLdifTypes",
+        ),
+        ".utilities": ("TestsFlextLdifUtilities",),
+    },
+    alias_groups={
+        ".base": (("s", "TestsFlextLdifServiceBase"),),
+        ".constants": (("c", "TestsFlextLdifConstants"),),
+        ".models": (("m", "TestsFlextLdifModels"),),
+        ".protocols": (("p", "TestsFlextLdifProtocols"),),
+        ".typings": (("t", "TestsFlextLdifTypes"),),
+        ".utilities": (("u", "TestsFlextLdifUtilities"),),
+        "flext_core.decorators": (("d", "FlextDecorators"),),
+        "flext_core.exceptions": (("e", "FlextExceptions"),),
+        "flext_core.handlers": (("h", "FlextHandlers"),),
+        "flext_core.mixins": (("x", "FlextMixins"),),
+        "flext_core.result": (("r", "FlextResult"),),
+    },
+)
 
 __all__ = [
     "GenericFieldsDict",

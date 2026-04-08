@@ -3,31 +3,43 @@
 
 from __future__ import annotations
 
-from flext_core.lazy import install_lazy_exports, merge_lazy_imports
+from flext_core.lazy import (
+    build_lazy_import_map,
+    install_lazy_exports,
+    merge_lazy_imports,
+)
 
 _LAZY_IMPORTS = merge_lazy_imports(
     ("._services",),
-    {
-        "FlextLdifAcl": ".acl",
-        "FlextLdifAnalysis": ".analysis",
-        "FlextLdifCategorization": ".categorization",
-        "FlextLdifConversion": ".conversion",
-        "FlextLdifDetector": ".detector",
-        "FlextLdifDetectorMixin": ".detector",
-        "FlextLdifEntries": ".entries",
-        "FlextLdifFilters": ".filters",
-        "FlextLdifMigrationPipeline": ".migration",
-        "FlextLdifParser": ".parser",
-        "FlextLdifParserMixin": ".parser",
-        "FlextLdifProcessing": ".processing",
-        "FlextLdifProcessingPipeline": ".pipeline",
-        "FlextLdifServer": ".server",
-        "FlextLdifStatistics": ".statistics",
-        "FlextLdifTransformer": ".transformers",
-        "FlextLdifValidation": ".rfc_validation",
-        "FlextLdifWriter": ".writer",
-        "FlextLdifWriterMixin": ".writer",
-    },
+    build_lazy_import_map(
+        {
+            ".acl": ("FlextLdifAcl",),
+            ".analysis": ("FlextLdifAnalysis",),
+            ".categorization": ("FlextLdifCategorization",),
+            ".conversion": ("FlextLdifConversion",),
+            ".detector": (
+                "FlextLdifDetector",
+                "FlextLdifDetectorMixin",
+            ),
+            ".entries": ("FlextLdifEntries",),
+            ".filters": ("FlextLdifFilters",),
+            ".migration": ("FlextLdifMigrationPipeline",),
+            ".parser": (
+                "FlextLdifParser",
+                "FlextLdifParserMixin",
+            ),
+            ".pipeline": ("FlextLdifProcessingPipeline",),
+            ".processing": ("FlextLdifProcessing",),
+            ".rfc_validation": ("FlextLdifValidation",),
+            ".server": ("FlextLdifServer",),
+            ".statistics": ("FlextLdifStatistics",),
+            ".transformers": ("FlextLdifTransformer",),
+            ".writer": (
+                "FlextLdifWriter",
+                "FlextLdifWriterMixin",
+            ),
+        },
+    ),
     exclude_names=(
         "cleanup_submodule_namespace",
         "install_lazy_exports",

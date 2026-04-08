@@ -3,7 +3,11 @@
 
 from __future__ import annotations
 
-from flext_core.lazy import install_lazy_exports, merge_lazy_imports
+from flext_core.lazy import (
+    build_lazy_import_map,
+    install_lazy_exports,
+    merge_lazy_imports,
+)
 
 _LAZY_IMPORTS = merge_lazy_imports(
     (
@@ -12,20 +16,22 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "._oud",
         "._rfc",
     ),
-    {
-        "FlextLdifServersAd": ".ad",
-        "FlextLdifServersApache": ".apache",
-        "FlextLdifServersBase": ".base",
-        "FlextLdifServersDs389": ".ds389",
-        "FlextLdifServersNovell": ".novell",
-        "FlextLdifServersOid": ".oid",
-        "FlextLdifServersOpenldap": ".openldap",
-        "FlextLdifServersOpenldap1": ".openldap1",
-        "FlextLdifServersOud": ".oud",
-        "FlextLdifServersRelaxed": ".relaxed",
-        "FlextLdifServersRfc": ".rfc",
-        "FlextLdifServersTivoli": ".tivoli",
-    },
+    build_lazy_import_map(
+        {
+            ".ad": ("FlextLdifServersAd",),
+            ".apache": ("FlextLdifServersApache",),
+            ".base": ("FlextLdifServersBase",),
+            ".ds389": ("FlextLdifServersDs389",),
+            ".novell": ("FlextLdifServersNovell",),
+            ".oid": ("FlextLdifServersOid",),
+            ".openldap": ("FlextLdifServersOpenldap",),
+            ".openldap1": ("FlextLdifServersOpenldap1",),
+            ".oud": ("FlextLdifServersOud",),
+            ".relaxed": ("FlextLdifServersRelaxed",),
+            ".rfc": ("FlextLdifServersRfc",),
+            ".tivoli": ("FlextLdifServersTivoli",),
+        },
+    ),
     exclude_names=(
         "cleanup_submodule_namespace",
         "install_lazy_exports",

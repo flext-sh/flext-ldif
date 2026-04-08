@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import typing as _t
 
-from flext_core.lazy import install_lazy_exports
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if _t.TYPE_CHECKING:
     from flext_core.constants import FlextConstants as c
@@ -19,19 +19,22 @@ if _t.TYPE_CHECKING:
     from flext_core.service import FlextService as s
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
-_LAZY_IMPORTS = {
-    "c": ("flext_core.constants", "FlextConstants"),
-    "d": ("flext_core.decorators", "FlextDecorators"),
-    "e": ("flext_core.exceptions", "FlextExceptions"),
-    "h": ("flext_core.handlers", "FlextHandlers"),
-    "m": ("flext_core.models", "FlextModels"),
-    "p": ("flext_core.protocols", "FlextProtocols"),
-    "r": ("flext_core.result", "FlextResult"),
-    "s": ("flext_core.service", "FlextService"),
-    "t": ("flext_core.typings", "FlextTypes"),
-    "u": ("flext_core.utilities", "FlextUtilities"),
-    "x": ("flext_core.mixins", "FlextMixins"),
-}
+_LAZY_IMPORTS = build_lazy_import_map(
+    {},
+    alias_groups={
+        "flext_core.constants": (("c", "FlextConstants"),),
+        "flext_core.decorators": (("d", "FlextDecorators"),),
+        "flext_core.exceptions": (("e", "FlextExceptions"),),
+        "flext_core.handlers": (("h", "FlextHandlers"),),
+        "flext_core.mixins": (("x", "FlextMixins"),),
+        "flext_core.models": (("m", "FlextModels"),),
+        "flext_core.protocols": (("p", "FlextProtocols"),),
+        "flext_core.result": (("r", "FlextResult"),),
+        "flext_core.service": (("s", "FlextService"),),
+        "flext_core.typings": (("t", "FlextTypes"),),
+        "flext_core.utilities": (("u", "FlextUtilities"),),
+    },
+)
 
 __all__ = [
     "c",

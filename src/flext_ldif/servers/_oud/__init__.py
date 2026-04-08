@@ -3,16 +3,20 @@
 
 from __future__ import annotations
 
-from flext_core.lazy import install_lazy_exports
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
-_LAZY_IMPORTS = {
-    "FlextLdifServersOudAcl": ".acl",
-    "FlextLdifServersOudConstants": ".constants",
-    "FlextLdifServersOudEntry": ".entry",
-    "FlextLdifServersOudSchema": ".schema",
-    "FlextLdifServersOudUtilities": ".utilities",
-    "c": ".constants",
-}
+_LAZY_IMPORTS = build_lazy_import_map(
+    {
+        ".acl": ("FlextLdifServersOudAcl",),
+        ".constants": (
+            "FlextLdifServersOudConstants",
+            "c",
+        ),
+        ".entry": ("FlextLdifServersOudEntry",),
+        ".schema": ("FlextLdifServersOudSchema",),
+        ".utilities": ("FlextLdifServersOudUtilities",),
+    },
+)
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)
