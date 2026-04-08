@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import typing as _t
 
-from flext_core.lazy import install_lazy_exports, merge_lazy_imports
+from flext_core.lazy import install_lazy_exports
 
 if _t.TYPE_CHECKING:
     from flext_core.decorators import FlextDecorators as d
@@ -25,57 +25,26 @@ if _t.TYPE_CHECKING:
         TestsFlextLdifTypes as t,
     )
     from tests.utilities import TestsFlextLdifUtilities, TestsFlextLdifUtilities as u
-_LAZY_IMPORTS = merge_lazy_imports(
-    (
-        "tests.e2e",
-        "tests.helpers",
-        "tests.integration",
-        "tests.support",
-        "tests.unit",
-    ),
-    {
-        "GenericFieldsDict": ("tests.typings", "GenericFieldsDict"),
-        "TestsFlextLdifConstants": ("tests.constants", "TestsFlextLdifConstants"),
-        "TestsFlextLdifModels": ("tests.models", "TestsFlextLdifModels"),
-        "TestsFlextLdifProtocols": ("tests.protocols", "TestsFlextLdifProtocols"),
-        "TestsFlextLdifServiceBase": ("tests.base", "TestsFlextLdifServiceBase"),
-        "TestsFlextLdifTypes": ("tests.typings", "TestsFlextLdifTypes"),
-        "TestsFlextLdifUtilities": ("tests.utilities", "TestsFlextLdifUtilities"),
-        "base": "tests.base",
-        "c": ("tests.constants", "TestsFlextLdifConstants"),
-        "conftest": "tests.conftest",
-        "conftest_shared": "tests.conftest_shared",
-        "constants": "tests.constants",
-        "d": ("flext_core.decorators", "FlextDecorators"),
-        "e": ("flext_core.exceptions", "FlextExceptions"),
-        "e2e": "tests.e2e",
-        "h": ("flext_core.handlers", "FlextHandlers"),
-        "helpers": "tests.helpers",
-        "integration": "tests.integration",
-        "m": ("tests.models", "TestsFlextLdifModels"),
-        "models": "tests.models",
-        "p": ("tests.protocols", "TestsFlextLdifProtocols"),
-        "protocols": "tests.protocols",
-        "r": ("flext_core.result", "FlextResult"),
-        "s": ("tests.base", "TestsFlextLdifServiceBase"),
-        "support": "tests.support",
-        "t": ("tests.typings", "TestsFlextLdifTypes"),
-        "test_factory": "tests.test_factory",
-        "test_helpers": "tests.test_helpers",
-        "typings": "tests.typings",
-        "u": ("tests.utilities", "TestsFlextLdifUtilities"),
-        "unit": "tests.unit",
-        "utilities": "tests.utilities",
-        "x": ("flext_core.mixins", "FlextMixins"),
-    },
-)
-_ = _LAZY_IMPORTS.pop("cleanup_submodule_namespace", None)
-_ = _LAZY_IMPORTS.pop("install_lazy_exports", None)
-_ = _LAZY_IMPORTS.pop("lazy_getattr", None)
-_ = _LAZY_IMPORTS.pop("logger", None)
-_ = _LAZY_IMPORTS.pop("merge_lazy_imports", None)
-_ = _LAZY_IMPORTS.pop("output", None)
-_ = _LAZY_IMPORTS.pop("output_reporting", None)
+_LAZY_IMPORTS = {
+    "GenericFieldsDict": ("tests.typings", "GenericFieldsDict"),
+    "TestsFlextLdifConstants": ("tests.constants", "TestsFlextLdifConstants"),
+    "TestsFlextLdifModels": ("tests.models", "TestsFlextLdifModels"),
+    "TestsFlextLdifProtocols": ("tests.protocols", "TestsFlextLdifProtocols"),
+    "TestsFlextLdifServiceBase": ("tests.base", "TestsFlextLdifServiceBase"),
+    "TestsFlextLdifTypes": ("tests.typings", "TestsFlextLdifTypes"),
+    "TestsFlextLdifUtilities": ("tests.utilities", "TestsFlextLdifUtilities"),
+    "c": ("tests.constants", "TestsFlextLdifConstants"),
+    "d": ("flext_core.decorators", "FlextDecorators"),
+    "e": ("flext_core.exceptions", "FlextExceptions"),
+    "h": ("flext_core.handlers", "FlextHandlers"),
+    "m": ("tests.models", "TestsFlextLdifModels"),
+    "p": ("tests.protocols", "TestsFlextLdifProtocols"),
+    "r": ("flext_core.result", "FlextResult"),
+    "s": ("tests.base", "TestsFlextLdifServiceBase"),
+    "t": ("tests.typings", "TestsFlextLdifTypes"),
+    "u": ("tests.utilities", "TestsFlextLdifUtilities"),
+    "x": ("flext_core.mixins", "FlextMixins"),
+}
 
 __all__ = [
     "GenericFieldsDict",
@@ -85,31 +54,16 @@ __all__ = [
     "TestsFlextLdifServiceBase",
     "TestsFlextLdifTypes",
     "TestsFlextLdifUtilities",
-    "base",
     "c",
-    "conftest",
-    "conftest_shared",
-    "constants",
     "d",
     "e",
-    "e2e",
     "h",
-    "helpers",
-    "integration",
     "m",
-    "models",
     "p",
-    "protocols",
     "r",
     "s",
-    "support",
     "t",
-    "test_factory",
-    "test_helpers",
-    "typings",
     "u",
-    "unit",
-    "utilities",
     "x",
 ]
 

@@ -13,8 +13,6 @@ _LAZY_IMPORTS = {
         "flext_ldif._protocols.domain",
         "FlextLdifProtocolsDomain",
     ),
-    "base": "flext_ldif._protocols.base",
-    "domain": "flext_ldif._protocols.domain",
 }
 
 

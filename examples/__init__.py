@@ -24,7 +24,6 @@ if _t.TYPE_CHECKING:
 _LAZY_IMPORTS = {
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
-    "demo_structured_migration": "examples.demo_structured_migration",
     "e": ("flext_core.exceptions", "FlextExceptions"),
     "h": ("flext_core.handlers", "FlextHandlers"),
     "m": ("flext_core.models", "FlextModels"),
@@ -39,7 +38,6 @@ _LAZY_IMPORTS = {
 __all__ = [
     "c",
     "d",
-    "demo_structured_migration",
     "e",
     "h",
     "m",

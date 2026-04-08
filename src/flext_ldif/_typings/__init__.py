@@ -10,8 +10,6 @@ from flext_core.lazy import install_lazy_exports
 _LAZY_IMPORTS = {
     "FlextLdifTypesBase": ("flext_ldif._typings.base", "FlextLdifTypesBase"),
     "FlextLdifTypesDomain": ("flext_ldif._typings.domain", "FlextLdifTypesDomain"),
-    "base": "flext_ldif._typings.base",
-    "domain": "flext_ldif._typings.domain",
 }
 
 
