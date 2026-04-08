@@ -8,20 +8,11 @@ from __future__ import annotations
 from flext_core.lazy import install_lazy_exports
 
 _LAZY_IMPORTS = {
-    "FlextLdifServersRfcAcl": ("flext_ldif.servers._rfc.acl", "FlextLdifServersRfcAcl"),
-    "FlextLdifServersRfcConstants": (
-        "flext_ldif.servers._rfc.constants",
-        "FlextLdifServersRfcConstants",
-    ),
-    "FlextLdifServersRfcEntry": (
-        "flext_ldif.servers._rfc.entry",
-        "FlextLdifServersRfcEntry",
-    ),
-    "FlextLdifServersRfcSchema": (
-        "flext_ldif.servers._rfc.schema",
-        "FlextLdifServersRfcSchema",
-    ),
-    "c": ("flext_ldif.servers._rfc.constants", "c"),
+    "FlextLdifServersRfcAcl": ".acl",
+    "FlextLdifServersRfcConstants": ".constants",
+    "FlextLdifServersRfcEntry": ".entry",
+    "FlextLdifServersRfcSchema": ".schema",
+    "c": ".constants",
 }
 
 

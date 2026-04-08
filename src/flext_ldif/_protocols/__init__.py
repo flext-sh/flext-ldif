@@ -8,11 +8,8 @@ from __future__ import annotations
 from flext_core.lazy import install_lazy_exports
 
 _LAZY_IMPORTS = {
-    "FlextLdifProtocolsBase": ("flext_ldif._protocols.base", "FlextLdifProtocolsBase"),
-    "FlextLdifProtocolsDomain": (
-        "flext_ldif._protocols.domain",
-        "FlextLdifProtocolsDomain",
-    ),
+    "FlextLdifProtocolsBase": ".base",
+    "FlextLdifProtocolsDomain": ".domain",
 }
 
 

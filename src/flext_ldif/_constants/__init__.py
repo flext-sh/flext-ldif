@@ -8,11 +8,8 @@ from __future__ import annotations
 from flext_core.lazy import install_lazy_exports
 
 _LAZY_IMPORTS = {
-    "FlextLdifConstantsBase": ("flext_ldif._constants.base", "FlextLdifConstantsBase"),
-    "FlextLdifConstantsEnums": (
-        "flext_ldif._constants.enums",
-        "FlextLdifConstantsEnums",
-    ),
+    "FlextLdifConstantsBase": ".base",
+    "FlextLdifConstantsEnums": ".enums",
 }
 
 

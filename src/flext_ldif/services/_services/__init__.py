@@ -8,10 +8,7 @@ from __future__ import annotations
 from flext_core.lazy import install_lazy_exports
 
 _LAZY_IMPORTS = {
-    "FlextLdifProcessingPipelineService": (
-        "flext_ldif.services._services.processing_pipeline_service",
-        "FlextLdifProcessingPipelineService",
-    ),
+    "FlextLdifProcessingPipelineService": ".processing_pipeline_service",
 }
 
 

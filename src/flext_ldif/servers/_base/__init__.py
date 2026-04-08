@@ -8,26 +8,11 @@ from __future__ import annotations
 from flext_core.lazy import install_lazy_exports
 
 _LAZY_IMPORTS = {
-    "FlextLdifQuirkMethodsMixin": (
-        "flext_ldif.servers._base.mixins",
-        "FlextLdifQuirkMethodsMixin",
-    ),
-    "FlextLdifServersBaseConstants": (
-        "flext_ldif.servers._base.constants",
-        "FlextLdifServersBaseConstants",
-    ),
-    "FlextLdifServersBaseEntry": (
-        "flext_ldif.servers._base.entry",
-        "FlextLdifServersBaseEntry",
-    ),
-    "FlextLdifServersBaseSchema": (
-        "flext_ldif.servers._base.schema",
-        "FlextLdifServersBaseSchema",
-    ),
-    "FlextLdifServersBaseSchemaAcl": (
-        "flext_ldif.servers._base.acl",
-        "FlextLdifServersBaseSchemaAcl",
-    ),
+    "FlextLdifQuirkMethodsMixin": ".mixins",
+    "FlextLdifServersBaseConstants": ".constants",
+    "FlextLdifServersBaseEntry": ".entry",
+    "FlextLdifServersBaseSchema": ".schema",
+    "FlextLdifServersBaseSchemaAcl": ".acl",
 }
 
 
