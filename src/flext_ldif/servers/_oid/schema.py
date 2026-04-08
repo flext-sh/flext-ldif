@@ -19,7 +19,6 @@ from flext_ldif import (
 )
 
 logger = FlextLogger(__name__)
-_OidConstants = FlextLdifServersOidConstants
 
 
 class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
@@ -127,23 +126,25 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             normalized_equality, normalized_substr = u.Ldif.normalize_matching_rules(
                 attr.equality,
                 attr.substr,
-                replacements=_OidConstants.MATCHING_RULE_TO_RFC,
-                normalized_substr_values=_OidConstants.MATCHING_RULE_TO_RFC,
+                replacements=FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC,
+                normalized_substr_values=FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC,
             )
             if normalized_equality != attr.equality:
                 attr.equality = normalized_equality
             if normalized_substr != attr.substr:
                 attr.substr = normalized_substr
             if attr.ordering:
-                normalized_ordering = _OidConstants.MATCHING_RULE_TO_RFC.get(
-                    attr.ordering,
+                normalized_ordering = (
+                    FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC.get(
+                        attr.ordering,
+                    )
                 )
                 if normalized_ordering:
                     attr.ordering = normalized_ordering
             if attr.syntax:
                 attr.syntax = u.Ldif.normalize_syntax_oid(
                     str(attr.syntax),
-                    replacements=_OidConstants.SYNTAX_OID_TO_RFC,
+                    replacements=FlextLdifServersOidConstants.SYNTAX_OID_TO_RFC,
                 )
             attr = self._transform_case_ignore_substrings(attr)
             return r[m.Ldif.SchemaAttribute].ok(attr)
@@ -502,12 +503,14 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             oid_equality, oid_substr = u.Ldif.normalize_matching_rules(
                 attr_copy.equality,
                 attr_copy.substr,
-                replacements=_OidConstants.MATCHING_RULE_RFC_TO_OID,
-                normalized_substr_values=_OidConstants.MATCHING_RULE_RFC_TO_OID,
+                replacements=FlextLdifServersOidConstants.MATCHING_RULE_RFC_TO_OID,
+                normalized_substr_values=FlextLdifServersOidConstants.MATCHING_RULE_RFC_TO_OID,
             )
             oid_ordering = attr_copy.ordering
             if attr_copy.ordering:
-                mapped = _OidConstants.MATCHING_RULE_RFC_TO_OID.get(attr_copy.ordering)
+                mapped = FlextLdifServersOidConstants.MATCHING_RULE_RFC_TO_OID.get(
+                    attr_copy.ordering,
+                )
                 if mapped:
                     oid_ordering = mapped
         oid_syntax: str | None = None

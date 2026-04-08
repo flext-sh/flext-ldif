@@ -23,7 +23,6 @@ from flext_ldif import (
 )
 
 logger = FlextLogger(__name__)
-_OidConstants = FlextLdifServersOidConstants
 
 
 class _OidAclTargetAttributesJson(RootModel[MutableSequence[str]]):
@@ -60,7 +59,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         """Detect OID ACL subject type by matching ACL_SUBJECT_PATTERNS."""
         if not content:
             return None
-        const = _OidConstants
+        const = FlextLdifServersOidConstants
         for pattern_key, (_, subject_type, _) in const.ACL_SUBJECT_PATTERNS.items():
             if pattern_key.lower() in content.lower():
                 return subject_type
@@ -71,7 +70,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         """Extract target DN and attributes from OID ACL."""
         target_dn: str | None = None
         attributes: MutableSequence[str] = []
-        patterns = _OidConstants
+        patterns = FlextLdifServersOidConstants
         target_match = re.search(patterns.ACL_TARGET_DN_EXTRACT, content, re.IGNORECASE)
         if target_match:
             target_dn = target_match.group(1)
@@ -93,7 +92,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         allowed_perms: MutableSequence[str] = []
         for perm, allowed in permissions.items():
             if allowed:
-                oid_perm_name = _OidConstants.ACL_PERMISSION_NAMES.get(perm, perm)
+                oid_perm_name = FlextLdifServersOidConstants.ACL_PERMISSION_NAMES.get(
+                    perm,
+                    perm,
+                )
                 allowed_perms.append(oid_perm_name)
         if allowed_perms:
             return f"({','.join(allowed_perms)})"
@@ -191,7 +193,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _parse_oid_permissions(content: str) -> t.MutableBoolMapping:
         """Parse OID ACL permissions clause."""
         permissions: t.MutableBoolMapping = {}
-        const = _OidConstants
+        const = FlextLdifServersOidConstants
         perm_match = re.search(const.ACL_PERMS_EXTRACT_OID, content, re.IGNORECASE)
         if perm_match:
             perms_str = perm_match.group(1)
