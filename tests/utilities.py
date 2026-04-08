@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import ClassVar, TextIO
 
 from flext_ldap import FlextLdapTypes
-from flext_tests import FlextTestsDocker, FlextTestsUtilities
+from flext_tests import FlextTestsUtilities, tk
 from ldap3 import Connection as Ldap3Connection, Server as Ldap3Server
 
 from flext_core import FlextLogger
@@ -28,7 +28,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
         class Tests(FlextTestsUtilities.Tests):
             """Test utilities with Matchers, Docker, and LDAP infra support."""
 
-            Docker = FlextTestsDocker
+            Docker = tk
 
             LdapConnectionLike = p.Ldif.Tests.LdapConnectionLike
 
@@ -157,9 +157,9 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
             _resolved_admin_credentials: ClassVar[list[tuple[str, str] | None]] = [None]
 
             @staticmethod
-            def get_docker_control(worker_id: str = "master") -> TestsFlextDocker:
+            def get_docker_control(worker_id: str = "master") -> tk:
                 """Create tk instance for Docker container management."""
-                return TestsFlextDocker(
+                return tk(
                     workspace_root=TestsFlextLdifUtilities.Ldif.Tests._workspace_root,
                     worker_id=worker_id,
                 )
