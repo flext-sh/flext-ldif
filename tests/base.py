@@ -24,8 +24,7 @@ from pydantic import ConfigDict
 
 from flext_core import FlextService, r
 from flext_ldif import FlextLdifEntries
-from tests.models import m
-from tests.typings import t
+from tests import m, t
 
 
 class FlextLdifTestsServiceBase(FlextService[m.Ldif.Entry]):

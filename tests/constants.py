@@ -45,7 +45,7 @@ from flext_ldif import (
     p,
     t,
 )
-from tests.models import FlextLdifTestModels
+from tests import FlextLdifTestModels
 
 
 class FlextLdifTestConstants(FlextTestsConstants):

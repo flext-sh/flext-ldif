@@ -7,8 +7,7 @@ from contextlib import suppress
 from pathlib import Path
 from typing import override
 
-from flext_ldif import FlextLdifServer, m, r, s, t, u
-from flext_ldif.services.conversion import FlextLdifConversion
+from flext_ldif import FlextLdifConversion, FlextLdifServer, m, r, s, t, u
 
 
 class FlextLdifWriterMixin:
