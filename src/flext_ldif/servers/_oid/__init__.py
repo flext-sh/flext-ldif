@@ -21,11 +21,7 @@ _LAZY_IMPORTS = {
         "flext_ldif.servers._oid.schema",
         "FlextLdifServersOidSchema",
     ),
-    "acl": "flext_ldif.servers._oid.acl",
     "c": ("flext_ldif.servers._oid.constants", "c"),
-    "constants": "flext_ldif.servers._oid.constants",
-    "entry": "flext_ldif.servers._oid.entry",
-    "schema": "flext_ldif.servers._oid.schema",
 }
 
 

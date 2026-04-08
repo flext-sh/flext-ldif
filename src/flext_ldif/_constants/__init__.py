@@ -13,8 +13,6 @@ _LAZY_IMPORTS = {
         "flext_ldif._constants.enums",
         "FlextLdifConstantsEnums",
     ),
-    "base": "flext_ldif._constants.base",
-    "enums": "flext_ldif._constants.enums",
 }
 
 

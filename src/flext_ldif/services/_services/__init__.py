@@ -12,7 +12,6 @@ _LAZY_IMPORTS = {
         "flext_ldif.services._services.processing_pipeline_service",
         "FlextLdifProcessingPipelineService",
     ),
-    "processing_pipeline_service": "flext_ldif.services._services.processing_pipeline_service",
 }
 
 

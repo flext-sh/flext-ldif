@@ -8,16 +8,7 @@ from __future__ import annotations
 from flext_core.lazy import install_lazy_exports
 
 _LAZY_IMPORTS = {
-    "c": ("flext_core.constants", "FlextConstants"),
     "conftest": "tests.integration.conftest",
-    "d": ("flext_core.decorators", "FlextDecorators"),
-    "e": ("flext_core.exceptions", "FlextExceptions"),
-    "h": ("flext_core.handlers", "FlextHandlers"),
-    "m": ("flext_core.models", "FlextModels"),
-    "p": ("flext_core.protocols", "FlextProtocols"),
-    "r": ("flext_core.result", "FlextResult"),
-    "s": ("flext_core.service", "FlextService"),
-    "t": ("flext_core.typings", "FlextTypes"),
     "test_acl_metadata_preservation": "tests.integration.test_acl_metadata_preservation",
     "test_api_integration": "tests.integration.test_api_integration",
     "test_categorization_real_data": "tests.integration.test_categorization_real_data",
@@ -46,8 +37,6 @@ _LAZY_IMPORTS = {
     "test_zero_data_loss_oid_oud": "tests.integration.test_zero_data_loss_oid_oud",
     "test_zero_data_loss_schema": "tests.integration.test_zero_data_loss_schema",
     "typings": "tests.integration.typings",
-    "u": ("flext_core.utilities", "FlextUtilities"),
-    "x": ("flext_core.mixins", "FlextMixins"),
 }
 
 

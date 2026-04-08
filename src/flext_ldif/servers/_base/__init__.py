@@ -28,11 +28,6 @@ _LAZY_IMPORTS = {
         "flext_ldif.servers._base.acl",
         "FlextLdifServersBaseSchemaAcl",
     ),
-    "acl": "flext_ldif.servers._base.acl",
-    "constants": "flext_ldif.servers._base.constants",
-    "entry": "flext_ldif.servers._base.entry",
-    "mixins": "flext_ldif.servers._base.mixins",
-    "schema": "flext_ldif.servers._base.schema",
 }
 
 

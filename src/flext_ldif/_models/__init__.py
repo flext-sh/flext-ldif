@@ -95,20 +95,6 @@ _LAZY_IMPORTS = {
     "WhitelistRules": ("flext_ldif._models.settings", "WhitelistRules"),
     "WriteFormatOptions": ("flext_ldif._models.settings", "WriteFormatOptions"),
     "WriteOutputOptions": ("flext_ldif._models.settings", "WriteOutputOptions"),
-    "base": "flext_ldif._models.base",
-    "collections": "flext_ldif._models.collections",
-    "domain_acl": "flext_ldif._models.domain_acl",
-    "domain_attributes": "flext_ldif._models.domain_attributes",
-    "domain_dn": "flext_ldif._models.domain_dn",
-    "domain_entries": "flext_ldif._models.domain_entries",
-    "domain_entry": "flext_ldif._models.domain_entry",
-    "domain_metadata": "flext_ldif._models.domain_metadata",
-    "domain_schema": "flext_ldif._models.domain_schema",
-    "events": "flext_ldif._models.events",
-    "metadata": "flext_ldif._models.metadata",
-    "processing": "flext_ldif._models.processing",
-    "results": "flext_ldif._models.results",
-    "settings": "flext_ldif._models.settings",
 }
 
 

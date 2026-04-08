@@ -21,11 +21,7 @@ _LAZY_IMPORTS = {
         "flext_ldif.servers._rfc.schema",
         "FlextLdifServersRfcSchema",
     ),
-    "acl": "flext_ldif.servers._rfc.acl",
     "c": ("flext_ldif.servers._rfc.constants", "c"),
-    "constants": "flext_ldif.servers._rfc.constants",
-    "entry": "flext_ldif.servers._rfc.entry",
-    "schema": "flext_ldif.servers._rfc.schema",
 }
 
 
