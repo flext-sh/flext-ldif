@@ -703,7 +703,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
     def _check_hierarchy_priority(
         self,
         entry: m.Ldif.Entry,
-        constants: type[FlextLdifConstantsServersBase],
+        constants: type[c.Ldif],
     ) -> bool:
         """Check if entry matches HIERARCHY_PRIORITY_OBJECTCLASSES."""
         priority_classes_raw: frozenset[str] = getattr(
@@ -726,7 +726,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
 
     def _get_priority_order_from_constants(
         self,
-        constants: type[FlextLdifConstantsServersBase] | None,
+        constants: type[c.Ldif] | None,
     ) -> MutableSequence[str]:
         """Get priority order from constants or use default."""
         if constants is not None and hasattr(constants, "CATEGORIZATION_PRIORITY"):
@@ -760,11 +760,11 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
     def _get_server_constants(
         self,
         server_type: str,
-    ) -> r[type[FlextLdifConstantsServersBase]]:
+    ) -> r[type[c.Ldif]]:
         """Get and validate server constants via FlextLdifServer registry."""
         return self._server_registry.get_constants(server_type).fold(
-            on_failure=lambda e: r[type[FlextLdifConstantsServersBase]].fail(e),
-            on_success=lambda v: r[type[FlextLdifConstantsServersBase]].ok(v),
+            on_failure=lambda e: r[type[c.Ldif]].fail(e),
+            on_success=lambda v: r[type[c.Ldif]].ok(v),
         )
 
     def _match_entry_to_category(
@@ -794,7 +794,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
     def _merge_server_constants_to_map(
         self,
         category_map: t.MutableFrozensetMapping,
-        constants: type[FlextLdifConstantsServersBase],
+        constants: type[c.Ldif],
         *,
         override_existing: bool = False,
     ) -> t.MutableFrozensetMapping:

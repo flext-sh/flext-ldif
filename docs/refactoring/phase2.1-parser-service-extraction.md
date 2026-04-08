@@ -121,7 +121,7 @@ class FlextLdifParser(Flext[t.ContainerMapping]):
 - **FlextLdifSettings**: Configuration for parsing behavior
 - **FlextLogger**: Structured logging for operations
 - **r**: Railway-oriented error handling
-- **FlextService**: Base class for FLEXT ecosystem integration
+- **s**: Base class for FLEXT ecosystem integration
 
 ### Design Principles Applied
 
@@ -129,7 +129,7 @@ class FlextLdifParser(Flext[t.ContainerMapping]):
 1. **Dependency Injection**: Client and config injected via constructor
 1. **Railway-Oriented Programming**: All methods return r[T]
 1. **Type Safety**: Full Python 3.13+ type annotations
-1. **FLEXT Patterns**: Inherits from FlextService, uses r
+1. **FLEXT Patterns**: Inherits from s, uses r
 
 ______________________________________________________________________
 
@@ -246,7 +246,7 @@ from collections.abc import Mapping, Sequence`)
 
 ### FLEXT Compliance
 
-- ✅ Inherits from FlextService\[t.ContainerMapping\]
+- ✅ Inherits from s\[t.ContainerMapping\]
 - ✅ Implements execute() method for health checks
 - ✅ Uses r for all operations
 - ✅ Uses FlextLogger for structured logging
@@ -373,7 +373,7 @@ ______________________________________________________________________
 ## Success Criteria
 
 - ✅ FlextLdifParser created with all parsing operations
-- ✅ All methods follow FLEXT patterns (FlextService, r)
+- ✅ All methods follow FLEXT patterns (s, r)
 - ✅ Complete type annotations (Python 3.13+)
 - ✅ Comprehensive documentation with examples
 - ⏳ Integration with api.py (Next: User confirmation)

@@ -80,7 +80,7 @@ class FlextLdifProcessing(
 
     @override
     def execute(self) -> r[MutableSequence[m.Ldif.ProcessingResult]]:
-        """Execute method required by FlextService abstract base class."""
+        """Execute method required by s abstract base class."""
         return r[MutableSequence[m.Ldif.ProcessingResult]].fail(
             "FlextLdifProcessing does not support generic execute(). Use specific methods instead.",
         )

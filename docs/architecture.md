@@ -59,7 +59,7 @@ Supporting modules live under `_models/` (domain/config/processing/results) and
 `ldif` is the single public entry point. It registers factories for filter
 and categorization services, maps service types to concrete classes via
 `SERVICE_MAPPING`, and lazily instantiates services on first access. The facade
-inherits flext-core `FlextService`, exposing configuration (`FlextLdifSettings`),
+inherits flext-core `s`, exposing configuration (`FlextLdifSettings`),
 logging, and `r` helpers to callers. Builder-style helpers (parse →
 filter → write) reuse the same instance-level services to avoid redundant
 initialization.
@@ -67,7 +67,7 @@ initialization.
 ### Service Base (`base.py`)
 
 All services inherit `FlextLdifServiceBase`, a thin wrapper around flext-core
-`FlextService` that exposes namespaced configuration through the `ldif_config`
+`s` that exposes namespaced configuration through the `ldif_config`
 property.
 
 ### Services (`services/`)

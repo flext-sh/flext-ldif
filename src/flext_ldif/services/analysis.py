@@ -144,7 +144,7 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
 
     @override
     def execute(self) -> r[m.Ldif.EntryAnalysisResult]:
-        """Execute method required by FlextService abstract base class."""
+        """Execute method required by s abstract base class."""
         return r[m.Ldif.EntryAnalysisResult].fail(
             "FlextLdifAnalysis does not support generic execute(). Use specific methods instead.",
         )

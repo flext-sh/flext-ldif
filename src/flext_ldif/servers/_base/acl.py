@@ -8,7 +8,7 @@ from typing import Annotated, ClassVar, Self, override
 
 from pydantic import Field, ValidationError
 
-from flext_core import FlextLogger, FlextService, r
+from flext_core import FlextLogger, r, s
 from flext_ldif import (
     FlextLdifQuirkMethodsMixin,
     FlextLdifUtilitiesACL,
@@ -22,7 +22,7 @@ logger = FlextLogger(__name__)
 
 class FlextLdifServersBaseSchemaAcl(
     FlextLdifQuirkMethodsMixin,
-    FlextService[m.Ldif.Acl | str],
+    s[m.Ldif.Acl | str],
 ):
     """Base class for ACL quirks - satisfies Acl (structural typing)."""
 

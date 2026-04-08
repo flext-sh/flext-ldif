@@ -22,7 +22,7 @@ from flext_ldif import (
 
 
 class FlextLdifServersBase(s[m.Ldif.Entry]):
-    """Base class for LDIF/LDAP server quirks as FlextService V2."""
+    """Base class for LDIF/LDAP server quirks as s V2."""
 
     model_config: ClassVar[ConfigDict] = ConfigDict(
         arbitrary_types_allowed=True,

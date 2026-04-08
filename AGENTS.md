@@ -88,7 +88,7 @@ FLEXT-LDIF is built on a **generic RFC-compliant foundation** with a powerful **
 src/flext_ldif/
 ├── api.py                      # ldif facade (main entry point)
 ├── models.py                   # FlextLdifModels (Pydantic v2)
-├── config.py                   # FlextLdifConfig
+├── config.py                   # FlextLdifSettings
 ├── constants.py                # FlextLdifConstants
 ├── typings.py                  # Type definitions
 ├── protocols.py                # Protocol definitions
@@ -362,9 +362,9 @@ entry = m.Ldif.Entry(...)  # ✅ CORRETO
 # entry = m.Entry(...)  # ❌ PROIBIDO - root alias
 
 # Access configuration
-from flext_ldif import FlextLdifConfig
+from flext_ldif import FlextLdifSettings
 
-config = FlextLdifConfig()
+config = FlextLdifSettings()
 
 # Access constants (ALWAYS use namespace completo)
 from flext_core import c

@@ -11,8 +11,8 @@
   - [**2. Delete Over-Engineered Processors**](#2-delete-over-engineered-processors)
   - [**3. Remove Wrapper Methods**](#3-remove-wrapper-methods)
   - [**4. Remove Property Accessors**](#4-remove-property-accessors)
-  - [**5. Leverage FlextDecorators**](#5-leverage-flextdecorators)
-  - [**6. Refactor Services to FlextService**](#6-refactor-services-to-flextservice)
+  - [**5. Leverage d**](#5-leverage-flextdecorators)
+  - [**6. Refactor Services to s**](#6-refactor-services-to-flextservice)
   - [**7. Simplify with Python 3.13+ Pattern Matching**](#7-simplify-with-python-313-pattern-matching)
   - [**8. Reorganize Tests**](#8-reorganize-tests)
 - [Consequences](#consequences)
@@ -54,8 +54,8 @@ flext-ldif has evolved through multiple phases achieving production-ready status
 ### **flext-core Under-Utilization**
 
 1. **FlextProcessors**: Not used directly - wrapped unnecessarily
-1. **FlextDecorators**: Not applied (`@log_operation`, `@track_performance`, `@retry`)
-1. **FlextService**: Services don't extend base class (missing automatic logging, context management)
+1. **d**: Not applied (`@log_operation`, `@track_performance`, `@retry`)
+1. **s**: Services don't extend base class (missing automatic logging, context management)
 
 ### **Impact**
 
@@ -200,26 +200,26 @@ attrs = entry.attributes.to_ldap3()  # Direct
 - Unnecessary indirection
 - Python convention: direct imports over property access
 
-### **5. Leverage FlextDecorators**
+### **5. Leverage d**
 
 **Action**: Apply flext-core decorators to key operations
 
 **Decorators to Apply**:
 
-- `@FlextDecorators.log_operation()` - Automatic operation logging
-- `@FlextDecorators.track_performance()` - Performance metrics
-- `@FlextDecorators.retry()` - Automatic retry logic
-- `@FlextDecorators.railway()` - Railway error handling
+- `@d.log_operation()` - Automatic operation logging
+- `@d.track_performance()` - Performance metrics
+- `@d.retry()` - Automatic retry logic
+- `@d.railway()` - Railway error handling
 
 **Example**:
 
 ```python
-from flext_core import FlextDecorators
+from flext_core import d
 
 
 class RfcLdifParser:
-    @FlextDecorators.log_operation(level="info")
-    @FlextDecorators.track_performance()
+    @d.log_operation(level="info")
+    @d.track_performance()
     def parse(self, file_path: Path) -> r[Sequence[Entry]]:
         """Parse LDIF with automatic logging and metrics."""
         # Implementation
@@ -232,9 +232,9 @@ class RfcLdifParser:
 - Retry logic for file operations
 - Consistent cross-cutting concerns
 
-### **6. Refactor Services to FlextService**
+### **6. Refactor Services to s**
 
-**Action**: Services extend `FlextService` base class
+**Action**: Services extend `s` base class
 
 **Services to Update**:
 
@@ -255,7 +255,7 @@ class FlextLdifDetector:
 **After**:
 
 ```python
-from flext_core import FlextService, r
+from flext_core import s, r
 
 
 class FlextLdifDetector(Flext):
@@ -263,7 +263,7 @@ class FlextLdifDetector(Flext):
 
     def execute(self, content: str) -> r[dict]:
         self.logger.info("Detecting server type", extra={"size": len(content)})
-        # self.logger available automatically from FlextService
+        # self.logger available automatically from s
 ```
 
 **Benefits**:
@@ -382,8 +382,8 @@ ______________________________________________________________________
 1. **Better flext-core Integration**
 
    - Direct `FlextProcessors` usage
-   - `FlextDecorators` applied
-   - `FlextService` inheritance
+   - `d` applied
+   - `s` inheritance
    - Maximum code reuse
 
 1. **Improved Observability**
@@ -457,8 +457,8 @@ ______________________________________________________________________
 1. Delete `processors/` directory
 1. Flatten module structure
 1. Reorganize tests
-1. Apply `FlextDecorators`
-1. Refactor services to `FlextService`
+1. Apply `d`
+1. Refactor services to `s`
 1. Remove wrapper methods
 1. Simplify with pattern matching
 1. Final validation

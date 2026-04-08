@@ -501,7 +501,7 @@ class FlextLdifDetector(FlextLdifDetectorMixin, s[m.Ldif.ClientStatus]):
 
     @override
     def execute(self) -> r[m.Ldif.ClientStatus]:
-        """Execute server detector self-check (required by FlextService)."""
+        """Execute server detector self-check (required by s)."""
         config_settings = m.Ldif.ConfigSettings()
         config_settings.set_setting("service", "FlextLdifDetector")
         status_result = m.Ldif.ClientStatus(

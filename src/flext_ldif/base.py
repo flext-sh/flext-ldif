@@ -6,14 +6,14 @@ from abc import ABC
 from collections.abc import Sequence
 from typing import override
 
-from flext_core import FlextService, FlextSettings, FlextTypes
+from flext_core import FlextSettings, FlextTypes, s
 from flext_ldif import FlextLdifSettings, m
 
 
 class FlextLdifServiceBase[
     TDomainResult: FlextTypes.ValueOrModel | Sequence[FlextTypes.ValueOrModel]
 ](
-    FlextService[TDomainResult],
+    s[TDomainResult],
     ABC,
 ):
     """Base class for LDIF services with typed config helper."""

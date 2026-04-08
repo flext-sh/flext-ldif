@@ -309,7 +309,7 @@ For FLEXT ecosystem integration patterns, see [flext-core documentation](https:/
 
 - r error handling
 - FlextContainer dependency injection
-- FlextService architecture
+- s architecture
 - Type safety with Pydantic v2
 
 Focus on LDIF-specific concerns:

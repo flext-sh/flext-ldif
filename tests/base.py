@@ -22,12 +22,12 @@ from typing import ClassVar, override
 from _pytest.fixtures import FixtureFunctionDefinition
 from pydantic import ConfigDict
 
-from flext_core import FlextService, r
+from flext_core import r, s
 from flext_ldif import FlextLdifEntries
 from tests import m, t
 
 
-class TestsFlextLdifServiceBase(FlextService[m.Ldif.Entry]):
+class TestsFlextLdifServiceBase(s[m.Ldif.Entry]):
     """Base class for all test services in flext-ldif.
 
     Extends s from flext_tests with LDIF-specific utilities:

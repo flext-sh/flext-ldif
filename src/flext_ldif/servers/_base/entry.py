@@ -11,7 +11,7 @@ from typing import Annotated, ClassVar, Self, override
 
 from pydantic import Field, ValidationError
 
-from flext_core import FlextLogger, FlextService, r
+from flext_core import FlextLogger, r, s
 from flext_ldif import (
     FlextLdifModelsDomainsEntries,
     FlextLdifModelsSettings,
@@ -28,7 +28,7 @@ logger = FlextLogger(__name__)
 
 class FlextLdifServersBaseEntry(
     FlextLdifQuirkMethodsMixin,
-    FlextService[m.Ldif.Entry | str],
+    s[m.Ldif.Entry | str],
 ):
     """Base class for entry processing quirks - satisfies Entry (structural typing)."""
 
