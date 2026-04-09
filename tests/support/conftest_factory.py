@@ -179,7 +179,6 @@ class FlextLdifTestConftest:
         request: pytest.FixtureRequest,
     ) -> str:
         """Generate unique DN suffix using factory pattern."""
-        node_name = getattr(getattr(request, "node", None), "name", "unknown")
         test_name = str(node_name)
         allowed_chars = {"-", "_"}
         test_name_clean = "".join(

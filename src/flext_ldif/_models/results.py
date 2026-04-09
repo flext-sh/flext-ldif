@@ -273,19 +273,20 @@ class FlextLdifModelsResults:
 
     class MigrationPipelineResult(m.FrozenModel):
         migrated_schema: FlextLdifModelsCollections.SchemaContent = Field(
-            ...,
+            default_factory=FlextLdifModelsCollections.SchemaContent,
             description="Schema content after migration transformation",
         )
         entries: MutableSequence[FlextLdifModelsDomainsEntries.Entry] = Field(
-            ...,
+            default_factory=list,
             description="Migrated LDIF entries",
         )
         stats: FlextLdifModelsResults.Statistics = Field(
-            ...,
+            default_factory=lambda: FlextLdifModelsResults.Statistics(),
             description="Migration processing statistics",
         )
         output_files: MutableSequence[str] = Field(
-            ..., description="Paths to generated output files"
+            default_factory=list,
+            description="Paths to generated output files",
         )
 
         @computed_field

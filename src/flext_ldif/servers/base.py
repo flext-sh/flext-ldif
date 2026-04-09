@@ -8,7 +8,6 @@ from typing import ClassVar, Self, overload, override
 from pydantic import ConfigDict
 
 from flext_ldif import (
-    FlextLdifModelsResults,
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,
     FlextLdifServersBaseSchemaAcl,
@@ -380,11 +379,11 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             return r[m.Ldif.Entry].ok(first_entry)
         return r[m.Ldif.Entry].fail("No valid parameters")
 
-    def parse_ldif(self, value: str) -> r[FlextLdifModelsResults.ParseResponse]:
+    def parse_ldif(self, value: str) -> r[m.Ldif.ParseResponse]:
         """Parse LDIF text to Entry models."""
         entry_quirk = getattr(self, "entry_quirk", None)
         if entry_quirk is None:
-            return r[FlextLdifModelsResults.ParseResponse].fail(
+            return r[m.Ldif.ParseResponse].fail(
                 "Entry quirk not available",
             )
         entries_result: r[MutableSequence[m.Ldif.Entry]] = entry_quirk.parse_quirk(
@@ -392,10 +391,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         )
         if entries_result.is_failure:
             error_msg = entries_result.error or "Entry parsing failed"
-            return r[FlextLdifModelsResults.ParseResponse].fail(error_msg)
+            return r[m.Ldif.ParseResponse].fail(error_msg)
         entries = entries_result.value
         detected_server = getattr(self, "server_type", None)
-        statistics = FlextLdifModelsResults.Statistics(
+        statistics = m.Ldif.Statistics(
             total_entries=len(entries),
             processed_entries=len(entries),
             detected_server_type=detected_server,
@@ -403,12 +402,12 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         domain_entries: MutableSequence[m.Ldif.Entry] = [
             entry.model_copy(deep=True) for entry in entries
         ]
-        parse_response = FlextLdifModelsResults.ParseResponse(
+        parse_response = m.Ldif.ParseResponse(
             entries=list(domain_entries),
             statistics=statistics,
             detected_server_type=detected_server,
         )
-        return r[FlextLdifModelsResults.ParseResponse].ok(parse_response)
+        return r[m.Ldif.ParseResponse].ok(parse_response)
 
     def write(self, entries: MutableSequence[m.Ldif.Entry]) -> r[str]:
         """Write Entry models to LDIF text."""

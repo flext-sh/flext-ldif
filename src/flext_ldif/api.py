@@ -14,12 +14,13 @@ from flext_ldif import (
     FlextLdifMigrationPipeline,
     FlextLdifParserMixin,
     FlextLdifServer,
-    FlextLdifServiceBase,
+    FlextLdifServersBaseSchema,
     FlextLdifSettings,
     FlextLdifValidation,
     FlextLdifWriterMixin,
     m,
     r,
+    s,
     t,
 )
 
@@ -65,7 +66,7 @@ class FlextLdif(
     FlextLdifWriterMixin,
     FlextLdifMigrationMixin,
     FlextLdifValidationMixin,
-    FlextLdifServiceBase[m.Ldif.Entry],
+    s[m.Ldif.Entry],
 ):
     """MRO facade over LDIF services.
 
@@ -121,15 +122,30 @@ class FlextLdif(
     def categorization(
         cls,
         *,
+        categorization_rules: m.Ldif.CategoryRules | None = None,
+        schema_whitelist_rules: m.Ldif.WhitelistRules | None = None,
+        forbidden_attributes: MutableSequence[str] | None = None,
+        forbidden_objectclasses: MutableSequence[str] | None = None,
         base_dn: str | None = None,
         server_type: str = "rfc",
     ) -> FlextLdifCategorization:
         """Create a categorization service with the global server registry."""
         return FlextLdifCategorization(
+            categorization_rules=categorization_rules,
+            schema_whitelist_rules=schema_whitelist_rules,
+            forbidden_attributes=forbidden_attributes,
+            forbidden_objectclasses=forbidden_objectclasses,
             base_dn=base_dn,
             server_type=server_type,
             server_registry=FlextLdifServer.get_global_instance(),
         )
+
+    def get_schema_quirk(
+        self,
+        server_type: str,
+    ) -> FlextLdifServersBaseSchema | None:
+        """Expose schema quirk lookup through the public LDIF facade."""
+        return self._server.get_schema_quirk(server_type)
 
     @override
     def execute(self) -> r[m.Ldif.Entry]:

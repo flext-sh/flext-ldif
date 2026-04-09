@@ -1829,7 +1829,6 @@ class TestsFlextLdifConstants(FlextTestsConstants):
                 if can_handle_method is None:
                     msg = "Entry quirk has no can_handle method"
                     raise AssertionError(msg)
-                dn = str(getattr(entry, "dn", ""))
                 attributes = getattr(entry, "attributes", {})
                 result = can_handle_method(dn, attributes)
                 if result != expected:

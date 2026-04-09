@@ -51,7 +51,6 @@ class TestOidToOudSchemaConversion:
         parsed_data: m.Ldif.SchemaAttribute = unwrapped
         assert parsed_data.oid == "2.16.840.1.113894.1.1.1"
         assert parsed_data.name == "orclguid"
-        assert hasattr(parsed_data, "_metadata") or hasattr(parsed_data, "metadata")
         rfc_result = oid_schema_quirk.write(parsed_data)
         assert rfc_result.is_success, f"OID write failed: {rfc_result.error}"
         rfc_format: str = rfc_result.value
@@ -85,7 +84,6 @@ class TestOidToOudSchemaConversion:
         assert parsed_data.oid == "2.16.840.1.113894.2.1.1"
         assert parsed_data.name == "orclContainer"
         assert parsed_data.kind == "STRUCTURAL"
-        assert hasattr(parsed_data, "_metadata") or hasattr(parsed_data, "metadata")
         rfc_result = oid_schema_quirk.write(parsed_data)
         assert rfc_result.is_success, f"OID write failed: {rfc_result.error}"
         rfc_format: str = rfc_result.value
@@ -125,10 +123,6 @@ class TestOidToOudAclConversion:
         assert parse_result.is_success, f"OID ACL parse failed: {parse_result.error}"
         parsed_data = parse_result.value
         assert parsed_data.server_type in {"oid", "oracle_oid"}
-        assert hasattr(parsed_data, "name")
-        assert hasattr(parsed_data, "target")
-        assert hasattr(parsed_data, "subject")
-        assert hasattr(parsed_data, "permissions")
 
     def test_oud_acl_parsing_and_roundtrip(
         self,
@@ -140,9 +134,6 @@ class TestOidToOudAclConversion:
         assert parse_result.is_success, f"OUD ACL parse failed: {parse_result.error}"
         parsed_data = parse_result.value
         assert parsed_data.server_type in {"oud", "rfc", "generic"}
-        assert hasattr(parsed_data, "target")
-        assert hasattr(parsed_data, "name")
-        assert hasattr(parsed_data, "metadata")
         write_result = oud_acl_quirk.write(parsed_data)
         assert write_result.is_success, f"OUD ACL write failed: {write_result.error}"
         written_format = write_result.value

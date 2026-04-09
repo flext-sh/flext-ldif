@@ -16,7 +16,8 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import ldif
-from tests import FlextLdifFixtures, c, m, t
+from tests import c, m, t
+from tests.conftest import FlextLdifFixtures
 
 
 def _verify_soft_deleted_attributes(entry: m.Ldif.Entry) -> None:
@@ -313,7 +314,6 @@ class TestZeroDataLossOidOud:
         entries = result.value.entries
         for entry in entries:
             if entry.metadata:
-                assert hasattr(entry.metadata, "conversion_history"), (
                     "Metadata missing conversion_history field"
                 )
                 assert isinstance(entry.metadata.conversion_history, list), (

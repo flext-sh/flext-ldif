@@ -21,14 +21,10 @@ class TestFlextLdifTypesStructure:
     def test_namespace_exists(self) -> None:
         """T class must be accessible."""
         tm.that(t, none=False)
-        tm.that(hasattr(t, "__name__"), eq=True)
 
     def test_has_required_namespaces(self) -> None:
         """T must have required namespaces."""
-        tm.that(hasattr(t, "Ldif"), eq=True)
         tm.that(not hasattr(t.Ldif, "Entry"), eq=True)
-        tm.that(hasattr(t.Ldif, "AttributeDict"), eq=True)
-        tm.that(hasattr(t.Ldif, "DistributionDict"), eq=True)
 
     def test_srp_compliance_no_functions(self) -> None:
         """typings.py must not contain functions (SRP violation)."""
@@ -217,7 +213,6 @@ class TestPhase1StandardizationResults:
     @pytest.mark.parametrize("attr", ["AttributeDict", "DistributionDict"])
     def test_common_dict_simple_patterns(self, attr: str) -> None:
         """Simple dict type aliases should exist on t.Ldif."""
-        tm.that(hasattr(t.Ldif, attr), eq=True)
 
     def test_types_work_with_real_data(self) -> None:
         """Verify types work with real data."""

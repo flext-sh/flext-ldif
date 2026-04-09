@@ -28,9 +28,7 @@ class TestsFlextLdifQuirksStandardizedConstants:
 
     def test_rfc_schema_constants(self) -> None:
         """RFC Schema must have standardized Constants."""
-        tm.that(hasattr(FlextLdifServersRfc, "Constants"), eq=True)
         constants = FlextLdifServersRfc.Constants
-        tm.that(hasattr(constants, "CANONICAL_NAME"), eq=True)
         tm.that(constants.CANONICAL_NAME, eq="rfc")
         tm.that(constants.ALIASES, has="rfc")
         tm.that(constants.PRIORITY, eq=100)
@@ -39,21 +37,18 @@ class TestsFlextLdifQuirksStandardizedConstants:
 
     def test_rfc_acl_constants(self) -> None:
         """RFC Acl must have standardized Constants."""
-        tm.that(hasattr(FlextLdifServersRfc, "Constants"), eq=True)
         constants = FlextLdifServersRfc.Constants
         tm.that(constants.CANONICAL_NAME, eq="rfc")
         tm.that(constants.ALIASES, has="rfc")
 
     def test_rfc_entry_constants(self) -> None:
         """RFC Entry must have standardized Constants."""
-        tm.that(hasattr(FlextLdifServersRfc, "Constants"), eq=True)
         constants = FlextLdifServersRfc.Constants
         tm.that(constants.CANONICAL_NAME, eq="rfc")
         tm.that(constants.ALIASES, has="rfc")
 
     def test_oid_schema_constants(self) -> None:
         """OID Schema must have standardized Constants."""
-        tm.that(hasattr(FlextLdifServersOid, "Constants"), eq=True)
         global_constants = FlextLdifServersOid.Constants
         tm.that(global_constants.CANONICAL_NAME, eq="oid")
         tm.that(global_constants.ALIASES, has="oid")
@@ -64,7 +59,6 @@ class TestsFlextLdifQuirksStandardizedConstants:
 
     def test_oud_schema_constants(self) -> None:
         """OUD must have standardized Constants."""
-        tm.that(hasattr(FlextLdifServersOud, "Constants"), eq=True)
         global_constants = FlextLdifServersOud.Constants
         tm.that(global_constants.CANONICAL_NAME, eq="oud")
         tm.that(global_constants.ALIASES, has="oud")

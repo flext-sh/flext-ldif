@@ -56,7 +56,6 @@ class TestFlextLdifAPIIntegration:
         entries = result.value.entries
         assert len(entries) == expected_entries
         for entry in entries:
-            assert hasattr(entry, "dn") and hasattr(entry, "attributes")
             assert entry.dn is not None
             assert entry.attributes is not None
             assert entry.dn.value

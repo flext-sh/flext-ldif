@@ -11,15 +11,12 @@ from pydantic import RootModel
 
 from flext_core import FlextLogger, r
 from flext_ldif import (
-    FlextLdifModelsDomainsEntries,
-    FlextLdifModelsMetadata,
     FlextLdifServersOidConstants,
     FlextLdifServersRfc,
-    FlextLdifUtilitiesACL,
-    FlextLdifUtilitiesMetadata,
     c,
     m,
     t,
+    u,
 )
 
 logger = FlextLogger(__name__)
@@ -86,7 +83,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _format_oid_permissions(
-        permissions: FlextLdifModelsMetadata.DynamicMetadata | m.Ldif.DynamicMetadata,
+        permissions: m.Ldif.DynamicMetadata,
     ) -> str:
         """Format OID ACL permissions clause."""
         allowed_perms: MutableSequence[str] = []
@@ -298,7 +295,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             else ""
         )
         metadata_dict: t.MutableConfigurationMapping = dict(
-            FlextLdifUtilitiesMetadata.build_acl_metadata_complete(
+            u.Ldif.build_acl_metadata_complete(
                 "oid",
                 acl_line=config.acl_line,
                 server_type="oid",
@@ -499,7 +496,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                     _,
                 ) in FlextLdifServersOidConstants.ACL_SUBJECT_PATTERNS.values():
                     if subj_type == oid_subject_type and regex:
-                        oid_subject_value = FlextLdifUtilitiesACL.extract_component(
+                        oid_subject_value = u.Ldif.extract_component(
                             acl_line,
                             regex,
                             group=1,
@@ -515,41 +512,41 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 oid_subject_value,
             )
             perms_dict = self._parse_oid_permissions(acl_line)
-            acl_filter = FlextLdifUtilitiesACL.extract_component(
+            acl_filter = u.Ldif.extract_component(
                 acl_line,
                 FlextLdifServersOidConstants.ACL_FILTER_PATTERN,
                 group=1,
             )
-            acl_constraint = FlextLdifUtilitiesACL.extract_component(
+            acl_constraint = u.Ldif.extract_component(
                 acl_line,
                 FlextLdifServersOidConstants.ACL_CONSTRAINT_PATTERN,
                 group=1,
             )
-            bindmode = FlextLdifUtilitiesACL.extract_component(
+            bindmode = u.Ldif.extract_component(
                 acl_line,
                 FlextLdifServersOidConstants.ACL_BINDMODE_PATTERN,
                 group=1,
             )
             deny_group_override = (
-                FlextLdifUtilitiesACL.extract_component(
+                u.Ldif.extract_component(
                     acl_line,
                     FlextLdifServersOidConstants.ACL_DENY_GROUP_OVERRIDE_PATTERN,
                 )
                 is not None
             )
             append_to_all = (
-                FlextLdifUtilitiesACL.extract_component(
+                u.Ldif.extract_component(
                     acl_line,
                     FlextLdifServersOidConstants.ACL_APPEND_TO_ALL_PATTERN,
                 )
                 is not None
             )
-            bind_ip_filter = FlextLdifUtilitiesACL.extract_component(
+            bind_ip_filter = u.Ldif.extract_component(
                 acl_line,
                 FlextLdifServersOidConstants.ACL_BIND_IP_FILTER_PATTERN,
                 group=1,
             )
-            constrain_to_added_object = FlextLdifUtilitiesACL.extract_component(
+            constrain_to_added_object = u.Ldif.extract_component(
                 acl_line,
                 FlextLdifServersOidConstants.ACL_CONSTRAIN_TO_ADDED_PATTERN,
                 group=1,
@@ -575,7 +572,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             rfc_compliant_perms = m.Ldif.AclPermissions.get_rfc_compliant_permissions(
                 perms_dict,
             )
-            extensions_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+            extensions_metadata = m.Ldif.DynamicMetadata.from_dict(
                 extensions,
             )
             acl_model = m.Ldif.Acl.model_validate({
@@ -685,7 +682,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             if acl_data.metadata
             else m.Ldif.QuirkMetadata.create_for(
                 server_type,
-                extensions=FlextLdifModelsMetadata.DynamicMetadata(),
+                extensions=m.Ldif.DynamicMetadata(),
             )
         )
         return acl_data.model_copy(
@@ -698,7 +695,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     @override
     def _write_acl(
         self,
-        acl_data: FlextLdifModelsDomainsEntries.Acl,
+        acl_data: m.Ldif.Acl,
         _format_option: str | None = None,
     ) -> r[str]:
         """Write ACL to OID orclaci format (Phase 2: Denormalization)."""

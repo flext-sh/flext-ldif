@@ -31,4 +31,5 @@ class FlextLdifServiceBase[
 
 
 s = FlextLdifServiceBase
+
 __all__ = ["FlextLdifServiceBase", "s"]

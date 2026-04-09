@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 from flext_tests import tm
-from tests import FlextLdifTestsServiceBase as s, m, u
+from tests import m, s, u
 
 
 class TestFlextLdifUtilitiesServer:

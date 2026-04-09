@@ -33,7 +33,8 @@ from flext_ldif import (
     FlextLdifWriter,
     ldif,
 )
-from tests import FlextLdifFixtures, c, m, p, t, u
+from tests import c, m, p, t, u
+from tests.conftest import FlextLdifFixtures
 
 
 @pytest.fixture
@@ -412,7 +413,6 @@ def unique_dn_suffix(worker_id: str, request: pytest.FixtureRequest) -> str:
     """Build a unique suffix for LDAP DNs per test execution."""
     node = getattr(request, "node", None)
     test_name: str = (
-        str(getattr(node, "name", "unknown")) if node is not None else "unknown"
     )
     test_name_clean: str = "".join(
         ch if ch.isalnum() or ch in {"-", "_"} else "-" for ch in test_name

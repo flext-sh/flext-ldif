@@ -5,11 +5,11 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from typing import override
 
-from flext_ldif import FlextLdifServiceBase, FlextLdifUtilitiesDN, m, r, t
+from flext_ldif import m, r, s, t, u
 
 
 class FlextLdifEntries(
-    FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]],
+    s[MutableSequence[m.Ldif.Entry]],
 ):
     """Entry operations with strict contracts."""
 
@@ -76,7 +76,7 @@ class FlextLdifEntries(
         objectclasses: MutableSequence[str] | None = None,
     ) -> r[m.Ldif.Entry]:
         """Create a validated entry from DN and attributes."""
-        if not FlextLdifUtilitiesDN.validate_dn(dn):
+        if not u.Ldif.validate_dn(dn):
             return r[m.Ldif.Entry].fail(f"Invalid DN: {dn}")
         final_attrs = dict(attributes)
         if objectclasses:

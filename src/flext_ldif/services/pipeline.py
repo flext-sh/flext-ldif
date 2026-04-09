@@ -6,11 +6,10 @@ from collections.abc import MutableSequence
 
 from flext_ldif import (
     FlextLdifTransformer,
-    FlextLdifUtilitiesPipeline,
-    FlextLdifUtilitiesTransformers,
     c,
     m,
     r,
+    u,
 )
 
 
@@ -36,9 +35,9 @@ class FlextLdifProcessingPipeline:
         """Execute the processing pipeline."""
         return self._pipeline.execute(entries)
 
-    def _build_pipeline(self) -> FlextLdifUtilitiesPipeline.Pipeline:
+    def _build_pipeline(self) -> u.Ldif.Pipeline:
         """Build the internal pipeline based on configuration."""
-        pipeline = FlextLdifUtilitiesPipeline.Pipeline()
+        pipeline = u.Ldif.Pipeline()
         if self._config.normalize_dns and self._config.process_config is not None:
             dn_config = (
                 self._config.process_config.dn_config or m.Ldif.DnNormalizationConfig()
@@ -48,7 +47,7 @@ class FlextLdifProcessingPipeline:
             case_enum = c.Ldif.CaseFoldOption(case_fold_value)
             spaces_enum = c.Ldif.SpaceHandlingOption(space_handling_value)
             pipeline.add(
-                FlextLdifUtilitiesTransformers.Normalize.dn(
+                u.Ldif.Normalize.dn(
                     case=case_enum,
                     spaces=spaces_enum,
                     validate=dn_config.validate_before,
@@ -61,7 +60,7 @@ class FlextLdifProcessingPipeline:
                 or m.Ldif.AttrNormalizationConfig()
             )
             pipeline.add(
-                FlextLdifUtilitiesTransformers.Normalize.attrs(
+                u.Ldif.Normalize.attrs(
                     case_fold_names=attr_config.case_fold_names,
                     trim_values=attr_config.trim_values,
                     remove_empty=attr_config.remove_empty,

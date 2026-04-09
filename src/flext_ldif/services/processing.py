@@ -6,11 +6,11 @@ from collections.abc import Callable, MutableMapping, MutableSequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import override
 
-from flext_ldif import FlextLdifServiceBase, m, r, u
+from flext_ldif import m, r, s, u
 
 
 class FlextLdifProcessing(
-    FlextLdifServiceBase[MutableSequence[m.Ldif.ProcessingResult]],
+    s[MutableSequence[m.Ldif.ProcessingResult]],
 ):
     """Service for batch and parallel entry processing."""
 

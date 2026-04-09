@@ -6,10 +6,10 @@ from collections import Counter
 from collections.abc import MutableSequence
 from typing import override
 
-from flext_ldif import FlextLdifServiceBase, d, m, r, u
+from flext_ldif import d, m, r, s, u
 
 
-class FlextLdifStatistics(FlextLdifServiceBase[m.Ldif.StatisticsServiceStatus]):
+class FlextLdifStatistics(s[m.Ldif.StatisticsServiceStatus]):
     """Statistics service for LDIF processing pipeline."""
 
     def calculate_for_entries(

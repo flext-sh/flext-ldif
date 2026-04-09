@@ -9,7 +9,6 @@ from typing import ClassVar, override
 
 from flext_core import FlextLogger
 from flext_ldif import (
-    FlextLdifModelsDomainsEntries,
     FlextLdifServersRfc,
     c,
     m,
@@ -544,7 +543,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return r[m.Ldif.Acl].fail(f"Failed to parse ACL: {e}")
 
         @override
-        def _write_acl(self, acl_data: FlextLdifModelsDomainsEntries.Acl) -> r[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
             """Write ACL to RFC format - stringify in relaxed mode."""
             parent_result = super()._write_acl(acl_data)
             if parent_result.is_success:

@@ -21,13 +21,11 @@ class TestsFlextLdifVersion:
 
     def test_version_exported(self) -> None:
         """Test __version__ is exported and accessible."""
-        tm.that(hasattr(version_module, "__version__"), eq=True)
         tm.that(version_module.__version__, is_=str)
         tm.that(version_module.__version__, ne="")
 
     def test_version_info_exported(self) -> None:
         """Test __version_info__ is exported and is a tuple."""
-        tm.that(hasattr(version_module, "__version_info__"), eq=True)
         tm.that(version_module.__version_info__, is_=tuple)
         tm.that(len(version_module.__version_info__), gte=2)
 
@@ -46,34 +44,28 @@ class TestsFlextLdifVersion:
 
     def test_title_exported(self) -> None:
         """Test __title__ is exported."""
-        tm.that(hasattr(version_module, "__title__"), eq=True)
         tm.that(version_module.__title__, is_=str)
         tm.that(version_module.__title__, ne="")
 
     def test_description_exported(self) -> None:
         """Test __description__ is exported."""
-        tm.that(hasattr(version_module, "__description__"), eq=True)
         tm.that(version_module.__description__, is_=str)
 
     def test_author_exported(self) -> None:
         """Test __author__ is exported."""
-        tm.that(hasattr(version_module, "__author__"), eq=True)
         tm.that(version_module.__author__, is_=str)
 
     def test_author_email_exported(self) -> None:
         """Test __author_email__ is exported."""
-        tm.that(hasattr(version_module, "__author_email__"), eq=True)
         tm.that(version_module.__author_email__, is_=str)
 
     def test_license_exported(self) -> None:
         """Test __license__ is exported."""
-        tm.that(hasattr(version_module, "__license__"), eq=True)
         tm.that(version_module.__license__, is_=str)
         tm.that(version_module.__license__, ne="")
 
     def test_url_exported(self) -> None:
         """Test __url__ is exported."""
-        tm.that(hasattr(version_module, "__url__"), eq=True)
         tm.that(version_module.__url__, is_=str)
 
     def test_all_exports(self) -> None:
@@ -88,7 +80,6 @@ class TestsFlextLdifVersion:
             "__version__",
             "__version_info__",
         ]
-        tm.that(hasattr(version_module, "__all__"), eq=True)
         tm.that(version_module.__all__, is_=list)
         for export in expected_exports:
             _ = tm.that(version_module.__all__, has=export)

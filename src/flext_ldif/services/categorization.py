@@ -6,13 +6,12 @@ import struct
 from collections.abc import MutableMapping, MutableSequence
 from typing import Final, override
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, PrivateAttr, ValidationError
 
 from flext_core import FlextLogger
 from flext_ldif import (
     FlextLdifFilters,
     FlextLdifServer,
-    FlextLdifUtilitiesDN,
     c,
     m,
     r,
@@ -36,6 +35,17 @@ _MISSING_ATTR: Final[_MissingSentinel] = _MissingSentinel()
 class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
     """LDIF Entry Categorization Service."""
 
+    _categorization_rules: m.Ldif.CategoryRules = PrivateAttr()
+    _schema_whitelist_rules: m.Ldif.WhitelistRules | None = PrivateAttr(default=None)
+    _forbidden_attributes: MutableSequence[str] = PrivateAttr(default_factory=list)
+    _forbidden_objectclasses: MutableSequence[str] = PrivateAttr(default_factory=list)
+    _base_dn: str | None = PrivateAttr(default=None)
+    _server_type: str = PrivateAttr(default="rfc")
+    _rejection_tracker: MutableMapping[str, MutableSequence[m.Ldif.Entry]] = (
+        PrivateAttr(default_factory=dict)
+    )
+    _server_registry: FlextLdifServer = PrivateAttr()
+
     def __init__(
         self,
         categorization_rules: m.Ldif.CategoryRules
@@ -51,14 +61,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         server_registry: FlextLdifServer | None = None,
     ) -> None:
         """Initialize categorization service."""
-        self._categorization_rules: m.Ldif.CategoryRules
-        self._schema_whitelist_rules: m.Ldif.WhitelistRules | None
-        self._forbidden_attributes: MutableSequence[str]
-        self._forbidden_objectclasses: MutableSequence[str]
-        self._base_dn: str | None
-        self._server_type: str
-        self._rejection_tracker: MutableMapping[str, MutableSequence[m.Ldif.Entry]]
-        self._server_registry: FlextLdifServer
+        super().__init__()
         if server_registry is not None:
             object.__setattr__(self, "_server_registry", server_registry)
         else:
@@ -622,7 +625,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         def validate_entry(entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
             """Validate and normalize entry DN."""
             dn_str = entry.dn.value if entry.dn else ""
-            if not FlextLdifUtilitiesDN.validate_dn(dn_str):
+            if not u.Ldif.validate_dn(dn_str):
                 rejected_entry = u.Ldif.update_entry_statistics(
                     entry,
                     mark_rejected=(

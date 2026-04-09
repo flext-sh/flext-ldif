@@ -59,8 +59,6 @@ class TestFlextLdifUtilitiesComprehensive:
         """Test server-specific utility functions."""
         entry = u.Ldif.Tests.Factory.create_real_entry(server_type=server_type)
         tm.that(entry, none=False)
-        tm.that(hasattr(entry, "dn"), eq=True)
-        tm.that(hasattr(entry, "attributes"), eq=True)
         normalized = u.Ldif.normalize_server_type(server_type)
         tm.that(normalized, is_=str)
         tm.that(normalized, empty=False)

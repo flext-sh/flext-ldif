@@ -9,17 +9,16 @@ from typing import Annotated, override
 from pydantic import Field
 
 from flext_ldif import (
-    FlextLdifServiceBase,
-    FlextLdifUtilitiesValidation,
     d,
     m,
     r,
+    s,
     u,
 )
 
 
 class FlextLdifValidation(
-    FlextLdifServiceBase[m.Ldif.ValidationServiceStatus],
+    s[m.Ldif.ValidationServiceStatus],
 ):
     """FlextLdifValidation class."""
 
@@ -61,7 +60,7 @@ class FlextLdifValidation(
     def validate_attribute_name(self, name: str) -> r[bool]:
         """Validate_attribute_name method."""
         return u.try_(
-            lambda: FlextLdifUtilitiesValidation.Rfc.is_valid_rfc4512_descriptor(name),
+            lambda: u.Ldif.Rfc.is_valid_rfc4512_descriptor(name),
             catch=(
                 ValueError,
                 KeyError,

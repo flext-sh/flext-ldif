@@ -19,7 +19,8 @@ import re
 import pytest
 
 from flext_ldif import ldif
-from tests import FlextLdifFixtures, t
+from tests import t
+from tests.conftest import FlextLdifFixtures
 
 
 class TestOudSchemaIntegration:
@@ -318,7 +319,6 @@ class TestOudMetadataPreservation:
         entries = result.value.entries
         assert len(entries) == 1
         entry = entries[0]
-        assert hasattr(entry, "metadata"), "Entry should have metadata attribute"
 
 
 __all__ = [

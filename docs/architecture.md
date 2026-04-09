@@ -66,7 +66,7 @@ initialization.
 
 ### Service Base (`base.py`)
 
-All services inherit `FlextLdifServiceBase`, a thin wrapper around flext-core
+All services inherit `s`, a thin wrapper around flext-core
 `s` that exposes namespaced configuration through the `ldif_config`
 property.
 
@@ -152,7 +152,7 @@ encodings.
   `FlextLdifServersBase`, implement nested `Schema`, `Acl`, and `Entry`, and
   expose `server_type` and `priority`. `FlextLdifServer` will auto-register it on
   the next discovery cycle.
-- **Adding a service:** subclass `FlextLdifServiceBase`, register a factory in
+- **Adding a service:** subclass `s`, register a factory in
   `FlextLdifServiceRegistry`, and expose it through the facade mapping.
 - **Reliability:** quirk discovery is idempotent and cached; typed models and
   `r` help prevent unexpected exceptions crossing boundaries.

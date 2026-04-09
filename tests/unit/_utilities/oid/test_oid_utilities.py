@@ -4,7 +4,7 @@ import re
 from unittest.mock import patch
 
 from flext_tests import tm
-from tests import FlextLdifTestsServiceBase as s, u
+from tests import s, u
 
 
 class TestFlextLdifUtilitiesOID:

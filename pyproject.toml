@@ -313,6 +313,11 @@ ignore = [
   "**/*.pyi",
   "../typings",
 ]
+include = [
+  "examples",
+  "src",
+  "tests",
+]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
 reportCallIssue = "none"

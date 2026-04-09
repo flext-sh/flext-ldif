@@ -141,7 +141,7 @@ if _t.TYPE_CHECKING:
 
     base = _flext_ldif_base
     import flext_ldif.constants as _flext_ldif_constants
-    from flext_ldif.base import FlextLdifServiceBase, s
+    from flext_ldif.base import s
 
     constants = _flext_ldif_constants
     import flext_ldif.models as _flext_ldif_models
@@ -280,7 +280,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "FlextLdifConstants": ("flext_ldif.constants", "FlextLdifConstants"),
         "FlextLdifModels": ("flext_ldif.models", "FlextLdifModels"),
         "FlextLdifProtocols": ("flext_ldif.protocols", "FlextLdifProtocols"),
-        "FlextLdifServiceBase": ("flext_ldif.base", "FlextLdifServiceBase"),
+        "s": ("flext_ldif.base", "s"),
         "FlextLdifSettings": ("flext_ldif.settings", "FlextLdifSettings"),
         "FlextLdifShared": ("flext_ldif.shared", "FlextLdifShared"),
         "FlextLdifTypes": ("flext_ldif.typings", "FlextLdifTypes"),
@@ -311,7 +311,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "p": ("flext_ldif.protocols", "FlextLdifProtocols"),
         "protocols": "flext_ldif.protocols",
         "r": ("flext_core.result", "FlextResult"),
-        "s": ("flext_ldif.base", "s"),
         "servers": "flext_ldif.servers",
         "services": "flext_ldif.services",
         "settings": "flext_ldif.settings",
@@ -409,7 +408,6 @@ __all__ = [
     "FlextLdifServersRfcEntry",
     "FlextLdifServersRfcSchema",
     "FlextLdifServersTivoli",
-    "FlextLdifServiceBase",
     "FlextLdifSettings",
     "FlextLdifShared",
     "FlextLdifStatistics",

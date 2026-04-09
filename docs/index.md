@@ -18,7 +18,7 @@ This project portal is generated from `pyproject.toml`, package exports, and rea
 
 ## Public Surface Summary
 
-- Primary facades: `FlextLdif`, `FlextLdifConstants`, `FlextLdifModels`, `FlextLdifProtocols`, `FlextLdifServiceBase`, `FlextLdifSettings` (+3 more)
+- Primary facades: `FlextLdif`, `FlextLdifConstants`, `FlextLdifModels`, `FlextLdifProtocols`, `s`, `FlextLdifSettings` (+3 more)
 - Alias namespaces: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
 - Public symbol exports: `10`
 - Exported module shortcuts: `api`, `base`, `constants`, `models`, `protocols`, `servers` (+5 more)

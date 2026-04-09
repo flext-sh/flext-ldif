@@ -8,9 +8,7 @@ from collections.abc import MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import (
-    FlextLdifModelsDomainsEntries,
     FlextLdifServersRfc,
-    FlextLdifUtilitiesACL,
     c,
     m,
     r,
@@ -225,7 +223,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
             """Parse Tivoli DS ACL definition."""
             try:
-                attr_name, content = FlextLdifUtilitiesACL.split_acl_line(acl_line)
+                attr_name, content = u.Ldif.split_acl_line(acl_line)
                 _ = attr_name
                 access_match = re.search(
                     FlextLdifServersTivoli.Constants.ACL_ACCESS_PATTERN,
@@ -261,7 +259,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 return r[m.Ldif.Acl].fail(f"IBM Tivoli DS ACL parsing failed: {exc}")
 
         @override
-        def _write_acl(self, acl_data: FlextLdifModelsDomainsEntries.Acl) -> r[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
                 acl_attribute = (

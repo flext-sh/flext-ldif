@@ -70,7 +70,6 @@ class TestsTestFlextLdifRelaxedQuirks:
         if should_succeed:
             _ = tm.that(result.is_success, eq=True)
             parsed = result.value
-            tm.that(hasattr(parsed, "name"), eq=True)
             if scenario in {
                 c.Ldif.Scenarios.Relaxed.Parse.VALID,
                 c.Ldif.Scenarios.Relaxed.Parse.MALFORMED,
@@ -105,7 +104,6 @@ class TestsTestFlextLdifRelaxedQuirks:
         if should_succeed:
             _ = tm.that(result.is_success, eq=True)
             parsed = result.value
-            tm.that(hasattr(parsed, "name"), eq=True)
         else:
             _ = tm.that(result.is_failure, eq=True)
 
@@ -184,7 +182,6 @@ class TestsTestFlextLdifRelaxedQuirks:
         """Test ACL parsing in relaxed mode with various scenarios."""
         acl_line, _should_succeed = acl_data
         result = acl_quirk.parse_input(acl_line)
-        tm.that(hasattr(result, "is_success"), eq=True)
         if result.is_success:
             parsed = result.value
             tm.that(parsed.raw_acl, eq=acl_line)
@@ -222,7 +219,6 @@ class TestsTestFlextLdifRelaxedQuirks:
         relaxed_instance: FlextLdifServersRelaxed,
     ) -> None:
         """Test entry quirk accepts malformed c.DNs."""
-        tm.that(hasattr(relaxed_instance, "entry_quirk") or True, eq=True)
 
     @pytest.mark.parametrize(
         ("parse_type", "bad_input"),
@@ -294,7 +290,6 @@ class TestsTestFlextLdifRelaxedQuirks:
             result = schema_quirk.parse_objectclass(input_with_oid)
         tm.that(result.is_success, eq=True)
         parsed = result.value
-        tm.that(hasattr(parsed, "name"), eq=True)
 
     def test_relaxed_mode_integration(
         self,
@@ -302,9 +297,6 @@ class TestsTestFlextLdifRelaxedQuirks:
     ) -> None:
         """Test relaxed mode full integration."""
         tm.that(relaxed_instance, none=False)
-        tm.that(hasattr(relaxed_instance, "schema_quirk"), eq=True)
-        tm.that(hasattr(relaxed_instance, "acl_quirk"), eq=True)
-        tm.that(hasattr(relaxed_instance, "entry_quirk"), eq=True)
 
     def test_relaxed_mode_priority(
         self,

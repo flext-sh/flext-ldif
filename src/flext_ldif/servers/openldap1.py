@@ -7,7 +7,7 @@ import struct
 from collections.abc import MutableSequence
 from typing import ClassVar, override
 
-from flext_ldif import FlextLdifModelsDomainsEntries, FlextLdifServersRfc, c, m, r, t
+from flext_ldif import FlextLdifServersRfc, c, m, r, t
 
 
 class FlextLdifServersOpenldap1(FlextLdifServersRfc):
@@ -358,7 +358,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 return r[m.Ldif.Acl].fail(f"OpenLDAP 1.x ACL parsing failed: {e}")
 
         @override
-        def _write_acl(self, acl_data: FlextLdifModelsDomainsEntries.Acl) -> r[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
                 if acl_data.raw_acl:

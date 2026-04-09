@@ -7,15 +7,12 @@ from collections.abc import MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import (
-    FlextLdifModelsDomainsEntries,
     FlextLdifServersRfc,
-    FlextLdifUtilitiesACL,
-    FlextLdifUtilitiesObjectClass,
-    FlextLdifUtilitiesServer,
     c,
     m,
     r,
     t,
+    u,
 )
 
 
@@ -133,7 +130,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ) -> bool:
             """Detect 389 DS attribute definitions using centralized constants."""
             if isinstance(attr_definition, m.Ldif.SchemaAttribute):
-                return FlextLdifUtilitiesServer.matches_server_patterns(
+                return u.Ldif.matches_server_patterns(
                     value=attr_definition,
                     oid_pattern=FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersDs389.Constants.DETECTION_ATTRIBUTE_PREFIXES,
@@ -164,7 +161,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ) -> bool:
             """Detect 389 DS objectClass definitions using centralized constants."""
             if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
-                return FlextLdifUtilitiesServer.matches_server_patterns(
+                return u.Ldif.matches_server_patterns(
                     value=oc_definition,
                     oid_pattern=FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersDs389.Constants.DETECTION_OBJECTCLASS_NAMES,
@@ -205,8 +202,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             result = super()._parse_objectclass(oc_definition)
             if result.is_success:
                 oc_data = result.value
-                FlextLdifUtilitiesObjectClass.fix_missing_sup(oc_data)
-                FlextLdifUtilitiesObjectClass.fix_kind_mismatch(oc_data)
+                u.Ldif.fix_missing_sup(oc_data)
+                u.Ldif.fix_kind_mismatch(oc_data)
                 metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
                 return r[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata}),
@@ -218,7 +215,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @staticmethod
         def _resolve_acl_targetattr(
-            target: m.Ldif.AclTarget | FlextLdifModelsDomainsEntries.AclTarget | None,
+            target: m.Ldif.AclTarget | None,
         ) -> str:
             """Resolve target attributes to formatted string."""
             if target and target.attributes:
@@ -230,9 +227,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @staticmethod
         def _resolve_acl_userdn(
-            subject: m.Ldif.AclSubject
-            | FlextLdifModelsDomainsEntries.AclSubject
-            | None,
+            subject: m.Ldif.AclSubject | None,
         ) -> str:
             """Resolve subject to userdn string."""
             if subject and subject.subject_value:
@@ -307,9 +302,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         def _extract_acl_permissions(
             self,
-            permissions_data: m.Ldif.AclPermissions
-            | FlextLdifModelsDomainsEntries.AclPermissions
-            | None,
+            permissions_data: m.Ldif.AclPermissions | None,
         ) -> MutableSequence[str]:
             """Extract permission names from Permissions model flags."""
             permissions: MutableSequence[str] = []
@@ -333,7 +326,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
             """Parse 389 DS ACI definition."""
             try:
-                attr_name, content = FlextLdifUtilitiesACL.split_acl_line(acl_line)
+                attr_name, content = u.Ldif.split_acl_line(acl_line)
                 _ = attr_name
                 acl_name_match = re.search(
                     FlextLdifServersDs389.Constants.ACL_NAME_PATTERN,
@@ -433,7 +426,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
 
         @override
-        def _write_acl(self, acl_data: FlextLdifModelsDomainsEntries.Acl) -> r[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
                 if acl_data.raw_acl:

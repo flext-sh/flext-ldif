@@ -53,7 +53,6 @@ class TestMinimalDifferencesOidOud:
         assert entries, "No entries parsed from OID fixture"
         for entry in entries:
             assert entry.metadata is not None, f"Entry {entry.dn} missing metadata"
-            assert hasattr(entry.metadata, "extensions"), (
                 f"Entry {entry.dn} missing extensions"
             )
             assert entry.metadata.quirk_type == c.Ldif.Fixtures.OID, (
@@ -83,7 +82,6 @@ class TestMinimalDifferencesOidOud:
         assert entries, "No entries parsed from OUD fixture"
         for entry in entries:
             assert entry.metadata is not None, f"Entry {entry.dn} missing metadata"
-            assert hasattr(entry.metadata, "extensions"), (
                 f"Entry {entry.dn} missing extensions"
             )
 

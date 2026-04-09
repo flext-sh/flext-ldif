@@ -13,10 +13,10 @@ from flext_ldif import (
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,
     FlextLdifServersBaseSchemaAcl,
-    FlextLdifUtilitiesServer,
     p,
     r,
     t,
+    u,
 )
 
 logger = FlextLogger(__name__)
@@ -134,7 +134,7 @@ class FlextLdifServer(FlextRegistry):
     def quirk(self, server_type: str) -> r[FlextLdifServersBase]:
         """Get base quirk for a server type."""
         try:
-            normalized = FlextLdifUtilitiesServer.normalize_server_type(server_type)
+            normalized = u.Ldif.normalize_server_type(server_type)
         except ValueError as e:
             return r[FlextLdifServersBase].fail(str(e))
         plugin_key = f"{self.SERVERS}::{normalized}"

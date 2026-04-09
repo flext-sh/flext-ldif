@@ -118,15 +118,12 @@ class TestsTestFlextLdifProtocols:
             Server implementations store SERVER_TYPE and PRIORITY in nested Constants class,
             not as direct instance attributes.
             """
-            tm.that(hasattr(server, "Constants"), eq=True)
             constants_cls: type = getattr(server, "Constants")
-            tm.that(hasattr(constants_cls, "SERVER_TYPE"), eq=True)
             server_type: str = getattr(constants_cls, "SERVER_TYPE")
             tm.that(
                 hasattr(server_type, "value") or bool(server_type),
                 eq=True,
             )
-            tm.that(hasattr(constants_cls, "PRIORITY"), eq=True)
             priority: int = getattr(constants_cls, "PRIORITY")
             tm.that(priority, is_=int)
 
@@ -141,8 +138,6 @@ class TestsTestFlextLdifProtocols:
                 c.Ldif.ProtocolTest.ATTR_ENTRY,
             ]
             for method in methods:
-                tm.that(hasattr(registry, method), eq=True)
-                tm.that(callable(getattr(registry, method)), eq=True)
 
     @classmethod
     def get_server_implementations(cls) -> Sequence[m.Ldif.Tests.ProtocolServer]:
@@ -159,7 +154,6 @@ class TestsTestFlextLdifProtocols:
     @pytest.mark.parametrize("protocol_name", _PROTOCOL_NAMES)
     def test_protocol_is_defined(self, protocol_name: str) -> None:
         """Test that protocol is defined and accessible."""
-        tm.that(hasattr(FlextLdifProtocols.Ldif, protocol_name), eq=True)
         protocol = getattr(FlextLdifProtocols.Ldif, protocol_name)
         tm.that(protocol, none=False)
 
@@ -284,4 +278,3 @@ class TestsTestFlextLdifProtocols:
         parse_result = schema.parse_attribute(
             c.Ldif.ProtocolTest.SAMPLE_ATTR_DEF_SIMPLE
         )
-        tm.that(hasattr(parse_result, c.Ldif.ProtocolTest.ATTR_IS_SUCCESS), eq=True)

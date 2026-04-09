@@ -23,12 +23,11 @@ from flext_ldif import (
     FlextLdifServersBase,
     FlextLdifServersBaseSchema,
     FlextLdifServersOidConstants,
-    FlextLdifServiceBase,
-    FlextLdifUtilitiesDN,
     c,
     m,
     p,
     r,
+    s,
     t,
     u,
 )
@@ -45,9 +44,7 @@ _MISSING_ATTR: Final[_MissingSentinel] = _MissingSentinel()
 
 
 class FlextLdifConversion(
-    FlextLdifServiceBase[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-    ],
+    s[m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl],
 ):
     """Facade for universal, model-driven quirk-to-quirk conversion."""
 
@@ -1326,7 +1323,7 @@ class FlextLdifConversion(
         """Convert Entry model directly without serialization."""
         try:
             entry_dn = entry.dn.value if entry.dn else ""
-            is_valid: bool = FlextLdifUtilitiesDN.validate_dn(entry_dn)
+            is_valid: bool = u.Ldif.validate_dn(entry_dn)
             if not is_valid:
                 return r[t.Ldif.ConvertedModel].fail(
                     f"Entry DN failed RFC 4514 validation: {entry_dn}",

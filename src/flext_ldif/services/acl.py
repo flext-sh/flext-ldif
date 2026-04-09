@@ -7,11 +7,7 @@ from typing import override
 
 from flext_core import FlextLogger
 from flext_ldif import (
-    FlextLdifModelsDomainsEntries,
     FlextLdifServer,
-    FlextLdifUtilitiesACL,
-    FlextLdifUtilitiesEntry,
-    FlextLdifUtilitiesServer,
     m,
     r,
     s,
@@ -35,7 +31,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
 
     @staticmethod
     def _build_acl_response(
-        acls: MutableSequence[FlextLdifModelsDomainsEntries.Acl],
+        acls: MutableSequence[u.Ldif.Acl],
         *,
         processed_entries: int = 1,
         failed_entries: int = 0,
@@ -52,7 +48,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
     @staticmethod
     def _is_schema_entry(entry: m.Ldif.Entry) -> bool:
         """Check if entry is a schema entry."""
-        return FlextLdifUtilitiesEntry.is_schema_entry(entry, strict=False)
+        return u.Ldif.is_schema_entry(entry, strict=False)
 
     @staticmethod
     def evaluate_acl_context(
@@ -129,13 +125,13 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
         server_type: str,
     ) -> r[m.Ldif.AclResponse]:
         """Extract ACLs from entry using server-specific attribute names."""
-        acl_attr_name = FlextLdifUtilitiesACL.get_acl_attributes()
+        acl_attr_name = u.Ldif.get_acl_attributes()
         if not acl_attr_name:
             return r[m.Ldif.AclResponse].ok(self._build_acl_response([]))
         acl_values = u.Ldif.get_attribute_values(entry, next(iter(acl_attr_name)))
         if not acl_values:
             return r[m.Ldif.AclResponse].ok(self._build_acl_response([]))
-        acls: MutableSequence[FlextLdifModelsDomainsEntries.Acl] = []
+        acls: MutableSequence[u.Ldif.Acl] = []
         failed_count = 0
 
         for acl_value in acl_values:
@@ -158,7 +154,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
         """Parse ACL string using server-specific quirks."""
         original_server_type = str(server_type)
         try:
-            normalized_server_type = FlextLdifUtilitiesServer.normalize_server_type(
+            normalized_server_type = u.Ldif.normalize_server_type(
                 original_server_type,
             )
         except (ValueError, TypeError) as e:

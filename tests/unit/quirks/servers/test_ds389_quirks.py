@@ -48,7 +48,6 @@ class TestsTestFlextLdifDs389Quirks:
         server = FlextLdifServersDs389()
         schema_quirk = server.schema_quirk
         tm.that(schema_quirk, is_=FlextLdifServersDs389.Schema)
-        tm.that(hasattr(schema_quirk, "can_handle_attribute"), eq=True)
         result = schema_quirk.can_handle_attribute(test_case.attr_definition)
         tm.that(result is test_case.expected_can_handle, eq=True)
 
@@ -102,7 +101,6 @@ class TestsTestFlextLdifDs389Quirks:
         server = FlextLdifServersDs389()
         schema_quirk = server.schema_quirk
         tm.that(schema_quirk, is_=FlextLdifServersDs389.Schema)
-        tm.that(hasattr(schema_quirk, "can_handle_objectclass"), eq=True)
         result = schema_quirk.can_handle_objectclass(test_case.oc_definition)
         tm.that(result is test_case.expected_can_handle, eq=True)
 
