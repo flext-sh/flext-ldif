@@ -318,7 +318,7 @@ staging/
 # Claude AI files
 .claude/
 
-# Auto-added by workspace-maintenance
+# Auto-added by maintenance
 __pycache__/
 *.egg-info
 .github/*.rej
