@@ -65,14 +65,13 @@ class TestsFlextLdifEdgeCases:
 
     def test_large_multivalue(self, ldif_api: ldif) -> None:
         """Test parsing of attributes with many values."""
-        base_dir = Path(__file__).parent.parent.parent.parent
         fixture_path = (
-            base_dir / "fixtures" / "edge_cases" / "size" / "large_multivalue.ldif"
+            Path(__file__).resolve().parents[2]
+            / "fixtures"
+            / "edge_cases"
+            / "size"
+            / "large_multivalue.ldif"
         )
-        if not fixture_path.exists():
-            fixture_path = Path(
-                "flext-ldif/tests/fixtures/edge_cases/size/large_multivalue.ldif",
-            )
         result = ldif_api.parse_ldif(fixture_path, server_type=c.Ldif.Tests.RFC)
         _ = tm.that(result.is_success, eq=True)
         entries = result.value.entries

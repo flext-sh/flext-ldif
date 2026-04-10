@@ -22,7 +22,7 @@ def test_ldap_connection(ldap_connection: p.Ldap.Ldap3Connection) -> None:
 
 def test_simple_ldap_search(
     ldap_connection: p.Ldap.Ldap3Connection,
-    ldap_container: t.Ldif.Tests.GenericFieldsDict,
+    ldap_container: t.StrMapping,
 ) -> None:
     """Test simple LDAP search."""
     base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -33,7 +33,7 @@ def test_simple_ldap_search(
 
 def test_create_and_export_entry(
     ldap_connection: p.Ldap.Ldap3Connection,
-    ldap_container: t.Ldif.Tests.GenericFieldsDict,
+    ldap_container: t.StrMapping,
     make_test_username: Callable[[str], str],
 ) -> None:
     """Create LDAP entry and export to LDIF."""

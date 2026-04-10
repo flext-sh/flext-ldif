@@ -18,7 +18,6 @@ if _t.TYPE_CHECKING:
     from tests.models import TestsFlextLdifModels, TestsFlextLdifModels as m
     from tests.protocols import TestsFlextLdifProtocols, TestsFlextLdifProtocols as p
     from tests.typings import (
-        GenericFieldsDict,
         TestsFlextLdifTypes,
         TestsFlextLdifTypes as t,
     )
@@ -28,10 +27,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".constants": ("TestsFlextLdifConstants",),
         ".models": ("TestsFlextLdifModels",),
         ".protocols": ("TestsFlextLdifProtocols",),
-        ".typings": (
-            "GenericFieldsDict",
-            "TestsFlextLdifTypes",
-        ),
+        ".typings": ("TestsFlextLdifTypes",),
         ".utilities": ("TestsFlextLdifUtilities",),
         "flext_core.decorators": ("d",),
         "flext_core.exceptions": ("e",),
@@ -50,7 +46,6 @@ _LAZY_IMPORTS = build_lazy_import_map(
 )
 
 __all__ = [
-    "GenericFieldsDict",
     "TestsFlextLdifConstants",
     "TestsFlextLdifModels",
     "TestsFlextLdifProtocols",

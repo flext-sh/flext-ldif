@@ -31,9 +31,7 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, p):
                 def parse_input(
                     self,
                     value: str,
-                ) -> r[
-                    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-                ]:
+                ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl]:
                     """Parse server-specific raw input."""
                     ...
 

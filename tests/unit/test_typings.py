@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 from flext_tests import tm
 
-import flext_ldif.typings as flext_ldif_typings
+from flext_ldif import typings
 from tests import c, t
 
 
@@ -27,7 +27,7 @@ class TestFlextLdifTypesStructure:
 
     def test_srp_compliance_no_functions(self) -> None:
         """typings.py must not contain functions (SRP violation)."""
-        members = inspect.getmembers(flext_ldif_typings)
+        members = inspect.getmembers(typings)
         user_functions = [
             m
             for m in members
