@@ -92,7 +92,7 @@ if _t.TYPE_CHECKING:
     from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
     from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
     from flext_ldif.api import FlextLdif
-    from flext_ldif.base import FlextLdifServiceBase, s
+    from flext_ldif.base import FlextLdifServiceBase, FlextLdifServiceBase as s
     from flext_ldif.constants import FlextLdifConstants, FlextLdifConstants as c
     from flext_ldif.ldif import ldif
     from flext_ldif.models import FlextLdifModels, FlextLdifModels as m
@@ -173,10 +173,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "__version_info__",
             ),
             ".api": ("FlextLdif",),
-            ".base": (
-                "FlextLdifServiceBase",
-                "s",
-            ),
+            ".base": ("FlextLdifServiceBase",),
             ".constants": ("FlextLdifConstants",),
             ".ldif": ("ldif",),
             ".models": ("FlextLdifModels",),
@@ -191,6 +188,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "flext_core.mixins": ("x",),
         },
         alias_groups={
+            ".base": (("s", "FlextLdifServiceBase"),),
             ".constants": (("c", "FlextLdifConstants"),),
             ".models": (("m", "FlextLdifModels"),),
             ".protocols": (("p", "FlextLdifProtocols"),),
