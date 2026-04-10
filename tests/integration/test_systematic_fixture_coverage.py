@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import ldif
+from flext_ldif import FlextLdif, ldif
 
 
 class TestSystematicFixtureCoverage:
@@ -32,7 +32,7 @@ class TestSystematicFixtureCoverage:
     """
 
     @pytest.fixture(scope="class")
-    def api(self) -> ldif:
+    def api(self) -> FlextLdif:
         """Ldif API instance."""
         return ldif.get_instance()
 
@@ -82,7 +82,7 @@ class TestSystematicFixtureCoverage:
     )
     def test_schema_fixture_coverage(
         self,
-        api: ldif,
+        api: FlextLdif,
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
@@ -125,7 +125,7 @@ class TestSystematicFixtureCoverage:
     )
     def test_acl_fixture_coverage(
         self,
-        api: ldif,
+        api: FlextLdif,
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
@@ -161,7 +161,7 @@ class TestSystematicFixtureCoverage:
     )
     def test_entries_fixture_coverage(
         self,
-        api: ldif,
+        api: FlextLdif,
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
@@ -206,7 +206,7 @@ class TestSystematicFixtureCoverage:
     )
     def test_integration_fixture_coverage(
         self,
-        api: ldif,
+        api: FlextLdif,
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
@@ -290,7 +290,7 @@ class TestSystematicFixtureCoverage:
                         f"Fixture {fixture_name} ({fixture_type}) not available: {e}",
                     )
 
-    def test_all_servers_support_basic_ldif_operations(self, api: ldif) -> None:
+    def test_all_servers_support_basic_ldif_operations(self, api: FlextLdif) -> None:
         """Baseline test that all server types support basic LDIF operations.
 
         Creates simple LDIF content and validates it can be parsed and written

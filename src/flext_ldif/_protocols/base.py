@@ -384,6 +384,16 @@ class FlextLdifProtocolsBase(Protocol):
             """Return ACL server type."""
             ...
 
+        @property
+        def permissions(self) -> FlextLdifProtocolsBase.AclPermissions | None:
+            """Return ACL permissions."""
+            ...
+
+        @property
+        def raw_acl(self) -> str:
+            """Return original ACL string."""
+            ...
+
     @runtime_checkable
     class Entry(Protocol):
         """Entry model contract used across LDIF services."""
@@ -448,66 +458,174 @@ class FlextLdifProtocolsBase(Protocol):
     class Statistics(Protocol):
         """Aggregate statistics payload for parse/write/migration flows."""
 
-        total_entries: int
-        processed_entries: int
-        failed_entries: int
-        rejected_entries: int
-        events: MutableSequence[
+        @property
+        def total_entries(self) -> int:
+            """Return total processed entries."""
+            ...
+
+        @property
+        def processed_entries(self) -> int:
+            """Return successfully processed entries."""
+            ...
+
+        @property
+        def failed_entries(self) -> int:
+            """Return failed entry count."""
+            ...
+
+        @property
+        def rejected_entries(self) -> int:
+            """Return rejected entry count."""
+            ...
+
+        @property
+        def events(
+            self,
+        ) -> Sequence[
             FlextLdifProtocolsBase.ConversionEvent | FlextLdifProtocolsBase.DnEvent
-        ]
+        ]:
+            """Return accumulated processing events."""
+            ...
 
     @runtime_checkable
     class ParseResponse(Protocol):
         """Parsed LDIF batch response."""
 
-        entries: MutableSequence[FlextLdifProtocolsBase.Entry]
-        statistics: FlextLdifProtocolsBase.Statistics
-        detected_server_type: str | None
+        @property
+        def entries(self) -> Sequence[FlextLdifProtocolsBase.Entry]:
+            """Return parsed entries."""
+            ...
+
+        @property
+        def statistics(self) -> FlextLdifProtocolsBase.Statistics:
+            """Return parse statistics."""
+            ...
+
+        @property
+        def detected_server_type(self) -> str | None:
+            """Return detected server type."""
+            ...
 
     @runtime_checkable
     class ValidationResult(Protocol):
         """Validation summary contract."""
 
-        is_valid: bool
-        total_entries: int
-        valid_entries: int
-        invalid_entries: int
-        errors: MutableSequence[str]
+        @property
+        def is_valid(self) -> bool:
+            """Return validation outcome."""
+            ...
+
+        @property
+        def total_entries(self) -> int:
+            """Return validated entry count."""
+            ...
+
+        @property
+        def valid_entries(self) -> int:
+            """Return valid entry count."""
+            ...
+
+        @property
+        def invalid_entries(self) -> int:
+            """Return invalid entry count."""
+            ...
+
+        @property
+        def errors(self) -> Sequence[str]:
+            """Return validation errors."""
+            ...
 
     @runtime_checkable
     class MigrationPipelineResult(Protocol):
         """Migration pipeline result contract."""
 
-        entries: MutableSequence[FlextLdifProtocolsBase.Entry]
-        stats: FlextLdifProtocolsBase.Statistics
-        output_files: MutableSequence[str]
+        @property
+        def entries(self) -> Sequence[FlextLdifProtocolsBase.Entry]:
+            """Return migrated entries."""
+            ...
+
+        @property
+        def stats(self) -> FlextLdifProtocolsBase.Statistics:
+            """Return migration statistics."""
+            ...
+
+        @property
+        def output_files(self) -> Sequence[str]:
+            """Return generated output files."""
+            ...
 
     @runtime_checkable
     class WriteResponse(Protocol):
         """Write response payload."""
 
-        content: str | None
-        output_path: str | None
-        statistics: FlextLdifProtocolsBase.Statistics
+        @property
+        def content(self) -> str | None:
+            """Return serialized LDIF text."""
+            ...
+
+        @property
+        def output_path(self) -> str | None:
+            """Return persisted output path."""
+            ...
+
+        @property
+        def statistics(self) -> FlextLdifProtocolsBase.Statistics:
+            """Return write statistics."""
+            ...
 
     @runtime_checkable
     class ConversionEvent(Protocol):
         """Conversion event contract."""
 
-        conversion_operation: str
-        source_format: str
-        target_format: str
-        items_converted: int
-        items_failed: int
-        error_details: MutableSequence[str] | None
+        @property
+        def conversion_operation(self) -> str:
+            """Return conversion operation name."""
+            ...
+
+        @property
+        def source_format(self) -> str:
+            """Return source format."""
+            ...
+
+        @property
+        def target_format(self) -> str:
+            """Return target format."""
+            ...
+
+        @property
+        def items_converted(self) -> int:
+            """Return converted item count."""
+            ...
+
+        @property
+        def items_failed(self) -> int:
+            """Return failed item count."""
+            ...
+
+        @property
+        def error_details(self) -> Sequence[str] | None:
+            """Return conversion error details."""
+            ...
 
     @runtime_checkable
     class DnEvent(Protocol):
         """DN event contract."""
 
-        dn_operation: str
-        input_dn: str
-        output_dn: str | None
+        @property
+        def dn_operation(self) -> str:
+            """Return DN operation name."""
+            ...
+
+        @property
+        def input_dn(self) -> str:
+            """Return input DN."""
+            ...
+
+        @property
+        def output_dn(self) -> str | None:
+            """Return output DN."""
+            ...
+
         validation_result: bool | None
 
     @runtime_checkable

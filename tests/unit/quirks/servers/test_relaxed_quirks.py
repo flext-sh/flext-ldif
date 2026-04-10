@@ -103,7 +103,6 @@ class TestsTestFlextLdifRelaxedQuirks:
         result = schema_quirk.parse_objectclass(definition)
         if should_succeed:
             _ = tm.that(result.is_success, eq=True)
-            parsed = result.value
         else:
             _ = tm.that(result.is_failure, eq=True)
 
@@ -289,7 +288,6 @@ class TestsTestFlextLdifRelaxedQuirks:
         else:
             result = schema_quirk.parse_objectclass(input_with_oid)
         tm.that(result.is_success, eq=True)
-        parsed = result.value
 
     def test_relaxed_mode_integration(
         self,

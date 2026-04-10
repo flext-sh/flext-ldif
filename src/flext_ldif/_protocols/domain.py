@@ -14,6 +14,35 @@ class FlextLdifProtocolsDomain(Protocol):
     """Service-level LDIF protocols built on top of base value contracts."""
 
     @runtime_checkable
+    class ServerQuirk(Protocol):
+        """Structured server quirk contract used by services and tests."""
+
+        @property
+        def server_type(self) -> str:
+            """Return normalized server type."""
+            ...
+
+        @property
+        def priority(self) -> int:
+            """Return quirk priority."""
+            ...
+
+        @property
+        def schema_quirk(self) -> FlextLdifProtocolsDomain.SchemaQuirk:
+            """Return schema quirk implementation."""
+            ...
+
+        @property
+        def acl_quirk(self) -> FlextLdifProtocolsDomain.AclQuirk:
+            """Return ACL quirk implementation."""
+            ...
+
+        @property
+        def entry_quirk(self) -> FlextLdifProtocolsDomain.EntryQuirk:
+            """Return entry quirk implementation."""
+            ...
+
+    @runtime_checkable
     class SchemaQuirk(Protocol):
         """Schema quirk contract."""
 

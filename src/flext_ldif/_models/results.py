@@ -273,7 +273,10 @@ class FlextLdifModelsResults:
 
     class MigrationPipelineResult(m.FrozenModel):
         migrated_schema: FlextLdifModelsCollections.SchemaContent = Field(
-            default_factory=FlextLdifModelsCollections.SchemaContent,
+            default_factory=lambda: FlextLdifModelsCollections.SchemaContent(
+                attributes=[],
+                object_classes=[],
+            ),
             description="Schema content after migration transformation",
         )
         entries: MutableSequence[FlextLdifModelsDomainsEntries.Entry] = Field(

@@ -15,7 +15,10 @@ class FlextLdifUtilitiesPipeline:
     class _EntryTransformer(Protocol):
         """Concrete transformer contract for LDIF entry pipelines."""
 
-        def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
+        def apply(
+            self,
+            item: m.Ldif.Entry,
+        ) -> r[m.Ldif.Entry]:
             """Transform one LDIF entry."""
             ...
 
@@ -58,14 +61,15 @@ class FlextLdifUtilitiesPipeline:
                 entry: m.Ldif.Entry,
             ) -> r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered]:
                 """Wrap transformer to match pipeline filter signature."""
-                result = transformer.apply(entry)
-                if result.is_failure:
-                    return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].fail(
-                        result.error or "Transformer failed",
+                return (
+                    transformer
+                    .apply(entry)
+                    .map_error(
+                        lambda error: error or "Transformer failed",
                     )
-                transformed: m.Ldif.Entry = result.value
-                return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(
-                    transformed,
+                    .map(
+                        lambda transformed: transformed,
+                    )
                 )
 
             self._steps.append((step_name, wrapped_transformer))
@@ -79,9 +83,11 @@ class FlextLdifUtilitiesPipeline:
 
             def process_entry(entry: m.Ldif.Entry) -> r[m.Ldif.Entry] | None:
                 """Process single entry through pipeline."""
-                result = self.execute_one(entry)
+                result = self.execute_one(entry).map_error(
+                    lambda error: error or "Processing failed",
+                )
                 if result.is_failure:
-                    return r[m.Ldif.Entry].fail(result.error or "Processing failed")
+                    return r[m.Ldif.Entry].fail(result.error)
                 processed = result.value
                 if isinstance(processed, FlextLdifUtilitiesPipeline._Filtered):
                     return None
@@ -112,13 +118,15 @@ class FlextLdifUtilitiesPipeline:
                     return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(
                         FlextLdifUtilitiesPipeline.FILTERED,
                     )
-                result = step_func(current)
+                failure_prefix = f"Step '{step_name}' failed: "
+                result = step_func(current).map_error(
+                    lambda error, prefix=failure_prefix: (
+                        f"{prefix}{error or 'Transformer failed'}"
+                    ),
+                )
                 if result.is_failure:
-                    return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].fail(
-                        f"Step '{step_name}' failed: {result.error}",
-                    )
-                unwrapped = result.value
-                current = unwrapped
+                    return result
+                current = result.value
             return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(current)
 
     class ValidationResult:

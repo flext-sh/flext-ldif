@@ -999,12 +999,10 @@ class FlextLdifModelsDomainEntry:
                 if params.raw_record_lines is not None:
                     entry_data["raw_record_lines"] = list(params.raw_record_lines)
                 entry_instance = cls.model_validate(entry_data)
-                ok_result: r[Self] = r(value=entry_instance, is_success=True)
+                ok_result: r[Self] = r[Self].ok(entry_instance)
                 return ok_result
             except (ValueError, TypeError, AttributeError) as e:
-                fail_result: r[Self] = r(
-                    error=f"Failed to create Entry: {e}", is_success=False
-                )
+                fail_result: r[Self] = r[Self].fail(f"Failed to create Entry: {e}")
                 return fail_result
 
         @classmethod

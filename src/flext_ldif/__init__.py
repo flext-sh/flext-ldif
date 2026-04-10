@@ -1,29 +1,38 @@
-# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
-# Regenerate with: make gen
-#
-"""Flext ldif package."""
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Flext Ldif package."""
 
 from __future__ import annotations
 
 import typing as _t
 
-from flext_core.lazy import install_lazy_exports, merge_lazy_imports
+from flext_core.lazy import (
+    build_lazy_import_map,
+    install_lazy_exports,
+    merge_lazy_imports,
+)
 from flext_ldif.__version__ import *
 
 if _t.TYPE_CHECKING:
-    import flext_ldif._constants as _flext_ldif__constants
-
-    _constants = _flext_ldif__constants
-    import flext_ldif._models as _flext_ldif__models
-    from flext_ldif._constants import (
-        FlextLdifConstantsBase,
-        FlextLdifConstantsEnums,
-        enums,
-    )
-
-    _models = _flext_ldif__models
-    import flext_ldif._protocols as _flext_ldif__protocols
-    from flext_ldif._models import (
+    from flext_core.decorators import d
+    from flext_core.exceptions import e
+    from flext_core.handlers import h
+    from flext_core.mixins import x
+    from flext_ldif._constants.base import FlextLdifConstantsBase
+    from flext_ldif._constants.enums import FlextLdifConstantsEnums
+    from flext_ldif._models.base import FlextLdifModelsBases
+    from flext_ldif._models.collections import FlextLdifModelsCollections
+    from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl
+    from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
+    from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN
+    from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
+    from flext_ldif._models.domain_entry import FlextLdifModelsDomainEntry
+    from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata
+    from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema
+    from flext_ldif._models.events import FlextLdifModelsEvents
+    from flext_ldif._models.metadata import FlextLdifModelsMetadata
+    from flext_ldif._models.processing import FlextLdifModelsProcessing
+    from flext_ldif._models.results import FlextLdifModelsResults
+    from flext_ldif._models.settings import (
         AciLineFormatConfig,
         AciParserConfig,
         AclMetadataConfig,
@@ -35,19 +44,6 @@ if _t.TYPE_CHECKING:
         EntryParseMetadataConfig,
         EntryTransformConfig,
         EntryWriteConfig,
-        FlextLdifModelsBases,
-        FlextLdifModelsCollections,
-        FlextLdifModelsDomainAcl,
-        FlextLdifModelsDomainAttributes,
-        FlextLdifModelsDomainDN,
-        FlextLdifModelsDomainEntry,
-        FlextLdifModelsDomainMetadata,
-        FlextLdifModelsDomainSchema,
-        FlextLdifModelsDomainsEntries,
-        FlextLdifModelsEvents,
-        FlextLdifModelsMetadata,
-        FlextLdifModelsProcessing,
-        FlextLdifModelsResults,
         FlextLdifModelsSettings,
         LogContextExtras,
         MigrateOptions,
@@ -63,271 +59,156 @@ if _t.TYPE_CHECKING:
         WhitelistRules,
         WriteFormatOptions,
         WriteOutputOptions,
-        collections,
-        domain_acl,
-        domain_attributes,
-        domain_dn,
-        domain_entries,
-        domain_entry,
-        domain_metadata,
-        domain_schema,
-        events,
-        metadata,
-        processing,
-        results,
     )
-
-    _protocols = _flext_ldif__protocols
-    import flext_ldif._typings as _flext_ldif__typings
-    from flext_ldif._protocols import (
-        FlextLdifProtocolsBase,
-        FlextLdifProtocolsDomain,
-        domain,
-    )
-
-    _typings = _flext_ldif__typings
-    import flext_ldif._utilities as _flext_ldif__utilities
-    from flext_ldif._typings import FlextLdifTypesBase, FlextLdifTypesDomain
-
-    _utilities = _flext_ldif__utilities
-    import flext_ldif.api as _flext_ldif_api
-    from flext_ldif._utilities import (
-        FlextLdifUtilitiesACL,
-        FlextLdifUtilitiesAttribute,
-        FlextLdifUtilitiesCollectionLdif,
-        FlextLdifUtilitiesDetection,
-        FlextLdifUtilitiesDispatch,
-        FlextLdifUtilitiesDN,
-        FlextLdifUtilitiesEntry,
-        FlextLdifUtilitiesEvents,
-        FlextLdifUtilitiesMetadata,
-        FlextLdifUtilitiesObjectClass,
-        FlextLdifUtilitiesOID,
-        FlextLdifUtilitiesParser,
-        FlextLdifUtilitiesParsers,
-        FlextLdifUtilitiesPipeline,
+    from flext_ldif._protocols.base import FlextLdifProtocolsBase
+    from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
+    from flext_ldif._typings.base import FlextLdifTypesBase
+    from flext_ldif._typings.domain import FlextLdifTypesDomain
+    from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
+    from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
+    from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
+    from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
+    from flext_ldif._utilities.dispatch import FlextLdifUtilitiesDispatch
+    from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
+    from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
+    from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
+    from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
+    from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
+    from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
+    from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
+    from flext_ldif._utilities.parsers import FlextLdifUtilitiesParsers
+    from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
+    from flext_ldif._utilities.result import (
         FlextLdifUtilitiesResult,
-        FlextLdifUtilitiesSchema,
-        FlextLdifUtilitiesServer,
+        FlextLdifUtilitiesResult as r,
+    )
+    from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
+    from flext_ldif._utilities.server import FlextLdifUtilitiesServer
+    from flext_ldif._utilities.transformers import (
         FlextLdifUtilitiesTransformer,
         FlextLdifUtilitiesTransformers,
-        FlextLdifUtilitiesValidation,
-        FlextLdifUtilitiesWriter,
-        FlextLdifUtilitiesWriters,
-        acl,
-        attribute,
-        collection_ldif,
-        detection,
-        dispatch,
-        dn,
-        entry,
-        object_class,
-        oid,
-        parser,
-        parsers,
-        pipeline,
-        result,
-        schema,
-        server,
-        transformers,
-        validation,
-        writer,
-        writers,
     )
-
-    api = _flext_ldif_api
-    import flext_ldif.base as _flext_ldif_base
-    from flext_ldif.api import FlextLdif, ldif
-
-    base = _flext_ldif_base
-    import flext_ldif.constants as _flext_ldif_constants
-    from flext_ldif.base import s
-
-    constants = _flext_ldif_constants
-    import flext_ldif.models as _flext_ldif_models
+    from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
+    from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
+    from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
+    from flext_ldif.api import FlextLdif
+    from flext_ldif.base import FlextLdifServiceBase, s
     from flext_ldif.constants import FlextLdifConstants, FlextLdifConstants as c
-
-    models = _flext_ldif_models
-    import flext_ldif.protocols as _flext_ldif_protocols
+    from flext_ldif.ldif import ldif
     from flext_ldif.models import FlextLdifModels, FlextLdifModels as m
-
-    protocols = _flext_ldif_protocols
-    import flext_ldif.servers as _flext_ldif_servers
     from flext_ldif.protocols import FlextLdifProtocols, FlextLdifProtocols as p
-
-    servers = _flext_ldif_servers
-    import flext_ldif.services as _flext_ldif_services
-    from flext_ldif.servers import (
-        FlextLdifServersAd,
-        FlextLdifServersApache,
-        FlextLdifServersBase,
-        FlextLdifServersDs389,
-        FlextLdifServersNovell,
-        FlextLdifServersOid,
-        FlextLdifServersOpenldap,
-        FlextLdifServersOpenldap1,
-        FlextLdifServersOud,
-        FlextLdifServersRelaxed,
-        FlextLdifServersRfc,
-        FlextLdifServersTivoli,
-        ad,
-        apache,
-        ds389,
-        logger,
-        novell,
-        openldap,
-        openldap1,
-        oud,
-        relaxed,
-        rfc,
-        tivoli,
-    )
-    from flext_ldif.servers._base import (
-        FlextLdifQuirkMethodsMixin,
-        FlextLdifServersBaseConstants,
-        FlextLdifServersBaseEntry,
-        FlextLdifServersBaseSchema,
-        FlextLdifServersBaseSchemaAcl,
-    )
-    from flext_ldif.servers._oid import (
-        FlextLdifServersOidAcl,
-        FlextLdifServersOidConstants,
-        FlextLdifServersOidEntry,
-        FlextLdifServersOidSchema,
-    )
-    from flext_ldif.servers._oud import (
-        FlextLdifServersOudAcl,
-        FlextLdifServersOudConstants,
-        FlextLdifServersOudEntry,
-        FlextLdifServersOudSchema,
-        FlextLdifServersOudUtilities,
-    )
-    from flext_ldif.servers._rfc import (
-        FlextLdifServersRfcAcl,
-        FlextLdifServersRfcConstants,
-        FlextLdifServersRfcEntry,
-        FlextLdifServersRfcSchema,
-    )
-
-    services = _flext_ldif_services
-    import flext_ldif.settings as _flext_ldif_settings
-    from flext_ldif.services import (
-        FlextLdifAcl,
-        FlextLdifAnalysis,
-        FlextLdifCategorization,
-        FlextLdifConversion,
-        FlextLdifDetector,
-        FlextLdifDetectorMixin,
-        FlextLdifEntries,
-        FlextLdifFilters,
-        FlextLdifMigrationPipeline,
-        FlextLdifParser,
-        FlextLdifParserMixin,
-        FlextLdifProcessing,
-        FlextLdifProcessingPipeline,
-        FlextLdifServer,
-        FlextLdifStatistics,
-        FlextLdifTransformer,
-        FlextLdifValidation,
-        FlextLdifWriter,
-        FlextLdifWriterMixin,
-        analysis,
-        categorization,
-        conversion,
-        detector,
-        entries,
-        filters,
-        migration,
-        rfc_validation,
-        statistics,
-    )
-    from flext_ldif.services._services import (
+    from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
+    from flext_ldif.servers._base.constants import FlextLdifServersBaseConstants
+    from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
+    from flext_ldif.servers._base.mixins import FlextLdifQuirkMethodsMixin
+    from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+    from flext_ldif.servers._oid.acl import FlextLdifServersOidAcl
+    from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
+    from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
+    from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema
+    from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
+    from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
+    from flext_ldif.servers._oud.entry import FlextLdifServersOudEntry
+    from flext_ldif.servers._oud.schema import FlextLdifServersOudSchema
+    from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
+    from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
+    from flext_ldif.servers._rfc.constants import FlextLdifServersRfcConstants
+    from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+    from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
+    from flext_ldif.servers.ad import FlextLdifServersAd
+    from flext_ldif.servers.apache import FlextLdifServersApache
+    from flext_ldif.servers.base import FlextLdifServersBase
+    from flext_ldif.servers.ds389 import FlextLdifServersDs389
+    from flext_ldif.servers.novell import FlextLdifServersNovell
+    from flext_ldif.servers.oid import FlextLdifServersOid
+    from flext_ldif.servers.openldap import FlextLdifServersOpenldap
+    from flext_ldif.servers.openldap1 import FlextLdifServersOpenldap1
+    from flext_ldif.servers.oud import FlextLdifServersOud
+    from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
+    from flext_ldif.servers.rfc import FlextLdifServersRfc
+    from flext_ldif.servers.tivoli import FlextLdifServersTivoli
+    from flext_ldif.services._services.processing_pipeline_service import (
         FlextLdifProcessingPipelineService,
-        processing_pipeline_service,
     )
-
-    settings = _flext_ldif_settings
-    import flext_ldif.shared as _flext_ldif_shared
+    from flext_ldif.services.acl import FlextLdifAcl
+    from flext_ldif.services.analysis import FlextLdifAnalysis
+    from flext_ldif.services.categorization import FlextLdifCategorization
+    from flext_ldif.services.conversion import FlextLdifConversion
+    from flext_ldif.services.detector import FlextLdifDetector, FlextLdifDetectorMixin
+    from flext_ldif.services.entries import FlextLdifEntries
+    from flext_ldif.services.filters import FlextLdifFilters
+    from flext_ldif.services.migration import FlextLdifMigrationPipeline
+    from flext_ldif.services.parser import FlextLdifParser, FlextLdifParserMixin
+    from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
+    from flext_ldif.services.processing import FlextLdifProcessing
+    from flext_ldif.services.rfc_validation import FlextLdifValidation
+    from flext_ldif.services.server import FlextLdifServer
+    from flext_ldif.services.statistics import FlextLdifStatistics
+    from flext_ldif.services.transformers import FlextLdifTransformer
+    from flext_ldif.services.writer import FlextLdifWriter, FlextLdifWriterMixin
     from flext_ldif.settings import FlextLdifSettings
-
-    shared = _flext_ldif_shared
-    import flext_ldif.typings as _flext_ldif_typings
     from flext_ldif.shared import FlextLdifShared
-
-    typings = _flext_ldif_typings
-    import flext_ldif.utilities as _flext_ldif_utilities
     from flext_ldif.typings import FlextLdifTypes, FlextLdifTypes as t
-
-    utilities = _flext_ldif_utilities
-    from flext_core.decorators import FlextDecorators as d
-    from flext_core.exceptions import FlextExceptions as e
-    from flext_core.handlers import FlextHandlers as h
-    from flext_core.mixins import FlextMixins as x
-    from flext_core.result import FlextResult as r
     from flext_ldif.utilities import FlextLdifUtilities, FlextLdifUtilities as u
 _LAZY_IMPORTS = merge_lazy_imports(
     (
-        "flext_ldif._constants",
-        "flext_ldif._models",
-        "flext_ldif._protocols",
-        "flext_ldif._typings",
-        "flext_ldif._utilities",
-        "flext_ldif.servers",
-        "flext_ldif.services",
+        "._constants",
+        "._models",
+        "._protocols",
+        "._typings",
+        "._utilities",
+        ".servers",
+        ".services",
     ),
-    {
-        "FlextLdif": ("flext_ldif.api", "FlextLdif"),
-        "FlextLdifConstants": ("flext_ldif.constants", "FlextLdifConstants"),
-        "FlextLdifModels": ("flext_ldif.models", "FlextLdifModels"),
-        "FlextLdifProtocols": ("flext_ldif.protocols", "FlextLdifProtocols"),
-        "s": ("flext_ldif.base", "s"),
-        "FlextLdifSettings": ("flext_ldif.settings", "FlextLdifSettings"),
-        "FlextLdifShared": ("flext_ldif.shared", "FlextLdifShared"),
-        "FlextLdifTypes": ("flext_ldif.typings", "FlextLdifTypes"),
-        "FlextLdifUtilities": ("flext_ldif.utilities", "FlextLdifUtilities"),
-        "__author__": ("flext_ldif.__version__", "__author__"),
-        "__author_email__": ("flext_ldif.__version__", "__author_email__"),
-        "__description__": ("flext_ldif.__version__", "__description__"),
-        "__license__": ("flext_ldif.__version__", "__license__"),
-        "__title__": ("flext_ldif.__version__", "__title__"),
-        "__url__": ("flext_ldif.__version__", "__url__"),
-        "__version__": ("flext_ldif.__version__", "__version__"),
-        "__version_info__": ("flext_ldif.__version__", "__version_info__"),
-        "_constants": "flext_ldif._constants",
-        "_models": "flext_ldif._models",
-        "_protocols": "flext_ldif._protocols",
-        "_typings": "flext_ldif._typings",
-        "_utilities": "flext_ldif._utilities",
-        "api": "flext_ldif.api",
-        "base": "flext_ldif.base",
-        "c": ("flext_ldif.constants", "FlextLdifConstants"),
-        "constants": "flext_ldif.constants",
-        "d": ("flext_core.decorators", "FlextDecorators"),
-        "e": ("flext_core.exceptions", "FlextExceptions"),
-        "h": ("flext_core.handlers", "FlextHandlers"),
-        "ldif": ("flext_ldif.api", "ldif"),
-        "m": ("flext_ldif.models", "FlextLdifModels"),
-        "models": "flext_ldif.models",
-        "p": ("flext_ldif.protocols", "FlextLdifProtocols"),
-        "protocols": "flext_ldif.protocols",
-        "r": ("flext_core.result", "FlextResult"),
-        "servers": "flext_ldif.servers",
-        "services": "flext_ldif.services",
-        "settings": "flext_ldif.settings",
-        "shared": "flext_ldif.shared",
-        "t": ("flext_ldif.typings", "FlextLdifTypes"),
-        "typings": "flext_ldif.typings",
-        "u": ("flext_ldif.utilities", "FlextLdifUtilities"),
-        "utilities": "flext_ldif.utilities",
-        "x": ("flext_core.mixins", "FlextMixins"),
-    },
+    build_lazy_import_map(
+        {
+            ".__version__": (
+                "__author__",
+                "__author_email__",
+                "__description__",
+                "__license__",
+                "__title__",
+                "__url__",
+                "__version__",
+                "__version_info__",
+            ),
+            ".api": ("FlextLdif",),
+            ".base": (
+                "FlextLdifServiceBase",
+                "s",
+            ),
+            ".constants": ("FlextLdifConstants",),
+            ".ldif": ("ldif",),
+            ".models": ("FlextLdifModels",),
+            ".protocols": ("FlextLdifProtocols",),
+            ".settings": ("FlextLdifSettings",),
+            ".shared": ("FlextLdifShared",),
+            ".typings": ("FlextLdifTypes",),
+            ".utilities": ("FlextLdifUtilities",),
+            "flext_core.decorators": ("d",),
+            "flext_core.exceptions": ("e",),
+            "flext_core.handlers": ("h",),
+            "flext_core.mixins": ("x",),
+        },
+        alias_groups={
+            ".constants": (("c", "FlextLdifConstants"),),
+            ".models": (("m", "FlextLdifModels"),),
+            ".protocols": (("p", "FlextLdifProtocols"),),
+            ".typings": (("t", "FlextLdifTypes"),),
+            ".utilities": (("u", "FlextLdifUtilities"),),
+        },
+    ),
+    exclude_names=(
+        "cleanup_submodule_namespace",
+        "install_lazy_exports",
+        "lazy_getattr",
+        "logger",
+        "merge_lazy_imports",
+        "output",
+        "output_reporting",
+    ),
+    module_name=__name__,
 )
-_ = _LAZY_IMPORTS.pop("cleanup_submodule_namespace", None)
-_ = _LAZY_IMPORTS.pop("install_lazy_exports", None)
-_ = _LAZY_IMPORTS.pop("lazy_getattr", None)
-_ = _LAZY_IMPORTS.pop("merge_lazy_imports", None)
-_ = _LAZY_IMPORTS.pop("output", None)
-_ = _LAZY_IMPORTS.pop("output_reporting", None)
 
 __all__ = [
     "AciLineFormatConfig",
@@ -408,6 +289,7 @@ __all__ = [
     "FlextLdifServersRfcEntry",
     "FlextLdifServersRfcSchema",
     "FlextLdifServersTivoli",
+    "FlextLdifServiceBase",
     "FlextLdifSettings",
     "FlextLdifShared",
     "FlextLdifStatistics",
@@ -463,87 +345,17 @@ __all__ = [
     "__url__",
     "__version__",
     "__version_info__",
-    "_constants",
-    "_models",
-    "_protocols",
-    "_typings",
-    "_utilities",
-    "acl",
-    "ad",
-    "analysis",
-    "apache",
-    "api",
-    "attribute",
-    "base",
     "c",
-    "categorization",
-    "collection_ldif",
-    "collections",
-    "constants",
-    "conversion",
     "d",
-    "detection",
-    "detector",
-    "dispatch",
-    "dn",
-    "domain",
-    "domain_acl",
-    "domain_attributes",
-    "domain_dn",
-    "domain_entries",
-    "domain_entry",
-    "domain_metadata",
-    "domain_schema",
-    "ds389",
     "e",
-    "entries",
-    "entry",
-    "enums",
-    "events",
-    "filters",
     "h",
     "ldif",
-    "logger",
     "m",
-    "metadata",
-    "migration",
-    "models",
-    "novell",
-    "object_class",
-    "oid",
-    "openldap",
-    "openldap1",
-    "oud",
     "p",
-    "parser",
-    "parsers",
-    "pipeline",
-    "processing",
-    "processing_pipeline_service",
-    "protocols",
     "r",
-    "relaxed",
-    "result",
-    "results",
-    "rfc",
-    "rfc_validation",
     "s",
-    "schema",
-    "server",
-    "servers",
-    "services",
-    "settings",
-    "shared",
-    "statistics",
     "t",
-    "tivoli",
-    "transformers",
-    "typings",
     "u",
-    "utilities",
-    "validation",
-    "writer",
-    "writers",
     "x",
 ]
 

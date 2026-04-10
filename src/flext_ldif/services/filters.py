@@ -149,11 +149,7 @@ class FlextLdifFilters:
         forbidden_attrs: Sequence[str],
         forbidden_ocs: Sequence[str],
     ) -> m.Ldif.Entry:
-        """Strip forbidden attributes and objectClasses from an entry.
-
-        Case-insensitive matching for both attribute names and objectClass values.
-        Returns a new entry with filtered attributes; original is not modified.
-        """
+        """Strip forbidden attributes and objectClasses from an entry."""
         filtered_entry = entry
         if entry.attributes and forbidden_attrs:
             attrs_dict = entry.attributes.attributes
@@ -202,15 +198,7 @@ class FlextLdifFilters:
         entry: m.Ldif.Entry,
         allowed_oids: Mapping[str, frozenset[str]],
     ) -> m.Ldif.Entry:
-        """Filter individual OID values within schema entry attributes.
-
-        For each schema field (attributeTypes, objectClasses, matchingRules, etc.),
-        keep only values whose OID is in the corresponding allowed set.
-        Removes empty attributes after filtering.
-
-        ``allowed_oids`` maps lowercase attribute names to their allowed OID frozensets,
-        e.g. ``{"attributetypes": frozenset(["2.5.4.0", ...]), ...}``.
-        """
+        """Filter individual OID values within schema entry attributes."""
         if entry.attributes is None:
             return entry
         attrs_dict = entry.attributes.attributes

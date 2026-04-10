@@ -35,6 +35,7 @@ class FlextLdifTypesDomain:
     type SchemaItem = SchemaAttributeLike | SchemaObjectClassLike
     type SchemaItemSequence = MutableSequence[SchemaItem]
     type AclLike = p.Ldif.Acl
+    type AclSequence = MutableSequence[AclLike]
     type WriteOptionsLike = p.Ldif.WriteFormatOptions | p.Ldif.WriteOptions
     type MetadataLike = (
         p.Ldif.QuirkMetadata
@@ -55,11 +56,13 @@ class FlextLdifTypesDomain:
     type AclQuirkLike = p.Ldif.AclQuirk
     type EntryQuirkLike = p.Ldif.EntryQuirk
     type QuirkRegistryLike = p.Ldif.QuirkRegistry
+    type ServerQuirkLike = p.Ldif.ServerQuirk
     type SchemaItemResult = p.Result[SchemaItem]
     type SchemaAttributeResult = p.Result[SchemaAttributeLike]
     type SchemaObjectClassResult = p.Result[SchemaObjectClassLike]
     type EntryResult = p.Result[EntryLike]
     type EntrySequenceResult = p.Result[EntrySequence]
+    type ServerQuirkResult = p.Result[ServerQuirkLike]
     type AclResult = p.Result[AclLike]
     type WriteStringResult = p.Result[str]
     type ParseResponseResult = p.Result[ParseResponseLike]

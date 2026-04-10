@@ -15,9 +15,8 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import ldif
-from tests import c, m, t
-from tests.conftest import FlextLdifFixtures
+from flext_ldif import FlextLdif, ldif
+from tests import FlextLdifFixtures, c, m, t
 
 
 def _verify_soft_deleted_attributes(entry: m.Ldif.Entry) -> None:
@@ -44,7 +43,7 @@ class TestZeroDataLossOidOud:
     """Test zero data loss in OID↔OUD↔RFC conversions."""
 
     @pytest.fixture
-    def api(self) -> ldif:
+    def api(self) -> FlextLdif:
         """Create ldif API instance."""
         return ldif.get_instance()
 
@@ -62,7 +61,7 @@ class TestZeroDataLossOidOud:
 
     def test_oid_parse_preserves_original_ldif(
         self,
-        api: ldif,
+        api: FlextLdif,
         oid_fixture: str,
     ) -> None:
         """Test that OID parsing preserves original LDIF in metadata."""
@@ -88,7 +87,7 @@ class TestZeroDataLossOidOud:
 
     def test_oud_parse_preserves_original_ldif(
         self,
-        api: ldif,
+        api: FlextLdif,
         oud_fixture: str,
     ) -> None:
         """Test that OUD parsing preserves original LDIF in metadata."""
@@ -107,7 +106,7 @@ class TestZeroDataLossOidOud:
 
     def test_oid_boolean_conversion_tracking(
         self,
-        api: ldif,
+        api: FlextLdif,
         oid_fixture: str,
     ) -> None:
         """Test that boolean conversions are tracked in metadata."""
@@ -148,7 +147,7 @@ class TestZeroDataLossOidOud:
 
     def test_oid_oud_conversion_preserves_all_data(
         self,
-        api: ldif,
+        api: FlextLdif,
         oid_fixture: str,
     ) -> None:
         """Test OID→OUD conversion preserves ALL data in metadata."""
@@ -204,7 +203,7 @@ class TestZeroDataLossOidOud:
 
     def test_round_trip_oid_oud_oid_preserves_formatting(
         self,
-        api: ldif,
+        api: FlextLdif,
         oid_fixture: str,
     ) -> None:
         """Test OID→OUD→OID round-trip preserves ALL formatting."""
@@ -262,7 +261,7 @@ class TestZeroDataLossOidOud:
 
     def test_minimal_differences_tracking(
         self,
-        api: ldif,
+        api: FlextLdif,
         oid_fixture: str,
     ) -> None:
         """Test that minimal differences are tracked for all conversions."""
@@ -295,7 +294,7 @@ class TestZeroDataLossOidOud:
                             f"Missing differences for {attr_name}"
                         )
 
-    def test_soft_delete_tracking(self, api: ldif, oid_fixture: str) -> None:
+    def test_soft_delete_tracking(self, api: FlextLdif, oid_fixture: str) -> None:
         """Test that soft-deleted attributes are tracked in metadata."""
         result = api.parse_ldif(oid_fixture, server_type=c.Ldif.Fixtures.OID)
         assert result.is_success
@@ -305,7 +304,7 @@ class TestZeroDataLossOidOud:
 
     def test_conversion_history_tracking(
         self,
-        api: ldif,
+        api: FlextLdif,
         oid_fixture: str,
     ) -> None:
         """Test that conversion history is tracked in metadata."""
@@ -314,15 +313,13 @@ class TestZeroDataLossOidOud:
         entries = result.value.entries
         for entry in entries:
             if entry.metadata:
-                    "Metadata missing conversion_history field"
-                )
                 assert isinstance(entry.metadata.conversion_history, list), (
                     "conversion_history should be a list"
                 )
 
     def test_original_strings_preservation(
         self,
-        api: ldif,
+        api: FlextLdif,
         oid_fixture: str,
     ) -> None:
         """Test that ALL original strings are preserved in metadata."""
@@ -355,7 +352,7 @@ class TestZeroDataLossOidOud:
 
     def test_restore_original_format_option(
         self,
-        api: ldif,
+        api: FlextLdif,
         oid_fixture: str,
     ) -> None:
         """Test that restore_original_format option restores exact original."""

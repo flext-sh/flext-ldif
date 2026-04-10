@@ -161,7 +161,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 return r[m.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata}),
                 )
-            return result
+            return r[m.Ldif.SchemaAttribute].from_result(result)
 
         @override
         def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
@@ -173,7 +173,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 return r[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata}),
                 )
-            return result
+            return r[m.Ldif.SchemaObjectClass].from_result(result)
 
     class Acl(FlextLdifServersRfc.Acl):
         """IBM Tivoli Directory Server ACL quirks implementation."""

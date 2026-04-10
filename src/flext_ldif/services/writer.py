@@ -168,17 +168,21 @@ class FlextLdifWriterMixin:
                 f"No entry quirk found for server type: {effective_server_type}",
             )
         options = self._normalize_format_options(format_options)
-        prepared_entries_result = self._prepare_entries_for_target_write(
-            normalized_entries,
-            effective_server_type,
-        )
-        if prepared_entries_result.is_failure:
-            return r[str].fail(
-                prepared_entries_result.error or "LDIF entry preparation failed",
+        return (
+            self
+            ._prepare_entries_for_target_write(
+                normalized_entries,
+                effective_server_type,
             )
-        return entry_quirk.write(prepared_entries_result.value, options).fold(
-            on_failure=lambda e: r[str].fail(e or "LDIF writing failed"),
-            on_success=lambda v: r[str].ok(v),
+            .map_error(
+                lambda error: error or "LDIF entry preparation failed",
+            )
+            .flat_map(
+                lambda prepared_entries: entry_quirk.write(prepared_entries, options),
+            )
+            .map_error(
+                lambda error: error or "LDIF writing failed",
+            )
         )
 
     @staticmethod

@@ -24,6 +24,7 @@ import pytest
 from flext_ldap import FlextLdapTypes, FlextLdapUtilities as ldap_u
 
 from flext_ldif import (
+    FlextLdif,
     FlextLdifConversion,
     FlextLdifParser,
     FlextLdifServer,
@@ -33,12 +34,11 @@ from flext_ldif import (
     FlextLdifWriter,
     ldif,
 )
-from tests import c, m, p, t, u
-from tests.conftest import FlextLdifFixtures
+from tests import FlextLdifFixtures, c, m, p, t, u
 
 
 @pytest.fixture
-def api() -> ldif:
+def api() -> FlextLdif:
     """Create ldif API instance for testing."""
     return ldif.get_instance()
 
@@ -85,21 +85,28 @@ def oid_integration_fixture() -> str:
 
 @pytest.fixture
 def oid_schema_entries(
-    api: ldif,
+    api: FlextLdif,
     oid_schema_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse OID schema fixture into Entry models."""
-    result = api.parse_ldif(oid_schema_fixture)
-    assert result.is_success, f"OID schema parsing failed: {result.error}"
-    return result.value.entries
+    parse_response: m.Ldif.ParseResponse = u.expect_success(
+        api.parse_ldif(oid_schema_fixture),
+        message="OID schema parsing failed",
+    )
+    return parse_response.entries
 
 
 @pytest.fixture
-def oid_entries(api: ldif, oid_entries_fixture: str) -> Sequence[m.Ldif.Entry]:
+def oid_entries(
+    api: FlextLdif,
+    oid_entries_fixture: str,
+) -> Sequence[m.Ldif.Entry]:
     """Parse OID entries fixture into Entry models."""
-    result = api.parse_ldif(oid_entries_fixture)
-    assert result.is_success, f"OID entries parsing failed: {result.error}"
-    return result.value.entries
+    parse_response: m.Ldif.ParseResponse = u.expect_success(
+        api.parse_ldif(oid_entries_fixture),
+        message="OID entries parsing failed",
+    )
+    return parse_response.entries
 
 
 @pytest.fixture
@@ -132,21 +139,28 @@ def oud_integration_fixture() -> str:
 
 @pytest.fixture
 def oud_schema_entries(
-    api: ldif,
+    api: FlextLdif,
     oud_schema_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse OUD schema fixture into Entry models."""
-    result = api.parse_ldif(oud_schema_fixture)
-    assert result.is_success, f"OUD schema parsing failed: {result.error}"
-    return result.value.entries
+    parse_response: m.Ldif.ParseResponse = u.expect_success(
+        api.parse_ldif(oud_schema_fixture),
+        message="OUD schema parsing failed",
+    )
+    return parse_response.entries
 
 
 @pytest.fixture
-def oud_entries(api: ldif, oud_entries_fixture: str) -> Sequence[m.Ldif.Entry]:
+def oud_entries(
+    api: FlextLdif,
+    oud_entries_fixture: str,
+) -> Sequence[m.Ldif.Entry]:
     """Parse OUD entries fixture into Entry models."""
-    result = api.parse_ldif(oud_entries_fixture)
-    assert result.is_success, f"OUD entries parsing failed: {result.error}"
-    return result.value.entries
+    parse_response: m.Ldif.ParseResponse = u.expect_success(
+        api.parse_ldif(oud_entries_fixture),
+        message="OUD entries parsing failed",
+    )
+    return parse_response.entries
 
 
 @pytest.fixture
@@ -179,24 +193,28 @@ def openldap_integration_fixture() -> str:
 
 @pytest.fixture
 def openldap_schema_entries(
-    api: ldif,
+    api: FlextLdif,
     openldap_schema_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse OpenLDAP schema fixture into Entry models."""
-    result = api.parse_ldif(openldap_schema_fixture)
-    assert result.is_success, f"OpenLDAP schema parsing failed: {result.error}"
-    return result.value.entries
+    parse_response: m.Ldif.ParseResponse = u.expect_success(
+        api.parse_ldif(openldap_schema_fixture),
+        message="OpenLDAP schema parsing failed",
+    )
+    return parse_response.entries
 
 
 @pytest.fixture
 def openldap_entries(
-    api: ldif,
+    api: FlextLdif,
     openldap_entries_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse OpenLDAP entries fixture into Entry models."""
-    result = api.parse_ldif(openldap_entries_fixture)
-    assert result.is_success, f"OpenLDAP entries parsing failed: {result.error}"
-    return result.value.entries
+    parse_response: m.Ldif.ParseResponse = u.expect_success(
+        api.parse_ldif(openldap_entries_fixture),
+        message="OpenLDAP entries parsing failed",
+    )
+    return parse_response.entries
 
 
 @pytest.fixture
@@ -208,13 +226,15 @@ def rfc_schema_fixture() -> str:
 
 @pytest.fixture
 def rfc_schema_entries(
-    api: ldif,
+    api: FlextLdif,
     rfc_schema_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse RFC schema fixture into Entry models."""
-    result = api.parse_ldif(rfc_schema_fixture)
-    assert result.is_success, f"RFC schema parsing failed: {result.error}"
-    return result.value.entries
+    parse_response: m.Ldif.ParseResponse = u.expect_success(
+        api.parse_ldif(rfc_schema_fixture),
+        message="RFC schema parsing failed",
+    )
+    return parse_response.entries
 
 
 @pytest.fixture
@@ -279,49 +299,55 @@ def conversion_matrix() -> FlextLdifConversion:
 @pytest.fixture
 def server() -> FlextLdifServer:
     """Get FlextLdifServer instance for quirk management."""
-    return FlextLdifServer()
+    return FlextLdifServer.get_global_instance()
 
 
 @pytest.fixture
 def oid_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get OID server quirk via FlextLdifServer API."""
-    quirk_result = server.quirk("oid")
-    assert quirk_result.is_success, (
-        f"OID quirk must be registered: {quirk_result.error}"
+    return u.expect_success(
+        server.quirk("oid"),
+        message="OID quirk must be registered",
     )
-    return quirk_result.value
 
 
 @pytest.fixture
 def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get OUD server quirk via FlextLdifServer API."""
-    quirk_result = server.get_base_quirk("oud")
-    assert quirk_result.is_success, (
-        f"OUD quirk must be registered: {quirk_result.error}"
+    return u.expect_success(
+        server.get_base_quirk("oud"),
+        message="OUD quirk must be registered",
     )
-    return quirk_result.value
 
 
 @pytest.fixture
-def oid_schema_quirk(oid_quirk: FlextLdifServersBase) -> FlextLdifServersBaseSchema:
+def oid_schema_quirk(
+    oid_quirk: FlextLdifServersBase,
+) -> FlextLdifServersBaseSchema:
     """Create OID schema quirk instance for conversion tests."""
     return oid_quirk.schema_quirk
 
 
 @pytest.fixture
-def oud_schema_quirk(oud_quirk: FlextLdifServersBase) -> FlextLdifServersBaseSchema:
+def oud_schema_quirk(
+    oud_quirk: FlextLdifServersBase,
+) -> FlextLdifServersBaseSchema:
     """Create OUD schema quirk instance for conversion tests."""
     return oud_quirk.schema_quirk
 
 
 @pytest.fixture
-def oid_acl_quirk(oid_quirk: FlextLdifServersBase) -> FlextLdifServersBaseSchemaAcl:
+def oid_acl_quirk(
+    oid_quirk: FlextLdifServersBase,
+) -> FlextLdifServersBaseSchemaAcl:
     """Create OID ACL quirk instance for conversion tests."""
     return oid_quirk.acl_quirk
 
 
 @pytest.fixture
-def oud_acl_quirk(oud_quirk: FlextLdifServersBase) -> FlextLdifServersBaseSchemaAcl:
+def oud_acl_quirk(
+    oud_quirk: FlextLdifServersBase,
+) -> FlextLdifServersBaseSchemaAcl:
     """Create OUD ACL quirk instance for conversion tests."""
     return oud_quirk.acl_quirk
 
@@ -411,9 +437,8 @@ def ldap_container_shared(ldap_container: t.ContainerMapping) -> str:
 @pytest.fixture
 def unique_dn_suffix(worker_id: str, request: pytest.FixtureRequest) -> str:
     """Build a unique suffix for LDAP DNs per test execution."""
-    node = getattr(request, "node", None)
-    test_name: str = (
-    )
+    getattr(request, "node", None)
+    test_name: tuple[str, ...] = ()
     test_name_clean: str = "".join(
         ch if ch.isalnum() or ch in {"-", "_"} else "-" for ch in test_name
     )[:20]

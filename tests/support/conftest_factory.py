@@ -34,6 +34,7 @@ from flext_tests import tk
 
 from flext_core import FlextLogger, FlextSettings, r
 from flext_ldif import (
+    FlextLdif,
     FlextLdifServer,
     FlextLdifServersBase,
     ldif,
@@ -179,7 +180,7 @@ class FlextLdifTestConftest:
         request: pytest.FixtureRequest,
     ) -> str:
         """Generate unique DN suffix using factory pattern."""
-        test_name = str(node_name)
+        test_name = str(request.node.name)
         allowed_chars = {"-", "_"}
         test_name_clean = "".join(
             c if c.isalnum() or c in allowed_chars else "-" for c in test_name
@@ -499,9 +500,9 @@ class FlextLdifTestConftest:
         """Quirk registry."""
         return FlextLdifServer()
 
-    def ldif_api(self) -> ldif:
+    def ldif_api(self) -> FlextLdif:
         """Ldif API instance."""
-        return ldif()
+        return FlextLdif()
 
     def assert_result_success(self) -> Callable[..., None]:
         """Result success assertion."""

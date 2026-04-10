@@ -158,7 +158,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             entries=entries,
             _operation=operation,
         )
-        return result.value
+        value = result.unwrap()
+        if isinstance(value, str):
+            return value
+        return u.Ldif.as_entry(value)
 
     @classmethod
     def _extract_execute_params(
@@ -386,28 +389,36 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             return r[m.Ldif.ParseResponse].fail(
                 "Entry quirk not available",
             )
-        entries_result: r[MutableSequence[m.Ldif.Entry]] = entry_quirk.parse_quirk(
-            value,
-        )
-        if entries_result.is_failure:
-            error_msg = entries_result.error or "Entry parsing failed"
-            return r[m.Ldif.ParseResponse].fail(error_msg)
-        entries = entries_result.value
         detected_server = getattr(self, "server_type", None)
-        statistics = m.Ldif.Statistics(
-            total_entries=len(entries),
-            processed_entries=len(entries),
-            detected_server_type=detected_server,
+
+        def normalize_parse_error(error: str) -> str:
+            return error or "Entry parsing failed"
+
+        def build_parse_response(
+            parsed_entries: t.Ldif.EntrySequence,
+        ) -> m.Ldif.ParseResponse:
+            domain_entries = u.Ldif.as_entries(parsed_entries)
+            statistics = m.Ldif.Statistics(
+                total_entries=len(domain_entries),
+                processed_entries=len(domain_entries),
+                detected_server_type=detected_server,
+            )
+            return m.Ldif.ParseResponse(
+                entries=[entry.model_copy(deep=True) for entry in domain_entries],
+                statistics=statistics,
+                detected_server_type=detected_server,
+            )
+
+        return (
+            entry_quirk
+            .parse_quirk(value)
+            .map_error(
+                normalize_parse_error,
+            )
+            .map(
+                build_parse_response,
+            )
         )
-        domain_entries: MutableSequence[m.Ldif.Entry] = [
-            entry.model_copy(deep=True) for entry in entries
-        ]
-        parse_response = m.Ldif.ParseResponse(
-            entries=list(domain_entries),
-            statistics=statistics,
-            detected_server_type=detected_server,
-        )
-        return r[m.Ldif.ParseResponse].ok(parse_response)
 
     def write(self, entries: MutableSequence[m.Ldif.Entry]) -> r[str]:
         """Write Entry models to LDIF text."""
@@ -436,8 +447,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         parse_result = self.parse_ldif(ldif_text)
         if not parse_result.is_success:
             return r[m.Ldif.Entry].fail(parse_result.error or "Parse failed")
-        parse_response = parse_result.value
-        entries = getattr(parse_response, "entries", [])
+        parse_response = parse_result.unwrap()
+        entries = parse_response.entries
         if not entries:
             return r[m.Ldif.Entry].fail("No entries parsed")
         first_entry = entries[0]

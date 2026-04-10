@@ -16,8 +16,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdifParser, FlextLdifServer, FlextLdifWriter
-from tests import c, m
-from tests.test_helpers import tm
+from tests import c, m, tm
 
 
 class TestRfcParserRealFixtures:

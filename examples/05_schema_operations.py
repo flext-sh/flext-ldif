@@ -3,13 +3,6 @@
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-Demonstrates flext-ldif advanced schema operations capabilities with minimal code bloat:
-- Schema building with Entry.create() factory
-- Batch schema operations with comprehensive error handling
-- Schema migration and transformation pipelines
-- Railway-oriented schema validation with early failure detection
-
-This example shows how flext-ldif enables ADVANCED schema operations through typed builders.
 """
 
 from __future__ import annotations
@@ -17,8 +10,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence, Sequence
 from pathlib import Path
 
-from flext_core import r
-from flext_ldif import ldif, m, t
+from flext_ldif import ldif, m, r, t
 
 
 def _create_entry_or_none(
@@ -27,7 +19,7 @@ def _create_entry_or_none(
 ) -> m.Ldif.Entry | None:
     """Create an entry, returning None on failure."""
     result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
-    return result.map_or(None)
+    return result.unwrap() if result.is_success else None
 
 
 def intelligent_schema_building() -> r[MutableSequence[m.Ldif.Entry]]:
@@ -129,7 +121,7 @@ def parallel_schema_validation() -> r[t.ContainerMapping]:
             dn = f"ou=Container{i},dc=example,dc=com"
         entry_result = m.Ldif.Entry.create(dn=dn, attributes=attrs)
         if entry_result.is_success:
-            test_entries.append(entry_result.value)
+            test_entries.append(entry_result.unwrap())
     invalid_scenarios: Sequence[tuple[str, t.MutableAttributeMapping]] = [
         (
             "cn=Invalid Person,ou=People,dc=example,dc=com",
@@ -156,13 +148,13 @@ def parallel_schema_validation() -> r[t.ContainerMapping]:
     for inv_dn, inv_attrs in invalid_scenarios:
         entry_result = m.Ldif.Entry.create(dn=inv_dn, attributes=inv_attrs)
         if entry_result.is_success:
-            test_entries.append(entry_result.value)
+            test_entries.append(entry_result.unwrap())
     validation_result = api.validate_entries(test_entries)
     if validation_result.is_failure:
         return r[t.ContainerMapping].fail(
             f"Schema validation failed: {validation_result.error}",
         )
-    validation_report = validation_result.value
+    validation_report = validation_result.unwrap()
     error_analysis: dict[str, int] = {}
     analysis: dict[str, t.Numeric | dict[str, int]] = {
         "total_entries": len(test_entries),
@@ -206,11 +198,12 @@ def schema_migration_pipeline() -> r[t.ContainerMapping]:
     for ldif_file in source_dir.glob("*.ldif"):
         parse_result = api.parse_ldif(ldif_file)
         if parse_result.is_success:
-            all_entries.extend(parse_result.value.entries)
+            parse_response = parse_result.unwrap()
+            all_entries.extend(parse_response.entries)
     migration_results["source_entries_parsed"] = len(all_entries)
     pre_validation = api.validate_entries(all_entries)
     if pre_validation.is_success:
-        pre_report = pre_validation.value
+        pre_report = pre_validation.unwrap()
         migration_results["pre_migration_validation"] = {
             "valid": pre_report.valid_entries,
             "invalid": pre_report.invalid_entries,
@@ -234,11 +227,11 @@ def schema_migration_pipeline() -> r[t.ContainerMapping]:
         )
         migrate_result = m.Ldif.Entry.create(dn=entry_dn, attributes=attrs_dict)
         if migrate_result.is_success:
-            migrated_entries.append(migrate_result.value)
+            migrated_entries.append(migrate_result.unwrap())
     migration_results["entries_migrated"] = len(migrated_entries)
     post_validation = api.validate_entries(migrated_entries)
     if post_validation.is_success:
-        post_report = post_validation.value
+        post_report = post_validation.unwrap()
         migration_results["post_migration_validation"] = {
             "valid": post_report.valid_entries,
             "invalid": post_report.invalid_entries,
@@ -274,7 +267,7 @@ def batch_schema_operations() -> r[t.ContainerMapping]:
             },
         )
         if attr_result.is_success:
-            core_attrs.append(attr_result.value)
+            core_attrs.append(attr_result.unwrap())
     schema_batches.append(("core_attributes", core_attrs))
     object_classes: list[m.Ldif.Entry] = []
     oc_definitions: Sequence[tuple[str, str, str, list[str], list[str]]] = [
@@ -308,7 +301,7 @@ def batch_schema_operations() -> r[t.ContainerMapping]:
             attrs["may"] = may_attrs
         oc_result = m.Ldif.Entry.create(dn=f"cn={name},cn=schema", attributes=attrs)
         if oc_result.is_success:
-            object_classes.append(oc_result.value)
+            object_classes.append(oc_result.unwrap())
     schema_batches.append(("object_classes", object_classes))
     batch_results: dict[str, dict[str, int] | str | None] = {}
     total_schema_entries = 0
@@ -319,7 +312,7 @@ def batch_schema_operations() -> r[t.ContainerMapping]:
         if validation_result.is_failure:
             batch_results[f"{batch_name}_error"] = validation_result.error
             continue
-        report = validation_result.value
+        report = validation_result.unwrap()
         batch_results[batch_name] = {
             "entries": len(entries),
             "valid": report.valid_entries,
@@ -345,13 +338,13 @@ def railway_schema_pipeline() -> r[t.ContainerMapping]:
         return r[t.ContainerMapping].fail(
             f"Schema building failed: {schema_build_result.error}",
         )
-    schema_entries = schema_build_result.value
+    schema_entries = schema_build_result.unwrap()
     schema_validation = api.validate_entries(schema_entries)
     if schema_validation.is_failure:
         return r[t.ContainerMapping].fail(
             f"Schema validation failed: {schema_validation.error}",
         )
-    schema_report = schema_validation.value
+    schema_report = schema_validation.unwrap()
     if not schema_report.is_valid:
         return r[t.ContainerMapping].fail(
             f"Schema entries invalid: {schema_report.errors}",
@@ -380,13 +373,13 @@ def railway_schema_pipeline() -> r[t.ContainerMapping]:
             dn = f"cn=Schema Test Group{i},ou=Groups,dc=example,dc=com"
         entry_result = m.Ldif.Entry.create(dn=dn, attributes=attrs)
         if entry_result.is_success:
-            test_entries.append(entry_result.value)
+            test_entries.append(entry_result.unwrap())
     entry_validation = api.validate_entries(test_entries)
     if entry_validation.is_failure:
         return r[t.ContainerMapping].fail(
             f"Entry validation failed: {entry_validation.error}",
         )
-    entry_report = entry_validation.value
+    entry_report = entry_validation.unwrap()
     if not entry_report.is_valid:
         return r[t.ContainerMapping].fail(
             f"Test entries invalid: {entry_report.errors}",

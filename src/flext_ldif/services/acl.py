@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableSequence
+from collections.abc import Mapping, Sequence
 from typing import override
 
 from flext_core import FlextLogger
@@ -31,13 +31,13 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
 
     @staticmethod
     def _build_acl_response(
-        acls: MutableSequence[u.Ldif.Acl],
+        acls: Sequence[t.Ldif.AclLike],
         *,
         processed_entries: int = 1,
         failed_entries: int = 0,
     ) -> m.Ldif.AclResponse:
         return m.Ldif.AclResponse(
-            acls=list(acls),
+            acls=u.Ldif.as_acls(acls),
             statistics=m.Ldif.Statistics(
                 processed_entries=processed_entries,
                 acls_extracted=len(acls),
@@ -52,7 +52,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
 
     @staticmethod
     def evaluate_acl_context(
-        acls: MutableSequence[m.Ldif.Acl],
+        acls: Sequence[t.Ldif.AclLike],
         required_permissions: m.Ldif.AclPermissions | t.MutableBoolMapping,
     ) -> r[m.Ldif.AclEvaluationResult]:
         """Evaluate if ACLs grant required permissions."""
@@ -81,16 +81,19 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
             return r[m.Ldif.AclEvaluationResult].ok(
                 m.Ldif.AclEvaluationResult(
                     granted=True,
-                    matched_acl=acls[0] if acls else None,
+                    matched_acl=u.Ldif.as_acl(acls[0]) if acls else None,
                     message="No permissions required - access granted trivially",
                 ),
             )
 
-        def acl_grants_all(acl: m.Ldif.Acl) -> bool:
+        def acl_grants_all(acl: t.Ldif.AclLike) -> bool:
             """Check if ACL grants all required permissions."""
-            return all(getattr(acl.permissions, perm, False) for perm in required_perms)
+            permissions = acl.permissions
+            if permissions is None:
+                return False
+            return all(getattr(permissions, perm, False) for perm in required_perms)
 
-        def predicate(value: m.Ldif.Acl) -> bool:
+        def predicate(value: t.Ldif.AclLike) -> bool:
             """Check if ACL grants all permissions."""
             return acl_grants_all(value)
 
@@ -100,7 +103,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
             return r[m.Ldif.AclEvaluationResult].ok(
                 m.Ldif.AclEvaluationResult(
                     granted=True,
-                    matched_acl=found_acl,
+                    matched_acl=u.Ldif.as_acl(found_acl),
                     message=f"ACL '{found_acl.name}' grants required permissions: {required_perms}",
                 ),
             )
@@ -131,7 +134,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
         acl_values = u.Ldif.get_attribute_values(entry, next(iter(acl_attr_name)))
         if not acl_values:
             return r[m.Ldif.AclResponse].ok(self._build_acl_response([]))
-        acls: MutableSequence[u.Ldif.Acl] = []
+        acls: t.Ldif.AclSequence = []
         failed_count = 0
 
         for acl_value in acl_values:
@@ -150,7 +153,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
             self._build_acl_response(acls, failed_entries=failed_count),
         )
 
-    def parse_acl_string(self, acl_string: str, server_type: str) -> r[m.Ldif.Acl]:
+    def parse_acl_string(self, acl_string: str, server_type: str) -> r[t.Ldif.AclLike]:
         """Parse ACL string using server-specific quirks."""
         original_server_type = str(server_type)
         try:
@@ -158,7 +161,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
                 original_server_type,
             )
         except (ValueError, TypeError) as e:
-            return r[m.Ldif.Acl].fail(f"Invalid server type: {server_type} - {e}")
+            return r[t.Ldif.AclLike].fail(f"Invalid server type: {server_type} - {e}")
         try:
             if original_server_type == "openldap":
                 acl_quirk = self._server.acl("openldap1")
@@ -167,14 +170,14 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
             else:
                 acl_quirk = self._server.acl(normalized_server_type)
         except ValueError as e:
-            return r[m.Ldif.Acl].fail(str(e))
+            return r[t.Ldif.AclLike].fail(str(e))
         if acl_quirk is None:
-            return r[m.Ldif.Acl].fail(
+            return r[t.Ldif.AclLike].fail(
                 f"No ACL quirk found for server type: {normalized_server_type}",
             )
         return acl_quirk.parse_quirk(acl_string).fold(
-            on_failure=lambda e: r[m.Ldif.Acl].fail(e or "ACL parsing failed"),
-            on_success=lambda v: r[m.Ldif.Acl].ok(v),
+            on_failure=lambda e: r[t.Ldif.AclLike].fail(e or "ACL parsing failed"),
+            on_success=lambda v: r[t.Ldif.AclLike].ok(v),
         )
 
 

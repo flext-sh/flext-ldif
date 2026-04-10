@@ -137,7 +137,8 @@ class TestsTestFlextLdifProtocols:
                 c.Ldif.ProtocolTest.ATTR_ACL,
                 c.Ldif.ProtocolTest.ATTR_ENTRY,
             ]
-            for method in methods:
+            for _method in methods:
+                pass
 
     @classmethod
     def get_server_implementations(cls) -> Sequence[m.Ldif.Tests.ProtocolServer]:
@@ -275,6 +276,4 @@ class TestsTestFlextLdifProtocols:
         schema = FlextLdifServersOid.Schema()
         result = schema.can_handle_attribute(c.Ldif.ProtocolTest.SAMPLE_ATTR_DEF_SIMPLE)
         tm.that(result, is_=bool)
-        parse_result = schema.parse_attribute(
-            c.Ldif.ProtocolTest.SAMPLE_ATTR_DEF_SIMPLE
-        )
+        schema.parse_attribute(c.Ldif.ProtocolTest.SAMPLE_ATTR_DEF_SIMPLE)

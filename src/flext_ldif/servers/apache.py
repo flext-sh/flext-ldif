@@ -139,7 +139,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 return r[m.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata}),
                 )
-            return result
+            return r[m.Ldif.SchemaAttribute].from_result(result)
 
         @override
         def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
@@ -153,7 +153,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 return r[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata}),
                 )
-            return result
+            return r[m.Ldif.SchemaObjectClass].from_result(result)
 
     class Acl(FlextLdifServersRfc.Acl):
         """Apache Directory Server ACI quirk."""
@@ -203,8 +203,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 acl_str = parent_result.value
                 if acl_str and (not acl_str.strip().startswith(("aci:", "ads-aci:"))):
                     return r[str].ok(f"aci: {acl_str}")
-                return parent_result
-            return parent_result
+                return r[str].from_result(parent_result)
+            return r[str].from_result(parent_result)
 
     class Entry(FlextLdifServersRfc.Entry):
         """Entry quirks for Apache Directory Server."""
@@ -232,7 +232,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             }
             base_result = super().parse_entry(entry_dn, str_attrs)
             if base_result.is_failure:
-                return base_result
+                return r[m.Ldif.Entry].from_result(base_result)
             entry = base_result.value
             try:
                 if not entry.dn:

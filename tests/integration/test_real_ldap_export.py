@@ -24,12 +24,12 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import ldif
+from flext_ldif import FlextLdif, ldif
 from tests import m, p, t
 
 
 @pytest.fixture
-def flext_api() -> ldif:
+def flext_api() -> FlextLdif:
     """Ldif API instance."""
     return ldif.get_instance()
 
@@ -44,7 +44,7 @@ class TestRealLdapExport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: ldif,
+        flext_api: FlextLdif,
         make_test_username: Callable[[str], str],
     ) -> None:
         """Export single LDAP entry to LDIF."""
@@ -93,7 +93,7 @@ class TestRealLdapExport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: ldif,
+        flext_api: FlextLdif,
         make_test_username: Callable[[str], str],
     ) -> None:
         """Export multiple LDAP entries to LDIF."""
@@ -160,7 +160,7 @@ class TestRealLdapExport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: ldif,
+        flext_api: FlextLdif,
         make_test_username: Callable[[str], str],
     ) -> None:
         """Export hierarchical LDAP structure to LDIF."""
@@ -239,7 +239,7 @@ class TestRealLdapExport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: ldif,
+        flext_api: FlextLdif,
         tmp_path: Path,
         make_test_username: Callable[[str], str],
     ) -> None:

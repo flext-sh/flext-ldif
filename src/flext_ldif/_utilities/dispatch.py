@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
-from typing import TypeGuard, overload
+from typing import ClassVar, TypeGuard, overload
+
+from pydantic import TypeAdapter
 
 from flext_core import r
 from flext_ldif import (
@@ -21,6 +23,58 @@ from flext_ldif import (
 
 class FlextLdifUtilitiesDispatch:
     """Override dispatchers that route between parent classes."""
+
+    _ENTRY_LIST_ADAPTER: ClassVar[TypeAdapter[list[m.Ldif.Entry]]] = TypeAdapter(
+        list[m.Ldif.Entry]
+    )
+    _ACL_LIST_ADAPTER: ClassVar[TypeAdapter[list[m.Ldif.Acl]]] = TypeAdapter(
+        list[m.Ldif.Acl]
+    )
+
+    @staticmethod
+    def as_entry(value: t.Ldif.EntryLike | t.ModelInput) -> m.Ldif.Entry:
+        """Coerce an entry-like value into the canonical LDIF entry model."""
+        return m.Ldif.Entry.model_validate(value)
+
+    @staticmethod
+    def as_entries(
+        values: Sequence[t.Ldif.EntryLike] | t.ModelInput,
+    ) -> MutableSequence[m.Ldif.Entry]:
+        """Coerce an entry sequence into canonical LDIF entry models."""
+        return FlextLdifUtilitiesDispatch._ENTRY_LIST_ADAPTER.validate_python(values)
+
+    @staticmethod
+    def as_acl(value: t.Ldif.AclLike | t.ModelInput) -> m.Ldif.Acl:
+        """Coerce an ACL-like value into the canonical LDIF ACL model."""
+        return m.Ldif.Acl.model_validate(value)
+
+    @staticmethod
+    def as_acls(
+        values: Sequence[t.Ldif.AclLike] | t.ModelInput,
+    ) -> MutableSequence[m.Ldif.Acl]:
+        """Coerce an ACL sequence into canonical LDIF ACL models."""
+        return FlextLdifUtilitiesDispatch._ACL_LIST_ADAPTER.validate_python(values)
+
+    @staticmethod
+    def as_parse_response(
+        value: t.Ldif.ParseResponseLike | t.ModelInput,
+    ) -> m.Ldif.ParseResponse:
+        """Coerce a parse response-like value into the canonical model."""
+        return m.Ldif.ParseResponse.model_validate(value)
+
+    @staticmethod
+    def as_validation_result(
+        value: t.Ldif.ValidationResultLike | t.ModelInput,
+    ) -> m.Ldif.ValidationResult:
+        """Coerce a validation result-like value into the canonical model."""
+        return m.Ldif.ValidationResult.model_validate(value)
+
+    @staticmethod
+    def as_migration_result(
+        value: t.Ldif.MigrationPipelineResultLike | t.ModelInput,
+    ) -> m.Ldif.MigrationPipelineResult:
+        """Coerce a migration result-like value into the canonical model."""
+        return m.Ldif.MigrationPipelineResult.model_validate(value)
 
     @staticmethod
     @overload

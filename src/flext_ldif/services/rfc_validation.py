@@ -59,16 +59,18 @@ class FlextLdifValidation(
 
     def validate_attribute_name(self, name: str) -> r[bool]:
         """Validate_attribute_name method."""
-        return u.try_(
-            lambda: u.Ldif.Rfc.is_valid_rfc4512_descriptor(name),
-            catch=(
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ),
-        ).map_error(lambda e: f"Failed to validate attribute name: {e}")
+        return r[bool].from_result(
+            u.try_(
+                lambda: u.Ldif.Rfc.is_valid_rfc4512_descriptor(name),
+                catch=(
+                    ValueError,
+                    KeyError,
+                    AttributeError,
+                    UnicodeDecodeError,
+                    struct.error,
+                ),
+            ).map_error(lambda e: f"Failed to validate attribute name: {e}"),
+        )
 
     def validate_objectclass_name(self, name: str) -> r[bool]:
         """Validate_objectclass_name method."""

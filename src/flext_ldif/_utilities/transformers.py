@@ -73,25 +73,41 @@ class FlextLdifUtilitiesTransformers:
                 if getattr(item.dn, "value", None) is not None
                 else str(item.dn)
             )
-            if self._validate:
-                validation_result = FlextLdifUtilitiesTransformers.NormalizeDnTransformer.validate_dn_components(
-                    dn_str,
-                )
-                if validation_result.is_failure:
-                    error_msg = (
-                        str(validation_result.error)
-                        if validation_result.error
-                        else "DN validation failed"
+
+            def validate_dn(_: str) -> r[str]:
+                if not self._validate:
+                    return r[str].ok(dn_str)
+                return (
+                    FlextLdifUtilitiesTransformers.NormalizeDnTransformer
+                    .validate_dn_components(
+                        dn_str,
                     )
-                    return r[m.Ldif.Entry].fail(error_msg)
-            norm_result = FlextLdifUtilitiesDN.norm(dn_str)
-            if norm_result.is_failure:
-                return r[m.Ldif.Entry].fail(norm_result.error)
-            normalized_dn = norm_result.value
-            normalized_dn = self._normalize_dn_case_and_spaces(normalized_dn)
-            update_dict: t.MutableContainerMapping = {"dn": normalized_dn}
-            updated_entry = item.model_copy(update=update_dict)
-            return r[m.Ldif.Entry].ok(updated_entry)
+                    .map_error(
+                        lambda error: str(error) if error else "DN validation failed",
+                    )
+                    .map(
+                        lambda __: dn_str,
+                    )
+                )
+
+            def update_entry(normalized_dn: str) -> m.Ldif.Entry:
+                normalized_text = self._normalize_dn_case_and_spaces(normalized_dn)
+                update_dict: t.MutableContainerMapping = {"dn": normalized_text}
+                return item.model_copy(update=update_dict)
+
+            return (
+                r[str]
+                .ok(dn_str)
+                .flat_map(
+                    validate_dn,
+                )
+                .flat_map(
+                    FlextLdifUtilitiesDN.norm,
+                )
+                .map(
+                    update_entry,
+                )
+            )
 
         def _normalize_dn_case_and_spaces(self, normalized_dn: str) -> str:
             """Helper: Apply case folding and space handling."""

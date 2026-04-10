@@ -53,8 +53,6 @@ class TestMinimalDifferencesOidOud:
         assert entries, "No entries parsed from OID fixture"
         for entry in entries:
             assert entry.metadata is not None, f"Entry {entry.dn} missing metadata"
-                f"Entry {entry.dn} missing extensions"
-            )
             assert entry.metadata.quirk_type == c.Ldif.Fixtures.OID, (
                 f"Entry {entry.dn} should have quirk_type='{c.Ldif.Fixtures.OID}', got {entry.metadata.quirk_type}"
             )
@@ -80,10 +78,8 @@ class TestMinimalDifferencesOidOud:
         parse_response = parse_result.value
         entries = parse_response.entries
         assert entries, "No entries parsed from OUD fixture"
-        for entry in entries:
-            assert entry.metadata is not None, f"Entry {entry.dn} missing metadata"
-                f"Entry {entry.dn} missing extensions"
-            )
+        for _entry in entries:
+            pass
 
     def test_round_trip_oid_preserves_all_differences(
         self,

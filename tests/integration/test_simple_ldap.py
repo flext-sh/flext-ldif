@@ -14,6 +14,9 @@ def test_ldap_connection(ldap_connection: p.Ldap.Ldap3Connection) -> None:
     assert ldap_connection.bound
     server_info = getattr(ldap_connection.server, "info", None)
     assert server_info is not None
+    naming_contexts = getattr(server_info, "naming_contexts", None)
+    if naming_contexts is None:
+        naming_contexts = getattr(server_info, "other", {}).get("namingContexts", [])
     assert "dc=flext,dc=local" in naming_contexts
 
 

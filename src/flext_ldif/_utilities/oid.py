@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import re
 
-from flext_core import FlextLogger, r
-
-logger = FlextLogger(__name__)
+from flext_core import r
 
 
 class FlextLdifUtilitiesOID:
@@ -15,14 +13,10 @@ class FlextLdifUtilitiesOID:
     @staticmethod
     def extract_from_definition(definition: str) -> r[str]:
         """Extract OID from schema definition string."""
-        try:
-            match = re.search(r"\(\s*([\d.]+)", definition)
-            if match:
-                return r[str].ok(match.group(1))
-            return r[str].fail(f"missing an OID in definition: {definition!r}")
-        except (re.error, AttributeError) as e:
-            logger.debug("Failed to extract OID from definition", error=str(e))
-            return r[str].fail(f"OID extraction failed: {e}")
+        match = re.search(r"\(\s*([\d.]+)", definition)
+        if match:
+            return r[str].ok(match.group(1))
+        return r[str].fail(f"missing an OID in definition: {definition!r}")
 
     @staticmethod
     def matches_pattern(definition: str, oid_pattern: re.Pattern[str]) -> bool:
@@ -49,10 +43,10 @@ class FlextLdifUtilitiesOID:
             True if OID matches pattern, False otherwise
 
         """
-        result = FlextLdifUtilitiesOID.extract_from_definition(definition)
-        if result.is_failure:
-            return False
-        return bool(oid_pattern.match(result.value))
+        return FlextLdifUtilitiesOID.extract_from_definition(definition).map_or(
+            False,
+            lambda oid: bool(oid_pattern.match(oid)),
+        )
 
     @staticmethod
     def validate_format(oid: str) -> r[bool]:

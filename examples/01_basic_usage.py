@@ -25,8 +25,8 @@ from collections.abc import MutableSequence
 from pathlib import Path
 from typing import Final
 
-from flext_core import FlextContext, FlextLogger, r
-from flext_ldif import ldif, m
+from flext_core import FlextContext, FlextLogger
+from flext_ldif import FlextLdif, ldif, m, r
 
 logger: Final = FlextLogger(__name__)
 
@@ -56,7 +56,7 @@ class BasicUsageDry:
             entries.append(entry)
         if not entries:
             return r[MutableSequence[m.Ldif.Entry]].fail("Failed to create entries")
-        api = ldif.get_instance()
+        api: FlextLdif = ldif.get_instance()
         validate_result = api.validate_entries(entries)
         if validate_result.is_failure:
             return r[MutableSequence[m.Ldif.Entry]].fail(
@@ -72,7 +72,7 @@ class BasicUsageDry:
             r with processing result or error.
 
         """
-        api = ldif.get_instance()
+        api: FlextLdif = ldif.get_instance()
         sample_file = Path("examples/sample_basic.ldif")
         if not sample_file.exists():
             return r[str].fail("Sample file not found")
@@ -81,12 +81,14 @@ class BasicUsageDry:
         if detect_result.is_failure:
             return r[str].fail(detect_result.error or "Server detection failed")
 
-        server_type = detect_result.value.detected_server_type
+        detection = detect_result.unwrap()
+        server_type = detection.detected_server_type or "rfc"
         parse_result = api.parse_ldif(sample_file, server_type=server_type)
         if parse_result.is_failure:
             return r[str].fail(parse_result.error or "Parse failed")
 
-        parsed_entries = parse_result.value.entries
+        parse_response = parse_result.unwrap()
+        parsed_entries = parse_response.entries
         validate_result = api.validate_entries(parsed_entries)
         if validate_result.is_failure:
             return r[str].fail(validate_result.error or "Validation failed")
@@ -104,7 +106,7 @@ class BasicUsageDry:
             r with processing result or error.
 
         """
-        api = ldif.get_instance()
+        api: FlextLdif = ldif.get_instance()
         with FlextContext.Correlation.new_correlation("req-123-dry"):
             server_result = api.get_effective_server_type(
                 ldif_content=self.SAMPLE_LDIF,
@@ -113,20 +115,22 @@ class BasicUsageDry:
                 return r[MutableSequence[m.Ldif.Entry]].fail(
                     server_result.error or "Server detection failed",
                 )
+            resolved_server_type = str(server_result.value)
             parse_result = api.parse_ldif(
                 self.SAMPLE_LDIF[:100],
-                server_type=server_result.value,
+                server_type=resolved_server_type,
             )
             if parse_result.is_failure:
                 return r[MutableSequence[m.Ldif.Entry]].fail(
                     parse_result.error or "Parse failed",
                 )
-            validate_result = api.validate_entries(parse_result.value.entries)
+            parse_response = parse_result.unwrap()
+            validate_result = api.validate_entries(parse_response.entries)
             if validate_result.is_failure:
                 return r[MutableSequence[m.Ldif.Entry]].fail(
                     validate_result.error or "Validation failed",
                 )
-            return r[MutableSequence[m.Ldif.Entry]].ok(parse_result.value.entries)
+            return r[MutableSequence[m.Ldif.Entry]].ok(parse_response.entries)
 
     def process_pipeline(self) -> r[MutableSequence[m.Ldif.Entry]]:
         """DRY railway: detect -> parse -> validate.
@@ -140,11 +144,13 @@ class BasicUsageDry:
             r with parsed and validated entries or error.
 
         """
-        api = ldif.get_instance()
+        api: FlextLdif = ldif.get_instance()
         server_type = "rfc"
         detect_result = api.detect_server_type(ldif_content=self.SAMPLE_LDIF)
-        if detect_result.is_success and detect_result.value.detected_server_type:
-            server_type = detect_result.value.detected_server_type
+        if detect_result.is_success:
+            detection = detect_result.unwrap()
+            if detection.detected_server_type:
+                server_type = str(detection.detected_server_type)
         elif detect_result.is_failure:
             return r[MutableSequence[m.Ldif.Entry]].fail(
                 detect_result.error or "Detection failed",
@@ -154,7 +160,8 @@ class BasicUsageDry:
             return r[MutableSequence[m.Ldif.Entry]].fail(
                 parse_result.error or "Parse failed"
             )
-        entries = parse_result.value.entries
+        parse_response = parse_result.unwrap()
+        entries = parse_response.entries
         validate_result = api.validate_entries(entries)
         if validate_result.is_failure:
             return r[MutableSequence[m.Ldif.Entry]].fail(

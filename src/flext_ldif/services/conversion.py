@@ -539,43 +539,64 @@ class FlextLdifConversion(
         | m.Ldif.SchemaObjectClassConversionPipelineConfig,
     ) -> r[t.Ldif.ConvertedModel]:
         """Process schema conversion pipeline using direct method dispatch."""
+
+        def parse_target_ldif(ldif_string: str) -> r[t.Ldif.ConvertedModel]:
+            if isinstance(config, m.Ldif.SchemaAttributeConversionPipelineConfig):
+                return (
+                    r[t.Ldif.SchemaConversionValue]
+                    .from_result(
+                        config.target_schema.parse_attribute(ldif_string),
+                    )
+                    .map_error(
+                        lambda error: (
+                            "Failed to parse "
+                            f"{config.item_name} in target format: {error or 'Unknown parse error'}"
+                        ),
+                    )
+                    .map(
+                        m.Ldif.SchemaAttribute.model_validate,
+                    )
+                )
+            return (
+                r[t.Ldif.SchemaConversionValue]
+                .from_result(
+                    config.target_schema.parse_objectclass(ldif_string),
+                )
+                .map_error(
+                    lambda error: (
+                        "Failed to parse "
+                        f"{config.item_name} in target format: {error or 'Unknown parse error'}"
+                    ),
+                )
+                .map(
+                    m.Ldif.SchemaObjectClass.model_validate,
+                )
+            )
+
         write_result = (
             config.source_schema.write_attribute(config.item)
             if isinstance(config, m.Ldif.SchemaAttributeConversionPipelineConfig)
             else config.source_schema.write_objectclass(config.item)
         )
-        if write_result.is_failure:
-            return r[t.Ldif.ConvertedModel].fail(
-                f"Failed to write {config.item_name} in source format: {write_result.error}",
+        return (
+            r[str]
+            .from_result(write_result)
+            .map_error(
+                lambda error: (
+                    "Failed to write "
+                    f"{config.item_name} in source format: {error or 'Unknown write error'}"
+                ),
             )
-
-        write_val = write_result.value
-
-        ldif_result = FlextLdifConversion._validate_ldif_string(
-            write_val,
-            config.item_name,
+            .flat_map(
+                lambda write_value: FlextLdifConversion._validate_ldif_string(
+                    write_value,
+                    config.item_name,
+                ),
+            )
+            .flat_map(
+                parse_target_ldif,
+            )
         )
-        if ldif_result.is_failure:
-            return r[t.Ldif.ConvertedModel].fail(
-                ldif_result.error or "LDIF validation failed",
-            )
-        ldif_string: str = ldif_result.value
-        parse_result = (
-            config.target_schema.parse_attribute(ldif_string)
-            if isinstance(config, m.Ldif.SchemaAttributeConversionPipelineConfig)
-            else config.target_schema.parse_objectclass(ldif_string)
-        )
-        if parse_result.is_failure:
-            parse_error = parse_result.error or "Unknown parse error"
-            return r[t.Ldif.ConvertedModel].fail(
-                f"Failed to parse {config.item_name} in target format: {parse_error}",
-            )
-
-        if isinstance(config, m.Ldif.SchemaAttributeConversionPipelineConfig):
-            parsed_value = m.Ldif.SchemaAttribute.model_validate(parse_result.value)
-        else:
-            parsed_value = m.Ldif.SchemaObjectClass.model_validate(parse_result.value)
-        return r[t.Ldif.ConvertedModel].ok(parsed_value)
 
     @staticmethod
     def _resolve_quirk(
@@ -607,6 +628,12 @@ class FlextLdifConversion(
         value: t.Ldif.SchemaConversionValue,
     ) -> r[t.Ldif.SchemaConversionValue]:
         return r[t.Ldif.SchemaConversionValue].ok(value)
+
+    @staticmethod
+    def _to_schema_conversion_value(
+        value: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+    ) -> t.Ldif.SchemaConversionValue:
+        return value
 
     @staticmethod
     def _schema_passthrough_ok(
@@ -983,6 +1010,38 @@ class FlextLdifConversion(
     ) -> r[t.Ldif.ConvertedModel]:
         """Convert Acl model via Entry RFC + Metadata pipeline."""
         try:
+
+            def extract_converted_acl(
+                converted_entry_value: t.Ldif.ConvertedModel,
+            ) -> r[m.Ldif.Acl]:
+                if not isinstance(converted_entry_value, m.Ldif.Entry):
+                    return r[m.Ldif.Acl].fail(
+                        "Entry conversion returned unexpected type: "
+                        f"{type(converted_entry_value).__name__}",
+                    )
+                get_metadata = u.prop("metadata")
+                converted_metadata_raw = get_metadata(converted_entry_value)
+                if converted_metadata_raw is None:
+                    return r[m.Ldif.Acl].fail(
+                        "Converted entry has no ACLs in metadata.acls",
+                    )
+                if not isinstance(converted_metadata_raw, m.Ldif.QuirkMetadata):
+                    return r[m.Ldif.Acl].fail(
+                        f"Unexpected metadata type: {type(converted_metadata_raw).__name__}",
+                    )
+                converted_metadata = converted_metadata_raw
+                acls_raw = converted_metadata.acls
+                if not isinstance(acls_raw, list):
+                    return r[m.Ldif.Acl].fail(
+                        "Converted entry has no ACLs in metadata.acls",
+                    )
+                acls = [item for item in acls_raw if isinstance(item, m.Ldif.Acl)]
+                if not acls:
+                    return r[m.Ldif.Acl].fail(
+                        "Converted entry has no ACLs in metadata.acls",
+                    )
+                return r[m.Ldif.Acl].ok(acls[0])
+
             acl = acl.model_copy(deep=True)
             entry_dn = m.Ldif.DN(
                 value="cn=acl-conversion,dc=example,dc=com",
@@ -1016,40 +1075,6 @@ class FlextLdifConversion(
                 "attributes": entry_attributes,
                 "metadata": entry_metadata,
             })
-            entry_result = self._convert_entry(source_quirk, target_quirk, rfc_entry)
-            if entry_result.is_failure:
-                return entry_result
-            converted_entry_value = entry_result.value
-            if not isinstance(converted_entry_value, m.Ldif.Entry):
-                return r[t.Ldif.ConvertedModel].fail(
-                    f"Entry conversion returned unexpected type: {type(converted_entry_value).__name__}",
-                )
-            converted_entry: m.Ldif.Entry = converted_entry_value
-            get_metadata = u.prop("metadata")
-            get_acls = u.prop("acls")
-            converted_metadata_raw = get_metadata(converted_entry)
-            if not isinstance(
-                converted_metadata_raw,
-                (m.Ldif.QuirkMetadata, type(None)),
-            ):
-                return r[t.Ldif.ConvertedModel].fail(
-                    f"Unexpected metadata type: {type(converted_metadata_raw).__name__}",
-                )
-            converted_metadata: m.Ldif.QuirkMetadata | None = converted_metadata_raw
-            acls_raw = get_acls(converted_metadata) if converted_metadata else None
-            acls: MutableSequence[m.Ldif.Acl] | None = None
-            if acls_raw is not None and isinstance(acls_raw, list):
-                acls = [item for item in acls_raw if isinstance(item, m.Ldif.Acl)]
-            if not acls:
-                return r[t.Ldif.ConvertedModel].fail(
-                    "Converted entry has no ACLs in metadata.acls",
-                )
-            if not acls or not acls:
-                return r[t.Ldif.ConvertedModel].fail(
-                    "No ACL found in converted entry metadata",
-                )
-            domain_acl = acls[0]
-            converted_acl: m.Ldif.Acl = domain_acl
             get_server_type = u.prop("server_type")
             target_server_raw = get_server_type(target_quirk)
             target_server_type_raw = (
@@ -1065,17 +1090,30 @@ class FlextLdifConversion(
                 ),
                 default=None,
             ).map_or(None)
-            converted_acl = self._preserve_acl_metadata(
-                acl,
-                converted_acl,
-                source_server_type=source_server_type,
-                target_server_type=target_server_type,
+            return (
+                self
+                ._convert_entry(
+                    source_quirk,
+                    target_quirk,
+                    rfc_entry,
+                )
+                .flat_map(
+                    extract_converted_acl,
+                )
+                .flat_map(
+                    lambda converted_acl: r[t.Ldif.ConvertedModel].ok(
+                        self._preserve_acl_metadata(
+                            acl,
+                            converted_acl,
+                            source_server_type=source_server_type,
+                            target_server_type=target_server_type,
+                        ).model_copy(
+                            update={"server_type": target_server_type},
+                            deep=True,
+                        ),
+                    ),
+                )
             )
-            converted_acl = converted_acl.model_copy(
-                update={"server_type": target_server_type},
-                deep=True,
-            )
-            return r[t.Ldif.ConvertedModel].ok(converted_acl)
         except (
             ValueError,
             KeyError,
@@ -1115,29 +1153,21 @@ class FlextLdifConversion(
         schema_item_kind: Literal["attribute", "objectclass"],
     ) -> r[t.Ldif.SchemaConversionValue]:
         if schema_item_kind == "attribute":
-            parse_result = self._parse_attribute_with_schema(
+            return self._parse_attribute_with_schema(
                 schema,
                 value,
                 parse_error_message=parse_error_message,
+            ).map(
+                FlextLdifConversion._to_schema_conversion_value,
             )
-            if parse_result.is_failure:
-                return FlextLdifConversion._schema_conversion_fail(
-                    parse_result.error,
-                    parse_error_message,
-                )
-            return FlextLdifConversion._schema_conversion_ok(parse_result.value)
 
-        oc_parse_result = self._parse_objectclass_with_schema(
+        return self._parse_objectclass_with_schema(
             schema,
             value,
             parse_error_message=parse_error_message,
+        ).map(
+            FlextLdifConversion._to_schema_conversion_value,
         )
-        if oc_parse_result.is_failure:
-            return FlextLdifConversion._schema_conversion_fail(
-                oc_parse_result.error,
-                parse_error_message,
-            )
-        return FlextLdifConversion._schema_conversion_ok(oc_parse_result.value)
 
     def _convert_schema_via_rfc_pipeline(
         self,
@@ -1154,58 +1184,69 @@ class FlextLdifConversion(
         conversion_failure_message: str,
     ) -> r[t.Ldif.SchemaConversionValue]:
         try:
+
+            def write_rfc_schema_item(
+                parsed_item: t.Ldif.SchemaConversionValue,
+            ) -> r[t.Ldif.SchemaConversionValue]:
+                return (
+                    self._write_attribute_to_rfc(source, parsed_item)
+                    if schema_item_kind == "attribute"
+                    else self._write_objectclass_to_rfc(source, parsed_item)
+                )
+
+            def parse_target_schema_item(
+                rfc_value: str,
+            ) -> r[t.Ldif.SchemaConversionValue]:
+                return (
+                    self
+                    ._resolve_schema_quirk(target, role="Target")
+                    .map_error(
+                        lambda error: error or "Target schema not available",
+                    )
+                    .flat_map(
+                        lambda target_schema: self._parse_schema_item_with_schema(
+                            target_schema,
+                            rfc_value,
+                            parse_error_message=target_parse_error_message,
+                            schema_item_kind=schema_item_kind,
+                        ).map_error(
+                            lambda error: error or target_parse_failure_message,
+                        ),
+                    )
+                )
+
             if not isinstance(data, str):
                 return r[t.Ldif.SchemaConversionValue].fail(required_string_message)
-            source_schema_result = self._resolve_schema_quirk(source, role="Source")
-            if source_schema_result.is_failure:
-                return FlextLdifConversion._schema_conversion_fail(
-                    source_schema_result.error,
-                    "Source schema not available",
+            return (
+                self
+                ._resolve_schema_quirk(
+                    source,
+                    role="Source",
                 )
-            parse_result = self._parse_schema_item_with_schema(
-                source_schema_result.value,
-                data,
-                parse_error_message=source_parse_error_message,
-                schema_item_kind=schema_item_kind,
+                .map_error(
+                    lambda error: error or "Source schema not available",
+                )
+                .flat_map(
+                    lambda source_schema: self._parse_schema_item_with_schema(
+                        source_schema,
+                        data,
+                        parse_error_message=source_parse_error_message,
+                        schema_item_kind=schema_item_kind,
+                    ).map_error(
+                        lambda error: error or source_parse_failure_message,
+                    ),
+                )
+                .flat_map(
+                    write_rfc_schema_item,
+                )
+                .flat_map(
+                    lambda rfc_value: (
+                        FlextLdifConversion._schema_conversion_ok(rfc_value)
+                        if not isinstance(rfc_value, str)
+                        else parse_target_schema_item(rfc_value)
+                    ),
+                )
             )
-            if parse_result.is_failure:
-                return FlextLdifConversion._schema_conversion_fail(
-                    parse_result.error,
-                    source_parse_failure_message,
-                )
-            parsed_item = parse_result.value
-            rfc_result = (
-                self._write_attribute_to_rfc(source, parsed_item)
-                if schema_item_kind == "attribute"
-                else self._write_objectclass_to_rfc(source, parsed_item)
-            )
-            if rfc_result.is_failure:
-                return rfc_result
-            rfc_value = rfc_result.value
-
-            if not isinstance(rfc_value, str):
-                return FlextLdifConversion._schema_conversion_ok(rfc_value)
-
-            target_schema_result = self._resolve_schema_quirk(target, role="Target")
-            if target_schema_result.is_failure:
-                return FlextLdifConversion._schema_conversion_fail(
-                    target_schema_result.error,
-                    "Target schema not available",
-                )
-            target_parse_result = self._parse_schema_item_with_schema(
-                target_schema_result.value,
-                rfc_value,
-                parse_error_message=target_parse_error_message,
-                schema_item_kind=schema_item_kind,
-            )
-            if target_parse_result.is_failure:
-                return FlextLdifConversion._schema_conversion_fail(
-                    target_parse_result.error,
-                    target_parse_failure_message,
-                )
-
-            final_val: t.Ldif.SchemaConversionValue = target_parse_result.value
-            return FlextLdifConversion._schema_conversion_ok(final_val)
         except (
             ValueError,
             KeyError,
@@ -1228,32 +1269,57 @@ class FlextLdifConversion(
         field_name: str,
     ) -> r[str]:
         """Convert a schema definition string embedded inside an LDIF entry."""
-        parsed_result = self._parse_schema_item_with_schema(
-            source_schema,
-            value,
-            parse_error_message=f"Failed to parse {field_name} definition",
-            schema_item_kind=schema_item_kind,
-        )
-        if parsed_result.is_failure:
-            return r[str].fail(parsed_result.error or f"Failed to parse {field_name}")
-        parsed_item = parsed_result.value
-        if schema_item_kind == "attribute":
-            if not isinstance(parsed_item, m.Ldif.SchemaAttribute):
-                return r[str].fail(
-                    f"Expected SchemaAttribute for {field_name}, got {type(parsed_item).__name__}",
+
+        def write_schema_item(
+            parsed_item: t.Ldif.SchemaConversionValue,
+        ) -> r[str]:
+            if schema_item_kind == "attribute":
+                if not isinstance(parsed_item, m.Ldif.SchemaAttribute):
+                    return r[str].fail(
+                        "Expected SchemaAttribute for "
+                        f"{field_name}, got {type(parsed_item).__name__}",
+                    )
+                return (
+                    r[str]
+                    .from_result(
+                        target_schema.write_attribute(parsed_item),
+                    )
+                    .map_error(
+                        lambda error: (
+                            error or f"Failed to write converted {field_name}"
+                        ),
+                    )
                 )
-            write_result = target_schema.write_attribute(parsed_item)
-        else:
             if not isinstance(parsed_item, m.Ldif.SchemaObjectClass):
                 return r[str].fail(
-                    f"Expected SchemaObjectClass for {field_name}, got {type(parsed_item).__name__}",
+                    "Expected SchemaObjectClass for "
+                    f"{field_name}, got {type(parsed_item).__name__}",
                 )
-            write_result = target_schema.write_objectclass(parsed_item)
-        if write_result.is_failure:
-            return r[str].fail(
-                write_result.error or f"Failed to write converted {field_name}",
+            return (
+                r[str]
+                .from_result(
+                    target_schema.write_objectclass(parsed_item),
+                )
+                .map_error(
+                    lambda error: error or f"Failed to write converted {field_name}",
+                )
             )
-        return r[str].ok(write_result.value)
+
+        return (
+            self
+            ._parse_schema_item_with_schema(
+                source_schema,
+                value,
+                parse_error_message=f"Failed to parse {field_name} definition",
+                schema_item_kind=schema_item_kind,
+            )
+            .map_error(
+                lambda error: error or f"Failed to parse {field_name}",
+            )
+            .flat_map(
+                write_schema_item,
+            )
+        )
 
     def _convert_schema_entry_attributes(
         self,

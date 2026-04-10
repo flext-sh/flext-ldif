@@ -3,34 +3,17 @@
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-Demonstrates flext-ldif advanced server migration capabilities with minimal code bloat:
-- Parallel migration processing with ThreadPoolExecutor
-- Automatic server type detection from LDIF content
-- Batch migration pipelines with comprehensive error handling
-- Server-agnostic migration with intelligent quirk handling
-- Railway-oriented migration pipelines with rollback capabilities
-
-This example shows how flext-ldif enables ADVANCED migration through parallel processing.
-Original: 252 lines | Advanced: ~200 lines with parallel migration + auto-detection + batch processing
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core import r
-from flext_ldif import ldif, m, t, u
+from flext_ldif import FlextLdif, ldif, m, r, t, u
 
 
 class ExampleServerMigration:
-    """Demonstrates advanced server migration capabilities with parallel processing.
-
-    This class provides examples of flext-ldif migration features including:
-    - Parallel migration between different LDAP servers
-    - Automatic server type detection
-    - Batch comparison across multiple servers
-    - Comprehensive migration workflows with validation
-    """
+    """Demonstrates advanced server migration capabilities with parallel processing."""
 
     @staticmethod
     def _create_test_data(source_dir: Path) -> None:
@@ -58,7 +41,7 @@ class ExampleServerMigration:
 
     @staticmethod
     def _detect_server_type(
-        api: ldif,
+        api: FlextLdif,
         source_dir: Path,
     ) -> tuple[str, t.ContainerMapping]:
         """Detect server type from source data."""
@@ -66,7 +49,7 @@ class ExampleServerMigration:
         detect_result = api.detect_server_type(ldif_content=sample_file.read_text())
         detection_data: dict[str, str | float | None] = {}
         if detect_result.is_success:
-            detection = detect_result.value
+            detection = detect_result.unwrap()
             detection_data = {
                 "detected_server": detection.detected_server_type,
                 "detection_confidence": detection.confidence,
@@ -102,12 +85,13 @@ class ExampleServerMigration:
             return r[t.ContainerMapping].fail(
                 f"Server detection failed: {detect_result.error}",
             )
-        detection = detect_result.value
+        detection = detect_result.unwrap()
         detected_server = detection.detected_server_type or "rfc"
         parse_result = api.parse_ldif(mixed_ldif, server_type=detected_server)
         if parse_result.is_failure:
             return r[t.ContainerMapping].fail(f"Parse failed: {parse_result.error}")
-        entries = parse_result.value.entries
+        parse_response = parse_result.unwrap()
+        entries = parse_response.entries
         migration_dir = Path("examples/auto_migration")
         migration_dir.mkdir(exist_ok=True, parents=True)
         (migration_dir / "source.ldif").write_text(mixed_ldif)
@@ -143,7 +127,8 @@ class ExampleServerMigration:
             server_type = server
             parse_result = api.parse_ldif(test_ldif, server_type=server_type)
             if parse_result.is_success:
-                entries = parse_result.value.entries
+                parse_response = parse_result.unwrap()
+                entries = parse_response.entries
                 comparison_results[server] = {
                     "parsed_successfully": True,
                     "entry_count": len(entries),
@@ -152,7 +137,7 @@ class ExampleServerMigration:
                 if entries:
                     validate_result = api.validate_entries(entries)
                     if validate_result.is_success:
-                        report = validate_result.value
+                        report = validate_result.unwrap()
                         server_result = comparison_results[server]
                         server_result["validation_is_valid"] = report.is_valid
                         server_result["validation_valid_entries"] = report.valid_entries
@@ -215,8 +200,9 @@ class ExampleServerMigration:
             return r[t.ContainerMapping].fail(
                 f"Final migration failed: {final_migration.error}",
             )
-        final_result = final_migration.value
-        final_count = final_result.stats.processed_entries if final_result.stats else 0
+        final_result = final_migration.unwrap()
+        final_stats = final_result.stats
+        final_count = final_stats.processed_entries if final_stats is not None else 0
         workflow_results = {
             **detection_data,
             "intermediate_migration": "success",
@@ -251,7 +237,8 @@ class ExampleServerMigration:
             return r[m.Ldif.MigrationPipelineResult].fail(
                 f"Migration failed: {migration_result.error}",
             )
-        result = migration_result.value
-        _ = len(result.entries)
-        _ = result.stats.processed_entries if result.stats else 0
-        return r[m.Ldif.MigrationPipelineResult].ok(result)
+        pipeline_result = migration_result.unwrap()
+        _ = len(pipeline_result.entries)
+        stats = pipeline_result.stats
+        _ = stats.processed_entries if stats is not None else 0
+        return r[m.Ldif.MigrationPipelineResult].ok(pipeline_result)

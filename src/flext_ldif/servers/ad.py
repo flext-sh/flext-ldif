@@ -184,7 +184,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
                 attr_updated = attr_data.model_copy(update={"metadata": metadata})
                 return r[m.Ldif.SchemaAttribute].ok(attr_updated)
-            return result
+            return r[m.Ldif.SchemaAttribute].from_result(result)
 
         @override
         def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
@@ -197,7 +197,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
                 oc_updated = oc_data.model_copy(update={"metadata": metadata})
                 return r[m.Ldif.SchemaObjectClass].ok(oc_updated)
-            return result
+            return r[m.Ldif.SchemaObjectClass].from_result(result)
 
     class Acl(FlextLdifServersRfc.Acl):
         """Active Directory ACL quirk handling nTSecurityDescriptor entries."""

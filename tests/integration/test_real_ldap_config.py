@@ -16,12 +16,12 @@ from pathlib import Path
 import pytest
 
 from flext_core import FlextSettings
-from flext_ldif import FlextLdifSettings, ldif
+from flext_ldif import FlextLdif, FlextLdifSettings, ldif
 from tests import m
 
 
 @pytest.fixture
-def flext_api() -> ldif:
+def flext_api() -> FlextLdif:
     """Ldif API instance."""
     return ldif.get_instance()
 
@@ -30,11 +30,9 @@ def flext_api() -> ldif:
 class TestRealLdapConfigurationFromEnv:
     """Test configuration loading from .env file."""
 
-    def test_config_loaded_from_env(self, flext_api: ldif) -> None:
+    def test_config_loaded_from_env(self, flext_api: FlextLdif) -> None:
         """Verify FlextLdifSettings loads from environment variables."""
-        root_config = flext_api.config
-        ldif_config: FlextLdifSettings = (
-        )
+        ldif_config: FlextLdifSettings = flext_api.ldif_config
         assert ldif_config.ldif_encoding in {
             "utf-8",
             "utf-16",
@@ -47,7 +45,7 @@ class TestRealLdapConfigurationFromEnv:
         root_config = FlextSettings.get_global()
         assert root_config.max_workers >= 1
 
-    def test_effective_workers_calculation(self, flext_api: ldif) -> None:
+    def test_effective_workers_calculation(self, flext_api: FlextLdif) -> None:
         """Test dynamic worker calculation based on config and entry count."""
         root_config = FlextSettings.get_global()
         assert root_config.max_workers >= 1
@@ -60,7 +58,7 @@ class TestRealLdapRailwayComposition:
 
     def test_railway_parse_validate_write_cycle(
         self,
-        flext_api: ldif,
+        flext_api: FlextLdif,
         tmp_path: Path,
     ) -> None:
         """Test r railway composition: write -> parse -> validate."""

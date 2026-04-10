@@ -32,8 +32,8 @@ from typing import ClassVar, Final
 from flext_tests import FlextTestsConstants
 from pydantic import BaseModel
 
-from flext_core import r
 from flext_ldif import (
+    FlextLdif,
     FlextLdifConstants,
     FlextLdifEntries,
     FlextLdifParser,
@@ -43,9 +43,10 @@ from flext_ldif import (
     ldif,
     m,
     p,
+    r,
     t,
 )
-from tests import TestsFlextLdifModels
+from tests import TestsFlextLdifModels, u
 
 
 class TestsFlextLdifConstants(FlextTestsConstants):
@@ -908,18 +909,19 @@ class TestsFlextLdifConstants(FlextTestsConstants):
                     List of parsed entries
 
                 """
-                result = parser_service.parse_string(
-                    content=content,
-                    server_type=server_type,
+                parse_response: m.Ldif.ParseResponse = u.expect_success(
+                    parser_service.parse_string(
+                        content=content,
+                        server_type=server_type,
+                    ),
+                    message="Parsing failed",
                 )
-                if result.is_failure:
-                    raise AssertionError(f"Parsing failed: {result.error}")
-                entries = result.value.entries
+                entries = parse_response.entries
                 if len(entries) != expected_count:
                     raise AssertionError(
                         f"Expected {expected_count} entries, got {len(entries)}",
                     )
-                return [m.Ldif.Entry.model_validate(entry) for entry in entries]
+                return entries
 
             @staticmethod
             def test_entry_create_and_unwrap(
@@ -939,10 +941,11 @@ class TestsFlextLdifConstants(FlextTestsConstants):
                     AssertionError: If entry creation fails
 
                 """
-                result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
-                if result.is_failure:
-                    raise AssertionError(f"Entry creation failed: {result.error}")
-                return result.value
+                entry: m.Ldif.Entry = u.expect_success(
+                    m.Ldif.Entry.create(dn=dn, attributes=attributes),
+                    message="Entry creation failed",
+                )
+                return entry
 
             @staticmethod
             def test_quirk_schema_parse_and_assert_properties(
@@ -1073,11 +1076,11 @@ class TestsFlextLdifConstants(FlextTestsConstants):
                 return value
 
             @staticmethod
-            def test_result_success_and_unwrap[TResult: t.Ldif.RecursiveContainer](
-                result: r[TResult],
+            def test_result_success_and_unwrap(
+                result: r[t.Ldif.RecursiveContainer],
                 expected_type: type | None = None,
                 expected_count: int | None = None,
-            ) -> TResult | None:
+            ) -> t.Ldif.RecursiveContainer | None:
                 """Assert result is successful and unwrap its value.
 
                 Args:
@@ -1092,9 +1095,7 @@ class TestsFlextLdifConstants(FlextTestsConstants):
                     AssertionError: If result is failure or type mismatch
 
                 """
-                if result.is_failure:
-                    raise AssertionError(f"Result is failure: {result.error}")
-                value: TResult = result.value
+                value = u.expect_success(result, message="Result is failure")
                 if expected_type is not None and (not isinstance(value, expected_type)):
                     raise AssertionError(
                         f"Expected {expected_type.__name__}, got {type(value).__name__}",
@@ -1133,10 +1134,11 @@ class TestsFlextLdifConstants(FlextTestsConstants):
                 """
                 if attributes is None:
                     attributes = {}
-                result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
-                if result.is_failure:
-                    raise AssertionError(f"Entry creation failed: {result.error}")
-                return result.value
+                entry: m.Ldif.Entry = u.expect_success(
+                    m.Ldif.Entry.create(dn=dn, attributes=attributes),
+                    message="Entry creation failed",
+                )
+                return entry
 
             @staticmethod
             def test_create_schema_attribute_and_unwrap(
@@ -1574,12 +1576,11 @@ class TestsFlextLdifConstants(FlextTestsConstants):
                     AssertionError: If parsing fails or structure doesn't match
 
                 """
-                result = parser_service.parse_string(content=content, server_type="rfc")
-                if result.is_failure:
-                    raise AssertionError(f"Parsing failed: {result.error}")
-                entries = [
-                    m.Ldif.Entry.model_validate(entry) for entry in result.value.entries
-                ]
+                parse_response: m.Ldif.ParseResponse = u.expect_success(
+                    parser_service.parse_string(content=content, server_type="rfc"),
+                    message="Parsing failed",
+                )
+                entries = parse_response.entries
                 if len(entries) != expected_count:
                     raise AssertionError(
                         f"Expected {expected_count} entries, got {len(entries)}",
@@ -1622,12 +1623,11 @@ class TestsFlextLdifConstants(FlextTestsConstants):
                     AssertionError: If parsing fails or structure doesn't match
 
                 """
-                result = parser_service.parse_string(content=content, server_type="rfc")
-                if result.is_failure:
-                    raise AssertionError(f"Parsing failed: {result.error}")
-                entries = [
-                    m.Ldif.Entry.model_validate(entry) for entry in result.value.entries
-                ]
+                parse_response: m.Ldif.ParseResponse = u.expect_success(
+                    parser_service.parse_string(content=content, server_type="rfc"),
+                    message="Parsing failed",
+                )
+                entries = parse_response.entries
                 if len(entries) != expected_count:
                     raise AssertionError(
                         f"Expected {expected_count} entries, got {len(entries)}",
@@ -1659,10 +1659,11 @@ class TestsFlextLdifConstants(FlextTestsConstants):
                     AssertionError: If entry creation fails
 
                 """
-                result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
-                if result.is_failure:
-                    raise AssertionError(f"Entry creation failed: {result.error}")
-                return result.value
+                entry: m.Ldif.Entry = u.expect_success(
+                    m.Ldif.Entry.create(dn=dn, attributes=attributes),
+                    message="Entry creation failed",
+                )
+                return entry
 
             @staticmethod
             def test_write_entries_to_string(
@@ -1684,10 +1685,10 @@ class TestsFlextLdifConstants(FlextTestsConstants):
                     AssertionError: If writing fails or expected content not found
 
                 """
-                result = writer_service.write_to_string(entries=entries)
-                if result.is_failure:
-                    raise AssertionError(f"Writing failed: {result.error}")
-                ldif_string = result.value
+                ldif_string = u.expect_success(
+                    writer_service.write_to_string(entries=entries),
+                    message="Writing failed",
+                )
                 if expected_content:
                     for substring in expected_content:
                         if substring not in ldif_string:
@@ -1758,7 +1759,13 @@ class TestsFlextLdifConstants(FlextTestsConstants):
                 if should_succeed is False and result.is_success:
                     msg = "Expected failure but got success"
                     raise AssertionError(msg)
-                return result.map(lambda r: list(r.entries)).map_or(None)
+                if result.is_failure:
+                    return None
+                parse_response: m.Ldif.ParseResponse = u.expect_success(
+                    result,
+                    message="Parsing failed",
+                )
+                return parse_response.entries
 
             @staticmethod
             def test_write_entry_variations(
@@ -1790,19 +1797,21 @@ class TestsFlextLdifConstants(FlextTestsConstants):
                             )
                             for k, v in raw_attributes.items()
                         }
-                    entry_result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
-                    if entry_result.is_failure:
-                        raise AssertionError(
-                            f"Entry creation failed for {test_name}: {entry_result.error}",
-                        )
+                    entry: m.Ldif.Entry = u.expect_success(
+                        m.Ldif.Entry.create(dn=dn, attributes=attributes),
+                        message=f"Entry creation failed for {test_name}",
+                    )
                     write_result = writer_service.write_to_string(
-                        entries=[entry_result.value],
+                        entries=[entry],
                     )
                     if write_result.is_failure:
                         raise AssertionError(
                             f"Write failed for {test_name}: {write_result.error}",
                         )
-                    written_content = write_result.value
+                    written_content = u.expect_success(
+                        write_result,
+                        message=f"Write failed for {test_name}",
+                    )
                     if dn and dn not in written_content:
                         raise AssertionError(
                             f"DN '{dn}' not found in output for {test_name}",
@@ -1830,7 +1839,10 @@ class TestsFlextLdifConstants(FlextTestsConstants):
                     msg = "Entry quirk has no can_handle method"
                     raise AssertionError(msg)
                 attributes = getattr(entry, "attributes", {})
-                result = can_handle_method(dn, attributes)
+                result = can_handle_method(
+                    entry.dn.value if entry.dn is not None else "",
+                    attributes,
+                )
                 if result != expected:
                     raise AssertionError(
                         f"Expected can_handle to return {expected}, got {result}",
@@ -2002,7 +2014,8 @@ class TestsFlextLdifConstants(FlextTestsConstants):
                         attributes=normalized_attrs,
                     )
                     if result.is_success:
-                        entries.append(result.value)
+                        entry: m.Ldif.Entry = u.expect_success(result)
+                        entries.append(entry)
                 return entries
 
             @staticmethod
@@ -2048,7 +2061,7 @@ class TestsFlextLdifConstants(FlextTestsConstants):
 
             @staticmethod
             def helper_api_write_and_unwrap(
-                api: ldif,
+                api: FlextLdif,
                 entries: MutableSequence[m.Ldif.Entry],
                 must_contain: t.StrSequence | None = None,
             ) -> str:
@@ -2063,10 +2076,10 @@ class TestsFlextLdifConstants(FlextTestsConstants):
                     LDIF string
 
                 """
-                assert isinstance(api, ldif)
-                result = api.write(entries)
-                assert result.is_success, f"write() failed: {result.error}"
-                response = result.value
+                response: m.Ldif.WriteResponse = u.expect_success(
+                    api.write(entries),
+                    message="write() failed",
+                )
                 ldif_string = response.content or str(response)
                 if must_contain:
                     for substring in must_contain:

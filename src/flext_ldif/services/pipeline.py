@@ -33,7 +33,9 @@ class FlextLdifProcessingPipeline:
         entries: MutableSequence[m.Ldif.Entry],
     ) -> r[MutableSequence[m.Ldif.Entry]]:
         """Execute the processing pipeline."""
-        return self._pipeline.execute(entries)
+        return r[MutableSequence[m.Ldif.Entry]].from_result(
+            self._pipeline.execute(entries),
+        )
 
     def _build_pipeline(self) -> u.Ldif.Pipeline:
         """Build the internal pipeline based on configuration."""

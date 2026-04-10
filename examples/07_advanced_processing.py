@@ -18,20 +18,22 @@ from collections.abc import MutableSequence
 from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_ldif import ldif, m, u
+from flext_ldif import FlextLdif, ldif, m, u
 
 
 def basic_batch_processing() -> None:
     """Process entries in batches using direct API method."""
-    api = ldif.get_instance()
+    api: FlextLdif = ldif.get_instance()
     ldif_content = "dn: cn=User1,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User1\nsn: One\n\ndn: cn=User2,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User2\nsn: Two\n\ndn: cn=User3,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User3\nsn: Three\n"
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
-    entries = parse_result.value.entries
+    parse_response = parse_result.unwrap()
+    entries = parse_response.entries
     validation_result = api.validate_entries(entries)
     if validation_result.is_success:
-        _ = validation_result.value.total_entries
+        report = validation_result.unwrap()
+        _ = report.total_entries
 
 
 def parallel_processing() -> None:
@@ -39,7 +41,7 @@ def parallel_processing() -> None:
 
     Demonstrates creating entries directly via models and validating in batch.
     """
-    api = ldif.get_instance()
+    api: FlextLdif = ldif.get_instance()
     entries: list[m.Ldif.Entry] = []
     for i in range(10):
         entry = m.Ldif.Entry(
@@ -56,7 +58,8 @@ def parallel_processing() -> None:
         entries.append(entry)
     validation_result = api.validate_entries(entries)
     if validation_result.is_success:
-        _ = validation_result.value.total_entries
+        report = validation_result.unwrap()
+        _ = report.total_entries
 
 
 def use_dn_utilities() -> None:
@@ -102,14 +105,15 @@ def use_validation_utilities() -> None:
 
 def use_ldif_utilities() -> None:
     """Use LDIF-specific utilities."""
-    api = ldif.get_instance()
+    api: FlextLdif = ldif.get_instance()
     ldif_content = (
         "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
     )
     syntax_result = api.parse_ldif(ldif_content)
     _ = syntax_result.is_success
     if syntax_result.is_success:
-        entries = syntax_result.value.entries
+        parse_response = syntax_result.unwrap()
+        entries = parse_response.entries
         _ = len(entries)
 
 
@@ -149,12 +153,13 @@ def use_file_utilities() -> None:
 
 def complete_processing_pipeline() -> None:
     """Complete pipeline using utilities and direct processing methods."""
-    api = ldif.get_instance()
+    api: FlextLdif = ldif.get_instance()
     ldif_content = "dn: cn=Pipeline,ou=People,dc=example,dc=com\nobjectClass: person\ncn: Pipeline\nsn: User\n"
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
-    entries = parse_result.value.entries
+    parse_response = parse_result.unwrap()
+    entries = parse_response.entries
 
     valid_entries: MutableSequence[m.Ldif.Entry] = []
     for entry in entries:
@@ -164,7 +169,7 @@ def complete_processing_pipeline() -> None:
 
     validation_result = api.validate_entries(valid_entries)
     if validation_result.is_success:
-        report = validation_result.value
+        report = validation_result.unwrap()
         _ = (len(valid_entries), report.total_entries)
 
 

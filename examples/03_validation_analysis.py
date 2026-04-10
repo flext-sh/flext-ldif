@@ -60,7 +60,8 @@ class DRYValidationAnalysis:
             )
             parse_result = api.parse_ldif(ldif_text)
             if parse_result.is_success:
-                entries.extend(parse_result.value.entries)
+                parse_response = parse_result.unwrap()
+                entries.extend(parse_response.entries)
         return entries
 
     @staticmethod
@@ -79,7 +80,7 @@ class DRYValidationAnalysis:
                 errors=[str(validate_result.error)],
             )
             return r[m.Ldif.ValidationResult].ok(validation_result)
-        vr = validate_result.value
+        vr = validate_result.unwrap()
         validation_result = m.Ldif.ValidationResult(
             is_valid=vr.is_valid,
             total_entries=total_entries,
@@ -98,7 +99,7 @@ class DRYValidationAnalysis:
         if validate_result.is_failure:
             return r[Mapping[str, t.Numeric]].fail(validate_result.error)
         total_entries = len(entries)
-        valid_result = validate_result.value
+        valid_result = validate_result.unwrap()
         valid_entries = valid_result.valid_entries
         invalid_entries = valid_result.invalid_entries
         return r[Mapping[str, t.Numeric]].ok({

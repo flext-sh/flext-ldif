@@ -29,14 +29,15 @@ def extract_acls_from_entry() -> None:
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
-    entries = parse_result.value.entries
+    parse_response = parse_result.unwrap()
+    entries = parse_response.entries
     if not entries:
         return
     entry = entries[0]
     acl_service = _get_acl_service()
     acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
     if acl_result.is_success:
-        acl_response = acl_result.value
+        acl_response = acl_result.unwrap()
         acls = acl_response.acls
         _ = len(acls)
 
@@ -48,7 +49,8 @@ def parse_and_evaluate_acls() -> None:
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
-    entries = parse_result.value.entries
+    parse_response = parse_result.unwrap()
+    entries = parse_response.entries
     if not entries:
         return
     entry = entries[0]
@@ -56,12 +58,12 @@ def parse_and_evaluate_acls() -> None:
     acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
     if acl_result.is_failure:
         return
-    acl_response = acl_result.value
+    acl_response = acl_result.unwrap()
     acls = acl_response.acls
     required_perms: t.MutableBoolMapping = {"read": True, "write": True}
     evaluation_result = acl_service.evaluate_acl_context(acls, required_perms)
     if evaluation_result.is_success:
-        _ = evaluation_result.value
+        _ = evaluation_result.unwrap()
 
 
 def process_entries_with_acls() -> None:
@@ -71,12 +73,13 @@ def process_entries_with_acls() -> None:
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
-    entries = parse_result.value.entries
+    parse_response = parse_result.unwrap()
+    entries = parse_response.entries
     acl_service = _get_acl_service()
     for entry in entries:
         acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
         if acl_result.is_success:
-            acl_response = acl_result.value
+            acl_response = acl_result.unwrap()
             acls = acl_response.acls
             if acls:
                 _ = (str(entry.dn), len(acls))
@@ -99,7 +102,7 @@ def execute_acl_service() -> None:
     acl_service = _get_acl_service()
     exec_result = acl_service.execute()
     if exec_result.is_success:
-        _ = exec_result.value
+        _ = exec_result.unwrap()
 
 
 def acl_pipeline() -> None:
@@ -109,7 +112,8 @@ def acl_pipeline() -> None:
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.is_failure:
         return
-    entries = parse_result.value.entries
+    parse_response = parse_result.unwrap()
+    entries = parse_response.entries
     if not entries:
         return
     entry = entries[0]
@@ -117,7 +121,7 @@ def acl_pipeline() -> None:
     acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
     if acl_result.is_failure:
         return
-    acl_response = acl_result.value
+    acl_response = acl_result.unwrap()
     acls = acl_response.acls
     required_perms: t.MutableBoolMapping = {"read": True}
     eval_result = acl_service.evaluate_acl_context(acls, required_perms)

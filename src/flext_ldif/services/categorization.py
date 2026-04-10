@@ -847,16 +847,18 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
             return r[m.Ldif.CategoryRules].ok(rules)
         if rules is None:
             return r[m.Ldif.CategoryRules].ok(self._categorization_rules)
-        return u.try_(
-            lambda: m.Ldif.CategoryRules.model_validate(dict(rules)),
-            catch=(
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ),
-        ).map_error(lambda e: f"Invalid rules mapping: {e}")
+        return r[m.Ldif.CategoryRules].from_result(
+            u.try_(
+                lambda: m.Ldif.CategoryRules.model_validate(dict(rules)),
+                catch=(
+                    ValueError,
+                    KeyError,
+                    AttributeError,
+                    UnicodeDecodeError,
+                    struct.error,
+                ),
+            ).map_error(lambda e: f"Invalid rules mapping: {e}"),
+        )
 
     def _update_metadata_for_filtered_entries(
         self,
