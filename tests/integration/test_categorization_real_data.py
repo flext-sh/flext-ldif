@@ -347,9 +347,7 @@ class TestCategorizationRealData:
             "Input file content should match"
         )
         api = ldif()
-        parse_result = api.parse_ldif(
-            value=ldif_content, server_type=c.Ldif.Tests.RFC
-        )
+        parse_result = api.parse_ldif(value=ldif_content, server_type=c.Ldif.Tests.RFC)
         assert parse_result.is_success, f"Parsing failed: {parse_result.error}"
         entries = parse_result.value.entries
         assert len(entries) == 6, f"Should parse 6 entries, got {len(entries)}"

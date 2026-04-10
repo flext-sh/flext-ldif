@@ -71,8 +71,8 @@ class TestsTestFlextLdifRelaxedQuirks:
             _ = tm.that(result.is_success, eq=True)
             parsed = result.value
             if scenario in {
-                c.Ldif.Tests.RELAXED_PARSE_SCENARIOS.VALID,
-                c.Ldif.Tests.RELAXED_PARSE_SCENARIOS.MALFORMED,
+                c.Ldif.Tests.RELAXED_PARSE_VALID,
+                c.Ldif.Tests.RELAXED_PARSE_MALFORMED,
             }:
                 tm.that(parsed.oid, none=False)
                 tm.that(parsed.metadata is not None, eq=True)
@@ -191,13 +191,13 @@ class TestsTestFlextLdifRelaxedQuirks:
     ) -> None:
         """Test that writing ACL preserves raw content."""
         raw_acl = '(targetentry="cn=REDACTED_LDAP_BIND_PASSWORD")(version 3.0;acl "REDACTED_LDAP_BIND_PASSWORD";allow(all)'
-        acl_data = m.Ldif.Tests.Acl(
+        acl_data = m.Ldif.Acl(
             name="test_acl",
-            target=m.Ldif.Tests.AclTarget(target_dn="*", attributes=[]),
-            subject=m.Ldif.Tests.AclSubject(
+            target=m.Ldif.AclTarget(target_dn="*", attributes=[]),
+            subject=m.Ldif.AclSubject(
                 subject_type=c.Ldif.AclSubjectType.ALL, subject_value="*"
             ),
-            permissions=m.Ldif.Tests.AclPermissions(),
+            permissions=m.Ldif.AclPermissions(),
             raw_acl=raw_acl,
         )
         result = acl_quirk.write(acl_data)

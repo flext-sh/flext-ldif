@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 from flext_tests import tm
 
-import flext_ldif
+import flext_ldif.typings as flext_ldif_typings
 from tests import c, t
 
 
@@ -27,7 +27,7 @@ class TestFlextLdifTypesStructure:
 
     def test_srp_compliance_no_functions(self) -> None:
         """typings.py must not contain functions (SRP violation)."""
-        members = inspect.getmembers(flext_ldif.typings)
+        members = inspect.getmembers(flext_ldif_typings)
         user_functions = [
             m
             for m in members
@@ -68,8 +68,8 @@ class TestsFlextLdifCommonDictionaryTypes:
         """AttributeDict must work with real LDIF entry attributes."""
         attr_dict: t.Ldif.AttributeDict = c.Ldif.Tests.TYPINGS_SAMPLE_ATTR_DICT
         tm.that(attr_dict, is_=dict)
-        tm.that(attr_dict[c.Ldif.Tests.Names.CN], eq=["John Doe"])
-        tm.that(len(attr_dict[c.Ldif.Tests.Names.MAIL]), eq=2)
+        tm.that(attr_dict[c.Ldif.Tests.NAME_CN], eq=["John Doe"])
+        tm.that(len(attr_dict[c.Ldif.Tests.NAME_MAIL]), eq=2)
 
     def test_attribute_dict_empty(self) -> None:
         """AttributeDict must handle empty attributes."""
@@ -79,7 +79,7 @@ class TestsFlextLdifCommonDictionaryTypes:
     def test_distribution_dict_with_entry_counts(self) -> None:
         """DistributionDict must work with entry type statistics."""
         dist: t.IntMapping = c.Ldif.Tests.TYPINGS_SAMPLE_DISTRIBUTION
-        tm.that(dist[c.Ldif.Tests.Names.INETORGPERSON], eq=1245)
+        tm.that(dist[c.Ldif.Tests.NAME_INETORGPERSON], eq=1245)
         tm.that(sum(dist.values()), eq=1371)
 
     def test_distribution_dict_from_schema_stats(self) -> None:
@@ -98,40 +98,40 @@ class TestModelsNamespace:
     def test_entry_attributes_dict_with_real_ldif_data(self) -> None:
         """EntryAttributesDict must work with real LDIF attribute data."""
         attrs: Mapping[str, t.Scalar | t.StrSequence] = {
-            c.Ldif.Tests.Names.CN: ["John Doe"],
-            c.Ldif.Tests.Names.OBJECTCLASS: [
-                c.Ldif.Tests.Names.INETORGPERSON,
-                c.Ldif.Tests.Names.PERSON,
-                c.Ldif.Tests.Names.TOP,
+            c.Ldif.Tests.NAME_CN: ["John Doe"],
+            c.Ldif.Tests.NAME_OBJECTCLASS: [
+                c.Ldif.Tests.NAME_INETORGPERSON,
+                c.Ldif.Tests.NAME_PERSON,
+                c.Ldif.Tests.NAME_TOP,
             ],
-            c.Ldif.Tests.Names.SN: "Doe",
-            c.Ldif.Tests.Names.MAIL: ["john@example.com"],
-            c.Ldif.Tests.Names.UID: "jdoe",
+            c.Ldif.Tests.NAME_SN: "Doe",
+            c.Ldif.Tests.NAME_MAIL: ["john@example.com"],
+            c.Ldif.Tests.NAME_UID: "jdoe",
         }
-        cn_value = attrs.get(c.Ldif.Tests.Names.CN)
+        cn_value = attrs.get(c.Ldif.Tests.NAME_CN)
         tm.that(cn_value, eq=["John Doe"])
-        objectclass_value = attrs.get(c.Ldif.Tests.Names.OBJECTCLASS)
+        objectclass_value = attrs.get(c.Ldif.Tests.NAME_OBJECTCLASS)
         tm.that(objectclass_value, is_=list)
 
     def test_attributes_data_with_real_schema(self) -> None:
         """AttributesData must support real schema attribute patterns."""
         data: Mapping[str, Mapping[str, t.Scalar | t.StrSequence]] = {
-            c.Ldif.Tests.Names.CN: {
-                "oid": c.Ldif.Tests.OIDs.CN,
+            c.Ldif.Tests.NAME_CN: {
+                "oid": c.Ldif.Tests.OID_CN,
                 "syntax": "Directory String",
                 "equality": "caseIgnoreMatch",
                 "single_valued": False,
             },
-            c.Ldif.Tests.Names.UID: {
+            c.Ldif.Tests.NAME_UID: {
                 "oid": "0.9.2342.19200300.100.1.1",
                 "syntax": "Directory String",
                 "single_valued": True,
             },
         }
-        cn_oid: t.Scalar | t.StrSequence | None = data[c.Ldif.Tests.Names.CN].get("oid")
-        tm.that(cn_oid, eq=c.Ldif.Tests.OIDs.CN)
+        cn_oid: t.Scalar | t.StrSequence | None = data[c.Ldif.Tests.NAME_CN].get("oid")
+        tm.that(cn_oid, eq=c.Ldif.Tests.OID_CN)
         uid_single_valued: t.Scalar | t.StrSequence | None = data[
-            c.Ldif.Tests.Names.UID
+            c.Ldif.Tests.NAME_UID
         ].get(
             "single_valued",
         )
@@ -140,28 +140,28 @@ class TestModelsNamespace:
     def test_objectclasses_data_with_real_schema(self) -> None:
         """ObjectClassesData must support real objectClass patterns."""
         data: Mapping[str, Mapping[str, t.Scalar | t.StrSequence]] = {
-            c.Ldif.Tests.Names.INETORGPERSON: {
+            c.Ldif.Tests.NAME_INETORGPERSON: {
                 "oid": "2.16.840.1.113730.3.2.2",
                 "kind": "STRUCTURAL",
                 "sup": "organizationalPerson",
-                "must": [c.Ldif.Tests.Names.UID],
-                "may": [c.Ldif.Tests.Names.MAIL, "mobile"],
+                "must": [c.Ldif.Tests.NAME_UID],
+                "may": [c.Ldif.Tests.NAME_MAIL, "mobile"],
             },
         }
         oid_value: t.Scalar | t.StrSequence | None = data[
-            c.Ldif.Tests.Names.INETORGPERSON
+            c.Ldif.Tests.NAME_INETORGPERSON
         ].get(
             "oid",
         )
         tm.that(oid_value, eq="2.16.840.1.113730.3.2.2")
         may_values: t.Scalar | t.StrSequence | None = data[
-            c.Ldif.Tests.Names.INETORGPERSON
+            c.Ldif.Tests.NAME_INETORGPERSON
         ].get(
             "may",
         )
         tm.that(may_values, none=False)
         if may_values is not None and isinstance(may_values, list):
-            tm.that(may_values, has=c.Ldif.Tests.Names.MAIL)
+            tm.that(may_values, has=c.Ldif.Tests.NAME_MAIL)
 
     def test_extensions_with_reals(self) -> None:
         """QuirkExtensions must support real quirk metadata."""
@@ -212,23 +212,23 @@ class TestPhase1StandardizationResults:
     def test_types_work_with_real_data(self) -> None:
         """Verify types work with real data."""
         attr_dict: t.Ldif.AttributeDict = {
-            c.Ldif.Tests.Names.CN: ["Jane Doe"],
-            c.Ldif.Tests.Names.OBJECTCLASS: [
-                c.Ldif.Tests.Names.PERSON,
-                c.Ldif.Tests.Names.INETORGPERSON,
+            c.Ldif.Tests.NAME_CN: ["Jane Doe"],
+            c.Ldif.Tests.NAME_OBJECTCLASS: [
+                c.Ldif.Tests.NAME_PERSON,
+                c.Ldif.Tests.NAME_INETORGPERSON,
             ],
         }
         distribution: t.IntMapping = {
-            c.Ldif.Tests.Names.INETORGPERSON: 2,
-            c.Ldif.Tests.Names.PERSON: 1,
+            c.Ldif.Tests.NAME_INETORGPERSON: 2,
+            c.Ldif.Tests.NAME_PERSON: 1,
         }
-        tm.that(attr_dict[c.Ldif.Tests.Names.CN], eq=["Jane Doe"])
+        tm.that(attr_dict[c.Ldif.Tests.NAME_CN], eq=["Jane Doe"])
         tm.that(
-            attr_dict[c.Ldif.Tests.Names.OBJECTCLASS],
-            has=c.Ldif.Tests.Names.INETORGPERSON,
+            attr_dict[c.Ldif.Tests.NAME_OBJECTCLASS],
+            has=c.Ldif.Tests.NAME_INETORGPERSON,
         )
         tm.that(sum(distribution.values()), eq=3)
-        tm.that(distribution[c.Ldif.Tests.Names.PERSON], eq=1)
+        tm.that(distribution[c.Ldif.Tests.NAME_PERSON], eq=1)
 
 
 class TestIntegrationWithLdifFixtures:
@@ -248,23 +248,23 @@ class TestIntegrationWithLdifFixtures:
         """Verify types work with real LDIF fixture files."""
         tm.that(oid_ldif_path.exists(), eq=True)
         entry_attrs: t.Ldif.AttributeDict = {
-            c.Ldif.Tests.Names.CN: ["Test Entry"],
-            c.Ldif.Tests.Names.OBJECTCLASS: [
-                c.Ldif.Tests.Names.PERSON,
-                c.Ldif.Tests.Names.INETORGPERSON,
+            c.Ldif.Tests.NAME_CN: ["Test Entry"],
+            c.Ldif.Tests.NAME_OBJECTCLASS: [
+                c.Ldif.Tests.NAME_PERSON,
+                c.Ldif.Tests.NAME_INETORGPERSON,
             ],
         }
-        tm.that(entry_attrs, has=c.Ldif.Tests.Names.CN)
+        tm.that(entry_attrs, has=c.Ldif.Tests.NAME_CN)
 
     def test_models_namespace_with_schema_data(self) -> None:
         """Verify Models namespace types work with schema data."""
         schema_attrs: Mapping[str, Mapping[str, t.Scalar | t.StrSequence]] = {
-            c.Ldif.Tests.Names.CN: {
-                "oid": c.Ldif.Tests.OIDs.CN,
+            c.Ldif.Tests.NAME_CN: {
+                "oid": c.Ldif.Tests.OID_CN,
                 "syntax": "Directory String",
             },
         }
         cn_oid: t.Scalar | t.StrSequence | None = schema_attrs[
-            c.Ldif.Tests.Names.CN
+            c.Ldif.Tests.NAME_CN
         ].get("oid")
-        tm.that(cn_oid, eq=c.Ldif.Tests.OIDs.CN)
+        tm.that(cn_oid, eq=c.Ldif.Tests.OID_CN)

@@ -4,22 +4,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_ldap import FlextLdapProtocols
+from flext_ldap import p
 from flext_tests import FlextTestsProtocols
-
-from flext_ldif import FlextLdifProtocols
+from tests import r
 
 if TYPE_CHECKING:
     from tests import m
 
 
-class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdapProtocols):
+class TestsFlextLdifProtocols(FlextTestsProtocols, p):
     """Protocol definitions for flext-ldif tests."""
 
-    class Ldap(FlextLdapProtocols.Ldap):
+    class Ldap(p.Ldap):
         """LDAP protocols re-exported for tests."""
 
-    class Ldif(FlextLdifProtocols.Ldif):
+    class Ldif(p.Ldif):
         """LDIF helper protocols."""
 
         class Tests(FlextTestsProtocols.Tests):
@@ -32,7 +31,7 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdapProtocols):
                 def parse_input(
                     self,
                     value: str,
-                ) -> FlextLdifProtocols.Result[
+                ) -> r[
                     m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
                 ]:
                     """Parse server-specific raw input."""
@@ -45,7 +44,7 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdapProtocols):
                 def _write_attribute(
                     self,
                     attr_data: m.Ldif.SchemaAttribute,
-                ) -> FlextLdifProtocols.Result[str]:
+                ) -> r[str]:
                     """Serialize an attribute definition."""
                     ...
 
@@ -56,7 +55,7 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdapProtocols):
                 def _write_objectclass(
                     self,
                     oc_data: m.Ldif.SchemaObjectClass,
-                ) -> FlextLdifProtocols.Result[str]:
+                ) -> r[str]:
                     """Serialize an objectClass definition."""
                     ...
 
@@ -67,7 +66,7 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdapProtocols):
                 def _write_acl(
                     self,
                     acl_data: m.Ldif.Acl,
-                ) -> FlextLdifProtocols.Result[str]:
+                ) -> r[str]:
                     """Serialize an ACL definition."""
                     ...
 
@@ -78,7 +77,7 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdapProtocols):
                 def parse_quirk(
                     self,
                     value: str,
-                ) -> FlextLdifProtocols.Result[m.Ldif.Acl]:
+                ) -> r[m.Ldif.Acl]:
                     """Parse ACL content into the test model."""
                     ...
 
@@ -89,7 +88,7 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdapProtocols):
                 def write(
                     self,
                     acl_data: m.Ldif.Acl,
-                ) -> FlextLdifProtocols.Result[str]:
+                ) -> r[str]:
                     """Write ACL content from the test model."""
                     ...
 

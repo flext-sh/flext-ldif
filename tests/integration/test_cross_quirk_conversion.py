@@ -41,7 +41,7 @@ class TestOidToOudSchemaConversion:
         oud_schema_quirk: p.Ldif.SchemaQuirk,
     ) -> None:
         """Test converting OID attribute definition to OUD format."""
-        oid_attribute = c.Ldif.Tests.CrossQuirk.OID_ATTRIBUTE_ORCLGUID
+        oid_attribute = c.Ldif.Tests.CROSS_QUIRK_OID_ATTRIBUTE_ORCLGUID
         parse_result = oid_schema_quirk.parse_quirk(oid_attribute)
         assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
         unwrapped = parse_result.value
@@ -73,7 +73,7 @@ class TestOidToOudSchemaConversion:
         oud_schema_quirk: p.Ldif.SchemaQuirk,
     ) -> None:
         """Test converting OID objectClass definition to OUD format."""
-        oid_objectclass = c.Ldif.Tests.CrossQuirk.OID_OBJECTCLASS_ORCLCONTAINER
+        oid_objectclass = c.Ldif.Tests.CROSS_QUIRK_OID_OBJECTCLASS_ORCLCONTAINER
         parse_result = oid_schema_quirk.parse_quirk(oid_objectclass)
         assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
         unwrapped = parse_result.value
@@ -118,7 +118,7 @@ class TestOidToOudAclConversion:
         oid_acl_quirk: p.Ldif.AclQuirk,
     ) -> None:
         """Test OID ACL parsing and round-trip within OID format."""
-        oid_acl_str = c.Ldif.Tests.CrossQuirk.OID_ACL_ANONYMOUS
+        oid_acl_str = c.Ldif.Tests.CROSS_QUIRK_OID_ACL_ANONYMOUS
         parse_result = oid_acl_quirk.parse_quirk(oid_acl_str)
         assert parse_result.is_success, f"OID ACL parse failed: {parse_result.error}"
         parsed_data = parse_result.value
@@ -129,7 +129,7 @@ class TestOidToOudAclConversion:
         oud_acl_quirk: p.Ldif.AclQuirk,
     ) -> None:
         """Test OUD ACL parsing and round-trip within OUD format."""
-        oud_aci = c.Ldif.Tests.CrossQuirk.OUD_ACI_ANONYMOUS
+        oud_aci = c.Ldif.Tests.CROSS_QUIRK_OUD_ACI_ANONYMOUS
         parse_result = oud_acl_quirk.parse_quirk(oud_aci)
         assert parse_result.is_success, f"OUD ACL parse failed: {parse_result.error}"
         parsed_data = parse_result.value
@@ -216,7 +216,7 @@ class TestQuirksConversionMatrixFacade:
         oid_quirk: FlextLdifServersOid,
     ) -> None:
         """Test schema attribute conversion via direct quirk API (not matrix)."""
-        oud_attr_string = c.Ldif.Tests.CrossQuirk.OUD_ATTRIBUTE_ORCLGUID
+        oud_attr_string = c.Ldif.Tests.CROSS_QUIRK_OUD_ATTRIBUTE_ORCLGUID
         parse_result = oud_quirk.schema_quirk.parse_attribute(oud_attr_string)
         assert parse_result.is_success, f"Parse failed: {parse_result.error}"
         oud_attr_model = parse_result.value
@@ -239,7 +239,7 @@ class TestQuirksConversionMatrixFacade:
         oid_quirk: FlextLdifServersOid,
     ) -> None:
         """Test schema objectClass conversion via direct quirk API (not matrix)."""
-        oid_oc_string = c.Ldif.Tests.CrossQuirk.OID_OBJECTCLASS_ORCLCONTEXT
+        oid_oc_string = c.Ldif.Tests.CROSS_QUIRK_OID_OBJECTCLASS_ORCLCONTEXT
         parse_result = oid_quirk.schema_quirk.parse_objectclass(oid_oc_string)
         assert parse_result.is_success, f"Parse failed: {parse_result.error}"
         oid_oc_model = parse_result.value
@@ -263,7 +263,7 @@ class TestQuirksConversionMatrixFacade:
     ) -> None:
         """Test batch attribute conversion via direct quirk API (not matrix)."""
         oud_attr_strings = [
-            c.Ldif.Tests.CrossQuirk.OUD_ATTRIBUTE_ORCLGUID,
+            c.Ldif.Tests.CROSS_QUIRK_OUD_ATTRIBUTE_ORCLGUID,
             "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
         ]
         oud_attr_models: MutableSequence[m.Ldif.SchemaAttribute] = []
@@ -294,7 +294,7 @@ class TestQuirksConversionMatrixFacade:
         oid_quirk: FlextLdifServersOid,
     ) -> None:
         """Test bidirectional attribute conversion OUD ↔ OID via direct quirk API."""
-        original_string = c.Ldif.Tests.CrossQuirk.OUD_ATTRIBUTE_ORCLGUID
+        original_string = c.Ldif.Tests.CROSS_QUIRK_OUD_ATTRIBUTE_ORCLGUID
         parse_result = oud_quirk.schema_quirk.parse_attribute(original_string)
         assert parse_result.is_success
         oud_model = parse_result.value

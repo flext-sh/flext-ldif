@@ -227,10 +227,10 @@ class TestsTestFlextLdifApacheQuirks:
         acl_model = u.Ldif.Tests.acl_parse_and_unwrap(
             acl_quirk,
             acl_line,
-            expected_type=m.Ldif.Tests.Acl,
+            expected_type=m.Ldif.Acl,
         )
         assert acl_model is not None
-        assert isinstance(acl_model, m.Ldif.Tests.Acl)
+        assert isinstance(acl_model, m.Ldif.Acl)
         roundtrip_result = u.Ldif.Tests.acl_parse_and_unwrap(
             acl_quirk,
             acl_model.raw_acl or str(acl_model),
@@ -245,10 +245,10 @@ class TestsTestFlextLdifApacheQuirks:
         acl_model = u.Ldif.Tests.acl_parse_and_unwrap(
             acl_quirk,
             acl_line,
-            expected_type=m.Ldif.Tests.Acl,
+            expected_type=m.Ldif.Acl,
         )
         assert acl_model is not None
-        assert isinstance(acl_model, m.Ldif.Tests.Acl)
+        assert isinstance(acl_model, m.Ldif.Acl)
         roundtrip_result = u.Ldif.Tests.acl_parse_and_unwrap(
             acl_quirk,
             acl_model.raw_acl or str(acl_model),
@@ -263,10 +263,10 @@ class TestsTestFlextLdifApacheQuirks:
         acl_model = u.Ldif.Tests.acl_parse_and_unwrap(
             acl_quirk,
             acl_line,
-            expected_type=m.Ldif.Tests.Acl,
+            expected_type=m.Ldif.Acl,
         )
         assert acl_model is not None
-        assert isinstance(acl_model, m.Ldif.Tests.Acl)
+        assert isinstance(acl_model, m.Ldif.Acl)
         roundtrip_result = u.Ldif.Tests.acl_parse_and_unwrap(
             acl_quirk,
             acl_model.raw_acl or str(acl_model),
@@ -296,10 +296,10 @@ class TestsTestFlextLdifApacheQuirks:
         acl_data = u.Ldif.Tests.acl_parse_and_unwrap(
             acl_quirk,
             acl_line,
-            expected_type=m.Ldif.Tests.Acl,
+            expected_type=m.Ldif.Acl,
         )
         assert acl_data is not None
-        assert isinstance(acl_data, m.Ldif.Tests.Acl)
+        assert isinstance(acl_data, m.Ldif.Acl)
         tm.that(acl_data.get_acl_format(), eq=c.Ldif.DEFAULT_ACL_FORMAT)
         tm.that(acl_data.server_type, eq=c.Ldif.ServerTypes.APACHE)
 
@@ -311,22 +311,22 @@ class TestsTestFlextLdifApacheQuirks:
         acl_data = u.Ldif.Tests.acl_parse_and_unwrap(
             acl_quirk,
             acl_line,
-            expected_type=m.Ldif.Tests.Acl,
+            expected_type=m.Ldif.Acl,
         )
         assert acl_data is not None
-        assert isinstance(acl_data, m.Ldif.Tests.Acl)
+        assert isinstance(acl_data, m.Ldif.Acl)
 
     def test_acl_write_with_content(self) -> None:
         """Test writing ACL with content to RFC string format."""
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
-        acl_model = m.Ldif.Tests.Acl(
+        acl_model = m.Ldif.Acl(
             name="ads-aci",
-            target=m.Ldif.Tests.AclTarget(target_dn="", attributes=[]),
-            subject=m.Ldif.Tests.AclSubject(
+            target=m.Ldif.AclTarget(target_dn="", attributes=[]),
+            subject=m.Ldif.AclSubject(
                 subject_type=c.Ldif.AclSubjectType.ALL, subject_value=""
             ),
-            permissions=m.Ldif.Tests.AclPermissions(),
+            permissions=m.Ldif.AclPermissions(),
             server_type=c.Ldif.ServerTypes.APACHE,
             raw_acl="( version 3.0 ) ( deny grantAdd )",
         )
@@ -341,13 +341,13 @@ class TestsTestFlextLdifApacheQuirks:
         """Test writing ACL with clauses only to RFC string format."""
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
-        acl_model = m.Ldif.Tests.Acl(
+        acl_model = m.Ldif.Acl(
             name="aci",
-            target=m.Ldif.Tests.AclTarget(target_dn="", attributes=[]),
-            subject=m.Ldif.Tests.AclSubject(
+            target=m.Ldif.AclTarget(target_dn="", attributes=[]),
+            subject=m.Ldif.AclSubject(
                 subject_type=c.Ldif.AclSubjectType.ALL, subject_value=""
             ),
-            permissions=m.Ldif.Tests.AclPermissions(),
+            permissions=m.Ldif.AclPermissions(),
             server_type=c.Ldif.ServerTypes.APACHE,
             raw_acl="( version 3.0 ) ( deny grantAdd )",
         )
@@ -361,13 +361,13 @@ class TestsTestFlextLdifApacheQuirks:
         """Test writing empty ACL to RFC string format."""
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
-        acl_model = m.Ldif.Tests.Acl(
+        acl_model = m.Ldif.Acl(
             name="ads-aci",
-            target=m.Ldif.Tests.AclTarget(target_dn="", attributes=[]),
-            subject=m.Ldif.Tests.AclSubject(
+            target=m.Ldif.AclTarget(target_dn="", attributes=[]),
+            subject=m.Ldif.AclSubject(
                 subject_type=c.Ldif.AclSubjectType.ALL, subject_value=""
             ),
-            permissions=m.Ldif.Tests.AclPermissions(),
+            permissions=m.Ldif.AclPermissions(),
             server_type=c.Ldif.ServerTypes.APACHE,
             raw_acl="",
         )

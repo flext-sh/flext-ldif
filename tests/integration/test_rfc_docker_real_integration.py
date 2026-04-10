@@ -30,9 +30,7 @@ class TestRfcParserRealFixtures:
     def test_parse_oid_entries_fixture(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing real OID entries from fixtures."""
         entries_file = (
-            c.Ldif.Tests.FIXTURES_DIR
-            / c.Ldif.Tests.OID
-            / "oid_entries_fixtures.ldif"
+            c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.OID / "oid_entries_fixtures.ldif"
         )
         if not entries_file.exists():
             pytest.skip(f"Fixture not found: {entries_file}")
@@ -53,9 +51,7 @@ class TestRfcParserRealFixtures:
     def test_parse_oud_entries_fixture(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing real OUD entries from fixtures."""
         entries_file = (
-            c.Ldif.Tests.FIXTURES_DIR
-            / c.Ldif.Tests.OUD
-            / "oud_entries_fixtures.ldif"
+            c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.OUD / "oud_entries_fixtures.ldif"
         )
         if not entries_file.exists():
             pytest.skip(f"Fixture not found: {entries_file}")
@@ -130,9 +126,7 @@ class TestRfcWriterRealFixtures:
     ) -> None:
         """Test roundtrip: parse OID fixture, write, and re-parse."""
         source_file = (
-            c.Ldif.Tests.FIXTURES_DIR
-            / c.Ldif.Tests.OID
-            / "oid_entries_fixtures.ldif"
+            c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.OID / "oid_entries_fixtures.ldif"
         )
         if not source_file.exists():
             pytest.skip(f"Fixture not found: {source_file}")

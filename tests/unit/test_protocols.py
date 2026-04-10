@@ -45,9 +45,9 @@ class TestsTestFlextLdifProtocols:
     """
 
     _PROTOCOL_NAMES: ClassVar[t.StrSequence] = [
-        c.Ldif.Tests.PROTOCOL_NAMES.SCHEMA.value,
-        c.Ldif.Tests.PROTOCOL_NAMES.ACL.value,
-        c.Ldif.Tests.PROTOCOL_NAMES.ENTRY.value,
+        c.Ldif.Tests.PROTOCOL_NAME_SCHEMA,
+        c.Ldif.Tests.PROTOCOL_NAME_ACL,
+        c.Ldif.Tests.PROTOCOL_NAME_ENTRY,
     ]
 
     class Helpers:

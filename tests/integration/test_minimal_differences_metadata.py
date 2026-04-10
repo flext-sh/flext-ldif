@@ -144,9 +144,7 @@ class TestMinimalDifferencesOidOud:
     def test_punctuation_differences_captured(self, parser: FlextLdifParser) -> None:
         """Test that punctuation differences (e.g., trailing semicolons) are captured."""
         ldif = "dn: cn=test,dc=example,dc=com\nobjectClass: top\nobjectClass: person\ncn: test\n"
-        parse_result = parser.parse_string(
-            content=ldif, server_type=c.Ldif.Tests.RFC
-        )
+        parse_result = parser.parse_string(content=ldif, server_type=c.Ldif.Tests.RFC)
         assert parse_result.is_success
         entries = parse_result.value.entries
         assert len(entries) == 1
@@ -199,9 +197,7 @@ class TestMinimalDifferencesOidOud:
     def test_soft_deleted_attributes_preserved(self, parser: FlextLdifParser) -> None:
         """Test that soft-deleted attributes are preserved in metadata."""
         ldif = "dn: cn=test,dc=example,dc=com\nobjectClass: top\nobjectClass: person\ncn: test\ncreatorsName: cn=Directory Manager\ncreateTimestamp: 20250101000000Z\n"
-        parse_result = parser.parse_string(
-            content=ldif, server_type=c.Ldif.Tests.RFC
-        )
+        parse_result = parser.parse_string(content=ldif, server_type=c.Ldif.Tests.RFC)
         assert parse_result.is_success
         entries = parse_result.value.entries
         assert len(entries) == 1

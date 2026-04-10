@@ -9,37 +9,20 @@ from typing import Annotated, ClassVar
 from flext_tests import FlextTestsModels
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_ldif import FlextLdifModels, FlextLdifModelsSettings
+from flext_ldap import m
 from tests import t
 
 
-class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
+class TestsFlextLdifModels(FlextTestsModels, m):
     """Test models composed from the project and shared test namespaces."""
 
-    class Ldif(FlextLdifModels.Ldif):
+    class Ldif(m.Ldif):
         """Production LDIF models with nested test-only models."""
 
         class Tests:
             """Test fixture models namespace."""
 
-            Acl = FlextLdifModels.Ldif.Acl
-            AclTarget = FlextLdifModels.Ldif.AclTarget
-            AclSubject = FlextLdifModels.Ldif.AclSubject
-            AclPermissions = FlextLdifModels.Ldif.AclPermissions
-            AclWriteMetadata = FlextLdifModels.Ldif.AclWriteMetadata
-            Syntax = FlextLdifModels.Ldif.Syntax
-            SchemaAttribute = FlextLdifModels.Ldif.SchemaAttribute
-            SchemaObjectClass = FlextLdifModels.Ldif.SchemaObjectClass
-            WriteFormatOptions = FlextLdifModels.Ldif.WriteFormatOptions
-            ValidationServiceStatus = FlextLdifModels.Ldif.ValidationServiceStatus
-            SchemaServiceStatus = FlextLdifModels.Ldif.SchemaServiceStatus
-            StatisticsServiceStatus = FlextLdifModels.Ldif.StatisticsServiceStatus
-            ValidationBatchResult = FlextLdifModels.Ldif.ValidationBatchResult
-            ValidationMetadata = FlextLdifModels.Ldif.ValidationMetadata
-            StatisticsResult = FlextLdifModels.Ldif.StatisticsResult
-            ServerValidationRules = FlextLdifModelsSettings.ServerValidationRules
-
-            class LdifTestData(FlextLdifModels.Value):
+            class LdifTestData(m.Value):
                 """Test data for LDIF utilities."""
 
                 id: str

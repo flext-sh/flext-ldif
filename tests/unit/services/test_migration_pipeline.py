@@ -190,7 +190,7 @@ class TestsTestFlextLdifMigrationPipeline:
         )
         entries = [
             m.Ldif.Entry(
-                dn=m.Ldif.DN(value=c.Ldif.Tests.DNs.TEST),
+                dn=m.Ldif.DN(value=c.Ldif.Tests.DN_TEST),
                 attributes=m.Ldif.Attributes(
                     attributes={"cn": ["test"], "objectClass": ["person"]},
                     attribute_metadata={},

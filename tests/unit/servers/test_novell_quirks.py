@@ -116,9 +116,7 @@ class TestNovellSchemaAttributeParsing:
 class TestNovellSchemaObjectClassDetection:
     """Test schema objectClass detection."""
 
-    @pytest.mark.parametrize(
-        "test_case", c.Ldif.Tests.NOVELL_OBJECTCLASS_TEST_CASES
-    )
+    @pytest.mark.parametrize("test_case", c.Ldif.Tests.NOVELL_OBJECTCLASS_TEST_CASES)
     def test_can_handle_objectclass(
         self,
         test_case: m.Ldif.Tests.ObjectClassTestCase,

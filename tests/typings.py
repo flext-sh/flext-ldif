@@ -5,23 +5,25 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Literal
 
-from flext_ldap import t as lt
+from flext_ldap import t
 from flext_tests import FlextTestsTypes
 
 
-class TestsFlextLdifTypes(FlextTestsTypes, lt):
+class TestsFlextLdifTypes(FlextTestsTypes, t):
     """Test types extending TestsFlextTypes and FlextLdapTypes."""
 
-    class Ldif(lt.Ldif):
+    class Ldif(t.Ldif):
         """LDIF test type namespace."""
 
         class Tests(FlextTestsTypes.Tests):
             """flext-ldif-specific test type definitions namespace."""
 
-            type GenericFieldsDict = lt.StrMapping
+            type GenericFieldsDict = TestsFlextLdifTypes.StrMapping
             type DnRefData = Mapping[
                 str,
-                lt.StrMapping | lt.StrSequence | str,
+                TestsFlextLdifTypes.StrMapping
+                | TestsFlextLdifTypes.StrSequence
+                | str,
             ]
             type FixtureServer = str
             type FixtureKind = str

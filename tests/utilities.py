@@ -10,12 +10,10 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from pathlib import Path
 from typing import ClassVar, TextIO
 
-import ldap3
 from flext_tests import FlextTestsUtilities, tk
-from pydantic import BaseModel
 
 from flext_core import FlextLogger
-from flext_ldif import u
+from flext_ldap import u
 from tests import c, m, p, t
 
 
@@ -51,9 +49,9 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 server_url: str,
                 *,
                 get_info: t.Ldap.Ldap3GetInfo = "ALL",
-            ) -> ldap3.Server:
+            ) -> p.Ldap.Ldap3Server:
                 """Create an LDAP server from a URL for test connectivity checks."""
-                return ldap3.Server(server_url, get_info=get_info)
+                return u.Ldap.create_server_from_url(server_url, get_info=get_info)
 
             @staticmethod
             def create_bare_server(
@@ -61,28 +59,31 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 *,
                 port: int = c.Ldif.Tests.DOCKER_PORT,
                 get_info: t.Ldap.Ldap3GetInfo = "NO_INFO",
-            ) -> ldap3.Server:
+            ) -> p.Ldap.Ldap3Server:
                 """Create a minimal LDAP server for connectivity checks."""
-                return ldap3.Server(host, port=port, get_info=get_info)
+                return u.Ldap.create_server_from_url(
+                    f"ldap://{host}:{port}",
+                    get_info=get_info,
+                )
 
             @staticmethod
             def create_connection(
-                server: ldap3.Server,
+                server: p.Ldap.Ldap3Server,
                 *,
                 user: str,
                 password: str,
                 auto_bind: bool = True,
                 receive_timeout: int | None = None,
-            ) -> ldap3.Connection:
+            ) -> p.Ldap.Ldap3Connection:
                 """Create an LDAP connection for test workflows."""
                 if receive_timeout is None:
-                    return ldap3.Connection(
+                    return u.Ldap.create_connection(
                         server,
                         user=user,
                         password=password,
                         auto_bind=auto_bind,
                     )
-                return ldap3.Connection(
+                return u.Ldap.create_connection(
                     server,
                     user=user,
                     password=password,
@@ -491,17 +492,19 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
 
             @staticmethod
             def quirk_parse_and_unwrap(
-                quirk: (
-                    p.Ldif.SchemaQuirk
-                    | p.Ldif.Tests.ParseInputQuirk
-                ),
+                quirk: (p.Ldif.SchemaQuirk | p.Ldif.Tests.ParseInputQuirk),
                 content: str,
                 *,
                 parse_method: t.Ldif.Tests.ParseMethod = "parse_quirk",
-                expected_type: type[BaseModel] | None = None,
+                expected_type: (
+                    type[m.Ldif.SchemaAttribute]
+                    | type[m.Ldif.SchemaObjectClass]
+                    | type[m.Ldif.Acl]
+                    | None
+                ) = None,
                 should_succeed: bool | None = None,
                 message: str | None = None,
-            ) -> BaseModel | None:
+            ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl | None:
                 """Parse content with a quirk and unwrap the typed result."""
                 if parse_method == "parse_attribute":
                     if not isinstance(quirk, p.Ldif.SchemaQuirk):
@@ -538,14 +541,25 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     raise AssertionError(
                         f"Expected {expected_type.__name__}, got {type(value).__name__}",
                     )
-                return value if isinstance(value, BaseModel) else None
+                return (
+                    value
+                    if isinstance(
+                        value,
+                        (
+                            m.Ldif.SchemaAttribute,
+                            m.Ldif.SchemaObjectClass,
+                            m.Ldif.Acl,
+                        ),
+                    )
+                    else None
+                )
 
             @staticmethod
             def acl_parse_and_unwrap(
                 quirk: p.Ldif.Tests.ParseAclQuirk,
                 content: str,
                 *,
-                expected_type: type[BaseModel] | None = None,
+                expected_type: type[m.Ldif.Acl] | None = None,
                 should_succeed: bool | None = None,
                 message: str | None = None,
             ) -> m.Ldif.Acl | None:
@@ -557,7 +571,9 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                         raise AssertionError(msg)
                     return None
                 if result.is_failure:
-                    msg = message or f"Expected success but parse failed: {result.error}"
+                    msg = (
+                        message or f"Expected success but parse failed: {result.error}"
+                    )
                     raise AssertionError(msg)
                 value = result.value
                 if expected_type is not None and not isinstance(value, expected_type):

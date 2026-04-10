@@ -88,9 +88,7 @@ class TestsFlextLdifEdgeCases:
     def test_roundtrip_unicode(self, ldif_api: ldif, tmp_path: Path) -> None:
         """Test roundtrip of unicode entries."""
         unicode_ldif = "dn: cn=José,ou=Users,dc=example,dc=com\ncn: José\nsn: García\nobjectClass: person\n\n"
-        parse_result = ldif_api.parse_ldif(
-            unicode_ldif, server_type=c.Ldif.Tests.RFC
-        )
+        parse_result = ldif_api.parse_ldif(unicode_ldif, server_type=c.Ldif.Tests.RFC)
         _ = tm.that(parse_result.is_success, eq=True)
         entries = parse_result.value.entries
         tm.that(len(entries), eq=1)
@@ -109,9 +107,7 @@ class TestsFlextLdifEdgeCases:
     def test_roundtrip_deep_dn(self, ldif_api: ldif, tmp_path: Path) -> None:
         """Test roundtrip of deep DN entries."""
         deep_dn_ldif = "dn: cn=level1,ou=level2,ou=level3,ou=level4,ou=level5,ou=level6,dc=example,dc=com\ncn: level1\nobjectClass: person\n\n"
-        parse_result = ldif_api.parse_ldif(
-            deep_dn_ldif, server_type=c.Ldif.Tests.RFC
-        )
+        parse_result = ldif_api.parse_ldif(deep_dn_ldif, server_type=c.Ldif.Tests.RFC)
         _ = tm.that(parse_result.is_success, eq=True)
         entries = parse_result.value.entries
         tm.that(len(entries), eq=1)

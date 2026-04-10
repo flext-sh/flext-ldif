@@ -223,9 +223,7 @@ class TestZeroDataLossOidOud:
         assert write_oid.is_success
         roundtrip_ldif = write_oid.value.content
         assert roundtrip_ldif is not None
-        parse_roundtrip = api.parse_ldif(
-            roundtrip_ldif, server_type=c.Ldif.Tests.OID
-        )
+        parse_roundtrip = api.parse_ldif(roundtrip_ldif, server_type=c.Ldif.Tests.OID)
         assert parse_roundtrip.is_success
         roundtrip_entries = parse_roundtrip.value.entries
         assert len(original_entries) == len(roundtrip_entries)

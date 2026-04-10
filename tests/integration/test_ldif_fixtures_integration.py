@@ -28,7 +28,9 @@ class TestLdifFixturesIntegration:
 
     def test_rfc_fixture_parsing(self, ldif_client: ldif) -> None:
         """Test parsing RFC fixture with current baseline entries."""
-        fixture = c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.RFC / "rfc_entries_fixtures.ldif"
+        fixture = (
+            c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.RFC / "rfc_entries_fixtures.ldif"
+        )
         result = ldif_client.parse_ldif(fixture)
         assert result.is_success
         entries_raw = result.value.entries
@@ -38,7 +40,9 @@ class TestLdifFixturesIntegration:
 
     def test_rfc_fixture_validation(self, ldif_client: ldif) -> None:
         """Test RFC fixture entries are valid."""
-        fixture = c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.RFC / "rfc_entries_fixtures.ldif"
+        fixture = (
+            c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.RFC / "rfc_entries_fixtures.ldif"
+        )
         parse_result = ldif_client.parse_ldif(fixture)
         assert parse_result.is_success
         entries_raw = parse_result.value.entries
@@ -48,7 +52,9 @@ class TestLdifFixturesIntegration:
 
     def test_oid_fixture_parsing(self, ldif_client: ldif) -> None:
         """Test parsing OID fixture."""
-        fixture = c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.OID / "oid_entries_fixtures.ldif"
+        fixture = (
+            c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.OID / "oid_entries_fixtures.ldif"
+        )
         result = ldif_client.parse_ldif(fixture)
         assert result.is_success
         entries_raw = result.value.entries
@@ -56,7 +62,9 @@ class TestLdifFixturesIntegration:
 
     def test_oud_fixture_parsing(self, ldif_client: ldif) -> None:
         """Test parsing OUD fixture."""
-        fixture = c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.OUD / "oud_entries_fixtures.ldif"
+        fixture = (
+            c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.OUD / "oud_entries_fixtures.ldif"
+        )
         result = ldif_client.parse_ldif(fixture)
         assert result.is_success
         entries_raw = result.value.entries
@@ -94,7 +102,9 @@ class TestLdifFixturesIntegration:
 
     def test_rfc_entries_have_valid_dns(self, ldif_client: ldif) -> None:
         """Test all RFC entries have valid DNs."""
-        fixture = c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.RFC / "rfc_entries_fixtures.ldif"
+        fixture = (
+            c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.RFC / "rfc_entries_fixtures.ldif"
+        )
         result = ldif_client.parse_ldif(fixture)
         assert result.is_success
         entries_raw = result.value.entries

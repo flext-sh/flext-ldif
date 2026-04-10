@@ -45,7 +45,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         class Tests:
             """Flat test-only constants consumed from `?.Ldif.Tests.*`."""
 
-            class Paths:
+            class _Paths:
                 """Test directory path constants."""
 
                 FIXTURES_DIR: Final[Path] = Path(__file__).parent / "fixtures"
@@ -74,7 +74,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             ENTRIES: Final[t.Ldif.Tests.FixtureKind] = "entries"
             INTEGRATION: Final[t.Ldif.Tests.FixtureKind] = "integration"
 
-            class Docker:
+            class _Docker:
                 """Docker container infrastructure constants for integration tests.
 
                 Mirrors c.Ldap.Tests.Docker from flext-ldap tests to avoid
@@ -93,7 +93,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 )
                 LEGACY_ADMIN_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD123"
 
-            class Schema:
+            class _Schema:
                 """Schema constants wrapper for test convenience."""
 
                 STRUCTURAL: str = c.Ldif.SchemaKind.STRUCTURAL
@@ -102,7 +102,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 ACTIVE: str = "ACTIVE"
                 DEPRECATED: str = "DEPRECATED"
 
-            class Names:
+            class _Names:
                 """Standard LDAP attribute names for test fixtures."""
 
                 CN: Final[str] = "cn"
@@ -131,7 +131,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 INET_ORG_PERSON: Final[str] = INETORGPERSON
                 MODIFY_TIMESTAMP: Final[str] = "modifyTimestamp"
 
-            class Fixtures:
+            class _Fixtures:
                 """Test fixture directory names used in tests/fixtures/."""
 
                 OID: Final[str] = "oid"
@@ -140,7 +140,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 OPENLDAP2: Final[str] = "openldap2"
                 RFC: Final[str] = "rfc"
 
-            class DNs:
+            class _Dns:
                 """Canonical DN constants for testing."""
 
                 EXAMPLE: Final[str] = "dc=example,dc=com"
@@ -158,7 +158,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 SCHEMA_SYSTEM: Final[str] = "cn=schema,o=system"
                 INVALID: Final[str] = "invalid-dn-format"
 
-            class OIDs:
+            class _Oids:
                 """Canonical OID constants for testing.
 
                 Attribute OIDs, ObjectClass OIDs, and Syntax OIDs.
@@ -183,7 +183,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 OID: Final[str] = "1.3.6.1.4.1.1466.115.121.1.38"
                 OCTET_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.40"
 
-            class Rfc:
+            class _Rfc:
                 """RFC test constants for schema and entry testing."""
 
                 ATTR_DEF_CN: Final[str] = (
@@ -275,7 +275,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 ACL_SAMPLE_BROWSE: Final[str] = "access to entry by * (browse)"
                 ACL_SAMPLE_READ: Final[str] = "access to entry by * (read)"
 
-            class TestData:
+            class _TestData:
                 """Test data generation constants."""
 
                 SAMPLE_BASE_DN: Final[str] = "dc=test,dc=local"
@@ -569,7 +569,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                         "EntryProcessing",
                     ]
 
-            class General:
+            class _General:
                 """General test constants (from fixtures/general_constants.py)."""
 
                 SAMPLE_DN: Final[str] = "cn=test,dc=example,dc=com"
@@ -605,7 +605,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 OC_NAME_PERSON: Final[str] = "person"
                 OC_NAME_TOP: Final[str] = "top"
 
-            class RfcServer:
+            class _RfcServer:
                 """RFC server test constants (from fixtures/rfc_constants.py)."""
 
                 ATTR_DEF_CN: Final[str] = "( 2.5.4.3 NAME 'cn' )"
@@ -699,7 +699,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 ACL_LINE_EMPTY_OID: Final[str] = ""
                 ACL_LINE_INVALID_OID: Final[str] = "invalid.oid.format"
 
-            class OidServer:
+            class _OidServer:
                 """OID server test constants (from fixtures/oid_constants.py)."""
 
                 ORACLE_OID_NAMESPACE: Final[str] = "2.16.840.1.113894"
@@ -726,13 +726,13 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 OBJECTCLASS_NAME_ORCLCONTEXT: Final[str] = "orclContext"
                 OBJECTCLASS_NAME_ORCLCONTAINER: Final[str] = "orclContainer"
 
-            class OudServer:
+            class _OudServer:
                 """OUD server test constants (from fixtures/oud_constants.py)."""
 
                 SCHEMA_DN: Final[str] = "cn=schema"
                 SCHEMA_DN_SUBSCHEMA: Final[str] = "cn=subschemasubentry"
 
-            class Values:
+            class _Values:
                 """Value constants for testing."""
 
                 TEST: Final[str] = "test"
@@ -810,7 +810,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                     "( 1.2.3.8 NAME 'testMRU' APPLIES testAttr )"
                 )
 
-            class Conversion:
+            class _Conversion:
                 """Conversion test constants (from conftest ConversionTestConstants)."""
 
                 OID_ATTRIBUTE_ORCLGUID: Final[str] = (
@@ -838,7 +838,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                     "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
                 )
 
-            class Migration:
+            class _Migration:
                 """Migration pipeline test constants."""
 
                 class Oid:
@@ -853,7 +853,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                         "0": "FALSE",
                     }
 
-            class ProtocolTest:
+            class _ProtocolTest:
                 """Protocol test constants."""
 
                 ATTR_PARSE: str = "parse_attribute"
@@ -872,7 +872,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 SAMPLE_ATTR_DEF_SIMPLE: str = "( 2.5.4.3 NAME 'cn' )"
                 SAMPLE_OC_DEF: str = "( 2.5.6.0 NAME 'top' ABSTRACT )"
 
-            class CrossQuirk:
+            class _CrossQuirk:
                 """Cross-quirk conversion test constants."""
 
                 OID_ATTRIBUTE_ORCLGUID: Final[str] = (
@@ -892,7 +892,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                     "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
                 )
 
-            class ConfigIntegration:
+            class _ConfigIntegration:
                 """Config integration test constants."""
 
                 SERVER_TYPES: ClassVar[t.StrSequence] = (
@@ -916,7 +916,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                     "rfc": "dn: cn=RFC Test,dc=example,dc=com\ncn: RFC Test\nobjectClass: person\n",
                 }
 
-            class ConftestFactory:
+            class _ConftestFactory:
                 """Constants for FlextLdifTestConftest factory."""
 
                 SAMPLE_LDIF_FILE: Final[str] = "tests/fixtures/sample_basic.ldif"
@@ -937,7 +937,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                     {"name": "Test User 3", "email": "user3@example.com"},
                 ]
 
-            class Scenarios:
+            class _Scenarios:
                 """Scenario enums used by parametrized tests."""
 
                 class Relaxed:
@@ -996,7 +996,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                         ACL = "AclQuirk"
                         ENTRY = "EntryQuirk"
 
-            class TestCases:
+            class _TestCases:
                 """Parametrized test case data for quirk server tests."""
 
                 class Apache:
@@ -1336,7 +1336,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                     )
 
             @unique
-            class ServerType(StrEnum):
+            class _ServerType(StrEnum):
                 """Canonical server identifiers for tests."""
 
                 RFC = "rfc"
@@ -1351,7 +1351,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 AD = "ad"
 
             @unique
-            class FixtureType(StrEnum):
+            class _FixtureType(StrEnum):
                 """Canonical fixture categories for tests."""
 
                 SCHEMA = "schema"
@@ -1359,42 +1359,81 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 ENTRIES = "entries"
                 INTEGRATION = "integration"
 
-            DOCKER_CONTAINER_NAME: Final[str] = Docker.CONTAINER_NAME
-            DOCKER_COMPOSE_FILE_REL: Final[str] = Docker.COMPOSE_FILE_REL
-            DOCKER_SERVICE_NAME: Final[str] = Docker.SERVICE_NAME
-            DOCKER_PORT: Final[int] = Docker.PORT
-            DOCKER_BASE_DN: Final[str] = Docker.BASE_DN
-            DOCKER_ADMIN_DN: Final[str] = Docker.ADMIN_DN
-            DOCKER_ADMIN_PASSWORD: Final[str] = Docker.ADMIN_PASSWORD
-            DOCKER_LEGACY_ADMIN_DN: Final[str] = Docker.LEGACY_ADMIN_DN
-            DOCKER_LEGACY_ADMIN_PASSWORD: Final[str] = Docker.LEGACY_ADMIN_PASSWORD
+            DOCKER_CONTAINER_NAME: Final[str] = _Docker.CONTAINER_NAME
+            DOCKER_COMPOSE_FILE_REL: Final[str] = _Docker.COMPOSE_FILE_REL
+            DOCKER_SERVICE_NAME: Final[str] = _Docker.SERVICE_NAME
+            DOCKER_PORT: Final[int] = _Docker.PORT
+            DOCKER_BASE_DN: Final[str] = _Docker.BASE_DN
+            DOCKER_ADMIN_DN: Final[str] = _Docker.ADMIN_DN
+            DOCKER_ADMIN_PASSWORD: Final[str] = _Docker.ADMIN_PASSWORD
+            DOCKER_LEGACY_ADMIN_DN: Final[str] = _Docker.LEGACY_ADMIN_DN
+            DOCKER_LEGACY_ADMIN_PASSWORD: Final[str] = _Docker.LEGACY_ADMIN_PASSWORD
 
-            SCHEMA_STRUCTURAL: Final[str] = Schema.STRUCTURAL
-            SCHEMA_AUXILIARY: Final[str] = Schema.AUXILIARY
-            SCHEMA_ABSTRACT: Final[str] = Schema.ABSTRACT
+            SCHEMA_STRUCTURAL: Final[str] = _Schema.STRUCTURAL
+            SCHEMA_AUXILIARY: Final[str] = _Schema.AUXILIARY
+            SCHEMA_ABSTRACT: Final[str] = _Schema.ABSTRACT
+
+            NAME_CN: Final[str] = _Names.CN
+            NAME_SN: Final[str] = _Names.SN
+            NAME_MAIL: Final[str] = _Names.MAIL
+            NAME_UID: Final[str] = _Names.UID
+            NAME_OBJECTCLASS: Final[str] = _Names.OBJECTCLASS
+            NAME_PERSON: Final[str] = _Names.PERSON
+            NAME_TOP: Final[str] = _Names.TOP
+            NAME_INETORGPERSON: Final[str] = _Names.INETORGPERSON
+
+            DN_TEST: Final[str] = _Dns.TEST
+            DN_TEST_USER: Final[str] = _Dns.TEST_USER
+
+            OID_CN: Final[str] = _Oids.CN
+
+            RFC_SAMPLE_LDIF_BASIC: Final[str] = _Rfc.SAMPLE_LDIF_BASIC
+            RFC_SAMPLE_LDIF_MULTIPLE: Final[str] = _Rfc.SAMPLE_LDIF_MULTIPLE
+            RFC_TEST_DN: Final[str] = _Rfc.TEST_DN
+
+            ATTR_VALUE_TEST: Final[str] = _General.ATTR_VALUE_TEST
+            ATTR_VALUE_USER: Final[str] = _General.ATTR_VALUE_USER
+
+            CONFIG_BASIC_ENTRY: Final[str] = _ConfigIntegration.BASIC_ENTRY
+            CONFIG_MULTIPLE_ENTRIES: Final[str] = _ConfigIntegration.MULTIPLE_ENTRIES
+
+            CROSS_QUIRK_OID_ATTRIBUTE_ORCLGUID: Final[str] = (
+                _CrossQuirk.OID_ATTRIBUTE_ORCLGUID
+            )
+            CROSS_QUIRK_OID_OBJECTCLASS_ORCLCONTAINER: Final[str] = (
+                _CrossQuirk.OID_OBJECTCLASS_ORCLCONTAINER
+            )
+            CROSS_QUIRK_OID_OBJECTCLASS_ORCLCONTEXT: Final[str] = (
+                _CrossQuirk.OID_OBJECTCLASS_ORCLCONTEXT
+            )
+            CROSS_QUIRK_OID_ACL_ANONYMOUS: Final[str] = _CrossQuirk.OID_ACL_ANONYMOUS
+            CROSS_QUIRK_OUD_ACI_ANONYMOUS: Final[str] = _CrossQuirk.OUD_ACI_ANONYMOUS
+            CROSS_QUIRK_OUD_ATTRIBUTE_ORCLGUID: Final[str] = (
+                _CrossQuirk.OUD_ATTRIBUTE_ORCLGUID
+            )
 
             FIXTURE_SERVERS = FrozenList(
                 [
-                    ServerType.OID,
-                    ServerType.OUD,
-                    ServerType.OPENLDAP,
-                    ServerType.OPENLDAP1,
-                    ServerType.DS389,
-                    ServerType.APACHE,
-                    ServerType.NOVELL,
-                    ServerType.TIVOLI,
-                    ServerType.AD,
-                    ServerType.RFC,
+                    _ServerType.OID,
+                    _ServerType.OUD,
+                    _ServerType.OPENLDAP,
+                    _ServerType.OPENLDAP1,
+                    _ServerType.DS389,
+                    _ServerType.APACHE,
+                    _ServerType.NOVELL,
+                    _ServerType.TIVOLI,
+                    _ServerType.AD,
+                    _ServerType.RFC,
                 ],
             )
             FIXTURE_SERVERS.freeze()
 
             FIXTURE_TYPES = FrozenList(
                 [
-                    FixtureType.SCHEMA,
-                    FixtureType.ACL,
-                    FixtureType.ENTRIES,
-                    FixtureType.INTEGRATION,
+                    _FixtureType.SCHEMA,
+                    _FixtureType.ACL,
+                    _FixtureType.ENTRIES,
+                    _FixtureType.INTEGRATION,
                 ],
             )
             FIXTURE_TYPES.freeze()
@@ -1403,101 +1442,101 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 value.value for value in FIXTURE_SERVERS
             )
             CONFIG_SERVER_CONTENT: Final[Mapping[str, str]] = MappingProxyType(
-                dict(ConfigIntegration.SERVER_CONTENT),
+                dict(_ConfigIntegration.SERVER_CONTENT),
             )
             BOOLEAN_RFC_TO_OID: Final[Mapping[str, str]] = MappingProxyType(
-                dict(Migration.Oid.RFC_TO_OID_BOOLEAN),
+                dict(_Migration.Oid.RFC_TO_OID_BOOLEAN),
             )
             BOOLEAN_OID_TO_RFC: Final[Mapping[str, str]] = MappingProxyType(
-                dict(Migration.Oid.OID_TO_RFC_BOOLEAN),
+                dict(_Migration.Oid.OID_TO_RFC_BOOLEAN),
             )
 
-            TEST_USERS = FrozenList(list(ConftestFactory.TEST_USERS))
+            TEST_USERS = FrozenList(list(_ConftestFactory.TEST_USERS))
             TEST_USERS.freeze()
 
-            RELAXED_PARSE_SCENARIOS = Scenarios.Relaxed.Parse
-            API_SCENARIOS = Scenarios.Api.Scenario
-            ACL_REGISTRY_GET_ACL_ATTRIBUTES = Scenarios.AclRegistry.GetAclAttributes
-            ACL_REGISTRY_IS_ACL_ATTRIBUTE = Scenarios.AclRegistry.IsAclAttribute
-            PROTOCOL_NAMES = Scenarios.Protocol.Names
+            RELAXED_PARSE_VALID: Final[str] = _Scenarios.Relaxed.Parse.VALID
+            RELAXED_PARSE_MALFORMED: Final[str] = _Scenarios.Relaxed.Parse.MALFORMED
+            API_SCENARIO_SIMPLE_LDIF: Final[str] = _Scenarios.Api.Scenario.SIMPLE_LDIF
+            API_SCENARIO_MULTIPLE_INSTANCES: Final[str] = (
+                _Scenarios.Api.Scenario.MULTIPLE_INSTANCES
+            )
+            PROTOCOL_NAME_SCHEMA: Final[str] = _Scenarios.Protocol.Names.SCHEMA
+            PROTOCOL_NAME_ACL: Final[str] = _Scenarios.Protocol.Names.ACL
+            PROTOCOL_NAME_ENTRY: Final[str] = _Scenarios.Protocol.Names.ENTRY
             ACL_REGISTRY_GET_ACL_ATTRIBUTES_DATA = (
-                TestData.AclRegistry.GET_ACL_ATTRIBUTES_DATA
+                _TestData.AclRegistry.GET_ACL_ATTRIBUTES_DATA
             )
             ACL_REGISTRY_IS_ACL_ATTRIBUTE_DATA = (
-                TestData.AclRegistry.IS_ACL_ATTRIBUTE_DATA
+                _TestData.AclRegistry.IS_ACL_ATTRIBUTE_DATA
             )
 
-            RELAXED_ATTRIBUTE_DEFINITIONS = TestData.Relaxed.ATTRIBUTE_DEFINITIONS
-            RELAXED_OBJECTCLASS_DEFINITIONS = (
-                TestData.Relaxed.OBJECTCLASS_DEFINITIONS
-            )
+            RELAXED_ATTRIBUTE_DEFINITIONS = _TestData.Relaxed.ATTRIBUTE_DEFINITIONS
+            RELAXED_OBJECTCLASS_DEFINITIONS = _TestData.Relaxed.OBJECTCLASS_DEFINITIONS
             RELAXED_NAME_FORMAT_VARIATIONS = FrozenList(
-                list(TestData.Relaxed.NAME_FORMAT_VARIATIONS),
+                list(_TestData.Relaxed.NAME_FORMAT_VARIATIONS),
             )
             RELAXED_NAME_FORMAT_VARIATIONS.freeze()
-            RELAXED_ACL_DEFINITIONS = TestData.Relaxed.ACL_DEFINITIONS
+            RELAXED_ACL_DEFINITIONS = _TestData.Relaxed.ACL_DEFINITIONS
 
-            SAMPLE_USER_DN = TestData.SAMPLE_USER_DN
-            TYPINGS_SAMPLE_ATTR_DICT = TestData.Typings.SAMPLE_ATTR_DICT
-            TYPINGS_SAMPLE_DISTRIBUTION = TestData.Typings.SAMPLE_DISTRIBUTION
+            SAMPLE_USER_DN = _TestData.SAMPLE_USER_DN
+            TYPINGS_SAMPLE_ATTR_DICT = _TestData.Typings.SAMPLE_ATTR_DICT
+            TYPINGS_SAMPLE_DISTRIBUTION = _TestData.Typings.SAMPLE_DISTRIBUTION
             TYPINGS_REMOVED_NAMESPACES = FrozenList(
-                list(TestData.Typings.REMOVED_NAMESPACES),
+                list(_TestData.Typings.REMOVED_NAMESPACES),
             )
             TYPINGS_REMOVED_NAMESPACES.freeze()
             TYPINGS_REMOVED_COMMON_DICT = FrozenList(
-                list(TestData.Typings.REMOVED_COMMON_DICT),
+                list(_TestData.Typings.REMOVED_COMMON_DICT),
             )
             TYPINGS_REMOVED_COMMON_DICT.freeze()
-            TYPINGS_REMOVED_ENTRY = FrozenList(list(TestData.Typings.REMOVED_ENTRY))
+            TYPINGS_REMOVED_ENTRY = FrozenList(list(_TestData.Typings.REMOVED_ENTRY))
             TYPINGS_REMOVED_ENTRY.freeze()
 
-            PROTOCOL_ATTR_PARSE = ProtocolTest.ATTR_PARSE
-            PROTOCOL_ATTR_WRITE = ProtocolTest.ATTR_WRITE
-            PROTOCOL_ATTR_CAN_HANDLE_ATTRIBUTE = (
-                ProtocolTest.ATTR_CAN_HANDLE_ATTRIBUTE
-            )
+            PROTOCOL_ATTR_PARSE = _ProtocolTest.ATTR_PARSE
+            PROTOCOL_ATTR_WRITE = _ProtocolTest.ATTR_WRITE
+            PROTOCOL_ATTR_CAN_HANDLE_ATTRIBUTE = _ProtocolTest.ATTR_CAN_HANDLE_ATTRIBUTE
             PROTOCOL_ATTR_CAN_HANDLE_OBJECTCLASS = (
-                ProtocolTest.ATTR_CAN_HANDLE_OBJECTCLASS
+                _ProtocolTest.ATTR_CAN_HANDLE_OBJECTCLASS
             )
-            PROTOCOL_ATTR_SCHEMA = ProtocolTest.ATTR_SCHEMA
-            PROTOCOL_ATTR_ACL = ProtocolTest.ATTR_ACL
-            PROTOCOL_ATTR_ENTRY = ProtocolTest.ATTR_ENTRY
-            PROTOCOL_SAMPLE_ATTR_DEF = ProtocolTest.SAMPLE_ATTR_DEF
+            PROTOCOL_ATTR_SCHEMA = _ProtocolTest.ATTR_SCHEMA
+            PROTOCOL_ATTR_ACL = _ProtocolTest.ATTR_ACL
+            PROTOCOL_ATTR_ENTRY = _ProtocolTest.ATTR_ENTRY
+            PROTOCOL_SAMPLE_ATTR_DEF = _ProtocolTest.SAMPLE_ATTR_DEF
 
             APACHE_ATTRIBUTE_TEST_CASES = FrozenList(
-                list(TestCases.Apache.ATTRIBUTE_TEST_CASES),
+                list(_TestCases.Apache.ATTRIBUTE_TEST_CASES),
             )
             APACHE_ATTRIBUTE_TEST_CASES.freeze()
             APACHE_OBJECTCLASS_TEST_CASES = FrozenList(
-                list(TestCases.Apache.OBJECTCLASS_TEST_CASES),
+                list(_TestCases.Apache.OBJECTCLASS_TEST_CASES),
             )
             APACHE_OBJECTCLASS_TEST_CASES.freeze()
             APACHE_ENTRY_TEST_CASES = FrozenList(
-                list(TestCases.Apache.ENTRY_TEST_CASES)
+                list(_TestCases.Apache.ENTRY_TEST_CASES)
             )
             APACHE_ENTRY_TEST_CASES.freeze()
 
             DS389_ATTRIBUTE_TEST_CASES = FrozenList(
-                list(TestCases.Ds389.ATTRIBUTE_TEST_CASES),
+                list(_TestCases.Ds389.ATTRIBUTE_TEST_CASES),
             )
             DS389_ATTRIBUTE_TEST_CASES.freeze()
             DS389_OBJECTCLASS_TEST_CASES = FrozenList(
-                list(TestCases.Ds389.OBJECTCLASS_TEST_CASES),
+                list(_TestCases.Ds389.OBJECTCLASS_TEST_CASES),
             )
             DS389_OBJECTCLASS_TEST_CASES.freeze()
-            DS389_ENTRY_TEST_CASES = FrozenList(list(TestCases.Ds389.ENTRY_TEST_CASES))
+            DS389_ENTRY_TEST_CASES = FrozenList(list(_TestCases.Ds389.ENTRY_TEST_CASES))
             DS389_ENTRY_TEST_CASES.freeze()
 
             NOVELL_ATTRIBUTE_TEST_CASES = FrozenList(
-                list(TestCases.Novell.ATTRIBUTE_TEST_CASES),
+                list(_TestCases.Novell.ATTRIBUTE_TEST_CASES),
             )
             NOVELL_ATTRIBUTE_TEST_CASES.freeze()
             NOVELL_OBJECTCLASS_TEST_CASES = FrozenList(
-                list(TestCases.Novell.OBJECTCLASS_TEST_CASES),
+                list(_TestCases.Novell.OBJECTCLASS_TEST_CASES),
             )
             NOVELL_OBJECTCLASS_TEST_CASES.freeze()
             NOVELL_ENTRY_TEST_CASES = FrozenList(
-                list(TestCases.Novell.ENTRY_TEST_CASES),
+                list(_TestCases.Novell.ENTRY_TEST_CASES),
             )
             NOVELL_ENTRY_TEST_CASES.freeze()
 

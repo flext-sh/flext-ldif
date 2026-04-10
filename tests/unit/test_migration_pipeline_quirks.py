@@ -31,9 +31,9 @@ class TestsFlextLdifMigrationPipelineQuirks:
         output_dir.mkdir()
         attr_enabled = "orclIsEnabled"
         attr_locked = "orclAccountLocked"
-        val_true_oid = c.Ldif.Tests.Migration.Oid.RFC_TO_OID_BOOLEAN["TRUE"]
-        val_false_oid = c.Ldif.Tests.Migration.Oid.RFC_TO_OID_BOOLEAN["FALSE"]
-        ldif_content = f"dn: {c.Ldif.Tests.DNs.TEST_USER}\n{c.Ldif.Tests.Names.OBJECTCLASS}: {c.Ldif.Tests.Names.TOP}\n{c.Ldif.Tests.Names.OBJECTCLASS}: {c.Ldif.Tests.Names.PERSON}\n{c.Ldif.Tests.Names.OBJECTCLASS}: orcluser\n{c.Ldif.Tests.Names.CN}: test\n{c.Ldif.Tests.Names.SN}: test\n{attr_enabled}: {val_true_oid}\n{attr_locked}: {val_false_oid}\n"
+        val_true_oid = c.Ldif.Tests.BOOLEAN_RFC_TO_OID["TRUE"]
+        val_false_oid = c.Ldif.Tests.BOOLEAN_RFC_TO_OID["FALSE"]
+        ldif_content = f"dn: {c.Ldif.Tests.DN_TEST_USER}\n{c.Ldif.Tests.NAME_OBJECTCLASS}: {c.Ldif.Tests.NAME_TOP}\n{c.Ldif.Tests.NAME_OBJECTCLASS}: {c.Ldif.Tests.NAME_PERSON}\n{c.Ldif.Tests.NAME_OBJECTCLASS}: orcluser\n{c.Ldif.Tests.NAME_CN}: test\n{c.Ldif.Tests.NAME_SN}: test\n{attr_enabled}: {val_true_oid}\n{attr_locked}: {val_false_oid}\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -48,8 +48,8 @@ class TestsFlextLdifMigrationPipelineQuirks:
         output_file = output_dir / "migrated.ldif"
         _ = tm.that(output_file.exists(), eq=True)
         content = output_file.read_text(encoding="utf-8")
-        val_true_rfc = c.Ldif.Tests.Migration.Oid.OID_TO_RFC_BOOLEAN[val_true_oid]
-        val_false_rfc = c.Ldif.Tests.Migration.Oid.OID_TO_RFC_BOOLEAN[val_false_oid]
+        val_true_rfc = c.Ldif.Tests.BOOLEAN_OID_TO_RFC[val_true_oid]
+        val_false_rfc = c.Ldif.Tests.BOOLEAN_OID_TO_RFC[val_false_oid]
         tm.that(content, has=f"{attr_enabled.lower()}: {val_true_rfc}")
         tm.that(content, has=f"{attr_locked.lower()}: {val_false_rfc}")
         tm.that(f"{attr_enabled.lower()}: {val_true_oid}" not in content, eq=True)
@@ -65,7 +65,7 @@ class TestsFlextLdifMigrationPipelineQuirks:
         attr_locked = "orclAccountLocked"
         val_true_rfc = "TRUE"
         val_false_rfc = "FALSE"
-        ldif_content = f"dn: {c.Ldif.Tests.DNs.TEST_USER}\n{c.Ldif.Tests.Names.OBJECTCLASS}: {c.Ldif.Tests.Names.TOP}\n{c.Ldif.Tests.Names.OBJECTCLASS}: {c.Ldif.Tests.Names.PERSON}\n{c.Ldif.Tests.Names.OBJECTCLASS}: orcluser\n{c.Ldif.Tests.Names.CN}: test\n{c.Ldif.Tests.Names.SN}: test\n{attr_enabled}: {val_true_rfc}\n{attr_locked}: {val_false_rfc}\n"
+        ldif_content = f"dn: {c.Ldif.Tests.DN_TEST_USER}\n{c.Ldif.Tests.NAME_OBJECTCLASS}: {c.Ldif.Tests.NAME_TOP}\n{c.Ldif.Tests.NAME_OBJECTCLASS}: {c.Ldif.Tests.NAME_PERSON}\n{c.Ldif.Tests.NAME_OBJECTCLASS}: orcluser\n{c.Ldif.Tests.NAME_CN}: test\n{c.Ldif.Tests.NAME_SN}: test\n{attr_enabled}: {val_true_rfc}\n{attr_locked}: {val_false_rfc}\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -80,8 +80,8 @@ class TestsFlextLdifMigrationPipelineQuirks:
         output_file = output_dir / "migrated.ldif"
         _ = tm.that(output_file.exists(), eq=True)
         content = output_file.read_text(encoding="utf-8")
-        val_true_oid = c.Ldif.Tests.Migration.Oid.RFC_TO_OID_BOOLEAN[val_true_rfc]
-        val_false_oid = c.Ldif.Tests.Migration.Oid.RFC_TO_OID_BOOLEAN[val_false_rfc]
+        val_true_oid = c.Ldif.Tests.BOOLEAN_RFC_TO_OID[val_true_rfc]
+        val_false_oid = c.Ldif.Tests.BOOLEAN_RFC_TO_OID[val_false_rfc]
         tm.that(content, has=f"{attr_enabled.lower()}: {val_true_oid}")
         tm.that(content, has=f"{attr_locked.lower()}: {val_false_oid}")
         tm.that(f"{attr_enabled.lower()}: {val_true_rfc}" not in content, eq=True)
@@ -94,7 +94,7 @@ class TestsFlextLdifMigrationPipelineQuirks:
         input_dir.mkdir()
         output_dir.mkdir()
         acl_val = "access to entry by * (read)"
-        ldif_content = f"dn: {c.Ldif.Tests.DNs.TEST_USER}\n{c.Ldif.Tests.Names.OBJECTCLASS}: {c.Ldif.Tests.Names.TOP}\n{c.Ldif.Tests.Names.OBJECTCLASS}: {c.Ldif.Tests.Names.PERSON}\n{c.Ldif.Tests.Names.CN}: test\n{c.Ldif.Tests.Names.SN}: test\n{FlextLdifServersOidConstants.ORCLACI}: {acl_val}\n"
+        ldif_content = f"dn: {c.Ldif.Tests.DN_TEST_USER}\n{c.Ldif.Tests.NAME_OBJECTCLASS}: {c.Ldif.Tests.NAME_TOP}\n{c.Ldif.Tests.NAME_OBJECTCLASS}: {c.Ldif.Tests.NAME_PERSON}\n{c.Ldif.Tests.NAME_CN}: test\n{c.Ldif.Tests.NAME_SN}: test\n{FlextLdifServersOidConstants.ORCLACI}: {acl_val}\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -125,7 +125,7 @@ class TestsFlextLdifMigrationPipelineQuirks:
         input_dir.mkdir()
         output_dir.mkdir()
         acl_val = "access to entry by * (read)"
-        ldif_content = f"dn: {c.Ldif.Tests.DNs.TEST_USER}\n{c.Ldif.Tests.Names.OBJECTCLASS}: {c.Ldif.Tests.Names.TOP}\n{c.Ldif.Tests.Names.OBJECTCLASS}: {c.Ldif.Tests.Names.PERSON}\n{c.Ldif.Tests.Names.CN}: test\n{c.Ldif.Tests.Names.SN}: test\n{FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME}: {acl_val}\n"
+        ldif_content = f"dn: {c.Ldif.Tests.DN_TEST_USER}\n{c.Ldif.Tests.NAME_OBJECTCLASS}: {c.Ldif.Tests.NAME_TOP}\n{c.Ldif.Tests.NAME_OBJECTCLASS}: {c.Ldif.Tests.NAME_PERSON}\n{c.Ldif.Tests.NAME_CN}: test\n{c.Ldif.Tests.NAME_SN}: test\n{FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME}: {acl_val}\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -149,7 +149,7 @@ class TestsFlextLdifMigrationPipelineQuirks:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-        ldif_content = f"dn: {FlextLdifServersOidConstants.SCHEMA_DN_QUIRK}\n{c.Ldif.Tests.Names.OBJECTCLASS}: {c.Ldif.Tests.Names.TOP}\n{c.Ldif.Tests.Names.OBJECTCLASS}: subschema\n{c.Ldif.Tests.Names.CN}: subschemasubentry\n"
+        ldif_content = f"dn: {FlextLdifServersOidConstants.SCHEMA_DN_QUIRK}\n{c.Ldif.Tests.NAME_OBJECTCLASS}: {c.Ldif.Tests.NAME_TOP}\n{c.Ldif.Tests.NAME_OBJECTCLASS}: subschema\n{c.Ldif.Tests.NAME_CN}: subschemasubentry\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -178,7 +178,7 @@ class TestsFlextLdifMigrationPipelineQuirks:
         output_dir.mkdir()
         attr_enabled = "orclIsEnabled"
         val_true_rfc = "TRUE"
-        ldif_content = f"dn: {c.Ldif.Tests.DNs.TEST_USER}\n{c.Ldif.Tests.Names.OBJECTCLASS}: {c.Ldif.Tests.Names.TOP}\n{c.Ldif.Tests.Names.OBJECTCLASS}: {c.Ldif.Tests.Names.PERSON}\n{c.Ldif.Tests.Names.CN}: test\n{attr_enabled}: {val_true_rfc}\n"
+        ldif_content = f"dn: {c.Ldif.Tests.DN_TEST_USER}\n{c.Ldif.Tests.NAME_OBJECTCLASS}: {c.Ldif.Tests.NAME_TOP}\n{c.Ldif.Tests.NAME_OBJECTCLASS}: {c.Ldif.Tests.NAME_PERSON}\n{c.Ldif.Tests.NAME_CN}: test\n{attr_enabled}: {val_true_rfc}\n"
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -192,5 +192,5 @@ class TestsFlextLdifMigrationPipelineQuirks:
         tm.ok(result)
         output_file = output_dir / "migrated.ldif"
         content = output_file.read_text(encoding="utf-8")
-        val_true_oid = c.Ldif.Tests.Migration.Oid.RFC_TO_OID_BOOLEAN[val_true_rfc]
+        val_true_oid = c.Ldif.Tests.BOOLEAN_RFC_TO_OID[val_true_rfc]
         tm.that(content, has=f"{attr_enabled.lower()}: {val_true_oid}")
