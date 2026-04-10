@@ -1,15 +1,9 @@
-"""Test model definitions composing src models for centralized test objects.
-
-This module provides test-specific model composition (NOT inheritance) from
-src/flext_ldif/models.py and flext_tests/models.py. Uses composition to
-avoid triggering deprecation warnings from __init_subclass__ hooks.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Test model definitions composing src models for centralized test objects."""
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from pathlib import Path
 from typing import Annotated, ClassVar
 
 from flext_tests import FlextTestsModels
@@ -20,53 +14,29 @@ from tests import t
 
 
 class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
-    """Test models - composition of TestsFlextModels + FlextLdifModels.
+    """Test models composed from the project and shared test namespaces."""
 
-    Uses composition instead of inheritance to avoid deprecation warnings
-    from TestsFlextModels.__init_subclass__ and FlextLdifModels.__init_subclass__.
-
-    Access patterns:
-    - TestsFlextLdifModels.Ldif.* - Production domain models (delegated from FlextLdifModels.Ldif)
-    - TestsFlextLdifModels.Ldif.Tests.* - Test fixtures (ACL, Schema, etc.)
-    """
-
-    # Production models namespace delegation
     class Ldif(FlextLdifModels.Ldif):
-        """Production LDIF models with nested test fixture aliases."""
+        """Production LDIF models with nested test-only models."""
 
         class Tests:
-            """Test fixture models namespace.
+            """Test fixture models namespace."""
 
-            Convenience aliases for test-only shortcuts.
-            Production code should use FlextLdifModels.Ldif.* pattern.
-            """
-
-            # ACL models for testing
             Acl = FlextLdifModels.Ldif.Acl
             AclTarget = FlextLdifModels.Ldif.AclTarget
             AclSubject = FlextLdifModels.Ldif.AclSubject
             AclPermissions = FlextLdifModels.Ldif.AclPermissions
             AclWriteMetadata = FlextLdifModels.Ldif.AclWriteMetadata
-
-            # Schema models for testing
             Syntax = FlextLdifModels.Ldif.Syntax
             SchemaAttribute = FlextLdifModels.Ldif.SchemaAttribute
             SchemaObjectClass = FlextLdifModels.Ldif.SchemaObjectClass
-
-            # Format options for testing
             WriteFormatOptions = FlextLdifModels.Ldif.WriteFormatOptions
-
-            # Service status models for testing
             ValidationServiceStatus = FlextLdifModels.Ldif.ValidationServiceStatus
             SchemaServiceStatus = FlextLdifModels.Ldif.SchemaServiceStatus
             StatisticsServiceStatus = FlextLdifModels.Ldif.StatisticsServiceStatus
-
-            # Result models for testing
             ValidationBatchResult = FlextLdifModels.Ldif.ValidationBatchResult
             ValidationMetadata = FlextLdifModels.Ldif.ValidationMetadata
             StatisticsResult = FlextLdifModels.Ldif.StatisticsResult
-
-            # Validation rules for testing
             ServerValidationRules = FlextLdifModelsSettings.ServerValidationRules
 
             class LdifTestData(FlextLdifModels.Value):
@@ -77,40 +47,41 @@ class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
                 dn: str
                 attributes: t.StrSequenceMapping
 
-            class LdifSample(BaseModel):
-                """LDIF sample with metadata for test data generation."""
+            class FixtureMetadata(BaseModel):
+                """Metadata about a discovered fixture file."""
 
                 model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
-                content: Annotated[str, Field(description="LDIF content as string")]
-                description: Annotated[
-                    str,
-                    Field(description="Human-readable description of the sample"),
+                server_type: Annotated[
+                    t.Ldif.Tests.FixtureServer,
+                    Field(description="Fixture server identifier"),
                 ]
-                expected_entries: Annotated[
+                fixture_type: Annotated[
+                    t.Ldif.Tests.FixtureKind,
+                    Field(description="Fixture category identifier"),
+                ]
+                file_path: Annotated[Path, Field(description="Fixture file path")]
+                line_count: Annotated[
                     int,
-                    Field(description="Expected number of entries in the LDIF"),
+                    Field(description="Number of lines in the fixture file"),
                 ]
-                has_binary: Annotated[
-                    bool,
-                    Field(description="Whether the sample contains binary data"),
-                ] = False
-                has_changes: Annotated[
-                    bool,
-                    Field(description="Whether the sample contains change records"),
-                ] = False
+                entry_count: Annotated[
+                    int,
+                    Field(description="Number of LDIF entries in the fixture"),
+                ]
+                size_bytes: Annotated[
+                    int,
+                    Field(description="Fixture file size in bytes"),
+                ]
 
             class AttributeTestCase(BaseModel):
-                """Unified test case for attribute detection and parsing across all quirk servers."""
+                """Unified test case for attribute detection."""
 
                 model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
-                scenario: Annotated[
-                    str, Field(description="Attribute scenario identifier")
-                ]
+                scenario: Annotated[str, Field(description="Attribute scenario")]
                 attr_definition: Annotated[
-                    str,
-                    Field(description="Schema attribute definition string"),
+                    str, Field(description="Attribute definition")
                 ]
                 expected_can_handle: Annotated[
                     bool,
@@ -126,16 +97,14 @@ class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
                 ] = None
 
             class ObjectClassTestCase(BaseModel):
-                """Unified test case for objectClass detection and parsing across all quirk servers."""
+                """Unified test case for objectClass detection."""
 
                 model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
-                scenario: Annotated[
-                    str, Field(description="ObjectClass scenario identifier")
-                ]
+                scenario: Annotated[str, Field(description="ObjectClass scenario")]
                 oc_definition: Annotated[
                     str,
-                    Field(description="Schema objectClass definition string"),
+                    Field(description="ObjectClass definition"),
                 ]
                 expected_can_handle: Annotated[
                     bool,
@@ -155,17 +124,15 @@ class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
                 ] = None
 
             class EntryTestCase(BaseModel):
-                """Unified test case for entry detection across all quirk servers."""
+                """Unified test case for entry detection."""
 
                 model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
-                scenario: Annotated[
-                    str, Field(description="Entry detection scenario identifier")
-                ]
-                entry_dn: Annotated[str, Field(description="Entry distinguished name")]
+                scenario: Annotated[str, Field(description="Entry scenario")]
+                entry_dn: Annotated[str, Field(description="Entry DN")]
                 attributes: Annotated[
                     t.MutableStrSequenceMapping,
-                    Field(description="Entry attributes mapped by name"),
+                    Field(description="Entry attributes"),
                 ]
                 expected_can_handle: Annotated[
                     bool,
@@ -173,63 +140,55 @@ class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
                 ]
 
             class ProtocolServer(BaseModel):
-                """Server implementation for schema protocol testing."""
+                """Server implementation for protocol testing."""
 
                 __test__ = False
                 model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
-                name: Annotated[
-                    str, Field(description="Protocol server implementation name")
-                ]
-                server_class: Annotated[
-                    type, Field(description="Server implementation class")
-                ]
-                schema_class: Annotated[
-                    type, Field(description="Schema implementation class")
-                ]
+                name: Annotated[str, Field(description="Implementation name")]
+                server_class: Annotated[type, Field(description="Server class")]
+                schema_class: Annotated[type, Field(description="Schema class")]
+                fixture_servers: Annotated[
+                    Sequence[t.Ldif.Tests.FixtureServer],
+                    Field(description="Servers covered by the implementation"),
+                ] = ()
 
             class OidServerStub:
-                """Stub OID server for testing."""
+                """Minimal nested server stub for server-type extraction tests."""
 
                 class Constants:
-                    """OID server constants."""
+                    """Server constants stub used by detection helpers."""
 
                     SERVER_TYPE = "oid"
 
                 class Entry:
-                    """OID entry stub."""
+                    """Nested entry stub preserving the server namespace."""
 
             class OudServerStub:
-                """Stub OUD server for testing."""
+                """Minimal server stub for server-type extraction tests."""
 
                 class Constants:
-                    """OUD server constants."""
+                    """Server constants stub used by detection helpers."""
 
                     SERVER_TYPE = "oud"
 
             class AclTestCase(BaseModel):
-                """Unified test case for ACL handling across all quirk servers."""
+                """Unified test case for ACL handling."""
 
                 model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
-                scenario: Annotated[str, Field(description="ACL scenario identifier")]
-                acl_line: Annotated[
-                    str | None,
-                    Field(description="ACL line under test"),
-                ] = None
+                scenario: Annotated[str, Field(description="ACL scenario")]
+                acl_line: Annotated[str | None, Field(description="ACL line")] = None
                 expected_can_handle: Annotated[
                     bool,
                     Field(description="Expected can_handle result"),
                 ] = False
                 expected_success: Annotated[
                     bool,
-                    Field(description="Expected parse success state"),
+                    Field(description="Expected parse success"),
                 ] = False
 
 
 m = TestsFlextLdifModels
 
-__all__ = [
-    "TestsFlextLdifModels",
-    "m",
-]
+__all__ = ["TestsFlextLdifModels", "m"]

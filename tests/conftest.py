@@ -9,15 +9,30 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
-from enum import StrEnum, unique
+import contextlib
+import time
+from collections.abc import (
+    Callable,
+    Generator,
+    Sequence,
+)
 from pathlib import Path
-from typing import Annotated, ClassVar, Final
 
 import pytest
-from pydantic import BaseModel, ConfigDict, Field
 
-from flext_ldif import FlextLdif, FlextLdifSettings, ldif
+from flext_ldif import (
+    FlextLdif,
+    FlextLdifConversion,
+    FlextLdifParser,
+    FlextLdifServer,
+    FlextLdifServersBase,
+    FlextLdifServersBaseSchema,
+    FlextLdifServersBaseSchemaAcl,
+    FlextLdifSettings,
+    FlextLdifWriter,
+    ldif,
+)
+from tests import c, m, p, t, u
 
 pytest_plugins = ["flext_tests.conftest_plugin"]
 
@@ -28,6 +43,575 @@ def ldif_settings(
 ) -> FlextLdifSettings:
     """Provide clean FlextLdifSettings for tests."""
     return settings_factory(FlextLdifSettings)
+
+
+@pytest.fixture
+def real_entry() -> m.Ldif.Entry:
+    """Provide a real Entry model for testing."""
+    return u.Ldif.Tests.create_real_entry()
+
+
+@pytest.fixture
+def real_ldif_content() -> str:
+    """Provide real LDIF content for testing."""
+    return u.Ldif.Tests.create_real_ldif_content()
+
+
+@pytest.fixture(params=u.Ldif.Tests.parametrize_real_data())
+def parametrized_real_data(
+    request: pytest.FixtureRequest,
+) -> m.Ldif.Tests.LdifTestData:
+    """Provide parametrized real test data."""
+    return request.param
+
+
+@pytest.fixture
+def large_test_dataset() -> str:
+    """Provide large dataset for performance testing."""
+    return u.Ldif.Tests.create_real_ldif_content(entries_count=100)
+
+
+@pytest.fixture
+def api() -> FlextLdif:
+    """Create ldif API instance for testing."""
+    return ldif.get_instance()
+
+
+@pytest.fixture
+def parser() -> FlextLdifParser:
+    """Create ldif parser service for testing."""
+    return FlextLdifParser()
+
+
+@pytest.fixture
+def writer() -> FlextLdifWriter:
+    """Create ldif writer service for testing."""
+    return FlextLdifWriter()
+
+
+@pytest.fixture
+def oid_schema_fixture() -> str:
+    """Load OID schema fixture data."""
+    return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OID, c.Ldif.Tests.SCHEMA)
+
+
+@pytest.fixture
+def oid_acl_fixture() -> str:
+    """Load OID ACL fixture data."""
+    return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OID, c.Ldif.Tests.ACL)
+
+
+@pytest.fixture
+def oid_entries_fixture() -> str:
+    """Load OID entries fixture data."""
+    return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OID, c.Ldif.Tests.ENTRIES)
+
+
+@pytest.fixture
+def oid_integration_fixture() -> str:
+    """Load OID integration fixture data."""
+    return u.Ldif.Tests.load_fixture(
+        c.Ldif.Tests.OID,
+        c.Ldif.Tests.INTEGRATION,
+    )
+
+
+@pytest.fixture
+def oid_schema_entries(
+    api: FlextLdif,
+    oid_schema_fixture: str,
+) -> Sequence[m.Ldif.Entry]:
+    """Parse OID schema fixture into Entry models."""
+    parse_response: m.Ldif.ParseResponse = u.expect_success(
+        api.parse_ldif(oid_schema_fixture),
+        message="OID schema parsing failed",
+    )
+    return parse_response.entries
+
+
+@pytest.fixture
+def oid_entries(
+    api: FlextLdif,
+    oid_entries_fixture: str,
+) -> Sequence[m.Ldif.Entry]:
+    """Parse OID entries fixture into Entry models."""
+    parse_response: m.Ldif.ParseResponse = u.expect_success(
+        api.parse_ldif(oid_entries_fixture),
+        message="OID entries parsing failed",
+    )
+    return parse_response.entries
+
+
+@pytest.fixture
+def oud_schema_fixture() -> str:
+    """Load OUD schema fixture data."""
+    return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OUD, c.Ldif.Tests.SCHEMA)
+
+
+@pytest.fixture
+def oud_acl_fixture() -> str:
+    """Load OUD ACL fixture data."""
+    return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OUD, c.Ldif.Tests.ACL)
+
+
+@pytest.fixture
+def oud_entries_fixture() -> str:
+    """Load OUD entries fixture data."""
+    return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OUD, c.Ldif.Tests.ENTRIES)
+
+
+@pytest.fixture
+def oud_integration_fixture() -> str:
+    """Load OUD integration fixture data."""
+    return u.Ldif.Tests.load_fixture(
+        c.Ldif.Tests.OUD,
+        c.Ldif.Tests.INTEGRATION,
+    )
+
+
+@pytest.fixture
+def oud_schema_entries(
+    api: FlextLdif,
+    oud_schema_fixture: str,
+) -> Sequence[m.Ldif.Entry]:
+    """Parse OUD schema fixture into Entry models."""
+    parse_response: m.Ldif.ParseResponse = u.expect_success(
+        api.parse_ldif(oud_schema_fixture),
+        message="OUD schema parsing failed",
+    )
+    return parse_response.entries
+
+
+@pytest.fixture
+def oud_entries(
+    api: FlextLdif,
+    oud_entries_fixture: str,
+) -> Sequence[m.Ldif.Entry]:
+    """Parse OUD entries fixture into Entry models."""
+    parse_response: m.Ldif.ParseResponse = u.expect_success(
+        api.parse_ldif(oud_entries_fixture),
+        message="OUD entries parsing failed",
+    )
+    return parse_response.entries
+
+
+@pytest.fixture
+def openldap_schema_fixture() -> str:
+    """Load OpenLDAP schema fixture data."""
+    return u.Ldif.Tests.load_fixture(
+        c.Ldif.Tests.OPENLDAP,
+        c.Ldif.Tests.SCHEMA,
+    )
+
+
+@pytest.fixture
+def openldap_acl_fixture() -> str:
+    """Load OpenLDAP ACL fixture data."""
+    return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OPENLDAP, c.Ldif.Tests.ACL)
+
+
+@pytest.fixture
+def openldap_entries_fixture() -> str:
+    """Load OpenLDAP entries fixture data."""
+    return u.Ldif.Tests.load_fixture(
+        c.Ldif.Tests.OPENLDAP,
+        c.Ldif.Tests.ENTRIES,
+    )
+
+
+@pytest.fixture
+def openldap_integration_fixture() -> str:
+    """Load OpenLDAP integration fixture data."""
+    return u.Ldif.Tests.load_fixture(
+        c.Ldif.Tests.OPENLDAP,
+        c.Ldif.Tests.INTEGRATION,
+    )
+
+
+@pytest.fixture
+def openldap_schema_entries(
+    api: FlextLdif,
+    openldap_schema_fixture: str,
+) -> Sequence[m.Ldif.Entry]:
+    """Parse OpenLDAP schema fixture into Entry models."""
+    parse_response: m.Ldif.ParseResponse = u.expect_success(
+        api.parse_ldif(openldap_schema_fixture),
+        message="OpenLDAP schema parsing failed",
+    )
+    return parse_response.entries
+
+
+@pytest.fixture
+def openldap_entries(
+    api: FlextLdif,
+    openldap_entries_fixture: str,
+) -> Sequence[m.Ldif.Entry]:
+    """Parse OpenLDAP entries fixture into Entry models."""
+    parse_response: m.Ldif.ParseResponse = u.expect_success(
+        api.parse_ldif(openldap_entries_fixture),
+        message="OpenLDAP entries parsing failed",
+    )
+    return parse_response.entries
+
+
+@pytest.fixture
+def rfc_schema_fixture() -> str:
+    """Load RFC reference schema fixture data."""
+    return u.Ldif.Tests.load_fixture(c.Ldif.Tests.RFC, c.Ldif.Tests.SCHEMA)
+
+
+@pytest.fixture
+def rfc_schema_entries(
+    api: FlextLdif,
+    rfc_schema_fixture: str,
+) -> Sequence[m.Ldif.Entry]:
+    """Parse RFC schema fixture into Entry models."""
+    parse_response: m.Ldif.ParseResponse = u.expect_success(
+        api.parse_ldif(rfc_schema_fixture),
+        message="RFC schema parsing failed",
+    )
+    return parse_response.entries
+
+
+@pytest.fixture
+def all_schema_fixtures() -> t.StrMapping:
+    """Provide all schema fixtures by server type."""
+    return {
+        c.Ldif.Tests.OID: u.Ldif.Tests.load_fixture(
+            c.Ldif.Tests.OID,
+            c.Ldif.Tests.SCHEMA,
+        ),
+        c.Ldif.Tests.OUD: u.Ldif.Tests.load_fixture(
+            c.Ldif.Tests.OUD,
+            c.Ldif.Tests.SCHEMA,
+        ),
+        c.Ldif.Tests.OPENLDAP: u.Ldif.Tests.load_fixture(
+            c.Ldif.Tests.OPENLDAP,
+            c.Ldif.Tests.SCHEMA,
+        ),
+        c.Ldif.Tests.RFC: u.Ldif.Tests.load_fixture(
+            c.Ldif.Tests.RFC,
+            c.Ldif.Tests.SCHEMA,
+        ),
+    }
+
+
+@pytest.fixture
+def all_entries_fixtures() -> t.StrMapping:
+    """Provide all entries fixtures by server type."""
+    return {
+        c.Ldif.Tests.OID: u.Ldif.Tests.load_fixture(
+            c.Ldif.Tests.OID,
+            c.Ldif.Tests.ENTRIES,
+        ),
+        c.Ldif.Tests.OUD: u.Ldif.Tests.load_fixture(
+            c.Ldif.Tests.OUD,
+            c.Ldif.Tests.ENTRIES,
+        ),
+        c.Ldif.Tests.OPENLDAP: u.Ldif.Tests.load_fixture(
+            c.Ldif.Tests.OPENLDAP,
+            c.Ldif.Tests.ENTRIES,
+        ),
+    }
+
+
+@pytest.fixture
+def all_acl_fixtures() -> t.StrMapping:
+    """Provide all ACL fixtures by server type."""
+    return {
+        c.Ldif.Tests.OID: u.Ldif.Tests.load_fixture(
+            c.Ldif.Tests.OID,
+            c.Ldif.Tests.ACL,
+        ),
+        c.Ldif.Tests.OUD: u.Ldif.Tests.load_fixture(
+            c.Ldif.Tests.OUD,
+            c.Ldif.Tests.ACL,
+        ),
+        c.Ldif.Tests.OPENLDAP: u.Ldif.Tests.load_fixture(
+            c.Ldif.Tests.OPENLDAP,
+            c.Ldif.Tests.ACL,
+        ),
+    }
+
+
+@pytest.fixture
+def all_integration_fixtures() -> t.StrMapping:
+    """Provide all integration fixtures by server type."""
+    return {
+        c.Ldif.Tests.OID: u.Ldif.Tests.load_fixture(
+            c.Ldif.Tests.OID,
+            c.Ldif.Tests.INTEGRATION,
+        ),
+        c.Ldif.Tests.OUD: u.Ldif.Tests.load_fixture(
+            c.Ldif.Tests.OUD,
+            c.Ldif.Tests.INTEGRATION,
+        ),
+        c.Ldif.Tests.OPENLDAP: u.Ldif.Tests.load_fixture(
+            c.Ldif.Tests.OPENLDAP,
+            c.Ldif.Tests.INTEGRATION,
+        ),
+    }
+
+
+@pytest.fixture
+def tmp_ldif_path(tmp_path: Path) -> Path:
+    """Create temporary LDIF file path."""
+    return tmp_path / "test_output.ldif"
+
+
+@pytest.fixture
+def fixtures_dir() -> Path:
+    """Get path to fixtures directory."""
+    return c.Ldif.Tests.FIXTURES_DIR
+
+
+@pytest.fixture
+def conversion_matrix() -> FlextLdifConversion:
+    """Create FlextLdifConversion instance for conversion tests."""
+    return FlextLdifConversion()
+
+
+@pytest.fixture
+def server() -> FlextLdifServer:
+    """Get FlextLdifServer instance for quirk management."""
+    return FlextLdifServer.get_global_instance()
+
+
+@pytest.fixture
+def oid_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
+    """Get OID server quirk via FlextLdifServer API."""
+    return u.expect_success(
+        server.quirk("oid"),
+        message="OID quirk must be registered",
+    )
+
+
+@pytest.fixture
+def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
+    """Get OUD server quirk via FlextLdifServer API."""
+    return u.expect_success(
+        server.get_base_quirk("oud"),
+        message="OUD quirk must be registered",
+    )
+
+
+@pytest.fixture
+def oid_schema_quirk(
+    oid_quirk: FlextLdifServersBase,
+) -> FlextLdifServersBaseSchema:
+    """Create OID schema quirk instance for conversion tests."""
+    return oid_quirk.schema_quirk
+
+
+@pytest.fixture
+def oud_schema_quirk(
+    oud_quirk: FlextLdifServersBase,
+) -> FlextLdifServersBaseSchema:
+    """Create OUD schema quirk instance for conversion tests."""
+    return oud_quirk.schema_quirk
+
+
+@pytest.fixture
+def oid_acl_quirk(
+    oid_quirk: FlextLdifServersBase,
+) -> FlextLdifServersBaseSchemaAcl:
+    """Create OID ACL quirk instance for conversion tests."""
+    return oid_quirk.acl_quirk
+
+
+@pytest.fixture
+def oud_acl_quirk(
+    oud_quirk: FlextLdifServersBase,
+) -> FlextLdifServersBaseSchemaAcl:
+    """Create OUD ACL quirk instance for conversion tests."""
+    return oud_quirk.acl_quirk
+
+
+@pytest.fixture(scope="session")
+def ldap_container(worker_id: str) -> t.ContainerMapping:
+    """Ensure shared OpenLDAP container is available for integration tests.
+
+    Uses centralized infrastructure: c.Ldif.Tests for constants,
+    u.Ldif.Tests.FileLock for locking, u.Ldif.Tests.get_admin_credentials
+    for credential resolution.
+    """
+    docker_control = u.Ldif.Tests.get_docker_control(worker_id)
+    server_url = f"ldap://localhost:{c.Ldif.Tests.DOCKER_PORT}"
+    lock = u.Ldif.Tests.FileLock(
+        Path.home() / ".flext" / f"{c.Ldif.Tests.DOCKER_CONTAINER_NAME}.lock",
+    )
+    with lock:
+        start_result = docker_control.start_existing_container(
+            c.Ldif.Tests.DOCKER_CONTAINER_NAME,
+        )
+        if start_result.is_failure:
+            compose_file = str(
+                c.Ldif.Tests.WORKSPACE_ROOT / c.Ldif.Tests.DOCKER_COMPOSE_FILE_REL
+            )
+            compose_result = docker_control.compose_up(
+                compose_file,
+                c.Ldif.Tests.DOCKER_SERVICE_NAME,
+            )
+            if compose_result.is_failure:
+                pytest.skip(
+                    f"Could not start shared OpenLDAP container: {compose_result.error}",
+                )
+        port_result = docker_control.wait_for_port_ready(
+            "localhost",
+            c.Ldif.Tests.DOCKER_PORT,
+            15,
+        )
+        if port_result.is_failure or not port_result.value:
+            pytest.skip(
+                f"LDAP container port {c.Ldif.Tests.DOCKER_PORT} is not ready",
+            )
+        admin_dn, admin_password = u.Ldif.Tests.get_admin_credentials()
+        # Verify LDAP bind readiness
+        waited = 0.0
+        max_wait = 10.0
+        while waited < max_wait:
+            try:
+                srv = u.Ldif.Tests.create_server_from_url(server_url)
+                conn = u.Ldif.Tests.create_connection(
+                    srv,
+                    user=admin_dn,
+                    password=admin_password,
+                    auto_bind=False,
+                )
+                bound: bool = bool(conn.bind())
+                if bound:
+                    conn.unbind()
+                    break
+                conn.unbind()
+            except (
+                t.Ldap.LDAPException,
+                ConnectionError,
+                TimeoutError,
+                OSError,
+            ):
+                pass
+            time.sleep(1.0)
+            waited += 1.0
+        else:
+            pytest.skip("LDAP container is running but bind is not ready")
+    return {
+        "server_url": server_url,
+        "host": "localhost",
+        "bind_dn": admin_dn,
+        "password": admin_password,
+        "base_dn": c.Ldif.Tests.DOCKER_BASE_DN,
+        "port": c.Ldif.Tests.DOCKER_PORT,
+        "use_ssl": False,
+        "worker_id": worker_id,
+    }
+
+
+@pytest.fixture(scope="session")
+def ldap_container_shared(ldap_container: t.ContainerMapping) -> str:
+    """Provide LDAP connection URL for tests requiring Docker container."""
+    default_url = f"ldap://localhost:{c.Ldif.Tests.DOCKER_PORT}"
+    return str(ldap_container.get("server_url", default_url))
+
+
+@pytest.fixture
+def unique_dn_suffix(worker_id: str, request: pytest.FixtureRequest) -> str:
+    """Build a unique suffix for LDAP DNs per test execution."""
+    getattr(request, "node", None)
+    test_name: tuple[str, ...] = ()
+    test_name_clean: str = "".join(
+        ch if ch.isalnum() or ch in {"-", "_"} else "-" for ch in test_name
+    )[:20]
+    return f"{worker_id}-{int(time.time() * 1000)}-{test_name_clean}"
+
+
+@pytest.fixture
+def make_test_username(unique_dn_suffix: str) -> Callable[[str], str]:
+    """Return a factory that creates unique usernames."""
+
+    def _make(username: str) -> str:
+        return f"{username}-{unique_dn_suffix}"
+
+    return _make
+
+
+@pytest.fixture
+def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
+    """Return a factory that creates unique test base DNs."""
+
+    def _make(ou: str) -> str:
+        return f"ou={ou}-{unique_dn_suffix},{c.Ldif.Tests.DOCKER_BASE_DN}"
+
+    return _make
+
+
+@pytest.fixture
+def ldap_connection(
+    ldap_container: t.ContainerMapping,
+) -> Generator[p.Ldap.Ldap3Connection]:
+    """Provide a bound LDAP connection or skip when unavailable."""
+    server_url = str(
+        ldap_container.get(
+            "server_url", f"ldap://localhost:{c.Ldif.Tests.DOCKER_PORT}"
+        ),
+    )
+    bind_dn = str(ldap_container.get("bind_dn", c.Ldif.Tests.DOCKER_ADMIN_DN))
+    password = str(
+        ldap_container.get("password", c.Ldif.Tests.DOCKER_ADMIN_PASSWORD),
+    )
+    srv = u.Ldif.Tests.create_server_from_url(server_url)
+    conn = u.Ldif.Tests.create_connection(
+        srv,
+        user=bind_dn,
+        password=password,
+        auto_bind=False,
+    )
+    try:
+        bind_ok: bool = bool(conn.bind())
+        if not bind_ok:
+            pytest.skip(
+                f"LDAP server not available at {server_url} for bind_dn={bind_dn}",
+            )
+    except (
+        t.Ldap.LDAPException,
+        ConnectionError,
+        TimeoutError,
+        OSError,
+    ) as exc:
+        pytest.skip(f"LDAP server not available: {exc}")
+    yield conn
+    conn.unbind()
+
+
+@pytest.fixture
+def clean_test_ou(
+    ldap_connection: p.Ldap.Ldap3Connection,
+    make_test_base_dn: Callable[[str], str],
+) -> Generator[str]:
+    """Create and clean up an isolated OU for integration tests."""
+    test_ou_dn = make_test_base_dn("FlextLdifTests")
+    with contextlib.suppress(Exception):
+        ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
+        entries: Sequence[p.Ldap.Ldap3Entry] = list(ldap_connection.entries)
+        if entries:
+            dns_to_delete: t.StrSequence = [str(entry.entry_dn) for entry in entries]
+            for dn in reversed(dns_to_delete):
+                with contextlib.suppress(Exception):
+                    ldap_connection.delete(dn)
+    with contextlib.suppress(Exception):
+        ldap_connection.add(
+            test_ou_dn,
+            ["organizationalUnit"],
+            {"ou": "FlextLdifTests"},
+        )
+    yield test_ou_dn
+    with contextlib.suppress(Exception):
+        ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
+        entries2: Sequence[p.Ldap.Ldap3Entry] = list(ldap_connection.entries)
+        if entries2:
+            dns_to_delete2: t.StrSequence = [str(entry.entry_dn) for entry in entries2]
+            for dn in reversed(dns_to_delete2):
+                with contextlib.suppress(Exception):
+                    ldap_connection.delete(dn)
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -44,565 +628,3 @@ def pytest_configure(config: pytest.Config) -> None:
 def flext_ldif() -> FlextLdif:
     """Provide ldif instance for tests."""
     return ldif.get_instance()
-
-
-class FlextLdifFixtures:
-    """FLEXT LDIF fixture loading infrastructure.
-
-    Provides standardized access to test fixtures for different LDAP servers.
-    Follows FLEXT architectural patterns with nested classes for organization.
-
-    Usage:
-        # Generic loading
-        loader = FlextLdifFixtures.Loader()
-        oid_schema = loader.load(FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.SCHEMA)
-
-        # Server-specific loading (singleton pattern for performance)
-        oid = FlextLdifFixtures.get_oid()  # Cached singleton
-        schema = oid.schema()
-        acl = oid.acl()
-
-        # Metadata inspection
-        metadata = loader.get_metadata(FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.SCHEMA)
-    """
-
-    _instances: ClassVar[
-        dict[
-            str,
-            FlextLdifFixtures.OID
-            | FlextLdifFixtures.OUD
-            | FlextLdifFixtures.OpenLDAP
-            | FlextLdifFixtures.Loader,
-        ]
-    ] = {}
-
-    @classmethod
-    def get_oid(cls) -> FlextLdifFixtures.OID:
-        """Get singleton OID fixture loader."""
-        if "oid" not in cls._instances:
-            cls._instances["oid"] = cls.OID()
-        instance = cls._instances["oid"]
-        assert isinstance(instance, cls.OID)
-        return instance
-
-    @classmethod
-    def get_oud(cls) -> FlextLdifFixtures.OUD:
-        """Get singleton OUD fixture loader."""
-        if "oud" not in cls._instances:
-            cls._instances["oud"] = cls.OUD()
-        instance = cls._instances["oud"]
-        assert isinstance(instance, cls.OUD)
-        return instance
-
-    @classmethod
-    def get_openldap(cls) -> FlextLdifFixtures.OpenLDAP:
-        """Get singleton OpenLDAP fixture loader."""
-        if "openldap" not in cls._instances:
-            cls._instances["openldap"] = cls.OpenLDAP()
-        instance = cls._instances["openldap"]
-        assert isinstance(instance, cls.OpenLDAP)
-        return instance
-
-    @classmethod
-    def get_loader(cls) -> FlextLdifFixtures.Loader:
-        """Get singleton generic fixture loader."""
-        if "loader" not in cls._instances:
-            cls._instances["loader"] = cls.Loader()
-        instance = cls._instances["loader"]
-        assert isinstance(instance, cls.Loader)
-        return instance
-
-    @unique
-    class ServerType(StrEnum):
-        """Supported LDAP server types with quirks."""
-
-        RFC = "rfc"
-        OID = "oid"
-        OUD = "oud"
-        OPENLDAP = "openldap"
-        OPENLDAP1 = "openldap1"
-        DS389 = "ds389"
-        APACHE = "apache"
-        NOVELL = "novell"
-        TIVOLI = "tivoli"
-        AD = "ad"
-
-    @unique
-    class FixtureType(StrEnum):
-        """Types of fixtures available for each server."""
-
-        SCHEMA = "schema"
-        ACL = "acl"
-        ENTRIES = "entries"
-        INTEGRATION = "integration"
-
-    class Metadata(BaseModel):
-        """Metadata about a loaded fixture."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-
-        server_type: Annotated[
-            FlextLdifFixtures.ServerType,
-            Field(
-                description="LDAP server type for the fixture",
-            ),
-        ]
-        fixture_type: Annotated[
-            FlextLdifFixtures.FixtureType,
-            Field(
-                description="Fixture category identifier",
-            ),
-        ]
-        file_path: Annotated[Path, Field(description="Fixture file path")]
-        line_count: Annotated[
-            int,
-            Field(description="Number of lines in the fixture file"),
-        ]
-        entry_count: Annotated[
-            int,
-            Field(description="Number of LDIF entries in the fixture"),
-        ]
-        size_bytes: Annotated[int, Field(description="Fixture file size in bytes")]
-
-    class Loader:
-        """Generic fixture loader for all LDAP server types.
-
-        Provides standardized access to test fixtures with consistent naming.
-        Each server has a directory structure:
-            tests/fixtures/{server_type}/
-                {server_type}_schema_fixtures.ldif
-                {server_type}_acl_fixtures.ldif
-                {server_type}_entries_fixtures.ldif
-                {server_type}_integration_fixtures.ldif
-        """
-
-        _content_cache: ClassVar[
-            MutableMapping[
-                tuple[FlextLdifFixtures.ServerType, FlextLdifFixtures.FixtureType],
-                str,
-            ]
-        ] = {}
-        _metadata_cache: ClassVar[MutableMapping[Path, FlextLdifFixtures.Metadata]] = {}
-
-        def __init__(self, fixtures_root: Path | None = None) -> None:
-            """Initialize fixture loader.
-
-            Args:
-                fixtures_root: Root directory for fixtures. Defaults to tests/fixtures/
-
-            """
-            if fixtures_root is None:
-                conftest_dir = Path(__file__).parent
-                fixtures_root = conftest_dir / "fixtures"
-            self.fixtures_root: Final[Path] = fixtures_root
-
-        def _get_fixture_path(
-            self,
-            server_type: FlextLdifFixtures.ServerType,
-            fixture_type: FlextLdifFixtures.FixtureType,
-        ) -> Path:
-            """Get path to a specific fixture file.
-
-            Args:
-                server_type: LDAP server type
-                fixture_type: Type of fixture to load
-
-            Returns:
-                Path: Path to fixture file
-
-            Raises:
-                FileNotFoundError: If fixture file doesn't exist
-
-            """
-            server_dir = self.fixtures_root / server_type.value
-            filename = f"{server_type.value}_{fixture_type.value}_fixtures.ldif"
-            file_path = server_dir / filename
-            if not file_path.exists():
-                msg = f"Fixture file not found: {file_path}\nExpected: {server_type.value}/{filename}"
-                raise FileNotFoundError(msg)
-            return file_path
-
-        def load(
-            self,
-            server_type: FlextLdifFixtures.ServerType,
-            fixture_type: FlextLdifFixtures.FixtureType,
-        ) -> str:
-            """Load a specific fixture file.
-
-            Args:
-                server_type: LDAP server type
-                fixture_type: Type of fixture to load
-
-            Returns:
-                str: LDIF content from fixture file
-
-            Raises:
-                FileNotFoundError: If fixture file doesn't exist
-
-            """
-            cache_key = (server_type, fixture_type)
-            if cache_key not in self._content_cache:
-                file_path = self._get_fixture_path(server_type, fixture_type)
-                self._content_cache[cache_key] = file_path.read_text(encoding="utf-8")
-            return self._content_cache[cache_key]
-
-        def load_all(
-            self,
-            server_type: FlextLdifFixtures.ServerType,
-        ) -> Mapping[FlextLdifFixtures.FixtureType, str]:
-            """Load all fixtures for a server type.
-
-            Args:
-                server_type: Server type to load fixtures for
-
-            Returns:
-                Dict mapping fixture types to their content strings
-
-            """
-            fixtures: MutableMapping[FlextLdifFixtures.FixtureType, str] = {}
-            fixture_types = [
-                FlextLdifFixtures.FixtureType.SCHEMA,
-                FlextLdifFixtures.FixtureType.ACL,
-                FlextLdifFixtures.FixtureType.ENTRIES,
-                FlextLdifFixtures.FixtureType.INTEGRATION,
-            ]
-            for fixture_type in fixture_types:
-                try:
-                    fixtures[fixture_type] = self.load(server_type, fixture_type)
-                except FileNotFoundError:
-                    continue
-            return fixtures
-
-        def get_available_servers(self) -> Sequence[FlextLdifFixtures.ServerType]:
-            """Get list of servers that have fixtures available.
-
-            Returns:
-                list: List of server types with fixture directories
-
-            """
-            available: MutableSequence[FlextLdifFixtures.ServerType] = []
-            server_types = [
-                FlextLdifFixtures.ServerType.OID,
-                FlextLdifFixtures.ServerType.OUD,
-                FlextLdifFixtures.ServerType.OPENLDAP,
-                FlextLdifFixtures.ServerType.OPENLDAP1,
-                FlextLdifFixtures.ServerType.DS389,
-                FlextLdifFixtures.ServerType.APACHE,
-                FlextLdifFixtures.ServerType.NOVELL,
-                FlextLdifFixtures.ServerType.TIVOLI,
-                FlextLdifFixtures.ServerType.AD,
-            ]
-            for server_type in server_types:
-                server_dir = self.fixtures_root / server_type.value
-                if server_dir.exists() and server_dir.is_dir():
-                    available.append(server_type)
-            return available
-
-        def get_available_fixtures(
-            self,
-            server_type: FlextLdifFixtures.ServerType,
-        ) -> Sequence[FlextLdifFixtures.FixtureType]:
-            """Get list of available fixture types for a server.
-
-            Args:
-                server_type: LDAP server type
-
-            Returns:
-                list: List of available fixture types for this server
-
-            """
-            available: MutableSequence[FlextLdifFixtures.FixtureType] = []
-            for fixture_type in FlextLdifFixtures.FixtureType.__members__.values():
-                try:
-                    self._get_fixture_path(server_type, fixture_type)
-                    available.append(fixture_type)
-                except FileNotFoundError:
-                    continue
-            return available
-
-        def get_metadata(
-            self,
-            server_type: FlextLdifFixtures.ServerType,
-            fixture_type: FlextLdifFixtures.FixtureType,
-        ) -> FlextLdifFixtures.Metadata:
-            """Get metadata about a fixture file.
-
-            Args:
-                server_type: LDAP server type
-                fixture_type: Type of fixture
-
-            Returns:
-                FlextLdifFixtures.Metadata: Metadata about the fixture file
-
-            Raises:
-                FileNotFoundError: If fixture file doesn't exist
-
-            """
-            file_path = self._get_fixture_path(server_type, fixture_type)
-            if file_path in self._metadata_cache:
-                return self._metadata_cache[file_path]
-            content = self.load(server_type, fixture_type)
-            lines = content.splitlines()
-            entry_count = sum(1 for line in lines if line.strip().startswith("dn:"))
-            metadata = FlextLdifFixtures.Metadata(
-                server_type=server_type,
-                fixture_type=fixture_type,
-                file_path=file_path,
-                line_count=len(lines),
-                entry_count=entry_count,
-                size_bytes=file_path.stat().st_size,
-            )
-            self._metadata_cache[file_path] = metadata
-            return metadata
-
-        def fixture_exists(
-            self,
-            server_type: FlextLdifFixtures.ServerType,
-            fixture_type: FlextLdifFixtures.FixtureType,
-        ) -> bool:
-            """Check if a fixture file exists.
-
-            Args:
-                server_type: LDAP server type
-                fixture_type: Type of fixture
-
-            Returns:
-                bool: True if fixture exists, False otherwise
-
-            """
-            try:
-                self._get_fixture_path(server_type, fixture_type)
-                return True
-            except FileNotFoundError:
-                return False
-
-    class OID:
-        """Oracle Internet Directory fixture loader.
-
-        Provides direct access to OID-specific fixtures without enum parameters.
-
-        Usage:
-            oid = FlextLdifFixtures.OID()
-            schema = oid.schema()
-            integration = oid.integration()
-        """
-
-        def __init__(self, fixtures_root: Path | None = None) -> None:
-            """Initialize OID fixture loader.
-
-            Args:
-                fixtures_root: Root directory for fixtures. Defaults to tests/fixtures/
-
-            """
-            self._loader = FlextLdifFixtures.Loader(fixtures_root)
-
-        def schema(self) -> str:
-            """Load OID schema fixtures.
-
-            Returns:
-                str: LDIF content with OID schema definitions
-
-            """
-            return self._loader.load(
-                FlextLdifFixtures.ServerType.OID,
-                FlextLdifFixtures.FixtureType.SCHEMA,
-            )
-
-        def acl(self) -> str:
-            """Load OID ACL fixtures.
-
-            Returns:
-                str: LDIF content with OID ACL definitions
-
-            """
-            return self._loader.load(
-                FlextLdifFixtures.ServerType.OID,
-                FlextLdifFixtures.FixtureType.ACL,
-            )
-
-        def entries(self) -> str:
-            """Load OID entry fixtures.
-
-            Returns:
-                str: LDIF content with OID directory entries
-
-            """
-            return self._loader.load(
-                FlextLdifFixtures.ServerType.OID,
-                FlextLdifFixtures.FixtureType.ENTRIES,
-            )
-
-        def integration(self) -> str:
-            """Load OID integration fixtures.
-
-            Returns:
-                str: LDIF content with complete OID directory structure and real quirks
-
-            """
-            return self._loader.load(
-                FlextLdifFixtures.ServerType.OID,
-                FlextLdifFixtures.FixtureType.INTEGRATION,
-            )
-
-        def all(self) -> Mapping[FlextLdifFixtures.FixtureType, str]:
-            """Load all OID fixtures.
-
-            Returns:
-                t.ContainerMapping: All available OID fixtures
-
-            """
-            return self._loader.load_all(FlextLdifFixtures.ServerType.OID)
-
-        def metadata(
-            self,
-            fixture_type: FlextLdifFixtures.FixtureType,
-        ) -> FlextLdifFixtures.Metadata:
-            """Get metadata about an OID fixture.
-
-            Args:
-                fixture_type: Type of fixture
-
-            Returns:
-                FlextLdifFixtures.Metadata: Metadata about the fixture file
-
-            """
-            return self._loader.get_metadata(
-                FlextLdifFixtures.ServerType.OID,
-                fixture_type,
-            )
-
-    class OUD:
-        """Oracle Unified Directory fixture loader.
-
-        Provides direct access to OUD-specific fixtures.
-        """
-
-        def __init__(self, fixtures_root: Path | None = None) -> None:
-            """Initialize OUD fixture loader."""
-            self._loader = FlextLdifFixtures.Loader(fixtures_root)
-            self._server_type = FlextLdifFixtures.ServerType.OUD
-
-        def schema(self) -> str:
-            """Load OUD schema fixtures."""
-            return self._loader.load(
-                self._server_type,
-                FlextLdifFixtures.FixtureType.SCHEMA,
-            )
-
-        def acl(self) -> str:
-            """Load OUD ACL fixtures."""
-            return self._loader.load(
-                self._server_type,
-                FlextLdifFixtures.FixtureType.ACL,
-            )
-
-        def entries(self) -> str:
-            """Load OUD entry fixtures."""
-            return self._loader.load(
-                self._server_type,
-                FlextLdifFixtures.FixtureType.ENTRIES,
-            )
-
-        def integration(self) -> str:
-            """Load OUD integration fixtures."""
-            return self._loader.load(
-                self._server_type,
-                FlextLdifFixtures.FixtureType.INTEGRATION,
-            )
-
-        def all(self) -> Mapping[FlextLdifFixtures.FixtureType, str]:
-            """Load all OUD fixtures."""
-            return self._loader.load_all(self._server_type)
-
-    class RFC:
-        """RFC fixture loader.
-
-        Provides direct access to RFC-compliant fixtures.
-        """
-
-        def __init__(self, fixtures_root: Path | None = None) -> None:
-            """Initialize RFC fixture loader."""
-            self._loader = FlextLdifFixtures.Loader(fixtures_root)
-            self._server_type = FlextLdifFixtures.ServerType.RFC
-
-        def schema(self) -> str:
-            """Load RFC schema fixtures."""
-            return self._loader.load(
-                self._server_type,
-                FlextLdifFixtures.FixtureType.SCHEMA,
-            )
-
-        def acl(self) -> str:
-            """Load RFC ACL fixtures."""
-            return self._loader.load(
-                self._server_type,
-                FlextLdifFixtures.FixtureType.ACL,
-            )
-
-        def entries(self) -> str:
-            """Load RFC entry fixtures."""
-            return self._loader.load(
-                self._server_type,
-                FlextLdifFixtures.FixtureType.ENTRIES,
-            )
-
-        def integration(self) -> str:
-            """Load RFC integration fixtures."""
-            return self._loader.load(
-                self._server_type,
-                FlextLdifFixtures.FixtureType.INTEGRATION,
-            )
-
-        def all(self) -> Mapping[FlextLdifFixtures.FixtureType, str]:
-            """Load all RFC fixtures."""
-            return self._loader.load_all(self._server_type)
-
-    class OpenLDAP:
-        """OpenLDAP fixture loader.
-
-        Provides direct access to OpenLDAP-specific fixtures.
-        """
-
-        def __init__(self, fixtures_root: Path | None = None) -> None:
-            """Initialize OpenLDAP fixture loader."""
-            self._loader = FlextLdifFixtures.Loader(fixtures_root)
-            self._server_type = FlextLdifFixtures.ServerType.OPENLDAP
-
-        def schema(self) -> str:
-            """Load OpenLDAP schema fixtures."""
-            return self._loader.load(
-                self._server_type,
-                FlextLdifFixtures.FixtureType.SCHEMA,
-            )
-
-        def acl(self) -> str:
-            """Load OpenLDAP ACL fixtures."""
-            return self._loader.load(
-                self._server_type,
-                FlextLdifFixtures.FixtureType.ACL,
-            )
-
-        def entries(self) -> str:
-            """Load OpenLDAP entry fixtures."""
-            return self._loader.load(
-                self._server_type,
-                FlextLdifFixtures.FixtureType.ENTRIES,
-            )
-
-        def integration(self) -> str:
-            """Load OpenLDAP integration fixtures."""
-            return self._loader.load(
-                self._server_type,
-                FlextLdifFixtures.FixtureType.INTEGRATION,
-            )
-
-        def all(self) -> Mapping[FlextLdifFixtures.FixtureType, str]:
-            """Load all OpenLDAP fixtures."""
-            return self._loader.load_all(self._server_type)
-
-
-FIXTURES_DIR: Final[Path] = Path(__file__).parent / "fixtures"
-OID_FIXTURES_DIR: Final[Path] = FIXTURES_DIR / "oid"
-
-# Canonical aliases — prefer c.Ldif.Paths.FIXTURES_DIR in new code
-# These module-level names are kept for backward compat with auto-generated __init__.py

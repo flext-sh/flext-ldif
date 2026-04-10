@@ -18,7 +18,7 @@ class TestFlextLdifUtilitiesComprehensive:
 
     def test_real_ldif_processing_pipeline(self) -> None:
         """Test complete LDIF processing pipeline with real data."""
-        ldif_content = u.Ldif.Tests.Factory.create_real_ldif_content(
+        ldif_content = u.Ldif.Tests.create_real_ldif_content(
             entries_count=5,
             include_schema=True,
         )
@@ -57,7 +57,7 @@ class TestFlextLdifUtilitiesComprehensive:
     @pytest.mark.parametrize("server_type", ["generic", "openldap", "ad", "oid", "oud"])
     def test_server_specific_utilities(self, server_type: str) -> None:
         """Test server-specific utility functions."""
-        entry = u.Ldif.Tests.Factory.create_real_entry(server_type=server_type)
+        entry = u.Ldif.Tests.create_real_entry(server_type=server_type)
         tm.that(entry, none=False)
         normalized = u.Ldif.normalize_server_type(server_type)
         tm.that(normalized, is_=str)

@@ -30,17 +30,17 @@ class TestRfcDockerRealData:
     @pytest.fixture
     def oid_fixtures_dir(self) -> Path:
         """Path to OID fixtures."""
-        return c.Ldif.Paths.FIXTURES_DIR / c.Ldif.Fixtures.OID
+        return c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.OID
 
     @pytest.fixture
     def oud_fixtures_dir(self) -> Path:
         """Path to OUD fixtures."""
-        return c.Ldif.Paths.FIXTURES_DIR / c.Ldif.Fixtures.OUD
+        return c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.OUD
 
     @pytest.fixture
     def openldap_fixtures_dir(self) -> Path:
         """Path to OpenLDAP fixtures."""
-        return c.Ldif.Paths.FIXTURES_DIR / "openldap2"
+        return c.Ldif.Tests.FIXTURES_DIR / "openldap2"
 
     def test_parse_real_oid_schema(
         self,
@@ -131,7 +131,7 @@ class TestRfcDockerRealData:
         write_result = writer.write_ldif_file(
             typed_entries,
             output_file,
-            server_type=c.Ldif.Fixtures.OID,
+            server_type=c.Ldif.Tests.OID,
         )
         assert write_result.is_success, f"Failed to write: {write_result.error}"
         assert output_file.exists()
@@ -165,7 +165,7 @@ class TestRfcDockerRealData:
 
     def test_parse_edge_case_unicode(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing Unicode edge cases."""
-        unicode_dir = c.Ldif.Paths.FIXTURES_DIR / "edge_cases" / "unicode"
+        unicode_dir = c.Ldif.Tests.FIXTURES_DIR / "edge_cases" / "unicode"
         if not unicode_dir.exists():
             pytest.skip("Unicode fixtures not found")
         unicode_files = list(unicode_dir.glob("*.ldif"))
@@ -199,7 +199,7 @@ class TestRfcDockerRealData:
             result = writer.write_ldif_file(
                 [test_entry],
                 output_file,
-                server_type=c.Ldif.Fixtures.RFC,
+                server_type=c.Ldif.Tests.RFC,
             )
             if not result.is_success:
                 assert result.error is not None
@@ -215,7 +215,7 @@ class TestRfcDockerRealData:
         quirk_registry: FlextLdifServer,
     ) -> None:
         """Test relaxed parsing of broken/malformed LDIF."""
-        broken_dir = c.Ldif.Paths.FIXTURES_DIR / "broken" / "structure"
+        broken_dir = c.Ldif.Tests.FIXTURES_DIR / "broken" / "structure"
         if not broken_dir.exists():
             pytest.skip("Broken fixtures not found")
         broken_files = list(broken_dir.glob("*.ldif"))
@@ -233,7 +233,7 @@ class TestRfcDockerRealData:
     ) -> None:
         """Test RFC schema parser with real OID schema."""
         schema_file = (
-            c.Ldif.Paths.FIXTURES_DIR / c.Ldif.Fixtures.OID / "oid_schema_fixtures.ldif"
+            c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.OID / "oid_schema_fixtures.ldif"
         )
         if not schema_file.exists():
             pytest.skip("OID schema fixtures not found")
@@ -264,7 +264,7 @@ class TestRfcIntegrationRealWorld:
     def test_large_oid_schema_parsing(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing large real OID schema (345KB fixture)."""
         schema_file = (
-            c.Ldif.Paths.FIXTURES_DIR / c.Ldif.Fixtures.OID / "oid_schema_fixtures.ldif"
+            c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.OID / "oid_schema_fixtures.ldif"
         )
         if not schema_file.exists():
             pytest.skip("OID schema fixtures not found")
@@ -277,8 +277,8 @@ class TestRfcIntegrationRealWorld:
     def test_large_oud_integration_data(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing large real OUD integration data (31KB)."""
         integration_file = (
-            c.Ldif.Paths.FIXTURES_DIR
-            / c.Ldif.Fixtures.OUD
+            c.Ldif.Tests.FIXTURES_DIR
+            / c.Ldif.Tests.OUD
             / "oud_integration_fixtures.ldif"
         )
         if not integration_file.exists():
@@ -316,7 +316,7 @@ class TestRfcIntegrationRealWorld:
         result = writer.write_ldif_file(
             entry_models,
             output_file,
-            server_type=c.Ldif.Fixtures.RFC,
+            server_type=c.Ldif.Tests.RFC,
         )
         assert result.is_success, f"Failed to write large dataset: {result.error}"
         assert output_file.exists()

@@ -18,7 +18,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import FlextLdifServersOid, FlextLdifServersOud
-from tests import FlextLdifFixtures
+from tests import c, u
 
 
 class TestOudToOidSchemaMigration:
@@ -37,8 +37,7 @@ class TestOudToOidSchemaMigration:
     @pytest.fixture
     def oud_schema_fixture(self) -> str:
         """Load OUD schema fixture data."""
-        loader = FlextLdifFixtures.OUD()
-        return loader.schema()
+        return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OUD, c.Ldif.Tests.SCHEMA)
 
 
 class TestOudToOidAclMigration:
@@ -68,9 +67,9 @@ class TestOudToOidFullMigration:
     """Test complete OUD to OID migration workflow."""
 
     @pytest.fixture
-    def oud_fixtures(self) -> FlextLdifFixtures.OUD:
-        """Create OUD fixture loader."""
-        return FlextLdifFixtures.OUD()
+    def oud_fixtures(self) -> str:
+        """Create OUD entries fixture data."""
+        return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OUD, c.Ldif.Tests.ENTRIES)
 
     @pytest.fixture
     def oud(self) -> FlextLdifServersOud:

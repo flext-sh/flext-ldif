@@ -27,7 +27,7 @@ from tests import c
 logger = FlextLogger(__name__)
 
 
-ConfigTestData = c.Ldif.ConfigIntegration
+ConfigTestData = c.Ldif.Tests.ConfigIntegration
 
 
 class TestFlextLdifSettingsIntegration:
@@ -48,7 +48,7 @@ class TestFlextLdifSettingsIntegration:
         config = FlextLdifSettings()
         api = FlextLdif(config=config)
         result = api.parse_ldif(
-            ConfigTestData.BASIC_ENTRY, server_type=c.Ldif.Fixtures.OPENLDAP
+            ConfigTestData.BASIC_ENTRY, server_type=c.Ldif.Tests.OPENLDAP
         )
         assert result.is_success
         entries = result.value.entries
@@ -61,10 +61,10 @@ class TestFlextLdifSettingsIntegration:
         ldif1 = FlextLdif(config=config1)
         ldif2 = FlextLdif(config=config2)
         result1 = ldif1.parse_ldif(
-            ConfigTestData.BASIC_ENTRY, server_type=c.Ldif.Fixtures.OID
+            ConfigTestData.BASIC_ENTRY, server_type=c.Ldif.Tests.OID
         )
         result2 = ldif2.parse_ldif(
-            ConfigTestData.BASIC_ENTRY, server_type=c.Ldif.Fixtures.OPENLDAP
+            ConfigTestData.BASIC_ENTRY, server_type=c.Ldif.Tests.OPENLDAP
         )
         assert result1.is_success
         assert result2.is_success
@@ -83,10 +83,10 @@ class TestFlextLdifSettingsIntegration:
     @pytest.mark.parametrize(
         ("server_type", "expected_content_key"),
         [
-            (c.Ldif.Fixtures.RFC, c.Ldif.Fixtures.RFC),
-            (c.Ldif.Fixtures.OID, c.Ldif.Fixtures.OID),
-            (c.Ldif.Fixtures.OUD, c.Ldif.Fixtures.OUD),
-            (c.Ldif.Fixtures.OPENLDAP, c.Ldif.Fixtures.OPENLDAP),
+            (c.Ldif.Tests.RFC, c.Ldif.Tests.RFC),
+            (c.Ldif.Tests.OID, c.Ldif.Tests.OID),
+            (c.Ldif.Tests.OUD, c.Ldif.Tests.OUD),
+            (c.Ldif.Tests.OPENLDAP, c.Ldif.Tests.OPENLDAP),
         ],
     )
     def test_config_with_server_type(

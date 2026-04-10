@@ -1,55 +1,46 @@
-"""Test type definitions extending src typings for centralized test types.
-
-This module provides test-specific type extensions that inherit from
-src/flext_ldif/typings.py classes. This centralizes test types without
-duplicating parent class functionality.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Test type definitions extending src typings for centralized test types."""
 
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import Literal
 
+from flext_ldap import t as lt
 from flext_tests import FlextTestsTypes
 
-from flext_ldif import FlextLdifTypes
 
+class TestsFlextLdifTypes(FlextTestsTypes, lt):
+    """Test types extending TestsFlextTypes and FlextLdapTypes."""
 
-class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
-    """Test types extending TestsFlextTypes and FlextLdifTypes.
-
-    Provides test-specific type extensions without duplicating parent functionality.
-    All parent types are accessible via inheritance hierarchy.
-
-    Hierarchy:
-    - TestsFlextTypes.Tests.* (generic test types from flext_tests)
-    - FlextLdifTypes.Ldif.* (source types from flext_ldif)
-    - TestsFlextLdifTypes.Tests.* (flext-ldif-specific test types)
-
-    Naming convention: Flext[Project]Test* where Project is the project name.
-    Short name 't' for convenient access in tests.
-    """
-
-    class Ldif(FlextLdifTypes.Ldif):
+    class Ldif(lt.Ldif):
         """LDIF test type namespace."""
 
         class Tests(FlextTestsTypes.Tests):
-            """flext-ldif-specific test type definitions namespace.
+            """flext-ldif-specific test type definitions namespace."""
 
-            Use t.Tests.* for generic test types from TestsFlextTypes.
-            """
-
-            type GenericFieldsDict = FlextLdifTypes.StrMapping
+            type GenericFieldsDict = lt.StrMapping
             type DnRefData = Mapping[
-                str, FlextLdifTypes.StrMapping | FlextLdifTypes.StrSequence | str
+                str,
+                lt.StrMapping | lt.StrSequence | str,
+            ]
+            type FixtureServer = str
+            type FixtureKind = str
+            type ParseMethod = Literal[
+                "parse_quirk",
+                "parse_attribute",
+                "parse_objectclass",
+                "parse_input",
+            ]
+            type WriteMethod = Literal[
+                "write",
+                "_write_attribute",
+                "_write_objectclass",
+                "_write_acl",
             ]
 
-            class Fixtures:
-                """TypedDict definitions for LDIF test fixtures."""
 
+type GenericFieldsDict = TestsFlextLdifTypes.Ldif.Tests.GenericFieldsDict
 
 t = TestsFlextLdifTypes
-type GenericFieldsDict = TestsFlextLdifTypes.Ldif.Tests.GenericFieldsDict
+
 __all__ = ["GenericFieldsDict", "TestsFlextLdifTypes", "t"]

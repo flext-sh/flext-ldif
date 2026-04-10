@@ -61,11 +61,11 @@ Each server has 4 types of fixtures:
 ### Loading Fixtures
 
 ```python
-from tests import FlextLdifFixtures
+from tests import c, u
 
-loader = FlextLdifFixtures.Loader()
-schema = loader.load(
-    FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.SCHEMA
+schema = u.Ldif.Tests.load_fixture(
+    c.Ldif.Tests.OID,
+    c.Ldif.Tests.SCHEMA,
 )
 ```
 

@@ -13,35 +13,27 @@ if _t.TYPE_CHECKING:
     from flext_core.handlers import h
     from flext_core.mixins import x
     from flext_core.result import r
-    from tests.base import TestsFlextLdifServiceBase, TestsFlextLdifServiceBase as s
+    from flext_core.service import s
     from tests.constants import TestsFlextLdifConstants, TestsFlextLdifConstants as c
     from tests.models import TestsFlextLdifModels, TestsFlextLdifModels as m
     from tests.protocols import TestsFlextLdifProtocols, TestsFlextLdifProtocols as p
-    from tests.typings import (
-        GenericFieldsDict,
-        TestsFlextLdifTypes,
-        TestsFlextLdifTypes as t,
-    )
+    from tests.typings import TestsFlextLdifTypes, TestsFlextLdifTypes as t
     from tests.utilities import TestsFlextLdifUtilities, TestsFlextLdifUtilities as u
 _LAZY_IMPORTS = build_lazy_import_map(
     {
-        ".base": ("TestsFlextLdifServiceBase",),
         ".constants": ("TestsFlextLdifConstants",),
         ".models": ("TestsFlextLdifModels",),
         ".protocols": ("TestsFlextLdifProtocols",),
-        ".typings": (
-            "GenericFieldsDict",
-            "TestsFlextLdifTypes",
-        ),
+        ".typings": ("TestsFlextLdifTypes",),
         ".utilities": ("TestsFlextLdifUtilities",),
         "flext_core.decorators": ("d",),
         "flext_core.exceptions": ("e",),
         "flext_core.handlers": ("h",),
         "flext_core.mixins": ("x",),
         "flext_core.result": ("r",),
+        "flext_core.service": ("s",),
     },
     alias_groups={
-        ".base": (("s", "TestsFlextLdifServiceBase"),),
         ".constants": (("c", "TestsFlextLdifConstants"),),
         ".models": (("m", "TestsFlextLdifModels"),),
         ".protocols": (("p", "TestsFlextLdifProtocols"),),
@@ -51,11 +43,9 @@ _LAZY_IMPORTS = build_lazy_import_map(
 )
 
 __all__ = [
-    "GenericFieldsDict",
     "TestsFlextLdifConstants",
     "TestsFlextLdifModels",
     "TestsFlextLdifProtocols",
-    "TestsFlextLdifServiceBase",
     "TestsFlextLdifTypes",
     "TestsFlextLdifUtilities",
     "c",

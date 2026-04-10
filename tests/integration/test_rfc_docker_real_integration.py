@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdifParser, FlextLdifServer, FlextLdifWriter
-from tests import c, m, tm
+from tests import c, m
 
 
 class TestRfcParserRealFixtures:
@@ -30,8 +30,8 @@ class TestRfcParserRealFixtures:
     def test_parse_oid_entries_fixture(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing real OID entries from fixtures."""
         entries_file = (
-            c.Ldif.Paths.FIXTURES_DIR
-            / c.Ldif.Fixtures.OID
+            c.Ldif.Tests.FIXTURES_DIR
+            / c.Ldif.Tests.OID
             / "oid_entries_fixtures.ldif"
         )
         if not entries_file.exists():
@@ -48,13 +48,13 @@ class TestRfcParserRealFixtures:
             )
             for entry in parse_response.entries
         ]
-        tm.entries(typed_entries)
+        assert typed_entries
 
     def test_parse_oud_entries_fixture(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing real OUD entries from fixtures."""
         entries_file = (
-            c.Ldif.Paths.FIXTURES_DIR
-            / c.Ldif.Fixtures.OUD
+            c.Ldif.Tests.FIXTURES_DIR
+            / c.Ldif.Tests.OUD
             / "oud_entries_fixtures.ldif"
         )
         if not entries_file.exists():
@@ -71,7 +71,7 @@ class TestRfcParserRealFixtures:
     ) -> None:
         """Test parsing real OpenLDAP entries from fixtures."""
         entries_file = (
-            c.Ldif.Paths.FIXTURES_DIR / "openldap2" / "openldap2_entries_fixtures.ldif"
+            c.Ldif.Tests.FIXTURES_DIR / "openldap2" / "openldap2_entries_fixtures.ldif"
         )
         if not entries_file.exists():
             pytest.skip(f"Fixture not found: {entries_file}")
@@ -93,7 +93,7 @@ class TestRfcSchemaParserRealFixtures:
     def test_parse_oid_schema_fixture(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing real OID schema from fixtures."""
         schema_file = (
-            c.Ldif.Paths.FIXTURES_DIR / c.Ldif.Fixtures.OID / "oid_schema_fixtures.ldif"
+            c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.OID / "oid_schema_fixtures.ldif"
         )
         if not schema_file.exists():
             pytest.skip(f"Fixture not found: {schema_file}")
@@ -106,7 +106,7 @@ class TestRfcSchemaParserRealFixtures:
     def test_parse_oud_schema_fixture(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing real OUD schema from fixtures."""
         schema_file = (
-            c.Ldif.Paths.FIXTURES_DIR / c.Ldif.Fixtures.OUD / "oud_schema_fixtures.ldif"
+            c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.OUD / "oud_schema_fixtures.ldif"
         )
         if not schema_file.exists():
             pytest.skip(f"Fixture not found: {schema_file}")
@@ -130,8 +130,8 @@ class TestRfcWriterRealFixtures:
     ) -> None:
         """Test roundtrip: parse OID fixture, write, and re-parse."""
         source_file = (
-            c.Ldif.Paths.FIXTURES_DIR
-            / c.Ldif.Fixtures.OID
+            c.Ldif.Tests.FIXTURES_DIR
+            / c.Ldif.Tests.OID
             / "oid_entries_fixtures.ldif"
         )
         if not source_file.exists():
@@ -155,7 +155,7 @@ class TestRfcWriterRealFixtures:
         write_result = writer.write_ldif_file(
             typed_entries,
             output_file,
-            server_type=c.Ldif.Fixtures.RFC,
+            server_type=c.Ldif.Tests.RFC,
         )
         assert write_result.is_success, f"Failed to write: {write_result.error}"
         assert output_file.exists()
@@ -172,7 +172,7 @@ class TestRfcWriterRealFixtures:
     ) -> None:
         """Test writing OUD ACL entries to file."""
         acl_file = (
-            c.Ldif.Paths.FIXTURES_DIR / c.Ldif.Fixtures.OUD / "oud_acl_fixtures.ldif"
+            c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.OUD / "oud_acl_fixtures.ldif"
         )
         if not acl_file.exists():
             pytest.skip(f"Fixture not found: {acl_file}")
@@ -195,7 +195,7 @@ class TestRfcWriterRealFixtures:
         result = writer.write_ldif_file(
             typed_entries,
             output_file,
-            server_type=c.Ldif.Fixtures.RFC,
+            server_type=c.Ldif.Tests.RFC,
         )
         assert result.is_success, f"Failed to write ACL entries: {result.error}"
         assert output_file.exists()
@@ -236,7 +236,7 @@ class TestRfcExceptionHandlingRealScenarios:
             result = writer.write_ldif_file(
                 [test_entry],
                 readonly_dir / "test.ldif",
-                server_type=c.Ldif.Fixtures.RFC,
+                server_type=c.Ldif.Tests.RFC,
             )
             if not result.is_success:
                 assert result.error is not None
