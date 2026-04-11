@@ -123,7 +123,7 @@ class FlextLdifServersBaseEntry(
         entry_model = kwargs_map.get("entry_model")
         if isinstance(ldif_content, str):
             entries_result = self._parse_content(ldif_content)
-            if entries_result.is_success:
+            if entries_result.success:
                 entries = entries_result.value
                 return r[m.Ldif.Entry | str].ok(entries[0] if entries else "")
             return r[m.Ldif.Entry | str].ok("")
@@ -139,7 +139,7 @@ class FlextLdifServersBaseEntry(
     def parse_input(self, ldif_text: str) -> MutableSequence[m.Ldif.Entry] | None:
         """Compatibility parser entrypoint for direct quirk consumers."""
         parse_result = self.parse_quirk(ldif_text)
-        if parse_result.is_failure:
+        if parse_result.failure:
             return None
         return parse_result.value
 

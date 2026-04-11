@@ -227,7 +227,7 @@ class FlextLdifUtilitiesWriters:
     ) -> str | None:
         """Write single entry with stats tracking."""
         result = write_entry_hook(entry)
-        if result.is_success:
+        if result.success:
             stats.successful += 1
             return result.value
         stats.failed += 1

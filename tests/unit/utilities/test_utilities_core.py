@@ -76,7 +76,7 @@ class TestsFlextLdifDnOperationsPure:
         """Test DN component parsing."""
         dn = "cn=John,ou=Users,dc=example"
         result = u.Ldif.parse(dn)
-        tm.that(result.is_success, eq=True)
+        tm.that(result.success, eq=True)
         parsed = result.value
         tm.that(len(parsed), gte=2)
 
@@ -85,7 +85,7 @@ class TestsFlextLdifDnOperationsPure:
         dn1 = "cn=John,dc=example,dc=com"
         dn2 = "cn=jane,dc=example,dc=com"
         result = u.Ldif.compare_dns(dn1, dn2)
-        tm.that(result.is_success, eq=True)
+        tm.that(result.success, eq=True)
         comparison = result.value
         tm.that(comparison, is_=int)
 

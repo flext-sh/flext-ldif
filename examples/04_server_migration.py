@@ -29,7 +29,7 @@ class ExampleServerMigration:
 
         batch_result = u.process(list(range(20)), create_entry_data, on_error="skip")
         source_data: list[str] = []
-        if batch_result.is_success:
+        if batch_result.success:
             source_data = list(batch_result.value)
 
         def write_file(item: tuple[int, str]) -> None:
@@ -48,7 +48,7 @@ class ExampleServerMigration:
         sample_file = source_dir / "data_00.ldif"
         detect_result = api.detect_server_type(ldif_content=sample_file.read_text())
         detection_data: dict[str, str | float | None] = {}
-        if detect_result.is_success:
+        if detect_result.success:
             detection = detect_result.unwrap()
             detection_data = {
                 "detected_server": detection.detected_server_type,
@@ -81,14 +81,14 @@ class ExampleServerMigration:
         api = ldif.get_instance()
         mixed_ldif = 'dn: cn=Auto Detect Test,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Auto Detect Test\nsn: Test\nmail: auto@example.com\n# This could be from OID (has orclaci) or OUD (has aci)\norclaci: access to * by * read\naci: (target="ldap:///cn=Auto Detect Test")(version 3.0; acl "test"; allow (read) userdn="ldap:///anyone";)\n\ndn: cn=Auto Group,ou=Groups,dc=example,dc=com\nobjectClass: groupOfUniqueNames\nobjectClass: groupOfNames\ncn: Auto Group\nuniquemember: cn=Auto Detect Test,ou=People,dc=example,dc=com\nmember: cn=Auto Detect Test,ou=People,dc=example,dc=com\n'
         detect_result = api.detect_server_type(ldif_content=mixed_ldif)
-        if detect_result.is_failure:
+        if detect_result.failure:
             return r[t.ContainerMapping].fail(
                 f"Server detection failed: {detect_result.error}",
             )
         detection = detect_result.unwrap()
         detected_server = detection.detected_server_type or "rfc"
         parse_result = api.parse_ldif(mixed_ldif, server_type=detected_server)
-        if parse_result.is_failure:
+        if parse_result.failure:
             return r[t.ContainerMapping].fail(f"Parse failed: {parse_result.error}")
         parse_response = parse_result.unwrap()
         entries = parse_response.entries
@@ -101,7 +101,7 @@ class ExampleServerMigration:
             source_server=detected_server,
             target_server="rfc",
         )
-        if migration_result.is_failure:
+        if migration_result.failure:
             return r[t.ContainerMapping].fail(
                 f"Migration to RFC failed: {migration_result.error}",
             )
@@ -126,7 +126,7 @@ class ExampleServerMigration:
         for server in servers:
             server_type = server
             parse_result = api.parse_ldif(test_ldif, server_type=server_type)
-            if parse_result.is_success:
+            if parse_result.success:
                 parse_response = parse_result.unwrap()
                 entries = parse_response.entries
                 comparison_results[server] = {
@@ -136,10 +136,10 @@ class ExampleServerMigration:
                 }
                 if entries:
                     validate_result = api.validate_entries(entries)
-                    if validate_result.is_success:
+                    if validate_result.success:
                         report = validate_result.unwrap()
                         server_result = comparison_results[server]
-                        server_result["validation_is_valid"] = report.is_valid
+                        server_result["validation_is_valid"] = report.valid
                         server_result["validation_valid_entries"] = report.valid_entries
                         server_result["validation_invalid_entries"] = (
                             report.invalid_entries
@@ -186,7 +186,7 @@ class ExampleServerMigration:
             source_server=source_server_typed,
             target_server="oud",
         )
-        if intermediate_migration.is_failure:
+        if intermediate_migration.failure:
             return r[t.ContainerMapping].fail(
                 f"Intermediate migration failed: {intermediate_migration.error}",
             )
@@ -196,7 +196,7 @@ class ExampleServerMigration:
             source_server="oud",
             target_server="rfc",
         )
-        if final_migration.is_failure:
+        if final_migration.failure:
             return r[t.ContainerMapping].fail(
                 f"Final migration failed: {final_migration.error}",
             )
@@ -233,7 +233,7 @@ class ExampleServerMigration:
             source_server="oid",
             target_server="oud",
         )
-        if migration_result.is_failure:
+        if migration_result.failure:
             return r[m.Ldif.MigrationPipelineResult].fail(
                 f"Migration failed: {migration_result.error}",
             )

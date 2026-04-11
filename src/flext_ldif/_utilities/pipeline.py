@@ -86,7 +86,7 @@ class FlextLdifUtilitiesPipeline:
                 result = self.execute_one(entry).map_error(
                     lambda error: error or "Processing failed",
                 )
-                if result.is_failure:
+                if result.failure:
                     return r[m.Ldif.Entry].fail(result.error)
                 processed = result.value
                 if isinstance(processed, FlextLdifUtilitiesPipeline._Filtered):
@@ -98,7 +98,7 @@ class FlextLdifUtilitiesPipeline:
                 process_result = process_entry(entry)
                 if process_result is None:
                     continue
-                if process_result.is_failure:
+                if process_result.failure:
                     if self._fail_fast:
                         return r[MutableSequence[m.Ldif.Entry]].fail(
                             process_result.error or "Pipeline execution failed",
@@ -124,7 +124,7 @@ class FlextLdifUtilitiesPipeline:
                         f"{prefix}{error or 'Transformer failed'}"
                     ),
                 )
-                if result.is_failure:
+                if result.failure:
                     return result
                 current = result.value
             return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(current)
@@ -137,13 +137,13 @@ class FlextLdifUtilitiesPipeline:
         def __init__(
             self,
             *,
-            is_valid: bool,
+            valid: bool,
             errors: MutableSequence[str] | None = None,
             warnings: MutableSequence[str] | None = None,
         ) -> None:
             """Initialize validation result."""
             super().__init__()
-            self._is_valid = is_valid
+            self._is_valid = valid
             self._errors = errors or []
             self._warnings = warnings or []
 
@@ -159,7 +159,7 @@ class FlextLdifUtilitiesPipeline:
             return self._errors
 
         @property
-        def is_valid(self) -> bool:
+        def valid(self) -> bool:
             """Check if validation passed."""
             return self._is_valid
 
@@ -195,7 +195,7 @@ class FlextLdifUtilitiesPipeline:
             total_errors = 0
             for entry in entries:
                 validation_result = self.validate_one(entry)
-                if validation_result.is_failure:
+                if validation_result.failure:
                     return r[
                         MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]
                     ].fail(validation_result.error)
@@ -204,7 +204,7 @@ class FlextLdifUtilitiesPipeline:
                 total_errors += len(validation.errors)
                 if self._max_errors > 0 and total_errors >= self._max_errors:
                     break
-                if not self._collect_all and (not validation.is_valid):
+                if not self._collect_all and (not validation.valid):
                     break
             return r[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]].ok(
                 results,
@@ -250,7 +250,7 @@ class FlextLdifUtilitiesPipeline:
                         warnings.append("Entry has no objectClass attribute")
             return r[FlextLdifUtilitiesPipeline.ValidationResult].ok(
                 FlextLdifUtilitiesPipeline.ValidationResult(
-                    is_valid=not errors,
+                    valid=not errors,
                     errors=errors,
                     warnings=warnings,
                 ),

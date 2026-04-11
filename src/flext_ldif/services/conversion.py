@@ -369,7 +369,7 @@ class FlextLdifConversion(
                 target_quirk,
                 "Target",
             )
-            if target_schema_result.is_failure:
+            if target_schema_result.failure:
                 return r[t.Ldif.ConvertedModel].fail(
                     target_schema_result.error
                     or "Target schema quirk error: Schema not available",
@@ -451,7 +451,7 @@ class FlextLdifConversion(
             lambda: FlextLdifConversion._get_schema_quirk(quirk),
             default=None,
         )
-        if result.is_failure:
+        if result.failure:
             return r[p.Ldif.SchemaQuirk].fail(
                 result.error or f"{quirk_type} quirk error: Schema not available",
             )
@@ -499,7 +499,7 @@ class FlextLdifConversion(
         parse_error_message: str,
     ) -> r[m.Ldif.SchemaAttribute]:
         parse_result = schema.parse_attribute(value)
-        if parse_result.is_failure:
+        if parse_result.failure:
             return r[m.Ldif.SchemaAttribute].fail(
                 parse_result.error or parse_error_message,
             )
@@ -514,7 +514,7 @@ class FlextLdifConversion(
         parse_error_message: str,
     ) -> r[m.Ldif.SchemaObjectClass]:
         parse_result = schema.parse_objectclass(value)
-        if parse_result.is_failure:
+        if parse_result.failure:
             return r[m.Ldif.SchemaObjectClass].fail(
                 parse_result.error or parse_error_message,
             )
@@ -607,7 +607,7 @@ class FlextLdifConversion(
             server = FlextLdifServer.get_global_instance()
             server_type_str: str = quirk_or_type
             resolved_result = server.quirk(server_type_str)
-            if resolved_result.is_failure:
+            if resolved_result.failure:
                 error_msg = (
                     f"Unknown server type: {quirk_or_type}: {resolved_result.error}"
                 )
@@ -685,8 +685,8 @@ class FlextLdifConversion(
         )
         result = self._convert_model(source, target, model_instance)
         duration_ms = (time.perf_counter() - start_time) * 1000.0
-        items_converted = 1 if result.is_success else 0
-        items_failed = 0 if result.is_success else 1
+        items_converted = 1 if result.success else 0
+        items_failed = 0 if result.success else 1
         conversion_config = m.Ldif.ConversionEventConfig(
             conversion_operation=conversion_operation,
             source_format=source_format,
@@ -696,13 +696,13 @@ class FlextLdifConversion(
             items_failed=items_failed,
             conversion_duration_ms=duration_ms,
             error_details=[f"{model_type}: {result.error or 'Unknown error'}"]
-            if result.is_failure
+            if result.failure
             else [],
         )
         _ = u.Ldif.log_and_emit_conversion_event(
             logger=logger,
             config=conversion_config,
-            log_level="info" if result.is_success else "error",
+            log_level="info" if result.success else "error",
         )
         return result
 
@@ -913,7 +913,7 @@ class FlextLdifConversion(
         if parse_attr is None or not callable(parse_attr):
             return support
         attr_result = parse_attr(test_attr_def)
-        if isinstance(attr_result, r) and attr_result.is_success:
+        if isinstance(attr_result, r) and attr_result.success:
             support["attribute"] = 1
         return support
 
@@ -982,7 +982,7 @@ class FlextLdifConversion(
         if parse_oc is None or not callable(parse_oc):
             return support
         oc_result = parse_oc(test_oc_def)
-        if isinstance(oc_result, r) and oc_result.is_success:
+        if isinstance(oc_result, r) and oc_result.success:
             support["objectclass"] = 1
         return support
 
@@ -1331,12 +1331,12 @@ class FlextLdifConversion(
         if entry.attributes is None or not u.Ldif.is_schema_entry(entry):
             return r[m.Ldif.Entry].ok(entry)
         source_schema_result = self._resolve_schema_quirk(source_quirk, role="Source")
-        if source_schema_result.is_failure:
+        if source_schema_result.failure:
             return r[m.Ldif.Entry].fail(
                 source_schema_result.error or "Source schema not available",
             )
         target_schema_result = self._resolve_schema_quirk(target_quirk, role="Target")
-        if target_schema_result.is_failure:
+        if target_schema_result.failure:
             return r[m.Ldif.Entry].fail(
                 target_schema_result.error or "Target schema not available",
             )
@@ -1359,7 +1359,7 @@ class FlextLdifConversion(
                     schema_item_kind=schema_item_kind,
                     field_name=attr_name,
                 )
-                if converted_value_result.is_failure:
+                if converted_value_result.failure:
                     return r[m.Ldif.Entry].fail(
                         converted_value_result.error
                         or f"Failed converting schema field {attr_name}",
@@ -1389,8 +1389,8 @@ class FlextLdifConversion(
         """Convert Entry model directly without serialization."""
         try:
             entry_dn = entry.dn.value if entry.dn else ""
-            is_valid: bool = u.Ldif.validate_dn(entry_dn)
-            if not is_valid:
+            valid: bool = u.Ldif.validate_dn(entry_dn)
+            if not valid:
                 return r[t.Ldif.ConvertedModel].fail(
                     f"Entry DN failed RFC 4514 validation: {entry_dn}",
                 )
@@ -1446,7 +1446,7 @@ class FlextLdifConversion(
                     target_quirk,
                     converted_entry,
                 )
-                if schema_entry_result.is_failure:
+                if schema_entry_result.failure:
                     return r[t.Ldif.ConvertedModel].fail(
                         schema_entry_result.error
                         or "Failed to convert schema attributes in entry",
@@ -1957,7 +1957,7 @@ class FlextLdifConversion(
 
         write_res = schema_quirk.write_attribute(source_attr)
         # Use return value directly if possible, else wrap
-        if write_res.is_success:
+        if write_res.success:
             return r[t.Ldif.SchemaConversionValue].ok(write_res.value)
         return r[t.Ldif.SchemaConversionValue].fail(
             write_res.error or "Schema write failed",
@@ -1984,7 +1984,7 @@ class FlextLdifConversion(
             return r[t.Ldif.SchemaConversionValue].ok(source_oc)
 
         write_res = schema_quirk.write_objectclass(source_oc)
-        if write_res.is_success:
+        if write_res.success:
             return r[t.Ldif.SchemaConversionValue].ok(write_res.value)
         return r[t.Ldif.SchemaConversionValue].fail(
             write_res.error or "Schema OC write failed",
@@ -2023,7 +2023,7 @@ class FlextLdifConversion(
         if not isinstance(schema_quirk, FlextLdifServersBaseSchema):
             return FlextLdifConversion._schema_conversion_ok(parsed_oc)
         write_result = schema_quirk.write_objectclass(parsed_oc)
-        if write_result.is_success:
+        if write_result.success:
             return FlextLdifConversion._schema_conversion_ok(write_result.value)
         error_msg = write_result.error or "Failed to write objectClass"
         return FlextLdifConversion._schema_conversion_fail(

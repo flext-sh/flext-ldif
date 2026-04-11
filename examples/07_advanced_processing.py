@@ -26,12 +26,12 @@ def basic_batch_processing() -> None:
     api: FlextLdif = ldif.get_instance()
     ldif_content = "dn: cn=User1,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User1\nsn: One\n\ndn: cn=User2,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User2\nsn: Two\n\ndn: cn=User3,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User3\nsn: Three\n"
     parse_result = api.parse_ldif(ldif_content)
-    if parse_result.is_failure:
+    if parse_result.failure:
         return
     parse_response = parse_result.unwrap()
     entries = parse_response.entries
     validation_result = api.validate_entries(entries)
-    if validation_result.is_success:
+    if validation_result.success:
         report = validation_result.unwrap()
         _ = report.total_entries
 
@@ -57,7 +57,7 @@ def parallel_processing() -> None:
         )
         entries.append(entry)
     validation_result = api.validate_entries(entries)
-    if validation_result.is_success:
+    if validation_result.success:
         report = validation_result.unwrap()
         _ = report.total_entries
 
@@ -66,11 +66,11 @@ def use_dn_utilities() -> None:
     """Use DN (Distinguished Name) utilities."""
     dn = "cn=John Doe,ou=People,dc=example,dc=com"
     parse_result = u.Ldif.parse_dn(dn)
-    if parse_result.is_success:
+    if parse_result.success:
         components = parse_result.value
         _ = len(components)
     normalize_result = u.Ldif.norm(dn)
-    if normalize_result.is_success:
+    if normalize_result.success:
         normalized = normalize_result.value
         _ = normalized
 
@@ -99,7 +99,7 @@ def use_time_utilities() -> None:
 def use_validation_utilities() -> None:
     """Use validation utilities."""
     oid_result = u.Ldif.validate_format("2.5.4.3")
-    if oid_result.is_success:
+    if oid_result.success:
         _ = oid_result.value
 
 
@@ -110,8 +110,8 @@ def use_ldif_utilities() -> None:
         "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
     )
     syntax_result = api.parse_ldif(ldif_content)
-    _ = syntax_result.is_success
-    if syntax_result.is_success:
+    _ = syntax_result.success
+    if syntax_result.success:
         parse_response = syntax_result.unwrap()
         entries = parse_response.entries
         _ = len(entries)
@@ -156,7 +156,7 @@ def complete_processing_pipeline() -> None:
     api: FlextLdif = ldif.get_instance()
     ldif_content = "dn: cn=Pipeline,ou=People,dc=example,dc=com\nobjectClass: person\ncn: Pipeline\nsn: User\n"
     parse_result = api.parse_ldif(ldif_content)
-    if parse_result.is_failure:
+    if parse_result.failure:
         return
     parse_response = parse_result.unwrap()
     entries = parse_response.entries
@@ -164,11 +164,11 @@ def complete_processing_pipeline() -> None:
     valid_entries: MutableSequence[m.Ldif.Entry] = []
     for entry in entries:
         dn_result = u.Ldif.parse_dn(str(entry.dn.value) if entry.dn else "")
-        if dn_result.is_success:
+        if dn_result.success:
             valid_entries.append(entry)
 
     validation_result = api.validate_entries(valid_entries)
-    if validation_result.is_success:
+    if validation_result.success:
         report = validation_result.unwrap()
         _ = (len(valid_entries), report.total_entries)
 

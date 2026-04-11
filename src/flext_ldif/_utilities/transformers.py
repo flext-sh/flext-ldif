@@ -54,10 +54,10 @@ class FlextLdifUtilitiesTransformers:
                     all_errors.append(f"Invalid RDN (missing '='): {comp}")
                     continue
                 _, _, value = comp.partition("=")
-                is_valid, errors = FlextLdifUtilitiesDN.is_valid_dn_string(
+                valid, errors = FlextLdifUtilitiesDN.is_valid_dn_string(
                     value.strip(),
                 )
-                if not is_valid:
+                if not valid:
                     all_errors.extend([f"RDN value '{value}': {e}" for e in errors])
             if all_errors:
                 return r[bool].fail(f"Invalid DN: {', '.join(all_errors)}")

@@ -161,11 +161,9 @@ class TestCategorizationRealData:
             base_dn=base_dn, server_type=c.Ldif.Tests.OUD
         )
         validate_result = categorization.validate_dns(entries)
-        assert validate_result.is_success, (
-            f"DN validation failed: {validate_result.error}"
-        )
+        assert validate_result.success, f"DN validation failed: {validate_result.error}"
         categories_result = categorization.categorize_entries(validate_result.value)
-        assert categories_result.is_success, (
+        assert categories_result.success, (
             f"Categorization failed: {categories_result.error}"
         )
         categories = categories_result.value
@@ -272,9 +270,9 @@ class TestCategorizationRealData:
             base_dn=base_dn, server_type=c.Ldif.Tests.OUD
         )
         validate_result = categorization.validate_dns(acl_entries)
-        assert validate_result.is_success
+        assert validate_result.success
         categories_result = categorization.categorize_entries(validate_result.value)
-        assert categories_result.is_success
+        assert categories_result.success
         categories = categories_result.value
         acl_category = categories.get(c.Ldif.Categories.ACL)
         acls_with_basedn: MutableSequence[m.Ldif.Entry] = []
@@ -348,7 +346,7 @@ class TestCategorizationRealData:
         )
         api = ldif()
         parse_result = api.parse_ldif(value=ldif_content, server_type=c.Ldif.Tests.RFC)
-        assert parse_result.is_success, f"Parsing failed: {parse_result.error}"
+        assert parse_result.success, f"Parsing failed: {parse_result.error}"
         entries = parse_result.value.entries
         assert len(entries) == 6, f"Should parse 6 entries, got {len(entries)}"
         base_dn = "dc=example"
@@ -356,9 +354,9 @@ class TestCategorizationRealData:
             base_dn=base_dn, server_type=c.Ldif.Tests.OUD
         )
         validate_result = categorization.validate_dns(entries)
-        assert validate_result.is_success
+        assert validate_result.success
         categories_result = categorization.categorize_entries(validate_result.value)
-        assert categories_result.is_success
+        assert categories_result.success
         categories = categories_result.value
         filtered = categorization.filter_by_base_dn(categories)
         output_file = tmp_path / "output_real_migration_categorized.ldif"

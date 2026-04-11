@@ -349,14 +349,14 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if current_aci:
             aci_text = "\n".join(current_aci)
             result = self.parse_quirk(aci_text)
-            if result.is_success:
+            if result.success:
                 acls.append(result.value)
 
     def _parse_aci_format(self, acl_line: str) -> r[m.Ldif.Acl]:
         """Parse RFC 4876 ACI format using utility with OUD-specific config."""
         config = FlextLdifServersOudUtilities.get_parser_config()
         result = FlextLdifUtilitiesACL.parse_aci(acl_line, config)
-        if not result.is_success:
+        if not result.success:
             return result
         acl = result.value
         aci_content = acl_line.split(":", 1)[1].strip() if ":" in acl_line else ""
@@ -393,7 +393,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if normalized.startswith(FlextLdifServersOudConstants.ACL_ACI_PREFIX):
             return self._parse_aci_format(acl_line)
         rfc_result = super()._parse_acl(acl_line)
-        if rfc_result.is_success:
+        if rfc_result.success:
             acl_model = rfc_result.value
             if acl_model.name or normalized.startswith("aci:"):
                 return rfc_result
@@ -466,7 +466,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             acl_name = acl_data.name or sc.ACL_DEFAULT_NAME
             aci_parts.append(f'({sc.ACL_DEFAULT_VERSION}; acl "{acl_name}";')
             perms_result = self._build_aci_permissions(acl_data)
-            if perms_result.is_failure:
+            if perms_result.failure:
                 return r[str].fail(perms_result.error or "Unknown error")
             subject_str = self._build_aci_subject(acl_data)
             if not subject_str:

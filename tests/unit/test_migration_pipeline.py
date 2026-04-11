@@ -107,7 +107,7 @@ class TestsFlextLdifMigrationPipeline:
             target_server_type=c.Ldif.Tests.OUD,
         )
         result = pipeline.execute()
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(result.error, none=False)
         tm.that(str(result.error).lower(), has="not found")
 
@@ -124,7 +124,7 @@ class TestsFlextLdifMigrationPipeline:
             target_server_type=c.Ldif.Tests.RFC,
         )
         result = pipeline.execute()
-        tm.that(result.is_success or result.is_failure, eq=True)
+        tm.that(result.success or result.failure, eq=True)
 
     def test_basic_execution(self, tmp_path: Path) -> None:
         """Test pipeline executes successfully with sample LDIF."""
@@ -141,7 +141,7 @@ class TestsFlextLdifMigrationPipeline:
             target_server_type=c.Ldif.Tests.RFC,
         )
         result = pipeline.execute()
-        tm.that(result.is_success or result.is_failure, eq=True)
+        tm.that(result.success or result.failure, eq=True)
 
     @pytest.mark.parametrize(
         ("source", "target"),
@@ -174,4 +174,4 @@ class TestsFlextLdifMigrationPipeline:
             target_server_type=target,
         )
         result = pipeline.execute()
-        tm.that(result.is_success or result.is_failure, eq=True)
+        tm.that(result.success or result.failure, eq=True)

@@ -19,16 +19,16 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
     ) -> tuple[bool, MutableSequence[str]]:
         """Validate entry attributes."""
         errors: MutableSequence[str] = []
-        is_valid = True
+        valid = True
         if entry.attributes is None:
             errors.append(f"Entry {dn_str}: Attributes cannot be None")
             return (False, errors)
         for attr_name in entry.attributes.attributes:
             attr_result = validation_service.validate_attribute_name(attr_name)
-            if attr_result.is_failure or not attr_result.value:
+            if attr_result.failure or not attr_result.value:
                 errors.append(f"Entry {dn_str}: Invalid attribute name '{attr_name}'")
-                is_valid = False
-        return (is_valid, errors)
+                valid = False
+        return (valid, errors)
 
     @staticmethod
     def _validate_entry_dn(
@@ -57,7 +57,7 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
     ) -> tuple[bool, MutableSequence[str]]:
         """Validate entry objectClass values."""
         errors: MutableSequence[str] = []
-        is_valid = True
+        valid = True
         attrs: t.MutableStrSequenceMapping = (
             entry.attributes.attributes if entry.attributes else {}
         )
@@ -70,10 +70,10 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
             oc_values = []
         for oc_item in oc_values:
             oc_result = validation_service.validate_objectclass_name(oc_item)
-            if oc_result.is_failure or not oc_result.value:
+            if oc_result.failure or not oc_result.value:
                 errors.append(f"Entry {dn_str}: Invalid objectClass '{oc_item}'")
-                is_valid = False
-        return (is_valid, errors)
+                valid = False
+        return (valid, errors)
 
     @staticmethod
     def _validate_single_entry(
@@ -134,7 +134,7 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
         invalid_count = total_entries - valid_count
         return r[m.Ldif.ValidationResult].ok(
             m.Ldif.ValidationResult(
-                is_valid=invalid_count == 0,
+                valid=invalid_count == 0,
                 total_entries=total_entries,
                 valid_entries=valid_count,
                 invalid_entries=invalid_count,

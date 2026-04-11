@@ -118,7 +118,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             return attr
         oid_str = str(attr.oid)
         oid_validation = self._validate_attribute_oid(oid_str)
-        if oid_validation.is_failure:
+        if oid_validation.failure:
             return attr
         is_valid_oud_oid = oid_validation.value
         existing_metadata = attr.metadata
@@ -185,7 +185,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         )
         oid = str(attr.oid)
         oid_validation = self._validate_attribute_oid(oid)
-        if oid_validation.is_failure:
+        if oid_validation.failure:
             return r[m.Ldif.SchemaAttribute].fail(
                 oid_validation.error or "OID validation failed",
             )
@@ -226,12 +226,12 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         if not oc:
             return r[m.Ldif.SchemaObjectClass].fail("ObjectClass is None or empty")
         sup_validation = self._validate_objectclass_sup(oc)
-        if sup_validation.is_failure:
+        if sup_validation.failure:
             return r[m.Ldif.SchemaObjectClass].fail(
                 sup_validation.error or "SUP validation failed",
             )
         oid_and_sup_validation = self._validate_objectclass_oid_and_sup(oc)
-        if oid_and_sup_validation.is_failure:
+        if oid_and_sup_validation.failure:
             return r[m.Ldif.SchemaObjectClass].fail(
                 oid_and_sup_validation.error or "OID validation failed",
             )
@@ -272,14 +272,14 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
     def _validate_attribute_oid(self, oid: str) -> r[bool]:
         """Validate attribute OID format for OUD."""
         oid_validation_result = u.Ldif.validate_format(oid)
-        if oid_validation_result.is_failure:
+        if oid_validation_result.failure:
             return r[bool].fail(f"OID validation failed: {oid_validation_result.error}")
         is_valid_basic_oid = oid_validation_result.value
         is_valid_oud_oid = is_valid_basic_oid
         if not is_valid_oud_oid and oid.endswith("-oid"):
             base_oid = oid[:-4]
             base_validation = u.Ldif.validate_format(base_oid)
-            if base_validation.is_success:
+            if base_validation.success:
                 is_valid_oud_oid = base_validation.value
         if not is_valid_oud_oid:
             return r[bool].fail(
@@ -295,7 +295,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         if oc and oc.oid:
             oid_str = str(oc.oid)
             oid_validation = self._validate_attribute_oid(oid_str)
-            if oid_validation.is_failure:
+            if oid_validation.failure:
                 return r[m.Ldif.SchemaObjectClass].fail(
                     f"ObjectClass OID validation failed: {oid_validation.error}",
                 )
@@ -323,7 +323,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             sup_str = str(sup)
             if sup_str and "." in sup_str and sup_str[0].isdigit():
                 sup_validation = self._validate_attribute_oid(sup_str)
-                if sup_validation.is_failure:
+                if sup_validation.failure:
                     return r[m.Ldif.SchemaObjectClass].fail(
                         f"ObjectClass SUP OID validation failed: {sup_validation.error}",
                     )

@@ -107,7 +107,7 @@ class TestNovellSchemaAttributeParsing:
         """Test parsing attribute without OID fails."""
         attr_def = "NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15"
         result = schema_quirk.parse_attribute(attr_def)
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(result.error, none=False)
         if result.error is not None:
             tm.that(result.error, has="missing an OID")
@@ -179,7 +179,7 @@ class TestNovellSchemaObjectClassParsing:
         oc_def = "NAME 'ndsPerson' SUP top STRUCTURAL"
         quirk_schema = schema_quirk
         result = quirk_schema.parse_objectclass(oc_def)
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(result.error, none=False)
         if result.error is not None:
             tm.that(result.error, has="missing an OID")

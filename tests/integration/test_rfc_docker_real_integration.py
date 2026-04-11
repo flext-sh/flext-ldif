@@ -36,7 +36,7 @@ class TestRfcParserRealFixtures:
             pytest.skip(f"Fixture not found: {entries_file}")
         parser = FlextLdifParser()
         parse_result = parser.parse_ldif_file(entries_file)
-        assert parse_result.is_success
+        assert parse_result.success
         parse_response = parse_result.value
         typed_entries = [
             m.Ldif.Entry(
@@ -57,7 +57,7 @@ class TestRfcParserRealFixtures:
             pytest.skip(f"Fixture not found: {entries_file}")
         parser = FlextLdifParser()
         result = parser.parse_ldif_file(entries_file)
-        assert result.is_success, f"Failed to parse: {result.error}"
+        assert result.success, f"Failed to parse: {result.error}"
         parse_response = result.value
         assert parse_response.entries
 
@@ -73,7 +73,7 @@ class TestRfcParserRealFixtures:
             pytest.skip(f"Fixture not found: {entries_file}")
         parser = FlextLdifParser()
         result = parser.parse_ldif_file(entries_file)
-        assert result.is_success, f"Failed to parse: {result.error}"
+        assert result.success, f"Failed to parse: {result.error}"
         parse_response = result.value
         assert parse_response.entries
 
@@ -95,7 +95,7 @@ class TestRfcSchemaParserRealFixtures:
             pytest.skip(f"Fixture not found: {schema_file}")
         parser = FlextLdifParser()
         result = parser.parse_ldif_file(schema_file)
-        assert result.is_success, f"Failed to parse: {result.error}"
+        assert result.success, f"Failed to parse: {result.error}"
         parse_response = result.value
         assert parse_response.entries
 
@@ -108,7 +108,7 @@ class TestRfcSchemaParserRealFixtures:
             pytest.skip(f"Fixture not found: {schema_file}")
         parser = FlextLdifParser()
         result = parser.parse_ldif_file(schema_file)
-        assert result.is_success, f"Failed to parse: {result.error}"
+        assert result.success, f"Failed to parse: {result.error}"
 
 
 class TestRfcWriterRealFixtures:
@@ -132,7 +132,7 @@ class TestRfcWriterRealFixtures:
             pytest.skip(f"Fixture not found: {source_file}")
         parser = FlextLdifParser()
         parse_result = parser.parse_ldif_file(source_file)
-        assert parse_result.is_success, f"Failed to parse source: {parse_result.error}"
+        assert parse_result.success, f"Failed to parse source: {parse_result.error}"
         parse_response = parse_result.value
         entries = parse_response.entries
         typed_entries = [
@@ -151,11 +151,11 @@ class TestRfcWriterRealFixtures:
             output_file,
             server_type=c.Ldif.Tests.RFC,
         )
-        assert write_result.is_success, f"Failed to write: {write_result.error}"
+        assert write_result.success, f"Failed to write: {write_result.error}"
         assert output_file.exists()
         reparser = FlextLdifParser()
         reparse_result = reparser.parse_ldif_file(output_file)
-        assert reparse_result.is_success, f"Failed to re-parse: {reparse_result.error}"
+        assert reparse_result.success, f"Failed to re-parse: {reparse_result.error}"
         reparsed_response = reparse_result.value
         assert len(reparsed_response.entries) == original_count
 
@@ -172,7 +172,7 @@ class TestRfcWriterRealFixtures:
             pytest.skip(f"Fixture not found: {acl_file}")
         parser = FlextLdifParser()
         parse_result = parser.parse_ldif_file(acl_file)
-        if not parse_result.is_success:
+        if not parse_result.success:
             pytest.skip(f"Failed to parse ACL fixture: {parse_result.error}")
         parse_response = parse_result.value
         entries = parse_response.entries
@@ -191,7 +191,7 @@ class TestRfcWriterRealFixtures:
             output_file,
             server_type=c.Ldif.Tests.RFC,
         )
-        assert result.is_success, f"Failed to write ACL entries: {result.error}"
+        assert result.success, f"Failed to write ACL entries: {result.error}"
         assert output_file.exists()
 
 
@@ -207,7 +207,7 @@ class TestRfcExceptionHandlingRealScenarios:
         """Test parsing nonexistent file returns error."""
         parser = FlextLdifParser()
         result = parser.parse_ldif_file(Path("/nonexistent/file.ldif"))
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
 
     def test_write_to_readonly_directory(
@@ -232,7 +232,7 @@ class TestRfcExceptionHandlingRealScenarios:
                 readonly_dir / "test.ldif",
                 server_type=c.Ldif.Tests.RFC,
             )
-            if not result.is_success:
+            if not result.success:
                 assert result.error is not None
                 assert (
                     "Permission denied" in result.error
@@ -251,6 +251,6 @@ class TestRfcExceptionHandlingRealScenarios:
         empty_file.write_text("")
         parser = FlextLdifParser()
         result = parser.parse_ldif_file(empty_file)
-        assert result.is_success
+        assert result.success
         parse_response = result.value
         assert not parse_response.entries

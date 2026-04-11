@@ -18,7 +18,7 @@ class TestsTestFlextLdifOidQuirks:
     def test_server_type_and_priority(self, server_registry: FlextLdifServer) -> None:
         """OID base quirk should expose canonical type and priority."""
         oid_result = server_registry.get_base_quirk("oid")
-        assert oid_result.is_success, f"OID quirk not found: {oid_result.error}"
+        assert oid_result.success, f"OID quirk not found: {oid_result.error}"
         oid_quirk = oid_result.value
         assert oid_quirk.server_type == "oid"
         assert oid_quirk.priority == 10
@@ -35,7 +35,7 @@ class TestsTestFlextLdifOidQuirks:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 SINGLE-VALUE )"
         )
         result = schema.parse_attribute(attr_def)
-        assert result.is_success, f"Parse failed: {result.error}"
+        assert result.success, f"Parse failed: {result.error}"
         attr = result.value
         assert str(attr.syntax) == "1.3.6.1.4.1.1466.115.121.1.15"
 
@@ -53,7 +53,7 @@ class TestsTestFlextLdifOidQuirks:
             "USAGE userApplications )"
         )
         result = schema.parse_attribute(attr_def)
-        assert result.is_success, f"Parse failed: {result.error}"
+        assert result.success, f"Parse failed: {result.error}"
         attr = result.value
         assert attr.equality == "caseIgnoreMatch"
         assert attr.substr == "caseIgnoreSubstringsMatch"
@@ -71,7 +71,7 @@ class TestsTestFlextLdifOidQuirks:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
         result = schema.parse_attribute(attr_def)
-        assert result.is_success, f"Parse failed: {result.error}"
+        assert result.success, f"Parse failed: {result.error}"
         assert result.value.equality == "caseIgnoreMatch"
 
     def test_parse_attribute_distinguished_name_case_variant(
@@ -87,7 +87,7 @@ class TestsTestFlextLdifOidQuirks:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
         )
         result = schema.parse_attribute(attr_def)
-        assert result.is_success, f"Parse failed: {result.error}"
+        assert result.success, f"Parse failed: {result.error}"
         assert result.value.equality == "distinguishedNameMatch"
 
     def test_parse_objectclass_quoted_sup(
@@ -102,7 +102,7 @@ class TestsTestFlextLdifOidQuirks:
             "SUP 'top' STRUCTURAL MAY ( orclOwnerGUID $ seeAlso ) )"
         )
         result = schema.parse_objectclass(oc_def)
-        assert result.is_success, f"Parse failed: {result.error}"
+        assert result.success, f"Parse failed: {result.error}"
         assert result.value.sup == "top"
 
     def test_parse_objectclass_auxiliary_typo(
@@ -117,7 +117,7 @@ class TestsTestFlextLdifOidQuirks:
             "SUP top AUXILLARY MAY ( cn ) )"
         )
         result = schema.parse_objectclass(oc_def)
-        assert result.is_success, f"Parse failed: {result.error}"
+        assert result.success, f"Parse failed: {result.error}"
         assert result.value.kind == "AUXILIARY"
 
     def test_parse_objectclass_parenthesized_sup(
@@ -132,7 +132,7 @@ class TestsTestFlextLdifOidQuirks:
             "SUP ( top ) STRUCTURAL MAY ( cn ) )"
         )
         result = schema.parse_objectclass(oc_def)
-        assert result.is_success, f"Parse failed: {result.error}"
+        assert result.success, f"Parse failed: {result.error}"
         assert result.value.sup == "top"
 
     def test_write_attribute_preserves_matching_rules(
@@ -148,9 +148,9 @@ class TestsTestFlextLdifOidQuirks:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
         )
         parse_result = schema.parse_attribute(attr_def)
-        assert parse_result.is_success, f"Parse failed: {parse_result.error}"
+        assert parse_result.success, f"Parse failed: {parse_result.error}"
         write_result = schema.write_attribute(parse_result.value)
-        assert write_result.is_success, f"Write failed: {write_result.error}"
+        assert write_result.success, f"Write failed: {write_result.error}"
         written = write_result.value
         assert "EQUALITY caseIgnoreSubstringsMatch" in written
 

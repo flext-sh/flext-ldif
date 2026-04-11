@@ -271,7 +271,7 @@ class FlextLdifServersBaseSchema(
         if validate_method is not None and callable(validate_method):
             validate_result_raw = validate_method(oid_value)
             if isinstance(validate_result_raw, r):
-                if validate_result_raw.is_failure:
+                if validate_result_raw.failure:
                     oid_validate_result = r[bool].fail(validate_result_raw.error)
                 else:
                     oid_validate_result = r[bool].ok(True)
@@ -279,7 +279,7 @@ class FlextLdifServersBaseSchema(
                 oid_validate_result = r[bool].ok(bool(validate_result_raw))
         else:
             oid_validate_result = r[bool].ok(True)
-        if oid_validate_result.is_failure:
+        if oid_validate_result.failure:
             metadata_extensions["syntax_validation_error"] = (
                 f"{oid_name.capitalize()} OID validation failed: {oid_validate_result.error}"
             )
@@ -397,7 +397,7 @@ class FlextLdifServersBaseSchema(
             schema_type = "attribute"
         if schema_type == "objectclass":
             oc_result = self._parse_objectclass(definition)
-            if oc_result.is_failure:
+            if oc_result.failure:
                 return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
                     oc_result.error or "Parse failed",
                 )
@@ -405,7 +405,7 @@ class FlextLdifServersBaseSchema(
                 oc_result.value,
             )
         attr_result = self._parse_attribute(definition)
-        if attr_result.is_failure:
+        if attr_result.failure:
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
                 attr_result.error or "Parse failed",
             )
@@ -455,7 +455,7 @@ class FlextLdifServersBaseSchema(
         """Handle parse operation for schema quirk."""
         if attr_definition:
             attr_result = self.parse_attribute(attr_definition)
-            if attr_result.is_success:
+            if attr_result.success:
                 parsed_attr: m.Ldif.SchemaAttribute = attr_result.value
                 return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].ok(
                     parsed_attr,
@@ -466,7 +466,7 @@ class FlextLdifServersBaseSchema(
             )
         if oc_definition:
             oc_result = self.parse_objectclass(oc_definition)
-            if oc_result.is_success:
+            if oc_result.success:
                 parsed_oc: m.Ldif.SchemaObjectClass = oc_result.value
                 return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].ok(
                     parsed_oc,
@@ -487,7 +487,7 @@ class FlextLdifServersBaseSchema(
         """Handle write operation for schema quirk."""
         if attr_model:
             write_result = self.write_attribute(attr_model)
-            if write_result.is_success:
+            if write_result.success:
                 written_text: str = write_result.value
                 return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].ok(
                     written_text,
@@ -498,7 +498,7 @@ class FlextLdifServersBaseSchema(
             )
         if oc_model:
             write_oc_result = self.write_objectclass(oc_model)
-            if write_oc_result.is_success:
+            if write_oc_result.success:
                 written_text = write_oc_result.value
                 return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].ok(
                     written_text,

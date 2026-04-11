@@ -162,7 +162,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _extract_oid_from_attribute(self, attr_definition: str) -> str | None:
             """Extract OID from attribute definition using multiple strategies."""
             oid_result = u.Ldif.extract_oid(attr_definition)
-            if oid_result.is_success:
+            if oid_result.success:
                 return oid_result.value
             oid_match = re.search(
                 FlextLdifServersRelaxed.Constants.OID_NUMERIC_WITH_PAREN,
@@ -187,7 +187,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _extract_oid_with_fallback_patterns(self, definition: str) -> str | None:
             """Extract OID using multiple fallback patterns for relaxed mode."""
             oid_result = u.Ldif.extract_oid(definition)
-            if oid_result.is_success:
+            if oid_result.success:
                 return oid_result.value
             oid_match = re.search(
                 FlextLdifServersRelaxed.Constants.OID_NUMERIC_WITH_PAREN,
@@ -240,7 +240,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "Attribute definition cannot be empty",
                 )
             parent_result = super()._parse_attribute(attr_definition)
-            if parent_result.is_success:
+            if parent_result.success:
                 attribute = parent_result.value
                 self._enhance_schema_item_metadata(
                     schema_item=attribute,
@@ -316,7 +316,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "ObjectClass definition cannot be empty",
                 )
             parent_result = super()._parse_objectclass(oc_definition)
-            if parent_result.is_success:
+            if parent_result.success:
                 objectclass = parent_result.value
                 return r[m.Ldif.SchemaObjectClass].ok(
                     self._enhance_objectclass_metadata(objectclass, oc_definition),
@@ -382,7 +382,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> r[str]:
             """Write attribute to RFC format - stringify in relaxed mode."""
             parent_result = super()._write_attribute(attr_data)
-            if parent_result.is_success:
+            if parent_result.success:
                 return parent_result
             source_server = None
             if attr_data.metadata and attr_data.metadata.extensions:
@@ -413,7 +413,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> r[str]:
             """Write objectClass to RFC format - stringify in relaxed mode."""
             parent_result = super()._write_objectclass(oc_data)
-            if parent_result.is_success:
+            if parent_result.success:
                 return parent_result
             source_server = None
             if oc_data.metadata and oc_data.metadata.extensions:
@@ -480,7 +480,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return r[m.Ldif.Acl].fail("ACL line cannot be empty")
             try:
                 parent_result = super()._parse_acl(acl_line)
-                if parent_result.is_success:
+                if parent_result.success:
                     acl = parent_result.value
                     if not acl.metadata:
                         updated_acl = acl.model_copy(
@@ -546,7 +546,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
             """Write ACL to RFC format - stringify in relaxed mode."""
             parent_result = super()._write_acl(acl_data)
-            if parent_result.is_success:
+            if parent_result.success:
                 return parent_result
             if acl_data.raw_acl:
                 return r[str].ok(acl_data.raw_acl)
@@ -589,7 +589,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return r[str].fail("DN cannot be empty")
             try:
                 norm_result = u.Ldif.norm(dn)
-                if norm_result.is_success:
+                if norm_result.success:
                     return r[str].ok(norm_result.value)
                 return r[str].fail(
                     f"DN normalization failed for DN: {dn}: {norm_result.error}",
@@ -642,7 +642,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _parse_content(self, ldif_content: str) -> r[MutableSequence[m.Ldif.Entry]]:
             """Parse raw LDIF content string into Entry models (internal)."""
             parent_result = super()._parse_content(ldif_content)
-            if parent_result.is_success:
+            if parent_result.success:
                 return parent_result
             FlextLdifServersRelaxed._logger.debug(
                 f"RFC parser failed, using relaxed mode: {parent_result.error}",
@@ -734,7 +734,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _write_entry(self, entry_data: m.Ldif.Entry) -> r[str]:
             """Write Entry model to RFC-compliant LDIF string format (internal)."""
             parent_result = super()._write_entry(entry_data)
-            if parent_result.is_success:
+            if parent_result.success:
                 return parent_result
             FlextLdifServersRelaxed._logger.debug(
                 f"RFC write failed, using relaxed mode: {parent_result.error}",

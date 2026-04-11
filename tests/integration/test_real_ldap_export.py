@@ -78,10 +78,10 @@ class TestRealLdapExport:
             attributes=attrs_dict,
             metadata=None,
         )
-        assert entry_result.is_success
+        assert entry_result.success
         flext_entry = entry_result.value
         write_result = flext_api.write([flext_entry])
-        assert write_result.is_success
+        assert write_result.success
         ldif_output = write_result.value.content
         assert ldif_output is not None
         assert f"dn: cn={unique_username}" in ldif_output
@@ -138,7 +138,7 @@ class TestRealLdapExport:
                 attributes=attrs_dict,
                 metadata=None,
             )
-            assert result.is_success
+            assert result.success
             unwrapped_entry = result.value
             if hasattr(unwrapped_entry, "dn") and hasattr(
                 unwrapped_entry,
@@ -150,7 +150,7 @@ class TestRealLdapExport:
                 facade_entry = m.Ldif.Entry.model_validate(entry_dict)
                 entries.append(facade_entry)
         write_result = flext_api.write(entries)
-        assert write_result.is_success
+        assert write_result.success
         ldif_output = write_result.value.content
         assert ldif_output is not None
         for unique_username in unique_usernames:
@@ -215,7 +215,7 @@ class TestRealLdapExport:
                 attributes=attrs_dict,
                 metadata=None,
             )
-            assert result.is_success
+            assert result.success
             unwrapped_entry = result.value
             if hasattr(unwrapped_entry, "dn") and hasattr(
                 unwrapped_entry,
@@ -227,7 +227,7 @@ class TestRealLdapExport:
                 facade_entry = m.Ldif.Entry.model_validate(entry_dict)
                 entries.append(facade_entry)
         write_result = flext_api.write(entries)
-        assert write_result.is_success
+        assert write_result.success
         ldif_output = write_result.value.content
         assert ldif_output is not None
         assert "ou=Groups" in ldif_output
@@ -269,11 +269,11 @@ class TestRealLdapExport:
             attributes=attrs_dict,
             metadata=None,
         )
-        assert entry_result.is_success
+        assert entry_result.success
         flext_entry = entry_result.value
         output_file = tmp_path / "export.ldif"
         write_result = flext_api.write_ldif_file([flext_entry], output_file)
-        assert write_result.is_success
+        assert write_result.success
         assert output_file.exists()
         content = output_file.read_text()
         assert f"cn: {unique_username}" in content

@@ -386,7 +386,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                     attributes_parsed_model,
                     available_attrs,
                 )
-                if not validation_result.is_success:
+                if not validation_result.success:
                     return r[
                         MutableMapping[
                             str,
@@ -533,7 +533,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             server_type=server_type,
             parse_parts_hook=parse_parts_hook,
         )
-        if parse_result_raw.is_failure:
+        if parse_result_raw.failure:
             return r[m.Ldif.SchemaAttribute].fail(
                 parse_result_raw.error or "Attribute parsing failed",
             )
@@ -583,7 +583,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition using core parser."""
         parse_result = self._parse_objectclass_core(oc_definition)
-        if parse_result.is_failure:
+        if parse_result.failure:
             return parse_result
         return self._hook_post_parse_objectclass(parse_result.value)
 

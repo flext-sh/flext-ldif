@@ -444,7 +444,7 @@ def ldap_container(worker_id: str) -> t.ContainerMapping:
         start_result = docker_control.start_existing_container(
             c.Ldif.Tests.DOCKER_CONTAINER_NAME,
         )
-        if start_result.is_failure:
+        if start_result.failure:
             compose_file = str(
                 c.Ldif.Tests.WORKSPACE_ROOT / c.Ldif.Tests.DOCKER_COMPOSE_FILE_REL
             )
@@ -452,7 +452,7 @@ def ldap_container(worker_id: str) -> t.ContainerMapping:
                 compose_file,
                 c.Ldif.Tests.DOCKER_SERVICE_NAME,
             )
-            if compose_result.is_failure:
+            if compose_result.failure:
                 pytest.skip(
                     f"Could not start shared OpenLDAP container: {compose_result.error}",
                 )
@@ -461,7 +461,7 @@ def ldap_container(worker_id: str) -> t.ContainerMapping:
             c.Ldif.Tests.DOCKER_PORT,
             15,
         )
-        if port_result.is_failure or not port_result.value:
+        if port_result.failure or not port_result.value:
             pytest.skip(
                 f"LDAP container port {c.Ldif.Tests.DOCKER_PORT} is not ready",
             )

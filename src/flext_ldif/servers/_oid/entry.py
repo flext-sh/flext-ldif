@@ -864,7 +864,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         """Parse ACL and merge additional extensions from parsed model."""
         try:
             acl_result = acl_quirk.parse_quirk(acl_value)
-            if not acl_result.is_success:
+            if not acl_result.success:
                 return
             acl_model = m.Ldif.Acl.model_validate(acl_result.value)
             if not (acl_model.metadata and acl_model.metadata.extensions):
@@ -960,7 +960,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     def _parse_entry_from_lines(self, lines: MutableSequence[str]) -> r[m.Ldif.Entry]:
         """Parse entry from LDIF lines, apply OID→RFC normalization, finalize metadata."""
         result = super()._parse_entry_from_lines(lines)
-        if result.is_failure:
+        if result.failure:
             return result
         entry = result.value
         if entry.dn and entry.dn.value:
@@ -972,7 +972,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         finalize_result = self._hook_finalize_entry_parse(
             entry, original_dn, original_attrs
         )
-        if finalize_result.is_failure:
+        if finalize_result.failure:
             return finalize_result
         return self._hook_post_parse_entry(finalize_result.value)
 

@@ -435,7 +435,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         merged_category_map = self._build_category_map_from_rules(normalized_rules)
         constants: type | None = None
         constants_result = self._get_server_constants(effective_server_type)
-        if constants_result.is_success:
+        if constants_result.success:
             constants_raw = constants_result.map_or(None)
             if constants_raw is not None:
                 constants = constants_raw
@@ -582,7 +582,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
             entries=schema_entries,
             allowed_oids=allowed_oids,
         )
-        if result.is_success:
+        if result.success:
             filtered = result.map_or(None)
             if filtered is not None:
                 logger.info(
@@ -656,7 +656,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         validated: MutableSequence[m.Ldif.Entry] = [
             validation_result.value
             for entry in normalized_entries
-            if (validation_result := validate_entry(entry)).is_success
+            if (validation_result := validate_entry(entry)).success
         ]
         logger.info(
             "Validated entries",

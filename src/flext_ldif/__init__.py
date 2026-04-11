@@ -13,11 +13,7 @@ from flext_core.lazy import (
 from flext_ldif.__version__ import *
 
 if _t.TYPE_CHECKING:
-    from flext_core.decorators import d
-    from flext_core.exceptions import e
-    from flext_core.handlers import h
-    from flext_core.mixins import x
-    from flext_core.result import r
+    from flext_core import d, e, h, r, s, x
     from flext_ldif._constants.base import FlextLdifConstantsBase
     from flext_ldif._constants.enums import FlextLdifConstantsEnums
     from flext_ldif._models.base import FlextLdifModelsBases
@@ -52,7 +48,6 @@ if _t.TYPE_CHECKING:
     from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
     from flext_ldif._utilities.parsers import FlextLdifUtilitiesParsers
     from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
-    from flext_ldif._utilities.result import FlextLdifUtilitiesResult
     from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
     from flext_ldif._utilities.server import FlextLdifUtilitiesServer
     from flext_ldif._utilities.transformers import (
@@ -63,7 +58,7 @@ if _t.TYPE_CHECKING:
     from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
     from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
     from flext_ldif.api import FlextLdif
-    from flext_ldif.base import FlextLdifServiceBase, s
+    from flext_ldif.base import FlextLdifServiceBase
     from flext_ldif.constants import FlextLdifConstants, c
     from flext_ldif.ldif import ldif
     from flext_ldif.models import FlextLdifModels, m
@@ -144,10 +139,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "__version_info__",
             ),
             ".api": ("FlextLdif",),
-            ".base": (
-                "FlextLdifServiceBase",
-                "s",
-            ),
+            ".base": ("FlextLdifServiceBase",),
             ".constants": (
                 "FlextLdifConstants",
                 "c",
@@ -171,11 +163,14 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "FlextLdifUtilities",
                 "u",
             ),
-            "flext_core.decorators": ("d",),
-            "flext_core.exceptions": ("e",),
-            "flext_core.handlers": ("h",),
-            "flext_core.mixins": ("x",),
-            "flext_core.result": ("r",),
+            "flext_core": (
+                "d",
+                "e",
+                "h",
+                "r",
+                "s",
+                "x",
+            ),
         },
     ),
     exclude_names=(
@@ -284,7 +279,6 @@ __all__ = [
     "FlextLdifUtilitiesParser",
     "FlextLdifUtilitiesParsers",
     "FlextLdifUtilitiesPipeline",
-    "FlextLdifUtilitiesResult",
     "FlextLdifUtilitiesSchema",
     "FlextLdifUtilitiesServer",
     "FlextLdifUtilitiesTransformer",

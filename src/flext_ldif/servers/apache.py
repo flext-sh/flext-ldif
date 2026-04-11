@@ -133,7 +133,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add Apache metadata."""
             result = super()._parse_attribute(attr_definition)
-            if result.is_success:
+            if result.success:
                 attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for("apache")
                 return r[m.Ldif.SchemaAttribute].ok(
@@ -145,7 +145,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add Apache metadata."""
             result = super()._parse_objectclass(oc_definition)
-            if result.is_success:
+            if result.success:
                 oc_data = result.value
                 u.Ldif.fix_missing_sup(oc_data)
                 u.Ldif.fix_kind_mismatch(oc_data)
@@ -199,7 +199,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def _write_acl(self, acl_data: FlextLdifModelsDomainsEntries.Acl) -> r[str]:
             """Write ACL data to Apache Directory Server ACI format."""
             parent_result = super()._write_acl(acl_data)
-            if parent_result.is_success:
+            if parent_result.success:
                 acl_str = parent_result.value
                 if acl_str and (not acl_str.strip().startswith(("aci:", "ads-aci:"))):
                     return r[str].ok(f"aci: {acl_str}")
@@ -231,7 +231,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 for k, vals in entry_attrs.items()
             }
             base_result = super().parse_entry(entry_dn, str_attrs)
-            if base_result.is_failure:
+            if base_result.failure:
                 return r[m.Ldif.Entry].from_result(base_result)
             entry = base_result.value
             try:

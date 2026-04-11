@@ -179,7 +179,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add AD metadata."""
             result = super()._parse_attribute(attr_definition)
-            if result.is_success:
+            if result.success:
                 attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
                 attr_updated = attr_data.model_copy(update={"metadata": metadata})
@@ -190,7 +190,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add AD metadata."""
             result = super()._parse_objectclass(oc_definition)
-            if result.is_success:
+            if result.success:
                 oc_data = result.value
                 FlextLdifUtilitiesObjectClass.fix_missing_sup(oc_data)
                 FlextLdifUtilitiesObjectClass.fix_kind_mismatch(oc_data)

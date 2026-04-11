@@ -445,7 +445,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     def _execute_parse(self, ldif_text: str) -> r[m.Ldif.Entry]:
         """Execute parse operation."""
         parse_result = self.parse_ldif(ldif_text)
-        if not parse_result.is_success:
+        if not parse_result.success:
             return r[m.Ldif.Entry].fail(parse_result.error or "Parse failed")
         parse_response = parse_result.unwrap()
         entries = parse_response.entries

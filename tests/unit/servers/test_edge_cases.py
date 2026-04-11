@@ -38,7 +38,7 @@ class TestsFlextLdifEdgeCases:
         """Test parsing of entries with unicode characters in names."""
         unicode_ldif = "dn: cn=José,ou=Users,dc=example,dc=com\ncn: José\nsn: García\nobjectClass: person\n\n"
         result = ldif_api.parse_ldif(unicode_ldif, server_type=c.Ldif.Tests.RFC)
-        _ = tm.that(result.is_success, eq=True)
+        _ = tm.that(result.success, eq=True)
         entries = result.value.entries
         tm.that(len(entries) > 0, eq=True)
         for entry in entries:
@@ -53,7 +53,7 @@ class TestsFlextLdifEdgeCases:
         """Test parsing of entries with very deep DN hierarchies."""
         deep_dn_ldif = "dn: cn=level1,ou=level2,ou=level3,ou=level4,ou=level5,ou=level6,dc=example,dc=com\ncn: level1\nobjectClass: person\n\n"
         result = ldif_api.parse_ldif(deep_dn_ldif, server_type=c.Ldif.Tests.RFC)
-        _ = tm.that(result.is_success, eq=True)
+        _ = tm.that(result.success, eq=True)
         entries = result.value.entries
         tm.that(len(entries) > 0, eq=True)
         max_depth = 0
@@ -73,7 +73,7 @@ class TestsFlextLdifEdgeCases:
             / "large_multivalue.ldif"
         )
         result = ldif_api.parse_ldif(fixture_path, server_type=c.Ldif.Tests.RFC)
-        _ = tm.that(result.is_success, eq=True)
+        _ = tm.that(result.success, eq=True)
         entries = result.value.entries
         tm.that(len(entries) > 0, eq=True)
         max_values = 0
@@ -88,18 +88,18 @@ class TestsFlextLdifEdgeCases:
         """Test roundtrip of unicode entries."""
         unicode_ldif = "dn: cn=José,ou=Users,dc=example,dc=com\ncn: José\nsn: García\nobjectClass: person\n\n"
         parse_result = ldif_api.parse_ldif(unicode_ldif, server_type=c.Ldif.Tests.RFC)
-        _ = tm.that(parse_result.is_success, eq=True)
+        _ = tm.that(parse_result.success, eq=True)
         entries = parse_result.value.entries
         tm.that(len(entries), eq=1)
         output_path = tmp_path / "unicode_roundtrip.ldif"
         write_result = ldif_api.write_ldif_file(
             entries, output_path, server_type=c.Ldif.Tests.RFC
         )
-        _ = tm.that(write_result.is_success, eq=True)
+        _ = tm.that(write_result.success, eq=True)
         roundtrip_result = ldif_api.parse_ldif(
             output_path, server_type=c.Ldif.Tests.RFC
         )
-        _ = tm.that(roundtrip_result.is_success, eq=True)
+        _ = tm.that(roundtrip_result.success, eq=True)
         roundtrip_entries = roundtrip_result.value.entries
         tm.that(len(roundtrip_entries), eq=1)
 
@@ -107,18 +107,18 @@ class TestsFlextLdifEdgeCases:
         """Test roundtrip of deep DN entries."""
         deep_dn_ldif = "dn: cn=level1,ou=level2,ou=level3,ou=level4,ou=level5,ou=level6,dc=example,dc=com\ncn: level1\nobjectClass: person\n\n"
         parse_result = ldif_api.parse_ldif(deep_dn_ldif, server_type=c.Ldif.Tests.RFC)
-        _ = tm.that(parse_result.is_success, eq=True)
+        _ = tm.that(parse_result.success, eq=True)
         entries = parse_result.value.entries
         tm.that(len(entries), eq=1)
         output_path = tmp_path / "deep_dn_roundtrip.ldif"
         write_result = ldif_api.write_ldif_file(
             entries, output_path, server_type=c.Ldif.Tests.RFC
         )
-        _ = tm.that(write_result.is_success, eq=True)
+        _ = tm.that(write_result.success, eq=True)
         roundtrip_result = ldif_api.parse_ldif(
             output_path, server_type=c.Ldif.Tests.RFC
         )
-        _ = tm.that(roundtrip_result.is_success, eq=True)
+        _ = tm.that(roundtrip_result.success, eq=True)
         roundtrip_entries = roundtrip_result.value.entries
         tm.that(len(roundtrip_entries), eq=1)
 
@@ -132,17 +132,17 @@ class TestsFlextLdifEdgeCases:
         parse_result = ldif_api.parse_ldif(
             large_multivalue_ldif, server_type=c.Ldif.Tests.RFC
         )
-        _ = tm.that(parse_result.is_success, eq=True)
+        _ = tm.that(parse_result.success, eq=True)
         entries = parse_result.value.entries
         tm.that(len(entries), eq=1)
         output_path = tmp_path / "large_multivalue_roundtrip.ldif"
         write_result = ldif_api.write_ldif_file(
             entries, output_path, server_type=c.Ldif.Tests.RFC
         )
-        _ = tm.that(write_result.is_success, eq=True)
+        _ = tm.that(write_result.success, eq=True)
         roundtrip_result = ldif_api.parse_ldif(
             output_path, server_type=c.Ldif.Tests.RFC
         )
-        _ = tm.that(roundtrip_result.is_success, eq=True)
+        _ = tm.that(roundtrip_result.success, eq=True)
         roundtrip_entries = roundtrip_result.value.entries
         tm.that(len(roundtrip_entries), eq=1)

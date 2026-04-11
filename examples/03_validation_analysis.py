@@ -29,7 +29,7 @@ class DRYValidationAnalysis:
         validation_result: m.Ldif.ValidationResult,
     ) -> r[m.Ldif.ValidationResult]:
         """DRY validation analysis: categorize errors and detect patterns."""
-        if not validation_result.is_valid:
+        if not validation_result.valid:
             error_groups: dict[str, list[str]] = {}
             for error in validation_result.errors:
                 category = getattr(error, "category", "unknown")
@@ -59,7 +59,7 @@ class DRYValidationAnalysis:
                 f"mail: {mail}\n"
             )
             parse_result = api.parse_ldif(ldif_text)
-            if parse_result.is_success:
+            if parse_result.success:
                 parse_response = parse_result.unwrap()
                 entries.extend(parse_response.entries)
         return entries
@@ -71,9 +71,9 @@ class DRYValidationAnalysis:
         entries = DRYValidationAnalysis._generate_test_dataset(100, error_rate=0.1)
         validate_result = api.validate_entries(entries)
         total_entries = len(entries)
-        if validate_result.is_failure:
+        if validate_result.failure:
             validation_result = m.Ldif.ValidationResult(
-                is_valid=False,
+                valid=False,
                 total_entries=total_entries,
                 valid_entries=0,
                 invalid_entries=total_entries,
@@ -82,10 +82,10 @@ class DRYValidationAnalysis:
             return r[m.Ldif.ValidationResult].ok(validation_result)
         vr = validate_result.unwrap()
         validation_result = m.Ldif.ValidationResult(
-            is_valid=vr.is_valid,
+            valid=vr.valid,
             total_entries=total_entries,
-            valid_entries=total_entries if vr.is_valid else 0,
-            invalid_entries=0 if vr.is_valid else total_entries,
+            valid_entries=total_entries if vr.valid else 0,
+            invalid_entries=0 if vr.valid else total_entries,
             errors=[],
         )
         return DRYValidationAnalysis._analyze_validation_results(validation_result)
@@ -96,7 +96,7 @@ class DRYValidationAnalysis:
         api = ldif.get_instance()
         entries = DRYValidationAnalysis._generate_test_dataset(500, error_rate=0.05)
         validate_result = api.validate_entries(entries)
-        if validate_result.is_failure:
+        if validate_result.failure:
             return r[Mapping[str, t.Numeric]].fail(validate_result.error)
         total_entries = len(entries)
         valid_result = validate_result.unwrap()

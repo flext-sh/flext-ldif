@@ -212,12 +212,12 @@ class FlextLdifUtilitiesDN:
     def _normalize_dns_for_comparison(dn1: str, dn2: str) -> r[tuple[str, str]]:
         """Normalize both DNs for comparison."""
         norm1_result = FlextLdifUtilitiesDN.norm(dn1)
-        if not norm1_result.is_success:
+        if not norm1_result.success:
             return r[tuple[str, str]].fail(
                 f"Comparison failed (RFC 4514): Failed to normalize first DN: {norm1_result.error}",
             )
         norm2_result = FlextLdifUtilitiesDN.norm(dn2)
-        if not norm2_result.is_success:
+        if not norm2_result.success:
             return r[tuple[str, str]].fail(
                 f"Comparison failed (RFC 4514): Failed to normalize second DN: {norm2_result.error}",
             )
@@ -462,7 +462,7 @@ class FlextLdifUtilitiesDN:
             if not dn1 or not dn2:
                 return r[int].fail("Both DNs must be provided for comparison")
             norm_result = FlextLdifUtilitiesDN._normalize_dns_for_comparison(dn1, dn2)
-            if not norm_result.is_success:
+            if not norm_result.success:
                 return r[int].fail(norm_result.error or "Normalization failed")
             norm1_lower, norm2_lower = norm_result.value
             comparison = (norm1_lower > norm2_lower) - (norm1_lower < norm2_lower)
@@ -645,7 +645,7 @@ class FlextLdifUtilitiesDN:
                 predicate=lambda comp: "=" in comp,
                 on_error="skip",
             )
-            if process_result.is_failure:
+            if process_result.failure:
                 return r[str].fail(
                     f"Failed to normalize DN: no valid components in '{dn_str}'",
                 )
@@ -712,7 +712,7 @@ class FlextLdifUtilitiesDN:
         if dn is None:
             return ""
         result = FlextLdifUtilitiesDN.norm(dn)
-        if result.is_success:
+        if result.success:
             return result.value
         if fallback == "lower":
             return dn.lower()

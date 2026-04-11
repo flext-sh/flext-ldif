@@ -32,9 +32,9 @@ class TestsTestFlextLdifCrossDirectionConversion:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
         )
         parse_result = oid_schema.parse_attribute(attr_def)
-        assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
+        assert parse_result.success, f"OID parse failed: {parse_result.error}"
         write_result = oud_schema.write_attribute(parse_result.value)
-        assert write_result.is_success, f"OUD write failed: {write_result.error}"
+        assert write_result.success, f"OUD write failed: {write_result.error}"
         written = write_result.value
         assert "EQUALITY caseIgnoreSubstringsMatch" not in written
         assert "SUBSTR caseIgnoreSubstringsMatch" in written
@@ -53,9 +53,9 @@ class TestsTestFlextLdifCrossDirectionConversion:
             "SUP 'top' STRUCTURAL MAY ( orclOwnerGUID $ seeAlso ) )"
         )
         parse_result = oid_schema.parse_objectclass(oc_def)
-        assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
+        assert parse_result.success, f"OID parse failed: {parse_result.error}"
         write_result = oud_schema.write_objectclass(parse_result.value)
-        assert write_result.is_success, f"OUD write failed: {write_result.error}"
+        assert write_result.success, f"OUD write failed: {write_result.error}"
         written = write_result.value
         assert "SUP top" in written
         assert "SUP 'top'" not in written
@@ -74,10 +74,10 @@ class TestsTestFlextLdifCrossDirectionConversion:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 SINGLE-VALUE )"
         )
         parse_result = oid_schema.parse_attribute(attr_def)
-        assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
+        assert parse_result.success, f"OID parse failed: {parse_result.error}"
         assert str(parse_result.value.syntax) == "1.3.6.1.4.1.1466.115.121.1.15"
         write_result = oud_schema.write_attribute(parse_result.value)
-        assert write_result.is_success, f"OUD write failed: {write_result.error}"
+        assert write_result.success, f"OUD write failed: {write_result.error}"
         written = write_result.value
         assert "1.3.6.1.4.1.1466.115.121.1.15" in written
         assert "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 " not in written
@@ -95,9 +95,9 @@ class TestsTestFlextLdifCrossDirectionConversion:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
         )
         parse_result = oid_schema.parse_attribute(attr_def)
-        assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
+        assert parse_result.success, f"OID parse failed: {parse_result.error}"
         write_result = oid_schema.write_attribute(parse_result.value)
-        assert write_result.is_success, f"OID write failed: {write_result.error}"
+        assert write_result.success, f"OID write failed: {write_result.error}"
         assert write_result.value == attr_def
 
     def test_oid_roundtrip_objectclass(
@@ -112,9 +112,9 @@ class TestsTestFlextLdifCrossDirectionConversion:
             "SUP top STRUCTURAL MUST cn MAY ( sn $ description ) )"
         )
         parse_result = oid_schema.parse_objectclass(oc_def)
-        assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
+        assert parse_result.success, f"OID parse failed: {parse_result.error}"
         write_result = oid_schema.write_objectclass(parse_result.value)
-        assert write_result.is_success, f"OID write failed: {write_result.error}"
+        assert write_result.success, f"OID write failed: {write_result.error}"
         written = write_result.value
         assert "orclTestOC" in written
         assert "SUP top" in written
@@ -133,9 +133,9 @@ class TestsTestFlextLdifCrossDirectionConversion:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
         parse_result = oud_schema.parse_attribute(attr_def)
-        assert parse_result.is_success, f"OUD parse failed: {parse_result.error}"
+        assert parse_result.success, f"OUD parse failed: {parse_result.error}"
         write_result = oud_schema.write_attribute(parse_result.value)
-        assert write_result.is_success, f"OUD write failed: {write_result.error}"
+        assert write_result.success, f"OUD write failed: {write_result.error}"
         assert "ds-sync-hist" in write_result.value
 
     def test_oud_roundtrip_objectclass(
@@ -149,9 +149,9 @@ class TestsTestFlextLdifCrossDirectionConversion:
             "( 1.3.6.1.4.1.26027.1.2.1 NAME 'ds-root-dse' SUP top STRUCTURAL MAY cn )"
         )
         parse_result = oud_schema.parse_objectclass(oc_def)
-        assert parse_result.is_success, f"OUD parse failed: {parse_result.error}"
+        assert parse_result.success, f"OUD parse failed: {parse_result.error}"
         write_result = oud_schema.write_objectclass(parse_result.value)
-        assert write_result.is_success, f"OUD write failed: {write_result.error}"
+        assert write_result.success, f"OUD write failed: {write_result.error}"
         written = write_result.value
         assert "ds-root-dse" in written
         assert "STRUCTURAL" in written
@@ -171,9 +171,9 @@ class TestsTestFlextLdifCrossDirectionConversion:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
         parse_result = oud_schema.parse_attribute(attr_def)
-        assert parse_result.is_success, f"OUD parse failed: {parse_result.error}"
+        assert parse_result.success, f"OUD parse failed: {parse_result.error}"
         write_result = oid_schema.write_attribute(parse_result.value)
-        assert write_result.is_success, f"OID write failed: {write_result.error}"
+        assert write_result.success, f"OID write failed: {write_result.error}"
         written = write_result.value
         assert "caseIgnoreMatch" in written
         assert "accessDirectiveMatch" not in written
@@ -193,10 +193,10 @@ class TestsTestFlextLdifCrossDirectionConversion:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
         )
         parse_result = oid_schema.parse_attribute(attr_def)
-        assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
+        assert parse_result.success, f"OID parse failed: {parse_result.error}"
         assert parse_result.value.equality == "distinguishedNameMatch"
         write_result = oud_schema.write_attribute(parse_result.value)
-        assert write_result.is_success, f"OUD write failed: {write_result.error}"
+        assert write_result.success, f"OUD write failed: {write_result.error}"
         assert "distinguishedNAMEMatch" not in write_result.value
 
     def test_oid_to_oud_schema_entry_is_target_normalized(self) -> None:
@@ -231,7 +231,7 @@ class TestsTestFlextLdifCrossDirectionConversion:
             },
         })
         result = conversion.convert_entry("oid", "oud", entry)
-        assert result.is_success, f"Entry conversion failed: {result.error}"
+        assert result.success, f"Entry conversion failed: {result.error}"
         assert isinstance(result.value, m.Ldif.Entry)
         converted_entry = result.value
         assert converted_entry.attributes is not None
@@ -270,7 +270,7 @@ class TestsTestFlextLdifCrossDirectionConversion:
             },
         })
         result = conversion.convert_entry("oud", "oid", entry)
-        assert result.is_success, f"Entry conversion failed: {result.error}"
+        assert result.success, f"Entry conversion failed: {result.error}"
         assert isinstance(result.value, m.Ldif.Entry)
         converted_entry = result.value
         assert converted_entry.attributes is not None

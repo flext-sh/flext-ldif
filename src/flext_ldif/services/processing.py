@@ -96,7 +96,7 @@ class FlextLdifProcessing(
     ) -> r[MutableSequence[m.Ldif.ProcessingResult]]:
         """Unified processing method supporting batch and parallel modes."""
         processor_result = self._get_processor_function(processor_name)
-        if processor_result.is_failure:
+        if processor_result.failure:
             return r[MutableSequence[m.Ldif.ProcessingResult]].fail(
                 processor_result.error or "Processor function not found",
             )

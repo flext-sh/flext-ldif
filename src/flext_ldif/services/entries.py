@@ -129,7 +129,7 @@ class FlextLdifEntries(
     def get_entry_objectclasses(entry: m.Ldif.Entry) -> r[MutableSequence[str]]:
         """Get objectClass values from entry attributes."""
         attributes_result = FlextLdifEntries.get_entry_attributes(entry)
-        if attributes_result.is_failure:
+        if attributes_result.failure:
             return r[MutableSequence[str]].fail(
                 f"Failed to get entry attributes: {attributes_result.error}",
             )
@@ -173,7 +173,7 @@ class FlextLdifEntries(
             results: MutableSequence[m.Ldif.Entry] = []
             for entry in self._entries:
                 result = self.remove_attributes(entry, self._attributes_to_remove)
-                if result.is_success:
+                if result.success:
                     results.append(result.value)
             return r[MutableSequence[m.Ldif.Entry]].ok(results)
         return r[MutableSequence[m.Ldif.Entry]].fail(

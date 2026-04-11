@@ -52,7 +52,7 @@ class TestFlextLdifAPIIntegration:
         """Test parsing LDIF content across different scenarios."""
         api = ldif()
         result = api.parse_ldif(ldif_content)
-        assert result.is_success
+        assert result.success
         entries = result.value.entries
         assert len(entries) == expected_entries
         for entry in entries:
@@ -87,10 +87,10 @@ class TestFlextLdifAPIIntegration:
         """Test complete validation workflow."""
         api = ldif()
         parse_result = api.parse_ldif(c.Ldif.Tests.RFC_SAMPLE_LDIF_BASIC)
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.value.entries
         validate_result = api.validate_entries(entries)
-        assert validate_result.is_success
+        assert validate_result.success
 
     def test_multiple_instances_independence(self) -> None:
         """Test that multiple ldif instances work independently."""
@@ -98,8 +98,8 @@ class TestFlextLdifAPIIntegration:
         ldif2 = ldif()
         result1 = ldif1.parse_ldif(c.Ldif.Tests.RFC_SAMPLE_LDIF_BASIC)
         result2 = ldif2.parse_ldif(c.Ldif.Tests.RFC_SAMPLE_LDIF_BASIC)
-        assert result1.is_success
-        assert result2.is_success
+        assert result1.success
+        assert result2.success
         entries1 = result1.value.entries
         entries2 = result2.value.entries
         assert len(entries1) == len(entries2) == 1
@@ -118,24 +118,24 @@ class TestFlextLdifAPIIntegration:
                 "sn": ["check"],
             },
         )
-        assert create_result.is_success
+        assert create_result.success
         created = create_result.value
         assert created is not None
         assert isinstance(created, m.Ldif.Entry)
-        assert api.validate_entries([created]).is_success
+        assert api.validate_entries([created]).success
 
     def test_end_to_end_workflow_complete(self) -> None:
         """Test complete end-to-end workflow from parse to filter."""
         api = ldif()
         parse_result = api.parse_ldif(c.Ldif.Tests.RFC_SAMPLE_LDIF_BASIC)
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.value.entries
         analyze_result = FlextLdifStatistics().calculate_for_entries(entries)
-        assert analyze_result.is_success
+        assert analyze_result.success
         stats = analyze_result.value
         assert stats.total_entries == 1
         validate_result = api.validate_entries(entries)
-        assert validate_result.is_success
+        assert validate_result.success
 
 
 if __name__ == "__main__":

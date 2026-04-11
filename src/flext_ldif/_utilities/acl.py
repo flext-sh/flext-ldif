@@ -700,11 +700,11 @@ class FlextLdifUtilitiesACL:
         config: FlextLdifModelsSettings.AciParserConfig,
     ) -> r[m.Ldif.Acl]:
         """Parse ACI line using server-specific config Model."""
-        is_valid, aci_content = FlextLdifUtilitiesACL.validate_aci_format(
+        valid, aci_content = FlextLdifUtilitiesACL.validate_aci_format(
             acl_line,
             config.aci_prefix,
         )
-        if not is_valid:
+        if not valid:
             return r[m.Ldif.Acl].fail(f"Not a valid ACI format: {config.aci_prefix}")
         version, acl_name = FlextLdifUtilitiesACL._extract_version_and_name(
             aci_content,

@@ -53,7 +53,7 @@ class TestRfcDockerRealData:
             pytest.skip(f"OID schema fixtures not found: {schema_file}")
         parser = FlextLdifParser()
         result = parser.parse_ldif_file(schema_file)
-        assert result.is_success, f"Failed to parse OID schema: {result.error}"
+        assert result.success, f"Failed to parse OID schema: {result.error}"
         parse_response = result.value
         entries = parse_response.entries
         assert entries, "No schema entries parsed"
@@ -77,7 +77,7 @@ class TestRfcDockerRealData:
             pytest.skip(f"OUD entries fixtures not found: {entries_file}")
         parser = FlextLdifParser()
         result = parser.parse_ldif_file(entries_file)
-        assert result.is_success, f"Failed to parse OUD entries: {result.error}"
+        assert result.success, f"Failed to parse OUD entries: {result.error}"
         parse_response = result.value
         entries = parse_response.entries
         assert entries, "No entries parsed from OUD fixtures"
@@ -94,10 +94,10 @@ class TestRfcDockerRealData:
             pytest.skip(f"OpenLDAP integration fixtures not found: {integration_file}")
         parser = FlextLdifParser()
         result = parser.parse_ldif_file(integration_file)
-        assert result.is_success or (
+        assert result.success or (
             result.error is not None and "Failed to parse" in result.error
         )
-        if result.is_success:
+        if result.success:
             parse_response = result.value
             entries = parse_response.entries
             assert entries
@@ -114,7 +114,7 @@ class TestRfcDockerRealData:
             pytest.skip(f"OID entries fixtures not found: {source_file}")
         parser = FlextLdifParser()
         parse_result = parser.parse_ldif_file(source_file)
-        if not parse_result.is_success:
+        if not parse_result.success:
             pytest.skip(f"Could not parse source: {parse_result.error}")
         parse_response = parse_result.value
         entries = parse_response.entries
@@ -133,11 +133,11 @@ class TestRfcDockerRealData:
             output_file,
             server_type=c.Ldif.Tests.OID,
         )
-        assert write_result.is_success, f"Failed to write: {write_result.error}"
+        assert write_result.success, f"Failed to write: {write_result.error}"
         assert output_file.exists()
         reparser = FlextLdifParser()
         reparse_result = reparser.parse_ldif_file(output_file)
-        assert reparse_result.is_success, f"Failed to re-parse: {reparse_result.error}"
+        assert reparse_result.success, f"Failed to re-parse: {reparse_result.error}"
         reparsed_response = reparse_result.value
         reparsed_entries = reparsed_response.entries
         assert len(reparsed_entries) == len(typed_entries)
@@ -153,7 +153,7 @@ class TestRfcDockerRealData:
             pytest.skip(f"OUD ACL fixtures not found: {acl_file}")
         parser = FlextLdifParser()
         result = parser.parse_ldif_file(acl_file)
-        assert result.is_success, f"Failed to parse {acl_file.name}: {result.error}"
+        assert result.success, f"Failed to parse {acl_file.name}: {result.error}"
         parse_response = result.value
         entries = parse_response.entries
         acl_entries = [
@@ -174,7 +174,7 @@ class TestRfcDockerRealData:
         for ldif_file in unicode_files:
             parser = FlextLdifParser()
             result = parser.parse_ldif_file(ldif_file)
-            assert result.is_success or result.error, (
+            assert result.success or result.error, (
                 f"Parsing {ldif_file.name} should return valid result"
             )
 
@@ -201,7 +201,7 @@ class TestRfcDockerRealData:
                 output_file,
                 server_type=c.Ldif.Tests.RFC,
             )
-            if not result.is_success:
+            if not result.success:
                 assert result.error is not None
                 assert (
                     "Permission denied" in result.error
@@ -222,7 +222,7 @@ class TestRfcDockerRealData:
         for broken_file in broken_files:
             parser = FlextLdifParser()
             result = parser.parse_ldif_file(broken_file)
-            if result.is_success:
+            if result.success:
                 parse_response = result.value
                 entries = parse_response.entries
                 assert isinstance(entries, list)
@@ -239,7 +239,7 @@ class TestRfcDockerRealData:
             pytest.skip("OID schema fixtures not found")
         parser = FlextLdifParser()
         result = parser.parse_ldif_file(schema_file)
-        assert result.is_success, f"Failed to parse {schema_file.name}: {result.error}"
+        assert result.success, f"Failed to parse {schema_file.name}: {result.error}"
         parse_response = result.value
         entries = parse_response.entries
         assert entries
@@ -272,7 +272,7 @@ class TestRfcIntegrationRealWorld:
         assert file_size > 300000, "Expected large schema file"
         parser = FlextLdifParser()
         result = parser.parse_ldif_file(schema_file)
-        assert result.is_success, f"Failed to parse large schema: {result.error}"
+        assert result.success, f"Failed to parse large schema: {result.error}"
 
     def test_large_oud_integration_data(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing large real OUD integration data (31KB)."""
@@ -285,7 +285,7 @@ class TestRfcIntegrationRealWorld:
             pytest.skip("OUD integration fixtures not found")
         parser = FlextLdifParser()
         result = parser.parse_ldif_file(integration_file)
-        if result.is_success:
+        if result.success:
             parse_response = result.value
             entries = parse_response.entries
             assert entries, "Integration file should have entries"
@@ -318,7 +318,7 @@ class TestRfcIntegrationRealWorld:
             output_file,
             server_type=c.Ldif.Tests.RFC,
         )
-        assert result.is_success, f"Failed to write large dataset: {result.error}"
+        assert result.success, f"Failed to write large dataset: {result.error}"
         assert output_file.exists()
         content = output_file.read_text(encoding="utf-8")
         assert content.count("dn: cn=user") == 100, "Not all entries written"

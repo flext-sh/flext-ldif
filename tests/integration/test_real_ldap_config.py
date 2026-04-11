@@ -72,7 +72,7 @@ class TestRealLdapRailwayComposition:
             },
             metadata=None,
         )
-        assert entry_result.is_success
+        assert entry_result.success
         flext_entry = entry_result.value
         output_file = tmp_path / "railway.ldif"
         result = (
@@ -85,7 +85,7 @@ class TestRealLdapRailwayComposition:
                 ),
             )
         )
-        assert result.is_success
+        assert result.success
         entries = result.value.entries
         assert len(entries) == 1
 

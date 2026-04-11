@@ -416,12 +416,12 @@ class FlextLdifUtilitiesSchema:
         definition_label: str,
     ) -> r[tuple[str, str, str | None]]:
         oid_result = FlextLdifUtilitiesParser.extract_oid(definition)
-        if oid_result.is_failure:
+        if oid_result.failure:
             error = oid_result.error or "unknown OID extraction error"
             return r[tuple[str, str, str | None]].fail(
                 f"RFC {definition_label} parsing failed: {error}",
             )
-        if not oid_result.is_success:
+        if not oid_result.success:
             return r[tuple[str, str, str | None]].fail(
                 f"RFC {definition_label} parsing failed: unknown result state",
             )
@@ -497,7 +497,7 @@ class FlextLdifUtilitiesSchema:
             if line.lower().startswith(line_prefix.lower()):
                 item_def = line.split(":", 1)[1].strip()
                 result = parse_callback(item_def)
-                if result.is_success:
+                if result.success:
                     try:
                         items.append(model_type.model_validate(result.value))
                     except (
@@ -643,7 +643,7 @@ class FlextLdifUtilitiesSchema:
             bool | MutableSequence[str] | str | None,
         ] = {}
         validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
-        if validate_result.is_failure:
+        if validate_result.failure:
             syntax_extensions[c.Ldif.SYNTAX_VALIDATION_ERROR] = (
                 f"Syntax OID validation failed: {validate_result.error}"
             )
@@ -1031,7 +1031,7 @@ class FlextLdifUtilitiesSchema:
         basic_fields_result = FlextLdifUtilitiesSchema._extract_attribute_basic_fields(
             attr_definition,
         )
-        if basic_fields_result.is_failure:
+        if basic_fields_result.failure:
             return r[t.MutableContainerMapping].fail(basic_fields_result.error)
         oid, name, desc = basic_fields_result.value
         syntax, length = FlextLdifUtilitiesSchema._extract_attribute_syntax(
@@ -1102,7 +1102,7 @@ class FlextLdifUtilitiesSchema:
         basic_fields_result = (
             FlextLdifUtilitiesSchema._extract_objectclass_basic_fields(oc_definition)
         )
-        if basic_fields_result.is_failure:
+        if basic_fields_result.failure:
             msg = basic_fields_result.error or "RFC objectClass parsing failed"
             raise ValueError(msg)
         oid, name, desc = basic_fields_result.value
@@ -1156,7 +1156,7 @@ class FlextLdifUtilitiesSchema:
         if syntax is None or not syntax.strip():
             return None
         validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
-        if validate_result.is_failure:
+        if validate_result.failure:
             return f"Syntax OID validation failed: {validate_result.error}"
         if not validate_result.value:
             return f"Invalid syntax OID format: {syntax}"

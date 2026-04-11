@@ -40,7 +40,7 @@ class FlextLdifDetectorMixin:
         """Get server Constants class dynamically via FlextLdifServer registry."""
         registry = FlextLdifServer.get_global_instance()
         server_quirk_result = registry.quirk(server_type)
-        if not server_quirk_result.is_success:
+        if not server_quirk_result.success:
             return None
         server_quirk = server_quirk_result.value
         quirk_class = type(server_quirk)
@@ -113,14 +113,14 @@ class FlextLdifDetectorMixin:
                 ldif_path=ldif_path,
                 ldif_content=ldif_content,
             )
-            if detection_result.is_success:
+            if detection_result.success:
                 return r[str].ok(detection_result.value.detected_server_type)
         return r[str].ok("rfc")
 
     def _get_effective_server_type_value(self) -> str:
         """Resolve effective server type via detector (overrides ParserMixin default)."""
         result = self.get_effective_server_type()
-        if result.is_success:
+        if result.success:
             return result.value
         return "rfc"
 

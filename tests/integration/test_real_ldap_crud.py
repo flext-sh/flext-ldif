@@ -58,7 +58,7 @@ class TestRealLdapCRUD:
                 "objectClass": ["inetOrgPerson", "person", "top"],
             },
         )
-        assert person_result.is_success
+        assert person_result.success
         person_entry = person_result.value
         obj_class_values = list(
             u.Ldif.get_attribute_values(person_entry, "objectclass")
@@ -120,7 +120,7 @@ class TestRealLdapBatchOperations:
                     "objectClass": ["inetOrgPerson", "person", "top"],
                 },
             )
-            if result.is_success:
+            if result.success:
                 entries.append(result.value)
         assert len(entries) == 20
         ldap_entries: MutableSequence[m.Ldif.DN | None] = []
@@ -143,7 +143,7 @@ class TestRealLdapBatchOperations:
             ldap_connection.add(str(entry.dn), object_classes, attrs_dict)
             ldap_entries.append(entry.dn)
         validation_result = flext_api.validate_entries(entries)
-        assert validation_result.is_success
+        assert validation_result.success
 
     def test_batch_ldif_export_import(
         self,
@@ -194,14 +194,14 @@ class TestRealLdapBatchOperations:
                 attributes=attrs_dict,
                 metadata=None,
             )
-            assert result.is_success
+            assert result.success
             entries.append(result.value)
         export_file = tmp_path / "batch_export.ldif"
         write_result = flext_api.write_ldif_file(entries, export_file)
-        assert write_result.is_success
+        assert write_result.success
         assert export_file.exists()
         parse_result = flext_api.parse_ldif(export_file)
-        assert parse_result.is_success
+        assert parse_result.success
         parsed_entries = parse_result.value.entries
         assert len(parsed_entries) == actual_count
 

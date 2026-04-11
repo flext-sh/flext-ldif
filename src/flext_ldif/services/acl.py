@@ -98,7 +98,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
             return acl_grants_all(value)
 
         found_result = u.find(acls, predicate=predicate)
-        if found_result.is_success:
+        if found_result.success:
             found_acl = found_result.value
             return r[m.Ldif.AclEvaluationResult].ok(
                 m.Ldif.AclEvaluationResult(
@@ -139,7 +139,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
 
         for acl_value in acl_values:
             parse_result = self.parse_acl_string(acl_value, server_type)
-            if parse_result.is_success:
+            if parse_result.success:
                 acls.append(parse_result.value)
                 continue
             failed_count += 1

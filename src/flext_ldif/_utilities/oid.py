@@ -55,8 +55,8 @@ class FlextLdifUtilitiesOID:
             return r[bool].ok(False)
         oid_pattern = "^[0-2](\\.[0-9]+)*$"
         try:
-            is_valid = bool(re.match(oid_pattern, oid))
-            return r[bool].ok(is_valid)
+            valid = bool(re.match(oid_pattern, oid))
+            return r[bool].ok(valid)
         except (TypeError, re.error) as e:
             return r[bool].fail(f"Failed to validate OID format: {e}")
 

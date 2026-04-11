@@ -129,7 +129,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 flags=re.IGNORECASE,
             ).strip()
             result = super()._parse_attribute(stripped)
-            if result.is_success:
+            if result.success:
                 attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for("openldap1")
                 return r[m.Ldif.SchemaAttribute].ok(
@@ -146,7 +146,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 oc_definition,
             ).strip()
             result = super()._parse_objectclass(stripped)
-            if result.is_success:
+            if result.success:
                 oc_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for("openldap1")
                 return r[m.Ldif.SchemaObjectClass].ok(

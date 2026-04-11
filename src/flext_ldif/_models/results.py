@@ -332,7 +332,7 @@ class FlextLdifModelsResults:
         ]
 
     class ValidationResult(m.FrozenModel):
-        is_valid: Annotated[
+        valid: Annotated[
             bool,
             Field(description="Whether all entries passed validation"),
         ]

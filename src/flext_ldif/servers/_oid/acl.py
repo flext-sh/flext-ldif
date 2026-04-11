@@ -460,10 +460,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
         """Parse Oracle OID ACL string to RFC-compliant internal model."""
         parent_result = super()._parse_acl(acl_line)
-        if parent_result.is_failure:
+        if parent_result.failure:
             return parent_result
         if (
-            parent_result.is_success
+            parent_result.success
             and (acl_data := parent_result.value)
             and self.can_handle_acl(acl_line)
             and any(
@@ -474,7 +474,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             updated_acl = self._update_acl_with_oid_metadata(acl_data, acl_line)
             return r[m.Ldif.Acl].ok(updated_acl)
         if (
-            parent_result.is_success
+            parent_result.success
             and (acl_data := parent_result.value)
             and (not self.can_handle_acl(acl_line))
         ):

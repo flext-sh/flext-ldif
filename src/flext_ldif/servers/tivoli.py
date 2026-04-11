@@ -155,7 +155,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add Tivoli metadata."""
             result = super()._parse_attribute(attr_definition)
-            if result.is_success:
+            if result.success:
                 attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for("ibm_tivoli")
                 return r[m.Ldif.SchemaAttribute].ok(
@@ -167,7 +167,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add Tivoli metadata."""
             result = super()._parse_objectclass(oc_definition)
-            if result.is_success:
+            if result.success:
                 oc_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for("ibm_tivoli")
                 return r[m.Ldif.SchemaObjectClass].ok(
@@ -349,7 +349,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         def normalize_dn(self, entry_dn: str) -> str:
             """Normalize DN for Tivoli DS."""
             norm_result = u.Ldif.norm(entry_dn)
-            if norm_result.is_success:
+            if norm_result.success:
                 return norm_result.value
             return entry_dn.lower()
 

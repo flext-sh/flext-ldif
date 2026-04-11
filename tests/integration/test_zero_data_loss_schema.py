@@ -48,7 +48,7 @@ class TestSchemaDeviationsSyntaxQuotes:
         """Test OID syntax with quotes is tracked in metadata."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' EQUALITY caseIgnoreMatch SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )"
         result = oid_schema._parse_attribute(oid_definition)
-        assert result.is_success, f"Parse failed: {result.error}"
+        assert result.success, f"Parse failed: {result.error}"
         attr = result.value
         assert attr.metadata is not None, "Missing metadata"
         format_details = attr.metadata.schema_format_details
@@ -67,7 +67,7 @@ class TestSchemaDeviationsSyntaxQuotes:
         """Test OUD syntax without quotes is tracked in metadata."""
         oud_definition = "( 0.9.2342.19200300.100.1.1 NAME ( 'uid' 'userid' ) EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} X-ORIGIN 'RFC 4519' )"
         result = oud_schema._parse_attribute(oud_definition)
-        assert result.is_success, f"Parse failed: {result.error}"
+        assert result.success, f"Parse failed: {result.error}"
         attr = result.value
         assert attr.metadata is not None, "Missing metadata"
         format_details = attr.metadata.schema_format_details
@@ -99,7 +99,7 @@ class TestSchemaDeviationsXOrigin:
         """Test OID without X-ORIGIN is tracked in metadata."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' EQUALITY caseIgnoreMatch SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )"
         result = oid_schema._parse_attribute(oid_definition)
-        assert result.is_success, f"Parse failed: {result.error}"
+        assert result.success, f"Parse failed: {result.error}"
         attr = result.value
         assert attr.metadata is not None, "Missing metadata"
         format_details = attr.metadata.schema_format_details
@@ -119,7 +119,7 @@ class TestSchemaDeviationsXOrigin:
         """Test OUD with X-ORIGIN is tracked in metadata."""
         oud_definition = "( 0.9.2342.19200300.100.1.1 NAME ( 'uid' 'userid' ) EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} X-ORIGIN 'RFC 4519' )"
         result = oud_schema._parse_attribute(oud_definition)
-        assert result.is_success, f"Parse failed: {result.error}"
+        assert result.success, f"Parse failed: {result.error}"
         attr = result.value
         assert attr.metadata is not None, "Missing metadata"
         format_details = attr.metadata.schema_format_details
@@ -157,7 +157,7 @@ class TestSchemaDeviationsNameAliases:
         """Test OID single NAME format is tracked."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )"
         result = oid_schema._parse_attribute(oid_definition)
-        assert result.is_success, f"Parse failed: {result.error}"
+        assert result.success, f"Parse failed: {result.error}"
         attr = result.value
         assert attr.metadata is not None, "Missing metadata"
         format_details = attr.metadata.schema_format_details
@@ -179,7 +179,7 @@ class TestSchemaDeviationsNameAliases:
         """Test OUD multiple NAME aliases are tracked."""
         oud_definition = "( 0.9.2342.19200300.100.1.1 NAME ( 'uid' 'userid' ) SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
         result = oud_schema._parse_attribute(oud_definition)
-        assert result.is_success, f"Parse failed: {result.error}"
+        assert result.success, f"Parse failed: {result.error}"
         attr = result.value
         assert attr.metadata is not None, "Missing metadata"
         format_details = attr.metadata.schema_format_details
@@ -209,7 +209,7 @@ class TestSchemaDeviationsObsolete:
         """Test OBSOLETE marker is tracked in metadata."""
         oid_definition = "( 0.9.2342.19200300.100.1.23 NAME 'lastModifiedTime' OBSOLETE SYNTAX '1.3.6.1.4.1.1466.115.121.1.53' )"
         result = oid_schema._parse_attribute(oid_definition)
-        assert result.is_success, f"Parse failed: {result.error}"
+        assert result.success, f"Parse failed: {result.error}"
         attr = result.value
         assert attr.metadata is not None, "Missing metadata"
         format_details = attr.metadata.schema_format_details
@@ -230,7 +230,7 @@ class TestSchemaDeviationsObsolete:
         """Test absence of OBSOLETE is tracked."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )"
         result = oid_schema._parse_attribute(oid_definition)
-        assert result.is_success
+        assert result.success
         attr = result.value
         assert attr.metadata is not None
         format_details = attr.metadata.schema_format_details
@@ -256,7 +256,7 @@ class TestSchemaDeviationsSpacing:
         """Test trailing spaces are tracked."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  "
         result = oid_schema._parse_attribute(oid_definition)
-        assert result.is_success
+        assert result.success
         attr = result.value
         assert attr.metadata is not None
         format_details = attr.metadata.schema_format_details
@@ -275,7 +275,7 @@ class TestSchemaDeviationsSpacing:
         """Test field order is tracked."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )"
         result = oid_schema._parse_attribute(oid_definition)
-        assert result.is_success
+        assert result.success
         attr = result.value
         assert attr.metadata is not None
         format_details = attr.metadata.schema_format_details
@@ -314,7 +314,7 @@ class TestSchemaDeviationsOriginalString:
         """Test complete OID original string is preserved."""
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' EQUALITY caseIgnoreMatch SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  "
         result = oid_schema._parse_attribute(oid_definition)
-        assert result.is_success
+        assert result.success
         attr = result.value
         assert attr.metadata is not None
         format_details = attr.metadata.schema_format_details
@@ -338,7 +338,7 @@ class TestSchemaDeviationsOriginalString:
         """Test complete OUD original string is preserved."""
         oud_definition = "( 0.9.2342.19200300.100.1.1 NAME ( 'uid' 'userid' ) EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} X-ORIGIN 'RFC 4519' )"
         result = oud_schema._parse_attribute(oud_definition)
-        assert result.is_success
+        assert result.success
         attr = result.value
         assert attr.metadata is not None
         format_details = attr.metadata.schema_format_details
@@ -366,7 +366,7 @@ class TestSchemaDeviationsRoundTrip:
         oid_schema = FlextLdifServersOid().schema_quirk
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' EQUALITY caseIgnoreMatch SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )"
         result = oid_schema._parse_attribute(oid_definition)
-        assert result.is_success
+        assert result.success
         attr = result.value
         assert attr.metadata is not None
         format_details = attr.metadata.schema_format_details
@@ -389,7 +389,7 @@ class TestSchemaDeviationsRoundTrip:
         oud_schema = FlextLdifServersOud().schema_quirk
         oud_definition = "( 0.9.2342.19200300.100.1.1 NAME ( 'uid' 'userid' ) EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} X-ORIGIN 'RFC 4519' )"
         result = oud_schema._parse_attribute(oud_definition)
-        assert result.is_success
+        assert result.success
         attr = result.value
         assert attr.metadata is not None
         format_details = attr.metadata.schema_format_details
@@ -482,7 +482,7 @@ class TestSchemaDeviationsMissingSpaces:
         """Test malformed SYNTAX1.3.6.1 is tracked for restoration."""
         oud_definition = "( 0.9.2342.19200300.100.1.47 NAME 'mailPreferenceOption' SYNTAX1.3.6.1.4.1.1466.115.121.1.27 SINGLE-VALUE X-ORIGIN 'RFC 1274' )"
         result = oud_schema._parse_attribute(oud_definition)
-        if result.is_success:
+        if result.success:
             attr = result.value
             if attr.metadata and attr.metadata.schema_format_details:
                 schema_details = attr.metadata.schema_format_details
@@ -540,7 +540,7 @@ class TestSchemaDeviationsComplete:
         oid_schema = FlextLdifServersOid().schema_quirk
         oid_definition = "( 0.9.2342.19200300.100.1.1 NAME 'uid' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )"
         result = oid_schema._parse_attribute(oid_definition)
-        assert result.is_success
+        assert result.success
         attr = result.value
         assert attr.metadata is not None
         format_details = attr.metadata.schema_format_details
@@ -580,7 +580,7 @@ class TestSchemaDeviationsComplete:
         oud_schema = FlextLdifServersOud().schema_quirk
         oud_definition = "( 0.9.2342.19200300.100.1.1 NAME ( 'uid' 'userid' ) EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} X-ORIGIN 'RFC 4519' )"
         result = oud_schema._parse_attribute(oud_definition)
-        assert result.is_success
+        assert result.success
         attr = result.value
         assert attr.metadata is not None
         format_details = attr.metadata.schema_format_details

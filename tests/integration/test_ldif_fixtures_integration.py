@@ -32,7 +32,7 @@ class TestLdifFixturesIntegration:
             c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.RFC / "rfc_entries_fixtures.ldif"
         )
         result = ldif_client.parse_ldif(fixture)
-        assert result.is_success
+        assert result.success
         entries_raw = result.value.entries
         assert len(entries_raw) >= 14, (
             f"Expected at least 14 RFC entries, got {len(entries_raw)}"
@@ -44,7 +44,7 @@ class TestLdifFixturesIntegration:
             c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.RFC / "rfc_entries_fixtures.ldif"
         )
         parse_result = ldif_client.parse_ldif(fixture)
-        assert parse_result.is_success
+        assert parse_result.success
         entries_raw = parse_result.value.entries
         for entry in entries_raw:
             assert entry.dn is not None
@@ -56,7 +56,7 @@ class TestLdifFixturesIntegration:
             c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.OID / "oid_entries_fixtures.ldif"
         )
         result = ldif_client.parse_ldif(fixture)
-        assert result.is_success
+        assert result.success
         entries_raw = result.value.entries
         assert len(entries_raw) >= 1
 
@@ -66,7 +66,7 @@ class TestLdifFixturesIntegration:
             c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.OUD / "oud_entries_fixtures.ldif"
         )
         result = ldif_client.parse_ldif(fixture)
-        assert result.is_success
+        assert result.success
         entries_raw = result.value.entries
         assert len(entries_raw) >= 1
 
@@ -78,7 +78,7 @@ class TestLdifFixturesIntegration:
             / "openldap2_integration_fixtures.ldif"
         )
         result = ldif_client.parse_ldif(fixture)
-        assert result.is_success
+        assert result.success
         entries_raw = result.value.entries
         assert len(entries_raw) >= 45, (
             f"Expected 45+ OpenLDAP2 entries, got {len(entries_raw)}"
@@ -94,7 +94,7 @@ class TestLdifFixturesIntegration:
         ]
         for fixture_path in fixtures:
             result = ldif_client.parse_ldif(fixture_path)
-            assert result.is_success, f"Failed to parse {fixture_path}: {result.error}"
+            assert result.success, f"Failed to parse {fixture_path}: {result.error}"
             entries_raw = result.value.entries
             assert len(entries_raw) >= 1, (
                 f"Expected at least 1 entry from {fixture_path}"
@@ -106,7 +106,7 @@ class TestLdifFixturesIntegration:
             c.Ldif.Tests.FIXTURES_DIR / c.Ldif.Tests.RFC / "rfc_entries_fixtures.ldif"
         )
         result = ldif_client.parse_ldif(fixture)
-        assert result.is_success
+        assert result.success
         entries_raw = result.value.entries
         for entry in entries_raw:
             assert entry.dn is not None, "Entry must have DN"

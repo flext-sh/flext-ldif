@@ -304,7 +304,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         """Parse Oracle OID attribute definition (Phase 1: Normalization)."""
         try:
             result = super()._parse_attribute(attr_definition)
-            if not result.is_success:
+            if not result.success:
                 return result
             attr_data = result.value
             target_values = self._capture_attribute_values(attr_data)
@@ -336,7 +336,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         """Parse Oracle OID objectClass definition."""
         try:
             result = super()._parse_objectclass(oc_definition)
-            if not result.is_success:
+            if not result.success:
                 return result
             oc_data = result.value
             key = c.Ldif.SCHEMA_ORIGINAL_FORMAT

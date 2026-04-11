@@ -64,7 +64,7 @@ class TestZeroDataLossOidOud:
     ) -> None:
         """Test that OID parsing preserves original LDIF in metadata."""
         result = api.parse_ldif(oid_fixture, server_type=c.Ldif.Tests.OID)
-        assert result.is_success, f"Parse failed: {result.error}"
+        assert result.success, f"Parse failed: {result.error}"
         entries = result.value.entries
         assert entries, "No entries parsed"
         for entry in entries:
@@ -90,7 +90,7 @@ class TestZeroDataLossOidOud:
     ) -> None:
         """Test that OUD parsing preserves original LDIF in metadata."""
         result = api.parse_ldif(oud_fixture, server_type=c.Ldif.Tests.OUD)
-        assert result.is_success, f"Parse failed: {result.error}"
+        assert result.success, f"Parse failed: {result.error}"
         entries = result.value.entries
         assert entries, "No entries parsed"
         for entry in entries:
@@ -109,7 +109,7 @@ class TestZeroDataLossOidOud:
     ) -> None:
         """Test that boolean conversions are tracked in metadata."""
         result = api.parse_ldif(oid_fixture, server_type=c.Ldif.Tests.OID)
-        assert result.is_success
+        assert result.success
         entries = result.value.entries
         boolean_entries = [
             e
@@ -150,14 +150,14 @@ class TestZeroDataLossOidOud:
     ) -> None:
         """Test OID→OUD conversion preserves ALL data in metadata."""
         parse_result = api.parse_ldif(oid_fixture, server_type=c.Ldif.Tests.OID)
-        assert parse_result.is_success
+        assert parse_result.success
         oid_entries = parse_result.value.entries
         write_result = api.write(oid_entries, server_type=c.Ldif.Tests.RFC)
-        assert write_result.is_success
+        assert write_result.success
         rfc_ldif = write_result.value.content
         assert rfc_ldif is not None
         parse_oud_result = api.parse_ldif(rfc_ldif, server_type=c.Ldif.Tests.OUD)
-        assert parse_oud_result.is_success
+        assert parse_oud_result.success
         oud_entries = parse_oud_result.value.entries
         assert len(oid_entries) == len(oud_entries), "Entry count mismatch"
         for oid_entry, oud_entry in zip(oid_entries, oud_entries, strict=False):
@@ -206,25 +206,25 @@ class TestZeroDataLossOidOud:
     ) -> None:
         """Test OID→OUD→OID round-trip preserves ALL formatting."""
         parse_oid = api.parse_ldif(oid_fixture, server_type=c.Ldif.Tests.OID)
-        assert parse_oid.is_success
+        assert parse_oid.success
         original_entries = parse_oid.value.entries
         write_oud = api.write(original_entries, server_type=c.Ldif.Tests.OUD)
-        assert write_oud.is_success
+        assert write_oud.success
         oud_ldif = write_oud.value.content
         assert oud_ldif is not None
         parse_oud = api.parse_ldif(oud_ldif, server_type=c.Ldif.Tests.OUD)
-        assert parse_oud.is_success
+        assert parse_oud.success
         oud_entries = parse_oud.value.entries
         write_oid = api.write(
             oud_entries,
             server_type=c.Ldif.Tests.OID,
             format_options=m.Ldif.WriteFormatOptions(restore_original_format=True),
         )
-        assert write_oid.is_success
+        assert write_oid.success
         roundtrip_ldif = write_oid.value.content
         assert roundtrip_ldif is not None
         parse_roundtrip = api.parse_ldif(roundtrip_ldif, server_type=c.Ldif.Tests.OID)
-        assert parse_roundtrip.is_success
+        assert parse_roundtrip.success
         roundtrip_entries = parse_roundtrip.value.entries
         assert len(original_entries) == len(roundtrip_entries)
         for orig, roundtrip in zip(original_entries, roundtrip_entries, strict=False):
@@ -262,7 +262,7 @@ class TestZeroDataLossOidOud:
     ) -> None:
         """Test that minimal differences are tracked for all conversions."""
         result = api.parse_ldif(oid_fixture, server_type=c.Ldif.Tests.OID)
-        assert result.is_success
+        assert result.success
         entries = result.value.entries
         for entry in entries:
             if entry.metadata:
@@ -293,7 +293,7 @@ class TestZeroDataLossOidOud:
     def test_soft_delete_tracking(self, api: FlextLdif, oid_fixture: str) -> None:
         """Test that soft-deleted attributes are tracked in metadata."""
         result = api.parse_ldif(oid_fixture, server_type=c.Ldif.Tests.OID)
-        assert result.is_success
+        assert result.success
         entries = result.value.entries
         for entry in entries:
             _verify_soft_deleted_attributes(entry)
@@ -305,7 +305,7 @@ class TestZeroDataLossOidOud:
     ) -> None:
         """Test that conversion history is tracked in metadata."""
         result = api.parse_ldif(oid_fixture, server_type=c.Ldif.Tests.OID)
-        assert result.is_success
+        assert result.success
         entries = result.value.entries
         for entry in entries:
             if entry.metadata:
@@ -320,7 +320,7 @@ class TestZeroDataLossOidOud:
     ) -> None:
         """Test that ALL original strings are preserved in metadata."""
         result = api.parse_ldif(oid_fixture, server_type=c.Ldif.Tests.OID)
-        assert result.is_success
+        assert result.success
         entries = result.value.entries
         for entry in entries:
             assert entry.metadata is not None
@@ -353,14 +353,14 @@ class TestZeroDataLossOidOud:
     ) -> None:
         """Test that restore_original_format option restores exact original."""
         parse_result = api.parse_ldif(oid_fixture, server_type=c.Ldif.Tests.OID)
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.value.entries
         write_result = api.write(
             entries,
             server_type=c.Ldif.Tests.OID,
             format_options=m.Ldif.WriteFormatOptions(restore_original_format=True),
         )
-        assert write_result.is_success
+        assert write_result.success
         restored_ldif = write_result.value.content
         assert restored_ldif is not None
         for entry in entries:

@@ -58,7 +58,7 @@ class BasicUsageDry:
             return r[MutableSequence[m.Ldif.Entry]].fail("Failed to create entries")
         api: FlextLdif = ldif.get_instance()
         validate_result = api.validate_entries(entries)
-        if validate_result.is_failure:
+        if validate_result.failure:
             return r[MutableSequence[m.Ldif.Entry]].fail(
                 validate_result.error or "Validation failed",
             )
@@ -78,24 +78,24 @@ class BasicUsageDry:
             return r[str].fail("Sample file not found")
         ldif_content = sample_file.read_text(encoding="utf-8")
         detect_result = api.detect_server_type(ldif_content=ldif_content)
-        if detect_result.is_failure:
+        if detect_result.failure:
             return r[str].fail(detect_result.error or "Server detection failed")
 
         detection = detect_result.unwrap()
         server_type = detection.detected_server_type or "rfc"
         parse_result = api.parse_ldif(sample_file, server_type=server_type)
-        if parse_result.is_failure:
+        if parse_result.failure:
             return r[str].fail(parse_result.error or "Parse failed")
 
         parse_response = parse_result.unwrap()
         parsed_entries = parse_response.entries
         validate_result = api.validate_entries(parsed_entries)
-        if validate_result.is_failure:
+        if validate_result.failure:
             return r[str].fail(validate_result.error or "Validation failed")
         write_result = api.write_ldif_file(
             parsed_entries, Path("examples/output_dry.ldif")
         )
-        if write_result.is_failure:
+        if write_result.failure:
             return r[str].fail(write_result.error or "Write failed")
         return r[str].ok("File processing complete")
 
@@ -111,7 +111,7 @@ class BasicUsageDry:
             server_result = api.get_effective_server_type(
                 ldif_content=self.SAMPLE_LDIF,
             )
-            if server_result.is_failure:
+            if server_result.failure:
                 return r[MutableSequence[m.Ldif.Entry]].fail(
                     server_result.error or "Server detection failed",
                 )
@@ -120,13 +120,13 @@ class BasicUsageDry:
                 self.SAMPLE_LDIF[:100],
                 server_type=resolved_server_type,
             )
-            if parse_result.is_failure:
+            if parse_result.failure:
                 return r[MutableSequence[m.Ldif.Entry]].fail(
                     parse_result.error or "Parse failed",
                 )
             parse_response = parse_result.unwrap()
             validate_result = api.validate_entries(parse_response.entries)
-            if validate_result.is_failure:
+            if validate_result.failure:
                 return r[MutableSequence[m.Ldif.Entry]].fail(
                     validate_result.error or "Validation failed",
                 )
@@ -147,23 +147,23 @@ class BasicUsageDry:
         api: FlextLdif = ldif.get_instance()
         server_type = "rfc"
         detect_result = api.detect_server_type(ldif_content=self.SAMPLE_LDIF)
-        if detect_result.is_success:
+        if detect_result.success:
             detection = detect_result.unwrap()
             if detection.detected_server_type:
                 server_type = str(detection.detected_server_type)
-        elif detect_result.is_failure:
+        elif detect_result.failure:
             return r[MutableSequence[m.Ldif.Entry]].fail(
                 detect_result.error or "Detection failed",
             )
         parse_result = api.parse_ldif(self.SAMPLE_LDIF, server_type=server_type)
-        if parse_result.is_failure:
+        if parse_result.failure:
             return r[MutableSequence[m.Ldif.Entry]].fail(
                 parse_result.error or "Parse failed"
             )
         parse_response = parse_result.unwrap()
         entries = parse_response.entries
         validate_result = api.validate_entries(entries)
-        if validate_result.is_failure:
+        if validate_result.failure:
             return r[MutableSequence[m.Ldif.Entry]].fail(
                 validate_result.error or "Validation failed",
             )

@@ -27,7 +27,7 @@ class TestFlextLdifFacadeWorkflows:
         api = ldif()
         ldif_content = "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: Test\nmail: test@example.com\n"
         result = api.parse_ldif(ldif_content)
-        assert result.is_success
+        assert result.success
         entries = result.value.entries
         assert len(entries) == 1
         assert entries[0].dn is not None
@@ -38,7 +38,7 @@ class TestFlextLdifFacadeWorkflows:
         api = ldif()
         ldif_content = "dn: cn=user1,dc=example,dc=com\nobjectClass: person\ncn: user1\nsn: User1\n\ndn: cn=user2,dc=example,dc=com\nobjectClass: person\ncn: user2\nsn: User2\n\ndn: cn=user3,dc=example,dc=com\nobjectClass: person\ncn: user3\nsn: User3\n"
         result = api.parse_ldif(ldif_content)
-        assert result.is_success
+        assert result.success
         entries = result.value.entries
         assert len(entries) == 3
 
@@ -47,7 +47,7 @@ class TestFlextLdifFacadeWorkflows:
         api = ldif()
         ldif_content = "dn: cn=group,dc=example,dc=com\nobjectClass: groupOfNames\ncn: group\nmember: cn=user1,dc=example,dc=com\nmember: cn=user2,dc=example,dc=com\nmember: cn=user3,dc=example,dc=com\n"
         result = api.parse_ldif(ldif_content)
-        assert result.is_success
+        assert result.success
         entries = result.value.entries
         assert len(entries) == 1
 
@@ -58,7 +58,7 @@ class TestFlextLdifFacadeWorkflows:
             "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: Test\n"
         )
         parse_result = api.parse_ldif(ldif_content)
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.value.entries
         validation_result = api.validate_entries(entries)
         assert validation_result is not None
@@ -73,7 +73,7 @@ class TestFlextLdifFacadeWorkflows:
         parse_result = api.parse_ldif(ldif_content)
         entries = parse_result.value.entries
         write_result = api.write_ldif_file(entries, output_file)
-        if write_result.is_success:
+        if write_result.success:
             assert output_file.exists()
 
     def test_parse_file_from_path(self, tmp_path: Path) -> None:
@@ -84,7 +84,7 @@ class TestFlextLdifFacadeWorkflows:
         )
         api = ldif()
         result = api.parse_ldif(ldif_file)
-        if result.is_success:
+        if result.success:
             entries = result.value.entries
             assert len(entries) == 1
 
@@ -139,7 +139,7 @@ class TestFlextLdifFacadeWorkflows:
         api = ldif()
         ldif_content = "version: 1\n# Comment line\ndn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: Test\n"
         result = api.parse_ldif(ldif_content)
-        assert result.is_success
+        assert result.success
         entries = result.value.entries
         assert len(entries) == 1
         assert entries[0].attributes is not None

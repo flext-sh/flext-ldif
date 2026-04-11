@@ -194,7 +194,7 @@ class FlextLdifUtilitiesParsers:
                 else:
                     processed_entry = raw_entry.strip()
                 result = parse_entry_hook(processed_entry)
-                if result.is_success:
+                if result.success:
                     successful += 1
                     entries.append(result.value)
                 else:

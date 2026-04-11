@@ -77,7 +77,7 @@ class FlextLdifWriterMixin:
             server_type_typed,
             format_options,
         )
-        if string_result.is_failure:
+        if string_result.failure:
             return r[m.Ldif.WriteResponse].fail(
                 string_result.error or "LDIF writing failed",
             )
@@ -121,7 +121,7 @@ class FlextLdifWriterMixin:
             server_type,
             format_options,
         )
-        if string_result.is_failure:
+        if string_result.failure:
             return r[m.Ldif.WriteResponse].fail(
                 string_result.error or "Failed to generate LDIF content",
             )
@@ -236,7 +236,7 @@ class FlextLdifWriterMixin:
                 normalized_target,
                 entry,
             )
-            if conversion_result.is_failure:
+            if conversion_result.failure:
                 return r[MutableSequence[m.Ldif.Entry]].fail(
                     conversion_result.error or "Entry conversion failed before write",
                 )
@@ -331,7 +331,7 @@ class FlextLdifWriter(FlextLdifWriterMixin, s[m.Ldif.WriteResponse]):
                 target_server_type,
                 format_options,
             )
-            if file_result.is_failure:
+            if file_result.failure:
                 return r[m.Ldif.WriteResponse].fail(
                     file_result.error or "File write failed",
                 )
@@ -341,7 +341,7 @@ class FlextLdifWriter(FlextLdifWriterMixin, s[m.Ldif.WriteResponse]):
             target_server_type,
             format_options,
         )
-        if string_result.is_failure:
+        if string_result.failure:
             return r[m.Ldif.WriteResponse].fail(
                 string_result.error or "String write failed",
             )

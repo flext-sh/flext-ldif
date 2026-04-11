@@ -162,7 +162,7 @@ class FlextLdifServersBaseSchemaAcl(
         if not sanitized_name:
             return r[str].ok(acl_value)
         pattern_result = self._hook_format_acl_name_pattern()
-        if pattern_result.is_failure:
+        if pattern_result.failure:
             return r[str].ok(acl_value)
         pattern, replacement_template = pattern_result.value
         formatted_value = pattern.sub(
@@ -219,14 +219,14 @@ class FlextLdifServersBaseSchemaAcl(
     def _execute_acl_parse(self, data: str) -> r[m.Ldif.Acl | str]:
         """Execute ACL parse operation."""
         parse_result = self.parse_quirk(data)
-        if parse_result.is_success:
+        if parse_result.success:
             return r[m.Ldif.Acl | str].ok(parse_result.value)
         return r[m.Ldif.Acl | str].fail(parse_result.error or "Parse failed")
 
     def _execute_acl_write(self, data: m.Ldif.Acl) -> r[m.Ldif.Acl | str]:
         """Execute ACL write operation."""
         write_result = self.write(data)
-        if write_result.is_success:
+        if write_result.success:
             return r[m.Ldif.Acl | str].ok(write_result.value)
         return r[m.Ldif.Acl | str].fail(write_result.error or "Write failed")
 

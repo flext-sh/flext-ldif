@@ -91,7 +91,7 @@ class FlextLdifModelsBases:
             return self.server_type != "rfc"
 
         @computed_field
-        def is_valid(self) -> bool:
+        def valid(self) -> bool:
             """Check if ACL element passed validation."""
             return not self.validation_violations
 

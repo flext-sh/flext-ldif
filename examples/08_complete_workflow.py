@@ -17,12 +17,12 @@ def complete_ldif_processing_workflow() -> None:
     api: FlextLdif = ldif.get_instance()
     content = "dn: cn=Workflow User,dc=example,dc=com\nobjectClass: person\ncn: Workflow User\nsn: User\n"
     parse_result = api.parse_ldif(content, server_type="rfc")
-    if parse_result.is_failure:
+    if parse_result.failure:
         return
     parse_response = parse_result.unwrap()
     entries = parse_response.entries
     validation_result = api.validate_entries(entries)
-    if validation_result.is_failure:
+    if validation_result.failure:
         return
     report = validation_result.unwrap()
     _ = report.total_entries
@@ -47,7 +47,7 @@ def server_migration_workflow() -> None:
         source_server="rfc",
         target_server="rfc",
     )
-    if migration_result.is_failure:
+    if migration_result.failure:
         return
     for entry in migration_result.unwrap().entries:
         _ = entry.dn
@@ -72,7 +72,7 @@ def entry_building_and_processing_workflow() -> None:
         created.append(entry)
     if not created:
         return
-    if api.validate_entries(created).is_failure:
+    if api.validate_entries(created).failure:
         return
     persons: MutableSequence[m.Ldif.Entry] = [
         e
@@ -106,7 +106,7 @@ def acl_processing_workflow() -> None:
     api: FlextLdif = ldif.get_instance()
     ldif_content = 'dn: ou=Secure,dc=example,dc=com\nobjectClass: organizationalUnit\nou: Secure\naci: (targetattr="*")(version 3.0; acl "a"; allow (read) userdn="ldap:///anyone";)\n'
     parse_result = api.parse_ldif(ldif_content)
-    if parse_result.is_failure:
+    if parse_result.failure:
         return
     parse_response = parse_result.unwrap()
     for entry in parse_response.entries:
@@ -132,7 +132,7 @@ def batch_processing_workflow() -> None:
         )
         entries.append(entry)
     validation_result = api.validate_entries(entries)
-    if validation_result.is_success:
+    if validation_result.success:
         report = validation_result.unwrap()
         _ = report.total_entries
 
@@ -158,15 +158,15 @@ def error_handling_and_recovery() -> None:
     parse_result = api.parse_ldif(
         "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
     )
-    if parse_result.is_failure:
+    if parse_result.failure:
         return
     parse_response = parse_result.unwrap()
     entries = parse_response.entries
     validation_result = api.validate_entries(entries)
-    if validation_result.is_failure:
+    if validation_result.failure:
         return
     report = validation_result.unwrap()
-    if not report.is_valid:
+    if not report.valid:
         _ = api.validate_entries(entries)
 
 

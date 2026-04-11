@@ -47,7 +47,7 @@ class TestMinimalDifferencesOidOud:
         parse_result = parser.parse_ldif_file(
             path=fixture_path, server_type=c.Ldif.Tests.OID
         )
-        assert parse_result.is_success, f"Parsing failed: {parse_result.error}"
+        assert parse_result.success, f"Parsing failed: {parse_result.error}"
         parse_response = parse_result.value
         entries = parse_response.entries
         assert entries, "No entries parsed from OID fixture"
@@ -74,7 +74,7 @@ class TestMinimalDifferencesOidOud:
         parse_result = parser.parse_ldif_file(
             path=fixture_path, server_type=c.Ldif.Tests.OUD
         )
-        assert parse_result.is_success, f"Parsing failed: {parse_result.error}"
+        assert parse_result.success, f"Parsing failed: {parse_result.error}"
         parse_response = parse_result.value
         entries = parse_response.entries
         assert entries, "No entries parsed from OUD fixture"
@@ -91,7 +91,7 @@ class TestMinimalDifferencesOidOud:
         parse_result = parser.parse_string(
             content=oid_ldif, server_type=c.Ldif.Tests.OID
         )
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.value.entries
         assert len(entries) == 1
         original_entry = entries[0]
@@ -100,7 +100,7 @@ class TestMinimalDifferencesOidOud:
         write_result = writer.write(
             entries=[m.Ldif.Entry.model_validate(original_entry)],
         )
-        assert write_result.is_success
+        assert write_result.success
         written_ldif = write_result.value.content
         assert written_ldif is not None
         assert written_ldif
@@ -112,7 +112,7 @@ class TestMinimalDifferencesOidOud:
         parse_result = parser.parse_string(
             content=ldif_with_spaces, server_type=c.Ldif.Tests.RFC
         )
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.value.entries
         assert len(entries) == 1
         entry = entries[0]
@@ -128,7 +128,7 @@ class TestMinimalDifferencesOidOud:
         parse_result = parser.parse_string(
             content=ldif_mixed_case, server_type=c.Ldif.Tests.RFC
         )
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.value.entries
         assert len(entries) == 1
         entry = entries[0]
@@ -145,7 +145,7 @@ class TestMinimalDifferencesOidOud:
         """Test that punctuation differences (e.g., trailing semicolons) are captured."""
         ldif = "dn: cn=test,dc=example,dc=com\nobjectClass: top\nobjectClass: person\ncn: test\n"
         parse_result = parser.parse_string(content=ldif, server_type=c.Ldif.Tests.RFC)
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.value.entries
         assert len(entries) == 1
         entry = entries[0]
@@ -163,7 +163,7 @@ class TestMinimalDifferencesOidOud:
         parse_result = parser.parse_string(
             content=oid_ldif, server_type=c.Ldif.Tests.OID
         )
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.value.entries
         assert len(entries) == 1
         entry = entries[0]
@@ -198,7 +198,7 @@ class TestMinimalDifferencesOidOud:
         """Test that soft-deleted attributes are preserved in metadata."""
         ldif = "dn: cn=test,dc=example,dc=com\nobjectClass: top\nobjectClass: person\ncn: test\ncreatorsName: cn=Directory Manager\ncreateTimestamp: 20250101000000Z\n"
         parse_result = parser.parse_string(content=ldif, server_type=c.Ldif.Tests.RFC)
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.value.entries
         assert len(entries) == 1
         entry = entries[0]

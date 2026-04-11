@@ -76,7 +76,7 @@ class FlextLdifParserMixin:
                 f"Entry quirk for server type {effective_server_type} does not have parse_quirk method",
             )
         parse_out = entry_quirk_raw.parse_quirk(content)
-        if parse_out.is_failure:
+        if parse_out.failure:
             error_msg = parse_out.error or "LDIF parsing failed"
             return r[m.Ldif.ParseResponse].fail(str(error_msg))
         entries = parse_out.value

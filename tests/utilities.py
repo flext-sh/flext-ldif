@@ -427,7 +427,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     if is_objectclass
                     else quirk.parse_attribute(schema_def)
                 )
-                if result.is_failure:
+                if result.failure:
                     msg = f"Parsing failed: {result.error}"
                     raise AssertionError(msg)
                 value = (
@@ -525,11 +525,11 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     msg = f"{parse_method} is not supported by this quirk"
                     raise AssertionError(msg)
                 if should_succeed is False:
-                    if result.is_success:
+                    if result.success:
                         msg = message or "Expected failure but parse succeeded"
                         raise AssertionError(msg)
                     return None
-                if result.is_failure:
+                if result.failure:
                     msg = (
                         message or f"Expected success but parse failed: {result.error}"
                     )
@@ -564,11 +564,11 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 """Parse ACL content and unwrap the resulting model."""
                 result = quirk.parse_quirk(content)
                 if should_succeed is False:
-                    if result.is_success:
+                    if result.success:
                         msg = message or "Expected failure but parse succeeded"
                         raise AssertionError(msg)
                     return None
-                if result.is_failure:
+                if result.failure:
                     msg = (
                         message or f"Expected success but parse failed: {result.error}"
                     )
@@ -627,7 +627,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 else:
                     msg = f"{write_method} is not supported by this quirk"
                     raise AssertionError(msg)
-                if result.is_failure:
+                if result.failure:
                     msg = message or f"Write failed: {result.error}"
                     raise AssertionError(msg)
                 serialized = result.value
@@ -649,7 +649,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             ) -> str:
                 """Write ACL content and unwrap the serialized output."""
                 result = quirk.write(data)
-                if result.is_failure:
+                if result.failure:
                     msg = message or f"Write failed: {result.error}"
                     raise AssertionError(msg)
                 serialized = result.value

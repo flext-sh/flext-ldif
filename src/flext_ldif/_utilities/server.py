@@ -62,7 +62,7 @@ class FlextLdifUtilitiesServer:
         server_name_result = FlextLdifUtilitiesServer._extract_server_name(
             name_without_prefix,
         )
-        if server_name_result.is_failure:
+        if server_name_result.failure:
             return None
         server_type_lower = server_name_result.value.lower()
         if FlextLdifUtilitiesServer._is_valid_server_type_literal(server_type_lower):

@@ -93,7 +93,7 @@ class TestsTestFlextLdifMigrationPipeline:
             target_server_type=c.Ldif.Tests.OUD,
         )
         result = pipeline.execute()
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(str(result.error).lower(), has="input_dir")
 
     def test_execute_fails_with_no_output_dir(self, tmp_path: Path) -> None:
@@ -106,7 +106,7 @@ class TestsTestFlextLdifMigrationPipeline:
             target_server_type=c.Ldif.Tests.OUD,
         )
         result = pipeline.execute()
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(str(result.error).lower(), has="output_dir")
 
     def test_execute_fails_with_nonexistent_input_dir(self, tmp_path: Path) -> None:
@@ -121,7 +121,7 @@ class TestsTestFlextLdifMigrationPipeline:
             target_server_type=c.Ldif.Tests.OUD,
         )
         result = pipeline.execute()
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(str(result.error).lower(), has="not found")
 
     def test_execute_creates_output_dir_if_missing(self, tmp_path: Path) -> None:
@@ -139,7 +139,7 @@ class TestsTestFlextLdifMigrationPipeline:
             target_server_type=c.Ldif.Tests.RFC,
         )
         result = pipeline.execute()
-        tm.that(result.is_success, eq=True)
+        tm.that(result.success, eq=True)
         _ = tm.that(nonexistent_output.exists(), eq=True)
 
     def test_execute_with_empty_input(self, tmp_path: Path) -> None:
@@ -153,7 +153,7 @@ class TestsTestFlextLdifMigrationPipeline:
             output_dir=output_dir,
         )
         result = pipeline.execute()
-        tm.that(result.is_success, eq=True)
+        tm.that(result.success, eq=True)
         migration_result: m.Ldif.MigrationPipelineResult = result.value
         tm.that(migration_result.stats.total_entries, eq=0)
 
@@ -172,7 +172,7 @@ class TestsTestFlextLdifMigrationPipeline:
             target_server_type=c.Ldif.Tests.RFC,
         )
         result = pipeline.execute()
-        tm.that(result.is_success, eq=True)
+        tm.that(result.success, eq=True)
         migration_result: m.Ldif.MigrationPipelineResult = result.value
         tm.that(migration_result.stats.processed_entries, gte=1)
 
@@ -198,7 +198,7 @@ class TestsTestFlextLdifMigrationPipeline:
             ),
         ]
         result = pipeline.migrate_entries(entries)
-        tm.that(result.is_success, eq=True)
+        tm.that(result.success, eq=True)
         migrated = result.value
         tm.that(len(migrated), eq=1)
 
@@ -218,7 +218,7 @@ class TestsTestFlextLdifMigrationPipeline:
             target_server_type=c.Ldif.Tests.RFC,
         )
         result = pipeline.migrate_file(input_file)
-        tm.that(result.is_success, eq=True)
+        tm.that(result.success, eq=True)
         migration_result = result.value
         tm.that(migration_result.stats.total_entries, gte=1)
 
@@ -252,7 +252,7 @@ class TestsTestFlextLdifMigrationPipeline:
             target_server_type=target,
         )
         result = pipeline.execute()
-        tm.that(result.is_success or result.is_failure, eq=True)
+        tm.that(result.success or result.failure, eq=True)
 
     def test_execute_with_multiple_files(self, tmp_path: Path) -> None:
         """Test pipeline processes multiple input files."""
@@ -273,7 +273,7 @@ class TestsTestFlextLdifMigrationPipeline:
             target_server_type=c.Ldif.Tests.RFC,
         )
         result = pipeline.execute()
-        tm.that(result.is_success, eq=True)
+        tm.that(result.success, eq=True)
         migration_result: m.Ldif.MigrationPipelineResult = result.value
         tm.that(migration_result.stats.total_entries, gte=2)
 
@@ -291,7 +291,7 @@ class TestsTestFlextLdifMigrationPipeline:
         )
         nonexistent_file = input_dir / "nonexistent.ldif"
         result = pipeline.migrate_file(nonexistent_file)
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(str(result.error).lower(), has="not found")
 
     def test_migrate_entries_empty_list(self, tmp_path: Path) -> None:
@@ -307,6 +307,6 @@ class TestsTestFlextLdifMigrationPipeline:
             target_server_type=c.Ldif.Tests.RFC,
         )
         result = pipeline.migrate_entries([])
-        tm.that(result.is_success, eq=True)
+        tm.that(result.success, eq=True)
         migrated = result.value
         tm.that(not migrated, eq=True)

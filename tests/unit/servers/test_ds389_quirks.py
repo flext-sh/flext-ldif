@@ -87,7 +87,7 @@ class TestsTestFlextLdifDs389Quirks:
         tm.that(schema_quirk, is_=FlextLdifServersDs389.Schema)
         attr_def = "NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27"
         result = schema_quirk.parse_input(attr_def)
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(result.error, none=False)
         if result.error is not None:
             tm.that(result.error, has="missing an OID")
@@ -140,7 +140,7 @@ class TestsTestFlextLdifDs389Quirks:
         tm.that(schema_quirk, is_=FlextLdifServersDs389.Schema)
         oc_def = "( 2.16.840.1.113730.3.2.3 NAME 'nsds5base' ABSTRACT )"
         result = schema_quirk.parse_input(oc_def)
-        tm.that(result.is_success, eq=True)
+        tm.that(result.success, eq=True)
         oc_data = result.value
         assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
         tm.that(oc_data.kind, eq="ABSTRACT")
@@ -152,7 +152,7 @@ class TestsTestFlextLdifDs389Quirks:
         tm.that(schema_quirk, is_=FlextLdifServersDs389.Schema)
         oc_def = "NAME 'nscontainer' SUP top STRUCTURAL"
         result = schema_quirk.parse_input(oc_def)
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(result.error, none=False)
         if result.error is not None:
             tm.that(result.error, has="missing an OID")
@@ -171,7 +171,7 @@ class TestsTestFlextLdifDs389Quirks:
             may=["nsslapd-port"],
         )
         result = schema_quirk.write(oc_data)
-        tm.that(result.is_success, eq=True)
+        tm.that(result.success, eq=True)
         oc_str = result.value
         tm.that(oc_str, has="2.16.840.1.113730.3.2.1")
         tm.that(oc_str, has="nscontainer")

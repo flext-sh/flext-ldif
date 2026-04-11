@@ -40,7 +40,7 @@ class TestOidSchemaIntegration:
         - Entry has valid DN
         """
         result = api.parse_ldif(oid_schema_fixture)
-        assert result.is_success, f"Schema parsing failed: {result.error}"
+        assert result.success, f"Schema parsing failed: {result.error}"
         entries = result.value.entries
         assert entries, "No schema entries parsed"
         schema_entry = entries[0]
@@ -58,7 +58,7 @@ class TestOidSchemaIntegration:
         - Schema parsing completes successfully
         """
         result = api.parse_ldif(oid_schema_fixture)
-        assert result.is_success
+        assert result.success
         entries = result.value.entries
         schema_entry = entries[0]
         assert schema_entry.attributes is not None
@@ -100,7 +100,7 @@ class TestOidSchemaIntegration:
         - ObjectClass parsing completes successfully
         """
         result = api.parse_ldif(oid_schema_fixture)
-        assert result.is_success
+        assert result.success
         entries = result.value.entries
         schema_entry = entries[0]
         assert schema_entry.attributes is not None
@@ -151,7 +151,7 @@ class TestOidEntryIntegration:
         - All entries parse with valid structure
         """
         result = api.parse_ldif(oid_integration_fixture)
-        assert result.is_success, f"Integration fixture parsing failed: {result.error}"
+        assert result.success, f"Integration fixture parsing failed: {result.error}"
         entries = result.value.entries
         min_expected_entries = 100
         assert len(entries) > min_expected_entries, (
@@ -170,7 +170,7 @@ class TestOidEntryIntegration:
         - orclentrylevelaci attributes are detected
         """
         result = api.parse_ldif(oid_integration_fixture)
-        assert result.is_success
+        assert result.success
         entries = result.value.entries
         entries_with_orclaci = sum(
             1
@@ -200,7 +200,7 @@ class TestOidEntryIntegration:
         - orclpassword attributes are found
         """
         result = api.parse_ldif(oid_integration_fixture)
-        assert result.is_success
+        assert result.success
         entries = result.value.entries
         oracle_attr_patterns = ["orclisenabled", "orclpassword"]
         for attr_name in oracle_attr_patterns:
@@ -234,16 +234,16 @@ class TestOidRoundTripIntegration:
         - Re-parsing maintains entry count
         """
         parse_result_1 = api.parse_ldif(oid_integration_fixture)
-        assert parse_result_1.is_success, f"First parse failed: {parse_result_1.error}"
+        assert parse_result_1.success, f"First parse failed: {parse_result_1.error}"
         entries_1 = parse_result_1.value.entries
         original_entry_count = len(entries_1)
         assert original_entry_count > 0, "No entries in original parse"
         write_result = api.write(entries_1)
-        assert write_result.is_success, f"Write failed: {write_result.error}"
+        assert write_result.success, f"Write failed: {write_result.error}"
         ldif_output = write_result.value.content
         assert ldif_output is not None
         parse_result_2 = api.parse_ldif(ldif_output)
-        assert parse_result_2.is_success, f"Second parse failed: {parse_result_2.error}"
+        assert parse_result_2.success, f"Second parse failed: {parse_result_2.error}"
         entries_2 = parse_result_2.value.entries
         assert len(entries_2) == original_entry_count, (
             f"Entry count mismatch: original={original_entry_count}, after round-trip={len(entries_2)}"
@@ -261,15 +261,15 @@ class TestOidRoundTripIntegration:
         - DN count matches after round-trip
         """
         parse_result_1 = api.parse_ldif(oid_integration_fixture)
-        assert parse_result_1.is_success
+        assert parse_result_1.success
         entries_1 = parse_result_1.value.entries
         original_dns = sorted([str(entry.dn) for entry in entries_1])
         write_result = api.write(entries_1)
-        assert write_result.is_success
+        assert write_result.success
         written_content = write_result.value.content
         assert written_content is not None
         parse_result_2 = api.parse_ldif(written_content)
-        assert parse_result_2.is_success
+        assert parse_result_2.success
         entries_2 = parse_result_2.value.entries
         roundtrip_dns = sorted([str(entry.dn) for entry in entries_2])
         assert original_dns == roundtrip_dns, "DN mismatch after round-trip"
@@ -286,7 +286,7 @@ class TestOidRoundTripIntegration:
         - orclaci and orclentrylevelaci survive round-trip
         """
         parse_result_1 = api.parse_ldif(oid_integration_fixture)
-        assert parse_result_1.is_success
+        assert parse_result_1.success
         entries_1 = parse_result_1.value.entries
 
         def get_attribute_values_count(entry: m.Ldif.Entry, attr_name: str) -> int:
@@ -305,11 +305,11 @@ class TestOidRoundTripIntegration:
             for entry in entries_1
         )
         write_result = api.write(entries_1)
-        assert write_result.is_success
+        assert write_result.success
         written_content = write_result.value.content
         assert written_content is not None
         parse_result_2 = api.parse_ldif(written_content)
-        assert parse_result_2.is_success
+        assert parse_result_2.success
         entries_2 = parse_result_2.value.entries
         roundtrip_orclaci_count = sum(
             get_attribute_values_count(entry, "orclaci") for entry in entries_2

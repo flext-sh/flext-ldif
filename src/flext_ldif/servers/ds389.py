@@ -188,7 +188,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add 389 DS metadata."""
             result = super()._parse_attribute(attr_definition)
-            if result.is_success:
+            if result.success:
                 attr_data = result.value
                 metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
                 return r[m.Ldif.SchemaAttribute].ok(
@@ -200,7 +200,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add 389 DS metadata."""
             result = super()._parse_objectclass(oc_definition)
-            if result.is_success:
+            if result.success:
                 oc_data = result.value
                 u.Ldif.fix_missing_sup(oc_data)
                 u.Ldif.fix_kind_mismatch(oc_data)

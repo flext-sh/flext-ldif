@@ -61,10 +61,10 @@ def test_create_and_export_entry(
         dn=ldap_entry.entry_dn,
         attributes=attrs,
     )
-    assert entry_result.is_success
+    assert entry_result.success
     flext_entry = entry_result.value
     write_result = api.write([flext_entry])
-    assert write_result.is_success
+    assert write_result.success
     ldif_output = write_result.value.content
     assert ldif_output is not None
     assert f"cn: {unique_username}" in ldif_output

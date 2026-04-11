@@ -44,7 +44,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             entries: MutableSequence[m.Ldif.Entry] = []
             for record_lines in u.Ldif.split_ldif_records(ldif_content):
                 result = self._parse_entry_from_lines(record_lines)
-                if result.is_success:
+                if result.success:
                     entries.append(result.value)
                     continue
                 logger.debug(

@@ -379,7 +379,7 @@ class FlextLdifUtilitiesParser:
         if syntax is None or not syntax.strip():
             return None
         validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
-        if validate_result.is_failure:
+        if validate_result.failure:
             return f"Syntax OID validation failed: {validate_result.error}"
         if not validate_result.value:
             return f"Invalid syntax OID format: {syntax}"

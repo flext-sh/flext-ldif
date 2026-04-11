@@ -411,7 +411,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     ) -> r[m.Ldif.Entry]:
         """Correct RFC syntax issues and return entry."""
         corrected_result = correct_rfc_syntax_in_attributes(attrs_dict)
-        if corrected_result.is_failure:
+        if corrected_result.failure:
             return r[m.Ldif.Entry].fail(corrected_result.error or "Unknown error")
         corrected_data = corrected_result.value
         corrected_data_typed: MutableMapping[
@@ -550,7 +550,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             for aci_value in aci_attrs:
                 if u.is_type(aci_value, str):
                     validation_result = validate_aci_macros(aci_value)
-                    if validation_result.is_failure:
+                    if validation_result.failure:
                         return f"ACI macro validation failed: {validation_result.error}"
         return None
 
@@ -638,12 +638,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def parse_quirk(self, value: str) -> r[MutableSequence[m.Ldif.Entry]]:
         """Parse LDIF content and apply OUD post-processing hooks."""
         parsed_result = super().parse_quirk(value)
-        if parsed_result.is_failure:
+        if parsed_result.failure:
             return parsed_result
         processed_entries: MutableSequence[m.Ldif.Entry] = []
         for parsed_entry in parsed_result.value:
             post_parse_result = self._hook_post_parse_entry(parsed_entry)
-            if post_parse_result.is_failure:
+            if post_parse_result.failure:
                 return r[MutableSequence[m.Ldif.Entry]].fail(
                     post_parse_result.error or "OUD post-parse failed",
                 )
@@ -660,7 +660,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 original_dn,
                 original_attrs,
             )
-            if finalize_result.is_failure:
+            if finalize_result.failure:
                 return r[MutableSequence[m.Ldif.Entry]].fail(
                     finalize_result.error or "OUD finalize parse failed",
                 )
@@ -729,7 +729,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 for k, vs in entry_attrs.attributes.attributes.items()
             }
         result = super().parse_entry(entry_dn, entry_attrs_dict)
-        if result.is_failure:
+        if result.failure:
             return result
         entry = result.value
         original_attribute_case: t.MutableStrMapping = {}
@@ -862,7 +862,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             "# " + "=" * 70,
         ])
         original_result = self._write_entry_as_comment(original_entry_obj)
-        if original_result.is_success:
+        if original_result.success:
             ldif_parts.append(original_result.value)
         ldif_parts.extend([
             "",
@@ -1313,7 +1313,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 case _:
                     entry_attrs[str(k)] = [str(v)]
         result = self.parse_entry(dn, entry_attrs)
-        if result.is_success:
+        if result.success:
             entry = result.value
             original_dn = dn
             parsed_dn = entry.dn.value if entry.dn else None
@@ -1585,7 +1585,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         aci_value,
                         acl_metadata_extensions,
                     )
-                    if process_result.is_failure:
+                    if process_result.failure:
                         return r[m.Ldif.Entry].fail(
                             process_result.error or "ACI processing failed",
                         )
@@ -1760,7 +1760,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if not normalized_aci.startswith("aci:"):
                 normalized_aci = f"aci: {normalized_aci}"
             acl_result = acl_quirk.parse_quirk(normalized_aci)
-            if acl_result.is_success:
+            if acl_result.success:
                 acl_model = acl_result.value
                 if acl_model.metadata and acl_model.metadata.extensions:
                     acl_ext_raw = acl_model.metadata.extensions.to_dict()
@@ -1850,7 +1850,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """Process single ACI value, extract metadata, return has_macros flag."""
         has_macros = bool(re.search(r"\(\$dn\)|\[\$dn\]|\(\$attr\.", aci_value))
         validation_result = self._validate_aci_macros(aci_value)
-        if validation_result.is_failure:
+        if validation_result.failure:
             return r[bool].fail(
                 f"ACI macro validation failed: {validation_result.error}",
             )
@@ -1859,7 +1859,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             normalized_aci = f"aci: {normalized_aci}"
         acl_quirk = FlextLdifServersOudAcl()
         parse_result = acl_quirk.parse_quirk(normalized_aci)
-        if parse_result.is_success:
+        if parse_result.success:
             parsed_acl = parse_result.value
             if parsed_acl.metadata and parsed_acl.metadata.extensions:
                 acl_extensions = parsed_acl.metadata.extensions
@@ -2066,7 +2066,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         """
         hook_result = self._hook_pre_write_entry(entry_data)
-        if hook_result.is_failure:
+        if hook_result.failure:
             return r[str].fail(f"Pre-write hook failed: {hook_result.error}")
         normalized_entry = hook_result.value
         entry_to_write = self._restore_entry_from_metadata(normalized_entry)

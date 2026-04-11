@@ -511,7 +511,7 @@ class FlextLdifProtocolsBase(Protocol):
         """Validation summary contract."""
 
         @property
-        def is_valid(self) -> bool:
+        def valid(self) -> bool:
             """Return validation outcome."""
             ...
 

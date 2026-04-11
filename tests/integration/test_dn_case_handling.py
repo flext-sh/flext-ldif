@@ -72,7 +72,7 @@ class TestDnCaseRegistry:
         """Test validation passes with single case variant."""
         registry.register_dn("cn=admin,dc=com")
         result = registry.validate_oud_consistency()
-        assert result.is_success
+        assert result.success
         assert result.value is True
 
     def test_validate_oud_consistency_multiple_cases(
@@ -83,7 +83,7 @@ class TestDnCaseRegistry:
         registry.register_dn("cn=admin,dc=com")
         registry.register_dn("CN=Admin,DC=Com")
         result = registry.validate_oud_consistency()
-        assert result.is_success
+        assert result.success
         assert result.value is False
 
     def test_clear_removes_all_registrations(self, registry: m.Ldif.DnRegistry) -> None:
@@ -115,7 +115,7 @@ class TestDnCaseNormalizationScenarios:
         canonical = registry.get_canonical_dn("CN=ADMIN,DC=COM")
         assert canonical == "cn=admin,dc=com"
         result = registry.validate_oud_consistency()
-        assert result.is_success
+        assert result.success
         assert result.value is False
 
     def test_hierarchical_dn_references(self, registry: m.Ldif.DnRegistry) -> None:

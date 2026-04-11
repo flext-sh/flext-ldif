@@ -126,7 +126,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             for input_file in in_dir.glob("*.ldif"):
                 logger.debug("Processing input file: %s", input_file)
                 result = self.migrate_file(input_file)
-                if result.is_success:
+                if result.success:
                     res = result.value
                     total_processed += res.stats.total_entries
                     total_migrated += res.stats.processed_entries
@@ -221,14 +221,14 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                 content,
                 server_type=self.source_server_type,
             )
-            if parse_result.is_failure:
+            if parse_result.failure:
                 return r[m.Ldif.MigrationPipelineResult].fail(
                     f"Parse failed: {parse_result.error}",
                 )
             response = parse_result.value
             entries_list: MutableSequence[m.Ldif.Entry] = list(response.entries)
             migrate_result = self.migrate_entries(entries_list)
-            if migrate_result.is_failure:
+            if migrate_result.failure:
                 return r[m.Ldif.MigrationPipelineResult].fail(
                     f"Migration failed: {migrate_result.error}",
                 )
@@ -246,7 +246,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                 migrated,
                 server_type=self.target_server_type,
             )
-            if write_result.is_failure:
+            if write_result.failure:
                 return r[m.Ldif.MigrationPipelineResult].fail(
                     f"Write failed: {write_result.error}",
                 )
