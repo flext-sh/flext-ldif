@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_ldap import p
 from flext_tests import FlextTestsProtocols
+
 from tests import r
 
 if TYPE_CHECKING:

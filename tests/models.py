@@ -6,10 +6,10 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Annotated, ClassVar
 
+from flext_ldap import m
 from flext_tests import FlextTestsModels
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_ldap import m
 from tests import t
 
 

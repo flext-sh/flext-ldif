@@ -10,10 +10,10 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from pathlib import Path
 from typing import ClassVar, TextIO
 
+from flext_ldap import u
 from flext_tests import FlextTestsUtilities, tk
 
 from flext_core import FlextLogger
-from flext_ldap import u
 from tests import c, m, p, t
 
 
@@ -497,9 +497,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 *,
                 parse_method: t.Ldif.Tests.ParseMethod = "parse_quirk",
                 expected_type: (
-                    type[m.Ldif.SchemaAttribute]
-                    | type[m.Ldif.SchemaObjectClass]
-                    | type[m.Ldif.Acl]
+                    type[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl]
                     | None
                 ) = None,
                 should_succeed: bool | None = None,
