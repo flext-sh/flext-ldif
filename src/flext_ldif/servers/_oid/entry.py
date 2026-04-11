@@ -233,7 +233,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         metadata_keys_dict = {
             k: v
             for k, v in c.Ldif.__dict__.items()
-            if not k.startswith("_") and u.is_type(v, str)
+            if not k.startswith("_") and u.matches_type(v, str)
         }
         metadata_keys_str: str | None = (
             m.Ldif.DynamicMetadata.from_dict(metadata_keys_dict).model_dump_json()
@@ -650,9 +650,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                                 typed_dict[key_str] = raw_value
                             elif isinstance(raw_value, list):
                                 typed_items: MutableSequence[str] = [
-                                    str(item)
-                                    for item in raw_value
-                                    if u.is_primitive(item)
+                                    str(item) for item in raw_value if u.primitive(item)
                                 ]
                                 typed_dict[key_str] = typed_items
                         boolean_conversions[key] = typed_dict
@@ -672,7 +670,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 original_extensions[k] = v
             elif isinstance(v, list) and (
                 all(isinstance(item, str) for item in v)
-                or all(u.is_primitive(item) for item in v)
+                or all(u.primitive(item) for item in v)
             ):
                 original_extensions[k] = [str(item) for item in v]
         return original_extensions
@@ -988,11 +986,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         acl_quirk = getattr(parent, "_acl_quirk", None) if parent is not None else None
         acl_list = (
             list(orclaci_values)
-            if u.is_type(orclaci_values, (list, tuple))
+            if u.matches_type(orclaci_values, (list, tuple))
             else [str(orclaci_values)]
         )
         for acl_value in acl_list:
-            if not u.is_type(acl_value, str):
+            if not u.matches_type(acl_value, str):
                 continue
             self._extract_acl_metadata_from_string(acl_value, current_extensions)
             if acl_quirk is not None:
@@ -1045,7 +1043,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if attr_name.lower() not in boolean_attr_names:
                 continue
             conv_data = boolean_conversions.get(attr_name, {})
-            if u.is_type(conv_data, dict) and conv_data:
+            if u.matches_type(conv_data, dict) and conv_data:
                 self._restore_boolean_attribute_from_metadata(
                     attr_name,
                     conv_data,

@@ -173,6 +173,6 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         """Write ACL to RFC-compliant string format (internal)."""
         if acl_data.raw_acl and acl_data.raw_acl.strip():
             return r[str].ok(acl_data.raw_acl)
-        if acl_data.name and u.is_string_non_empty(acl_data.name):
+        if acl_data.name and u.string_non_empty(acl_data.name):
             return r[str].ok(f"{acl_data.name}:")
         return r[str].fail("ACL has no raw_acl or name to write")

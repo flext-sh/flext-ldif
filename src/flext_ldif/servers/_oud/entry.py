@@ -138,7 +138,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         quirk = FlextLdifServersOudEntry()
         if quirk.can_handle_entry(entry):
             result = quirk.parse_entry(entry.dn.value, entry.attributes.attributes)
-            if result.is_success:
+            if result.success:
                 parsed_entry = result.value
                 # Access OUD-specific operational attributes
 
@@ -161,7 +161,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         {
             k: v
             for k, v in kwargs.items()
-            if k != "_parent_quirk" and u.is_type(v, (str, float, bool, type(None)))
+            if k != "_parent_quirk"
+            and u.matches_type(v, (str, float, bool, type(None)))
         }
         entry_service_typed: p.Ldif.EntryQuirk | None = (
             entry_service if entry_service is not None else None
@@ -247,7 +248,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return m.Ldif.WriteOptions()
         hidden_attrs_raw = getattr(write_opts, "hidden_attrs", [])
         hidden_attrs_set: set[str] = set()
-        if u.is_type(hidden_attrs_raw, (list, tuple, frozenset, set)):
+        if u.matches_type(hidden_attrs_raw, (list, tuple, frozenset, set)):
             hidden_attrs_set = {str(item) for item in hidden_attrs_raw}
         hidden_attrs_set.update(hidden_attrs)
         if isinstance(write_opts, FlextLdifModelsDomainsEntries.WriteOptions):
@@ -462,7 +463,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         for acl_attr in acl_attribute_names:
             if acl_attr in new_attrs:
                 acl_values = new_attrs[acl_attr]
-                if u.is_type(acl_values, list):
+                if u.matches_type(acl_values, list):
                     commented_vals[acl_attr] = list(acl_values)
                 else:
                     commented_vals[acl_attr] = [str(acl_values)]
@@ -546,9 +547,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     ) -> str | None:
         """Validate ACI macros if present. Returns error message or None if valid."""
         aci_attrs = attrs_dict.get("aci")
-        if aci_attrs and u.is_type(aci_attrs, (list, tuple)):
+        if aci_attrs and u.matches_type(aci_attrs, (list, tuple)):
             for aci_value in aci_attrs:
-                if u.is_type(aci_value, str):
+                if u.matches_type(aci_value, str):
                     validation_result = validate_aci_macros(aci_value)
                     if validation_result.failure:
                         return f"ACI macro validation failed: {validation_result.error}"
@@ -924,7 +925,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if (
             entry.metadata
             and entry.metadata.extensions
-            and u.is_type(entry.metadata.extensions, dict)
+            and u.matches_type(entry.metadata.extensions, dict)
         ):
             rejection_reason = entry.metadata.extensions.get("rejection_reason")
             if rejection_reason:
@@ -993,7 +994,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             removed_attr_names: MutableSequence[str] = [
                 str(attr_name)
                 for attr_name in removed_attrs_dict
-                if u.is_type(attr_name, str)
+                if u.matches_type(attr_name, str)
                 and attr_name.lower() not in acl_attr_names_to_skip
             ]
             ordered_removed_attrs = self._determine_attribute_order(
@@ -1215,11 +1216,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         for src_key, dest_key in key_mapping.items():
             value_raw = acl_extensions.get(src_key)
             if value_raw is not None:
-                if u.is_primitive(value_raw):
+                if u.primitive(value_raw):
                     acl_metadata_extensions[dest_key] = value_raw
                 elif isinstance(value_raw, (list, tuple)):
                     value_list: MutableSequence[t.Ldif.Scalar] = [
-                        item if item is None or u.is_primitive(item) else str(item)
+                        item if item is None or u.primitive(item) else str(item)
                         for item in value_raw
                     ]
                     acl_metadata_extensions[dest_key] = value_list
@@ -1227,7 +1228,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     value_dict_2: t.MutableConfigurationMapping = {}
                     for k, v in value_raw.items():
                         key = str(k)
-                        value_dict_2[key] = v if u.is_primitive(v) else str(v)
+                        value_dict_2[key] = v if u.primitive(v) else str(v)
                     acl_metadata_extensions[dest_key] = dict(value_dict_2)
                 else:
                     acl_metadata_extensions[dest_key] = str(value_raw)
@@ -1259,12 +1260,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             value_raw = acl_extensions.get(src_key)
             if value_raw is None:
                 continue
-            if u.is_primitive(value_raw):
+            if u.primitive(value_raw):
                 scalar_value: t.Scalar = value_raw
                 acl_metadata_extensions[dest_key] = scalar_value
             elif isinstance(value_raw, (list, tuple)):
                 value_list: MutableSequence[t.Ldif.Scalar] = [
-                    item if item is None or u.is_primitive(item) else str(item)
+                    item if item is None or u.primitive(item) else str(item)
                     for item in value_raw
                 ]
                 acl_metadata_extensions[dest_key] = value_list
@@ -1272,7 +1273,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 value_dict_1: t.MutableConfigurationMapping = {}
                 for k, v in value_raw.items():
                     key = str(k)
-                    if u.is_primitive(v):
+                    if u.primitive(v):
                         value_dict_1[key] = v
                     else:
                         value_dict_1[key] = str(v)
@@ -1331,7 +1332,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 key_str = str(raw_key)
                 if isinstance(raw_value, bytes):
                     entry_attrs_for_diff[key_str] = raw_value.decode("utf-8")
-                elif raw_value is None or u.is_primitive(raw_value):
+                elif raw_value is None or u.primitive(raw_value):
                     entry_attrs_for_diff[key_str] = raw_value
                 elif isinstance(raw_value, list):
                     entry_attrs_for_diff[key_str] = [str(item) for item in raw_value]
@@ -1483,7 +1484,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         acl_quirk_raw = getattr(parent, "_acl_quirk", None)
         if not acl_quirk_raw:
             return r[m.Ldif.Entry].ok(entry)
-        if not u.is_type(acl_quirk_raw, FlextLdifServersOudAcl):
+        if not u.matches_type(acl_quirk_raw, FlextLdifServersOudAcl):
             return r[m.Ldif.Entry].ok(entry)
         acl_quirk: FlextLdifServersOudAcl = acl_quirk_raw
         self._process_aci_list_for_finalize(aci_values, acl_quirk, current_extensions)
@@ -1576,11 +1577,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entry.attributes.attributes if entry.attributes is not None else {}
         )
         aci_attrs = attrs_dict.get("aci")
-        if aci_attrs and u.is_type(aci_attrs, (list, tuple)):
+        if aci_attrs and u.matches_type(aci_attrs, (list, tuple)):
             has_macros = False
             acl_metadata_extensions: t.MutableContainerMapping = {}
             for aci_value in aci_attrs:
-                if u.is_type(aci_value, str):
+                if u.matches_type(aci_value, str):
                     process_result = self._process_single_aci_value(
                         aci_value,
                         acl_metadata_extensions,
@@ -1594,7 +1595,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if has_macros:
                 aci_list = (
                     list(aci_attrs)
-                    if u.is_type(aci_attrs, (list, tuple))
+                    if u.matches_type(aci_attrs, (list, tuple))
                     else [str(aci_attrs)]
                 )
                 logger.debug(
@@ -1731,7 +1732,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return entry_data
         normalized_aci_values: MutableSequence[str] = []
         for aci in aci_values:
-            aci_str = aci if u.is_type(aci, str) else str(aci)
+            aci_str = aci if u.matches_type(aci, str) else str(aci)
             normalized_aci, was_filtered = self._normalize_aci_value(
                 aci_str,
                 base_dn,
@@ -1821,11 +1822,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if mapped_key is None and key in known_keys:
                 mapped_key = key
             final_key = mapped_key or key
-            if value is None or u.is_primitive(value):
+            if value is None or u.primitive(value):
                 current_extensions[final_key] = value
             elif isinstance(value, (list, tuple)):
                 value_list: MutableSequence[t.Ldif.Scalar] = [
-                    item if item is None or u.is_primitive(item) else str(item)
+                    item if item is None or u.primitive(item) else str(item)
                     for item in value
                 ]
                 current_extensions[final_key] = value_list
@@ -1833,7 +1834,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 value_dict_inner: t.MutableConfigurationMapping = {}
                 for k, v in value.items():
                     key = str(k)
-                    if u.is_primitive(v):
+                    if u.primitive(v):
                         value_dict_inner[key] = v
                     else:
                         value_dict_inner[key] = str(v)
@@ -1863,9 +1864,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             parsed_acl = parse_result.value
             if parsed_acl.metadata and parsed_acl.metadata.extensions:
                 acl_extensions = parsed_acl.metadata.extensions
-                if u.is_type(
-                    acl_extensions,
-                    FlextLdifModelsMetadata.DynamicMetadata,
+                if u.matches_type(
+                    acl_extensions, FlextLdifModelsMetadata.DynamicMetadata
                 ):
                     self._extract_acl_metadata_from_dynamic(
                         acl_extensions,

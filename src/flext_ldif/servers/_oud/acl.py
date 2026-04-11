@@ -94,7 +94,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     @staticmethod
     def _scalar_or_list_value(value: t.NormalizedValue) -> bool:
         """Check if value is scalar metadata value or list."""
-        return u.is_primitive(value) or isinstance(value, list)
+        return u.primitive(value) or isinstance(value, list)
 
     @override
     def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:

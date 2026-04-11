@@ -34,7 +34,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         """Initialize base quirk and its nested quirks."""
         init_kwargs: t.MutableScalarMapping = {}
         for key, value in kwargs.items():
-            if u.is_primitive(value):
+            if u.primitive(value):
                 init_kwargs[key] = value
         super().__init__()
         parent_ref: FlextLdifServersBase = self

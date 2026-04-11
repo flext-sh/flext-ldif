@@ -182,7 +182,7 @@ class TestMinimalDifferencesOidOud:
         else:
             boolean_conversions = dict[str, t.Ldif.MetadataValue]()
         if (
-            u.is_dict_non_empty(boolean_conversions)
+            u.dict_non_empty(boolean_conversions)
             and "orcldasisenabled" in boolean_conversions
         ):
             conv = boolean_conversions["orcldasisenabled"]

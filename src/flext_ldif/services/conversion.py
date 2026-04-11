@@ -475,7 +475,7 @@ class FlextLdifConversion(
         """Normalize metadata value to proper type."""
         if value is None:
             return ""
-        if u.is_primitive(value):
+        if u.primitive(value):
             return value
         if isinstance(value, Sequence) and not isinstance(value, str | bytes):
             normalized_items: MutableSequence[t.Scalar | str] = [
@@ -1633,7 +1633,7 @@ class FlextLdifConversion(
         """Convert value to MetadataAttributeValue type."""
         if value is None:
             return ""
-        if u.is_primitive(value):
+        if u.primitive(value):
             return value
         if isinstance(value, Sequence) and not isinstance(value, str | bytes):
             converted_list: t.ScalarList = [

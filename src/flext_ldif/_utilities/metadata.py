@@ -562,7 +562,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _is_metadata_scalar(value: t.NormalizedValue) -> bool:
-        return value is None or u.is_scalar(value)
+        return value is None or u.scalar(value)
 
     @staticmethod
     def _is_metadata_scalar_typed(
@@ -598,7 +598,7 @@ class FlextLdifUtilitiesMetadata:
             metadata_obj = metadata.to_dict()
             normalized_metadata: t.MutableContainerMapping = {}
             for write_option_key, value in metadata_obj.items():
-                if u.is_primitive(value):
+                if u.primitive(value):
                     normalized_metadata[write_option_key] = value
                 elif isinstance(value, list):
                     normalized_metadata[write_option_key] = [

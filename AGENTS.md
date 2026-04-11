@@ -435,7 +435,7 @@ if u.is_valid_phone(value):
 result = FlextUtilities.Validation.validate_pattern(email, email_pattern)
 
 # Type guards
-if u.is_list_like(values):
+if u.list_like(values):
     ...
 ```
 

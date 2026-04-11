@@ -683,7 +683,7 @@ class FlextLdifUtilitiesDN:
 
         Replaces the common 3-line pattern:
             norm_result = FlextLdifUtilitiesDN.norm(dn)
-            normalized = norm_result.value if norm_result.is_success else dn.lower()
+            normalized = norm_result.value if norm_result.success else dn.lower()
 
         With a single call:
             normalized = FlextLdifUtilitiesDN.norm_or_fallback(dn)

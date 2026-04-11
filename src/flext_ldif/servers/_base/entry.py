@@ -337,7 +337,7 @@ class FlextLdifServersBaseEntry(
         extensions_data: t.MutableContainerMapping = {}
         if entry_data.metadata:
             metadata_extensions = entry_data.metadata.extensions
-            if u.is_type(metadata_extensions, Mapping):
+            if u.matches_type(metadata_extensions, Mapping):
                 extensions_data = dict(metadata_extensions)
         hidden_raw = extensions_data.get(c.Ldif.HIDDEN_ATTRIBUTES)
         if isinstance(hidden_raw, list):
