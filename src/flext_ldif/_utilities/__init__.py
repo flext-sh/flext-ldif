@@ -21,6 +21,10 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".parser": ("FlextLdifUtilitiesParser",),
         ".parsers": ("FlextLdifUtilitiesParsers",),
         ".pipeline": ("FlextLdifUtilitiesPipeline",),
+        ".result": (
+            "FlextLdifUtilitiesResult",
+            "r",
+        ),
         ".schema": ("FlextLdifUtilitiesSchema",),
         ".server": ("FlextLdifUtilitiesServer",),
         ".transformers": (

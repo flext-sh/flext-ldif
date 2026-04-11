@@ -48,6 +48,7 @@ if _t.TYPE_CHECKING:
     from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
     from flext_ldif._utilities.parsers import FlextLdifUtilitiesParsers
     from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
+    from flext_ldif._utilities.result import FlextLdifUtilitiesResult
     from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
     from flext_ldif._utilities.server import FlextLdifUtilitiesServer
     from flext_ldif._utilities.transformers import (
@@ -279,6 +280,7 @@ __all__ = [
     "FlextLdifUtilitiesParser",
     "FlextLdifUtilitiesParsers",
     "FlextLdifUtilitiesPipeline",
+    "FlextLdifUtilitiesResult",
     "FlextLdifUtilitiesSchema",
     "FlextLdifUtilitiesServer",
     "FlextLdifUtilitiesTransformer",
