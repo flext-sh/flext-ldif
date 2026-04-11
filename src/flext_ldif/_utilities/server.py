@@ -15,12 +15,12 @@ from flext_ldif import (
     t,
 )
 
-_VALID_SERVER_TYPES: frozenset[str] = c.Ldif.VALID_SERVER_TYPES
-_CLASS_SUFFIXES: tuple[str, ...] = c.Ldif.CLASS_SUFFIXES
-
 
 class FlextLdifUtilitiesServer:
     """Server utilities for LDIF server type resolution."""
+
+    VALID_SERVER_TYPES: frozenset[str] = c.Ldif.VALID_SERVER_TYPES
+    CLASS_SUFFIXES: tuple[str, ...] = c.Ldif.CLASS_SUFFIXES
 
     @staticmethod
     def _check_name_patterns(
@@ -42,7 +42,7 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def _extract_server_name(name_without_prefix: str) -> r[str]:
         """Extract server name from class name suffix."""
-        for suffix in _CLASS_SUFFIXES:
+        for suffix in FlextLdifUtilitiesServer.CLASS_SUFFIXES:
             if name_without_prefix.endswith(suffix):
                 server_name = name_without_prefix[: -len(suffix)]
                 if server_name:
@@ -103,7 +103,7 @@ class FlextLdifUtilitiesServer:
     def _is_valid_server_type_literal(
         value: str,
     ) -> TypeIs[c.Ldif.ServerTypeLiteral]:
-        return value in _VALID_SERVER_TYPES
+        return value in FlextLdifUtilitiesServer.VALID_SERVER_TYPES
 
     @staticmethod
     def extract_server_type_from_constants(

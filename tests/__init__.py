@@ -5,64 +5,114 @@ from __future__ import annotations
 
 import typing as _t
 
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
-
-if _t.TYPE_CHECKING:
-    from flext_core.decorators import d
-    from flext_core.exceptions import e
-    from flext_core.handlers import h
-    from flext_core.mixins import x
-    from flext_core.result import r
-    from flext_core.service import s
-    from tests.constants import TestsFlextLdifConstants, TestsFlextLdifConstants as c
-    from tests.models import TestsFlextLdifModels, TestsFlextLdifModels as m
-    from tests.protocols import TestsFlextLdifProtocols, TestsFlextLdifProtocols as p
-    from tests.typings import (
-        TestsFlextLdifTypes,
-        TestsFlextLdifTypes as t,
-    )
-    from tests.utilities import TestsFlextLdifUtilities, TestsFlextLdifUtilities as u
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".constants": ("TestsFlextLdifConstants",),
-        ".models": ("TestsFlextLdifModels",),
-        ".protocols": ("TestsFlextLdifProtocols",),
-        ".typings": ("TestsFlextLdifTypes",),
-        ".utilities": ("TestsFlextLdifUtilities",),
-        "flext_core.decorators": ("d",),
-        "flext_core.exceptions": ("e",),
-        "flext_core.handlers": ("h",),
-        "flext_core.mixins": ("x",),
-        "flext_core.result": ("r",),
-        "flext_core.service": ("s",),
-    },
-    alias_groups={
-        ".constants": (("c", "TestsFlextLdifConstants"),),
-        ".models": (("m", "TestsFlextLdifModels"),),
-        ".protocols": (("p", "TestsFlextLdifProtocols"),),
-        ".typings": (("t", "TestsFlextLdifTypes"),),
-        ".utilities": (("u", "TestsFlextLdifUtilities"),),
-    },
+from flext_core.lazy import (
+    build_lazy_import_map,
+    install_lazy_exports,
+    merge_lazy_imports,
 )
 
-__all__ = [
-    "TestsFlextLdifConstants",
-    "TestsFlextLdifModels",
-    "TestsFlextLdifProtocols",
-    "TestsFlextLdifTypes",
-    "TestsFlextLdifUtilities",
-    "c",
-    "d",
-    "e",
-    "h",
-    "m",
-    "p",
-    "r",
-    "s",
-    "t",
-    "u",
-    "x",
-]
+if _t.TYPE_CHECKING:
+    from flext_tests._fixtures.settings import (
+        reset_settings,
+        settings,
+        settings_factory,
+    )
+    from flext_tests._utilities.matchers import tm
+    from flext_tests.docker import tk
+    from flext_tests.domains import td
+    from flext_tests.files import tf
+    from flext_tests.validator import tv
+
+    from tests.constants import TestsFlextLdifConstants, c
+    from tests.models import TestsFlextLdifModels, m
+    from tests.protocols import TestsFlextLdifProtocols, p
+    from tests.typings import TestsFlextLdifTypes, t
+    from tests.unit.services.test_migration_pipeline import (
+        TestsTestFlextLdifMigrationPipeline,
+    )
+    from tests.unit.services.test_quirks_standardization import (
+        TestAliasDiscovery,
+        TestQuirksAutoInterchange,
+        TestQuirksWithRealLdifFixtures,
+        TestsFlextLdifQuirksStandardizedConstants,
+    )
+    from tests.utilities import TestsFlextLdifUtilities, u
+_LAZY_IMPORTS = merge_lazy_imports(
+    (
+        ".integration",
+        ".unit",
+    ),
+    build_lazy_import_map(
+        {
+            ".constants": (
+                "TestsFlextLdifConstants",
+                "c",
+            ),
+            ".models": (
+                "TestsFlextLdifModels",
+                "m",
+            ),
+            ".protocols": (
+                "TestsFlextLdifProtocols",
+                "p",
+            ),
+            ".typings": (
+                "TestsFlextLdifTypes",
+                "t",
+            ),
+            ".utilities": (
+                "TestsFlextLdifUtilities",
+                "u",
+            ),
+            "flext_tests._fixtures.settings": (
+                "reset_settings",
+                "settings",
+                "settings_factory",
+            ),
+            "flext_tests._utilities.matchers": ("tm",),
+            "flext_tests.docker": ("tk",),
+            "flext_tests.domains": ("td",),
+            "flext_tests.files": ("tf",),
+            "flext_tests.validator": ("tv",),
+        },
+    ),
+    exclude_names=(
+        "cleanup_submodule_namespace",
+        "install_lazy_exports",
+        "lazy_getattr",
+        "logger",
+        "merge_lazy_imports",
+        "output",
+        "output_reporting",
+    ),
+    module_name=__name__,
+)
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
+
+__all__ = [
+    "TestAliasDiscovery",
+    "TestQuirksAutoInterchange",
+    "TestQuirksWithRealLdifFixtures",
+    "TestsFlextLdifConstants",
+    "TestsFlextLdifModels",
+    "TestsFlextLdifProtocols",
+    "TestsFlextLdifQuirksStandardizedConstants",
+    "TestsFlextLdifTypes",
+    "TestsFlextLdifUtilities",
+    "TestsTestFlextLdifMigrationPipeline",
+    "c",
+    "m",
+    "p",
+    "reset_settings",
+    "settings",
+    "settings_factory",
+    "t",
+    "td",
+    "tf",
+    "tk",
+    "tm",
+    "tv",
+    "u",
+]

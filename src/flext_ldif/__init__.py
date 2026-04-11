@@ -17,6 +17,7 @@ if _t.TYPE_CHECKING:
     from flext_core.exceptions import e
     from flext_core.handlers import h
     from flext_core.mixins import x
+    from flext_core.result import r
     from flext_ldif._constants.base import FlextLdifConstantsBase
     from flext_ldif._constants.enums import FlextLdifConstantsEnums
     from flext_ldif._models.base import FlextLdifModelsBases
@@ -32,34 +33,7 @@ if _t.TYPE_CHECKING:
     from flext_ldif._models.metadata import FlextLdifModelsMetadata
     from flext_ldif._models.processing import FlextLdifModelsProcessing
     from flext_ldif._models.results import FlextLdifModelsResults
-    from flext_ldif._models.settings import (
-        AciLineFormatConfig,
-        AciParserConfig,
-        AclMetadataConfig,
-        AttrNormalizationConfig,
-        BatchWriteConfig,
-        CategoryRules,
-        DnNormalizationConfig,
-        EntryCriteriaConfig,
-        EntryParseMetadataConfig,
-        EntryTransformConfig,
-        EntryWriteConfig,
-        FlextLdifModelsSettings,
-        LogContextExtras,
-        MigrateOptions,
-        PermissionMappingConfig,
-        ProcessConfig,
-        RdnProcessingConfig,
-        SchemaAttributeConversionPipelineConfig,
-        SchemaObjectClassConversionPipelineConfig,
-        ServerPatternsConfig,
-        ServerValidationRules,
-        SortConfig,
-        TransformConfig,
-        WhitelistRules,
-        WriteFormatOptions,
-        WriteOutputOptions,
-    )
+    from flext_ldif._models.settings import FlextLdifModelsSettings
     from flext_ldif._protocols.base import FlextLdifProtocolsBase
     from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
     from flext_ldif._typings.base import FlextLdifTypesBase
@@ -78,10 +52,7 @@ if _t.TYPE_CHECKING:
     from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
     from flext_ldif._utilities.parsers import FlextLdifUtilitiesParsers
     from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
-    from flext_ldif._utilities.result import (
-        FlextLdifUtilitiesResult,
-        FlextLdifUtilitiesResult as r,
-    )
+    from flext_ldif._utilities.result import FlextLdifUtilitiesResult
     from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
     from flext_ldif._utilities.server import FlextLdifUtilitiesServer
     from flext_ldif._utilities.transformers import (
@@ -92,11 +63,11 @@ if _t.TYPE_CHECKING:
     from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
     from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
     from flext_ldif.api import FlextLdif
-    from flext_ldif.base import FlextLdifServiceBase, FlextLdifServiceBase as s
-    from flext_ldif.constants import FlextLdifConstants, FlextLdifConstants as c
+    from flext_ldif.base import FlextLdifServiceBase, s
+    from flext_ldif.constants import FlextLdifConstants, c
     from flext_ldif.ldif import ldif
-    from flext_ldif.models import FlextLdifModels, FlextLdifModels as m
-    from flext_ldif.protocols import FlextLdifProtocols, FlextLdifProtocols as p
+    from flext_ldif.models import FlextLdifModels, m
+    from flext_ldif.protocols import FlextLdifProtocols, p
     from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
     from flext_ldif.servers._base.constants import FlextLdifServersBaseConstants
     from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
@@ -148,8 +119,8 @@ if _t.TYPE_CHECKING:
     from flext_ldif.services.writer import FlextLdifWriter, FlextLdifWriterMixin
     from flext_ldif.settings import FlextLdifSettings
     from flext_ldif.shared import FlextLdifShared
-    from flext_ldif.typings import FlextLdifTypes, FlextLdifTypes as t
-    from flext_ldif.utilities import FlextLdifUtilities, FlextLdifUtilities as u
+    from flext_ldif.typings import FlextLdifTypes, t
+    from flext_ldif.utilities import FlextLdifUtilities, u
 _LAZY_IMPORTS = merge_lazy_imports(
     (
         "._constants",
@@ -173,27 +144,38 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "__version_info__",
             ),
             ".api": ("FlextLdif",),
-            ".base": ("FlextLdifServiceBase",),
-            ".constants": ("FlextLdifConstants",),
+            ".base": (
+                "FlextLdifServiceBase",
+                "s",
+            ),
+            ".constants": (
+                "FlextLdifConstants",
+                "c",
+            ),
             ".ldif": ("ldif",),
-            ".models": ("FlextLdifModels",),
-            ".protocols": ("FlextLdifProtocols",),
+            ".models": (
+                "FlextLdifModels",
+                "m",
+            ),
+            ".protocols": (
+                "FlextLdifProtocols",
+                "p",
+            ),
             ".settings": ("FlextLdifSettings",),
             ".shared": ("FlextLdifShared",),
-            ".typings": ("FlextLdifTypes",),
-            ".utilities": ("FlextLdifUtilities",),
+            ".typings": (
+                "FlextLdifTypes",
+                "t",
+            ),
+            ".utilities": (
+                "FlextLdifUtilities",
+                "u",
+            ),
             "flext_core.decorators": ("d",),
             "flext_core.exceptions": ("e",),
             "flext_core.handlers": ("h",),
             "flext_core.mixins": ("x",),
-        },
-        alias_groups={
-            ".base": (("s", "FlextLdifServiceBase"),),
-            ".constants": (("c", "FlextLdifConstants"),),
-            ".models": (("m", "FlextLdifModels"),),
-            ".protocols": (("p", "FlextLdifProtocols"),),
-            ".typings": (("t", "FlextLdifTypes"),),
-            ".utilities": (("u", "FlextLdifUtilities"),),
+            "flext_core.result": ("r",),
         },
     ),
     exclude_names=(
@@ -208,18 +190,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
     module_name=__name__,
 )
 
+
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
+
 __all__ = [
-    "AciLineFormatConfig",
-    "AciParserConfig",
-    "AclMetadataConfig",
-    "AttrNormalizationConfig",
-    "BatchWriteConfig",
-    "CategoryRules",
-    "DnNormalizationConfig",
-    "EntryCriteriaConfig",
-    "EntryParseMetadataConfig",
-    "EntryTransformConfig",
-    "EntryWriteConfig",
     "FlextLdif",
     "FlextLdifAcl",
     "FlextLdifAnalysis",
@@ -321,20 +295,6 @@ __all__ = [
     "FlextLdifValidation",
     "FlextLdifWriter",
     "FlextLdifWriterMixin",
-    "LogContextExtras",
-    "MigrateOptions",
-    "PermissionMappingConfig",
-    "ProcessConfig",
-    "RdnProcessingConfig",
-    "SchemaAttributeConversionPipelineConfig",
-    "SchemaObjectClassConversionPipelineConfig",
-    "ServerPatternsConfig",
-    "ServerValidationRules",
-    "SortConfig",
-    "TransformConfig",
-    "WhitelistRules",
-    "WriteFormatOptions",
-    "WriteOutputOptions",
     "__author__",
     "__author_email__",
     "__description__",
@@ -356,6 +316,3 @@ __all__ = [
     "u",
     "x",
 ]
-
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
