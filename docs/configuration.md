@@ -85,18 +85,18 @@ class Config(BaseModel):
 
 ```python
 # Create configuration with custom settings
-config = FlextLdifModels.Config(
+settings = FlextLdifModels.Config(
     max_entries=100000, strict_validation=True, encoding="utf-8", log_level="DEBUG"
 )
 
 # Use configuration with API
 from flext_ldif import ldif
 
-api = ldif(config=config)
+api = ldif(settings=settings)
 
 # Access configuration values
-print(f"Max entries: {config.max_entries}")
-print(f"Strict validation: {config.strict_validation}")
+print(f"Max entries: {settings.max_entries}")
+print(f"Strict validation: {settings.strict_validation}")
 ```
 
 ## Global Configuration
@@ -156,8 +156,8 @@ def load_config_from_environment() -> FlextLdifModels.Config:
 
 
 # Use environment-based configuration
-config = load_config_from_environment()
-api = ldif(config=config)
+settings = load_config_from_environment()
+api = ldif(settings=settings)
 ```
 
 ## Configuration Scenarios
@@ -178,7 +178,7 @@ def create_development_config() -> FlextLdifModels.Config:
 
 
 # Development API instance
-dev_api = ldif(config=create_development_config())
+dev_api = ldif(settings=create_development_config())
 ```
 
 ### Production Configuration
@@ -199,7 +199,7 @@ def create_production_config() -> FlextLdifModels.Config:
 
 
 # Production API instance
-prod_api = ldif(config=create_production_config())
+prod_api = ldif(settings=create_production_config())
 ```
 
 ### Migration Configuration
@@ -220,7 +220,7 @@ def create_migration_config() -> FlextLdifModels.Config:
 
 
 # Migration API instance
-migration_api = ldif(config=create_migration_config())
+migration_api = ldif(settings=create_migration_config())
 ```
 
 ## Advanced Configuration
@@ -235,8 +235,8 @@ from flext_ldif import FlextLdifModels
 def validate_configuration(config_dict: dict) -> r[FlextLdifModels.Config]:
     """Validate configuration with detailed error handling."""
     try:
-        config = FlextLdifModels.Config(**config_dict)
-        return r[FlextLdifModels.Config].ok(config)
+        settings = FlextLdifModels.Config(**config_dict)
+        return r[FlextLdifModels.Config].ok(settings)
     except ValidationError as e:
         error_details = "; ".join([
             f"{err['loc'][0]}: {err['msg']}" for err in e.errors()
@@ -255,8 +255,8 @@ config_data = {
 
 validation_result = validate_configuration(config_data)
 if validation_result.is_success:
-    config = validation_result.unwrap()
-    api = ldif(config=config)
+    settings = validation_result.unwrap()
+    api = ldif(settings=settings)
 else:
     print(f"Configuration error: {validation_result.error}")
 ```
@@ -334,7 +334,7 @@ class ConfigurationProfiles:
 
 
 # Use predefined profiles
-api = ldif(config=ConfigurationProfiles.enterprise())
+api = ldif(settings=ConfigurationProfiles.enterprise())
 ```
 
 ## Integration with FLEXT Configuration
@@ -366,9 +366,9 @@ from flext_ldif import FlextLdifSettings
 
 # Register configuration in container
 container = FlextContainer.get_global()
-config = FlextLdifModels.Config(max_entries=100000)
+settings = FlextLdifModels.Config(max_entries=100000)
 
-registration_result = container.register("ldif_config", config)
+registration_result = container.register("ldif_config", settings)
 if registration_result.is_success:
     print("Configuration registered in container")
 
@@ -376,7 +376,7 @@ if registration_result.is_success:
 config_result = container.get("ldif_config")
 if config_result.is_success:
     retrieved_config = config_result.unwrap()
-    api = ldif(config=retrieved_config)
+    api = ldif(settings=retrieved_config)
 ```
 
 ### Configuration Logging
@@ -404,26 +404,26 @@ from flext_core import t
 from flext_core import u
 
 
-def log_configuration(config: FlextLdifModels.Config) -> None:
+def log_configuration(settings: FlextLdifModels.Config) -> None:
     """Log configuration settings for debugging."""
     logger = u.fetch_logger(__name__)
 
     logger.info(
         "LDIF configuration initialized",
         extra={
-            "max_entries": config.max_entries,
-            "strict_validation": config.strict_validation,
-            "encoding": config.encoding,
-            "buffer_size": config.buffer_size,
-            "log_level": config.log_level,
+            "max_entries": settings.max_entries,
+            "strict_validation": settings.strict_validation,
+            "encoding": settings.encoding,
+            "buffer_size": settings.buffer_size,
+            "log_level": settings.log_level,
         },
     )
 
 
 # Log configuration during initialization
-config = FlextLdifModels.Config(max_entries=50000)
-log_configuration(config)
-api = ldif(config=config)
+settings = FlextLdifModels.Config(max_entries=50000)
+log_configuration(settings)
+api = ldif(settings=settings)
 ```
 
 ## Configuration Best Practices
@@ -434,7 +434,7 @@ Always use the Pydantic-based configuration models:
 
 ```python
 # ✅ Good: Type-safe configuration
-config = FlextLdifModels.Config(max_entries=50000, strict_validation=True)
+settings = FlextLdifModels.Config(max_entries=50000, strict_validation=True)
 
 # ❌ Avoid: Raw dictionaries without validation
 config_dict = {
@@ -451,11 +451,11 @@ Validate configuration at application startup:
 def initialize_application_config() -> r[ldif]:
     """Initialize application with validated configuration."""
     try:
-        config = FlextLdifModels.Config(
+        settings = FlextLdifModels.Config(
             max_entries=int(os.getenv("MAX_ENTRIES", "50000")),
             strict_validation=os.getenv("STRICT_VALIDATION", "").lower() == "true",
         )
-        api = ldif(config=config)
+        api = ldif(settings=settings)
         return r[ldif].ok(api)
     except Exception as e:
         return r[ldif].fail(f"Configuration initialization failed: {e}")
@@ -479,8 +479,8 @@ def get_environment_config(environment: str) -> FlextLdifModels.Config:
 
 # Use environment-based configuration
 env = os.getenv("ENVIRONMENT", "development")
-config = get_environment_config(env)
-api = ldif(config=config)
+settings = get_environment_config(env)
+api = ldif(settings=settings)
 ```
 
 ### 4. Document Configuration Changes

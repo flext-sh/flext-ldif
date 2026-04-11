@@ -1,14 +1,14 @@
 {
   "entries": [
     {
-      "dn": "cn=config",
+      "dn": "cn=settings",
       "attributes": {
         "objectClass": ["olcConfig"],
-        "cn": ["config"]
+        "cn": ["settings"]
       }
     },
     {
-      "dn": "olcDatabase=mdb,cn=config",
+      "dn": "olcDatabase=mdb,cn=settings",
       "attributes": {
         "objectClass": ["olcDatabaseConfig", "olcMdbConfig"],
         "olcDatabase": ["mdb"],
@@ -25,7 +25,7 @@
       }
     },
     {
-      "dn": "olcOverlay=syncprov,olcDatabase=mdb,cn=config",
+      "dn": "olcOverlay=syncprov,olcDatabase=mdb,cn=settings",
       "attributes": {
         "objectClass": ["olcOverlayConfig", "olcSyncProvConfig"],
         "olcOverlay": ["syncprov"],

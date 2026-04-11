@@ -507,7 +507,7 @@ class FlextLdifDetector(FlextLdifDetectorMixin, s[m.Ldif.ClientStatus]):
         status_result = m.Ldif.ClientStatus(
             status="initialized",
             services=["detect_server_type"],
-            config=config_settings,
+            settings=config_settings,
         )
         return r[m.Ldif.ClientStatus].ok(status_result)
 

@@ -400,7 +400,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             """Check if this quirk should handle the entry."""
             if not entry_dn:
                 return False
-            config_marker = "cn=config"
+            config_marker = "cn=settings"
             is_config_dn = config_marker in entry_dn.lower()
             has_olc_attrs = any(
                 attr_name.lower().startswith("olc") for attr_name in attributes

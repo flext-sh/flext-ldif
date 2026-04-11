@@ -723,42 +723,42 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def build_entry_parse_metadata(
-        config: FlextLdifModelsSettings.EntryParseMetadataConfig,
+        settings: FlextLdifModelsSettings.EntryParseMetadataConfig,
     ) -> m.Ldif.QuirkMetadata:
         """Build QuirkMetadata for entry parsing with format preservation."""
         server_data_dict: t.MutableContainerMapping = {}
-        dn_typed: t.NormalizedValue = config.original_entry_dn
-        cleaned_typed: t.NormalizedValue = config.cleaned_dn
-        base64_typed: t.NormalizedValue = config.dn_was_base64
+        dn_typed: t.NormalizedValue = settings.original_entry_dn
+        cleaned_typed: t.NormalizedValue = settings.cleaned_dn
+        base64_typed: t.NormalizedValue = settings.dn_was_base64
         server_data_dict["original_entry_dn"] = dn_typed
         server_data_dict["cleaned_dn"] = cleaned_typed
         server_data_dict["dn_was_base64"] = base64_typed
-        if config.original_dn_line:
-            dn_line_typed: t.NormalizedValue = config.original_dn_line
+        if settings.original_dn_line:
+            dn_line_typed: t.NormalizedValue = settings.original_dn_line
             server_data_dict["original_dn_line"] = dn_line_typed
-        if config.original_attr_lines:
-            attr_lines_typed: t.NormalizedValue = list(config.original_attr_lines)
+        if settings.original_attr_lines:
+            attr_lines_typed: t.NormalizedValue = list(settings.original_attr_lines)
             server_data_dict["original_attribute_lines"] = attr_lines_typed
-        if config.original_attribute_case:
-            attr_case_typed: t.NormalizedValue = dict(config.original_attribute_case)
+        if settings.original_attribute_case:
+            attr_case_typed: t.NormalizedValue = dict(settings.original_attribute_case)
             server_data_dict["original_attribute_case"] = attr_case_typed
         server_data = FlextLdifModelsMetadata.EntryMetadata.model_validate(
             server_data_dict,
         )
         original_ldif_parts: MutableSequence[str] = []
-        if config.original_dn_line:
-            original_ldif_parts.append(config.original_dn_line)
-        if config.original_attr_lines:
-            original_ldif_parts.extend(config.original_attr_lines)
+        if settings.original_dn_line:
+            original_ldif_parts.append(settings.original_dn_line)
+        if settings.original_attr_lines:
+            original_ldif_parts.extend(settings.original_attr_lines)
         original_ldif = "\n".join(original_ldif_parts) if original_ldif_parts else ""
         extensions_dict: t.MutableContainerMapping = {}
         mk = c.Ldif
-        extensions_dict[mk.ORIGINAL_DN_COMPLETE] = config.original_entry_dn
+        extensions_dict[mk.ORIGINAL_DN_COMPLETE] = settings.original_entry_dn
         dynamic_extensions = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
             extensions_dict,
         )
         metadata = m.Ldif.QuirkMetadata(
-            quirk_type=config.quirk_type,
+            quirk_type=settings.quirk_type,
             server_specific_data=server_data,
             extensions=dynamic_extensions,
         )

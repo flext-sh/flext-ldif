@@ -71,7 +71,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             "nsorganizationalperson",
         ])
         DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "cn=config",
+            "cn=settings",
             "cn=monitor",
             "cn=changelog",
         ])

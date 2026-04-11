@@ -49,7 +49,7 @@ flext-ldif has evolved through multiple phases achieving production-ready status
 
 1. **Custom Processors**: `processors/ldif_processor.py` (160 lines) wraps `FlextProcessors` from flext-core unnecessarily
 1. **Wrapper Methods**: 600+ lines in `api.py` delegating to model methods (`get_entry_dn`, `get_entry_attributes`, `create_entry`)
-1. **Property Accessors**: 100+ lines exposing imports via properties (`ldif.models`, `ldif.config`, `ldif.processors`)
+1. **Property Accessors**: 100+ lines exposing imports via properties (`ldif.models`, `ldif.settings`, `ldif.processors`)
 
 ### **flext-core Under-Utilization**
 
@@ -191,7 +191,7 @@ attrs = entry.attributes.to_ldap3()  # Direct
 **Properties to Remove**:
 
 - `@property def models()` → Import `FlextLdifModels` directly
-- `@property def config()` → Import `FlextLdifSettings` directly
+- `@property def settings()` → Import `FlextLdifSettings` directly
 - `@property def constants()` → Import `FlextLdifConstants` directly
 - `@property def processors()` → Import `FlextProcessors` from flext-core
 

@@ -180,7 +180,7 @@ Configure LDIF processing behavior:
 from flext_ldif import ldif, FlextLdifModels
 
 # Create configuration
-config = FlextLdifModels.Config(
+settings = FlextLdifModels.Config(
     max_entries=10000,  # Limit number of entries processed
     strict_validation=True,  # Enable strict RFC 2849 validation
     ignore_unknown_attributes=False,  # Process all attributes
@@ -188,7 +188,7 @@ config = FlextLdifModels.Config(
 )
 
 # Initialize API with configuration
-api = ldif(config=config)
+api = ldif(settings=settings)
 ```
 
 ### Advanced Configuration
@@ -199,11 +199,11 @@ Access additional configuration options:
 from flext_ldif import FlextLdifSettings, get_ldif_config
 
 # Get global configuration
-config = get_ldif_config()
+settings = get_ldif_config()
 
 # Access configuration settings
-print(f"Max entries: {config.max_entries}")
-print(f"Strict validation: {config.strict_validation}")
+print(f"Max entries: {settings.max_entries}")
+print(f"Strict validation: {settings.strict_validation}")
 ```
 
 ## Command Line Interface

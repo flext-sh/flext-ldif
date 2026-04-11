@@ -78,8 +78,8 @@ ______________________________________________________________________
 
 ```
 FlextLdifSchemaService
-├── parse_attribute() - uses RFC parser + server config
-├── parse_objectclass() - uses RFC parser + server config
+├── parse_attribute() - uses RFC parser + server settings
+├── parse_objectclass() - uses RFC parser + server settings
 ├── validate_attribute()
 ├── validate_objectclass()
 ├── transform_attribute_for_write()
@@ -87,13 +87,13 @@ FlextLdifSchemaService
 └── write_attribute() / write_objectclass()
 
 FlextLdifAclService
-├── parse_acl() - uses RFC ACL logic + server config
+├── parse_acl() - uses RFC ACL logic + server settings
 ├── write_acl() - formats for specific server
 ├── validate_acl()
 └── transform_acl_for_write()
 
 FlextLdifEntryService
-├── parse_entry() - uses RFC entry parsing + server config
+├── parse_entry() - uses RFC entry parsing + server settings
 ├── write_entry()
 ├── validate_entry()
 └── transform_entry_for_write()
@@ -106,14 +106,14 @@ FlextLdifServerSettings (replaces nested Constants)
 └── validation_rules
 
 FlextLdifServersRfc (uses services)
-├── config: FlextLdifServerSettings
+├── settings: FlextLdifServerSettings
 ├── schema_service: FlextLdifSchemaService
 ├── acl_service: FlextLdifAclService
 ├── entry_service: FlextLdifEntryService
 └── delegate to services for all operations
 
 FlextLdifServersOud (extends FlextLdifServersRfc)
-├── config: OUD-specific FlextLdifServerSettings
+├── settings: OUD-specific FlextLdifServerSettings
 └── services with OUD configuration
 ```
 
@@ -143,14 +143,14 @@ ______________________________________________________________________
 
 **Key Methods**:
 
-- `parse_attribute(definition: str, config: ServerConfig) -> SchemaAttribute`
-- `parse_objectclass(definition: str, config: ServerConfig) -> SchemaObjectClass`
-- `validate_attribute(attr: SchemaAttribute, config: ServerConfig) -> ValidationResult`
-- `validate_objectclass(oc: SchemaObjectClass, config: ServerConfig) -> ValidationResult`
-- `transform_attribute_for_write(attr: SchemaAttribute, config: ServerConfig) -> SchemaAttribute`
-- `transform_objectclass_for_write(oc: SchemaObjectClass, config: ServerConfig) -> SchemaObjectClass`
-- `write_attribute(attr: SchemaAttribute, config: ServerConfig) -> str`
-- `write_objectclass(oc: SchemaObjectClass, config: ServerConfig) -> str`
+- `parse_attribute(definition: str, settings: ServerConfig) -> SchemaAttribute`
+- `parse_objectclass(definition: str, settings: ServerConfig) -> SchemaObjectClass`
+- `validate_attribute(attr: SchemaAttribute, settings: ServerConfig) -> ValidationResult`
+- `validate_objectclass(oc: SchemaObjectClass, settings: ServerConfig) -> ValidationResult`
+- `transform_attribute_for_write(attr: SchemaAttribute, settings: ServerConfig) -> SchemaAttribute`
+- `transform_objectclass_for_write(oc: SchemaObjectClass, settings: ServerConfig) -> SchemaObjectClass`
+- `write_attribute(attr: SchemaAttribute, settings: ServerConfig) -> str`
+- `write_objectclass(oc: SchemaObjectClass, settings: ServerConfig) -> str`
 
 **Leverage Existing**:
 
@@ -164,11 +164,11 @@ ______________________________________________________________________
 
 **Key Methods**:
 
-- `parse_acl(acl_line: str, config: ServerConfig) -> Acl`
-- `can_handle_acl(acl_line: str, config: ServerConfig) -> bool`
-- `validate_acl(acl: Acl, config: ServerConfig) -> ValidationResult`
-- `transform_acl_for_write(acl: Acl, config: ServerConfig) -> Acl`
-- `write_acl(acl: Acl, config: ServerConfig) -> str`
+- `parse_acl(acl_line: str, settings: ServerConfig) -> Acl`
+- `can_handle_acl(acl_line: str, settings: ServerConfig) -> bool`
+- `validate_acl(acl: Acl, settings: ServerConfig) -> ValidationResult`
+- `transform_acl_for_write(acl: Acl, settings: ServerConfig) -> Acl`
+- `write_acl(acl: Acl, settings: ServerConfig) -> str`
 
 **Leverage Existing**:
 
@@ -181,11 +181,11 @@ ______________________________________________________________________
 
 **Key Methods**:
 
-- `parse_entry(entry_dn: str, attributes: dict, config: ServerConfig) -> Entry`
-- `can_handle_entry(entry: Entry, config: ServerConfig) -> bool`
-- `validate_entry(entry: Entry, config: ServerConfig) -> ValidationResult`
-- `transform_entry_for_write(entry: Entry, config: ServerConfig) -> Entry`
-- `write_entry(entry: Entry, config: ServerConfig) -> str`
+- `parse_entry(entry_dn: str, attributes: dict, settings: ServerConfig) -> Entry`
+- `can_handle_entry(entry: Entry, settings: ServerConfig) -> bool`
+- `validate_entry(entry: Entry, settings: ServerConfig) -> ValidationResult`
+- `transform_entry_for_write(entry: Entry, settings: ServerConfig) -> Entry`
+- `write_entry(entry: Entry, settings: ServerConfig) -> str`
 
 **Leverage Existing**:
 
@@ -226,10 +226,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 class FlextLdifServersOud(FlextLdifServersRfc):
     def __init__(self):
         super().__init__()
-        self.config = OudServerConfig()  # Configuration
-        self.schema_service = FlextLdifSchemaService(self.config)
-        self.acl_service = FlextLdifAclService(self.config)
-        self.entry_service = FlextLdifEntryService(self.config)
+        self.settings = OudServerConfig()  # Configuration
+        self.schema_service = FlextLdifSchemaService(self.settings)
+        self.acl_service = FlextLdifAclService(self.settings)
+        self.entry_service = FlextLdifEntryService(self.settings)
 
     def parse_attribute(self, attr_def):
         return self.schema_service.parse_attribute(attr_def)
@@ -244,17 +244,17 @@ class FlextLdifServiceComposer:
     """Composes services for a given server type."""
 
     @classmethod
-    def create_services(cls, config: ServerConfig) -> Services:
+    def create_services(cls, settings: ServerConfig) -> Services:
         """Create and configure services for server."""
         return Services(
-            schema=FlextLdifSchemaService(config),
-            acl=FlextLdifAclService(config),
-            entry=FlextLdifEntryService(config),
+            schema=FlextLdifSchemaService(settings),
+            acl=FlextLdifAclService(settings),
+            entry=FlextLdifEntryService(settings),
         )
 
 
 # Usage in servers
-services = FlextLdifServiceComposer.create_services(self.config)
+services = FlextLdifServiceComposer.create_services(self.settings)
 attribute = services.schema.parse_attribute(attr_def)
 ```
 
@@ -265,7 +265,7 @@ ______________________________________________________________________
 ### Step 1: Create ServiceConfig abstraction
 
 - Extract Constants from servers
-- Create config classes for each server type
+- Create settings classes for each server type
 - Keep backward compatibility with Constants
 
 ### Step 2: Create services with new functionality
@@ -295,7 +295,7 @@ ______________________________________________________________________
 - [ ] Zero duplication of parsing/writing logic
 - [ ] All tests pass with new architecture
 - [ ] Services are independently testable
-- [ ] Server-specific logic is in config, not code
+- [ ] Server-specific logic is in settings, not code
 - [ ] Documentation updated with new patterns
 
 ______________________________________________________________________

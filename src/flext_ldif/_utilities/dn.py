@@ -97,10 +97,10 @@ class FlextLdifUtilitiesDN:
         char: str,
         rdn: str,
         position: int,
-        config: FlextLdifModelsSettings.RdnProcessingConfig,
+        settings: FlextLdifModelsSettings.RdnProcessingConfig,
     ) -> tuple[str, str, bool, int]:
         """Advance position during RDN parsing and return new state."""
-        result = FlextLdifUtilitiesDN._process_rdn_char(char, rdn, position, config)
+        result = FlextLdifUtilitiesDN._process_rdn_char(char, rdn, position, settings)
         attr, val, in_val, next_pos, _ = result
         return (attr, val, in_val, next_pos)
 
@@ -231,39 +231,39 @@ class FlextLdifUtilitiesDN:
         char: str,
         rdn: str,
         i: int,
-        config: FlextLdifModelsSettings.RdnProcessingConfig,
+        settings: FlextLdifModelsSettings.RdnProcessingConfig,
     ) -> tuple[str, str, bool, int, bool]:
         """Process single character in RDN parsing."""
-        current_attr = config.current_attr
-        current_val = config.current_val
-        in_value = config.in_value
+        current_attr = settings.current_attr
+        current_val = settings.current_val
+        in_value = settings.in_value
         if char == "\\" and i + 1 < len(rdn):
             current_val, next_i = FlextLdifUtilitiesDN._process_rdn_escape(
                 rdn,
                 i,
-                config.current_val,
+                settings.current_val,
             )
-            config.current_val = current_val
+            settings.current_val = current_val
             return (current_attr, current_val, in_value, next_i, True)
         if char == "=" and (not in_value):
             current_attr = current_attr.strip().lower()
-            config.current_attr = current_attr
-            config.in_value = True
+            settings.current_attr = current_attr
+            settings.in_value = True
             return (current_attr, current_val, True, i + 1, True)
         if char == "+" and in_value:
             current_val = current_val.strip()
             if current_attr:
-                config.pairs.append((current_attr, current_val))
-            config.current_attr = ""
-            config.current_val = ""
-            config.in_value = False
+                settings.pairs.append((current_attr, current_val))
+            settings.current_attr = ""
+            settings.current_val = ""
+            settings.in_value = False
             return ("", "", False, i + 1, True)
         if in_value:
             current_val += char
-            config.current_val = current_val
+            settings.current_val = current_val
         else:
             current_attr += char
-            config.current_attr = current_attr
+            settings.current_attr = current_attr
         return (current_attr, current_val, in_value, i + 1, False)
 
     @staticmethod

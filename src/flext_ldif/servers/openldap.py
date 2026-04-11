@@ -39,7 +39,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["openldap", "rfc"])
         ACL_FORMAT: ClassVar[str] = "olcAccess"
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "olcAccess"
-        DETECTION_PATTERN: ClassVar[str] = "\\b(olc[A-Z][a-zA-Z]+|cn=config)\\b"
+        DETECTION_PATTERN: ClassVar[str] = "\\b(olc[A-Z][a-zA-Z]+|cn=settings)\\b"
         DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             "olcDatabase",
             "olcAccess",
@@ -59,7 +59,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             "olcSuffix",
         ])
         OPENLDAP_2_DN_PATTERNS: ClassVar[frozenset[str]] = frozenset([
-            "cn=config",
+            "cn=settings",
             "olcDatabase=",
             "olcOverlay=",
         ])
@@ -110,7 +110,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             "olcbdbconfig",
         ])
         DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "cn=config",
+            "cn=settings",
             "cn=schema",
             "cn=monitor",
         ])

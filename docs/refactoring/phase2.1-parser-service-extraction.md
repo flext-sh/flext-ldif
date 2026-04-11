@@ -126,7 +126,7 @@ class FlextLdifParser(Flext[t.ContainerMapping]):
 ### Design Principles Applied
 
 1. **Single Responsibility Principle**: Service focuses only on parsing operations
-1. **Dependency Injection**: Client and config injected via constructor
+1. **Dependency Injection**: Client and settings injected via constructor
 1. **Railway-Oriented Programming**: All methods return r[T]
 1. **Type Safety**: Full Python 3.13+ type annotations
 1. **FLEXT Patterns**: Inherits from s, uses r
@@ -143,12 +143,12 @@ Replace existing parse methods in `ldif` class:
 class ldif(Flext[t.ContainerMapping]):
     _parser: FlextLdifParser  # Add new service
 
-    def __init__(self, config: FlextLdifSettings | None = None) -> None:
+    def __init__(self, settings: FlextLdifSettings | None = None) -> None:
         super().__init__()
-        self._config = config if config is not None else FlextLdifSettings()
+        self._config = settings if settings is not None else FlextLdifSettings()
 
         # Initialize parser service
-        self._parser = FlextLdifParser(client=self._client, config=self._config)
+        self._parser = FlextLdifParser(client=self._client, settings=self._config)
         # ... rest of initialization
 
     def parse(self, source, server_type, *, batch, paginate, page_size):

@@ -281,42 +281,42 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _build_oid_acl_metadata(
         self,
-        config: m.Ldif.OidAclMetadataConfig,
+        settings: m.Ldif.OidAclMetadataConfig,
     ) -> t.MutableConfigurationMapping:
         """Build metadata extensions for OID ACL with Oracle-specific features."""
         target_attrs_str: str = (
-            _OidAclTargetAttributesJson(root=config.target_attrs).model_dump_json()
-            if config.target_attrs
+            _OidAclTargetAttributesJson(root=settings.target_attrs).model_dump_json()
+            if settings.target_attrs
             else ""
         )
         permissions_str: str = (
-            m.Ldif.DynamicMetadata.from_dict(config.perms_dict).model_dump_json()
-            if config.perms_dict
+            m.Ldif.DynamicMetadata.from_dict(settings.perms_dict).model_dump_json()
+            if settings.perms_dict
             else ""
         )
         metadata_dict: t.MutableConfigurationMapping = dict(
             u.Ldif.build_acl_metadata_complete(
                 "oid",
-                acl_line=config.acl_line,
+                acl_line=settings.acl_line,
                 server_type="oid",
-                subject_type=config.oid_subject_type,
-                subject_value=config.oid_subject_value,
-                target_dn=config.target_dn,
+                subject_type=settings.oid_subject_type,
+                subject_value=settings.oid_subject_value,
+                target_dn=settings.target_dn,
                 target_attrs=target_attrs_str,
                 permissions=permissions_str,
-                target_subject_type=config.rfc_subject_type,
-                acl_filter=config.acl_filter,
-                acl_constraint=config.acl_constraint,
-                bindmode=config.bindmode,
-                deny_group_override=config.deny_group_override is True,
-                append_to_all=config.append_to_all is True,
-                bind_ip_filter=config.bind_ip_filter,
-                constrain_to_added_object=config.constrain_to_added_object,
+                target_subject_type=settings.rfc_subject_type,
+                acl_filter=settings.acl_filter,
+                acl_constraint=settings.acl_constraint,
+                bindmode=settings.bindmode,
+                deny_group_override=settings.deny_group_override is True,
+                append_to_all=settings.append_to_all is True,
+                bind_ip_filter=settings.bind_ip_filter,
+                constrain_to_added_object=settings.constrain_to_added_object,
                 target_key=FlextLdifServersOidConstants.OID_ACL_SOURCE_TARGET,
             ),
         )
-        if config.oid_subject_type:
-            metadata_dict["acl_source_subject_type"] = config.oid_subject_type
+        if settings.oid_subject_type:
+            metadata_dict["acl_source_subject_type"] = settings.oid_subject_type
         return metadata_dict
 
     def _extract_extensions_dict(
@@ -551,7 +551,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 FlextLdifServersOidConstants.ACL_CONSTRAIN_TO_ADDED_PATTERN,
                 group=1,
             )
-            config = self.OidAclMetadataConfig.model_validate({
+            settings = self.OidAclMetadataConfig.model_validate({
                 "acl_line": acl_line,
                 "oid_subject_type": oid_subject_type,
                 "rfc_subject_type": rfc_subject_type,
@@ -567,7 +567,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 "bind_ip_filter": bind_ip_filter or "",
                 "constrain_to_added_object": constrain_to_added_object or "",
             })
-            extensions = self._build_oid_acl_metadata(config)
+            extensions = self._build_oid_acl_metadata(settings)
             server_type: Literal["oid"] = "oid"
             rfc_compliant_perms = m.Ldif.AclPermissions.get_rfc_compliant_permissions(
                 perms_dict,

@@ -43,14 +43,14 @@ class FlextLdif(
     def __init__(
         self,
         *,
-        config: FlextLdifSettings | None = None,
+        settings: FlextLdifSettings | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize LDIF facade with server registry."""
         del kwargs
         try:
-            if config is not None:
-                self._set_init_config_overrides(config)
+            if settings is not None:
+                self._set_init_config_overrides(settings)
         finally:
             self._clear_init_config_overrides()
         super().__init__()
@@ -63,23 +63,23 @@ class FlextLdif(
 
     @classmethod
     def _clear_init_config_overrides(cls) -> None:
-        """Clear temporary init config overrides after initialization."""
+        """Clear temporary init settings overrides after initialization."""
         cls._init_config_overrides = None
 
     @classmethod
     @override
     def _runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
-        """Allow per-instance config overrides on initialization."""
-        base_options = m.RuntimeBootstrapOptions(config_type=FlextLdifSettings)
+        """Allow per-instance settings overrides on initialization."""
+        base_options = m.RuntimeBootstrapOptions(settings_type=FlextLdifSettings)
         overrides = cls._init_config_overrides
         if not overrides:
             return base_options
         return base_options.model_copy(update={"config_overrides": dict(overrides)})
 
     @classmethod
-    def _set_init_config_overrides(cls, config: FlextLdifSettings) -> None:
-        """Set temporary init config overrides for runtime bootstrap."""
-        cls._init_config_overrides = config.model_dump(exclude_none=True)
+    def _set_init_config_overrides(cls, settings: FlextLdifSettings) -> None:
+        """Set temporary init settings overrides for runtime bootstrap."""
+        cls._init_config_overrides = settings.model_dump(exclude_none=True)
 
     @classmethod
     def categorization(

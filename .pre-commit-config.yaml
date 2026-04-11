@@ -46,7 +46,7 @@ repos: [] # DISABLED BY SCRIPT - All hooks disabled
 #         types: [python]
 #         require_serial: true
 #         pass_filenames: false
-#         args: [src/, --config-file=pyproject.toml]
+#         args: [src/, --settings-file=pyproject.toml]
 #
 #       # Bandit security
 #       - id: bandit

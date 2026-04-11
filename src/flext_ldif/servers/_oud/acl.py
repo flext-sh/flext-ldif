@@ -353,9 +353,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 acls.append(result.value)
 
     def _parse_aci_format(self, acl_line: str) -> r[m.Ldif.Acl]:
-        """Parse RFC 4876 ACI format using utility with OUD-specific config."""
-        config = FlextLdifServersOudUtilities.get_parser_config()
-        result = FlextLdifUtilitiesACL.parse_aci(acl_line, config)
+        """Parse RFC 4876 ACI format using utility with OUD-specific settings."""
+        settings = FlextLdifServersOudUtilities.get_parser_config()
+        result = FlextLdifUtilitiesACL.parse_aci(acl_line, settings)
         if not result.success:
             return result
         acl = result.value
@@ -374,7 +374,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         ssf_match = re.search(FlextLdifServersOudConstants.ACL_SSF_PATTERN, aci_content)
         if ssf_match:
             extensions[c.Ldif.ACL_SSF] = f"{ssf_match.group(1)}{ssf_match.group(2)}"
-        server_type_value = config.server_type if config else "oud"
+        server_type_value = settings.server_type if settings else "oud"
         new_metadata = m.Ldif.QuirkMetadata.create_for(
             server_type_value,
             extensions=extensions,

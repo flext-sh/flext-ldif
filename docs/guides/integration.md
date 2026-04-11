@@ -142,7 +142,7 @@ class FLEXTOUDMigrationService:
             encoding="utf-8",
         )
 
-        self._ldif_api = ldif(config=migration_config)
+        self._ldif_api = ldif(settings=migration_config)
 
     def process_oud_export(self, export_file: Path) -> r[t.Dict]:
         """Process Oracle Unified Directory LDIF export."""

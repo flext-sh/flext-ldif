@@ -18,13 +18,13 @@ class FlextLdifProcessingPipeline:
 
     __slots__ = ("_config", "_pipeline")
 
-    def __init__(self, config: m.Ldif.TransformConfig | None = None) -> None:
+    def __init__(self, settings: m.Ldif.TransformConfig | None = None) -> None:
         """Initialize processing pipeline."""
-        self._config = config or m.Ldif.TransformConfig()
+        self._config = settings or m.Ldif.TransformConfig()
         self._pipeline = self._build_pipeline()
 
     @property
-    def config(self) -> m.Ldif.TransformConfig:
+    def settings(self) -> m.Ldif.TransformConfig:
         """Get the processing configuration."""
         return self._config
 

@@ -36,7 +36,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             "ads-interceptor",
         ])
         DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "ou=config",
+            "ou=settings",
             "ou=services",
             "ou=system",
             "ou=partitions",
@@ -60,7 +60,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ACL_NAME_PREFIX: ClassVar[str] = "apache-"
         ACL_SUBJECT_TYPE_ANONYMOUS: ClassVar[str] = "anonymous"
         ACL_SUBJECT_VALUE_WILDCARD: ClassVar[str] = "*"
-        DN_CONFIG_ENTRY_MARKER: ClassVar[str] = "ou=config"
+        DN_CONFIG_ENTRY_MARKER: ClassVar[str] = "ou=settings"
 
     class Schema(FlextLdifServersRfc.Schema):
         """Schema quirks for Apache Directory Server (ApacheDS)."""

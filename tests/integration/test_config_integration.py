@@ -1,6 +1,6 @@
 """Config Integration Tests - FlextLdifSettings Integration Verification.
 
-Tests comprehensive config integration with ldif facade including:
+Tests comprehensive settings integration with ldif facade including:
 - Configuration initialization with facade
 - Server type selection and behavior
 - Quirks mode handling
@@ -34,15 +34,15 @@ class TestFlextLdifSettingsIntegration:
     """
 
     def test_default_config_initialization(self) -> None:
-        """Test facade initializes with default config."""
+        """Test facade initializes with default settings."""
         api = ldif()
         result = api.parse_ldif(c.Ldif.Tests.CONFIG_BASIC_ENTRY)
         assert result.success
 
     def test_custom_config_with_server_type(self) -> None:
-        """Test facade with custom config and server type."""
-        config = FlextLdifSettings()
-        api = FlextLdif(config=config)
+        """Test facade with custom settings and server type."""
+        settings = FlextLdifSettings()
+        api = FlextLdif(settings=settings)
         result = api.parse_ldif(
             c.Ldif.Tests.CONFIG_BASIC_ENTRY,
             server_type=c.Ldif.Tests.OPENLDAP,
@@ -55,8 +55,8 @@ class TestFlextLdifSettingsIntegration:
         """Test that multiple ldif instances with different configs are independent."""
         config1 = FlextLdifSettings()
         config2 = FlextLdifSettings()
-        ldif1 = FlextLdif(config=config1)
-        ldif2 = FlextLdif(config=config2)
+        ldif1 = FlextLdif(settings=config1)
+        ldif2 = FlextLdif(settings=config2)
         result1 = ldif1.parse_ldif(
             c.Ldif.Tests.CONFIG_BASIC_ENTRY,
             server_type=c.Ldif.Tests.OID,
@@ -73,9 +73,9 @@ class TestFlextLdifSettingsIntegration:
         self,
         server_type: c.Ldif.ServerTypeLiteral,
     ) -> None:
-        """Test that config settings affect parsing behavior."""
-        config = FlextLdifSettings()
-        api = FlextLdif(config=config)
+        """Test that settings settings affect parsing behavior."""
+        settings = FlextLdifSettings()
+        api = FlextLdif(settings=settings)
         result = api.parse_ldif(
             c.Ldif.Tests.CONFIG_BASIC_ENTRY, server_type=server_type
         )
@@ -95,9 +95,9 @@ class TestFlextLdifSettingsIntegration:
         server_type: c.Ldif.ServerTypeLiteral,
         expected_content_key: str,
     ) -> None:
-        """Test config with specific server type using parametrization."""
-        config = FlextLdifSettings()
-        api = FlextLdif(config=config)
+        """Test settings with specific server type using parametrization."""
+        settings = FlextLdifSettings()
+        api = FlextLdif(settings=settings)
         content = c.Ldif.Tests.CONFIG_SERVER_CONTENT[expected_content_key]
         result = api.parse_ldif(content, server_type=server_type)
         assert result.success
@@ -105,9 +105,9 @@ class TestFlextLdifSettingsIntegration:
         assert len(entries) == 1
 
     def test_config_consistency_across_operations(self) -> None:
-        """Test that config remains consistent across operations."""
-        config = FlextLdifSettings()
-        api = FlextLdif(config=config)
+        """Test that settings remains consistent across operations."""
+        settings = FlextLdifSettings()
+        api = FlextLdif(settings=settings)
         content1 = "dn: cn=Test1,dc=example,dc=com\ncn: Test1\nobjectClass: person\n"
         content2 = "dn: cn=Test2,dc=example,dc=com\ncn: Test2\nobjectClass: person\n"
         result1 = api.parse_ldif(content1)
@@ -116,9 +116,9 @@ class TestFlextLdifSettingsIntegration:
         assert result2.success
 
     def test_config_with_multiple_entries(self) -> None:
-        """Test config handling with multiple entries."""
-        config = FlextLdifSettings()
-        api = FlextLdif(config=config)
+        """Test settings handling with multiple entries."""
+        settings = FlextLdifSettings()
+        api = FlextLdif(settings=settings)
         result = api.parse_ldif(c.Ldif.Tests.CONFIG_MULTIPLE_ENTRIES)
         assert result.success
         entries = result.value.entries

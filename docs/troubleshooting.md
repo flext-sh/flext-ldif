@@ -137,12 +137,12 @@ def process_large_file_safely(file_path: str) -> r[t.Dict]:
         )
 
     # Configure for large files
-    config = FlextLdifModels.Config(
+    settings = FlextLdifModels.Config(
         max_entries=50000,  # Limit entries
         buffer_size=16384,  # Smaller buffer
     )
 
-    api = ldif(config=config)
+    api = ldif(settings=settings)
     return api.parse_file(file_path)
 
 
@@ -209,7 +209,7 @@ def handle_validation_errors(entries: list) -> r[list]:
     """Handle validation errors with detailed reporting."""
     # Try with strict validation first
     strict_config = FlextLdifModels.Config(strict_validation=True)
-    strict_api = ldif(config=strict_config)
+    strict_api = ldif(settings=strict_config)
 
     strict_result = strict_api.validate_entries(entries)
     if strict_result.is_success:
@@ -222,7 +222,7 @@ def handle_validation_errors(entries: list) -> r[list]:
     permissive_config = FlextLdifModels.Config(
         strict_validation=False, ignore_unknown_attributes=True
     )
-    permissive_api = ldif(config=permissive_config)
+    permissive_api = ldif(settings=permissive_config)
 
     permissive_result = permissive_api.validate_entries(entries)
     if permissive_result.is_success:
@@ -318,8 +318,8 @@ def optimize_processing_config() -> FlextLdifModels.Config:
 
 def process_with_optimization(file_path: str) -> r[t.Dict]:
     """Process LDIF with performance optimizations."""
-    config = optimize_processing_config()
-    api = ldif(config=config)
+    settings = optimize_processing_config()
+    api = ldif(settings=settings)
 
     return api.parse_file(file_path).map(
         lambda entries: {"entry_count": len(entries), "processing_optimized": True}
@@ -571,7 +571,7 @@ def enable_debug_mode() -> ldif:
         strict_validation=True, ignore_unknown_attributes=False, log_level="DEBUG"
     )
 
-    api = ldif(config=debug_config)
+    api = ldif(settings=debug_config)
 
     print("🐛 Debug mode enabled:")
     print("  - Strict validation active")

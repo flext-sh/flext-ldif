@@ -375,14 +375,14 @@ class FlextLdifConversion(
                 )
             target_schema: p.Ldif.SchemaQuirk = target_schema_result.value
 
-            config = m.Ldif.SchemaAttributeConversionPipelineConfig(
+            settings = m.Ldif.SchemaAttributeConversionPipelineConfig(
                 item_type="attribute",
                 source_schema=source_schema,
                 target_schema=target_schema,
                 item=attribute,
                 item_name="attribute",
             )
-            return FlextLdifConversion._process_schema_conversion_pipeline(config)
+            return FlextLdifConversion._process_schema_conversion_pipeline(settings)
         except (
             ValueError,
             KeyError,
@@ -421,14 +421,14 @@ class FlextLdifConversion(
                     target_schema_result.error or "Target schema not available"
                 )
 
-            config = m.Ldif.SchemaObjectClassConversionPipelineConfig(
+            settings = m.Ldif.SchemaObjectClassConversionPipelineConfig(
                 item_type="objectclass",
                 source_schema=source_schema,
                 target_schema=target_schema,
                 item=objectclass,
                 item_name="objectclass",
             )
-            return FlextLdifConversion._process_schema_conversion_pipeline(config)
+            return FlextLdifConversion._process_schema_conversion_pipeline(settings)
         except (
             ValueError,
             KeyError,
@@ -534,22 +534,22 @@ class FlextLdifConversion(
 
     @staticmethod
     def _process_schema_conversion_pipeline(
-        config: m.Ldif.SchemaAttributeConversionPipelineConfig
+        settings: m.Ldif.SchemaAttributeConversionPipelineConfig
         | m.Ldif.SchemaObjectClassConversionPipelineConfig,
     ) -> r[t.Ldif.ConvertedModel]:
         """Process schema conversion pipeline using direct method dispatch."""
 
         def parse_target_ldif(ldif_string: str) -> r[t.Ldif.ConvertedModel]:
-            if isinstance(config, m.Ldif.SchemaAttributeConversionPipelineConfig):
+            if isinstance(settings, m.Ldif.SchemaAttributeConversionPipelineConfig):
                 return (
                     r[t.Ldif.SchemaConversionValue]
                     .from_result(
-                        config.target_schema.parse_attribute(ldif_string),
+                        settings.target_schema.parse_attribute(ldif_string),
                     )
                     .map_error(
                         lambda error: (
                             "Failed to parse "
-                            f"{config.item_name} in target format: {error or 'Unknown parse error'}"
+                            f"{settings.item_name} in target format: {error or 'Unknown parse error'}"
                         ),
                     )
                     .map(
@@ -559,12 +559,12 @@ class FlextLdifConversion(
             return (
                 r[t.Ldif.SchemaConversionValue]
                 .from_result(
-                    config.target_schema.parse_objectclass(ldif_string),
+                    settings.target_schema.parse_objectclass(ldif_string),
                 )
                 .map_error(
                     lambda error: (
                         "Failed to parse "
-                        f"{config.item_name} in target format: {error or 'Unknown parse error'}"
+                        f"{settings.item_name} in target format: {error or 'Unknown parse error'}"
                     ),
                 )
                 .map(
@@ -573,9 +573,9 @@ class FlextLdifConversion(
             )
 
         write_result = (
-            config.source_schema.write_attribute(config.item)
-            if isinstance(config, m.Ldif.SchemaAttributeConversionPipelineConfig)
-            else config.source_schema.write_objectclass(config.item)
+            settings.source_schema.write_attribute(settings.item)
+            if isinstance(settings, m.Ldif.SchemaAttributeConversionPipelineConfig)
+            else settings.source_schema.write_objectclass(settings.item)
         )
         return (
             r[str]
@@ -583,13 +583,13 @@ class FlextLdifConversion(
             .map_error(
                 lambda error: (
                     "Failed to write "
-                    f"{config.item_name} in source format: {error or 'Unknown write error'}"
+                    f"{settings.item_name} in source format: {error or 'Unknown write error'}"
                 ),
             )
             .flat_map(
                 lambda write_value: FlextLdifConversion._validate_ldif_string(
                     write_value,
-                    config.item_name,
+                    settings.item_name,
                 ),
             )
             .flat_map(
@@ -700,7 +700,7 @@ class FlextLdifConversion(
         )
         _ = u.Ldif.log_and_emit_conversion_event(
             logger=logger,
-            config=conversion_config,
+            settings=conversion_config,
             log_level="info" if result.success else "error",
         )
         return result
@@ -783,7 +783,7 @@ class FlextLdifConversion(
 
     def _apply_permission_mapping(
         self,
-        config: m.Ldif.PermissionMappingConfig | None = None,
+        settings: m.Ldif.PermissionMappingConfig | None = None,
         *,
         original_acl: m.Ldif.Acl | None = None,
         converted_acl: m.Ldif.Acl | None = None,
@@ -793,8 +793,8 @@ class FlextLdifConversion(
         converted_has_permissions: bool = False,
     ) -> m.Ldif.Acl:
         """Apply permission mapping based on server types."""
-        if config is not None:
-            resolved_config = config
+        if settings is not None:
+            resolved_config = settings
         else:
             if original_acl is None or converted_acl is None:
                 if converted_acl is not None:

@@ -95,28 +95,28 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _build_subject_and_permissions(
         aci_content: str,
-        config: FlextLdifModelsSettings.AciParserConfig,
+        settings: FlextLdifModelsSettings.AciParserConfig,
     ) -> tuple[str, str, t.MutableBoolMapping]:
         """Build subject and permissions from ACI content."""
         permissions_list = FlextLdifUtilitiesACL.extract_permissions(
             aci_content,
-            config.allow_deny_pattern,
-            config.ops_separator,
-            config.action_filter,
+            settings.allow_deny_pattern,
+            settings.ops_separator,
+            settings.action_filter,
         )
         bind_rules_data = FlextLdifUtilitiesACL.extract_bind_rules(
             aci_content,
-            config.bind_patterns,
+            settings.bind_patterns,
         )
         subject_type_map = {"userdn": "user", "groupdn": "group", "roledn": "role"}
         subject_type, subject_value = FlextLdifUtilitiesACL.build_aci_subject(
             bind_rules_data,
             subject_type_map,
-            config.special_subjects,
+            settings.special_subjects,
         )
         permissions_dict_raw = FlextLdifUtilitiesACL.build_permissions_dict(
             permissions_list,
-            config.permission_map,
+            settings.permission_map,
         )
         permissions_dict: t.MutableBoolMapping = {
             k: bool(v) for k, v in dict(permissions_dict_raw).items()
@@ -152,15 +152,15 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _extract_target_info(
         aci_content: str,
-        config: FlextLdifModelsSettings.AciParserConfig,
+        settings: FlextLdifModelsSettings.AciParserConfig,
     ) -> tuple[MutableSequence[str], str]:
         """Extract target attributes and DN from ACI content."""
         targetattr_extracted = FlextLdifUtilitiesACL.extract_component(
             aci_content,
-            config.targetattr_pattern,
+            settings.targetattr_pattern,
             group=2,
         )
-        targetattr: str = targetattr_extracted or config.default_targetattr
+        targetattr: str = targetattr_extracted or settings.default_targetattr
         target_attributes, target_dn = FlextLdifUtilitiesACL.parse_targetattr(
             targetattr,
         )
@@ -271,21 +271,21 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def build_metadata_extensions(
-        config: FlextLdifModelsSettings.AclMetadataConfig,
+        settings: FlextLdifModelsSettings.AclMetadataConfig,
     ) -> t.MutableContainerMapping:
         """Build QuirkMetadata extensions for ACL."""
         normalized_line_breaks: MutableSequence[t.Scalar] | None = None
-        if config.line_breaks is not None:
-            normalized_line_breaks = [int(value) for value in config.line_breaks]
+        if settings.line_breaks is not None:
+            normalized_line_breaks = [int(value) for value in settings.line_breaks]
         normalized_targetscope: MutableSequence[t.Scalar] | None = None
-        if config.targetscope is not None:
-            normalized_targetscope = [int(value) for value in config.targetscope]
+        if settings.targetscope is not None:
+            normalized_targetscope = [int(value) for value in settings.targetscope]
         extension_items: MutableSequence[tuple[str, t.NormalizedValue | None]] = [
             ("line_breaks", normalized_line_breaks),
-            ("dn_spaces", config.dn_spaces),
+            ("dn_spaces", settings.dn_spaces),
             ("targetscope", normalized_targetscope),
-            ("version", config.version),
-            ("action_type", config.action_type),
+            ("version", settings.version),
+            ("action_type", settings.action_type),
         ]
         result: t.MutableContainerMapping = {
             key: value
@@ -365,7 +365,7 @@ class FlextLdifUtilitiesACL:
             return []
 
         def process_rule_config(rule_item: tuple[str, str, str | None]) -> str | None:
-            """Process single rule config item."""
+            """Process single rule settings item."""
             ext_key, format_template, operator_default = rule_item
             value_raw: t.NormalizedValue = (
                 extensions.get(ext_key) if extensions else None
@@ -393,7 +393,7 @@ class FlextLdifUtilitiesACL:
             return format_template.format(value=str(value_raw))
 
         def rule_predicate(item: tuple[str, str, str | None]) -> bool:
-            """Filter rule config items based on extensions."""
+            """Filter rule settings items based on extensions."""
             return bool(extensions.get(item[0]) if extensions else None)
 
         result: MutableSequence[str] = []
@@ -494,7 +494,7 @@ class FlextLdifUtilitiesACL:
             return []
 
         def process_target_config(target_item: tuple[str, str]) -> str | None:
-            """Process single target config item."""
+            """Process single target settings item."""
             ext_key, format_template = target_item
             value_raw: t.NormalizedValue = (
                 extensions.get(ext_key) if extensions else None
@@ -537,27 +537,27 @@ class FlextLdifUtilitiesACL:
         return [p.lower() for p in permissions if p.lower() in supported_lower]
 
     @staticmethod
-    def format_aci_line(config: FlextLdifModelsSettings.AciLineFormatConfig) -> str:
+    def format_aci_line(settings: FlextLdifModelsSettings.AciLineFormatConfig) -> str:
         r"""Format complete ACI line from components.
 
         Args:
-            config: AciLineFormatConfig with all formatting parameters
+            settings: AciLineFormatConfig with all formatting parameters
 
         Returns:
             Formatted ACI line string
 
         Example:
-            config = FlextLdifModelsSettings.AciLineFormatConfig(
+            settings = FlextLdifModelsSettings.AciLineFormatConfig(
                 name="test-acl",
                 target_clause="(targetattr=\\"cn\\")",
                 permissions_clause="allow (read,write)",
                 bind_rule="userdn=\\"ldap:///self\\"",
             )
-            aci_line = FlextLdifUtilitiesACL.format_aci_line(config)
+            aci_line = FlextLdifUtilitiesACL.format_aci_line(settings)
 
         """
-        sanitized_name, _ = FlextLdifUtilitiesACL.sanitize_acl_name(config.name)
-        return f'{config.aci_prefix}{config.target_clause}(version {config.version}; acl "{sanitized_name}"; {config.permissions_clause} {config.bind_rule};)'
+        sanitized_name, _ = FlextLdifUtilitiesACL.sanitize_acl_name(settings.name)
+        return f'{settings.aci_prefix}{settings.target_clause}(version {settings.version}; acl "{sanitized_name}"; {settings.permissions_clause} {settings.bind_rule};)'
 
     @staticmethod
     def format_aci_subject(
@@ -697,32 +697,32 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def parse_aci(
         acl_line: str,
-        config: FlextLdifModelsSettings.AciParserConfig,
+        settings: FlextLdifModelsSettings.AciParserConfig,
     ) -> r[m.Ldif.Acl]:
-        """Parse ACI line using server-specific config Model."""
+        """Parse ACI line using server-specific settings Model."""
         valid, aci_content = FlextLdifUtilitiesACL.validate_aci_format(
             acl_line,
-            config.aci_prefix,
+            settings.aci_prefix,
         )
         if not valid:
-            return r[m.Ldif.Acl].fail(f"Not a valid ACI format: {config.aci_prefix}")
+            return r[m.Ldif.Acl].fail(f"Not a valid ACI format: {settings.aci_prefix}")
         version, acl_name = FlextLdifUtilitiesACL._extract_version_and_name(
             aci_content,
-            config.version_acl_pattern,
-            config.default_name,
+            settings.version_acl_pattern,
+            settings.default_name,
         )
         target_attributes, target_dn = FlextLdifUtilitiesACL._extract_target_info(
             aci_content,
-            config,
+            settings,
         )
         subject_type, subject_value, permissions_dict = (
-            FlextLdifUtilitiesACL._build_subject_and_permissions(aci_content, config)
+            FlextLdifUtilitiesACL._build_subject_and_permissions(aci_content, settings)
         )
         extensions = FlextLdifUtilitiesACL._build_extensions(
             aci_content,
             version,
             acl_line,
-            config.extra_patterns,
+            settings.extra_patterns,
         )
         acl_model = m.Ldif.Acl(
             name=acl_name,
@@ -737,10 +737,10 @@ class FlextLdifUtilitiesACL:
                 subject_value=subject_value,
             ),
             permissions=m.Ldif.AclPermissions(**permissions_dict),
-            server_type=c.Ldif.ServerTypes(config.server_type),
+            server_type=c.Ldif.ServerTypes(settings.server_type),
             raw_acl=acl_line,
             metadata=m.Ldif.QuirkMetadata.create_for(
-                config.server_type,
+                settings.server_type,
                 extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(extensions)
                 if extensions
                 else None,

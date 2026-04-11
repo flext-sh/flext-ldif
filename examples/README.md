@@ -304,7 +304,7 @@ Looking for specific features? Use this quick reference:
 ### Namespace Access (Example 08)
 
 - `api.models` - Domain models
-- `api.config` - Configuration
+- `api.settings` - Configuration
 - `api.constants` - Constants
 - `api.types` - Type definitions
 - `api.protocols` - Protocol definitions

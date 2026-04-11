@@ -231,12 +231,12 @@ def test_large_file_processing_performance():
 @pytest.fixture
 def flext_ldif_api():
     """Configured ldif instance for testing."""
-    config = FlextLdifSettings(
+    settings = FlextLdifSettings(
         max_entries=1000,
         strict_validation=True,
         enable_observability=False,  # Disable for testing
     )
-    return ldif(config)
+    return ldif(settings)
 
 
 @pytest.fixture
@@ -404,7 +404,7 @@ pytest -m "not slow" --ff        # Fast tests first, skip slow tests
 
 # Comprehensive validation
 pytest --strict-markers           # Enforce marker usage
-pytest --strict-config            # Enforce configuration compliance
+pytest --strict-settings            # Enforce configuration compliance
 
 # Debug test failures
 pytest --pdb                      # Drop into debugger on failure

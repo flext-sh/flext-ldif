@@ -34,7 +34,7 @@ class FlextLdifProcessingPipelineService:
                 dn_config=None,
                 attr_config=None,
             )
-            config = m.Ldif.TransformConfig(
+            settings = m.Ldif.TransformConfig(
                 fail_fast=False,
                 preserve_order=True,
                 track_changes=False,
@@ -42,7 +42,7 @@ class FlextLdifProcessingPipelineService:
                 normalize_attrs=False,
                 process_config=process_config,
             )
-            pipeline = FlextLdifProcessingPipeline(config)
+            pipeline = FlextLdifProcessingPipeline(settings)
             self._processing_pipeline = pipeline
         return pipeline
 

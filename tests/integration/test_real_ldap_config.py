@@ -46,7 +46,7 @@ class TestRealLdapConfigurationFromEnv:
         assert root_config.max_workers >= 1
 
     def test_effective_workers_calculation(self, flext_api: FlextLdif) -> None:
-        """Test dynamic worker calculation based on config and entry count."""
+        """Test dynamic worker calculation based on settings and entry count."""
         root_config = FlextSettings.fetch_global()
         assert root_config.max_workers >= 1
         assert root_config.max_workers > 0

@@ -651,13 +651,13 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def matches_criteria(
         entry: p.Ldif.Entry,
-        config: FlextLdifModelsSettings.EntryCriteriaConfig | None = None,
+        settings: FlextLdifModelsSettings.EntryCriteriaConfig | None = None,
         **kwargs: str | float | bool | None,
     ) -> bool:
         """Check multiple entry criteria in one call."""
         resolved_config = (
-            config
-            if config is not None
+            settings
+            if settings is not None
             else FlextLdifModelsSettings.EntryCriteriaConfig.model_validate(kwargs)
         )
         checks: MutableSequence[bool] = []
@@ -726,7 +726,7 @@ class FlextLdifUtilitiesEntry:
     def matches_entry_server_patterns(
         entry_dn: str,
         attributes: t.StrSequenceMapping,
-        config: FlextLdifModelsSettings.ServerPatternsConfig,
+        settings: FlextLdifModelsSettings.ServerPatternsConfig,
     ) -> bool:
         """Check if entry matches server-specific patterns."""
         if not entry_dn or not attributes:
@@ -737,22 +737,24 @@ class FlextLdifUtilitiesEntry:
             else attributes
         )
         attr_names_lower = {k.lower() for k in attrs}
-        if config.dn_patterns and any(
+        if settings.dn_patterns and any(
             all(pattern in entry_dn for pattern in pattern_set)
-            for pattern_set in config.dn_patterns
+            for pattern_set in settings.dn_patterns
         ):
             return True
-        if config.attr_prefixes and any(
-            attr.startswith(prefix) for attr in attrs for prefix in config.attr_prefixes
+        if settings.attr_prefixes and any(
+            attr.startswith(prefix)
+            for attr in attrs
+            for prefix in settings.attr_prefixes
         ):
             return True
-        if config.attr_names and attr_names_lower & set(config.attr_names):
+        if settings.attr_names and attr_names_lower & set(settings.attr_names):
             return True
-        if config.keyword_patterns:
+        if settings.keyword_patterns:
             return any(
                 keyword in attr
                 for attr in attr_names_lower
-                for keyword in config.keyword_patterns
+                for keyword in settings.keyword_patterns
             )
         return False
 

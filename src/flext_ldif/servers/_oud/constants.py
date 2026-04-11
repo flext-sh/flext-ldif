@@ -248,14 +248,14 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "groups",
         "rejected",
     ]
-    DN_PREFIX_CN_CONFIG: ClassVar[str] = "cn=config"
+    DN_PREFIX_CN_CONFIG: ClassVar[str] = "cn=settings"
     DN_PREFIX_CN_SCHEMA: ClassVar[str] = "cn=schema"
     DN_PREFIX_CN_DIRECTORY: ClassVar[str] = "cn=directory"
     DN_PREFIX_CN_DS: ClassVar[str] = "cn=ds"
     DN_DETECTION_PATTERNS: ClassVar[tuple[tuple[str, ...], ...]] = (
-        ("cn=config", "cn=schema"),
-        ("cn=config", "cn=directory"),
-        ("cn=config", "cn=ds"),
+        ("cn=settings", "cn=schema"),
+        ("cn=settings", "cn=directory"),
+        ("cn=settings", "cn=ds"),
     )
     KEYWORD_PATTERNS: ClassVar[tuple[str, ...]] = ("pwd", "password")
     DETECTION_PATTERN: ClassVar[str] = "(?i)(ds-sync-|ds-pwp-|ds-cfg-|root dns)"
@@ -279,11 +279,11 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
         "ds-root-dse",
         "ds-root-dn-user",
-        "ds-unbound-id-config",
+        "ds-unbound-id-settings",
         "ds-cfg-backend",
     ])
     DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
-        "cn=config",
+        "cn=settings",
         "cn=tasks",
         "cn=monitor",
     ])

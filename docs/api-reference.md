@@ -85,7 +85,7 @@ Main unified interface for all LDIF processing operations.
 class ldif:
     """Unified LDIF Processing API."""
 
-    def __init__(self, config: FlextLdifModels.Config | None = None) -> None:
+    def __init__(self, settings: FlextLdifModels.Config | None = None) -> None:
         """Initialize LDIF API with optional configuration."""
 ```
 
@@ -559,7 +559,7 @@ class Config(BaseModel):
 
 ```python
 # Create custom configuration
-config = FlextLdifModels.Config(
+settings = FlextLdifModels.Config(
     max_entries=50000,
     strict_validation=True,
     ignore_unknown_attributes=False,
@@ -567,7 +567,7 @@ config = FlextLdifModels.Config(
 )
 
 # Use configuration with API
-api = ldif(config=config)
+api = ldif(settings=settings)
 ```
 
 ### FlextLdifModels.Factory
@@ -632,8 +632,8 @@ initialize_ldif_config({
 })
 
 # Access global configuration
-config = get_ldif_config()
-print(f"Max entries: {config.max_entries}")
+settings = get_ldif_config()
+print(f"Max entries: {settings.max_entries}")
 ```
 
 ### Instance Configuration
@@ -646,7 +646,7 @@ instance_config = FlextLdifModels.Config(
 )
 
 # Use with API instance
-api = ldif(config=instance_config)
+api = ldif(settings=instance_config)
 ```
 
 ## Error Handling
@@ -1132,7 +1132,7 @@ logger = u.fetch_logger(__name__)
 # Log processing operations
 logger.info(
     "Starting LDIF processing",
-    extra={"file_path": str(input_file), "config": config.model_dump()},
+    extra={"file_path": str(input_file), "settings": settings.model_dump()},
 )
 
 # Log processing results

@@ -253,7 +253,7 @@ class TestInvalidSchemaDefinitions:
         - Parsing continues gracefully
         - Other schema entries still processed
         """
-        ldif_content = "dn: cn=Schema,cn=config\nobjectClass: schema\nattributeTypes: ( invalid-oid NAME 'test' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )\n"
+        ldif_content = "dn: cn=Schema,cn=settings\nobjectClass: schema\nattributeTypes: ( invalid-oid NAME 'test' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )\n"
         result = api.parse_ldif(ldif_content)
         assert result is not None
 
@@ -265,7 +265,7 @@ class TestInvalidSchemaDefinitions:
         - Missing NAME detected
         - Graceful error handling
         """
-        ldif_content = "dn: cn=Schema,cn=config\nobjectClass: schema\nattributeTypes: ( NAME 'incomplete' )\n"
+        ldif_content = "dn: cn=Schema,cn=settings\nobjectClass: schema\nattributeTypes: ( NAME 'incomplete' )\n"
         result = api.parse_ldif(ldif_content)
         assert result is not None
 
@@ -277,7 +277,7 @@ class TestInvalidSchemaDefinitions:
         - Following definitions still parsed
         - No parser crash
         """
-        ldif_content = "dn: cn=Schema,cn=config\nobjectClass: schema\nattributeTypes: ( 1.2.3 NAME 'incomplete'\n"
+        ldif_content = "dn: cn=Schema,cn=settings\nobjectClass: schema\nattributeTypes: ( 1.2.3 NAME 'incomplete'\n"
         result = api.parse_ldif(ldif_content)
         assert result is not None
 

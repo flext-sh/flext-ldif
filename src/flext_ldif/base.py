@@ -16,7 +16,7 @@ class FlextLdifServiceBase[
     s[TDomainResult],
     ABC,
 ):
-    """Base class for LDIF services with typed config helper."""
+    """Base class for LDIF services with typed settings helper."""
 
     @property
     def ldif_config(self) -> FlextLdifSettings:
@@ -27,7 +27,7 @@ class FlextLdifServiceBase[
     @override
     def _runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDIF services."""
-        return m.RuntimeBootstrapOptions(config_type=FlextLdifSettings)
+        return m.RuntimeBootstrapOptions(settings_type=FlextLdifSettings)
 
 
 s = FlextLdifServiceBase

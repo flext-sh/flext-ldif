@@ -248,12 +248,12 @@ class FlextLdifModelsSettings:
         Reduces function signature from 7 parameters to 1 model.
 
         Example:
-            config = FlextLdifModelsSettings.EntryCriteriaConfig(
+            settings = FlextLdifModelsSettings.EntryCriteriaConfig(
                 objectclasses=["inetOrgPerson", "person"],
                 objectclass_mode="any",
                 required_attrs=["cn", "sn"],
             )
-            matches = FlextLdifUtilities.Entry.matches_criteria(entry, config)
+            matches = FlextLdifUtilities.Entry.matches_criteria(entry, settings)
 
         """
 
@@ -293,13 +293,13 @@ class FlextLdifModelsSettings:
         Reduces function signature from 7 parameters to 1 model.
 
         Example:
-            config = FlextLdifModelsSettings.EntryParseMetadataConfig(
+            settings = FlextLdifModelsSettings.EntryParseMetadataConfig(
                 quirk_type="oid",
                 original_entry_dn="cn=test,dc=example",
                 cleaned_dn="cn=test,dc=example",
                 original_dn_line="dn: cn=test,dc=example",
             )
-            metadata = FlextLdifUtilities.Metadata.build_entry_parse_metadata(config)
+            metadata = FlextLdifUtilities.Metadata.build_entry_parse_metadata(settings)
 
         """
 
@@ -526,7 +526,7 @@ class FlextLdifModelsSettings:
         migration_config: Annotated[
             t.MutableScalarMapping | None,
             Field(
-                description="Structured migration config with 6-file output and tracking",
+                description="Structured migration settings with 6-file output and tracking",
             ),
         ] = None
         categorization_rules: FlextLdifModelsSettings.CategoryRules | None = Field(
@@ -602,17 +602,17 @@ class FlextLdifModelsSettings:
                 # NEW (correct):
                 from flext_ldif import FlextLdifSettings
 
-                config = FlextSettings.get_global().get_namespace(
+                settings = FlextSettings.get_global().get_namespace(
                     "ldif", FlextLdifSettings
                 )
-                # Override if needed: config.ldif_write_fold_long_lines = True
-                result = ldif.write(entries)  # Uses config.ldif_write_* fields
+                # Override if needed: settings.ldif_write_fold_long_lines = True
+                result = ldif.write(entries)  # Uses settings.ldif_write_* fields
 
         **Mapping Table**:
-            - line_width → config.ldif_max_line_length
-            - fold_long_lines → config.ldif_write_fold_long_lines
-            - respect_attribute_order → config.ldif_write_respect_attribute_order
-            - sort_attributes → config.ldif_write_sort_attributes
+            - line_width → settings.ldif_max_line_length
+            - fold_long_lines → settings.ldif_write_fold_long_lines
+            - respect_attribute_order → settings.ldif_write_respect_attribute_order
+            - sort_attributes → settings.ldif_write_sort_attributes
             - (see FlextLdifSettings for complete list of ldif_write_* fields)
 
         Provides detailed control over the output format, including line width

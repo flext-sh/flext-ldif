@@ -88,7 +88,7 @@ FLEXT-LDIF is built on a **generic RFC-compliant foundation** with a powerful **
 src/flext_ldif/
 ├── api.py                      # ldif facade (main entry point)
 ├── models.py                   # FlextLdifModels (Pydantic v2)
-├── config.py                   # FlextLdifSettings
+├── settings.py                   # FlextLdifSettings
 ├── constants.py                # FlextLdifConstants
 ├── typings.py                  # Type definitions
 ├── protocols.py                # Protocol definitions
@@ -158,7 +158,7 @@ src/flext_ldif/
 **Three Detection Modes**:
 
 - **auto** (default): Automatic detection from LDIF content
-- **manual**: Uses specified `quirks_server_type` from config, skips auto-detection
+- **manual**: Uses specified `quirks_server_type` from settings, skips auto-detection
 - **disabled**: Uses only RFC 2849/4512, no server-specific quirks
 
 ______________________________________________________________________
@@ -364,7 +364,7 @@ entry = m.Ldif.Entry(...)  # ✅ CORRETO
 # Access configuration
 from flext_ldif import FlextLdifSettings
 
-config = FlextLdifSettings()
+settings = FlextLdifSettings()
 
 # Access constants (ALWAYS use namespace completo)
 from flext_core import c

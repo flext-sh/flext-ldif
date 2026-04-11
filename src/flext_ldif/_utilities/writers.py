@@ -27,13 +27,13 @@ class FlextLdifUtilitiesWriters:
     @staticmethod
     def write_entry(
         *,
-        config: m.Ldif.EntryWriteConfig | None = None,
+        settings: m.Ldif.EntryWriteConfig | None = None,
         **kwargs: t.Scalar,
     ) -> r[str]:
         """Write entry to LDIF string using hooks."""
         resolved_config = (
-            config
-            if config is not None
+            settings
+            if settings is not None
             else m.Ldif.EntryWriteConfig.model_validate(kwargs)
         )
         try:
@@ -78,18 +78,18 @@ class FlextLdifUtilitiesWriters:
     @staticmethod
     def write_entry_parts(
         entry: p.Ldif.Entry,
-        config: m.Ldif.EntryWriteConfig,
+        settings: m.Ldif.EntryWriteConfig,
         lines: MutableSequence[str],
     ) -> None:
         """Write entry parts (comments, DN, attributes)."""
-        if config.include_comments and config.write_comments_hook:
-            config.write_comments_hook(entry, lines)
+        if settings.include_comments and settings.write_comments_hook:
+            settings.write_comments_hook(entry, lines)
         dn_str = FlextLdifUtilitiesWriters.get_entry_dn_string(entry)
-        if config.write_dn_hook:
-            config.write_dn_hook(dn_str, lines)
+        if settings.write_dn_hook:
+            settings.write_dn_hook(dn_str, lines)
         else:
             lines.append(f"dn: {dn_str}")
-        config.write_attributes_hook(entry, lines)
+        settings.write_attributes_hook(entry, lines)
 
     @staticmethod
     def write_attribute_definition(
@@ -177,13 +177,13 @@ class FlextLdifUtilitiesWriters:
     @staticmethod
     def write_content(
         *,
-        config: m.Ldif.BatchWriteConfig | None = None,
+        settings: m.Ldif.BatchWriteConfig | None = None,
         **kwargs: t.Scalar,
     ) -> r[str]:
         """Write multiple entries to LDIF string."""
         resolved_config = (
-            config
-            if config is not None
+            settings
+            if settings is not None
             else m.Ldif.BatchWriteConfig.model_validate(kwargs)
         )
         try:

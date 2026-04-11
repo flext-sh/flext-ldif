@@ -13,22 +13,22 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def _build_conversion_event_logging(
         event: FlextLdifModelsEvents.ConversionEvent,
-        config: FlextLdifModelsEvents.ConversionEventConfig,
+        settings: FlextLdifModelsEvents.ConversionEventConfig,
     ) -> tuple[t.MutableScalarMapping, str]:
         return (
             {
                 "aggregate_id": event.aggregate_id,
-                "conversion_operation": config.conversion_operation,
-                "source_format": config.source_format,
-                "target_format": config.target_format,
-                "items_processed": config.items_processed,
-                "items_converted": config.items_converted,
-                "items_failed": config.items_failed,
-                "conversion_duration_ms": config.conversion_duration_ms,
+                "conversion_operation": settings.conversion_operation,
+                "source_format": settings.source_format,
+                "target_format": settings.target_format,
+                "items_processed": settings.items_processed,
+                "items_converted": settings.items_converted,
+                "items_failed": settings.items_failed,
+                "conversion_duration_ms": settings.conversion_duration_ms,
                 "success_rate_pct": event.conversion_success_rate,
                 "throughput_items_per_sec": event.throughput_items_per_sec,
             },
-            f"Conversion '{config.conversion_operation}' from {config.source_format} to {config.target_format} completed",
+            f"Conversion '{settings.conversion_operation}' from {settings.source_format} to {settings.target_format} completed",
         )
 
     @staticmethod
@@ -84,51 +84,53 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def create_conversion_event(
-        config: FlextLdifModelsEvents.ConversionEventConfig,
+        settings: FlextLdifModelsEvents.ConversionEventConfig,
     ) -> FlextLdifModelsEvents.ConversionEvent:
-        """Create ConversionEvent with standardized fields from config Model."""
-        aggregate_id = f"{config.source_format}_to_{config.target_format}_{config.conversion_operation}"
+        """Create ConversionEvent with standardized fields from settings Model."""
+        aggregate_id = f"{settings.source_format}_to_{settings.target_format}_{settings.conversion_operation}"
         error_details_list = FlextLdifUtilitiesEvents._to_error_details_list(
-            list(config.error_details) if config.error_details is not None else None,
+            list(settings.error_details)
+            if settings.error_details is not None
+            else None,
         )
         return FlextLdifModelsEvents.ConversionEvent.model_validate({
             "event_type": "ldif.conversion",
             "aggregate_id": aggregate_id,
-            "conversion_operation": config.conversion_operation,
-            "source_format": config.source_format,
-            "target_format": config.target_format,
-            "items_converted": config.items_converted,
-            "items_failed": config.items_failed,
-            "conversion_duration_ms": config.conversion_duration_ms,
+            "conversion_operation": settings.conversion_operation,
+            "source_format": settings.source_format,
+            "target_format": settings.target_format,
+            "items_converted": settings.items_converted,
+            "items_failed": settings.items_failed,
+            "conversion_duration_ms": settings.conversion_duration_ms,
             "error_details": error_details_list,
         })
 
     @staticmethod
     def create_dn_event(
-        config: FlextLdifModelsEvents.DnEventConfig,
+        settings: FlextLdifModelsEvents.DnEventConfig,
     ) -> FlextLdifModelsEvents.DnEvent:
-        """Create DnEvent with standardized fields from config Model."""
+        """Create DnEvent with standardized fields from settings Model."""
         return FlextLdifModelsEvents.DnEvent.model_validate({
             "event_type": "ldif.dn",
-            "aggregate_id": config.input_dn,
-            "dn_operation": config.dn_operation,
-            "input_dn": config.input_dn,
-            "output_dn": config.output_dn,
-            "dn_duration_ms": config.operation_duration_ms,
-            "validation_result": config.validation_result,
+            "aggregate_id": settings.input_dn,
+            "dn_operation": settings.dn_operation,
+            "input_dn": settings.input_dn,
+            "output_dn": settings.output_dn,
+            "dn_duration_ms": settings.operation_duration_ms,
+            "validation_result": settings.validation_result,
         })
 
     @staticmethod
     def log_and_emit_conversion_event(
         logger: p.Logger,
-        config: FlextLdifModelsEvents.ConversionEventConfig,
+        settings: FlextLdifModelsEvents.ConversionEventConfig,
         log_level: str = "info",
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
     ) -> FlextLdifModelsEvents.ConversionEvent:
         """Create ConversionEvent, log with context, and attach to logger context."""
-        event = FlextLdifUtilitiesEvents.create_conversion_event(config)
+        event = FlextLdifUtilitiesEvents.create_conversion_event(settings)
         log_context, log_message = (
-            FlextLdifUtilitiesEvents._build_conversion_event_logging(event, config)
+            FlextLdifUtilitiesEvents._build_conversion_event_logging(event, settings)
         )
         FlextLdifUtilitiesEvents._log_and_emit_generic_event(
             logger,
@@ -142,24 +144,24 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def log_and_emit_dn_event(
         logger: p.Logger,
-        config: FlextLdifModelsEvents.DnEventConfig,
+        settings: FlextLdifModelsEvents.DnEventConfig,
         log_level: str = "info",
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
     ) -> FlextLdifModelsEvents.DnEvent:
         """Create DnEvent, log with context, and attach to logger context."""
-        event = FlextLdifUtilitiesEvents.create_dn_event(config)
+        event = FlextLdifUtilitiesEvents.create_dn_event(settings)
         aggregate_id = event.aggregate_id or ""
         log_context: t.MutableScalarMapping = {
             "aggregate_id": aggregate_id,
-            "dn_operation": config.dn_operation,
-            "input_dn": config.input_dn,
-            "operation_duration_ms": config.operation_duration_ms,
+            "dn_operation": settings.dn_operation,
+            "input_dn": settings.input_dn,
+            "operation_duration_ms": settings.operation_duration_ms,
             "has_output": event.has_output,
             "component_count": event.component_count,
         }
-        if config.output_dn is not None:
-            log_context["output_dn"] = config.output_dn
-        log_message = f"DN operation '{config.dn_operation}' completed"
+        if settings.output_dn is not None:
+            log_context["output_dn"] = settings.output_dn
+        log_message = f"DN operation '{settings.dn_operation}' completed"
         FlextLdifUtilitiesEvents._log_and_emit_generic_event(
             logger=logger,
             log_context=log_context,

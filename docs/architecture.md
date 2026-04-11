@@ -38,8 +38,8 @@ to show how the library processes LDIF while adapting to different LDAP servers.
 ```
 src/flext_ldif/
 ├── api.py                # Public facade that wires and exposes services
-├── base.py               # Shared service base with LDIF-specific config helper
-├── config.py             # Configuration namespace for LDIF options
+├── base.py               # Shared service base with LDIF-specific settings helper
+├── settings.py             # Configuration namespace for LDIF options
 ├── constants.py          # Enumerations and literal helpers
 ├── models.py             # Public aggregation of domain, processing, and result models
 ├── protocols.py          # Protocol contracts for services and quirks
@@ -49,7 +49,7 @@ src/flext_ldif/
 └── utilities.py          # Cross-cutting helpers for DN, ACL, detection, validation
 ```
 
-Supporting modules live under `_models/` (domain/config/processing/results) and
+Supporting modules live under `_models/` (domain/settings/processing/results) and
 `_utilities/` (helpers split by concern). Type hints ship with `py.typed`.
 
 ## Core Components

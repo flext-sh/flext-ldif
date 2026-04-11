@@ -1051,7 +1051,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                     ENTRY_TEST_CASES = (
                         m.Ldif.Tests.EntryTestCase(
                             scenario="ou_config",
-                            entry_dn="ou=config,dc=example,dc=com",
+                            entry_dn="ou=settings,dc=example,dc=com",
                             attributes={"objectClass": ["organizationalUnit"]},
                             expected_can_handle=True,
                         ),
@@ -1164,7 +1164,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                     ENTRY_TEST_CASES = (
                         m.Ldif.Tests.EntryTestCase(
                             scenario="cn_config",
-                            entry_dn="cn=config",
+                            entry_dn="cn=settings",
                             attributes={c.Ldif.DictKeys.OBJECTCLASS: ["nscontainer"]},
                             expected_can_handle=True,
                         ),

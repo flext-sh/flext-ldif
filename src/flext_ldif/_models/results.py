@@ -326,7 +326,7 @@ class FlextLdifModelsResults:
             MutableSequence[str],
             Field(description="Available service names"),
         ]
-        config: Annotated[
+        settings: Annotated[
             FlextLdifModelsCollections.ConfigSettings,
             Field(description="Active client configuration settings"),
         ]

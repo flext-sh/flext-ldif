@@ -259,7 +259,7 @@ class TestCategorizationRealData:
                 ),
             ),
             m.Ldif.Entry(
-                dn=m.Ldif.DN(value="cn=config"),
+                dn=m.Ldif.DN(value="cn=settings"),
                 attributes=m.Ldif.Attributes(
                     attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
                     attribute_metadata={},
@@ -324,8 +324,8 @@ class TestCategorizationRealData:
         without_basedn_dns = [
             e.dn.value for e in acls_without_basedn if e.dn is not None
         ]
-        assert "cn=config" in without_basedn_dns, (
-            "cn=config should be in acls_without_basedn"
+        assert "cn=settings" in without_basedn_dns, (
+            "cn=settings should be in acls_without_basedn"
         )
         assert "dc=example2" in without_basedn_dns, (
             "dc=example2 should be in acls_without_basedn (not matching base DN)"
