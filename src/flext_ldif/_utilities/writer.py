@@ -7,8 +7,8 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 
 from pydantic import BaseModel
 
-from flext_core import r
-from flext_ldif import c, m, t, u
+from flext_core import r, u
+from flext_ldif import c, m, t
 
 logger = u.fetch_logger(__name__)
 

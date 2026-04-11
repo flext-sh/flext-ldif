@@ -13,7 +13,6 @@ from typing import ClassVar, TextIO
 from flext_ldap import u
 from flext_tests import FlextTestsUtilities, tk
 
-from flext_core import FlextLogger
 from tests import c, m, p, t
 
 
@@ -30,7 +29,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             LdapConnectionLike = p.Ldap.Ldap3Connection
             LdapEntryLike = p.Ldap.Ldap3Entry
 
-            _logger: ClassVar[FlextLogger] = u.fetch_logger(__name__)
+            _logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
             _resolved_admin_credentials: ClassVar[list[tuple[str, str] | None]] = [
                 None,
             ]

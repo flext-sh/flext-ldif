@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Final
 
 from flext_core import FlextContext
-from flext_ldif import FlextLdif, ldif, m, r
+from flext_ldif import FlextLdif, ldif, m, r, u
 
 logger: Final = u.fetch_logger(__name__)
 

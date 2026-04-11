@@ -5,8 +5,8 @@ from __future__ import annotations
 import struct
 from collections.abc import Callable, MutableMapping, MutableSequence
 
-from flext_core import r
-from flext_ldif import m, t
+from flext_core import u
+from flext_ldif import m, r, t
 
 logger = u.fetch_logger(__name__)
 

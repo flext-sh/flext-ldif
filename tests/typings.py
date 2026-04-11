@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Literal
 
-from flext_ldap import FlextLdapTypes, t
+from flext_ldap import FlextLdapTypes
 from flext_tests import FlextTestsTypes
 
 

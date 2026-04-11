@@ -21,7 +21,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import FlextLdif, FlextLdifSettings, ldif
-from tests import c
+from tests import c, u
 
 logger = u.fetch_logger(__name__)
 

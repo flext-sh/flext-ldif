@@ -9,12 +9,12 @@ from typing import TypeIs
 
 from pydantic import ValidationError
 
+from flext_core import u
 from flext_ldif import (
     FlextLdifModelsSettings,
     FlextLdifProtocols as p,
     c,
     t,
-    u,
 )
 
 

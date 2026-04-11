@@ -17,7 +17,6 @@ from typing import (
 
 from pydantic import BaseModel, Field
 
-from flext_core import FlextLogger
 from flext_ldif import (
     FlextLdifServer,
     FlextLdifServersBase,
@@ -72,7 +71,7 @@ class FlextLdifConversion(
         obj: t.NormalizedValue
         | FlextLdifServersBase
         | FlextLdifServersBaseSchema
-        | FlextLogger
+        | p.Logger
         | p.Ldif.SchemaQuirk
         | m.Ldif.SchemaAttributeConversionPipelineConfig
         | m.Ldif.SchemaObjectClassConversionPipelineConfig
