@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from typing import override
 
-from flext_core import FlextLogger, r
+from flext_core import r
 from flext_ldif import (
     FlextLdifServersBaseSchema,
     FlextLdifServersOudConstants,
@@ -18,7 +18,7 @@ from flext_ldif import (
     u,
 )
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):

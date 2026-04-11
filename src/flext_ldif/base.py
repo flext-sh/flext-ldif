@@ -21,7 +21,7 @@ class FlextLdifServiceBase[
     @property
     def ldif_config(self) -> FlextLdifSettings:
         """Return the LDIF configuration namespace with proper typing."""
-        return FlextSettings.get_global().get_namespace("ldif", FlextLdifSettings)
+        return FlextSettings.fetch_global().fetch_namespace("ldif", FlextLdifSettings)
 
     @classmethod
     @override

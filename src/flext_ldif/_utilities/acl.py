@@ -7,7 +7,7 @@ import struct
 from collections.abc import MutableMapping, MutableSequence
 from typing import TypeIs
 
-from flext_core import FlextLogger, r, u
+from flext_core import r, u
 from flext_ldif import (
     FlextLdifModelsMetadata,
     FlextLdifModelsSettings,
@@ -16,7 +16,7 @@ from flext_ldif import (
     t,
 )
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 class FlextLdifUtilitiesACL:

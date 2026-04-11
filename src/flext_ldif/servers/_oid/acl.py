@@ -9,7 +9,7 @@ from typing import ClassVar, Literal, override
 
 from pydantic import RootModel
 
-from flext_core import FlextLogger, r
+from flext_core import r
 from flext_ldif import (
     FlextLdifServersOidConstants,
     FlextLdifServersRfc,
@@ -19,7 +19,7 @@ from flext_ldif import (
     u,
 )
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 class _OidAclTargetAttributesJson(RootModel[MutableSequence[str]]):

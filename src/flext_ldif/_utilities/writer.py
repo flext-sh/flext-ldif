@@ -7,10 +7,10 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 
 from pydantic import BaseModel
 
-from flext_core import FlextLogger, r
-from flext_ldif import c, m, t
+from flext_core import r
+from flext_ldif import c, m, t, u
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 class FlextLdifUtilitiesWriter:

@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import override
 
-from flext_core import FlextLogger, r
+from flext_core import r
 from flext_ldif import FlextLdifServersBase, m, t, u
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):

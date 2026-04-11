@@ -6,7 +6,6 @@ from collections.abc import MutableSequence
 from pathlib import Path
 from typing import ClassVar, override
 
-from flext_core import FlextLogger
 from flext_ldif import (
     FlextLdifAnalysis,
     FlextLdifCategorization,
@@ -22,6 +21,7 @@ from flext_ldif import (
     r,
     s,
     t,
+    u,
 )
 
 
@@ -59,7 +59,7 @@ class FlextLdif(
             "_server",
             FlextLdifServer.get_global_instance(),
         )
-        _ = FlextLogger(__name__).info("FlextLdif facade initialized")
+        _ = u.fetch_logger(__name__).info("FlextLdif facade initialized")
 
     @classmethod
     def _clear_init_config_overrides(cls) -> None:
@@ -152,4 +152,6 @@ class FlextLdif(
         return cls._instance
 
 
-__all__ = ["FlextLdif"]
+ldif = FlextLdif
+
+__all__ = ["FlextLdif", "ldif"]

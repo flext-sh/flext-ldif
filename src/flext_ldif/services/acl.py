@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import override
 
-from flext_core import FlextLogger
 from flext_ldif import (
     FlextLdifServer,
     m,
@@ -143,7 +142,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
                 acls.append(parse_result.value)
                 continue
             failed_count += 1
-            logger = FlextLogger(__name__)
+            logger = u.fetch_logger(__name__)
             logger.warning(
                 "Failed to parse ACL value",
                 error=str(parse_result.error) if parse_result.error else "",

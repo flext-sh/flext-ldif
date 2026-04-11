@@ -23,7 +23,7 @@ class FlextLdifModelsMetadata:
     class DynamicMetadata(m.DynamicModel):
         """Model with extra='allow' for dynamic field storage."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra=c.EXTRA_ALLOW)
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra=c.ExtraConfig.ALLOW.value)
 
         transformations: MutableSequence[t.Scalar] | None = Field(
             default=None, description="List of transformations applied to this metadata"
@@ -133,7 +133,7 @@ class FlextLdifModelsMetadata:
     class EntryMetadata(m.FrozenDynamicModel):
         """Entry metadata for tracking processing details."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra=c.EXTRA_ALLOW)
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra=c.ExtraConfig.ALLOW.value)
 
         def __getitem__(self, key: str) -> t.Ldif.MetadataValue:
             return self._extra()[key]

@@ -5,10 +5,10 @@ from __future__ import annotations
 import struct
 from collections.abc import Callable, MutableSequence
 
-from flext_core import FlextLogger, r
+from flext_core import r
 from flext_ldif import m, p, t
 
-logger = FlextLogger.create_module_logger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 class FlextLdifUtilitiesWriters:

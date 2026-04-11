@@ -132,7 +132,7 @@ class FLEXTOUDMigrationService:
     """FLEXT Oracle Unified Directory LDIF processing."""
 
     def __init__(self) -> None:
-        self.logger = FlextLogger(__name__)
+        self.logger = u.fetch_logger(__name__)
 
         # Configure for enterprise migration with legacy data accommodation
         migration_config = FlextLdifModels.Config(

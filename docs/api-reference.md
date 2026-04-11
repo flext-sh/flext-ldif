@@ -1127,7 +1127,7 @@ from flext_core import t
 from flext_core import u
 
 # Structured logging in LDIF operations
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 # Log processing operations
 logger.info(

@@ -8,16 +8,17 @@ from typing import Annotated, ClassVar, Self, override
 
 from pydantic import Field, ValidationError
 
-from flext_core import FlextLogger, r, s
+from flext_core import r, s
 from flext_ldif import (
     FlextLdifQuirkMethodsMixin,
     FlextLdifUtilitiesACL,
     m,
     p,
     t,
+    u,
 )
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServersBaseSchemaAcl(

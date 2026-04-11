@@ -8,7 +8,7 @@ from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, 
 from datetime import datetime
 from typing import TypeIs
 
-from flext_core import FlextLogger, r, u
+from flext_core import r, u
 from flext_ldif import (
     FlextLdifModelsBases,
     FlextLdifUtilitiesOID,
@@ -21,7 +21,7 @@ from flext_ldif import (
     t,
 )
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 class FlextLdifUtilitiesSchema:

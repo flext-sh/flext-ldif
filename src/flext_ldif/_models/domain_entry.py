@@ -356,7 +356,7 @@ class FlextLdifModelsDomainEntry:
             strict=True,
             validate_default=True,
             validate_assignment=True,
-            extra=c.EXTRA_ALLOW,
+            extra=c.ExtraConfig.ALLOW.value,
         )
         dn: FlextLdifModelsDomainDN.DN | None = Field(
             ...,

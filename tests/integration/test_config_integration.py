@@ -20,11 +20,10 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextLogger
 from flext_ldif import FlextLdif, FlextLdifSettings, ldif
 from tests import c
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 class TestFlextLdifSettingsIntegration:

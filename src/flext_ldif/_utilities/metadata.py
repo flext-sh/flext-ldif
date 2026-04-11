@@ -8,7 +8,7 @@ from typing import TypeIs
 
 from pydantic import BaseModel
 
-from flext_core import FlextLogger, u
+from flext_core import u
 from flext_ldif import (
     FlextLdifModelsDomainMetadata,
     FlextLdifModelsMetadata,
@@ -20,7 +20,7 @@ from flext_ldif import (
     t,
 )
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 class FlextLdifUtilitiesMetadata:

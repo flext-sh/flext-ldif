@@ -33,7 +33,7 @@ from flext_ldif import (
 )
 
 # c.Ldif.TUPLE_LENGTH_PAIR = c.Ldif.c.Ldif.TUPLE_LENGTH_PAIR
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 class _MissingSentinel:

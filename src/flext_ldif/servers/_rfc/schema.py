@@ -8,10 +8,10 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 from typing import Self, overload, override
 
-from flext_core import FlextLogger, r
+from flext_core import r
 from flext_ldif import FlextLdifServersBase, FlextLdifServersBaseSchema, c, m, p, t, u
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):

@@ -25,10 +25,10 @@ from collections.abc import MutableSequence
 from pathlib import Path
 from typing import Final
 
-from flext_core import FlextContext, FlextLogger
+from flext_core import FlextContext
 from flext_ldif import FlextLdif, ldif, m, r
 
-logger: Final = FlextLogger(__name__)
+logger: Final = u.fetch_logger(__name__)
 
 
 class BasicUsageDry:

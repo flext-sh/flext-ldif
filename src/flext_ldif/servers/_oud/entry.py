@@ -12,7 +12,7 @@ import re
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence
 from typing import override
 
-from flext_core import FlextLogger, r
+from flext_core import r
 from flext_ldif import (
     FlextLdifModelsDomainsEntries,
     FlextLdifModelsMetadata,
@@ -29,7 +29,7 @@ from flext_ldif import (
     u,
 )
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):

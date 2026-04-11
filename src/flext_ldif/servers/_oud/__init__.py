@@ -14,10 +14,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ),
         ".entry": ("FlextLdifServersOudEntry",),
         ".schema": ("FlextLdifServersOudSchema",),
-        ".utilities": (
-            "FlextLdifServersOudUtilities",
-            "u",
-        ),
+        ".utilities": ("FlextLdifServersOudUtilities",),
     },
 )
 

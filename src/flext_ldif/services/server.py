@@ -7,19 +7,20 @@ from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
 import flext_ldif.servers as servers_package
-from flext_core import FlextLogger, FlextRegistry
+from flext_core import FlextRegistry
 from flext_ldif import (
     FlextLdifServersBase,
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,
     FlextLdifServersBaseSchemaAcl,
+    c,
     p,
     r,
     t,
     u,
 )
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServer(FlextRegistry):
@@ -129,7 +130,9 @@ class FlextLdifServer(FlextRegistry):
 
     def list_registered_servers(self) -> MutableSequence[str]:
         """List all registered server types."""
-        return sorted(self.list_plugins(self.SERVERS, scope="class").value or [])
+        return sorted(
+            self.list_plugins(self.SERVERS, scope=c.RegistrationScope.CLASS).value or []
+        )
 
     def quirk(self, server_type: str) -> r[FlextLdifServersBase]:
         """Get base quirk for a server type."""
@@ -180,7 +183,7 @@ class FlextLdifServer(FlextRegistry):
                         self.SERVERS,
                         server_type,
                         instance,
-                        scope="class",
+                        scope=c.RegistrationScope.CLASS,
                     )
             except (TypeError, AttributeError):
                 continue

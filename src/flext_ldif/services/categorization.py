@@ -8,7 +8,6 @@ from typing import Final, override
 
 from pydantic import BaseModel, PrivateAttr, ValidationError
 
-from flext_core import FlextLogger
 from flext_ldif import (
     FlextLdifFilters,
     FlextLdifServer,
@@ -20,7 +19,7 @@ from flext_ldif import (
     u,
 )
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 _MAX_DN_PREVIEW_LENGTH: Final[int] = 100
 

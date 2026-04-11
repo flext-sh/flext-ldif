@@ -9,7 +9,6 @@ from typing import Final, override
 
 from pydantic import PrivateAttr
 
-from flext_core import FlextLogger
 from flext_ldif import (
     FlextLdifParser,
     FlextLdifProcessingPipeline,
@@ -19,9 +18,10 @@ from flext_ldif import (
     m,
     r,
     s,
+    u,
 )
 
-logger: Final = FlextLogger(__name__)
+logger: Final = u.fetch_logger(__name__)
 
 
 class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):

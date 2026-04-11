@@ -7,7 +7,6 @@ import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import ClassVar, override
 
-from flext_core import FlextLogger
 from flext_ldif import (
     FlextLdifServersRfc,
     c,
@@ -15,15 +14,16 @@ from flext_ldif import (
     p,
     r,
     t,
+    u,
 )
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServersOpenldap(FlextLdifServersRfc):
     """OpenLDAP 2.x Quirks - Complete Implementation."""
 
-    _logger: ClassVar[p.Logger] = FlextLogger(__name__)
+    _logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for OpenLDAP 2.x quirk."""

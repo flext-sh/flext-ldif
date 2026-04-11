@@ -406,7 +406,7 @@ from flext_core import u
 
 def log_configuration(config: FlextLdifModels.Config) -> None:
     """Log configuration settings for debugging."""
-    logger = FlextLogger(__name__)
+    logger = u.fetch_logger(__name__)
 
     logger.info(
         "LDIF configuration initialized",

@@ -9,19 +9,19 @@ from typing import TypeIs
 
 from pydantic import ValidationError
 
-from flext_core import FlextLogger
 from flext_ldif import (
     FlextLdifModelsSettings,
     FlextLdifProtocols as p,
     c,
     t,
+    u,
 )
 
 
 class FlextLdifUtilitiesEntry:
     """Entry transformation utilities - pure helper functions."""
 
-    _logger = FlextLogger(__name__)
+    _logger = u.fetch_logger(__name__)
     _ATTR_NAME_PATTERN = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]*$")
     _ATTR_OPTION_PATTERN = re.compile(r"^[a-zA-Z][a-zA-Z0-9_-]*$")
     _BINARY_CHAR_PATTERN = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\xff]")

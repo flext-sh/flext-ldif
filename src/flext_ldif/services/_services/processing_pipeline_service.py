@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from typing import Final
 
-from flext_core import FlextLogger
-from flext_ldif import FlextLdifProcessingPipeline, c, m
+from flext_ldif import FlextLdifProcessingPipeline, c, m, u
 
-logger: Final = FlextLogger(__name__)
+logger: Final = u.fetch_logger(__name__)
 
 
 class FlextLdifProcessingPipelineService:

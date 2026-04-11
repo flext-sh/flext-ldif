@@ -563,7 +563,7 @@ def enable_debug_mode() -> ldif:
     """Enable comprehensive debug mode."""
 
     # Configure debug logging
-    logger = FlextLogger(__name__)
+    logger = u.fetch_logger(__name__)
     logger.set_level("DEBUG")
 
     # Create debug configuration

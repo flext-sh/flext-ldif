@@ -6,10 +6,9 @@ import struct
 from collections.abc import Mapping, MutableSequence, Sequence
 from typing import Final
 
-from flext_core import FlextLogger
-from flext_ldif import m, r, t
+from flext_ldif import m, r, t, u
 
-logger: Final = FlextLogger(__name__)
+logger: Final = u.fetch_logger(__name__)
 
 
 class FlextLdifFilters:

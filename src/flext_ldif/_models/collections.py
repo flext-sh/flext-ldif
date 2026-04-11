@@ -22,7 +22,9 @@ from flext_ldif import (
 
 class FlextLdifModelsCollections:
     class DynamicCounts(m.DynamicModel):
-        model_config = ConfigDict(extra=c.EXTRA_ALLOW, validate_assignment=True)
+        model_config = ConfigDict(
+            extra=c.ExtraConfig.ALLOW.value, validate_assignment=True
+        )
 
         @override
         def __eq__(self, other: object) -> bool:

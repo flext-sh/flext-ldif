@@ -13,7 +13,7 @@ from flext_core.lazy import (
 from flext_ldif.__version__ import *
 
 if _t.TYPE_CHECKING:
-    from flext_core import d, e, h, r, s, x
+    from flext_core import d, e, h, r, x
     from flext_ldif._constants.base import FlextLdifConstantsBase
     from flext_ldif._constants.enums import FlextLdifConstantsEnums
     from flext_ldif._models.base import FlextLdifModelsBases
@@ -58,10 +58,9 @@ if _t.TYPE_CHECKING:
     from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
     from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
     from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
-    from flext_ldif.api import FlextLdif
-    from flext_ldif.base import FlextLdifServiceBase
+    from flext_ldif.api import FlextLdif, ldif
+    from flext_ldif.base import FlextLdifServiceBase, s
     from flext_ldif.constants import FlextLdifConstants, c
-    from flext_ldif.ldif import ldif
     from flext_ldif.models import FlextLdifModels, m
     from flext_ldif.protocols import FlextLdifProtocols, p
     from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
@@ -139,13 +138,18 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "__version__",
                 "__version_info__",
             ),
-            ".api": ("FlextLdif",),
-            ".base": ("FlextLdifServiceBase",),
+            ".api": (
+                "FlextLdif",
+                "ldif",
+            ),
+            ".base": (
+                "FlextLdifServiceBase",
+                "s",
+            ),
             ".constants": (
                 "FlextLdifConstants",
                 "c",
             ),
-            ".ldif": ("ldif",),
             ".models": (
                 "FlextLdifModels",
                 "m",
@@ -169,7 +173,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "e",
                 "h",
                 "r",
-                "s",
                 "x",
             ),
         },

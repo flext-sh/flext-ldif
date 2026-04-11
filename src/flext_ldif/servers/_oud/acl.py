@@ -7,7 +7,7 @@ import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import ClassVar, Self, override
 
-from flext_core import FlextLogger, r
+from flext_core import r
 from flext_ldif import (
     FlextLdifModelsDomainsEntries,
     FlextLdifModelsMetadata,
@@ -24,7 +24,7 @@ from flext_ldif import (
     u,
 )
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
