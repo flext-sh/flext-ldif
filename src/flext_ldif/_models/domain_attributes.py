@@ -247,4 +247,4 @@ class FlextLdifModelsDomainAttributes:
         ] = ""
 
 
-__all__ = ["FlextLdifModelsDomainAttributes"]
+__all__: list[str] = ["FlextLdifModelsDomainAttributes"]

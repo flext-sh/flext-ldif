@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 from pathlib import Path
-from typing import ClassVar, override
+from typing import override
 
 from flext_ldif import (
     FlextLdifAnalysis,
@@ -14,7 +14,6 @@ from flext_ldif import (
     FlextLdifParserMixin,
     FlextLdifServer,
     FlextLdifServersBaseSchema,
-    FlextLdifServiceBase,
     FlextLdifSettings,
     FlextLdifValidation,
     FlextLdifWriterMixin,
@@ -37,15 +36,13 @@ class FlextLdif(
     and infrastructure classmethods are defined locally.
     """
 
-    _instance: ClassVar[FlextLdif | None] = None
-
     def __init__(
         self,
         *,
         settings: FlextLdifSettings | None = None,
     ) -> None:
         """Initialize LDIF facade with server registry."""
-        FlextLdifServiceBase.__init__(self, settings=settings)
+        super().__init__(settings=settings)
         object.__setattr__(
             self,
             "_server",
@@ -112,18 +109,12 @@ class FlextLdif(
     @override
     def execute(self) -> r[m.Ldif.Entry]:
         """Execute FlextServiceBase pattern compliance."""
-        return r[m.Ldif.Entry].fail(
+        return r[m.Ldif.Entry].fail_op(
+            "execute ldif facade",
             "FlextLdif is a facade. Use parse_ldif(), write(), or migrate() instead.",
         )
-
-    @classmethod
-    def get_instance(cls) -> FlextLdif:
-        """Get singleton instance of FlextLdif."""
-        if cls._instance is None:
-            cls._instance = cls()
-        return cls._instance
 
 
 ldif = FlextLdif
 
-__all__ = ["FlextLdif", "ldif"]
+__all__: list[str] = ["FlextLdif", "ldif"]

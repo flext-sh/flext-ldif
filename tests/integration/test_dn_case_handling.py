@@ -132,4 +132,4 @@ class TestDnCaseNormalizationScenarios:
         assert result.value is True
 
 
-__all__ = ["TestDnCaseNormalizationScenarios", "TestDnCaseRegistry"]
+__all__: list[str] = ["TestDnCaseNormalizationScenarios", "TestDnCaseRegistry"]

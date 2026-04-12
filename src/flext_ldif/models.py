@@ -83,6 +83,6 @@ class FlextLdifModels(FlextModels):
             constrain_to_added_object: Annotated[str, Field()] = ""
 
 
-__all__ = ["FlextLdifModels", "m"]
+__all__: list[str] = ["FlextLdifModels", "m"]
 
 m = FlextLdifModels

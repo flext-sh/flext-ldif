@@ -40,6 +40,6 @@ class FlextLdifServersOudUtilities:
         )
 
 
-__all__ = ["FlextLdifServersOudUtilities"]
+__all__: list[str] = ["FlextLdifServersOudUtilities"]
 
 u = FlextLdifServersOudUtilities

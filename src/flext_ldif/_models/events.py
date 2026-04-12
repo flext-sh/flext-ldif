@@ -11,8 +11,6 @@ from flext_core import (
     m,
 )
 
-__all__ = ["FlextLdifModelsEvents"]
-
 
 class FlextLdifModelsEvents:
     """LDIF event and configuration models container class."""
@@ -95,4 +93,4 @@ class FlextLdifModelsEvents:
         )
 
 
-__all__ = ["FlextLdifModelsEvents"]
+__all__: list[str] = ["FlextLdifModelsEvents"]

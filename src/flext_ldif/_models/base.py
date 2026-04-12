@@ -106,4 +106,4 @@ class FlextLdifModelsBases:
             return FlextLdifShared.normalize_server_type(value)
 
 
-__all__ = ["FlextLdifModelsBases"]
+__all__: list[str] = ["FlextLdifModelsBases"]

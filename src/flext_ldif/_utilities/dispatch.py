@@ -294,4 +294,4 @@ class FlextLdifUtilitiesDispatch:
         return FlextLdifUtilitiesCollectionLdif.find(items, predicate=predicate)
 
 
-__all__ = ["FlextLdifUtilitiesDispatch"]
+__all__: list[str] = ["FlextLdifUtilitiesDispatch"]

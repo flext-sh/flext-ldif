@@ -396,7 +396,7 @@ class TestsTestFlextLdifApacheQuirks:
                     ldif += f"{attr}: {val}\n"
             else:
                 ldif += f"{attr}: {values}\n"
-        return ldif
+        return ldif()
 
     @pytest.mark.parametrize(
         "test_case",

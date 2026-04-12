@@ -143,4 +143,4 @@ class FlextLdifProtocolsDomain(Protocol):
             ...
 
 
-__all__ = ["FlextLdifProtocolsDomain"]
+__all__: list[str] = ["FlextLdifProtocolsDomain"]

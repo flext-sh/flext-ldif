@@ -27,4 +27,4 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         """OUD Entry quirk."""
 
 
-__all__ = ["FlextLdifServersOud"]
+__all__: list[str] = ["FlextLdifServersOud"]

@@ -531,4 +531,4 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             return entry
 
 
-__all__ = ["FlextLdifServersOpenldap"]
+__all__: list[str] = ["FlextLdifServersOpenldap"]

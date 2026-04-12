@@ -56,7 +56,7 @@ class BasicUsageDry:
             entries.append(entry)
         if not entries:
             return r[MutableSequence[m.Ldif.Entry]].fail("Failed to create entries")
-        api: FlextLdif = ldif.get_instance()
+        api: FlextLdif = ldif()
         validate_result = api.validate_entries(entries)
         if validate_result.failure:
             return r[MutableSequence[m.Ldif.Entry]].fail(
@@ -72,7 +72,7 @@ class BasicUsageDry:
             r with processing result or error.
 
         """
-        api: FlextLdif = ldif.get_instance()
+        api: FlextLdif = ldif()
         sample_file = Path("examples/sample_basic.ldif")
         if not sample_file.exists():
             return r[str].fail("Sample file not found")
@@ -106,7 +106,7 @@ class BasicUsageDry:
             r with processing result or error.
 
         """
-        api: FlextLdif = ldif.get_instance()
+        api: FlextLdif = ldif()
         with FlextContext.Correlation.new_correlation("req-123-dry"):
             server_result = api.get_effective_server_type(
                 ldif_content=self.SAMPLE_LDIF,
@@ -144,7 +144,7 @@ class BasicUsageDry:
             r with parsed and validated entries or error.
 
         """
-        api: FlextLdif = ldif.get_instance()
+        api: FlextLdif = ldif()
         server_type = "rfc"
         detect_result = api.detect_server_type(ldif_content=self.SAMPLE_LDIF)
         if detect_result.success:

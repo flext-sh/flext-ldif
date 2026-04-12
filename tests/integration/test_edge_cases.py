@@ -29,7 +29,7 @@ class TestEmptyAndMinimalCases:
     @pytest.fixture
     def api(self) -> FlextLdif:
         """Ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     def test_completely_empty_ldif(self, api: FlextLdif) -> None:
         """Test parsing of completely empty LDIF.
@@ -109,7 +109,7 @@ class TestLargeAndComplexCases:
     @pytest.fixture
     def api(self) -> FlextLdif:
         """Ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     def test_entry_with_many_attributes(self, api: FlextLdif) -> None:
         """Test entry with many attributes (100+).
@@ -181,7 +181,7 @@ class TestBoundaryValues:
     @pytest.fixture
     def api(self) -> FlextLdif:
         """Ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     def test_single_character_values(self, api: FlextLdif) -> None:
         """Test attributes with single character values.
@@ -249,7 +249,7 @@ class TestUnicodeBoundaries:
     @pytest.fixture
     def api(self) -> FlextLdif:
         """Ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     def test_bmp_characters(self, api: FlextLdif) -> None:
         """Test Basic Multilingual Plane characters (U+0000 to U+FFFF).
@@ -306,7 +306,7 @@ class TestRoundtripEdgeCases:
     @pytest.fixture
     def api(self) -> FlextLdif:
         """Ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     def test_roundtrip_empty(self, api: FlextLdif) -> None:
         """Test roundtrip of empty LDIF.
@@ -375,7 +375,7 @@ class TestRoundtripEdgeCases:
         assert len(roundtrip_entries) == initial_count
 
 
-__all__ = [
+__all__: list[str] = [
     "TestBoundaryValues",
     "TestEmptyAndMinimalCases",
     "TestLargeAndComplexCases",

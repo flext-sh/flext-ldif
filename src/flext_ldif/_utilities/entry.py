@@ -759,4 +759,4 @@ class FlextLdifUtilitiesEntry:
         return False
 
 
-__all__ = ["FlextLdifUtilitiesEntry"]
+__all__: list[str] = ["FlextLdifUtilitiesEntry"]

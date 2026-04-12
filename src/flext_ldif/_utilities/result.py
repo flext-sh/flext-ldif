@@ -7,4 +7,4 @@ from flext_core import FlextResult
 FlextLdifUtilitiesResult = FlextResult
 r = FlextResult
 
-__all__ = ["FlextLdifUtilitiesResult", "r"]
+__all__: list[str] = ["FlextLdifUtilitiesResult", "r"]

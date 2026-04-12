@@ -407,4 +407,4 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 )
 
 
-__all__ = ["FlextLdifServersTivoli"]
+__all__: list[str] = ["FlextLdifServersTivoli"]

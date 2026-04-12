@@ -23,7 +23,7 @@ __author__ = _metadata.get("Author", "FLEXT Team")
 __author_email__ = _metadata.get("Author-Email", "")
 __license__ = _metadata.get("License", "MIT")
 __url__ = _metadata.get("Home-Page", "")
-__all__ = [
+__all__: list[str] = [
     "__author__",
     "__author_email__",
     "__description__",

@@ -35,4 +35,4 @@ class FlextLdifServersBaseConstants:
     DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset()
 
 
-__all__ = ["FlextLdifServersBaseConstants"]
+__all__: list[str] = ["FlextLdifServersBaseConstants"]

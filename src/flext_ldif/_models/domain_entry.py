@@ -1121,4 +1121,4 @@ class FlextLdifModelsDomainEntry:
             return cls._create_entry(params=params)
 
 
-__all__ = ["FlextLdifModelsDomainEntry"]
+__all__: list[str] = ["FlextLdifModelsDomainEntry"]

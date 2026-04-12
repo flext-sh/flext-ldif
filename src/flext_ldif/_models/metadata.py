@@ -152,4 +152,4 @@ class FlextLdifModelsMetadata:
             return self.__pydantic_extra__ or {}
 
 
-__all__ = ["FlextLdifModelsMetadata"]
+__all__: list[str] = ["FlextLdifModelsMetadata"]

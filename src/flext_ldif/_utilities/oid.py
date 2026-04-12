@@ -61,4 +61,4 @@ class FlextLdifUtilitiesOID:
             return r[bool].fail(f"Failed to validate OID format: {e}")
 
 
-__all__ = ["FlextLdifUtilitiesOID"]
+__all__: list[str] = ["FlextLdifUtilitiesOID"]

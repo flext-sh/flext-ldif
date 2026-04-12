@@ -331,4 +331,4 @@ class FlextLdifModelsDomainAcl:
             return self.original_format is not None and bool(self.original_format)
 
 
-__all__ = ["FlextLdifModelsDomainAcl"]
+__all__: list[str] = ["FlextLdifModelsDomainAcl"]

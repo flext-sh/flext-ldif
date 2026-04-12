@@ -45,4 +45,4 @@ class FlextLdifUtilitiesValidation:
                 return False
 
 
-__all__ = ["FlextLdifUtilitiesValidation"]
+__all__: list[str] = ["FlextLdifUtilitiesValidation"]

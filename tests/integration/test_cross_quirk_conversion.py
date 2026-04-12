@@ -323,7 +323,7 @@ class TestQuirksConversionMatrixFacade:
         assert result.error is not None
 
 
-__all__ = [
+__all__: list[str] = [
     "TestOidToOudAclConversion",
     "TestOidToOudIntegrationConversion",
     "TestOidToOudSchemaConversion",

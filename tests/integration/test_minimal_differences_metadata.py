@@ -206,4 +206,4 @@ class TestMinimalDifferencesOidOud:
         assert entry.metadata is not None
 
 
-__all__ = ["TestMinimalDifferencesOidOud"]
+__all__: list[str] = ["TestMinimalDifferencesOidOud"]

@@ -359,7 +359,7 @@ class TestSchemaDeviationsRoundTrip:
     @pytest.fixture
     def api(self) -> FlextLdif:
         """Create ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     def test_oid_to_rfc_metadata_preserved(self) -> None:
         """Test OID→RFC conversion preserves all metadata."""

@@ -34,7 +34,7 @@ class TestSystematicFixtureCoverage:
     @pytest.fixture(scope="class")
     def api(self) -> FlextLdif:
         """Ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     @staticmethod
     def _limit_schema_fixture_content(
@@ -316,4 +316,4 @@ class TestSystematicFixtureCoverage:
         assert str(roundtrip_entries[0].dn) == str(entries[0].dn)
 
 
-__all__ = ["TestSystematicFixtureCoverage"]
+__all__: list[str] = ["TestSystematicFixtureCoverage"]

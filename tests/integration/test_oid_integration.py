@@ -326,7 +326,7 @@ class TestOidRoundTripIntegration:
         )
 
 
-__all__ = [
+__all__: list[str] = [
     "TestOidEntryIntegration",
     "TestOidRoundTripIntegration",
     "TestOidSchemaIntegration",

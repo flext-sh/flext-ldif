@@ -174,4 +174,4 @@ class TestsFlextLdifModels(FlextTestsModels, m):
 
 m = TestsFlextLdifModels
 
-__all__ = ["TestsFlextLdifModels", "m"]
+__all__: list[str] = ["TestsFlextLdifModels", "m"]

@@ -15,4 +15,4 @@ class FlextLdifTypes(FlextTypes):
 
 t = FlextLdifTypes
 
-__all__ = ["FlextLdifTypes", "t"]
+__all__: list[str] = ["FlextLdifTypes", "t"]

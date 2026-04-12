@@ -18,4 +18,4 @@ class FlextLdifProtocols(FlextProtocols):
 
 p = FlextLdifProtocols
 
-__all__ = ["FlextLdifProtocols", "p"]
+__all__: list[str] = ["FlextLdifProtocols", "p"]

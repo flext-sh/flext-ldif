@@ -224,4 +224,4 @@ class FlextLdifUtilitiesParsers:
             )
 
 
-__all__ = ["FlextLdifUtilitiesParsers"]
+__all__: list[str] = ["FlextLdifUtilitiesParsers"]

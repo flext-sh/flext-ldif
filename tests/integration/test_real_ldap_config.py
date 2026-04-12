@@ -23,7 +23,7 @@ from tests import m
 @pytest.fixture
 def flext_api() -> FlextLdif:
     """Ldif API instance."""
-    return ldif.get_instance()
+    return ldif()
 
 
 @pytest.mark.integration
@@ -90,4 +90,7 @@ class TestRealLdapRailwayComposition:
         assert len(entries) == 1
 
 
-__all__ = ["TestRealLdapConfigurationFromEnv", "TestRealLdapRailwayComposition"]
+__all__: list[str] = [
+    "TestRealLdapConfigurationFromEnv",
+    "TestRealLdapRailwayComposition",
+]

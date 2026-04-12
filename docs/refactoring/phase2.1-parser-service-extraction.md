@@ -202,7 +202,7 @@ Add parser service to exports:
 ```python
 from flext_ldif import FlextLdifParser
 
-__all__ = [
+__all__: list[str] = [
     # ... existing exports
     "FlextLdifParser",
 ]

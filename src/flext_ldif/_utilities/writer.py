@@ -414,4 +414,4 @@ class FlextLdifUtilitiesWriter:
             return r[str].fail(f"RFC objectClass writing failed: {e}")
 
 
-__all__ = ["FlextLdifUtilitiesWriter"]
+__all__: list[str] = ["FlextLdifUtilitiesWriter"]

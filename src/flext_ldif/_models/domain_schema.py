@@ -340,4 +340,4 @@ class FlextLdifModelsDomainSchema:
         )
 
 
-__all__ = ["FlextLdifModelsDomainSchema"]
+__all__: list[str] = ["FlextLdifModelsDomainSchema"]

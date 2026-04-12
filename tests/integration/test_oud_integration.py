@@ -117,7 +117,7 @@ class TestOudAclIntegration:
     @pytest.fixture
     def api(self) -> FlextLdif:
         """Create ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     @pytest.fixture
     def acl_fixture(self) -> str:
@@ -169,7 +169,7 @@ class TestOudEntryIntegration:
     @pytest.fixture
     def api(self) -> FlextLdif:
         """Create ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     @pytest.fixture
     def entry_fixture(self) -> str:
@@ -233,7 +233,7 @@ class TestOudRoundTripIntegration:
     @pytest.fixture
     def api(self) -> FlextLdif:
         """Create ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     @pytest.fixture
     def integration_fixture(self) -> str:
@@ -304,12 +304,12 @@ class TestOudMetadataPreservation:
     @pytest.fixture
     def api(self) -> FlextLdif:
         """Create ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     def test_metadata_attached_to_parsed_entries(self) -> None:
         """Test that metadata is attached to parsed entries."""
         test_ldif = "dn: cn=OracleContext,dc=example,dc=com\ncn: OracleContext\nobjectClass: top\nobjectClass: orclContext\norclVersion: 90600\n"
-        api = ldif.get_instance()
+        api = ldif()
         result = api.parse_ldif(test_ldif)
         assert result.success
         entries = result.value.entries
@@ -317,7 +317,7 @@ class TestOudMetadataPreservation:
         entries[0]
 
 
-__all__ = [
+__all__: list[str] = [
     "TestOudAclIntegration",
     "TestOudEntryIntegration",
     "TestOudMetadataPreservation",

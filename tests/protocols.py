@@ -94,4 +94,4 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, p):
 
 p = TestsFlextLdifProtocols
 
-__all__ = ["TestsFlextLdifProtocols", "p"]
+__all__: list[str] = ["TestsFlextLdifProtocols", "p"]

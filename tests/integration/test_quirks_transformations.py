@@ -52,7 +52,7 @@ class TestOidQuirksTransformations:
 
     @pytest.fixture(scope="class")
     def api(self) -> FlextLdif:
-        return ldif.get_instance()
+        return ldif()
 
     def test_oid_parse_and_transform_schema(
         self,
@@ -117,7 +117,7 @@ class TestOudQuirksTransformations:
 
     @pytest.fixture(scope="class")
     def api(self) -> FlextLdif:
-        return ldif.get_instance()
+        return ldif()
 
     def test_oud_parse_and_transform_schema(
         self,

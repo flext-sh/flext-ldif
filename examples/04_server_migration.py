@@ -78,7 +78,7 @@ class ExampleServerMigration:
     @staticmethod
     def auto_detection_migration_pipeline() -> r[t.ContainerMapping]:
         """Migration pipeline with automatic server detection."""
-        api = ldif.get_instance()
+        api = ldif()
         mixed_ldif = 'dn: cn=Auto Detect Test,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Auto Detect Test\nsn: Test\nmail: auto@example.com\n# This could be from OID (has orclaci) or OUD (has aci)\norclaci: access to * by * read\naci: (target="ldap:///cn=Auto Detect Test")(version 3.0; acl "test"; allow (read) userdn="ldap:///anyone";)\n\ndn: cn=Auto Group,ou=Groups,dc=example,dc=com\nobjectClass: groupOfUniqueNames\nobjectClass: groupOfNames\ncn: Auto Group\nuniquemember: cn=Auto Detect Test,ou=People,dc=example,dc=com\nmember: cn=Auto Detect Test,ou=People,dc=example,dc=com\n'
         detect_result = api.detect_server_type(ldif_content=mixed_ldif)
         if detect_result.failure:
@@ -116,7 +116,7 @@ class ExampleServerMigration:
     @staticmethod
     def batch_server_comparison() -> r[t.ContainerMapping]:
         """Batch comparison of parsing across multiple LDAP servers."""
-        api = ldif.get_instance()
+        api = ldif()
         test_ldif = 'dn: cn=Server Comparison,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Server Comparison\nsn: Test\nmail: comparison@example.com\n# OID-specific attributes\norclguid: abc123def456\norclaci: access to attr=mail by * read\n# OUD-specific attributes\naci: (targetattr="mail")(version 3.0; acl "mail access"; allow (read,search) userdn="ldap:///anyone";)\n# OpenLDAP-specific attributes\nentryUUID: 12345678-1234-1234-1234-123456789012\nentryCSN: 20240101000000.000000Z#000000#000#000000\n'
         servers: list[str] = ["rfc", "oid", "oud", "openldap"]
         comparison_results: dict[
@@ -169,7 +169,7 @@ class ExampleServerMigration:
     @staticmethod
     def comprehensive_migration_workflow() -> r[t.ContainerMapping]:
         """Comprehensive migration workflow with parallel processing and validation."""
-        api = ldif.get_instance()
+        api = ldif()
         workflow_dir = Path("examples/comprehensive_migration")
         source_dir, intermediate_dir, final_dir = (
             ExampleServerMigration._setup_directories(workflow_dir)
@@ -218,7 +218,7 @@ class ExampleServerMigration:
     @staticmethod
     def parallel_server_migration() -> r[m.Ldif.MigrationPipelineResult]:
         """Parallel migration between servers with comprehensive error handling."""
-        api = ldif.get_instance()
+        api = ldif()
         input_dir = Path("examples/migration_input")
         output_dir = Path("examples/migration_output")
         input_dir.mkdir(exist_ok=True, parents=True)

@@ -592,4 +592,4 @@ class FlextLdifModelsResults:
         )
 
 
-__all__ = ["FlextLdifModelsResults"]
+__all__: list[str] = ["FlextLdifModelsResults"]

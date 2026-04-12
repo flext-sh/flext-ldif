@@ -1183,4 +1183,4 @@ class FlextLdifUtilitiesSchema:
         )
 
 
-__all__ = ["FlextLdifUtilitiesSchema"]
+__all__: list[str] = ["FlextLdifUtilitiesSchema"]

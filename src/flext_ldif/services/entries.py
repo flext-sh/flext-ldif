@@ -181,4 +181,4 @@ class FlextLdifEntries(
         )
 
 
-__all__ = ["FlextLdifEntries"]
+__all__: list[str] = ["FlextLdifEntries"]

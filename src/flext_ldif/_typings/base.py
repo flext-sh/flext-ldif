@@ -101,4 +101,4 @@ class FlextLdifTypesBase:
     )
 
 
-__all__ = ["FlextLdifTypesBase"]
+__all__: list[str] = ["FlextLdifTypesBase"]

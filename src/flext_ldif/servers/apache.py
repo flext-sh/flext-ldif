@@ -254,4 +254,4 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 )
 
 
-__all__ = ["FlextLdifServersApache"]
+__all__: list[str] = ["FlextLdifServersApache"]

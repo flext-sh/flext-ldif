@@ -60,4 +60,4 @@ class FlextLdifUtilitiesAttribute:
         return (base_attribute, options)
 
 
-__all__ = ["FlextLdifUtilitiesAttribute"]
+__all__: list[str] = ["FlextLdifUtilitiesAttribute"]

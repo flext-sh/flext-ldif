@@ -233,4 +233,4 @@ class FlextLdifFilters:
         )
 
 
-__all__ = ["FlextLdifFilters"]
+__all__: list[str] = ["FlextLdifFilters"]

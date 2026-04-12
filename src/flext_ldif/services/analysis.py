@@ -150,4 +150,4 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
         )
 
 
-__all__ = ["FlextLdifAnalysis"]
+__all__: list[str] = ["FlextLdifAnalysis"]

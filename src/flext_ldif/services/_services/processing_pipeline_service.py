@@ -47,4 +47,4 @@ class FlextLdifProcessingPipelineService:
         return pipeline
 
 
-__all__ = ["FlextLdifProcessingPipelineService"]
+__all__: list[str] = ["FlextLdifProcessingPipelineService"]

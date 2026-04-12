@@ -71,4 +71,4 @@ class FlextLdifTypesDomain:
     type WriteResponseResult = p.Result[WriteResponseLike]
 
 
-__all__ = ["FlextLdifTypesDomain"]
+__all__: list[str] = ["FlextLdifTypesDomain"]

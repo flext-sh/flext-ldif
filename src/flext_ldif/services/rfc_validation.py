@@ -77,4 +77,4 @@ class FlextLdifValidation(
         return self.validate_attribute_name(name)
 
 
-__all__ = ["FlextLdifValidation"]
+__all__: list[str] = ["FlextLdifValidation"]

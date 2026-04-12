@@ -91,7 +91,7 @@ def intelligent_schema_building() -> r[MutableSequence[m.Ldif.Entry]]:
 
 def parallel_schema_validation() -> r[t.ContainerMapping]:
     """Schema validation with comprehensive error analysis."""
-    api = ldif.get_instance()
+    api = ldif()
     test_entries: list[m.Ldif.Entry] = []
     for i in range(30):
         if i % 3 == 0:
@@ -179,7 +179,7 @@ def parallel_schema_validation() -> r[t.ContainerMapping]:
 
 def schema_migration_pipeline() -> r[t.ContainerMapping]:
     """Schema-aware migration pipeline with validation."""
-    api = ldif.get_instance()
+    api = ldif()
     migration_dir = Path("examples/schema_migration")
     source_dir = migration_dir / "source"
     migrated_dir = migration_dir / "migrated"
@@ -246,7 +246,7 @@ def schema_migration_pipeline() -> r[t.ContainerMapping]:
 
 def batch_schema_operations() -> r[t.ContainerMapping]:
     """Batch schema operations with validation."""
-    api = ldif.get_instance()
+    api = ldif()
     schema_batches: list[tuple[str, list[m.Ldif.Entry]]] = []
     core_attrs: list[m.Ldif.Entry] = []
     core_attribute_definitions: Sequence[tuple[str, str, str, bool]] = [
@@ -332,7 +332,7 @@ def batch_schema_operations() -> r[t.ContainerMapping]:
 
 def railway_schema_pipeline() -> r[t.ContainerMapping]:
     """Railway-oriented schema pipeline with integrated validation."""
-    api = ldif.get_instance()
+    api = ldif()
     schema_build_result = intelligent_schema_building()
     if schema_build_result.failure:
         return r[t.ContainerMapping].fail(

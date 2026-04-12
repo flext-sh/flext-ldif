@@ -41,7 +41,7 @@ class DRYEntryOperations:
     @staticmethod
     def batch_processing() -> r[MutableSequence[m.Ldif.Entry]]:
         """DRY batch processing: validate entries pipeline."""
-        api = ldif.get_instance()
+        api = ldif()
         return DRYEntryOperations.advanced_filtering().flat_map(
             lambda entries: api.validate_entries(entries).map(lambda _: entries),
         )

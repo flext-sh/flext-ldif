@@ -24,7 +24,7 @@ def _get_acl_service() -> FlextLdifAcl:
 
 def extract_acls_from_entry() -> None:
     """Extract ACL information from an LDIF entry."""
-    api = ldif.get_instance()
+    api = ldif()
     ldif_content = 'dn: cn=test,ou=People,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Allow read"; allow (read,search) userdn="ldap:///anyone";)\n'
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.failure:
@@ -44,7 +44,7 @@ def extract_acls_from_entry() -> None:
 
 def parse_and_evaluate_acls() -> None:
     """Parse ACL attributes and evaluate against context."""
-    api = ldif.get_instance()
+    api = ldif()
     ldif_content = 'dn: ou=People,dc=example,dc=com\nobjectClass: organizationalUnit\nou: People\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="cn || sn")(version 3.0; acl "Allow self write"; allow (write) userdn="ldap:///self";)\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Allow admin all"; allow (all) userdn="ldap:///cn=admin,dc=example,dc=com";)\n'
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.failure:
@@ -68,7 +68,7 @@ def parse_and_evaluate_acls() -> None:
 
 def process_entries_with_acls() -> None:
     """Process entries that contain ACL information."""
-    api = ldif.get_instance()
+    api = ldif()
     ldif_content = 'dn: ou=People,dc=example,dc=com\nobjectClass: organizationalUnit\nou: People\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Read access"; allow (read) userdn="ldap:///anyone";)\n\ndn: ou=Groups,dc=example,dc=com\nobjectClass: organizationalUnit\nou: Groups\naci: (target="ldap:///ou=Groups,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Admin access"; allow (all) userdn="ldap:///cn=admin,dc=example,dc=com";)\n\ndn: cn=user,ou=People,dc=example,dc=com\nobjectClass: person\ncn: user\nsn: test\n'
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.failure:
@@ -107,7 +107,7 @@ def execute_acl_service() -> None:
 
 def acl_pipeline() -> None:
     """Complete ACL processing pipeline."""
-    api = ldif.get_instance()
+    api = ldif()
     ldif_content = 'dn: ou=Pipeline,dc=example,dc=com\nobjectClass: organizationalUnit\nou: Pipeline\naci: (target="ldap:///ou=Pipeline,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Pipeline ACL"; allow (read,search) userdn="ldap:///anyone";)\n'
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.failure:

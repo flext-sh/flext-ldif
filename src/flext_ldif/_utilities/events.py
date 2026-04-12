@@ -172,4 +172,4 @@ class FlextLdifUtilitiesEvents:
         return event
 
 
-__all__ = ["FlextLdifUtilitiesEvents"]
+__all__: list[str] = ["FlextLdifUtilitiesEvents"]

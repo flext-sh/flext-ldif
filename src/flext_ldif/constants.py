@@ -820,4 +820,4 @@ class FlextLdifConstants(FlextConstants):
 
 c = FlextLdifConstants
 
-__all__ = ["FlextLdifConstants", "c"]
+__all__: list[str] = ["FlextLdifConstants", "c"]

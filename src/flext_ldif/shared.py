@@ -80,4 +80,4 @@ class FlextLdifShared:
         raise ValueError(msg)
 
 
-__all__ = ["FlextLdifShared"]
+__all__: list[str] = ["FlextLdifShared"]

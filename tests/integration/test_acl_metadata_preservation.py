@@ -36,7 +36,7 @@ class TestOidAclMetadataPreservation:
     @pytest.fixture
     def api(self) -> FlextLdif:
         """Create ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     def test_oid_bindmode_preservation(self, api: FlextLdif) -> None:
         """Test that OID BINDMODE is preserved in metadata."""
@@ -124,7 +124,7 @@ class TestOudAciMetadataPreservation:
     @pytest.fixture
     def api(self) -> FlextLdif:
         """Create ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     def test_oud_targattrfilters_preservation(self, api: FlextLdif) -> None:
         """Test that OUD targattrfilters is preserved in metadata."""
@@ -252,7 +252,7 @@ class TestAclRoundTripPreservation:
     @pytest.fixture
     def api(self) -> FlextLdif:
         """Create ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     def test_oid_acl_round_trip(self, api: FlextLdif) -> None:
         """Test that OID ACL survives round-trip (parse → write → parse)."""

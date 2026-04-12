@@ -27,4 +27,4 @@ class FlextLdifModelsDomainsEntries(
     """LDIF domain models — composed via MRO from domain mixins."""
 
 
-__all__ = ["FlextLdifModelsDomainsEntries"]
+__all__: list[str] = ["FlextLdifModelsDomainsEntries"]

@@ -838,4 +838,4 @@ class FlextLdifUtilitiesACL:
         return (True, aci_content)
 
 
-__all__ = ["FlextLdifUtilitiesACL"]
+__all__: list[str] = ["FlextLdifUtilitiesACL"]

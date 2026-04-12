@@ -30,7 +30,7 @@ from tests import m, p, t, u
 @pytest.fixture
 def flext_api() -> FlextLdif:
     """Ldif API instance."""
-    return ldif.get_instance()
+    return ldif()
 
 
 @pytest.mark.docker
@@ -206,4 +206,4 @@ class TestRealLdapBatchOperations:
         assert len(parsed_entries) == actual_count
 
 
-__all__ = ["TestRealLdapBatchOperations", "TestRealLdapCRUD"]
+__all__: list[str] = ["TestRealLdapBatchOperations", "TestRealLdapCRUD"]

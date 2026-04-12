@@ -74,7 +74,7 @@ def large_test_dataset() -> str:
 @pytest.fixture
 def api() -> FlextLdif:
     """Create ldif API instance for testing."""
-    return ldif.get_instance()
+    return ldif()
 
 
 @pytest.fixture
@@ -627,4 +627,4 @@ def pytest_configure(config: pytest.Config) -> None:
 @pytest.fixture(scope="session")
 def flext_ldif() -> FlextLdif:
     """Provide ldif instance for tests."""
-    return ldif.get_instance()
+    return ldif()

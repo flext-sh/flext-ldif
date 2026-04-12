@@ -2031,4 +2031,4 @@ class FlextLdifConversion(
         )
 
 
-__all__ = ["FlextLdifConversion"]
+__all__: list[str] = ["FlextLdifConversion"]

@@ -601,4 +601,4 @@ class FlextLdifUtilitiesParser:
         return lines
 
 
-__all__ = ["FlextLdifUtilitiesParser"]
+__all__: list[str] = ["FlextLdifUtilitiesParser"]

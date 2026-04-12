@@ -29,4 +29,4 @@ class FlextLdifUtilitiesDetection:
         )
 
 
-__all__ = ["FlextLdifUtilitiesDetection"]
+__all__: list[str] = ["FlextLdifUtilitiesDetection"]

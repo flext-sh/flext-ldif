@@ -283,4 +283,4 @@ class FlextLdifModelsDomainDN:
             return r[bool].ok(True)
 
 
-__all__ = ["FlextLdifModelsDomainDN"]
+__all__: list[str] = ["FlextLdifModelsDomainDN"]

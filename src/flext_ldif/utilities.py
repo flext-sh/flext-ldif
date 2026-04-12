@@ -83,4 +83,4 @@ class FlextLdifUtilities(FlextUtilities):
 
 u = FlextLdifUtilities
 
-__all__ = ["FlextLdifUtilities", "u"]
+__all__: list[str] = ["FlextLdifUtilities", "u"]

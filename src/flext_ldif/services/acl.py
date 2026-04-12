@@ -180,4 +180,4 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
         )
 
 
-__all__ = ["FlextLdifAcl"]
+__all__: list[str] = ["FlextLdifAcl"]

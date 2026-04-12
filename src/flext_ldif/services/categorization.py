@@ -879,4 +879,4 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         ]
 
 
-__all__ = ["FlextLdifCategorization"]
+__all__: list[str] = ["FlextLdifCategorization"]

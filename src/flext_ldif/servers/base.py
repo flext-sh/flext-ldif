@@ -472,4 +472,4 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         return attr_name
 
 
-__all__ = ["FlextLdifServersBase"]
+__all__: list[str] = ["FlextLdifServersBase"]

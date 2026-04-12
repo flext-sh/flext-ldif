@@ -360,4 +360,4 @@ class FlextLdifWriter(FlextLdifWriterMixin, s[m.Ldif.WriteResponse]):
         )
 
 
-__all__ = ["FlextLdifWriter", "FlextLdifWriterMixin"]
+__all__: list[str] = ["FlextLdifWriter", "FlextLdifWriterMixin"]

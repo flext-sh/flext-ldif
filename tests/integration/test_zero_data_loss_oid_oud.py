@@ -45,7 +45,7 @@ class TestZeroDataLossOidOud:
     @pytest.fixture
     def api(self) -> FlextLdif:
         """Create ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     @pytest.fixture
     def oid_fixture(self) -> str:

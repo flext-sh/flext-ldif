@@ -27,7 +27,7 @@ class TestMalformedLdifHandling:
     @pytest.fixture
     def api(self) -> FlextLdif:
         """Ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     def test_missing_dn_line(self, api: FlextLdif) -> None:
         """Test handling of entry without DN line.
@@ -198,7 +198,7 @@ class TestIncompleteEntries:
     @pytest.fixture
     def api(self) -> FlextLdif:
         """Ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     def test_truncated_ldif(self, api: FlextLdif) -> None:
         """Test handling of truncated LDIF file.
@@ -243,7 +243,7 @@ class TestInvalidSchemaDefinitions:
     @pytest.fixture
     def api(self) -> FlextLdif:
         """Ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     def test_malformed_oid(self, api: FlextLdif) -> None:
         """Test handling of malformed OID in schema.
@@ -288,7 +288,7 @@ class TestEncodingErrors:
     @pytest.fixture
     def api(self) -> FlextLdif:
         """Ldif API instance."""
-        return ldif.get_instance()
+        return ldif()
 
     def test_utf8_handling(self, api: FlextLdif) -> None:
         """Test proper UTF-8 encoding handling.
@@ -329,7 +329,7 @@ class TestEncodingErrors:
         assert result is not None
 
 
-__all__ = [
+__all__: list[str] = [
     "TestEncodingErrors",
     "TestIncompleteEntries",
     "TestInvalidSchemaDefinitions",

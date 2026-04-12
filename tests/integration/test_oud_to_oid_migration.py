@@ -92,7 +92,7 @@ class TestOudToOidFullMigration:
         return FlextLdifServersOid.Entry()
 
 
-__all__ = [
+__all__: list[str] = [
     "TestOudToOidAclMigration",
     "TestOudToOidEntryMigration",
     "TestOudToOidFullMigration",

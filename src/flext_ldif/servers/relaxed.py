@@ -775,4 +775,4 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return r[str].fail(f"Failed to write entry: {e}")
 
 
-__all__ = ["FlextLdifServersRelaxed"]
+__all__: list[str] = ["FlextLdifServersRelaxed"]

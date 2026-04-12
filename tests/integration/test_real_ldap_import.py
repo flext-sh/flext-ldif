@@ -34,7 +34,7 @@ from tests import p, t, u
 @pytest.fixture
 def flext_api() -> FlextLdif:
     """Ldif API instance."""
-    return ldif.get_instance()
+    return ldif()
 
 
 @pytest.mark.docker
@@ -167,4 +167,4 @@ class TestRealLdapImport:
         assert imported["cn"].value == unique_username
 
 
-__all__ = ["TestRealLdapImport"]
+__all__: list[str] = ["TestRealLdapImport"]

@@ -11,22 +11,8 @@ class FlextLdifUtilitiesObjectClass:
     class SchemaConstants:
         """Schema constants container for type safety (single class, no loose helpers)."""
 
-        _instance: FlextLdifUtilitiesObjectClass.SchemaConstants | None = None
-        auxiliary: str
-        structural: str
-
-        def __init__(self) -> None:
-            """Initialize schema constants from SchemaKind enum."""
-            super().__init__()
-            self.auxiliary = c.Ldif.SchemaKind.AUXILIARY.value
-            self.structural = c.Ldif.SchemaKind.STRUCTURAL.value
-
-        @classmethod
-        def get_instance(cls) -> FlextLdifUtilitiesObjectClass.SchemaConstants:
-            """Return cached schema constants instance (avoids repeated getattr)."""
-            if cls._instance is None:
-                cls._instance = cls()
-            return cls._instance
+        auxiliary: str = c.Ldif.SchemaKind.AUXILIARY.value
+        structural: str = c.Ldif.SchemaKind.STRUCTURAL.value
 
     @staticmethod
     def fix_kind_mismatch(
@@ -48,7 +34,7 @@ class FlextLdifUtilitiesObjectClass:
         else:
             first_sup = sup_value[0] if sup_value else ""
             sup_lower = str(first_sup).lower() if first_sup else ""
-        schema_constants = FlextLdifUtilitiesObjectClass.SchemaConstants.get_instance()
+        schema_constants = FlextLdifUtilitiesObjectClass.SchemaConstants
         if (
             sup_lower in structural_superiors
             and schema_oc.kind == schema_constants.auxiliary
@@ -65,6 +51,6 @@ class FlextLdifUtilitiesObjectClass:
         schema_oc: FlextLdifModelsDomainsEntries.SchemaObjectClass,
     ) -> None:
         """Fix AUXILIARY ObjectClass missing SUP (superior) attribute."""
-        schema_constants = FlextLdifUtilitiesObjectClass.SchemaConstants.get_instance()
+        schema_constants = FlextLdifUtilitiesObjectClass.SchemaConstants
         if schema_oc.kind == schema_constants.auxiliary and (not schema_oc.sup):
             object.__setattr__(schema_oc, "sup", "top")

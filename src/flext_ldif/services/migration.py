@@ -301,4 +301,4 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         )
 
 
-__all__ = ["FlextLdifMigrationPipeline"]
+__all__: list[str] = ["FlextLdifMigrationPipeline"]

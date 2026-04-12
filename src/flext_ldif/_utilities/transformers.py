@@ -226,7 +226,7 @@ class FlextLdifUtilitiesTransformers:
             )
 
 
-__all__ = [
+__all__: list[str] = [
     "FlextLdifUtilitiesTransformer",
     "FlextLdifUtilitiesTransformers",
 ]

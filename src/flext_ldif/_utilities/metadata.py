@@ -924,4 +924,4 @@ class FlextLdifUtilitiesMetadata:
         return FlextLdifUtilitiesMetadata._update_entry_with_stats(entry, updated_stats)
 
 
-__all__ = ["FlextLdifUtilitiesMetadata"]
+__all__: list[str] = ["FlextLdifUtilitiesMetadata"]

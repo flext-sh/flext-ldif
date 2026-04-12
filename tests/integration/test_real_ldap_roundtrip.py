@@ -31,7 +31,7 @@ from tests import m, p, t, u
 @pytest.fixture
 def flext_api() -> FlextLdif:
     """Ldif API instance."""
-    return ldif.get_instance()
+    return ldif()
 
 
 @pytest.mark.docker
@@ -121,4 +121,4 @@ class TestRealLdapRoundtrip:
         )
 
 
-__all__ = ["TestRealLdapRoundtrip"]
+__all__: list[str] = ["TestRealLdapRoundtrip"]

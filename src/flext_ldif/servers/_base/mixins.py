@@ -56,4 +56,4 @@ class FlextLdifQuirkMethodsMixin:
         return FlextLdifQuirkMethodsMixin.get_server_type_from_utilities(type(self))
 
 
-__all__ = ["FlextLdifQuirkMethodsMixin"]
+__all__: list[str] = ["FlextLdifQuirkMethodsMixin"]

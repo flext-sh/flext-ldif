@@ -198,4 +198,4 @@ class FlextLdifServer:
         return cls._global_instance
 
 
-__all__ = ["FlextLdifServer"]
+__all__: list[str] = ["FlextLdifServer"]

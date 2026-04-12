@@ -61,4 +61,4 @@ class FlextLdifStatistics(s[m.Ldif.StatisticsServiceStatus]):
         )
 
 
-__all__ = ["FlextLdifStatistics"]
+__all__: list[str] = ["FlextLdifStatistics"]

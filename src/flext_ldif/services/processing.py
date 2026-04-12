@@ -131,4 +131,4 @@ class FlextLdifProcessing(
         )
 
 
-__all__ = ["FlextLdifProcessing"]
+__all__: list[str] = ["FlextLdifProcessing"]

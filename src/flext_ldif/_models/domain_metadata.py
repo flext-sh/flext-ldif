@@ -411,4 +411,4 @@ class FlextLdifModelsDomainMetadata:
             return self
 
 
-__all__ = ["FlextLdifModelsDomainMetadata"]
+__all__: list[str] = ["FlextLdifModelsDomainMetadata"]

@@ -155,4 +155,4 @@ class TestsTestFlextLdifOidQuirks:
         assert "EQUALITY caseIgnoreSubstringsMatch" in written
 
 
-__all__ = ["TestsTestFlextLdifOidQuirks"]
+__all__: list[str] = ["TestsTestFlextLdifOidQuirks"]

@@ -44,7 +44,7 @@ class DRYValidationAnalysis:
         error_rate: float = 0.0,
     ) -> MutableSequence[m.Ldif.Entry]:
         """DRY test dataset generation with configurable errors."""
-        api = ldif.get_instance()
+        api = ldif()
         entries: MutableSequence[m.Ldif.Entry] = []
         error_mod = int(1 / error_rate) if error_rate > 0 else 0
         for i in range(count):
@@ -67,7 +67,7 @@ class DRYValidationAnalysis:
     @staticmethod
     def parallel_validation() -> r[m.Ldif.ValidationResult]:
         """DRY parallel validation: generate dataset → validate → analyze."""
-        api = ldif.get_instance()
+        api = ldif()
         entries = DRYValidationAnalysis._generate_test_dataset(100, error_rate=0.1)
         validate_result = api.validate_entries(entries)
         total_entries = len(entries)
@@ -93,7 +93,7 @@ class DRYValidationAnalysis:
     @staticmethod
     def statistical_analysis() -> r[Mapping[str, t.Numeric]]:
         """DRY statistical analysis: comprehensive metrics in one pipeline."""
-        api = ldif.get_instance()
+        api = ldif()
         entries = DRYValidationAnalysis._generate_test_dataset(500, error_rate=0.05)
         validate_result = api.validate_entries(entries)
         if validate_result.failure:

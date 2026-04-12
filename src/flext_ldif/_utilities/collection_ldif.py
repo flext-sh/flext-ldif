@@ -65,4 +65,4 @@ class FlextLdifUtilitiesCollectionLdif:
     nz = normalize_ldif
 
 
-__all__ = ["FlextLdifUtilitiesCollectionLdif"]
+__all__: list[str] = ["FlextLdifUtilitiesCollectionLdif"]

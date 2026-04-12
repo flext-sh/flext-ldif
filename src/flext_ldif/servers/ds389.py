@@ -521,4 +521,4 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
 
 
-__all__ = ["FlextLdifServersDs389"]
+__all__: list[str] = ["FlextLdifServersDs389"]

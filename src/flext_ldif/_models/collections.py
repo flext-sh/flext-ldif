@@ -204,4 +204,4 @@ class FlextLdifModelsCollections:
             yield from self.categories.values()
 
 
-__all__ = ["FlextLdifModelsCollections"]
+__all__: list[str] = ["FlextLdifModelsCollections"]

@@ -14,7 +14,7 @@ from flext_ldif import FlextLdif, c, ldif, m
 
 def complete_ldif_processing_workflow() -> None:
     """Run a complete LDIF processing workflow."""
-    api: FlextLdif = ldif.get_instance()
+    api: FlextLdif = ldif()
     content = "dn: cn=Workflow User,dc=example,dc=com\nobjectClass: person\ncn: Workflow User\nsn: User\n"
     parse_result = api.parse_ldif(content, server_type="rfc")
     if parse_result.failure:
@@ -31,7 +31,7 @@ def complete_ldif_processing_workflow() -> None:
 
 def server_migration_workflow() -> None:
     """Run a server migration workflow."""
-    api: FlextLdif = ldif.get_instance()
+    api: FlextLdif = ldif()
     source_dir = Path("examples/workflow_source")
     target_dir = Path("examples/workflow_target")
     source_dir.mkdir(exist_ok=True)
@@ -55,7 +55,7 @@ def server_migration_workflow() -> None:
 
 def entry_building_and_processing_workflow() -> None:
     """Run an entry building and processing workflow."""
-    api: FlextLdif = ldif.get_instance()
+    api: FlextLdif = ldif()
     created: list[m.Ldif.Entry] = []
     for idx in range(2):
         entry = m.Ldif.Entry(
@@ -103,7 +103,7 @@ def schema_driven_workflow() -> None:
 
 def acl_processing_workflow() -> None:
     """Run an ACL processing workflow."""
-    api: FlextLdif = ldif.get_instance()
+    api: FlextLdif = ldif()
     ldif_content = 'dn: ou=Secure,dc=example,dc=com\nobjectClass: organizationalUnit\nou: Secure\naci: (targetattr="*")(version 3.0; acl "a"; allow (read) userdn="ldap:///anyone";)\n'
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.failure:
@@ -116,7 +116,7 @@ def acl_processing_workflow() -> None:
 
 def batch_processing_workflow() -> None:
     """Run a batch processing workflow."""
-    api: FlextLdif = ldif.get_instance()
+    api: FlextLdif = ldif()
     entries: list[m.Ldif.Entry] = []
     for idx in range(10):
         entry = m.Ldif.Entry(
@@ -154,7 +154,7 @@ def access_all_namespace_classes() -> None:
 
 def error_handling_and_recovery() -> None:
     """Run an error handling and recovery workflow."""
-    api: FlextLdif = ldif.get_instance()
+    api: FlextLdif = ldif()
     parse_result = api.parse_ldif(
         "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
     )

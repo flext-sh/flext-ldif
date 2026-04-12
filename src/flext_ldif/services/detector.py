@@ -70,22 +70,28 @@ class FlextLdifDetectorMixin:
         """Detect LDAP server type from LDIF file or content."""
         max_lines = max_lines or u.Ldif.get_server_detection_default_max_lines()
         if ldif_path is None and ldif_content is None:
-            return r[m.Ldif.ServerDetectionResult].fail(
+            return r[m.Ldif.ServerDetectionResult].fail_op(
+                "detect server type",
                 "Either ldif_path or ldif_content must be provided",
             )
         if ldif_content is None and ldif_path is not None:
             if not ldif_path.exists():
-                return r[m.Ldif.ServerDetectionResult].fail(
+                return r[m.Ldif.ServerDetectionResult].fail_op(
+                    "read detection source",
                     f"LDIF file not found: {ldif_path}",
                 )
             try:
                 ldif_content = ldif_path.read_text(encoding="utf-8")
             except UnicodeDecodeError as e:
-                return r[m.Ldif.ServerDetectionResult].fail(
-                    f"LDIF file is not valid UTF-8 (RFC 2849 violation): {e}",
+                return r[m.Ldif.ServerDetectionResult].fail_op(
+                    "read detection source",
+                    e,
                 )
         if ldif_content is None:
-            return r[m.Ldif.ServerDetectionResult].fail("No LDIF content provided")
+            return r[m.Ldif.ServerDetectionResult].fail_op(
+                "detect server type",
+                "No LDIF content provided",
+            )
         lines = ldif_content.split("\n")
         content_sample = "\n".join(lines[:max_lines])
         scores_dict = self._calculate_scores(content_sample)
@@ -512,4 +518,4 @@ class FlextLdifDetector(FlextLdifDetectorMixin, s[m.Ldif.ClientStatus]):
         return r[m.Ldif.ClientStatus].ok(status_result)
 
 
-__all__ = ["FlextLdifDetector", "FlextLdifDetectorMixin"]
+__all__: list[str] = ["FlextLdifDetector", "FlextLdifDetectorMixin"]

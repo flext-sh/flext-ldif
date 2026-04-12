@@ -27,4 +27,4 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         """RFC baseline constants (RFC 4512 compliant)."""
 
 
-__all__ = ["FlextLdifServersRfc"]
+__all__: list[str] = ["FlextLdifServersRfc"]

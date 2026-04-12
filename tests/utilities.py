@@ -663,4 +663,4 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
 
 u = TestsFlextLdifUtilities
 
-__all__ = ["TestsFlextLdifUtilities", "u"]
+__all__: list[str] = ["TestsFlextLdifUtilities", "u"]

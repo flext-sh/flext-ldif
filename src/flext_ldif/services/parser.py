@@ -43,8 +43,9 @@ class FlextLdifParserMixin:
         try:
             content = path.read_text(encoding=encoding)
         except (OSError, UnicodeDecodeError) as e:
-            return r[m.Ldif.ParseResponse].fail(
-                f"Failed to read LDIF file {path}: {e}",
+            return r[m.Ldif.ParseResponse].fail_op(
+                "read ldif file",
+                e,
             )
         return self.parse_string(content, server_type)
 
@@ -60,25 +61,28 @@ class FlextLdifParserMixin:
                 effective_server_type_raw,
             )
         except (ValueError, TypeError) as e:
-            return r[m.Ldif.ParseResponse].fail(
-                f"Invalid server type: {effective_server_type_raw} - {e}",
+            return r[m.Ldif.ParseResponse].fail_op(
+                "normalize ldif server type",
+                e,
             )
         try:
             entry_quirk_raw = self._server.entry(effective_server_type)
         except ValueError as e:
-            return r[m.Ldif.ParseResponse].fail(str(e))
+            return r[m.Ldif.ParseResponse].fail_op("resolve entry quirk", e)
         if entry_quirk_raw is None:
-            return r[m.Ldif.ParseResponse].fail(
+            return r[m.Ldif.ParseResponse].fail_op(
+                "resolve entry quirk",
                 f"No entry quirk found for server type: {effective_server_type}",
             )
         if not hasattr(entry_quirk_raw, "parse_quirk"):
-            return r[m.Ldif.ParseResponse].fail(
+            return r[m.Ldif.ParseResponse].fail_op(
+                "validate entry quirk capability",
                 f"Entry quirk for server type {effective_server_type} does not have parse_quirk method",
             )
         parse_out = entry_quirk_raw.parse_quirk(content)
         if parse_out.failure:
             error_msg = parse_out.error or "LDIF parsing failed"
-            return r[m.Ldif.ParseResponse].fail(str(error_msg))
+            return r[m.Ldif.ParseResponse].fail_op("parse ldif content", error_msg)
         entries = parse_out.value
         detected_server_type = c.Ldif.ServerTypes(effective_server_type)
         response = m.Ldif.ParseResponse(
@@ -109,14 +113,16 @@ class FlextLdifParserMixin:
             if candidate_path.exists():
                 resolved_path = candidate_path
         if not resolved_path.exists():
-            return r[m.Ldif.ParseResponse].fail(
+            return r[m.Ldif.ParseResponse].fail_op(
+                "resolve ldif path",
                 f"File not found: {path}",
             )
         try:
             content = resolved_path.read_text(encoding="utf-8")
         except OSError as e:
-            return r[m.Ldif.ParseResponse].fail(
-                f"Failed to read file: {e}",
+            return r[m.Ldif.ParseResponse].fail_op(
+                "read ldif path",
+                e,
             )
         return self.parse_ldif(value=content, server_type=server_type)
 
@@ -137,9 +143,10 @@ class FlextLdifParser(FlextLdifParserMixin, s[m.Ldif.ParseResponse]):
     @override
     def execute(self) -> r[m.Ldif.ParseResponse]:
         """Guard against invoking the service without input data."""
-        return r[m.Ldif.ParseResponse].fail(
+        return r[m.Ldif.ParseResponse].fail_op(
+            "execute ldif parser",
             "FlextLdifParser requires input data. Use parse_string() or parse_ldif_file().",
         )
 
 
-__all__ = ["FlextLdifParser", "FlextLdifParserMixin"]
+__all__: list[str] = ["FlextLdifParser", "FlextLdifParserMixin"]

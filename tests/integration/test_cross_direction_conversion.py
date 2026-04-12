@@ -279,4 +279,4 @@ class TestsTestFlextLdifCrossDirectionConversion:
         assert "accessDirectiveMatch" not in converted_attribute
 
 
-__all__ = ["TestsTestFlextLdifCrossDirectionConversion"]
+__all__: list[str] = ["TestsTestFlextLdifCrossDirectionConversion"]

@@ -1543,4 +1543,4 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
 
 c = TestsFlextLdifConstants
 
-__all__ = ["TestsFlextLdifConstants", "c"]
+__all__: list[str] = ["TestsFlextLdifConstants", "c"]

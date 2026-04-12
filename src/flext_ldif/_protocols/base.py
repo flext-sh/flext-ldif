@@ -683,4 +683,4 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
 
-__all__ = ["FlextLdifProtocolsBase"]
+__all__: list[str] = ["FlextLdifProtocolsBase"]

@@ -39,4 +39,4 @@ class FlextLdifSettings(FlextSettings):
     ] = c.Ldif.SettingsDefaults.DEFAULT_STRICT_VALIDATION
 
 
-__all__ = ["FlextLdifSettings"]
+__all__: list[str] = ["FlextLdifSettings"]

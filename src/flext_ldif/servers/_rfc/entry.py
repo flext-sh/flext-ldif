@@ -59,4 +59,4 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             )
 
 
-__all__ = ["FlextLdifServersRfcEntry"]
+__all__: list[str] = ["FlextLdifServersRfcEntry"]
