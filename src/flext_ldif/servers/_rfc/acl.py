@@ -114,7 +114,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         self,
         permission: str,
         _feature_id: str | None,
-        _metadata: t.MutableContainerMapping,
+        _metadata: t.MutableRecursiveContainerMapping,
     ) -> str:
         """Convert RFC permission back to server-specific format."""
         return permission
@@ -127,7 +127,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
     def _normalize_permission(
         self,
         permission: str,
-        _metadata: t.MutableContainerMapping,
+        _metadata: t.MutableRecursiveContainerMapping,
     ) -> tuple[str, str | None]:
         """Normalize a server-specific permission to RFC standard."""
         return (permission, None)

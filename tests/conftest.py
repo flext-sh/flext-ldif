@@ -428,7 +428,7 @@ def oud_acl_quirk(
 
 
 @pytest.fixture(scope="session")
-def ldap_container(worker_id: str) -> t.ContainerMapping:
+def ldap_container(worker_id: str) -> t.RecursiveContainerMapping:
     """Ensure shared OpenLDAP container is available for integration tests.
 
     Uses centralized infrastructure: c.Ldif.Tests for constants,
@@ -507,7 +507,7 @@ def ldap_container(worker_id: str) -> t.ContainerMapping:
 
 
 @pytest.fixture(scope="session")
-def ldap_container_shared(ldap_container: t.ContainerMapping) -> str:
+def ldap_container_shared(ldap_container: t.RecursiveContainerMapping) -> str:
     """Provide LDAP connection URL for tests requiring Docker container."""
     default_url = f"ldap://localhost:{c.Ldif.Tests.DOCKER_PORT}"
     return str(ldap_container.get("server_url", default_url))
@@ -546,7 +546,7 @@ def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
 
 @pytest.fixture
 def ldap_connection(
-    ldap_container: t.ContainerMapping,
+    ldap_container: t.RecursiveContainerMapping,
 ) -> Generator[p.Ldap.Ldap3Connection]:
     """Provide a bound LDAP connection or skip when unavailable."""
     server_url = str(

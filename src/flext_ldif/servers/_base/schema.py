@@ -225,10 +225,10 @@ class FlextLdifServersBaseSchema(
         metadata_extensions["schema_original_string_complete"] = attr_definition
         quirk_type = FlextLdifServersBaseSchema._resolve_quirk_type(server_type)
         metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = quirk_type.value
-        extensions_typed: t.MutableContainerMapping = {}
+        extensions_typed: t.MutableRecursiveContainerMapping = {}
         for key, val in metadata_extensions.items():
             if isinstance(val, list):
-                list_typed: t.NormalizedValue = list(val)
+                list_typed: t.RecursiveContainer = list(val)
                 extensions_typed[key] = list_typed
             elif val is not None:
                 extensions_typed[key] = val

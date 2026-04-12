@@ -108,10 +108,10 @@ class FlextLdifServersBaseSchemaAcl(
     def create_metadata(
         self,
         original_format: str,
-        extensions: t.MutableContainerMapping | None = None,
+        extensions: t.MutableRecursiveContainerMapping | None = None,
     ) -> m.Ldif.QuirkMetadata:
         """Create ACL quirk metadata."""
-        all_extensions: t.MutableContainerMapping = {
+        all_extensions: t.MutableRecursiveContainerMapping = {
             "original_format": original_format,
         }
         if extensions:
@@ -186,7 +186,7 @@ class FlextLdifServersBaseSchemaAcl(
 
     def _coerce_acl_data(
         self,
-        value: str | m.Ldif.Acl | t.NormalizedValue,
+        value: str | m.Ldif.Acl | t.RecursiveContainer,
     ) -> str | m.Ldif.Acl | None:
         """Coerce generic value to ACL payload union."""
         if value is None:
@@ -203,7 +203,7 @@ class FlextLdifServersBaseSchemaAcl(
             )
             return None
 
-    def _coerce_operation(self, value: t.NormalizedValue) -> str | None:
+    def _coerce_operation(self, value: t.RecursiveContainer) -> str | None:
         """Coerce operation token to supported ACL operation."""
         if not isinstance(value, str):
             return None
@@ -253,7 +253,7 @@ class FlextLdifServersBaseSchemaAcl(
 
     def _extract_acl_parameters(
         self,
-        kwargs: t.MutableContainerMapping,
+        kwargs: t.MutableRecursiveContainerMapping,
     ) -> tuple[str | m.Ldif.Acl | None, str | None]:
         """Extract and validate ACL operation parameters from kwargs."""
         data_raw = kwargs.get("data")
@@ -289,7 +289,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _resolve_data(
         self,
         data: str | m.Ldif.Acl | None,
-        kwargs: t.ContainerMapping,
+        kwargs: t.RecursiveContainerMapping,
     ) -> str | m.Ldif.Acl | None:
         """Resolve data from parameter or kwargs."""
         if data is not None:
@@ -300,7 +300,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _resolve_operation(
         self,
         operation: str | None,
-        kwargs: t.ContainerMapping,
+        kwargs: t.RecursiveContainerMapping,
     ) -> str | None:
         """Resolve operation from parameter or kwargs."""
         if operation is not None:

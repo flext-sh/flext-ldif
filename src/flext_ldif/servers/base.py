@@ -100,7 +100,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         """Override __new__ to support auto-execute and processor instantiation."""
         instance: Self = object.__new__(cls)
         filtered_kwargs: t.MutableConfigValueMapping = {}
-        execute_kwargs: t.MutableContainerMapping = {}
+        execute_kwargs: t.MutableRecursiveContainerMapping = {}
         for k, v in kwargs.items():
             value = v
             if isinstance(value, (str, float, bool)):
@@ -166,7 +166,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     @classmethod
     def _extract_execute_params(
         cls,
-        kwargs: t.MutableContainerMapping,
+        kwargs: t.MutableRecursiveContainerMapping,
     ) -> tuple[str | None, MutableSequence[m.Ldif.Entry] | None, str | None]:
         """Extract type-safe execution parameters from kwargs."""
         return (
@@ -176,10 +176,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         )
 
     @classmethod
-    def _get_priority_from_mro(cls, quirk_class: type[t.NormalizedValue]) -> int:
+    def _get_priority_from_mro(cls, quirk_class: type[t.RecursiveContainer]) -> int:
         """Get priority from parent class Constants via MRO traversal."""
 
-        def is_valid_server_class(mro_cls: type[t.NormalizedValue]) -> bool:
+        def is_valid_server_class(mro_cls: type[t.RecursiveContainer]) -> bool:
             """Check if MRO class is a valid server class with PRIORITY."""
             if not mro_cls.__name__.startswith("FlextLdifServers"):
                 return False
@@ -189,7 +189,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             priority = getattr(constants, "PRIORITY", None)
             return isinstance(priority, int)
 
-        def extract_priority(mro_cls: type[t.NormalizedValue]) -> int | None:
+        def extract_priority(mro_cls: type[t.RecursiveContainer]) -> int | None:
             """Extract priority if it's a valid integer."""
             constants = getattr(mro_cls, "Constants", None)
             if constants is None:
@@ -219,10 +219,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         raise AttributeError(msg)
 
     @classmethod
-    def _get_server_type_from_mro(cls, quirk_class: type[t.NormalizedValue]) -> str:
+    def _get_server_type_from_mro(cls, quirk_class: type[t.RecursiveContainer]) -> str:
         """Get server_type from parent class Constants via MRO traversal."""
 
-        def is_valid_server_class(mro_cls: type[t.NormalizedValue]) -> bool:
+        def is_valid_server_class(mro_cls: type[t.RecursiveContainer]) -> bool:
             """Check if MRO class is a valid server class with SERVER_TYPE."""
             if not mro_cls.__name__.startswith("FlextLdifServers"):
                 return False
@@ -232,7 +232,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             server_type = getattr(constants, "SERVER_TYPE", None)
             return isinstance(server_type, str)
 
-        def extract_server_type(mro_cls: type[t.NormalizedValue]) -> str | None:
+        def extract_server_type(mro_cls: type[t.RecursiveContainer]) -> str | None:
             """Extract server type if it's a valid string."""
             constants = getattr(mro_cls, "Constants", None)
             if constants is None:
@@ -263,15 +263,15 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     def _register_in_registry(
         cls,
         quirk_instance: p.Ldif.SchemaQuirk | FlextLdifServersBase,
-        registry: p.Ldif.QuirkRegistry | t.NormalizedValue,
+        registry: p.Ldif.QuirkRegistry | t.RecursiveContainer,
     ) -> None:
         """Helper method to register a quirk instance in the registry."""
 
         def validate_registry(
-            registry_obj: p.Ldif.QuirkRegistry | t.NormalizedValue,
+            registry_obj: p.Ldif.QuirkRegistry | t.RecursiveContainer,
         ) -> (
             Callable[
-                [str, p.Ldif.SchemaQuirk | t.NormalizedValue | FlextLdifServersBase],
+                [str, p.Ldif.SchemaQuirk | t.RecursiveContainer | FlextLdifServersBase],
                 None,
             ]
             | None
@@ -284,7 +284,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 def typed_register(
                     server_type: str,
                     quirk: p.Ldif.SchemaQuirk
-                    | t.NormalizedValue
+                    | t.RecursiveContainer
                     | FlextLdifServersBase,
                 ) -> None:
                     _ = captured(server_type, quirk)
@@ -294,7 +294,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
         def perform_registration(
             register_func: Callable[
-                [str, p.Ldif.SchemaQuirk | t.NormalizedValue | FlextLdifServersBase],
+                [str, p.Ldif.SchemaQuirk | t.RecursiveContainer | FlextLdifServersBase],
                 None,
             ]
             | None,
@@ -314,7 +314,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     @staticmethod
     def _extract_entries(
-        kwargs: t.MutableContainerMapping,
+        kwargs: t.MutableRecursiveContainerMapping,
     ) -> MutableSequence[m.Ldif.Entry] | None:
         """Extract and validate entries parameter."""
         if "entries" not in kwargs:
@@ -338,7 +338,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     @staticmethod
     def _extract_ldif_text(
-        kwargs: t.MutableContainerMapping,
+        kwargs: t.MutableRecursiveContainerMapping,
     ) -> str | None:
         """Extract and validate ldif_text parameter."""
         if "ldif_text" not in kwargs:
@@ -351,7 +351,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     @staticmethod
     def _extract_operation(
-        kwargs: t.MutableContainerMapping,
+        kwargs: t.MutableRecursiveContainerMapping,
     ) -> str | None:
         """Extract and validate operation parameter."""
         if "operation" not in kwargs:

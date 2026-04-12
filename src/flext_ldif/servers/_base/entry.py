@@ -69,11 +69,11 @@ class FlextLdifServersBaseEntry(
     ) -> FlextLdifModelsSettings.WriteFormatOptions | None:
         if metadata is None:
             return None
-        format_options_raw: t.NormalizedValue | None = metadata.extensions.get(
+        format_options_raw: t.RecursiveContainer | None = metadata.extensions.get(
             "write_format_options",
         )
         if isinstance(format_options_raw, Mapping):
-            format_options_map: t.MutableContainerMapping = {}
+            format_options_map: t.MutableRecursiveContainerMapping = {}
             for raw_key, raw_value in format_options_raw.items():
                 key = str(raw_key)
                 format_options_map[key] = raw_value
@@ -116,9 +116,11 @@ class FlextLdifServersBaseEntry(
         return False
 
     @override
-    def execute(self, **kwargs: t.MutableContainerMapping) -> r[m.Ldif.Entry | str]:
+    def execute(
+        self, **kwargs: t.MutableRecursiveContainerMapping
+    ) -> r[m.Ldif.Entry | str]:
         """Execute entry operation (parse/write)."""
-        kwargs_map: MutableMapping[str, t.MutableContainerMapping] = kwargs
+        kwargs_map: MutableMapping[str, t.MutableRecursiveContainerMapping] = kwargs
         ldif_content = kwargs_map.get("ldif_content")
         entry_model = kwargs_map.get("entry_model")
         if isinstance(ldif_content, str):
@@ -215,7 +217,7 @@ class FlextLdifServersBaseEntry(
         self,
         write_options: FlextLdifModelsSettings.WriteFormatOptions
         | FlextLdifModelsDomainsEntries.WriteOptions
-        | t.NormalizedValue,
+        | t.RecursiveContainer,
     ) -> FlextLdifModelsDomainsEntries.WriteOptions:
         if isinstance(write_options, FlextLdifModelsDomainsEntries.WriteOptions):
             return write_options
@@ -334,7 +336,7 @@ class FlextLdifServersBaseEntry(
         use_original_acl_format_as_name = False
         hidden_attributes: set[str] = set()
         acl_original_format: str | None = None
-        extensions_data: t.MutableContainerMapping = {}
+        extensions_data: t.MutableRecursiveContainerMapping = {}
         if entry_data.metadata:
             metadata_extensions = entry_data.metadata.extensions
             if u.matches_type(metadata_extensions, Mapping):

@@ -476,7 +476,7 @@ class FlextLdifModelsResults:
         def keys(self) -> MutableSequence[str]:
             return list(self.model_fields_set)
 
-        def _resolve_key(self, key: str) -> t.NormalizedValue:
+        def _resolve_key(self, key: str) -> t.RecursiveContainer:
             if key in type(self).model_fields:
                 return getattr(self, key)
             extra = self.__pydantic_extra__

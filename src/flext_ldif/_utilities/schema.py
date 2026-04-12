@@ -215,7 +215,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_metadata_extensions(
-        extensions_raw: t.MutableContainerMapping,
+        extensions_raw: t.MutableRecursiveContainerMapping,
     ) -> MutableMapping[
         str,
         t.Scalar
@@ -253,9 +253,9 @@ class FlextLdifUtilitiesSchema:
     def _convert_metadata_value(
         value: t.Scalar
         | datetime
-        | t.MutableContainerList
-        | MutableMapping[t.NormalizedValue, t.NormalizedValue]
-        | t.ContainerMapping,
+        | t.MutableRecursiveContainerList
+        | MutableMapping[t.RecursiveContainer, t.RecursiveContainer]
+        | t.RecursiveContainerMapping,
     ) -> (
         t.Scalar
         | MutableSequence[str]
@@ -268,7 +268,7 @@ class FlextLdifUtilitiesSchema:
         if isinstance(value, list):
             converted_list: MutableSequence[str] = []
             for index in range(len(value)):
-                item_value: t.NormalizedValue = value[index]
+                item_value: t.RecursiveContainer = value[index]
                 converted_list.append(str(item_value))
             return converted_list
         if isinstance(value, Mapping):
@@ -287,7 +287,10 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_nested_metadata_value(
-        value: t.Scalar | datetime | t.MutableContainerList | t.NormalizedValue,
+        value: t.Scalar
+        | datetime
+        | t.MutableRecursiveContainerList
+        | t.RecursiveContainer,
     ) -> t.Scalar | MutableSequence[str]:
         if u.primitive(value):
             return value
@@ -296,27 +299,27 @@ class FlextLdifUtilitiesSchema:
         if FlextLdifUtilitiesSchema._is_object_sequence(value):
             converted_nested_list: MutableSequence[str] = []
             for index in range(len(value)):
-                nested_item_value: t.NormalizedValue = value[index]
+                nested_item_value: t.RecursiveContainer = value[index]
                 converted_nested_list.append(str(nested_item_value))
             return converted_nested_list
         return str(value)
 
     @staticmethod
     def _is_object_list(
-        value: t.NormalizedValue,
-    ) -> TypeIs[t.MutableContainerList]:
+        value: t.RecursiveContainer,
+    ) -> TypeIs[t.MutableRecursiveContainerList]:
         return isinstance(value, list)
 
     @staticmethod
     def _is_object_mapping(
-        value: t.NormalizedValue,
-    ) -> TypeIs[t.ContainerMapping]:
+        value: t.RecursiveContainer,
+    ) -> TypeIs[t.RecursiveContainerMapping]:
         return isinstance(value, Mapping)
 
     @staticmethod
     def _is_object_sequence(
-        value: t.NormalizedValue,
-    ) -> TypeIs[t.MutableContainerList]:
+        value: t.RecursiveContainer,
+    ) -> TypeIs[t.MutableRecursiveContainerList]:
         return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
     @staticmethod
@@ -634,7 +637,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _validate_attribute_syntax(
         syntax: str | None,
-    ) -> t.MutableContainerMapping | None:
+    ) -> t.MutableRecursiveContainerMapping | None:
         """Validate syntax OID and return validation result."""
         if not syntax or not syntax.strip():
             return None
@@ -654,10 +657,10 @@ class FlextLdifUtilitiesSchema:
         syntax_extensions[c.Ldif.SYNTAX_OID_VALID] = (
             c.Ldif.SYNTAX_VALIDATION_ERROR not in syntax_extensions
         )
-        result_dict: t.MutableContainerMapping = {}
+        result_dict: t.MutableRecursiveContainerMapping = {}
         for key, val in syntax_extensions.items():
             if isinstance(val, list):
-                list_typed: t.NormalizedValue = list(val)
+                list_typed: t.RecursiveContainer = list(val)
                 result_dict[key] = list_typed
             elif val is not None:
                 result_dict[key] = val
@@ -741,13 +744,13 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def build_metadata(
         definition: str,
-        additional_extensions: t.MutableContainerMapping | None = None,
-    ) -> t.MutableContainerMapping:
+        additional_extensions: t.MutableRecursiveContainerMapping | None = None,
+    ) -> t.MutableRecursiveContainerMapping:
         """Build metadata extensions dictionary for schema definitions."""
         extensions_raw = FlextLdifUtilitiesParser.extract_extensions(definition)
-        extensions: t.MutableContainerMapping = {}
+        extensions: t.MutableRecursiveContainerMapping = {}
         for key, val in extensions_raw.items():
-            typed_val: t.NormalizedValue = list(val)
+            typed_val: t.RecursiveContainer = list(val)
             extensions[key] = typed_val
         extensions[c.Ldif.ORIGINAL_FORMAT] = definition.strip()
         if additional_extensions:
@@ -1026,18 +1029,18 @@ class FlextLdifUtilitiesSchema:
         attr_definition: str,
         *,
         validate_syntax: bool = True,
-    ) -> r[t.MutableContainerMapping]:
+    ) -> r[t.MutableRecursiveContainerMapping]:
         """Parse RFC 4512 attribute definition into structured data."""
         basic_fields_result = FlextLdifUtilitiesSchema._extract_attribute_basic_fields(
             attr_definition,
         )
         if basic_fields_result.failure:
-            return r[t.MutableContainerMapping].fail(basic_fields_result.error)
+            return r[t.MutableRecursiveContainerMapping].fail(basic_fields_result.error)
         oid, name, desc = basic_fields_result.value
         syntax, length = FlextLdifUtilitiesSchema._extract_attribute_syntax(
             attr_definition,
         )
-        syntax_validation_result: t.MutableContainerMapping | None = None
+        syntax_validation_result: t.MutableRecursiveContainerMapping | None = None
         if validate_syntax:
             syntax_validation_result = (
                 FlextLdifUtilitiesSchema._validate_attribute_syntax(syntax)
@@ -1051,7 +1054,7 @@ class FlextLdifUtilitiesSchema:
         sup, usage = FlextLdifUtilitiesSchema._extract_attribute_sup_usage(
             attr_definition,
         )
-        additional_extensions_converted: t.MutableContainerMapping | None = (
+        additional_extensions_converted: t.MutableRecursiveContainerMapping | None = (
             syntax_validation_result
         )
         extensions_raw = FlextLdifUtilitiesSchema.build_metadata(
@@ -1076,7 +1079,7 @@ class FlextLdifUtilitiesSchema:
                     syntax_validation_result,
                 )
             )
-        parsed_dict: t.MutableContainerMapping = {
+        parsed_dict: t.MutableRecursiveContainerMapping = {
             "oid": oid,
             "name": name,
             "desc": desc,
@@ -1092,12 +1095,12 @@ class FlextLdifUtilitiesSchema:
             "metadata_extensions": extensions_converted,
             "syntax_validation": syntax_validation_converted,
         }
-        return r[t.MutableContainerMapping].ok(parsed_dict)
+        return r[t.MutableRecursiveContainerMapping].ok(parsed_dict)
 
     @staticmethod
     def parse_objectclass(
         oc_definition: str,
-    ) -> t.MutableContainerMapping:
+    ) -> t.MutableRecursiveContainerMapping:
         """Parse RFC 4512 objectClass definition into structured data."""
         basic_fields_result = (
             FlextLdifUtilitiesSchema._extract_objectclass_basic_fields(oc_definition)
@@ -1115,7 +1118,7 @@ class FlextLdifUtilitiesSchema:
         extensions_converted = FlextLdifUtilitiesSchema._convert_metadata_extensions(
             extensions_raw,
         )
-        parsed_dict: t.MutableContainerMapping = {
+        parsed_dict: t.MutableRecursiveContainerMapping = {
             "oid": oid,
             "name": name,
             "desc": desc,

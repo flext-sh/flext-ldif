@@ -12,10 +12,10 @@ class FlextLdifUtilitiesCollectionLdif:
 
     @staticmethod
     def find(
-        items: t.ContainerList,
+        items: t.RecursiveContainerList,
         *,
         predicate: Callable[..., bool],
-    ) -> t.NormalizedValue | None:
+    ) -> t.RecursiveContainer | None:
         """Find first item matching predicate."""
         for elem in items:
             if predicate(elem):

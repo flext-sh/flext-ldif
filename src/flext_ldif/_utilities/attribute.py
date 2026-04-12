@@ -38,8 +38,9 @@ class FlextLdifUtilitiesAttribute:
         definition: str,
         *,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], r[t.MutableContainerMapping]] | None = None,
-    ) -> r[t.MutableContainerMapping]:
+        parse_parts_hook: Callable[[str], r[t.MutableRecursiveContainerMapping]]
+        | None = None,
+    ) -> r[t.MutableRecursiveContainerMapping]:
         """Parse RFC 4512 attribute definition into structured data."""
         _ = server_type
         if parse_parts_hook:

@@ -63,7 +63,7 @@ class FlextLdifUtilities(FlextUtilities):
             attr_definition: str,
             *,
             validate_syntax: bool = True,
-        ) -> r[t.MutableContainerMapping]:
+        ) -> r[t.MutableRecursiveContainerMapping]:
             """Route to Schema.parse_attribute (resolves Attribute vs Schema)."""
             return FlextLdifUtilitiesSchema.parse_attribute(
                 attr_definition,
@@ -74,7 +74,7 @@ class FlextLdifUtilities(FlextUtilities):
         @override
         def parse_objectclass(
             oc_definition: str,
-        ) -> t.MutableContainerMapping:
+        ) -> t.MutableRecursiveContainerMapping:
             """Route to Schema.parse_objectclass (resolves ObjectClass vs Schema)."""
             return FlextLdifUtilitiesSchema.parse_objectclass(oc_definition)
 

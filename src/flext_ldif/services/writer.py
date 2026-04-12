@@ -23,7 +23,7 @@ class FlextLdifWriterMixin:
     def _normalize_format_options(
         format_options: m.Ldif.WriteFormatOptions
         | m.Ldif.WriteOptions
-        | t.NormalizedValue
+        | t.RecursiveContainer
         | None,
     ) -> m.Ldif.WriteFormatOptions:
         """Normalize format options to WriteFormatOptions."""
@@ -44,9 +44,9 @@ class FlextLdifWriterMixin:
 
     @staticmethod
     def _normalize_write_format(
-        d: t.MutableContainerMapping,
-    ) -> t.MutableContainerMapping:
-        mapped: t.MutableContainerMapping = {
+        d: t.MutableRecursiveContainerMapping,
+    ) -> t.MutableRecursiveContainerMapping:
+        mapped: t.MutableRecursiveContainerMapping = {
             "base64_encode_binary": d.get("base64_encode_binary"),
             "sort_attributes": d.get("sort_entries"),
             "include_dn_comments": d.get("include_comments"),
@@ -268,7 +268,7 @@ class FlextLdifWriter(FlextLdifWriterMixin, s[m.Ldif.WriteResponse]):
         params: t.ValueOrModel | None = None,
     ) -> r[m.Ldif.WriteResponse]:
         """Execute write operation with parameters."""
-        params_mapping: t.MutableContainerMapping = {}
+        params_mapping: t.MutableRecursiveContainerMapping = {}
         if isinstance(params, Mapping):
             params_mapping = {str(k): v for k, v in params.items()}
         params_data = params_mapping

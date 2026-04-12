@@ -1,7 +1,7 @@
 """Tests for Novell eDirectory (NDS) server-specific LDIF quirks handling.
 
 This module tests the FlextLdifServersNovell implementation for handling Novell
-eDirectory-specific attributes, t.NormalizedValue classes, and entries in LDIF format.
+eDirectory-specific attributes, t.RecursiveContainer classes, and entries in LDIF format.
 """
 
 from __future__ import annotations

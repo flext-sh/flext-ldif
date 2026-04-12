@@ -212,7 +212,7 @@ def write(self, entries: Sequence[FlextLdifModels.Entry]) -> r[str]:
 
 ##### filter_persons(entries)
 
-Filter entries with person t.NormalizedValue class.
+Filter entries with person t.RecursiveContainer class.
 
 ```python
 def filter_persons(
@@ -236,7 +236,7 @@ def filter_persons(
 
 ##### filter_groups(entries)
 
-Filter entries with group t.NormalizedValue classes.
+Filter entries with group t.RecursiveContainer classes.
 
 ```python
 def filter_groups(
@@ -258,13 +258,13 @@ def filter_groups(
 
 ##### filter_by_objectclass(entries, object_class)
 
-Filter entries by specific t.NormalizedValue class.
+Filter entries by specific t.RecursiveContainer class.
 
 ```python
 def filter_by_objectclass(
     self, entries: Sequence[FlextLdifModels.Entry], object_class: str
 ) -> r[Sequence[FlextLdifModels.Entry]]:
-    """Filter entries by t.NormalizedValue class.
+    """Filter entries by t.RecursiveContainer class.
 
     Args:
         entries: List of entries to filter
@@ -351,8 +351,8 @@ class QuirksConversionMatrix:
         source,
         target,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
-        data: str | t.ContainerMapping,
-    ) -> r[str | t.ContainerMapping]:
+        data: str | t.RecursiveContainerMapping,
+    ) -> r[str | t.RecursiveContainerMapping]:
         """Convert data from source quirk format to target quirk format via RFC.
 
         Args:
@@ -371,8 +371,8 @@ class QuirksConversionMatrix:
         source,
         target,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
-        data_batch: Sequence[str | t.ContainerMapping],
-    ) -> r[Sequence[str | t.ContainerMapping]]:
+        data_batch: Sequence[str | t.RecursiveContainerMapping],
+    ) -> r[Sequence[str | t.RecursiveContainerMapping]]:
         """Convert batch of data from source to target quirk format via RFC.
 
         Args:
@@ -395,7 +395,7 @@ class QuirksConversionMatrix:
         """
 
     def validate_oud_conversion(
-        self, converted_data: Sequence[str | t.ContainerMapping]
+        self, converted_data: Sequence[str | t.RecursiveContainerMapping]
     ) -> r[bool]:
         """Validate converted data for OUD compatibility.
 
@@ -502,13 +502,13 @@ class Entry(BaseModel):
     )
 
     def get_object_classes(self) -> t.StringList:
-        """Get t.NormalizedValue class values for this entry."""
+        """Get t.RecursiveContainer class values for this entry."""
 
     def get_attribute_values(self, attr_name: str) -> t.StringList:
         """Get values for specific attribute."""
 
     def has_object_class(self, object_class: str) -> bool:
-        """Check if entry has specific t.NormalizedValue class."""
+        """Check if entry has specific t.RecursiveContainer class."""
 
     def is_person(self) -> bool:
         """Check if entry represents a person."""

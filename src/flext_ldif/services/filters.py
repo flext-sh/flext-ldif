@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Mapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableSequence
 from typing import Final
 
 from flext_ldif import m, r, t, u
@@ -145,15 +145,15 @@ class FlextLdifFilters:
     def filter_entry_attributes(
         cls,
         entry: m.Ldif.Entry,
-        forbidden_attrs: Sequence[str],
-        forbidden_ocs: Sequence[str],
+        forbidden_attrs: t.StrSequence,
+        forbidden_ocs: t.StrSequence,
     ) -> m.Ldif.Entry:
         """Strip forbidden attributes and objectClasses from an entry."""
         filtered_entry = entry
         if entry.attributes and forbidden_attrs:
             attrs_dict = entry.attributes.attributes
             forbidden_set = {attr.lower() for attr in forbidden_attrs}
-            attrs_to_remove: Sequence[str] = [
+            attrs_to_remove: t.StrSequence = [
                 k for k in attrs_dict if k.lower() in forbidden_set
             ]
             if attrs_to_remove:

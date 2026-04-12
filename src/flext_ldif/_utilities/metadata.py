@@ -28,9 +28,9 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _add_to_dict_metadata(
-        metadata: t.MutableContainerMapping,
+        metadata: t.MutableRecursiveContainerMapping,
         metadata_key: str,
-        item_data: t.NormalizedValue,
+        item_data: t.RecursiveContainer,
     ) -> None:
         """Add item to dict metadata."""
         value = metadata.get(metadata_key)
@@ -54,9 +54,9 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _add_to_list_metadata(
-        metadata: t.MutableContainerMapping,
+        metadata: t.MutableRecursiveContainerMapping,
         metadata_key: str,
-        item_data: t.NormalizedValue,
+        item_data: t.RecursiveContainer,
     ) -> None:
         """Add item to list metadata."""
         value = metadata.get(metadata_key)
@@ -101,7 +101,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _build_schema_format_model(
         definition: str,
-        combined: t.MutableContainerMapping,
+        combined: t.MutableRecursiveContainerMapping,
     ) -> m.Ldif.SchemaFormatDetails:
         """Build SchemaFormatDetails model from combined details."""
         known_fields = {
@@ -112,10 +112,10 @@ class FlextLdifUtilitiesMetadata:
             "x_origin",
             "x_ordered",
         }
-        known_field_values: t.MutableContainerMapping = {
+        known_field_values: t.MutableRecursiveContainerMapping = {
             "original_string_complete": definition,
         }
-        extension_kwargs: t.MutableContainerMapping = {}
+        extension_kwargs: t.MutableRecursiveContainerMapping = {}
         for write_option_key, value in combined.items():
             if write_option_key in known_fields:
                 known_field_values[write_option_key] = value
@@ -132,9 +132,9 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _extract_all_schema_details(
         definition: str,
-    ) -> t.MutableContainerMapping:
+    ) -> t.MutableRecursiveContainerMapping:
         """Extract all schema formatting details into combined dict."""
-        combined: t.MutableContainerMapping = {}
+        combined: t.MutableRecursiveContainerMapping = {}
         extractors: Sequence[
             Callable[
                 [str], Mapping[str, str | bool | int | MutableSequence[str] | None]
@@ -171,8 +171,8 @@ class FlextLdifUtilitiesMetadata:
         field_order, field_positions = FlextLdifUtilitiesMetadata._extract_field_order(
             definition,
         )
-        field_order_typed: t.NormalizedValue = list(field_order)
-        field_positions_typed: t.NormalizedValue = dict(field_positions)
+        field_order_typed: t.RecursiveContainer = list(field_order)
+        field_positions_typed: t.RecursiveContainer = dict(field_positions)
         combined["field_order"] = field_order_typed
         combined["field_positions"] = field_positions_typed
         spacing_result = FlextLdifUtilitiesMetadata._extract_spacing_between_fields(
@@ -193,7 +193,7 @@ class FlextLdifUtilitiesMetadata:
                 "X-ORIGIN": "X-ORIGIN",
             },
         )
-        spacing_typed: t.NormalizedValue = dict(spacing_result)
+        spacing_typed: t.RecursiveContainer = dict(spacing_result)
         combined["spacing_between_fields"] = spacing_typed
         return combined
 
@@ -551,7 +551,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _get_metadata_dict(
         model: p.Ldif.ModelWithValidationMetadata,
-    ) -> t.MutableContainerMapping:
+    ) -> t.MutableRecursiveContainerMapping:
         """Get mutable metadata dict from model."""
         metadata_obj = getattr(model, "validation_metadata", None)
         if metadata_obj is None:
@@ -561,18 +561,18 @@ class FlextLdifUtilitiesMetadata:
         return {}
 
     @staticmethod
-    def _is_metadata_scalar(value: t.NormalizedValue) -> bool:
+    def _is_metadata_scalar(value: t.RecursiveContainer) -> bool:
         return value is None or u.scalar(value)
 
     @staticmethod
     def _is_metadata_scalar_typed(
-        value: t.NormalizedValue,
+        value: t.RecursiveContainer,
     ) -> TypeIs[t.Scalar | None]:
         return FlextLdifUtilitiesMetadata._is_metadata_scalar(value)
 
     @staticmethod
     def _normalize_dict_list(
-        values: t.MutableContainerList | MutableSequence[str],
+        values: t.MutableRecursiveContainerList | MutableSequence[str],
     ) -> MutableSequence[t.Scalar]:
         normalized: MutableSequence[t.Scalar] = []
         for item in values:
@@ -583,7 +583,7 @@ class FlextLdifUtilitiesMetadata:
         return normalized
 
     @staticmethod
-    def _normalize_metadata_list_item(item: t.NormalizedValue) -> t.Scalar | None:
+    def _normalize_metadata_list_item(item: t.RecursiveContainer) -> t.Scalar | None:
         if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(item):
             return item
         return str(item)
@@ -596,7 +596,7 @@ class FlextLdifUtilitiesMetadata:
         """Set validation_metadata on model (handles both mutable and frozen models)."""
         try:
             metadata_obj = metadata.to_dict()
-            normalized_metadata: t.MutableContainerMapping = {}
+            normalized_metadata: t.MutableRecursiveContainerMapping = {}
             for write_option_key, value in metadata_obj.items():
                 if u.primitive(value):
                     normalized_metadata[write_option_key] = value
@@ -611,7 +611,7 @@ class FlextLdifUtilitiesMetadata:
                     }
                 else:
                     normalized_metadata[write_option_key] = str(value)
-            config_root: MutableMapping[str, t.NormalizedValue | BaseModel] = dict(
+            config_root: MutableMapping[str, t.RecursiveContainer | BaseModel] = dict(
                 normalized_metadata,
             )
             object.__setattr__(
@@ -622,7 +622,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _update_conversion_path(
-        metadata: t.MutableContainerMapping,
+        metadata: t.MutableRecursiveContainerMapping,
         update_conversion_path: str,
     ) -> None:
         """Update conversion_path in metadata."""
@@ -662,11 +662,11 @@ class FlextLdifUtilitiesMetadata:
         original: str,
         converted: str | None,
         context: str = "entry",
-    ) -> t.MutableContainerMapping:
+    ) -> t.MutableRecursiveContainerMapping:
         """Analyze minimal differences between original and converted strings."""
         mk = c.Ldif
         empty_diffs: MutableSequence[str] = []
-        differences: t.MutableContainerMapping = {
+        differences: t.MutableRecursiveContainerMapping = {
             mk.HAS_DIFFERENCES: False,
             "context": context,
             "original": original,
@@ -717,7 +717,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def build_entry_metadata_extensions(
         quirk_type: str,
-    ) -> t.MutableContainerMapping:
+    ) -> t.MutableRecursiveContainerMapping:
         """Build metadata extensions for entry as a dictionary."""
         return {"quirk_type": quirk_type, "source_server": quirk_type}
 
@@ -726,21 +726,23 @@ class FlextLdifUtilitiesMetadata:
         settings: FlextLdifModelsSettings.EntryParseMetadataConfig,
     ) -> m.Ldif.QuirkMetadata:
         """Build QuirkMetadata for entry parsing with format preservation."""
-        server_data_dict: t.MutableContainerMapping = {}
-        dn_typed: t.NormalizedValue = settings.original_entry_dn
-        cleaned_typed: t.NormalizedValue = settings.cleaned_dn
-        base64_typed: t.NormalizedValue = settings.dn_was_base64
+        server_data_dict: t.MutableRecursiveContainerMapping = {}
+        dn_typed: t.RecursiveContainer = settings.original_entry_dn
+        cleaned_typed: t.RecursiveContainer = settings.cleaned_dn
+        base64_typed: t.RecursiveContainer = settings.dn_was_base64
         server_data_dict["original_entry_dn"] = dn_typed
         server_data_dict["cleaned_dn"] = cleaned_typed
         server_data_dict["dn_was_base64"] = base64_typed
         if settings.original_dn_line:
-            dn_line_typed: t.NormalizedValue = settings.original_dn_line
+            dn_line_typed: t.RecursiveContainer = settings.original_dn_line
             server_data_dict["original_dn_line"] = dn_line_typed
         if settings.original_attr_lines:
-            attr_lines_typed: t.NormalizedValue = list(settings.original_attr_lines)
+            attr_lines_typed: t.RecursiveContainer = list(settings.original_attr_lines)
             server_data_dict["original_attribute_lines"] = attr_lines_typed
         if settings.original_attribute_case:
-            attr_case_typed: t.NormalizedValue = dict(settings.original_attribute_case)
+            attr_case_typed: t.RecursiveContainer = dict(
+                settings.original_attribute_case
+            )
             server_data_dict["original_attribute_case"] = attr_case_typed
         server_data = FlextLdifModelsMetadata.EntryMetadata.model_validate(
             server_data_dict,
@@ -751,7 +753,7 @@ class FlextLdifUtilitiesMetadata:
         if settings.original_attr_lines:
             original_ldif_parts.extend(settings.original_attr_lines)
         original_ldif = "\n".join(original_ldif_parts) if original_ldif_parts else ""
-        extensions_dict: t.MutableContainerMapping = {}
+        extensions_dict: t.MutableRecursiveContainerMapping = {}
         mk = c.Ldif
         extensions_dict[mk.ORIGINAL_DN_COMPLETE] = settings.original_entry_dn
         dynamic_extensions = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
@@ -815,16 +817,18 @@ class FlextLdifUtilitiesMetadata:
         write_opts = getattr(entry_data.metadata, "write_options", None)
         if write_opts is None:
             return None
-        raw_extras: t.MutableContainerMapping | None = None
+        raw_extras: t.MutableRecursiveContainerMapping | None = None
         if isinstance(write_opts, BaseModel):
             model_extra_val = write_opts.model_extra
             if isinstance(model_extra_val, dict):
                 raw_extras = {str(k): v for k, v in model_extra_val.items()}
-        extras: t.MutableContainerMapping = {}
-        opt: t.NormalizedValue | None = None
+        extras: t.MutableRecursiveContainerMapping = {}
+        opt: t.RecursiveContainer | None = None
         if raw_extras is not None:
-            config_map_root: MutableMapping[str, t.NormalizedValue | BaseModel] = dict(
-                raw_extras,
+            config_map_root: MutableMapping[str, t.RecursiveContainer | BaseModel] = (
+                dict(
+                    raw_extras,
+                )
             )
             extras = {
                 extra_key: u.normalize_to_metadata(extra_value)

@@ -392,7 +392,7 @@ class FlextLdifModelsDomainEntry:
         def coerce_attributes_from_dict(
             cls,
             value: FlextLdifModelsDomainAttributes.Attributes
-            | t.MutableContainerMapping
+            | t.MutableRecursiveContainerMapping
             | None,
         ) -> FlextLdifModelsDomainAttributes.Attributes | None:
             """Convert dict to Attributes instance.
@@ -404,7 +404,7 @@ class FlextLdifModelsDomainEntry:
                 return None
             if isinstance(value, FlextLdifModelsDomainAttributes.Attributes):
                 return value
-            wrapped_value: t.MutableContainerMapping = value
+            wrapped_value: t.MutableRecursiveContainerMapping = value
             if "attributes" not in value:
                 wrapped_value = {"attributes": value}
             return FlextLdifModelsDomainAttributes.Attributes.model_validate(
@@ -415,7 +415,10 @@ class FlextLdifModelsDomainEntry:
         @classmethod
         def coerce_dn_from_string(
             cls,
-            value: FlextLdifModelsDomainDN.DN | t.MutableContainerMapping | str | None,
+            value: FlextLdifModelsDomainDN.DN
+            | t.MutableRecursiveContainerMapping
+            | str
+            | None,
         ) -> FlextLdifModelsDomainDN.DN | None:
             """Convert string DN to DN instance.
 
@@ -546,10 +549,12 @@ class FlextLdifModelsDomainEntry:
         @classmethod
         def ensure_metadata_initialized(
             cls,
-            data: t.MutableContainerMapping,
+            data: t.MutableRecursiveContainerMapping,
         ) -> MutableMapping[
             str,
-            t.NormalizedValue | datetime | FlextLdifModelsDomainMetadata.QuirkMetadata,
+            t.RecursiveContainer
+            | datetime
+            | FlextLdifModelsDomainMetadata.QuirkMetadata,
         ]:
             """Ensure metadata field is always initialized to a QuirkMetadata instance.
 
@@ -570,7 +575,7 @@ class FlextLdifModelsDomainEntry:
             """
             data_dict: MutableMapping[
                 str,
-                t.NormalizedValue
+                t.RecursiveContainer
                 | datetime
                 | FlextLdifModelsDomainMetadata.QuirkMetadata,
             ] = dict(data)
@@ -800,16 +805,16 @@ class FlextLdifModelsDomainEntry:
             server_type: c.Ldif.ServerTypeLiteral | None,
             source_entry: str | None,
             unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None,
-        ) -> t.MutableContainerMapping:
+        ) -> t.MutableRecursiveContainerMapping:
             """Build extension kwargs for DynamicMetadata."""
-            ext_kwargs: t.MutableContainerMapping = {}
+            ext_kwargs: t.MutableRecursiveContainerMapping = {}
             if server_type:
                 ext_kwargs["server_type"] = server_type
             if source_entry:
                 ext_kwargs["source_entry"] = source_entry
             if unconverted_attributes:
                 unconverted_dump = unconverted_attributes.model_dump()
-                unconverted_typed: t.NormalizedValue = unconverted_dump
+                unconverted_typed: t.RecursiveContainer = unconverted_dump
                 ext_kwargs["unconverted_attributes"] = unconverted_typed
             return ext_kwargs
 
@@ -1011,13 +1016,13 @@ class FlextLdifModelsDomainEntry:
             attributes: t.MutableAttributeMapping
             | FlextLdifModelsDomainAttributes.Attributes,
         ) -> FlextLdifModelsDomainAttributes.Attributes:
-            """Normalize attributes to Attributes t.NormalizedValue.
+            """Normalize attributes to Attributes t.RecursiveContainer.
 
             Args:
-                attributes: Attributes as dict or Attributes t.NormalizedValue
+                attributes: Attributes as dict or Attributes t.RecursiveContainer
 
             Returns:
-                Attributes t.NormalizedValue with normalized values
+                Attributes t.RecursiveContainer with normalized values
 
             Note:
                 Lenient processing: Empty attributes dict is accepted and will be captured

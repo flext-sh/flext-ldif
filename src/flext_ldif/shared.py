@@ -26,10 +26,10 @@ class FlextLdifShared:
     """Shared LDIF helpers — single class per module (no loose functions)."""
 
     @staticmethod
-    def _has_attr(obj: t.NormalizedValue, attr_name: str) -> bool:
-        """Check if an t.NormalizedValue has a non-None attribute (canonical implementation).
+    def _has_attr(obj: t.RecursiveContainer, attr_name: str) -> bool:
+        """Check if an t.RecursiveContainer has a non-None attribute (canonical implementation).
 
-        Uses a sentinel t.NormalizedValue to distinguish between attributes that are None
+        Uses a sentinel t.RecursiveContainer to distinguish between attributes that are None
         and attributes that don't exist at all.
         """
         return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR

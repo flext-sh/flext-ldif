@@ -358,7 +358,7 @@ class FlextLdifModelsDomainMetadata:
             cls,
             quirk_type: str | c.Ldif.ServerTypeLiteral | None = None,
             extensions: FlextLdifModelsMetadata.DynamicMetadata
-            | t.MutableContainerMapping
+            | t.MutableRecursiveContainerMapping
             | None = None,
         ) -> Self:
             """Factory method to create QuirkMetadata with extensions.

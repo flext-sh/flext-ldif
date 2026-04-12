@@ -7,13 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from collections.abc import MutableMapping, MutableSequence, Sequence
+from collections.abc import MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
-from flext_core import m, r
-from flext_ldif import FlextLdifModelsMetadata
+from flext_core import m
+from flext_ldif import FlextLdifModelsMetadata, r, t
 
 
 class FlextLdifModelsDomainDN:
@@ -35,7 +35,7 @@ class FlextLdifModelsDomainDN:
             Field(..., description="Final normalized DN (RFC 4514 compliant)"),
         ]
         transformations: Annotated[
-            Sequence[str],
+            t.StrSequence,
             Field(description="Ordered list of transformations applied"),
         ]
         had_tab_chars: Annotated[
@@ -73,11 +73,11 @@ class FlextLdifModelsDomainDN:
             ),
         ] = "valid"
         validation_warnings: Annotated[
-            Sequence[str],
+            t.StrSequence,
             Field(description="Non-fatal validation warnings"),
         ]
         validation_errors: Annotated[
-            Sequence[str],
+            t.StrSequence,
             Field(description="Fatal validation errors"),
         ]
 

@@ -93,7 +93,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             @staticmethod
             def create_real_entry(
                 dn: str | None = None,
-                attributes: Mapping[str, Sequence[str]] | None = None,
+                attributes: Mapping[str, t.StrSequence] | None = None,
                 server_type: str = "generic",
             ) -> m.Ldif.Entry:
                 """Create a real Entry model with valid data."""

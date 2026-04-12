@@ -92,7 +92,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         )
 
     @staticmethod
-    def _scalar_or_list_value(value: t.NormalizedValue) -> bool:
+    def _scalar_or_list_value(value: t.RecursiveContainer) -> bool:
         """Check if value is scalar metadata value or list."""
         return u.primitive(value) or isinstance(value, list)
 
@@ -153,7 +153,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     ) -> r[str]:
         """Build ACI permissions clause from ACL model."""
         perms = acl_data.permissions
-        target_perms_dict: t.MutableContainerMapping | None = None
+        target_perms_dict: t.MutableRecursiveContainerMapping | None = None
         if not perms and acl_data.metadata:
             extensions = acl_data.metadata.extensions
             target_perms_dict_raw = (
@@ -168,7 +168,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                     str(k): v for k, v in target_perms_dict_raw.items()
                 }
         if target_perms_dict:
-            perms_data: t.MutableContainerMapping = {}
+            perms_data: t.MutableRecursiveContainerMapping = {}
             for key, val in target_perms_dict.items():
                 k = str(key)
                 if isinstance(val, Mapping):
@@ -194,7 +194,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             else:
                 perms = None
         if not perms:
-            return r[str].fail("ACL model has no permissions t.NormalizedValue")
+            return r[str].fail("ACL model has no permissions t.RecursiveContainer")
         ops: MutableSequence[str] = [
             field_name
             for field_name in (
@@ -266,7 +266,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if not target and acl_data.metadata:
             extensions = acl_data.metadata.extensions
             target_dict = extensions.get("acl_target_target") if extensions else None
-            target_data: t.MutableContainerMapping = {}
+            target_data: t.MutableRecursiveContainerMapping = {}
             if isinstance(target_dict, Mapping):
                 for raw_key, raw_value in target_dict.items():
                     if isinstance(raw_value, Mapping):
@@ -443,7 +443,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Write RFC-compliant ACL model to OUD ACI string format (protected internal method)."""
         try:
             sc = FlextLdifServersOudConstants
-            extensions: t.MutableContainerMapping | None = (
+            extensions: t.MutableRecursiveContainerMapping | None = (
                 dict(acl_data.metadata.extensions.to_dict())
                 if acl_data.metadata and acl_data.metadata.extensions
                 else None

@@ -18,10 +18,10 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def _extract_extensions(
-        metadata: t.NormalizedValue,
-    ) -> MutableMapping[str, t.NormalizedValue | BaseModel] | None:
+        metadata: t.RecursiveContainer,
+    ) -> MutableMapping[str, t.RecursiveContainer | BaseModel] | None:
         """Extract extensions mapping from metadata (BaseModel or Mapping)."""
-        ext_raw: t.NormalizedValue | None = None
+        ext_raw: t.RecursiveContainer | None = None
         if isinstance(metadata, BaseModel):
             ext_raw = getattr(metadata, "extensions", None)
         elif isinstance(metadata, Mapping):
@@ -221,15 +221,15 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def determine_attribute_order(
-        entry_data: t.MutableContainerMapping,
-    ) -> MutableSequence[tuple[str, t.NormalizedValue]] | None:
+        entry_data: t.MutableRecursiveContainerMapping,
+    ) -> MutableSequence[tuple[str, t.RecursiveContainer]] | None:
         """Determine attribute processing order from entry metadata."""
         metadata = entry_data.get("_metadata")
         if metadata is None:
             return None
         attr_order_raw: MutableSequence[str] | None = None
         extensions_mapping: (
-            MutableMapping[str, t.NormalizedValue | BaseModel] | None
+            MutableMapping[str, t.RecursiveContainer | BaseModel] | None
         ) = FlextLdifUtilitiesWriter._extract_extensions(metadata)
         if extensions_mapping is not None:
             typed_extensions = t.ConfigMap(root=extensions_mapping).root
@@ -253,7 +253,7 @@ class FlextLdifUtilitiesWriter:
             return None
         attr_order = attr_order_raw
         skip_keys = {c.Ldif.DictKeys.DN, "_metadata", "server_type", "_acl_attributes"}
-        result: MutableSequence[tuple[str, t.NormalizedValue]] = [
+        result: MutableSequence[tuple[str, t.RecursiveContainer]] = [
             (key, entry_data[key])
             for key in attr_order
             if key in entry_data and key not in skip_keys

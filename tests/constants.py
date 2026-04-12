@@ -542,7 +542,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                         "country": 1,
                         "dcObject": 1,
                     }
-                    REMOVED_NAMESPACES: Final[Sequence[str]] = [
+                    REMOVED_NAMESPACES: Final[t.StrSequence] = [
                         "Parser",
                         "Writer",
                         "LdifValidation",
@@ -556,13 +556,13 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                         "LdifProject",
                         "Project",
                     ]
-                    REMOVED_COMMON_DICT: Final[Sequence[str]] = [
+                    REMOVED_COMMON_DICT: Final[t.StrSequence] = [
                         "ChangeDict",
                         "CategorizedDict",
                         "TreeDict",
                         "HierarchyDict",
                     ]
-                    REMOVED_ENTRY: Final[Sequence[str]] = [
+                    REMOVED_ENTRY: Final[t.StrSequence] = [
                         "EntryConfiguration",
                         "EntryValidation",
                         "EntryTransformation",
@@ -844,11 +844,11 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 class Oid:
                     """Constants for OID boolean conversion tests."""
 
-                    RFC_TO_OID_BOOLEAN: Final[Mapping[str, str]] = {
+                    RFC_TO_OID_BOOLEAN: Final[t.StrMapping] = {
                         "TRUE": "1",
                         "FALSE": "0",
                     }
-                    OID_TO_RFC_BOOLEAN: Final[Mapping[str, str]] = {
+                    OID_TO_RFC_BOOLEAN: Final[t.StrMapping] = {
                         "1": "TRUE",
                         "0": "FALSE",
                     }
@@ -931,7 +931,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 DEFAULT_TIMEOUT_MS: Final[int] = 5000
                 MAX_PARSE_TIME_PER_ENTRY: Final[int] = 1000
 
-                TEST_USERS: Final[Sequence[Mapping[str, str]]] = [
+                TEST_USERS: Final[Sequence[t.StrMapping]] = [
                     {"name": "Test User 1", "email": "user1@example.com"},
                     {"name": "Test User 2", "email": "user2@example.com"},
                     {"name": "Test User 3", "email": "user3@example.com"},
@@ -1438,16 +1438,16 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             )
             FIXTURE_TYPES.freeze()
 
-            CONFIG_SERVER_TYPES: Final[Sequence[str]] = tuple(
+            CONFIG_SERVER_TYPES: Final[t.StrSequence] = tuple(
                 value.value for value in FIXTURE_SERVERS
             )
-            CONFIG_SERVER_CONTENT: Final[Mapping[str, str]] = MappingProxyType(
+            CONFIG_SERVER_CONTENT: Final[t.StrMapping] = MappingProxyType(
                 dict(_ConfigIntegration.SERVER_CONTENT),
             )
-            BOOLEAN_RFC_TO_OID: Final[Mapping[str, str]] = MappingProxyType(
+            BOOLEAN_RFC_TO_OID: Final[t.StrMapping] = MappingProxyType(
                 dict(_Migration.Oid.RFC_TO_OID_BOOLEAN),
             )
-            BOOLEAN_OID_TO_RFC: Final[Mapping[str, str]] = MappingProxyType(
+            BOOLEAN_OID_TO_RFC: Final[t.StrMapping] = MappingProxyType(
                 dict(_Migration.Oid.OID_TO_RFC_BOOLEAN),
             )
 

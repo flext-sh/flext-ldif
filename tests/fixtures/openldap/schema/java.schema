@@ -48,13 +48,13 @@ attributetype ( 1.3.6.1.4.1.42.2.27.4.1.13
  
 attributetype ( 1.3.6.1.4.1.42.2.27.4.1.8
 	NAME 'javaSerializedData'
-	DESC 'Serialized form of a Java t.NormalizedValue'
+	DESC 'Serialized form of a Java t.RecursiveContainer'
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.40
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.4.1.42.2.27.4.1.10
 	NAME 'javaFactory'
-	DESC 'Fully qualified Java class name of a JNDI t.NormalizedValue factory'
+	DESC 'Fully qualified Java class name of a JNDI t.RecursiveContainer factory'
 	EQUALITY caseExactMatch
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
 	SINGLE-VALUE )
@@ -73,14 +73,14 @@ attributetype ( 1.3.6.1.4.1.42.2.27.4.1.12
 
 objectclass ( 1.3.6.1.4.1.42.2.27.4.2.1
 	NAME 'javaContainer'
-	DESC 'Container for a Java t.NormalizedValue'
+	DESC 'Container for a Java t.RecursiveContainer'
 	SUP top
 	STRUCTURAL
 	MUST cn )
 
 objectclass ( 1.3.6.1.4.1.42.2.27.4.2.4
 	NAME 'javaObject'
-	DESC 'Java t.NormalizedValue representation'
+	DESC 'Java t.RecursiveContainer representation'
 	SUP top
 	ABSTRACT
 	MUST javaClassName
@@ -89,14 +89,14 @@ objectclass ( 1.3.6.1.4.1.42.2.27.4.2.4
 
 objectclass ( 1.3.6.1.4.1.42.2.27.4.2.5
 	NAME 'javaSerializedObject'
-	DESC 'Java serialized t.NormalizedValue'
+	DESC 'Java serialized t.RecursiveContainer'
 	SUP javaObject
 	AUXILIARY
 	MUST javaSerializedData )
  
 objectclass ( 1.3.6.1.4.1.42.2.27.4.2.8
 	NAME 'javaMarshalledObject'
-	DESC 'Java marshalled t.NormalizedValue'
+	DESC 'Java marshalled t.RecursiveContainer'
 	SUP javaObject
 	AUXILIARY
 	MUST javaSerializedData )

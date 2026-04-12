@@ -92,7 +92,9 @@ class FlextLdifUtilitiesTransformers:
 
             def update_entry(normalized_dn: str) -> m.Ldif.Entry:
                 normalized_text = self._normalize_dn_case_and_spaces(normalized_dn)
-                update_dict: t.MutableContainerMapping = {"dn": normalized_text}
+                update_dict: t.MutableRecursiveContainerMapping = {
+                    "dn": normalized_text
+                }
                 return item.model_copy(update=update_dict)
 
             return (

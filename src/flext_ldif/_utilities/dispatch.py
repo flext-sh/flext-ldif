@@ -89,18 +89,18 @@ class FlextLdifUtilitiesDispatch:
     def parse(
         definition: str | m.Ldif.DN | None,
         server_type: str | None,
-        parse_parts_hook: Callable[[str], t.MutableContainerMapping]
-        | Callable[[str], r[t.MutableContainerMapping]],
-    ) -> r[t.MutableContainerMapping]: ...
+        parse_parts_hook: Callable[[str], t.MutableRecursiveContainerMapping]
+        | Callable[[str], r[t.MutableRecursiveContainerMapping]],
+    ) -> r[t.MutableRecursiveContainerMapping]: ...
 
     @staticmethod
     def parse(
         definition: str | m.Ldif.DN | None,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], t.MutableContainerMapping]
-        | Callable[[str], r[t.MutableContainerMapping]]
+        parse_parts_hook: Callable[[str], t.MutableRecursiveContainerMapping]
+        | Callable[[str], r[t.MutableRecursiveContainerMapping]]
         | None = None,
-    ) -> r[MutableSequence[tuple[str, str]]] | r[t.MutableContainerMapping]:
+    ) -> r[MutableSequence[tuple[str, str]]] | r[t.MutableRecursiveContainerMapping]:
         if definition is None:
             return r[MutableSequence[tuple[str, str]]].fail("DN cannot be None")
         if isinstance(definition, m.Ldif.DN):
@@ -108,13 +108,13 @@ class FlextLdifUtilitiesDispatch:
         if parse_parts_hook is None and server_type is None:
             return FlextLdifUtilitiesDN.parse_dn(definition)
 
-        def attr_hook(value: str) -> r[t.MutableContainerMapping]:
+        def attr_hook(value: str) -> r[t.MutableRecursiveContainerMapping]:
             if parse_parts_hook is None:
-                return r[t.MutableContainerMapping].ok({})
+                return r[t.MutableRecursiveContainerMapping].ok({})
             parsed_value = parse_parts_hook(value)
             if isinstance(parsed_value, r):
                 return parsed_value
-            return r[t.MutableContainerMapping].ok(dict(parsed_value))
+            return r[t.MutableRecursiveContainerMapping].ok(dict(parsed_value))
 
         return FlextLdifUtilitiesAttribute.resolve_attribute(
             definition=definition,
@@ -125,8 +125,8 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     def matches_server_patterns(
         value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        oid_pattern: t.MutableContainerMapping | str,
-        detection_names: t.NormalizedValue | frozenset[str],
+        oid_pattern: t.MutableRecursiveContainerMapping | str,
+        detection_names: t.RecursiveContainer | frozenset[str],
         detection_string: str | None = None,
         *,
         use_prefix_match: bool = False,
@@ -286,10 +286,10 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def find(
-        items: t.ContainerList,
+        items: t.RecursiveContainerList,
         *,
         predicate: Callable[..., bool],
-    ) -> t.NormalizedValue | None:
+    ) -> t.RecursiveContainer | None:
         """Route to CollectionLdif.find (resolves CollectionLdif vs core)."""
         return FlextLdifUtilitiesCollectionLdif.find(items, predicate=predicate)
 

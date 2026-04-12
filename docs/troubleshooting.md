@@ -242,10 +242,10 @@ def analyze_entry_issues(entries: list) -> None:
         if not entry.dn or "=" not in entry.dn:
             print("  ❌ Invalid DN format")
 
-        # Check t.NormalizedValue classes
+        # Check t.RecursiveContainer classes
         object_classes = entry.get_object_classes()
         if not object_classes:
-            print("  ❌ Missing t.NormalizedValue class")
+            print("  ❌ Missing t.RecursiveContainer class")
 
         # Check required attributes for person entries
         if "person" in object_classes:
@@ -467,7 +467,7 @@ def debug_railway_chain(file_path: str) -> r[list]:
 ### Health Check Utility
 
 ```python
-def run_health_check() -> t.ContainerMapping:
+def run_health_check() -> t.RecursiveContainerMapping:
     """Run comprehensive health check for FLEXT-LDIF."""
     results = {"status": "healthy", "checks": {}, "warnings": [], "errors": []}
 
@@ -595,7 +595,7 @@ def enable_debug_mode() -> ldif:
 When creating support requests, include:
 
 ```python
-def generate_support_info() -> t.ContainerMapping:
+def generate_support_info() -> t.RecursiveContainerMapping:
     """Generate information for support requests."""
     import sys
     import platform

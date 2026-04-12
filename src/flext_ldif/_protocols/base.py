@@ -65,9 +65,9 @@ class FlextLdifProtocolsBase(Protocol):
         original_dn: str
         cleaned_dn: str
         normalized_dn: str
-        transformations: Sequence[str]
-        validation_warnings: Sequence[str]
-        validation_errors: Sequence[str]
+        transformations: t.StrSequence
+        validation_warnings: t.StrSequence
+        validation_errors: t.StrSequence
         was_transformed: bool
 
     @runtime_checkable
@@ -531,7 +531,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
-        def errors(self) -> Sequence[str]:
+        def errors(self) -> t.StrSequence:
             """Return validation errors."""
             ...
 
@@ -550,7 +550,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
-        def output_files(self) -> Sequence[str]:
+        def output_files(self) -> t.StrSequence:
             """Return generated output files."""
             ...
 
@@ -603,7 +603,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
-        def error_details(self) -> Sequence[str] | None:
+        def error_details(self) -> t.StrSequence | None:
             """Return conversion error details."""
             ...
 

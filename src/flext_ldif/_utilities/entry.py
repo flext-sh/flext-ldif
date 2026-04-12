@@ -30,22 +30,22 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def is_string_key_mapping(
-        value: t.NormalizedValue,
-    ) -> TypeIs[t.MutableContainerMapping]:
+        value: t.RecursiveContainer,
+    ) -> TypeIs[t.MutableRecursiveContainerMapping]:
         """Check if value is a string-key mapping."""
         return isinstance(value, Mapping)
 
     @staticmethod
     def is_object_list(
-        value: t.NormalizedValue,
-    ) -> TypeIs[t.MutableContainerList]:
+        value: t.RecursiveContainer,
+    ) -> TypeIs[t.MutableRecursiveContainerList]:
         """Check if value is a list."""
         return isinstance(value, list)
 
     @staticmethod
     def is_object_sequence(
-        value: t.NormalizedValue,
-    ) -> TypeIs[t.MutableContainerList]:
+        value: t.RecursiveContainer,
+    ) -> TypeIs[t.MutableRecursiveContainerList]:
         """Check if value is a non-string/bytes sequence."""
         return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
@@ -442,7 +442,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def parse_validation_rules(
-        validation_rules: t.NormalizedValue,
+        validation_rules: t.RecursiveContainer,
     ) -> FlextLdifModelsSettings.ServerValidationRules | None:
         """Normalize dynamic validation_rules payload to ServerValidationRules."""
         if isinstance(
@@ -466,7 +466,7 @@ class FlextLdifUtilitiesEntry:
             validation_rules,
         ):
             try:
-                validation_rules_payload: t.MutableContainerMapping = dict(
+                validation_rules_payload: t.MutableRecursiveContainerMapping = dict(
                     validation_rules.items(),
                 )
                 return FlextLdifModelsSettings.ServerValidationRules.model_validate(
@@ -485,11 +485,11 @@ class FlextLdifUtilitiesEntry:
         original: str,
         converted: str | None,
         context: str = "entry",
-    ) -> t.MutableContainerMapping:
+    ) -> t.MutableRecursiveContainerMapping:
         """Analyze minimal differences between original and converted strings."""
         mk = c.Ldif
         empty_diffs: MutableSequence[str] = []
-        differences: t.MutableContainerMapping = {
+        differences: t.MutableRecursiveContainerMapping = {
             mk.HAS_DIFFERENCES: False,
             "context": context,
             "original": original,
@@ -505,15 +505,15 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def analyze_differences(
-        entry_attrs: t.ContainerMapping,
+        entry_attrs: t.RecursiveContainerMapping,
         converted_attrs: MutableMapping[str, MutableSequence[t.Ldif.AttributeValue]],
         original_dn: str,
         cleaned_dn: str,
         normalize_attr_fn: Callable[[str], str] | None = None,
     ) -> tuple[
-        t.MutableContainerMapping,
-        MutableMapping[str, t.MutableContainerMapping],
-        t.MutableContainerMapping,
+        t.MutableRecursiveContainerMapping,
+        MutableMapping[str, t.MutableRecursiveContainerMapping],
+        t.MutableRecursiveContainerMapping,
         t.MutableStrMapping,
     ]:
         """Analyze DN and attribute differences for round-trip support (DRY utility)."""
@@ -543,8 +543,10 @@ class FlextLdifUtilitiesEntry:
                     original_attribute_case[key] = value
             except (ValueError, TypeError, AttributeError):
                 continue
-        attribute_differences: MutableMapping[str, t.MutableContainerMapping] = {}
-        original_attributes_complete: t.MutableContainerMapping = {}
+        attribute_differences: MutableMapping[
+            str, t.MutableRecursiveContainerMapping
+        ] = {}
+        original_attributes_complete: t.MutableRecursiveContainerMapping = {}
         for attr_name, attr_values in entry_attrs.items():
             original_attr_name = str(attr_name)
             canonical_name = normalize(original_attr_name)
@@ -555,7 +557,7 @@ class FlextLdifUtilitiesEntry:
                 original_values_list = [str(v) for v in attr_values if v is not None]
             elif attr_values is not None:
                 original_values_list = [str(attr_values)]
-            typed_list: t.NormalizedValue = list(original_values_list)
+            typed_list: t.RecursiveContainer = list(original_values_list)
             original_attributes_complete[original_attr_name] = typed_list
             converted_values = converted_attrs.get(canonical_name, [])
             original_str = f"{original_attr_name}: {', '.join(original_values_list)}"
@@ -667,7 +669,7 @@ class FlextLdifUtilitiesEntry:
                 == resolved_config.is_schema,
             )
         if resolved_config.objectclasses:
-            entry_ocs: Sequence[str] = (
+            entry_ocs: t.StrSequence = (
                 entry.attributes.get("objectClass", []) if entry.attributes else []
             )
             entry_ocs_lower = {oc.lower() for oc in entry_ocs}
