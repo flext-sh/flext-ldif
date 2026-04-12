@@ -133,13 +133,13 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
         total_entries = u.count(normalized_entries)
         invalid_count = total_entries - valid_count
         return r[m.Ldif.ValidationResult].ok(
-            m.Ldif.ValidationResult(
-                valid=invalid_count == 0,
-                total_entries=total_entries,
-                valid_entries=valid_count,
-                invalid_entries=invalid_count,
-                errors=errors[:100],
-            ),
+            m.Ldif.ValidationResult.model_validate({
+                "valid": invalid_count == 0,
+                "total_entries": total_entries,
+                "valid_entries": valid_count,
+                "invalid_entries": invalid_count,
+                "errors": errors[:100],
+            }),
         )
 
     @override

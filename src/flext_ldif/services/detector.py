@@ -99,13 +99,13 @@ class FlextLdifDetectorMixin:
         patterns_found = self._extract_patterns(content_sample)
         detected_type = u.Ldif.normalize_server_type(detected_type_raw)
         scores_model = m.Ldif.DynamicCounts(**scores_dict)
-        detection_result = m.Ldif.ServerDetectionResult(
-            detected_server_type=detected_type,
-            confidence=confidence,
-            scores=scores_model,
-            patterns_found=patterns_found,
-            is_confident=confidence >= u.Ldif.get_confidence_threshold(),
-        )
+        detection_result = m.Ldif.ServerDetectionResult.model_validate({
+            "detected_server_type": detected_type,
+            "confidence": confidence,
+            "scores": scores_model,
+            "patterns_found": patterns_found,
+            "is_confident": confidence >= u.Ldif.get_confidence_threshold(),
+        })
         return r[m.Ldif.ServerDetectionResult].ok(detection_result)
 
     def get_effective_server_type(

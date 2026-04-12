@@ -143,15 +143,15 @@ class FlextLdifUtilitiesParsers:
                 may = None
             else:
                 may = [str(may_raw)]
-            objectclass = m.Ldif.SchemaObjectClass(
-                oid=str(parts.get("oid", "")),
-                name=str(parts.get("name", parts.get("oid", ""))),
-                desc=str(parts.get("desc")) if parts.get("desc") else None,
-                sup=str(parts.get("sup")) if parts.get("sup") else None,
-                kind=str(parts.get("kind", "STRUCTURAL")),
-                must=must,
-                may=may,
-            )
+            objectclass = m.Ldif.SchemaObjectClass.model_validate({
+                "oid": str(parts.get("oid", "")),
+                "name": str(parts.get("name", parts.get("oid", ""))),
+                "desc": str(parts.get("desc")) if parts.get("desc") else None,
+                "sup": str(parts.get("sup")) if parts.get("sup") else None,
+                "kind": str(parts.get("kind", "STRUCTURAL")),
+                "must": must,
+                "may": may,
+            })
             if transform_hook:
                 objectclass = transform_hook(objectclass)
             return r[m.Ldif.SchemaObjectClass].ok(objectclass)

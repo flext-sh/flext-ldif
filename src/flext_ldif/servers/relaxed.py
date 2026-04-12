@@ -365,16 +365,16 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             })
             objectclass_name = name or oid
             return r[m.Ldif.SchemaObjectClass].ok(
-                m.Ldif.SchemaObjectClass(
-                    name=objectclass_name,
-                    oid=oid,
-                    desc=desc,
-                    sup=sup,
-                    kind=kind,
-                    must=must,
-                    may=may,
-                    metadata=metadata,
-                ),
+                m.Ldif.SchemaObjectClass.model_validate({
+                    "name": objectclass_name,
+                    "oid": oid,
+                    "desc": desc,
+                    "sup": sup,
+                    "kind": kind,
+                    "must": must,
+                    "may": may,
+                    "metadata": metadata,
+                }),
             )
 
         @override

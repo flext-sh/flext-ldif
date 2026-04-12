@@ -815,7 +815,7 @@ class FlextLdifConversion(
             resolved_config = m.Ldif.PermissionMappingConfig(
                 original_acl=original_acl,
                 converted_acl=converted_acl,
-                orig_perms_dict=dict(orig_perms_dict or {}),
+                orig_perms_dict=dict((orig_perms_dict or {}).items()),
                 source_server_type=source_server_type,
                 target_server_type=target_server_type,
                 converted_has_permissions=converted_has_permissions,

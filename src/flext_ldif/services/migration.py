@@ -142,11 +142,14 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                         error=str(result.error),
                     )
             converted_all_entries: MutableSequence[m.Ldif.Entry] = list(all_entries)
-            pipeline_result = m.Ldif.MigrationPipelineResult(
-                migrated_schema=m.Ldif.SchemaContent(attributes=[], object_classes=[]),
-                entries=converted_all_entries,
-                output_files=output_files,
-                stats=m.Ldif.Statistics(
+            pipeline_result = m.Ldif.MigrationPipelineResult.model_validate({
+                "migrated_schema": m.Ldif.SchemaContent(
+                    attributes=[],
+                    object_classes=[],
+                ),
+                "entries": converted_all_entries,
+                "output_files": output_files,
+                "stats": m.Ldif.Statistics(
                     total_entries=total_processed,
                     processed_entries=total_migrated,
                     failed_entries=0,
@@ -168,7 +171,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                     rejection_reasons=m.Ldif.DynamicCounts(),
                     events=[],
                 ),
-            )
+            })
             return r[m.Ldif.MigrationPipelineResult].ok(pipeline_result)
         except (
             ValueError,
