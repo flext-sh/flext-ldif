@@ -7,9 +7,6 @@ from typing import override
 
 from flext_core import r
 from flext_ldif import (
-    FlextLdifServersBaseSchema,
-    FlextLdifServersOudConstants,
-    FlextLdifServersRfc,
     FlextLdifUtilitiesSchema,
     c,
     m,
@@ -17,6 +14,9 @@ from flext_ldif import (
     t,
     u,
 )
+from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
+from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 logger = u.fetch_logger(__name__)
 

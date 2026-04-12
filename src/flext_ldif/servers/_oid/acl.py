@@ -11,13 +11,13 @@ from pydantic import RootModel
 
 from flext_core import r
 from flext_ldif import (
-    FlextLdifServersOidConstants,
-    FlextLdifServersRfc,
     c,
     m,
     t,
     u,
 )
+from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
+from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 logger = u.fetch_logger(__name__)
 

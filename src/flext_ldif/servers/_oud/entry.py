@@ -17,10 +17,6 @@ from flext_ldif import (
     FlextLdifModelsDomainsEntries,
     FlextLdifModelsMetadata,
     FlextLdifServersBase,
-    FlextLdifServersBaseEntry,
-    FlextLdifServersOudAcl,
-    FlextLdifServersOudConstants,
-    FlextLdifServersRfc,
     FlextLdifUtilitiesMetadata,
     c,
     m,
@@ -28,6 +24,10 @@ from flext_ldif import (
     t,
     u,
 )
+from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
+from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
+from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
+from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 logger = u.fetch_logger(__name__)
 
@@ -739,15 +739,15 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if isinstance(entry_attrs, Mapping):
             for attr_name in entry_attrs:
                 original_attribute_case[attr_name.lower()] = attr_name
-        metadata_config = m.Ldif.EntryParseMetadataConfig(
-            quirk_type=c.Ldif.ServerTypes.OUD,
-            original_entry_dn=entry_dn,
-            cleaned_dn=entry.dn.value if entry.dn else entry_dn,
-            original_dn_line=f"dn: {entry_dn}",
-            original_attr_lines=[],
-            dn_was_base64=False,
-            original_attribute_case=original_attribute_case,
-        )
+        metadata_config = m.Ldif.EntryParseMetadataConfig.model_validate({
+            "quirk_type": c.Ldif.ServerTypes.OUD,
+            "original_entry_dn": entry_dn,
+            "cleaned_dn": entry.dn.value if entry.dn else entry_dn,
+            "original_dn_line": f"dn: {entry_dn}",
+            "original_attr_lines": [],
+            "dn_was_base64": False,
+            "original_attribute_case": original_attribute_case,
+        })
         metadata = FlextLdifUtilitiesMetadata.build_entry_parse_metadata(
             metadata_config,
         )

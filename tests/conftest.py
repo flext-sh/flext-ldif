@@ -34,8 +34,6 @@ from flext_ldif import (
 )
 from tests import c, m, p, t, u
 
-pytest_plugins = ["flext_tests.conftest_plugin"]
-
 
 @pytest.fixture
 def ldif_settings(

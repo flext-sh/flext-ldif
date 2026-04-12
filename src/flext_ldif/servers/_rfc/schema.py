@@ -9,7 +9,9 @@ from datetime import datetime
 from typing import Self, overload, override
 
 from flext_core import r
-from flext_ldif import FlextLdifServersBase, FlextLdifServersBaseSchema, c, m, p, t, u
+from flext_ldif import c, m, p, t, u
+from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+from flext_ldif.servers.base import FlextLdifServersBase
 
 logger = u.fetch_logger(__name__)
 
@@ -651,16 +653,16 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             )
             oc_must = self._to_string_list(parsed.get("must"))
             oc_may = self._to_string_list(parsed.get("may"))
-            objectclass = m.Ldif.SchemaObjectClass(
-                oid=oc_oid,
-                name=oc_name,
-                desc=oc_desc,
-                sup=oc_sup,
-                kind=oc_kind,
-                must=oc_must,
-                may=oc_may,
-                metadata=metadata,
-            )
+            objectclass = m.Ldif.SchemaObjectClass.model_validate({
+                "oid": oc_oid,
+                "name": oc_name,
+                "desc": oc_desc,
+                "sup": oc_sup,
+                "kind": oc_kind,
+                "must": oc_must,
+                "may": oc_may,
+                "metadata": metadata,
+            })
             return r[m.Ldif.SchemaObjectClass].ok(objectclass)
         except (ValueError, TypeError, AttributeError) as e:
             logger.exception("RFC objectClass parsing exception")

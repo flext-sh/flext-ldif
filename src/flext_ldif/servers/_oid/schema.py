@@ -8,15 +8,15 @@ from typing import override
 
 from flext_core import r
 from flext_ldif import (
-    FlextLdifServersBaseSchema,
-    FlextLdifServersOidConstants,
-    FlextLdifServersRfc,
     c,
     m,
     p,
     t,
     u,
 )
+from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
+from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 logger = u.fetch_logger(__name__)
 

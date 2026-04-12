@@ -9,16 +9,16 @@ from typing import override
 
 from pydantic import RootModel
 
-from flext_core import FlextTypes, r
+from flext_core import r
 from flext_ldif import (
-    FlextLdifServersOidConstants,
-    FlextLdifServersRfc,
     c,
     m,
     p,
     t,
     u,
 )
+from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
+from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 logger = u.fetch_logger(__name__)
 
@@ -27,7 +27,9 @@ class _OidStringListJson(RootModel[MutableSequence[str]]):
     pass
 
 
-class _OidObjectListJson(RootModel[MutableSequence[FlextTypes.NormalizedValue]]):
+class _OidObjectListJson(
+    RootModel[MutableSequence[t.MutableRecursiveContainerMapping]]
+):
     pass
 
 
@@ -512,14 +514,14 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             != str(raw_attr_name).lower()
         }
         acl_transformations: MutableMapping[str, m.Ldif.AttributeTransformation] = {
-            original_name: m.Ldif.AttributeTransformation(
-                original_name=original_name,
-                target_name=attr_name,
-                original_values=attr_values,
-                target_values=attr_values,
-                transformation_type=c.Ldif.TransformationType.ATTRIBUTE_RENAMED,
-                reason=f"OID ACL ({original_name}) → RFC 2256 (aci)",
-            )
+            original_name: m.Ldif.AttributeTransformation.model_validate({
+                "original_name": original_name,
+                "target_name": attr_name,
+                "original_values": attr_values,
+                "target_values": attr_values,
+                "transformation_type": c.Ldif.TransformationType.ATTRIBUTE_RENAMED,
+                "reason": f"OID ACL ({original_name}) → RFC 2256 (aci)",
+            })
             for attr_name, attr_values in converted_attributes.items()
             if attr_name.lower() in original_attr_names
             and (original_name := original_attr_names[attr_name.lower()]).lower()
