@@ -1,4 +1,4 @@
-"""Server quirk registry using FlextRegistry class-level plugin API."""
+"""Server quirk registry using the canonical `p.Registry` DSL."""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
 import flext_ldif.servers as servers_package
-from flext_core import FlextRegistry
 from flext_ldif import (
     FlextLdifServersBase,
     FlextLdifServersBaseEntry,
@@ -23,11 +22,12 @@ from flext_ldif import (
 logger = u.fetch_logger(__name__)
 
 
-class FlextLdifServer(FlextRegistry):
-    """Server quirk registry using FlextRegistry class-level plugin API."""
+class FlextLdifServer:
+    """Server quirk registry using the canonical registry DSL."""
 
     SERVERS: ClassVar[str] = "ldif_servers"
     _discovery_initialized: ClassVar[bool] = False
+    _registry: p.Registry
 
     def __init__(
         self,
@@ -36,7 +36,7 @@ class FlextLdifServer(FlextRegistry):
     ) -> None:
         """Initialize registry and trigger auto-discovery."""
         _ = data
-        super().__init__(dispatcher=dispatcher)
+        self._registry = u.build_registry(dispatcher=dispatcher)
         if not type(self)._discovery_initialized:
             self._auto_discover()
             type(self)._discovery_initialized = True
@@ -131,7 +131,11 @@ class FlextLdifServer(FlextRegistry):
     def list_registered_servers(self) -> MutableSequence[str]:
         """List all registered server types."""
         return sorted(
-            self.list_plugins(self.SERVERS, scope=c.RegistrationScope.CLASS).value or []
+            self._registry.list_plugins(
+                self.SERVERS,
+                scope=c.RegistrationScope.CLASS,
+            ).value
+            or []
         )
 
     def quirk(self, server_type: str) -> r[FlextLdifServersBase]:
@@ -140,18 +144,14 @@ class FlextLdifServer(FlextRegistry):
             normalized = u.Ldif.normalize_server_type(server_type)
         except ValueError as e:
             return r[FlextLdifServersBase].fail(str(e))
-        plugin_key = f"{self.SERVERS}::{normalized}"
-        cls = type(self)
-        if plugin_key not in cls._class_registered_keys:
-            available = [
-                key.split("::", 1)[1]
-                for key in cls._class_registered_keys
-                if key.startswith(f"{self.SERVERS}::")
-            ]
-            return r[FlextLdifServersBase].fail(
-                f"{self.SERVERS} '{normalized}' not found. Available: {available}",
-            )
-        plugin = cls._class_plugin_storage[plugin_key]
+        plugin_result = self._registry.fetch_plugin(
+            self.SERVERS,
+            normalized,
+            scope=c.RegistrationScope.CLASS,
+        )
+        if plugin_result.failure:
+            return r[FlextLdifServersBase].fail(plugin_result.error or normalized)
+        plugin = plugin_result.unwrap()
         if isinstance(plugin, FlextLdifServersBase):
             return r[FlextLdifServersBase].ok(plugin)
         plugin_type = type(plugin).__name__
@@ -179,7 +179,7 @@ class FlextLdifServer(FlextRegistry):
                 ):
                     continue
                 if server_type and isinstance(server_type, str):
-                    self.register_plugin(
+                    self._registry.register_plugin(
                         self.SERVERS,
                         server_type,
                         instance,
