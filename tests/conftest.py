@@ -614,16 +614,14 @@ def clean_test_ou(
                     ldap_connection.delete(dn)
 
 
-def pytest_configure(settings: pytest.Config) -> None:
+def pytest_configure(config: pytest.Config) -> None:
     """Configure pytest with custom markers."""
-    settings.addinivalue_line("markers", "unit: marks tests as unit tests")
-    settings.addinivalue_line(
-        "markers", "integration: marks tests as integration tests"
-    )
-    settings.addinivalue_line("markers", "ldif: marks tests as LDIF-specific tests")
-    settings.addinivalue_line("markers", "docker: marks tests that require Docker")
-    settings.addinivalue_line("markers", "slow: marks tests as slow tests")
-    settings.addinivalue_line("markers", "real: marks tests using real functionality")
+    config.addinivalue_line("markers", "unit: marks tests as unit tests")
+    config.addinivalue_line("markers", "integration: marks tests as integration tests")
+    config.addinivalue_line("markers", "ldif: marks tests as LDIF-specific tests")
+    config.addinivalue_line("markers", "docker: marks tests that require Docker")
+    config.addinivalue_line("markers", "slow: marks tests as slow tests")
+    config.addinivalue_line("markers", "real: marks tests using real functionality")
 
 
 @pytest.fixture(scope="session")

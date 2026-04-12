@@ -18,6 +18,10 @@ class FlextLdifServiceBase[
 ):
     """Base class for LDIF services with typed settings helper."""
 
+    def __init__(self, settings: FlextLdifSettings | None = None) -> None:
+        """Expose the typed LDIF settings bootstrap on the concrete service base."""
+        super().__init__(settings=settings)
+
     @property
     def ldif_config(self) -> FlextLdifSettings:
         """Return the LDIF configuration namespace with proper typing."""

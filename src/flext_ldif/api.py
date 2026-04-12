@@ -14,13 +14,13 @@ from flext_ldif import (
     FlextLdifParserMixin,
     FlextLdifServer,
     FlextLdifServersBaseSchema,
+    FlextLdifServiceBase,
     FlextLdifSettings,
     FlextLdifValidation,
     FlextLdifWriterMixin,
     m,
     r,
     s,
-    t,
     u,
 )
 
@@ -38,48 +38,20 @@ class FlextLdif(
     """
 
     _instance: ClassVar[FlextLdif | None] = None
-    _init_config_overrides: ClassVar[t.MutableContainerMapping | None] = None
 
     def __init__(
         self,
         *,
         settings: FlextLdifSettings | None = None,
-        **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize LDIF facade with server registry."""
-        del kwargs
-        try:
-            if settings is not None:
-                self._set_init_config_overrides(settings)
-        finally:
-            self._clear_init_config_overrides()
-        super().__init__()
+        FlextLdifServiceBase.__init__(self, settings=settings)
         object.__setattr__(
             self,
             "_server",
             FlextLdifServer.get_global_instance(),
         )
         _ = u.fetch_logger(__name__).info("FlextLdif facade initialized")
-
-    @classmethod
-    def _clear_init_config_overrides(cls) -> None:
-        """Clear temporary init settings overrides after initialization."""
-        cls._init_config_overrides = None
-
-    @classmethod
-    @override
-    def _runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
-        """Allow per-instance settings overrides on initialization."""
-        base_options = m.RuntimeBootstrapOptions(settings_type=FlextLdifSettings)
-        overrides = cls._init_config_overrides
-        if not overrides:
-            return base_options
-        return base_options.model_copy(update={"config_overrides": dict(overrides)})
-
-    @classmethod
-    def _set_init_config_overrides(cls, settings: FlextLdifSettings) -> None:
-        """Set temporary init settings overrides for runtime bootstrap."""
-        cls._init_config_overrides = settings.model_dump(exclude_none=True)
 
     @classmethod
     def categorization(

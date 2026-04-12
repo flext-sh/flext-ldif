@@ -26,8 +26,7 @@ class FlextLdifSettings(FlextSettings):
     """LDIF processing settings inheriting base FLEXT configuration."""
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
-        env_prefix="FLEXT_LDIF_",
-        extra="ignore",
+        env_prefix="FLEXT_LDIF_", extra="ignore"
     )
 
     ldif_encoding: Annotated[
