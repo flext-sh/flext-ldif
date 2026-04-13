@@ -5,8 +5,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence, Sequence
 from typing import ClassVar, override
 
-from flext_core import r
-from flext_ldif import FlextLdifUtilitiesDN, c, m, t
+from flext_ldif import FlextLdifUtilitiesDN, c, m, r, t
 
 
 class FlextLdifUtilitiesTransformer[T]:

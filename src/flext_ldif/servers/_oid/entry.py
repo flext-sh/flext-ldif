@@ -9,11 +9,11 @@ from typing import override
 
 from pydantic import RootModel
 
-from flext_core import r
 from flext_ldif import (
     c,
     m,
     p,
+    r,
     t,
     u,
 )

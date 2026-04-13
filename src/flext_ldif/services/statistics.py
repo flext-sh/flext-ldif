@@ -43,8 +43,7 @@ class FlextLdifStatistics(s[m.Ldif.StatisticsServiceStatus]):
         return r[m.Ldif.EntriesStatistics].ok(entries_stats)
 
     @override
-    @d.log_operation("statistics_service_check")
-    @d.track_operation()
+    @d.log_operation("statistics_service_check", track_perf=True)
     def execute(self) -> r[m.Ldif.StatisticsServiceStatus]:
         """Execute statistics service self-check."""
         return r[m.Ldif.StatisticsServiceStatus].ok(

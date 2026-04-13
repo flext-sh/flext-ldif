@@ -5,8 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, MutableSequence
 from typing import ClassVar, Protocol, Self, override
 
-from flext_core import r
-from flext_ldif import m, t
+from flext_ldif import m, r, t
 
 
 class FlextLdifUtilitiesPipeline:

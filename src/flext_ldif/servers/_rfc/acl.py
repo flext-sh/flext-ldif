@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import Self, overload, override
 
-from flext_core import r
-from flext_ldif import m, p, t, u
+from flext_ldif import m, p, r, t, u
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers.base import FlextLdifServersBase
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from flext_core import r
+from flext_ldif import r
 
 
 class FlextLdifUtilitiesOID:

@@ -7,11 +7,11 @@ import sys
 from collections.abc import MutableSequence
 from typing import TypeIs
 
-from flext_core import r
 from flext_ldif import (
     FlextLdifModelsDomainSchema,
     FlextLdifShared,
     c,
+    r,
     t,
 )
 

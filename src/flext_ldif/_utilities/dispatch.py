@@ -7,7 +7,6 @@ from typing import ClassVar, TypeGuard, overload
 
 from pydantic import TypeAdapter
 
-from flext_core import r
 from flext_ldif import (
     FlextLdifUtilitiesAttribute,
     FlextLdifUtilitiesCollectionLdif,
@@ -17,6 +16,7 @@ from flext_ldif import (
     FlextLdifUtilitiesValidation,
     m,
     p,
+    r,
     t,
 )
 

@@ -3,9 +3,16 @@
 from __future__ import annotations
 
 from collections.abc import MutableSequence
-from typing import override
+from typing import TYPE_CHECKING, override
 
-from flext_ldif import FlextLdifValidation, m, r, s, t, u
+from flext_core import r
+from flext_ldif.base import s
+from flext_ldif.models import m
+from flext_ldif.typings import t
+from flext_ldif.utilities import u
+
+if TYPE_CHECKING:
+    from flext_ldif.services.rfc_validation import FlextLdifValidation
 
 
 class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):

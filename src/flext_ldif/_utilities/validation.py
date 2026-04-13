@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from pydantic import ValidationError
 
-from flext_core import r
-from flext_ldif import FlextLdifProtocols as p, t
+from flext_ldif import p, r, t
 
 
 class FlextLdifUtilitiesValidation:

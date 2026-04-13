@@ -14,13 +14,14 @@ from collections.abc import (
 from pathlib import Path
 from typing import Literal, overload
 
-from flext_core import r, u
+from flext_core import u
 from flext_ldif import (
     FlextLdifModelsDomainDN,
     FlextLdifModelsDomainEntry,
     FlextLdifModelsSettings,
     c,
     m,
+    r,
 )
 
 

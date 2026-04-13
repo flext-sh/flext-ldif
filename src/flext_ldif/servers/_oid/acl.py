@@ -9,10 +9,10 @@ from typing import ClassVar, Literal, override
 
 from pydantic import RootModel
 
-from flext_core import r
 from flext_ldif import (
     c,
     m,
+    r,
     t,
     u,
 )

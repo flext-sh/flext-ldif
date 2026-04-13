@@ -8,13 +8,10 @@ from typing import Annotated, override
 
 from pydantic import Field
 
-from flext_ldif import (
-    d,
-    m,
-    r,
-    s,
-    u,
-)
+from flext_core import d, r
+from flext_ldif.base import s
+from flext_ldif.models import m
+from flext_ldif.utilities import u
 
 
 class FlextLdifValidation(
@@ -42,7 +39,7 @@ class FlextLdifValidation(
     ] = None
 
     @override
-    @d.track_operation("validation_service_check")
+    @d.log_operation("validation_service_check", track_perf=True)
     def execute(self) -> r[m.Ldif.ValidationServiceStatus]:
         return r[m.Ldif.ValidationServiceStatus].ok(
             m.Ldif.ValidationServiceStatus(

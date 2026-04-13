@@ -6,11 +6,11 @@ import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import override
 
-from flext_core import r
 from flext_ldif import (
     c,
     m,
     p,
+    r,
     t,
     u,
 )

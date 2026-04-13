@@ -6,22 +6,20 @@ from collections.abc import MutableSequence
 from pathlib import Path
 from typing import override
 
-from flext_ldif import (
-    FlextLdifAnalysis,
-    FlextLdifCategorization,
-    FlextLdifDetectorMixin,
-    FlextLdifMigrationPipeline,
-    FlextLdifParserMixin,
-    FlextLdifServer,
-    FlextLdifServersBaseSchema,
-    FlextLdifSettings,
-    FlextLdifValidation,
-    FlextLdifWriterMixin,
-    m,
-    r,
-    s,
-    u,
-)
+from flext_core import r
+from flext_ldif.base import s
+from flext_ldif.models import m
+from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+from flext_ldif.services.analysis import FlextLdifAnalysis
+from flext_ldif.services.categorization import FlextLdifCategorization
+from flext_ldif.services.detector import FlextLdifDetectorMixin
+from flext_ldif.services.migration import FlextLdifMigrationPipeline
+from flext_ldif.services.parser import FlextLdifParserMixin
+from flext_ldif.services.rfc_validation import FlextLdifValidation
+from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.services.writer import FlextLdifWriterMixin
+from flext_ldif.settings import FlextLdifSettings
+from flext_ldif.utilities import u
 
 
 class FlextLdif(

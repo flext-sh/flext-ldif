@@ -8,7 +8,6 @@ from typing import Annotated, ClassVar, Self, override
 
 from pydantic import Field
 
-from flext_core import r, s
 from flext_ldif import (
     FlextLdifQuirkMethodsMixin,
     FlextLdifUtilitiesMetadata,
@@ -18,6 +17,8 @@ from flext_ldif import (
     c,
     m,
     p,
+    r,
+    s,
     t,
     u,
 )

@@ -8,13 +8,14 @@ import re
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import TypeIs
 
-from flext_core import r, u
+from flext_core import u
 from flext_ldif import (
     FlextLdifModelsMetadata,
     FlextLdifUtilitiesOID,
     FlextLdifUtilitiesServer,
     c,
     m,
+    r,
     t,
 )
 
