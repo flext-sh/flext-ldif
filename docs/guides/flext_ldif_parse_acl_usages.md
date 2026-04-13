@@ -56,7 +56,7 @@ ______________________________________________________________________
 class FlextLdifServersBase.Acl(ABC, QuirkRegistrationMixin):
     """Base class for ACL quirks."""
 
-    def parse(self, acl_line: str) -> r[FlextLdifModels.Acl]:
+    def parse(self, acl_line: str) -> p.Result[FlextLdifModels.Acl]:
         """Parse server-specific ACL definition.
 
         Args:
@@ -75,7 +75,7 @@ class FlextLdifServersBase.Acl(ABC, QuirkRegistrationMixin):
 class Acl(Protocol):
     """Protocol for ACL quirks."""
 
-    def parse(self, acl_line: str) -> r[t.RecursiveContainerMapping]:
+    def parse(self, acl_line: str) -> p.Result[t.RecursiveContainerMapping]:
         """Parse ACL - returns r with dict or Acl model."""
 ```
 
@@ -106,7 +106,7 @@ ______________________________________________________________________
 Each server quirks class has:
 
 - `class XyzAcl(FlextLdifServersBase.Acl):`
-- `def parse(self, acl_line: str) -> r[FlextLdifModels.Acl]:`
+- `def parse(self, acl_line: str) -> p.Result[FlextLdifModels.Acl]:`
 - Server-specific parsing logic
 - Returns `r.ok(Acl(...))` or `r.fail(...)`
 
@@ -125,7 +125,7 @@ ______________________________________________________________________
 ```python
 def parse(
     self, acl_line: str, server_type: str | None = None
-) -> r[FlextLdifModels.Acl]:
+) -> p.Result[FlextLdifModels.Acl]:
     """Parse ACL line using appropriate quirks.
 
     Delegates to quirks.parse() internally.
@@ -149,7 +149,7 @@ def parse(
 ```python
 def _transform_categories(
     self, categorized: Mapping[str, Sequence[t.Dict]]
-) -> r[Mapping[str, Sequence[t.Dict]]]:
+) -> p.Result[Mapping[str, Sequence[t.Dict]]]:
     """Transform ACL entries using OID→OUD pipeline.
 
     Uses parse()

@@ -220,7 +220,7 @@ from flext_core import d
 class RfcLdifParser:
     @d.log_operation(level="info")
     @d.track_performance()
-    def parse(self, file_path: Path) -> r[Sequence[Entry]]:
+    def parse(self, file_path: Path) -> p.Result[Sequence[Entry]]:
         """Parse LDIF with automatic logging and metrics."""
         # Implementation
 ```
@@ -261,7 +261,7 @@ from flext_core import s, r
 class FlextLdifDetector(Flext):
     """Server detection service with automatic logging."""
 
-    def execute(self, content: str) -> r[dict]:
+    def execute(self, content: str) -> p.Result[dict]:
         self.logger.info("Detecting server type", extra={"size": len(content)})
         # self.logger available automatically from s
 ```
@@ -307,7 +307,7 @@ def parse(
     mode: Literal["single", "batch", "paginate"] = "single",
     server_type: str = "rfc",
     page_size: int = 1000,
-) -> r[Sequence[Entry] | Callable]:
+) -> p.Result[Sequence[Entry] | Callable]:
     """Parse LDIF with pattern matching mode dispatch."""
     match mode:
         case "batch":

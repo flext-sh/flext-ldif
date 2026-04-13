@@ -40,7 +40,7 @@ class DnCaseRegistry:
     def get_canonical_dn(self, dn: str) -> str:
         """Get canonical case for any DN variant."""
 
-    def validate_oud_consistency(self) -> r[bool]:
+    def validate_oud_consistency(self) -> p.Result[bool]:
         """Validate no case conflicts exist for OUD compatibility."""
 ```
 

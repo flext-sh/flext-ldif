@@ -76,7 +76,7 @@ UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 123
 **Solution**:
 
 ```python
-def handle_encoding_issues(file_path: str) -> r[str]:
+def handle_encoding_issues(file_path: str) -> p.Result[str]:
     """Handle various character encodings."""
     encodings_to_try = ["utf-8", "latin-1", "cp1252", "iso-8859-1"]
 
@@ -94,7 +94,7 @@ def handle_encoding_issues(file_path: str) -> r[str]:
 
 
 # Usage with custom encoding
-def parse_with_encoding_detection(file_path: str) -> r[list]:
+def parse_with_encoding_detection(file_path: str) -> p.Result[list]:
     """Parse LDIF with automatic encoding detection."""
     content_result = handle_encoding_issues(file_path)
     if content_result.is_failure:
@@ -118,7 +118,7 @@ MemoryError: Unable to allocate array
 **Solution**:
 
 ```python
-def process_large_file_safely(file_path: str) -> r[t.Dict]:
+def process_large_file_safely(file_path: str) -> p.Result[t.Dict]:
     """Process large LDIF files with memory management."""
     import psutil
     import os
@@ -146,7 +146,7 @@ def process_large_file_safely(file_path: str) -> r[t.Dict]:
     return api.parse_file(file_path)
 
 
-def chunk_process_file(file_path: str, chunk_size: int = 10000) -> r[t.Dict]:
+def chunk_process_file(file_path: str, chunk_size: int = 10000) -> p.Result[t.Dict]:
     """Process file in chunks to manage memory."""
     results = {"total_entries": 0, "processed_chunks": 0}
 
@@ -183,7 +183,7 @@ def chunk_process_file(file_path: str, chunk_size: int = 10000) -> r[t.Dict]:
         return r[t.Dict].fail(f"Chunk processing failed: {e}")
 
 
-def process_chunk(chunk_entries: t.StringList) -> r[bool]:
+def process_chunk(chunk_entries: t.StringList) -> p.Result[bool]:
     """Process a chunk of LDIF entries."""
     chunk_content = "\n\n".join(chunk_entries)
     api = ldif()
@@ -205,7 +205,7 @@ result = api.validate_entries(entries)
 **Solution**:
 
 ```python
-def handle_validation_errors(entries: list) -> r[list]:
+def handle_validation_errors(entries: list) -> p.Result[list]:
     """Handle validation errors with detailed reporting."""
     # Try with strict validation first
     strict_config = FlextLdifModels.Config(strict_validation=True)
@@ -316,7 +316,7 @@ def optimize_processing_config() -> FlextLdifModels.Config:
     )
 
 
-def process_with_optimization(file_path: str) -> r[t.Dict]:
+def process_with_optimization(file_path: str) -> p.Result[t.Dict]:
     """Process LDIF with performance optimizations."""
     settings = optimize_processing_config()
     api = ldif(settings=settings)
@@ -370,7 +370,7 @@ def debug_container_issues() -> None:
         print(f"✗ Registration failed: {registration_result.error}")
 
 
-def safe_service_registration() -> r[ldif]:
+def safe_service_registration() -> p.Result[ldif]:
     """Safely register LDIF service with error handling."""
     container = FlextContainer.get_global()
 
@@ -407,7 +407,7 @@ result = (
 **Solution**:
 
 ```python
-def correct_railway_chaining(file_path: str) -> r[list]:
+def correct_railway_chaining(file_path: str) -> p.Result[list]:
     """Demonstrate correct r chaining."""
     api = ldif()
 
@@ -426,7 +426,7 @@ def correct_railway_chaining(file_path: str) -> r[list]:
     )
 
 
-def debug_railway_chain(file_path: str) -> r[list]:
+def debug_railway_chain(file_path: str) -> p.Result[list]:
     """Debug railway-oriented programming chains."""
     api = ldif()
 

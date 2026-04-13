@@ -232,7 +232,7 @@ from pydantic import ValidationError
 from flext_ldif import FlextLdifModels
 
 
-def validate_configuration(config_dict: dict) -> r[FlextLdifModels.Config]:
+def validate_configuration(config_dict: dict) -> p.Result[FlextLdifModels.Config]:
     """Validate configuration with detailed error handling."""
     try:
         settings = FlextLdifModels.Config(**config_dict)
@@ -356,7 +356,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import r
+from flext_core import r, p
 from flext_core import u
 from flext_core import s
 from flext_core import t
@@ -395,7 +395,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import r
+from flext_core import r, p
 from flext_core import u
 from flext_core import s
 from flext_core import t
@@ -446,7 +446,7 @@ config_dict = {
 Validate configuration at application startup:
 
 ```python
-def initialize_application_config() -> r[ldif]:
+def initialize_application_config() -> p.Result[ldif]:
     """Initialize application with validated configuration."""
     try:
         settings = FlextLdifModels.Config(

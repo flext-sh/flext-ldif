@@ -96,7 +96,9 @@ class ldif:
 Parse LDIF file into structured entries.
 
 ```python
-def parse_file(self, file_path: Path | str) -> r[Sequence[FlextLdifModels.Entry]]:
+def parse_file(
+    self, file_path: Path | str
+) -> p.Result[Sequence[FlextLdifModels.Entry]]:
     """Parse LDIF file using railway-oriented programming.
 
     Args:
@@ -119,7 +121,7 @@ def parse_file(self, file_path: Path | str) -> r[Sequence[FlextLdifModels.Entry]
 Parse LDIF string content into structured entries.
 
 ```python
-def parse_string(self, content: str) -> r[Sequence[FlextLdifModels.Entry]]:
+def parse_string(self, content: str) -> p.Result[Sequence[FlextLdifModels.Entry]]:
     """Parse LDIF string content.
 
     Args:
@@ -144,7 +146,7 @@ def parse_string(self, content: str) -> r[Sequence[FlextLdifModels.Entry]]:
 Validate LDIF entries against RFC 2849 and business rules.
 
 ```python
-def validate_entries(self, entries: Sequence[FlextLdifModels.Entry]) -> r[bool]:
+def validate_entries(self, entries: Sequence[FlextLdifModels.Entry]) -> p.Result[bool]:
     """Validate LDIF entries.
 
     Args:
@@ -168,7 +170,7 @@ Write LDIF entries to file.
 ```python
 def write_file(
     self, entries: Sequence[FlextLdifModels.Entry], file_path: Path | str
-) -> r[bool]:
+) -> p.Result[bool]:
     """Write LDIF entries to file.
 
     Args:
@@ -191,7 +193,7 @@ def write_file(
 Convert entries to LDIF string format.
 
 ```python
-def write(self, entries: Sequence[FlextLdifModels.Entry]) -> r[str]:
+def write(self, entries: Sequence[FlextLdifModels.Entry]) -> p.Result[str]:
     """Convert entries to LDIF string.
 
     Args:
@@ -217,7 +219,7 @@ Filter entries with person t.RecursiveContainer class.
 ```python
 def filter_persons(
     self, entries: Sequence[FlextLdifModels.Entry]
-) -> r[Sequence[FlextLdifModels.Entry]]:
+) -> p.Result[Sequence[FlextLdifModels.Entry]]:
     """Filter person entries from entry list.
 
     Args:
@@ -241,7 +243,7 @@ Filter entries with group t.RecursiveContainer classes.
 ```python
 def filter_groups(
     self, entries: Sequence[FlextLdifModels.Entry]
-) -> r[Sequence[FlextLdifModels.Entry]]:
+) -> p.Result[Sequence[FlextLdifModels.Entry]]:
     """Filter group entries from entry list.
 
     Args:
@@ -263,7 +265,7 @@ Filter entries by specific t.RecursiveContainer class.
 ```python
 def filter_by_objectclass(
     self, entries: Sequence[FlextLdifModels.Entry], object_class: str
-) -> r[Sequence[FlextLdifModels.Entry]]:
+) -> p.Result[Sequence[FlextLdifModels.Entry]]:
     """Filter entries by t.RecursiveContainer class.
 
     Args:
@@ -288,7 +290,7 @@ Generate statistics about LDIF entries.
 ```python
 def get_entry_statistics(
     self, entries: Sequence[FlextLdifModels.Entry]
-) -> r[t.IntMapping]:
+) -> p.Result[t.IntMapping]:
     """Get statistics about LDIF entries.
 
     Args:
@@ -310,7 +312,7 @@ def get_entry_statistics(
 Perform comprehensive analysis of LDIF entries.
 
 ```python
-def analyze_entries(self, entries: Sequence[FlextLdifModels.Entry]) -> r[t.Dict]:
+def analyze_entries(self, entries: Sequence[FlextLdifModels.Entry]) -> p.Result[t.Dict]:
     """Perform comprehensive entry analysis.
 
     Args:
@@ -352,7 +354,7 @@ class QuirksConversionMatrix:
         target,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
         data: str | t.RecursiveContainerMapping,
-    ) -> r[str | t.RecursiveContainerMapping]:
+    ) -> p.Result[str | t.RecursiveContainerMapping]:
         """Convert data from source quirk format to target quirk format via RFC.
 
         Args:
@@ -372,7 +374,7 @@ class QuirksConversionMatrix:
         target,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
         data_batch: Sequence[str | t.RecursiveContainerMapping],
-    ) -> r[Sequence[str | t.RecursiveContainerMapping]]:
+    ) -> p.Result[Sequence[str | t.RecursiveContainerMapping]]:
         """Convert batch of data from source to target quirk format via RFC.
 
         Args:
@@ -396,7 +398,7 @@ class QuirksConversionMatrix:
 
     def validate_oud_conversion(
         self, converted_data: Sequence[str | t.RecursiveContainerMapping]
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         """Validate converted data for OUD compatibility.
 
         Args:
@@ -458,7 +460,7 @@ class DnCaseRegistry:
 
         """
 
-    def validate_oud_consistency(self) -> r[bool]:
+    def validate_oud_consistency(self) -> p.Result[bool]:
         """Validate registry for OUD case-sensitive consistency.
 
         Returns:
@@ -670,7 +672,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import r
+from flext_core import r, p
 from flext_core import u
 from flext_core import s
 from flext_core import t
@@ -767,7 +769,9 @@ if result.is_success:
 ### Pipeline Processing
 
 ```python
-def process_enterprise_directory(input_file: Path, output_file: Path) -> r[t.Dict]:
+def process_enterprise_directory(
+    input_file: Path, output_file: Path
+) -> p.Result[t.Dict]:
     """Process enterprise directory with complete pipeline."""
     api = ldif(FlextLdifModels.Config(strict_validation=True))
 
@@ -799,7 +803,7 @@ def process_enterprise_directory(input_file: Path, output_file: Path) -> r[t.Dic
 ### Batch Processing
 
 ```python
-def process_multiple_files(file_paths: Sequence[Path]) -> r[t.Dict]:
+def process_multiple_files(file_paths: Sequence[Path]) -> p.Result[t.Dict]:
     """Process multiple LDIF files in batch."""
     api = ldif()
     all_entries = []
@@ -826,7 +830,7 @@ def process_multiple_files(file_paths: Sequence[Path]) -> r[t.Dict]:
 ```python
 def filter_by_custom_criteria(
     api: ldif, entries: Sequence[FlextLdifModels.Entry]
-) -> r[Sequence[FlextLdifModels.Entry]]:
+) -> p.Result[Sequence[FlextLdifModels.Entry]]:
     """Apply custom filtering logic."""
 
     def matches_criteria(entry: FlextLdifModels.Entry) -> bool:
@@ -874,7 +878,7 @@ class RfcSchemaParserService:
             server_type: Optional server type to select specific quirks (None = pure RFC)
         """
 
-    def execute(self) -> r[t.Dict]:
+    def execute(self) -> p.Result[t.Dict]:
         """Execute RFC-compliant schema parsing with quirks.
 
         Returns:
@@ -965,7 +969,7 @@ class FlextLdifMigration:
             target_server_type: Target server type (e.g., "oud", "openldap")
         """
 
-    def execute(self) -> r[t.Dict]:
+    def execute(self) -> p.Result[t.Dict]:
         """Execute migration pipeline.
 
         Generic transformation process:
@@ -1081,7 +1085,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import r
+from flext_core import r, p
 from flext_core import u
 from flext_core import s
 from flext_core import t
@@ -1117,7 +1121,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import r
+from flext_core import r, p
 from flext_core import u
 from flext_core import s
 from flext_core import t

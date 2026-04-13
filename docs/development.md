@@ -129,7 +129,7 @@ result = api.parse_file("small_directory.ldif")
 
 ```python
 # LDIF-specific validation
-def validate_ldif_structure(entries: Sequence[FlextLdifModels.Entry]) -> r[bool]:
+def validate_ldif_structure(entries: Sequence[FlextLdifModels.Entry]) -> p.Result[bool]:
     """Validate LDIF entries for common issues."""
     for entry in entries:
         # Check DN format
@@ -226,14 +226,14 @@ def test_memory_usage():
 
 ```python
 # Good: Process small files directly
-def process_small_ldif(file_path: str) -> r[t.Dict]:
+def process_small_ldif(file_path: str) -> p.Result[t.Dict]:
     """Process LDIF files under 100MB."""
     api = ldif()
     return api.parse_file(file_path)
 
 
 # Consider: External tools for large files
-def process_large_ldif(file_path: str) -> r[t.Dict]:
+def process_large_ldif(file_path: str) -> p.Result[t.Dict]:
     """Process large LDIF files using external tools."""
     # Use grep, awk, or other streaming tools
     # Then process results with FLEXT-LDIF
@@ -241,7 +241,7 @@ def process_large_ldif(file_path: str) -> r[t.Dict]:
 
 
 # Monitor: Memory usage for production systems
-def process_with_monitoring(file_path: str) -> r[t.Dict]:
+def process_with_monitoring(file_path: str) -> p.Result[t.Dict]:
     """Process LDIF with memory monitoring."""
     file_size = os.path.getsize(file_path)
     if file_size > 100 * 1024 * 1024:  # 100MB
