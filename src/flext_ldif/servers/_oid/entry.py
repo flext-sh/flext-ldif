@@ -180,7 +180,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         attribute_conflicts_json: t.Cli.JsonValue = u.Cli.normalize_json_value([
             {
                 str(key): (
-                    str(value) if isinstance(value, str) else [str(item) for item in value]
+                    str(value)
+                    if isinstance(value, str)
+                    else [str(item) for item in value]
                 )
                 for key, value in conflict.items()
             }
