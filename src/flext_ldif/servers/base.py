@@ -429,7 +429,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         def write_single_entry(entry_model: m.Ldif.Entry) -> r[str]:
             """Write single entry using entry quirk."""
             if entry_quirk is not None:
-                result: r[str] = entry_quirk.write(entry_model)
+                result: p.Result[str] = entry_quirk.write(entry_model)
                 return result
             return r[str].fail("No entry quirk found")
 

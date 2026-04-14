@@ -13,6 +13,7 @@ from flext_ldif import (
     FlextLdifServer,
     c,
     m,
+    p,
     r,
     s,
     t,
@@ -366,7 +367,8 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
                 filtered = list(entries)
                 if has_schema_rules:
                     rules = self._schema_whitelist_rules
-                    assert rules is not None  # noqa: S101
+                    if rules is None:
+                        continue
                     allowed_oids: MutableMapping[str, frozenset[str]] = {
                         "attributetypes": frozenset(rules.allowed_attribute_oids),
                         "objectclasses": frozenset(rules.allowed_objectclass_oids),
@@ -765,8 +767,8 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
     ) -> r[type[c.Ldif]]:
         """Get and validate server constants via FlextLdifServer registry."""
         return self._server_registry.get_constants(server_type).fold(
-            on_failure=lambda e: r[type[c.Ldif]].fail(e),
-            on_success=lambda v: r[type[c.Ldif]].ok(v),
+            on_failure=lambda e: p.Result[type[c.Ldif]].fail(e),
+            on_success=lambda v: p.Result[type[c.Ldif]].ok(v),
         )
 
     def _match_entry_to_category(

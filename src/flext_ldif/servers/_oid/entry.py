@@ -7,8 +7,6 @@ import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import override
 
-from pydantic import RootModel
-
 from flext_ldif import (
     c,
     m,
@@ -21,16 +19,6 @@ from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 logger = u.fetch_logger(__name__)
-
-
-class _OidStringListJson(RootModel[MutableSequence[str]]):
-    pass
-
-
-class _OidObjectListJson(
-    RootModel[MutableSequence[t.MutableRecursiveContainerMapping]]
-):
-    pass
 
 
 class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
@@ -183,13 +171,24 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             else {}
         )
         rfc_violations_str: str = (
-            _OidStringListJson(root=rfc_violations).model_dump_json()
+            m.Cli.CliNormalizedJson(
+                u.Cli.json_normalize(list(rfc_violations)),
+            ).model_dump_json()
             if rfc_violations
             else ""
         )
+        attribute_conflicts_json: t.Cli.JsonValue = u.Cli.normalize_json_value([
+            {
+                str(key): (
+                    str(value) if isinstance(value, str) else [str(item) for item in value]
+                )
+                for key, value in conflict.items()
+            }
+            for conflict in attribute_conflicts
+        ])
         attribute_conflicts_str: str = (
-            _OidObjectListJson(
-                root=[dict(conflict) for conflict in attribute_conflicts],
+            m.Cli.CliNormalizedJson(
+                attribute_conflicts_json,
             ).model_dump_json()
             if attribute_conflicts
             else ""
@@ -243,8 +242,10 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             else None
         )
         operational_attributes_str: str | None = (
-            _OidStringListJson(
-                root=list(FlextLdifServersOidConstants.OPERATIONAL_ATTRIBUTES),
+            m.Cli.CliNormalizedJson(
+                u.Cli.json_normalize(
+                    list(FlextLdifServersOidConstants.OPERATIONAL_ATTRIBUTES),
+                ),
             ).model_dump_json()
             if FlextLdifServersOidConstants.OPERATIONAL_ATTRIBUTES
             else None
@@ -394,7 +395,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 original_strings_data,
             )
         converted_attrs_format_str: str = (
-            _OidStringListJson(root=list(converted_attrs)).model_dump_json()
+            m.Cli.CliNormalizedJson(
+                u.Cli.json_normalize(list(converted_attrs)),
+            ).model_dump_json()
             if converted_attrs
             else ""
         )
@@ -418,7 +421,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             else ""
         )
         original_attr_lines_str: str = (
-            _OidStringListJson(root=orig_attr_lines).model_dump_json()
+            m.Cli.CliNormalizedJson(
+                u.Cli.json_normalize(list(orig_attr_lines)),
+            ).model_dump_json()
             if orig_attr_lines
             else ""
         )
@@ -742,12 +747,23 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 ).model_dump_json()
             )
         if rfc_violations:
-            current_extensions["rfc_violations"] = _OidStringListJson(
-                root=rfc_violations,
+            current_extensions["rfc_violations"] = m.Cli.CliNormalizedJson(
+                u.Cli.json_normalize(list(rfc_violations)),
             ).model_dump_json()
         if attribute_conflicts:
-            current_extensions["attribute_conflicts"] = _OidObjectListJson(
-                root=[dict(conflict) for conflict in attribute_conflicts],
+            attribute_conflicts_json = u.Cli.normalize_json_value([
+                {
+                    str(key): (
+                        str(value)
+                        if isinstance(value, str)
+                        else [str(item) for item in value]
+                    )
+                    for key, value in conflict.items()
+                }
+                for conflict in attribute_conflicts
+            ])
+            current_extensions["attribute_conflicts"] = m.Cli.CliNormalizedJson(
+                attribute_conflicts_json,
             ).model_dump_json()
         if current_extensions != (entry.metadata.extensions if entry.metadata else {}):
             updated_extensions = (

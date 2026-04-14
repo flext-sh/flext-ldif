@@ -10,7 +10,7 @@ class FlextLdifQuirkMethodsMixin:
 
     @staticmethod
     def get_parent_quirk_from_instance(
-        instance: object,
+        instance: FlextLdifQuirkMethodsMixin,
     ) -> p.Ldif.SchemaQuirk | None:
         """Get the effective parent quirk when available."""
         parent_raw: p.Ldif.SchemaQuirk | None = getattr(instance, "_parent_quirk", None)

@@ -271,7 +271,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def _is_entry_sequence(
-        obj: object,
+        obj: MutableSequence[m.Ldif.Entry] | t.Container | str | m.Ldif.DN,
     ) -> TypeGuard[MutableSequence[m.Ldif.Entry]]:
         """Check if value is a Sequence of Entry objects (dispatch helper)."""
         if isinstance(obj, (str, bytes)):

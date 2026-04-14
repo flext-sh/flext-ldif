@@ -8,6 +8,7 @@ from typing import override
 from flext_ldif import (
     FlextLdifServer,
     m,
+    p,
     r,
     s,
     t,
@@ -175,8 +176,10 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
                 f"No ACL quirk found for server type: {normalized_server_type}",
             )
         return acl_quirk.parse_quirk(acl_string).fold(
-            on_failure=lambda e: r[t.Ldif.AclLike].fail(e or "ACL parsing failed"),
-            on_success=lambda v: r[t.Ldif.AclLike].ok(v),
+            on_failure=lambda e: p.Result[t.Ldif.AclLike].fail(
+                e or "ACL parsing failed"
+            ),
+            on_success=lambda v: p.Result[t.Ldif.AclLike].ok(v),
         )
 
 

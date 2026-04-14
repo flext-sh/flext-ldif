@@ -27,7 +27,7 @@ class FlextLdifModelsCollections:
         )
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: t.ValueOrModel) -> bool:
             if isinstance(other, dict):
                 self_dict = {
                     key: value
@@ -107,7 +107,7 @@ class FlextLdifModelsCollections:
 
     class BooleanFlags(m.FrozenDynamicModel):
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: t.ValueOrModel) -> bool:
             if isinstance(other, dict):
                 extra = self.model_extra
                 return (extra or {}) == other
@@ -137,7 +137,7 @@ class FlextLdifModelsCollections:
         )
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: t.ValueOrModel) -> bool:
             if isinstance(other, self.__class__):
                 return self.categories == other.categories
             if isinstance(other, dict):

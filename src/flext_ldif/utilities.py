@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextUtilities
+from flext_cli import FlextCliUtilities
+
 from flext_ldif import (
     FlextLdifUtilitiesACL,
     FlextLdifUtilitiesAttribute,
@@ -31,7 +32,7 @@ from flext_ldif import (
 )
 
 
-class FlextLdifUtilities(FlextUtilities):
+class FlextLdifUtilities(FlextCliUtilities):
     """FLEXT LDIF Utilities - Centralized helpers for LDIF operations."""
 
     class Ldif(

@@ -768,7 +768,7 @@ class FlextLdifModelsSettings:
         use_rfc_attribute_order: Annotated[
             bool,
             Field(
-                description="If True, writes attributes in RFC 2849 order: objectClass first after DN, then remaining attributes alphabetically. DN is always first (handled automatically by writer).",
+                description="If True, writes attributes in RFC 2849 orderClass first after DN, then remaining attributes alphabetically. DN is always first (handled automatically by writer).",
             ),
         ] = False
         rfc_order_priority_attributes: Annotated[

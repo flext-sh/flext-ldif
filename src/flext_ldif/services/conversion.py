@@ -1100,7 +1100,7 @@ class FlextLdifConversion(
                     extract_converted_acl,
                 )
                 .flat_map(
-                    lambda converted_acl: r[t.Ldif.ConvertedModel].ok(
+                    lambda converted_acl: p.Result[t.Ldif.ConvertedModel].ok(
                         self._preserve_acl_metadata(
                             acl,
                             converted_acl,

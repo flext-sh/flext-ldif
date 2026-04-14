@@ -13,9 +13,9 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
+from flext_cli import FlextCliModels
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextModels
 from flext_ldif import (
     FlextLdifModelsBases,
     FlextLdifModelsCollections,
@@ -29,7 +29,7 @@ from flext_ldif import (
 )
 
 
-class FlextLdifModels(FlextModels):
+class FlextLdifModels(FlextCliModels):
     """LDIF domain models — flat façade with MRO class inheritance.
 
     Architecture: Domain layer helper

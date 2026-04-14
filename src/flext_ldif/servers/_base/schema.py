@@ -268,7 +268,7 @@ class FlextLdifServersBaseSchema(
         if not oid_value:
             return
         oid_util = FlextLdifUtilitiesOID
-        oid_validate_result: r[bool]
+        oid_validate_result: p.Result[bool]
         validate_method = getattr(oid_util, "validate_format", None)
         if validate_method is not None and callable(validate_method):
             validate_result_raw = validate_method(oid_value)

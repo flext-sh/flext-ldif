@@ -29,6 +29,7 @@ from flext_ldif import (
     FlextLdifModelsMetadata,
     FlextLdifUtilitiesEntry,
     c,
+    p,
     r,
     t,
 )
@@ -1004,10 +1005,12 @@ class FlextLdifModelsDomainEntry:
                 if params.raw_record_lines is not None:
                     entry_data["raw_record_lines"] = list(params.raw_record_lines)
                 entry_instance = cls.model_validate(entry_data)
-                ok_result: r[Self] = r[Self].ok(entry_instance)
+                ok_result: p.Result[Self] = r[Self].ok(entry_instance)
                 return ok_result
             except (ValueError, TypeError, AttributeError) as e:
-                fail_result: r[Self] = r[Self].fail(f"Failed to create Entry: {e}")
+                fail_result: p.Result[Self] = r[Self].fail(
+                    f"Failed to create Entry: {e}"
+                )
                 return fail_result
 
         @classmethod

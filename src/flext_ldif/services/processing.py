@@ -6,7 +6,7 @@ from collections.abc import Callable, MutableMapping, MutableSequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import override
 
-from flext_ldif import m, r, s, u
+from flext_ldif import m, p, r, s, u
 
 
 class FlextLdifProcessing(
@@ -60,10 +60,14 @@ class FlextLdifProcessing(
     ) -> r[MutableSequence[m.Ldif.ProcessingResult]]:
         """Execute batch processing sequentially."""
         return u.process(entries, processor_func, on_error="collect").fold(
-            on_failure=lambda e: r[MutableSequence[m.Ldif.ProcessingResult]].fail(
+            on_failure=lambda e: p.Result[
+                MutableSequence[m.Ldif.ProcessingResult]
+            ].fail(
                 e or "Batch processing failed",
             ),
-            on_success=lambda v: r[MutableSequence[m.Ldif.ProcessingResult]].ok([*v]),
+            on_success=lambda v: p.Result[MutableSequence[m.Ldif.ProcessingResult]].ok([
+                *v
+            ]),
         )
 
     @staticmethod

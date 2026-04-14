@@ -13,7 +13,8 @@ from flext_core.lazy import (
 from flext_ldif.__version__ import *
 
 if _t.TYPE_CHECKING:
-    from flext_core import d, e, h, r, x
+    from flext_cli import d, e, h, r, x
+
     from flext_ldif._constants.base import FlextLdifConstantsBase
     from flext_ldif._constants.enums import FlextLdifConstantsEnums
     from flext_ldif._models.base import FlextLdifModelsBases
@@ -168,7 +169,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "FlextLdifUtilities",
                 "u",
             ),
-            "flext_core": (
+            "flext_cli": (
                 "d",
                 "e",
                 "h",

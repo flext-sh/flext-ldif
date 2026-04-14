@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from flext_core import FlextProtocols
+from flext_cli import FlextCliProtocols
+
 from flext_ldif import FlextLdifProtocolsBase, FlextLdifProtocolsDomain
 
 
-class FlextLdifProtocols(FlextProtocols):
+class FlextLdifProtocols(FlextCliProtocols):
     """Unified LDIF protocol facade."""
 
     @runtime_checkable
