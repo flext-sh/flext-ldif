@@ -6,7 +6,7 @@
 
 **Status**: Accepted
 
-**Date**: 2025-10-10
+**Date**: 2026-04-14
 
 **Context**:
 LDAP servers implement the RFC standards differently, requiring server-specific adaptations. FLEXT-LDIF must support 9+ LDAP server implementations while maintaining a clean, extensible architecture.

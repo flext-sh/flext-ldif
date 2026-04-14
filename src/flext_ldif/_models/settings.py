@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, MutableMapping, MutableSequence
-from typing import Annotated, ClassVar, Literal
+from typing import Annotated, ClassVar, Literal, Self
 
 from pydantic import ConfigDict, Field
 
@@ -195,6 +195,27 @@ class FlextLdifModelsSettings:
             default=None, description="Attribute normalization configuration"
         )
 
+        @classmethod
+        def servers(
+            cls,
+            *,
+            source_server: str | c.Ldif.ServerTypes | None,
+            target_server: str | c.Ldif.ServerTypes | None,
+        ) -> Self:
+            """Build processing config keeping model defaults untouched."""
+            return cls(
+                source_server=(
+                    source_server.value
+                    if isinstance(source_server, c.Ldif.ServerTypes)
+                    else source_server
+                ),
+                target_server=(
+                    target_server.value
+                    if isinstance(target_server, c.Ldif.ServerTypes)
+                    else target_server
+                ),
+            )
+
     class TransformConfig(FlextModels.Value):
         """Configuration for transformation operations."""
 
@@ -216,6 +237,21 @@ class FlextLdifModelsSettings:
         process_config: FlextLdifModelsSettings.ProcessConfig | None = Field(
             default=None, description="Processing configuration for batch operations"
         )
+
+        @classmethod
+        def servers(
+            cls,
+            *,
+            source_server: str | c.Ldif.ServerTypes | None,
+            target_server: str | c.Ldif.ServerTypes | None,
+        ) -> Self:
+            """Build transform config for server-to-server conversion only."""
+            return cls(
+                process_config=FlextLdifModelsSettings.ProcessConfig.servers(
+                    source_server=source_server,
+                    target_server=target_server,
+                ),
+            )
 
     class ServerPatternsConfig(FlextModels.Value):
         """Configuration for server pattern matching."""

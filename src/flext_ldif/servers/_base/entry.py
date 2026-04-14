@@ -11,6 +11,7 @@ from typing import Annotated, ClassVar, Self, override
 
 from pydantic import Field, ValidationError
 
+from flext_core import s
 from flext_ldif import (
     FlextLdifModelsDomainsEntries,
     FlextLdifModelsSettings,
@@ -19,7 +20,6 @@ from flext_ldif import (
     m,
     p,
     r,
-    s,
     t,
     u,
 )

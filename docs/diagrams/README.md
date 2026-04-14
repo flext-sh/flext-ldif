@@ -21,7 +21,7 @@
 - [Related Documentation](#related-documentation)
 <!-- TOC END -->
 
-**Version**: 0.9.9 | **Framework**: PlantUML + C4 Model | **Updated**: October 10, 2025
+**Version**: 0.12.0-dev | **Framework**: PlantUML + C4 Model | **Updated**: October 10, 2025
 
 This directory contains architecture diagrams for FLEXT-LDIF using modern diagramming practices and tools.
 
@@ -152,7 +152,7 @@ skinparam packageBorderColor #0066CC
 title FLEXT-LDIF System Context Diagram
 
 ' Include version information
-note right : Version: 0.9.9
+note right : Version: 0.12.0-dev
 ```
 
 ### Content Standards

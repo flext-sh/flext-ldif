@@ -55,7 +55,7 @@ Supports hierarchy, DN, custom predicate, and schema OID sorting.
 ```python
 result = FlextLdifSorting(entries=my_entries, sort_by="hierarchy").execute()
 
-if result.is_success:
+if result.success:
     sorted_entries = result.unwrap()
 ```
 

@@ -7,7 +7,9 @@ from collections.abc import Sequence
 from typing import override
 
 from flext_core import FlextSettings, FlextTypes, s
-from flext_ldif import FlextLdifSettings, m
+from flext_ldif.models import m
+from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.settings import FlextLdifSettings
 
 
 class FlextLdifServiceBase[
@@ -18,13 +20,24 @@ class FlextLdifServiceBase[
 ):
     """Base class for LDIF services with typed settings helper."""
 
-    def __init__(self, settings: FlextLdifSettings | None = None) -> None:
-        """Expose the typed LDIF settings bootstrap on the concrete service base."""
+    def __init__(
+        self,
+        *,
+        server: FlextLdifServer | None = None,
+        settings: FlextLdifSettings | None = None,
+    ) -> None:
+        """Initialize the typed LDIF service runtime."""
         super().__init__(settings=settings)
+        object.__setattr__(
+            self,
+            "_server",
+            server or FlextLdifServer.get_global_instance(),
+        )
 
     @property
-    def ldif_config(self) -> FlextLdifSettings:
-        """Return the LDIF configuration namespace with proper typing."""
+    @override
+    def settings(self) -> FlextLdifSettings:
+        """Return the typed LDIF configuration namespace."""
         return FlextSettings.fetch_global().fetch_namespace("ldif", FlextLdifSettings)
 
     @classmethod

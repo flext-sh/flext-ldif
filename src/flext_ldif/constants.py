@@ -29,7 +29,7 @@ class FlextLdifConstants(FlextCliConstants):
 
         @unique
         class SortStrategy(StrEnum):
-            """Valid sorting strategies for LDIF entries (V2 type-safe enum)."""
+            """Valid sorting strategies for LDIF entries (type-safe enum)."""
 
             HIERARCHY = "hierarchy"
             DN = "dn"
@@ -47,7 +47,7 @@ class FlextLdifConstants(FlextCliConstants):
 
         @unique
         class SortTarget(StrEnum):
-            """What to sort in LDIF data (V2 type-safe enum)."""
+            """What to sort in LDIF data (type-safe enum)."""
 
             ENTRIES = "entries"
             ATTRIBUTES = "attributes"

@@ -6,7 +6,7 @@
 
 **Status**: Accepted
 
-**Date**: 2025-10-10
+**Date**: 2026-04-14
 
 **Context**:
 FLEXT-LDIF supports 9+ LDAP server implementations (OID, OUD, OpenLDAP, Active Directory, etc.), each with different syntax requirements and quirks. The challenge was providing seamless conversion between any server pair without implementing N×N conversion functions.

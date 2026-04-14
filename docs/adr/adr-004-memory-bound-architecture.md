@@ -6,7 +6,7 @@
 
 **Status**: Accepted
 
-**Date**: 2025-10-10
+**Date**: 2026-04-14
 
 **Context**:
 FLEXT-LDIF processes LDIF files containing directory data that can range from small configuration files to large enterprise directory exports. The system needs to handle files efficiently while maintaining type safety and RFC compliance.

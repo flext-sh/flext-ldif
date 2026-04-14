@@ -30,7 +30,7 @@
   - [Environment Variable Mapping](#environment-variable-mapping)
 <!-- TOC END -->
 
-**Version**: 0.9.9 RC | **Updated**: September 17, 2025
+**Version**: 0.12.0-dev | **Updated**: April 14, 2026
 
 This document covers configuration options for FLEXT-LDIF, including settings management, environment configuration, and integration with FLEXT ecosystem configuration patterns.
 
@@ -254,7 +254,7 @@ config_data = {
 }
 
 validation_result = validate_configuration(config_data)
-if validation_result.is_success:
+if validation_result.success:
     settings = validation_result.unwrap()
     api = ldif(settings=settings)
 else:
@@ -367,13 +367,13 @@ from flext_ldif import FlextLdifSettings
 container = FlextContainer.get_global()
 settings = FlextLdifModels.Config(max_entries=100000)
 
-registration_result = container.register("ldif_config", settings)
-if registration_result.is_success:
+registration_result = container.bind("ldif_config", settings)
+if registration_result.success:
     print("Configuration registered in container")
 
 # Retrieve configuration from container
-config_result = container.get("ldif_config")
-if config_result.is_success:
+config_result = container.resolve("ldif_config")
+if config_result.success:
     retrieved_config = config_result.unwrap()
     api = ldif(settings=retrieved_config)
 ```

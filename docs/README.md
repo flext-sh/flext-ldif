@@ -13,7 +13,7 @@
   - [💡 Examples (`examples/`)](#examples-examples)
   - [🚨 Troubleshooting (`troubleshooting.md`)](#troubleshooting-troubleshootingmd)
 - [🌟 Key Features Documented](#key-features-documented)
-  - [Current Implementation (v0.9.9)](#current-implementation-v099)
+  - [Current Implementation (v0.12.0-dev)](#current-implementation-v099)
   - [Known Limitations](#known-limitations)
   - [Future Development Goals](#future-development-goals)
 - [📖 Documentation Principles](#documentation-principles)
@@ -37,7 +37,7 @@
 - [🤝 Contributing to Documentation](#contributing-to-documentation)
 <!-- TOC END -->
 
-**Version**: 0.9.9 RC | **Updated**: October 10, 2025 | **Status**: RFC-first LDIF Processing with Server Quirks · Production-Ready
+**Version**: 0.12.0-dev RC | **Updated**: October 10, 2025 | **Status**: RFC-first LDIF Processing with Server Quirks · Production-Ready
 
 This directory contains documentation for FLEXT-LDIF, a Python library for processing LDAP Data Interchange Format (LDIF) files within the FLEXT ecosystem.
 
@@ -143,7 +143,7 @@ Working code examples organized by complexity:
 
 ## 🌟 Key Features Documented
 
-### Current Implementation (v0.9.9)
+### Current Implementation (v0.12.0-dev)
 
 - **RFC 2849/4512 Compliance**: Full standard compliance with strict enforcement
 - **Quirks System**: 4 fully implemented servers (OID, OUD, OpenLDAP 1.x/2.x), 5 stubs ready
@@ -270,7 +270,7 @@ Working code examples organized by complexity:
 
 - **Code Accuracy**: All examples tested and functional
 - **Complete Coverage**: All public APIs documented
-- **Current Information**: Version 0.9.9 alignment throughout documentation
+- **Current Information**: Version 0.12.0-dev alignment throughout documentation
 - **Professional Standards**: Clear, technical, and accurate language
 
 ## 🤝 Contributing to Documentation
@@ -285,6 +285,6 @@ When contributing to FLEXT-LDIF documentation:
 
 ______________________________________________________________________
 
-**FLEXT-LDIF Documentation**: Your guide to practical LDIF processing within the FLEXT ecosystem. This documentation reflects the current v0.9.9 implementation and provides accurate, tested examples for real-world usage.
+**FLEXT-LDIF Documentation**: Your guide to practical LDIF processing within the FLEXT ecosystem. This documentation reflects the current v0.12.0-dev implementation and provides accurate, tested examples for real-world usage.
 
 This documentation represents our commitment to providing accurate, useful guidance for FLEXT-LDIF users and contributors, clearly distinguishing between current capabilities and future development goals.

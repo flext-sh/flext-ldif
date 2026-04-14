@@ -11,7 +11,6 @@ from pydantic import PrivateAttr
 
 from flext_ldif import (
     FlextLdifParser,
-    FlextLdifProcessingPipeline,
     FlextLdifProcessingPipelineService,
     FlextLdifWriter,
     c,
@@ -34,7 +33,6 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
     _output_dir: Path | None = PrivateAttr(default=None)
     _source_server: c.Ldif.ServerTypes = PrivateAttr(default=c.Ldif.ServerTypes.RFC)
     _target_server: c.Ldif.ServerTypes = PrivateAttr(default=c.Ldif.ServerTypes.RFC)
-    _processing_pipeline_service: FlextLdifProcessingPipelineService = PrivateAttr()
     _output_filename: str | None = PrivateAttr(default=None)
 
     def __init__(
@@ -65,11 +63,6 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             self._coerce_server_type(effective_target_server),
         )
         object.__setattr__(self, "_output_filename", output_filename)
-        object.__setattr__(
-            self,
-            "_processing_pipeline_service",
-            FlextLdifProcessingPipelineService(),
-        )
 
     @property
     def input_dir(self) -> Path | None:
@@ -203,7 +196,10 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
     ) -> r[MutableSequence[m.Ldif.Entry]]:
         """Migrate entries from source to target server format."""
         try:
-            pipeline = self._get_processing_pipeline()
+            pipeline = FlextLdifProcessingPipelineService.get_processing_pipeline(
+                source_server_type=self.source_server_type,
+                target_server_type=self.target_server_type,
+            )
             return pipeline.execute(entries)
         except (
             ValueError,
@@ -257,7 +253,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                 filename = self.output_filename or input_file.name
                 output_file = out_dir / filename
             writer = FlextLdifWriter()
-            write_result = writer.write_to_file(
+            write_result = writer.write_ldif_file(
                 migrated,
                 output_file,
                 server_type=self.target_server_type,
@@ -283,14 +279,6 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         ) as e:
             logger.exception("File migration failed", input_file=str(input_file))
             return r[m.Ldif.MigrationPipelineResult].fail(f"File migration failed: {e}")
-
-    def _get_processing_pipeline(self) -> FlextLdifProcessingPipeline:
-        """Get or create processing pipeline instance."""
-        service = self._processing_pipeline_service
-        return service.get_processing_pipeline(
-            source_server_type=self.source_server_type,
-            target_server_type=self.target_server_type,
-        )
 
 
 __all__: list[str] = ["FlextLdifMigrationPipeline"]

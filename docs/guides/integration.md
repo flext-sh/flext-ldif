@@ -20,7 +20,7 @@
   - [Recommended Usage Patterns](#recommended-usage-patterns)
 <!-- TOC END -->
 
-**Version**: 0.9.9 RC | **Updated**: September 17, 2025
+**Version**: 0.12.0-dev | **Updated**: April 14, 2026
 
 LDIF-specific integration patterns for using FLEXT-LDIF within the FLEXT ecosystem. For general FLEXT patterns, see [flext-core documentation](https://github.com/organization/flext/tree/main/flext-core/README.md).
 
@@ -401,7 +401,7 @@ class LdifCLIService(FlextCliService):
 
             # Get LDIF-specific statistics
             stats_result = self._ldif_api.get_entry_statistics(entries)
-            if stats_result.is_success:
+            if stats_result.success:
                 stats = stats_result.unwrap()
                 print(f"  Object class distribution: {stats}")
 
@@ -480,7 +480,7 @@ def process_multiple_ldif_files(file_paths: Sequence[Path]) -> p.Result[t.Dict]:
             )
 
         result = api.parse_file(file_path)
-        if result.is_success:
+        if result.success:
             entries = result.unwrap()
             all_entries.extend(entries)
             processing_stats[str(file_path)] = {
@@ -537,7 +537,7 @@ def robust_ldif_processing(content: str) -> p.Result[t.Dict]:
     api = ldif()
 
     result = api.parse_string(content)
-    if result.is_failure:
+    if result.failure:
         error_msg = result.error
         if "LDIF" in error_msg or "parse" in error_msg.lower():
             return r[t.Dict].fail(f"LDIF format error: {error_msg}")

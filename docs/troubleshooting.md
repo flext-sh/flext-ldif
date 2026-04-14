@@ -16,7 +16,7 @@
   - [Emergency Contacts](#emergency-contacts)
 <!-- TOC END -->
 
-**Version**: 0.9.9 RC | **Updated**: September 17, 2025
+**Version**: 0.12.0-dev | **Updated**: April 14, 2026
 
 This document provides solutions to common issues encountered when using FLEXT-LDIF, including error diagnosis, performance problems, and integration issues.
 
@@ -30,7 +30,7 @@ This document provides solutions to common issues encountered when using FLEXT-L
 
 ```python
 result = api.parse_string(ldif_content)
-if result.is_failure:
+if result.failure:
     print(f"Parse error: {result.error}")
     # Common error: "Invalid LDIF format: missing DN"
 ```
@@ -97,7 +97,7 @@ def handle_encoding_issues(file_path: str) -> p.Result[str]:
 def parse_with_encoding_detection(file_path: str) -> p.Result[list]:
     """Parse LDIF with automatic encoding detection."""
     content_result = handle_encoding_issues(file_path)
-    if content_result.is_failure:
+    if content_result.failure:
         return r[list].fail(content_result.error)
 
     api = ldif()
@@ -164,7 +164,7 @@ def chunk_process_file(file_path: str, chunk_size: int = 10000) -> p.Result[t.Di
                     if len(current_chunk) >= chunk_size:
                         # Process chunk
                         chunk_result = process_chunk(current_chunk)
-                        if chunk_result.is_success:
+                        if chunk_result.success:
                             results["total_entries"] += len(current_chunk)
                             results["processed_chunks"] += 1
                         current_chunk = []
@@ -174,7 +174,7 @@ def chunk_process_file(file_path: str, chunk_size: int = 10000) -> p.Result[t.Di
             # Process final chunk
             if current_chunk:
                 chunk_result = process_chunk(current_chunk)
-                if chunk_result.is_success:
+                if chunk_result.success:
                     results["total_entries"] += len(current_chunk)
                     results["processed_chunks"] += 1
 
@@ -212,7 +212,7 @@ def handle_validation_errors(entries: list) -> p.Result[list]:
     strict_api = ldif(settings=strict_config)
 
     strict_result = strict_api.validate_entries(entries)
-    if strict_result.is_success:
+    if strict_result.success:
         print("✓ All entries pass strict validation")
         return r[list].ok(entries)
 
@@ -225,7 +225,7 @@ def handle_validation_errors(entries: list) -> p.Result[list]:
     permissive_api = ldif(settings=permissive_config)
 
     permissive_result = permissive_api.validate_entries(entries)
-    if permissive_result.is_success:
+    if permissive_result.success:
         print("✓ Entries pass permissive validation")
         print("⚠️  Consider reviewing data quality")
         return r[list].ok(entries)
@@ -284,7 +284,7 @@ def benchmark_processing(file_path: str) -> None:
     parse_result = api.parse_file(file_path)
     parse_time = time.time() - start_time
 
-    if parse_result.is_success:
+    if parse_result.success:
         entries = parse_result.unwrap()
         print(f"Parsed {len(entries)} entries in {parse_time:.2f} seconds")
         print(f"Processing rate: {len(entries) / parse_time:.1f} entries/second")
@@ -295,7 +295,7 @@ def benchmark_processing(file_path: str) -> None:
         validation_result = api.validate_entries(entries)
         validation_time = time.time() - start_time
 
-        if validation_result.is_success:
+        if validation_result.success:
             print(f"Validated in {validation_time:.2f} seconds")
         else:
             print(f"Validation failed: {validation_result.error}")
@@ -335,8 +335,8 @@ def process_with_optimization(file_path: str) -> p.Result[t.Dict]:
 ```python
 # Error: "Service registration failed"
 container = FlextContainer.get_global()
-result = container.register("ldif_api", api)
-# result.is_failure == True
+result = container.bind("ldif_api", api)
+# result.failure == True
 ```
 
 **Solution**:
@@ -354,14 +354,14 @@ def debug_container_issues() -> None:
 
     # Try registration with error handling
     api = ldif()
-    registration_result = container.register("ldif_api", api)
+    registration_result = container.bind("ldif_api", api)
 
-    if registration_result.is_success:
+    if registration_result.success:
         print("✓ Service registered successfully")
 
         # Test retrieval
-        retrieval_result = container.get("ldif_api")
-        if retrieval_result.is_success:
+        retrieval_result = container.resolve("ldif_api")
+        if retrieval_result.success:
             retrieved_api = retrieval_result.unwrap()
             print(f"✓ Service retrieved: {type(retrieved_api)}")
         else:
@@ -378,13 +378,13 @@ def safe_service_registration() -> p.Result[ldif]:
     api = ldif()
 
     # Attempt registration
-    registration_result = container.register("ldif_api", api)
-    if registration_result.is_failure:
+    registration_result = container.bind("ldif_api", api)
+    if registration_result.failure:
         return r[ldif].fail(f"Failed to register LDIF API: {registration_result.error}")
 
     # Verify registration by retrieving
-    retrieval_result = container.get("ldif_api")
-    if retrieval_result.is_failure:
+    retrieval_result = container.resolve("ldif_api")
+    if retrieval_result.failure:
         return r[ldif].fail(f"Failed to retrieve LDIF API: {retrieval_result.error}")
 
     return r[ldif].ok(retrieval_result.unwrap())
@@ -433,7 +433,7 @@ def debug_railway_chain(file_path: str) -> p.Result[list]:
     # Step 1: Parse
     print("Step 1: Parsing file...")
     parse_result = api.parse_file(file_path)
-    if parse_result.is_failure:
+    if parse_result.failure:
         print(f"❌ Parse failed: {parse_result.error}")
         return parse_result
 
@@ -443,7 +443,7 @@ def debug_railway_chain(file_path: str) -> p.Result[list]:
     # Step 2: Validate
     print("Step 2: Validating entries...")
     validation_result = api.validate_entries(entries)
-    if validation_result.is_failure:
+    if validation_result.failure:
         print(f"❌ Validation failed: {validation_result.error}")
         return r[list].fail(validation_result.error)
 
@@ -452,7 +452,7 @@ def debug_railway_chain(file_path: str) -> p.Result[list]:
     # Step 3: Filter
     print("Step 3: Filtering persons...")
     filter_result = api.filter_persons(entries)
-    if filter_result.is_failure:
+    if filter_result.failure:
         print(f"❌ Filtering failed: {filter_result.error}")
         return filter_result
 
@@ -497,7 +497,7 @@ cn: test
 objectClass: person
 """
         parse_result = api.parse_string(test_ldif)
-        if parse_result.is_success:
+        if parse_result.success:
             results["checks"]["basic_parsing"] = "✓ Basic parsing works"
         else:
             results["checks"]["basic_parsing"] = (
@@ -511,8 +511,8 @@ objectClass: person
     # Check container integration
     try:
         container = FlextContainer.get_global()
-        reg_result = container.register("health_check_api", api)
-        if reg_result.is_success:
+        reg_result = container.bind("health_check_api", api)
+        if reg_result.success:
             results["checks"]["container_integration"] = "✓ Container integration works"
         else:
             results["checks"]["container_integration"] = (

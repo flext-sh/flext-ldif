@@ -6,7 +6,7 @@
   - [Initial Setup](#initial-setup)
   - [Development Commands](#development-commands)
 - [LDIF Processing Architecture](#ldif-processing-architecture)
-  - [Current Implementation (v0.9.9)](#current-implementation-v099)
+  - [Current Implementation (v0.12.0-dev)](#current-implementation-v099)
   - [LDIF-Specific Development Patterns](#ldif-specific-development-patterns)
 - [Testing LDIF Functionality](#testing-ldif-functionality)
   - [LDIF Test Data](#ldif-test-data)
@@ -23,7 +23,7 @@
 - [Integration with FLEXT Ecosystem](#integration-with-flext-ecosystem)
 <!-- TOC END -->
 
-**Version**: 0.9.9 RC | **Updated**: September 17, 2025
+**Version**: 0.12.0-dev | **Updated**: April 14, 2026
 
 This guide covers LDIF-specific development workflows and technical considerations for contributing to FLEXT-LDIF.
 
@@ -71,7 +71,7 @@ make reset          # Full reset of environment
 
 ## LDIF Processing Architecture
 
-### Current Implementation (v0.9.9)
+### Current Implementation (v0.12.0-dev)
 
 FLEXT-LDIF uses a custom LDIF parser implementation with the following characteristics:
 
@@ -185,7 +185,7 @@ description: Administrator account
 def test_ldif_parsing():
     api = ldif()
     result = api.parse_string(create_test_ldif())
-    assert result.is_success
+    assert result.success
     entries = result.unwrap()
     assert len(entries) == 2
 ```

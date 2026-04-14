@@ -48,6 +48,7 @@ class FlextLdifTypesDomain:
     type SchemaConversionValue = SchemaItem | str
     type EventType = p.Ldif.ConversionEvent | p.Ldif.DnEvent
     type EventSequence = MutableSequence[EventType]
+    type ResponseLike = p.Ldif.Response
     type ParseResponseLike = p.Ldif.ParseResponse
     type ValidationResultLike = p.Ldif.ValidationResult
     type MigrationPipelineResultLike = p.Ldif.MigrationPipelineResult
@@ -65,6 +66,7 @@ class FlextLdifTypesDomain:
     type ServerQuirkResult = p.Result[ServerQuirkLike]
     type AclResult = p.Result[AclLike]
     type WriteStringResult = p.Result[str]
+    type ResponseResult = p.Result[ResponseLike]
     type ParseResponseResult = p.Result[ParseResponseLike]
     type ValidationResponseResult = p.Result[ValidationResultLike]
     type MigrationResult = p.Result[MigrationPipelineResultLike]

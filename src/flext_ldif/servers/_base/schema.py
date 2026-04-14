@@ -8,13 +8,13 @@ from typing import Annotated, ClassVar, Self, override
 
 from pydantic import Field, ValidationError
 
+from flext_core import s
 from flext_ldif import (
     FlextLdifQuirkMethodsMixin,
     c,
     m,
     p,
     r,
-    s,
     t,
     u,
 )
@@ -26,7 +26,7 @@ class FlextLdifServersBaseSchema(
     FlextLdifQuirkMethodsMixin,
     s[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str],
 ):
-    """Base class for schema quirks - s V2 with enhanced usability."""
+    """Base class for schema quirks using `s` with enhanced usability."""
 
     server_type: str = Field(
         default="rfc",

@@ -29,7 +29,7 @@
 - [Related Documentation](#related-documentation)
 <!-- TOC END -->
 
-**Version**: 0.9.9 RC | **Updated**: October 10, 2025
+**Version**: 0.12.0-dev | **Updated**: October 10, 2025
 
 This guide provides step-by-step instructions for installing and using FLEXT-LDIF, an RFC 2849/4512 compliant LDIF processing library with server-specific quirks for the FLEXT ecosystem.
 
@@ -124,7 +124,7 @@ member: cn=John Doe,ou=People,dc=example,dc=com
 
 # Parse LDIF content using r patterns
 result = api.parse_string(sample_ldif)
-if result.is_success:
+if result.success:
     entries = result.unwrap()
     print(f"Successfully parsed {len(entries)} LDIF entries")
 
@@ -151,18 +151,18 @@ api = ldif()
 ldif_path = Path("directory.ldif")
 result = api.parse_file(ldif_path)
 
-if result.is_success:
+if result.success:
     entries = result.unwrap()
 
     # Validate entries
     validation_result = api.validate_entries(entries)
-    if validation_result.is_success:
+    if validation_result.success:
         print("All entries are valid")
 
         # Write to new file
         output_path = Path("processed_directory.ldif")
         write_result = api.write_file(entries, output_path)
-        if write_result.is_success:
+        if write_result.success:
             print(f"Successfully wrote {len(entries)} entries to {output_path}")
     else:
         print(f"Validation failed: {validation_result.error}")
@@ -260,7 +260,7 @@ parser = RfcSchemaParserService(
 )
 
 result = parser.execute()
-if result.is_success:
+if result.success:
     schema_data = result.unwrap()
     attributes = schema_data["attributes"]
     objectclasses = schema_data["objectclasses"]
@@ -292,7 +292,7 @@ pipeline = FlextLdifMigration(
 
 # Execute generic transformation: OID → RFC → OUD
 result = pipeline.execute()
-if result.is_success:
+if result.success:
     migration_data = result.unwrap()
     print("Migration completed successfully")
     print(f"Entries migrated: {migration_data.get('entries_migrated', 0)}")
@@ -333,12 +333,12 @@ api = ldif(FlextLdifModels.Config(strict_validation=True))
 
 # Parse with strict validation
 result = api.parse_string(ldif_content)
-if result.is_success:
+if result.success:
     entries = result.unwrap()
 
     # Validate all entries
     validation_result = api.validate_entries(entries)
-    if validation_result.is_failure:
+    if validation_result.failure:
         print(f"Validation issues found: {validation_result.error}")
 
     # Continue processing valid entries

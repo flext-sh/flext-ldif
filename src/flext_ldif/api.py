@@ -7,23 +7,29 @@ from pathlib import Path
 from typing import override
 
 from flext_core import r
-from flext_ldif import FlextLdifSettings, c, m, s, t, u
-from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
-from flext_ldif.services.analysis import FlextLdifAnalysis
-from flext_ldif.services.categorization import FlextLdifCategorization
-from flext_ldif.services.detector import FlextLdifDetectorMixin
-from flext_ldif.services.migration import FlextLdifMigrationPipeline
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.rfc_validation import FlextLdifValidation
-from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.services.writer import FlextLdifWriter
+from flext_ldif import (
+    FlextLdifAnalysis,
+    FlextLdifCategorization,
+    FlextLdifDetectorMixin,
+    FlextLdifMigrationPipeline,
+    FlextLdifParser,
+    FlextLdifServer,
+    FlextLdifServersBaseSchema,
+    FlextLdifSettings,
+    FlextLdifValidation,
+    FlextLdifWriter,
+    c,
+    m,
+    s,
+    t,
+)
 
 
 class FlextLdif(
     FlextLdifDetectorMixin,
+    s[m.Ldif.Response],
     FlextLdifParser,
     FlextLdifWriter,
-    s[m.Ldif.Entry],
 ):
     """MRO facade over LDIF services.
 
@@ -34,16 +40,11 @@ class FlextLdif(
     def __init__(
         self,
         *,
+        server: FlextLdifServer | None = None,
         settings: FlextLdifSettings | None = None,
     ) -> None:
         """Initialize LDIF facade with server registry."""
-        super().__init__(settings=settings)
-        object.__setattr__(
-            self,
-            "_server",
-            FlextLdifServer.get_global_instance(),
-        )
-        _ = u.fetch_logger(__name__).info("FlextLdif facade initialized")
+        super().__init__(server=server, settings=settings)
 
     @classmethod
     def categorization(
@@ -105,10 +106,10 @@ class FlextLdif(
     def execute(
         self,
         params: t.ValueOrModel | None = None,
-    ) -> r[m.Ldif.Entry]:
+    ) -> r[m.Ldif.Response]:
         """Execute FlextServiceBase pattern compliance."""
         _ = params
-        return r[m.Ldif.Entry].fail_op(
+        return r[m.Ldif.Response].fail_op(
             "execute ldif facade",
             "FlextLdif is a facade. Use parse_ldif(), write(), or migrate() instead.",
         )

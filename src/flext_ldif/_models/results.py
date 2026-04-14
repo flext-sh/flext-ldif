@@ -543,27 +543,25 @@ class FlextLdifModelsResults:
             Field(description="Per-entry validation results as boolean flags"),
         ]
 
-    class ParseResponse(m.Value):
+    class Response(m.Value):
+        statistics: FlextLdifModelsResults.Statistics = Field(
+            ...,
+            description="Canonical LDIF service statistics payload",
+        )
+
+    class ParseResponse(Response):
         entries: MutableSequence[FlextLdifModelsDomainsEntries.Entry] = Field(
             ...,
             description="Parsed LDIF entries",
-        )
-        statistics: FlextLdifModelsResults.Statistics = Field(
-            ...,
-            description="Parsing statistics",
         )
         detected_server_type: c.Ldif.ServerTypeLiteral | None = Field(
             default=None, description="LDAP server type detected during parsing"
         )
 
-    class AclResponse(m.Value):
+    class AclResponse(Response):
         acls: MutableSequence[FlextLdifModelsDomainsEntries.Acl] = Field(
             ...,
             description="Extracted ACL models",
-        )
-        statistics: FlextLdifModelsResults.Statistics = Field(
-            ...,
-            description="ACL extraction statistics",
         )
 
     class AclEvaluationResult(m.Value):
@@ -578,17 +576,13 @@ class FlextLdifModelsResults:
             description="Human-readable evaluation result message",
         )
 
-    class WriteResponse(m.Value):
+    class WriteResponse(Response):
         content: str | None = Field(
             default=None, description="Serialized LDIF content string"
         )
         output_path: str | None = Field(
             default=None,
             description="Target file path when the write operation persisted content",
-        )
-        statistics: FlextLdifModelsResults.Statistics = Field(
-            ...,
-            description="Write operation statistics",
         )
 
 

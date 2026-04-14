@@ -6,7 +6,7 @@
 
 **Status**: Accepted
 
-**Date**: 2025-10-10
+**Date**: 2026-04-14
 
 **Context**:
 FLEXT-LDIF processes LDAP Data Interchange Format (LDIF) files for multiple LDAP server implementations. The challenge was ensuring standards compliance while supporting server-specific extensions without compromising architectural integrity.

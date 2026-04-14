@@ -488,17 +488,21 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
-    class ParseResponse(Protocol):
+    class Response(Protocol):
+        """Canonical LDIF service response payload."""
+
+        @property
+        def statistics(self) -> FlextLdifProtocolsBase.Statistics:
+            """Return pipeline statistics."""
+            ...
+
+    @runtime_checkable
+    class ParseResponse(Response, Protocol):
         """Parsed LDIF batch response."""
 
         @property
         def entries(self) -> Sequence[FlextLdifProtocolsBase.Entry]:
             """Return parsed entries."""
-            ...
-
-        @property
-        def statistics(self) -> FlextLdifProtocolsBase.Statistics:
-            """Return parse statistics."""
             ...
 
         @property
@@ -555,7 +559,16 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
-    class WriteResponse(Protocol):
+    class AclResponse(Response, Protocol):
+        """ACL extraction response payload."""
+
+        @property
+        def acls(self) -> Sequence[FlextLdifProtocolsBase.Acl]:
+            """Return extracted ACLs."""
+            ...
+
+    @runtime_checkable
+    class WriteResponse(Response, Protocol):
         """Write response payload."""
 
         @property
@@ -566,11 +579,6 @@ class FlextLdifProtocolsBase(Protocol):
         @property
         def output_path(self) -> str | None:
             """Return persisted output path."""
-            ...
-
-        @property
-        def statistics(self) -> FlextLdifProtocolsBase.Statistics:
-            """Return write statistics."""
             ...
 
     @runtime_checkable

@@ -7,12 +7,12 @@ from typing import ClassVar, Self, overload, override
 
 from pydantic import ConfigDict
 
+from flext_core import s
 from flext_ldif import (
     c,
     m,
     p,
     r,
-    s,
     t,
     u,
 )
@@ -22,7 +22,7 @@ from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 
 
 class FlextLdifServersBase(s[m.Ldif.Entry]):
-    """Base class for LDIF/LDAP server quirks as s V2."""
+    """Base class for LDIF/LDAP server quirks built on `s`."""
 
     model_config: ClassVar[ConfigDict] = ConfigDict(
         arbitrary_types_allowed=True,
@@ -391,6 +391,16 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 "Entry quirk not available",
             )
         detected_server = getattr(self, "server_type", None)
+        detected_server_type: c.Ldif.ServerTypes | None = None
+        if isinstance(detected_server, c.Ldif.ServerTypes):
+            detected_server_type = detected_server
+        elif isinstance(detected_server, str):
+            try:
+                detected_server_type = c.Ldif.ServerTypes(
+                    u.Ldif.normalize_server_type(detected_server),
+                )
+            except ValueError:
+                detected_server_type = None
 
         def normalize_parse_error(error: str) -> str:
             return error or "Entry parsing failed"
@@ -402,12 +412,12 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             statistics = m.Ldif.Statistics(
                 total_entries=len(domain_entries),
                 processed_entries=len(domain_entries),
-                detected_server_type=detected_server,
+                detected_server_type=detected_server_type,
             )
             return m.Ldif.ParseResponse(
                 entries=[entry.model_copy(deep=True) for entry in domain_entries],
                 statistics=statistics,
-                detected_server_type=detected_server,
+                detected_server_type=detected_server_type,
             )
 
         return (
@@ -421,29 +431,18 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             )
         )
 
-    def write(self, entries: MutableSequence[m.Ldif.Entry]) -> r[str]:
+    def write(
+        self,
+        entries: MutableSequence[m.Ldif.Entry],
+        write_options: m.Ldif.WriteFormatOptions | None = None,
+    ) -> r[str]:
         """Write Entry models to LDIF text."""
         entry_quirk = getattr(self, "entry_quirk", None)
         if not entry_quirk:
             return r[str].fail("Entry quirk not available")
-
-        def write_single_entry(entry_model: m.Ldif.Entry) -> r[str]:
-            """Write single entry using entry quirk."""
-            if entry_quirk is not None:
-                result: p.Result[str] = entry_quirk.write(entry_model)
-                if result.success:
-                    return r[str].ok(result.unwrap())
-                return r[str].fail(result.error or "Failed to write entry")
-            return r[str].fail("No entry quirk found")
-
-        def format_ldif_output(ldif_lines: t.StrSequence) -> str:
-            """Format LDIF output with proper newline handling."""
-            ldif = "\n".join(ldif_lines)
-            if ldif and (not ldif.endswith("\n")):
-                ldif += "\n"
-            return ldif
-
-        return r.traverse(entries, write_single_entry).map(format_ldif_output)
+        return entry_quirk.write(entries, write_options).map(
+            lambda ldif: ldif if not ldif or ldif.endswith("\n") else f"{ldif}\n",
+        )
 
     def _execute_parse(self, ldif_text: str) -> r[m.Ldif.Entry]:
         """Execute parse operation."""

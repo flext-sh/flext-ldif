@@ -4,17 +4,29 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif import FlextLdifServer, c, m, r, u
+from flext_ldif import c, m, r
+from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.settings import FlextLdifSettings
 
 
 class FlextLdifParser:
-    """Parser methods for MRO composition on FlextLdif.
-
-    Expects ``self._server: FlextLdifServer`` to be provided by the
-    instantiated class (either FlextLdifParser or FlextLdif).
-    """
+    """LDIF parser orchestrator over the server quirk registry."""
 
     _server: FlextLdifServer = FlextLdifServer.get_global_instance()
+
+    def __init__(
+        self,
+        *,
+        server: FlextLdifServer | None = None,
+        settings: FlextLdifSettings | None = None,
+    ) -> None:
+        """Initialize parser with optional explicit server registry."""
+        _ = settings
+        object.__setattr__(
+            self,
+            "_server",
+            server or FlextLdifServer.get_global_instance(),
+        )
 
     def parse_ldif(
         self,
@@ -36,7 +48,7 @@ class FlextLdifParser:
     ) -> r[m.Ldif.ParseResponse]:
         """Parse LDIF content from a file path with optional encoding override."""
         resolved_path = path
-        if not resolved_path.exists() and (not resolved_path.is_absolute()):
+        if not resolved_path.exists() and not resolved_path.is_absolute():
             project_root = Path(__file__).resolve().parents[2]
             candidate_path = project_root / resolved_path
             if candidate_path.exists():
@@ -48,11 +60,8 @@ class FlextLdifParser:
             )
         try:
             content = resolved_path.read_text(encoding=encoding)
-        except (OSError, UnicodeDecodeError) as e:
-            return r[m.Ldif.ParseResponse].fail_op(
-                "read ldif file",
-                e,
-            )
+        except (OSError, UnicodeDecodeError) as error:
+            return r[m.Ldif.ParseResponse].fail_op("read ldif file", error)
         return self.parse_string(content, server_type=server_type)
 
     def parse_string(
@@ -60,50 +69,21 @@ class FlextLdifParser:
         content: str,
         server_type: str | None = None,
     ) -> r[m.Ldif.ParseResponse]:
-        """Parse LDIF content from a string using the requested server type."""
-        effective_server_type_raw = server_type or "rfc"
-        try:
-            effective_server_type = u.Ldif.normalize_server_type(
-                effective_server_type_raw,
+        """Parse LDIF content from a string through the selected base quirk."""
+        effective_server_type = server_type or self._get_effective_server_type_value()
+        return (
+            self._server
+            .quirk(str(effective_server_type))
+            .map_error(
+                lambda error: error or "Failed to resolve LDIF server quirk",
             )
-        except (ValueError, TypeError) as e:
-            return r[m.Ldif.ParseResponse].fail_op(
-                "normalize ldif server type",
-                e,
-            )
-        try:
-            entry_quirk_raw = self._server.entry(effective_server_type)
-        except ValueError as e:
-            return r[m.Ldif.ParseResponse].fail_op("resolve entry quirk", e)
-        if entry_quirk_raw is None:
-            return r[m.Ldif.ParseResponse].fail_op(
-                "resolve entry quirk",
-                f"No entry quirk found for server type: {effective_server_type}",
-            )
-        if not hasattr(entry_quirk_raw, "parse_quirk"):
-            return r[m.Ldif.ParseResponse].fail_op(
-                "validate entry quirk capability",
-                f"Entry quirk for server type {effective_server_type} does not have parse_quirk method",
-            )
-        parse_out = entry_quirk_raw.parse_quirk(content)
-        if parse_out.failure:
-            error_msg = parse_out.error or "LDIF parsing failed"
-            return r[m.Ldif.ParseResponse].fail_op("parse ldif content", error_msg)
-        entries = parse_out.value
-        detected_server_type = c.Ldif.ServerTypes(effective_server_type)
-        response = m.Ldif.ParseResponse(
-            entries=entries,
-            statistics=m.Ldif.Statistics(
-                total_entries=len(entries),
-                parse_errors=0,
-            ),
-            detected_server_type=detected_server_type,
+            .flat_map(lambda quirk: quirk.parse_ldif(content))
+            .map_error(lambda error: error or "LDIF parsing failed")
         )
-        return r[m.Ldif.ParseResponse].ok(response)
 
     def _get_effective_server_type_value(self) -> str:
         """Resolve effective server type (default: rfc, overridden by DetectorMixin)."""
-        return "rfc"
+        return c.Ldif.ServerTypes.RFC.value
 
 
 __all__: list[str] = ["FlextLdifParser"]

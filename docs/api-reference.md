@@ -110,7 +110,7 @@ def parse_file(
     Example:
         >>> api = ldif()
         >>> result = api.parse_file("directory.ldif")
-        >>> if result.is_success:
+        >>> if result.success:
         ...     entries = result.unwrap()
         ...     print(f"Parsed {len(entries)} entries")
     """
@@ -137,7 +137,7 @@ def parse_string(self, content: str) -> p.Result[Sequence[FlextLdifModels.Entry]
         ... objectClass: person
         ... '''
         >>> result = api.parse_string(ldif_content)
-        >>> entries = result.unwrap() if result.is_success else []
+        >>> entries = result.unwrap() if result.success else []
     """
 ```
 
@@ -158,7 +158,7 @@ def validate_entries(self, entries: Sequence[FlextLdifModels.Entry]) -> p.Result
     Example:
         >>> entries = parse_result.unwrap()
         >>> validation = api.validate_entries(entries)
-        >>> if validation.is_success:
+        >>> if validation.success:
         ...     print("All entries are valid")
     """
 ```
@@ -183,7 +183,7 @@ def write_file(
     Example:
         >>> entries = [...]
         >>> result = api.write_file(entries, "output.ldif")
-        >>> if result.is_success:
+        >>> if result.success:
         ...     print("File written successfully")
     """
 ```
@@ -204,7 +204,7 @@ def write(self, entries: Sequence[FlextLdifModels.Entry]) -> p.Result[str]:
 
     Example:
         >>> result = api.write(entries)
-        >>> if result.is_success:
+        >>> if result.success:
         ...     ldif_content = result.unwrap()
         ...     print(ldif_content)
     """
@@ -230,7 +230,7 @@ def filter_persons(
 
     Example:
         >>> result = api.filter_persons(all_entries)
-        >>> if result.is_success:
+        >>> if result.success:
         ...     persons = result.unwrap()
         ...     print(f"Found {len(persons)} person entries")
     """
@@ -254,7 +254,7 @@ def filter_groups(
 
     Example:
         >>> groups_result = api.filter_groups(all_entries)
-        >>> groups = groups_result.unwrap() if groups_result.is_success else []
+        >>> groups = groups_result.unwrap() if groups_result.success else []
     """
 ```
 
@@ -277,7 +277,7 @@ def filter_by_objectclass(
 
     Example:
         >>> ou_result = api.filter_by_objectclass(entries, "organizationalUnit")
-        >>> organizational_units = ou_result.unwrap() if ou_result.is_success else []
+        >>> organizational_units = ou_result.unwrap() if ou_result.success else []
     """
 ```
 
@@ -301,7 +301,7 @@ def get_entry_statistics(
 
     Example:
         >>> stats_result = api.get_entry_statistics(entries)
-        >>> if stats_result.is_success:
+        >>> if stats_result.success:
         ...     stats = stats_result.unwrap()
         ...     print(f"Object class distribution: {stats}")
     """
@@ -323,7 +323,7 @@ def analyze_entries(self, entries: Sequence[FlextLdifModels.Entry]) -> p.Result[
 
     Example:
         >>> analysis = api.analyze_entries(entries)
-        >>> if analysis.is_success:
+        >>> if analysis.success:
         ...     results = analysis.unwrap()
         ...     print(f"Analysis: {results}")
     """
@@ -680,7 +680,7 @@ from flext_core import u
 
 # Successful operation
 result = api.parse_file("valid.ldif")
-if result.is_success:
+if result.success:
     entries = result.unwrap()
     # Process entries
 else:
@@ -735,7 +735,7 @@ from pathlib import Path
 
 api = ldif()
 result = api.parse_file(Path("directory.ldif"))
-if result.is_success:
+if result.success:
     entries = result.unwrap()
     print(f"Parsed {len(entries)} entries")
 
@@ -744,10 +744,10 @@ if result.is_success:
 
 # ✅ NEW (Library API):
 result = api.parse_file(Path("directory.ldif"))
-if result.is_success:
+if result.success:
     entries = result.unwrap()
     stats_result = api.get_entry_statistics(entries)
-    if stats_result.is_success:
+    if stats_result.success:
         stats = stats_result.unwrap()
         print(f"Statistics: {stats}")
 
@@ -756,10 +756,10 @@ if result.is_success:
 
 # ✅ NEW (Library API):
 result = api.parse_file(Path("directory.ldif"))
-if result.is_success:
+if result.success:
     entries = result.unwrap()
     persons_result = api.filter_persons(entries)
-    if persons_result.is_success:
+    if persons_result.success:
         persons = persons_result.unwrap()
         print(f"Found {len(persons)} person entries")
 ```
@@ -811,7 +811,7 @@ def process_multiple_files(file_paths: Sequence[Path]) -> p.Result[t.Dict]:
 
     for file_path in file_paths:
         result = api.parse_file(file_path)
-        if result.is_success:
+        if result.success:
             entries = result.unwrap()
             all_entries.extend(entries)
             processing_stats[str(file_path)] = len(entries)
@@ -916,7 +916,7 @@ oid_parser = RfcSchemaParserService(
 )
 
 result = oid_parser.execute()
-if result.is_success:
+if result.success:
     schema_data = result.unwrap()
     print(f"Attributes: {len(schema_data['attributes'])}")
     print(f"ObjectClasses: {len(schema_data['objectclasses'])}")
@@ -998,7 +998,7 @@ pipeline = FlextLdifMigration(
 )
 
 result = pipeline.execute()
-if result.is_success:
+if result.success:
     data = result.unwrap()
     print(f"Migrated {data['entries_migrated']} entries")
     print(f"Schema files: {data['schema_files']}")
@@ -1096,11 +1096,11 @@ container = FlextContainer.get_global()
 
 # Register LDIF API as service
 api = ldif()
-register_result = container.register("ldif_api", api)
+register_result = container.bind("ldif_api", api)
 
 # Retrieve from container in other services
-api_result = container.get("ldif_api")
-if api_result.is_success:
+api_result = container.resolve("ldif_api")
+if api_result.success:
     ldif_api = api_result.unwrap()
 ```
 
@@ -1156,7 +1156,7 @@ api = ldif()
 
 # Parse LDIF file
 parse_result = api.parse_file(Path("directory.ldif"))
-if parse_result.is_failure:
+if parse_result.failure:
     print(f"Parse failed: {parse_result.error}")
     exit(1)
 
@@ -1165,7 +1165,7 @@ print(f"✅ Parsed {len(entries)} entries")
 
 # Validate entries
 validation_result = api.validate_entries(entries)
-if validation_result.is_failure:
+if validation_result.failure:
     print(f"Validation failed: {validation_result.error}")
     exit(1)
 
@@ -1173,13 +1173,13 @@ print("✅ All entries valid")
 
 # Filter person entries
 persons_result = api.filter_persons(entries)
-if persons_result.is_success:
+if persons_result.success:
     persons = persons_result.unwrap()
     print(f"✅ Found {len(persons)} person entries")
 
 # Write filtered results
 write_result = api.write_file(persons, Path("persons_only.ldif"))
-if write_result.is_success:
+if write_result.success:
     print("✅ Written persons_only.ldif")
 ```
 
@@ -1205,7 +1205,7 @@ oid_parser = RfcSchemaParserService(
 )
 
 result = oid_parser.execute()
-if result.is_success:
+if result.success:
     schema = result.unwrap()
     print(f"✅ Parsed {len(schema['attributes'])} attributes")
     print(f"✅ Parsed {len(schema['objectclasses'])} objectClasses")
@@ -1241,7 +1241,7 @@ migration = FlextLdifMigration(
 
 # Execute migration: OID → RFC → OUD
 result = migration.execute()
-if result.is_success:
+if result.success:
     data = result.unwrap()
     print(f"✅ Migrated {data['entries_migrated']} entries")
     print(f"✅ Processed {len(data['schema_files'])} schema files")
@@ -1287,7 +1287,7 @@ result = (
 )
 
 # Handle final result
-if result.is_success:
+if result.success:
     stats = result.unwrap()
     print(f"✅ Pipeline completed: {stats}")
 else:

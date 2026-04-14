@@ -131,7 +131,7 @@ def parse(
     Delegates to quirks.parse() internally.
     """
     quirk_result = self._get_for_server(server_type)
-    if quirk_result.is_failure:
+    if quirk_result.failure:
         return r[FlextLdifModels.Acl].fail(...)
 
     quirk = quirk_result.unwrap()
@@ -187,7 +187,7 @@ def test_parse_oracle_oid():
 
     result = quirk.parse(acl_line)
 
-    assert result.is_success
+    assert result.success
     acl = result.unwrap()
     assert isinstance(acl, FlextLdifModels.Acl)  # ← Tests Acl return type
     assert acl.server_type == "oid"

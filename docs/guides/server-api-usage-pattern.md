@@ -118,7 +118,7 @@ def test_conversion_oid_to_oud(
     """Test conversion from OID to OUD."""
     # Use os quirks diretamente
     result = conversion_service.convert(oid_quirk, oud_quirk, entry)
-    assert result.is_success
+    assert result.success
 ```
 
 ______________________________________________________________________
