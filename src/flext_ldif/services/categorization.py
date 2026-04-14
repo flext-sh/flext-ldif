@@ -13,7 +13,6 @@ from flext_ldif import (
     FlextLdifServer,
     c,
     m,
-    p,
     r,
     s,
     t,
@@ -37,12 +36,12 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
 
     _categorization_rules: m.Ldif.CategoryRules = PrivateAttr()
     _schema_whitelist_rules: m.Ldif.WhitelistRules | None = PrivateAttr(default=None)
-    _forbidden_attributes: MutableSequence[str] = PrivateAttr(default_factory=list)
-    _forbidden_objectclasses: MutableSequence[str] = PrivateAttr(default_factory=list)
+    _forbidden_attributes: MutableSequence[str] = PrivateAttr()
+    _forbidden_objectclasses: MutableSequence[str] = PrivateAttr()
     _base_dn: str | None = PrivateAttr(default=None)
     _server_type: str = PrivateAttr(default="rfc")
     _rejection_tracker: MutableMapping[str, MutableSequence[m.Ldif.Entry]] = (
-        PrivateAttr(default_factory=dict)
+        PrivateAttr()
     )
     _server_registry: FlextLdifServer = PrivateAttr()
 
@@ -138,10 +137,6 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
     def schema_whitelist_rules(self) -> m.Ldif.WhitelistRules | None:
         """Get schema whitelist rules (read-only)."""
         return self._schema_whitelist_rules
-
-    @staticmethod
-    def _cat(category: str) -> str:
-        return category
 
     @staticmethod
     def _ensure_entry_model(
@@ -766,9 +761,14 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         server_type: str,
     ) -> r[type[c.Ldif]]:
         """Get and validate server constants via FlextLdifServer registry."""
-        return self._server_registry.get_constants(server_type).fold(
-            on_failure=lambda e: p.Result[type[c.Ldif]].fail(e),
-            on_success=lambda v: p.Result[type[c.Ldif]].ok(v),
+        return (
+            r[type[c.Ldif]]
+            .from_result(
+                self._server_registry.get_constants(server_type),
+            )
+            .map_error(
+                lambda error: error or f"Failed to resolve constants for {server_type}",
+            )
         )
 
     def _match_entry_to_category(
@@ -826,15 +826,12 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
             acl_attrs = frozenset(map(str, acl_attrs_raw))
             acl_category = c.Ldif.Category.ACL
 
-            def _to_attr_key(attr: str) -> str:
-                return f"attr:{attr.lower()}"
-
             if override_existing or acl_category not in category_map:
-                mapped = u.map(acl_attrs, mapper=_to_attr_key)
+                mapped = u.map(acl_attrs, mapper=lambda attr: f"attr:{attr.lower()}")
                 category_map[acl_category] = frozenset(mapped)
             else:
                 existing_acl = category_map.get(acl_category, frozenset())
-                mapped = u.map(acl_attrs, mapper=_to_attr_key)
+                mapped = u.map(acl_attrs, mapper=lambda attr: f"attr:{attr.lower()}")
                 new_acl_attrs = frozenset(mapped)
                 category_map[acl_category] = existing_acl | new_acl_attrs
         return category_map

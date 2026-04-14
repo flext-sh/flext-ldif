@@ -6,14 +6,10 @@ import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 from flext_ldif import (
     FlextLdifQuirkMethodsMixin,
-    FlextLdifUtilitiesMetadata,
-    FlextLdifUtilitiesOID,
-    FlextLdifUtilitiesParser,
-    FlextLdifUtilitiesSchema,
     c,
     m,
     p,
@@ -132,8 +128,7 @@ class FlextLdifServersBaseSchema(
         attr_definition: str,
     ) -> t.Ldif.SchemaExtensionsMapping:
         """Extract metadata extensions from attribute definition."""
-        parser_util = FlextLdifUtilitiesParser
-        extract_method = getattr(parser_util, "extract_extensions", None)
+        extract_method = getattr(u.Ldif, "extract_extensions", None)
         if extract_method is None or not callable(extract_method):
             return {}
         extensions_raw = extract_method(attr_definition)
@@ -155,8 +150,7 @@ class FlextLdifServersBaseSchema(
         attr_definition: str,
     ) -> None:
         """Preserve schema formatting via FlextLdifUtilities.Metadata."""
-        metadata_util = FlextLdifUtilitiesMetadata
-        preserve_method = getattr(metadata_util, "preserve_schema_formatting", None)
+        preserve_method = getattr(u.Ldif, "preserve_schema_formatting", None)
         if preserve_method is not None and callable(preserve_method):
             _ = preserve_method(metadata, attr_definition)
 
@@ -267,20 +261,15 @@ class FlextLdifServersBaseSchema(
         """Validate OID and track result in metadata extensions."""
         if not oid_value:
             return
-        oid_util = FlextLdifUtilitiesOID
-        oid_validate_result: p.Result[bool]
-        validate_method = getattr(oid_util, "validate_format", None)
-        if validate_method is not None and callable(validate_method):
-            validate_result_raw = validate_method(oid_value)
-            if isinstance(validate_result_raw, r):
-                if validate_result_raw.failure:
-                    oid_validate_result = r[bool].fail(validate_result_raw.error)
-                else:
-                    oid_validate_result = r[bool].ok(True)
-            else:
-                oid_validate_result = r[bool].ok(bool(validate_result_raw))
-        else:
-            oid_validate_result = r[bool].ok(True)
+        oid_validate_result = (
+            r[bool]
+            .from_result(
+                u.Ldif.validate_format(oid_value),
+            )
+            .map_error(
+                lambda error: error or f"{oid_name} OID validation failed",
+            )
+        )
         if oid_validate_result.failure:
             metadata_extensions["syntax_validation_error"] = (
                 f"{oid_name.capitalize()} OID validation failed: {oid_validate_result.error}"
@@ -319,50 +308,116 @@ class FlextLdifServersBaseSchema(
         **kwargs: t.Scalar,
     ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
         """Execute schema operation with auto-detection: str→parse, Model→write."""
-        if data is None:
-            data_raw = kwargs.get("data")
-            if data_raw is not None:
-                try:
-                    if isinstance(data_raw, str):
-                        data = data_raw
-                    else:
-                        try:
-                            data = m.Ldif.SchemaAttribute.model_validate(data_raw)
-                        except (
-                            ValueError,
-                            KeyError,
-                            AttributeError,
-                            UnicodeDecodeError,
-                            struct.error,
-                        ):
-                            data = m.Ldif.SchemaObjectClass.model_validate(data_raw)
-                except (
-                    ValueError,
-                    KeyError,
-                    AttributeError,
-                    UnicodeDecodeError,
-                    struct.error,
-                ):
-                    data = None
-        if operation is None:
-            operation_raw = kwargs.get("operation")
-            operation_typed: str | None = None
-            if isinstance(operation_raw, str):
-                if operation_raw == "parse":
-                    operation_typed = "parse"
-                elif operation_raw == "write":
-                    operation_typed = "write"
-            operation = operation_typed
-        if data is None:
+        resolved_data = self._resolve_data(data, kwargs)
+        operation = self._resolve_operation(operation, kwargs)
+        if resolved_data is None:
             empty_str: str = ""
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].ok(
                 empty_str,
             )
-        operation_final: str | None = None
-        if isinstance(operation, str) and operation in {"parse", "write"}:
-            operation_final = "parse" if operation == "parse" else "write"
-        detected_op = self._auto_detect_operation(data, operation_final)
-        return self._route_operation(data, detected_op)
+        operation_final = operation if operation in {"parse", "write"} else None
+        detected_op = self._auto_detect_operation(resolved_data, operation_final)
+        return self._route_operation(resolved_data, detected_op)
+
+    def _coerce_schema_data(
+        self,
+        value: t.RecursiveContainer
+        | m.Ldif.SchemaAttribute
+        | m.Ldif.SchemaObjectClass
+        | None,
+    ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None:
+        """Coerce raw execute payload to the concrete schema payload union."""
+        if value is None:
+            return None
+        if isinstance(value, str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass):
+            return value
+        for model in (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass):
+            try:
+                return model.model_validate(value)
+            except (
+                ValidationError,
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ):
+                continue
+        return None
+
+    def _coerce_operation(self, value: t.Scalar | None) -> str | None:
+        """Coerce raw operation token to a supported schema operation."""
+        if isinstance(value, str) and value in {"parse", "write"}:
+            return value
+        return None
+
+    def _detect_schema_type(self, definition: str) -> str:
+        """Resolve schema type from definition using the shared schema utility."""
+        detect_method = getattr(u.Ldif, "detect_schema_type", None)
+        if detect_method is not None and callable(detect_method):
+            detected_type = detect_method(definition)
+            if isinstance(detected_type, str):
+                return detected_type
+        return "attribute"
+
+    def _is_objectclass_schema_type(self, definition: str) -> bool:
+        """Return whether the schema definition is an objectClass payload."""
+        return self._detect_schema_type(definition).lower() == "objectclass"
+
+    def _coerce_attribute_model(
+        self,
+        value: t.RecursiveContainer | t.Ldif.SchemaConversionValue,
+    ) -> m.Ldif.SchemaAttribute | None:
+        """Coerce raw value to a schema attribute model when possible."""
+        try:
+            return m.Ldif.SchemaAttribute.model_validate(value)
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ):
+            return None
+
+    def _coerce_objectclass_model(
+        self,
+        value: t.RecursiveContainer | t.Ldif.SchemaConversionValue,
+    ) -> m.Ldif.SchemaObjectClass | None:
+        """Coerce raw value to a schema objectClass model when possible."""
+        try:
+            return m.Ldif.SchemaObjectClass.model_validate(value)
+        except (
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ):
+            return None
+
+    def _resolve_data(
+        self,
+        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None,
+        kwargs: t.RecursiveContainerMapping,
+    ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None:
+        """Resolve schema payload from parameter or kwargs."""
+        if data is not None:
+            return data
+        return self._coerce_schema_data(kwargs.get("data"))
+
+    def _resolve_operation(
+        self,
+        operation: str | None,
+        kwargs: t.RecursiveContainerMapping,
+    ) -> str | None:
+        """Resolve schema operation from parameter or kwargs."""
+        if operation is not None:
+            return self._coerce_operation(operation)
+        raw_operation = kwargs.get("operation")
+        if not isinstance(raw_operation, t.SCALAR_TYPES):
+            return None
+        return self._coerce_operation(raw_operation)
 
     def parse_quirk(
         self,
@@ -391,13 +446,7 @@ class FlextLdifServersBaseSchema(
         definition: str,
     ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
         """Route schema definition to appropriate parse method."""
-        schema_util = FlextLdifUtilitiesSchema
-        detect_method = getattr(schema_util, "detect_schema_type", None)
-        if detect_method is not None and callable(detect_method):
-            schema_type = detect_method(definition)
-        else:
-            schema_type = "attribute"
-        if schema_type == "objectclass":
+        if self._is_objectclass_schema_type(definition):
             oc_result = self._parse_objectclass(definition)
             if oc_result.failure:
                 return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
@@ -568,13 +617,7 @@ class FlextLdifServersBaseSchema(
                 return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].fail(
                     f"parse operation requires str, got {type(data).__name__}",
                 )
-            schema_util = FlextLdifUtilitiesSchema
-            detect_method = getattr(schema_util, "detect_schema_type", None)
-            if detect_method is not None and callable(detect_method):
-                schema_type = detect_method(data)
-            else:
-                schema_type = "attribute"
-            if schema_type == "objectClass":
+            if self._is_objectclass_schema_type(data):
                 return self._handle_parse_operation(
                     attr_definition=None,
                     oc_definition=data,
@@ -584,31 +627,13 @@ class FlextLdifServersBaseSchema(
                 oc_definition=None,
             )
         if operation == "write":
-            try:
-                attr_model = m.Ldif.SchemaAttribute.model_validate(data)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ):
-                attr_model = None
+            attr_model = self._coerce_attribute_model(data)
             if attr_model is not None:
                 return self._handle_write_operation(
                     attr_model=attr_model,
                     oc_model=None,
                 )
-            try:
-                oc_model = m.Ldif.SchemaObjectClass.model_validate(data)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ):
-                oc_model = None
+            oc_model = self._coerce_objectclass_model(data)
             if oc_model is not None:
                 return self._handle_write_operation(attr_model=None, oc_model=oc_model)
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].fail(

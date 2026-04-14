@@ -2,22 +2,38 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableSequence, Sequence
-from contextlib import suppress
+from collections.abc import Mapping, MutableSequence
 from pathlib import Path
-from typing import override
 
-from flext_ldif import FlextLdifConversion, FlextLdifServer, m, r, s, t, u
+from flext_ldif import (
+    FlextLdifConversion,
+    FlextLdifServer,
+    FlextLdifSettings,
+    m,
+    r,
+    t,
+    u,
+)
 
 
-class FlextLdifWriterMixin:
-    """Writer methods for MRO composition on FlextLdif.
+class FlextLdifWriter:
+    """Writer service methods for LDIF facade and standalone usage.
 
     Expects ``self._server: FlextLdifServer`` to be provided by the
     instantiated class (either FlextLdifWriter or FlextLdif).
     """
 
-    _server: FlextLdifServer
+    _server: FlextLdifServer = FlextLdifServer.get_global_instance()
+
+    def __init__(
+        self,
+        *,
+        server: FlextLdifServer | None = None,
+        settings: FlextLdifSettings | None = None,
+    ) -> None:
+        """Initialize writer with optional explicit server registry."""
+        _ = settings
+        self._server = server or FlextLdifServer.get_global_instance()
 
     @staticmethod
     def _normalize_format_options(
@@ -33,7 +49,16 @@ class FlextLdifWriterMixin:
         elif isinstance(format_options, m.Ldif.WriteFormatOptions):
             result_raw = format_options
         elif isinstance(format_options, m.Ldif.WriteOptions):
-            result_raw = FlextLdifWriterMixin._to_format_options(format_options)
+            dumped = format_options.model_dump(exclude_none=True)
+            mapped: t.MutableRecursiveContainerMapping = {
+                "base64_encode_binary": dumped.get("base64_encode_binary"),
+                "sort_attributes": dumped.get("sort_entries"),
+                "include_dn_comments": dumped.get("include_comments"),
+            }
+            normalized = {
+                key: value for key, value in mapped.items() if value is not None
+            }
+            result_raw = m.Ldif.WriteFormatOptions.model_validate(normalized)
         elif not isinstance(format_options, Mapping):
             result_raw = m.Ldif.WriteFormatOptions()
         else:
@@ -41,25 +66,6 @@ class FlextLdifWriterMixin:
                 dict(format_options),
             )
         return m.Ldif.WriteFormatOptions.model_validate(result_raw)
-
-    @staticmethod
-    def _normalize_write_format(
-        d: t.MutableRecursiveContainerMapping,
-    ) -> t.MutableRecursiveContainerMapping:
-        mapped: t.MutableRecursiveContainerMapping = {
-            "base64_encode_binary": d.get("base64_encode_binary"),
-            "sort_attributes": d.get("sort_entries"),
-            "include_dn_comments": d.get("include_comments"),
-        }
-        return {key: value for key, value in mapped.items() if value is not None}
-
-    @staticmethod
-    def _to_format_options(
-        write_options: m.Ldif.WriteOptions,
-    ) -> m.Ldif.WriteFormatOptions:
-        dumped = write_options.model_dump(exclude_none=True)
-        normalized = FlextLdifWriterMixin._normalize_write_format(dumped)
-        return m.Ldif.WriteFormatOptions.model_validate(normalized)
 
     def write(
         self,
@@ -249,115 +255,4 @@ class FlextLdifWriterMixin:
         return r[MutableSequence[m.Ldif.Entry]].ok(prepared_entries)
 
 
-class FlextLdifWriter(FlextLdifWriterMixin, s[m.Ldif.WriteResponse]):
-    """Standalone writer service (also usable outside FlextLdif MRO)."""
-
-    _server: FlextLdifServer
-
-    def __init__(self, server: FlextLdifServer | None = None) -> None:
-        """Initialize writer with optional server instance."""
-        object.__setattr__(
-            self,
-            "_server",
-            server if server is not None else FlextLdifServer.get_global_instance(),
-        )
-
-    @override
-    def execute(
-        self,
-        params: t.ValueOrModel | None = None,
-    ) -> r[m.Ldif.WriteResponse]:
-        """Execute write operation with parameters."""
-        params_mapping: t.MutableRecursiveContainerMapping = {}
-        if isinstance(params, Mapping):
-            params_mapping = {str(k): v for k, v in params.items()}
-        params_data = params_mapping
-        entries_raw = u.take(params_data, "entries")
-        entries: MutableSequence[m.Ldif.Entry] = []
-        entry_candidates: tuple[t.ValueOrModel, ...] = ()
-        with suppress(Exception):
-            if isinstance(entries_raw, Sequence) and not isinstance(
-                entries_raw,
-                str | bytes,
-            ):
-                entry_candidates = tuple(entries_raw)
-        for entry_candidate in entry_candidates:
-            validated_entry: m.Ldif.Entry | None = None
-            with suppress(Exception):
-                validated_entry = m.Ldif.Entry.model_validate(entry_candidate)
-            if validated_entry is not None:
-                entries.append(validated_entry)
-        target_server_type_raw = u.take(
-            params_data,
-            "target_server_type",
-            as_type=str,
-            default="rfc",
-        )
-        target_server_type: str | None = None
-        try:
-            target_server_type = u.Ldif.normalize_server_type(
-                str(target_server_type_raw),
-            )
-        except ValueError:
-            target_server_type = None
-        output_path_raw = u.take(params_data, "output_path", as_type=Path)
-        output_path: Path | None = None
-        if output_path_raw is not None:
-            try:
-                output_path = Path(str(output_path_raw))
-            except (TypeError, ValueError):
-                output_path = None
-        format_options_raw = u.take(params_data, "format_options")
-        format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None
-        if format_options_raw is not None:
-            validated_format_options: m.Ldif.WriteFormatOptions | None = None
-            with suppress(Exception):
-                validated_format_options = m.Ldif.WriteFormatOptions.model_validate(
-                    format_options_raw,
-                )
-            if validated_format_options is not None:
-                format_options = validated_format_options
-            else:
-                validated_write_options: m.Ldif.WriteOptions | None = None
-                with suppress(Exception):
-                    validated_write_options = m.Ldif.WriteOptions.model_validate(
-                        format_options_raw,
-                    )
-                format_options = validated_write_options
-        if output_path is not None:
-            file_result = self.write_to_file(
-                entries,
-                output_path,
-                target_server_type,
-                format_options,
-            )
-            if file_result.failure:
-                return r[m.Ldif.WriteResponse].fail(
-                    file_result.error or "File write failed",
-                )
-            return r[m.Ldif.WriteResponse].ok(file_result.value)
-        string_result = self.write_to_string(
-            entries,
-            target_server_type,
-            format_options,
-        )
-        if string_result.failure:
-            return r[m.Ldif.WriteResponse].fail(
-                string_result.error or "String write failed",
-            )
-        result_value = string_result.value
-        with suppress(Exception):
-            result_response = m.Ldif.WriteResponse.model_validate(result_value)
-            return r[m.Ldif.WriteResponse].ok(result_response)
-        return r[m.Ldif.WriteResponse].ok(
-            m.Ldif.WriteResponse(
-                content=str(result_value),
-                statistics=m.Ldif.Statistics(
-                    total_entries=len(entries),
-                    processed_entries=len(entries),
-                ),
-            ),
-        )
-
-
-__all__: list[str] = ["FlextLdifWriter", "FlextLdifWriterMixin"]
+__all__: list[str] = ["FlextLdifWriter"]

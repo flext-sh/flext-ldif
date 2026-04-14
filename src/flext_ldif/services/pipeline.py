@@ -17,6 +17,10 @@ class FlextLdifProcessingPipeline:
     """Full processing pipeline with configuration."""
 
     __slots__ = ("_config", "_pipeline")
+    _DEFAULT_CASE_FOLD: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.NONE
+    _DEFAULT_SPACE_HANDLING: c.Ldif.SpaceHandlingOption = (
+        c.Ldif.SpaceHandlingOption.PRESERVE
+    )
 
     def __init__(self, settings: m.Ldif.TransformConfig | None = None) -> None:
         """Initialize processing pipeline."""
@@ -44,10 +48,16 @@ class FlextLdifProcessingPipeline:
             dn_config = (
                 self._config.process_config.dn_config or m.Ldif.DnNormalizationConfig()
             )
-            case_fold_value = dn_config.case_fold or "none"
-            space_handling_value = dn_config.space_handling or "preserve"
-            case_enum = c.Ldif.CaseFoldOption(case_fold_value)
-            spaces_enum = c.Ldif.SpaceHandlingOption(space_handling_value)
+            case_enum = (
+                c.Ldif.CaseFoldOption(dn_config.case_fold)
+                if dn_config.case_fold is not None
+                else self._DEFAULT_CASE_FOLD
+            )
+            spaces_enum = (
+                c.Ldif.SpaceHandlingOption(dn_config.space_handling)
+                if dn_config.space_handling is not None
+                else self._DEFAULT_SPACE_HANDLING
+            )
             pipeline.add(
                 u.Ldif.Normalize.dn(
                     case=case_enum,
@@ -74,12 +84,12 @@ class FlextLdifProcessingPipeline:
             and self._config.process_config.source_server
             and self._config.process_config.target_server
         ):
-            source_server = c.Ldif.ServerTypes[
-                self._config.process_config.source_server.upper()
-            ]
-            target_server = c.Ldif.ServerTypes[
-                self._config.process_config.target_server.upper()
-            ]
+            source_server = c.Ldif.ServerTypes(
+                u.Ldif.normalize_server_type(self._config.process_config.source_server),
+            )
+            target_server = c.Ldif.ServerTypes(
+                u.Ldif.normalize_server_type(self._config.process_config.target_server),
+            )
             pipeline.add(
                 FlextLdifTransformer(
                     source_server=source_server,

@@ -7,7 +7,6 @@ from types import MappingProxyType
 from typing import ClassVar, Final
 
 from flext_cli import FlextCliConstants
-
 from flext_ldif import t
 
 
@@ -399,6 +398,68 @@ class FlextLdifConstants(FlextCliConstants):
 
         TRUE_RFC: Final[str] = "TRUE"
         FALSE_RFC: Final[str] = "FALSE"
+        OID_TRUE: Final[str] = "1"
+        OID_FALSE: Final[str] = "0"
+
+        OID_BOOLEAN_ATTRIBUTES: Final[frozenset[str]] = frozenset({
+            "orclisenabled",
+            "orclaccountlocked",
+            "orclpwdmustchange",
+            "orclpasswordverify",
+            "orclisvisible",
+            "orclsamlenable",
+            "orclsslenable",
+            "orcldasenableproductlogo",
+            "orcldasenablesubscriberlogo",
+            "orcldasshowproductlogo",
+            "orcldasenablebranding",
+            "orcldasisenabled",
+            "orcldasismandatory",
+            "orcldasispersonal",
+            "orcldassearchable",
+            "orcldasselfmodifiable",
+            "orcldasviewable",
+            "orcldasREDACTED_LDAP_BIND_PASSWORDmodifiable",
+            "pwdlockout",
+            "pwdmustchange",
+            "pwdallowuserchange",
+        })
+
+        OID_TO_RFC_BOOL: Final[t.StrMapping] = MappingProxyType({
+            OID_TRUE: TRUE_RFC,
+            OID_FALSE: FALSE_RFC,
+            "true": TRUE_RFC,
+            "false": FALSE_RFC,
+        })
+        RFC_TO_OID_BOOL: Final[t.StrMapping] = MappingProxyType({
+            TRUE_RFC: OID_TRUE,
+            FALSE_RFC: OID_FALSE,
+            "true": OID_TRUE,
+            "false": OID_FALSE,
+        })
+
+        ATTRIBUTE_TRANSFORMATION_OID_TO_RFC: Final[t.StrMapping] = MappingProxyType({
+            "orclguid": "entryUUID",
+            "orclaci": "aci",
+            "orclentrylevelaci": "aci",
+        })
+        ATTRIBUTE_TRANSFORMATION_RFC_TO_OID: Final[t.StrMapping] = MappingProxyType({
+            "entryUUID": "orclguid",
+            "aci": "orclaci",
+        })
+        ACL_PERMISSION_KEYS: Final[tuple[str, ...]] = (
+            "read",
+            "write",
+            "add",
+            "delete",
+            "search",
+            "compare",
+            "self_write",
+            "proxy",
+            "browse",
+            "auth",
+            "all",
+        )
 
         SCHEMA_ORIGINAL_FORMAT: Final[str] = "schema_original_format"
         SCHEMA_ORIGINAL_STRING_COMPLETE: Final[str] = "schema_original_string_complete"
@@ -817,6 +878,16 @@ class FlextLdifConstants(FlextCliConstants):
             DELETE = "delete"
             MODDN = "moddn"
             MODRDN = "modrdn"
+
+        @unique
+        class LogLevelLower(StrEnum):
+            """Lowercase log-level names for logger dispatch comparisons."""
+
+            DEBUG = "debug"
+            INFO = "info"
+            WARNING = "warning"
+            ERROR = "error"
+            CRITICAL = "critical"
 
 
 c = FlextLdifConstants

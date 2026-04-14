@@ -3,23 +3,18 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import override
 
-from pydantic import BeforeValidator, PrivateAttr
-
-from flext_ldif import FlextLdifServer, c, m, r, s, u
-
-_ = BeforeValidator
+from flext_ldif import FlextLdifServer, c, m, r, u
 
 
-class FlextLdifParserMixin:
+class FlextLdifParser:
     """Parser methods for MRO composition on FlextLdif.
 
     Expects ``self._server: FlextLdifServer`` to be provided by the
     instantiated class (either FlextLdifParser or FlextLdif).
     """
 
-    _server: FlextLdifServer
+    _server: FlextLdifServer = FlextLdifServer.get_global_instance()
 
     def parse_ldif(
         self,
@@ -30,7 +25,7 @@ class FlextLdifParserMixin:
         """Parse LDIF content from string or file."""
         effective_type = server_type or self._get_effective_server_type_value()
         if isinstance(value, Path):
-            return self._parse_ldif_path(value, server_type=effective_type)
+            return self.parse_ldif_file(value, server_type=effective_type)
         return self.parse_string(value, server_type=effective_type)
 
     def parse_ldif_file(
@@ -40,14 +35,25 @@ class FlextLdifParserMixin:
         encoding: str = "utf-8",
     ) -> r[m.Ldif.ParseResponse]:
         """Parse LDIF content from a file path with optional encoding override."""
+        resolved_path = path
+        if not resolved_path.exists() and (not resolved_path.is_absolute()):
+            project_root = Path(__file__).resolve().parents[2]
+            candidate_path = project_root / resolved_path
+            if candidate_path.exists():
+                resolved_path = candidate_path
+        if not resolved_path.exists():
+            return r[m.Ldif.ParseResponse].fail_op(
+                "resolve ldif path",
+                f"File not found: {path}",
+            )
         try:
-            content = path.read_text(encoding=encoding)
+            content = resolved_path.read_text(encoding=encoding)
         except (OSError, UnicodeDecodeError) as e:
             return r[m.Ldif.ParseResponse].fail_op(
                 "read ldif file",
                 e,
             )
-        return self.parse_string(content, server_type)
+        return self.parse_string(content, server_type=server_type)
 
     def parse_string(
         self,
@@ -99,54 +105,5 @@ class FlextLdifParserMixin:
         """Resolve effective server type (default: rfc, overridden by DetectorMixin)."""
         return "rfc"
 
-    def _parse_ldif_path(
-        self,
-        path: Path,
-        *,
-        server_type: str | None = None,
-    ) -> r[m.Ldif.ParseResponse]:
-        """Parse LDIF file and return parse response."""
-        resolved_path = path
-        if not resolved_path.exists() and (not resolved_path.is_absolute()):
-            project_root = Path(__file__).resolve().parents[2]
-            candidate_path = project_root / resolved_path
-            if candidate_path.exists():
-                resolved_path = candidate_path
-        if not resolved_path.exists():
-            return r[m.Ldif.ParseResponse].fail_op(
-                "resolve ldif path",
-                f"File not found: {path}",
-            )
-        try:
-            content = resolved_path.read_text(encoding="utf-8")
-        except OSError as e:
-            return r[m.Ldif.ParseResponse].fail_op(
-                "read ldif path",
-                e,
-            )
-        return self.parse_ldif(value=content, server_type=server_type)
 
-
-class FlextLdifParser(FlextLdifParserMixin, s[m.Ldif.ParseResponse]):
-    """Standalone parser service (also usable outside FlextLdif MRO)."""
-
-    _server: FlextLdifServer = PrivateAttr()
-
-    def __init__(self, server: FlextLdifServer | None = None) -> None:
-        """Initialize the parser with an optional server registry."""
-        object.__setattr__(
-            self,
-            "_server",
-            server if server is not None else FlextLdifServer.get_global_instance(),
-        )
-
-    @override
-    def execute(self) -> r[m.Ldif.ParseResponse]:
-        """Guard against invoking the service without input data."""
-        return r[m.Ldif.ParseResponse].fail_op(
-            "execute ldif parser",
-            "FlextLdifParser requires input data. Use parse_string() or parse_ldif_file().",
-        )
-
-
-__all__: list[str] = ["FlextLdifParser", "FlextLdifParserMixin"]
+__all__: list[str] = ["FlextLdifParser"]

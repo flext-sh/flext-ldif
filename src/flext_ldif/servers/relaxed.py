@@ -646,11 +646,53 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             FlextLdifServersRelaxed._logger.debug(
                 f"RFC parser failed, using relaxed mode: {parent_result.error}",
             )
-            return u.Ldif.parse_content(
-                ldif_content=ldif_content,
-                server_type=self._get_server_type(),
-                parse_entry_hook=self._adapted_parse_entry_relaxed,
-            )
+            try:
+                entries: MutableSequence[m.Ldif.Entry] = []
+                raw_entries = ldif_content.strip().split("\n\n")
+                successful = 0
+                failed = 0
+                for raw_entry in raw_entries:
+                    if not raw_entry.strip():
+                        continue
+                    lines = raw_entry.strip().split("\n")
+                    processed_entry = raw_entry.strip()
+                    if lines and lines[0].lower().startswith("version:"):
+                        lines = lines[1:]
+                        if not lines:
+                            continue
+                        processed_entry = "\n".join(lines)
+                    result = self._adapted_parse_entry_relaxed(processed_entry)
+                    if result.success:
+                        successful += 1
+                        entries.append(result.value)
+                        continue
+                    failed += 1
+                    FlextLdifServersRelaxed._logger.warning(
+                        "Failed to parse entry",
+                        error=str(result.error),
+                        server_type=self._get_server_type(),
+                    )
+                FlextLdifServersRelaxed._logger.debug(
+                    "LDIF content parse stats",
+                    total_entries=len(raw_entries),
+                    successful=successful,
+                    failed=failed,
+                )
+                return r[MutableSequence[m.Ldif.Entry]].ok(entries)
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as error:
+                FlextLdifServersRelaxed._logger.exception(
+                    "Failed to parse content",
+                    server_type=self._get_server_type(),
+                )
+                return r[MutableSequence[m.Ldif.Entry]].fail(
+                    f"Failed to parse content: {error}",
+                )
 
         def _parse_entry(
             self,

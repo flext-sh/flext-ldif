@@ -131,7 +131,7 @@ ignore-words-list = "crate,nd"
 
 # [MANAGED] coverage
 [tool.coverage.report]
-fail_under = 15
+fail_under = 25
 precision = 2
 show_missing = true
 skip_covered = false
@@ -141,7 +141,7 @@ omit = [ "*/dependency_injector/providers.pyx" ]
 
 # [MANAGED] deptry
 [tool.deptry]
-known_first_party = [ "flext_core", "flext_ldif" ]
+known_first_party = [ "flext_cli", "flext_core", "flext_ldif" ]
 pep621_dev_dependency_groups = [ "dev" ]
 
 [tool.hatch.metadata]
@@ -214,7 +214,7 @@ bad-match = true
 bad-override = false
 bad-param-name-override = true
 bad-raise = true
-bad-return = false
+bad-return = true
 bad-specialization = true
 bad-typed-dict = true
 bad-typed-dict-key = true
@@ -463,7 +463,7 @@ select = [ "ALL" ]
 [tool.ruff.lint.isort]
 combine-as-imports = true
 force-single-line = false
-known-first-party = [ "flext_core", "flext_ldif" ]
+known-first-party = [ "flext_cli", "flext_core", "flext_ldif" ]
 split-on-trailing-comma = true
 
 [tool.ruff.lint.per-file-ignores]
@@ -636,6 +636,9 @@ split-on-trailing-comma = true
 all = true
 in_place = true
 sort_first = [ "build-system", "dependency-groups", "project", "tool" ]
+
+[tool.uv.sources.flext-cli]
+workspace = true
 
 [tool.uv.sources.flext-core]
 workspace = true

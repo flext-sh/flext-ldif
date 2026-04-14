@@ -53,9 +53,7 @@ class FlextLdifProtocolsDomain(Protocol):
             """Parse a schema definition into a schema item."""
             ...
 
-        def parse_attribute(
-            self, definition: str
-        ) -> p.Result[m.Ldif.SchemaAttribute]:
+        def parse_attribute(self, definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse an attributeType definition."""
             ...
 

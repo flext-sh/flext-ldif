@@ -10,7 +10,6 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".acl": ("FlextLdifUtilitiesACL",),
         ".attribute": ("FlextLdifUtilitiesAttribute",),
         ".collection_ldif": ("FlextLdifUtilitiesCollectionLdif",),
-        ".detection": ("FlextLdifUtilitiesDetection",),
         ".dispatch": ("FlextLdifUtilitiesDispatch",),
         ".dn": ("FlextLdifUtilitiesDN",),
         ".entry": ("FlextLdifUtilitiesEntry",),
@@ -19,7 +18,6 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".object_class": ("FlextLdifUtilitiesObjectClass",),
         ".oid": ("FlextLdifUtilitiesOID",),
         ".parser": ("FlextLdifUtilitiesParser",),
-        ".parsers": ("FlextLdifUtilitiesParsers",),
         ".pipeline": ("FlextLdifUtilitiesPipeline",),
         ".result": (
             "FlextLdifUtilitiesResult",
@@ -33,7 +31,6 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ),
         ".validation": ("FlextLdifUtilitiesValidation",),
         ".writer": ("FlextLdifUtilitiesWriter",),
-        ".writers": ("FlextLdifUtilitiesWriters",),
     },
 )
 

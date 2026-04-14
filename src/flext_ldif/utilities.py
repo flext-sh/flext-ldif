@@ -2,15 +2,11 @@
 
 from __future__ import annotations
 
-from typing import override
-
 from flext_cli import FlextCliUtilities
-
 from flext_ldif import (
     FlextLdifUtilitiesACL,
     FlextLdifUtilitiesAttribute,
     FlextLdifUtilitiesCollectionLdif,
-    FlextLdifUtilitiesDetection,
     FlextLdifUtilitiesDispatch,
     FlextLdifUtilitiesDN,
     FlextLdifUtilitiesEntry,
@@ -19,16 +15,12 @@ from flext_ldif import (
     FlextLdifUtilitiesObjectClass,
     FlextLdifUtilitiesOID,
     FlextLdifUtilitiesParser,
-    FlextLdifUtilitiesParsers,
     FlextLdifUtilitiesPipeline,
     FlextLdifUtilitiesSchema,
     FlextLdifUtilitiesServer,
     FlextLdifUtilitiesTransformers,
     FlextLdifUtilitiesValidation,
     FlextLdifUtilitiesWriter,
-    FlextLdifUtilitiesWriters,
-    r,
-    t,
 )
 
 
@@ -40,7 +32,6 @@ class FlextLdifUtilities(FlextCliUtilities):
         FlextLdifUtilitiesCollectionLdif,
         FlextLdifUtilitiesACL,
         FlextLdifUtilitiesAttribute,
-        FlextLdifUtilitiesDetection,
         FlextLdifUtilitiesDN,
         FlextLdifUtilitiesEntry,
         FlextLdifUtilitiesEvents,
@@ -48,39 +39,14 @@ class FlextLdifUtilities(FlextCliUtilities):
         FlextLdifUtilitiesObjectClass,
         FlextLdifUtilitiesOID,
         FlextLdifUtilitiesParser,
-        FlextLdifUtilitiesParsers,
         FlextLdifUtilitiesPipeline,
         FlextLdifUtilitiesSchema,
         FlextLdifUtilitiesServer,
         FlextLdifUtilitiesTransformers,
         FlextLdifUtilitiesValidation,
         FlextLdifUtilitiesWriter,
-        FlextLdifUtilitiesWriters,
     ):
         """LDIF-specific utility namespace."""
-
-        @staticmethod
-        @override
-        def parse_attribute(
-            attr_definition: str,
-            *,
-            validate_syntax: bool = True,
-        ) -> r[t.MutableRecursiveContainerMapping]:
-            """Route to Schema.parse_attribute (resolves Attribute vs Schema)."""
-            return FlextLdifUtilitiesSchema.parse_attribute(
-                attr_definition,
-                validate_syntax=validate_syntax,
-            )
-
-        @staticmethod
-        @override
-        def parse_objectclass(
-            oc_definition: str,
-        ) -> t.MutableRecursiveContainerMapping:
-            """Route to Schema.parse_objectclass (resolves ObjectClass vs Schema)."""
-            return FlextLdifUtilitiesSchema.parse_objectclass(oc_definition)
-
-        # Methods inherited via MRO from mixin classes (no explicit overrides needed)
 
 
 u = FlextLdifUtilities

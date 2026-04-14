@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_ldif import FlextLdifModelsEvents, FlextLdifModelsSettings, p, t
+from flext_ldif import FlextLdifModelsEvents, FlextLdifModelsSettings, c, p, t
 
 
 class FlextLdifUtilitiesEvents:
@@ -36,18 +36,18 @@ class FlextLdifUtilitiesEvents:
         logger: p.Logger,
         log_context: t.MutableScalarMapping,
         log_message: str,
-        log_level: str = "info",
+        log_level: str = c.Ldif.LogLevelLower.INFO.value,
         extras: FlextLdifModelsSettings.LogContextExtras | None = None,
     ) -> None:
         """Generic helper for logging events with context and extras."""
         filtered_extras = FlextLdifUtilitiesEvents._process_extras(extras)
         merged_context = dict(log_context)
         merged_context.update(filtered_extras)
-        if log_level == "debug":
+        if log_level == c.Ldif.LogLevelLower.DEBUG.value:
             logger.debug(log_message, return_result=False, **merged_context)
-        elif log_level == "warning":
+        elif log_level == c.Ldif.LogLevelLower.WARNING.value:
             logger.warning(log_message, return_result=False, **merged_context)
-        elif log_level == "error":
+        elif log_level == c.Ldif.LogLevelLower.ERROR.value:
             logger.error(log_message, return_result=False, **merged_context)
         else:
             logger.info(log_message, return_result=False, **merged_context)

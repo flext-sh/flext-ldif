@@ -8,7 +8,6 @@ from typing import override
 from flext_ldif import (
     FlextLdifServer,
     m,
-    p,
     r,
     s,
     t,
@@ -153,33 +152,37 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
             self._build_acl_response(acls, failed_entries=failed_count),
         )
 
-    def parse_acl_string(self, acl_string: str, server_type: str) -> r[t.Ldif.AclLike]:
+    def parse_acl_string(self, acl_string: str, server_type: str) -> r[m.Ldif.Acl]:
         """Parse ACL string using server-specific quirks."""
-        original_server_type = str(server_type)
         try:
-            normalized_server_type = u.Ldif.normalize_server_type(
-                original_server_type,
+            normalized_server_type = u.Ldif.normalize_server_type(server_type)
+        except (ValueError, TypeError) as error:
+            return r[m.Ldif.Acl].fail(
+                f"Invalid server type: {server_type} - {error}",
             )
-        except (ValueError, TypeError) as e:
-            return r[t.Ldif.AclLike].fail(f"Invalid server type: {server_type} - {e}")
         try:
-            if original_server_type == "openldap":
-                acl_quirk = self._server.acl("openldap1")
-                if acl_quirk is None:
-                    acl_quirk = self._server.acl("openldap2")
-            else:
-                acl_quirk = self._server.acl(normalized_server_type)
-        except ValueError as e:
-            return r[t.Ldif.AclLike].fail(str(e))
+            acl_quirk = self._server.acl(
+                "openldap1" if server_type == "openldap" else normalized_server_type,
+            )
+            if acl_quirk is None and server_type == "openldap":
+                acl_quirk = self._server.acl("openldap2")
+        except ValueError as error:
+            return r[m.Ldif.Acl].fail(str(error))
         if acl_quirk is None:
-            return r[t.Ldif.AclLike].fail(
+            return r[m.Ldif.Acl].fail(
                 f"No ACL quirk found for server type: {normalized_server_type}",
             )
-        return acl_quirk.parse_quirk(acl_string).fold(
-            on_failure=lambda e: p.Result[t.Ldif.AclLike].fail(
-                e or "ACL parsing failed"
-            ),
-            on_success=lambda v: p.Result[t.Ldif.AclLike].ok(v),
+        return (
+            r[m.Ldif.Acl]
+            .from_result(
+                acl_quirk.parse_quirk(acl_string),
+            )
+            .map(
+                m.Ldif.Acl.model_validate,
+            )
+            .map_error(
+                lambda error: error or "ACL parsing failed",
+            )
         )
 
 

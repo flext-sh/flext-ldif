@@ -631,68 +631,76 @@ class FlextLdifUtilitiesACL:
         return attribute_name.lower() in all_attrs_lower
 
     @staticmethod
+    def normalize_permission_key(key: str) -> str:
+        """Normalize permission key for cross-server ACL mapping."""
+        return {"self_write": "selfwrite"}.get(key, key)
+
+    @staticmethod
     def map_oid_to_oud_permissions(
-        oid_permissions: t.MutableBoolMapping,
+        orig_perms_dict: t.MutableBoolMapping,
     ) -> t.MutableBoolMapping:
-        """Map OID-specific permissions to OUD-equivalent permissions."""
-        pass_through_perms = {
-            "read",
-            "write",
-            "add",
-            "delete",
-            "search",
-            "compare",
-            "all",
+        """Map OID permission names to OUD permission names."""
+        normalized_orig_perms: t.MutableBoolMapping = {
+            FlextLdifUtilitiesACL.normalize_permission_key(key): value
+            for key, value in orig_perms_dict.items()
         }
-
-        def map_perm(perm_name: str, *, perm_value: bool) -> t.MutableBoolMapping:
-            """Map single permission."""
+        mapping_values = {
+            FlextLdifUtilitiesACL.normalize_permission_key(key)
+            for key in c.Ldif.ACL_PERMISSION_KEYS
+        }
+        pass_through_perms = {
+            key for key in mapping_values if key not in {"browse", "selfwrite"}
+        }
+        mapped_perms: t.MutableBoolMapping = {}
+        for perm_name, perm_value in normalized_orig_perms.items():
             if perm_name == "browse":
-                return {"read": perm_value, "search": perm_value}
+                mapped_perms["read"] = mapped_perms.get("read", False) or perm_value
+                mapped_perms["search"] = mapped_perms.get("search", False) or perm_value
+                continue
             if perm_name == "selfwrite":
-                return {"write": perm_value}
+                mapped_perms["write"] = mapped_perms.get("write", False) or perm_value
+                continue
             if perm_name in pass_through_perms:
-                return {perm_name: perm_value}
-            return {}
-
-        mapped_dicts: MutableSequence[t.MutableBoolMapping] = [
-            map_perm(perm_name, perm_value=perm_value)
-            for perm_name, perm_value in oid_permissions.items()
-        ]
-        filtered_dicts: MutableSequence[t.MutableBoolMapping] = [
-            d for d in mapped_dicts if d
-        ]
-        result: t.MutableBoolMapping = {}
-        for d in filtered_dicts:
-            for k, v in d.items():
-                result[k] = result.get(k, False) or v
-        return result
+                mapped_perms[perm_name] = (
+                    mapped_perms.get(perm_name, False) or perm_value
+                )
+        return mapped_perms
 
     @staticmethod
     def map_oud_to_oid_permissions(
-        oud_permissions: t.MutableBoolMapping,
+        orig_perms_dict: t.MutableBoolMapping,
     ) -> t.MutableBoolMapping:
-        """Map OUD-specific permissions to OID-equivalent permissions."""
+        """Map OUD permission names to OID permission names."""
+        normalized_orig_perms: t.MutableBoolMapping = {
+            FlextLdifUtilitiesACL.normalize_permission_key(key): value
+            for key, value in orig_perms_dict.items()
+        }
+        mapping_values = {
+            FlextLdifUtilitiesACL.normalize_permission_key(key)
+            for key in c.Ldif.ACL_PERMISSION_KEYS
+        }
         pass_through_perms = {
-            "read",
-            "write",
-            "add",
-            "delete",
-            "search",
-            "compare",
-            "all",
+            key for key in mapping_values if key not in {"read", "search", "browse"}
         }
-        has_read = oud_permissions.get("read", False)
-        has_search = oud_permissions.get("search", False)
-        browse_dict: t.MutableBoolMapping = (
-            {"browse": has_read and has_search} if has_read or has_search else {}
-        )
-        pass_through: t.MutableBoolMapping = {
-            k: v
-            for k, v in oud_permissions.items()
-            if k in pass_through_perms and k not in {"read", "search"}
-        }
-        result: t.MutableBoolMapping = {**browse_dict, **pass_through}
+        has_read = normalized_orig_perms.get("read", False)
+        has_search = normalized_orig_perms.get("search", False)
+        mapped_perms: t.MutableBoolMapping = {}
+        if has_read or has_search:
+            mapped_perms["browse"] = has_read and has_search
+        for perm_name, perm_value in normalized_orig_perms.items():
+            if perm_name in pass_through_perms:
+                mapped_perms[perm_name] = perm_value
+        return mapped_perms
+
+    @staticmethod
+    def build_mapped_permissions_dict(
+        mapped_perms: t.MutableBoolMapping,
+        mapping: t.MutableStrMapping,
+    ) -> t.MutableOptionalBoolMapping:
+        """Build permissions dict from a source->mapped key table."""
+        result: t.MutableOptionalBoolMapping = {}
+        for source_key, mapped_key in mapping.items():
+            result[source_key] = mapped_perms.get(mapped_key)
         return result
 
     @staticmethod

@@ -79,31 +79,21 @@ class FlextLdifUtilitiesPipeline:
             entries: MutableSequence[m.Ldif.Entry],
         ) -> r[MutableSequence[m.Ldif.Entry]]:
             """Execute pipeline on a sequence of entries."""
-
-            def process_entry(entry: m.Ldif.Entry) -> r[m.Ldif.Entry] | None:
-                """Process single entry through pipeline."""
+            results: MutableSequence[m.Ldif.Entry] = []
+            for entry in entries:
                 result = self.execute_one(entry).map_error(
                     lambda error: error or "Processing failed",
                 )
                 if result.failure:
-                    return r[m.Ldif.Entry].fail(result.error)
-                processed = result.value
-                if isinstance(processed, FlextLdifUtilitiesPipeline._Filtered):
-                    return None
-                return r[m.Ldif.Entry].ok(processed)
-
-            results: MutableSequence[m.Ldif.Entry] = []
-            for entry in entries:
-                process_result = process_entry(entry)
-                if process_result is None:
-                    continue
-                if process_result.failure:
                     if self._fail_fast:
                         return r[MutableSequence[m.Ldif.Entry]].fail(
-                            process_result.error or "Pipeline execution failed",
+                            result.error or "Pipeline execution failed",
                         )
                     continue
-                results.append(process_result.value)
+                processed = result.value
+                if isinstance(processed, FlextLdifUtilitiesPipeline._Filtered):
+                    continue
+                results.append(processed)
             return r[MutableSequence[m.Ldif.Entry]].ok(results)
 
         def execute_one(

@@ -24,20 +24,14 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".entries": ("FlextLdifEntries",),
             ".filters": ("FlextLdifFilters",),
             ".migration": ("FlextLdifMigrationPipeline",),
-            ".parser": (
-                "FlextLdifParser",
-                "FlextLdifParserMixin",
-            ),
+            ".parser": ("FlextLdifParser",),
             ".pipeline": ("FlextLdifProcessingPipeline",),
             ".processing": ("FlextLdifProcessing",),
             ".rfc_validation": ("FlextLdifValidation",),
             ".server": ("FlextLdifServer",),
             ".statistics": ("FlextLdifStatistics",),
             ".transformers": ("FlextLdifTransformer",),
-            ".writer": (
-                "FlextLdifWriter",
-                "FlextLdifWriterMixin",
-            ),
+            ".writer": ("FlextLdifWriter",),
         },
     ),
     exclude_names=(

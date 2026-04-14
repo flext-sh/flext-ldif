@@ -8,6 +8,7 @@ from typing import ClassVar, Self, overload, override
 from pydantic import ConfigDict
 
 from flext_ldif import (
+    c,
     m,
     p,
     r,
@@ -27,7 +28,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         arbitrary_types_allowed=True,
         extra="forbid",
     )
-    server_type: ClassVar[str] = "unknown"
+    server_type: ClassVar[str] = c.Ldif.EntryDefaults.UNKNOWN_VALUE
     priority: ClassVar[int] = 0
 
     def __init__(self, **kwargs: t.Scalar) -> None:
@@ -430,7 +431,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             """Write single entry using entry quirk."""
             if entry_quirk is not None:
                 result: p.Result[str] = entry_quirk.write(entry_model)
-                return result
+                if result.success:
+                    return r[str].ok(result.unwrap())
+                return r[str].fail(result.error or "Failed to write entry")
             return r[str].fail("No entry quirk found")
 
         def format_ldif_output(ldif_lines: t.StrSequence) -> str:

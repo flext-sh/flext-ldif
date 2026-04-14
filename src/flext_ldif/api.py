@@ -7,25 +7,22 @@ from pathlib import Path
 from typing import override
 
 from flext_core import r
-from flext_ldif.base import s
-from flext_ldif.models import m
+from flext_ldif import FlextLdifSettings, c, m, s, t, u
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.services.analysis import FlextLdifAnalysis
 from flext_ldif.services.categorization import FlextLdifCategorization
 from flext_ldif.services.detector import FlextLdifDetectorMixin
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
-from flext_ldif.services.parser import FlextLdifParserMixin
+from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.rfc_validation import FlextLdifValidation
 from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.services.writer import FlextLdifWriterMixin
-from flext_ldif.settings import FlextLdifSettings
-from flext_ldif.utilities import u
+from flext_ldif.services.writer import FlextLdifWriter
 
 
 class FlextLdif(
     FlextLdifDetectorMixin,
-    FlextLdifParserMixin,
-    FlextLdifWriterMixin,
+    FlextLdifParser,
+    FlextLdifWriter,
     s[m.Ldif.Entry],
 ):
     """MRO facade over LDIF services.
@@ -57,7 +54,7 @@ class FlextLdif(
         forbidden_attributes: MutableSequence[str] | None = None,
         forbidden_objectclasses: MutableSequence[str] | None = None,
         base_dn: str | None = None,
-        server_type: str = "rfc",
+        server_type: str = c.Ldif.ServerTypes.RFC.value,
     ) -> FlextLdifCategorization:
         """Create a categorization service with the global server registry."""
         return FlextLdifCategorization(
@@ -74,8 +71,8 @@ class FlextLdif(
         self,
         input_dir: Path | None = None,
         output_dir: Path | None = None,
-        source_server: str = "rfc",
-        target_server: str = "rfc",
+        source_server: str = c.Ldif.ServerTypes.RFC.value,
+        target_server: str = c.Ldif.ServerTypes.RFC.value,
         options: m.Ldif.MigrateOptions | None = None,
     ) -> r[m.Ldif.MigrationPipelineResult]:
         """Migrate LDIF data between servers."""
@@ -105,8 +102,12 @@ class FlextLdif(
         return FlextLdifAnalysis.validate_entries(entries, validation_service)
 
     @override
-    def execute(self) -> r[m.Ldif.Entry]:
+    def execute(
+        self,
+        params: t.ValueOrModel | None = None,
+    ) -> r[m.Ldif.Entry]:
         """Execute FlextServiceBase pattern compliance."""
+        _ = params
         return r[m.Ldif.Entry].fail_op(
             "execute ldif facade",
             "FlextLdif is a facade. Use parse_ldif(), write(), or migrate() instead.",

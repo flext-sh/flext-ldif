@@ -5,13 +5,13 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from typing import ClassVar, TypeGuard, overload
 
-from pydantic import TypeAdapter
+from pydantic import TypeAdapter, ValidationError
 
 from flext_ldif import (
-    FlextLdifUtilitiesAttribute,
     FlextLdifUtilitiesCollectionLdif,
     FlextLdifUtilitiesDN,
     FlextLdifUtilitiesPipeline,
+    FlextLdifUtilitiesSchema,
     FlextLdifUtilitiesServer,
     FlextLdifUtilitiesValidation,
     m,
@@ -56,27 +56,6 @@ class FlextLdifUtilitiesDispatch:
         return FlextLdifUtilitiesDispatch._ACL_LIST_ADAPTER.validate_python(values)
 
     @staticmethod
-    def as_parse_response(
-        value: t.Ldif.ParseResponseLike | t.ModelInput,
-    ) -> m.Ldif.ParseResponse:
-        """Coerce a parse response-like value into the canonical model."""
-        return m.Ldif.ParseResponse.model_validate(value)
-
-    @staticmethod
-    def as_validation_result(
-        value: t.Ldif.ValidationResultLike | t.ModelInput,
-    ) -> m.Ldif.ValidationResult:
-        """Coerce a validation result-like value into the canonical model."""
-        return m.Ldif.ValidationResult.model_validate(value)
-
-    @staticmethod
-    def as_migration_result(
-        value: t.Ldif.MigrationPipelineResultLike | t.ModelInput,
-    ) -> m.Ldif.MigrationPipelineResult:
-        """Coerce a migration result-like value into the canonical model."""
-        return m.Ldif.MigrationPipelineResult.model_validate(value)
-
-    @staticmethod
     @overload
     def parse(
         definition: str | m.Ldif.DN | None,
@@ -107,20 +86,16 @@ class FlextLdifUtilitiesDispatch:
             return FlextLdifUtilitiesDN.parse_dn(definition)
         if parse_parts_hook is None and server_type is None:
             return FlextLdifUtilitiesDN.parse_dn(definition)
+        if parse_parts_hook is None:
+            return FlextLdifUtilitiesSchema.parse_attribute(definition)
 
         def attr_hook(value: str) -> r[t.MutableRecursiveContainerMapping]:
-            if parse_parts_hook is None:
-                return r[t.MutableRecursiveContainerMapping].ok({})
             parsed_value = parse_parts_hook(value)
             if isinstance(parsed_value, r):
                 return parsed_value
             return r[t.MutableRecursiveContainerMapping].ok(dict(parsed_value))
 
-        return FlextLdifUtilitiesAttribute.resolve_attribute(
-            definition=definition,
-            server_type=server_type,
-            parse_parts_hook=attr_hook if parse_parts_hook is not None else None,
-        )
+        return attr_hook(definition)
 
     @staticmethod
     def matches_server_patterns(
@@ -274,13 +249,15 @@ class FlextLdifUtilitiesDispatch:
         obj: MutableSequence[m.Ldif.Entry] | t.Container | str | m.Ldif.DN,
     ) -> TypeGuard[MutableSequence[m.Ldif.Entry]]:
         """Check if value is a Sequence of Entry objects (dispatch helper)."""
-        if isinstance(obj, (str, bytes)):
+        if isinstance(obj, (str, bytes, m.Ldif.DN)):
             return False
-        if isinstance(obj, list):
-            return not obj or isinstance(obj[0], m.Ldif.Entry)
-        if isinstance(obj, tuple):
-            return not obj or isinstance(obj[0], m.Ldif.Entry)
-        return False
+        if not isinstance(obj, Sequence):
+            return False
+        try:
+            FlextLdifUtilitiesDispatch._ENTRY_LIST_ADAPTER.validate_python(obj)
+            return True
+        except (ValidationError, TypeError):
+            return False
 
     # --- MRO conflict resolution: Collection methods (CollectionLdif vs FlextUtilities) ---
 
