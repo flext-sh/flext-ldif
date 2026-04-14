@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_core import p
 
 if TYPE_CHECKING:
-    from flext_ldif import t
+    from flext_ldif import m, t
 
 
 class FlextLdifProtocolsDomain(Protocol):
@@ -46,37 +46,43 @@ class FlextLdifProtocolsDomain(Protocol):
     class SchemaQuirk(Protocol):
         """Schema quirk contract."""
 
-        def parse_quirk(self, value: str) -> p.Result[t.Ldif.SchemaItem]:
+        def parse_quirk(
+            self,
+            value: str,
+        ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
             """Parse a schema definition into a schema item."""
             ...
 
         def parse_attribute(
             self, definition: str
-        ) -> p.Result[t.Ldif.SchemaAttributeLike]:
+        ) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse an attributeType definition."""
             ...
 
         def parse_objectclass(
             self,
             definition: str,
-        ) -> p.Result[t.Ldif.SchemaObjectClassLike]:
+        ) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse an objectClass definition."""
             ...
 
-        def write(self, model: t.Ldif.SchemaItem) -> p.Result[str]:
+        def write(
+            self,
+            model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        ) -> p.Result[str]:
             """Serialize a schema item."""
             ...
 
         def write_attribute(
             self,
-            attr_data: t.Ldif.SchemaAttributeLike,
+            attr_data: m.Ldif.SchemaAttribute,
         ) -> p.Result[str]:
             """Serialize an attributeType definition."""
             ...
 
         def write_objectclass(
             self,
-            oc_data: t.Ldif.SchemaObjectClassLike,
+            oc_data: m.Ldif.SchemaObjectClass,
         ) -> p.Result[str]:
             """Serialize an objectClass definition."""
             ...

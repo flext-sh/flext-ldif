@@ -160,22 +160,22 @@ class TestsTestFlextLdifProtocols:
 
     def test_schema_satisfies_protocol_oid(self) -> None:
         """Test that OID schema satisfies Schema."""
-        schema: p.Ldif.SchemaQuirk = FlextLdifServersOid.Schema()
+        schema = FlextLdifServersOid.Schema()
         self.Helpers.verify_protocol_methods(schema)
 
     def test_schema_satisfies_protocol_oud(self) -> None:
         """Test that OUD schema satisfies Schema."""
-        schema: p.Ldif.SchemaQuirk = FlextLdifServersOud.Schema()
+        schema = FlextLdifServersOud.Schema()
         self.Helpers.verify_protocol_methods(schema)
 
     def test_schema_satisfies_protocol_openldap(self) -> None:
         """Test that OpenLDAP schema satisfies Schema."""
-        schema: p.Ldif.SchemaQuirk = FlextLdifServersOpenldap.Schema()
+        schema = FlextLdifServersOpenldap.Schema()
         self.Helpers.verify_protocol_methods(schema)
 
     def test_schema_satisfies_protocol_relaxed(self) -> None:
         """Test that Relaxed schema satisfies Schema."""
-        schema: p.Ldif.SchemaQuirk = FlextLdifServersRelaxed.Schema()
+        schema = FlextLdifServersRelaxed.Schema()
         self.Helpers.verify_protocol_methods(schema)
 
     def test_server_has_protocol_attributes_oid(self) -> None:

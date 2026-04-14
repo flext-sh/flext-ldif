@@ -403,21 +403,27 @@ class FlextLdifServersBaseSchema(
                 return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
                     oc_result.error or "Parse failed",
                 )
+            parsed_objectclass = m.Ldif.SchemaObjectClass.model_validate(
+                oc_result.unwrap(),
+            )
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(
-                oc_result.value,
+                parsed_objectclass,
             )
         attr_result = self._parse_attribute(definition)
         if attr_result.failure:
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
                 attr_result.error or "Parse failed",
             )
+        parsed_attribute = m.Ldif.SchemaAttribute.model_validate(
+            attr_result.unwrap(),
+        )
         return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(
-            attr_result.value,
+            parsed_attribute,
         )
 
     def write(
         self,
-        model: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
+        model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> r[str]:
         """Write schema model to string format."""
         try:
@@ -427,19 +433,19 @@ class FlextLdifServersBaseSchema(
             return self.write_objectclass(objectclass_model)
         return self.write_attribute(attribute_model)
 
-    def write_attribute(self, attr_data: p.Ldif.SchemaAttribute) -> r[str]:
+    def write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> r[str]:
         """Write attribute to RFC-compliant string format (public API)."""
         validated_attr = m.Ldif.SchemaAttribute.model_validate(attr_data)
         return self._write_attribute(validated_attr)
 
-    def write_objectclass(self, oc_data: p.Ldif.SchemaObjectClass) -> r[str]:
+    def write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> r[str]:
         """Write objectClass to RFC-compliant string format (public API)."""
         validated_oc = m.Ldif.SchemaObjectClass.model_validate(oc_data)
         return self._write_objectclass(validated_oc)
 
     def _auto_detect_operation(
         self,
-        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        data: t.Ldif.SchemaConversionValue,
         operation: str | None,
     ) -> str:
         """Auto-detect operation from data type."""
@@ -458,7 +464,9 @@ class FlextLdifServersBaseSchema(
         if attr_definition:
             attr_result = self.parse_attribute(attr_definition)
             if attr_result.success:
-                parsed_attr: m.Ldif.SchemaAttribute = attr_result.value
+                parsed_attr = m.Ldif.SchemaAttribute.model_validate(
+                    attr_result.unwrap(),
+                )
                 return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].ok(
                     parsed_attr,
                 )
@@ -469,7 +477,9 @@ class FlextLdifServersBaseSchema(
         if oc_definition:
             oc_result = self.parse_objectclass(oc_definition)
             if oc_result.success:
-                parsed_oc: m.Ldif.SchemaObjectClass = oc_result.value
+                parsed_oc = m.Ldif.SchemaObjectClass.model_validate(
+                    oc_result.unwrap(),
+                )
                 return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].ok(
                     parsed_oc,
                 )
@@ -490,7 +500,7 @@ class FlextLdifServersBaseSchema(
         if attr_model:
             write_result = self.write_attribute(attr_model)
             if write_result.success:
-                written_text: str = write_result.value
+                written_text = write_result.unwrap()
                 return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].ok(
                     written_text,
                 )
@@ -501,7 +511,7 @@ class FlextLdifServersBaseSchema(
         if oc_model:
             write_oc_result = self.write_objectclass(oc_model)
             if write_oc_result.success:
-                written_text = write_oc_result.value
+                written_text = write_oc_result.unwrap()
                 return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].ok(
                     written_text,
                 )

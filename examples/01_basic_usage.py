@@ -81,13 +81,13 @@ class BasicUsageDry:
         if detect_result.failure:
             return r[str].fail(detect_result.error or "Server detection failed")
 
-        detection = detect_result.unwrap()
+        detection = m.Ldif.ServerDetectionResult.model_validate(detect_result.value)
         server_type = detection.detected_server_type or "rfc"
         parse_result = api.parse_ldif(sample_file, server_type=server_type)
         if parse_result.failure:
             return r[str].fail(parse_result.error or "Parse failed")
 
-        parse_response = parse_result.unwrap()
+        parse_response = m.Ldif.ParseResponse.model_validate(parse_result.value)
         parsed_entries = parse_response.entries
         validate_result = api.validate_entries(parsed_entries)
         if validate_result.failure:
@@ -124,7 +124,7 @@ class BasicUsageDry:
                 return r[MutableSequence[m.Ldif.Entry]].fail(
                     parse_result.error or "Parse failed",
                 )
-            parse_response = parse_result.unwrap()
+            parse_response = m.Ldif.ParseResponse.model_validate(parse_result.value)
             validate_result = api.validate_entries(parse_response.entries)
             if validate_result.failure:
                 return r[MutableSequence[m.Ldif.Entry]].fail(
@@ -148,7 +148,9 @@ class BasicUsageDry:
         server_type = "rfc"
         detect_result = api.detect_server_type(ldif_content=self.SAMPLE_LDIF)
         if detect_result.success:
-            detection = detect_result.unwrap()
+            detection = m.Ldif.ServerDetectionResult.model_validate(
+                detect_result.value,
+            )
             if detection.detected_server_type:
                 server_type = str(detection.detected_server_type)
         elif detect_result.failure:
@@ -160,7 +162,7 @@ class BasicUsageDry:
             return r[MutableSequence[m.Ldif.Entry]].fail(
                 parse_result.error or "Parse failed"
             )
-        parse_response = parse_result.unwrap()
+        parse_response = m.Ldif.ParseResponse.model_validate(parse_result.value)
         entries = parse_response.entries
         validate_result = api.validate_entries(entries)
         if validate_result.failure:
