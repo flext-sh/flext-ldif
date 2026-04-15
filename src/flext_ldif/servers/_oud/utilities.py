@@ -5,8 +5,8 @@ from __future__ import annotations
 from flext_ldif import (
     FlextLdifConstants,
     FlextLdifModelsSettings,
+    FlextLdifServersOudConstants,
 )
-from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 
 
 class FlextLdifServersOudUtilities:

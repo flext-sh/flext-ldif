@@ -5,8 +5,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import override
 
-from flext_ldif import m, r, t, u
-from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif import FlextLdifServersBase, m, r, t, u
 
 logger = u.fetch_logger(__name__)
 

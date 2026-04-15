@@ -9,9 +9,7 @@ from typing import Annotated, override
 from pydantic import Field
 
 from flext_core import d, r
-from flext_ldif.base import s
-from flext_ldif.models import m
-from flext_ldif.utilities import u
+from flext_ldif import m, s, u
 
 
 class FlextLdifValidation(

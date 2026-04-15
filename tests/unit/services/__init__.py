@@ -14,6 +14,19 @@ _LAZY_IMPORTS = build_lazy_import_map(
             "TestQuirksWithRealLdifFixtures",
             "TestsFlextLdifQuirksStandardizedConstants",
         ),
+        "flext_ldif": (
+            "c",
+            "d",
+            "e",
+            "h",
+            "m",
+            "p",
+            "r",
+            "s",
+            "t",
+            "u",
+            "x",
+        ),
     },
 )
 

@@ -8,9 +8,16 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 from typing import Self, overload, override
 
-from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
-from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif import (
+    FlextLdifServersBase,
+    FlextLdifServersBaseSchema,
+    c,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
 
 logger = u.fetch_logger(__name__)
 

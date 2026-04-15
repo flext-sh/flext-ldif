@@ -5,8 +5,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import ClassVar
 
-from flext_ldif import t
-from flext_ldif.servers._base.constants import FlextLdifServersBaseConstants
+from flext_ldif import FlextLdifServersBaseConstants, t
 
 
 class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):

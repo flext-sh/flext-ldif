@@ -9,6 +9,9 @@ from pydantic import ConfigDict
 
 from flext_core import s
 from flext_ldif import (
+    FlextLdifServersBaseEntry,
+    FlextLdifServersBaseSchema,
+    FlextLdifServersBaseSchemaAcl,
     c,
     m,
     p,
@@ -16,9 +19,6 @@ from flext_ldif import (
     t,
     u,
 )
-from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
-from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
-from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 
 
 class FlextLdifServersBase(s[m.Ldif.Entry]):

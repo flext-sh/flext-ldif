@@ -7,9 +7,7 @@ from collections.abc import Sequence
 from typing import override
 
 from flext_core import FlextSettings, FlextTypes, s
-from flext_ldif.models import m
-from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.settings import FlextLdifSettings
+from flext_ldif import FlextLdifServer, FlextLdifSettings, m
 
 
 class FlextLdifServiceBase[

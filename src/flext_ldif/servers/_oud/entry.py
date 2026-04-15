@@ -16,6 +16,10 @@ from flext_ldif import (
     FlextLdifModelsDomainsEntries,
     FlextLdifModelsMetadata,
     FlextLdifServersBase,
+    FlextLdifServersBaseEntry,
+    FlextLdifServersOudAcl,
+    FlextLdifServersOudConstants,
+    FlextLdifServersRfc,
     FlextLdifUtilitiesMetadata,
     c,
     m,
@@ -24,10 +28,6 @@ from flext_ldif import (
     t,
     u,
 )
-from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
-from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
-from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
-from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 logger = u.fetch_logger(__name__)
 

@@ -8,6 +8,8 @@ from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import override
 
 from flext_ldif import (
+    FlextLdifServersOidConstants,
+    FlextLdifServersRfc,
     c,
     m,
     p,
@@ -15,8 +17,6 @@ from flext_ldif import (
     t,
     u,
 )
-from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
-from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 logger = u.fetch_logger(__name__)
 

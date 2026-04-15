@@ -6,14 +6,14 @@ from collections.abc import Mapping, MutableSequence
 from pathlib import Path
 
 from flext_ldif import (
+    FlextLdifServer,
+    FlextLdifSettings,
     c,
     m,
     r,
     t,
     u,
 )
-from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.settings import FlextLdifSettings
 
 
 class FlextLdifWriter:

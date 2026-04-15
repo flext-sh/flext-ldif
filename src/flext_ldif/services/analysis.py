@@ -6,10 +6,7 @@ from collections.abc import MutableSequence
 from typing import TYPE_CHECKING, override
 
 from flext_core import r
-from flext_ldif.base import s
-from flext_ldif.models import m
-from flext_ldif.typings import t
-from flext_ldif.utilities import u
+from flext_ldif import m, s, t, u
 
 if TYPE_CHECKING:
     from flext_ldif.services.rfc_validation import FlextLdifValidation

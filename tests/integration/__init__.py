@@ -34,6 +34,19 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".test_systematic_fixture_coverage": ("test_systematic_fixture_coverage",),
         ".test_zero_data_loss_oid_oud": ("test_zero_data_loss_oid_oud",),
         ".test_zero_data_loss_schema": ("test_zero_data_loss_schema",),
+        "flext_ldif": (
+            "c",
+            "d",
+            "e",
+            "h",
+            "m",
+            "p",
+            "r",
+            "s",
+            "t",
+            "u",
+            "x",
+        ),
     },
 )
 

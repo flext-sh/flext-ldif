@@ -14,6 +14,19 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".test_oid_quirks": ("test_oid_quirks",),
         ".test_relaxed_quirks": ("test_relaxed_quirks",),
         ".test_schema_transformer": ("test_schema_transformer",),
+        "flext_ldif": (
+            "c",
+            "d",
+            "e",
+            "h",
+            "m",
+            "p",
+            "r",
+            "s",
+            "t",
+            "u",
+            "x",
+        ),
     },
 )
 
