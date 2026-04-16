@@ -9,8 +9,6 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self, override
 
-from pydantic import Field, ValidationError
-
 from flext_core import s
 from flext_ldif import (
     FlextLdifModelsDomainsEntries,
@@ -33,17 +31,21 @@ class FlextLdifServersBaseEntry(
 ):
     """Base class for entry processing quirks - satisfies Entry (structural typing)."""
 
-    server_type: str = Field(
-        default="unknown",
-        description="Server type identifier",
-    )
-    priority: int = Field(
-        default=0,
-        description="Quirk priority (lower number = higher priority)",
-    )
+    server_type: Annotated[
+        str,
+        m.Field(
+            description="Server type identifier",
+        ),
+    ] = "unknown"
+    priority: Annotated[
+        int,
+        m.Field(
+            description="Quirk priority (lower number = higher priority)",
+        ),
+    ] = 0
     parent_quirk: Annotated[
         Self | None,
-        Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="Reference to parent quirk instance for server-level access",
@@ -88,7 +90,7 @@ class FlextLdifServersBaseEntry(
             return FlextLdifModelsSettings.WriteFormatOptions.model_validate(
                 metadata.write_options.model_dump(exclude_none=True),
             )
-        except ValidationError as exc:
+        except c.ValidationError as exc:
             logger.warning(
                 "Failed to validate write format options",
                 error=str(exc),

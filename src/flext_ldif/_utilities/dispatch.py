@@ -24,10 +24,10 @@ from flext_ldif import (
 class FlextLdifUtilitiesDispatch:
     """Override dispatchers that route between parent classes."""
 
-    _ENTRY_LIST_ADAPTER: ClassVar[TypeAdapter[list[m.Ldif.Entry]]] = TypeAdapter(
+    _ENTRY_LIST_ADAPTER: ClassVar[m.TypeAdapter[list[m.Ldif.Entry]]] = TypeAdapter(
         list[m.Ldif.Entry]
     )
-    _ACL_LIST_ADAPTER: ClassVar[TypeAdapter[list[m.Ldif.Acl]]] = TypeAdapter(
+    _ACL_LIST_ADAPTER: ClassVar[m.TypeAdapter[list[m.Ldif.Acl]]] = TypeAdapter(
         list[m.Ldif.Acl]
     )
 

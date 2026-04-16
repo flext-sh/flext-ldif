@@ -6,7 +6,7 @@ import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
-from pydantic import Field, ValidationError
+from pydantic import ValidationError
 
 from flext_core import s
 from flext_ldif import (
@@ -28,17 +28,21 @@ class FlextLdifServersBaseSchema(
 ):
     """Base class for schema quirks using `s` with enhanced usability."""
 
-    server_type: str = Field(
-        default="rfc",
-        description="Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')",
-    )
-    priority: int = Field(
-        default=0,
-        description="Quirk priority (lower number = higher priority)",
-    )
+    server_type: Annotated[
+        str,
+        m.Field(
+            description="Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')",
+        ),
+    ] = "rfc"
+    priority: Annotated[
+        int,
+        m.Field(
+            description="Quirk priority (lower number = higher priority)",
+        ),
+    ] = 0
     parent_quirk: Annotated[
         Self | None,
-        Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="Reference to parent quirk instance for server-level access",
@@ -46,7 +50,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     attr_definition: Annotated[
         str | None,
-        Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="Attribute definition for auto-execute pattern",
@@ -54,7 +58,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     oc_definition: Annotated[
         str | None,
-        Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="ObjectClass definition for auto-execute pattern",
@@ -62,7 +66,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     attr_model: Annotated[
         m.Ldif.SchemaAttribute | None,
-        Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="SchemaAttribute model for auto-execute pattern",
@@ -70,7 +74,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     oc_model: Annotated[
         m.Ldif.SchemaObjectClass | None,
-        Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="SchemaObjectClass model for auto-execute pattern",
@@ -78,7 +82,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     operation: Annotated[
         str | None,
-        Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="Operation type for auto-execute pattern",

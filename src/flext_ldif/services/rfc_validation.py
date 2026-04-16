@@ -6,8 +6,6 @@ import struct
 from collections.abc import MutableSequence
 from typing import Annotated, override
 
-from pydantic import Field
-
 from flext_core import d, r
 from flext_ldif import m, s, u
 
@@ -19,21 +17,21 @@ class FlextLdifValidation(
 
     attribute_names: Annotated[
         MutableSequence[str],
-        Field(
+        m.Field(
             default_factory=list,
             description="Attribute names to validate against RFC 4512",
         ),
-    ] = Field(default_factory=list)
+    ] = m.Field(default_factory=list)
     objectclass_names: Annotated[
         MutableSequence[str],
-        Field(
+        m.Field(
             default_factory=list,
             description="Object class names to validate against RFC 4512",
         ),
-    ] = Field(default_factory=list)
+    ] = m.Field(default_factory=list)
     max_attr_value_length: Annotated[
         int | None,
-        Field(description="Maximum allowed attribute value length for validation"),
+        m.Field(description="Maximum allowed attribute value length for validation"),
     ] = None
 
     @override

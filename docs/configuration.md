@@ -53,32 +53,32 @@ Core configuration class with validation:
 from flext_ldif import FlextLdifModels
 
 
-class Config(BaseModel):
+class Config(m.BaseModel):
     """LDIF processing configuration with Pydantic validation."""
 
-    max_entries: int | None = Field(
+    max_entries: int | None = m.Field(
         None,
         description="Maximum number of entries to process (None = unlimited)",
         ge=1,
     )
 
-    strict_validation: bool = Field(
+    strict_validation: bool = m.Field(
         False, description="Enable strict RFC 2849 validation"
     )
 
-    ignore_unknown_attributes: bool = Field(
+    ignore_unknown_attributes: bool = m.Field(
         True, description="Ignore attributes not in standard LDAP schema"
     )
 
-    encoding: str = Field("utf-8", description="Character encoding for LDIF files")
+    encoding: str = m.Field("utf-8", description="Character encoding for LDIF files")
 
-    line_separator: str = Field("\\n", description="Line separator for LDIF output")
+    line_separator: str = m.Field("\\n", description="Line separator for LDIF output")
 
-    buffer_size: int = Field(
+    buffer_size: int = m.Field(
         8192, description="Buffer size for file operations", ge=1024
     )
 
-    log_level: str = Field("INFO", description="Logging level for LDIF operations")
+    log_level: str = m.Field("INFO", description="Logging level for LDIF operations")
 ```
 
 ### Configuration Usage
@@ -237,7 +237,7 @@ def validate_configuration(config_dict: dict) -> p.Result[FlextLdifModels.Config
     try:
         settings = FlextLdifModels.Config(**config_dict)
         return r[FlextLdifModels.Config].ok(settings)
-    except ValidationError as e:
+    except c.ValidationError as e:
         error_details = "; ".join([
             f"{err['loc'][0]}: {err['msg']}" for err in e.errors()
         ])

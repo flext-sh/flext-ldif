@@ -9,7 +9,7 @@ from flext_core import r
 from flext_ldif import m, s, t, u
 
 if TYPE_CHECKING:
-    from flext_ldif.services.rfc_validation import FlextLdifValidation
+    from flext_ldif import FlextLdifValidation
 
 
 class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):

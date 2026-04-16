@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import MutableSequence
-
-from pydantic import Field
+from typing import Annotated
 
 from flext_core import (
     FlextModelsDomainEvent,
@@ -16,81 +15,91 @@ class FlextLdifModelsEvents:
     """LDIF event and configuration models container class."""
 
     class DnEventConfig(m.StrictModel):
-        dn_operation: str = Field(description="DN operation type performed")
-        input_dn: str = Field(description="Original DN before operation")
-        output_dn: str | None = Field(
-            default=None, description="Resulting DN after operation"
-        )
-        operation_duration_ms: float = Field(
-            default=0.0, description="Operation duration in milliseconds"
-        )
-        validation_result: bool | None = Field(
-            default=None, description="Whether the DN passed validation"
-        )
-        parse_components: MutableSequence[tuple[str, str]] | None = Field(
-            default=None,
-            description="Parsed RDN components as (attribute, value) pairs",
-        )
+        dn_operation: str = m.Field(description="DN operation type performed")
+        input_dn: str = m.Field(description="Original DN before operation")
+        output_dn: Annotated[
+            str | None, m.Field(description="Resulting DN after operation")
+        ] = None
+        operation_duration_ms: Annotated[
+            float, m.Field(description="Operation duration in milliseconds")
+        ] = 0.0
+        validation_result: Annotated[
+            bool | None, m.Field(description="Whether the DN passed validation")
+        ] = None
+        parse_components: Annotated[
+            MutableSequence[tuple[str, str]] | None,
+            m.Field(
+                description="Parsed RDN components as (attribute, value) pairs",
+            ),
+        ] = None
 
     class ConversionEventConfig(m.StrictModel):
-        conversion_operation: str = Field(
+        conversion_operation: str = m.Field(
             description="Conversion operation type performed"
         )
-        source_format: str = Field(description="Source LDAP server format")
-        target_format: str = Field(description="Target LDAP server format")
-        items_processed: int = Field(description="Total items processed in conversion")
-        items_converted: int = Field(
-            default=0, description="Items successfully converted"
+        source_format: str = m.Field(description="Source LDAP server format")
+        target_format: str = m.Field(description="Target LDAP server format")
+        items_processed: int = m.Field(
+            description="Total items processed in conversion"
         )
-        items_failed: int = Field(default=0, description="Items that failed conversion")
-        conversion_duration_ms: float = Field(
-            default=0.0, description="Conversion duration in milliseconds"
-        )
-        error_details: MutableSequence[str] | None = Field(
-            default=None, description="Error messages for failed items"
-        )
+        items_converted: Annotated[
+            int, m.Field(description="Items successfully converted")
+        ] = 0
+        items_failed: Annotated[
+            int, m.Field(description="Items that failed conversion")
+        ] = 0
+        conversion_duration_ms: Annotated[
+            float, m.Field(description="Conversion duration in milliseconds")
+        ] = 0.0
+        error_details: Annotated[
+            MutableSequence[str] | None,
+            m.Field(description="Error messages for failed items"),
+        ] = None
 
     class DnEvent(FlextModelsDomainEvent.Entry):
-        dn_operation: str = Field(description="DN operation type performed")
-        input_dn: str = Field(description="Original DN before operation")
-        output_dn: str | None = Field(
-            default=None, description="Resulting DN after operation"
-        )
-        dn_duration_ms: float = Field(
-            default=0.0, description="DN operation duration in milliseconds"
-        )
-        validation_result: bool | None = Field(
-            default=None, description="Whether the DN passed validation"
-        )
-        has_output: bool = Field(
-            default=False, description="Whether the operation produced output"
-        )
-        component_count: int = Field(
-            default=0, description="Number of RDN components in the DN"
-        )
+        dn_operation: str = m.Field(description="DN operation type performed")
+        input_dn: str = m.Field(description="Original DN before operation")
+        output_dn: Annotated[
+            str | None, m.Field(description="Resulting DN after operation")
+        ] = None
+        dn_duration_ms: Annotated[
+            float, m.Field(description="DN operation duration in milliseconds")
+        ] = 0.0
+        validation_result: Annotated[
+            bool | None, m.Field(description="Whether the DN passed validation")
+        ] = None
+        has_output: Annotated[
+            bool, m.Field(description="Whether the operation produced output")
+        ] = False
+        component_count: Annotated[
+            int, m.Field(description="Number of RDN components in the DN")
+        ] = 0
 
     class ConversionEvent(FlextModelsDomainEvent.Entry):
-        conversion_operation: str = Field(
+        conversion_operation: str = m.Field(
             description="Conversion operation type performed"
         )
-        source_format: str = Field(description="Source LDAP server format")
-        target_format: str = Field(description="Target LDAP server format")
-        items_converted: int = Field(
-            default=0, description="Items successfully converted"
-        )
-        items_failed: int = Field(default=0, description="Items that failed conversion")
-        conversion_duration_ms: float = Field(
-            default=0.0, description="Conversion duration in milliseconds"
-        )
-        error_details: MutableSequence[str] | None = Field(
-            default=None, description="Error messages for failed items"
-        )
-        conversion_success_rate: float = Field(
-            default=0.0, description="Percentage of items successfully converted"
-        )
-        throughput_items_per_sec: float = Field(
-            default=0.0, description="Conversion throughput in items per second"
-        )
+        source_format: str = m.Field(description="Source LDAP server format")
+        target_format: str = m.Field(description="Target LDAP server format")
+        items_converted: Annotated[
+            int, m.Field(description="Items successfully converted")
+        ] = 0
+        items_failed: Annotated[
+            int, m.Field(description="Items that failed conversion")
+        ] = 0
+        conversion_duration_ms: Annotated[
+            float, m.Field(description="Conversion duration in milliseconds")
+        ] = 0.0
+        error_details: Annotated[
+            MutableSequence[str] | None,
+            m.Field(description="Error messages for failed items"),
+        ] = None
+        conversion_success_rate: Annotated[
+            float, m.Field(description="Percentage of items successfully converted")
+        ] = 0.0
+        throughput_items_per_sec: Annotated[
+            float, m.Field(description="Conversion throughput in items per second")
+        ] = 0.0
 
 
 __all__: list[str] = ["FlextLdifModelsEvents"]

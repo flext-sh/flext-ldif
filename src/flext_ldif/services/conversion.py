@@ -13,7 +13,7 @@ from typing import (
     override,
 )
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from flext_ldif import (
     FlextLdifServer,
@@ -79,7 +79,7 @@ class FlextLdifConversion(
             and FlextLdifConversion._has_attr(obj, "write_objectclass")
         )
 
-    dn_registry: m.Ldif.DnRegistry = Field(
+    dn_registry: m.Ldif.DnRegistry = m.Field(
         default_factory=m.Ldif.DnRegistry,
         description="DN registry for tracking distinguished names during conversion",
     )

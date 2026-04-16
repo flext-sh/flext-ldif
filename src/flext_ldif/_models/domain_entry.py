@@ -14,8 +14,6 @@ from typing import Annotated, ClassVar, Self, override
 
 from pydantic import (
     ConfigDict,
-    Field,
-    computed_field,
     field_validator,
     model_validator,
 )
@@ -32,6 +30,7 @@ from flext_ldif import (
     c,
     r,
     t,
+    u,
 )
 
 
@@ -55,143 +54,149 @@ class FlextLdifModelsDomainEntry:
 
         was_parsed: Annotated[
             bool,
-            Field(description="Entry was successfully parsed from LDIF"),
+            m.Field(description="Entry was successfully parsed from LDIF"),
         ] = True
         was_validated: Annotated[
             bool,
-            Field(description="Entry passed validation checks"),
+            m.Field(description="Entry passed validation checks"),
         ] = False
         was_filtered: Annotated[
             bool,
-            Field(
+            m.Field(
                 description="Entry was filtered by rules (base DN, schema, etc.)",
             ),
         ] = False
         was_written: Annotated[
             bool,
-            Field(description="Entry was written to output LDIF"),
+            m.Field(description="Entry was written to output LDIF"),
         ] = False
         was_rejected: Annotated[
             bool,
-            Field(description="Entry was rejected during processing"),
+            m.Field(description="Entry was rejected during processing"),
         ] = False
         rejection_category: Annotated[
             str | None,
-            Field(
+            m.Field(
                 description="Rejection category (use RejectionCategory constants)",
             ),
         ] = None
         rejection_reason: Annotated[
             str | None,
-            Field(description="Human-readable rejection reason"),
+            m.Field(description="Human-readable rejection reason"),
         ] = None
         attributes_added: Annotated[
             MutableSequence[str],
-            Field(
+            m.Field(
                 description="Attribute names added during processing",
             ),
         ]
         attributes_removed: Annotated[
             MutableSequence[str],
-            Field(
+            m.Field(
                 description="Attribute names removed during processing",
             ),
         ]
         attributes_modified: Annotated[
             MutableSequence[str],
-            Field(
+            m.Field(
                 description="Attribute names modified during processing",
             ),
         ]
         attributes_filtered: Annotated[
             MutableSequence[str],
-            Field(
+            m.Field(
                 description="Attribute names filtered by whitelist/blacklist",
             ),
         ]
         objectclasses_original: Annotated[
             MutableSequence[str],
-            Field(description="Original objectClass values"),
+            m.Field(description="Original objectClass values"),
         ]
         objectclasses_final: Annotated[
             MutableSequence[str],
-            Field(
+            m.Field(
                 description="Final objectClass values after transformation",
             ),
         ]
         quirks_applied: Annotated[
             MutableSequence[str],
-            Field(
+            m.Field(
                 description="List of quirk types applied to this entry",
             ),
         ]
         quirk_transformations: Annotated[
             int,
-            Field(description="Count of quirk transformations applied"),
+            m.Field(description="Count of quirk transformations applied"),
         ] = 0
-        dn_statistics: FlextLdifModelsDomainDN.DNStatistics | None = Field(
-            default=None, description="DN transformation statistics (if applicable)"
-        )
+        dn_statistics: Annotated[
+            FlextLdifModelsDomainDN.DNStatistics | None,
+            m.Field(description="DN transformation statistics (if applicable)"),
+        ] = None
         filters_applied: Annotated[
             MutableSequence[str],
-            Field(
+            m.Field(
                 description="List of filters applied (use FilterType constants)",
             ),
         ]
         filter_results: Annotated[
             t.MutableBoolMapping,
-            Field(
+            m.Field(
                 description="Filter results: {filter_name: passed}",
             ),
         ]
         errors: Annotated[
             MutableSequence[str],
-            Field(
+            m.Field(
                 description="Error messages (use ErrorCategory constants for keys)",
             ),
         ]
         warnings: Annotated[
             MutableSequence[str],
-            Field(description="Warning messages"),
+            m.Field(description="Warning messages"),
         ]
         category_assigned: Annotated[
             str | None,
-            Field(
+            m.Field(
                 description="Category assigned (schema, hierarchy, users, groups, acl)",
             ),
         ] = None
         category_confidence: Annotated[
             float,
-            Field(
+            m.Field(
                 ge=0.0,
                 le=1.0,
                 description="Confidence score for category assignment",
             ),
         ] = 1.0
 
-        @computed_field
+        @u.computed_field()
+        @property
         def dn_was_transformed(self) -> bool:
             """Check if DN underwent transformation."""
             if self.dn_statistics is None:
                 return False
             return bool(self.dn_statistics.was_transformed)
 
-        @computed_field
+        @u.computed_field()
+        @property
         def had_errors(self) -> bool:
             """Check if any errors occurred."""
             return bool(self.errors)
 
-        @computed_field
+        @u.computed_field()
+        @property
         def had_warnings(self) -> bool:
             """Check if any warnings occurred."""
             return bool(self.warnings)
 
-        @computed_field
+        @u.computed_field()
+        @property
         def objectclasses_changed(self) -> bool:
             """Check if objectClass values changed."""
             return set(self.objectclasses_original) != set(self.objectclasses_final)
 
-        @computed_field
+        @u.computed_field()
+        @property
         def total_attribute_changes(self) -> int:
             """Total count of attribute modifications."""
             return (
@@ -283,23 +288,23 @@ class FlextLdifModelsDomainEntry:
 
         control_type: Annotated[
             str,
-            Field(description="LDAP control OID or descriptor"),
+            m.Field(description="LDAP control OID or descriptor"),
         ]
         criticality: Annotated[
             bool | None,
-            Field(description="Optional criticality flag from control line"),
+            m.Field(description="Optional criticality flag from control line"),
         ] = None
         value: Annotated[
             str | None,
-            Field(description="Optional control value"),
+            m.Field(description="Optional control value"),
         ] = None
         value_origin: Annotated[
             c.Ldif.ValueOriginLiteral | None,
-            Field(description="Original control value encoding/source"),
+            m.Field(description="Original control value encoding/source"),
         ] = None
         raw_value: Annotated[
             str | None,
-            Field(description="Original serialized control payload"),
+            m.Field(description="Original serialized control payload"),
         ] = None
 
     class ChangeOperationValue(m.Value):
@@ -307,15 +312,15 @@ class FlextLdifModelsDomainEntry:
 
         value: Annotated[
             str,
-            Field(description="Decoded value used by the operation"),
+            m.Field(description="Decoded value used by the operation"),
         ]
         value_origin: Annotated[
             c.Ldif.ValueOriginLiteral,
-            Field(description="Original LDIF encoding/source for this value"),
+            m.Field(description="Original LDIF encoding/source for this value"),
         ] = c.Ldif.ValueOrigin.PLAIN
         raw_value: Annotated[
             str | None,
-            Field(description="Original serialized value payload before decoding"),
+            m.Field(description="Original serialized value payload before decoding"),
         ] = None
 
     class ChangeOperation(m.Value):
@@ -323,16 +328,16 @@ class FlextLdifModelsDomainEntry:
 
         operation: Annotated[
             c.Ldif.ChangeOperationLiteral,
-            Field(description="Modify operation name"),
+            m.Field(description="Modify operation name"),
         ]
         attribute: Annotated[
             str,
-            Field(description="Target attribute for the modify block"),
+            m.Field(description="Target attribute for the modify block"),
         ]
         values: Annotated[
             MutableSequence[FlextLdifModelsDomainEntry.ChangeOperationValue],
-            Field(description="Decoded values in the block"),
-        ] = Field(default_factory=list)
+            m.Field(description="Decoded values in the block"),
+        ] = m.Field(default_factory=list)
 
     class Entry(m.Entity, m.DynamicModel):
         """LDIF entry domain model.
@@ -393,30 +398,34 @@ class FlextLdifModelsDomainEntry:
                 },
             )
         )
-        dn: FlextLdifModelsDomainDN.DN | None = Field(
-            ...,
-            description="Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from str via field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.Entry",
-        )
-        attributes: FlextLdifModelsDomainAttributes.Attributes | None = Field(
-            ...,
-            description="Entry attributes container (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from dict[str, list[str]] via field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.Entry",
-        )
+        dn: Annotated[
+            FlextLdifModelsDomainDN.DN | None,
+            m.Field(
+                description="Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from str via field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.Entry",
+            ),
+        ]
+        attributes: Annotated[
+            FlextLdifModelsDomainAttributes.Attributes | None,
+            m.Field(
+                description="Entry attributes container (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from dict[str, list[str]] via field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.Entry",
+            ),
+        ]
         record_kind: Annotated[
             c.Ldif.RecordKindLiteral,
-            Field(
+            m.Field(
                 description="Whether this Entry represents LDIF content or an LDIF change record.",
             ),
         ] = c.Ldif.RecordKind.CONTENT
         controls: Annotated[
             MutableSequence[FlextLdifModelsDomainEntry.Control],
-            Field(description="RFC 2849 control lines associated with the record"),
-        ] = Field(default_factory=list)
+            m.Field(description="RFC 2849 control lines associated with the record"),
+        ] = m.Field(default_factory=list)
         change_operations: Annotated[
             MutableSequence[FlextLdifModelsDomainEntry.ChangeOperation],
-            Field(
+            m.Field(
                 description="Structured modify operation blocks for changetype=modify"
             ),
-        ] = Field(default_factory=list)
+        ] = m.Field(default_factory=list)
 
         @field_validator("attributes", mode="before")
         @classmethod
@@ -478,7 +487,7 @@ class FlextLdifModelsDomainEntry:
 
         changetype: Annotated[
             c.Ldif.LdifChangeTypeLiteral | None,
-            Field(
+            m.Field(
                 description="Change operation type per RFC 2849 § 5.7 (add/delete/modify/moddn/modrdn)",
             ),
         ] = None
@@ -496,30 +505,37 @@ class FlextLdifModelsDomainEntry:
 
         newrdn: Annotated[
             str | None,
-            Field(description="RFC 2849 newrdn field for moddn/modrdn records"),
+            m.Field(description="RFC 2849 newrdn field for moddn/modrdn records"),
         ] = None
         deleteoldrdn: Annotated[
             bool | None,
-            Field(description="RFC 2849 deleteoldrdn field for moddn/modrdn records"),
+            m.Field(description="RFC 2849 deleteoldrdn field for moddn/modrdn records"),
         ] = None
         newsuperior: Annotated[
             str | None,
-            Field(description="RFC 2849 newsuperior field for moddn/modrdn records"),
+            m.Field(description="RFC 2849 newsuperior field for moddn/modrdn records"),
         ] = None
         raw_record_lines: Annotated[
             MutableSequence[str],
-            Field(description="Original unfolded LDIF lines for loss-aware round-trip"),
-        ] = Field(default_factory=list)
-        metadata: FlextLdifModelsDomainMetadata.QuirkMetadata | None = Field(
-            default=None,
-            description="Quirk-specific metadata for processing data, ACLs, statistics, validation (non-RFC data)",
-        )
-        validation_metadata: t.ConfigMap | None = Field(
-            default=None,
-            description="Validation metadata captured during parsing and transformation.",
-        )
+            m.Field(
+                description="Original unfolded LDIF lines for loss-aware round-trip"
+            ),
+        ] = m.Field(default_factory=list)
+        metadata: Annotated[
+            FlextLdifModelsDomainMetadata.QuirkMetadata | None,
+            m.Field(
+                description="Quirk-specific metadata for processing data, ACLs, statistics, validation (non-RFC data)",
+            ),
+        ] = None
+        validation_metadata: Annotated[
+            t.ConfigMap | None,
+            m.Field(
+                description="Validation metadata captured during parsing and transformation.",
+            ),
+        ] = None
 
-        @computed_field
+        @u.computed_field()
+        @property
         def attributes_dict(self) -> t.MutableStrSequenceMapping:
             """Protocol compliance: p.Ldif.Entry.Entry requires attributes: dict[str, list[str]].
 
@@ -529,7 +545,8 @@ class FlextLdifModelsDomainEntry:
                 return {}
             return self.attributes.attributes
 
-        @computed_field
+        @u.computed_field()
+        @property
         def dn_str(self) -> str:
             """Protocol compliance: p.Ldif.Entry.Entry requires dn: str.
 
@@ -539,12 +556,14 @@ class FlextLdifModelsDomainEntry:
                 return ""
             return self.dn.value
 
-        @computed_field
+        @u.computed_field()
+        @property
         def is_change_record(self) -> bool:
             """True when the entry represents an LDIF change record."""
             return bool(self.changetype) or self.record_kind == c.Ldif.RecordKind.CHANGE
 
-        @computed_field
+        @u.computed_field()
+        @property
         def unconverted_attributes(
             self,
         ) -> MutableMapping[str, str | MutableSequence[str] | bytes]:
@@ -816,7 +835,8 @@ class FlextLdifModelsDomainEntry:
                 cls._VALIDATION_CONTEXT_TOTAL_VIOLATIONS_KEY: str(total_violations),
             }
 
-        @computed_field
+        @u.computed_field()
+        @property
         def has_validation_errors(self) -> bool:
             """Check if entry has validation errors.
 
@@ -830,7 +850,8 @@ class FlextLdifModelsDomainEntry:
                 return False
             return bool(self.metadata.validation_results.errors)
 
-        @computed_field
+        @u.computed_field()
+        @property
         def is_acl_entry(self) -> bool:
             """Check if entry has Access Control Lists.
 
@@ -842,7 +863,8 @@ class FlextLdifModelsDomainEntry:
                 return False
             return bool(self.metadata.acls)
 
-        @computed_field
+        @u.computed_field()
+        @property
         def is_schema_entry(self) -> bool:
             """Check if entry is a schema definition entry.
 
@@ -913,100 +935,129 @@ class FlextLdifModelsDomainEntry:
                 extra="forbid",
                 validate_assignment=True,
             )
-            dn: str | FlextLdifModelsDomainDN.DN = Field(
-                ...,
-                description="Distinguished Name as string or DN object",
-            )
-            attributes: (
-                t.MutableAttributeMapping | FlextLdifModelsDomainAttributes.Attributes
-            ) = Field(
-                ...,
-                description="Entry attributes as dict or Attributes object",
-            )
-            metadata: FlextLdifModelsDomainMetadata.QuirkMetadata | None = Field(
-                default=None,
-                description="Quirk-specific metadata for the entry",
-            )
-            acls: MutableSequence[FlextLdifModelsDomainAcl.Acl] | None = Field(
-                default=None,
-                description="Access Control Lists for the entry",
-            )
-            objectclasses: (
-                MutableSequence[FlextLdifModelsDomainSchema.SchemaObjectClass] | None
-            ) = Field(
-                default=None,
-                description="Schema object class definitions",
-            )
-            attributes_schema: (
-                MutableSequence[FlextLdifModelsDomainSchema.SchemaAttribute] | None
-            ) = Field(
-                default=None,
-                description="Schema attribute definitions",
-            )
-            entry_metadata: FlextLdifModelsMetadata.EntryMetadata | None = Field(
-                default=None,
-                description="Entry-level metadata for processing details",
-            )
-            validation_metadata: (
-                FlextLdifModelsDomainMetadata.ValidationMetadata | None
-            ) = Field(
-                default=None,
-                description="Validation results from entry processing",
-            )
-            server_type: c.Ldif.ServerTypeLiteral | None = Field(
-                default=None,
-                description="LDAP server type identifier",
-            )
-            record_kind: c.Ldif.RecordKindLiteral = Field(
-                default=c.Ldif.RecordKind.CONTENT,
-                description="High-level LDIF record kind",
-            )
-            controls: MutableSequence[FlextLdifModelsDomainEntry.Control] | None = (
-                Field(
-                    default=None,
+            dn: Annotated[
+                str | FlextLdifModelsDomainDN.DN,
+                m.Field(
+                    description="Distinguished Name as string or DN object",
+                ),
+            ]
+            attributes: Annotated[
+                (
+                    t.MutableAttributeMapping
+                    | FlextLdifModelsDomainAttributes.Attributes
+                ),
+                m.Field(
+                    description="Entry attributes as dict or Attributes object",
+                ),
+            ]
+            metadata: Annotated[
+                FlextLdifModelsDomainMetadata.QuirkMetadata | None,
+                m.Field(
+                    description="Quirk-specific metadata for the entry",
+                ),
+            ] = None
+            acls: Annotated[
+                MutableSequence[FlextLdifModelsDomainAcl.Acl] | None,
+                m.Field(
+                    description="Access Control Lists for the entry",
+                ),
+            ] = None
+            objectclasses: Annotated[
+                (MutableSequence[FlextLdifModelsDomainSchema.SchemaObjectClass] | None),
+                m.Field(
+                    description="Schema object class definitions",
+                ),
+            ] = None
+            attributes_schema: Annotated[
+                (MutableSequence[FlextLdifModelsDomainSchema.SchemaAttribute] | None),
+                m.Field(
+                    description="Schema attribute definitions",
+                ),
+            ] = None
+            entry_metadata: Annotated[
+                FlextLdifModelsMetadata.EntryMetadata | None,
+                m.Field(
+                    description="Entry-level metadata for processing details",
+                ),
+            ] = None
+            validation_metadata: Annotated[
+                (FlextLdifModelsDomainMetadata.ValidationMetadata | None),
+                m.Field(
+                    description="Validation results from entry processing",
+                ),
+            ] = None
+            server_type: Annotated[
+                c.Ldif.ServerTypeLiteral | None,
+                m.Field(
+                    description="LDAP server type identifier",
+                ),
+            ] = None
+            record_kind: Annotated[
+                c.Ldif.RecordKindLiteral,
+                m.Field(
+                    description="High-level LDIF record kind",
+                ),
+            ] = c.Ldif.RecordKind.CONTENT
+            controls: Annotated[
+                MutableSequence[FlextLdifModelsDomainEntry.Control] | None,
+                m.Field(
                     description="RFC 2849 controls associated with the record",
-                )
-            )
-            change_operations: (
-                MutableSequence[FlextLdifModelsDomainEntry.ChangeOperation] | None
-            ) = Field(
-                default=None,
-                description="Structured modify operations for changetype=modify",
-            )
-            changetype: c.Ldif.LdifChangeTypeLiteral | None = Field(
-                default=None,
-                description="RFC 2849 changetype",
-            )
-            newrdn: str | None = Field(
-                default=None,
-                description="RFC 2849 newrdn value",
-            )
-            deleteoldrdn: bool | None = Field(
-                default=None,
-                description="RFC 2849 deleteoldrdn value",
-            )
-            newsuperior: str | None = Field(
-                default=None,
-                description="RFC 2849 newsuperior value",
-            )
-            raw_record_lines: MutableSequence[str] | None = Field(
-                default=None,
-                description="Original unfolded LDIF record lines",
-            )
-            source_entry: str | None = Field(
-                default=None,
-                description="Original LDIF source entry string",
-            )
-            unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None = (
-                Field(
-                    default=None,
+                ),
+            ] = None
+            change_operations: Annotated[
+                (MutableSequence[FlextLdifModelsDomainEntry.ChangeOperation] | None),
+                m.Field(
+                    description="Structured modify operations for changetype=modify",
+                ),
+            ] = None
+            changetype: Annotated[
+                c.Ldif.LdifChangeTypeLiteral | None,
+                m.Field(
+                    description="RFC 2849 changetype",
+                ),
+            ] = None
+            newrdn: Annotated[
+                str | None,
+                m.Field(
+                    description="RFC 2849 newrdn value",
+                ),
+            ] = None
+            deleteoldrdn: Annotated[
+                bool | None,
+                m.Field(
+                    description="RFC 2849 deleteoldrdn value",
+                ),
+            ] = None
+            newsuperior: Annotated[
+                str | None,
+                m.Field(
+                    description="RFC 2849 newsuperior value",
+                ),
+            ] = None
+            raw_record_lines: Annotated[
+                MutableSequence[str] | None,
+                m.Field(
+                    description="Original unfolded LDIF record lines",
+                ),
+            ] = None
+            source_entry: Annotated[
+                str | None,
+                m.Field(
+                    description="Original LDIF source entry string",
+                ),
+            ] = None
+            unconverted_attributes: Annotated[
+                FlextLdifModelsMetadata.DynamicMetadata | None,
+                m.Field(
                     description="Attributes preserved in original format",
-                )
-            )
-            statistics: FlextLdifModelsDomainEntry.EntryStatistics | None = Field(
-                default=None,
-                description="Entry processing statistics",
-            )
+                ),
+            ] = None
+            statistics: Annotated[
+                FlextLdifModelsDomainEntry.EntryStatistics | None,
+                m.Field(
+                    description="Entry processing statistics",
+                ),
+            ] = None
 
         @classmethod
         def _create_entry(cls, params: _CreateEntryParams) -> r[Self]:

@@ -7,13 +7,13 @@ import struct
 from collections.abc import MutableMapping, MutableSequence
 from typing import TypeIs
 
-from flext_core import u
+from flext_core import r, u
 from flext_ldif import (
+    FlextLdifModelsDomainAcl,
+    FlextLdifModelsDomainMetadata,
     FlextLdifModelsMetadata,
     FlextLdifModelsSettings,
     c,
-    m,
-    r,
     t,
 )
 
@@ -707,14 +707,16 @@ class FlextLdifUtilitiesACL:
     def parse_aci(
         acl_line: str,
         settings: FlextLdifModelsSettings.AciParserConfig,
-    ) -> r[m.Ldif.Acl]:
+    ) -> r[FlextLdifModelsDomainAcl.Acl]:
         """Parse ACI line using server-specific settings Model."""
         valid, aci_content = FlextLdifUtilitiesACL.validate_aci_format(
             acl_line,
             settings.aci_prefix,
         )
         if not valid:
-            return r[m.Ldif.Acl].fail(f"Not a valid ACI format: {settings.aci_prefix}")
+            return r[FlextLdifModelsDomainAcl.Acl].fail(
+                f"Not a valid ACI format: {settings.aci_prefix}"
+            )
         version, acl_name = FlextLdifUtilitiesACL._extract_version_and_name(
             aci_content,
             settings.version_acl_pattern,
@@ -733,29 +735,29 @@ class FlextLdifUtilitiesACL:
             acl_line,
             settings.extra_patterns,
         )
-        acl_model = m.Ldif.Acl(
+        acl_model = FlextLdifModelsDomainAcl.Acl(
             name=acl_name,
-            target=m.Ldif.AclTarget.model_validate({
+            target=FlextLdifModelsDomainAcl.AclTarget.model_validate({
                 "target_dn": target_dn,
                 "attributes": target_attributes,
             }),
-            subject=m.Ldif.AclSubject(
+            subject=FlextLdifModelsDomainAcl.AclSubject(
                 subject_type=subject_type
                 if FlextLdifUtilitiesACL._is_acl_subject_type(subject_type)
                 else c.Ldif.AclSubjectType.USER,
                 subject_value=subject_value,
             ),
-            permissions=m.Ldif.AclPermissions(**permissions_dict),
+            permissions=FlextLdifModelsDomainAcl.AclPermissions(**permissions_dict),
             server_type=c.Ldif.ServerTypes(settings.server_type),
             raw_acl=acl_line,
-            metadata=m.Ldif.QuirkMetadata.create_for(
+            metadata=FlextLdifModelsDomainMetadata.QuirkMetadata.create_for(
                 settings.server_type,
                 extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(extensions)
                 if extensions
                 else None,
             ),
         )
-        return r[m.Ldif.Acl].ok(acl_model)
+        return r[FlextLdifModelsDomainAcl.Acl].ok(acl_model)
 
     @staticmethod
     def parse_targetattr(

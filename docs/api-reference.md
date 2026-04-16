@@ -495,11 +495,11 @@ class DnCaseRegistry:
 Represents an LDIF entry with structured data.
 
 ```python
-class Entry(BaseModel):
+class Entry(m.BaseModel):
     """LDIF entry domain model."""
 
-    dn: str = Field(..., description="Distinguished Name")
-    attributes: Mapping[str, t.StringList] = Field(
+    dn: str = m.Field(..., description="Distinguished Name")
+    attributes: Mapping[str, t.StringList] = m.Field(
         default_factory=dict, description="Entry attributes as key-value pairs"
     )
 
@@ -541,20 +541,22 @@ if entry.is_person():
 Configuration settings for LDIF processing.
 
 ```python
-class Config(BaseModel):
+class Config(m.BaseModel):
     """LDIF processing configuration."""
 
-    max_entries: int | None = Field(
+    max_entries: int | None = m.Field(
         None, description="Maximum number of entries to process"
     )
-    strict_validation: bool = Field(
+    strict_validation: bool = m.Field(
         False, description="Enable strict RFC 2849 validation"
     )
-    ignore_unknown_attributes: bool = Field(
+    ignore_unknown_attributes: bool = m.Field(
         True, description="Ignore attributes not in standard schema"
     )
-    encoding: str = Field("utf-8", description="Character encoding for LDIF processing")
-    line_separator: str = Field("\n", description="Line separator for LDIF output")
+    encoding: str = m.Field(
+        "utf-8", description="Character encoding for LDIF processing"
+    )
+    line_separator: str = m.Field("\n", description="Line separator for LDIF output")
 ```
 
 **Example Usage**:

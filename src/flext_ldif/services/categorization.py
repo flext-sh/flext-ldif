@@ -6,7 +6,7 @@ import struct
 from collections.abc import MutableMapping, MutableSequence
 from typing import Final, override
 
-from pydantic import BaseModel, PrivateAttr, ValidationError
+from pydantic import BaseModel, PrivateAttr
 
 from flext_ldif import (
     FlextLdifFilters,
@@ -147,7 +147,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         if isinstance(value, BaseModel):
             try:
                 return m.Ldif.Entry.model_validate(value)
-            except ValidationError as exc:
+            except c.ValidationError as exc:
                 logger.warning(
                     "Failed to coerce BaseModel to Entry",
                     error=str(exc),

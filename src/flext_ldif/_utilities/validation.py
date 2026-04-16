@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from pydantic import ValidationError
-
-from flext_ldif import p, r, t
+from flext_ldif import c, p, r, t
 
 
 class FlextLdifUtilitiesValidation:
@@ -22,7 +20,7 @@ class FlextLdifUtilitiesValidation:
             try:
                 _ = t.Ldif.RFC2849_ATTRIBUTE_VALUE_ADAPTER.validate_python(value)
                 return True
-            except ValidationError:
+            except c.ValidationError:
                 return False
 
         @classmethod
@@ -30,7 +28,7 @@ class FlextLdifUtilitiesValidation:
             try:
                 _ = t.Ldif.RFC4512_DESCRIPTOR_ADAPTER.validate_python(value)
                 return True
-            except ValidationError:
+            except c.ValidationError:
                 return False
 
         @classmethod
@@ -40,7 +38,7 @@ class FlextLdifUtilitiesValidation:
                     f"{attribute_name}={value}",
                 )
                 return True
-            except ValidationError:
+            except c.ValidationError:
                 return False
 
 

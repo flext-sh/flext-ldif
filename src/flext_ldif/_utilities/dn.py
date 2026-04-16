@@ -12,17 +12,17 @@ from collections.abc import (
     MutableSequence,
 )
 from pathlib import Path
-from typing import Literal, overload
+from typing import TYPE_CHECKING, Literal, overload
 
-from flext_core import u
+from flext_core import r, u
 from flext_ldif import (
     FlextLdifModelsDomainDN,
-    FlextLdifModelsDomainEntry,
     FlextLdifModelsSettings,
     c,
-    m,
-    r,
 )
+
+if TYPE_CHECKING:
+    from flext_ldif import FlextLdifModelsDomainEntry
 
 
 class FlextLdifUtilitiesDN:
@@ -986,7 +986,7 @@ class FlextLdifUtilitiesDN:
                     dn_str, source_dn, target_dn
                 )
                 if new_dn_str != dn_str:
-                    updates["dn"] = m.Ldif.DN(value=new_dn_str)
+                    updates["dn"] = FlextLdifModelsDomainDN.DN(value=new_dn_str)
         entry_attrs = entry.attributes
         if entry_attrs is not None:
             attr_dict = entry_attrs.attributes

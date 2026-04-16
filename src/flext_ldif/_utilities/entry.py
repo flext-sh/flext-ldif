@@ -7,8 +7,6 @@ import struct
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from typing import TypeIs
 
-from pydantic import ValidationError
-
 from flext_core import u
 from flext_ldif import (
     FlextLdifModelsSettings,
@@ -526,7 +524,7 @@ class FlextLdifUtilitiesEntry:
                         validation_rules,
                     )
                 )
-            except ValidationError as exc:
+            except c.ValidationError as exc:
                 FlextLdifUtilitiesEntry._logger.warning(
                     f"Failed to validate server rules from JSON string: {exc}",
                 )
@@ -541,7 +539,7 @@ class FlextLdifUtilitiesEntry:
                 return FlextLdifModelsSettings.ServerValidationRules.model_validate(
                     validation_rules_payload,
                 )
-            except ValidationError as exc:
+            except c.ValidationError as exc:
                 FlextLdifUtilitiesEntry._logger.warning(
                     f"Failed to validate server rules from mapping: {exc}",
                 )

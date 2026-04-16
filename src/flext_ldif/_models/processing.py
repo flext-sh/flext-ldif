@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from pydantic import Field
-
 from flext_core import m
 from flext_ldif import t
 
@@ -18,9 +16,9 @@ class FlextLdifModelsProcessing:
 
         dn: Annotated[
             str,
-            Field(..., description="Distinguished name of the processed entry"),
+            m.Field(..., description="Distinguished name of the processed entry"),
         ]
         attributes: Annotated[
             t.MutableStrSequenceMapping,
-            Field(..., description="LDAP attributes as name -> list of values"),
+            m.Field(..., description="LDAP attributes as name -> list of values"),
         ]

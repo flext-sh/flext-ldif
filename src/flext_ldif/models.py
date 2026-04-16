@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict
 
 from flext_cli import FlextCliModels
 from flext_ldif import (
@@ -25,6 +25,7 @@ from flext_ldif import (
     FlextLdifModelsProcessing,
     FlextLdifModelsResults,
     FlextLdifModelsSettings,
+    m,
     t,
 )
 
@@ -53,34 +54,34 @@ class FlextLdifModels(FlextCliModels):
         # COMPOSITE MODELS — defined here, not in _models
         # =================================================================
 
-        class Stats(BaseModel):
+        class Stats(m.BaseModel):
             """Write statistics for batch content operations."""
 
             model_config: ClassVar[ConfigDict] = ConfigDict(validate_default=True)
-            total_entries: Annotated[t.NonNegativeInt, Field()] = 0
-            successful: Annotated[t.NonNegativeInt, Field()] = 0
-            failed: Annotated[t.NonNegativeInt, Field()] = 0
+            total_entries: Annotated[t.NonNegativeInt, m.Field()] = 0
+            successful: Annotated[t.NonNegativeInt, m.Field()] = 0
+            failed: Annotated[t.NonNegativeInt, m.Field()] = 0
 
-        class OidAclMetadataConfig(BaseModel):
+        class OidAclMetadataConfig(m.BaseModel):
             """Configuration model for OID ACL metadata parsing."""
 
-            acl_line: Annotated[str, Field()] = ""
-            oid_subject_type: Annotated[str, Field()] = ""
-            rfc_subject_type: Annotated[str, Field()] = ""
-            oid_subject_value: Annotated[str, Field()] = ""
+            acl_line: Annotated[str, m.Field()] = ""
+            oid_subject_type: Annotated[str, m.Field()] = ""
+            rfc_subject_type: Annotated[str, m.Field()] = ""
+            oid_subject_value: Annotated[str, m.Field()] = ""
             perms_dict: Annotated[
                 t.MutableBoolMapping,
-                Field(),
-            ] = Field(default_factory=dict)
-            target_dn: Annotated[str, Field()] = "entry"
-            target_attrs: MutableSequence[str] = Field(default_factory=list)
-            acl_filter: Annotated[str, Field()] = ""
-            acl_constraint: Annotated[str, Field()] = ""
-            bindmode: Annotated[str, Field()] = ""
-            deny_group_override: Annotated[bool, Field()] = False
-            append_to_all: Annotated[bool, Field()] = False
-            bind_ip_filter: Annotated[str, Field()] = ""
-            constrain_to_added_object: Annotated[str, Field()] = ""
+                m.Field(),
+            ] = m.Field(default_factory=dict)
+            target_dn: Annotated[str, m.Field()] = "entry"
+            target_attrs: MutableSequence[str] = m.Field(default_factory=list)
+            acl_filter: Annotated[str, m.Field()] = ""
+            acl_constraint: Annotated[str, m.Field()] = ""
+            bindmode: Annotated[str, m.Field()] = ""
+            deny_group_override: Annotated[bool, m.Field()] = False
+            append_to_all: Annotated[bool, m.Field()] = False
+            bind_ip_filter: Annotated[str, m.Field()] = ""
+            constrain_to_added_object: Annotated[str, m.Field()] = ""
 
 
 __all__: list[str] = ["FlextLdifModels", "m"]

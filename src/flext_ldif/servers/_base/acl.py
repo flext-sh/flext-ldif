@@ -6,12 +6,11 @@ import re
 from collections.abc import MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
-from pydantic import Field, ValidationError
-
 from flext_core import s
 from flext_ldif import (
     FlextLdifQuirkMethodsMixin,
     FlextLdifUtilitiesACL,
+    c,
     m,
     p,
     r,
@@ -29,17 +28,21 @@ class FlextLdifServersBaseSchemaAcl(
     """Base class for ACL quirks - satisfies Acl (structural typing)."""
 
     acl_attribute_name: ClassVar[str] = "acl"
-    server_type: str = Field(
-        default="rfc",
-        description="Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')",
-    )
-    priority: int = Field(
-        default=0,
-        description="Quirk priority (lower number = higher priority)",
-    )
+    server_type: Annotated[
+        str,
+        m.Field(
+            description="Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')",
+        ),
+    ] = "rfc"
+    priority: Annotated[
+        int,
+        m.Field(
+            description="Quirk priority (lower number = higher priority)",
+        ),
+    ] = 0
     parent_quirk: Annotated[
         Self | None,
-        Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="Reference to parent quirk instance for server-level access",
@@ -196,7 +199,7 @@ class FlextLdifServersBaseSchemaAcl(
             return value
         try:
             return m.Ldif.Acl.model_validate(value)
-        except ValidationError as exc:
+        except c.ValidationError as exc:
             logger.warning(
                 "Failed to coerce value to ACL model",
                 error=str(exc),

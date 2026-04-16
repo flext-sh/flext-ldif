@@ -14,7 +14,7 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar, Self
 
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict
 
 from flext_core import m
 from flext_ldif import (
@@ -38,17 +38,17 @@ class FlextLdifModelsDomainAttributes:
         )
         attributes: Annotated[
             t.MutableStrSequenceMapping,
-            Field(description="Attribute name to values list"),
+            m.Field(description="Attribute name to values list"),
         ]
         attribute_metadata: Annotated[
             MutableMapping[str, t.MutableAttributeMapping],
-            Field(
+            m.Field(
                 description="Metadata for each attribute, like category or hidden status.",
             ),
-        ] = Field(default_factory=dict)
+        ] = m.Field(default_factory=dict)
         metadata: Annotated[
             FlextLdifModelsMetadata.EntryMetadata | None,
-            Field(
+            m.Field(
                 description="Metadata for preserving ordering and formats",
             ),
         ] = None
@@ -219,31 +219,31 @@ class FlextLdifModelsDomainAttributes:
 
         original_name: Annotated[
             str,
-            Field(..., description="Original attribute name from source server"),
+            m.Field(..., description="Original attribute name from source server"),
         ]
         target_name: Annotated[
             str | None,
-            Field(
+            m.Field(
                 description="Transformed attribute name (None if removed)",
             ),
         ] = None
         original_values: Annotated[
             MutableSequence[str],
-            Field(
+            m.Field(
                 description="Original attribute values from source",
             ),
         ]
         target_values: Annotated[
             MutableSequence[str] | None,
-            Field(description="Transformed values (None if removed)"),
+            m.Field(description="Transformed values (None if removed)"),
         ] = None
         transformation_type: Annotated[
             c.Ldif.TransformationTypeLiteral,
-            Field(..., description="Type of transformation applied to the attribute"),
+            m.Field(..., description="Type of transformation applied to the attribute"),
         ]
         reason: Annotated[
             str,
-            Field(description="Human-readable reason for transformation"),
+            m.Field(description="Human-readable reason for transformation"),
         ] = ""
 
 
