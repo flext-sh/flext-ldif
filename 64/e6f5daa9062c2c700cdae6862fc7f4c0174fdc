@@ -1,0 +1,14 @@
+tests/fixtures/openldap/schema/java.schema
+  h_9db9d35f50cf33 51,57,76,83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "64e6f5daa9062c2c700cdae6862fc7f4c0174fdc",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
