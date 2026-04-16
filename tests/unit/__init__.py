@@ -17,6 +17,15 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ),
     build_lazy_import_map(
         {
+            ".services.test_migration_pipeline": (
+                "TestsTestFlextLdifMigrationPipeline",
+            ),
+            ".services.test_quirks_standardization": (
+                "TestAliasDiscovery",
+                "TestQuirksAutoInterchange",
+                "TestQuirksWithRealLdifFixtures",
+                "TestsFlextLdifQuirksStandardizedConstants",
+            ),
             ".test_acl_registry": ("test_acl_registry",),
             ".test_migration_pipeline": ("test_migration_pipeline",),
             ".test_migration_pipeline_quirks": ("test_migration_pipeline_quirks",),

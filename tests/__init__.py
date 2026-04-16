@@ -52,6 +52,15 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextLdifTypes",
                 "t",
             ),
+            ".unit.services.test_migration_pipeline": (
+                "TestsTestFlextLdifMigrationPipeline",
+            ),
+            ".unit.services.test_quirks_standardization": (
+                "TestAliasDiscovery",
+                "TestQuirksAutoInterchange",
+                "TestQuirksWithRealLdifFixtures",
+                "TestsFlextLdifQuirksStandardizedConstants",
+            ),
             ".utilities": (
                 "TestsFlextLdifUtilities",
                 "u",

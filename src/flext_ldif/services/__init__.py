@@ -13,6 +13,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ("._services",),
     build_lazy_import_map(
         {
+            "._services.processing_pipeline_service": (
+                "FlextLdifProcessingPipelineService",
+            ),
             ".acl": ("FlextLdifAcl",),
             ".analysis": ("FlextLdifAnalysis",),
             ".categorization": ("FlextLdifCategorization",),

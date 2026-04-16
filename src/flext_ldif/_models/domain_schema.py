@@ -297,9 +297,9 @@ class FlextLdifModelsDomainSchema:
             return v
 
     class SchemaObjectClass(FlextLdifModelsBases.SchemaElement):
-        """LDAP schema t.RecursiveContainer class definition model (RFC 4512 compliant).
+        """LDAP schema object class definition model (RFC 4512 compliant).
 
-        Represents an LDAP t.RecursiveContainer class definition from schema with full
+        Represents an LDAP object class definition from schema with full
         RFC 4512 support.
 
         Inherits from FlextLdifModelsBases.SchemaElement:
@@ -318,7 +318,7 @@ class FlextLdifModelsDomainSchema:
         sup: Annotated[
             str | MutableSequence[str] | None,
             Field(
-                description="Superior t.RecursiveContainer class(es) (RFC 4512 SUP)",
+                description="Superior object class(es) (RFC 4512 SUP)",
             ),
         ] = None
         kind: Annotated[

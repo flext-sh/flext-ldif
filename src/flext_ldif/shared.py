@@ -27,7 +27,7 @@ class FlextLdifShared:
 
     @staticmethod
     def _has_attr(obj: t.RecursiveContainer, attr_name: str) -> bool:
-        """Check if an t.RecursiveContainer has a non-None attribute (canonical implementation).
+        """Check if an object has a non-None attribute (canonical implementation).
 
         Uses a sentinel t.RecursiveContainer to distinguish between attributes that are None
         and attributes that don't exist at all.

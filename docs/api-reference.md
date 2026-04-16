@@ -214,7 +214,7 @@ def write(self, entries: Sequence[FlextLdifModels.Entry]) -> p.Result[str]:
 
 ##### filter_persons(entries)
 
-Filter entries with person t.RecursiveContainer class.
+Filter entries with person object class.
 
 ```python
 def filter_persons(
@@ -238,7 +238,7 @@ def filter_persons(
 
 ##### filter_groups(entries)
 
-Filter entries with group t.RecursiveContainer classes.
+Filter entries with group object classes.
 
 ```python
 def filter_groups(
@@ -260,13 +260,13 @@ def filter_groups(
 
 ##### filter_by_objectclass(entries, object_class)
 
-Filter entries by specific t.RecursiveContainer class.
+Filter entries by specific object class.
 
 ```python
 def filter_by_objectclass(
     self, entries: Sequence[FlextLdifModels.Entry], object_class: str
 ) -> p.Result[Sequence[FlextLdifModels.Entry]]:
-    """Filter entries by t.RecursiveContainer class.
+    """Filter entries by object class.
 
     Args:
         entries: List of entries to filter
@@ -504,13 +504,13 @@ class Entry(BaseModel):
     )
 
     def get_object_classes(self) -> t.StringList:
-        """Get t.RecursiveContainer class values for this entry."""
+        """Get object class values for this entry."""
 
     def get_attribute_values(self, attr_name: str) -> t.StringList:
         """Get values for specific attribute."""
 
     def has_object_class(self, object_class: str) -> bool:
-        """Check if entry has specific t.RecursiveContainer class."""
+        """Check if entry has specific object class."""
 
     def is_person(self) -> bool:
         """Check if entry represents a person."""

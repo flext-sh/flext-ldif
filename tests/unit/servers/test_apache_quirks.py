@@ -1,7 +1,7 @@
 """Tests for Apache Directory Server (ApacheDS) LDIF quirks handling.
 
 This module tests the FlextLdifServersApache implementation for handling Apache
-Directory Server-specific attributes, t.RecursiveContainer classes, entries, and ACLs in LDIF format.
+Directory Server-specific attributes, object classes, entries, and ACLs in LDIF format.
 """
 
 from __future__ import annotations

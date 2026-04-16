@@ -242,10 +242,10 @@ def analyze_entry_issues(entries: list) -> None:
         if not entry.dn or "=" not in entry.dn:
             print("  ❌ Invalid DN format")
 
-        # Check t.RecursiveContainer classes
+        # Check object classes
         object_classes = entry.get_object_classes()
         if not object_classes:
-            print("  ❌ Missing t.RecursiveContainer class")
+            print("  ❌ Missing object class")
 
         # Check required attributes for person entries
         if "person" in object_classes:

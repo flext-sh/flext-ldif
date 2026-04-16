@@ -1,7 +1,7 @@
 """Tests for 389 Directory Server (DS389) LDIF quirks handling.
 
 This module tests the FlextLdifServersDs389 implementation for handling 389
-Directory Server-specific attributes, t.RecursiveContainer classes, and entries in LDIF format.
+Directory Server-specific attributes, object classes, and entries in LDIF format.
 """
 
 from __future__ import annotations

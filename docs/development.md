@@ -147,7 +147,7 @@ def validate_ldif_structure(entries: Sequence[FlextLdifModels.Entry]) -> p.Resul
 
 ```bash
 # For large LDIF files, consider external processing
-# Extract specific t.RecursiveContainer classes
+# Extract specific object classes
 grep "^objectClass: person" large.ldif > persons.ldif
 
 # Count entries without loading into memory
