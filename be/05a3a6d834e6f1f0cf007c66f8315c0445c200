@@ -1,0 +1,80 @@
+src/flext_ldif/_models/events.py
+  h_9db9d35f50cf33 18-19,22,25,28,34,37,40,42,45,48,51,56-57,61,64,67,70,75,79,82-84,86,89,92,95
+docs/guides/development.md
+  h_9db9d35f50cf33 192,195,201,205,349,352,355
+src/flext_ldif/_utilities/validation.py
+  h_9db9d35f50cf33 3,23,31,41
+src/flext_ldif/services/analysis.py
+  h_9db9d35f50cf33 12
+src/flext_ldif/_utilities/dn.py
+  h_9db9d35f50cf33 15,17,24-25,989
+src/flext_ldif/_models/domain_acl.py
+  h_9db9d35f50cf33 12,36-41,44,48,52,58,64,68,72,76,80,84,131,134,142,144,158-159,162,165,168,171-172
+src/flext_ldif/_models/settings.py
+  h_9db9d35f50cf33 17,31,34,38,42,44,46-47,54,56,59,65,69,73,77,81,85-86,89-90,93-94,97-98,101,109,113,117,121,125,131,134,137,140,143,146,156,159,162,165,168,171,181,184,187,190,193,196,230,233,236,239,358,576,598,799,808,817,826,859,941,945,949,953,966,970-971,985,1023-1024,1027,1031-1032,1039,1043,1079,1105,1127,1131
+docs/api-reference.md
+  h_9db9d35f50cf33 498,501-502,544,547,550,553,556,559
+src/flext_ldif/_utilities/pipeline.py
+  h_9db9d35f50cf33 8,19-20,43-44,60-61,79-80,82,89,97,101-102,104,107
+src/flext_ldif/_models/results.py
+  h_9db9d35f50cf33 15,23,26,29,32,35,38,41,44,47-48,51-54,57-58,61,70,73,76,81,87,90,93,96,99,102,105,108,111,114,117,120,123,126,129,132,135,138,141,145,148,154,165,173,291,325,338,344,359,417,421,513,531,538,542,546,552,577,580,589,592
+src/flext_ldif/_models/metadata.py
+  h_9db9d35f50cf33 14,28,31,34,37,40,44,46
+src/flext_ldif/servers/_base/acl.py
+  h_9db9d35f50cf33 13,31,35,41
+tests/models.py
+  h_9db9d35f50cf33 33,40,44,46,49,53,57,60,65,67,71,75,79,82,87,90,94,98,102,106,109,114-115,118,122,125,131-133,136,158,163-164,167,171
+src/flext_ldif/_models/collections.py
+  h_9db9d35f50cf33 12,94,98,134
+src/flext_ldif/services/rfc_validation.py
+  h_9db9d35f50cf33 20,24,27,31,34
+src/flext_ldif/servers/_base/entry.py
+  h_9db9d35f50cf33 36,40
+docs/guides/troubleshooting.md
+  h_9db9d35f50cf33 249,517
+src/flext_ldif/_models/base.py
+  h_9db9d35f50cf33 8,10,32,37,83
+src/flext_ldif/models.py
+  h_9db9d35f50cf33 28,57,61-63,65,68-71,74-84
+src/flext_ldif/_utilities/acl.py
+  h_9db9d35f50cf33 10,12-13,710,717,738,740,744,750,753,760
+src/flext_ldif/_models/processing.py
+  h_9db9d35f50cf33 19,23
+src/flext_ldif/_models/domain_dn.py
+  h_9db9d35f50cf33 13,15,27,31,35,39,43,47,51,55,59,63,67,71,77,81,84,140,144,148,152,156,160,164,174-175
+tests/fixtures/openldap/schema/java.schema
+  h_9db9d35f50cf33 92,99
+src/flext_ldif/settings.py
+  h_9db9d35f50cf33 20,27,33,37
+src/flext_ldif/_models/domain_entry.py
+  h_9db9d35f50cf33 33,57,61,65,71,75,79,85,89,95,101,107,113,117,123,129,131,193,405,411-412,415,523,533,548,943,947,953,957,961,966,973,977,981,985,989,993,997,1002,1007
+src/flext_ldif/_utilities/dispatch.py
+  h_9db9d35f50cf33 27,30
+src/flext_ldif/services/categorization.py
+  h_9db9d35f50cf33 150
+src/flext_ldif/_models/domain_schema.py
+  h_9db9d35f50cf33 44,221,316
+src/flext_ldif/servers/_base/schema.py
+  h_9db9d35f50cf33 9,31,35,41
+src/flext_ldif/_models/domain_metadata.py
+  h_9db9d35f50cf33 17,40,46,50,54,58,64,75,81,85,88,91,95,99,112,116,120,124,128,139,145,149,153,156,159,163,166,169,172,204,211,214,217,220,223,226,229,232,236,242,245,248,254,260,263,266,269,271,276,280,286,298,304
+docs/guides/configuration.md
+  h_9db9d35f50cf33 256,381,384,388
+src/flext_ldif/services/conversion.py
+  h_9db9d35f50cf33 16,82
+src/flext_ldif/_models/domain_attributes.py
+  h_9db9d35f50cf33 17,41,45,48,51,222,226,232,238,242,246
+docs/configuration.md
+  h_9db9d35f50cf33 56,59,65,69,73,75,77,81,240
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "be05a3a6d834e6f1f0cf007c66f8315c0445c200",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
