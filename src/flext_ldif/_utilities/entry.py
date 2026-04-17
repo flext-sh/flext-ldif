@@ -225,7 +225,7 @@ class FlextLdifUtilitiesEntry:
         ):
             return False
 
-    # --- Validation helpers (called by model_validators) ---
+    # --- Validation helpers (called by u.model_validators) ---
 
     @staticmethod
     def validate_dn_format(dn_value: str) -> MutableSequence[str]:

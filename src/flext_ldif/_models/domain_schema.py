@@ -15,13 +15,11 @@ import struct
 from collections.abc import MutableSequence
 from typing import Annotated, Self
 
-from pydantic import field_validator
-
-from flext_core import m
 from flext_ldif import (
     FlextLdifModelsBases,
     FlextLdifModelsDomainMetadata,
     c,
+    u,
 )
 
 
@@ -41,115 +39,115 @@ class FlextLdifModelsDomainSchema:
         - has_server_extensions computed field
         """
 
-        name: Annotated[str, m.Field(..., description="Attribute name")]
-        oid: Annotated[str, m.Field(..., description="Attribute OID")]
+        name: Annotated[str, u.Field(..., description="Attribute name")]
+        oid: Annotated[str, u.Field(..., description="Attribute OID")]
         desc: Annotated[
             str | None,
-            m.Field(description="Attribute description (RFC 4512 DESC)"),
+            u.Field(description="Attribute description (RFC 4512 DESC)"),
         ] = None
         sup: Annotated[
             str | None,
-            m.Field(description="Superior attribute type (RFC 4512 SUP)"),
+            u.Field(description="Superior attribute type (RFC 4512 SUP)"),
         ] = None
         equality: Annotated[
             str | None,
-            m.Field(
+            u.Field(
                 description="Equality matching rule (RFC 4512 EQUALITY)",
             ),
         ] = None
         ordering: Annotated[
             str | None,
-            m.Field(
+            u.Field(
                 description="Ordering matching rule (RFC 4512 ORDERING)",
             ),
         ] = None
         substr: Annotated[
             str | None,
-            m.Field(
+            u.Field(
                 description="Substring matching rule (RFC 4512 SUBSTR)",
             ),
         ] = None
         syntax: Annotated[
             str | None,
-            m.Field(description="Attribute syntax OID (RFC 4512 SYNTAX)"),
+            u.Field(description="Attribute syntax OID (RFC 4512 SYNTAX)"),
         ] = None
         length: Annotated[
             int | None,
-            m.Field(description="Maximum length constraint"),
+            u.Field(description="Maximum length constraint"),
         ] = None
         usage: Annotated[
             str | None,
-            m.Field(description="Attribute usage (RFC 4512 USAGE)"),
+            u.Field(description="Attribute usage (RFC 4512 USAGE)"),
         ] = None
         single_value: Annotated[
             bool,
-            m.Field(
+            u.Field(
                 description="Whether attribute is single-valued (RFC 4512 SINGLE-VALUE)",
             ),
         ] = False
         collective: Annotated[
             bool,
-            m.Field(
+            u.Field(
                 description="Whether attribute is collective (RFC 4512 COLLECTIVE)",
             ),
         ] = False
         no_user_modification: Annotated[
             bool,
-            m.Field(
+            u.Field(
                 description="Whether users can modify this attribute (RFC 4512 NO-USER-MODIFICATION)",
             ),
         ] = False
         immutable: Annotated[
             bool,
-            m.Field(
+            u.Field(
                 description="Whether attribute is immutable (OUD extension)",
             ),
         ] = False
         user_modification: Annotated[
             bool,
-            m.Field(
+            u.Field(
                 description="Whether users can modify this attribute (OUD extension)",
             ),
         ] = True
         obsolete: Annotated[
             bool,
-            m.Field(
+            u.Field(
                 description="Whether attribute is obsolete (OUD extension)",
             ),
         ] = False
         x_origin: Annotated[
             str | None,
-            m.Field(
+            u.Field(
                 description="Origin of attribute definition (server-specific X-ORIGIN extension)",
             ),
         ] = None
         x_file_ref: Annotated[
             str | None,
-            m.Field(
+            u.Field(
                 description="File reference for attribute definition (server-specific X-FILE-REF extension)",
             ),
         ] = None
         x_name: Annotated[
             str | None,
-            m.Field(
+            u.Field(
                 description="Extended name for attribute (server-specific X-NAME extension)",
             ),
         ] = None
         x_alias: Annotated[
             str | None,
-            m.Field(
+            u.Field(
                 description="Extended alias for attribute (server-specific X-ALIAS extension)",
             ),
         ] = None
         x_oid: Annotated[
             str | None,
-            m.Field(
+            u.Field(
                 description="Extended OID for attribute (server-specific X-OID extension)",
             ),
         ] = None
         metadata: Annotated[
             FlextLdifModelsDomainMetadata.QuirkMetadata | None,
-            m.Field(description="Quirk-specific metadata for schema attribute"),
+            u.Field(description="Quirk-specific metadata for schema attribute"),
         ] = None
 
     class Syntax(FlextLdifModelsBases.SchemaElement):
@@ -166,63 +164,63 @@ class FlextLdifModelsDomainSchema:
 
         oid: Annotated[
             str,
-            m.Field(
+            u.Field(
                 ...,
                 description="Syntax OID (RFC 4517, format: 1.3.6.1.4.1.1466.115.121.1.X)",
             ),
         ]
         name: Annotated[
             str | None,
-            m.Field(
+            u.Field(
                 None,
                 description="Human-readable syntax name (e.g., 'Boolean', 'Integer')",
             ),
         ]
         desc: Annotated[
             str | None,
-            m.Field(None, description="Syntax description and purpose"),
+            u.Field(None, description="Syntax description and purpose"),
         ]
         type_category: Annotated[
             str,
-            m.Field(
+            u.Field(
                 description="Syntax type category: string, integer, binary, dn, time, boolean",
             ),
         ] = "string"
         is_binary: Annotated[
             bool,
-            m.Field(
+            u.Field(
                 description="Whether this syntax uses binary encoding",
             ),
         ] = False
         max_length: Annotated[
             int | None,
-            m.Field(description="Maximum length in bytes (if applicable)"),
+            u.Field(description="Maximum length in bytes (if applicable)"),
         ] = None
         case_insensitive: Annotated[
             bool,
-            m.Field(
+            u.Field(
                 description="Whether comparisons are case-insensitive",
             ),
         ] = False
         allows_multivalued: Annotated[
             bool,
-            m.Field(
+            u.Field(
                 description="Whether attributes using this syntax can be multivalued",
             ),
         ] = True
         encoding: Annotated[
             c.Ldif.EncodingLiteral,
-            m.Field(
+            u.Field(
                 description="Expected character encoding (utf-8, ascii, iso-8859-1, etc.)",
             ),
         ] = c.Ldif.Encoding.UTF8
         validation_pattern: Annotated[
             str | None,
-            m.Field(description="Optional regex pattern for value validation"),
+            u.Field(description="Optional regex pattern for value validation"),
         ] = None
         metadata: Annotated[
             FlextLdifModelsDomainMetadata.QuirkMetadata | None,
-            m.Field(description="Server-specific quirk metadata"),
+            u.Field(description="Server-specific quirk metadata"),
         ] = None
 
         @classmethod
@@ -290,7 +288,7 @@ class FlextLdifModelsDomainSchema:
             ):
                 return None
 
-        @field_validator("oid")
+        @u.field_validator("oid")
         @classmethod
         def validate_oid(cls, v: str) -> str:
             """Validate that OID is not empty."""
@@ -312,35 +310,35 @@ class FlextLdifModelsDomainSchema:
         - has_server_extensions computed field
         """
 
-        name: Annotated[str, m.Field(..., description="Object class name")]
-        oid: Annotated[str, m.Field(..., description="Object class OID")]
+        name: Annotated[str, u.Field(..., description="Object class name")]
+        oid: Annotated[str, u.Field(..., description="Object class OID")]
         desc: Annotated[
             str | None,
-            m.Field(description="Object class description (RFC 4512 DESC)"),
+            u.Field(description="Object class description (RFC 4512 DESC)"),
         ] = None
         sup: Annotated[
             str | MutableSequence[str] | None,
-            m.Field(
+            u.Field(
                 description="Superior object class(es) (RFC 4512 SUP)",
             ),
         ] = None
         kind: Annotated[
             str,
-            m.Field(
+            u.Field(
                 description="Object class kind (RFC 4512: STRUCTURAL, AUXILIARY, ABSTRACT)",
             ),
         ] = "STRUCTURAL"
         must: Annotated[
             MutableSequence[str] | None,
-            m.Field(description="Required attributes (RFC 4512 MUST)"),
+            u.Field(description="Required attributes (RFC 4512 MUST)"),
         ] = None
         may: Annotated[
             MutableSequence[str] | None,
-            m.Field(description="Optional attributes (RFC 4512 MAY)"),
+            u.Field(description="Optional attributes (RFC 4512 MAY)"),
         ] = None
         metadata: Annotated[
             FlextLdifModelsDomainMetadata.QuirkMetadata | None,
-            m.Field(description="Quirk-specific metadata for schema object class"),
+            u.Field(description="Quirk-specific metadata for schema object class"),
         ] = None
 
 

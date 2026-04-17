@@ -5,8 +5,6 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import Annotated
 
-from pydantic import field_validator
-
 from flext_core import m, u
 from flext_ldif import FlextLdifShared, c, t
 
@@ -29,7 +27,7 @@ class FlextLdifModelsBases:
 
         validation_metadata: Annotated[
             t.ConfigMap | None,
-            m.Field(
+            u.Field(
                 description="Validation metadata captured during schema processing.",
             ),
         ] = None
@@ -70,20 +68,20 @@ class FlextLdifModelsBases:
 
         server_type: Annotated[
             c.Ldif.ServerTypeLiteral,
-            m.Field(
+            u.Field(
                 description="LDAP server type (oid, oud, openldap, rfc, etc.)",
             ),
         ] = c.Ldif.ServerTypes.RFC
         validation_violations: Annotated[
             MutableSequence[str],
-            m.Field(
+            u.Field(
                 default_factory=list,
                 description="Validation violations captured during parsing/processing",
             ),
-        ] = m.Field(default_factory=list)
+        ] = u.Field(default_factory=list)
         validation_metadata: Annotated[
             t.ConfigMap | None,
-            m.Field(
+            u.Field(
                 description="Validation metadata captured during ACL processing.",
             ),
         ] = None
@@ -100,7 +98,7 @@ class FlextLdifModelsBases:
             """Check if ACL element passed validation."""
             return not self.validation_violations
 
-        @field_validator("server_type", mode="before")
+        @u.field_validator("server_type", mode="before")
         @classmethod
         def _coerce_server_type(
             cls,

@@ -17,7 +17,7 @@ from typing import Annotated, ClassVar
 from pydantic_settings import SettingsConfigDict
 
 from flext_core import FlextSettings
-from flext_ldif import c, m
+from flext_ldif import c, m, u
 
 
 @FlextSettings.auto_register("ldif")
@@ -30,11 +30,11 @@ class FlextLdifSettings(FlextSettings):
 
     ldif_encoding: Annotated[
         str,
-        m.Field(description="Default encoding for LDIF read/write operations"),
+        u.Field(description="Default encoding for LDIF read/write operations"),
     ] = c.Ldif.SettingsDefaults.DEFAULT_ENCODING
     ldif_strict_validation: Annotated[
         bool,
-        m.Field(description="Enable strict LDIF validation rules"),
+        u.Field(description="Enable strict LDIF validation rules"),
     ] = c.Ldif.SettingsDefaults.DEFAULT_STRICT_VALIDATION
 
 

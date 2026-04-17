@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableSequence
+from collections.abc import Callable, MutableSequence, Sequence
 from typing import ClassVar, Protocol, Self, override
 
-from flext_ldif import r, t
+from flext_ldif import m, r, t
 
 
 class FlextLdifUtilitiesPipeline:
@@ -16,8 +16,8 @@ class FlextLdifUtilitiesPipeline:
 
         def apply(
             self,
-            item: t.Ldif.EntryLike,
-        ) -> r[t.Ldif.EntryLike]:
+            item: m.Ldif.Entry,
+        ) -> r[m.Ldif.Entry]:
             """Transform one LDIF entry."""
             ...
 
@@ -40,8 +40,8 @@ class FlextLdifUtilitiesPipeline:
                 tuple[
                     str,
                     Callable[
-                        [t.Ldif.EntryLike],
-                        r[t.Ldif.EntryLike | FlextLdifUtilitiesPipeline._Filtered],
+                        [m.Ldif.Entry],
+                        r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered],
                     ],
                 ]
             ] = []
@@ -57,8 +57,8 @@ class FlextLdifUtilitiesPipeline:
             step_name = name or transformer.__class__.__name__
 
             def wrapped_transformer(
-                entry: t.Ldif.EntryLike,
-            ) -> r[t.Ldif.EntryLike | FlextLdifUtilitiesPipeline._Filtered]:
+                entry: m.Ldif.Entry,
+            ) -> r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered]:
                 """Wrap transformer to match pipeline filter signature."""
                 return (
                     transformer
@@ -76,17 +76,17 @@ class FlextLdifUtilitiesPipeline:
 
         def execute(
             self,
-            entries: MutableSequence[t.Ldif.EntryLike],
-        ) -> r[MutableSequence[t.Ldif.EntryLike]]:
+            entries: Sequence[m.Ldif.Entry],
+        ) -> r[MutableSequence[m.Ldif.Entry]]:
             """Execute pipeline on a sequence of entries."""
-            results: MutableSequence[t.Ldif.EntryLike] = []
+            results: MutableSequence[m.Ldif.Entry] = []
             for entry in entries:
                 result = self.execute_one(entry).map_error(
                     lambda error: error or "Processing failed",
                 )
                 if result.failure:
                     if self._fail_fast:
-                        return r[MutableSequence[t.Ldif.EntryLike]].fail(
+                        return r[MutableSequence[m.Ldif.Entry]].fail(
                             result.error or "Pipeline execution failed",
                         )
                     continue
@@ -94,19 +94,17 @@ class FlextLdifUtilitiesPipeline:
                 if isinstance(processed, FlextLdifUtilitiesPipeline._Filtered):
                     continue
                 results.append(processed)
-            return r[MutableSequence[t.Ldif.EntryLike]].ok(results)
+            return r[MutableSequence[m.Ldif.Entry]].ok(results)
 
         def execute_one(
             self,
-            entry: t.Ldif.EntryLike,
-        ) -> r[t.Ldif.EntryLike | FlextLdifUtilitiesPipeline._Filtered]:
+            entry: m.Ldif.Entry,
+        ) -> r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered]:
             """Execute pipeline on a single entry."""
-            current: t.Ldif.EntryLike | FlextLdifUtilitiesPipeline._Filtered = entry
+            current: m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered = entry
             for step_name, step_func in self._steps:
                 if isinstance(current, FlextLdifUtilitiesPipeline._Filtered):
-                    return r[
-                        t.Ldif.EntryLike | FlextLdifUtilitiesPipeline._Filtered
-                    ].ok(
+                    return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(
                         FlextLdifUtilitiesPipeline.FILTERED,
                     )
                 failure_prefix = f"Step '{step_name}' failed: "
@@ -118,9 +116,7 @@ class FlextLdifUtilitiesPipeline:
                 if result.failure:
                     return result
                 current = result.value
-            return r[t.Ldif.EntryLike | FlextLdifUtilitiesPipeline._Filtered].ok(
-                current
-            )
+            return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(current)
 
     class ValidationResult:
         """Result of entry validation."""
@@ -181,7 +177,7 @@ class FlextLdifUtilitiesPipeline:
 
         def validate(
             self,
-            entries: MutableSequence[t.Ldif.EntryLike],
+            entries: Sequence[m.Ldif.Entry],
         ) -> r[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]:
             """Validate a sequence of entries."""
             results: MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult] = []
@@ -205,7 +201,7 @@ class FlextLdifUtilitiesPipeline:
 
         def validate_one(
             self,
-            entry: t.Ldif.EntryLike,
+            entry: m.Ldif.Entry,
         ) -> r[FlextLdifUtilitiesPipeline.ValidationResult]:
             """Validate a single entry."""
             errors: MutableSequence[str] = []

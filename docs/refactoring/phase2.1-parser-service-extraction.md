@@ -226,6 +226,7 @@ ______________________________________________________________________
 - ✅ Uses Python 3.13+ syntax (`from **future** import annotations
 
 from collections.abc import Mapping, Sequence`)
+
 - ✅ Complex union types properly handled with `cast()`
 - ✅ r[T] return types for all operations
 

@@ -91,7 +91,10 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
             FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS | frozenset(["auth"])
         )
-        ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["x_origin", "ordering"])
+        ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset([
+            "x_origin",
+            "ordering",
+        ])
         OBJECTCLASS_REQUIREMENTS: ClassVar[t.MutableBoolMapping] = {
             "requires_sup_for_auxiliary": True,
             "allows_multiple_sup": True,

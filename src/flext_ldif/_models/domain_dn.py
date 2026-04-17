@@ -10,7 +10,7 @@ import re
 from collections.abc import MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
-from pydantic import ConfigDict, field_validator
+from pydantic import ConfigDict
 
 from flext_core import m, u
 from flext_ldif import FlextLdifModelsMetadata, r, t
@@ -24,61 +24,61 @@ class FlextLdifModelsDomainDN:
 
         original_dn: Annotated[
             str,
-            m.Field(..., description="Original DN as received from input"),
+            u.Field(..., description="Original DN as received from input"),
         ]
         cleaned_dn: Annotated[
             str,
-            m.Field(..., description="DN after clean_dn() transformation"),
+            u.Field(..., description="DN after clean_dn() transformation"),
         ]
         normalized_dn: Annotated[
             str,
-            m.Field(..., description="Final normalized DN (RFC 4514 compliant)"),
+            u.Field(..., description="Final normalized DN (RFC 4514 compliant)"),
         ]
         transformations: Annotated[
             t.StrSequence,
-            m.Field(description="Ordered list of transformations applied"),
+            u.Field(description="Ordered list of transformations applied"),
         ]
         had_tab_chars: Annotated[
             bool,
-            m.Field(description="DN contained TAB characters"),
+            u.Field(description="DN contained TAB characters"),
         ] = False
         had_trailing_spaces: Annotated[
             bool,
-            m.Field(description="DN had trailing spaces"),
+            u.Field(description="DN had trailing spaces"),
         ] = False
         had_leading_spaces: Annotated[
             bool,
-            m.Field(description="DN had leading spaces"),
+            u.Field(description="DN had leading spaces"),
         ] = False
         had_extra_spaces: Annotated[
             bool,
-            m.Field(description="DN had multiple consecutive spaces"),
+            u.Field(description="DN had multiple consecutive spaces"),
         ] = False
         was_base64_encoded: Annotated[
             bool,
-            m.Field(description="DN was base64 encoded in LDIF (dn::)"),
+            u.Field(description="DN was base64 encoded in LDIF (dn::)"),
         ] = False
         had_utf8_chars: Annotated[
             bool,
-            m.Field(description="DN contained UTF-8 multi-byte characters"),
+            u.Field(description="DN contained UTF-8 multi-byte characters"),
         ] = False
         had_escape_sequences: Annotated[
             bool,
-            m.Field(description="DN contained LDAP escape sequences"),
+            u.Field(description="DN contained LDAP escape sequences"),
         ] = False
         validation_status: Annotated[
             str,
-            m.Field(
+            u.Field(
                 description="Validation status (use ValidationStatus constants)",
             ),
         ] = "valid"
         validation_warnings: Annotated[
             t.StrSequence,
-            m.Field(description="Non-fatal validation warnings"),
+            u.Field(description="Non-fatal validation warnings"),
         ]
         validation_errors: Annotated[
             t.StrSequence,
-            m.Field(description="Fatal validation errors"),
+            u.Field(description="Fatal validation errors"),
         ]
 
         @u.computed_field()
@@ -116,7 +116,7 @@ class FlextLdifModelsDomainDN:
                 "normalized_dn": dn,
             })
 
-        @field_validator("transformations", mode="after")
+        @u.field_validator("transformations", mode="after")
         @classmethod
         def deduplicate_transformations(
             cls,
@@ -134,54 +134,54 @@ class FlextLdifModelsDomainDN:
     class DNStatisticsFlags(m.FrozenModel):
         """Flags capturing DN transformation quirks and validation state."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = ConfigDict(frozen=True)
         had_tab_chars: Annotated[
             bool,
-            m.Field(description="DN contained TAB characters"),
+            u.Field(description="DN contained TAB characters"),
         ] = False
         had_trailing_spaces: Annotated[
             bool,
-            m.Field(description="DN had trailing spaces"),
+            u.Field(description="DN had trailing spaces"),
         ] = False
         had_leading_spaces: Annotated[
             bool,
-            m.Field(description="DN had leading spaces"),
+            u.Field(description="DN had leading spaces"),
         ] = False
         had_extra_spaces: Annotated[
             bool,
-            m.Field(description="DN had multiple consecutive spaces"),
+            u.Field(description="DN had multiple consecutive spaces"),
         ] = False
         was_base64_encoded: Annotated[
             bool,
-            m.Field(description="DN was base64 encoded in LDIF (dn::)"),
+            u.Field(description="DN was base64 encoded in LDIF (dn::)"),
         ] = False
         had_utf8_chars: Annotated[
             bool,
-            m.Field(description="DN contained UTF-8 multi-byte characters"),
+            u.Field(description="DN contained UTF-8 multi-byte characters"),
         ] = False
         had_escape_sequences: Annotated[
             bool,
-            m.Field(description="DN contained LDAP escape sequences"),
+            u.Field(description="DN contained LDAP escape sequences"),
         ] = False
         validation_status: Annotated[
             str,
-            m.Field(
+            u.Field(
                 description="Validation status (use ValidationStatus constants)",
             ),
         ] = "valid"
         validation_warnings: Annotated[
             MutableSequence[str],
-            m.Field(description="Non-fatal validation warnings"),
-        ] = m.Field(default_factory=list)
+            u.Field(description="Non-fatal validation warnings"),
+        ] = u.Field(default_factory=list)
         validation_errors: Annotated[
             MutableSequence[str],
-            m.Field(description="Fatal validation errors"),
-        ] = m.Field(default_factory=list)
+            u.Field(description="Fatal validation errors"),
+        ] = u.Field(default_factory=list)
 
     class DN(m.Value):
         """Distinguished Name value."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = ConfigDict(
             strict=True,
             frozen=True,
             extra="forbid",
@@ -191,17 +191,17 @@ class FlextLdifModelsDomainDN:
         )
         value: Annotated[
             str,
-            m.Field(
+            u.Field(
                 ...,
                 description="DN string value (lenient processing - no max_length)",
             ),
         ]
         metadata: Annotated[
             FlextLdifModelsMetadata.EntryMetadata,
-            m.Field(
+            u.Field(
                 description="Quirk-specific metadata for preserving original format",
             ),
-        ] = m.Field(default_factory=FlextLdifModelsMetadata.EntryMetadata)
+        ] = u.Field(default_factory=FlextLdifModelsMetadata.EntryMetadata)
         _DN_COMPONENT_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
             r"^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\\\,]|\\\\.)*$",
             re.IGNORECASE,

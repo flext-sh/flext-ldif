@@ -54,6 +54,7 @@ ______________________________________________________________________
 For full zero-tolerance rules, code examples, and anti-patterns, see [../AGENTS.md §3 Code Law](../AGENTS.md#3-code-law).
 
 **flext-ldif specific rules:**
+
 - **Root Aliases**: Always use full namespace: `m.Ldif.Entry`, not `m.Entry`
 - **Namespace constants**: `c.Ldif.ServerTypes`, not `c.ServerTypes`
 - **TYPE_CHECKING**: Allowed for non-Pydantic type-only imports to resolve circular deps
@@ -226,13 +227,13 @@ make help                              # Show all targets
 
 ### When to use which
 
-| Scenario | Use |
-|----------|-----|
-| Quick lint check during dev | `ruff check src/` (RTK) |
-| Type-check a single file | `pyright src/flext_ldif/foo.py` (RTK) |
-| Run all 4 type checkers at once | `make check` |
-| Pre-commit full validation | `make check && make test` |
-| CI/CD pipeline | `make check && make test && make scan` |
+| Scenario                        | Use                                    |
+| ------------------------------- | -------------------------------------- |
+| Quick lint check during dev     | `ruff check src/` (RTK)                |
+| Type-check a single file        | `pyright src/flext_ldif/foo.py` (RTK)  |
+| Run all 4 type checkers at once | `make check`                           |
+| Pre-commit full validation      | `make check && make test`              |
+| CI/CD pipeline                  | `make check && make test && make scan` |
 
 ## Test Helpers and Unified Methods
 

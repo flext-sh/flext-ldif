@@ -30,19 +30,19 @@ class FlextLdifServersBaseSchema(
 
     server_type: Annotated[
         str,
-        m.Field(
+        u.Field(
             description="Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')",
         ),
     ] = "rfc"
     priority: Annotated[
         int,
-        m.Field(
+        u.Field(
             description="Quirk priority (lower number = higher priority)",
         ),
     ] = 0
     parent_quirk: Annotated[
         Self | None,
-        m.Field(
+        u.Field(
             exclude=True,
             repr=False,
             description="Reference to parent quirk instance for server-level access",
@@ -50,7 +50,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     attr_definition: Annotated[
         str | None,
-        m.Field(
+        u.Field(
             exclude=True,
             repr=False,
             description="Attribute definition for auto-execute pattern",
@@ -58,7 +58,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     oc_definition: Annotated[
         str | None,
-        m.Field(
+        u.Field(
             exclude=True,
             repr=False,
             description="ObjectClass definition for auto-execute pattern",
@@ -66,7 +66,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     attr_model: Annotated[
         m.Ldif.SchemaAttribute | None,
-        m.Field(
+        u.Field(
             exclude=True,
             repr=False,
             description="SchemaAttribute model for auto-execute pattern",
@@ -74,7 +74,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     oc_model: Annotated[
         m.Ldif.SchemaObjectClass | None,
-        m.Field(
+        u.Field(
             exclude=True,
             repr=False,
             description="SchemaObjectClass model for auto-execute pattern",
@@ -82,7 +82,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     operation: Annotated[
         str | None,
-        m.Field(
+        u.Field(
             exclude=True,
             repr=False,
             description="Operation type for auto-execute pattern",

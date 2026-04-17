@@ -7,8 +7,6 @@ from collections.abc import MutableSequence
 from pathlib import Path
 from typing import Final, override
 
-from pydantic import PrivateAttr
-
 from flext_ldif import (
     FlextLdifParser,
     FlextLdifProcessingPipelineService,
@@ -29,11 +27,15 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
     _DEFAULT_SERVER: Final[c.Ldif.ServerTypes] = c.Ldif.ServerTypes.RFC
     _ENCODING_UTF8: Final[str] = c.Ldif.Encoding.UTF8.value
 
-    _input_dir: Path | None = PrivateAttr(default=None)
-    _output_dir: Path | None = PrivateAttr(default=None)
-    _source_server: c.Ldif.ServerTypes = PrivateAttr(default=c.Ldif.ServerTypes.RFC)
-    _target_server: c.Ldif.ServerTypes = PrivateAttr(default=c.Ldif.ServerTypes.RFC)
-    _output_filename: str | None = PrivateAttr(default=None)
+    _input_dir: Path | None = u.PrivateAttr(default_factory=lambda: None)
+    _output_dir: Path | None = u.PrivateAttr(default_factory=lambda: None)
+    _source_server: c.Ldif.ServerTypes = u.PrivateAttr(
+        default_factory=lambda: c.Ldif.ServerTypes.RFC
+    )
+    _target_server: c.Ldif.ServerTypes = u.PrivateAttr(
+        default_factory=lambda: c.Ldif.ServerTypes.RFC
+    )
+    _output_filename: str | None = u.PrivateAttr(default_factory=lambda: None)
 
     def __init__(
         self,

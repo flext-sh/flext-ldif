@@ -167,8 +167,8 @@ result = FlextLdifSorting.by_custom(
 
 ## Public Classmethod API
 
-| Method                                             | Returns                    | Description                          |
-| -------------------------------------------------- | -------------------------- | ------------------------------------ |
+| Method                                             | Returns              | Description                          |
+| -------------------------------------------------- | -------------------- | ------------------------------------ |
 | `sort(entries, target=..., by=..., predicate=...)` | `r[Sequence[Entry]]` | For chaining                         |
 | `by_hierarchy(entries)`                            | `r[Sequence[Entry]]` | Depth-first + alphabetical           |
 | `by_dn(entries)`                                   | `r[Sequence[Entry]]` | Alphabetical by full DN              |
@@ -176,7 +176,7 @@ result = FlextLdifSorting.by_custom(
 | `by_custom(entries, predicate)`                    | `r[Sequence[Entry]]` | Custom sort function                 |
 | `sort_attributes_in_entries(entries, order=None)`  | `r[Sequence[Entry]]` | Sort attrs within entries            |
 | `sort_acl_in_entries(entries, acl_attrs=None)`     | `r[Sequence[Entry]]` | Sort ACL values                      |
-| `builder()`                                        | `FlextLdifSorting`         | Fluent builder, terminal: `.build()` |
+| `builder()`                                        | `FlextLdifSorting`   | Fluent builder, terminal: `.build()` |
 
 ## Quick Reference
 

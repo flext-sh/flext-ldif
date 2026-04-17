@@ -17,21 +17,21 @@ class FlextLdifValidation(
 
     attribute_names: Annotated[
         MutableSequence[str],
-        m.Field(
+        u.Field(
             default_factory=list,
             description="Attribute names to validate against RFC 4512",
         ),
-    ] = m.Field(default_factory=list)
+    ] = u.Field(default_factory=list)
     objectclass_names: Annotated[
         MutableSequence[str],
-        m.Field(
+        u.Field(
             default_factory=list,
             description="Object class names to validate against RFC 4512",
         ),
-    ] = m.Field(default_factory=list)
+    ] = u.Field(default_factory=list)
     max_attr_value_length: Annotated[
         int | None,
-        m.Field(description="Maximum allowed attribute value length for validation"),
+        u.Field(description="Maximum allowed attribute value length for validation"),
     ] = None
 
     @override

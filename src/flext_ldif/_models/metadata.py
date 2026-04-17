@@ -13,7 +13,7 @@ from typing import Annotated, ClassVar, Self, override
 
 from pydantic import ConfigDict
 
-from flext_core import m
+from flext_core import m, u
 from flext_ldif import c, t
 
 
@@ -23,31 +23,33 @@ class FlextLdifModelsMetadata:
     class DynamicMetadata(m.DynamicModel):
         """Model with extra='allow' for dynamic field storage."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra=c.ExtraConfig.ALLOW.value)
+        model_config: ClassVar[m.ConfigDict] = ConfigDict(
+            extra=c.ExtraConfig.ALLOW.value
+        )
 
         transformations: Annotated[
             MutableSequence[t.Scalar] | None,
-            m.Field(description="List of transformations applied to this metadata"),
+            u.Field(description="List of transformations applied to this metadata"),
         ] = None
         original_format: Annotated[
-            str | None, m.Field(description="Original LDIF format before conversion")
+            str | None, u.Field(description="Original LDIF format before conversion")
         ] = None
         schema_source_server: Annotated[
-            str | None, m.Field(description="Server type that provided the schema")
+            str | None, u.Field(description="Server type that provided the schema")
         ] = None
         server_type: Annotated[
-            str | None, m.Field(description="LDAP server type identifier")
+            str | None, u.Field(description="LDAP server type identifier")
         ] = None
         relaxed_mode: Annotated[
-            bool | None, m.Field(description="Whether relaxed parsing mode was used")
+            bool | None, u.Field(description="Whether relaxed parsing mode was used")
         ] = None
         server_specific_violations: Annotated[
             MutableSequence[t.Ldif.MetadataValue] | None,
-            m.Field(description="Server-specific validation violations"),
+            u.Field(description="Server-specific validation violations"),
         ] = None
         schema_transformations: Annotated[
             MutableSequence[t.Ldif.MetadataValue] | None,
-            m.Field(
+            u.Field(
                 description="Schema transformations applied during processing",
             ),
         ] = None
@@ -137,7 +139,9 @@ class FlextLdifModelsMetadata:
     class EntryMetadata(m.FrozenDynamicModel):
         """Entry metadata for tracking processing details."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra=c.ExtraConfig.ALLOW.value)
+        model_config: ClassVar[m.ConfigDict] = ConfigDict(
+            extra=c.ExtraConfig.ALLOW.value
+        )
 
         def __getitem__(self, key: str) -> t.Ldif.MetadataValue:
             return self._extra()[key]

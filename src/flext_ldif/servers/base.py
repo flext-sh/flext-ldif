@@ -24,7 +24,7 @@ from flext_ldif import (
 class FlextLdifServersBase(s[m.Ldif.Entry]):
     """Base class for LDIF/LDAP server quirks built on `s`."""
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(
+    model_config: ClassVar[m.ConfigDict] = ConfigDict(
         arbitrary_types_allowed=True,
         extra="forbid",
     )

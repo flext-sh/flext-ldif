@@ -56,29 +56,29 @@ from flext_ldif import FlextLdifModels
 class Config(m.BaseModel):
     """LDIF processing configuration with Pydantic validation."""
 
-    max_entries: int | None = m.Field(
+    max_entries: int | None = u.Field(
         None,
         description="Maximum number of entries to process (None = unlimited)",
         ge=1,
     )
 
-    strict_validation: bool = m.Field(
+    strict_validation: bool = u.Field(
         False, description="Enable strict RFC 2849 validation"
     )
 
-    ignore_unknown_attributes: bool = m.Field(
+    ignore_unknown_attributes: bool = u.Field(
         True, description="Ignore attributes not in standard LDAP schema"
     )
 
-    encoding: str = m.Field("utf-8", description="Character encoding for LDIF files")
+    encoding: str = u.Field("utf-8", description="Character encoding for LDIF files")
 
-    line_separator: str = m.Field("\\n", description="Line separator for LDIF output")
+    line_separator: str = u.Field("\\n", description="Line separator for LDIF output")
 
-    buffer_size: int = m.Field(
+    buffer_size: int = u.Field(
         8192, description="Buffer size for file operations", ge=1024
     )
 
-    log_level: str = m.Field("INFO", description="Logging level for LDIF operations")
+    log_level: str = u.Field("INFO", description="Logging level for LDIF operations")
 ```
 
 ### Configuration Usage
@@ -505,15 +505,15 @@ def get_config_version() -> str:
 
 ### Complete Configuration Options
 
-| Option                      | Type          | Default   | Description                                   |
-| --------------------------- | ------------- | --------- | --------------------------------------------- |
-| `max_entries`               | `int \| None` | `None`    | Maximum entries to process (None = unlimited) |
-| `strict_validation`         | `bool`        | `False`   | Enable strict RFC 2849 validation             |
-| `ignore_unknown_attributes` | `bool`        | `True`    | Ignore non-standard attributes                |
-| `encoding`                  | `str`         | `"utf-8"` | Character encoding for files                  |
-| `line_separator`            | `str`         | `"\\n"`   | Line separator for output                     |
-| `buffer_size`               | `int`         | `8192`    | File operation buffer size                    |
-| `log_level`                 | `str`         | `"INFO"`  | Logging level (DEBUG, INFO, WARNING, ERROR)   |
+| Option                      | Type   | Default   | Description                                 |                                               |
+| --------------------------- | ------ | --------- | ------------------------------------------- | --------------------------------------------- |
+| `max_entries`               | `int \ | None`     | `None`                                      | Maximum entries to process (None = unlimited) |
+| `strict_validation`         | `bool` | `False`   | Enable strict RFC 2849 validation           |                                               |
+| `ignore_unknown_attributes` | `bool` | `True`    | Ignore non-standard attributes              |                                               |
+| `encoding`                  | `str`  | `"utf-8"` | Character encoding for files                |                                               |
+| `line_separator`            | `str`  | `"\\n"`   | Line separator for output                   |                                               |
+| `buffer_size`               | `int`  | `8192`    | File operation buffer size                  |                                               |
+| `log_level`                 | `str`  | `"INFO"`  | Logging level (DEBUG, INFO, WARNING, ERROR) |                                               |
 
 ### Environment Variable Mapping
 

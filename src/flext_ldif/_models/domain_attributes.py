@@ -16,7 +16,7 @@ from typing import Annotated, ClassVar, Self
 
 from pydantic import ConfigDict
 
-from flext_core import m
+from flext_core import m, u
 from flext_ldif import (
     FlextLdifModelsMetadata,
     c,
@@ -30,7 +30,7 @@ class FlextLdifModelsDomainAttributes:
     class Attributes(m.ArbitraryTypesModel):
         """LDIF attributes container - simplified dict-like interface."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = ConfigDict(
             validate_assignment=True,
             extra="forbid",
             use_enum_values=True,
@@ -38,17 +38,17 @@ class FlextLdifModelsDomainAttributes:
         )
         attributes: Annotated[
             t.MutableStrSequenceMapping,
-            m.Field(description="Attribute name to values list"),
+            u.Field(description="Attribute name to values list"),
         ]
         attribute_metadata: Annotated[
             MutableMapping[str, t.MutableAttributeMapping],
-            m.Field(
+            u.Field(
                 description="Metadata for each attribute, like category or hidden status.",
             ),
-        ] = m.Field(default_factory=dict)
+        ] = u.Field(default_factory=dict)
         metadata: Annotated[
             FlextLdifModelsMetadata.EntryMetadata | None,
-            m.Field(
+            u.Field(
                 description="Metadata for preserving ordering and formats",
             ),
         ] = None
@@ -219,31 +219,31 @@ class FlextLdifModelsDomainAttributes:
 
         original_name: Annotated[
             str,
-            m.Field(..., description="Original attribute name from source server"),
+            u.Field(..., description="Original attribute name from source server"),
         ]
         target_name: Annotated[
             str | None,
-            m.Field(
+            u.Field(
                 description="Transformed attribute name (None if removed)",
             ),
         ] = None
         original_values: Annotated[
             MutableSequence[str],
-            m.Field(
+            u.Field(
                 description="Original attribute values from source",
             ),
         ]
         target_values: Annotated[
             MutableSequence[str] | None,
-            m.Field(description="Transformed values (None if removed)"),
+            u.Field(description="Transformed values (None if removed)"),
         ] = None
         transformation_type: Annotated[
             c.Ldif.TransformationTypeLiteral,
-            m.Field(..., description="Type of transformation applied to the attribute"),
+            u.Field(..., description="Type of transformation applied to the attribute"),
         ]
         reason: Annotated[
             str,
-            m.Field(description="Human-readable reason for transformation"),
+            u.Field(description="Human-readable reason for transformation"),
         ] = ""
 
 

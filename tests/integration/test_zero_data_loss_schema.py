@@ -289,9 +289,9 @@ class TestSchemaDeviationsSpacing:
         assert len(field_order) >= 3, "Should track at least 3 fields"
         for field_name in field_order:
             assert isinstance(field_name, str), (
-                f"Field name should be string, got {type(field_name)}"
+                f"u.Field name should be string, got {type(field_name)}"
             )
-            assert field_name, "Field name should not be empty"
+            assert field_name, "u.Field name should not be empty"
 
 
 class TestSchemaDeviationsOriginalString:
@@ -319,8 +319,10 @@ class TestSchemaDeviationsOriginalString:
         assert attr.metadata is not None
         format_details = attr.metadata.schema_format_details
         assert format_details is not None, "Schema format details should be preserved"
-        assert format_details.field_order is not None, "Field order should be preserved"
-        assert format_details.field_order, "Field order should contain fields"
+        assert format_details.field_order is not None, (
+            "u.Field order should be preserved"
+        )
+        assert format_details.field_order, "u.Field order should contain fields"
         assert "OID" in format_details.field_order, "Should track OID in field_order"
         assert "NAME" in format_details.field_order, "Should track NAME in field_order"
         assert "SYNTAX" in format_details.field_order, (

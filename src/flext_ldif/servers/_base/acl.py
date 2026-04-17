@@ -30,19 +30,19 @@ class FlextLdifServersBaseSchemaAcl(
     acl_attribute_name: ClassVar[str] = "acl"
     server_type: Annotated[
         str,
-        m.Field(
+        u.Field(
             description="Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')",
         ),
     ] = "rfc"
     priority: Annotated[
         int,
-        m.Field(
+        u.Field(
             description="Quirk priority (lower number = higher priority)",
         ),
     ] = 0
     parent_quirk: Annotated[
         Self | None,
-        m.Field(
+        u.Field(
             exclude=True,
             repr=False,
             description="Reference to parent quirk instance for server-level access",

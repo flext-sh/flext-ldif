@@ -6,7 +6,7 @@ import struct
 from collections.abc import MutableMapping, MutableSequence
 from typing import Final, override
 
-from pydantic import BaseModel, PrivateAttr
+from pydantic import BaseModel
 
 from flext_ldif import (
     FlextLdifFilters,
@@ -34,16 +34,18 @@ _MISSING_ATTR: Final[_MissingSentinel] = _MissingSentinel()
 class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
     """LDIF Entry Categorization Service."""
 
-    _categorization_rules: m.Ldif.CategoryRules = PrivateAttr()
-    _schema_whitelist_rules: m.Ldif.WhitelistRules | None = PrivateAttr(default=None)
-    _forbidden_attributes: MutableSequence[str] = PrivateAttr()
-    _forbidden_objectclasses: MutableSequence[str] = PrivateAttr()
-    _base_dn: str | None = PrivateAttr(default=None)
-    _server_type: str = PrivateAttr(default="rfc")
-    _rejection_tracker: MutableMapping[str, MutableSequence[m.Ldif.Entry]] = (
-        PrivateAttr()
+    _categorization_rules: m.Ldif.CategoryRules = u.PrivateAttr()
+    _schema_whitelist_rules: m.Ldif.WhitelistRules | None = u.PrivateAttr(
+        default_factory=lambda: None
     )
-    _server_registry: FlextLdifServer = PrivateAttr()
+    _forbidden_attributes: MutableSequence[str] = u.PrivateAttr()
+    _forbidden_objectclasses: MutableSequence[str] = u.PrivateAttr()
+    _base_dn: str | None = u.PrivateAttr(default_factory=lambda: None)
+    _server_type: str = u.PrivateAttr(default_factory=lambda: "rfc")
+    _rejection_tracker: MutableMapping[str, MutableSequence[m.Ldif.Entry]] = (
+        u.PrivateAttr()
+    )
+    _server_registry: FlextLdifServer = u.PrivateAttr()
 
     def __init__(
         self,

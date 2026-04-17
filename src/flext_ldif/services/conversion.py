@@ -79,7 +79,7 @@ class FlextLdifConversion(
             and FlextLdifConversion._has_attr(obj, "write_objectclass")
         )
 
-    dn_registry: m.Ldif.DnRegistry = m.Field(
+    dn_registry: m.Ldif.DnRegistry = u.Field(
         default_factory=m.Ldif.DnRegistry,
         description="DN registry for tracking distinguished names during conversion",
     )

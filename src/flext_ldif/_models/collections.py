@@ -11,7 +11,7 @@ from typing import Annotated, override
 
 from pydantic import ConfigDict
 
-from flext_core import m
+from flext_core import m, u
 from flext_ldif import (
     FlextLdifModelsDomainsEntries,
     FlextLdifModelsMetadata,
@@ -91,11 +91,11 @@ class FlextLdifModelsCollections:
     class SchemaContent(m.FrozenModel):
         attributes: Annotated[
             MutableSequence[FlextLdifModelsDomainsEntries.SchemaAttribute],
-            m.Field(description="Schema attribute definitions extracted from LDIF"),
+            u.Field(description="Schema attribute definitions extracted from LDIF"),
         ]
         object_classes: Annotated[
             MutableSequence[FlextLdifModelsDomainsEntries.SchemaObjectClass],
-            m.Field(description="Schema object class definitions extracted from LDIF"),
+            u.Field(description="Schema object class definitions extracted from LDIF"),
         ]
 
     class CategoryPaths(FlextLdifModelsMetadata.DynamicMetadata):
@@ -131,7 +131,7 @@ class FlextLdifModelsCollections:
     class FlexibleCategories(m.DynamicModel):
         categories: MutableMapping[
             str, MutableSequence[FlextLdifModelsDomainsEntries.Entry]
-        ] = m.Field(
+        ] = u.Field(
             default_factory=dict,
             description="Mapping of category names to their LDIF entries",
         )

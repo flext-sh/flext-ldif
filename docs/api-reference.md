@@ -498,8 +498,8 @@ Represents an LDIF entry with structured data.
 class Entry(m.BaseModel):
     """LDIF entry domain model."""
 
-    dn: str = m.Field(..., description="Distinguished Name")
-    attributes: Mapping[str, t.StringList] = m.Field(
+    dn: str = u.Field(..., description="Distinguished Name")
+    attributes: Mapping[str, t.StringList] = u.Field(
         default_factory=dict, description="Entry attributes as key-value pairs"
     )
 
@@ -544,19 +544,19 @@ Configuration settings for LDIF processing.
 class Config(m.BaseModel):
     """LDIF processing configuration."""
 
-    max_entries: int | None = m.Field(
+    max_entries: int | None = u.Field(
         None, description="Maximum number of entries to process"
     )
-    strict_validation: bool = m.Field(
+    strict_validation: bool = u.Field(
         False, description="Enable strict RFC 2849 validation"
     )
-    ignore_unknown_attributes: bool = m.Field(
+    ignore_unknown_attributes: bool = u.Field(
         True, description="Ignore attributes not in standard schema"
     )
-    encoding: str = m.Field(
+    encoding: str = u.Field(
         "utf-8", description="Character encoding for LDIF processing"
     )
-    line_separator: str = m.Field("\n", description="Line separator for LDIF output")
+    line_separator: str = u.Field("\n", description="Line separator for LDIF output")
 ```
 
 **Example Usage**:
