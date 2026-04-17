@@ -10,9 +10,7 @@ import re
 from collections.abc import MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
-from pydantic import ConfigDict
-
-from flext_core import m, u
+from flext_cli import m, u
 from flext_ldif import FlextLdifModelsMetadata, r, t
 
 
@@ -134,7 +132,7 @@ class FlextLdifModelsDomainDN:
     class DNStatisticsFlags(m.FrozenModel):
         """Flags capturing DN transformation quirks and validation state."""
 
-        model_config: ClassVar[m.ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
         had_tab_chars: Annotated[
             bool,
             u.Field(description="DN contained TAB characters"),
@@ -181,7 +179,7 @@ class FlextLdifModelsDomainDN:
     class DN(m.Value):
         """Distinguished Name value."""
 
-        model_config: ClassVar[m.ConfigDict] = ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             strict=True,
             frozen=True,
             extra="forbid",

@@ -6,7 +6,6 @@ import inspect
 from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
-import flext_ldif.servers as servers_package
 from flext_ldif import (
     FlextLdifServersBase,
     FlextLdifServersBaseEntry,
@@ -15,6 +14,7 @@ from flext_ldif import (
     c,
     p,
     r,
+    servers,
     t,
     u,
 )
@@ -159,7 +159,7 @@ class FlextLdifServer:
 
     def _auto_discover(self) -> None:
         """Discover and register concrete quirk classes from servers package."""
-        for name, obj in inspect.getmembers(servers_package):
+        for name, obj in inspect.getmembers(servers):
             if (
                 name.startswith("_")
                 or not inspect.isclass(obj)

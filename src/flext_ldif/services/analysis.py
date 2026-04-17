@@ -5,8 +5,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import TYPE_CHECKING, override
 
-from flext_core import r
-from flext_ldif import m, s, t, u
+from flext_ldif import m, r, s, t, u
 
 if TYPE_CHECKING:
     from flext_ldif import FlextLdifValidation

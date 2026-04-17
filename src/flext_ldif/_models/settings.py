@@ -14,19 +14,19 @@ from typing import Annotated, ClassVar, Literal, Self
 
 from pydantic import ConfigDict
 
-from flext_core import FlextModels, m, u
+from flext_cli import m, u
 from flext_ldif import (
     FlextLdifModelsDomainAcl,
     FlextLdifModelsDomainSchema,
-    FlextLdifProtocols as p,
     c,
+    p,
     r,
     t,
 )
 
 
 class FlextLdifModelsSettings:
-    class AciLineFormatConfig(FlextModels.Value):
+    class AciLineFormatConfig(m.Value):
         """Configuration for formatting a complete ACI line from components."""
 
         name: Annotated[str, u.Field(..., description="ACL name")]
@@ -47,7 +47,7 @@ class FlextLdifModelsSettings:
         )
         version: Annotated[str, u.Field(description="ACI version")] = "3.0"
 
-    class AciParserConfig(FlextModels.Value):
+    class AciParserConfig(m.Value):
         """Configuration for server-specific ACI parsing."""
 
         server_type: Annotated[
@@ -102,7 +102,7 @@ class FlextLdifModelsSettings:
             u.Field(description="Default ACL name when none found"),
         ] = "unnamed-acl"
 
-    class AclMetadataConfig(FlextModels.Value):
+    class AclMetadataConfig(m.Value):
         """Configuration for building ACL metadata extensions."""
 
         line_breaks: Annotated[
@@ -126,7 +126,7 @@ class FlextLdifModelsSettings:
             u.Field(description="Action type (allow/deny)"),
         ] = None
 
-    class DnNormalizationConfig(FlextModels.Value):
+    class DnNormalizationConfig(m.Value):
         """Configuration for DN normalization."""
 
         case_sensitive: Annotated[
@@ -149,7 +149,7 @@ class FlextLdifModelsSettings:
             bool, u.Field(description="Validate DN format before normalization")
         ] = True
 
-    class AttrNormalizationConfig(FlextModels.Value):
+    class AttrNormalizationConfig(m.Value):
         """Configuration for attribute normalization."""
 
         lowercase_keys: Annotated[
@@ -175,7 +175,7 @@ class FlextLdifModelsSettings:
             bool, u.Field(description="Remove attributes with empty values")
         ] = False
 
-    class ProcessConfig(FlextModels.Value):
+    class ProcessConfig(m.Value):
         """Configuration for processing operations."""
 
         batch_size: Annotated[
@@ -223,7 +223,7 @@ class FlextLdifModelsSettings:
                 ),
             )
 
-    class TransformConfig(FlextModels.Value):
+    class TransformConfig(m.Value):
         """Configuration for transformation operations."""
 
         fail_fast: Annotated[
@@ -261,7 +261,7 @@ class FlextLdifModelsSettings:
                 ),
             )
 
-    class ServerPatternsConfig(FlextModels.Value):
+    class ServerPatternsConfig(m.Value):
         """Configuration for server pattern matching."""
 
         dn_patterns: Annotated[
@@ -285,7 +285,7 @@ class FlextLdifModelsSettings:
             u.Field(description="Keywords to search in attribute names"),
         ] = ()
 
-    class EntryCriteriaConfig(FlextModels.Value):
+    class EntryCriteriaConfig(m.Value):
         """Configuration for entry criteria matching.
 
         Consolidates parameters for matches_criteria utility function.
@@ -330,7 +330,7 @@ class FlextLdifModelsSettings:
             ),
         ] = None
 
-    class EntryParseMetadataConfig(FlextModels.Value):
+    class EntryParseMetadataConfig(m.Value):
         """Configuration for building entry parse metadata.
 
         Consolidates parameters for build_entry_parse_metadata utility function.
@@ -380,7 +380,7 @@ class FlextLdifModelsSettings:
             ),
         ] = None
 
-    class EntryTransformConfig(FlextModels.Value):
+    class EntryTransformConfig(m.Value):
         """Configuration for batch entry transformation operations."""
 
         normalize_dns: Annotated[
@@ -410,7 +410,7 @@ class FlextLdifModelsSettings:
             u.Field(description="Stop on first transform error"),
         ] = False
 
-    class CategoryRules(FlextModels.Rules):
+    class CategoryRules(m.Rules):
         """Rules for entry categorization.
 
         Contains DN patterns and objectClass lists for each category.
@@ -468,7 +468,7 @@ class FlextLdifModelsSettings:
             ),
         ]
 
-    class LogContextExtras(FlextModels.Value):
+    class LogContextExtras(m.Value):
         """Extra context fields for structured event logging."""
 
         user_id: Annotated[str | None, u.Field(description="User identifier")] = None
@@ -490,7 +490,7 @@ class FlextLdifModelsSettings:
         ] = None
         trace_id: Annotated[str | None, u.Field(description="Trace identifier")] = None
 
-    class WhitelistRules(FlextModels.Rules):
+    class WhitelistRules(m.Rules):
         """Whitelist rules for entry validation.
 
         Defines blocked objectClasses and validation rules.
@@ -550,7 +550,7 @@ class FlextLdifModelsSettings:
             ),
         ]
 
-    class MigrateOptions(FlextModels.Value):
+    class MigrateOptions(m.Value):
         """Options for FlextLdif.migrate() operation.
 
         Consolidates 12+ optional parameters into single typed Model.
@@ -561,7 +561,7 @@ class FlextLdifModelsSettings:
         - Categorized: Custom multi-file output (via categorization_rules)
         - Simple: Single output file (default)
 
-        Inherits from FlextModels.Value:
+        Inherits from m.Value:
         - Immutable (frozen=True)
         - Validates assignment
         - Extra fields forbidden
@@ -630,7 +630,7 @@ class FlextLdifModelsSettings:
             ),
         ] = False
 
-    class WriteFormatOptions(FlextModels.Value):
+    class WriteFormatOptions(m.Value):
         """Formatting options for LDIF serialization.
 
         .. deprecated:: 0.9.0
@@ -868,7 +868,7 @@ class FlextLdifModelsSettings:
             ),
         ] = u.Field(default_factory=dict)
 
-    class WriteOutputOptions(FlextModels.ArbitraryTypesModel):
+    class WriteOutputOptions(m.ArbitraryTypesModel):
         """Output visibility options for attributes based on their marker status.
 
         This class controls how attributes are rendered in LDIF output based on
@@ -929,7 +929,7 @@ class FlextLdifModelsSettings:
             ),
         ] = "comment"
 
-    class EntryWriteConfig(FlextModels.Value):
+    class EntryWriteConfig(m.Value):
         """Configuration for entry writing.
 
         Consolidates parameters for Entry.write method.
@@ -973,7 +973,7 @@ class FlextLdifModelsSettings:
             ),
         ] = True
 
-    class BatchWriteConfig(FlextModels.Value):
+    class BatchWriteConfig(m.Value):
         """Configuration for batch entry writing.
 
         Consolidates parameters for Batch.write method.
@@ -1007,7 +1007,7 @@ class FlextLdifModelsSettings:
             u.Field(description="Separator between entries"),
         ] = "\n"
 
-    class SortConfig(FlextModels.Value):
+    class SortConfig(m.Value):
         """Configuration for entry sorting.
 
         Consolidates parameters for FlextLdifSorting.sort method.
@@ -1045,7 +1045,7 @@ class FlextLdifModelsSettings:
             MutableSequence[str] | None, u.Field(description="ACL attributes to sort")
         ] = None
 
-    class RdnProcessingConfig(FlextModels.ArbitraryTypesModel):
+    class RdnProcessingConfig(m.ArbitraryTypesModel):
         """Mutable state for RDN character-by-character parsing."""
 
         current_attr: Annotated[str, u.Field(description="Current attribute name")] = ""
@@ -1059,7 +1059,7 @@ class FlextLdifModelsSettings:
             u.Field(description="Accumulated (attr, value) pairs"),
         ] = u.Field(default_factory=lambda: list[tuple[str, str]]())
 
-    class SchemaAttributeConversionPipelineConfig(FlextModels.Value):
+    class SchemaAttributeConversionPipelineConfig(m.Value):
         """Config for schema attribute conversion pipeline (discriminated union)."""
 
         source_schema: Annotated[
@@ -1085,7 +1085,7 @@ class FlextLdifModelsSettings:
             u.Field(description="Item name for errors"),
         ] = "attribute"
 
-    class SchemaObjectClassConversionPipelineConfig(FlextModels.Value):
+    class SchemaObjectClassConversionPipelineConfig(m.Value):
         """Config for schema objectclass conversion pipeline (discriminated union)."""
 
         source_schema: Annotated[
@@ -1111,7 +1111,7 @@ class FlextLdifModelsSettings:
             u.Field(description="Item name for errors"),
         ] = "objectclass"
 
-    class PermissionMappingConfig(FlextModels.Value):
+    class PermissionMappingConfig(m.Value):
         """Configuration for permission mapping during ACL conversion.
 
         Consolidates parameters for
@@ -1149,7 +1149,7 @@ class FlextLdifModelsSettings:
             u.Field(description="Whether converted ACL has permissions"),
         ] = False
 
-    class ServerValidationRules(FlextModels.Value):
+    class ServerValidationRules(m.Value):
         """Server-specific validation rules for LDIF entries."""
 
         requires_binary_option: Annotated[

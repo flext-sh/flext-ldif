@@ -6,7 +6,6 @@ from collections.abc import MutableSequence
 from pathlib import Path
 from typing import override
 
-from flext_core import r
 from flext_ldif import (
     FlextLdifAnalysis,
     FlextLdifCategorization,
@@ -20,6 +19,7 @@ from flext_ldif import (
     FlextLdifWriter,
     c,
     m,
+    r,
     s,
     t,
 )

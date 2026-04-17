@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldif import FlextLdifConversion, FlextLdifUtilitiesTransformer, c, m, r
+from flext_ldif import FlextLdifConversion, c, m, r, s
 
 
-class FlextLdifTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):
+class FlextLdifTransformer(s[m.Ldif.Entry]):
     """Transformer for server-specific conversions."""
 
     __slots__ = ("_source_server", "_target_server")

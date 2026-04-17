@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifModelsDomainsEntries, c
+from flext_ldif import c, m
 
 
 class FlextLdifUtilitiesObjectClass:
@@ -16,7 +16,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def fix_kind_mismatch(
-        schema_oc: FlextLdifModelsDomainsEntries.SchemaObjectClass,
+        schema_oc: m.Ldif.SchemaObjectClass,
         _server_type: str = "oid",
     ) -> None:
         """Fix objectClass kind mismatches with superior classes (server-specific)."""
@@ -48,7 +48,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def fix_missing_sup(
-        schema_oc: FlextLdifModelsDomainsEntries.SchemaObjectClass,
+        schema_oc: m.Ldif.SchemaObjectClass,
     ) -> None:
         """Fix AUXILIARY ObjectClass missing SUP (superior) attribute."""
         schema_constants = FlextLdifUtilitiesObjectClass.SchemaConstants

@@ -23,7 +23,7 @@ from tests import c
 
 
 @pytest.mark.unit
-class TestsFlextLdifQuirksStandardizedConstants:
+class TestsFlextLdifServersStandardizedConstants:
     """Verify all quirks have standardized Constants."""
 
     def test_rfc_schema_constants(self) -> None:

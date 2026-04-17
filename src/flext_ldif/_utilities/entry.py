@@ -7,11 +7,11 @@ import struct
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from typing import TypeIs
 
-from flext_core import u
+from flext_cli import u
 from flext_ldif import (
-    FlextLdifModelsSettings,
-    FlextLdifProtocols as p,
     c,
+    m,
+    p,
     t,
 )
 
@@ -436,7 +436,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def check_binary_option_rule(
         entry: p.Ldif.Entry,
-        rules: FlextLdifModelsSettings.ServerValidationRules,
+        rules: m.Ldif.ServerValidationRules,
     ) -> MutableSequence[str]:
         """Check binary attribute option requirement from server rules."""
         violations: MutableSequence[str] = []
@@ -460,7 +460,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def check_naming_attr_rule(
         entry: p.Ldif.Entry,
-        rules: FlextLdifModelsSettings.ServerValidationRules,
+        rules: m.Ldif.ServerValidationRules,
         dn_value: str,
     ) -> MutableSequence[str]:
         """Check naming attribute requirement from server rules."""
@@ -482,7 +482,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def check_objectclass_rule(
         entry: p.Ldif.Entry,
-        rules: FlextLdifModelsSettings.ServerValidationRules,
+        rules: m.Ldif.ServerValidationRules,
         dn_value: str,
     ) -> MutableSequence[str]:
         """Check objectClass requirement from server rules."""
@@ -510,19 +510,17 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def parse_validation_rules(
         validation_rules: t.RecursiveContainer,
-    ) -> FlextLdifModelsSettings.ServerValidationRules | None:
+    ) -> m.Ldif.ServerValidationRules | None:
         """Normalize dynamic validation_rules payload to ServerValidationRules."""
         if isinstance(
             validation_rules,
-            FlextLdifModelsSettings.ServerValidationRules,
+            m.Ldif.ServerValidationRules,
         ):
             return validation_rules
         if isinstance(validation_rules, str):
             try:
-                return (
-                    FlextLdifModelsSettings.ServerValidationRules.model_validate_json(
-                        validation_rules,
-                    )
+                return m.Ldif.ServerValidationRules.model_validate_json(
+                    validation_rules,
                 )
             except c.ValidationError as exc:
                 FlextLdifUtilitiesEntry._logger.warning(
@@ -536,7 +534,7 @@ class FlextLdifUtilitiesEntry:
                 validation_rules_payload: t.MutableRecursiveContainerMapping = dict(
                     validation_rules.items(),
                 )
-                return FlextLdifModelsSettings.ServerValidationRules.model_validate(
+                return m.Ldif.ServerValidationRules.model_validate(
                     validation_rules_payload,
                 )
             except c.ValidationError as exc:
@@ -720,14 +718,14 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def matches_criteria(
         entry: p.Ldif.Entry,
-        settings: FlextLdifModelsSettings.EntryCriteriaConfig | None = None,
+        settings: m.Ldif.EntryCriteriaConfig | None = None,
         **kwargs: str | float | bool | None,
     ) -> bool:
         """Check multiple entry criteria in one call."""
         resolved_config = (
             settings
             if settings is not None
-            else FlextLdifModelsSettings.EntryCriteriaConfig.model_validate(kwargs)
+            else m.Ldif.EntryCriteriaConfig.model_validate(kwargs)
         )
         checks: MutableSequence[bool] = []
         if resolved_config.is_schema is not None:
@@ -795,7 +793,7 @@ class FlextLdifUtilitiesEntry:
     def matches_entry_server_patterns(
         entry_dn: str,
         attributes: t.StrSequenceMapping,
-        settings: FlextLdifModelsSettings.ServerPatternsConfig,
+        settings: m.Ldif.ServerPatternsConfig,
     ) -> bool:
         """Check if entry matches server-specific patterns."""
         if not entry_dn or not attributes:

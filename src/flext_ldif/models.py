@@ -15,7 +15,7 @@ from typing import Annotated, ClassVar
 
 from pydantic import ConfigDict
 
-from flext_cli import FlextCliModels, u
+from flext_cli import m, u
 from flext_ldif import (
     FlextLdifModelsBases,
     FlextLdifModelsCollections,
@@ -25,12 +25,11 @@ from flext_ldif import (
     FlextLdifModelsProcessing,
     FlextLdifModelsResults,
     FlextLdifModelsSettings,
-    m,
     t,
 )
 
 
-class FlextLdifModels(FlextCliModels):
+class FlextLdifModels(m):
     """LDIF domain models — flat façade with MRO class inheritance.
 
     Architecture: Domain layer helper
@@ -84,6 +83,6 @@ class FlextLdifModels(FlextCliModels):
             constrain_to_added_object: Annotated[str, u.Field()] = ""
 
 
-__all__: list[str] = ["FlextLdifModels", "m"]
-
 m = FlextLdifModels
+
+__all__: list[str] = ["FlextLdifModels", "m"]

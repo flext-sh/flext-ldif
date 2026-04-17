@@ -9,7 +9,6 @@ from flext_ldif import (
     FlextLdifServersBaseSchema,
     FlextLdifServersOudConstants,
     FlextLdifServersRfc,
-    FlextLdifUtilitiesSchema,
     c,
     m,
     p,
@@ -95,7 +94,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             )
             fixed_equality = None
         original_substr = fixed_substr
-        fixed_substr = FlextLdifUtilitiesSchema.replace_invalid_substr_rule(
+        fixed_substr = u.Ldif.replace_invalid_substr_rule(
             fixed_substr,
             FlextLdifServersOudConstants.INVALID_SUBSTR_RULES,
         )
@@ -254,7 +253,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         fixed_equality, fixed_substr = self._transform_by_matching_rules(
             attr_data,
         )
-        is_boolean = FlextLdifUtilitiesSchema.is_boolean_attribute(
+        is_boolean = u.Ldif.is_boolean_attribute(
             attr_data.name,
             set(FlextLdifServersOudConstants.BOOLEAN_ATTRIBUTES),
         )

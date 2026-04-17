@@ -9,14 +9,12 @@ from collections.abc import MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import (
-    FlextLdifModelsDomainsEntries,
     FlextLdifServersRfc,
-    FlextLdifUtilitiesObjectClass,
-    FlextLdifUtilitiesServer,
     c,
     m,
     r,
     t,
+    u,
 )
 
 
@@ -156,7 +154,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect AD attribute definitions using centralized constants."""
-            return FlextLdifUtilitiesServer.matches_server_patterns(
+            return u.Ldif.matches_server_patterns(
                 value=attr_definition,
                 oid_pattern=FlextLdifServersAd.Constants.DETECTION_OID_PATTERN,
                 detection_names=FlextLdifServersAd.Constants.DETECTION_ATTRIBUTE_NAMES,
@@ -169,7 +167,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect AD objectClass definitions using centralized constants."""
-            return FlextLdifUtilitiesServer.matches_server_patterns(
+            return u.Ldif.matches_server_patterns(
                 value=oc_definition,
                 oid_pattern=FlextLdifServersAd.Constants.DETECTION_OID_PATTERN,
                 detection_names=FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES,
@@ -192,8 +190,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             result = super()._parse_objectclass(oc_definition)
             if result.success:
                 oc_data = result.value
-                FlextLdifUtilitiesObjectClass.fix_missing_sup(oc_data)
-                FlextLdifUtilitiesObjectClass.fix_kind_mismatch(oc_data)
+                u.Ldif.fix_missing_sup(oc_data)
+                u.Ldif.fix_kind_mismatch(oc_data)
                 metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
                 oc_updated = oc_data.model_copy(update={"metadata": metadata})
                 return r[m.Ldif.SchemaObjectClass].ok(oc_updated)
@@ -316,7 +314,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 return r[m.Ldif.Acl].fail(f"Active Directory ACL parsing failed: {exc}")
 
         @override
-        def _write_acl(self, acl_data: FlextLdifModelsDomainsEntries.Acl) -> r[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
                 if not acl_data.raw_acl:

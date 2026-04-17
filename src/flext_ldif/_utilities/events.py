@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_ldif import FlextLdifModelsEvents, FlextLdifModelsSettings, c, p, t
+from flext_ldif import c, m, p, t
 
 
 class FlextLdifUtilitiesEvents:
@@ -12,8 +12,8 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _build_conversion_event_logging(
-        event: FlextLdifModelsEvents.ConversionEvent,
-        settings: FlextLdifModelsEvents.ConversionEventConfig,
+        event: m.Ldif.ConversionEvent,
+        settings: m.Ldif.ConversionEventConfig,
     ) -> tuple[t.MutableScalarMapping, str]:
         return (
             {
@@ -37,7 +37,7 @@ class FlextLdifUtilitiesEvents:
         log_context: t.MutableScalarMapping,
         log_message: str,
         log_level: str = c.Ldif.LogLevelLower.INFO.value,
-        extras: FlextLdifModelsSettings.LogContextExtras | None = None,
+        extras: m.Ldif.LogContextExtras | None = None,
     ) -> None:
         """Generic helper for logging events with context and extras."""
         filtered_extras = FlextLdifUtilitiesEvents._process_extras(extras)
@@ -54,7 +54,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _process_extras(
-        extras: FlextLdifModelsSettings.LogContextExtras | None = None,
+        extras: m.Ldif.LogContextExtras | None = None,
     ) -> t.MutableScalarMapping:
         """Extract and filter extras into a dict of loggable context."""
         filtered_extras: t.MutableScalarMapping = {}
@@ -86,8 +86,8 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def create_conversion_event(
-        settings: FlextLdifModelsEvents.ConversionEventConfig,
-    ) -> FlextLdifModelsEvents.ConversionEvent:
+        settings: m.Ldif.ConversionEventConfig,
+    ) -> m.Ldif.ConversionEvent:
         """Create ConversionEvent with standardized fields from settings Model."""
         aggregate_id = f"{settings.source_format}_to_{settings.target_format}_{settings.conversion_operation}"
         error_details_list = FlextLdifUtilitiesEvents._to_error_details_list(
@@ -95,7 +95,7 @@ class FlextLdifUtilitiesEvents:
             if settings.error_details is not None
             else None,
         )
-        return FlextLdifModelsEvents.ConversionEvent.model_validate({
+        return m.Ldif.ConversionEvent.model_validate({
             "event_type": "ldif.conversion",
             "aggregate_id": aggregate_id,
             "conversion_operation": settings.conversion_operation,
@@ -109,10 +109,10 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def create_dn_event(
-        settings: FlextLdifModelsEvents.DnEventConfig,
-    ) -> FlextLdifModelsEvents.DnEvent:
+        settings: m.Ldif.DnEventConfig,
+    ) -> m.Ldif.DnEvent:
         """Create DnEvent with standardized fields from settings Model."""
-        return FlextLdifModelsEvents.DnEvent.model_validate({
+        return m.Ldif.DnEvent.model_validate({
             "event_type": "ldif.dn",
             "aggregate_id": settings.input_dn,
             "dn_operation": settings.dn_operation,
@@ -125,10 +125,10 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def log_and_emit_conversion_event(
         logger: p.Logger,
-        settings: FlextLdifModelsEvents.ConversionEventConfig,
+        settings: m.Ldif.ConversionEventConfig,
         log_level: str = "info",
-        extras: FlextLdifModelsSettings.LogContextExtras | None = None,
-    ) -> FlextLdifModelsEvents.ConversionEvent:
+        extras: m.Ldif.LogContextExtras | None = None,
+    ) -> m.Ldif.ConversionEvent:
         """Create ConversionEvent, log with context, and attach to logger context."""
         event = FlextLdifUtilitiesEvents.create_conversion_event(settings)
         log_context, log_message = (
@@ -146,10 +146,10 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def log_and_emit_dn_event(
         logger: p.Logger,
-        settings: FlextLdifModelsEvents.DnEventConfig,
+        settings: m.Ldif.DnEventConfig,
         log_level: str = "info",
-        extras: FlextLdifModelsSettings.LogContextExtras | None = None,
-    ) -> FlextLdifModelsEvents.DnEvent:
+        extras: m.Ldif.LogContextExtras | None = None,
+    ) -> m.Ldif.DnEvent:
         """Create DnEvent, log with context, and attach to logger context."""
         event = FlextLdifUtilitiesEvents.create_dn_event(settings)
         aggregate_id = event.aggregate_id or ""

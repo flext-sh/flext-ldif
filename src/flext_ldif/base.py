@@ -6,13 +6,11 @@ from abc import ABC
 from collections.abc import Sequence
 from typing import override
 
-from flext_core import FlextSettings, FlextTypes, s
-from flext_ldif import FlextLdifServer, FlextLdifSettings, m
+from flext_core import FlextSettings, s
+from flext_ldif import FlextLdifServer, FlextLdifSettings, m, t
 
 
-class FlextLdifServiceBase[
-    TDomainResult: FlextTypes.ValueOrModel | Sequence[FlextTypes.ValueOrModel]
-](
+class FlextLdifServiceBase[TDomainResult: t.ValueOrModel | Sequence[t.ValueOrModel]](
     s[TDomainResult],
     ABC,
 ):

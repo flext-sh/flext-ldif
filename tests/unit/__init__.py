@@ -24,7 +24,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestAliasDiscovery",
                 "TestQuirksAutoInterchange",
                 "TestQuirksWithRealLdifFixtures",
-                "TestsFlextLdifQuirksStandardizedConstants",
+                "TestsFlextLdifServersStandardizedConstants",
             ),
             ".test_acl_registry": ("test_acl_registry",),
             ".test_migration_pipeline": ("test_migration_pipeline",),

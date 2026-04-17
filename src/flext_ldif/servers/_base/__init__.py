@@ -10,7 +10,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".acl": ("FlextLdifServersBaseSchemaAcl",),
         ".constants": ("FlextLdifServersBaseConstants",),
         ".entry": ("FlextLdifServersBaseEntry",),
-        ".mixins": ("FlextLdifQuirkMethodsMixin",),
+        ".mixins": ("FlextLdifServerMethodsMixin",),
         ".schema": ("FlextLdifServersBaseSchema",),
     },
 )

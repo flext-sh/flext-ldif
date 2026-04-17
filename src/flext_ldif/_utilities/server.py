@@ -8,9 +8,9 @@ from collections.abc import MutableSequence
 from typing import TypeIs
 
 from flext_ldif import (
-    FlextLdifModelsDomainSchema,
     FlextLdifShared,
     c,
+    m,
     r,
     t,
 )
@@ -183,9 +183,7 @@ class FlextLdifUtilitiesServer:
 
     @staticmethod
     def matches_server_patterns(
-        value: str
-        | FlextLdifModelsDomainSchema.SchemaAttribute
-        | FlextLdifModelsDomainSchema.SchemaObjectClass,
+        value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         oid_pattern: str,
         detection_names: frozenset[str],
         detection_string: str | None = None,
@@ -228,8 +226,7 @@ class FlextLdifUtilitiesServer:
             return bool(name and name.lower() in detection_names)
 
         def check_model_patterns(
-            model: FlextLdifModelsDomainSchema.SchemaAttribute
-            | FlextLdifModelsDomainSchema.SchemaObjectClass,
+            model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Check patterns for model types."""
             if check_oid_pattern(model.oid) or check_name_in_set(model.name):
@@ -251,7 +248,7 @@ class FlextLdifUtilitiesServer:
                 detection_string,
                 use_prefix_match=use_prefix_match,
             )
-        if isinstance(value, FlextLdifModelsDomainSchema.SchemaAttribute):
+        if isinstance(value, m.Ldif.SchemaAttribute):
             return check_model_patterns(value)
         return check_model_patterns(value)
 

@@ -6,14 +6,13 @@ import re
 from collections.abc import MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import s
 from flext_ldif import (
-    FlextLdifQuirkMethodsMixin,
-    FlextLdifUtilitiesACL,
+    FlextLdifServerMethodsMixin,
     c,
     m,
     p,
     r,
+    s,
     t,
     u,
 )
@@ -22,7 +21,7 @@ logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServersBaseSchemaAcl(
-    FlextLdifQuirkMethodsMixin,
+    FlextLdifServerMethodsMixin,
     s[m.Ldif.Acl | str],
 ):
     """Base class for ACL quirks - satisfies Acl (structural typing)."""
@@ -160,7 +159,7 @@ class FlextLdifServersBaseSchemaAcl(
         original_format = acl_metadata.original_format
         if not original_format:
             return r[str].ok(acl_value)
-        sanitize_result_raw: tuple[str, bool] = FlextLdifUtilitiesACL.sanitize_acl_name(
+        sanitize_result_raw: tuple[str, bool] = u.Ldif.sanitize_acl_name(
             original_format,
         )
         sanitized_name, _was_sanitized = sanitize_result_raw

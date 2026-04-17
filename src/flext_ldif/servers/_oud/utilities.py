@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from flext_ldif import (
-    FlextLdifConstants,
-    FlextLdifModelsSettings,
     FlextLdifServersOudConstants,
+    c,
+    m,
 )
 
 
@@ -13,11 +13,11 @@ class FlextLdifServersOudUtilities:
     """Oracle Unified Directory-specific utilities."""
 
     @staticmethod
-    def get_parser_config() -> FlextLdifModelsSettings.AciParserConfig:
+    def get_parser_config() -> m.Ldif.AciParserConfig:
         """Create AciParserConfig for OUD ACL parsing."""
         constants = FlextLdifServersOudConstants
-        return FlextLdifModelsSettings.AciParserConfig.model_validate({
-            "server_type": FlextLdifConstants.Ldif.ServerTypes.OUD,
+        return m.Ldif.AciParserConfig.model_validate({
+            "server_type": c.Ldif.ServerTypes.OUD,
             "aci_prefix": "aci:",
             "version_acl_pattern": constants.ACL_VERSION_ACL_PATTERN,
             "targetattr_pattern": constants.ACL_TARGETATTR_PATTERN,

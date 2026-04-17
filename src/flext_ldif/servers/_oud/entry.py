@@ -13,14 +13,11 @@ from collections.abc import Callable, Mapping, MutableMapping, MutableSequence
 from typing import override
 
 from flext_ldif import (
-    FlextLdifModelsDomainsEntries,
-    FlextLdifModelsMetadata,
     FlextLdifServersBase,
     FlextLdifServersBaseEntry,
     FlextLdifServersOudAcl,
     FlextLdifServersOudConstants,
     FlextLdifServersRfc,
-    FlextLdifUtilitiesMetadata,
     c,
     m,
     p,
@@ -229,9 +226,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _create_write_options_with_hidden_attrs(
-        write_opts: FlextLdifModelsDomainsEntries.WriteOptions
-        | t.MutableRecursiveContainerMapping
-        | None,
+        write_opts: m.Ldif.WriteOptions | t.MutableRecursiveContainerMapping | None,
         hidden_attrs: set[str],
     ) -> m.Ldif.WriteOptions:
         """Create WriteOptions with updated hidden attributes.
@@ -251,7 +246,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if u.matches_type(hidden_attrs_raw, (list, tuple, frozenset, set)):
             hidden_attrs_set = {str(item) for item in hidden_attrs_raw}
         hidden_attrs_set.update(hidden_attrs)
-        if isinstance(write_opts, FlextLdifModelsDomainsEntries.WriteOptions):
+        if isinstance(write_opts, m.Ldif.WriteOptions):
             write_opts_data: t.MutableRecursiveContainerMapping = (
                 write_opts.model_dump()
             )
@@ -504,9 +499,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 hidden_attrs,
             )
         )
-        update_dict: MutableMapping[
-            str, FlextLdifModelsDomainsEntries.WriteOptions | None
-        ] = {
+        update_dict: MutableMapping[str, m.Ldif.WriteOptions | None] = {
             "write_options": new_write_options,
         }
         metadata_typed = metadata_typed.model_copy(update=update_dict)
@@ -533,9 +526,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             current_extensions["acl_commented_attributes"] = commented_attrs_typed
         update_dict_final: MutableMapping[
             str,
-            t.MutableRecursiveContainerMapping
-            | FlextLdifModelsDomainsEntries.WriteOptions
-            | None,
+            t.MutableRecursiveContainerMapping | m.Ldif.WriteOptions | None,
         ] = {
             "extensions": current_extensions,
             "write_options": new_write_options,
@@ -707,7 +698,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         ----------------------
 
         **Utilities Used**:
-        - ``FlextLdifUtilitiesMetadata.build_entry_parse_metadata()`` - Metadata creation
+        - ``u.Ldif.build_entry_parse_metadata()`` - Metadata creation
 
         **RFC Override**: Extends RFC (RFC creates Entry, OUD adds metadata).
 
@@ -748,7 +739,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             "dn_was_base64": False,
             "original_attribute_case": original_attribute_case,
         })
-        metadata = FlextLdifUtilitiesMetadata.build_entry_parse_metadata(
+        metadata = u.Ldif.build_entry_parse_metadata(
             metadata_config,
         )
         entry.metadata = metadata
@@ -779,7 +770,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         self,
         comment_lines: MutableSequence[str],
         attr_name: str,
-        _transformation: FlextLdifModelsDomainsEntries.AttributeTransformation,
+        _transformation: m.Ldif.AttributeTransformation,
         comment_type: str,
     ) -> None:
         """Add comment for attribute transformation.
@@ -1237,7 +1228,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _extract_acl_metadata_from_dynamic(
         self,
-        acl_extensions: FlextLdifModelsMetadata.DynamicMetadata,
+        acl_extensions: m.Ldif.DynamicMetadata,
         acl_metadata_extensions: t.MutableRecursiveContainerMapping,
     ) -> None:
         """Extract ACL metadata from DynamicMetadata extensions."""
@@ -1355,9 +1346,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if not entry.metadata:
                 entry.metadata = m.Ldif.QuirkMetadata.create_for(
                     "oud",
-                    extensions=FlextLdifModelsMetadata.DynamicMetadata(),
+                    extensions=m.Ldif.DynamicMetadata(),
                 )
-            FlextLdifUtilitiesMetadata.store_minimal_differences(
+            u.Ldif.store_minimal_differences(
                 metadata=entry.metadata,
                 dn_differences=m.Ldif.DynamicMetadata.from_dict(
                     dn_differences,
@@ -1473,7 +1464,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if not entry.metadata:
             entry.metadata = m.Ldif.QuirkMetadata.create_for(
                 "oud",
-                extensions=FlextLdifModelsMetadata.DynamicMetadata(),
+                extensions=m.Ldif.DynamicMetadata(),
             )
         current_extensions: t.MutableRecursiveContainerMapping = (
             dict(entry.metadata.extensions.to_dict())
@@ -1500,7 +1491,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if entry.metadata:
                 entry.metadata = entry.metadata.model_copy(
                     update={
-                        "extensions": FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+                        "extensions": m.Ldif.DynamicMetadata.from_dict(
                             merged_extensions,
                         ),
                     },
@@ -1643,7 +1634,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 else {}
             )
             current_extensions.update(acl_metadata_extensions)
-            merged_extensions = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+            merged_extensions = m.Ldif.DynamicMetadata.from_dict(
                 current_extensions,
             )
             return entry.model_copy(
@@ -1657,7 +1648,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             )
         entry_metadata = m.Ldif.QuirkMetadata.create_for(
             "oud",
-            extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+            extensions=m.Ldif.DynamicMetadata.from_dict(
                 acl_metadata_extensions,
             ),
         )
@@ -1771,7 +1762,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     for raw_key, raw_value in acl_ext_raw.items():
                         key = str(raw_key)
                         acl_extensions[key] = (
-                            FlextLdifModelsMetadata.DynamicMetadata.coerce_metadata_value(
+                            m.Ldif.DynamicMetadata.coerce_metadata_value(
                                 raw_value,
                             )
                         )
@@ -1866,9 +1857,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             parsed_acl = parse_result.value
             if parsed_acl.metadata and parsed_acl.metadata.extensions:
                 acl_extensions = parsed_acl.metadata.extensions
-                if u.matches_type(
-                    acl_extensions, FlextLdifModelsMetadata.DynamicMetadata
-                ):
+                if u.matches_type(acl_extensions, m.Ldif.DynamicMetadata):
                     self._extract_acl_metadata_from_dynamic(
                         acl_extensions,
                         acl_metadata_extensions,
@@ -1877,7 +1866,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     acl_extensions_dict: t.MutableRecursiveContainerMapping = {
                         str(
                             k,
-                        ): FlextLdifModelsMetadata.DynamicMetadata.coerce_metadata_value(
+                        ): m.Ldif.DynamicMetadata.coerce_metadata_value(
                             v,
                         )
                         for k, v in acl_extensions.items()
@@ -2072,7 +2061,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return r[str].fail(f"Pre-write hook failed: {hook_result.error}")
         normalized_entry = hook_result.value
         entry_to_write = self._restore_entry_from_metadata(normalized_entry)
-        write_options_raw = FlextLdifUtilitiesMetadata.extract_write_options(
+        write_options_raw = u.Ldif.extract_write_options(
             entry_to_write,
         )
         write_options = (

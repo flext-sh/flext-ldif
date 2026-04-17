@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import Annotated
 
-from flext_core import FlextModelsDomainEvent, m, u
+from flext_cli import m, u
 
 
 class FlextLdifModelsEvents:
@@ -53,7 +53,7 @@ class FlextLdifModelsEvents:
             u.Field(description="Error messages for failed items"),
         ] = None
 
-    class DnEvent(FlextModelsDomainEvent.Entry):
+    class DnEvent(m.Entry):
         dn_operation: str = u.Field(description="DN operation type performed")
         input_dn: str = u.Field(description="Original DN before operation")
         output_dn: Annotated[
@@ -72,7 +72,7 @@ class FlextLdifModelsEvents:
             int, u.Field(description="Number of RDN components in the DN")
         ] = 0
 
-    class ConversionEvent(FlextModelsDomainEvent.Entry):
+    class ConversionEvent(m.Entry):
         conversion_operation: str = u.Field(
             description="Conversion operation type performed"
         )

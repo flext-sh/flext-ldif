@@ -7,15 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableSequence
-from typing import Annotated, Self
+from typing import TYPE_CHECKING, Annotated, Self
 
-from flext_core import m, u
-from flext_ldif import (
-    FlextLdifModelsBases,
-    FlextLdifModelsDomainMetadata,
-    c,
-    t,
-)
+from flext_cli import m, u
+from flext_ldif import FlextLdifModelsBases, c, t
+
+if TYPE_CHECKING:
+    from flext_ldif import FlextLdifModelsDomainMetadata
 
 
 class FlextLdifModelsDomainAcl:

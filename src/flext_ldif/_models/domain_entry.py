@@ -12,11 +12,7 @@ from datetime import datetime
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
 
-from pydantic import (
-    ConfigDict,
-)
-
-from flext_core import m
+from flext_cli import m, u
 from flext_ldif import (
     FlextLdifModelsDomainAcl,
     FlextLdifModelsDomainAttributes,
@@ -28,7 +24,6 @@ from flext_ldif import (
     c,
     r,
     t,
-    u,
 )
 
 
@@ -352,7 +347,7 @@ class FlextLdifModelsDomainEntry:
         Inherits DynamicModel to legitimize extra='allow' for LDIF dynamic attributes.
         """
 
-        model_config: ClassVar[m.ConfigDict] = ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             strict=True,
             validate_default=True,
             validate_assignment=True,
@@ -929,7 +924,7 @@ class FlextLdifModelsDomainEntry:
             return metadata
 
         class _CreateEntryParams(m.Value):
-            model_config: ClassVar[m.ConfigDict] = ConfigDict(
+            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
                 extra="forbid",
                 validate_assignment=True,
             )

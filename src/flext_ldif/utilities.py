@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_cli import FlextCliUtilities
+from flext_cli import u
 from flext_ldif import (
     FlextLdifUtilitiesACL,
     FlextLdifUtilitiesAttribute,
@@ -24,7 +24,7 @@ from flext_ldif import (
 )
 
 
-class FlextLdifUtilities(FlextCliUtilities):
+class FlextLdifUtilities(u):
     """FLEXT LDIF Utilities - Centralized helpers for LDIF operations."""
 
     class Ldif(

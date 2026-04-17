@@ -12,16 +12,15 @@ from collections.abc import (
     MutableSequence,
     ValuesView,
 )
-from typing import Annotated, ClassVar, Self
+from typing import TYPE_CHECKING, Annotated, ClassVar, Self
 
 from pydantic import ConfigDict
 
-from flext_core import m, u
-from flext_ldif import (
-    FlextLdifModelsMetadata,
-    c,
-    t,
-)
+from flext_cli import m, u
+from flext_ldif import c, t
+
+if TYPE_CHECKING:
+    from flext_ldif import FlextLdifModelsMetadata
 
 
 class FlextLdifModelsDomainAttributes:

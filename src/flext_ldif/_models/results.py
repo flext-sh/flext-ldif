@@ -5,14 +5,13 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import Annotated, Self
 
-from flext_core import m
+from flext_cli import m, u
 from flext_ldif import (
     FlextLdifModelsCollections,
     FlextLdifModelsDomainsEntries,
     FlextLdifModelsEvents,
     c,
     t,
-    u,
 )
 
 

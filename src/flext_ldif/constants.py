@@ -6,11 +6,11 @@ from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import ClassVar, Final
 
-from flext_cli import FlextCliConstants
+from flext_cli import c
 from flext_ldif import t
 
 
-class FlextLdifConstants(FlextCliConstants):
+class FlextLdifConstants(c):
     """LDIF domain constants extending flext-core FlextConstants."""
 
     class Ldif:

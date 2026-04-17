@@ -21,7 +21,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._base.acl": ("FlextLdifServersBaseSchemaAcl",),
             "._base.constants": ("FlextLdifServersBaseConstants",),
             "._base.entry": ("FlextLdifServersBaseEntry",),
-            "._base.mixins": ("FlextLdifQuirkMethodsMixin",),
+            "._base.mixins": ("FlextLdifServerMethodsMixin",),
             "._base.schema": ("FlextLdifServersBaseSchema",),
             "._oid.acl": ("FlextLdifServersOidAcl",),
             "._oid.constants": ("FlextLdifServersOidConstants",),

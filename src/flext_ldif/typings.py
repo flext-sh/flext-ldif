@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-from flext_cli import FlextCliTypes
+from flext_cli import t
 from flext_ldif import FlextLdifTypesBase, FlextLdifTypesDomain
 
 
-class FlextLdifTypes(FlextCliTypes):
+class FlextLdifTypes(t):
     """LDIF domain types extending flext-core FlextTypes."""
-
-    class Cli(FlextCliTypes.Cli):
-        """CLI type namespace inherited for downstream JSON contracts."""
 
     class Ldif(FlextLdifTypesDomain, FlextLdifTypesBase):
         """LDIF-specific type namespace."""

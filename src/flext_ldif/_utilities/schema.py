@@ -10,7 +10,6 @@ from typing import TypeIs
 
 from flext_core import u
 from flext_ldif import (
-    FlextLdifModelsBases,
     FlextLdifUtilitiesOID,
     FlextLdifUtilitiesParser,
     FlextLdifUtilitiesServer,
@@ -486,9 +485,7 @@ class FlextLdifUtilitiesSchema:
         return FlextLdifUtilitiesSchema._split_schema_values(sup_value)[0]
 
     @staticmethod
-    def _extract_schema_items_from_lines[
-        SchemaModelT: FlextLdifModelsBases.SchemaElement
-    ](
+    def _extract_schema_items_from_lines[SchemaModelT: m.Ldif.SchemaElement](
         ldif_content: str,
         parse_callback: Callable[[str], r[SchemaModelT]],
         line_prefix: str,

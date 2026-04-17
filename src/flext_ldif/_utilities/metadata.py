@@ -10,9 +10,6 @@ from pydantic import BaseModel
 
 from flext_core import u
 from flext_ldif import (
-    FlextLdifModelsDomainMetadata,
-    FlextLdifModelsMetadata,
-    FlextLdifModelsSettings,
     FlextLdifUtilitiesServer,
     c,
     m,
@@ -121,7 +118,7 @@ class FlextLdifUtilitiesMetadata:
                 known_field_values[write_option_key] = value
             else:
                 extension_kwargs[write_option_key] = value
-        extensions = FlextLdifModelsMetadata.DynamicMetadata.model_validate(
+        extensions = m.Ldif.DynamicMetadata.model_validate(
             extension_kwargs,
         )
         return m.Ldif.SchemaFormatDetails.model_validate({
@@ -591,7 +588,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _set_model_metadata(
         model: p.Ldif.ModelWithValidationMetadata,
-        metadata: FlextLdifModelsMetadata.DynamicMetadata,
+        metadata: m.Ldif.DynamicMetadata,
     ) -> None:
         """Set validation_metadata on model (handles both mutable and frozen models)."""
         try:
@@ -723,7 +720,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def build_entry_parse_metadata(
-        settings: FlextLdifModelsSettings.EntryParseMetadataConfig,
+        settings: m.Ldif.EntryParseMetadataConfig,
     ) -> m.Ldif.QuirkMetadata:
         """Build QuirkMetadata for entry parsing with format preservation."""
         server_data_dict: t.MutableRecursiveContainerMapping = {}
@@ -744,7 +741,7 @@ class FlextLdifUtilitiesMetadata:
                 settings.original_attribute_case
             )
             server_data_dict["original_attribute_case"] = attr_case_typed
-        server_data = FlextLdifModelsMetadata.EntryMetadata.model_validate(
+        server_data = m.Ldif.EntryMetadata.model_validate(
             server_data_dict,
         )
         original_ldif_parts: MutableSequence[str] = []
@@ -756,7 +753,7 @@ class FlextLdifUtilitiesMetadata:
         extensions_dict: t.MutableRecursiveContainerMapping = {}
         mk = c.Ldif
         extensions_dict[mk.ORIGINAL_DN_COMPLETE] = settings.original_entry_dn
-        dynamic_extensions = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+        dynamic_extensions = m.Ldif.DynamicMetadata.from_dict(
             extensions_dict,
         )
         metadata = m.Ldif.QuirkMetadata(
@@ -810,7 +807,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def extract_write_options(
         entry_data: p.Ldif.EntryWithMetadata,
-    ) -> FlextLdifModelsSettings.WriteFormatOptions | None:
+    ) -> m.Ldif.WriteFormatOptions | None:
         """Extract write options from entry metadata."""
         if not entry_data.metadata:
             return None
@@ -838,12 +835,12 @@ class FlextLdifUtilitiesMetadata:
             }
         opt = extras.get(c.Ldif.WRITE_OPTIONS)
         if isinstance(opt, Mapping):
-            return FlextLdifModelsSettings.WriteFormatOptions.model_validate(opt)
+            return m.Ldif.WriteFormatOptions.model_validate(opt)
         return None
 
     @staticmethod
     def preserve_schema_formatting(
-        metadata: FlextLdifModelsDomainMetadata.QuirkMetadata,
+        metadata: m.Ldif.QuirkMetadata,
         definition: str,
     ) -> None:
         """Preserve complete schema formatting details for round-trip."""
@@ -859,7 +856,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def store_minimal_differences(
-        metadata: FlextLdifModelsDomainMetadata.QuirkMetadata,
+        metadata: m.Ldif.QuirkMetadata,
         **extra: t.Scalar,
     ) -> None:
         """Store minimal differences in metadata for delta tracking."""
@@ -868,7 +865,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def track_boolean_conversion(
-        metadata: FlextLdifModelsDomainMetadata.QuirkMetadata,
+        metadata: m.Ldif.QuirkMetadata,
         attr_name: str,
         original_value: str,
         converted_value: str,

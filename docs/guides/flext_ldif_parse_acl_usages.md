@@ -219,7 +219,7 @@ ______________________________________________________________________
 
 - `ldif.parse()` uses quirks internally but doesn't expose parse()
 - Higher-level API returns Entry models (not Acl models)
-- flext-oud-mig uses this API (already compatible with Entry return)
+- algar-oud-mig uses this API (already compatible with Entry return)
 
 ______________________________________________________________________
 
@@ -306,7 +306,7 @@ ______________________________________________________________________
 
 - [ ] Run full test suite
 - [ ] Test with real LDIF data
-- [ ] Verify flext-oud-mig compatibility (should be automatic)
+- [ ] Verify algar-oud-mig compatibility (should be automatic)
 
 **Total Estimated Time**: 10-15 hours of development
 
@@ -318,12 +318,12 @@ ______________________________________________________________________
 
 **Dependent on parse()/format_acl()**:
 
-1. flext-oud-mig - Uses via ldif.parse() (COMPATIBLE)
+1. algar-oud-mig - Uses via ldif.parse() (COMPATIBLE)
 1. Any other projects importing from flext-ldif
 
 **Risk Assessment**:
 
-- flext-oud-mig: 🟢 **NO CHANGES NEEDED** (uses high-level API)
+- algar-oud-mig: 🟢 **NO CHANGES NEEDED** (uses high-level API)
 - flext-ldif itself: 🔴 **EXTENSIVE CHANGES REQUIRED**
 - Other ecosytem projects: 🟡 **REVIEW REQUIRED** (depends on usage)
 
@@ -331,13 +331,13 @@ ______________________________________________________________________
 
 ## CONCLUSION
 
-The parse() and format_acl() return type change requires **significant refactoring** within flext-ldif but does **NOT impact flext-oud-mig** because:
+The parse() and format_acl() return type change requires **significant refactoring** within flext-ldif but does **NOT impact algar-oud-mig** because:
 
-1. flext-oud-mig uses `ldif.parse()` (high-level API) which returns Entry models
-1. flext-oud-mig does not directly call parse() or format_acl()
+1. algar-oud-mig uses `ldif.parse()` (high-level API) which returns Entry models
+1. algar-oud-mig does not directly call parse() or format_acl()
 1. The change is internal to flext-ldif's quirks system
 
-**Recommendation**: Implement the change in flext-ldif, test thoroughly, then verify flext-oud-mig continues to work (should be automatic with no code changes).
+**Recommendation**: Implement the change in flext-ldif, test thoroughly, then verify algar-oud-mig continues to work (should be automatic with no code changes).
 
 ______________________________________________________________________
 

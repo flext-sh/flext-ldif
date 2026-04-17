@@ -15,11 +15,11 @@ import struct
 from collections.abc import MutableSequence
 from typing import Annotated, Self
 
+from flext_cli import u
 from flext_ldif import (
     FlextLdifModelsBases,
     FlextLdifModelsDomainMetadata,
     c,
-    u,
 )
 
 

@@ -26,7 +26,7 @@ if _t.TYPE_CHECKING:
         TestAliasDiscovery,
         TestQuirksAutoInterchange,
         TestQuirksWithRealLdifFixtures,
-        TestsFlextLdifQuirksStandardizedConstants,
+        TestsFlextLdifServersStandardizedConstants,
     )
     from tests.utilities import TestsFlextLdifUtilities, u
 _LAZY_IMPORTS = merge_lazy_imports(
@@ -59,7 +59,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestAliasDiscovery",
                 "TestQuirksAutoInterchange",
                 "TestQuirksWithRealLdifFixtures",
-                "TestsFlextLdifQuirksStandardizedConstants",
+                "TestsFlextLdifServersStandardizedConstants",
             ),
             ".utilities": (
                 "TestsFlextLdifUtilities",
@@ -104,7 +104,7 @@ __all__: list[str] = [
     "TestsFlextLdifConstants",
     "TestsFlextLdifModels",
     "TestsFlextLdifProtocols",
-    "TestsFlextLdifQuirksStandardizedConstants",
+    "TestsFlextLdifServersStandardizedConstants",
     "TestsFlextLdifTypes",
     "TestsFlextLdifUtilities",
     "TestsTestFlextLdifMigrationPipeline",

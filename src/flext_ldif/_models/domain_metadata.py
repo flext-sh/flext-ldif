@@ -12,19 +12,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableMapping, MutableSequence
-from typing import Annotated, Self
+from typing import TYPE_CHECKING, Annotated, Self
 
-from pydantic import BaseModel
+from flext_cli import m, u
+from flext_ldif import FlextLdifModelsMetadata, FlextLdifShared, c, t
 
-from flext_core import m
-from flext_ldif import (
-    FlextLdifModelsDomainAttributes,
-    FlextLdifModelsMetadata,
-    FlextLdifShared,
-    c,
-    t,
-    u,
-)
+if TYPE_CHECKING:
+    from flext_ldif import FlextLdifModelsDomainAttributes
 
 
 class FlextLdifModelsDomainMetadata:
@@ -275,7 +269,7 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = None
         processing_stats: Annotated[
-            BaseModel | None,
+            m.BaseModel | None,
             u.Field(
                 description="Complete statistics tracking for entry transformations (accepts EntryStatistics)",
             ),

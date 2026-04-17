@@ -12,7 +12,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
             "TestAliasDiscovery",
             "TestQuirksAutoInterchange",
             "TestQuirksWithRealLdifFixtures",
-            "TestsFlextLdifQuirksStandardizedConstants",
+            "TestsFlextLdifServersStandardizedConstants",
         ),
         "flext_ldif": (
             "c",

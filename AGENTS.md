@@ -19,7 +19,7 @@ ______________________________________________________________________
 
 ## Regra 0 — Alinhamento Cruzado
 
-- Este arquivo espelha o `../AGENTS.md` raiz. Qualquer mudança de regra deve ser registrada primeiro no `AGENTS.md` raiz e propagada para este arquivo e para `flext-core/`, `flext-cli/`, `flext-ldap/` e `flext-oud-mig/`.
+- Este arquivo espelha o `../AGENTS.md` raiz. Qualquer mudança de regra deve ser registrada primeiro no `AGENTS.md` raiz e propagada para este arquivo e para `flext-core/`, `flext-cli/`, `flext-ldap/` e `algar-oud-mig/`.
 - Todos os agentes aceitam mudanças cruzadas e resolvem conflitos no `AGENTS.md` raiz antes de codar.
 
 ## Project Overview
@@ -129,7 +129,7 @@ src/flext_ldif/
 **How Quirks Work**:
 
 1. **RFC Foundation**: All parsing starts with RFC-compliant parsers
-1. **Quirk Discovery**: `FlextLdifQuirksRegistry` auto-discovers server-specific quirks
+1. **Quirk Discovery**: `FlextLdifServersRegistry` auto-discovers server-specific quirks
 1. **Priority Resolution**: Quirks use priority system (lower number = higher priority)
 1. **Nested Quirks**: Schema quirks contain nested ACL and Entry quirks
 1. **Transformation Pipeline**: Source → RFC → Target via `QuirksConversionMatrix`
@@ -378,11 +378,11 @@ server_types = c.Ldif.ServerTypes  # ✅ CORRETO
 
 ```python
 from flext_ldif import RfcSchemaParserService
-from flext_ldif import FlextLdifQuirksRegistry
+from flext_ldif import FlextLdifServersRegistry
 from pathlib import Path
 
 # MANDATORY: quirk_registry is REQUIRED for all RFC parsers/writers
-quirk_registry = FlextLdifQuirksRegistry()
+quirk_registry = FlextLdifServersRegistry()
 
 # Parse OID schema with quirks support
 oid_parser = RfcSchemaParserService(

@@ -11,9 +11,7 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar, Self, override
 
-from pydantic import ConfigDict
-
-from flext_core import m, u
+from flext_cli import m, u
 from flext_ldif import c, t
 
 
@@ -23,7 +21,7 @@ class FlextLdifModelsMetadata:
     class DynamicMetadata(m.DynamicModel):
         """Model with extra='allow' for dynamic field storage."""
 
-        model_config: ClassVar[m.ConfigDict] = ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             extra=c.ExtraConfig.ALLOW.value
         )
 
@@ -139,7 +137,7 @@ class FlextLdifModelsMetadata:
     class EntryMetadata(m.FrozenDynamicModel):
         """Entry metadata for tracking processing details."""
 
-        model_config: ClassVar[m.ConfigDict] = ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             extra=c.ExtraConfig.ALLOW.value
         )
 

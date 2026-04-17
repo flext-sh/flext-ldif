@@ -46,7 +46,6 @@ if _t.TYPE_CHECKING:
     from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
     from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
     from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
-    from flext_ldif._utilities.result import FlextLdifUtilitiesResult
     from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
     from flext_ldif._utilities.server import FlextLdifUtilitiesServer
     from flext_ldif._utilities.transformers import (
@@ -63,7 +62,7 @@ if _t.TYPE_CHECKING:
     from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
     from flext_ldif.servers._base.constants import FlextLdifServersBaseConstants
     from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
-    from flext_ldif.servers._base.mixins import FlextLdifQuirkMethodsMixin
+    from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
     from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
     from flext_ldif.servers._oid.acl import FlextLdifServersOidAcl
     from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
@@ -167,7 +166,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.oid": ("FlextLdifUtilitiesOID",),
             "._utilities.parser": ("FlextLdifUtilitiesParser",),
             "._utilities.pipeline": ("FlextLdifUtilitiesPipeline",),
-            "._utilities.result": ("FlextLdifUtilitiesResult",),
             "._utilities.schema": ("FlextLdifUtilitiesSchema",),
             "._utilities.server": ("FlextLdifUtilitiesServer",),
             "._utilities.transformers": (
@@ -199,7 +197,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".servers._base.acl": ("FlextLdifServersBaseSchemaAcl",),
             ".servers._base.constants": ("FlextLdifServersBaseConstants",),
             ".servers._base.entry": ("FlextLdifServersBaseEntry",),
-            ".servers._base.mixins": ("FlextLdifQuirkMethodsMixin",),
+            ".servers._base.mixins": ("FlextLdifServerMethodsMixin",),
             ".servers._base.schema": ("FlextLdifServersBaseSchema",),
             ".servers._oid.acl": ("FlextLdifServersOidAcl",),
             ".servers._oid.constants": ("FlextLdifServersOidConstants",),
@@ -318,8 +316,8 @@ __all__: list[str] = [
     "FlextLdifProtocols",
     "FlextLdifProtocolsBase",
     "FlextLdifProtocolsDomain",
-    "FlextLdifQuirkMethodsMixin",
     "FlextLdifServer",
+    "FlextLdifServerMethodsMixin",
     "FlextLdifServersAd",
     "FlextLdifServersApache",
     "FlextLdifServersBase",
@@ -370,7 +368,6 @@ __all__: list[str] = [
     "FlextLdifUtilitiesObjectClass",
     "FlextLdifUtilitiesParser",
     "FlextLdifUtilitiesPipeline",
-    "FlextLdifUtilitiesResult",
     "FlextLdifUtilitiesSchema",
     "FlextLdifUtilitiesServer",
     "FlextLdifUtilitiesTransformer",

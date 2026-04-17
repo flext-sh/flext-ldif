@@ -13,8 +13,6 @@ from collections.abc import (
 )
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import FlextTypes
-
 if TYPE_CHECKING:
     from flext_ldif import t
 
@@ -217,7 +215,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
-        def context(self) -> FlextTypes.MutableStrMapping:
+        def context(self) -> t.MutableStrMapping:
             """Return validation context."""
             ...
 
@@ -656,7 +654,7 @@ class FlextLdifProtocolsBase(Protocol):
     class ModelWithValidationMetadata(Protocol):
         """Model exposing validation metadata for helper updates."""
 
-        validation_metadata: FlextTypes.ConfigMap | None
+        validation_metadata: t.ConfigMap | None
 
     @runtime_checkable
     class ServerConstants(Protocol):
@@ -670,7 +668,7 @@ class FlextLdifProtocolsBase(Protocol):
         DETECTION_DN_MARKERS: frozenset[str] | None
         ACL_ATTRIBUTE_NAME: str | None
         CATEGORIZATION_PRIORITY: MutableSequence[str]
-        CATEGORY_OBJECTCLASSES: FlextTypes.MutableFrozensetMapping
+        CATEGORY_OBJECTCLASSES: t.MutableFrozensetMapping
 
     @runtime_checkable
     class ServerDetectionConstants(Protocol):

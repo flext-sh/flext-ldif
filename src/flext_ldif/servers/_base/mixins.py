@@ -5,12 +5,12 @@ from __future__ import annotations
 from flext_ldif import c, p, u
 
 
-class FlextLdifQuirkMethodsMixin:
+class FlextLdifServerMethodsMixin:
     """Common quirk methods shared by schema, ACL, and entry servers."""
 
     @staticmethod
     def get_parent_quirk_from_instance(
-        instance: FlextLdifQuirkMethodsMixin,
+        instance: FlextLdifServerMethodsMixin,
     ) -> p.Ldif.SchemaQuirk | None:
         """Get the effective parent quirk when available."""
         parent_raw: p.Ldif.SchemaQuirk | None = getattr(instance, "_parent_quirk", None)
@@ -43,17 +43,17 @@ class FlextLdifQuirkMethodsMixin:
 
     def _get_parent_quirk_safe(self) -> p.Ldif.SchemaQuirk | None:
         """Get the effective parent quirk safely."""
-        return FlextLdifQuirkMethodsMixin.get_parent_quirk_from_instance(self)
+        return FlextLdifServerMethodsMixin.get_parent_quirk_from_instance(self)
 
     def _get_priority(self) -> int:
         """Get server priority from the parent Constants class."""
-        return FlextLdifQuirkMethodsMixin.get_priority_from_parent(
+        return FlextLdifServerMethodsMixin.get_priority_from_parent(
             self._get_parent_quirk_safe(),
         )
 
     def _get_server_type(self) -> c.Ldif.ServerTypeLiteral:
         """Resolve server type for the current quirk class."""
-        return FlextLdifQuirkMethodsMixin.get_server_type_from_utilities(type(self))
+        return FlextLdifServerMethodsMixin.get_server_type_from_utilities(type(self))
 
 
-__all__: list[str] = ["FlextLdifQuirkMethodsMixin"]
+__all__: list[str] = ["FlextLdifServerMethodsMixin"]

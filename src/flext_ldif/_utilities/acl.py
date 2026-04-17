@@ -7,15 +7,8 @@ import struct
 from collections.abc import MutableMapping, MutableSequence
 from typing import TypeIs
 
-from flext_core import r, u
-from flext_ldif import (
-    FlextLdifModelsDomainAcl,
-    FlextLdifModelsDomainMetadata,
-    FlextLdifModelsMetadata,
-    FlextLdifModelsSettings,
-    c,
-    t,
-)
+from flext_core import u
+from flext_ldif import c, m, r, t
 
 logger = u.fetch_logger(__name__)
 
@@ -96,7 +89,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _build_subject_and_permissions(
         aci_content: str,
-        settings: FlextLdifModelsSettings.AciParserConfig,
+        settings: m.Ldif.AciParserConfig,
     ) -> tuple[str, str, t.MutableBoolMapping]:
         """Build subject and permissions from ACI content."""
         permissions_list = FlextLdifUtilitiesACL.extract_permissions(
@@ -153,7 +146,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _extract_target_info(
         aci_content: str,
-        settings: FlextLdifModelsSettings.AciParserConfig,
+        settings: m.Ldif.AciParserConfig,
     ) -> tuple[MutableSequence[str], str]:
         """Extract target attributes and DN from ACI content."""
         targetattr_extracted = FlextLdifUtilitiesACL.extract_component(
@@ -272,7 +265,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def build_metadata_extensions(
-        settings: FlextLdifModelsSettings.AclMetadataConfig,
+        settings: m.Ldif.AclMetadataConfig,
     ) -> t.MutableRecursiveContainerMapping:
         """Build QuirkMetadata extensions for ACL."""
         normalized_line_breaks: MutableSequence[t.Scalar] | None = None
@@ -485,9 +478,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def extract_target_extensions(
-        extensions: FlextLdifModelsMetadata.DynamicMetadata
-        | t.MutableRecursiveContainerMapping
-        | None,
+        extensions: m.Ldif.DynamicMetadata | t.MutableRecursiveContainerMapping | None,
         target_config: MutableSequence[tuple[str, str]],
     ) -> MutableSequence[str]:
         """Extract and format target extensions from metadata extensions."""
@@ -538,7 +529,7 @@ class FlextLdifUtilitiesACL:
         return [p.lower() for p in permissions if p.lower() in supported_lower]
 
     @staticmethod
-    def format_aci_line(settings: FlextLdifModelsSettings.AciLineFormatConfig) -> str:
+    def format_aci_line(settings: m.Ldif.AciLineFormatConfig) -> str:
         r"""Format complete ACI line from components.
 
         Args:
@@ -548,7 +539,7 @@ class FlextLdifUtilitiesACL:
             Formatted ACI line string
 
         Example:
-            settings = FlextLdifModelsSettings.AciLineFormatConfig(
+            settings = m.Ldif.AciLineFormatConfig(
                 name="test-acl",
                 target_clause="(targetattr=\\"cn\\")",
                 permissions_clause="allow (read,write)",
@@ -579,9 +570,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def format_conversion_comments(
-        extensions: FlextLdifModelsMetadata.DynamicMetadata
-        | t.MutableRecursiveContainerMapping
-        | None,
+        extensions: m.Ldif.DynamicMetadata | t.MutableRecursiveContainerMapping | None,
         converted_from_key: str,
         comments_key: str,
     ) -> MutableSequence[str]:
@@ -706,17 +695,15 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def parse_aci(
         acl_line: str,
-        settings: FlextLdifModelsSettings.AciParserConfig,
-    ) -> r[FlextLdifModelsDomainAcl.Acl]:
+        settings: m.Ldif.AciParserConfig,
+    ) -> r[m.Ldif.Acl]:
         """Parse ACI line using server-specific settings Model."""
         valid, aci_content = FlextLdifUtilitiesACL.validate_aci_format(
             acl_line,
             settings.aci_prefix,
         )
         if not valid:
-            return r[FlextLdifModelsDomainAcl.Acl].fail(
-                f"Not a valid ACI format: {settings.aci_prefix}"
-            )
+            return r[m.Ldif.Acl].fail(f"Not a valid ACI format: {settings.aci_prefix}")
         version, acl_name = FlextLdifUtilitiesACL._extract_version_and_name(
             aci_content,
             settings.version_acl_pattern,
@@ -735,29 +722,29 @@ class FlextLdifUtilitiesACL:
             acl_line,
             settings.extra_patterns,
         )
-        acl_model = FlextLdifModelsDomainAcl.Acl(
+        acl_model = m.Ldif.Acl(
             name=acl_name,
-            target=FlextLdifModelsDomainAcl.AclTarget.model_validate({
+            target=m.Ldif.AclTarget.model_validate({
                 "target_dn": target_dn,
                 "attributes": target_attributes,
             }),
-            subject=FlextLdifModelsDomainAcl.AclSubject(
+            subject=m.Ldif.AclSubject(
                 subject_type=subject_type
                 if FlextLdifUtilitiesACL._is_acl_subject_type(subject_type)
                 else c.Ldif.AclSubjectType.USER,
                 subject_value=subject_value,
             ),
-            permissions=FlextLdifModelsDomainAcl.AclPermissions(**permissions_dict),
+            permissions=m.Ldif.AclPermissions(**permissions_dict),
             server_type=c.Ldif.ServerTypes(settings.server_type),
             raw_acl=acl_line,
-            metadata=FlextLdifModelsDomainMetadata.QuirkMetadata.create_for(
+            metadata=m.Ldif.QuirkMetadata.create_for(
                 settings.server_type,
-                extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(extensions)
+                extensions=m.Ldif.DynamicMetadata.from_dict(extensions)
                 if extensions
                 else None,
             ),
         )
-        return r[FlextLdifModelsDomainAcl.Acl].ok(acl_model)
+        return r[m.Ldif.Acl].ok(acl_model)
 
     @staticmethod
     def parse_targetattr(

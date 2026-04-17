@@ -9,7 +9,6 @@ from typing import TypeIs
 
 from flext_core import u
 from flext_ldif import (
-    FlextLdifModelsMetadata,
     FlextLdifUtilitiesOID,
     FlextLdifUtilitiesServer,
     c,
@@ -56,7 +55,7 @@ class FlextLdifUtilitiesParser:
                 extensions_typed[key] = list(val)
             return m.Ldif.QuirkMetadata(
                 quirk_type=quirk_type,
-                extensions=FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+                extensions=m.Ldif.DynamicMetadata.from_dict(
                     extensions_typed,
                 ),
             )
@@ -375,7 +374,7 @@ class FlextLdifUtilitiesParser:
                 if str_list is not None:
                     extensions[key] = str_list
             return extensions
-        extensions_metadata = FlextLdifModelsMetadata.DynamicMetadata.from_dict(result)
+        extensions_metadata = m.Ldif.DynamicMetadata.from_dict(result)
         strict_result: t.MutableStrSequenceMapping = {}
         for key, value in extensions_metadata.items():
             if not _is_metadata_value(value):

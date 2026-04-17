@@ -15,33 +15,34 @@ from typing import Annotated
 
 from pydantic import BaseModel, StringConstraints, TypeAdapter
 
-from flext_core import FlextTypes, r
+from flext_cli import r
+from flext_core import t
 
 
 class FlextLdifTypesBase:
     """Base LDIF aliases for recursive containers and raw LDIF payloads."""
 
-    type Scalar = FlextTypes.Primitives | None
-    type MetadataLeaf = FlextTypes.Primitives | datetime | None
+    type Scalar = t.Primitives | None
+    type MetadataLeaf = t.Primitives | datetime | None
     type MetadataNode = (
         MetadataLeaf | Sequence[MetadataLeaf] | Mapping[str, MetadataLeaf]
     )
     type MetadataValue = (
         MetadataLeaf | Sequence[MetadataNode] | Mapping[str, MetadataNode]
     )
-    type ContainerLeaf = FlextTypes.Primitives | BaseModel | datetime | None
+    type ContainerLeaf = t.Primitives | BaseModel | datetime | None
     type ContainerNode = (
         ContainerLeaf | Sequence[ContainerLeaf] | Mapping[str, ContainerLeaf]
     )
     type RecursiveContainer = (
         ContainerLeaf | Sequence[ContainerNode] | Mapping[str, ContainerNode]
     )
-    type ValueType = Scalar | FlextTypes.StrSequence
+    type ValueType = Scalar | t.StrSequence
     type ValueList = Sequence[ValueType]
     type AttributeValue = str | bytes
-    type EntryAttributesDict = FlextTypes.StrSequenceMapping
-    type MutableEntryAttributesDict = FlextTypes.MutableStrSequenceMapping
-    type RawEntryDict = Mapping[str, str | FlextTypes.StrSequence | AbstractSet[str]]
+    type EntryAttributesDict = t.StrSequenceMapping
+    type MutableEntryAttributesDict = t.MutableStrSequenceMapping
+    type RawEntryDict = Mapping[str, str | t.StrSequence | AbstractSet[str]]
     type MutableRawEntryDict = MutableMapping[
         str,
         str | MutableSequence[str] | AbstractSet[str],
@@ -50,27 +51,24 @@ class FlextLdifTypesBase:
         str,
         MutableSequence[str] | str | bool | None,
     ]
-    type AttributeDict = FlextTypes.StrSequenceMapping
-    type AttributeDictGeneric = Mapping[str, FlextTypes.StrSequence | str]
-    type DistributionDict = FlextTypes.IntMapping
-    type TemplateValue = FlextTypes.Scalar | None
+    type AttributeDict = t.StrSequenceMapping
+    type AttributeDictGeneric = Mapping[str, t.StrSequence | str]
+    type DistributionDict = t.IntMapping
+    type TemplateValue = t.Scalar | None
     type DN = str
     type ParseMethodArg = str
-    type ParseMethodReturn = r[FlextTypes.Scalar | FlextTypes.StrSequence | None]
+    type ParseMethodReturn = r[t.Scalar | t.StrSequence | None]
     type ParseMethod = Callable[[RecursiveContainer, str], ParseMethodReturn]
     type ParseMethodDecorator = Callable[[ParseMethod], ParseMethod]
-    type WriteMethodArg = FlextTypes.Scalar | FlextTypes.StrSequence | None
+    type WriteMethodArg = t.Scalar | t.StrSequence | None
     type WriteMethodReturn = (
-        FlextTypes.Scalar
-        | FlextTypes.StrSequence
-        | r[FlextTypes.Scalar | FlextTypes.StrSequence | None]
-        | None
+        t.Scalar | t.StrSequence | r[t.Scalar | t.StrSequence | None] | None
     )
     type WriteMethod = Callable[[RecursiveContainer, WriteMethodArg], WriteMethodReturn]
     type WriteMethodDecorator = Callable[[WriteMethod], WriteMethod]
     type SafeMethod = Callable[
         [RecursiveContainer, ParseMethodArg],
-        FlextTypes.Scalar | FlextTypes.StrSequence | None,
+        t.Scalar | t.StrSequence | None,
     ]
     type SafeMethodDecorator = Callable[[SafeMethod], SafeMethod]
     type Rfc4512Descriptor = Annotated[

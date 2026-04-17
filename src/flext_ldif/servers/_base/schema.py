@@ -8,13 +8,13 @@ from typing import Annotated, ClassVar, Self, override
 
 from pydantic import ValidationError
 
-from flext_core import s
 from flext_ldif import (
-    FlextLdifQuirkMethodsMixin,
+    FlextLdifServerMethodsMixin,
     c,
     m,
     p,
     r,
+    s,
     t,
     u,
 )
@@ -23,7 +23,7 @@ logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServersBaseSchema(
-    FlextLdifQuirkMethodsMixin,
+    FlextLdifServerMethodsMixin,
     s[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str],
 ):
     """Base class for schema quirks using `s` with enhanced usability."""
