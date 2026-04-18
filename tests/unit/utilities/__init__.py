@@ -7,20 +7,14 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 _LAZY_IMPORTS = build_lazy_import_map(
     {
-        ".test_utilities_comprehensive": ("test_utilities_comprehensive",),
-        ".test_utilities_core": ("test_utilities_core",),
-        "flext_ldif": (
-            "c",
-            "d",
-            "e",
-            "h",
-            "m",
-            "p",
-            "r",
-            "s",
-            "t",
-            "u",
-            "x",
+        ".test_utilities_comprehensive": ("TestFlextLdifUtilitiesComprehensive",),
+        ".test_utilities_core": (
+            "TestAttributeFixer",
+            "TestDnObjectClassMethods",
+            "TestLdifParser",
+            "TestObjectClassUtilities",
+            "TestServerTypes",
+            "TestsFlextLdifDnOperationsPure",
         ),
     },
 )
