@@ -1,0 +1,14 @@
+tests/typings.py
+  h_9db9d35f50cf33 8,12-13,15,21,24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "7ab39d02cd853bf4064db18d52f0f0ed03fe60c2",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
