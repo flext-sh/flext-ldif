@@ -13,8 +13,6 @@ from typing import (
     override,
 )
 
-from pydantic import BaseModel
-
 from flext_ldif import (
     FlextLdifServer,
     FlextLdifServersBase,
@@ -448,7 +446,7 @@ class FlextLdifConversion(
         value: t.RuntimeAtomic | t.RecursiveContainer,
     ) -> TypeIs[t.RecursiveContainer]:
         """Type guard: check if value is NormalizedValue (not a BaseModel)."""
-        return not isinstance(value, BaseModel)
+        return not isinstance(value, m.BaseModel)
 
     @staticmethod
     def _normalize_metadata_value(value: t.RecursiveContainer) -> t.RecursiveContainer:

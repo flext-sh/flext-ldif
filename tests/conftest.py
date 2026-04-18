@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import contextlib
 import time
 from collections.abc import (
     Callable,
@@ -587,29 +586,24 @@ def clean_test_ou(
 ) -> Generator[str]:
     """Create and clean up an isolated OU for integration tests."""
     test_ou_dn = make_test_base_dn("FlextLdifTests")
-    with contextlib.suppress(Exception):
-        ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
-        entries: Sequence[p.Ldap.Ldap3Entry] = list(ldap_connection.entries)
-        if entries:
-            dns_to_delete: t.StrSequence = [str(entry.entry_dn) for entry in entries]
-            for dn in reversed(dns_to_delete):
-                with contextlib.suppress(Exception):
-                    ldap_connection.delete(dn)
-    with contextlib.suppress(Exception):
-        ldap_connection.add(
-            test_ou_dn,
-            ["organizationalUnit"],
-            {"ou": "FlextLdifTests"},
-        )
+    ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
+    entries: Sequence[p.Ldap.Ldap3Entry] = list(ldap_connection.entries)
+    if entries:
+        dns_to_delete: t.StrSequence = [str(entry.entry_dn) for entry in entries]
+        for dn in reversed(dns_to_delete):
+            ldap_connection.delete(dn)
+    ldap_connection.add(
+        test_ou_dn,
+        ["organizationalUnit"],
+        {"ou": "FlextLdifTests"},
+    )
     yield test_ou_dn
-    with contextlib.suppress(Exception):
-        ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
-        entries2: Sequence[p.Ldap.Ldap3Entry] = list(ldap_connection.entries)
-        if entries2:
-            dns_to_delete2: t.StrSequence = [str(entry.entry_dn) for entry in entries2]
-            for dn in reversed(dns_to_delete2):
-                with contextlib.suppress(Exception):
-                    ldap_connection.delete(dn)
+    ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
+    entries2: Sequence[p.Ldap.Ldap3Entry] = list(ldap_connection.entries)
+    if entries2:
+        dns_to_delete2: t.StrSequence = [str(entry.entry_dn) for entry in entries2]
+        for dn in reversed(dns_to_delete2):
+            ldap_connection.delete(dn)
 
 
 def pytest_configure(config: pytest.Config) -> None:

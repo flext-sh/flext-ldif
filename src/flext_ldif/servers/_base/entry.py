@@ -5,7 +5,6 @@ from __future__ import annotations
 import base64
 import re
 from collections.abc import Mapping, MutableMapping, MutableSequence
-from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self, override
 
@@ -78,9 +77,15 @@ class FlextLdifServersBaseEntry(
             for raw_key, raw_value in format_options_raw.items():
                 key = str(raw_key)
                 format_options_map[key] = raw_value
-            with suppress(Exception):
+            try:
                 return m.Ldif.WriteFormatOptions.model_validate(
                     dict(format_options_map),
+                )
+            except (c.ValidationError, TypeError) as exc:
+                logger.warning(
+                    "Failed to validate extension write format options",
+                    error=str(exc),
+                    error_type=type(exc).__name__,
                 )
         if metadata.write_options is None:
             return None

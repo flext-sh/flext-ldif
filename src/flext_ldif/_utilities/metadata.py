@@ -6,8 +6,6 @@ import re
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from typing import TypeIs
 
-from pydantic import BaseModel
-
 from flext_core import u
 from flext_ldif import (
     FlextLdifUtilitiesServer,
@@ -608,9 +606,9 @@ class FlextLdifUtilitiesMetadata:
                     }
                 else:
                     normalized_metadata[write_option_key] = str(value)
-            config_root: MutableMapping[str, t.RecursiveContainer | BaseModel] = dict(
-                normalized_metadata,
-            )
+            config_root: MutableMapping[
+                str, t.RecursiveContainer | m.BaseModel
+            ] = dict(normalized_metadata)
             object.__setattr__(
                 model, "validation_metadata", t.ConfigMap(root=config_root)
             )
@@ -815,18 +813,16 @@ class FlextLdifUtilitiesMetadata:
         if write_opts is None:
             return None
         raw_extras: t.MutableRecursiveContainerMapping | None = None
-        if isinstance(write_opts, BaseModel):
+        if isinstance(write_opts, m.BaseModel):
             model_extra_val = write_opts.model_extra
             if isinstance(model_extra_val, dict):
                 raw_extras = {str(k): v for k, v in model_extra_val.items()}
         extras: t.MutableRecursiveContainerMapping = {}
         opt: t.RecursiveContainer | None = None
         if raw_extras is not None:
-            config_map_root: MutableMapping[str, t.RecursiveContainer | BaseModel] = (
-                dict(
-                    raw_extras,
-                )
-            )
+            config_map_root: MutableMapping[
+                str, t.RecursiveContainer | m.BaseModel
+            ] = dict(raw_extras)
             extras = {
                 extra_key: u.normalize_to_metadata(extra_value)
                 for extra_key, extra_value in t.ConfigMap(

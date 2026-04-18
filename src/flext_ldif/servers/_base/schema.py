@@ -6,8 +6,6 @@ import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
-from pydantic import ValidationError
-
 from flext_ldif import (
     FlextLdifServerMethodsMixin,
     c,
@@ -339,7 +337,7 @@ class FlextLdifServersBaseSchema(
             try:
                 return model.model_validate(value)
             except (
-                ValidationError,
+                c.ValidationError,
                 ValueError,
                 KeyError,
                 AttributeError,

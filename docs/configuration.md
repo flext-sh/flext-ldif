@@ -228,8 +228,7 @@ migration_api = ldif(settings=create_migration_config())
 ### Configuration Validation
 
 ```python
-from pydantic import ValidationError
-from flext_ldif import FlextLdifModels
+from flext_ldif import FlextLdifModels, c
 
 
 def validate_configuration(config_dict: dict) -> p.Result[FlextLdifModels.Config]:

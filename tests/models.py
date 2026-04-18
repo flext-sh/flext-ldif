@@ -6,10 +6,9 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Annotated, ClassVar
 
-from flext_ldap import m, u
 from flext_tests import FlextTestsModels
-from pydantic import ConfigDict
 
+from flext_ldif import m, u
 from tests import t
 
 
@@ -33,7 +32,7 @@ class TestsFlextLdifModels(FlextTestsModels, m):
             class FixtureMetadata(m.BaseModel):
                 """Metadata about a discovered fixture file."""
 
-                model_config: ClassVar[m.ConfigDict] = ConfigDict(frozen=True)
+                model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
                 server_type: Annotated[
                     t.Ldif.Tests.FixtureServer,
@@ -60,7 +59,7 @@ class TestsFlextLdifModels(FlextTestsModels, m):
             class AttributeTestCase(m.BaseModel):
                 """Unified test case for attribute detection."""
 
-                model_config: ClassVar[m.ConfigDict] = ConfigDict(frozen=True)
+                model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
                 scenario: Annotated[str, u.Field(description="Attribute scenario")]
                 attr_definition: Annotated[
@@ -82,7 +81,7 @@ class TestsFlextLdifModels(FlextTestsModels, m):
             class ObjectClassTestCase(m.BaseModel):
                 """Unified test case for objectClass detection."""
 
-                model_config: ClassVar[m.ConfigDict] = ConfigDict(frozen=True)
+                model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
                 scenario: Annotated[str, u.Field(description="ObjectClass scenario")]
                 oc_definition: Annotated[
@@ -109,7 +108,7 @@ class TestsFlextLdifModels(FlextTestsModels, m):
             class EntryTestCase(m.BaseModel):
                 """Unified test case for entry detection."""
 
-                model_config: ClassVar[m.ConfigDict] = ConfigDict(frozen=True)
+                model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
                 scenario: Annotated[str, u.Field(description="Entry scenario")]
                 entry_dn: Annotated[str, u.Field(description="Entry DN")]
@@ -126,7 +125,7 @@ class TestsFlextLdifModels(FlextTestsModels, m):
                 """Server implementation for protocol testing."""
 
                 __test__ = False
-                model_config: ClassVar[m.ConfigDict] = ConfigDict(frozen=True)
+                model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
                 name: Annotated[str, u.Field(description="Implementation name")]
                 server_class: Annotated[type, u.Field(description="Server class")]
@@ -158,7 +157,7 @@ class TestsFlextLdifModels(FlextTestsModels, m):
             class AclTestCase(m.BaseModel):
                 """Unified test case for ACL handling."""
 
-                model_config: ClassVar[m.ConfigDict] = ConfigDict(frozen=True)
+                model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
                 scenario: Annotated[str, u.Field(description="ACL scenario")]
                 acl_line: Annotated[str | None, u.Field(description="ACL line")] = None

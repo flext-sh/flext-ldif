@@ -6,8 +6,6 @@ import struct
 from collections.abc import MutableMapping, MutableSequence
 from typing import Final, override
 
-from pydantic import BaseModel
-
 from flext_ldif import (
     FlextLdifFilters,
     FlextLdifServer,
@@ -146,7 +144,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
     ) -> m.Ldif.Entry | None:
         if isinstance(value, m.Ldif.Entry):
             return value
-        if isinstance(value, BaseModel):
+        if isinstance(value, m.BaseModel):
             try:
                 return m.Ldif.Entry.model_validate(value)
             except c.ValidationError as exc:

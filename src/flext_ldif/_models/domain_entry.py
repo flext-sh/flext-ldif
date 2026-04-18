@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
-from contextlib import suppress
 from datetime import datetime
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
@@ -625,8 +624,10 @@ class FlextLdifModelsDomainEntry:
             for dt_field in cls._DATETIME_FIELDS:
                 field_value = data_dict.get(dt_field)
                 if isinstance(field_value, str):
-                    with suppress(ValueError):
+                    try:
                         data_dict[dt_field] = datetime.fromisoformat(field_value)
+                    except ValueError:
+                        data_dict[dt_field] = field_value
             if data_dict.get("metadata") is None:
                 quirk_type_value = data_dict.get("quirk_type")
                 final_quirk_type_val: c.Ldif.ServerTypes

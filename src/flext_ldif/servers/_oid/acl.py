@@ -7,8 +7,6 @@ import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import ClassVar, Literal, override
 
-from pydantic import RootModel
-
 from flext_ldif import (
     FlextLdifServersOidConstants,
     FlextLdifServersRfc,
@@ -22,7 +20,7 @@ from flext_ldif import (
 logger = u.fetch_logger(__name__)
 
 
-class _OidAclTargetAttributesJson(RootModel[MutableSequence[str]]):
+class _OidAclTargetAttributesJson(m.RootModel[MutableSequence[str]]):
     pass
 
 

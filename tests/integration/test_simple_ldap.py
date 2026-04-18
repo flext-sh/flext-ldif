@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 from collections.abc import Callable
 
 from flext_ldif import ldif
@@ -40,7 +39,8 @@ def test_create_and_export_entry(
     base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
     unique_username = make_test_username("SimpleTest")
     test_dn = f"cn={unique_username},{base_dn}"
-    with contextlib.suppress(Exception):
+    ldap_connection.search(test_dn, "(objectClass=*)", search_scope="BASE")
+    if ldap_connection.entries:
         ldap_connection.delete(test_dn)
     ldap_connection.add(test_dn, ["person"], {"cn": unique_username, "sn": "Test"})
     ldap_connection.search(
