@@ -13,8 +13,6 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
-from pydantic import ConfigDict
-
 from flext_cli import m, u
 from flext_ldif import (
     FlextLdifModelsBases,
@@ -56,7 +54,7 @@ class FlextLdifModels(m):
         class Stats(m.BaseModel):
             """Write statistics for batch content operations."""
 
-            model_config: ClassVar[m.ConfigDict] = ConfigDict(validate_default=True)
+            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(validate_default=True)
             total_entries: Annotated[t.NonNegativeInt, u.Field()] = 0
             successful: Annotated[t.NonNegativeInt, u.Field()] = 0
             failed: Annotated[t.NonNegativeInt, u.Field()] = 0
