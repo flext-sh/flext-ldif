@@ -119,9 +119,9 @@ def oid_schema_entries(
     oid_schema_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse OID schema fixture into Entry models."""
-    parse_response: m.Ldif.ParseResponse = u.expect_success(
+    parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(oid_schema_fixture),
-        message="OID schema parsing failed",
+        error_msg="OID schema parsing failed",
     )
     return parse_response.entries
 
@@ -132,9 +132,9 @@ def oid_entries(
     oid_entries_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse OID entries fixture into Entry models."""
-    parse_response: m.Ldif.ParseResponse = u.expect_success(
+    parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(oid_entries_fixture),
-        message="OID entries parsing failed",
+        error_msg="OID entries parsing failed",
     )
     return parse_response.entries
 
@@ -172,9 +172,9 @@ def oud_schema_entries(
     oud_schema_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse OUD schema fixture into Entry models."""
-    parse_response: m.Ldif.ParseResponse = u.expect_success(
+    parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(oud_schema_fixture),
-        message="OUD schema parsing failed",
+        error_msg="OUD schema parsing failed",
     )
     return parse_response.entries
 
@@ -185,9 +185,9 @@ def oud_entries(
     oud_entries_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse OUD entries fixture into Entry models."""
-    parse_response: m.Ldif.ParseResponse = u.expect_success(
+    parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(oud_entries_fixture),
-        message="OUD entries parsing failed",
+        error_msg="OUD entries parsing failed",
     )
     return parse_response.entries
 
@@ -231,9 +231,9 @@ def openldap_schema_entries(
     openldap_schema_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse OpenLDAP schema fixture into Entry models."""
-    parse_response: m.Ldif.ParseResponse = u.expect_success(
+    parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(openldap_schema_fixture),
-        message="OpenLDAP schema parsing failed",
+        error_msg="OpenLDAP schema parsing failed",
     )
     return parse_response.entries
 
@@ -244,9 +244,9 @@ def openldap_entries(
     openldap_entries_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse OpenLDAP entries fixture into Entry models."""
-    parse_response: m.Ldif.ParseResponse = u.expect_success(
+    parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(openldap_entries_fixture),
-        message="OpenLDAP entries parsing failed",
+        error_msg="OpenLDAP entries parsing failed",
     )
     return parse_response.entries
 
@@ -263,9 +263,9 @@ def rfc_schema_entries(
     rfc_schema_fixture: str,
 ) -> Sequence[m.Ldif.Entry]:
     """Parse RFC schema fixture into Entry models."""
-    parse_response: m.Ldif.ParseResponse = u.expect_success(
+    parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(rfc_schema_fixture),
-        message="RFC schema parsing failed",
+        error_msg="RFC schema parsing failed",
     )
     return parse_response.entries
 
@@ -377,18 +377,18 @@ def server() -> FlextLdifServer:
 @pytest.fixture
 def oid_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get OID server quirk via FlextLdifServer API."""
-    return u.expect_success(
+    return u.Tests.assert_success(
         server.quirk("oid"),
-        message="OID quirk must be registered",
+        error_msg="OID quirk must be registered",
     )
 
 
 @pytest.fixture
 def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get OUD server quirk via FlextLdifServer API."""
-    return u.expect_success(
+    return u.Tests.assert_success(
         server.get_base_quirk("oud"),
-        message="OUD quirk must be registered",
+        error_msg="OUD quirk must be registered",
     )
 
 

@@ -322,7 +322,6 @@ class FlextLdifConversion(
             lambda: u.Ldif.normalize_server_type(
                 str(getattr(source_quirk, "server_type", "")),
             ),
-            default=None,
         ).map_or(None)
         metadata = m.Ldif.QuirkMetadata.create_for(source_server_type, extensions=None)
         field_name = (
@@ -979,7 +978,6 @@ class FlextLdifConversion(
                     if isinstance(server_type_attr, str)
                     else None
                 ),
-                default=None,
             ).map_or(None)
             entry_metadata = m.Ldif.QuirkMetadata.create_for(
                 source_server_type,
@@ -1004,7 +1002,6 @@ class FlextLdifConversion(
                     if target_server_type_raw != c.IDENTIFIER_UNKNOWN
                     else None
                 ),
-                default=None,
             ).map_or(None)
             return (
                 self
@@ -1567,7 +1564,6 @@ class FlextLdifConversion(
             if source_quirk_name != c.IDENTIFIER_UNKNOWN:
                 normalized_source_server = u.try_(
                     lambda: u.Ldif.normalize_server_type(source_quirk_name),
-                    default=None,
                 ).map_or(None)
             extensions_update: t.MutableRecursiveContainerMapping = {
                 "converted_from_server": source_quirk_name,
