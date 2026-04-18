@@ -5,8 +5,6 @@ from __future__ import annotations
 from collections.abc import Callable, MutableSequence
 from typing import ClassVar, Self, overload, override
 
-from pydantic import ConfigDict
-
 from flext_core import s
 from flext_ldif import (
     FlextLdifServersBaseEntry,
@@ -24,7 +22,7 @@ from flext_ldif import (
 class FlextLdifServersBase(s[m.Ldif.Entry]):
     """Base class for LDIF/LDAP server quirks built on `s`."""
 
-    model_config: ClassVar[m.ConfigDict] = ConfigDict(
+    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
         arbitrary_types_allowed=True,
         extra="forbid",
     )

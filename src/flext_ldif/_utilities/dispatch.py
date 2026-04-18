@@ -5,8 +5,6 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from typing import ClassVar, TypeGuard, overload
 
-from pydantic import TypeAdapter, ValidationError
-
 from flext_ldif import (
     FlextLdifUtilitiesCollectionLdif,
     FlextLdifUtilitiesDN,
@@ -14,6 +12,7 @@ from flext_ldif import (
     FlextLdifUtilitiesSchema,
     FlextLdifUtilitiesServer,
     FlextLdifUtilitiesValidation,
+    c,
     m,
     p,
     r,
@@ -24,10 +23,10 @@ from flext_ldif import (
 class FlextLdifUtilitiesDispatch:
     """Override dispatchers that route between parent classes."""
 
-    _ENTRY_LIST_ADAPTER: ClassVar[m.TypeAdapter[list[m.Ldif.Entry]]] = TypeAdapter(
+    _ENTRY_LIST_ADAPTER: ClassVar[m.TypeAdapter[list[m.Ldif.Entry]]] = m.TypeAdapter(
         list[m.Ldif.Entry]
     )
-    _ACL_LIST_ADAPTER: ClassVar[m.TypeAdapter[list[m.Ldif.Acl]]] = TypeAdapter(
+    _ACL_LIST_ADAPTER: ClassVar[m.TypeAdapter[list[m.Ldif.Acl]]] = m.TypeAdapter(
         list[m.Ldif.Acl]
     )
 
@@ -256,7 +255,7 @@ class FlextLdifUtilitiesDispatch:
         try:
             FlextLdifUtilitiesDispatch._ENTRY_LIST_ADAPTER.validate_python(obj)
             return True
-        except (ValidationError, TypeError):
+        except (c.ValidationError, TypeError):
             return False
 
     # --- MRO conflict resolution: Collection methods (CollectionLdif vs FlextUtilities) ---

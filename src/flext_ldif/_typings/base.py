@@ -13,9 +13,7 @@ from collections.abc import (
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import BaseModel, StringConstraints, TypeAdapter
-
-from flext_cli import r
+from flext_cli import m, r
 from flext_core import t
 
 
@@ -30,7 +28,7 @@ class FlextLdifTypesBase:
     type MetadataValue = (
         MetadataLeaf | Sequence[MetadataNode] | Mapping[str, MetadataNode]
     )
-    type ContainerLeaf = t.Primitives | BaseModel | datetime | None
+    type ContainerLeaf = t.Primitives | m.BaseModel | datetime | None
     type ContainerNode = (
         ContainerLeaf | Sequence[ContainerLeaf] | Mapping[str, ContainerLeaf]
     )
@@ -73,7 +71,7 @@ class FlextLdifTypesBase:
     type SafeMethodDecorator = Callable[[SafeMethod], SafeMethod]
     type Rfc4512Descriptor = Annotated[
         str,
-        StringConstraints(
+        m.StringConstraints(
             min_length=1,
             max_length=64,
             pattern=r"^[a-zA-Z0-9-]+$",
@@ -82,20 +80,20 @@ class FlextLdifTypesBase:
     ]
     type Rfc4514DnComponent = Annotated[
         str,
-        StringConstraints(min_length=2, pattern=r"^[a-zA-Z0-9-]+=[^,]+$"),
+        m.StringConstraints(min_length=2, pattern=r"^[a-zA-Z0-9-]+=[^,]+$"),
     ]
     type Rfc2849AttributeValue = Annotated[
         str,
-        StringConstraints(max_length=4096),
+        m.StringConstraints(max_length=4096),
     ]
-    RFC4512_DESCRIPTOR_ADAPTER: TypeAdapter[Rfc4512Descriptor] = TypeAdapter(
+    RFC4512_DESCRIPTOR_ADAPTER: m.TypeAdapter[Rfc4512Descriptor] = m.TypeAdapter(
         Rfc4512Descriptor,
     )
-    RFC4514_DN_COMPONENT_ADAPTER: TypeAdapter[Rfc4514DnComponent] = TypeAdapter(
+    RFC4514_DN_COMPONENT_ADAPTER: m.TypeAdapter[Rfc4514DnComponent] = m.TypeAdapter(
         Rfc4514DnComponent,
     )
-    RFC2849_ATTRIBUTE_VALUE_ADAPTER: TypeAdapter[Rfc2849AttributeValue] = TypeAdapter(
-        Rfc2849AttributeValue,
+    RFC2849_ATTRIBUTE_VALUE_ADAPTER: m.TypeAdapter[Rfc2849AttributeValue] = (
+        m.TypeAdapter(Rfc2849AttributeValue)
     )
 
 

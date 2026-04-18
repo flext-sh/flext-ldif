@@ -14,8 +14,6 @@ from collections.abc import (
 )
 from typing import TYPE_CHECKING, Annotated, ClassVar, Self
 
-from pydantic import ConfigDict
-
 from flext_cli import m, u
 from flext_ldif import c, t
 
@@ -29,7 +27,7 @@ class FlextLdifModelsDomainAttributes:
     class Attributes(m.ArbitraryTypesModel):
         """LDIF attributes container - simplified dict-like interface."""
 
-        model_config: ClassVar[m.ConfigDict] = ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             validate_assignment=True,
             extra="forbid",
             use_enum_values=True,

@@ -9,8 +9,6 @@ from __future__ import annotations
 from collections.abc import Iterator, MutableMapping, MutableSequence
 from typing import TYPE_CHECKING, Annotated, override
 
-from pydantic import ConfigDict
-
 from flext_cli import m, u
 from flext_ldif import FlextLdifModelsMetadata, c, t
 
@@ -20,7 +18,7 @@ if TYPE_CHECKING:
 
 class FlextLdifModelsCollections:
     class DynamicCounts(m.DynamicModel):
-        model_config = ConfigDict(
+        model_config = m.ConfigDict(
             extra=c.ExtraConfig.ALLOW.value, validate_assignment=True
         )
 

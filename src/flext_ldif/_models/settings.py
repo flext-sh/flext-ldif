@@ -12,8 +12,6 @@ from __future__ import annotations
 from collections.abc import Callable, MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Literal, Self
 
-from pydantic import ConfigDict
-
 from flext_cli import m, u
 from flext_ldif import (
     FlextLdifModelsDomainAcl,
@@ -897,7 +895,7 @@ class FlextLdifModelsSettings:
 
         """
 
-        model_config: ClassVar[m.ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
         show_operational_attributes: Annotated[
             str,
             u.Field(
