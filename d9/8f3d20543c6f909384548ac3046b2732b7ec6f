@@ -1,0 +1,34 @@
+src/flext_ldif/_utilities/metadata.py
+  h_9db9d35f50cf33 610-611,816,824-825
+src/flext_ldif/servers/_base/entry.py
+  h_9db9d35f50cf33 80,84-88
+src/flext_ldif/services/categorization.py
+  h_9db9d35f50cf33 147
+src/flext_ldif/servers/_base/schema.py
+  h_9db9d35f50cf33 340
+docs/configuration.md
+  h_9db9d35f50cf33 231
+tests/integration/test_simple_ldap.py
+  h_9db9d35f50cf33 42-43
+tests/models.py
+  h_9db9d35f50cf33 35,62,84,111,128,160
+src/flext_ldif/_models/domain_entry.py
+  h_9db9d35f50cf33 627,629-630
+tests/conftest.py
+  h_9db9d35f50cf33 594-595,606
+src/flext_ldif/servers/_oid/acl.py
+  h_9db9d35f50cf33 23
+src/flext_ldif/services/conversion.py
+  h_9db9d35f50cf33 449
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "d98f3d20543c6f909384548ac3046b2732b7ec6f",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
