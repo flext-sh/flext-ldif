@@ -198,20 +198,17 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 return priority
             return None
 
-        try:
-            priority = next(
-                (
-                    p
-                    for cls in quirk_class.__mro__
-                    if is_valid_server_class(cls)
-                    and (p := extract_priority(cls)) is not None
-                ),
-                None,
-            )
-            if priority is not None:
-                return priority
-        except StopIteration:
-            pass
+        priority = next(
+            (
+                p
+                for cls in quirk_class.__mro__
+                if is_valid_server_class(cls)
+                and (p := extract_priority(cls)) is not None
+            ),
+            None,
+        )
+        if priority is not None:
+            return priority
         msg = (
             f"Cannot find PRIORITY in Constants for quirk class: {quirk_class.__name__}"
         )
@@ -241,20 +238,17 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 return server_type
             return None
 
-        try:
-            server_type = next(
-                (
-                    st
-                    for cls in quirk_class.__mro__
-                    if is_valid_server_class(cls)
-                    and (st := extract_server_type(cls)) is not None
-                ),
-                None,
-            )
-            if server_type:
-                return u.Ldif.normalize_server_type(server_type)
-        except StopIteration:
-            pass
+        server_type = next(
+            (
+                st
+                for cls in quirk_class.__mro__
+                if is_valid_server_class(cls)
+                and (st := extract_server_type(cls)) is not None
+            ),
+            None,
+        )
+        if server_type:
+            return u.Ldif.normalize_server_type(server_type)
         msg = f"Cannot find SERVER_TYPE in Constants for quirk class: {quirk_class.__name__}"
         raise AttributeError(msg)
 
