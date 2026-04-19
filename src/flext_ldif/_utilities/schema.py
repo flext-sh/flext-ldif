@@ -994,14 +994,14 @@ class FlextLdifUtilitiesSchema:
         if not name_value:
             return name_value
         result = name_value
-        if suffixes_to_remove is None:
-            suffixes_to_remove = [";binary"]
-        if char_replacements is None:
-            char_replacements = {"_": "-"}
-        for suffix in suffixes_to_remove:
+        normalized_suffixes = suffixes_to_remove if suffixes_to_remove is not None else [";binary"]
+        normalized_replacements = (
+            char_replacements if char_replacements is not None else {"_": "-"}
+        )
+        for suffix in normalized_suffixes:
             if suffix in result:
                 result = result.replace(suffix, "")
-        for old, new in char_replacements.items():
+        for old, new in normalized_replacements.items():
             if old in result:
                 result = result.replace(old, new)
         return result if result != name_value else name_value

@@ -150,37 +150,6 @@ class FlextLdifUtilitiesDispatch:
         return FlextLdifUtilitiesServer.matches(server_type, *allowed_types)
 
     @staticmethod
-    @overload
-    def validate(
-        value_or_entries: t.Container,
-        validator_first: p.ValidatorSpec,
-        *validators_rest: p.ValidatorSpec,
-        strict: bool = True,
-        collect_all: bool = True,
-        max_errors: int = 0,
-    ) -> r[t.Container]: ...
-
-    @staticmethod
-    @overload
-    def validate(
-        value_or_entries: MutableSequence[m.Ldif.Entry],
-        *,
-        strict: bool = True,
-        collect_all: bool = True,
-        max_errors: int = 0,
-    ) -> r[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]: ...
-
-    @staticmethod
-    @overload
-    def validate(
-        value_or_entries: str | m.Ldif.DN,
-        *,
-        strict: bool = True,
-        collect_all: bool = True,
-        max_errors: int = 0,
-    ) -> bool: ...
-
-    @staticmethod
     def validate(
         value_or_entries: MutableSequence[m.Ldif.Entry] | t.Container | str | m.Ldif.DN,
         validator_first: p.ValidatorSpec | None = None,
