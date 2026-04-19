@@ -228,10 +228,7 @@ class FlextLdifModelsDomainMetadata:
         attribute_transformations: MutableMapping[
             str,
             FlextLdifModelsDomainAttributes.AttributeTransformation,
-        ] = u.Field(
-            default_factory=dict,
-            description="Detailed transformation records keyed by original attribute name",
-        )
+        ] = u.Field(default_factory=dict)
         server_specific_data: Annotated[
             FlextLdifModelsMetadata.EntryMetadata,
             u.Field(

@@ -127,10 +127,7 @@ class FlextLdifModelsCollections:
     class FlexibleCategories(m.DynamicModel):
         categories: MutableMapping[
             str, MutableSequence[FlextLdifModelsDomainsEntries.Entry]
-        ] = u.Field(
-            default_factory=dict,
-            description="Mapping of category names to their LDIF entries",
-        )
+        ] = u.Field(default_factory=dict)
 
         @override
         def __eq__(self, other: t.ValueOrModel) -> bool:

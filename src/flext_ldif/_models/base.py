@@ -74,10 +74,7 @@ class FlextLdifModelsBases:
         ] = c.Ldif.ServerTypes.RFC
         validation_violations: Annotated[
             MutableSequence[str],
-            u.Field(
-                default_factory=list,
-                description="Validation violations captured during parsing/processing",
-            ),
+            u.Field(default_factory=list),
         ] = u.Field(default_factory=list)
         validation_metadata: Annotated[
             t.ConfigMap | None,

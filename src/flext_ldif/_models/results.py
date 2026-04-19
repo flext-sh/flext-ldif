@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import MutableSequence
-from typing import Annotated, Self
+from typing import Annotated, ClassVar, Self
 
 from flext_cli import m, u
 from flext_ldif import (
@@ -302,10 +302,7 @@ class FlextLdifModelsResults:
             default_factory=lambda: FlextLdifModelsResults.Statistics(),
             description="Migration processing statistics",
         )
-        output_files: MutableSequence[str] = u.Field(
-            default_factory=list,
-            description="Paths to generated output files",
-        )
+        output_files: MutableSequence[str] = u.Field(default_factory=list)
 
         @u.computed_field()
         @property
@@ -351,6 +348,8 @@ class FlextLdifModelsResults:
         ]
 
     class ValidationResult(m.FrozenModel):
+        _flext_enforcement_exempt: ClassVar[bool] = True
+
         valid: Annotated[
             bool,
             u.Field(description="Whether all entries passed validation"),

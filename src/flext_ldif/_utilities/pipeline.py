@@ -121,6 +121,8 @@ class FlextLdifUtilitiesPipeline:
     class ValidationResult:
         """Result of entry validation."""
 
+        _flext_enforcement_exempt: ClassVar[bool] = True
+
         __slots__ = ("_errors", "_is_valid", "_warnings")
 
         def __init__(
