@@ -3,23 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Callable, MutableSequence, Sequence
-from typing import ClassVar, Protocol, Self, override
+from typing import ClassVar, Self, override
 
-from flext_ldif import m, r, t
+from flext_ldif import m, p, r, t
 
 
 class FlextLdifUtilitiesPipeline:
     """Pipeline orchestration utilities for LDIF entry processing."""
-
-    class _EntryTransformer(Protocol):
-        """Concrete transformer contract for LDIF entry pipelines."""
-
-        def apply(
-            self,
-            item: m.Ldif.Entry,
-        ) -> r[m.Ldif.Entry]:
-            """Transform one LDIF entry."""
-            ...
 
     class _Filtered:
         """Sentinel class to signal that an entry was filtered out."""
@@ -49,7 +39,7 @@ class FlextLdifUtilitiesPipeline:
 
         def add(
             self,
-            transformer: FlextLdifUtilitiesPipeline._EntryTransformer,
+            transformer: p.Ldif.EntryTransformer,
             *,
             name: str | None = None,
         ) -> Self:
@@ -60,15 +50,15 @@ class FlextLdifUtilitiesPipeline:
                 entry: m.Ldif.Entry,
             ) -> r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered]:
                 """Wrap transformer to match pipeline filter signature."""
-                return (
-                    transformer
-                    .apply(entry)
-                    .map_error(
-                        lambda error: error or "Transformer failed",
+                transformed_result = transformer.apply(entry).map_error(
+                    lambda error: error or "Transformer failed",
+                )
+                if transformed_result.failure:
+                    return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].fail(
+                        transformed_result.error,
                     )
-                    .map(
-                        lambda transformed: transformed,
-                    )
+                return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(
+                    transformed_result.value,
                 )
 
             self._steps.append((step_name, wrapped_transformer))

@@ -14,6 +14,14 @@ class FlextLdifProtocolsDomain(Protocol):
     """Service-level LDIF protocols built on top of base value contracts."""
 
     @runtime_checkable
+    class EntryTransformer(Protocol):
+        """Transformer contract for entry-processing pipelines."""
+
+        def apply(self, item: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+            """Transform one entry and return the canonical result container."""
+            ...
+
+    @runtime_checkable
     class ServerQuirk(Protocol):
         """Structured server quirk contract used by services and tests."""
 
