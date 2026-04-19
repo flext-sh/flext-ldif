@@ -1,0 +1,30 @@
+src/flext_ldif/_utilities/pipeline.py
+  h_9db9d35f50cf33 8,42,53-58,60-61
+src/flext_ldif/_protocols/domain.py
+  h_9db9d35f50cf33 17-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "0b2852abd754021a8188b88013126ede52f25b8f",
+  "prompts": {
+    "2a008a39b1ce7c77": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "234d2634-32e6-47bf-99b1-de4c2dbf1d3c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
