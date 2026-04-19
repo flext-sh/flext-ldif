@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, MutableSequence
 
-from flext_ldif import t
+from flext_ldif.typings import t
 
 
 class FlextLdifUtilitiesCollectionLdif:

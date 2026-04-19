@@ -6,7 +6,8 @@ import struct
 from collections.abc import Mapping, MutableSequence
 from typing import Final
 
-from flext_ldif import m, r, t, u
+from flext_ldif import m, r, u
+from flext_ldif.typings import t
 
 logger: Final = u.fetch_logger(__name__)
 

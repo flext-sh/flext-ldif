@@ -994,7 +994,9 @@ class FlextLdifUtilitiesSchema:
         if not name_value:
             return name_value
         result = name_value
-        normalized_suffixes = suffixes_to_remove if suffixes_to_remove is not None else [";binary"]
+        normalized_suffixes = (
+            suffixes_to_remove if suffixes_to_remove is not None else [";binary"]
+        )
         normalized_replacements = (
             char_replacements if char_replacements is not None else {"_": "-"}
         )

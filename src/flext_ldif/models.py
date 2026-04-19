@@ -14,17 +14,15 @@ from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
 from flext_cli import m, u
-from flext_ldif import (
-    FlextLdifModelsBases,
-    FlextLdifModelsCollections,
-    FlextLdifModelsDomainsEntries,
-    FlextLdifModelsEvents,
-    FlextLdifModelsMetadata,
-    FlextLdifModelsProcessing,
-    FlextLdifModelsResults,
-    FlextLdifModelsSettings,
-    t,
-)
+from flext_ldif._models.base import FlextLdifModelsBases
+from flext_ldif._models.collections import FlextLdifModelsCollections
+from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
+from flext_ldif._models.events import FlextLdifModelsEvents
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif._models.processing import FlextLdifModelsProcessing
+from flext_ldif._models.results import FlextLdifModelsResults
+from flext_ldif._models.settings import FlextLdifModelsSettings
+from flext_ldif.typings import t
 
 
 class FlextLdifModels(m):

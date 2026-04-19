@@ -10,7 +10,8 @@ from collections.abc import MutableSequence
 from typing import TYPE_CHECKING, Annotated, Self
 
 from flext_cli import m, u
-from flext_ldif import FlextLdifModelsBases, c, t
+from flext_ldif import FlextLdifModelsBases, c
+from flext_ldif.typings import t
 
 if TYPE_CHECKING:
     from flext_ldif import FlextLdifModelsDomainMetadata

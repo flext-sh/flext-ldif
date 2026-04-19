@@ -7,7 +7,8 @@ import re
 from collections.abc import MutableSequence
 from typing import ClassVar, override
 
-from flext_ldif import FlextLdifServersRfc, c, m, r, t, u
+from flext_ldif import FlextLdifServersRfc, c, m, r, u
+from flext_ldif.typings import t
 
 
 class FlextLdifServersNovell(FlextLdifServersRfc):

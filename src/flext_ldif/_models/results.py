@@ -6,13 +6,11 @@ from collections.abc import MutableSequence
 from typing import Annotated, ClassVar, Self
 
 from flext_cli import m, u
-from flext_ldif import (
-    FlextLdifModelsCollections,
-    FlextLdifModelsDomainsEntries,
-    FlextLdifModelsEvents,
-    c,
-    t,
-)
+from flext_ldif._models.collections import FlextLdifModelsCollections
+from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
+from flext_ldif._models.events import FlextLdifModelsEvents
+from flext_ldif.constants import c
+from flext_ldif.typings import t
 
 
 class FlextLdifModelsResults:

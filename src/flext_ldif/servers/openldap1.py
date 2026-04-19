@@ -7,7 +7,8 @@ import struct
 from collections.abc import MutableSequence
 from typing import ClassVar, override
 
-from flext_ldif import FlextLdifServersRfc, c, m, r, t
+from flext_ldif import FlextLdifServersRfc, c, m, r
+from flext_ldif.typings import t
 
 
 class FlextLdifServersOpenldap1(FlextLdifServersRfc):

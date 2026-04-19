@@ -10,17 +10,16 @@ from collections.abc import Iterator, MutableMapping, MutableSequence
 from typing import TYPE_CHECKING, Annotated, override
 
 from flext_cli import m, u
-from flext_ldif import FlextLdifModelsMetadata, c, t
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif.typings import t
 
 if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModelsDomainsEntries
+    from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
 
 
 class FlextLdifModelsCollections:
     class DynamicCounts(m.DynamicModel):
-        model_config = m.ConfigDict(
-            extra=c.ExtraConfig.ALLOW.value, validate_assignment=True
-        )
+        model_config = m.ConfigDict(extra="allow", validate_assignment=True)
 
         @override
         def __eq__(self, other: t.ValueOrModel) -> bool:

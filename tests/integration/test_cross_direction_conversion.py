@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import FlextLdifConversion, FlextLdifServer, m
+from flext_ldif import FlextLdifConversion, FlextLdifServer
+from tests import m
 
 pytestmark = [pytest.mark.integration]
 

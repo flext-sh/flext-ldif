@@ -12,7 +12,6 @@ from typing import ClassVar
 import pytest
 from flext_tests import tm
 
-from flext_core import r
 from flext_ldif import (
     FlextLdifProtocols,
     FlextLdifServer,
@@ -24,7 +23,7 @@ from flext_ldif import (
     p,
     t,
 )
-from tests import c, m
+from tests import c, m, r
 
 
 def _create_server_implementations() -> Sequence[tuple[str, type, type]]:

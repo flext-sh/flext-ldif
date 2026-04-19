@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from flext_ldif import c, p, u
+from flext_ldif.constants import c
+from flext_ldif.protocols import p
+from flext_ldif.utilities import u
 
 
 class FlextLdifServerMethodsMixin:

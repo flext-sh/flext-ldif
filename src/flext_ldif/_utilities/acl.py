@@ -8,7 +8,10 @@ from collections.abc import MutableMapping, MutableSequence
 from typing import TypeIs
 
 from flext_core import u
-from flext_ldif import c, m, r, t
+from flext_ldif import r
+from flext_ldif.constants import c
+from flext_ldif.models import m
+from flext_ldif.typings import t
 
 logger = u.fetch_logger(__name__)
 

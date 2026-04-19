@@ -13,8 +13,7 @@ from collections.abc import (
 from datetime import datetime
 from typing import Annotated
 
-from flext_cli import m, r
-from flext_core import t
+from flext_cli import m, r, t
 
 
 class FlextLdifTypesBase:
@@ -71,7 +70,7 @@ class FlextLdifTypesBase:
     type SafeMethodDecorator = Callable[[SafeMethod], SafeMethod]
     type Rfc4512Descriptor = Annotated[
         str,
-        m.StringConstraints(
+        t.StringConstraints(
             min_length=1,
             max_length=64,
             pattern=r"^[a-zA-Z0-9-]+$",
@@ -80,11 +79,11 @@ class FlextLdifTypesBase:
     ]
     type Rfc4514DnComponent = Annotated[
         str,
-        m.StringConstraints(min_length=2, pattern=r"^[a-zA-Z0-9-]+=[^,]+$"),
+        t.StringConstraints(min_length=2, pattern=r"^[a-zA-Z0-9-]+=[^,]+$"),
     ]
     type Rfc2849AttributeValue = Annotated[
         str,
-        m.StringConstraints(max_length=4096),
+        t.StringConstraints(max_length=4096),
     ]
     RFC4512_DESCRIPTOR_ADAPTER: m.TypeAdapter[Rfc4512Descriptor] = m.TypeAdapter(
         Rfc4512Descriptor,

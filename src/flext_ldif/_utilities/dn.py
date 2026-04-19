@@ -15,14 +15,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal, overload
 
 from flext_core import u
-from flext_ldif import (
-    c,
-    m,
-    r,
-)
+from flext_ldif import r
+from flext_ldif.constants import c
+from flext_ldif.models import m
 
 if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModelsDomainEntry
+    from flext_ldif._models.domain_entry import FlextLdifModelsDomainEntry
 
 
 class FlextLdifUtilitiesDN:

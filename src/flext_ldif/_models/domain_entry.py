@@ -350,7 +350,7 @@ class FlextLdifModelsDomainEntry:
             strict=True,
             validate_default=True,
             validate_assignment=True,
-            extra=c.ExtraConfig.ALLOW.value,
+            extra="allow",
         )
         _DATETIME_FIELDS: ClassVar[tuple[str, str]] = ("created_at", "updated_at")
         _CREATE_ENTRY_DUMP_EXCLUDE: ClassVar[Mapping[str, bool]] = MappingProxyType({
@@ -738,9 +738,9 @@ class FlextLdifModelsDomainEntry:
                 payload: dict[str, object] = {
                     **self._EMPTY_VALIDATION_RESULT_PAYLOAD,
                     "rfc_violations": list(violations),
-                    "errors": [],
-                    "warnings": [],
-                    "server_specific_violations": [],
+                    "errors": list[str](),
+                    "warnings": list[str](),
+                    "server_specific_violations": list[str](),
                     "context": context_payload,
                 }
                 self.metadata.validation_results = (
@@ -803,10 +803,10 @@ class FlextLdifModelsDomainEntry:
             """Create empty ValidationMetadata from canonical immutable payload."""
             payload: dict[str, object] = {
                 **cls._EMPTY_VALIDATION_RESULT_PAYLOAD,
-                "rfc_violations": [],
-                "errors": [],
-                "warnings": [],
-                "server_specific_violations": [],
+                "rfc_violations": list[str](),
+                "errors": list[str](),
+                "warnings": list[str](),
+                "server_specific_violations": list[str](),
             }
             return FlextLdifModelsDomainMetadata.ValidationMetadata.model_validate(
                 payload,

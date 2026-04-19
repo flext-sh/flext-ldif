@@ -15,10 +15,13 @@ from collections.abc import MutableMapping, MutableSequence
 from typing import TYPE_CHECKING, Annotated, Self
 
 from flext_cli import m, u
-from flext_ldif import FlextLdifModelsMetadata, FlextLdifShared, c, t
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif.constants import c
+from flext_ldif.shared import FlextLdifShared
+from flext_ldif.typings import t
 
 if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModelsDomainAttributes
+    from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
 
 
 class FlextLdifModelsDomainMetadata:

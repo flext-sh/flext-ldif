@@ -13,14 +13,12 @@ from collections.abc import Callable, MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Literal, Self
 
 from flext_cli import m, u
-from flext_ldif import (
-    FlextLdifModelsDomainAcl,
-    FlextLdifModelsDomainSchema,
-    c,
-    p,
-    r,
-    t,
-)
+from flext_ldif import r
+from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl
+from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema
+from flext_ldif.constants import c
+from flext_ldif.protocols import p
+from flext_ldif.typings import t
 
 
 class FlextLdifModelsSettings:

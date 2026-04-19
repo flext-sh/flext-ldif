@@ -12,7 +12,8 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import Final
 
-from flext_ldif import c, t
+from flext_cli import t
+from flext_ldif import c
 
 
 class _MissingSentinel:

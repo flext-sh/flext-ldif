@@ -12,7 +12,7 @@ from collections.abc import (
 from typing import Annotated, ClassVar, Self, override
 
 from flext_cli import m, u
-from flext_ldif import c, t
+from flext_ldif.typings import t
 
 
 class FlextLdifModelsMetadata:
@@ -21,9 +21,7 @@ class FlextLdifModelsMetadata:
     class DynamicMetadata(m.DynamicModel):
         """Model with extra='allow' for dynamic field storage."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            extra=c.ExtraConfig.ALLOW.value
-        )
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(extra="allow")
 
         transformations: Annotated[
             MutableSequence[t.Scalar] | None,
@@ -137,9 +135,7 @@ class FlextLdifModelsMetadata:
     class EntryMetadata(m.FrozenDynamicModel):
         """Entry metadata for tracking processing details."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            extra=c.ExtraConfig.ALLOW.value
-        )
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(extra="allow")
 
         def __getitem__(self, key: str) -> t.Ldif.MetadataValue:
             return self._extra()[key]

@@ -11,7 +11,9 @@ from collections.abc import MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
 from flext_cli import m, u
-from flext_ldif import FlextLdifModelsMetadata, r, t
+from flext_ldif import r
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
+from flext_ldif.typings import t
 
 
 class FlextLdifModelsDomainDN:

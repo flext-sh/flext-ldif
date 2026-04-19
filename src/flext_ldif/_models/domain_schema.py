@@ -16,11 +16,9 @@ from collections.abc import MutableSequence
 from typing import Annotated, Self
 
 from flext_cli import u
-from flext_ldif import (
-    FlextLdifModelsBases,
-    FlextLdifModelsDomainMetadata,
-    c,
-)
+from flext_ldif._models.base import FlextLdifModelsBases
+from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata
+from flext_ldif.constants import c
 
 
 class FlextLdifModelsDomainSchema:

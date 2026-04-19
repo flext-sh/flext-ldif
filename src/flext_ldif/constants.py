@@ -6,8 +6,7 @@ from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import ClassVar, Final
 
-from flext_cli import c
-from flext_ldif import t
+from flext_cli import c, t
 
 
 class FlextLdifConstants(c):

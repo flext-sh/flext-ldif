@@ -7,7 +7,8 @@ from collections.abc import MutableSequence
 from pathlib import Path
 from typing import override
 
-from flext_ldif import FlextLdifServer, m, p, r, s, t, u
+from flext_ldif import FlextLdifServer, m, p, r, s, u
+from flext_ldif.typings import t
 
 
 class FlextLdifDetectorMixin:

@@ -5,8 +5,10 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import Annotated
 
+from flext_cli import t
 from flext_core import m, u
-from flext_ldif import FlextLdifShared, c, t
+from flext_ldif import c
+from flext_ldif.shared import FlextLdifShared
 
 
 class FlextLdifModelsBases:

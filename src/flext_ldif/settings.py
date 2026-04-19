@@ -14,8 +14,6 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from pydantic_settings import SettingsConfigDict
-
 from flext_core import FlextSettings
 from flext_ldif import c, m, u
 
@@ -24,7 +22,7 @@ from flext_ldif import c, m, u
 class FlextLdifSettings(FlextSettings):
     """LDIF processing settings inheriting base FLEXT configuration."""
 
-    model_config: ClassVar[SettingsConfigDict] = m.SettingsConfigDict(
+    model_config: ClassVar[m.SettingsConfigDict] = m.SettingsConfigDict(
         env_prefix="FLEXT_LDIF_", extra="ignore"
     )
 
