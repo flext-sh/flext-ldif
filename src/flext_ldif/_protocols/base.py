@@ -656,7 +656,7 @@ class FlextLdifProtocolsBase(Protocol):
     class ModelWithValidationMetadata(Protocol):
         """Model exposing validation metadata for helper updates."""
 
-        validation_metadata: t.ConfigMap | None
+        validation_metadata: m.ConfigMap | None
 
     @runtime_checkable
     class ServerConstants(Protocol):

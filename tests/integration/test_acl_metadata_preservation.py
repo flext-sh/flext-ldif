@@ -20,7 +20,7 @@ from flext_ldif import FlextLdif, ldif
 from tests import c, m, t
 
 
-def _entry_extensions(entry: m.Ldif.Entry) -> t.RecursiveContainerMapping:
+def _entry_extensions(entry: m.Ldif.Entry) -> Mapping[str, t.Container]:
     metadata = entry.metadata
     assert metadata is not None
     extensions = metadata.extensions

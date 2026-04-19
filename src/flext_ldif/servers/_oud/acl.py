@@ -88,7 +88,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         )
 
     @staticmethod
-    def _scalar_or_list_value(value: t.RecursiveContainer) -> bool:
+    def _scalar_or_list_value(value: t.Container) -> bool:
         """Check if value is scalar metadata value or list."""
         return u.primitive(value) or isinstance(value, list)
 
@@ -188,7 +188,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             else:
                 perms = None
         if not perms:
-            return r[str].fail("ACL model has no permissions t.RecursiveContainer")
+            return r[str].fail("ACL model has no permissions t.Container")
         ops: MutableSequence[str] = [
             field_name
             for field_name in (

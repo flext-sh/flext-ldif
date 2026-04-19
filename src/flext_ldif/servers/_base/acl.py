@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import MutableSequence
+from collections.abc import Mapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
 from flext_ldif import (
@@ -189,7 +189,7 @@ class FlextLdifServersBaseSchemaAcl(
 
     def _coerce_acl_data(
         self,
-        value: str | m.Ldif.Acl | t.RecursiveContainer,
+        value: str | m.Ldif.Acl | t.Container,
     ) -> str | m.Ldif.Acl | None:
         """Coerce generic value to ACL payload union."""
         if value is None:
@@ -206,7 +206,7 @@ class FlextLdifServersBaseSchemaAcl(
             )
             return None
 
-    def _coerce_operation(self, value: t.RecursiveContainer) -> str | None:
+    def _coerce_operation(self, value: t.Container) -> str | None:
         """Coerce operation token to supported ACL operation."""
         if not isinstance(value, str):
             return None
@@ -292,7 +292,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _resolve_data(
         self,
         data: str | m.Ldif.Acl | None,
-        kwargs: t.RecursiveContainerMapping,
+        kwargs: Mapping[str, t.Container],
     ) -> str | m.Ldif.Acl | None:
         """Resolve data from parameter or kwargs."""
         if data is not None:
@@ -303,7 +303,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _resolve_operation(
         self,
         operation: str | None,
-        kwargs: t.RecursiveContainerMapping,
+        kwargs: Mapping[str, t.Container],
     ) -> str | None:
         """Resolve operation from parameter or kwargs."""
         if operation is not None:

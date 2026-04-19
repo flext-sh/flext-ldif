@@ -140,7 +140,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
 
     @staticmethod
     def _ensure_entry_model(
-        value: t.RecursiveContainer | m.Ldif.Entry,
+        value: t.Container | m.Ldif.Entry,
     ) -> m.Ldif.Entry | None:
         if isinstance(value, m.Ldif.Entry):
             return value
@@ -173,7 +173,7 @@ class FlextLdifCategorization(s[m.Ldif.FlexibleCategories]):
         return (included, excluded)
 
     @staticmethod
-    def _has_attr(obj: t.RecursiveContainer | type, attr_name: str) -> bool:
+    def _has_attr(obj: t.Container | type, attr_name: str) -> bool:
         return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
 
     @staticmethod

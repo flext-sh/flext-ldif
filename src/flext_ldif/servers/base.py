@@ -175,10 +175,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         )
 
     @classmethod
-    def _get_priority_from_mro(cls, quirk_class: type[t.RecursiveContainer]) -> int:
+    def _get_priority_from_mro(cls, quirk_class: type[t.Container]) -> int:
         """Get priority from parent class Constants via MRO traversal."""
 
-        def is_valid_server_class(mro_cls: type[t.RecursiveContainer]) -> bool:
+        def is_valid_server_class(mro_cls: type[t.Container]) -> bool:
             """Check if MRO class is a valid server class with PRIORITY."""
             if not mro_cls.__name__.startswith("FlextLdifServers"):
                 return False
@@ -188,7 +188,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             priority = getattr(constants, "PRIORITY", None)
             return isinstance(priority, int)
 
-        def extract_priority(mro_cls: type[t.RecursiveContainer]) -> int | None:
+        def extract_priority(mro_cls: type[t.Container]) -> int | None:
             """Extract priority if it's a valid integer."""
             constants = getattr(mro_cls, "Constants", None)
             if constants is None:
@@ -215,10 +215,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         raise AttributeError(msg)
 
     @classmethod
-    def _get_server_type_from_mro(cls, quirk_class: type[t.RecursiveContainer]) -> str:
+    def _get_server_type_from_mro(cls, quirk_class: type[t.Container]) -> str:
         """Get server_type from parent class Constants via MRO traversal."""
 
-        def is_valid_server_class(mro_cls: type[t.RecursiveContainer]) -> bool:
+        def is_valid_server_class(mro_cls: type[t.Container]) -> bool:
             """Check if MRO class is a valid server class with SERVER_TYPE."""
             if not mro_cls.__name__.startswith("FlextLdifServers"):
                 return False
@@ -228,7 +228,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             server_type = getattr(constants, "SERVER_TYPE", None)
             return isinstance(server_type, str)
 
-        def extract_server_type(mro_cls: type[t.RecursiveContainer]) -> str | None:
+        def extract_server_type(mro_cls: type[t.Container]) -> str | None:
             """Extract server type if it's a valid string."""
             constants = getattr(mro_cls, "Constants", None)
             if constants is None:
@@ -256,15 +256,15 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     def _register_in_registry(
         cls,
         quirk_instance: p.Ldif.SchemaQuirk | FlextLdifServersBase,
-        registry: p.Ldif.QuirkRegistry | t.RecursiveContainer,
+        registry: p.Ldif.QuirkRegistry | t.Container,
     ) -> None:
         """Helper method to register a quirk instance in the registry."""
 
         def validate_registry(
-            registry_obj: p.Ldif.QuirkRegistry | t.RecursiveContainer,
+            registry_obj: p.Ldif.QuirkRegistry | t.Container,
         ) -> (
             Callable[
-                [str, p.Ldif.SchemaQuirk | t.RecursiveContainer | FlextLdifServersBase],
+                [str, p.Ldif.SchemaQuirk | t.Container | FlextLdifServersBase],
                 None,
             ]
             | None
@@ -276,9 +276,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
                 def typed_register(
                     server_type: str,
-                    quirk: p.Ldif.SchemaQuirk
-                    | t.RecursiveContainer
-                    | FlextLdifServersBase,
+                    quirk: p.Ldif.SchemaQuirk | t.Container | FlextLdifServersBase,
                 ) -> None:
                     _ = captured(server_type, quirk)
 
@@ -287,7 +285,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
         def perform_registration(
             register_func: Callable[
-                [str, p.Ldif.SchemaQuirk | t.RecursiveContainer | FlextLdifServersBase],
+                [str, p.Ldif.SchemaQuirk | t.Container | FlextLdifServersBase],
                 None,
             ]
             | None,

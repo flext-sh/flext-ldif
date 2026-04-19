@@ -28,22 +28,22 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def is_string_key_mapping(
-        value: t.RecursiveContainer,
+        value: t.Container,
     ) -> TypeIs[t.MutableRecursiveContainerMapping]:
         """Check if value is a string-key mapping."""
         return isinstance(value, Mapping)
 
     @staticmethod
     def is_object_list(
-        value: t.RecursiveContainer,
-    ) -> TypeIs[t.MutableRecursiveContainerList]:
+        value: t.Container,
+    ) -> TypeIs[list[t.Container]]:
         """Check if value is a list."""
         return isinstance(value, list)
 
     @staticmethod
     def is_object_sequence(
-        value: t.RecursiveContainer,
-    ) -> TypeIs[t.MutableRecursiveContainerList]:
+        value: t.Container,
+    ) -> TypeIs[list[t.Container]]:
         """Check if value is a non-string/bytes sequence."""
         return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
@@ -509,7 +509,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def parse_validation_rules(
-        validation_rules: t.RecursiveContainer,
+        validation_rules: t.Container,
     ) -> m.Ldif.ServerValidationRules | None:
         """Normalize dynamic validation_rules payload to ServerValidationRules."""
         if isinstance(
@@ -570,7 +570,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def analyze_differences(
-        entry_attrs: t.RecursiveContainerMapping,
+        entry_attrs: Mapping[str, t.Container],
         converted_attrs: MutableMapping[str, MutableSequence[t.Ldif.AttributeValue]],
         original_dn: str,
         cleaned_dn: str,
@@ -622,7 +622,7 @@ class FlextLdifUtilitiesEntry:
                 original_values_list = [str(v) for v in attr_values if v is not None]
             elif attr_values is not None:
                 original_values_list = [str(attr_values)]
-            typed_list: t.RecursiveContainer = list(original_values_list)
+            typed_list: t.Container = list(original_values_list)
             original_attributes_complete[original_attr_name] = typed_list
             converted_values = converted_attrs.get(canonical_name, [])
             original_str = f"{original_attr_name}: {', '.join(original_values_list)}"

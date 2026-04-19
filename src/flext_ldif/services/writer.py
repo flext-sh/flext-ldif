@@ -39,7 +39,7 @@ class FlextLdifWriter:
     def _normalize_format_options(
         format_options: m.Ldif.WriteFormatOptions
         | m.Ldif.WriteOptions
-        | t.RecursiveContainer
+        | t.Container
         | None,
     ) -> m.Ldif.WriteFormatOptions:
         """Normalize format options to the canonical write model."""

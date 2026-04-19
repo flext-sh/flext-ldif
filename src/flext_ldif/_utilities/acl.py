@@ -188,7 +188,7 @@ class FlextLdifUtilitiesACL:
         return (version, acl_name)
 
     @staticmethod
-    def _is_metadata_scalar_or_container(value: t.RecursiveContainer) -> bool:
+    def _is_metadata_scalar_or_container(value: t.Container) -> bool:
         """Check supported metadata extension value shape."""
         return u.primitive(value) or isinstance(value, (list, dict))
 
@@ -277,7 +277,7 @@ class FlextLdifUtilitiesACL:
         normalized_targetscope: MutableSequence[t.Scalar] | None = None
         if settings.targetscope is not None:
             normalized_targetscope = [int(value) for value in settings.targetscope]
-        extension_items: MutableSequence[tuple[str, t.RecursiveContainer | None]] = [
+        extension_items: MutableSequence[tuple[str, t.Container | None]] = [
             ("line_breaks", normalized_line_breaks),
             ("dn_spaces", settings.dn_spaces),
             ("targetscope", normalized_targetscope),
@@ -364,9 +364,7 @@ class FlextLdifUtilitiesACL:
         def process_rule_config(rule_item: tuple[str, str, str | None]) -> str | None:
             """Process single rule settings item."""
             ext_key, format_template, operator_default = rule_item
-            value_raw: t.RecursiveContainer = (
-                extensions.get(ext_key) if extensions else None
-            )
+            value_raw: t.Container = extensions.get(ext_key) if extensions else None
             if value_raw is None:
                 return None
             operator_placeholder = "{" + "operator" + "}"
@@ -491,9 +489,7 @@ class FlextLdifUtilitiesACL:
         def process_target_config(target_item: tuple[str, str]) -> str | None:
             """Process single target settings item."""
             ext_key, format_template = target_item
-            value_raw: t.RecursiveContainer = (
-                extensions.get(ext_key) if extensions else None
-            )
+            value_raw: t.Container = extensions.get(ext_key) if extensions else None
             if value_raw is None:
                 return None
             return format_template.format(value=str(value_raw))
@@ -585,7 +581,7 @@ class FlextLdifUtilitiesACL:
         )
         if not converted_from_value:
             return []
-        comments_value: t.RecursiveContainer = (
+        comments_value: t.Container = (
             extensions.get(comments_key) if extensions else None
         )
         if comments_value is None:

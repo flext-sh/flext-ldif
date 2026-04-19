@@ -100,7 +100,7 @@ class FlextLdifUtilitiesDispatch:
     def matches_server_patterns(
         value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         oid_pattern: t.MutableRecursiveContainerMapping | str,
-        detection_names: t.RecursiveContainer | frozenset[str],
+        detection_names: t.Container | frozenset[str],
         detection_string: str | None = None,
         *,
         use_prefix_match: bool = False,
@@ -234,7 +234,7 @@ class FlextLdifUtilitiesDispatch:
         items: t.RecursiveContainerList,
         *,
         predicate: Callable[..., bool],
-    ) -> t.RecursiveContainer | None:
+    ) -> t.Container | None:
         """Route to CollectionLdif.find (resolves CollectionLdif vs core)."""
         return FlextLdifUtilitiesCollectionLdif.find(items, predicate=predicate)
 

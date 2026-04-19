@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from pathlib import Path
 
 from flext_ldif import ldif, m, r, t
@@ -89,7 +89,7 @@ def intelligent_schema_building() -> r[MutableSequence[m.Ldif.Entry]]:
     return r[MutableSequence[m.Ldif.Entry]].ok(schema_entries)
 
 
-def parallel_schema_validation() -> r[t.RecursiveContainerMapping]:
+def parallel_schema_validation() -> r[Mapping[str, t.Container]]:
     """Schema validation with comprehensive error analysis."""
     api = ldif()
     test_entries: list[m.Ldif.Entry] = []
@@ -151,7 +151,7 @@ def parallel_schema_validation() -> r[t.RecursiveContainerMapping]:
             test_entries.append(entry_result.unwrap())
     validation_result = api.validate_entries(test_entries)
     if validation_result.failure:
-        return r[t.RecursiveContainerMapping].fail(
+        return r[Mapping[str, t.Container]].fail(
             f"Schema validation failed: {validation_result.error}",
         )
     validation_report = validation_result.unwrap()
@@ -174,10 +174,10 @@ def parallel_schema_validation() -> r[t.RecursiveContainerMapping]:
     analysis["compliance_rate"] = (
         validation_report.valid_entries / len(test_entries) if test_entries else 0
     )
-    return r[t.RecursiveContainerMapping].ok(analysis)
+    return r[Mapping[str, t.Container]].ok(analysis)
 
 
-def schema_migration_pipeline() -> r[t.RecursiveContainerMapping]:
+def schema_migration_pipeline() -> r[Mapping[str, t.Container]]:
     """Schema-aware migration pipeline with validation."""
     api = ldif()
     migration_dir = Path("examples/schema_migration")
@@ -241,10 +241,10 @@ def schema_migration_pipeline() -> r[t.RecursiveContainerMapping]:
         output_file = migrated_dir / "migrated_schema_compliant.ldif"
         write_result = api.write_ldif_file(migrated_entries, output_file)
         migration_results["output_written"] = write_result.success
-    return r[t.RecursiveContainerMapping].ok(migration_results)
+    return r[Mapping[str, t.Container]].ok(migration_results)
 
 
-def batch_schema_operations() -> r[t.RecursiveContainerMapping]:
+def batch_schema_operations() -> r[Mapping[str, t.Container]]:
     """Batch schema operations with validation."""
     api = ldif()
     schema_batches: list[tuple[str, list[m.Ldif.Entry]]] = []
@@ -327,26 +327,26 @@ def batch_schema_operations() -> r[t.RecursiveContainerMapping]:
             b for b in batch_results if not b.endswith("_error") and b != "summary"
         ]),
     }
-    return r[t.RecursiveContainerMapping].ok(batch_results)
+    return r[Mapping[str, t.Container]].ok(batch_results)
 
 
-def railway_schema_pipeline() -> r[t.RecursiveContainerMapping]:
+def railway_schema_pipeline() -> r[Mapping[str, t.Container]]:
     """Railway-oriented schema pipeline with integrated validation."""
     api = ldif()
     schema_build_result = intelligent_schema_building()
     if schema_build_result.failure:
-        return r[t.RecursiveContainerMapping].fail(
+        return r[Mapping[str, t.Container]].fail(
             f"Schema building failed: {schema_build_result.error}",
         )
     schema_entries = schema_build_result.unwrap()
     schema_validation = api.validate_entries(schema_entries)
     if schema_validation.failure:
-        return r[t.RecursiveContainerMapping].fail(
+        return r[Mapping[str, t.Container]].fail(
             f"Schema validation failed: {schema_validation.error}",
         )
     schema_report = schema_validation.unwrap()
     if not schema_report.valid:
-        return r[t.RecursiveContainerMapping].fail(
+        return r[Mapping[str, t.Container]].fail(
             f"Schema entries invalid: {schema_report.errors}",
         )
     test_entries: list[m.Ldif.Entry] = []
@@ -376,12 +376,12 @@ def railway_schema_pipeline() -> r[t.RecursiveContainerMapping]:
             test_entries.append(entry_result.unwrap())
     entry_validation = api.validate_entries(test_entries)
     if entry_validation.failure:
-        return r[t.RecursiveContainerMapping].fail(
+        return r[Mapping[str, t.Container]].fail(
             f"Entry validation failed: {entry_validation.error}",
         )
     entry_report = entry_validation.unwrap()
     if not entry_report.valid:
-        return r[t.RecursiveContainerMapping].fail(
+        return r[Mapping[str, t.Container]].fail(
             f"Test entries invalid: {entry_report.errors}",
         )
     output_dir = Path("examples/schema_compliant_output")
@@ -390,7 +390,7 @@ def railway_schema_pipeline() -> r[t.RecursiveContainerMapping]:
     schema_write = api.write_ldif_file(list(schema_entries), schema_file)
     entries_file = output_dir / "entries.ldif"
     entries_write = api.write_ldif_file(test_entries, entries_file)
-    return r[t.RecursiveContainerMapping].ok({
+    return r[Mapping[str, t.Container]].ok({
         "schema_entries": len(schema_entries),
         "schema_valid": schema_report.valid_entries,
         "test_entries": len(test_entries),

@@ -110,13 +110,13 @@ class FlextLdifServersBaseSchema(
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
         service_kwargs: MutableMapping[
             str,
-            t.Scalar | t.ConfigMap | MutableSequence[t.Scalar],
+            t.Scalar | m.ConfigMap | MutableSequence[t.Scalar],
         ] = {}
         for key, value in filtered_kwargs.items():
             if isinstance(value, t.SCALAR_TYPES):
                 service_kwargs[key] = value
                 continue
-            if isinstance(value, t.ConfigMap):
+            if isinstance(value, m.ConfigMap):
                 service_kwargs[key] = value
         super().__init__()
         self._schema_service = _schema_service
@@ -225,7 +225,7 @@ class FlextLdifServersBaseSchema(
         extensions_typed: t.MutableRecursiveContainerMapping = {}
         for key, val in metadata_extensions.items():
             if isinstance(val, list):
-                list_typed: t.RecursiveContainer = list(val)
+                list_typed: t.Container = list(val)
                 extensions_typed[key] = list_typed
             elif val is not None:
                 extensions_typed[key] = val
@@ -323,10 +323,7 @@ class FlextLdifServersBaseSchema(
 
     def _coerce_schema_data(
         self,
-        value: t.RecursiveContainer
-        | m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass
-        | None,
+        value: t.Container | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None,
     ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None:
         """Coerce raw execute payload to the concrete schema payload union."""
         if value is None:
@@ -368,7 +365,7 @@ class FlextLdifServersBaseSchema(
 
     def _coerce_attribute_model(
         self,
-        value: t.RecursiveContainer | t.Ldif.SchemaConversionValue,
+        value: t.Container | t.Ldif.SchemaConversionValue,
     ) -> m.Ldif.SchemaAttribute | None:
         """Coerce raw value to a schema attribute model when possible."""
         try:
@@ -384,7 +381,7 @@ class FlextLdifServersBaseSchema(
 
     def _coerce_objectclass_model(
         self,
-        value: t.RecursiveContainer | t.Ldif.SchemaConversionValue,
+        value: t.Container | t.Ldif.SchemaConversionValue,
     ) -> m.Ldif.SchemaObjectClass | None:
         """Coerce raw value to a schema objectClass model when possible."""
         try:
@@ -401,7 +398,7 @@ class FlextLdifServersBaseSchema(
     def _resolve_data(
         self,
         data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None,
-        kwargs: t.RecursiveContainerMapping,
+        kwargs: Mapping[str, t.Container],
     ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None:
         """Resolve schema payload from parameter or kwargs."""
         if data is not None:
@@ -411,7 +408,7 @@ class FlextLdifServersBaseSchema(
     def _resolve_operation(
         self,
         operation: str | None,
-        kwargs: t.RecursiveContainerMapping,
+        kwargs: Mapping[str, t.Container],
     ) -> str | None:
         """Resolve schema operation from parameter or kwargs."""
         if operation is not None:

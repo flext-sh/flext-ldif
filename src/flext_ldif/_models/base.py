@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import Annotated
 
-from flext_cli import t
 from flext_core import m, u
 from flext_ldif import c
 from flext_ldif.shared import FlextLdifShared
@@ -28,7 +27,7 @@ class FlextLdifModelsBases:
         """Base class for all LDAP schema elements (attributes, objectClasses, syntaxes)."""
 
         validation_metadata: Annotated[
-            t.ConfigMap | None,
+            m.ConfigMap | None,
             u.Field(
                 description="Validation metadata captured during schema processing.",
             ),
@@ -79,7 +78,7 @@ class FlextLdifModelsBases:
             u.Field(default_factory=list),
         ] = u.Field(default_factory=list)
         validation_metadata: Annotated[
-            t.ConfigMap | None,
+            m.ConfigMap | None,
             u.Field(
                 description="Validation metadata captured during ACL processing.",
             ),

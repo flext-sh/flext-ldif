@@ -347,7 +347,7 @@ class FlextLdifUtilitiesParser:
         """Extract extension information from parsed metadata."""
 
         def _is_metadata_value(
-            value: t.RecursiveContainer,
+            value: t.Container,
         ) -> TypeIs[t.Ldif.MetadataValue]:
             return value is None or isinstance(
                 value,

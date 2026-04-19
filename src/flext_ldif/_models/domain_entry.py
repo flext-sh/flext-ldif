@@ -520,7 +520,7 @@ class FlextLdifModelsDomainEntry:
             ),
         ] = None
         validation_metadata: Annotated[
-            t.ConfigMap | None,
+            m.ConfigMap | None,
             u.Field(
                 description="Validation metadata captured during parsing and transformation.",
             ),
@@ -594,9 +594,7 @@ class FlextLdifModelsDomainEntry:
             data: t.MutableRecursiveContainerMapping,
         ) -> MutableMapping[
             str,
-            t.RecursiveContainer
-            | datetime
-            | FlextLdifModelsDomainMetadata.QuirkMetadata,
+            t.Container | datetime | FlextLdifModelsDomainMetadata.QuirkMetadata,
         ]:
             """Ensure metadata field is always initialized to a QuirkMetadata instance.
 
@@ -617,9 +615,7 @@ class FlextLdifModelsDomainEntry:
             """
             data_dict: MutableMapping[
                 str,
-                t.RecursiveContainer
-                | datetime
-                | FlextLdifModelsDomainMetadata.QuirkMetadata,
+                t.Container | datetime | FlextLdifModelsDomainMetadata.QuirkMetadata,
             ] = dict(data)
             for dt_field in cls._DATETIME_FIELDS:
                 field_value = data_dict.get(dt_field)
@@ -888,7 +884,7 @@ class FlextLdifModelsDomainEntry:
                 ext_kwargs["source_entry"] = source_entry
             if unconverted_attributes:
                 unconverted_dump = unconverted_attributes.model_dump()
-                unconverted_typed: t.RecursiveContainer = unconverted_dump
+                unconverted_typed: t.Container = unconverted_dump
                 ext_kwargs["unconverted_attributes"] = unconverted_typed
             return ext_kwargs
 
@@ -1097,13 +1093,13 @@ class FlextLdifModelsDomainEntry:
             attributes: t.MutableAttributeMapping
             | FlextLdifModelsDomainAttributes.Attributes,
         ) -> FlextLdifModelsDomainAttributes.Attributes:
-            """Normalize attributes to Attributes t.RecursiveContainer.
+            """Normalize attributes to Attributes t.Container.
 
             Args:
-                attributes: Attributes as dict or Attributes t.RecursiveContainer
+                attributes: Attributes as dict or Attributes t.Container
 
             Returns:
-                Attributes t.RecursiveContainer with normalized values
+                Attributes t.Container with normalized values
 
             Note:
                 Lenient processing: Empty attributes dict is accepted and will be captured

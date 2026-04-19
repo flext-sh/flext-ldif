@@ -315,7 +315,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                         nested_dict[nk] = [str(item) for item in nv]
                     else:
                         nested_dict[nk] = str(nv)
-                widened_dict: t.RecursiveContainer = nested_dict
+                widened_dict: t.Container = nested_dict
                 extensions_data[key] = widened_dict
             else:
                 extensions_data[key] = val
@@ -645,7 +645,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             else None
         )
         if isinstance(converted_attrs_data, Mapping):
-            boolean_conversions_obj: t.RecursiveContainer = converted_attrs_data.get(
+            boolean_conversions_obj: t.Container = converted_attrs_data.get(
                 mk.CONVERSION_BOOLEAN_CONVERSIONS,
                 {},
             )

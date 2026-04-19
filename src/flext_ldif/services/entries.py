@@ -41,7 +41,7 @@ class FlextLdifEntries(
                 return r[str].fail("Dict entry has unsupported 'dn' value type")
 
     @staticmethod
-    def _extract_dn_from_object(entry: t.RecursiveContainer | m.Ldif.Entry) -> r[str]:
+    def _extract_dn_from_object(entry: t.Container | m.Ldif.Entry) -> r[str]:
         dn_value = getattr(entry, "dn", None)
         if dn_value is None:
             return r[str].fail("Entry missing DN (dn is None)")

@@ -59,7 +59,7 @@
 #
 ## X.509 (08/2005) pp. 120-121
 ## 
-## -- t.RecursiveContainer identifier assignments --
+## -- t.Container identifier assignments --
 ## -- object classes --
 ## id-oc-pmiUser                            OBJECT IDENTIFIER ::= {id-oc 24}
 ## id-oc-pmiAA                              OBJECT IDENTIFIER ::= {id-oc 25}
@@ -240,7 +240,7 @@
 ##         ID                  id-at-xMLPprotPrivPolicy }
 ## 
 
-## -- t.RecursiveContainer identifier assignments --
+## -- t.Container identifier assignments --
 ## -- object classes --
 objectidentifier	id-oc-pmiUser 2.5.6.24
 objectidentifier	id-oc-pmiAA 2.5.6.25

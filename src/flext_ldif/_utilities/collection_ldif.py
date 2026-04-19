@@ -15,7 +15,7 @@ class FlextLdifUtilitiesCollectionLdif:
         items: t.RecursiveContainerList,
         *,
         predicate: Callable[..., bool],
-    ) -> t.RecursiveContainer | None:
+    ) -> t.Container | None:
         """Find first item matching predicate."""
         for elem in items:
             if predicate(elem):

@@ -25,7 +25,7 @@ class FlextLdifUtilitiesMetadata:
     def _add_to_dict_metadata(
         metadata: t.MutableRecursiveContainerMapping,
         metadata_key: str,
-        item_data: t.RecursiveContainer,
+        item_data: t.Container,
     ) -> None:
         """Add item to dict metadata."""
         value = metadata.get(metadata_key)
@@ -51,7 +51,7 @@ class FlextLdifUtilitiesMetadata:
     def _add_to_list_metadata(
         metadata: t.MutableRecursiveContainerMapping,
         metadata_key: str,
-        item_data: t.RecursiveContainer,
+        item_data: t.Container,
     ) -> None:
         """Add item to list metadata."""
         value = metadata.get(metadata_key)
@@ -166,8 +166,8 @@ class FlextLdifUtilitiesMetadata:
         field_order, field_positions = FlextLdifUtilitiesMetadata._extract_field_order(
             definition,
         )
-        field_order_typed: t.RecursiveContainer = list(field_order)
-        field_positions_typed: t.RecursiveContainer = dict(field_positions)
+        field_order_typed: t.Container = list(field_order)
+        field_positions_typed: t.Container = dict(field_positions)
         combined["field_order"] = field_order_typed
         combined["field_positions"] = field_positions_typed
         spacing_result = FlextLdifUtilitiesMetadata._extract_spacing_between_fields(
@@ -188,7 +188,7 @@ class FlextLdifUtilitiesMetadata:
                 "X-ORIGIN": "X-ORIGIN",
             },
         )
-        spacing_typed: t.RecursiveContainer = dict(spacing_result)
+        spacing_typed: t.Container = dict(spacing_result)
         combined["spacing_between_fields"] = spacing_typed
         return combined
 
@@ -556,18 +556,18 @@ class FlextLdifUtilitiesMetadata:
         return {}
 
     @staticmethod
-    def _is_metadata_scalar(value: t.RecursiveContainer) -> bool:
+    def _is_metadata_scalar(value: t.Container) -> bool:
         return value is None or u.scalar(value)
 
     @staticmethod
     def _is_metadata_scalar_typed(
-        value: t.RecursiveContainer,
+        value: t.Container,
     ) -> TypeIs[t.Scalar | None]:
         return FlextLdifUtilitiesMetadata._is_metadata_scalar(value)
 
     @staticmethod
     def _normalize_dict_list(
-        values: t.MutableRecursiveContainerList | MutableSequence[str],
+        values: list[t.Container] | MutableSequence[str],
     ) -> MutableSequence[t.Scalar]:
         normalized: MutableSequence[t.Scalar] = []
         for item in values:
@@ -578,7 +578,7 @@ class FlextLdifUtilitiesMetadata:
         return normalized
 
     @staticmethod
-    def _normalize_metadata_list_item(item: t.RecursiveContainer) -> t.Scalar | None:
+    def _normalize_metadata_list_item(item: t.Container) -> t.Scalar | None:
         if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(item):
             return item
         return str(item)
@@ -606,11 +606,11 @@ class FlextLdifUtilitiesMetadata:
                     }
                 else:
                     normalized_metadata[write_option_key] = str(value)
-            config_root: MutableMapping[str, t.RecursiveContainer | m.BaseModel] = dict(
+            config_root: MutableMapping[str, t.Container | m.BaseModel] = dict(
                 normalized_metadata
             )
             object.__setattr__(
-                model, "validation_metadata", t.ConfigMap(root=config_root)
+                model, "validation_metadata", m.ConfigMap(root=config_root)
             )
         except (AttributeError, TypeError, ValueError):
             pass
@@ -722,22 +722,20 @@ class FlextLdifUtilitiesMetadata:
     ) -> m.Ldif.QuirkMetadata:
         """Build QuirkMetadata for entry parsing with format preservation."""
         server_data_dict: t.MutableRecursiveContainerMapping = {}
-        dn_typed: t.RecursiveContainer = settings.original_entry_dn
-        cleaned_typed: t.RecursiveContainer = settings.cleaned_dn
-        base64_typed: t.RecursiveContainer = settings.dn_was_base64
+        dn_typed: t.Container = settings.original_entry_dn
+        cleaned_typed: t.Container = settings.cleaned_dn
+        base64_typed: t.Container = settings.dn_was_base64
         server_data_dict["original_entry_dn"] = dn_typed
         server_data_dict["cleaned_dn"] = cleaned_typed
         server_data_dict["dn_was_base64"] = base64_typed
         if settings.original_dn_line:
-            dn_line_typed: t.RecursiveContainer = settings.original_dn_line
+            dn_line_typed: t.Container = settings.original_dn_line
             server_data_dict["original_dn_line"] = dn_line_typed
         if settings.original_attr_lines:
-            attr_lines_typed: t.RecursiveContainer = list(settings.original_attr_lines)
+            attr_lines_typed: t.Container = list(settings.original_attr_lines)
             server_data_dict["original_attribute_lines"] = attr_lines_typed
         if settings.original_attribute_case:
-            attr_case_typed: t.RecursiveContainer = dict(
-                settings.original_attribute_case
-            )
+            attr_case_typed: t.Container = dict(settings.original_attribute_case)
             server_data_dict["original_attribute_case"] = attr_case_typed
         server_data = m.Ldif.EntryMetadata.model_validate(
             server_data_dict,
@@ -818,14 +816,14 @@ class FlextLdifUtilitiesMetadata:
             if isinstance(model_extra_val, dict):
                 raw_extras = {str(k): v for k, v in model_extra_val.items()}
         extras: t.MutableRecursiveContainerMapping = {}
-        opt: t.RecursiveContainer | None = None
+        opt: t.Container | None = None
         if raw_extras is not None:
-            config_map_root: MutableMapping[str, t.RecursiveContainer | m.BaseModel] = (
-                dict(raw_extras)
+            config_map_root: MutableMapping[str, t.Container | m.BaseModel] = dict(
+                raw_extras
             )
             extras = {
                 extra_key: u.normalize_to_metadata(extra_value)
-                for extra_key, extra_value in t.ConfigMap(
+                for extra_key, extra_value in m.ConfigMap(
                     root=config_map_root,
                 ).root.items()
             }

@@ -118,7 +118,7 @@ MemoryError: Unable to allocate array
 **Solution**:
 
 ```python
-def process_large_file_safely(file_path: str) -> p.Result[t.Dict]:
+def process_large_file_safely(file_path: str) -> p.Result[m.Dict]:
     """Process large LDIF files with memory management."""
     import psutil
     import os
@@ -131,7 +131,7 @@ def process_large_file_safely(file_path: str) -> p.Result[t.Dict]:
     print(f"Available memory: {available_memory_gb:.2f} GB")
 
     if file_size_gb > available_memory_gb * 0.5:
-        return r[t.Dict].fail(
+        return r[m.Dict].fail(
             f"File too large for available memory. "
             f"File: {file_size_gb:.2f}GB, Available: {available_memory_gb:.2f}GB"
         )
@@ -146,7 +146,7 @@ def process_large_file_safely(file_path: str) -> p.Result[t.Dict]:
     return api.parse_file(file_path)
 
 
-def chunk_process_file(file_path: str, chunk_size: int = 10000) -> p.Result[t.Dict]:
+def chunk_process_file(file_path: str, chunk_size: int = 10000) -> p.Result[m.Dict]:
     """Process file in chunks to manage memory."""
     results = {"total_entries": 0, "processed_chunks": 0}
 
@@ -178,9 +178,9 @@ def chunk_process_file(file_path: str, chunk_size: int = 10000) -> p.Result[t.Di
                     results["total_entries"] += len(current_chunk)
                     results["processed_chunks"] += 1
 
-        return r[t.Dict].ok(results)
+        return r[m.Dict].ok(results)
     except Exception as e:
-        return r[t.Dict].fail(f"Chunk processing failed: {e}")
+        return r[m.Dict].fail(f"Chunk processing failed: {e}")
 
 
 def process_chunk(chunk_entries: t.StringList) -> p.Result[bool]:
@@ -316,7 +316,7 @@ def optimize_processing_config() -> FlextLdifModels.Config:
     )
 
 
-def process_with_optimization(file_path: str) -> p.Result[t.Dict]:
+def process_with_optimization(file_path: str) -> p.Result[m.Dict]:
     """Process LDIF with performance optimizations."""
     settings = optimize_processing_config()
     api = ldif(settings=settings)
@@ -467,7 +467,7 @@ def debug_railway_chain(file_path: str) -> p.Result[list]:
 ### Health Check Utility
 
 ```python
-def run_health_check() -> t.RecursiveContainerMapping:
+def run_health_check() -> Mapping[str, t.Container]:
     """Run comprehensive health check for FLEXT-LDIF."""
     results = {"status": "healthy", "checks": {}, "warnings": [], "errors": []}
 
@@ -595,7 +595,7 @@ def enable_debug_mode() -> ldif:
 When creating support requests, include:
 
 ```python
-def generate_support_info() -> t.RecursiveContainerMapping:
+def generate_support_info() -> Mapping[str, t.Container]:
     """Generate information for support requests."""
     import sys
     import platform

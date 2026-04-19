@@ -253,9 +253,9 @@ class FlextLdifUtilitiesSchema:
     def _convert_metadata_value(
         value: t.Scalar
         | datetime
-        | t.MutableRecursiveContainerList
-        | MutableMapping[t.RecursiveContainer, t.RecursiveContainer]
-        | t.RecursiveContainerMapping,
+        | list[t.Container]
+        | MutableMapping[t.Container, t.Container]
+        | Mapping[str, t.Container],
     ) -> (
         t.Scalar
         | MutableSequence[str]
@@ -268,7 +268,7 @@ class FlextLdifUtilitiesSchema:
         if isinstance(value, list):
             converted_list: MutableSequence[str] = []
             for index in range(len(value)):
-                item_value: t.RecursiveContainer = value[index]
+                item_value: t.Container = value[index]
                 converted_list.append(str(item_value))
             return converted_list
         if isinstance(value, Mapping):
@@ -287,10 +287,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_nested_metadata_value(
-        value: t.Scalar
-        | datetime
-        | t.MutableRecursiveContainerList
-        | t.RecursiveContainer,
+        value: t.Scalar | datetime | list[t.Container] | t.Container,
     ) -> t.Scalar | MutableSequence[str]:
         if u.primitive(value):
             return value
@@ -299,27 +296,27 @@ class FlextLdifUtilitiesSchema:
         if FlextLdifUtilitiesSchema._is_object_sequence(value):
             converted_nested_list: MutableSequence[str] = []
             for index in range(len(value)):
-                nested_item_value: t.RecursiveContainer = value[index]
+                nested_item_value: t.Container = value[index]
                 converted_nested_list.append(str(nested_item_value))
             return converted_nested_list
         return str(value)
 
     @staticmethod
     def _is_object_list(
-        value: t.RecursiveContainer,
-    ) -> TypeIs[t.MutableRecursiveContainerList]:
+        value: t.Container,
+    ) -> TypeIs[list[t.Container]]:
         return isinstance(value, list)
 
     @staticmethod
     def _is_object_mapping(
-        value: t.RecursiveContainer,
-    ) -> TypeIs[t.RecursiveContainerMapping]:
+        value: t.Container,
+    ) -> TypeIs[Mapping[str, t.Container]]:
         return isinstance(value, Mapping)
 
     @staticmethod
     def _is_object_sequence(
-        value: t.RecursiveContainer,
-    ) -> TypeIs[t.MutableRecursiveContainerList]:
+        value: t.Container,
+    ) -> TypeIs[list[t.Container]]:
         return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
     @staticmethod
@@ -658,7 +655,7 @@ class FlextLdifUtilitiesSchema:
         result_dict: t.MutableRecursiveContainerMapping = {}
         for key, val in syntax_extensions.items():
             if isinstance(val, list):
-                list_typed: t.RecursiveContainer = list(val)
+                list_typed: t.Container = list(val)
                 result_dict[key] = list_typed
             elif val is not None:
                 result_dict[key] = val
@@ -748,7 +745,7 @@ class FlextLdifUtilitiesSchema:
         extensions_raw = FlextLdifUtilitiesParser.extract_extensions(definition)
         extensions: t.MutableRecursiveContainerMapping = {}
         for key, val in extensions_raw.items():
-            typed_val: t.RecursiveContainer = list(val)
+            typed_val: t.Container = list(val)
             extensions[key] = typed_val
         extensions[c.Ldif.ORIGINAL_FORMAT] = definition.strip()
         if additional_extensions:

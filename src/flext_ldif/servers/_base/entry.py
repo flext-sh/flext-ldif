@@ -69,7 +69,7 @@ class FlextLdifServersBaseEntry(
     ) -> m.Ldif.WriteFormatOptions | None:
         if metadata is None:
             return None
-        format_options_raw: t.RecursiveContainer | None = metadata.extensions.get(
+        format_options_raw: t.Container | None = metadata.extensions.get(
             "write_format_options",
         )
         if isinstance(format_options_raw, Mapping):
@@ -221,9 +221,7 @@ class FlextLdifServersBaseEntry(
 
     def _convert_write_options(
         self,
-        write_options: m.Ldif.WriteFormatOptions
-        | m.Ldif.WriteOptions
-        | t.RecursiveContainer,
+        write_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | t.Container,
     ) -> m.Ldif.WriteOptions:
         if isinstance(write_options, m.Ldif.WriteOptions):
             return write_options

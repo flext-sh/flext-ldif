@@ -51,7 +51,7 @@ from flext_core import u
 from flext_ldif import ldif
 
 
-def process_directory_export(file_path: str) -> p.Result[t.Dict]:
+def process_directory_export(file_path: str) -> p.Result[m.Dict]:
     """Process LDIF directory export with railway programming."""
     api = ldif()
 
@@ -81,7 +81,7 @@ import os
 from pathlib import Path
 
 
-def process_ldif_with_memory_check(file_path: Path) -> p.Result[t.Dict]:
+def process_ldif_with_memory_check(file_path: Path) -> p.Result[m.Dict]:
     """Process LDIF with memory size validation."""
     api = ldif()
 
@@ -90,7 +90,7 @@ def process_ldif_with_memory_check(file_path: Path) -> p.Result[t.Dict]:
     max_size = 100 * 1024 * 1024  # 100MB limit for memory-bound parser
 
     if file_size > max_size:
-        return r[t.Dict].fail(
+        return r[m.Dict].fail(
             f"File too large ({file_size} bytes). "
             f"Current implementation limited to {max_size} bytes."
         )
@@ -142,7 +142,7 @@ class FLEXTOUDMigrationService:
 
         self._ldif_api = ldif(settings=migration_config)
 
-    def process_oud_export(self, export_file: Path) -> p.Result[t.Dict]:
+    def process_oud_export(self, export_file: Path) -> p.Result[m.Dict]:
         """Process Oracle Unified Directory LDIF export."""
         self.logger.info(
             "Starting OUD LDIF processing",
@@ -166,7 +166,7 @@ class FLEXTOUDMigrationService:
             .map(self._log_ldif_completion)
         )
 
-    def _categorize_ldif_entries(self, entries) -> p.Result[t.Dict]:
+    def _categorize_ldif_entries(self, entries) -> p.Result[m.Dict]:
         """Categorize LDIF entries for migration processing."""
         try:
             users = []
@@ -184,7 +184,7 @@ class FLEXTOUDMigrationService:
                 else:
                     other.append(entry)
 
-            return r[t.Dict].ok({
+            return r[m.Dict].ok({
                 "users": users,
                 "groups": groups,
                 "organizational_units": organizational_units,
@@ -192,9 +192,9 @@ class FLEXTOUDMigrationService:
                 "total": len(entries),
             })
         except Exception as e:
-            return r[t.Dict].fail(f"LDIF entry categorization failed: {e}")
+            return r[m.Dict].fail(f"LDIF entry categorization failed: {e}")
 
-    def _apply_migration_transformations(self, categorized: dict) -> p.Result[t.Dict]:
+    def _apply_migration_transformations(self, categorized: dict) -> p.Result[m.Dict]:
         """Apply FLEXT-specific LDIF entry transformations."""
         # LDIF-specific transformations for OUD migration
 
@@ -212,7 +212,7 @@ class FLEXTOUDMigrationService:
         transformed_users = self._transform_user_entries(categorized["users"])
         transformed_groups = self._transform_group_entries(categorized["groups"])
 
-        return r[t.Dict].ok({
+        return r[m.Dict].ok({
             "users": transformed_users,
             "groups": transformed_groups,
             "organizational_units": categorized["organizational_units"],
@@ -232,7 +232,7 @@ class FLEXTOUDMigrationService:
 
     def _generate_migration_report(
         self, processed_data: dict
-    ) -> t.RecursiveContainerMapping:
+    ) -> Mapping[str, t.Container]:
         """Generate LDIF migration processing report."""
         return {
             "ldif_migration_summary": {
@@ -246,7 +246,7 @@ class FLEXTOUDMigrationService:
             "processed_data": processed_data,
         }
 
-    def _log_ldif_completion(self, report: dict) -> t.RecursiveContainerMapping:
+    def _log_ldif_completion(self, report: dict) -> Mapping[str, t.Container]:
         """Log LDIF migration processing completion."""
         self.logger.info(
             "OUD LDIF processing completed",
@@ -293,14 +293,14 @@ class LdifAPIService(FlextAPIService):
         super().__init__()
         self._ldif_api = ldif()
 
-    def parse_ldif_endpoint(self, file_content: str) -> p.Result[t.Dict]:
+    def parse_ldif_endpoint(self, file_content: str) -> p.Result[m.Dict]:
         """API endpoint for LDIF parsing with memory awareness."""
         # Check content size before processing
         content_size = len(file_content.encode("utf-8"))
         max_size = 50 * 1024 * 1024  # 50MB for API operations
 
         if content_size > max_size:
-            return r[t.Dict].fail({
+            return r[m.Dict].fail({
                 "status": "error",
                 "message": f"LDIF content too large ({content_size} bytes). Maximum: {max_size} bytes.",
                 "error_type": "memory_limit_exceeded",
@@ -328,7 +328,7 @@ class LdifAPIService(FlextAPIService):
             )
         )
 
-    def _serialize_ldif_entry(self, entry) -> t.RecursiveContainerMapping:
+    def _serialize_ldif_entry(self, entry) -> Mapping[str, t.Container]:
         """Serialize LDIF entry for API response."""
         return {
             "dn": entry.dn,
@@ -459,7 +459,7 @@ import psutil
 import os
 
 
-def process_multiple_ldif_files(file_paths: Sequence[Path]) -> p.Result[t.Dict]:
+def process_multiple_ldif_files(file_paths: Sequence[Path]) -> p.Result[m.Dict]:
     """Process multiple LDIF files with memory monitoring."""
     api = ldif()
     all_entries = []
@@ -474,7 +474,7 @@ def process_multiple_ldif_files(file_paths: Sequence[Path]) -> p.Result[t.Dict]:
         memory_increase = current_memory - initial_memory
 
         if memory_increase > 500 * 1024 * 1024:  # 500MB increase limit
-            return r[t.Dict].fail(
+            return r[m.Dict].fail(
                 f"Memory usage too high ({memory_increase} bytes). "
                 f"Processed {len(processing_stats)} files before limit."
             )
@@ -488,12 +488,12 @@ def process_multiple_ldif_files(file_paths: Sequence[Path]) -> p.Result[t.Dict]:
                 "memory_after": current_memory,
             }
         else:
-            return r[t.Dict].fail(f"Failed to process {file_path}: {result.error}")
+            return r[m.Dict].fail(f"Failed to process {file_path}: {result.error}")
 
     final_memory = process.memory_info().rss
     total_memory_used = final_memory - initial_memory
 
-    return r[t.Dict].ok({
+    return r[m.Dict].ok({
         "total_entries": len(all_entries),
         "files_processed": len(processing_stats),
         "file_stats": processing_stats,
@@ -532,7 +532,7 @@ def safe_ldif_processing(file_path: Path) -> p.Result[list]:
 Handle LDIF format errors specifically:
 
 ```python
-def robust_ldif_processing(content: str) -> p.Result[t.Dict]:
+def robust_ldif_processing(content: str) -> p.Result[m.Dict]:
     """Process LDIF with format-specific error handling."""
     api = ldif()
 
@@ -540,11 +540,11 @@ def robust_ldif_processing(content: str) -> p.Result[t.Dict]:
     if result.failure:
         error_msg = result.error
         if "LDIF" in error_msg or "parse" in error_msg.lower():
-            return r[t.Dict].fail(f"LDIF format error: {error_msg}")
+            return r[m.Dict].fail(f"LDIF format error: {error_msg}")
         else:
-            return r[t.Dict].fail(f"Processing error: {error_msg}")
+            return r[m.Dict].fail(f"Processing error: {error_msg}")
 
-    return r[t.Dict].ok({"entries": result.unwrap()})
+    return r[m.Dict].ok({"entries": result.unwrap()})
 ```
 
 ### 3. LDIF Entry Type Processing
@@ -552,7 +552,7 @@ def robust_ldif_processing(content: str) -> p.Result[t.Dict]:
 Use LDIF-specific entry type methods:
 
 ```python
-def categorize_ldif_entries(entries) -> t.RecursiveContainerMapping:
+def categorize_ldif_entries(entries) -> Mapping[str, t.Container]:
     """Categorize LDIF entries by type."""
     categories = {
         "persons": [e for e in entries if e.is_person()],
@@ -587,10 +587,10 @@ def categorize_ldif_entries(entries) -> t.RecursiveContainerMapping:
 
 ```python
 # ✅ Good: Small to medium LDIF files
-def process_small_ldif(file_path: Path) -> p.Result[t.Dict]:
+def process_small_ldif(file_path: Path) -> p.Result[m.Dict]:
     """Process LDIF files under 100MB."""
     if file_path.stat().st_size > 100 * 1024 * 1024:
-        return r[t.Dict].fail("File too large for current implementation")
+        return r[m.Dict].fail("File too large for current implementation")
 
     api = ldif()
     return api.parse_file(file_path)

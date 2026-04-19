@@ -312,7 +312,7 @@ def get_entry_statistics(
 Perform comprehensive analysis of LDIF entries.
 
 ```python
-def analyze_entries(self, entries: Sequence[FlextLdifModels.Entry]) -> p.Result[t.Dict]:
+def analyze_entries(self, entries: Sequence[FlextLdifModels.Entry]) -> p.Result[m.Dict]:
     """Perform comprehensive entry analysis.
 
     Args:
@@ -353,8 +353,8 @@ class QuirksConversionMatrix:
         source,
         target,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
-        data: str | t.RecursiveContainerMapping,
-    ) -> p.Result[str | t.RecursiveContainerMapping]:
+        data: str | Mapping[str, t.Container],
+    ) -> p.Result[str | Mapping[str, t.Container]]:
         """Convert data from source quirk format to target quirk format via RFC.
 
         Args:
@@ -373,8 +373,8 @@ class QuirksConversionMatrix:
         source,
         target,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
-        data_batch: Sequence[str | t.RecursiveContainerMapping],
-    ) -> p.Result[Sequence[str | t.RecursiveContainerMapping]]:
+        data_batch: Sequence[str | Mapping[str, t.Container]],
+    ) -> p.Result[Sequence[str | Mapping[str, t.Container]]]:
         """Convert batch of data from source to target quirk format via RFC.
 
         Args:
@@ -397,7 +397,7 @@ class QuirksConversionMatrix:
         """
 
     def validate_oud_conversion(
-        self, converted_data: Sequence[str | t.RecursiveContainerMapping]
+        self, converted_data: Sequence[str | Mapping[str, t.Container]]
     ) -> p.Result[bool]:
         """Validate converted data for OUD compatibility.
 
@@ -584,7 +584,7 @@ class Factory:
 
     @staticmethod
     def create(
-        data: t.Dict | str, attributes: Mapping[str, t.StringList] | None = None
+        data: m.Dict | str, attributes: Mapping[str, t.StringList] | None = None
     ) -> Entry:
         """Create LDIF entry with validation."""
 
@@ -773,7 +773,7 @@ if result.success:
 ```python
 def process_enterprise_directory(
     input_file: Path, output_file: Path
-) -> p.Result[t.Dict]:
+) -> p.Result[m.Dict]:
     """Process enterprise directory with complete pipeline."""
     api = ldif(FlextLdifModels.Config(strict_validation=True))
 
@@ -805,7 +805,7 @@ def process_enterprise_directory(
 ### Batch Processing
 
 ```python
-def process_multiple_files(file_paths: Sequence[Path]) -> p.Result[t.Dict]:
+def process_multiple_files(file_paths: Sequence[Path]) -> p.Result[m.Dict]:
     """Process multiple LDIF files in batch."""
     api = ldif()
     all_entries = []
@@ -818,9 +818,9 @@ def process_multiple_files(file_paths: Sequence[Path]) -> p.Result[t.Dict]:
             all_entries.extend(entries)
             processing_stats[str(file_path)] = len(entries)
         else:
-            return r[t.Dict].fail(f"Failed to process {file_path}: {result.error}")
+            return r[m.Dict].fail(f"Failed to process {file_path}: {result.error}")
 
-    return r[t.Dict].ok({
+    return r[m.Dict].ok({
         "total_entries": len(all_entries),
         "file_stats": processing_stats,
         "entries": all_entries,
@@ -880,7 +880,7 @@ class RfcSchemaParserService:
             server_type: Optional server type to select specific quirks (None = pure RFC)
         """
 
-    def execute(self) -> p.Result[t.Dict]:
+    def execute(self) -> p.Result[m.Dict]:
         """Execute RFC-compliant schema parsing with quirks.
 
         Returns:
@@ -971,7 +971,7 @@ class FlextLdifMigration:
             target_server_type: Target server type (e.g., "oud", "openldap")
         """
 
-    def execute(self) -> p.Result[t.Dict]:
+    def execute(self) -> p.Result[m.Dict]:
         """Execute migration pipeline.
 
         Generic transformation process:

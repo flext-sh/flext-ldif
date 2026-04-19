@@ -226,14 +226,14 @@ def test_memory_usage():
 
 ```python
 # Good: Process small files directly
-def process_small_ldif(file_path: str) -> p.Result[t.Dict]:
+def process_small_ldif(file_path: str) -> p.Result[m.Dict]:
     """Process LDIF files under 100MB."""
     api = ldif()
     return api.parse_file(file_path)
 
 
 # Consider: External tools for large files
-def process_large_ldif(file_path: str) -> p.Result[t.Dict]:
+def process_large_ldif(file_path: str) -> p.Result[m.Dict]:
     """Process large LDIF files using external tools."""
     # Use grep, awk, or other streaming tools
     # Then process results with FLEXT-LDIF
@@ -241,11 +241,11 @@ def process_large_ldif(file_path: str) -> p.Result[t.Dict]:
 
 
 # Monitor: Memory usage for production systems
-def process_with_monitoring(file_path: str) -> p.Result[t.Dict]:
+def process_with_monitoring(file_path: str) -> p.Result[m.Dict]:
     """Process LDIF with memory monitoring."""
     file_size = os.path.getsize(file_path)
     if file_size > 100 * 1024 * 1024:  # 100MB
-        return r[t.Dict].fail("File too large for current implementation")
+        return r[m.Dict].fail("File too large for current implementation")
 
     return process_small_ldif(file_path)
 ```
