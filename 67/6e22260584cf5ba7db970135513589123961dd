@@ -1,0 +1,106 @@
+src/flext_ldif/_utilities/dn.py
+  h_9db9d35f50cf33 400
+src/flext_ldif/servers/_rfc/schema.py
+  h_9db9d35f50cf33 208,219,253,286,296,306,317
+src/flext_ldif/services/categorization.py
+  h_9db9d35f50cf33 143,176
+tests/fixtures/openldap/schema/core.schema
+  h_9db9d35f50cf33 83,119,123,127,133,137,248,257,365,574,588,593,610
+src/flext_ldif/servers/_oud/acl.py
+  h_9db9d35f50cf33 91,191
+src/flext_ldif/servers/_oid/entry.py
+  h_9db9d35f50cf33 318,648
+src/flext_ldif/_utilities/events.py
+  h_9db9d35f50cf33 82
+src/flext_ldif/servers/base.py
+  h_9db9d35f50cf33 178,181,191,218,221,231,259,264,267
+src/flext_ldif/servers/_base/acl.py
+  h_9db9d35f50cf33 6,192,209,295,306
+src/flext_ldif/_utilities/dispatch.py
+  h_9db9d35f50cf33 103,237
+tests/fixtures/openldap/schema/dyngroup.schema
+  h_9db9d35f50cf33 62
+src/flext_ldif/servers/oid.py
+  h_9db9d35f50cf33 15
+docs/guides/testing.md
+  h_9db9d35f50cf33 528
+tests/fixtures/openldap/schema/pmi.schema
+  h_9db9d35f50cf33 62,243
+src/flext_ldif/servers/_base/schema.py
+  h_9db9d35f50cf33 113,119,228,326,368,384,401,411
+src/flext_ldif/_utilities/metadata.py
+  h_9db9d35f50cf33 28,54,169-170,191,559,564,570,581,609,613,725-727,732,735,738,819,821-822,826
+docs/guides/integration.md
+  h_9db9d35f50cf33 54,84,93,145,169,187,195,197,215,235,249,296,303,331,462,477,491,496,535,543,545,547,555,590,593
+docs/guides/development.md
+  h_9db9d35f50cf33 154,193,196,202,353,356,405
+src/flext_ldif/servers/_base/entry.py
+  h_9db9d35f50cf33 72
+docs/migration/v0.9-to-v1.0-migration.md
+  h_9db9d35f50cf33 496,506
+tests/fixtures/openldap/schema/corba.schema
+  h_9db9d35f50cf33 31,38,44,51,58
+src/flext_ldif/services/entries.py
+  h_9db9d35f50cf33 44
+src/flext_ldif/_models/metadata.py
+  h_9db9d35f50cf33 80
+src/flext_ldif/_utilities/entry.py
+  h_9db9d35f50cf33 31,38-39,45-46,512,573,625
+docs/guides/flext_ldif_parse_acl_usages.md
+  h_9db9d35f50cf33 78,151-152
+docs/api-reference.md
+  h_9db9d35f50cf33 315,356-357,376-377,400,587,776,808,821,823,883,974
+tests/conftest.py
+  h_9db9d35f50cf33 428,507,546
+src/flext_ldif/_models/settings.py
+  h_9db9d35f50cf33 413,493
+src/flext_ldif/servers/relaxed.py
+  h_9db9d35f50cf33 457
+src/flext_ldif/_protocols/base.py
+  h_9db9d35f50cf33 659
+src/flext_ldif/servers/_oud/entry.py
+  h_9db9d35f50cf33 327,348,359,510,525,1273,1395,1402,1668,1834
+docs/guides/troubleshooting.md
+  h_9db9d35f50cf33 141,155
+src/flext_ldif/_models/domain_entry.py
+  h_9db9d35f50cf33 523,597,618,887,1096,1099,1102
+src/flext_ldif/_utilities/schema.py
+  h_9db9d35f50cf33 256-258,271
+tests/fixtures/openldap/schema/cosine.schema
+  h_9db9d35f50cf33 300
+src/flext_ldif/shared.py
+  h_9db9d35f50cf33 30,33
+src/flext_ldif/services/conversion.py
+  h_9db9d35f50cf33 53,67,95,113,139,147,180,200-201,215,445-446,451,813,882,1281,1283,1285,1309,1326,1330,1356,1370,1456
+src/flext_ldif/_utilities/acl.py
+  h_9db9d35f50cf33 191,280,367
+src/flext_ldif/_utilities/collection_ldif.py
+  h_9db9d35f50cf33 18
+src/flext_ldif/_models/results.py
+  h_9db9d35f50cf33 497
+examples/05_schema_operations.py
+  h_9db9d35f50cf33 10,92,154,177,180,244,247,330,333,338,344,349,379,384,393
+docs/development.md
+  h_9db9d35f50cf33 229,236,244,248
+tests/integration/test_acl_metadata_preservation.py
+  h_9db9d35f50cf33 23
+docs/troubleshooting.md
+  h_9db9d35f50cf33 121,134,149,181,183,319,470,598
+src/flext_ldif/services/writer.py
+  h_9db9d35f50cf33 42
+docs/refactoring/phase2.1-parser-service-extraction.md
+  h_9db9d35f50cf33 112,143,250
+src/flext_ldif/_utilities/parser.py
+  h_9db9d35f50cf33 350
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "676e22260584cf5ba7db970135513589123961dd",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
