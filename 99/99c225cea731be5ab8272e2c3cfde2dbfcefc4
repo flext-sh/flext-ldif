@@ -1,0 +1,14 @@
+src/flext_ldif/_utilities/dispatch.py
+  h_9db9d35f50cf33 83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "9999c225cea731be5ab8272e2c3cfde2dbfcefc4",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
