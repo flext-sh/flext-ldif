@@ -80,7 +80,7 @@ class FlextLdifUtilitiesDispatch:
         | None = None,
     ) -> r[MutableSequence[tuple[str, str]]] | r[t.MutableRecursiveContainerMapping]:
         if definition is None:
-            return r[MutableSequence[tuple[str, str]]].fail("DN cannot be None")
+            return r[t.MutableRecursiveContainerMapping].fail("DN cannot be None")
         if isinstance(definition, m.Ldif.DN):
             return FlextLdifUtilitiesDN.parse_dn(definition)
         if parse_parts_hook is None and server_type is None:
