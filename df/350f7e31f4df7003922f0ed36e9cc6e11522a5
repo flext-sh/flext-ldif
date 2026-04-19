@@ -1,0 +1,108 @@
+src/flext_ldif/_models/base.py
+  h_9db9d35f50cf33 8,10-11
+src/flext_ldif/utilities.py
+  h_9db9d35f50cf33 6-22
+src/flext_ldif/_utilities/dn.py
+  h_9db9d35f50cf33 18-20,23
+src/flext_ldif/_models/metadata.py
+  h_9db9d35f50cf33 15
+src/flext_ldif/_utilities/events.py
+  h_9db9d35f50cf33 7-10
+src/flext_ldif/_models/domain_dn.py
+  h_9db9d35f50cf33 14-16
+src/flext_ldif/_utilities/pipeline.py
+  h_9db9d35f50cf33 8-11
+src/flext_ldif/_utilities/attribute.py
+  h_9db9d35f50cf33 8
+src/flext_ldif/_models/settings.py
+  h_9db9d35f50cf33 16-21
+src/flext_ldif/_utilities/acl.py
+  h_9db9d35f50cf33 11-14
+src/flext_ldif/typings.py
+  h_9db9d35f50cf33 6-7
+src/flext_ldif/_models/domain_entry.py
+  h_9db9d35f50cf33 353,741-743,806-809
+src/flext_ldif/shared.py
+  h_9db9d35f50cf33 15-16
+src/flext_ldif/servers/openldap1.py
+  h_9db9d35f50cf33 11
+src/flext_ldif/services/detector.py
+  h_9db9d35f50cf33 10-11
+src/flext_ldif/_utilities/object_class.py
+  h_9db9d35f50cf33 5-6
+src/flext_ldif/_models/domain_acl.py
+  h_9db9d35f50cf33 14
+src/flext_ldif/_models/processing.py
+  h_9db9d35f50cf33 8
+src/flext_ldif/servers/_base/constants.py
+  h_9db9d35f50cf33 8
+src/flext_ldif/_utilities/transformers.py
+  h_9db9d35f50cf33 8-12
+src/flext_ldif/models.py
+  h_9db9d35f50cf33 17-25
+src/flext_ldif/_models/domain_schema.py
+  h_9db9d35f50cf33 19-21
+tests/integration/test_cross_direction_conversion.py
+  h_9db9d35f50cf33 8
+src/flext_ldif/_utilities/collection_ldif.py
+  h_9db9d35f50cf33 7
+src/flext_ldif/_utilities/validation.py
+  h_9db9d35f50cf33 3-6
+src/flext_ldif/_models/collections.py
+  h_9db9d35f50cf33 13-14,17
+src/flext_ldif/_models/domain_attributes.py
+  h_9db9d35f50cf33 19
+src/flext_ldif/services/filters.py
+  h_9db9d35f50cf33 9-10
+src/flext_ldif/servers/_rfc/entry.py
+  h_9db9d35f50cf33 8-9
+src/flext_ldif/services/entries.py
+  h_9db9d35f50cf33 8-9
+src/flext_ldif/_models/domain_metadata.py
+  h_9db9d35f50cf33 18-21,24
+src/flext_ldif/servers/apache.py
+  h_9db9d35f50cf33 9-10
+src/flext_ldif/servers/_base/mixins.py
+  h_9db9d35f50cf33 5-7
+src/flext_ldif/constants.py
+  h_9db9d35f50cf33 9
+src/flext_ldif/settings.py
+  h_9db9d35f50cf33 25
+src/flext_ldif/servers/novell.py
+  h_9db9d35f50cf33 10-11
+src/flext_ldif/_models/results.py
+  h_9db9d35f50cf33 9-13
+src/flext_ldif/_typings/base.py
+  h_9db9d35f50cf33 16,73,82,86
+src/flext_ldif/_models/domain_entries.py
+  h_9db9d35f50cf33 9-14
+src/flext_ldif/_utilities/writer.py
+  h_9db9d35f50cf33 7-8
+src/flext_ldif/services/analysis.py
+  h_9db9d35f50cf33 8-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "df350f7e31f4df7003922f0ed36e9cc6e11522a5",
+  "prompts": {
+    "2a008a39b1ce7c77": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "234d2634-32e6-47bf-99b1-de4c2dbf1d3c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 1
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
