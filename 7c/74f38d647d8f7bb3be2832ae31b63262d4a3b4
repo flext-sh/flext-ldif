@@ -1,0 +1,28 @@
+src/flext_ldif/_utilities/entry.py
+  h_9db9d35f50cf33 17
+src/flext_ldif/_typings/base.py
+  h_9db9d35f50cf33 30
+src/flext_ldif/utilities.py
+  h_9db9d35f50cf33 6
+src/flext_ldif/constants.py
+  h_9db9d35f50cf33 9,12
+src/flext_ldif/protocols.py
+  h_9db9d35f50cf33 7
+src/flext_ldif/models.py
+  h_9db9d35f50cf33 18-19,30,54,57-58,64
+src/flext_ldif/_models/domain_entry.py
+  h_9db9d35f50cf33 20,704
+src/flext_ldif/typings.py
+  h_9db9d35f50cf33 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "7c74f38d647d8f7bb3be2832ae31b63262d4a3b4",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
