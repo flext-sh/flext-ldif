@@ -15,6 +15,7 @@ from datetime import datetime
 from typing import TypeIs
 
 from flext_core import u
+
 from flext_ldif import (
     FlextLdifUtilitiesOID,
     FlextLdifUtilitiesParser,

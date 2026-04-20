@@ -17,6 +17,7 @@ from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
 
 from flext_cli import m, u
+
 from flext_ldif import (
     FlextLdifModelsDomainAcl,
     FlextLdifModelsDomainAttributes,
@@ -700,7 +701,7 @@ class FlextLdifModelsDomainEntry:
             """
             violations: MutableSequence[str] = []
             dn_value = "<None>"
-            if self.dn is None:
+                if self.dn is None or not self.dn.value:
                 violations.append("RFC 2849 § 2: DN is required")
             else:
                 dn_value = str(self.dn.value)

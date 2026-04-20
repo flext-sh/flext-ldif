@@ -9,6 +9,7 @@ from collections.abc import (
 from typing import Annotated, override
 
 from flext_core import d, r
+
 from flext_ldif import m, s, u
 
 

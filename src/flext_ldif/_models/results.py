@@ -8,6 +8,7 @@ from collections.abc import (
 from typing import Annotated, ClassVar, Self
 
 from flext_cli import m, u
+
 from flext_ldif._models.collections import FlextLdifModelsCollections
 from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
 from flext_ldif._models.events import FlextLdifModelsEvents
@@ -80,7 +81,7 @@ class FlextLdifModelsResults:
             bool, u.Field(description="Whether the migration produced no output")
         ] = True
 
-    class Statistics(m.Statistics):
+    class Statistics(m.FrozenModel):
         total_entries: Annotated[
             t.NonNegativeInt, u.Field(description="Total number of entries processed")
         ] = 0

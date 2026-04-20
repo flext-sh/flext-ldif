@@ -14,6 +14,7 @@ from collections.abc import (
 from typing import TYPE_CHECKING, Annotated, override
 
 from flext_cli import m, u
+
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.typings import t
 

@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal, overload
 
 from flext_core import u
+
 from flext_ldif import r
 from flext_ldif.constants import c
 from flext_ldif.models import m

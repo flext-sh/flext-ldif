@@ -17,6 +17,7 @@ from collections.abc import (
 from typing import Annotated, ClassVar, Literal, Self
 
 from flext_cli import m, u
+
 from flext_ldif import r
 from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl
 from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema
@@ -410,7 +411,7 @@ class FlextLdifModelsSettings:
             u.Field(description="Stop on first transform error"),
         ] = False
 
-    class CategoryRules(m.Rules):
+    class CategoryRules(m.Value):
         """Rules for entry categorization.
 
         Contains DN patterns and objectClass lists for each category.
@@ -490,7 +491,7 @@ class FlextLdifModelsSettings:
         ] = None
         trace_id: Annotated[str | None, u.Field(description="Trace identifier")] = None
 
-    class WhitelistRules(m.Rules):
+    class WhitelistRules(m.Value):
         """Whitelist rules for entry validation.
 
         Defines blocked objectClasses and validation rules.

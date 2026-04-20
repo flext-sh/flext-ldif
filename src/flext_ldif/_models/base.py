@@ -8,6 +8,7 @@ from collections.abc import (
 from typing import Annotated
 
 from flext_core import m, u
+
 from flext_ldif import c
 from flext_ldif.shared import FlextLdifShared
 

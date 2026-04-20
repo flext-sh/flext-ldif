@@ -12,6 +12,7 @@ from collections.abc import (
 from typing import TYPE_CHECKING, Annotated, Self
 
 from flext_cli import m, u
+
 from flext_ldif import FlextLdifModelsBases, c
 from flext_ldif.typings import t
 

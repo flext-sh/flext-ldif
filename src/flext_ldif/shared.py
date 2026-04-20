@@ -15,6 +15,7 @@ from collections.abc import (
 from typing import Final
 
 from flext_cli import t
+
 from flext_ldif import c
 
 

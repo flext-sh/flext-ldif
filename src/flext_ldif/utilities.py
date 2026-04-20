@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from flext_cli import u
+
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
 from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif

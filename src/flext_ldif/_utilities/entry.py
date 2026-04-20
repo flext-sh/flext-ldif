@@ -14,6 +14,7 @@ from collections.abc import (
 from typing import TypeIs
 
 from flext_cli import u
+
 from flext_ldif import (
     c,
     m,

@@ -9,6 +9,7 @@ from collections.abc import (
 from typing import ClassVar, Self, overload, override
 
 from flext_core import s
+
 from flext_ldif import (
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,

@@ -27,13 +27,7 @@ class FlextLdifTypesBase:
     type MetadataValue = (
         MetadataLeaf | Sequence[MetadataNode] | Mapping[str, MetadataNode]
     )
-    type ContainerLeaf = t.Primitives | m.BaseModel | datetime | None
-    type ContainerNode = (
-        ContainerLeaf | Sequence[ContainerLeaf] | Mapping[str, ContainerLeaf]
-    )
-    type RecursiveContainer = (
-        ContainerLeaf | Sequence[ContainerNode] | Mapping[str, ContainerNode]
-    )
+    type RecursiveContainer = t.JsonValue
     type ValueType = Scalar | t.StrSequence
     type ValueList = Sequence[ValueType]
     type AttributeValue = str | bytes
