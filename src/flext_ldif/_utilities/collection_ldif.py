@@ -15,7 +15,7 @@ class FlextLdifUtilitiesCollectionLdif:
 
     @staticmethod
     def find(
-        items: t.RecursiveContainerList,
+        items: t.FlatContainerList,
         *,
         predicate: Callable[..., bool],
     ) -> t.Container | None:

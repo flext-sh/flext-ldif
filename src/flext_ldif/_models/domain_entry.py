@@ -429,7 +429,7 @@ class FlextLdifModelsDomainEntry:
         def coerce_attributes_from_dict(
             cls,
             value: FlextLdifModelsDomainAttributes.Attributes
-            | t.MutableRecursiveContainerMapping
+            | t.MutableFlatContainerMapping
             | None,
         ) -> FlextLdifModelsDomainAttributes.Attributes | None:
             """Convert dict to Attributes instance.
@@ -441,7 +441,7 @@ class FlextLdifModelsDomainEntry:
                 return None
             if isinstance(value, FlextLdifModelsDomainAttributes.Attributes):
                 return value
-            wrapped_value: t.MutableRecursiveContainerMapping = value
+            wrapped_value: t.MutableFlatContainerMapping = value
             if "attributes" not in value:
                 wrapped_value = {"attributes": value}
             return FlextLdifModelsDomainAttributes.Attributes.model_validate(
@@ -453,7 +453,7 @@ class FlextLdifModelsDomainEntry:
         def coerce_dn_from_string(
             cls,
             value: FlextLdifModelsDomainDN.DN
-            | t.MutableRecursiveContainerMapping
+            | t.MutableFlatContainerMapping
             | str
             | None,
         ) -> FlextLdifModelsDomainDN.DN | None:
@@ -596,7 +596,7 @@ class FlextLdifModelsDomainEntry:
         @classmethod
         def ensure_metadata_initialized(
             cls,
-            data: t.MutableRecursiveContainerMapping,
+            data: t.MutableFlatContainerMapping,
         ) -> MutableMapping[
             str,
             t.Container | datetime | FlextLdifModelsDomainMetadata.QuirkMetadata,
@@ -880,9 +880,9 @@ class FlextLdifModelsDomainEntry:
             server_type: c.Ldif.ServerTypeLiteral | None,
             source_entry: str | None,
             unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None,
-        ) -> t.MutableRecursiveContainerMapping:
+        ) -> t.MutableFlatContainerMapping:
             """Build extension kwargs for DynamicMetadata."""
-            ext_kwargs: t.MutableRecursiveContainerMapping = {}
+            ext_kwargs: t.MutableFlatContainerMapping = {}
             if server_type:
                 ext_kwargs["server_type"] = server_type
             if source_entry:

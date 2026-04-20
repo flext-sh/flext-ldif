@@ -29,7 +29,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _add_to_dict_metadata(
-        metadata: t.MutableRecursiveContainerMapping,
+        metadata: t.MutableFlatContainerMapping,
         metadata_key: str,
         item_data: t.Container,
     ) -> None:
@@ -55,7 +55,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _add_to_list_metadata(
-        metadata: t.MutableRecursiveContainerMapping,
+        metadata: t.MutableFlatContainerMapping,
         metadata_key: str,
         item_data: t.Container,
     ) -> None:
@@ -102,7 +102,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _build_schema_format_model(
         definition: str,
-        combined: t.MutableRecursiveContainerMapping,
+        combined: t.MutableFlatContainerMapping,
     ) -> m.Ldif.SchemaFormatDetails:
         """Build SchemaFormatDetails model from combined details."""
         known_fields = {
@@ -113,10 +113,10 @@ class FlextLdifUtilitiesMetadata:
             "x_origin",
             "x_ordered",
         }
-        known_field_values: t.MutableRecursiveContainerMapping = {
+        known_field_values: t.MutableFlatContainerMapping = {
             "original_string_complete": definition,
         }
-        extension_kwargs: t.MutableRecursiveContainerMapping = {}
+        extension_kwargs: t.MutableFlatContainerMapping = {}
         for write_option_key, value in combined.items():
             if write_option_key in known_fields:
                 known_field_values[write_option_key] = value
@@ -133,9 +133,9 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _extract_all_schema_details(
         definition: str,
-    ) -> t.MutableRecursiveContainerMapping:
+    ) -> t.MutableFlatContainerMapping:
         """Extract all schema formatting details into combined dict."""
-        combined: t.MutableRecursiveContainerMapping = {}
+        combined: t.MutableFlatContainerMapping = {}
         extractors: Sequence[
             Callable[
                 [str], Mapping[str, str | bool | int | MutableSequence[str] | None]
@@ -552,7 +552,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _get_metadata_dict(
         model: p.Ldif.ModelWithValidationMetadata,
-    ) -> t.MutableRecursiveContainerMapping:
+    ) -> t.MutableFlatContainerMapping:
         """Get mutable metadata dict from model."""
         metadata_obj = getattr(model, "validation_metadata", None)
         if metadata_obj is None:
@@ -597,7 +597,7 @@ class FlextLdifUtilitiesMetadata:
         """Set validation_metadata on model (handles both mutable and frozen models)."""
         try:
             metadata_obj = metadata.to_dict()
-            normalized_metadata: t.MutableRecursiveContainerMapping = {}
+            normalized_metadata: t.MutableFlatContainerMapping = {}
             for write_option_key, value in metadata_obj.items():
                 if u.primitive(value):
                     normalized_metadata[write_option_key] = value
@@ -623,7 +623,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _update_conversion_path(
-        metadata: t.MutableRecursiveContainerMapping,
+        metadata: t.MutableFlatContainerMapping,
         update_conversion_path: str,
     ) -> None:
         """Update conversion_path in metadata."""
@@ -663,11 +663,11 @@ class FlextLdifUtilitiesMetadata:
         original: str,
         converted: str | None,
         context: str = "entry",
-    ) -> t.MutableRecursiveContainerMapping:
+    ) -> t.MutableFlatContainerMapping:
         """Analyze minimal differences between original and converted strings."""
         mk = c.Ldif
         empty_diffs: MutableSequence[str] = []
-        differences: t.MutableRecursiveContainerMapping = {
+        differences: t.MutableFlatContainerMapping = {
             mk.HAS_DIFFERENCES: False,
             "context": context,
             "original": original,
@@ -718,7 +718,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def build_entry_metadata_extensions(
         quirk_type: str,
-    ) -> t.MutableRecursiveContainerMapping:
+    ) -> t.MutableFlatContainerMapping:
         """Build metadata extensions for entry as a dictionary."""
         return {"quirk_type": quirk_type, "source_server": quirk_type}
 
@@ -727,7 +727,7 @@ class FlextLdifUtilitiesMetadata:
         settings: m.Ldif.EntryParseMetadataConfig,
     ) -> m.Ldif.QuirkMetadata:
         """Build QuirkMetadata for entry parsing with format preservation."""
-        server_data_dict: t.MutableRecursiveContainerMapping = {}
+        server_data_dict: t.MutableFlatContainerMapping = {}
         dn_typed: t.Container = settings.original_entry_dn
         cleaned_typed: t.Container = settings.cleaned_dn
         base64_typed: t.Container = settings.dn_was_base64
@@ -752,7 +752,7 @@ class FlextLdifUtilitiesMetadata:
         if settings.original_attr_lines:
             original_ldif_parts.extend(settings.original_attr_lines)
         original_ldif = "\n".join(original_ldif_parts) if original_ldif_parts else ""
-        extensions_dict: t.MutableRecursiveContainerMapping = {}
+        extensions_dict: t.MutableFlatContainerMapping = {}
         mk = c.Ldif
         extensions_dict[mk.ORIGINAL_DN_COMPLETE] = settings.original_entry_dn
         dynamic_extensions = m.Ldif.DynamicMetadata.from_dict(
@@ -816,12 +816,12 @@ class FlextLdifUtilitiesMetadata:
         write_opts = getattr(entry_data.metadata, "write_options", None)
         if write_opts is None:
             return None
-        raw_extras: t.MutableRecursiveContainerMapping | None = None
+        raw_extras: t.MutableFlatContainerMapping | None = None
         if isinstance(write_opts, m.BaseModel):
             model_extra_val = write_opts.model_extra
             if isinstance(model_extra_val, dict):
                 raw_extras = {str(k): v for k, v in model_extra_val.items()}
-        extras: t.MutableRecursiveContainerMapping = {}
+        extras: t.MutableFlatContainerMapping = {}
         opt: t.Container | None = None
         if raw_extras is not None:
             config_map_root: MutableMapping[str, t.Container | m.BaseModel] = dict(

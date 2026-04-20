@@ -221,7 +221,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_metadata_extensions(
-        extensions_raw: t.MutableRecursiveContainerMapping,
+        extensions_raw: t.MutableFlatContainerMapping,
     ) -> MutableMapping[
         str,
         t.Scalar
@@ -638,7 +638,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _validate_attribute_syntax(
         syntax: str | None,
-    ) -> t.MutableRecursiveContainerMapping | None:
+    ) -> t.MutableFlatContainerMapping | None:
         """Validate syntax OID and return validation result."""
         if not syntax or not syntax.strip():
             return None
@@ -658,7 +658,7 @@ class FlextLdifUtilitiesSchema:
         syntax_extensions[c.Ldif.SYNTAX_OID_VALID] = (
             c.Ldif.SYNTAX_VALIDATION_ERROR not in syntax_extensions
         )
-        result_dict: t.MutableRecursiveContainerMapping = {}
+        result_dict: t.MutableFlatContainerMapping = {}
         for key, val in syntax_extensions.items():
             if isinstance(val, list):
                 list_typed: t.Container = list(val)
@@ -745,11 +745,11 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def build_metadata(
         definition: str,
-        additional_extensions: t.MutableRecursiveContainerMapping | None = None,
-    ) -> t.MutableRecursiveContainerMapping:
+        additional_extensions: t.MutableFlatContainerMapping | None = None,
+    ) -> t.MutableFlatContainerMapping:
         """Build metadata extensions dictionary for schema definitions."""
         extensions_raw = FlextLdifUtilitiesParser.extract_extensions(definition)
-        extensions: t.MutableRecursiveContainerMapping = {}
+        extensions: t.MutableFlatContainerMapping = {}
         for key, val in extensions_raw.items():
             typed_val: t.Container = list(val)
             extensions[key] = typed_val
@@ -1032,18 +1032,18 @@ class FlextLdifUtilitiesSchema:
         attr_definition: str,
         *,
         validate_syntax: bool = True,
-    ) -> r[t.MutableRecursiveContainerMapping]:
+    ) -> r[t.MutableFlatContainerMapping]:
         """Parse RFC 4512 attribute definition into structured data."""
         basic_fields_result = FlextLdifUtilitiesSchema._extract_attribute_basic_fields(
             attr_definition,
         )
         if basic_fields_result.failure:
-            return r[t.MutableRecursiveContainerMapping].fail(basic_fields_result.error)
+            return r[t.MutableFlatContainerMapping].fail(basic_fields_result.error)
         oid, name, desc = basic_fields_result.value
         syntax, length = FlextLdifUtilitiesSchema._extract_attribute_syntax(
             attr_definition,
         )
-        syntax_validation_result: t.MutableRecursiveContainerMapping | None = None
+        syntax_validation_result: t.MutableFlatContainerMapping | None = None
         if validate_syntax:
             syntax_validation_result = (
                 FlextLdifUtilitiesSchema._validate_attribute_syntax(syntax)
@@ -1057,7 +1057,7 @@ class FlextLdifUtilitiesSchema:
         sup, usage = FlextLdifUtilitiesSchema._extract_attribute_sup_usage(
             attr_definition,
         )
-        additional_extensions_converted: t.MutableRecursiveContainerMapping | None = (
+        additional_extensions_converted: t.MutableFlatContainerMapping | None = (
             syntax_validation_result
         )
         extensions_raw = FlextLdifUtilitiesSchema.build_metadata(
@@ -1082,7 +1082,7 @@ class FlextLdifUtilitiesSchema:
                     syntax_validation_result,
                 )
             )
-        parsed_dict: t.MutableRecursiveContainerMapping = {
+        parsed_dict: t.MutableFlatContainerMapping = {
             "oid": oid,
             "name": name,
             "desc": desc,
@@ -1098,12 +1098,12 @@ class FlextLdifUtilitiesSchema:
             "metadata_extensions": extensions_converted,
             "syntax_validation": syntax_validation_converted,
         }
-        return r[t.MutableRecursiveContainerMapping].ok(parsed_dict)
+        return r[t.MutableFlatContainerMapping].ok(parsed_dict)
 
     @staticmethod
     def parse_objectclass(
         oc_definition: str,
-    ) -> t.MutableRecursiveContainerMapping:
+    ) -> t.MutableFlatContainerMapping:
         """Parse RFC 4512 objectClass definition into structured data."""
         basic_fields_result = (
             FlextLdifUtilitiesSchema._extract_objectclass_basic_fields(oc_definition)
@@ -1121,7 +1121,7 @@ class FlextLdifUtilitiesSchema:
         extensions_converted = FlextLdifUtilitiesSchema._convert_metadata_extensions(
             extensions_raw,
         )
-        parsed_dict: t.MutableRecursiveContainerMapping = {
+        parsed_dict: t.MutableFlatContainerMapping = {
             "oid": oid,
             "name": name,
             "desc": desc,

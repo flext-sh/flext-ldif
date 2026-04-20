@@ -293,7 +293,7 @@ class FlextLdifModelsDomainAcl:
         @classmethod
         def from_extensions(
             cls,
-            extensions: t.MutableRecursiveContainerMapping | None,
+            extensions: t.MutableFlatContainerMapping | None,
         ) -> Self:
             """Extract ACL write metadata from QuirkMetadata extensions.
 

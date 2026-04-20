@@ -100,7 +100,7 @@ class FlextLdifConversion(
     def _analyze_attribute_case(
         original_attribute_case: t.Container,
         target_server_type: str,
-    ) -> MutableMapping[str, t.MutableRecursiveContainerMapping]:
+    ) -> MutableMapping[str, t.MutableFlatContainerMapping]:
         """Analyze attribute case for target compatibility."""
         if bool(original_attribute_case):
             return {
@@ -122,14 +122,14 @@ class FlextLdifConversion(
         """Analyze boolean conversions for target compatibility."""
         if not boolean_conversions or not isinstance(boolean_conversions, Mapping):
             return {}
-        typed_boolean_conversions: t.MutableRecursiveContainerMapping = {}
+        typed_boolean_conversions: t.MutableFlatContainerMapping = {}
         for raw_attr_name, raw_conv_info in boolean_conversions.items():
             typed_boolean_conversions[str(raw_attr_name)] = raw_conv_info
         result: MutableMapping[str, t.MutableStrMapping] = {}
         for attr_name, conv_info in typed_boolean_conversions.items():
             source_format = ""
             if isinstance(conv_info, Mapping):
-                conv_info_dict: t.MutableRecursiveContainerMapping = {}
+                conv_info_dict: t.MutableFlatContainerMapping = {}
                 for raw_key, raw_value in conv_info.items():
                     conv_info_dict[str(raw_key)] = raw_value
                 source_format = str(conv_info_dict.get("format", "") or "")
@@ -144,10 +144,10 @@ class FlextLdifConversion(
     def _analyze_dn_format(
         original_format_details: t.Container,
         target_server_type: str,
-    ) -> MutableMapping[str, t.MutableRecursiveContainerMapping]:
+    ) -> MutableMapping[str, t.MutableFlatContainerMapping]:
         """Analyze DN spacing for target compatibility."""
         if isinstance(original_format_details, Mapping):
-            format_details: t.MutableRecursiveContainerMapping = {}
+            format_details: t.MutableFlatContainerMapping = {}
             for raw_key, raw_value in original_format_details.items():
                 format_details[str(raw_key)] = raw_value
             spacing: t.Container | None = format_details.get("dn_spacing")
@@ -167,11 +167,11 @@ class FlextLdifConversion(
     def _analyze_metadata_for_conversion(
         source_metadata: m.Ldif.QuirkMetadata | m.Ldif.DynamicMetadata | None,
         target_server_type: str,
-    ) -> MutableMapping[str, str | t.MutableRecursiveContainerMapping]:
+    ) -> MutableMapping[str, str | t.MutableFlatContainerMapping]:
         """Analyze source metadata for intelligent conversion to target server."""
         conversion_analysis: MutableMapping[
             str,
-            str | t.MutableRecursiveContainerMapping,
+            str | t.MutableFlatContainerMapping,
         ] = {}
         if not source_metadata or not FlextLdifConversion._has_attr(
             source_metadata,
@@ -192,7 +192,7 @@ class FlextLdifConversion(
         )
         acc_typed: MutableMapping[
             str,
-            str | t.MutableRecursiveContainerMapping,
+            str | t.MutableFlatContainerMapping,
         ] = {}
         for key, value in boolean_analysis.items():
             if isinstance(value, str):
@@ -1284,10 +1284,7 @@ class FlextLdifConversion(
 
     def _convert_to_metadata_attribute_value(
         self,
-        value: t.Container
-        | t.MutableRecursiveContainerMapping
-        | list[t.Container]
-        | None,
+        value: t.Container | t.MutableFlatContainerMapping | list[t.Container] | None,
     ) -> t.Container:
         """Convert value to MetadataAttributeValue type."""
         if value is None:
@@ -1301,15 +1298,13 @@ class FlextLdifConversion(
             ]
             return converted_list
         if isinstance(value, Mapping):
-            typed_value: t.MutableRecursiveContainerMapping = {}
+            typed_value: t.MutableFlatContainerMapping = {}
             for raw_key, raw_item in value.items():
                 typed_value[str(raw_key)] = raw_item
             return str(typed_value)
         return str(value)
 
-    def _get_extensions_dict(
-        self, acl: m.Ldif.Acl
-    ) -> t.MutableRecursiveContainerMapping:
+    def _get_extensions_dict(self, acl: m.Ldif.Acl) -> t.MutableFlatContainerMapping:
         """Extract extensions dict from ACL metadata."""
 
         def to_general_value(value: t.Container) -> t.Container:
@@ -1326,7 +1321,7 @@ class FlextLdifConversion(
             if isinstance(value, datetime):
                 return value.isoformat()
             if isinstance(value, Mapping):
-                normalized_mapping: t.MutableRecursiveContainerMapping = {}
+                normalized_mapping: t.MutableFlatContainerMapping = {}
                 for raw_key, raw_item in value.items():
                     key = str(raw_key)
                     item: t.Container = raw_item
@@ -1428,7 +1423,7 @@ class FlextLdifConversion(
             return acl_step1
         conv_ext = self._get_extensions_dict(acl_step1)
         orig_ext = self._get_extensions_dict(original_acl)
-        merged_ext_raw: t.MutableRecursiveContainerMapping = {
+        merged_ext_raw: t.MutableFlatContainerMapping = {
             **orig_ext,
             **conv_ext,
         }
@@ -1438,7 +1433,7 @@ class FlextLdifConversion(
             or (not acl_step1.metadata)
         ):
             return acl_step1
-        dynamic_metadata_dict: t.MutableRecursiveContainerMapping = {}
+        dynamic_metadata_dict: t.MutableFlatContainerMapping = {}
         for key, value in merged_ext_raw.items():
             if value is None:
                 dynamic_metadata_dict[key] = ""
@@ -1449,7 +1444,7 @@ class FlextLdifConversion(
                 )
                 continue
             if isinstance(value, Mapping):
-                normalized_mapping: t.MutableRecursiveContainerMapping = {}
+                normalized_mapping: t.MutableFlatContainerMapping = {}
                 for raw_k, raw_v in value.items():
                     normalized_mapping[str(raw_k)] = (
                         FlextLdifConversion._normalize_metadata_value(raw_v)
@@ -1471,7 +1466,7 @@ class FlextLdifConversion(
                 str(value),
             )
         if acl_step1.metadata:
-            metadata_kwargs: t.MutableRecursiveContainerMapping = dynamic_metadata_dict
+            metadata_kwargs: t.MutableFlatContainerMapping = dynamic_metadata_dict
             updated_metadata = acl_step1.metadata.model_copy(
                 update={
                     "extensions": m.Ldif.DynamicMetadata.from_dict(metadata_kwargs),
@@ -1571,7 +1566,7 @@ class FlextLdifConversion(
                 normalized_source_server = u.try_(
                     lambda: u.Ldif.normalize_server_type(source_quirk_name),
                 ).map_or(None)
-            extensions_update: t.MutableRecursiveContainerMapping = {
+            extensions_update: t.MutableFlatContainerMapping = {
                 "converted_from_server": source_quirk_name,
             }
             if conversion_analysis:

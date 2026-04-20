@@ -114,10 +114,10 @@ class FlextLdifServersBaseSchemaAcl(
     def create_metadata(
         self,
         original_format: str,
-        extensions: t.MutableRecursiveContainerMapping | None = None,
+        extensions: t.MutableFlatContainerMapping | None = None,
     ) -> m.Ldif.QuirkMetadata:
         """Create ACL quirk metadata."""
-        all_extensions: t.MutableRecursiveContainerMapping = {
+        all_extensions: t.MutableFlatContainerMapping = {
             "original_format": original_format,
         }
         if extensions:
@@ -259,7 +259,7 @@ class FlextLdifServersBaseSchemaAcl(
 
     def _extract_acl_parameters(
         self,
-        kwargs: t.MutableRecursiveContainerMapping,
+        kwargs: t.MutableFlatContainerMapping,
     ) -> tuple[str | m.Ldif.Acl | None, str | None]:
         """Extract and validate ACL operation parameters from kwargs."""
         data_raw = kwargs.get("data")

@@ -77,7 +77,7 @@ class FlextLdifServersBaseEntry(
             "write_format_options",
         )
         if isinstance(format_options_raw, Mapping):
-            format_options_map: t.MutableRecursiveContainerMapping = {}
+            format_options_map: t.MutableFlatContainerMapping = {}
             for raw_key, raw_value in format_options_raw.items():
                 key = str(raw_key)
                 format_options_map[key] = raw_value
@@ -126,11 +126,9 @@ class FlextLdifServersBaseEntry(
         return False
 
     @override
-    def execute(
-        self, **kwargs: t.MutableRecursiveContainerMapping
-    ) -> r[m.Ldif.Entry | str]:
+    def execute(self, **kwargs: t.MutableFlatContainerMapping) -> r[m.Ldif.Entry | str]:
         """Execute entry operation (parse/write)."""
-        kwargs_map: MutableMapping[str, t.MutableRecursiveContainerMapping] = kwargs
+        kwargs_map: MutableMapping[str, t.MutableFlatContainerMapping] = kwargs
         ldif_content = kwargs_map.get("ldif_content")
         entry_model = kwargs_map.get("entry_model")
         if isinstance(ldif_content, str):
@@ -344,7 +342,7 @@ class FlextLdifServersBaseEntry(
         use_original_acl_format_as_name = False
         hidden_attributes: set[str] = set()
         acl_original_format: str | None = None
-        extensions_data: t.MutableRecursiveContainerMapping = {}
+        extensions_data: t.MutableFlatContainerMapping = {}
         if entry_data.metadata:
             metadata_extensions = entry_data.metadata.extensions
             if u.matches_type(metadata_extensions, Mapping):

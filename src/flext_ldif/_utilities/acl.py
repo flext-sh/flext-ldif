@@ -63,9 +63,9 @@ class FlextLdifUtilitiesACL:
         version: str,
         acl_line: str,
         extra_patterns: t.MutableStrMapping,
-    ) -> t.MutableRecursiveContainerMapping:
+    ) -> t.MutableFlatContainerMapping:
         """Build metadata extensions dict."""
-        extensions: t.MutableRecursiveContainerMapping = {
+        extensions: t.MutableFlatContainerMapping = {
             "version": version,
             "original_format": acl_line,
         }
@@ -272,7 +272,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def build_metadata_extensions(
         settings: m.Ldif.AclMetadataConfig,
-    ) -> t.MutableRecursiveContainerMapping:
+    ) -> t.MutableFlatContainerMapping:
         """Build QuirkMetadata extensions for ACL."""
         normalized_line_breaks: MutableSequence[t.Scalar] | None = None
         if settings.line_breaks is not None:
@@ -287,7 +287,7 @@ class FlextLdifUtilitiesACL:
             ("version", settings.version),
             ("action_type", settings.action_type),
         ]
-        result: t.MutableRecursiveContainerMapping = {
+        result: t.MutableFlatContainerMapping = {
             key: value
             for key, value in extension_items
             if value is not None
@@ -355,7 +355,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def extract_bind_rules_from_extensions(
-        extensions: t.MutableRecursiveContainerMapping | None,
+        extensions: t.MutableFlatContainerMapping | None,
         rule_config: MutableSequence[tuple[str, str, str | None]],
         *,
         tuple_length: int = 2,
@@ -482,7 +482,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def extract_target_extensions(
-        extensions: m.Ldif.DynamicMetadata | t.MutableRecursiveContainerMapping | None,
+        extensions: m.Ldif.DynamicMetadata | t.MutableFlatContainerMapping | None,
         target_config: MutableSequence[tuple[str, str]],
     ) -> MutableSequence[str]:
         """Extract and format target extensions from metadata extensions."""
@@ -572,7 +572,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def format_conversion_comments(
-        extensions: m.Ldif.DynamicMetadata | t.MutableRecursiveContainerMapping | None,
+        extensions: m.Ldif.DynamicMetadata | t.MutableFlatContainerMapping | None,
         converted_from_key: str,
         comments_key: str,
     ) -> MutableSequence[str]:

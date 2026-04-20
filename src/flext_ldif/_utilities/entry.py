@@ -35,7 +35,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def is_string_key_mapping(
         value: t.Container,
-    ) -> TypeIs[t.MutableRecursiveContainerMapping]:
+    ) -> TypeIs[t.MutableFlatContainerMapping]:
         """Check if value is a string-key mapping."""
         return isinstance(value, Mapping)
 
@@ -537,7 +537,7 @@ class FlextLdifUtilitiesEntry:
             validation_rules,
         ):
             try:
-                validation_rules_payload: t.MutableRecursiveContainerMapping = dict(
+                validation_rules_payload: t.MutableFlatContainerMapping = dict(
                     validation_rules.items(),
                 )
                 return m.Ldif.ServerValidationRules.model_validate(
@@ -556,11 +556,11 @@ class FlextLdifUtilitiesEntry:
         original: str,
         converted: str | None,
         context: str = "entry",
-    ) -> t.MutableRecursiveContainerMapping:
+    ) -> t.MutableFlatContainerMapping:
         """Analyze minimal differences between original and converted strings."""
         mk = c.Ldif
         empty_diffs: MutableSequence[str] = []
-        differences: t.MutableRecursiveContainerMapping = {
+        differences: t.MutableFlatContainerMapping = {
             mk.HAS_DIFFERENCES: False,
             "context": context,
             "original": original,
@@ -582,9 +582,9 @@ class FlextLdifUtilitiesEntry:
         cleaned_dn: str,
         normalize_attr_fn: Callable[[str], str] | None = None,
     ) -> tuple[
-        t.MutableRecursiveContainerMapping,
-        MutableMapping[str, t.MutableRecursiveContainerMapping],
-        t.MutableRecursiveContainerMapping,
+        t.MutableFlatContainerMapping,
+        MutableMapping[str, t.MutableFlatContainerMapping],
+        t.MutableFlatContainerMapping,
         t.MutableStrMapping,
     ]:
         """Analyze DN and attribute differences for round-trip support (DRY utility)."""
@@ -614,10 +614,8 @@ class FlextLdifUtilitiesEntry:
                     original_attribute_case[key] = value
             except (ValueError, TypeError, AttributeError):
                 continue
-        attribute_differences: MutableMapping[
-            str, t.MutableRecursiveContainerMapping
-        ] = {}
-        original_attributes_complete: t.MutableRecursiveContainerMapping = {}
+        attribute_differences: MutableMapping[str, t.MutableFlatContainerMapping] = {}
+        original_attributes_complete: t.MutableFlatContainerMapping = {}
         for attr_name, attr_values in entry_attrs.items():
             original_attr_name = str(attr_name)
             canonical_name = normalize(original_attr_name)

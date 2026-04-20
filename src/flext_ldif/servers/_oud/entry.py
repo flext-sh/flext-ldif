@@ -231,7 +231,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _create_write_options_with_hidden_attrs(
-        write_opts: m.Ldif.WriteOptions | t.MutableRecursiveContainerMapping | None,
+        write_opts: m.Ldif.WriteOptions | t.MutableFlatContainerMapping | None,
         hidden_attrs: set[str],
     ) -> m.Ldif.WriteOptions:
         """Create WriteOptions with updated hidden attributes.
@@ -252,12 +252,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             hidden_attrs_set = {str(item) for item in hidden_attrs_raw}
         hidden_attrs_set.update(hidden_attrs)
         if isinstance(write_opts, m.Ldif.WriteOptions):
-            write_opts_data: t.MutableRecursiveContainerMapping = (
-                write_opts.model_dump()
-            )
+            write_opts_data: t.MutableFlatContainerMapping = write_opts.model_dump()
             write_opts_data["hidden_attrs"] = list(hidden_attrs_set)
             return m.Ldif.WriteOptions.model_validate(write_opts_data)
-        write_opts_dict: t.MutableRecursiveContainerMapping = {
+        write_opts_dict: t.MutableFlatContainerMapping = {
             "hidden_attrs": list(hidden_attrs_set),
         }
         format_value = write_opts.get("format")
@@ -351,7 +349,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     @staticmethod
     def _parse_commented_values(
         commented_raw: t.Container,
-    ) -> t.MutableRecursiveContainerMapping | None:
+    ) -> t.MutableFlatContainerMapping | None:
         """Parse commented ACL values from raw storage format.
 
         Args:
@@ -368,7 +366,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             parsed = commented_raw
         if not isinstance(parsed, Mapping):
             return None
-        normalized: t.MutableRecursiveContainerMapping = {}
+        normalized: t.MutableFlatContainerMapping = {}
         for raw_key, raw_value in parsed.items():
             normalized[raw_key] = raw_value
         return normalized
@@ -495,7 +493,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         """
         metadata_typed: m.Ldif.QuirkMetadata = metadata
-        current_extensions: t.MutableRecursiveContainerMapping = (
+        current_extensions: t.MutableFlatContainerMapping = (
             dict(metadata_typed.extensions) if metadata_typed.extensions else {}
         )
         new_write_options = (
@@ -531,7 +529,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             current_extensions["acl_commented_attributes"] = commented_attrs_typed
         update_dict_final: MutableMapping[
             str,
-            t.MutableRecursiveContainerMapping | m.Ldif.WriteOptions | None,
+            t.MutableFlatContainerMapping | m.Ldif.WriteOptions | None,
         ] = {
             "extensions": current_extensions,
             "write_options": new_write_options,
@@ -1190,8 +1188,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _extract_acl_metadata_from_dict(
         self,
-        acl_extensions: t.MutableRecursiveContainerMapping,
-        acl_metadata_extensions: t.MutableRecursiveContainerMapping,
+        acl_extensions: t.MutableFlatContainerMapping,
+        acl_metadata_extensions: t.MutableFlatContainerMapping,
     ) -> None:
         """Extract ACL metadata from dict extensions."""
         mk = c.Ldif
@@ -1234,7 +1232,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _extract_acl_metadata_from_dynamic(
         self,
         acl_extensions: m.Ldif.DynamicMetadata,
-        acl_metadata_extensions: t.MutableRecursiveContainerMapping,
+        acl_metadata_extensions: t.MutableFlatContainerMapping,
     ) -> None:
         """Extract ACL metadata from DynamicMetadata extensions."""
         mk = c.Ldif
@@ -1282,7 +1280,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _finalize_and_parse_entry(
         self,
-        entry_dict: t.MutableRecursiveContainerMapping,
+        entry_dict: t.MutableFlatContainerMapping,
         entries_list: MutableSequence[m.Ldif.Entry],
     ) -> None:
         """Finalize entry dict and parse into entries list.
@@ -1471,7 +1469,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 "oud",
                 extensions=m.Ldif.DynamicMetadata(),
             )
-        current_extensions: t.MutableRecursiveContainerMapping = (
+        current_extensions: t.MutableFlatContainerMapping = (
             dict(entry.metadata.extensions.to_dict())
             if entry.metadata and entry.metadata.extensions
             else {}
@@ -1577,7 +1575,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         aci_attrs = attrs_dict.get("aci")
         if aci_attrs and u.matches_type(aci_attrs, (list, tuple)):
             has_macros = False
-            acl_metadata_extensions: t.MutableRecursiveContainerMapping = {}
+            acl_metadata_extensions: t.MutableFlatContainerMapping = {}
             for aci_value in aci_attrs:
                 if u.matches_type(aci_value, str):
                     process_result = self._process_single_aci_value(
@@ -1627,13 +1625,13 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _merge_acl_metadata_to_entry(
         self,
         entry: m.Ldif.Entry,
-        acl_metadata_extensions: t.MutableRecursiveContainerMapping,
+        acl_metadata_extensions: t.MutableFlatContainerMapping,
     ) -> m.Ldif.Entry:
         """Merge ACL metadata extensions into entry metadata."""
         if not acl_metadata_extensions:
             return entry
         if entry.metadata:
-            current_extensions: t.MutableRecursiveContainerMapping = (
+            current_extensions: t.MutableFlatContainerMapping = (
                 dict(entry.metadata.extensions.to_dict())
                 if entry.metadata.extensions
                 else {}
@@ -1748,7 +1746,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         self,
         aci_values: MutableSequence[str] | str,
         acl_quirk: FlextLdifServersOudAcl,
-        current_extensions: t.MutableRecursiveContainerMapping,
+        current_extensions: t.MutableFlatContainerMapping,
     ) -> None:
         """Process list of ACI values and extract metadata."""
         aci_list: MutableSequence[str] = (
@@ -1763,7 +1761,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 acl_model = acl_result.value
                 if acl_model.metadata and acl_model.metadata.extensions:
                     acl_ext_raw = acl_model.metadata.extensions.to_dict()
-                    acl_extensions: t.MutableRecursiveContainerMapping = {}
+                    acl_extensions: t.MutableFlatContainerMapping = {}
                     for raw_key, raw_value in acl_ext_raw.items():
                         key = str(raw_key)
                         acl_extensions[key] = (
@@ -1778,8 +1776,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _process_parsed_acl_extensions(
         self,
-        acl_extensions: t.MutableRecursiveContainerMapping,
-        current_extensions: t.MutableRecursiveContainerMapping,
+        acl_extensions: t.MutableFlatContainerMapping,
+        current_extensions: t.MutableFlatContainerMapping,
     ) -> None:
         """Process parsed ACL extensions and add to current extensions."""
         mk = c.Ldif
@@ -1844,7 +1842,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _process_single_aci_value(
         self,
         aci_value: str,
-        acl_metadata_extensions: t.MutableRecursiveContainerMapping,
+        acl_metadata_extensions: t.MutableFlatContainerMapping,
     ) -> r[bool]:
         """Process single ACI value, extract metadata, return has_macros flag."""
         has_macros = bool(re.search(r"\(\$dn\)|\[\$dn\]|\(\$attr\.", aci_value))
@@ -1868,7 +1866,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         acl_metadata_extensions,
                     )
                 elif isinstance(acl_extensions, Mapping):
-                    acl_extensions_dict: t.MutableRecursiveContainerMapping = {
+                    acl_extensions_dict: t.MutableFlatContainerMapping = {
                         str(
                             k,
                         ): m.Ldif.DynamicMetadata.coerce_metadata_value(
