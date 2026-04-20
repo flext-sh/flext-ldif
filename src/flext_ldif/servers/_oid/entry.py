@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import (
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+)
 from typing import override
 
 from flext_ldif import (

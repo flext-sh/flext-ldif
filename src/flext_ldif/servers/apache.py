@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import re
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import (
+    MutableMapping,
+    MutableSequence,
+)
 from typing import ClassVar, override
 
 from flext_ldif import FlextLdifModelsDomainsEntries, FlextLdifServersRfc, c, m, r, u

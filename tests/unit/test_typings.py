@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import ast
 import inspect
-from collections.abc import Mapping
+from collections.abc import (
+    Mapping,
+)
 from pathlib import Path
 
 import pytest

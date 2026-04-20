@@ -6,7 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from collections.abc import (
+    MutableSequence,
+)
 from typing import TYPE_CHECKING, Annotated, Self
 
 from flext_cli import m, u

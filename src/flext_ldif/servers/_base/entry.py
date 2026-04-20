@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import base64
 import re
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import (
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+)
 from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self, override
 

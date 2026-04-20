@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from collections.abc import (
+    MutableSequence,
+)
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import override
 

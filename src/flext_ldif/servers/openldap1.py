@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import MutableSequence
+from collections.abc import (
+    MutableSequence,
+)
 from typing import ClassVar, override
 
 from flext_ldif import FlextLdifServersRfc, c, m, r

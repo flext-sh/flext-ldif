@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 from typing import TypeIs
 
 from flext_cli import u

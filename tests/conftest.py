@@ -13,6 +13,7 @@ import time
 from collections.abc import (
     Callable,
     Generator,
+    Mapping,
     Sequence,
 )
 from pathlib import Path

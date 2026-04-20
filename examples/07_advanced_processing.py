@@ -14,7 +14,9 @@ No manual processor creation or conversion loops required.
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from collections.abc import (
+    MutableSequence,
+)
 from datetime import UTC, datetime
 from pathlib import Path
 

@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableSequence, Sequence
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableSequence,
+    Sequence,
+)
 from typing import ClassVar, TypeGuard, overload
 
 from flext_ldif import (

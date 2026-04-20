@@ -9,7 +9,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping, MutableSequence
+from collections.abc import (
+    Callable,
+    MutableMapping,
+    MutableSequence,
+)
 from typing import Annotated, ClassVar, Literal, Self
 
 from flext_cli import m, u

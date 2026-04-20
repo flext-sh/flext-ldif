@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import MutableSequence
+from collections.abc import (
+    MutableSequence,
+)
 from pathlib import Path
 from typing import Final, override
 

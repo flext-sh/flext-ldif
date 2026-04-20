@@ -7,7 +7,9 @@ attributes like CANONICAL_NAME, ALIASES, and PRIORITY values.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import (
+    Sequence,
+)
 from pathlib import Path
 from typing import Final
 

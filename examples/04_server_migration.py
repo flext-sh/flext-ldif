@@ -7,7 +7,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import (
+    Mapping,
+)
 from pathlib import Path
 
 from flext_ldif import FlextLdif, ldif, m, r, t, u

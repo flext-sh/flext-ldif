@@ -5,7 +5,9 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from collections.abc import (
+    MutableSequence,
+)
 from datetime import UTC, datetime
 from pathlib import Path
 

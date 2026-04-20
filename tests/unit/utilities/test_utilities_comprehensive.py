@@ -5,7 +5,9 @@ Tests all 830 uncovered lines in utilities.py with real data and automation.
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from collections.abc import (
+    MutableSequence,
+)
 
 import pytest
 from flext_tests import tm

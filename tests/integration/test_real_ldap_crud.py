@@ -18,7 +18,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping, MutableSequence
+from collections.abc import (
+    Callable,
+    MutableMapping,
+    MutableSequence,
+)
 from pathlib import Path
 
 import pytest

@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import re
 import sys
-from collections.abc import MutableSequence
+from collections.abc import (
+    MutableSequence,
+)
 from typing import TypeIs
 
 from flext_ldif import (

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import MutableSequence
+from collections.abc import (
+    MutableSequence,
+)
 from typing import override
 
 from flext_ldif import d, m, r, s, u

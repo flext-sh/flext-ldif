@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Mapping, MutableSequence
+from collections.abc import (
+    Mapping,
+    MutableSequence,
+)
 from typing import Final
 
 from flext_ldif import m, r, u

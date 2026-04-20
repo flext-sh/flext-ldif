@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableSequence
+from collections.abc import (
+    Callable,
+    MutableSequence,
+)
 from typing import ClassVar, Self, overload, override
 
 from flext_core import s

@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping, MutableSequence, Sequence
+from collections.abc import (
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 from typing import ClassVar, override
 
 from flext_ldif import r

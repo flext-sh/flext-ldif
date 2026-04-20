@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from collections.abc import (
+    MutableSequence,
+)
 from typing import override
 
 from flext_ldif import FlextLdifServersBase, m, r, u

@@ -9,7 +9,12 @@ Provides OUD-specific quirks for schema, ACL, and entry processing.
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+)
 from typing import override
 
 from flext_ldif import (

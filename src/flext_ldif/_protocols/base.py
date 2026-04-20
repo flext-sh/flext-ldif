@@ -13,6 +13,8 @@ from collections.abc import (
 )
 from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
+from flext_cli import m
+
 if TYPE_CHECKING:
     from flext_ldif import t
 

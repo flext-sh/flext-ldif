@@ -9,7 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import (
+    MutableMapping,
+)
 from typing import Final
 
 from flext_cli import t

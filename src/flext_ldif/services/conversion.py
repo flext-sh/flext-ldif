@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import struct
 import time
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 from datetime import datetime
 from typing import (
     Literal,

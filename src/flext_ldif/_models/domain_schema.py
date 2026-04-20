@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import MutableSequence
+from collections.abc import (
+    MutableSequence,
+)
 from typing import Annotated, Self
 
 from flext_cli import u

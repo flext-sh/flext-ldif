@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import MutableSequence
+from collections.abc import (
+    MutableSequence,
+)
 from typing import Annotated, override
 
 from flext_core import d, r

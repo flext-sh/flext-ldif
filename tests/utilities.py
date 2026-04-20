@@ -6,7 +6,11 @@ import fcntl
 import os
 import types
 import uuid
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import (
+    Mapping,
+    MutableMapping,
+    Sequence,
+)
 from pathlib import Path
 from typing import ClassVar, TextIO
 

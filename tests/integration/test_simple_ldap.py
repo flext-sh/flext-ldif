@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import (
+    Callable,
+)
 
 from flext_ldif import ldif
 from tests import m, p, t

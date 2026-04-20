@@ -3,7 +3,13 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 from typing import TypeIs
 
 from flext_core import u

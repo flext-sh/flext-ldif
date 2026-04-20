@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import (
+    MutableMapping,
+    MutableSequence,
+)
 from typing import ClassVar
 
 from flext_ldif import FlextLdifServersRfc, t
