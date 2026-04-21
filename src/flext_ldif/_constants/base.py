@@ -152,7 +152,11 @@ class FlextLdifConstantsBase:
     ORIGINAL_DN_COMPLETE: Final[str] = "original_dn_complete"
     ORIGINAL_ATTRIBUTES_COMPLETE: Final[str] = "original_attributes_complete"
     ORIGINAL_DN_LINE_COMPLETE: Final[str] = "original_dn_line_complete"
+    ENTRY_ORIGINAL_LDIF: Final[str] = "entry_original_ldif"
     WRITE_OPTIONS: Final[str] = "_write_options"
+    WRITE_FORMAT_OPTIONS: Final[str] = "write_format_options"
+    BASE_DN: Final[str] = "base_dn"
+    DN_REGISTRY: Final[str] = "dn_registry"
     HAS_DIFFERENCES: Final[str] = "has_differences"
     MINIMAL_DIFFERENCES_DN: Final[str] = "minimal_differences_dn"
 
@@ -198,6 +202,8 @@ class FlextLdifConstantsBase:
     # Source file and conversion
     SOURCE_FILE: Final[str] = "source_file"
     HIDDEN_ATTRIBUTES: Final[str] = "hidden_attributes"
+    COMMENTED_ATTRIBUTE_VALUES: Final[str] = "commented_attribute_values"
+    ACL_COMMENTED_ATTRIBUTES: Final[str] = "acl_commented_attributes"
     CONVERSION_BOOLEAN_CONVERSIONS: Final[str] = "boolean_conversions"
     CONVERSION_ATTRIBUTE_NAME_CONVERSIONS: Final[str] = "attribute_name_conversions"
     CONVERSION_ORIGINAL_VALUE: Final[str] = "original"

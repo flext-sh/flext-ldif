@@ -10,7 +10,7 @@ from collections.abc import (
     MutableSequence,
 )
 from datetime import UTC, datetime
-from typing import Annotated, ClassVar, Self, override
+from typing import Annotated, ClassVar, Self
 
 from flext_ldif import (
     FlextLdifServerMethodsMixin,
@@ -74,7 +74,7 @@ class FlextLdifServersBaseEntry(
         if metadata is None:
             return None
         format_options_raw: t.Container | None = metadata.extensions.get(
-            "write_format_options",
+            c.Ldif.WRITE_FORMAT_OPTIONS,
         )
         if isinstance(format_options_raw, Mapping):
             format_options_map: t.MutableFlatContainerMapping = {}
@@ -91,19 +91,7 @@ class FlextLdifServersBaseEntry(
                     error=str(exc),
                     error_type=type(exc).__name__,
                 )
-        if metadata.write_options is None:
-            return None
-        try:
-            return m.Ldif.WriteFormatOptions.model_validate(
-                metadata.write_options.model_dump(exclude_none=True),
-            )
-        except c.ValidationError as exc:
-            logger.warning(
-                "Failed to validate write format options",
-                error=str(exc),
-                error_type=type(exc).__name__,
-            )
-            return None
+        return None
 
     def can_handle(
         self,
@@ -125,7 +113,6 @@ class FlextLdifServersBaseEntry(
         _ = objectclass
         return False
 
-    @override
     def execute(self, **kwargs: t.MutableFlatContainerMapping) -> r[m.Ldif.Entry | str]:
         """Execute entry operation (parse/write)."""
         kwargs_map: MutableMapping[str, t.MutableFlatContainerMapping] = kwargs
@@ -221,29 +208,6 @@ class FlextLdifServersBaseEntry(
                 converted_attrs[canonical_attr_name] = string_values
         return converted_attrs
 
-    def _convert_write_options(
-        self,
-        write_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | t.Container,
-    ) -> m.Ldif.WriteOptions:
-        if isinstance(write_options, m.Ldif.WriteOptions):
-            return write_options
-        if isinstance(write_options, m.Ldif.WriteFormatOptions):
-            write_options_payload = write_options.model_dump(exclude_none=True)
-            return m.Ldif.WriteOptions.model_validate({
-                "sort_entries": write_options_payload.get("sort_attributes", False),
-                "include_comments": write_options_payload.get(
-                    "include_dn_comments",
-                    False,
-                ),
-                "base64_encode_binary": write_options_payload.get(
-                    "base64_encode_binary",
-                    False,
-                ),
-            })
-        if not isinstance(write_options, Mapping):
-            return m.Ldif.WriteOptions()
-        return m.Ldif.WriteOptions.model_validate(write_options)
-
     def _denormalize_entry(
         self,
         entry: m.Ldif.Entry,
@@ -272,31 +236,28 @@ class FlextLdifServersBaseEntry(
             return r[bool].fail("DN cannot be empty")
         return r[bool].ok(True)
 
-    def _inject_write_options(
+    def _inject_write_format_options(
         self,
         entry: m.Ldif.Entry,
         write_options: m.Ldif.WriteFormatOptions,
     ) -> m.Ldif.Entry:
-        """Inject write options into entry metadata."""
-        write_options_typed = self._convert_write_options(write_options)
+        """Inject write format options into entry metadata extensions."""
         format_options_payload = write_options.model_dump(exclude_none=True)
         existing_extensions = (
             entry.metadata.extensions.model_copy(deep=True)
             if entry.metadata
             else m.Ldif.DynamicMetadata()
         )
-        existing_extensions["write_format_options"] = format_options_payload
+        existing_extensions[c.Ldif.WRITE_FORMAT_OPTIONS] = format_options_payload
         if entry.metadata:
             updated_metadata = entry.metadata.model_copy(
                 update={
-                    "write_options": write_options_typed,
                     "extensions": existing_extensions,
                 },
             )
         else:
             updated_metadata = m.Ldif.QuirkMetadata(
                 quirk_type=c.Ldif.ServerTypes.RFC,
-                write_options=write_options_typed,
                 extensions=existing_extensions,
             )
         return entry.model_copy(update={"metadata": updated_metadata})
@@ -317,15 +278,6 @@ class FlextLdifServersBaseEntry(
         """Parse raw LDIF content string into Entry models (internal)."""
         _ = ldif_content
         return r[MutableSequence[m.Ldif.Entry]].fail("Must be implemented by subclass")
-
-    def _resolve_write_options_for_header(
-        self,
-        write_options: m.Ldif.WriteFormatOptions | None,
-    ) -> m.Ldif.WriteFormatOptions | None:
-        """Resolve write options for header generation."""
-        if write_options is None:
-            return m.Ldif.WriteFormatOptions()
-        return write_options
 
     def _write_entry(self, entry_data: m.Ldif.Entry) -> r[str]:
         """Write Entry model to RFC-compliant LDIF string (internal)."""
@@ -641,8 +593,7 @@ class FlextLdifServersBaseEntry(
         write_options: m.Ldif.WriteFormatOptions | None,
     ) -> r[str]:
         """Write list of entries to LDIF."""
-        opts = self._resolve_write_options_for_header(write_options)
-        header_lines = self._build_header_lines(opts, len(entries))
+        header_lines = self._build_header_lines(write_options, len(entries))
 
         def format_output(results: t.StrSequence) -> str:
             all_lines = [*header_lines, *results]
@@ -663,5 +614,5 @@ class FlextLdifServersBaseEntry(
     ) -> r[str]:
         """Write single entry to LDIF."""
         if write_options is not None:
-            entry = self._inject_write_options(entry, write_options)
+            entry = self._inject_write_format_options(entry, write_options)
         return self._write_entry(entry)

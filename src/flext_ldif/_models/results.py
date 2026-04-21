@@ -286,7 +286,7 @@ class FlextLdifModelsResults:
 
     class MigrationPipelineResult(m.FrozenModel):
         migrated_schema: mc.SchemaContent = u.Field(
-            default_factory=lambda: mc.SchemaContent(
+            default_factory=lambda: mc.SchemaContent.model_construct(
                 attributes=[],
                 object_classes=[],
             ),

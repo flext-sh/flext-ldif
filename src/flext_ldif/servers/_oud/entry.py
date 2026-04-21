@@ -230,60 +230,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         )
 
     @staticmethod
-    def _create_write_options_with_hidden_attrs(
-        write_opts: m.Ldif.WriteOptions | t.MutableFlatContainerMapping | None,
-        hidden_attrs: set[str],
-    ) -> m.Ldif.WriteOptions:
-        """Create WriteOptions with updated hidden attributes.
-
-        Args:
-            write_opts: Existing write options (model, dict, or None)
-            hidden_attrs: Set of hidden attribute names to add
-
-        Returns:
-            New WriteOptions with merged hidden_attrs
-
-        """
-        if not write_opts:
-            return m.Ldif.WriteOptions()
-        hidden_attrs_raw = getattr(write_opts, "hidden_attrs", [])
-        hidden_attrs_set: set[str] = set()
-        if u.matches_type(hidden_attrs_raw, (list, tuple, frozenset, set)):
-            hidden_attrs_set = {str(item) for item in hidden_attrs_raw}
-        hidden_attrs_set.update(hidden_attrs)
-        if isinstance(write_opts, m.Ldif.WriteOptions):
-            write_opts_data: t.MutableFlatContainerMapping = write_opts.model_dump()
-            write_opts_data["hidden_attrs"] = list(hidden_attrs_set)
-            return m.Ldif.WriteOptions.model_validate(write_opts_data)
-        write_opts_dict: t.MutableFlatContainerMapping = {
-            "hidden_attrs": list(hidden_attrs_set),
-        }
-        format_value = write_opts.get("format")
-        if isinstance(format_value, str):
-            write_opts_dict["format"] = format_value
-        base_dn_value = write_opts.get("base_dn")
-        if isinstance(base_dn_value, str):
-            write_opts_dict["base_dn"] = base_dn_value
-        sort_entries_value = write_opts.get("sort_entries")
-        if isinstance(sort_entries_value, bool):
-            write_opts_dict["sort_entries"] = sort_entries_value
-        else:
-            sort_attributes_value = write_opts.get("sort_attributes")
-            if isinstance(sort_attributes_value, bool):
-                write_opts_dict["sort_entries"] = sort_attributes_value
-        include_comments_value = write_opts.get("include_comments")
-        if isinstance(include_comments_value, bool):
-            write_opts_dict["include_comments"] = include_comments_value
-        else:
-            write_metadata_as_comments = write_opts.get("write_metadata_as_comments")
-            if isinstance(write_metadata_as_comments, bool):
-                write_opts_dict["include_comments"] = write_metadata_as_comments
-        base64_encode_binary_value = write_opts.get("base64_encode_binary")
-        if isinstance(base64_encode_binary_value, bool):
-            write_opts_dict["base64_encode_binary"] = base64_encode_binary_value
-        return m.Ldif.WriteOptions.model_validate(write_opts_dict)
-
-    @staticmethod
     def _hook_pre_write_entry_static(
         entry: m.Ldif.Entry,
         validate_aci_macros: Callable[[str], r[bool]],
@@ -496,26 +442,38 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         current_extensions: t.Ldif.MutableMetadataInputMapping = (
             dict(metadata_typed.extensions) if metadata_typed.extensions else {}
         )
-        new_write_options = (
-            FlextLdifServersOudEntry._create_write_options_with_hidden_attrs(
-                metadata_typed.write_options,
-                hidden_attrs,
+        hidden_attribute_names: set[str] = set()
+        hidden_attrs_raw = current_extensions.get(c.Ldif.HIDDEN_ATTRIBUTES, [])
+        if isinstance(hidden_attrs_raw, (list, tuple, frozenset, set)):
+            hidden_attribute_names = {str(item).lower() for item in hidden_attrs_raw}
+        if metadata_typed.write_options is not None:
+            legacy_hidden_attrs = getattr(
+                metadata_typed.write_options, "hidden_attrs", []
             )
-        )
-        update_dict: MutableMapping[str, m.Ldif.WriteOptions | None] = {
-            "write_options": new_write_options,
-        }
-        metadata_typed = metadata_typed.model_copy(update=update_dict)
+            if isinstance(legacy_hidden_attrs, (list, tuple, frozenset, set)):
+                hidden_attribute_names.update(
+                    str(item).lower() for item in legacy_hidden_attrs
+                )
+            base_dn_value = getattr(metadata_typed.write_options, "base_dn", None)
+            if isinstance(base_dn_value, str):
+                current_extensions.setdefault(c.Ldif.BASE_DN, base_dn_value)
+        hidden_attribute_names.update(attr.lower() for attr in hidden_attrs)
+        if hidden_attribute_names:
+            current_extensions[c.Ldif.HIDDEN_ATTRIBUTES] = sorted(
+                hidden_attribute_names
+            )
         if commented_acl_values:
             converted_attrs_list: MutableSequence[str] = list(
                 commented_acl_values.keys(),
             )
             converted_attrs_typed: t.Container = list(converted_attrs_list)
-            current_extensions["converted_attributes"] = converted_attrs_typed
-            current_extensions["commented_attribute_values"] = (
+            current_extensions[c.Ldif.CONVERTED_ATTRIBUTES] = converted_attrs_typed
+            current_extensions[c.Ldif.COMMENTED_ATTRIBUTE_VALUES] = (
                 m.Ldif.DynamicMetadata.from_dict(commented_acl_values).model_dump_json()
             )
-        commented_attrs_raw = current_extensions.get("acl_commented_attributes", [])
+        commented_attrs_raw = current_extensions.get(
+            c.Ldif.ACL_COMMENTED_ATTRIBUTES, []
+        )
         commented_attrs: MutableSequence[str] = (
             [str(x) for x in commented_attrs_raw]
             if isinstance(commented_attrs_raw, list)
@@ -526,13 +484,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 commented_attrs.append(acl_attr)
         if commented_attrs:
             commented_attrs_typed: t.Container = list(commented_attrs)
-            current_extensions["acl_commented_attributes"] = commented_attrs_typed
-        update_dict_final: MutableMapping[
-            str,
-            t.Ldif.MutableMetadataInputMapping | m.Ldif.WriteOptions | None,
-        ] = {
+            current_extensions[c.Ldif.ACL_COMMENTED_ATTRIBUTES] = commented_attrs_typed
+        update_dict_final: MutableMapping[str, t.Ldif.MutableMetadataInputMapping] = {
             "extensions": current_extensions,
-            "write_options": new_write_options,
         }
         return metadata_typed.model_copy(update=update_dict_final)
 
@@ -830,7 +784,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         Controlled via ``WriteFormatOptions``:
         - ``write_original_entry_as_comment: True`` - Enable original entry comments
-        - Original entry stored in ``metadata.write_options["_original_entry"]``
+        - Original LDIF stored in ``metadata.original_strings["entry_original_ldif"]``
 
         Args:
             entry_data: Entry with metadata containing original entry
@@ -842,15 +796,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """
         if not (write_options and write_options.write_original_entry_as_comment):
             return []
-        if not (entry_data.metadata and entry_data.metadata.write_options):
+        if not entry_data.metadata:
             return []
-        write_opts = entry_data.metadata.write_options
-        write_opts_data = write_opts.model_dump(exclude_none=True)
-        original_entry_raw = write_opts_data.get("original_entry")
-        original_entry_obj: m.Ldif.Entry | None = None
-        if isinstance(original_entry_raw, Mapping):
-            original_entry_obj = m.Ldif.Entry.model_validate(original_entry_raw)
-        if original_entry_obj is None:
+        original_ldif_raw = entry_data.metadata.original_strings.get(
+            c.Ldif.ENTRY_ORIGINAL_LDIF,
+        )
+        if not isinstance(original_ldif_raw, str) or not original_ldif_raw:
             return []
         ldif_parts: MutableSequence[str] = []
         ldif_parts.extend([
@@ -858,9 +809,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             "# ORIGINAL Entry (alternative format) (commented)",
             "# " + "=" * 70,
         ])
-        original_result = self._write_entry_as_comment(original_entry_obj)
-        if original_result.success:
-            ldif_parts.append(original_result.value)
+        ldif_parts.extend(
+            "#" if not line else f"# {line}" for line in original_ldif_raw.splitlines()
+        )
         ldif_parts.extend([
             "",
             "# " + "=" * 70,
@@ -1081,7 +1032,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if not entry.metadata or not entry.metadata.extensions:
             return
         commented_acl_values_raw = entry.metadata.extensions.get(
-            "commented_attribute_values",
+            c.Ldif.COMMENTED_ATTRIBUTE_VALUES,
         )
         if not commented_acl_values_raw:
             return
@@ -1165,25 +1116,29 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """
         base_dn: str | None = None
         dn_registry: m.Ldif.DnRegistry | None = None
-        if entry_data.metadata and entry_data.metadata.write_options:
+        if entry_data.metadata and entry_data.metadata.extensions:
+            extensions = entry_data.metadata.extensions
+            base_dn_ext = extensions.get(c.Ldif.BASE_DN)
+            if isinstance(base_dn_ext, str):
+                base_dn = base_dn_ext
+            dn_registry_ext = extensions.get(c.Ldif.DN_REGISTRY)
+            if isinstance(dn_registry_ext, m.Ldif.DnRegistry):
+                dn_registry = dn_registry_ext
+        if (
+            (base_dn is None or dn_registry is None)
+            and entry_data.metadata
+            and entry_data.metadata.write_options
+        ):
             base_dn_value = getattr(entry_data.metadata.write_options, "base_dn", None)
-            if isinstance(base_dn_value, str):
+            if base_dn is None and isinstance(base_dn_value, str):
                 base_dn = base_dn_value
             dn_registry_value = getattr(
                 entry_data.metadata.write_options,
                 "dn_registry",
                 None,
             )
-            if isinstance(dn_registry_value, m.Ldif.DnRegistry):
+            if dn_registry is None and isinstance(dn_registry_value, m.Ldif.DnRegistry):
                 dn_registry = dn_registry_value
-        if base_dn is None and entry_data.metadata and entry_data.metadata.extensions:
-            extensions = entry_data.metadata.extensions
-            base_dn_ext = extensions.get("base_dn")
-            if isinstance(base_dn_ext, str):
-                base_dn = base_dn_ext
-            dn_registry_ext = extensions.get("dn_registry")
-            if isinstance(dn_registry_ext, m.Ldif.DnRegistry):
-                dn_registry = dn_registry_ext
         return (base_dn, dn_registry)
 
     def _extract_acl_metadata_from_dict(
@@ -1408,7 +1363,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if not aci_values and entry.attributes and entry.attributes.attributes:
                 aci_values = self._find_aci_in_dict(entry.attributes.attributes)
         if not aci_values and entry.metadata and entry.metadata.extensions:
-            commented_raw = entry.metadata.extensions.get("commented_attribute_values")
+            commented_raw = entry.metadata.extensions.get(
+                c.Ldif.COMMENTED_ATTRIBUTE_VALUES,
+            )
             if commented_raw is not None:
                 commented_values = self._parse_commented_values(commented_raw)
                 if commented_values:
@@ -2062,14 +2019,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return r[str].fail(f"Pre-write hook failed: {hook_result.error}")
         normalized_entry = hook_result.value
         entry_to_write = self._restore_entry_from_metadata(normalized_entry)
-        write_options_raw = u.Ldif.extract_write_options(
-            entry_to_write,
-        )
-        write_options = (
-            m.Ldif.WriteFormatOptions.model_validate(write_options_raw.model_dump())
-            if write_options_raw is not None
-            else None
-        )
+        write_options = self._extract_write_format_options(entry_to_write.metadata)
         ldif_parts: MutableSequence[str] = []
         ldif_parts.extend(self._add_original_entry_comments(entry_data, write_options))
         entry_data = self._apply_phase_aware_acl_handling(entry_data, write_options)

@@ -604,7 +604,7 @@ class FlextLdifUtilitiesMetadata:
                 write_option_key: u.normalize_to_metadata(value)
                 for write_option_key, value in metadata_obj.items()
             }
-            config_root: MutableMapping[str, t.Container | m.BaseModel] = dict(
+            config_root: dict[str, t.Container | m.BaseModel] = dict(
                 normalized_metadata
             )
             object.__setattr__(
@@ -797,41 +797,6 @@ class FlextLdifUtilitiesMetadata:
             if isinstance(conflicts_val, str):
                 result["has_attribute_conflicts"] = conflicts_val
         return result
-
-    @staticmethod
-    def extract_write_options(
-        entry_data: p.Ldif.EntryWithMetadata,
-    ) -> m.Ldif.WriteFormatOptions | None:
-        """Extract write options from entry metadata."""
-        if not entry_data.metadata:
-            return None
-        write_opts = getattr(entry_data.metadata, "write_options", None)
-        if write_opts is None:
-            return None
-        raw_extras: t.Ldif.MutableMetadataMapping | None = None
-        extras: t.Ldif.MutableMetadataMapping = {}
-        if isinstance(write_opts, m.BaseModel):
-            model_extra_val = write_opts.model_extra
-            if isinstance(model_extra_val, dict):
-                raw_extras = {
-                    str(k): u.normalize_to_metadata(v)
-                    for k, v in model_extra_val.items()
-                }
-        opt: t.Container | None = None
-        if raw_extras is not None:
-            config_map_root: MutableMapping[str, t.Container | m.BaseModel] = dict(
-                raw_extras
-            )
-            extras = {
-                extra_key: u.normalize_to_metadata(extra_value)
-                for extra_key, extra_value in m.ConfigMap(
-                    root=config_map_root,
-                ).root.items()
-            }
-        opt = extras.get(c.Ldif.WRITE_OPTIONS)
-        if isinstance(opt, Mapping):
-            return m.Ldif.WriteFormatOptions.model_validate(opt)
-        return None
 
     @staticmethod
     def preserve_schema_formatting(
