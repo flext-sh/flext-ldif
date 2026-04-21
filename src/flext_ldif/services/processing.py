@@ -11,9 +11,7 @@ from typing import override
 from flext_ldif import m, r, s, u
 
 
-class FlextLdifProcessing(
-    s[MutableSequence[m.Ldif.ProcessingResult]],
-):
+class FlextLdifProcessing(s):
     """Service for batch and parallel entry processing."""
 
     _SUPPORTED_PROCESSORS: frozenset[str] = frozenset({"transform", "validate"})

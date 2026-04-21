@@ -7,13 +7,19 @@ from collections.abc import (
 )
 from typing import TYPE_CHECKING, override
 
-from flext_ldif import m, r, s, t, u
+from flext_ldif import (
+    FlextLdifServiceBase,
+    m,
+    p,
+    r,
+    u,
+)
 
 if TYPE_CHECKING:
     from flext_ldif import FlextLdifValidation
 
 
-class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
+class FlextLdifAnalysis(FlextLdifServiceBase):
     """Service for entry analysis and validation."""
 
     @staticmethod
@@ -63,10 +69,11 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
         """Validate entry objectClass values."""
         errors: MutableSequence[str] = []
         valid = True
-        attrs: t.MutableStrSequenceMapping = (
-            entry.attributes.attributes if entry.attributes else {}
+        oc_values_raw = (
+            entry.attributes.attributes.get("objectClass")
+            if entry.attributes is not None
+            else None
         )
-        oc_values_raw: MutableSequence[str] = attrs.get("objectClass", [])
         if isinstance(oc_values_raw, str):
             oc_values: MutableSequence[str] = [oc_values_raw]
         elif isinstance(oc_values_raw, list):
@@ -148,11 +155,9 @@ class FlextLdifAnalysis(s[m.Ldif.EntryAnalysisResult]):
         )
 
     @override
-    def execute(self) -> r[m.Ldif.EntryAnalysisResult]:
-        """Execute method required by s abstract base class."""
-        return r[m.Ldif.EntryAnalysisResult].fail(
-            "FlextLdifAnalysis does not support generic execute(). Use specific methods instead.",
-        )
+    def execute(self) -> p.Result[m.Ldif.Response]:
+        """Return the canonical LDIF response for service-facade composition."""
+        return super().execute()
 
 
 __all__: list[str] = ["FlextLdifAnalysis"]

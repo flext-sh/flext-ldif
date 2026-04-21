@@ -4,94 +4,98 @@ from __future__ import annotations
 
 import struct
 from collections.abc import (
+    Mapping,
     MutableSequence,
 )
 from pathlib import Path
-from typing import Final, override
+from typing import Annotated, Final, override
 
 from flext_ldif import (
     FlextLdifParser,
-    FlextLdifProcessingPipelineService,
+    FlextLdifProcessingPipeline,
     FlextLdifWriter,
     c,
     m,
     r,
     s,
+    t,
     u,
 )
 
-logger: Final = u.fetch_logger(__name__)
 
-
-class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
+class FlextLdifMigrationPipeline(s):
     """Migration Pipeline for Server-to-Server LDIF Migration."""
 
     _DEFAULT_SERVER: Final[c.Ldif.ServerTypes] = c.Ldif.ServerTypes.RFC
     _ENCODING_UTF8: Final[str] = c.Ldif.Encoding.UTF8.value
 
-    _input_dir: Path | None = u.PrivateAttr(default_factory=lambda: None)
-    _output_dir: Path | None = u.PrivateAttr(default_factory=lambda: None)
-    _source_server: c.Ldif.ServerTypes = u.PrivateAttr(
-        default_factory=lambda: c.Ldif.ServerTypes.RFC
-    )
-    _target_server: c.Ldif.ServerTypes = u.PrivateAttr(
-        default_factory=lambda: c.Ldif.ServerTypes.RFC
-    )
-    _output_filename: str | None = u.PrivateAttr(default_factory=lambda: None)
+    input_dir: Annotated[
+        Path | None,
+        u.Field(
+            default=None,
+            exclude=True,
+            description="Directory containing LDIF files to migrate.",
+        ),
+    ]
+    output_dir: Annotated[
+        Path | None,
+        u.Field(
+            default=None,
+            exclude=True,
+            description="Directory receiving migrated LDIF files.",
+        ),
+    ]
+    output_filename: Annotated[
+        str | None,
+        u.Field(
+            default=None,
+            exclude=True,
+            description="Optional output filename override used for single-file migration.",
+        ),
+    ]
+    source_server: Annotated[
+        str | c.Ldif.ServerTypes | None,
+        u.Field(
+            default=None,
+            exclude=True,
+            description="Legacy source server input accepted for compatibility.",
+        ),
+    ]
+    target_server: Annotated[
+        str | c.Ldif.ServerTypes | None,
+        u.Field(
+            default=None,
+            exclude=True,
+            description="Legacy target server input accepted for compatibility.",
+        ),
+    ]
+    source_server_type: Annotated[
+        str | c.Ldif.ServerTypes | None,
+        u.Field(
+            default=None,
+            exclude=True,
+            description="Canonical source server type used by the migration pipeline.",
+        ),
+    ]
+    target_server_type: Annotated[
+        str | c.Ldif.ServerTypes | None,
+        u.Field(
+            default=None,
+            exclude=True,
+            description="Canonical target server type used by the migration pipeline.",
+        ),
+    ]
 
-    def __init__(
-        self,
-        input_dir: Path | None = None,
-        output_dir: Path | None = None,
-        source_server: str = c.Ldif.ServerTypes.RFC.value,
-        target_server: str = c.Ldif.ServerTypes.RFC.value,
-        source_server_type: str | None = None,
-        target_server_type: str | None = None,
-        output_filename: str | None = None,
-        **_kwargs: str | float | bool | None,
-    ) -> None:
-        """Initialize migration pipeline."""
-        super().__init__()
-        effective_source_server = source_server_type or source_server
-        effective_target_server = target_server_type or target_server
-        object.__setattr__(self, "_input_dir", input_dir)
-        object.__setattr__(self, "_output_dir", output_dir)
-        object.__setattr__(
-            self,
-            "_source_server",
-            self._coerce_server_type(effective_source_server),
+    @override
+    def model_post_init(self, __context: Mapping[str, t.Container] | None, /) -> None:
+        """Normalize migration configuration after Pydantic initialization."""
+        super().model_post_init(__context)
+        self.source_server_type = self._coerce_server_type(
+            self.source_server_type or self.source_server or self._DEFAULT_SERVER,
         )
-        object.__setattr__(
-            self,
-            "_target_server",
-            self._coerce_server_type(effective_target_server),
+        self.target_server_type = self._coerce_server_type(
+            self.target_server_type or self.target_server or self._DEFAULT_SERVER,
         )
-        object.__setattr__(self, "_output_filename", output_filename)
-
-    @property
-    def input_dir(self) -> Path | None:
-        """Get input directory."""
-        return getattr(self, "_input_dir", None)
-
-    @property
-    def output_dir(self) -> Path | None:
-        """Get output directory."""
-        return getattr(self, "_output_dir", None)
-
-    @property
-    def output_filename(self) -> str | None:
-        """Get output filename override."""
-        return getattr(self, "_output_filename", None)
-
-    @property
-    def source_server_type(self) -> c.Ldif.ServerTypes:
-        """Get source server type."""
-        return getattr(self, "_source_server", self._DEFAULT_SERVER)
-
-    @property
-    def target_server_type(self) -> c.Ldif.ServerTypes:
-        """Get target server type."""
-        return getattr(self, "_target_server", self._DEFAULT_SERVER)
 
     @classmethod
     def _coerce_server_type(
@@ -160,7 +164,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             all_entries: MutableSequence[m.Ldif.Entry] = []
             output_files: MutableSequence[str] = []
             for input_file in in_dir.glob("*.ldif"):
-                logger.debug("Processing input file: %s", input_file)
+                self.logger.debug("Processing input file", input_file=str(input_file))
                 result = self.migrate_file(input_file)
                 if result.success:
                     res = result.value
@@ -169,7 +173,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                     all_entries.extend(res.entries)
                     output_files.extend(res.output_files)
                 else:
-                    logger.warning(
+                    self.logger.warning(
                         "File migration failed",
                         file=str(input_file),
                         error=str(result.error),
@@ -188,7 +192,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             UnicodeDecodeError,
             struct.error,
         ) as e:
-            logger.exception("Migration pipeline failed")
+            self.logger.exception("Migration pipeline failed", error=str(e))
             return r[m.Ldif.MigrationPipelineResult].fail(
                 f"Migration pipeline failed: {e}",
             )
@@ -199,9 +203,9 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
     ) -> r[MutableSequence[m.Ldif.Entry]]:
         """Migrate entries from source to target server format."""
         try:
-            pipeline = FlextLdifProcessingPipelineService.get_processing_pipeline(
-                source_server_type=self.source_server_type,
-                target_server_type=self.target_server_type,
+            pipeline = FlextLdifProcessingPipeline.for_servers(
+                source_server=self.source_server_type,
+                target_server=self.target_server_type,
             )
             return pipeline.execute(entries)
         except (
@@ -211,10 +215,11 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             UnicodeDecodeError,
             struct.error,
         ) as e:
-            logger.exception(
+            self.logger.exception(
                 "Migration failed",
                 source=self.source_server_type,
                 target=self.target_server_type,
+                error=str(e),
             )
             return r[MutableSequence[m.Ldif.Entry]].fail(f"Migration failed: {e}")
 
@@ -265,7 +270,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                 return r[m.Ldif.MigrationPipelineResult].fail(
                     f"Write failed: {write_result.error}",
                 )
-            logger.debug("Wrote migrated file to: %s", output_file)
+            self.logger.debug("Wrote migrated file", output_file=str(output_file))
             result = self._build_pipeline_result(
                 entries=migrated,
                 output_files=[str(output_file)],
@@ -280,7 +285,11 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             UnicodeDecodeError,
             struct.error,
         ) as e:
-            logger.exception("File migration failed", input_file=str(input_file))
+            self.logger.exception(
+                "File migration failed",
+                input_file=str(input_file),
+                error=str(e),
+            )
             return r[m.Ldif.MigrationPipelineResult].fail(f"File migration failed: {e}")
 
 

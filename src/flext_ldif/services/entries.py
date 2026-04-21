@@ -6,26 +6,38 @@ from collections.abc import (
     MutableMapping,
     MutableSequence,
 )
-from typing import override
+from typing import Annotated, override
 
 from flext_ldif import m, r, s, t, u
 
 
-class FlextLdifEntries(
-    s[MutableSequence[m.Ldif.Entry]],
-):
+class FlextLdifEntries(s):
     """Entry operations with strict contracts."""
 
-    def __init__(
-        self,
-        entries: MutableSequence[m.Ldif.Entry] | None = None,
-        operation: str | None = None,
-        attributes_to_remove: MutableSequence[str] | None = None,
-    ) -> None:
-        """Initialize entry operation builder state."""
-        self._entries = entries or []
-        self._operation = operation
-        self._attributes_to_remove = attributes_to_remove or []
+    entries: Annotated[
+        MutableSequence[m.Ldif.Entry],
+        u.Field(
+            default_factory=list,
+            exclude=True,
+            description="Entries processed when execute() is used as an operation runner.",
+        ),
+    ]
+    operation: Annotated[
+        str | None,
+        u.Field(
+            default=None,
+            exclude=True,
+            description="Configured entry operation executed by execute().",
+        ),
+    ]
+    attributes_to_remove: Annotated[
+        MutableSequence[str],
+        u.Field(
+            default_factory=list,
+            exclude=True,
+            description="Attributes removed by execute() when using remove_attributes.",
+        ),
+    ]
 
     @staticmethod
     def _extract_dn_from_dict(
@@ -172,16 +184,16 @@ class FlextLdifEntries(
     @override
     def execute(self) -> r[MutableSequence[m.Ldif.Entry]]:
         """Run configured entry operation."""
-        if not self._operation:
+        if not self.operation:
             return r[MutableSequence[m.Ldif.Entry]].fail("No operation specified")
-        if self._operation == "remove_attributes":
-            if not self._attributes_to_remove:
+        if self.operation == "remove_attributes":
+            if not self.attributes_to_remove:
                 return r[MutableSequence[m.Ldif.Entry]].fail(
                     "No attributes_to_remove specified for remove_attributes operation",
                 )
             results: MutableSequence[m.Ldif.Entry] = []
-            for entry in self._entries:
-                result = self.remove_attributes(entry, self._attributes_to_remove)
+            for entry in self.entries:
+                result = self.remove_attributes(entry, self.attributes_to_remove)
                 if result.success:
                     updated_entry = result.value
                     if not isinstance(updated_entry, m.Ldif.Entry):
@@ -191,7 +203,7 @@ class FlextLdifEntries(
                     results.append(updated_entry)
             return r[MutableSequence[m.Ldif.Entry]].ok(results)
         return r[MutableSequence[m.Ldif.Entry]].fail(
-            f"Unknown operation: {self._operation}",
+            f"Unknown operation: {self.operation}",
         )
 
 

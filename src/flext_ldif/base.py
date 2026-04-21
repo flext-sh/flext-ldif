@@ -3,31 +3,41 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import override
+from collections.abc import Mapping
+from typing import Annotated, override
 
 from flext_core import FlextSettings, s
 
-from flext_ldif import FlextLdifServer, FlextLdifSettings, c, m, p, r, u
+from flext_ldif import FlextLdifServer, FlextLdifSettings, c, m, p, r, t, u
 
 
 class FlextLdifServiceBase(s[m.Ldif.Response], ABC):
     """Base class for LDIF services with typed settings helper."""
 
-    _server: FlextLdifServer = u.PrivateAttr()
+    _server: FlextLdifServer = u.PrivateAttr(
+        default_factory=FlextLdifServer.get_global_instance,
+    )
+    server: Annotated[
+        FlextLdifServer | None,
+        u.Field(
+            exclude=True,
+            description="LDIF server registry used directly by service mixins.",
+        ),
+    ] = None
+    runtime_settings: Annotated[
+        FlextLdifSettings | None,
+        u.Field(
+            exclude=True,
+            description="Typed LDIF settings instance used for runtime bootstrap.",
+        ),
+    ] = None
 
-    def __init__(
-        self,
-        *,
-        server: FlextLdifServer | None = None,
-        settings: FlextLdifSettings | None = None,
-    ) -> None:
-        """Initialize the typed LDIF service runtime."""
-        super().__init__(runtime_settings=settings)
-        object.__setattr__(
-            self,
-            "_server",
-            server or FlextLdifServer.get_global_instance(),
-        )
+    @override
+    def model_post_init(self, __context: Mapping[str, t.Container] | None, /) -> None:
+        """Bind the shared LDIF server registry after Pydantic initialization."""
+        super().model_post_init(__context)
+        if self.server is not None:
+            self._server = self.server
 
     @override
     def execute(self) -> p.Result[m.Ldif.Response]:

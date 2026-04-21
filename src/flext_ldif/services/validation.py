@@ -10,11 +10,16 @@ from typing import Annotated, override
 
 from flext_core import d, r
 
-from flext_ldif import m, s, u
+from flext_ldif import (
+    FlextLdifServiceBase,
+    m,
+    p,
+    u,
+)
 
 
 class FlextLdifValidation(
-    s[m.Ldif.ValidationServiceStatus],
+    FlextLdifServiceBase,
 ):
     """FlextLdifValidation class."""
 
@@ -39,19 +44,8 @@ class FlextLdifValidation(
 
     @override
     @d.log_operation("validation_service_check", track_perf=True)
-    def execute(self) -> r[m.Ldif.ValidationServiceStatus]:
-        return r[m.Ldif.ValidationServiceStatus].ok(
-            m.Ldif.ValidationServiceStatus(
-                service="ValidationService",
-                status="operational",
-                rfc_compliance="RFC 2849, RFC 4512",
-                validation_types=[
-                    "attribute_name",
-                    "objectclass_name",
-                    "attribute_value",
-                ],
-            ),
-        )
+    def execute(self) -> p.Result[m.Ldif.Response]:
+        return super().execute()
 
     def validate_attribute_name(self, name: str) -> r[bool]:
         """Validate_attribute_name method."""

@@ -91,9 +91,6 @@ if _t.TYPE_CHECKING:
     from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
     from flext_ldif.servers.rfc import FlextLdifServersRfc
     from flext_ldif.servers.tivoli import FlextLdifServersTivoli
-    from flext_ldif.services._services.processing_pipeline_service import (
-        FlextLdifProcessingPipelineService,
-    )
     from flext_ldif.services.acl import FlextLdifAcl
     from flext_ldif.services.analysis import FlextLdifAnalysis
     from flext_ldif.services.categorization import FlextLdifCategorization
@@ -105,10 +102,10 @@ if _t.TYPE_CHECKING:
     from flext_ldif.services.parser import FlextLdifParser
     from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
     from flext_ldif.services.processing import FlextLdifProcessing
-    from flext_ldif.services.rfc_validation import FlextLdifValidation
     from flext_ldif.services.server import FlextLdifServer
     from flext_ldif.services.statistics import FlextLdifStatistics
     from flext_ldif.services.transformers import FlextLdifTransformer
+    from flext_ldif.services.validation import FlextLdifValidation
     from flext_ldif.services.writer import FlextLdifWriter
     from flext_ldif.settings import FlextLdifSettings
     from flext_ldif.shared import FlextLdifShared
@@ -226,9 +223,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".servers.relaxed": ("FlextLdifServersRelaxed",),
             ".servers.rfc": ("FlextLdifServersRfc",),
             ".servers.tivoli": ("FlextLdifServersTivoli",),
-            ".services._services.processing_pipeline_service": (
-                "FlextLdifProcessingPipelineService",
-            ),
             ".services.acl": ("FlextLdifAcl",),
             ".services.analysis": ("FlextLdifAnalysis",),
             ".services.categorization": ("FlextLdifCategorization",),
@@ -240,7 +234,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".services.parser": ("FlextLdifParser",),
             ".services.pipeline": ("FlextLdifProcessingPipeline",),
             ".services.processing": ("FlextLdifProcessing",),
-            ".services.rfc_validation": ("FlextLdifValidation",),
+            ".services.validation": ("FlextLdifValidation",),
             ".services.server": ("FlextLdifServer",),
             ".services.statistics": ("FlextLdifStatistics",),
             ".services.transformers": ("FlextLdifTransformer",),
@@ -310,7 +304,6 @@ __all__: list[str] = [
     "FlextLdifParser",
     "FlextLdifProcessing",
     "FlextLdifProcessingPipeline",
-    "FlextLdifProcessingPipelineService",
     "FlextLdifProtocols",
     "FlextLdifProtocolsBase",
     "FlextLdifProtocolsDomain",

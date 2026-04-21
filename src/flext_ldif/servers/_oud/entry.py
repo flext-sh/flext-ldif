@@ -278,7 +278,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """Normalize ACL values to expected type for comment generation.
 
         Args:
-            acl_values_raw: Raw ACL values (MetadataAttributeValue)
+            acl_values_raw: Raw ACL values (MetadataData)
 
         Returns:
             Normalized values as list[str], str, or Acl model

@@ -10,12 +10,9 @@ from flext_core.lazy import (
 )
 
 _LAZY_IMPORTS = merge_lazy_imports(
-    ("._services",),
+    (),
     build_lazy_import_map(
         {
-            "._services.processing_pipeline_service": (
-                "FlextLdifProcessingPipelineService",
-            ),
             ".acl": ("FlextLdifAcl",),
             ".analysis": ("FlextLdifAnalysis",),
             ".categorization": ("FlextLdifCategorization",),
@@ -27,7 +24,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".parser": ("FlextLdifParser",),
             ".pipeline": ("FlextLdifProcessingPipeline",),
             ".processing": ("FlextLdifProcessing",),
-            ".rfc_validation": ("FlextLdifValidation",),
+            ".validation": ("FlextLdifValidation",),
             ".server": ("FlextLdifServer",),
             ".statistics": ("FlextLdifStatistics",),
             ".transformers": ("FlextLdifTransformer",),

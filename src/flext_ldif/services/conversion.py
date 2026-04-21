@@ -34,7 +34,7 @@ logger = u.fetch_logger(__name__)
 
 
 class FlextLdifConversion(
-    s[m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl],
+    s,
 ):
     """Facade for universal, model-driven quirk-to-quirk conversion."""
 
@@ -85,8 +85,9 @@ class FlextLdifConversion(
         description="DN registry for tracking distinguished names during conversion",
     )
 
-    def __new__(cls) -> Self:
+    def __new__(cls, *args: object, **kwargs: object) -> Self:
         """Create service instance with matching signature for type checker."""
+        _ = args, kwargs
         instance = super().__new__(cls)
         if not isinstance(instance, cls):
             msg = f"Expected {cls.__name__}, got {type(instance).__name__}"
@@ -1251,7 +1252,7 @@ class FlextLdifConversion(
         self,
         value: t.Cli.JsonValue | None,
     ) -> t.Container:
-        """Convert value to MetadataAttributeValue type."""
+        """Convert value to MetadataData type."""
         return u.Cli.normalize_json_value("" if value is None else value)
 
     def _get_extensions_dict(self, acl: m.Ldif.Acl) -> t.MutableFlatContainerMapping:

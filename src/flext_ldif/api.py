@@ -9,13 +9,19 @@ from pathlib import Path
 from typing import Self, override
 
 from flext_ldif import (
+    FlextLdifAcl,
     FlextLdifAnalysis,
     FlextLdifCategorization,
+    FlextLdifConversion,
     FlextLdifDetector,
+    FlextLdifEntries,
     FlextLdifMigrationPipeline,
     FlextLdifParser,
+    FlextLdifProcessing,
+    FlextLdifProcessingPipeline,
     FlextLdifServer,
     FlextLdifSettings,
+    FlextLdifStatistics,
     FlextLdifValidation,
     FlextLdifWriter,
     c,
@@ -26,9 +32,17 @@ from flext_ldif import (
 
 
 class FlextLdif(
+    FlextLdifAcl,
+    FlextLdifCategorization,
+    FlextLdifConversion,
     FlextLdifDetector,
     FlextLdifParser,
     FlextLdifWriter,
+    FlextLdifAnalysis,
+    FlextLdifEntries,
+    FlextLdifProcessing,
+    FlextLdifValidation,
+    FlextLdifStatistics,
 ):
     """MRO facade over LDIF services.
 
@@ -43,7 +57,7 @@ class FlextLdif(
         settings: FlextLdifSettings | None = None,
     ) -> None:
         """Initialize the LDIF facade with the canonical shared registry."""
-        super().__init__(server=server, settings=settings)
+        super().__init__(server=server, runtime_settings=settings)
 
     def __call__(
         self,
@@ -75,7 +89,46 @@ class FlextLdif(
             forbidden_objectclasses=forbidden_objectclasses,
             base_dn=base_dn,
             server_type=server_type,
+            server=self._server,
+            runtime_settings=self.runtime_settings,
             server_registry=self._server,
+        )
+
+    def processing_pipeline(
+        self,
+        *,
+        settings: m.Ldif.TransformConfig | None = None,
+        source_server: str | c.Ldif.ServerTypes | None = None,
+        target_server: str | c.Ldif.ServerTypes | None = None,
+    ) -> FlextLdifProcessingPipeline:
+        """Create a processing pipeline from explicit config or server pair."""
+        if settings is not None:
+            return FlextLdifProcessingPipeline(transform_config=settings)
+        if source_server is not None and target_server is not None:
+            return FlextLdifProcessingPipeline.for_servers(
+                source_server=source_server,
+                target_server=target_server,
+            )
+        return FlextLdifProcessingPipeline()
+
+    def migration_pipeline(
+        self,
+        *,
+        input_dir: Path | None = None,
+        output_dir: Path | None = None,
+        source_server: str | c.Ldif.ServerTypes = c.Ldif.ServerTypes.RFC.value,
+        target_server: str | c.Ldif.ServerTypes = c.Ldif.ServerTypes.RFC.value,
+        output_filename: str | None = None,
+    ) -> FlextLdifMigrationPipeline:
+        """Create a configured migration pipeline bound to the facade runtime."""
+        return FlextLdifMigrationPipeline(
+            input_dir=input_dir,
+            output_dir=output_dir,
+            source_server=source_server,
+            target_server=target_server,
+            output_filename=output_filename,
+            server=self._server,
+            runtime_settings=self.runtime_settings,
         )
 
     def migrate(
@@ -88,15 +141,16 @@ class FlextLdif(
     ) -> r[m.Ldif.MigrationPipelineResult]:
         """Migrate LDIF data between servers."""
         output_filename = options.output_filename if options else None
-        pipeline = FlextLdifMigrationPipeline(
+        pipeline = self.migration_pipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type=source_server,
-            target_server_type=target_server,
+            source_server=source_server,
+            target_server=target_server,
             output_filename=output_filename,
         )
         return pipeline.execute()
 
+    @override
     def validate_entries(
         self,
         entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
@@ -108,7 +162,7 @@ class FlextLdif(
     @override
     def execute(
         self,
-        params: t.ValueOrModel | None = None,
+        params: t.Container | None = None,
     ) -> r[m.Ldif.Response]:
         """Execute FlextServiceBase pattern compliance."""
         _ = params

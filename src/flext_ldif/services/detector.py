@@ -12,12 +12,10 @@ from typing import override
 from flext_ldif import (
     FlextLdifServer,
     FlextLdifServiceBase,
-    FlextLdifSettings,
     c,
     m,
     p,
     r,
-    t,
     u,
 )
 
@@ -28,16 +26,6 @@ class FlextLdifDetector(FlextLdifServiceBase):
     Overrides ``_get_effective_server_type_value`` from parser and writer
     services so the facade can auto-detect the active server type.
     """
-
-    @override
-    def __init__(
-        self,
-        *,
-        server: FlextLdifServer | None = None,
-        settings: FlextLdifSettings | None = None,
-    ) -> None:
-        """Forward shared LDIF runtime state through the service MRO."""
-        super().__init__(server=server, settings=settings)
 
     @staticmethod
     def _add_pattern_if_match(
@@ -153,12 +141,9 @@ class FlextLdifDetector(FlextLdifServiceBase):
             return result.value
         return c.Ldif.ServerTypes.RFC.value
 
-    def _calculate_scores(self, content: str) -> t.MutableIntMapping:
+    def _calculate_scores(self, content: str) -> dict[str, int]:
         """Calculate detection scores for each server type."""
-        scores: t.MutableIntMapping = dict.fromkeys(
-            self._get_all_server_types(),
-            0,
-        )
+        scores: dict[str, int] = dict.fromkeys(self._get_all_server_types(), 0)
         scores[u.Ldif.get_server_type_value("GENERIC")] = 1
         content_lower = content.lower()
         oid_server_type = u.Ldif.normalize_server_type(
@@ -254,7 +239,7 @@ class FlextLdifDetector(FlextLdifServiceBase):
 
     def _determine_server_type(
         self,
-        scores: t.MutableIntMapping,
+        scores: dict[str, int],
     ) -> tuple[str, float]:
         """Determine the most likely server type from scores."""
         rfc_server_type = c.Ldif.ServerTypes.RFC.value
@@ -271,7 +256,7 @@ class FlextLdifDetector(FlextLdifServiceBase):
             return (rfc_server_type, confidence)
         if detected_key == "generic":
             return (rfc_server_type, confidence)
-        server_type_map: t.MutableStrMapping = {
+        server_type_map: dict[str, str] = {
             "oid": "oid",
             "oud": "oud",
             "openldap": "openldap",
@@ -462,7 +447,7 @@ class FlextLdifDetector(FlextLdifServiceBase):
         constants: type[p.Ldif.ServerDetectionConstants] | None,
         content: str,
         content_lower: str,
-        scores: t.MutableIntMapping,
+        scores: dict[str, int],
         *,
         case_sensitive: bool = False,
     ) -> None:
@@ -489,7 +474,7 @@ class FlextLdifDetector(FlextLdifServiceBase):
         server_type: str,
         constants: type[p.Ldif.ServerDetectionConstants] | None,
         content_lower: str,
-        scores: t.MutableIntMapping,
+        scores: dict[str, int],
         *,
         pattern_attr: str = "DETECTION_PATTERN",
     ) -> None:
@@ -509,7 +494,7 @@ class FlextLdifDetector(FlextLdifServiceBase):
         attributes: MutableSequence[str] | frozenset[str],
         content: str,
         content_lower: str,
-        scores: t.MutableIntMapping,
+        scores: dict[str, int],
         *,
         case_sensitive: bool = False,
         objectclasses: MutableSequence[str] | frozenset[str] | None = None,
@@ -525,4 +510,5 @@ class FlextLdifDetector(FlextLdifServiceBase):
             if server_type_lower in item_lower or item_lower in server_type_lower:
                 scores[server_type] += score_attr_match
 
-    __all__: list[str] = ["FlextLdifDetector"]
+
+__all__: list[str] = ["FlextLdifDetector"]

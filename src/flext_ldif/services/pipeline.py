@@ -3,36 +3,76 @@
 from __future__ import annotations
 
 from collections.abc import (
+    Mapping,
     MutableSequence,
 )
+from typing import Annotated, Self
 
 from flext_ldif import (
     FlextLdifTransformer,
     c,
     m,
     r,
+    s,
+    t,
     u,
 )
 
 
-class FlextLdifProcessingPipeline:
+class FlextLdifProcessingPipeline(s):
     """Full processing pipeline with configuration."""
 
-    __slots__ = ("_config", "_pipeline")
     _DEFAULT_CASE_FOLD: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.NONE
     _DEFAULT_SPACE_HANDLING: c.Ldif.SpaceHandlingOption = (
         c.Ldif.SpaceHandlingOption.PRESERVE
     )
+    transform_config: Annotated[
+        m.Ldif.TransformConfig | None,
+        u.Field(
+            default=None,
+            exclude=True,
+            description="Optional transformation configuration for the processing pipeline.",
+        ),
+    ]
+    _config: m.Ldif.TransformConfig = u.PrivateAttr(
+        default_factory=m.Ldif.TransformConfig,
+    )
+    _pipeline: u.Ldif.Pipeline = u.PrivateAttr()
 
-    def __init__(self, settings: m.Ldif.TransformConfig | None = None) -> None:
-        """Initialize processing pipeline."""
-        self._config = settings or m.Ldif.TransformConfig()
+    def model_post_init(self, __context: Mapping[str, t.Container] | None, /) -> None:
+        """Initialize the processing pipeline after model validation."""
+        super().model_post_init(__context)
+        self._config = self.transform_config or m.Ldif.TransformConfig()
         self._pipeline = self._build_pipeline()
 
-    @property
-    def settings(self) -> m.Ldif.TransformConfig:
-        """Get the processing configuration."""
-        return self._config
+    @classmethod
+    def for_servers(
+        cls,
+        *,
+        source_server: str | c.Ldif.ServerTypes,
+        target_server: str | c.Ldif.ServerTypes,
+    ) -> Self:
+        """Create a configured pipeline for source and target LDIF servers."""
+        source_server_type = (
+            source_server
+            if isinstance(source_server, c.Ldif.ServerTypes)
+            else c.Ldif.ServerTypes(u.Ldif.normalize_server_type(source_server))
+        )
+        target_server_type = (
+            target_server
+            if isinstance(target_server, c.Ldif.ServerTypes)
+            else c.Ldif.ServerTypes(u.Ldif.normalize_server_type(target_server))
+        )
+        cls._get_or_create_logger().debug(
+            "Creating processing pipeline",
+            source=source_server_type,
+            target=target_server_type,
+        )
+        transform_config = m.Ldif.TransformConfig.servers(
+            source_server=source_server_type,
+            target_server=target_server_type,
+        )
+        return cls(transform_config=transform_config)
 
     def execute(
         self,

@@ -6,10 +6,9 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-from typing import override
+from typing import Annotated, override
 
 from flext_ldif import (
-    FlextLdifServer,
     m,
     r,
     s,
@@ -18,18 +17,17 @@ from flext_ldif import (
 )
 
 
-class FlextLdifAcl(s[m.Ldif.AclResponse]):
+class FlextLdifAcl(s):
     """Direct ACL processing service using flext-core APIs."""
 
-    _server: FlextLdifServer
-
-    def __init__(self, server: FlextLdifServer | None = None) -> None:
-        """Initialize ACL service with optional server instance."""
-        object.__setattr__(
-            self,
-            "_server",
-            server if server is not None else FlextLdifServer.get_global_instance(),
-        )
+    server: Annotated[
+        object | None,
+        u.Field(
+            default=None,
+            exclude=True,
+            description="Optional LDIF server registry override for ACL parsing.",
+        ),
+    ]
 
     @staticmethod
     def _build_acl_response(
@@ -145,8 +143,7 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
                 acls.append(parse_result.value)
                 continue
             failed_count += 1
-            logger = u.fetch_logger(__name__)
-            logger.warning(
+            self.logger.warning(
                 "Failed to parse ACL value",
                 error=str(parse_result.error) if parse_result.error else "",
                 server_type=server_type,

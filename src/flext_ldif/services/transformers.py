@@ -2,23 +2,28 @@
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifConversion, c, m, r, s
+from typing import Annotated
+
+from flext_ldif import FlextLdifConversion, c, m, r, s, u
 
 
-class FlextLdifTransformer(s[m.Ldif.Entry]):
+class FlextLdifTransformer(s):
     """Transformer for server-specific conversions."""
 
-    __slots__ = ("_source_server", "_target_server")
-
-    def __init__(
-        self,
-        source_server: c.Ldif.ServerTypes,
-        target_server: c.Ldif.ServerTypes,
-    ) -> None:
-        """Initialize server transformer."""
-        super().__init__()
-        self._source_server = source_server
-        self._target_server = target_server
+    source_server: Annotated[
+        c.Ldif.ServerTypes,
+        u.Field(
+            exclude=True,
+            description="Source server type used for the conversion.",
+        ),
+    ]
+    target_server: Annotated[
+        c.Ldif.ServerTypes,
+        u.Field(
+            exclude=True,
+            description="Target server type used for the conversion.",
+        ),
+    ]
 
     def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
         """Apply server-specific transformation."""
@@ -33,8 +38,8 @@ class FlextLdifTransformer(s[m.Ldif.Entry]):
         return (
             FlextLdifConversion()
             .convert_entry(
-                source=self._source_server.value,
-                target=self._target_server.value,
+                source=self.source_server.value,
+                target=self.target_server.value,
                 model_instance=item,
             )
             .flat_map(ensure_entry)

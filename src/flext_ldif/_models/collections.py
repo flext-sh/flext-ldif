@@ -11,14 +11,15 @@ from collections.abc import (
     MutableMapping,
     MutableSequence,
 )
-from typing import TYPE_CHECKING, Annotated, override
+from typing import Annotated, override
 
 from flext_cli import m, u
 
-from flext_ldif import FlextLdifModelsMetadata as mdm, t
-
-if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModelsDomainsEntries as mde
+from flext_ldif import (
+    FlextLdifModelsDomainsEntries as mde,
+    FlextLdifModelsMetadata as mdm,
+    t,
+)
 
 
 class FlextLdifModelsCollections:
@@ -26,7 +27,7 @@ class FlextLdifModelsCollections:
         model_config = m.ConfigDict(extra="allow", validate_assignment=True)
 
         @override
-        def __eq__(self, other: t.ValueOrModel) -> bool:
+        def __eq__(self, other: t.RuntimeData) -> bool:
             if isinstance(other, dict):
                 self_dict = {
                     key: value
@@ -106,7 +107,7 @@ class FlextLdifModelsCollections:
 
     class BooleanFlags(m.FrozenDynamicModel):
         @override
-        def __eq__(self, other: t.ValueOrModel) -> bool:
+        def __eq__(self, other: t.RuntimeData) -> bool:
             if isinstance(other, dict):
                 extra = self.model_extra
                 return (extra or {}) == other
@@ -133,7 +134,7 @@ class FlextLdifModelsCollections:
         )
 
         @override
-        def __eq__(self, other: t.ValueOrModel) -> bool:
+        def __eq__(self, other: t.RuntimeData) -> bool:
             if isinstance(other, self.__class__):
                 return self.categories == other.categories
             if isinstance(other, dict):
