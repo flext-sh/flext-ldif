@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import (
+    MutableMapping,
     MutableSequence,
 )
 from pathlib import Path
@@ -15,11 +16,16 @@ from flext_ldif import (
     FlextLdifConversion,
     FlextLdifDetector,
     FlextLdifEntries,
+    FlextLdifFilters,
     FlextLdifMigrationPipeline,
     FlextLdifParser,
     FlextLdifProcessing,
     FlextLdifProcessingPipeline,
     FlextLdifServer,
+    FlextLdifServersBase,
+    FlextLdifServersBaseEntry,
+    FlextLdifServersBaseSchema,
+    FlextLdifServersBaseSchemaAcl,
     FlextLdifSettings,
     FlextLdifStatistics,
     FlextLdifValidation,
@@ -93,6 +99,83 @@ class FlextLdif(
             runtime_settings=self.runtime_settings,
             server_registry=self._server,
         )
+
+    def filter_entry_attributes(
+        self,
+        entry: m.Ldif.Entry,
+        forbidden_attrs: t.StrSequence,
+        forbidden_ocs: t.StrSequence,
+    ) -> m.Ldif.Entry:
+        """Expose the stateless filter helper through the facade DSL."""
+        return FlextLdifFilters.filter_entry_attributes(
+            entry=entry,
+            forbidden_attrs=forbidden_attrs,
+            forbidden_ocs=forbidden_ocs,
+        )
+
+    def filter_schema_attribute_values(
+        self,
+        entry: m.Ldif.Entry,
+        allowed_oids: dict[str, frozenset[str]],
+    ) -> m.Ldif.Entry:
+        """Expose schema-attribute OID filtering through the facade DSL."""
+        return FlextLdifFilters.filter_schema_attribute_values(
+            entry=entry,
+            allowed_oids=allowed_oids,
+        )
+
+    def acl(self, server_type: str) -> FlextLdifServersBaseSchemaAcl | None:
+        """Expose ACL quirk lookup through the public facade."""
+        return self._server.acl(server_type)
+
+    def entry(self, server_type: str) -> FlextLdifServersBaseEntry | None:
+        """Expose entry quirk lookup through the public facade."""
+        return self._server.entry(server_type)
+
+    def quirk(self, server_type: str) -> r[FlextLdifServersBase]:
+        """Expose base quirk lookup through the public facade."""
+        return self._server.quirk(server_type)
+
+    def get_base_quirk(self, server_type: str) -> r[FlextLdifServersBase]:
+        """Expose base quirk resolution through the public facade."""
+        return self._server.get_base_quirk(server_type)
+
+    def schema_quirk(self, server_type: str) -> FlextLdifServersBaseSchema | None:
+        """Expose schema quirk lookup through the public facade."""
+        return self._server.schema_quirk(server_type)
+
+    def get_schema_quirk(
+        self,
+        server_type: str,
+    ) -> FlextLdifServersBaseSchema | None:
+        """Expose canonical schema quirk resolution through the public facade."""
+        return self._server.get_schema_quirk(server_type)
+
+    def get_all_quirks(
+        self,
+        server_type: str,
+    ) -> r[
+        MutableMapping[
+            str,
+            FlextLdifServersBaseSchema
+            | FlextLdifServersBaseSchemaAcl
+            | FlextLdifServersBaseEntry,
+        ]
+    ]:
+        """Expose full quirk bundle resolution through the public facade."""
+        return self._server.get_all_quirks(server_type)
+
+    def get_constants(self, server_type: str) -> r[type]:
+        """Expose server constants lookup through the public facade."""
+        return self._server.get_constants(server_type)
+
+    def list_registered_servers(self) -> MutableSequence[str]:
+        """Expose the normalized registered server list through the facade."""
+        return self._server.list_registered_servers()
+
+    def get_registry_stats(self) -> t.Ldif.MutableMetadataInputMapping:
+        """Expose registry statistics through the public facade."""
+        return self._server.get_registry_stats()
 
     def processing_pipeline(
         self,

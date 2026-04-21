@@ -7,14 +7,11 @@ from collections.abc import (
     Mapping,
     MutableSequence,
 )
-from typing import Final
 
-from flext_ldif import m, r, t, u
-
-logger: Final = u.fetch_logger(__name__)
+from flext_ldif import m, r, s, t
 
 
-class FlextLdifFilters:
+class FlextLdifFilters(s):
     """LDIF entry filtering service."""
 
     @classmethod
@@ -126,7 +123,7 @@ class FlextLdifFilters:
                     allowed_mru,
                 )
             ]
-            logger.debug(
+            cls._get_or_create_logger().debug(
                 "Filtered schema entries by OIDs",
                 total_entries=len(entries),
                 filtered_count=len(filtered),
@@ -139,7 +136,9 @@ class FlextLdifFilters:
             UnicodeDecodeError,
             struct.error,
         ) as e:
-            logger.exception("Failed to filter schema entries by OIDs")
+            cls._get_or_create_logger().exception(
+                "Failed to filter schema entries by OIDs",
+            )
             return r[MutableSequence[m.Ldif.Entry]].fail(
                 f"Schema OID filter failed: {e}",
             )
