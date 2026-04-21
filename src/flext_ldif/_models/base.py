@@ -9,8 +9,7 @@ from typing import Annotated
 
 from flext_core import m, u
 
-from flext_ldif import c
-from flext_ldif.shared import FlextLdifShared
+from flext_ldif import FlextLdifShared, c
 
 
 class FlextLdifModelsBases:
@@ -71,7 +70,7 @@ class FlextLdifModelsBases:
         """Base class for all ACL-related models."""
 
         server_type: Annotated[
-            c.Ldif.ServerTypeLiteral,
+            c.Ldif.ServerTypes,
             u.Field(
                 description="LDAP server type (oid, oud, openldap, rfc, etc.)",
             ),

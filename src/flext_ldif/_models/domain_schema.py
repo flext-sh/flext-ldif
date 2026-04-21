@@ -19,21 +19,23 @@ from typing import Annotated, Self
 
 from flext_cli import u
 
-from flext_ldif._models.base import FlextLdifModelsBases
-from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata
-from flext_ldif.constants import c
+from flext_ldif import (
+    FlextLdifModelsBases as mb,
+    FlextLdifModelsDomainMetadata as mdm,
+    c,
+)
 
 
 class FlextLdifModelsDomainSchema:
     """Namespace mixin for LDIF schema domain models."""
 
-    class SchemaAttribute(FlextLdifModelsBases.SchemaElement):
+    class SchemaAttribute(mb.SchemaElement):
         """LDAP schema attribute definition model (RFC 4512 compliant).
 
         Represents an LDAP attribute type definition from schema with full
         RFC 4512 support.
 
-        Inherits from FlextLdifModelsBases.SchemaElement:
+        Inherits from mb.SchemaElement:
         - model_config (strict=True, validate_default=True, validate_assignment=True)
         - has_metadata computed field
         - server_type computed field
@@ -147,16 +149,16 @@ class FlextLdifModelsDomainSchema:
             ),
         ] = None
         metadata: Annotated[
-            FlextLdifModelsDomainMetadata.QuirkMetadata | None,
+            mdm.QuirkMetadata | None,
             u.Field(description="Quirk-specific metadata for schema attribute"),
         ] = None
 
-    class Syntax(FlextLdifModelsBases.SchemaElement):
+    class Syntax(mb.SchemaElement):
         """LDAP attribute syntax definition model (RFC 4517 compliant).
 
         Represents an LDAP attribute syntax OID and its validation rules per RFC 4517.
 
-        Inherits from FlextLdifModelsBases.SchemaElement:
+        Inherits from mb.SchemaElement:
         - model_config (strict=True, validate_default=True, validate_assignment=True)
         - has_metadata computed field
         - server_type computed field
@@ -210,7 +212,7 @@ class FlextLdifModelsDomainSchema:
             ),
         ] = True
         encoding: Annotated[
-            c.Ldif.EncodingLiteral,
+            c.Ldif.Encoding,
             u.Field(
                 description="Expected character encoding (utf-8, ascii, iso-8859-1, etc.)",
             ),
@@ -220,7 +222,7 @@ class FlextLdifModelsDomainSchema:
             u.Field(description="Optional regex pattern for value validation"),
         ] = None
         metadata: Annotated[
-            FlextLdifModelsDomainMetadata.QuirkMetadata | None,
+            mdm.QuirkMetadata | None,
             u.Field(description="Server-specific quirk metadata"),
         ] = None
 
@@ -228,7 +230,7 @@ class FlextLdifModelsDomainSchema:
         def resolve_syntax_oid(
             cls,
             oid: str,
-            server_type: c.Ldif.ServerTypeLiteral = c.Ldif.ServerTypes.RFC,
+            server_type: c.Ldif.ServerTypes = c.Ldif.ServerTypes.RFC,
         ) -> Self | None:
             """Resolve a syntax OID to a Syntax model using RFC 4517 validation.
 
@@ -249,7 +251,7 @@ class FlextLdifModelsDomainSchema:
             if not oid or not oid.strip():
                 return None
             try:
-                oid_pattern = re.compile(r"^\d+(\.\d+)*$")
+                oid_pattern = re.compile(c.Ldif.NUMERIC_OID_PATTERN)
                 if not oid_pattern.match(oid):
                     return None
                 oid_to_name = dict(c.Ldif.OID_TO_NAME)
@@ -260,7 +262,7 @@ class FlextLdifModelsDomainSchema:
                     else "string"
                 )
                 metadata = (
-                    FlextLdifModelsDomainMetadata.QuirkMetadata.model_validate({
+                    mdm.QuirkMetadata.model_validate({
                         "quirk_type": server_type,
                     })
                     if server_type != c.Ldif.ServerTypes.RFC.value
@@ -298,13 +300,13 @@ class FlextLdifModelsDomainSchema:
                 raise ValueError(msg)
             return v
 
-    class SchemaObjectClass(FlextLdifModelsBases.SchemaElement):
+    class SchemaObjectClass(mb.SchemaElement):
         """LDAP schema object class definition model (RFC 4512 compliant).
 
         Represents an LDAP object class definition from schema with full
         RFC 4512 support.
 
-        Inherits from FlextLdifModelsBases.SchemaElement:
+        Inherits from mb.SchemaElement:
         - model_config (strict=True, validate_default=True, validate_assignment=True)
         - has_metadata computed field
         - server_type computed field
@@ -338,7 +340,7 @@ class FlextLdifModelsDomainSchema:
             u.Field(description="Optional attributes (RFC 4512 MAY)"),
         ] = None
         metadata: Annotated[
-            FlextLdifModelsDomainMetadata.QuirkMetadata | None,
+            mdm.QuirkMetadata | None,
             u.Field(description="Quirk-specific metadata for schema object class"),
         ] = None
 

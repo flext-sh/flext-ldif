@@ -9,7 +9,7 @@ from collections.abc import (
     MutableMapping,
     MutableSequence,
 )
-from typing import ClassVar, Literal, override
+from typing import ClassVar, override
 
 from flext_ldif import (
     FlextLdifServersOidConstants,
@@ -570,7 +570,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 "constrain_to_added_object": constrain_to_added_object or "",
             })
             extensions = self._build_oid_acl_metadata(settings)
-            server_type: Literal["oid"] = "oid"
+            server_type: c.Ldif.ServerTypes = c.Ldif.ServerTypes.OID
             rfc_compliant_perms = m.Ldif.AclPermissions.get_rfc_compliant_permissions(
                 perms_dict,
             )

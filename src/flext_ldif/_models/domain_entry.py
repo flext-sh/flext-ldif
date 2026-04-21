@@ -16,18 +16,17 @@ from datetime import datetime
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
 
-from flext_cli import m, u
+from flext_cli import m, r, u
 
 from flext_ldif import (
-    FlextLdifModelsDomainAcl,
-    FlextLdifModelsDomainAttributes,
-    FlextLdifModelsDomainDN,
-    FlextLdifModelsDomainMetadata,
-    FlextLdifModelsDomainSchema,
-    FlextLdifModelsMetadata,
+    FlextLdifModelsDomainAcl as mdac,
+    FlextLdifModelsDomainAttributes as mda,
+    FlextLdifModelsDomainDN as mdn,
+    FlextLdifModelsDomainMetadata as mdm,
+    FlextLdifModelsDomainSchema as mds,
+    FlextLdifModelsMetadata as mm,
     FlextLdifUtilitiesEntry,
     c,
-    r,
     t,
 )
 
@@ -127,7 +126,7 @@ class FlextLdifModelsDomainEntry:
             u.Field(description="Count of quirk transformations applied"),
         ] = 0
         dn_statistics: Annotated[
-            FlextLdifModelsDomainDN.DNStatistics | None,
+            mdn.DNStatistics | None,
             u.Field(description="DN transformation statistics (if applicable)"),
         ] = None
         filters_applied: Annotated[
@@ -297,7 +296,7 @@ class FlextLdifModelsDomainEntry:
             u.Field(description="Optional control value"),
         ] = None
         value_origin: Annotated[
-            c.Ldif.ValueOriginLiteral | None,
+            c.Ldif.ValueOrigin | None,
             u.Field(description="Original control value encoding/source"),
         ] = None
         raw_value: Annotated[
@@ -313,7 +312,7 @@ class FlextLdifModelsDomainEntry:
             u.Field(description="Decoded value used by the operation"),
         ]
         value_origin: Annotated[
-            c.Ldif.ValueOriginLiteral,
+            c.Ldif.ValueOrigin,
             u.Field(description="Original LDIF encoding/source for this value"),
         ] = c.Ldif.ValueOrigin.PLAIN
         raw_value: Annotated[
@@ -325,7 +324,7 @@ class FlextLdifModelsDomainEntry:
         """Structured RFC 2849 modify operation block."""
 
         operation: Annotated[
-            c.Ldif.ChangeOperationLiteral,
+            c.Ldif.ChangeOperation,
             u.Field(description="Modify operation name"),
         ]
         attribute: Annotated[
@@ -343,7 +342,7 @@ class FlextLdifModelsDomainEntry:
         Implements p.Models.Entry through structural typing.
         The protocol requires:
         - dn: str
-        - attributes: FlextLdifModelsMetadata.DynamicMetadata
+        - attributes: mm.DynamicMetadata
 
         This model provides these through:
         - dn field (DN) which has .value property returning str
@@ -359,14 +358,6 @@ class FlextLdifModelsDomainEntry:
             extra="allow",
         )
         _DATETIME_FIELDS: ClassVar[tuple[str, str]] = ("created_at", "updated_at")
-        _CREATE_ENTRY_DUMP_EXCLUDE: ClassVar[Mapping[str, bool]] = MappingProxyType({
-            c.Ldif.DictKeys.DN: True,
-            c.Ldif.DictKeys.ATTRIBUTES: True,
-            "metadata": True,
-            "server_type": True,
-            "source_entry": True,
-            "unconverted_attributes": True,
-        })
         _ATTRIBUTES_VALIDATE_DEFAULTS: ClassVar[Mapping[str, object]] = (
             MappingProxyType(
                 {
@@ -397,19 +388,19 @@ class FlextLdifModelsDomainEntry:
             )
         )
         dn: Annotated[
-            FlextLdifModelsDomainDN.DN | None,
+            mdn.DN | None,
             u.Field(
                 description="Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from str via u.field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.Entry",
             ),
         ]
         attributes: Annotated[
-            FlextLdifModelsDomainAttributes.Attributes | None,
+            mda.Attributes | None,
             u.Field(
                 description="Entry attributes container (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from dict[str, list[str]] via u.field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.Entry",
             ),
         ]
         record_kind: Annotated[
-            c.Ldif.RecordKindLiteral,
+            c.Ldif.RecordKind,
             u.Field(
                 description="Whether this Entry represents LDIF content or an LDIF change record.",
             ),
@@ -429,10 +420,8 @@ class FlextLdifModelsDomainEntry:
         @classmethod
         def coerce_attributes_from_dict(
             cls,
-            value: FlextLdifModelsDomainAttributes.Attributes
-            | t.MutableFlatContainerMapping
-            | None,
-        ) -> FlextLdifModelsDomainAttributes.Attributes | None:
+            value: mda.Attributes | t.MutableFlatContainerMapping | None,
+        ) -> mda.Attributes | None:
             """Convert dict to Attributes instance.
 
             Allows None to pass through for violation capture in u.model_validator.
@@ -440,24 +429,20 @@ class FlextLdifModelsDomainEntry:
             """
             if value is None:
                 return None
-            if isinstance(value, FlextLdifModelsDomainAttributes.Attributes):
+            if isinstance(value, mda.Attributes):
                 return value
-            wrapped_value: t.MutableFlatContainerMapping = value
             if "attributes" not in value:
-                wrapped_value = {"attributes": value}
-            return FlextLdifModelsDomainAttributes.Attributes.model_validate(
-                wrapped_value,
-            )
+                return mda.Attributes.model_validate(
+                    {"attributes": dict(value)},
+                )
+            return mda.Attributes.model_validate(value)
 
         @u.field_validator("dn", mode="before")
         @classmethod
         def coerce_dn_from_string(
             cls,
-            value: FlextLdifModelsDomainDN.DN
-            | t.MutableFlatContainerMapping
-            | str
-            | None,
-        ) -> FlextLdifModelsDomainDN.DN | None:
+            value: mdn.DN | t.MutableFlatContainerMapping | str | None,
+        ) -> mdn.DN | None:
             """Convert string DN to DN instance.
 
             Allows None to pass through for violation capture in u.model_validator.
@@ -465,13 +450,13 @@ class FlextLdifModelsDomainEntry:
             """
             if value is None:
                 return None
-            if isinstance(value, FlextLdifModelsDomainDN.DN):
+            if isinstance(value, mdn.DN):
                 return value
             if isinstance(value, Mapping):
-                return FlextLdifModelsDomainDN.DN.model_validate(value)
-            return FlextLdifModelsDomainDN.DN(
+                return mdn.DN.model_validate(value)
+            return mdn.DN(
                 value=str(value),
-                metadata=FlextLdifModelsMetadata.EntryMetadata(),
+                metadata=mm.EntryMetadata(),
             )
 
         @u.field_validator("record_kind", mode="before")
@@ -479,12 +464,12 @@ class FlextLdifModelsDomainEntry:
         def coerce_record_kind(
             cls,
             value: str,
-        ) -> c.Ldif.RecordKindLiteral:
+        ) -> c.Ldif.RecordKind:
             """Accept both enum instances and serialized record kind strings."""
             return c.Ldif.RecordKind(value)
 
         changetype: Annotated[
-            c.Ldif.LdifChangeTypeLiteral | None,
+            c.Ldif.LdifChangeType | None,
             u.Field(
                 description="Change operation type per RFC 2849 § 5.7 (add/delete/modify/moddn/modrdn)",
             ),
@@ -495,7 +480,7 @@ class FlextLdifModelsDomainEntry:
         def coerce_changetype(
             cls,
             value: str | None,
-        ) -> c.Ldif.LdifChangeTypeLiteral | None:
+        ) -> c.Ldif.LdifChangeType | None:
             """Accept both enum instances and serialized changetype strings."""
             if isinstance(value, str):
                 return c.Ldif.LdifChangeType(value)
@@ -520,7 +505,7 @@ class FlextLdifModelsDomainEntry:
             ),
         ] = u.Field(default_factory=list)
         metadata: Annotated[
-            FlextLdifModelsDomainMetadata.QuirkMetadata | None,
+            mdm.QuirkMetadata | None,
             u.Field(
                 description="Quirk-specific metadata for processing data, ACLs, statistics, validation (non-RFC data)",
             ),
@@ -564,34 +549,16 @@ class FlextLdifModelsDomainEntry:
         @property
         def unconverted_attributes(
             self,
-        ) -> MutableMapping[str, str | MutableSequence[str] | bytes]:
+        ) -> t.Ldif.UnconvertedAttributes:
             """Get unconverted attributes from metadata extensions (read-only view, DRY pattern)."""
-            empty_attrs: MutableMapping[str, str | MutableSequence[str] | bytes] = {}
+            empty_attrs: t.Ldif.UnconvertedAttributes = {}
             if self.metadata is None:
                 return empty_attrs
             extra = self.metadata.extensions.__pydantic_extra__
             if extra is None:
                 return empty_attrs
             result = extra.get("unconverted_attributes")
-            if result is not None and FlextLdifUtilitiesEntry.is_string_key_mapping(
-                result
-            ):
-                converted_unconverted_attributes: MutableMapping[
-                    str,
-                    str | MutableSequence[str] | bytes,
-                ] = {}
-                for key_candidate, raw_value in result.items():
-                    key_str = key_candidate
-                    if FlextLdifUtilitiesEntry.is_object_list(raw_value):
-                        converted_unconverted_attributes[key_str] = [
-                            str(item) for item in raw_value
-                        ]
-                    elif isinstance(raw_value, str | bytes):
-                        converted_unconverted_attributes[key_str] = raw_value
-                    else:
-                        converted_unconverted_attributes[key_str] = str(raw_value)
-                return converted_unconverted_attributes
-            return empty_attrs
+            return FlextLdifUtilitiesEntry.normalize_unconverted_attributes(result)
 
         @u.model_validator(mode="before")
         @classmethod
@@ -600,7 +567,7 @@ class FlextLdifModelsDomainEntry:
             data: t.MutableFlatContainerMapping,
         ) -> MutableMapping[
             str,
-            t.Container | datetime | FlextLdifModelsDomainMetadata.QuirkMetadata,
+            t.Container | datetime | mdm.QuirkMetadata,
         ]:
             """Ensure metadata field is always initialized to a QuirkMetadata instance.
 
@@ -621,7 +588,7 @@ class FlextLdifModelsDomainEntry:
             """
             data_dict: MutableMapping[
                 str,
-                t.Container | datetime | FlextLdifModelsDomainMetadata.QuirkMetadata,
+                t.Container | datetime | mdm.QuirkMetadata,
             ] = dict(data)
             for dt_field in cls._DATETIME_FIELDS:
                 field_value = data_dict.get(dt_field)
@@ -640,7 +607,7 @@ class FlextLdifModelsDomainEntry:
                         final_quirk_type_val = c.Ldif.ServerTypes.RFC
                 else:
                     final_quirk_type_val = c.Ldif.ServerTypes.RFC
-                metadata_obj = FlextLdifModelsDomainMetadata.QuirkMetadata.create_for(
+                metadata_obj = mdm.QuirkMetadata.create_for(
                     quirk_type=final_quirk_type_val,
                 )
                 data_dict["metadata"] = metadata_obj
@@ -659,7 +626,7 @@ class FlextLdifModelsDomainEntry:
             and prevent infinite re-validation recursion (Pydantic v2 pattern).
             """
             if self.metadata is None:
-                self.metadata = FlextLdifModelsDomainMetadata.QuirkMetadata.create_for()
+                self.metadata = mdm.QuirkMetadata.create_for()
 
         @u.model_validator(mode="after")
         def normalize_record_kind(self) -> Self:
@@ -701,7 +668,7 @@ class FlextLdifModelsDomainEntry:
             """
             violations: MutableSequence[str] = []
             dn_value = "<None>"
-                if self.dn is None or not self.dn.value:
+            if self.dn is None:
                 violations.append("RFC 2849 § 2: DN is required")
             else:
                 dn_value = str(self.dn.value)
@@ -746,7 +713,7 @@ class FlextLdifModelsDomainEntry:
                     "context": context_payload,
                 }
                 self.metadata.validation_results = (
-                    FlextLdifModelsDomainMetadata.ValidationMetadata.model_validate(
+                    mdm.ValidationMetadata.model_validate(
                         payload,
                     )
                 )
@@ -762,7 +729,10 @@ class FlextLdifModelsDomainEntry:
             validation_rules = self.metadata.extensions.get(self._VALIDATION_RULES_KEY)
             if not validation_rules:
                 return self
-            rules = FlextLdifUtilitiesEntry.parse_validation_rules(validation_rules)
+            normalized_validation_rules = u.Cli.normalize_json_value(validation_rules)
+            rules = FlextLdifUtilitiesEntry.parse_validation_rules(
+                normalized_validation_rules,
+            )
             if rules is None:
                 return self
             dn_value = str(self.dn.value) if self.dn else ""
@@ -801,7 +771,7 @@ class FlextLdifModelsDomainEntry:
         @classmethod
         def _empty_validation_results(
             cls,
-        ) -> FlextLdifModelsDomainMetadata.ValidationMetadata:
+        ) -> mdm.ValidationMetadata:
             """Create empty ValidationMetadata from canonical immutable payload."""
             payload: dict[str, object] = {
                 **cls._EMPTY_VALIDATION_RESULT_PAYLOAD,
@@ -810,7 +780,7 @@ class FlextLdifModelsDomainEntry:
                 "warnings": list[str](),
                 "server_specific_violations": list[str](),
             }
-            return FlextLdifModelsDomainMetadata.ValidationMetadata.model_validate(
+            return mdm.ValidationMetadata.model_validate(
                 payload,
             )
 
@@ -878,30 +848,30 @@ class FlextLdifModelsDomainEntry:
         @classmethod
         def _build_extension_kwargs(
             cls,
-            server_type: c.Ldif.ServerTypeLiteral | None,
+            server_type: c.Ldif.ServerTypes | None,
             source_entry: str | None,
-            unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None,
-        ) -> t.MutableFlatContainerMapping:
+            unconverted_attributes: mm.DynamicMetadata | None,
+        ) -> t.Ldif.MutableMetadataMapping:
             """Build extension kwargs for DynamicMetadata."""
-            ext_kwargs: t.MutableFlatContainerMapping = {}
+            ext_kwargs: t.Ldif.MutableMetadataMapping = {}
             if server_type:
                 ext_kwargs["server_type"] = server_type
             if source_entry:
                 ext_kwargs["source_entry"] = source_entry
             if unconverted_attributes:
-                unconverted_dump = unconverted_attributes.model_dump()
-                unconverted_typed: t.Container = unconverted_dump
-                ext_kwargs["unconverted_attributes"] = unconverted_typed
+                ext_kwargs["unconverted_attributes"] = (
+                    unconverted_attributes.model_dump()
+                )
             return ext_kwargs
 
         @classmethod
         def _build_metadata(
             cls,
-            metadata: FlextLdifModelsDomainMetadata.QuirkMetadata | None,
-            server_type: c.Ldif.ServerTypeLiteral | None,
+            metadata: mdm.QuirkMetadata | None,
+            server_type: c.Ldif.ServerTypes | None,
             source_entry: str | None,
-            unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None,
-        ) -> FlextLdifModelsDomainMetadata.QuirkMetadata | None:
+            unconverted_attributes: mm.DynamicMetadata | None,
+        ) -> mdm.QuirkMetadata | None:
             """Build or update metadata with server-specific extensions."""
             has_new_metadata = server_type or source_entry or unconverted_attributes
             if metadata is None and has_new_metadata:
@@ -910,10 +880,10 @@ class FlextLdifModelsDomainEntry:
                     source_entry,
                     unconverted_attributes,
                 )
-                extensions = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
+                extensions = mm.DynamicMetadata.from_dict(
                     ext_kwargs,
                 )
-                return FlextLdifModelsDomainMetadata.QuirkMetadata.create_for(
+                return mdm.QuirkMetadata.create_for(
                     quirk_type=c.Ldif.ServerTypes.GENERIC,
                     extensions=extensions,
                 )
@@ -926,179 +896,11 @@ class FlextLdifModelsDomainEntry:
                 )
             return metadata
 
-        class _CreateEntryParams(m.Value):
-            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-                extra="forbid",
-                validate_assignment=True,
-            )
-            dn: Annotated[
-                str | FlextLdifModelsDomainDN.DN,
-                u.Field(
-                    description="Distinguished Name as string or DN object",
-                ),
-            ]
-            attributes: Annotated[
-                (
-                    t.MutableAttributeMapping
-                    | FlextLdifModelsDomainAttributes.Attributes
-                ),
-                u.Field(
-                    description="Entry attributes as dict or Attributes object",
-                ),
-            ]
-            metadata: Annotated[
-                FlextLdifModelsDomainMetadata.QuirkMetadata | None,
-                u.Field(
-                    description="Quirk-specific metadata for the entry",
-                ),
-            ] = None
-            acls: Annotated[
-                MutableSequence[FlextLdifModelsDomainAcl.Acl] | None,
-                u.Field(
-                    description="Access Control Lists for the entry",
-                ),
-            ] = None
-            objectclasses: Annotated[
-                (MutableSequence[FlextLdifModelsDomainSchema.SchemaObjectClass] | None),
-                u.Field(
-                    description="Schema object class definitions",
-                ),
-            ] = None
-            attributes_schema: Annotated[
-                (MutableSequence[FlextLdifModelsDomainSchema.SchemaAttribute] | None),
-                u.Field(
-                    description="Schema attribute definitions",
-                ),
-            ] = None
-            entry_metadata: Annotated[
-                FlextLdifModelsMetadata.EntryMetadata | None,
-                u.Field(
-                    description="Entry-level metadata for processing details",
-                ),
-            ] = None
-            validation_metadata: Annotated[
-                (FlextLdifModelsDomainMetadata.ValidationMetadata | None),
-                u.Field(
-                    description="Validation results from entry processing",
-                ),
-            ] = None
-            server_type: Annotated[
-                c.Ldif.ServerTypeLiteral | None,
-                u.Field(
-                    description="LDAP server type identifier",
-                ),
-            ] = None
-            record_kind: Annotated[
-                c.Ldif.RecordKindLiteral,
-                u.Field(
-                    description="High-level LDIF record kind",
-                ),
-            ] = c.Ldif.RecordKind.CONTENT
-            controls: Annotated[
-                MutableSequence[FlextLdifModelsDomainEntry.Control] | None,
-                u.Field(
-                    description="RFC 2849 controls associated with the record",
-                ),
-            ] = None
-            change_operations: Annotated[
-                (MutableSequence[FlextLdifModelsDomainEntry.ChangeOperation] | None),
-                u.Field(
-                    description="Structured modify operations for changetype=modify",
-                ),
-            ] = None
-            changetype: Annotated[
-                c.Ldif.LdifChangeTypeLiteral | None,
-                u.Field(
-                    description="RFC 2849 changetype",
-                ),
-            ] = None
-            newrdn: Annotated[
-                str | None,
-                u.Field(
-                    description="RFC 2849 newrdn value",
-                ),
-            ] = None
-            deleteoldrdn: Annotated[
-                bool | None,
-                u.Field(
-                    description="RFC 2849 deleteoldrdn value",
-                ),
-            ] = None
-            newsuperior: Annotated[
-                str | None,
-                u.Field(
-                    description="RFC 2849 newsuperior value",
-                ),
-            ] = None
-            raw_record_lines: Annotated[
-                MutableSequence[str] | None,
-                u.Field(
-                    description="Original unfolded LDIF record lines",
-                ),
-            ] = None
-            source_entry: Annotated[
-                str | None,
-                u.Field(
-                    description="Original LDIF source entry string",
-                ),
-            ] = None
-            unconverted_attributes: Annotated[
-                FlextLdifModelsMetadata.DynamicMetadata | None,
-                u.Field(
-                    description="Attributes preserved in original format",
-                ),
-            ] = None
-            statistics: Annotated[
-                FlextLdifModelsDomainEntry.EntryStatistics | None,
-                u.Field(
-                    description="Entry processing statistics",
-                ),
-            ] = None
-
-        @classmethod
-        def _create_entry(cls, params: _CreateEntryParams) -> r[Self]:
-            """Internal method for Entry creation with composition fields.
-
-            Args:
-            params: Validated payload model containing entry fields and metadata
-
-            Returns:
-            r[Self] with Entry instance or validation error
-
-            """
-            try:
-                dn_obj = FlextLdifModelsDomainDN.DN.from_value(params.dn)
-                attrs_obj = cls._normalize_attributes(params.attributes)
-                metadata = cls._build_metadata(
-                    params.metadata,
-                    params.server_type,
-                    params.source_entry,
-                    params.unconverted_attributes,
-                )
-                base_entry_data = params.model_dump(
-                    exclude_none=True,
-                    exclude=cls._CREATE_ENTRY_DUMP_EXCLUDE,
-                )
-                entry_data: dict[str, object] = {
-                    c.Ldif.DictKeys.DN: dn_obj,
-                    c.Ldif.DictKeys.ATTRIBUTES: attrs_obj,
-                    **base_entry_data,
-                }
-                if metadata is not None:
-                    entry_data["metadata"] = metadata
-                if params.raw_record_lines is not None:
-                    entry_data["raw_record_lines"] = list(params.raw_record_lines)
-                entry_instance = cls.model_validate(entry_data)
-                return r[Self].ok(entry_instance)
-            except (ValueError, TypeError, AttributeError) as e:
-                return r[Self].fail(f"Failed to create Entry: {e}")
-
         @classmethod
         def _normalize_attributes(
             cls,
-            attributes: t.MutableAttributeMapping
-            | FlextLdifModelsDomainAttributes.Attributes,
-        ) -> FlextLdifModelsDomainAttributes.Attributes:
+            attributes: t.MutableAttributeMapping | mda.Attributes,
+        ) -> mda.Attributes:
             """Normalize attributes to Attributes t.Container.
 
             Args:
@@ -1112,7 +914,7 @@ class FlextLdifModelsDomainEntry:
                 in validation_metadata as RFC violation.
 
             """
-            if isinstance(attributes, FlextLdifModelsDomainAttributes.Attributes):
+            if isinstance(attributes, mda.Attributes):
                 return attributes
             attrs_dict: t.MutableStrSequenceMapping = {}
             for attr_name, attr_values in attributes.items():
@@ -1127,17 +929,17 @@ class FlextLdifModelsDomainEntry:
                 "attributes": attrs_dict,
                 **cls._ATTRIBUTES_VALIDATE_DEFAULTS,
             }
-            return FlextLdifModelsDomainAttributes.Attributes.model_validate(
+            return mda.Attributes.model_validate(
                 validate_payload,
             )
 
         @classmethod
         def _update_existing_metadata(
             cls,
-            metadata: FlextLdifModelsDomainMetadata.QuirkMetadata,
-            server_type: c.Ldif.ServerTypeLiteral | None,
+            metadata: mdm.QuirkMetadata,
+            server_type: c.Ldif.ServerTypes | None,
             source_entry: str | None,
-            unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata | None,
+            unconverted_attributes: mm.DynamicMetadata | None,
         ) -> None:
             """Update existing metadata extensions in place."""
             if server_type:
@@ -1153,62 +955,76 @@ class FlextLdifModelsDomainEntry:
         @classmethod
         def create(
             cls,
-            dn: str | FlextLdifModelsDomainDN.DN,
-            attributes: t.MutableAttributeMapping
-            | FlextLdifModelsDomainAttributes.Attributes,
-            metadata: FlextLdifModelsDomainMetadata.QuirkMetadata | None = None,
-            acls: MutableSequence[FlextLdifModelsDomainAcl.Acl] | None = None,
-            objectclasses: MutableSequence[
-                FlextLdifModelsDomainSchema.SchemaObjectClass
-            ]
-            | None = None,
-            attributes_schema: MutableSequence[
-                FlextLdifModelsDomainSchema.SchemaAttribute
-            ]
-            | None = None,
-            entry_metadata: FlextLdifModelsMetadata.EntryMetadata | None = None,
-            validation_metadata: FlextLdifModelsDomainMetadata.ValidationMetadata
-            | None = None,
-            server_type: c.Ldif.ServerTypeLiteral | None = None,
-            record_kind: c.Ldif.RecordKindLiteral = c.Ldif.RecordKind.CONTENT,
+            dn: str | mdn.DN,
+            attributes: t.MutableAttributeMapping | mda.Attributes,
+            metadata: mdm.QuirkMetadata | None = None,
+            acls: MutableSequence[mdac.Acl] | None = None,
+            objectclasses: MutableSequence[mds.SchemaObjectClass] | None = None,
+            attributes_schema: MutableSequence[mds.SchemaAttribute] | None = None,
+            entry_metadata: mm.EntryMetadata | None = None,
+            validation_metadata: mdm.ValidationMetadata | None = None,
+            server_type: c.Ldif.ServerTypes | None = None,
+            record_kind: c.Ldif.RecordKind = c.Ldif.RecordKind.CONTENT,
             controls: MutableSequence[FlextLdifModelsDomainEntry.Control] | None = None,
             change_operations: MutableSequence[
                 FlextLdifModelsDomainEntry.ChangeOperation
             ]
             | None = None,
-            changetype: c.Ldif.LdifChangeTypeLiteral | None = None,
+            changetype: c.Ldif.LdifChangeType | None = None,
             newrdn: str | None = None,
             deleteoldrdn: bool | None = None,
             newsuperior: str | None = None,
             raw_record_lines: MutableSequence[str] | None = None,
             source_entry: str | None = None,
-            unconverted_attributes: FlextLdifModelsMetadata.DynamicMetadata
-            | None = None,
+            unconverted_attributes: mm.DynamicMetadata | None = None,
             statistics: FlextLdifModelsDomainEntry.EntryStatistics | None = None,
         ) -> r[Self]:
-            params = cls._CreateEntryParams.model_validate({
-                "dn": dn,
-                "attributes": attributes,
-                "metadata": metadata,
-                "acls": acls,
-                "objectclasses": objectclasses,
-                "attributes_schema": attributes_schema,
-                "entry_metadata": entry_metadata,
-                "validation_metadata": validation_metadata,
-                "server_type": server_type,
-                "record_kind": record_kind,
-                "controls": controls,
-                "change_operations": change_operations,
-                "changetype": changetype,
-                "newrdn": newrdn,
-                "deleteoldrdn": deleteoldrdn,
-                "newsuperior": newsuperior,
-                "raw_record_lines": raw_record_lines,
-                "source_entry": source_entry,
-                "unconverted_attributes": unconverted_attributes,
-                "statistics": statistics,
-            })
-            return cls._create_entry(params=params)
+            try:
+                dn_obj = mdn.DN.from_value(dn)
+                attrs_obj = cls._normalize_attributes(attributes)
+                resolved_metadata = cls._build_metadata(
+                    metadata,
+                    server_type,
+                    source_entry,
+                    unconverted_attributes,
+                )
+                entry_data: dict[str, object] = {
+                    c.Ldif.DictKeys.DN: dn_obj,
+                    c.Ldif.DictKeys.ATTRIBUTES: attrs_obj,
+                    "record_kind": record_kind,
+                }
+                if resolved_metadata is not None:
+                    entry_data["metadata"] = resolved_metadata
+                if acls is not None:
+                    entry_data["acls"] = acls
+                if objectclasses is not None:
+                    entry_data["objectclasses"] = objectclasses
+                if attributes_schema is not None:
+                    entry_data["attributes_schema"] = attributes_schema
+                if entry_metadata is not None:
+                    entry_data["entry_metadata"] = entry_metadata
+                if validation_metadata is not None:
+                    entry_data["validation_metadata"] = validation_metadata
+                if controls is not None:
+                    entry_data["controls"] = controls
+                if change_operations is not None:
+                    entry_data["change_operations"] = change_operations
+                if changetype is not None:
+                    entry_data["changetype"] = changetype
+                if newrdn is not None:
+                    entry_data["newrdn"] = newrdn
+                if deleteoldrdn is not None:
+                    entry_data["deleteoldrdn"] = deleteoldrdn
+                if newsuperior is not None:
+                    entry_data["newsuperior"] = newsuperior
+                if raw_record_lines is not None:
+                    entry_data["raw_record_lines"] = list(raw_record_lines)
+                if statistics is not None:
+                    entry_data["statistics"] = statistics
+                entry_instance = cls.model_validate(entry_data)
+                return r[Self].ok(entry_instance)
+            except (ValueError, TypeError, AttributeError) as e:
+                return r[Self].fail(f"Failed to create Entry: {e}")
 
 
 __all__: list[str] = ["FlextLdifModelsDomainEntry"]

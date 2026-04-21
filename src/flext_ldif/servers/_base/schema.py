@@ -3,11 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import (
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-)
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
 from flext_ldif import (
@@ -165,22 +161,10 @@ class FlextLdifServersBaseSchema(
         """Resolve server type to valid StrEnum, defaulting to GENERIC."""
         if not server_type:
             return c.Ldif.ServerTypes.RFC
-        type_map: MutableMapping[str, c.Ldif.ServerTypes] = {
-            "rfc": c.Ldif.ServerTypes.RFC,
-            "oid": c.Ldif.ServerTypes.OID,
-            "oud": c.Ldif.ServerTypes.OUD,
-            "openldap": c.Ldif.ServerTypes.OPENLDAP,
-            "openldap1": c.Ldif.ServerTypes.OPENLDAP1,
-            "openldap2": c.Ldif.ServerTypes.OPENLDAP2,
-            "ds389": c.Ldif.ServerTypes.DS389,
-            "apache": c.Ldif.ServerTypes.APACHE,
-            "ad": c.Ldif.ServerTypes.AD,
-            "novell": c.Ldif.ServerTypes.NOVELL,
-            "ibm_tivoli": c.Ldif.ServerTypes.IBM_TIVOLI,
-            "relaxed": c.Ldif.ServerTypes.RELAXED,
-            "generic": c.Ldif.ServerTypes.GENERIC,
-        }
-        return type_map.get(server_type.lower(), c.Ldif.ServerTypes.RFC)
+        try:
+            return u.Ldif.normalize_server_type(server_type)
+        except ValueError:
+            return c.Ldif.ServerTypes.RFC
 
     @staticmethod
     def build_attribute_metadata(
@@ -226,13 +210,10 @@ class FlextLdifServersBaseSchema(
         metadata_extensions["schema_original_string_complete"] = attr_definition
         quirk_type = FlextLdifServersBaseSchema._resolve_quirk_type(server_type)
         metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = quirk_type.value
-        extensions_typed: t.MutableFlatContainerMapping = {}
+        extensions_typed: t.Ldif.MutableMetadataMapping = {}
         for key, val in metadata_extensions.items():
-            if isinstance(val, list):
-                list_typed: t.Container = list(val)
-                extensions_typed[key] = list_typed
-            elif val is not None:
-                extensions_typed[key] = val
+            if val is not None:
+                extensions_typed[key] = u.normalize_to_metadata(val)
         metadata = m.Ldif.QuirkMetadata(
             quirk_type=quirk_type,
             extensions=m.Ldif.DynamicMetadata.from_dict(
@@ -552,7 +533,7 @@ class FlextLdifServersBaseSchema(
         if attr_model:
             write_result = self.write_attribute(attr_model)
             if write_result.success:
-                written_text = write_result.unwrap()
+                written_text = str(write_result.unwrap())
                 return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].ok(
                     written_text,
                 )
@@ -563,7 +544,7 @@ class FlextLdifServersBaseSchema(
         if oc_model:
             write_oc_result = self.write_objectclass(oc_model)
             if write_oc_result.success:
-                written_text = write_oc_result.unwrap()
+                written_text = str(write_oc_result.unwrap())
                 return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].ok(
                     written_text,
                 )

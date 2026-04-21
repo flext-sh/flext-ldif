@@ -9,10 +9,7 @@ from collections.abc import (
 )
 from typing import ClassVar, Self, override
 
-from flext_ldif import r
-from flext_ldif.models import m
-from flext_ldif.protocols import p
-from flext_ldif.typings import t
+from flext_ldif import m, p, r, t
 
 
 class FlextLdifUtilitiesPipeline:

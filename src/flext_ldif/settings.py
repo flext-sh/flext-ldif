@@ -28,9 +28,9 @@ class FlextLdifSettings(FlextSettings):
     )
 
     ldif_encoding: Annotated[
-        str,
+        c.Ldif.Encoding,
         u.Field(description="Default encoding for LDIF read/write operations"),
-    ] = c.Ldif.SettingsDefaults.DEFAULT_ENCODING
+    ] = c.Ldif.Encoding.UTF8
     ldif_strict_validation: Annotated[
         bool,
         u.Field(description="Enable strict LDIF validation rules"),

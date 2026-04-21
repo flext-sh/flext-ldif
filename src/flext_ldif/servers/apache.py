@@ -9,8 +9,7 @@ from collections.abc import (
 )
 from typing import ClassVar, override
 
-from flext_ldif import FlextLdifModelsDomainsEntries, FlextLdifServersRfc, c, m, r, u
-from flext_ldif.typings import t
+from flext_ldif import FlextLdifModelsDomainsEntries, FlextLdifServersRfc, c, m, r, t, u
 
 
 class FlextLdifServersApache(FlextLdifServersRfc):

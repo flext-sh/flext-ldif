@@ -10,7 +10,7 @@ from typing import override
 
 from flext_core import FlextSettings, s
 
-from flext_ldif import FlextLdifServer, FlextLdifSettings, m, t
+from flext_ldif import FlextLdifServer, FlextLdifSettings, c, m, t, u
 
 
 class FlextLdifServiceBase[TDomainResult: t.ValueOrModel | Sequence[t.ValueOrModel]](
@@ -19,6 +19,8 @@ class FlextLdifServiceBase[TDomainResult: t.ValueOrModel | Sequence[t.ValueOrMod
 ):
     """Base class for LDIF services with typed settings helper."""
 
+    _server: FlextLdifServer = u.PrivateAttr()
+
     def __init__(
         self,
         *,
@@ -26,7 +28,7 @@ class FlextLdifServiceBase[TDomainResult: t.ValueOrModel | Sequence[t.ValueOrMod
         settings: FlextLdifSettings | None = None,
     ) -> None:
         """Initialize the typed LDIF service runtime."""
-        super().__init__(settings=settings)
+        super().__init__(runtime_settings=settings)
         object.__setattr__(
             self,
             "_server",
@@ -44,6 +46,11 @@ class FlextLdifServiceBase[TDomainResult: t.ValueOrModel | Sequence[t.ValueOrMod
     def _runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDIF services."""
         return m.RuntimeBootstrapOptions(settings_type=FlextLdifSettings)
+
+    @staticmethod
+    def _get_effective_server_type_value() -> str:
+        """Return the default server type used by parser and writer services."""
+        return c.Ldif.ServerTypes.RFC.value
 
 
 s = FlextLdifServiceBase

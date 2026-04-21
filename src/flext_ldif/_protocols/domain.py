@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_core import p
 
 if TYPE_CHECKING:
-    from flext_ldif import m, t
+    from flext_ldif import m, p as lp, t
 
 
 class FlextLdifProtocolsDomain(Protocol):
@@ -124,7 +124,7 @@ class FlextLdifProtocolsDomain(Protocol):
         def write(
             self,
             entry_data: t.Ldif.EntryOrEntries,
-            write_options: t.Ldif.WriteOptionsLike | None = None,
+            write_options: lp.Ldif.WriteFormatOptions | None = None,
         ) -> p.Result[str]:
             """Serialize one or more entries."""
             ...

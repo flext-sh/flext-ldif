@@ -39,7 +39,6 @@ class FlextLdifTypesDomain:
     type SchemaItemSequence = MutableSequence[SchemaItem]
     type AclLike = p.Ldif.Acl
     type AclSequence = MutableSequence[AclLike]
-    type WriteOptionsLike = p.Ldif.WriteFormatOptions | p.Ldif.WriteOptions
     type MetadataLike = (
         p.Ldif.QuirkMetadata
         | p.Ldif.DynamicMetadata

@@ -55,7 +55,7 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def _get_type_from_independent_class(
         target_cls: type,
-    ) -> c.Ldif.ServerTypeLiteral | None:
+    ) -> c.Ldif.ServerTypes | None:
         """Extract server type from independent class naming pattern."""
         class_name = target_cls.__name__
         if not class_name.startswith("FlextLdifServers"):
@@ -66,15 +66,15 @@ class FlextLdifUtilitiesServer:
         )
         if server_name_result.failure:
             return None
-        server_type_lower = server_name_result.value.lower()
-        if FlextLdifUtilitiesServer._is_valid_server_type_literal(server_type_lower):
-            return server_type_lower
+        server_type_lower = str(server_name_result.value).lower()
+        if FlextLdifUtilitiesServer._is_valid_server_type(server_type_lower):
+            return c.Ldif.ServerTypes(server_type_lower)
         return None
 
     @staticmethod
     def _get_type_from_nested_class(
         target_cls: type,
-    ) -> c.Ldif.ServerTypeLiteral | None:
+    ) -> c.Ldif.ServerTypes | None:
         """Extract server type from nested class via parent's Constants."""
         qualname_parts = target_cls.__qualname__.split(".")
         if len(qualname_parts) > 1:
@@ -102,15 +102,15 @@ class FlextLdifUtilitiesServer:
         return None
 
     @staticmethod
-    def _is_valid_server_type_literal(
+    def _is_valid_server_type(
         value: str,
-    ) -> TypeIs[c.Ldif.ServerTypeLiteral]:
+    ) -> TypeIs[c.Ldif.ServerTypes]:
         return value in FlextLdifUtilitiesServer.VALID_SERVER_TYPES
 
     @staticmethod
     def extract_server_type_from_constants(
         cls_with_constants: type | None,
-    ) -> c.Ldif.ServerTypeLiteral | None:
+    ) -> c.Ldif.ServerTypes | None:
         """Extract server type from a class's Constants.SERVER_TYPE."""
         if cls_with_constants is None:
             return None
@@ -120,9 +120,9 @@ class FlextLdifUtilitiesServer:
         server_type_raw = getattr(constants_obj, "SERVER_TYPE", None)
         if (
             server_type_raw is not None
-            and FlextLdifUtilitiesServer._is_valid_server_type_literal(server_type_raw)
+            and FlextLdifUtilitiesServer._is_valid_server_type(server_type_raw)
         ):
-            return server_type_raw
+            return c.Ldif.ServerTypes(server_type_raw)
         return None
 
     @staticmethod
@@ -146,7 +146,7 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def get_parent_server_type(
         nested_class_instance_or_type: type | t.Container,
-    ) -> c.Ldif.ServerTypeLiteral:
+    ) -> c.Ldif.ServerTypes:
         """Get server_type from parent server class via __qualname__."""
         cls = (
             nested_class_instance_or_type

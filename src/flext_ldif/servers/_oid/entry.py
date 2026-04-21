@@ -159,13 +159,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             original_entry.attributes.attributes if original_entry.attributes else {}
         )
         mk = c.Ldif
-        conversion_metadata: t.MutableFlatContainerMapping = (
+        conversion_metadata: t.Ldif.MutableMetadataInputMapping = (
             {mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: list(converted_attrs)}
             if converted_attrs
             else {}
         )
         mk = c.Ldif
-        dn_metadata: t.MutableFlatContainerMapping = (
+        dn_metadata: t.Ldif.MutableMetadataInputMapping = (
             {
                 mk.ORIGINAL_DN_COMPLETE: original_dn,
                 mk.ORIGINAL_DN_LINE_COMPLETE: cleaned_dn,
@@ -174,12 +174,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if original_dn != cleaned_dn
             else {}
         )
-        rfc_violations_str: str = (
-            m.Cli.CliNormalizedJson(
-                u.Cli.json_normalize(list(rfc_violations)),
-            ).model_dump_json()
-            if rfc_violations
-            else ""
+        rfc_violations_str: str = u.Ldif.dump_json_payload(
+            list(rfc_violations) if rfc_violations else None,
         )
         attribute_conflicts_json: t.Cli.JsonValue = u.Cli.normalize_json_value([
             {
@@ -192,26 +188,14 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             }
             for conflict in attribute_conflicts
         ])
-        attribute_conflicts_str: str = (
-            m.Cli.CliNormalizedJson(
-                attribute_conflicts_json,
-            ).model_dump_json()
-            if attribute_conflicts
-            else ""
+        attribute_conflicts_str: str = u.Ldif.dump_json_payload(
+            attribute_conflicts_json if attribute_conflicts else None,
         )
-        boolean_conversions_str: str = (
-            m.Ldif.DynamicMetadata.from_dict(
-                dict(boolean_conversions),
-            ).model_dump_json()
-            if boolean_conversions
-            else ""
+        boolean_conversions_str: str = u.Ldif.dump_dynamic_metadata(
+            boolean_conversions or None,
         )
-        converted_attributes_str: str = (
-            m.Ldif.DynamicMetadata.from_dict(
-                dict(converted_attributes),
-            ).model_dump_json()
-            if converted_attributes
-            else ""
+        converted_attributes_str: str = u.Ldif.dump_dynamic_metadata(
+            converted_attributes or None,
         )
         original_entry_str: str = (
             original_entry.model_dump_json() if original_entry else ""
@@ -226,16 +210,16 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             entry_dn=cleaned_dn,
         )
         original_attributes_str: str | None = (
-            m.Ldif.DynamicMetadata.from_dict(original_attrs).model_dump_json()
-            if original_attrs
-            else None
+            u.Ldif.dump_dynamic_metadata(
+                original_attrs or None,
+            )
+            or None
         )
         processed_attributes_str: str | None = (
-            m.Ldif.DynamicMetadata.from_dict(
-                dict(converted_attributes),
-            ).model_dump_json()
-            if converted_attributes
-            else None
+            u.Ldif.dump_dynamic_metadata(
+                converted_attributes or None,
+            )
+            or None
         )
         metadata_keys_dict = {
             k: v
@@ -243,20 +227,20 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if not k.startswith("_") and u.matches_type(v, str)
         }
         metadata_keys_str: str | None = (
-            m.Ldif.DynamicMetadata.from_dict(metadata_keys_dict).model_dump_json()
-            if metadata_keys_dict
-            else None
+            u.Ldif.dump_dynamic_metadata(
+                metadata_keys_dict or None,
+            )
+            or None
         )
         operational_attributes_str: str | None = (
-            m.Cli.CliNormalizedJson(
-                u.Cli.json_normalize(
-                    list(FlextLdifServersOidConstants.OPERATIONAL_ATTRIBUTES),
-                ),
-            ).model_dump_json()
-            if FlextLdifServersOidConstants.OPERATIONAL_ATTRIBUTES
-            else None
+            u.Ldif.dump_json_payload(
+                list(FlextLdifServersOidConstants.OPERATIONAL_ATTRIBUTES)
+                if FlextLdifServersOidConstants.OPERATIONAL_ATTRIBUTES
+                else None,
+            )
+            or None
         )
-        generic_metadata: t.MutableFlatContainerMapping = dict(
+        generic_metadata: t.Ldif.MutableMetadataInputMapping = dict(
             u.Ldif.build_entry_metadata_extensions("oid"),
         )
         generic_metadata["entry_dn"] = original_dn
@@ -278,30 +262,24 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             and FlextLdifServersOidConstants.ORCLACI in original_attrs
             else {}
         )
-        boolean_conversions_dict: MutableMapping[
-            str,
-            t.MutableAttributeMapping,
-        ] = {
+        boolean_conversions_dict: t.Ldif.MutableMetadataInputMapping = {
             attr_name: dict(conversion_data)
             for attr_name, conversion_data in boolean_conversions.items()
         }
-        converted_attrs_data: MutableMapping[
-            str,
-            MutableMapping[str, t.MutableAttributeMapping] | t.MutableStrMapping,
-        ] = {
+        converted_attrs_data: t.Ldif.MutableMetadataInputMapping = {
             c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions_dict,
             c.Ldif.CONVERSION_ATTRIBUTE_NAME_CONVERSIONS: attr_name_conversions,
         }
-        converted_attrs_data_str: str = m.Ldif.DynamicMetadata.from_dict(
+        converted_attrs_data_str: str = u.Ldif.dump_dynamic_metadata(
             converted_attrs_data,
-        ).model_dump_json()
+        )
         generic_metadata[mk.CONVERTED_ATTRIBUTES] = converted_attrs_data_str
         generic_metadata[c.Ldif.ENTRY_TARGET_DN_CASE] = cleaned_dn
         generic_metadata[c.Ldif.ENTRY_ORIGINAL_FORMAT] = (
             f"OID Entry with {len(converted_attrs)} boolean conversions"
         )
         original_extensions = self._extract_original_extensions(original_entry)
-        extensions_data: t.MutableFlatContainerMapping = {
+        extensions_data: t.Ldif.MutableMetadataInputMapping = {
             **conversion_metadata,
             **dn_metadata,
             **generic_metadata,
@@ -319,8 +297,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                         nested_dict[nk] = [str(item) for item in nv]
                     else:
                         nested_dict[nk] = str(nv)
-                widened_dict: t.Container = nested_dict
-                extensions_data[key] = widened_dict
+                extensions_data[key] = nested_dict
             else:
                 extensions_data[key] = val
         for ext_key, ext_val in original_extensions.items():
@@ -400,38 +377,20 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             metadata.original_strings = m.Ldif.DynamicMetadata.from_dict(
                 original_strings_data,
             )
-        converted_attrs_format_str: str = (
-            m.Cli.CliNormalizedJson(
-                u.Cli.json_normalize(list(converted_attrs)),
-            ).model_dump_json()
-            if converted_attrs
-            else ""
+        converted_attrs_format_str: str = u.Ldif.dump_json_payload(
+            list(converted_attrs) if converted_attrs else None,
         )
-        boolean_conversions_format_str: str = (
-            m.Ldif.DynamicMetadata.from_dict(
-                dict(boolean_conversions),
-            ).model_dump_json()
-            if boolean_conversions
-            else ""
+        boolean_conversions_format_str: str = u.Ldif.dump_dynamic_metadata(
+            dict(boolean_conversions) if boolean_conversions else None,
         )
-        converted_attributes_format_str: str = (
-            m.Ldif.DynamicMetadata.from_dict(
-                dict(converted_attributes),
-            ).model_dump_json()
-            if converted_attributes
-            else ""
+        converted_attributes_format_str: str = u.Ldif.dump_dynamic_metadata(
+            dict(converted_attributes) if converted_attributes else None,
         )
-        original_attributes_format_str: str = (
-            m.Ldif.DynamicMetadata.from_dict(original_attrs).model_dump_json()
-            if original_attrs
-            else ""
+        original_attributes_format_str: str = u.Ldif.dump_dynamic_metadata(
+            original_attrs or None,
         )
-        original_attr_lines_str: str = (
-            m.Cli.CliNormalizedJson(
-                u.Cli.json_normalize(list(orig_attr_lines)),
-            ).model_dump_json()
-            if orig_attr_lines
-            else ""
+        original_attr_lines_str: str = u.Ldif.dump_json_payload(
+            list(orig_attr_lines) if orig_attr_lines else None,
         )
         metadata.original_format_details = u.Ldif.build_original_format_details(
             "oid",
@@ -747,15 +706,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             acl_transformations_dict = {
                 name: trans.model_dump() for name, trans in acl_transformations.items()
             }
-            current_extensions["acl_transformations"] = (
-                m.Ldif.DynamicMetadata.from_dict(
-                    acl_transformations_dict,
-                ).model_dump_json()
+            current_extensions["acl_transformations"] = u.Ldif.dump_dynamic_metadata(
+                acl_transformations_dict,
             )
         if rfc_violations:
-            current_extensions["rfc_violations"] = m.Cli.CliNormalizedJson(
-                u.Cli.json_normalize(list(rfc_violations)),
-            ).model_dump_json()
+            current_extensions["rfc_violations"] = u.Ldif.dump_json_payload(
+                list(rfc_violations),
+            )
         if attribute_conflicts:
             attribute_conflicts_json = u.Cli.normalize_json_value([
                 {
@@ -768,9 +725,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 }
                 for conflict in attribute_conflicts
             ])
-            current_extensions["attribute_conflicts"] = m.Cli.CliNormalizedJson(
+            current_extensions["attribute_conflicts"] = u.Ldif.dump_json_payload(
                 attribute_conflicts_json,
-            ).model_dump_json()
+            )
         if current_extensions != (entry.metadata.extensions if entry.metadata else {}):
             updated_extensions = (
                 m.Ldif.DynamicMetadata.from_dict(current_extensions)
@@ -826,9 +783,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                         mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: converted_attrs_list,
                         mk.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions_dict,
                     }
-                    conv_data_str: str = m.Ldif.DynamicMetadata.from_dict(
-                        conv_data,
-                    ).model_dump_json()
+                    conv_data_str: str = u.Ldif.dump_dynamic_metadata(conv_data)
                     setattr(
                         entry.metadata.extensions,
                         mk.CONVERTED_ATTRIBUTES,
@@ -1067,7 +1022,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if attr_name.lower() not in boolean_attr_names:
                 continue
             conv_data = boolean_conversions.get(attr_name, {})
-            if u.matches_type(conv_data, dict) and conv_data:
+            if isinstance(conv_data, Mapping) and conv_data:
                 self._restore_boolean_attribute_from_metadata(
                     attr_name,
                     conv_data,

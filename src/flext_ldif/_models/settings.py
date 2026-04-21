@@ -14,16 +14,18 @@ from collections.abc import (
     MutableMapping,
     MutableSequence,
 )
-from typing import Annotated, ClassVar, Literal, Self
+from typing import Annotated, ClassVar, Self
 
 from flext_cli import m, u
 
-from flext_ldif import r
-from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl
-from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema
-from flext_ldif.constants import c
-from flext_ldif.protocols import p
-from flext_ldif.typings import t
+from flext_ldif import (
+    FlextLdifModelsDomainAcl as mdac,
+    FlextLdifModelsDomainSchema as mds,
+    c,
+    p,
+    r,
+    t,
+)
 
 
 class FlextLdifModelsSettings:
@@ -307,9 +309,9 @@ class FlextLdifModelsSettings:
             u.Field(description="Required objectClasses"),
         ] = None
         objectclass_mode: Annotated[
-            Literal["any", "all"],
+            c.Ldif.EntryCriteriaMode,
             u.Field(description='"any" (has any) or "all" (has all)'),
-        ] = "any"
+        ] = c.Ldif.EntryCriteriaMode.ANY
         required_attrs: Annotated[
             MutableSequence[str] | None,
             u.Field(description="All of these attributes must exist"),
@@ -349,7 +351,7 @@ class FlextLdifModelsSettings:
         """
 
         quirk_type: Annotated[
-            c.Ldif.ServerTypeLiteral,
+            c.Ldif.ServerTypes,
             u.Field(
                 ...,
                 description="Server type performing the parse (oid, oud, rfc, etc.)",
@@ -1072,11 +1074,11 @@ class FlextLdifModelsSettings:
             u.Field(..., description="Target schema quirk"),
         ]
         item_type: Annotated[
-            Literal["attribute"],
+            c.Ldif.SchemaItemKind,
             u.Field(description="Discriminator"),
-        ] = "attribute"
+        ] = c.Ldif.SchemaItemKind.ATTRIBUTE
         item: Annotated[
-            FlextLdifModelsDomainSchema.SchemaAttribute,
+            mds.SchemaAttribute,
             u.Field(
                 description="Schema attribute to convert",
             ),
@@ -1098,11 +1100,11 @@ class FlextLdifModelsSettings:
             u.Field(..., description="Target schema quirk"),
         ]
         item_type: Annotated[
-            Literal["objectclass"],
+            c.Ldif.SchemaItemKind,
             u.Field(description="Discriminator"),
-        ] = "objectclass"
+        ] = c.Ldif.SchemaItemKind.OBJECTCLASS
         item: Annotated[
-            FlextLdifModelsDomainSchema.SchemaObjectClass,
+            mds.SchemaObjectClass,
             u.Field(
                 description="Schema objectclass to convert",
             ),
@@ -1122,13 +1124,13 @@ class FlextLdifModelsSettings:
         """
 
         original_acl: Annotated[
-            FlextLdifModelsDomainAcl.Acl,
+            mdac.Acl,
             u.Field(
                 description="Original ACL model",
             ),
         ]
         converted_acl: Annotated[
-            FlextLdifModelsDomainAcl.Acl,
+            mdac.Acl,
             u.Field(
                 description="Converted ACL model (modified in-place)",
             ),

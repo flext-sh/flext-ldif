@@ -15,9 +15,7 @@ from typing import Annotated, ClassVar, Self, override
 
 from flext_cli import m, u
 
-from flext_ldif import r
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif.typings import t
+from flext_ldif import FlextLdifModelsMetadata as mdm, c, r, t
 
 
 class FlextLdifModelsDomainDN:
@@ -201,13 +199,13 @@ class FlextLdifModelsDomainDN:
             ),
         ]
         metadata: Annotated[
-            FlextLdifModelsMetadata.EntryMetadata,
+            mdm.EntryMetadata,
             u.Field(
                 description="Quirk-specific metadata for preserving original format",
             ),
-        ] = u.Field(default_factory=FlextLdifModelsMetadata.EntryMetadata)
+        ] = u.Field(default_factory=mdm.EntryMetadata)
         _DN_COMPONENT_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            r"^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\\\,]|\\\\.)*$",
+            c.Ldif.DN_COMPONENT,
             re.IGNORECASE,
         )
 
@@ -224,7 +222,7 @@ class FlextLdifModelsDomainDN:
                 raise ValueError(msg)
             return cls.model_validate({
                 "value": str(dn),
-                "metadata": FlextLdifModelsMetadata.EntryMetadata.model_validate(
+                "metadata": mdm.EntryMetadata.model_validate(
                     {},
                 ),
             })
@@ -235,9 +233,7 @@ class FlextLdifModelsDomainDN:
         def __init__(self) -> None:
             """Initialize empty DN case registry."""
             super().__init__()
-            self._registry: FlextLdifModelsMetadata.DynamicMetadata = (
-                FlextLdifModelsMetadata.DynamicMetadata()
-            )
+            self._registry: mdm.DynamicMetadata = mdm.DynamicMetadata()
             self._case_variants: MutableMapping[str, set[str]] = {}
 
         @staticmethod

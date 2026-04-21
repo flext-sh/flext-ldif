@@ -12,16 +12,14 @@ from collections.abc import (
     MutableSequence,
 )
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, overload
+from typing import TYPE_CHECKING, overload
 
 from flext_core import u
 
-from flext_ldif import r
-from flext_ldif.constants import c
-from flext_ldif.models import m
+from flext_ldif import c, m, r
 
 if TYPE_CHECKING:
-    from flext_ldif._models.domain_entry import FlextLdifModelsDomainEntry
+    from flext_ldif import FlextLdifModelsDomainEntry as mde
 
 
 class FlextLdifUtilitiesDN:
@@ -222,8 +220,8 @@ class FlextLdifUtilitiesDN:
                 f"Comparison failed (RFC 4514): Failed to normalize second DN: {norm2_result.error}",
             )
         return r[tuple[str, str]].ok((
-            norm1_result.value.lower(),
-            norm2_result.value.lower(),
+            str(norm1_result.value).lower(),
+            str(norm2_result.value).lower(),
         ))
 
     @staticmethod
@@ -464,7 +462,11 @@ class FlextLdifUtilitiesDN:
             norm_result = FlextLdifUtilitiesDN._normalize_dns_for_comparison(dn1, dn2)
             if not norm_result.success:
                 return r[int].fail(norm_result.error or "Normalization failed")
-            norm1_lower, norm2_lower = norm_result.value
+            normalized_pair = norm_result.value
+            if len(normalized_pair) != c.Ldif.TUPLE_LENGTH_PAIR:
+                return r[int].fail("Normalization returned unexpected DN pair")
+            norm1_lower = str(normalized_pair[0])
+            norm2_lower = str(normalized_pair[1])
             comparison = (norm1_lower > norm2_lower) - (norm1_lower < norm2_lower)
             return r[int].ok(comparison)
         except (
@@ -677,7 +679,7 @@ class FlextLdifUtilitiesDN:
     def norm_or_fallback(
         dn: str | None,
         *,
-        fallback: Literal["lower", "upper", "original"] = "lower",
+        fallback: c.Ldif.NormalizeFallback = c.Ldif.NormalizeFallback.LOWER,
     ) -> str:
         r"""Normalize DN or return fallback if normalization fails.
 
@@ -713,10 +715,10 @@ class FlextLdifUtilitiesDN:
             return ""
         result = FlextLdifUtilitiesDN.norm(dn)
         if result.success:
-            return result.value
-        if fallback == "lower":
+            return str(result.value)
+        if fallback == c.Ldif.NormalizeFallback.LOWER:
             return dn.lower()
-        if fallback == "upper":
+        if fallback == c.Ldif.NormalizeFallback.UPPER:
             return dn.upper()
         return dn
 
@@ -906,7 +908,7 @@ class FlextLdifUtilitiesDN:
         if not dn_str or not source_dn or (not target_dn):
             return dn_str
         norm_result = FlextLdifUtilitiesDN.norm(dn_str)
-        normalized_dn = norm_result.map_or(dn_str)
+        normalized_dn = str(norm_result.map_or(dn_str))
         source_escaped = re.escape(source_dn)
         result = re.sub(
             f",{source_escaped}$",
@@ -962,11 +964,11 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def transform_entry_base_dn(
-        entry: FlextLdifModelsDomainEntry.Entry,
+        entry: mde.Entry,
         source_dn: str,
         target_dn: str,
         dn_valued_attributes: frozenset[str] | None = None,
-    ) -> FlextLdifModelsDomainEntry.Entry:
+    ) -> mde.Entry:
         """Transform an entry's DN and DN-valued attributes from source to target base DN.
 
         Rewrites:

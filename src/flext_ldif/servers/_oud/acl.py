@@ -151,7 +151,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     def _build_aci_permissions(self, acl_data: m.Ldif.Acl) -> r[str]:
         """Build ACI permissions clause from ACL model."""
         perms = acl_data.permissions
-        target_perms_dict: t.MutableFlatContainerMapping | None = None
+        target_perms_dict: t.Ldif.MutableMetadataInputMapping | None = None
         if not perms and acl_data.metadata:
             extensions = acl_data.metadata.extensions
             target_perms_dict_raw = (
@@ -166,7 +166,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                     str(k): v for k, v in target_perms_dict_raw.items()
                 }
         if target_perms_dict:
-            perms_data: t.MutableFlatContainerMapping = {}
+            perms_data: t.Ldif.MutableMetadataInputMapping = {}
             for key, val in target_perms_dict.items():
                 k = str(key)
                 if isinstance(val, Mapping):

@@ -3,63 +3,20 @@
 from __future__ import annotations
 
 from collections.abc import (
-    Mapping,
     MutableSequence,
 )
 from pathlib import Path
 
 from flext_ldif import (
-    FlextLdifServer,
-    FlextLdifSettings,
-    c,
+    FlextLdifServiceBase,
     m,
     r,
-    t,
     u,
 )
 
 
-class FlextLdifWriter:
+class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.WriteResponse]):
     """LDIF writer orchestrator over the server quirk registry."""
-
-    _server: FlextLdifServer = FlextLdifServer.get_global_instance()
-
-    def __init__(
-        self,
-        *,
-        server: FlextLdifServer | None = None,
-        settings: FlextLdifSettings | None = None,
-    ) -> None:
-        """Initialize writer with optional explicit server registry."""
-        _ = settings
-        object.__setattr__(
-            self,
-            "_server",
-            server or FlextLdifServer.get_global_instance(),
-        )
-
-    @staticmethod
-    def _normalize_format_options(
-        format_options: m.Ldif.WriteFormatOptions
-        | m.Ldif.WriteOptions
-        | t.Container
-        | None,
-    ) -> m.Ldif.WriteFormatOptions:
-        """Normalize format options to the canonical write model."""
-        if format_options is None:
-            return m.Ldif.WriteFormatOptions()
-        if isinstance(format_options, m.Ldif.WriteFormatOptions):
-            return format_options
-        if isinstance(format_options, m.Ldif.WriteOptions):
-            dumped = format_options.model_dump(exclude_none=True)
-            return m.Ldif.WriteFormatOptions.model_validate({
-                "base64_encode_binary": dumped.get("base64_encode_binary"),
-                "sort_attributes": dumped.get("sort_entries"),
-                "include_dn_comments": dumped.get("include_comments"),
-            })
-        if isinstance(format_options, Mapping):
-            return m.Ldif.WriteFormatOptions.model_validate(dict(format_options))
-        return m.Ldif.WriteFormatOptions()
 
     @staticmethod
     def _coerce_entries(
@@ -75,7 +32,7 @@ class FlextLdifWriter:
         entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
         *,
         server_type: str | None = None,
-        format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
+        format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> r[m.Ldif.WriteResponse]:
         """Write entries to LDIF text and return canonical write metadata."""
         normalized_entries = self._coerce_entries(entries)
@@ -105,7 +62,7 @@ class FlextLdifWriter:
         path: Path,
         *,
         server_type: str | None = None,
-        format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
+        format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> r[m.Ldif.WriteResponse]:
         """Write entries to an LDIF file and return canonical write metadata."""
         normalized_entries = self._coerce_entries(entries)
@@ -149,25 +106,20 @@ class FlextLdifWriter:
         self,
         entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
         server_type: str | None = None,
-        format_options: m.Ldif.WriteFormatOptions | m.Ldif.WriteOptions | None = None,
+        format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> r[str]:
         """Write entries to LDIF text through the selected base quirk."""
         normalized_entries = self._coerce_entries(entries)
         effective_server_type = server_type or self._get_effective_server_type_value()
-        options = self._normalize_format_options(format_options)
         return (
             self._server
             .quirk(str(effective_server_type))
             .map_error(
                 lambda error: error or "Failed to resolve LDIF server quirk",
             )
-            .flat_map(lambda quirk: quirk.write(normalized_entries, options))
+            .flat_map(lambda quirk: quirk.write(normalized_entries, format_options))
             .map_error(lambda error: error or "LDIF writing failed")
         )
-
-    def _get_effective_server_type_value(self) -> str:
-        """Resolve effective server type (default: rfc, overridden by DetectorMixin)."""
-        return c.Ldif.ServerTypes.RFC.value
 
 
 __all__: list[str] = ["FlextLdifWriter"]

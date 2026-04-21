@@ -9,11 +9,7 @@ from collections.abc import (
 )
 from typing import ClassVar, override
 
-from flext_ldif import r
-from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.typings import t
+from flext_ldif import FlextLdifUtilitiesDN as udn, c, m, r, t
 
 
 class FlextLdifUtilitiesTransformer[T]:
@@ -54,14 +50,14 @@ class FlextLdifUtilitiesTransformers:
         @staticmethod
         def validate_dn_components(dn_str: str) -> r[bool]:
             """Helper: Validate DN components."""
-            components = FlextLdifUtilitiesDN.split(dn_str)
+            components = udn.split(dn_str)
             all_errors: MutableSequence[str] = []
             for comp in components:
                 if "=" not in comp:
                     all_errors.append(f"Invalid RDN (missing '='): {comp}")
                     continue
                 _, _, value = comp.partition("=")
-                valid, errors = FlextLdifUtilitiesDN.is_valid_dn_string(
+                valid, errors = udn.is_valid_dn_string(
                     value.strip(),
                 )
                 if not valid:
@@ -109,7 +105,7 @@ class FlextLdifUtilitiesTransformers:
                     validate_dn,
                 )
                 .flat_map(
-                    FlextLdifUtilitiesDN.norm,
+                    udn.norm,
                 )
                 .map(
                     update_entry,

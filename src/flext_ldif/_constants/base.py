@@ -121,6 +121,13 @@ class FlextLdifConstantsBase:
     SCHEMA_OBJECTCLASS_MAY: Final[str] = "MAY\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))"
     ATTRIBUTE_NAME: Final[str] = "^[a-zA-Z][a-zA-Z0-9-]*$"
     ATTRIBUTE_OPTION: Final[str] = ";[a-zA-Z][a-zA-Z0-9-_]*"
+    BINARY_CHAR_PATTERN: Final[str] = "[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f-\\xff]"
+    NUMERIC_OID_PATTERN: Final[str] = "^\\d+(\\.\\d+)*$"
+    SCHEMA_X_EXTENSION: Final[str] = r"X-([A-Z0-9_-]+)\s+[\"']?([^\"']*)[\"']?(?:\s|$)"
+    SCHEMA_DESC_FLEX: Final[str] = r"DESC\s+['\\\"]([^'\\\"]*)['\\\"]"
+    SCHEMA_ORDERING_TOKEN: Final[str] = r"ORDERING\s+([A-Za-z0-9_-]+)"
+    SCHEMA_SUBSTR_TOKEN: Final[str] = r"SUBSTR\s+([A-Za-z0-9_-]+)"
+    SCHEMA_OID_CAPTURE: Final[str] = r"\(\s*([0-9.]+)"
     SYNTAX_TIME_PATTERN: Final[str] = "^\\d{14}(\\.\\d+)?Z$"
 
     # Schema metadata keys

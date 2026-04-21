@@ -12,10 +12,7 @@ from typing import TypeIs
 
 from flext_core import u
 
-from flext_ldif import r
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.typings import t
+from flext_ldif import c, m, r, t
 
 logger = u.fetch_logger(__name__)
 
@@ -26,8 +23,8 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _is_acl_subject_type(
         value: str,
-    ) -> TypeIs[c.Ldif.AclSubjectTypeLiteral]:
-        """Type guard to check if string is a valid AclSubjectTypeLiteral."""
+    ) -> TypeIs[c.Ldif.AclSubjectType]:
+        """Type guard to check if a string is a valid ACL subject enum value."""
         return value in {
             "user",
             "group",
@@ -64,9 +61,9 @@ class FlextLdifUtilitiesACL:
         version: str,
         acl_line: str,
         extra_patterns: t.MutableStrMapping,
-    ) -> t.MutableFlatContainerMapping:
+    ) -> t.Ldif.MutableMetadataInputMapping:
         """Build metadata extensions dict."""
-        extensions: t.MutableFlatContainerMapping = {
+        extensions: t.Ldif.MutableMetadataInputMapping = {
             "version": version,
             "original_format": acl_line,
         }
@@ -275,25 +272,23 @@ class FlextLdifUtilitiesACL:
         settings: m.Ldif.AclMetadataConfig,
     ) -> t.MutableFlatContainerMapping:
         """Build QuirkMetadata extensions for ACL."""
-        normalized_line_breaks: MutableSequence[t.Scalar] | None = None
+        normalized_line_breaks: list[t.Cli.JsonValue] | None = None
         if settings.line_breaks is not None:
             normalized_line_breaks = [int(value) for value in settings.line_breaks]
-        normalized_targetscope: MutableSequence[t.Scalar] | None = None
+        normalized_targetscope: list[t.Cli.JsonValue] | None = None
         if settings.targetscope is not None:
             normalized_targetscope = [int(value) for value in settings.targetscope]
-        extension_items: MutableSequence[tuple[str, t.Container | None]] = [
-            ("line_breaks", normalized_line_breaks),
-            ("dn_spaces", settings.dn_spaces),
-            ("targetscope", normalized_targetscope),
-            ("version", settings.version),
-            ("action_type", settings.action_type),
-        ]
-        result: t.MutableFlatContainerMapping = {
-            key: value
-            for key, value in extension_items
-            if value is not None
-            and FlextLdifUtilitiesACL._is_metadata_scalar_or_container(value)
-        }
+        result: t.MutableFlatContainerMapping = {}
+        if normalized_line_breaks is not None:
+            result["line_breaks"] = normalized_line_breaks
+        if settings.dn_spaces is not None:
+            result["dn_spaces"] = settings.dn_spaces
+        if normalized_targetscope is not None:
+            result["targetscope"] = normalized_targetscope
+        if settings.version is not None:
+            result["version"] = settings.version
+        if settings.action_type is not None:
+            result["action_type"] = settings.action_type
         return result
 
     @staticmethod
@@ -483,7 +478,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def extract_target_extensions(
-        extensions: m.Ldif.DynamicMetadata | t.MutableFlatContainerMapping | None,
+        extensions: m.Ldif.DynamicMetadata | t.Ldif.MetadataInputMapping | None,
         target_config: MutableSequence[tuple[str, str]],
     ) -> MutableSequence[str]:
         """Extract and format target extensions from metadata extensions."""
@@ -493,7 +488,9 @@ class FlextLdifUtilitiesACL:
         def process_target_config(target_item: tuple[str, str]) -> str | None:
             """Process single target settings item."""
             ext_key, format_template = target_item
-            value_raw: t.Container = extensions.get(ext_key) if extensions else None
+            value_raw: t.Ldif.MetadataCarrierValue | None = (
+                extensions.get(ext_key) if extensions else None
+            )
             if value_raw is None:
                 return None
             return format_template.format(value=str(value_raw))
@@ -573,7 +570,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def format_conversion_comments(
-        extensions: m.Ldif.DynamicMetadata | t.MutableFlatContainerMapping | None,
+        extensions: m.Ldif.DynamicMetadata | t.Ldif.MetadataInputMapping | None,
         converted_from_key: str,
         comments_key: str,
     ) -> MutableSequence[str]:
@@ -585,7 +582,7 @@ class FlextLdifUtilitiesACL:
         )
         if not converted_from_value:
             return []
-        comments_value: t.Container = (
+        comments_value: t.Ldif.MetadataCarrierValue | None = (
             extensions.get(comments_key) if extensions else None
         )
         if comments_value is None:

@@ -9,8 +9,7 @@ from collections.abc import (
 )
 from typing import Final
 
-from flext_ldif import m, r, u
-from flext_ldif.typings import t
+from flext_ldif import m, r, t, u
 
 logger: Final = u.fetch_logger(__name__)
 

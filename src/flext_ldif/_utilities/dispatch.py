@@ -72,20 +72,20 @@ class FlextLdifUtilitiesDispatch:
     def parse(
         definition: str | m.Ldif.DN | None,
         server_type: str | None,
-        parse_parts_hook: Callable[[str], t.MutableFlatContainerMapping]
-        | Callable[[str], r[t.MutableFlatContainerMapping]],
-    ) -> r[t.MutableFlatContainerMapping]: ...
+        parse_parts_hook: Callable[[str], t.Ldif.MutableMetadataMapping]
+        | Callable[[str], r[t.Ldif.MutableMetadataMapping]],
+    ) -> r[t.Ldif.MutableMetadataMapping]: ...
 
     @staticmethod
     def parse(
         definition: str | m.Ldif.DN | None,
         server_type: str | None = None,
-        parse_parts_hook: Callable[[str], t.MutableFlatContainerMapping]
-        | Callable[[str], r[t.MutableFlatContainerMapping]]
+        parse_parts_hook: Callable[[str], t.Ldif.MutableMetadataMapping]
+        | Callable[[str], r[t.Ldif.MutableMetadataMapping]]
         | None = None,
-    ) -> r[MutableSequence[tuple[str, str]]] | r[t.MutableFlatContainerMapping]:
+    ) -> r[MutableSequence[tuple[str, str]]] | r[t.Ldif.MutableMetadataMapping]:
         if definition is None:
-            return r[t.MutableFlatContainerMapping].fail("DN cannot be None")
+            return r[t.Ldif.MutableMetadataMapping].fail("DN cannot be None")
         if isinstance(definition, m.Ldif.DN):
             return FlextLdifUtilitiesDN.parse_dn(definition)
         if parse_parts_hook is None and server_type is None:
@@ -93,11 +93,11 @@ class FlextLdifUtilitiesDispatch:
         if parse_parts_hook is None:
             return FlextLdifUtilitiesSchema.parse_attribute(definition)
 
-        def attr_hook(value: str) -> r[t.MutableFlatContainerMapping]:
+        def attr_hook(value: str) -> r[t.Ldif.MutableMetadataMapping]:
             parsed_value = parse_parts_hook(value)
             if isinstance(parsed_value, r):
                 return parsed_value
-            return r[t.MutableFlatContainerMapping].ok(dict(parsed_value))
+            return r[t.Ldif.MutableMetadataMapping].ok(dict(parsed_value))
 
         return attr_hook(definition)
 

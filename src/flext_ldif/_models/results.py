@@ -9,11 +9,13 @@ from typing import Annotated, ClassVar, Self
 
 from flext_cli import m, u
 
-from flext_ldif._models.collections import FlextLdifModelsCollections
-from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
-from flext_ldif._models.events import FlextLdifModelsEvents
-from flext_ldif.constants import c
-from flext_ldif.typings import t
+from flext_ldif import (
+    FlextLdifModelsCollections as mc,
+    FlextLdifModelsDomainsEntries as mde,
+    FlextLdifModelsEvents as me,
+    c,
+    t,
+)
 
 
 class FlextLdifModelsResults:
@@ -134,7 +136,7 @@ class FlextLdifModelsResults:
             t.NonNegativeInt, u.Field(description="Count of parse errors encountered")
         ] = 0
         detected_server_type: Annotated[
-            c.Ldif.ServerTypeLiteral | None,
+            c.Ldif.ServerTypes | None,
             u.Field(description="LDAP server type detected from LDIF content"),
         ] = None
         entries_written: Annotated[
@@ -147,7 +149,7 @@ class FlextLdifModelsResults:
             t.NonNegativeInt, u.Field(description="Output file size in bytes")
         ] = 0
         encoding: Annotated[
-            c.Ldif.EncodingLiteral,
+            c.Ldif.Encoding,
             u.Field(
                 description="Character encoding used for output",
             ),
@@ -156,16 +158,12 @@ class FlextLdifModelsResults:
             t.NonNegativeFloat,
             u.Field(description="Total processing duration in seconds"),
         ] = 0.0
-        rejection_reasons: FlextLdifModelsCollections.DynamicCounts = u.Field(
-            default_factory=FlextLdifModelsCollections.DynamicCounts,
+        rejection_reasons: mc.DynamicCounts = u.Field(
+            default_factory=mc.DynamicCounts,
             description="Counts of entries rejected by reason category",
         )
-        events: MutableSequence[
-            FlextLdifModelsEvents.ConversionEvent | FlextLdifModelsEvents.DnEvent
-        ] = u.Field(
-            default_factory=lambda: list[
-                FlextLdifModelsEvents.ConversionEvent | FlextLdifModelsEvents.DnEvent
-            ](),
+        events: MutableSequence[me.ConversionEvent | me.DnEvent] = u.Field(
+            default_factory=lambda: list[me.ConversionEvent | me.DnEvent](),
             description="Domain events emitted during processing",
         )
 
@@ -208,7 +206,7 @@ class FlextLdifModelsResults:
             schema_attributes: int = 0,
             schema_objectclasses: int = 0,
             processing_duration: float = 0.0,
-            rejection_reasons: FlextLdifModelsCollections.DynamicCounts | None = None,
+            rejection_reasons: mc.DynamicCounts | None = None,
         ) -> Self:
             return cls(
                 total_entries=total,
@@ -227,8 +225,7 @@ class FlextLdifModelsResults:
                 schema_attributes=schema_attributes,
                 schema_objectclasses=schema_objectclasses,
                 processing_duration=processing_duration,
-                rejection_reasons=rejection_reasons
-                or FlextLdifModelsCollections.DynamicCounts(),
+                rejection_reasons=rejection_reasons or mc.DynamicCounts(),
             )
 
         def merge(self, other: Self) -> Self:
@@ -266,7 +263,7 @@ class FlextLdifModelsResults:
                 or other.detected_server_type,
                 "output_file": self.output_file or other.output_file,
                 "encoding": self.encoding,
-                "rejection_reasons": FlextLdifModelsCollections.DynamicCounts(
+                "rejection_reasons": mc.DynamicCounts(
                     **merged_reasons,
                 ),
                 "events": [*self.events, *other.events],
@@ -288,14 +285,14 @@ class FlextLdifModelsResults:
             )
 
     class MigrationPipelineResult(m.FrozenModel):
-        migrated_schema: FlextLdifModelsCollections.SchemaContent = u.Field(
-            default_factory=lambda: FlextLdifModelsCollections.SchemaContent(
+        migrated_schema: mc.SchemaContent = u.Field(
+            default_factory=lambda: mc.SchemaContent(
                 attributes=[],
                 object_classes=[],
             ),
             description="Schema content after migration transformation",
         )
-        entries: MutableSequence[FlextLdifModelsDomainsEntries.Entry] = u.Field(
+        entries: MutableSequence[mde.Entry] = u.Field(
             default_factory=list,
             description="Migrated LDIF entries",
         )
@@ -344,7 +341,7 @@ class FlextLdifModelsResults:
             u.Field(description="Available service names"),
         ]
         settings: Annotated[
-            FlextLdifModelsCollections.ConfigSettings,
+            mc.ConfigSettings,
             u.Field(description="Active client configuration settings"),
         ]
 
@@ -377,7 +374,7 @@ class FlextLdifModelsResults:
     class EntryAnalysisResult(m.FrozenModel):
         total_entries: t.NonNegativeInt = u.Field(description="Total entries analyzed")
         objectclass_distribution: Annotated[
-            FlextLdifModelsCollections.DynamicCounts,
+            mc.DynamicCounts,
             u.Field(description="Distribution of objectClass values across entries"),
         ]
         patterns_detected: Annotated[
@@ -392,14 +389,14 @@ class FlextLdifModelsResults:
 
     class ServerDetectionResult(m.FrozenModel):
         detected_server_type: Annotated[
-            c.Ldif.ServerTypeLiteral,
+            c.Ldif.ServerTypes,
             u.Field(description="LDAP server type detected from LDIF content"),
         ]
         confidence: t.DecimalFraction = u.Field(
             description="Detection confidence score between 0 and 1"
         )
         scores: Annotated[
-            FlextLdifModelsCollections.DynamicCounts,
+            mc.DynamicCounts,
             u.Field(description="Per-server-type detection scores"),
         ]
         patterns_found: Annotated[
@@ -425,7 +422,7 @@ class FlextLdifModelsResults:
             u.Field(description="Total entries in result set"),
         ]
         categorized: Annotated[
-            FlextLdifModelsCollections.DynamicCounts,
+            mc.DynamicCounts,
             u.Field(description="Entry counts per category"),
         ]
         rejection_rate: Annotated[
@@ -437,11 +434,11 @@ class FlextLdifModelsResults:
             u.Field(description="Total entries rejected"),
         ]
         written_counts: Annotated[
-            FlextLdifModelsCollections.DynamicCounts,
+            mc.DynamicCounts,
             u.Field(description="Entry counts written per category"),
         ]
         output_files: Annotated[
-            FlextLdifModelsCollections.CategoryPaths,
+            mc.CategoryPaths,
             u.Field(description="Category to output file path mapping"),
         ]
 
@@ -451,11 +448,11 @@ class FlextLdifModelsResults:
             u.Field(description="Total entries analyzed"),
         ]
         object_class_distribution: Annotated[
-            FlextLdifModelsCollections.DynamicCounts,
+            mc.DynamicCounts,
             u.Field(description="Distribution of objectClass values across entries"),
         ]
         server_type_distribution: Annotated[
-            FlextLdifModelsCollections.DynamicCounts,
+            mc.DynamicCounts,
             u.Field(description="Distribution of detected server types across entries"),
         ]
 
@@ -508,7 +505,7 @@ class FlextLdifModelsResults:
     class SchemaServiceStatus(DictAccessibleValue):
         service: Annotated[str, u.Field(description="Schema service name")]
         server_type: Annotated[
-            c.Ldif.ServerTypeLiteral,
+            c.Ldif.ServerTypes,
             u.Field(description="LDAP server type for schema operations"),
         ]
         status: Annotated[
@@ -568,7 +565,7 @@ class FlextLdifModelsResults:
 
     class ValidationBatchResult(m.StrictModel):
         results: Annotated[
-            FlextLdifModelsCollections.BooleanFlags,
+            mc.BooleanFlags,
             u.Field(description="Per-entry validation results as boolean flags"),
         ]
 
@@ -582,19 +579,19 @@ class FlextLdifModelsResults:
 
     class ParseResponse(Response):
         entries: Annotated[
-            MutableSequence[FlextLdifModelsDomainsEntries.Entry],
+            MutableSequence[mde.Entry],
             u.Field(
                 description="Parsed LDIF entries",
             ),
         ]
         detected_server_type: Annotated[
-            c.Ldif.ServerTypeLiteral | None,
+            c.Ldif.ServerTypes | None,
             u.Field(description="LDAP server type detected during parsing"),
         ] = None
 
     class AclResponse(Response):
         acls: Annotated[
-            MutableSequence[FlextLdifModelsDomainsEntries.Acl],
+            MutableSequence[mde.Acl],
             u.Field(
                 description="Extracted ACL models",
             ),
@@ -605,7 +602,7 @@ class FlextLdifModelsResults:
             bool, u.Field(description="Whether the ACL granted access")
         ] = False
         matched_acl: Annotated[
-            FlextLdifModelsDomainsEntries.Acl | None,
+            mde.Acl | None,
             u.Field(description="ACL rule that matched the evaluation"),
         ] = None
         message: Annotated[

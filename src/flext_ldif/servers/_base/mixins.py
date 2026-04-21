@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from flext_ldif.constants import c
-from flext_ldif.protocols import p
-from flext_ldif.utilities import u
+from flext_ldif import c, p, u
 
 
 class FlextLdifServerMethodsMixin:
@@ -39,7 +37,7 @@ class FlextLdifServerMethodsMixin:
     @staticmethod
     def get_server_type_from_utilities(
         quirk_class: type,
-    ) -> c.Ldif.ServerTypeLiteral:
+    ) -> c.Ldif.ServerTypes:
         """Infer the server type from the utilities namespace."""
         return u.Ldif.get_parent_server_type(quirk_class)
 
@@ -53,7 +51,7 @@ class FlextLdifServerMethodsMixin:
             self._get_parent_quirk_safe(),
         )
 
-    def _get_server_type(self) -> c.Ldif.ServerTypeLiteral:
+    def _get_server_type(self) -> c.Ldif.ServerTypes:
         """Resolve server type for the current quirk class."""
         return FlextLdifServerMethodsMixin.get_server_type_from_utilities(type(self))
 

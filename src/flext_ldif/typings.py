@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from flext_cli import FlextCliTypes
 
-from flext_ldif._typings.base import FlextLdifTypesBase
-from flext_ldif._typings.domain import FlextLdifTypesDomain
+from flext_ldif import FlextLdifTypesBase, FlextLdifTypesDomain
 
 
 class FlextLdifTypes(FlextCliTypes):

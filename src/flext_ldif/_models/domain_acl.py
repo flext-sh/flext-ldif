@@ -13,8 +13,7 @@ from typing import TYPE_CHECKING, Annotated, Self
 
 from flext_cli import m, u
 
-from flext_ldif import FlextLdifModelsBases, c
-from flext_ldif.typings import t
+from flext_ldif import FlextLdifModelsBases as mb, c, t
 
 if TYPE_CHECKING:
     from flext_ldif import FlextLdifModelsDomainMetadata
@@ -138,15 +137,15 @@ class FlextLdifModelsDomainAcl:
         """ACL subject specification."""
 
         subject_type: Annotated[
-            c.Ldif.AclSubjectTypeLiteral,
+            c.Ldif.AclSubjectType,
             u.Field(..., description="Subject type (user, group, etc.)"),
         ]
         subject_value: Annotated[str, u.Field(..., description="Subject value/pattern")]
 
-    class Acl(FlextLdifModelsBases.AclElement):
+    class Acl(mb.AclElement):
         """Universal ACL model for all LDAP server types.
 
-        Inherits from FlextLdifModelsBases.AclElement:
+        Inherits from mb.AclElement:
         - model_config (strict=True, validate_default=True, validate_assignment=True)
         - server_type field with default "rfc"
         - metadata field (QuirkMetadata | None)
@@ -195,16 +194,15 @@ class FlextLdifModelsDomainAcl:
             return c.Ldif.DEFAULT_ACL_FORMAT
 
         def get_acl_type(self) -> str:
-            """Get ACL type identifier for this server.
-
-            Uses FROM_LONG mapping to normalize long-form identifiers
-            (e.g., "oracle_oid" → "oid") to short-form canonical identifiers.
-            """
-            short_server_type = c.Ldif.FROM_LONG.get(
-                self.server_type,
-                self.server_type,
+            """Get ACL type identifier for this server using canonical enum normalization."""
+            server_type_raw = str(self.server_type).lower().strip()
+            aliased_server_type = c.Ldif.SERVER_TYPE_ALIASES.get(server_type_raw)
+            canonical_server_type = (
+                aliased_server_type.value
+                if aliased_server_type is not None
+                else server_type_raw
             )
-            return f"{short_server_type}_acl"
+            return f"{canonical_server_type}_acl"
 
         @u.model_validator(mode="after")
         def validate_acl_format(self) -> Self:
@@ -217,20 +215,32 @@ class FlextLdifModelsDomainAcl:
             See: https://docs.pydantic.dev/latest/concepts/validators/#model-validators
             """
             violations: MutableSequence[str] = []
-            valid_server_types: set[str] = {
-                "rfc",
-                "openldap",
-                "openldap2",
-                "openldap1",
-                "oid",
-                "oud",
-                "389ds",
-                "active_directory",
-                "relaxed",
-            }
-            if self.server_type not in valid_server_types:
+            valid_server_types: frozenset[c.Ldif.ServerTypes] = frozenset({
+                c.Ldif.ServerTypes.RFC,
+                c.Ldif.ServerTypes.OPENLDAP,
+                c.Ldif.ServerTypes.OPENLDAP2,
+                c.Ldif.ServerTypes.OPENLDAP1,
+                c.Ldif.ServerTypes.OID,
+                c.Ldif.ServerTypes.OUD,
+                c.Ldif.ServerTypes.DS389,
+                c.Ldif.ServerTypes.AD,
+                c.Ldif.ServerTypes.RELAXED,
+            })
+            server_type_raw = str(self.server_type).lower().strip()
+            aliased_server_type = c.Ldif.SERVER_TYPE_ALIASES.get(server_type_raw)
+            canonical_server_type = (
+                aliased_server_type.value
+                if aliased_server_type is not None
+                else server_type_raw
+            )
+            valid_server_type_values = frozenset(
+                server_type.value for server_type in valid_server_types
+            )
+            if canonical_server_type not in valid_server_type_values:
                 violations.append(
-                    f"Invalid server_type '{self.server_type}' - expected one of: {', '.join(sorted(valid_server_types))}",
+                    "Invalid server_type "
+                    f"'{self.server_type}' - expected one of: "
+                    f"{', '.join(sorted(valid_server_type_values))}",
                 )
             acl_is_defined = (
                 self.target is not None
@@ -294,7 +304,7 @@ class FlextLdifModelsDomainAcl:
         @classmethod
         def from_extensions(
             cls,
-            extensions: t.MutableFlatContainerMapping | None,
+            extensions: t.Ldif.MetadataInputMapping | None,
         ) -> Self:
             """Extract ACL write metadata from QuirkMetadata extensions.
 

@@ -15,17 +15,17 @@ from collections.abc import (
     MutableMapping,
     MutableSequence,
 )
-from typing import TYPE_CHECKING, Annotated, Self
+from typing import Annotated, Self
 
 from flext_cli import m, u
 
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif.constants import c
-from flext_ldif.shared import FlextLdifShared
-from flext_ldif.typings import t
-
-if TYPE_CHECKING:
-    from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
+from flext_ldif import (
+    FlextLdifModelsDomainAttributes,
+    FlextLdifModelsMetadata,
+    FlextLdifShared,
+    c,
+    t,
+)
 
 
 class FlextLdifModelsDomainMetadata:
@@ -62,7 +62,7 @@ class FlextLdifModelsDomainMetadata:
             ),
         ]
         validation_server_type: Annotated[
-            c.Ldif.ServerTypeLiteral | None,
+            c.Ldif.ServerTypes | None,
             u.Field(description="Server type used for validation"),
         ] = None
 
@@ -118,7 +118,7 @@ class FlextLdifModelsDomainMetadata:
             u.Field(description="Original attribute syntax information"),
         ] = None
         encoding: Annotated[
-            c.Ldif.EncodingLiteral | None,
+            c.Ldif.Encoding | None,
             u.Field(description="Original encoding (utf-8, etc.)"),
         ] = None
         spacing: Annotated[
@@ -202,7 +202,7 @@ class FlextLdifModelsDomainMetadata:
         """
 
         quirk_type: Annotated[
-            c.Ldif.ServerTypes | c.Ldif.ServerTypeLiteral,
+            c.Ldif.ServerTypes,
             u.Field(
                 ...,
                 description="Type of quirk this metadata represents (ServerTypes enum or literal)",
@@ -243,13 +243,13 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = u.Field(default_factory=FlextLdifModelsMetadata.EntryMetadata)
         original_server_type: Annotated[
-            c.Ldif.ServerTypeLiteral | None,
+            c.Ldif.ServerTypes | None,
             u.Field(
                 description="Source LDAP server type (e.g., 'oid', 'oud', 'ad', 'openldap')",
             ),
         ] = None
         target_server_type: Annotated[
-            c.Ldif.ServerTypeLiteral | None,
+            c.Ldif.ServerTypes | None,
             u.Field(
                 description="Target LDAP server type (e.g., 'oid', 'oud', 'ad', 'openldap')",
             ),
@@ -359,9 +359,9 @@ class FlextLdifModelsDomainMetadata:
         @classmethod
         def create_for(
             cls,
-            quirk_type: str | c.Ldif.ServerTypeLiteral | None = None,
+            quirk_type: str | c.Ldif.ServerTypes | None = None,
             extensions: FlextLdifModelsMetadata.DynamicMetadata
-            | t.MutableFlatContainerMapping
+            | t.Ldif.MetadataInputMapping
             | None = None,
         ) -> Self:
             """Factory method to create QuirkMetadata with extensions.

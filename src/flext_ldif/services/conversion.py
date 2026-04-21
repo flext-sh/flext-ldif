@@ -11,12 +11,9 @@ from collections.abc import (
     MutableSequence,
     Sequence,
 )
-from datetime import datetime
 from typing import (
-    Literal,
     Self,
     TypeIs,
-    override,
 )
 
 from flext_ldif import (
@@ -98,7 +95,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_attribute_case(
-        original_attribute_case: t.Container,
+        original_attribute_case: t.Cli.JsonMapping,
         target_server_type: str,
     ) -> MutableMapping[str, t.MutableFlatContainerMapping]:
         """Analyze attribute case for target compatibility."""
@@ -116,22 +113,17 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_boolean_conversions(
-        boolean_conversions: t.Container,
+        boolean_conversions: t.Cli.JsonMapping,
         target_server_type: str,
     ) -> MutableMapping[str, t.MutableStrMapping]:
         """Analyze boolean conversions for target compatibility."""
-        if not boolean_conversions or not isinstance(boolean_conversions, Mapping):
+        if not boolean_conversions:
             return {}
-        typed_boolean_conversions: t.MutableFlatContainerMapping = {}
-        for raw_attr_name, raw_conv_info in boolean_conversions.items():
-            typed_boolean_conversions[str(raw_attr_name)] = raw_conv_info
         result: MutableMapping[str, t.MutableStrMapping] = {}
-        for attr_name, conv_info in typed_boolean_conversions.items():
+        for attr_name, conv_info in boolean_conversions.items():
             source_format = ""
             if isinstance(conv_info, Mapping):
-                conv_info_dict: t.MutableFlatContainerMapping = {}
-                for raw_key, raw_value in conv_info.items():
-                    conv_info_dict[str(raw_key)] = raw_value
+                conv_info_dict = u.Cli.json_as_mapping(conv_info)
                 source_format = str(conv_info_dict.get("format", "") or "")
             result[f"boolean_{attr_name}"] = {
                 "source_format": source_format,
@@ -142,25 +134,21 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_dn_format(
-        original_format_details: t.Container,
+        original_format_details: t.Cli.JsonMapping,
         target_server_type: str,
     ) -> MutableMapping[str, t.MutableFlatContainerMapping]:
         """Analyze DN spacing for target compatibility."""
-        if isinstance(original_format_details, Mapping):
-            format_details: t.MutableFlatContainerMapping = {}
-            for raw_key, raw_value in original_format_details.items():
-                format_details[str(raw_key)] = raw_value
-            spacing: t.Container | None = format_details.get("dn_spacing")
-            if spacing:
-                return {
-                    "dn_format": {
-                        "source_dn": FlextLdifConversion._normalize_metadata_value(
-                            spacing,
-                        ),
-                        "target_server": str(target_server_type),
-                        "action": "normalize_for_target",
-                    },
-                }
+        spacing = original_format_details.get("dn_spacing")
+        if spacing:
+            return {
+                "dn_format": {
+                    "source_dn": FlextLdifConversion._normalize_metadata_value(
+                        spacing,
+                    ),
+                    "target_server": str(target_server_type),
+                    "action": "normalize_for_target",
+                },
+            }
         return {}
 
     @staticmethod
@@ -183,9 +171,7 @@ class FlextLdifConversion(
         get_attr_case = u.prop("original_attribute_case")
         get_format_details = u.prop("original_format_details")
         boolean_raw = get_boolean(source_metadata)
-        boolean_conversions: t.Container = (
-            boolean_raw if isinstance(boolean_raw, dict) else {}
-        )
+        boolean_conversions = u.Cli.json_as_mapping(boolean_raw)
         boolean_analysis = FlextLdifConversion._analyze_boolean_conversions(
             boolean_conversions,
             target_server_str,
@@ -203,12 +189,9 @@ class FlextLdifConversion(
                     for k, v in value.items()
                 }
         attr_case_raw = get_attr_case(source_metadata)
-        empty_map: Mapping[str, t.Container] = {}
-        attr_case_val: t.Container = empty_map
-        if FlextLdifConversion._is_normalized(attr_case_raw):
-            attr_case_val = attr_case_raw
+        attr_case_val = u.Cli.json_as_mapping(attr_case_raw)
         attr_case_analysis = FlextLdifConversion._analyze_attribute_case(
-            attr_case_val if attr_case_val is not None else empty_map,
+            attr_case_val,
             target_server_str,
         )
         for key, attr_case_value in attr_case_analysis.items():
@@ -218,11 +201,9 @@ class FlextLdifConversion(
                     for k, v in attr_case_value.items()
                 }
         format_raw = get_format_details(source_metadata)
-        format_val: t.Container = empty_map
-        if FlextLdifConversion._is_normalized(format_raw):
-            format_val = format_raw
+        format_val = u.Cli.json_as_mapping(format_raw)
         dn_format_analysis = FlextLdifConversion._analyze_dn_format(
-            format_val if format_val is not None else empty_map,
+            format_val,
             target_server_str,
         )
         for key, dn_format_value in dn_format_analysis.items():
@@ -286,7 +267,7 @@ class FlextLdifConversion(
             source_quirk,
             target_quirk,
             item=attribute,
-            schema_item_kind="attribute",
+            schema_item_kind=c.Ldif.SchemaItemKind.ATTRIBUTE,
             item_name="attribute",
         )
 
@@ -301,7 +282,7 @@ class FlextLdifConversion(
             source_quirk,
             target_quirk,
             item=objectclass,
-            schema_item_kind="objectclass",
+            schema_item_kind=c.Ldif.SchemaItemKind.OBJECTCLASS,
             item_name="objectclass",
         )
 
@@ -321,7 +302,7 @@ class FlextLdifConversion(
     def _build_schema_bridge_entry(
         self,
         source_quirk: FlextLdifServersBase,
-        schema_item_kind: Literal["attribute", "objectclass"],
+        schema_item_kind: c.Ldif.SchemaItemKind,
         schema_value: str,
     ) -> m.Ldif.Entry:
         source_server_type = u.try_(
@@ -332,7 +313,7 @@ class FlextLdifConversion(
         metadata = m.Ldif.QuirkMetadata.create_for(source_server_type, extensions=None)
         field_name = (
             c.Ldif.ATTRIBUTE_TYPES
-            if schema_item_kind == "attribute"
+            if schema_item_kind == c.Ldif.SchemaItemKind.ATTRIBUTE
             else c.Ldif.OBJECT_CLASSES
         )
         attributes = m.Ldif.Attributes.model_validate(
@@ -359,7 +340,7 @@ class FlextLdifConversion(
         target_quirk: FlextLdifServersBase,
         item: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         *,
-        schema_item_kind: Literal["attribute", "objectclass"],
+        schema_item_kind: c.Ldif.SchemaItemKind,
         item_name: str,
     ) -> r[t.Ldif.ConvertedModel]:
         """Orchestrate schema conversion through m.Ldif.Entry intermediary."""
@@ -373,7 +354,7 @@ class FlextLdifConversion(
             return r[t.Ldif.ConvertedModel].fail(
                 target_schema_result.error or "Target schema not available",
             )
-        if schema_item_kind == "attribute":
+        if schema_item_kind == c.Ldif.SchemaItemKind.ATTRIBUTE:
             if not isinstance(item, m.Ldif.SchemaAttribute):
                 return r[t.Ldif.ConvertedModel].fail(
                     "Expected SchemaAttribute in attribute conversion path",
@@ -447,26 +428,11 @@ class FlextLdifConversion(
         return parsed_oc_result.map(lambda parsed: parsed)
 
     @staticmethod
-    def _is_normalized(
-        value: t.RuntimeData | t.Container,
-    ) -> TypeIs[t.Container]:
-        """Type guard: check if value is NormalizedValue (not a BaseModel)."""
-        return not isinstance(value, m.BaseModel)
-
-    @staticmethod
-    def _normalize_metadata_value(value: t.Container) -> t.Container:
+    def _normalize_metadata_value(
+        value: t.Cli.JsonLikeValue | None,
+    ) -> t.Cli.JsonValue:
         """Normalize metadata value to proper type."""
-        if value is None:
-            return ""
-        if u.primitive(value):
-            return value
-        if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-            normalized_items: MutableSequence[t.Scalar | str] = [
-                item if isinstance(item, t.SCALAR_TYPES) else str(item)
-                for item in value
-            ]
-            return normalized_items
-        return str(value)
+        return u.Cli.normalize_json_value("" if value is None else value)
 
     @staticmethod
     def _parse_attribute_with_schema(
@@ -643,7 +609,6 @@ class FlextLdifConversion(
             model_instance=model_instance,
         )
 
-    @override
     def execute(
         self,
     ) -> r[
@@ -990,11 +955,11 @@ class FlextLdifConversion(
                 extensions=None,
             )
             entry_metadata.acls = [acl.raw_acl] if acl.raw_acl else list[str]()
-            rfc_entry = m.Ldif.Entry.model_validate({
-                "dn": entry_dn,
-                "attributes": entry_attributes,
-                "metadata": entry_metadata,
-            })
+            rfc_entry = m.Ldif.Entry.create(
+                dn=entry_dn,
+                attributes=entry_attributes,
+                metadata=entry_metadata,
+            ).unwrap()
             get_server_type = u.prop("server_type")
             target_server_raw = get_server_type(target_quirk)
             target_server_type_raw = (
@@ -1049,7 +1014,7 @@ class FlextLdifConversion(
         target_schema: p.Ldif.SchemaQuirk,
         value: str,
         *,
-        schema_item_kind: Literal["attribute", "objectclass"],
+        schema_item_kind: c.Ldif.SchemaItemKind,
         field_name: str,
     ) -> r[str]:
         """Convert a schema definition string embedded inside an LDIF entry."""
@@ -1057,7 +1022,7 @@ class FlextLdifConversion(
         def write_schema_item(
             parsed_item: t.Ldif.SchemaConversionValue,
         ) -> r[str]:
-            if schema_item_kind == "attribute":
+            if schema_item_kind == c.Ldif.SchemaItemKind.ATTRIBUTE:
                 if not isinstance(parsed_item, m.Ldif.SchemaAttribute):
                     return r[str].fail(
                         "Expected SchemaAttribute for "
@@ -1090,7 +1055,7 @@ class FlextLdifConversion(
             )
 
         parse_result: r[t.Ldif.SchemaConversionValue]
-        if schema_item_kind == "attribute":
+        if schema_item_kind == c.Ldif.SchemaItemKind.ATTRIBUTE:
             parse_result = self._parse_attribute_with_schema(
                 source_schema,
                 value,
@@ -1126,9 +1091,9 @@ class FlextLdifConversion(
             return r[m.Ldif.Entry].fail(
                 target_schema_result.error or "Target schema not available",
             )
-        schema_field_kinds: dict[str, Literal["attribute", "objectclass"]] = {
-            c.Ldif.ATTRIBUTE_TYPES.lower(): "attribute",
-            c.Ldif.OBJECT_CLASSES.lower(): "objectclass",
+        schema_field_kinds: dict[str, c.Ldif.SchemaItemKind] = {
+            c.Ldif.ATTRIBUTE_TYPES.lower(): c.Ldif.SchemaItemKind.ATTRIBUTE,
+            c.Ldif.OBJECT_CLASSES.lower(): c.Ldif.SchemaItemKind.OBJECTCLASS,
         }
         updated_attributes = dict(entry.attributes.attributes)
         changed = False
@@ -1284,55 +1249,16 @@ class FlextLdifConversion(
 
     def _convert_to_metadata_attribute_value(
         self,
-        value: t.Container | t.MutableFlatContainerMapping | list[t.Container] | None,
+        value: t.Cli.JsonLikeValue | None,
     ) -> t.Container:
         """Convert value to MetadataAttributeValue type."""
-        if value is None:
-            return ""
-        if u.primitive(value):
-            return value
-        if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-            converted_list: t.ScalarList = [
-                item if isinstance(item, t.SCALAR_TYPES) else str(item)
-                for item in value
-            ]
-            return converted_list
-        if isinstance(value, Mapping):
-            typed_value: t.MutableFlatContainerMapping = {}
-            for raw_key, raw_item in value.items():
-                typed_value[str(raw_key)] = raw_item
-            return str(typed_value)
-        return str(value)
+        return u.Cli.normalize_json_value("" if value is None else value)
 
     def _get_extensions_dict(self, acl: m.Ldif.Acl) -> t.MutableFlatContainerMapping:
         """Extract extensions dict from ACL metadata."""
 
-        def to_general_value(value: t.Container) -> t.Container:
-            if value is None:
-                return None
-            if isinstance(value, str):
-                return value
-            if isinstance(value, bool):
-                return value
-            if isinstance(value, int):
-                return value
-            if isinstance(value, float):
-                return value
-            if isinstance(value, datetime):
-                return value.isoformat()
-            if isinstance(value, Mapping):
-                normalized_mapping: t.MutableFlatContainerMapping = {}
-                for raw_key, raw_item in value.items():
-                    key = str(raw_key)
-                    item: t.Container = raw_item
-                    normalized_mapping[key] = to_general_value(item)
-                return normalized_mapping
-            if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-                normalized_sequence: list[t.Container] = [
-                    to_general_value(item) for item in value
-                ]
-                return normalized_sequence
-            return str(value)
+        def to_general_value(value: t.Ldif.MetadataCarrierValue) -> t.Container:
+            return u.Cli.normalize_json_value(value)
 
         get_metadata = u.prop("metadata")
         get_extensions = u.prop("extensions")
@@ -1528,7 +1454,7 @@ class FlextLdifConversion(
     def _update_entry_metadata(
         self,
         entry: m.Ldif.Entry,
-        validated_quirk_type: c.Ldif.ServerTypeLiteral,
+        validated_quirk_type: c.Ldif.ServerTypes,
         conversion_analysis: str | None,
         source_quirk_name: str,
     ) -> m.Ldif.Entry:
@@ -1561,7 +1487,7 @@ class FlextLdifConversion(
             )
         entry_metadata = current_entry.metadata
         if entry_metadata and get_metadata(current_entry):
-            normalized_source_server: c.Ldif.ServerTypeLiteral | None = None
+            normalized_source_server: c.Ldif.ServerTypes | None = None
             if source_quirk_name != c.IDENTIFIER_UNKNOWN:
                 normalized_source_server = u.try_(
                     lambda: u.Ldif.normalize_server_type(source_quirk_name),

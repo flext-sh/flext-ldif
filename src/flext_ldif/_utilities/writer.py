@@ -6,8 +6,7 @@ from collections.abc import (
     MutableSequence,
 )
 
-from flext_ldif.constants import c
-from flext_ldif.models import m
+from flext_ldif import c, m
 
 
 class FlextLdifUtilitiesWriter:

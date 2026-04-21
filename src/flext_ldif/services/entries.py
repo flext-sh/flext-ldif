@@ -8,8 +8,7 @@ from collections.abc import (
 )
 from typing import override
 
-from flext_ldif import m, r, s, u
-from flext_ldif.typings import t
+from flext_ldif import m, r, s, t, u
 
 
 class FlextLdifEntries(
@@ -137,7 +136,13 @@ class FlextLdifEntries(
             return r[MutableSequence[str]].fail(
                 f"Failed to get entry attributes: {attributes_result.error}",
             )
-        attributes = attributes_result.value
+        attributes_raw = attributes_result.value
+        if not isinstance(attributes_raw, MutableMapping):
+            return r[MutableSequence[str]].fail("Entry attributes payload is invalid")
+        attributes: t.MutableStrSequenceMapping = {
+            str(attr_name): list(attr_values)
+            for attr_name, attr_values in attributes_raw.items()
+        }
         for attr_name, attr_values in attributes.items():
             if attr_name.lower() == "objectclass":
                 return r[MutableSequence[str]].ok(list(attr_values))
@@ -152,17 +157,17 @@ class FlextLdifEntries(
         if entry.attributes is None:
             return r[m.Ldif.Entry].ok(entry)
         attrs_to_remove_lower = {attr.lower() for attr in attributes_to_remove}
-        new_attrs = {
+        new_attrs: t.MutableAttributeMapping = {
             k: v
             for k, v in entry.attributes.attributes.items()
             if k.lower() not in attrs_to_remove_lower
         }
-        modified_entry = m.Ldif.Entry(
-            dn=entry.dn,
-            attributes=m.Ldif.Attributes.model_validate({"attributes": new_attrs}),
+        dn_value = entry.dn if entry.dn is not None else entry.dn_str
+        return m.Ldif.Entry.create(
+            dn=dn_value,
+            attributes=new_attrs,
             metadata=entry.metadata,
         )
-        return r[m.Ldif.Entry].ok(modified_entry)
 
     @override
     def execute(self) -> r[MutableSequence[m.Ldif.Entry]]:
@@ -178,7 +183,12 @@ class FlextLdifEntries(
             for entry in self._entries:
                 result = self.remove_attributes(entry, self._attributes_to_remove)
                 if result.success:
-                    results.append(result.value)
+                    updated_entry = result.value
+                    if not isinstance(updated_entry, m.Ldif.Entry):
+                        return r[MutableSequence[m.Ldif.Entry]].fail(
+                            "Entry operation returned an invalid payload",
+                        )
+                    results.append(updated_entry)
             return r[MutableSequence[m.Ldif.Entry]].ok(results)
         return r[MutableSequence[m.Ldif.Entry]].fail(
             f"Unknown operation: {self._operation}",

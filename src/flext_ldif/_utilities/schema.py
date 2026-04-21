@@ -11,16 +11,14 @@ from collections.abc import (
     MutableSequence,
     Sequence,
 )
-from datetime import datetime
-from typing import TypeIs
 
 from flext_core import u
 
 from flext_ldif import (
-    FlextLdifUtilitiesOID,
-    FlextLdifUtilitiesParser,
-    FlextLdifUtilitiesServer,
-    FlextLdifUtilitiesWriter,
+    FlextLdifUtilitiesOID as uo,
+    FlextLdifUtilitiesParser as up,
+    FlextLdifUtilitiesServer as us,
+    FlextLdifUtilitiesWriter as uw,
     c,
     m,
     p,
@@ -41,7 +39,7 @@ class FlextLdifUtilitiesSchema:
     ) -> None:
         """Add MUST and MAY to objectclass parts list."""
         if oc_data.must:
-            if u.list_like(oc_data.must):
+            if isinstance(oc_data.must, Sequence) and not isinstance(oc_data.must, str):
                 must_list_str: MutableSequence[str] = [
                     str(item) for item in oc_data.must
                 ]
@@ -53,7 +51,7 @@ class FlextLdifUtilitiesSchema:
             else:
                 parts.append(f"MUST {oc_data.must}")
         if oc_data.may:
-            if u.list_like(oc_data.may):
+            if isinstance(oc_data.may, Sequence) and not isinstance(oc_data.may, str):
                 may_list_str: MutableSequence[str] = [str(item) for item in oc_data.may]
                 if len(may_list_str) == 1:
                     parts.append(f"MAY {may_list_str[0]}")
@@ -70,7 +68,7 @@ class FlextLdifUtilitiesSchema:
     ) -> None:
         """Add SUP to objectclass parts list."""
         if oc_data.sup:
-            if u.list_like(oc_data.sup):
+            if isinstance(oc_data.sup, Sequence) and not isinstance(oc_data.sup, str):
                 sup_list_str: MutableSequence[str] = [str(item) for item in oc_data.sup]
                 if len(sup_list_str) == 1:
                     parts.append(f"SUP {sup_list_str[0]}")
@@ -112,9 +110,9 @@ class FlextLdifUtilitiesSchema:
             parts.append("OBSOLETE")
         if attr_data.sup:
             parts.append(f"SUP {attr_data.sup}")
-        FlextLdifUtilitiesWriter.add_attribute_matching_rules(attr_data, parts)
-        FlextLdifUtilitiesWriter.add_attribute_syntax(attr_data, parts)
-        FlextLdifUtilitiesWriter.add_attribute_flags(attr_data, parts)
+        uw.add_attribute_matching_rules(attr_data, parts)
+        uw.add_attribute_syntax(attr_data, parts)
+        uw.add_attribute_flags(attr_data, parts)
         if attr_data.usage:
             parts.append(f"USAGE {attr_data.usage}")
         if attr_data.metadata and attr_data.metadata.extensions.get("x_origin"):
@@ -222,108 +220,35 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_metadata_extensions(
-        extensions_raw: t.MutableFlatContainerMapping,
-    ) -> MutableMapping[
-        str,
-        t.Scalar
-        | MutableSequence[str]
-        | MutableMapping[str, t.Scalar | MutableSequence[str]],
-    ]:
-        converted: MutableMapping[
-            str,
-            t.Scalar
-            | MutableSequence[str]
-            | MutableMapping[str, t.Scalar | MutableSequence[str]],
-        ] = {}
+        extensions_raw: t.Ldif.MutableMetadataMapping,
+    ) -> t.Ldif.MutableMetadataMapping:
+        converted: t.Ldif.MutableMetadataMapping = {}
         for key, raw_value in extensions_raw.items():
-            if u.primitive(raw_value) or isinstance(raw_value, datetime):
-                converted[key] = FlextLdifUtilitiesSchema._convert_metadata_value(
-                    raw_value,
-                )
-                continue
-            if FlextLdifUtilitiesSchema._is_object_list(raw_value):
-                converted[key] = FlextLdifUtilitiesSchema._convert_metadata_value(
-                    raw_value,
-                )
-                continue
-            if FlextLdifUtilitiesSchema._is_object_mapping(raw_value):
-                converted[key] = FlextLdifUtilitiesSchema._convert_metadata_value(
-                    dict(raw_value),
-                )
-                continue
-            converted[key] = FlextLdifUtilitiesSchema._convert_metadata_value(
-                str(raw_value),
-            )
+            converted[key] = u.normalize_to_metadata(raw_value)
         return converted
 
     @staticmethod
     def _convert_metadata_value(
-        value: t.Scalar
-        | datetime
-        | list[t.Container]
-        | MutableMapping[t.Container, t.Container]
-        | Mapping[str, t.Container],
-    ) -> (
-        t.Scalar
-        | MutableSequence[str]
-        | MutableMapping[str, t.Scalar | MutableSequence[str]]
-    ):
-        if isinstance(value, t.SCALAR_TYPES):
-            return value
-        if isinstance(value, datetime):
-            return value.isoformat()
-        if isinstance(value, list):
-            converted_list: MutableSequence[str] = []
-            for index in range(len(value)):
-                item_value: t.Container = value[index]
-                converted_list.append(str(item_value))
-            return converted_list
-        if isinstance(value, Mapping):
-            converted_mapping: MutableMapping[str, t.Scalar | MutableSequence[str]] = {}
-            for key_obj, nested_value_raw in value.items():
-                nested_value = FlextLdifUtilitiesSchema._convert_nested_metadata_value(
-                    nested_value_raw,
-                )
-                converted_mapping[str(key_obj)] = nested_value
-            return converted_mapping
-        return {
-            "value": FlextLdifUtilitiesSchema._convert_nested_metadata_value(
-                str(value),
-            ),
-        }
+        value: t.Ldif.MetadataValue,
+    ) -> t.Ldif.MetadataValue:
+        return u.normalize_to_metadata(value)
 
     @staticmethod
     def _convert_nested_metadata_value(
-        value: t.Scalar | datetime | list[t.Container] | t.Container,
-    ) -> t.Scalar | MutableSequence[str]:
-        if u.primitive(value):
-            return value
-        if isinstance(value, datetime):
-            return value.isoformat()
-        if FlextLdifUtilitiesSchema._is_object_sequence(value):
-            converted_nested_list: MutableSequence[str] = []
-            for index in range(len(value)):
-                nested_item_value: t.Container = value[index]
-                converted_nested_list.append(str(nested_item_value))
-            return converted_nested_list
-        return str(value)
-
-    @staticmethod
-    def _is_object_list(
-        value: t.Container,
-    ) -> TypeIs[list[t.Container]]:
-        return isinstance(value, list)
+        value: t.Ldif.MetadataValue,
+    ) -> t.Ldif.MetadataValue:
+        return u.normalize_to_metadata(value)
 
     @staticmethod
     def _is_object_mapping(
-        value: t.Container,
-    ) -> TypeIs[Mapping[str, t.Container]]:
+        value: t.Ldif.MetadataValue,
+    ) -> bool:
         return isinstance(value, Mapping)
 
     @staticmethod
     def _is_object_sequence(
-        value: t.Container,
-    ) -> TypeIs[list[t.Container]]:
+        value: t.Ldif.MetadataValue,
+    ) -> bool:
         return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
     @staticmethod
@@ -346,11 +271,11 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _extract_attribute_flags(attr_definition: str) -> tuple[bool, bool]:
         """Extract boolean flags (single_value, no_user_modification) from attribute definition."""
-        single_value = FlextLdifUtilitiesParser.extract_boolean_flag(
+        single_value = up.extract_boolean_flag(
             attr_definition,
             c.Ldif.SCHEMA_SINGLE_VALUE,
         )
-        no_user_modification = FlextLdifUtilitiesParser.extract_boolean_flag(
+        no_user_modification = up.extract_boolean_flag(
             attr_definition,
             c.Ldif.SCHEMA_NO_USER_MODIFICATION,
         )
@@ -361,15 +286,15 @@ class FlextLdifUtilitiesSchema:
         attr_definition: str,
     ) -> tuple[str | None, str | None, str | None]:
         """Extract matching rules (equality, substr, ordering) from attribute definition."""
-        equality = FlextLdifUtilitiesParser.extract_optional_field(
+        equality = up.extract_optional_field(
             attr_definition,
             c.Ldif.SCHEMA_EQUALITY,
         )
-        substr = FlextLdifUtilitiesParser.extract_optional_field(
+        substr = up.extract_optional_field(
             attr_definition,
             c.Ldif.SCHEMA_SUBSTR,
         )
-        ordering = FlextLdifUtilitiesParser.extract_optional_field(
+        ordering = up.extract_optional_field(
             attr_definition,
             c.Ldif.SCHEMA_ORDERING,
         )
@@ -380,11 +305,11 @@ class FlextLdifUtilitiesSchema:
         attr_definition: str,
     ) -> tuple[str | None, str | None]:
         """Extract SUP and USAGE from attribute definition."""
-        sup = FlextLdifUtilitiesParser.extract_optional_field(
+        sup = up.extract_optional_field(
             attr_definition,
             c.Ldif.SCHEMA_SUP,
         )
-        usage = FlextLdifUtilitiesParser.extract_optional_field(
+        usage = up.extract_optional_field(
             attr_definition,
             c.Ldif.SCHEMA_USAGE,
         )
@@ -422,7 +347,7 @@ class FlextLdifUtilitiesSchema:
         definition: str,
         definition_label: str,
     ) -> r[tuple[str, str, str | None]]:
-        oid_result = FlextLdifUtilitiesParser.extract_oid(definition)
+        oid_result = up.extract_oid(definition)
         if oid_result.failure:
             error = oid_result.error or "unknown OID extraction error"
             return r[tuple[str, str, str | None]].fail(
@@ -432,14 +357,14 @@ class FlextLdifUtilitiesSchema:
             return r[tuple[str, str, str | None]].fail(
                 f"RFC {definition_label} parsing failed: unknown result state",
             )
-        oid = oid_result.value
-        name_raw = FlextLdifUtilitiesParser.extract_optional_field(
+        oid = str(oid_result.value)
+        name_raw = up.extract_optional_field(
             definition,
             c.Ldif.SCHEMA_NAME,
             default=oid,
         )
         name: str = name_raw if name_raw is not None else oid
-        desc = FlextLdifUtilitiesParser.extract_optional_field(
+        desc = up.extract_optional_field(
             definition,
             c.Ldif.SCHEMA_DESC,
         )
@@ -524,7 +449,7 @@ class FlextLdifUtilitiesSchema:
         """Format attribute list (MUST/MAY) for objectClass definition."""
         if not attr_list:
             return None
-        if u.list_like(attr_list):
+        if isinstance(attr_list, Sequence) and not isinstance(attr_list, str):
             attr_strs = [str(item) for item in attr_list]
             if len(attr_strs) == 1:
                 return f"{prefix} {attr_strs[0]}"
@@ -536,7 +461,7 @@ class FlextLdifUtilitiesSchema:
         """Format SUP (superior) list for objectClass definition."""
         if not sup_value:
             return None
-        if u.list_like(sup_value):
+        if isinstance(sup_value, Sequence) and not isinstance(sup_value, str):
             sup_strs = [str(item) for item in sup_value]
             return f"SUP ( {' $ '.join(sup_strs)} )"
         return f"SUP {sup_value}"
@@ -626,10 +551,10 @@ class FlextLdifUtilitiesSchema:
         if not source_server_type or not target_server_type:
             return True
         try:
-            normalized_source = FlextLdifUtilitiesServer.normalize_server_type(
+            normalized_source = us.normalize_server_type(
                 str(source_server_type),
             )
-            normalized_target = FlextLdifUtilitiesServer.normalize_server_type(
+            normalized_target = us.normalize_server_type(
                 target_server_type,
             )
         except (TypeError, ValueError):
@@ -639,7 +564,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _validate_attribute_syntax(
         syntax: str | None,
-    ) -> t.MutableFlatContainerMapping | None:
+    ) -> t.Ldif.MutableMetadataMapping | None:
         """Validate syntax OID and return validation result."""
         if not syntax or not syntax.strip():
             return None
@@ -647,7 +572,7 @@ class FlextLdifUtilitiesSchema:
             str,
             bool | MutableSequence[str] | str | None,
         ] = {}
-        validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
+        validate_result = uo.validate_format(syntax)
         if validate_result.failure:
             syntax_extensions[c.Ldif.SYNTAX_VALIDATION_ERROR] = (
                 f"Syntax OID validation failed: {validate_result.error}"
@@ -659,13 +584,10 @@ class FlextLdifUtilitiesSchema:
         syntax_extensions[c.Ldif.SYNTAX_OID_VALID] = (
             c.Ldif.SYNTAX_VALIDATION_ERROR not in syntax_extensions
         )
-        result_dict: t.MutableFlatContainerMapping = {}
+        result_dict: t.Ldif.MutableMetadataMapping = {}
         for key, val in syntax_extensions.items():
-            if isinstance(val, list):
-                list_typed: t.Container = list(val)
-                result_dict[key] = list_typed
-            elif val is not None:
-                result_dict[key] = val
+            if val is not None:
+                result_dict[key] = u.normalize_to_metadata(val)
         return result_dict
 
     @staticmethod
@@ -719,9 +641,9 @@ class FlextLdifUtilitiesSchema:
             field_order,
             restore_position=True,
         )
-        FlextLdifUtilitiesWriter.add_attribute_matching_rules(attr_data, parts)
-        FlextLdifUtilitiesWriter.add_attribute_syntax(attr_data, parts)
-        FlextLdifUtilitiesWriter.add_attribute_flags(attr_data, parts)
+        uw.add_attribute_matching_rules(attr_data, parts)
+        uw.add_attribute_syntax(attr_data, parts)
+        uw.add_attribute_flags(attr_data, parts)
         x_origin_part = FlextLdifUtilitiesSchema._build_x_origin_part(
             attr_data,
             restore_format=True,
@@ -746,14 +668,13 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def build_metadata(
         definition: str,
-        additional_extensions: t.MutableFlatContainerMapping | None = None,
-    ) -> t.MutableFlatContainerMapping:
+        additional_extensions: t.Ldif.MutableMetadataMapping | None = None,
+    ) -> t.Ldif.MutableMetadataMapping:
         """Build metadata extensions dictionary for schema definitions."""
-        extensions_raw = FlextLdifUtilitiesParser.extract_extensions(definition)
-        extensions: t.MutableFlatContainerMapping = {}
+        extensions_raw = up.extract_extensions(definition)
+        extensions: t.Ldif.MutableMetadataMapping = {}
         for key, val in extensions_raw.items():
-            typed_val: t.Container = list(val)
-            extensions[key] = typed_val
+            extensions[key] = list(val)
         extensions[c.Ldif.ORIGINAL_FORMAT] = definition.strip()
         if additional_extensions:
             extensions.update(additional_extensions)
@@ -1033,18 +954,24 @@ class FlextLdifUtilitiesSchema:
         attr_definition: str,
         *,
         validate_syntax: bool = True,
-    ) -> r[t.MutableFlatContainerMapping]:
+    ) -> r[t.Ldif.MutableMetadataMapping]:
         """Parse RFC 4512 attribute definition into structured data."""
         basic_fields_result = FlextLdifUtilitiesSchema._extract_attribute_basic_fields(
             attr_definition,
         )
         if basic_fields_result.failure:
-            return r[t.MutableFlatContainerMapping].fail(basic_fields_result.error)
-        oid, name, desc = basic_fields_result.value
+            return r[t.Ldif.MutableMetadataMapping].fail(basic_fields_result.error)
+        basic_fields_value = basic_fields_result.value
+        if not isinstance(basic_fields_value, tuple):
+            msg = "RFC attribute parsing failed: invalid basic field payload"
+            raise TypeError(msg)
+        oid = str(basic_fields_value[0])
+        name = str(basic_fields_value[1])
+        desc = basic_fields_value[2]
         syntax, length = FlextLdifUtilitiesSchema._extract_attribute_syntax(
             attr_definition,
         )
-        syntax_validation_result: t.MutableFlatContainerMapping | None = None
+        syntax_validation_result: t.Ldif.MutableMetadataMapping | None = None
         if validate_syntax:
             syntax_validation_result = (
                 FlextLdifUtilitiesSchema._validate_attribute_syntax(syntax)
@@ -1058,7 +985,7 @@ class FlextLdifUtilitiesSchema:
         sup, usage = FlextLdifUtilitiesSchema._extract_attribute_sup_usage(
             attr_definition,
         )
-        additional_extensions_converted: t.MutableFlatContainerMapping | None = (
+        additional_extensions_converted: t.Ldif.MutableMetadataMapping | None = (
             syntax_validation_result
         )
         extensions_raw = FlextLdifUtilitiesSchema.build_metadata(
@@ -1068,43 +995,37 @@ class FlextLdifUtilitiesSchema:
         extensions_converted = FlextLdifUtilitiesSchema._convert_metadata_extensions(
             extensions_raw,
         )
-        syntax_validation_converted: (
-            MutableMapping[
-                str,
-                t.Scalar
-                | MutableSequence[str]
-                | MutableMapping[str, t.Scalar | MutableSequence[str]],
-            ]
-            | None
-        ) = None
+        syntax_validation_converted: t.Ldif.MutableMetadataMapping | None = None
         if syntax_validation_result is not None:
             syntax_validation_converted = (
                 FlextLdifUtilitiesSchema._convert_metadata_extensions(
                     syntax_validation_result,
                 )
             )
-        parsed_dict: t.MutableFlatContainerMapping = {
-            "oid": oid,
-            "name": name,
-            "desc": desc,
-            "syntax": syntax,
-            "length": length,
-            "equality": equality,
-            "ordering": ordering,
-            "substr": substr,
-            "single_value": single_value,
-            "no_user_modification": no_user_modification,
-            "sup": sup,
-            "usage": usage,
-            "metadata_extensions": extensions_converted,
-            "syntax_validation": syntax_validation_converted,
-        }
-        return r[t.MutableFlatContainerMapping].ok(parsed_dict)
+        parsed_dict = dict(
+            t.Cli.JSON_MAPPING_ADAPTER.validate_python({
+                "oid": oid,
+                "name": name,
+                "desc": desc,
+                "syntax": syntax,
+                "length": length,
+                "equality": equality,
+                "ordering": ordering,
+                "substr": substr,
+                "single_value": single_value,
+                "no_user_modification": no_user_modification,
+                "sup": sup,
+                "usage": usage,
+                "metadata_extensions": extensions_converted,
+                "syntax_validation": syntax_validation_converted,
+            })
+        )
+        return r[t.Ldif.MutableMetadataMapping].ok(parsed_dict)
 
     @staticmethod
     def parse_objectclass(
         oc_definition: str,
-    ) -> t.MutableFlatContainerMapping:
+    ) -> t.Ldif.MutableMetadataMapping:
         """Parse RFC 4512 objectClass definition into structured data."""
         basic_fields_result = (
             FlextLdifUtilitiesSchema._extract_objectclass_basic_fields(oc_definition)
@@ -1112,7 +1033,13 @@ class FlextLdifUtilitiesSchema:
         if basic_fields_result.failure:
             msg = basic_fields_result.error or "RFC objectClass parsing failed"
             raise ValueError(msg)
-        oid, name, desc = basic_fields_result.value
+        basic_fields_value = basic_fields_result.value
+        if not isinstance(basic_fields_value, tuple):
+            msg = "RFC objectClass parsing failed: invalid basic field payload"
+            raise TypeError(msg)
+        oid = str(basic_fields_value[0])
+        name = str(basic_fields_value[1])
+        desc = basic_fields_value[2]
         sup = FlextLdifUtilitiesSchema._extract_objectclass_sup(oc_definition)
         kind = FlextLdifUtilitiesSchema._extract_objectclass_kind(oc_definition)
         must, may = FlextLdifUtilitiesSchema._extract_objectclass_must_may(
@@ -1122,17 +1049,18 @@ class FlextLdifUtilitiesSchema:
         extensions_converted = FlextLdifUtilitiesSchema._convert_metadata_extensions(
             extensions_raw,
         )
-        parsed_dict: t.MutableFlatContainerMapping = {
-            "oid": oid,
-            "name": name,
-            "desc": desc,
-            "sup": sup,
-            "kind": kind,
-            "must": must,
-            "may": may,
-            "metadata_extensions": extensions_converted,
-        }
-        return parsed_dict
+        return dict(
+            t.Cli.JSON_MAPPING_ADAPTER.validate_python({
+                "oid": oid,
+                "name": name,
+                "desc": desc,
+                "sup": sup,
+                "kind": kind,
+                "must": must,
+                "may": may,
+                "metadata_extensions": extensions_converted,
+            })
+        )
 
     @staticmethod
     def replace_invalid_substr_rule(
@@ -1162,7 +1090,7 @@ class FlextLdifUtilitiesSchema:
         """
         if syntax is None or not syntax.strip():
             return None
-        validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
+        validate_result = uo.validate_format(syntax)
         if validate_result.failure:
             return f"Syntax OID validation failed: {validate_result.error}"
         if not validate_result.value:

@@ -132,15 +132,14 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         processed_entries: int,
     ) -> m.Ldif.MigrationPipelineResult:
         """Build result with defaults, keeping service as pure orchestrator."""
-        payload: dict[str, object] = {
-            "entries": entries,
-            "output_files": output_files,
-            "stats": cls._build_stats(
+        return m.Ldif.MigrationPipelineResult.model_construct(
+            entries=entries,
+            output_files=output_files,
+            stats=cls._build_stats(
                 total_entries=total_entries,
                 processed_entries=processed_entries,
             ),
-        }
-        return m.Ldif.MigrationPipelineResult.model_validate(payload)
+        )
 
     @override
     def execute(self) -> r[m.Ldif.MigrationPipelineResult]:

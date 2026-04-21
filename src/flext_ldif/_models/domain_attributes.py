@@ -12,15 +12,11 @@ from collections.abc import (
     MutableSequence,
     ValuesView,
 )
-from typing import TYPE_CHECKING, Annotated, ClassVar, Self
+from typing import Annotated, ClassVar, Self
 
 from flext_cli import m, u
 
-from flext_ldif import c
-from flext_ldif.typings import t
-
-if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModelsMetadata
+from flext_ldif import FlextLdifModelsMetadata, c, t
 
 
 class FlextLdifModelsDomainAttributes:
@@ -237,7 +233,7 @@ class FlextLdifModelsDomainAttributes:
             u.Field(description="Transformed values (None if removed)"),
         ] = None
         transformation_type: Annotated[
-            c.Ldif.TransformationTypeLiteral,
+            c.Ldif.TransformationType,
             u.Field(..., description="Type of transformation applied to the attribute"),
         ]
         reason: Annotated[

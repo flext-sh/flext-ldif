@@ -15,7 +15,7 @@ from typing import TypeIs
 from flext_core import u
 
 from flext_ldif import (
-    FlextLdifUtilitiesServer,
+    FlextLdifUtilitiesServer as us,
     c,
     m,
     p,
@@ -29,36 +29,53 @@ class FlextLdifUtilitiesMetadata:
     """Metadata utilities for LDIF validation metadata management."""
 
     @staticmethod
+    def dump_json_payload(value: t.Cli.JsonPayload | None) -> str:
+        """Serialize any CLI JSON-compatible payload through the canonical DSL."""
+        if value is None:
+            return ""
+        return m.Cli.CliNormalizedJson(
+            t.Cli.JSON_VALUE_ADAPTER.validate_python(
+                u.to_jsonable_python(value),
+            ),
+        ).model_dump_json()
+
+    @staticmethod
+    def dump_dynamic_metadata(
+        value: t.Ldif.MetadataInputMapping | None,
+    ) -> str:
+        """Serialize metadata-shaped mappings through the LDIF metadata model."""
+        if not value:
+            return ""
+        return m.Ldif.DynamicMetadata.from_dict(value).model_dump_json()
+
+    @staticmethod
     def _add_to_dict_metadata(
-        metadata: t.MutableFlatContainerMapping,
+        metadata: t.Ldif.MutableMetadataMapping,
         metadata_key: str,
-        item_data: t.Container,
+        item_data: t.Ldif.MetadataValue,
     ) -> None:
         """Add item to dict metadata."""
         value = metadata.get(metadata_key)
         if isinstance(value, Mapping) and isinstance(item_data, Mapping):
-            merged_value = dict(value)
+            merged_value = dict(
+                t.Cli.JSON_MAPPING_ADAPTER.validate_python({
+                    str(inner_key): u.normalize_to_metadata(inner_value)
+                    for inner_key, inner_value in value.items()
+                })
+            )
             for write_option_key, inner_value in item_data.items():
-                if isinstance(inner_value, list):
-                    merged_value[write_option_key] = (
-                        FlextLdifUtilitiesMetadata._normalize_dict_list(
-                            inner_value,
-                        )
-                    )
-                elif FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(inner_value):
-                    if inner_value is not None:
-                        merged_value[write_option_key] = inner_value
-                else:
-                    merged_value[write_option_key] = str(inner_value)
+                merged_value[str(write_option_key)] = u.normalize_to_metadata(
+                    inner_value,
+                )
             metadata[metadata_key] = merged_value
             return
-        metadata[metadata_key] = item_data
+        metadata[metadata_key] = u.normalize_to_metadata(item_data)
 
     @staticmethod
     def _add_to_list_metadata(
-        metadata: t.MutableFlatContainerMapping,
+        metadata: t.Ldif.MutableMetadataMapping,
         metadata_key: str,
-        item_data: t.Container,
+        item_data: t.Ldif.MetadataValue,
     ) -> None:
         """Add item to list metadata."""
         value = metadata.get(metadata_key)
@@ -103,7 +120,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _build_schema_format_model(
         definition: str,
-        combined: t.MutableFlatContainerMapping,
+        combined: t.Ldif.MutableMetadataMapping,
     ) -> m.Ldif.SchemaFormatDetails:
         """Build SchemaFormatDetails model from combined details."""
         known_fields = {
@@ -114,10 +131,10 @@ class FlextLdifUtilitiesMetadata:
             "x_origin",
             "x_ordered",
         }
-        known_field_values: t.MutableFlatContainerMapping = {
+        known_field_values: t.Ldif.MutableMetadataMapping = {
             "original_string_complete": definition,
         }
-        extension_kwargs: t.MutableFlatContainerMapping = {}
+        extension_kwargs: t.Ldif.MutableMetadataMapping = {}
         for write_option_key, value in combined.items():
             if write_option_key in known_fields:
                 known_field_values[write_option_key] = value
@@ -134,9 +151,9 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _extract_all_schema_details(
         definition: str,
-    ) -> t.MutableFlatContainerMapping:
+    ) -> t.Ldif.MutableMetadataMapping:
         """Extract all schema formatting details into combined dict."""
-        combined: t.MutableFlatContainerMapping = {}
+        combined: t.Ldif.MutableMetadataMapping = {}
         extractors: Sequence[
             Callable[
                 [str], Mapping[str, str | bool | int | MutableSequence[str] | None]
@@ -157,26 +174,12 @@ class FlextLdifUtilitiesMetadata:
         for extractor in extractors:
             extracted_raw = extractor(definition)
             for write_option_key, value in extracted_raw.items():
-                if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(value):
-                    if value is not None:
-                        combined[write_option_key] = value
-                elif isinstance(value, list):
-                    combined[write_option_key] = (
-                        FlextLdifUtilitiesMetadata._normalize_dict_list(
-                            value,
-                        )
-                    )
-                elif isinstance(value, Mapping):
-                    combined[write_option_key] = str(value)
-                else:
-                    combined[write_option_key] = str(value)
+                combined[write_option_key] = u.normalize_to_metadata(value)
         field_order, field_positions = FlextLdifUtilitiesMetadata._extract_field_order(
             definition,
         )
-        field_order_typed: t.Container = list(field_order)
-        field_positions_typed: t.Container = dict(field_positions)
-        combined["field_order"] = field_order_typed
-        combined["field_positions"] = field_positions_typed
+        combined["field_order"] = list(field_order)
+        combined["field_positions"] = dict(field_positions)
         spacing_result = FlextLdifUtilitiesMetadata._extract_spacing_between_fields(
             definition,
             field_order,
@@ -195,8 +198,7 @@ class FlextLdifUtilitiesMetadata:
                 "X-ORIGIN": "X-ORIGIN",
             },
         )
-        spacing_typed: t.Container = dict(spacing_result)
-        combined["spacing_between_fields"] = spacing_typed
+        combined["spacing_between_fields"] = dict(spacing_result)
         return combined
 
     @staticmethod
@@ -553,42 +555,42 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _get_metadata_dict(
         model: p.Ldif.ModelWithValidationMetadata,
-    ) -> t.MutableFlatContainerMapping:
+    ) -> t.Ldif.MutableMetadataMapping:
         """Get mutable metadata dict from model."""
         metadata_obj = getattr(model, "validation_metadata", None)
         if metadata_obj is None:
             metadata_obj = m.Metadata(attributes={})
         if isinstance(metadata_obj, m.Metadata):
-            return dict(metadata_obj.attributes)
+            return {
+                str(key): u.normalize_to_metadata(value)
+                for key, value in metadata_obj.attributes.items()
+            }
         return {}
 
     @staticmethod
-    def _is_metadata_scalar(value: t.Container) -> bool:
+    def _is_metadata_scalar(value: t.Ldif.MetadataValue) -> bool:
         return value is None or u.scalar(value)
 
     @staticmethod
     def _is_metadata_scalar_typed(
-        value: t.Container,
-    ) -> TypeIs[t.Scalar | None]:
+        value: t.Ldif.MetadataValue,
+    ) -> TypeIs[str | int | float | bool | None]:
         return FlextLdifUtilitiesMetadata._is_metadata_scalar(value)
 
     @staticmethod
     def _normalize_dict_list(
-        values: list[t.Container] | MutableSequence[str],
-    ) -> MutableSequence[t.Scalar]:
-        normalized: MutableSequence[t.Scalar] = []
+        values: Sequence[t.Ldif.MetadataValue],
+    ) -> MutableSequence[t.Ldif.MetadataValue]:
+        normalized: MutableSequence[t.Ldif.MetadataValue] = []
         for item in values:
-            if isinstance(item, t.SCALAR_TYPES):
-                normalized.append(item)
-            elif item is not None:
-                normalized.append(str(item))
+            normalized.append(u.normalize_to_metadata(item))
         return normalized
 
     @staticmethod
-    def _normalize_metadata_list_item(item: t.Container) -> t.Scalar | None:
-        if FlextLdifUtilitiesMetadata._is_metadata_scalar_typed(item):
-            return item
-        return str(item)
+    def _normalize_metadata_list_item(
+        item: t.Ldif.MetadataValue,
+    ) -> t.Ldif.MetadataValue:
+        return u.normalize_to_metadata(item)
 
     @staticmethod
     def _set_model_metadata(
@@ -598,21 +600,10 @@ class FlextLdifUtilitiesMetadata:
         """Set validation_metadata on model (handles both mutable and frozen models)."""
         try:
             metadata_obj = metadata.to_dict()
-            normalized_metadata: t.MutableFlatContainerMapping = {}
-            for write_option_key, value in metadata_obj.items():
-                if u.primitive(value):
-                    normalized_metadata[write_option_key] = value
-                elif isinstance(value, list):
-                    normalized_metadata[write_option_key] = [
-                        str(item) for item in value
-                    ]
-                elif isinstance(value, Mapping):
-                    normalized_metadata[write_option_key] = {
-                        str(inner_key): inner_value
-                        for inner_key, inner_value in value.items()
-                    }
-                else:
-                    normalized_metadata[write_option_key] = str(value)
+            normalized_metadata: t.Ldif.MutableMetadataMapping = {
+                write_option_key: u.normalize_to_metadata(value)
+                for write_option_key, value in metadata_obj.items()
+            }
             config_root: MutableMapping[str, t.Container | m.BaseModel] = dict(
                 normalized_metadata
             )
@@ -624,7 +615,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _update_conversion_path(
-        metadata: t.MutableFlatContainerMapping,
+        metadata: t.Ldif.MutableMetadataMapping,
         update_conversion_path: str,
     ) -> None:
         """Update conversion_path in metadata."""
@@ -649,7 +640,7 @@ class FlextLdifUtilitiesMetadata:
         entry_metadata = entry.metadata
         if entry_metadata is None:
             entry_metadata = m.Ldif.QuirkMetadata.create_for(
-                FlextLdifUtilitiesServer.normalize_server_type(
+                us.normalize_server_type(
                     c.Ldif.ServerTypes.RFC.value,
                 ),
             )
@@ -664,19 +655,21 @@ class FlextLdifUtilitiesMetadata:
         original: str,
         converted: str | None,
         context: str = "entry",
-    ) -> t.MutableFlatContainerMapping:
+    ) -> t.Ldif.MutableMetadataMapping:
         """Analyze minimal differences between original and converted strings."""
         mk = c.Ldif
         empty_diffs: MutableSequence[str] = []
-        differences: t.MutableFlatContainerMapping = {
-            mk.HAS_DIFFERENCES: False,
-            "context": context,
-            "original": original,
-            "converted": converted if converted is not None else original,
-            "differences": empty_diffs,
-            "original_length": len(original),
-            "converted_length": len(converted) if converted else len(original),
-        }
+        differences = dict(
+            t.Cli.JSON_MAPPING_ADAPTER.validate_python({
+                mk.HAS_DIFFERENCES: False,
+                "context": context,
+                "original": original,
+                "converted": converted if converted is not None else original,
+                "differences": empty_diffs,
+                "original_length": len(original),
+                "converted_length": len(converted) if converted else len(original),
+            })
+        )
         if converted is None or original == converted:
             return differences
         differences[mk.HAS_DIFFERENCES] = True
@@ -719,7 +712,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def build_entry_metadata_extensions(
         quirk_type: str,
-    ) -> t.MutableFlatContainerMapping:
+    ) -> t.Ldif.MutableMetadataMapping:
         """Build metadata extensions for entry as a dictionary."""
         return {"quirk_type": quirk_type, "source_server": quirk_type}
 
@@ -728,22 +721,20 @@ class FlextLdifUtilitiesMetadata:
         settings: m.Ldif.EntryParseMetadataConfig,
     ) -> m.Ldif.QuirkMetadata:
         """Build QuirkMetadata for entry parsing with format preservation."""
-        server_data_dict: t.MutableFlatContainerMapping = {}
-        dn_typed: t.Container = settings.original_entry_dn
-        cleaned_typed: t.Container = settings.cleaned_dn
-        base64_typed: t.Container = settings.dn_was_base64
-        server_data_dict["original_entry_dn"] = dn_typed
-        server_data_dict["cleaned_dn"] = cleaned_typed
-        server_data_dict["dn_was_base64"] = base64_typed
+        server_data_dict: t.Ldif.MutableMetadataMapping = {}
+        server_data_dict["original_entry_dn"] = settings.original_entry_dn
+        server_data_dict["cleaned_dn"] = settings.cleaned_dn
+        server_data_dict["dn_was_base64"] = settings.dn_was_base64
         if settings.original_dn_line:
-            dn_line_typed: t.Container = settings.original_dn_line
-            server_data_dict["original_dn_line"] = dn_line_typed
+            server_data_dict["original_dn_line"] = settings.original_dn_line
         if settings.original_attr_lines:
-            attr_lines_typed: t.Container = list(settings.original_attr_lines)
-            server_data_dict["original_attribute_lines"] = attr_lines_typed
+            server_data_dict["original_attribute_lines"] = list(
+                settings.original_attr_lines
+            )
         if settings.original_attribute_case:
-            attr_case_typed: t.Container = dict(settings.original_attribute_case)
-            server_data_dict["original_attribute_case"] = attr_case_typed
+            server_data_dict["original_attribute_case"] = dict(
+                settings.original_attribute_case
+            )
         server_data = m.Ldif.EntryMetadata.model_validate(
             server_data_dict,
         )
@@ -753,7 +744,7 @@ class FlextLdifUtilitiesMetadata:
         if settings.original_attr_lines:
             original_ldif_parts.extend(settings.original_attr_lines)
         original_ldif = "\n".join(original_ldif_parts) if original_ldif_parts else ""
-        extensions_dict: t.MutableFlatContainerMapping = {}
+        extensions_dict: t.Ldif.MutableMetadataMapping = {}
         mk = c.Ldif
         extensions_dict[mk.ORIGINAL_DN_COMPLETE] = settings.original_entry_dn
         dynamic_extensions = m.Ldif.DynamicMetadata.from_dict(
@@ -817,12 +808,15 @@ class FlextLdifUtilitiesMetadata:
         write_opts = getattr(entry_data.metadata, "write_options", None)
         if write_opts is None:
             return None
-        raw_extras: t.MutableFlatContainerMapping | None = None
+        raw_extras: t.Ldif.MutableMetadataMapping | None = None
+        extras: t.Ldif.MutableMetadataMapping = {}
         if isinstance(write_opts, m.BaseModel):
             model_extra_val = write_opts.model_extra
             if isinstance(model_extra_val, dict):
-                raw_extras = {str(k): v for k, v in model_extra_val.items()}
-        extras: t.MutableFlatContainerMapping = {}
+                raw_extras = {
+                    str(k): u.normalize_to_metadata(v)
+                    for k, v in model_extra_val.items()
+                }
         opt: t.Container | None = None
         if raw_extras is not None:
             config_map_root: MutableMapping[str, t.Container | m.BaseModel] = dict(

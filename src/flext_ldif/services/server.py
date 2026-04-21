@@ -46,14 +46,14 @@ class FlextLdifServer:
 
     def acl(self, server_type: str) -> FlextLdifServersBaseSchemaAcl | None:
         """Get ACL quirk for a server type."""
-        base = self.quirk(server_type).map_or(None)
+        base = self._resolve_base_quirk(server_type)
         if base is None:
             return None
         return base.acl_quirk
 
     def entry(self, server_type: str) -> FlextLdifServersBaseEntry | None:
         """Get entry quirk for a server type."""
-        base = self.quirk(server_type).map_or(None)
+        base = self._resolve_base_quirk(server_type)
         if base is None:
             return None
         return base.entry_quirk
@@ -70,13 +70,28 @@ class FlextLdifServer:
         ]
     ]:
         """Get all quirk types for a server."""
-        return self.quirk(server_type).map(
-            lambda base: {
-                "schema": base.schema_quirk,
-                "acl": base.acl_quirk,
-                "entry": base.entry_quirk,
-            },
-        )
+        base = self._resolve_base_quirk(server_type)
+        if base is None:
+            return r[
+                MutableMapping[
+                    str,
+                    FlextLdifServersBaseSchema
+                    | FlextLdifServersBaseSchemaAcl
+                    | FlextLdifServersBaseEntry,
+                ]
+            ].fail(f"Unknown server type: {server_type}")
+        return r[
+            MutableMapping[
+                str,
+                FlextLdifServersBaseSchema
+                | FlextLdifServersBaseSchemaAcl
+                | FlextLdifServersBaseEntry,
+            ]
+        ].ok({
+            "schema": base.schema_quirk,
+            "acl": base.acl_quirk,
+            "entry": base.entry_quirk,
+        })
 
     def get_base_quirk(self, server_type: str) -> r[FlextLdifServersBase]:
         """Get base quirk for a given server type."""
@@ -84,26 +99,29 @@ class FlextLdifServer:
 
     def get_constants(self, server_type: str) -> r[type]:
         """Get Constants class from server quirk."""
+        quirk_result = self.quirk(server_type)
+        if quirk_result.failure:
+            return r[type].fail(quirk_result.error or server_type)
+        base_raw = quirk_result.value
+        if not isinstance(base_raw, FlextLdifServersBase):
+            return r[type].fail(f"Invalid quirk payload for {server_type}")
+        base: FlextLdifServersBase = base_raw
+        constants = getattr(type(base), "Constants", None)
+        if constants is None:
+            return r[type].fail(f"Server {server_type} missing Constants")
+        if getattr(constants, "CATEGORIZATION_PRIORITY", None) is None:
+            return r[type].fail(
+                f"Server {server_type} missing CATEGORIZATION_PRIORITY",
+            )
+        return r[type].ok(constants)
 
-        def validate_constants(base: FlextLdifServersBase) -> r[type]:
-            constants = getattr(type(base), "Constants", None)
-            if constants is None:
-                return r[type].fail(f"Server {server_type} missing Constants")
-            if not getattr(constants, "CATEGORIZATION_PRIORITY", None) is not None:
-                return r[type].fail(
-                    f"Server {server_type} missing CATEGORIZATION_PRIORITY",
-                )
-            return r[type].ok(constants)
-
-        return self.quirk(server_type).flat_map(validate_constants)
-
-    def get_registry_stats(self) -> t.MutableFlatContainerMapping:
+    def get_registry_stats(self) -> t.Ldif.MutableMetadataInputMapping:
         """Get comprehensive registry statistics."""
         servers = self.list_registered_servers()
         quirks_by_server: MutableMapping[str, t.MutableOptionalStrMapping] = {}
         priorities: t.MutableIntMapping = {}
         for st in servers:
-            base = self.quirk(st).map_or(None)
+            base = self._resolve_base_quirk(st)
             if base is None:
                 continue
             quirks_by_server[st] = {
@@ -126,10 +144,21 @@ class FlextLdifServer:
 
     def get_schema_quirk(self, server_type: str) -> FlextLdifServersBaseSchema | None:
         """Get schema quirk for a server type."""
-        base = self.quirk(server_type).map_or(None)
+        base = self._resolve_base_quirk(server_type)
         if base is None:
             return None
         return base.schema_quirk
+
+    def _resolve_base_quirk(self, server_type: str) -> FlextLdifServersBase | None:
+        """Resolve a concrete base quirk or return None on lookup failure."""
+        quirk_result = self.quirk(server_type)
+        if quirk_result.failure:
+            return None
+        base_raw = quirk_result.value
+        if not isinstance(base_raw, FlextLdifServersBase):
+            return None
+        base: FlextLdifServersBase = base_raw
+        return base
 
     def list_registered_servers(self) -> MutableSequence[str]:
         """List all registered server types."""

@@ -493,7 +493,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         """
         metadata_typed: m.Ldif.QuirkMetadata = metadata
-        current_extensions: t.MutableFlatContainerMapping = (
+        current_extensions: t.Ldif.MutableMetadataInputMapping = (
             dict(metadata_typed.extensions) if metadata_typed.extensions else {}
         )
         new_write_options = (
@@ -529,7 +529,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             current_extensions["acl_commented_attributes"] = commented_attrs_typed
         update_dict_final: MutableMapping[
             str,
-            t.MutableFlatContainerMapping | m.Ldif.WriteOptions | None,
+            t.Ldif.MutableMetadataInputMapping | m.Ldif.WriteOptions | None,
         ] = {
             "extensions": current_extensions,
             "write_options": new_write_options,
@@ -1188,8 +1188,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _extract_acl_metadata_from_dict(
         self,
-        acl_extensions: t.MutableFlatContainerMapping,
-        acl_metadata_extensions: t.MutableFlatContainerMapping,
+        acl_extensions: t.Ldif.MetadataInputMapping,
+        acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
         """Extract ACL metadata from dict extensions."""
         mk = c.Ldif
@@ -1225,14 +1225,14 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     for k, v in value_raw.items():
                         key = str(k)
                         value_dict_2[key] = v if u.primitive(v) else str(v)
-                    acl_metadata_extensions[dest_key] = dict(value_dict_2)
+                    acl_metadata_extensions[dest_key] = value_dict_2
                 else:
                     acl_metadata_extensions[dest_key] = str(value_raw)
 
     def _extract_acl_metadata_from_dynamic(
         self,
         acl_extensions: m.Ldif.DynamicMetadata,
-        acl_metadata_extensions: t.MutableFlatContainerMapping,
+        acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
         """Extract ACL metadata from DynamicMetadata extensions."""
         mk = c.Ldif
@@ -1273,8 +1273,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         value_dict_1[key] = v
                     else:
                         value_dict_1[key] = str(v)
-                value_dict_typed_1: t.Container = dict(value_dict_1)
-                acl_metadata_extensions[dest_key] = value_dict_typed_1
+                acl_metadata_extensions[dest_key] = value_dict_1
             else:
                 acl_metadata_extensions[dest_key] = str(value_raw)
 
@@ -1469,7 +1468,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 "oud",
                 extensions=m.Ldif.DynamicMetadata(),
             )
-        current_extensions: t.MutableFlatContainerMapping = (
+        current_extensions: t.Ldif.MutableMetadataInputMapping = (
             dict(entry.metadata.extensions.to_dict())
             if entry.metadata and entry.metadata.extensions
             else {}
@@ -1575,7 +1574,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         aci_attrs = attrs_dict.get("aci")
         if aci_attrs and u.matches_type(aci_attrs, (list, tuple)):
             has_macros = False
-            acl_metadata_extensions: t.MutableFlatContainerMapping = {}
+            acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping = {}
             for aci_value in aci_attrs:
                 if u.matches_type(aci_value, str):
                     process_result = self._process_single_aci_value(
@@ -1625,13 +1624,13 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _merge_acl_metadata_to_entry(
         self,
         entry: m.Ldif.Entry,
-        acl_metadata_extensions: t.MutableFlatContainerMapping,
+        acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> m.Ldif.Entry:
         """Merge ACL metadata extensions into entry metadata."""
         if not acl_metadata_extensions:
             return entry
         if entry.metadata:
-            current_extensions: t.MutableFlatContainerMapping = (
+            current_extensions: t.Ldif.MutableMetadataInputMapping = (
                 dict(entry.metadata.extensions.to_dict())
                 if entry.metadata.extensions
                 else {}
@@ -1746,7 +1745,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         self,
         aci_values: MutableSequence[str] | str,
         acl_quirk: FlextLdifServersOudAcl,
-        current_extensions: t.MutableFlatContainerMapping,
+        current_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
         """Process list of ACI values and extract metadata."""
         aci_list: MutableSequence[str] = (
@@ -1761,7 +1760,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 acl_model = acl_result.value
                 if acl_model.metadata and acl_model.metadata.extensions:
                     acl_ext_raw = acl_model.metadata.extensions.to_dict()
-                    acl_extensions: t.MutableFlatContainerMapping = {}
+                    acl_extensions: t.Ldif.MutableMetadataInputMapping = {}
                     for raw_key, raw_value in acl_ext_raw.items():
                         key = str(raw_key)
                         acl_extensions[key] = (
@@ -1776,8 +1775,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _process_parsed_acl_extensions(
         self,
-        acl_extensions: t.MutableFlatContainerMapping,
-        current_extensions: t.MutableFlatContainerMapping,
+        acl_extensions: t.Ldif.MetadataInputMapping,
+        current_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
         """Process parsed ACL extensions and add to current extensions."""
         mk = c.Ldif
@@ -1834,15 +1833,14 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         value_dict_inner[key] = v
                     else:
                         value_dict_inner[key] = str(v)
-                value_dict_typed: t.Container = dict(value_dict_inner)
-                current_extensions[final_key] = value_dict_typed
+                current_extensions[final_key] = value_dict_inner
             else:
                 current_extensions[final_key] = str(value)
 
     def _process_single_aci_value(
         self,
         aci_value: str,
-        acl_metadata_extensions: t.MutableFlatContainerMapping,
+        acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> r[bool]:
         """Process single ACI value, extract metadata, return has_macros flag."""
         has_macros = bool(re.search(r"\(\$dn\)|\[\$dn\]|\(\$attr\.", aci_value))
@@ -1866,7 +1864,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         acl_metadata_extensions,
                     )
                 elif isinstance(acl_extensions, Mapping):
-                    acl_extensions_dict: t.MutableFlatContainerMapping = {
+                    acl_extensions_dict: t.Ldif.MutableMetadataInputMapping = {
                         str(
                             k,
                         ): m.Ldif.DynamicMetadata.coerce_metadata_value(

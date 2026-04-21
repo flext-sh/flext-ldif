@@ -9,9 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableMapping,
-)
 from typing import Final
 
 from flext_cli import t
@@ -52,30 +49,9 @@ class FlextLdifShared:
         Raises ValueError if server_type is not recognized.
         """
         server_type_lower = server_type.lower().strip()
-        alias_map: MutableMapping[str, c.Ldif.ServerTypes] = {
-            "active_directory": c.Ldif.ServerTypes.AD,
-            "activedirectory": c.Ldif.ServerTypes.AD,
-            "oracle_oid": c.Ldif.ServerTypes.OID,
-            "oracleoid": c.Ldif.ServerTypes.OID,
-            "oracle_oud": c.Ldif.ServerTypes.OUD,
-            "oracleoud": c.Ldif.ServerTypes.OUD,
-            "openldap": c.Ldif.ServerTypes.OPENLDAP2,
-            "openldap1": c.Ldif.ServerTypes.OPENLDAP1,
-            "openldap2": c.Ldif.ServerTypes.OPENLDAP2,
-            "ibm_tivoli": c.Ldif.ServerTypes.IBM_TIVOLI,
-            "ibmtivoli": c.Ldif.ServerTypes.IBM_TIVOLI,
-            "tivoli": c.Ldif.ServerTypes.IBM_TIVOLI,
-            "novell_edirectory": c.Ldif.ServerTypes.NOVELL,
-            "novelledirectory": c.Ldif.ServerTypes.NOVELL,
-            "edirectory": c.Ldif.ServerTypes.NOVELL,
-            "apache_directory": c.Ldif.ServerTypes.APACHE,
-            "apachedirectory": c.Ldif.ServerTypes.APACHE,
-            "apacheds": c.Ldif.ServerTypes.APACHE,
-            "389ds": c.Ldif.ServerTypes.DS389,
-            "389directory": c.Ldif.ServerTypes.DS389,
-        }
-        if server_type_lower in alias_map:
-            return alias_map[server_type_lower]
+        alias_value = c.Ldif.SERVER_TYPE_ALIASES.get(server_type_lower)
+        if alias_value is not None:
+            return alias_value
         for server_enum in c.Ldif.ServerTypes.__members__.values():
             if server_enum.value == server_type_lower:
                 return server_enum

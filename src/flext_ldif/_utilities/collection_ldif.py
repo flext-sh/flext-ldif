@@ -7,7 +7,7 @@ from collections.abc import (
     MutableSequence,
 )
 
-from flext_ldif.typings import t
+from flext_ldif import t
 
 
 class FlextLdifUtilitiesCollectionLdif:

@@ -4,27 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif import FlextLdifServer, FlextLdifSettings, c, m, r
+from flext_ldif import FlextLdifServiceBase, m, r
 
 
-class FlextLdifParser:
+class FlextLdifParser(FlextLdifServiceBase[m.Ldif.ParseResponse]):
     """LDIF parser orchestrator over the server quirk registry."""
-
-    _server: FlextLdifServer = FlextLdifServer.get_global_instance()
-
-    def __init__(
-        self,
-        *,
-        server: FlextLdifServer | None = None,
-        settings: FlextLdifSettings | None = None,
-    ) -> None:
-        """Initialize parser with optional explicit server registry."""
-        _ = settings
-        object.__setattr__(
-            self,
-            "_server",
-            server or FlextLdifServer.get_global_instance(),
-        )
 
     def parse_ldif(
         self,
@@ -78,10 +62,6 @@ class FlextLdifParser:
             .flat_map(lambda quirk: quirk.parse_ldif(content))
             .map_error(lambda error: error or "LDIF parsing failed")
         )
-
-    def _get_effective_server_type_value(self) -> str:
-        """Resolve effective server type (default: rfc, overridden by DetectorMixin)."""
-        return c.Ldif.ServerTypes.RFC.value
 
 
 __all__: list[str] = ["FlextLdifParser"]

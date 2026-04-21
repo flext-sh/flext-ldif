@@ -7,8 +7,7 @@ from collections.abc import (
 )
 from typing import TYPE_CHECKING, override
 
-from flext_ldif import m, r, s, u
-from flext_ldif.typings import t
+from flext_ldif import m, r, s, t, u
 
 if TYPE_CHECKING:
     from flext_ldif import FlextLdifValidation

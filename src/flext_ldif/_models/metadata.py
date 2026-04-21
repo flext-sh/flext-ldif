@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import (
     ItemsView,
     KeysView,
-    Mapping,
     MutableMapping,
     MutableSequence,
     ValuesView,
@@ -14,7 +13,7 @@ from typing import Annotated, ClassVar, Self, override
 
 from flext_cli import m, u
 
-from flext_ldif.typings import t
+from flext_ldif import t
 
 
 class FlextLdifModelsMetadata:
@@ -69,8 +68,8 @@ class FlextLdifModelsMetadata:
                 return getattr(self, key)
             return self._extra()[key]
 
-        def __setitem__(self, key: str, value: t.Ldif.MetadataValue) -> None:
-            setattr(self, key, value)
+        def __setitem__(self, key: str, value: t.Ldif.MetadataCarrierValue) -> None:
+            setattr(self, key, u.normalize_to_metadata(value))
 
         def __len__(self) -> int:
             return len(self._extra())
@@ -79,16 +78,23 @@ class FlextLdifModelsMetadata:
             return key in self._extra()
 
         @classmethod
-        def from_dict(cls, data: Mapping[str, t.Container] | None = None) -> Self:
+        def from_dict(
+            cls,
+            data: t.Ldif.MetadataInputMapping | None = None,
+        ) -> Self:
             """Create DynamicMetadata from a dictionary."""
             if data is None:
                 return cls()
-            return cls.model_validate(dict(data))
+            return cls.model_validate({
+                str(key): u.normalize_to_metadata(value) for key, value in data.items()
+            })
 
         @staticmethod
-        def coerce_metadata_value(value: t.Ldif.MetadataValue) -> t.Ldif.MetadataValue:
-            """Identity coercion — value already typed by MetadataAttributeValue."""
-            return value
+        def coerce_metadata_value(
+            value: t.Ldif.MetadataCarrierValue,
+        ) -> t.Ldif.MetadataValue:
+            """Normalize metadata payloads into the canonical recursive shape."""
+            return u.normalize_to_metadata(value)
 
         def clear(self) -> None:
             extra = self.__pydantic_extra__

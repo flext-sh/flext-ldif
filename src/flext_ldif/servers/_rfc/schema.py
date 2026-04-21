@@ -205,7 +205,17 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         elif oc_model is not None:
             data = oc_model
         result = self.execute(data=data, operation=operation)
-        return result.value
+        if result.failure:
+            msg = result.error or "RFC schema operation failed"
+            raise ValueError(msg)
+        result_value = result.value
+        if isinstance(
+            result_value,
+            str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        ):
+            return result_value
+        msg = "RFC schema operation returned an invalid payload"
+        raise TypeError(msg)
 
     @classmethod
     def _extract_syntax_validation_error(
@@ -380,9 +390,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 attr_definition: str,
             ) -> r[m.Ldif.SchemaAttribute]:
                 return self.parse_attribute(attr_definition).map(
-                    lambda attr: m.Ldif.SchemaAttribute.model_validate(
-                        attr.model_dump(),
-                    ),
+                    lambda attr: m.Ldif.SchemaAttribute.model_validate(attr),
                 )
 
             attributes_parsed = u.Ldif.extract_attributes_from_lines(
@@ -390,7 +398,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 parse_attribute_domain,
             )
             attributes_parsed_model: MutableSequence[m.Ldif.SchemaAttribute] = [
-                m.Ldif.SchemaAttribute.model_validate(attr.model_dump())
+                m.Ldif.SchemaAttribute.model_validate(attr)
                 for attr in attributes_parsed
             ]
             if validate_dependencies:
@@ -414,7 +422,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 oc_definition: str,
             ) -> r[m.Ldif.SchemaObjectClass]:
                 return self.parse_objectclass(oc_definition).map(
-                    lambda oc: m.Ldif.SchemaObjectClass.model_validate(oc.model_dump()),
+                    lambda oc: m.Ldif.SchemaObjectClass.model_validate(oc),
                 )
 
             objectclasses_parsed = u.Ldif.extract_objectclasses_from_lines(
@@ -422,7 +430,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 parse_objectclass_domain,
             )
             objectclasses_parsed_model: MutableSequence[m.Ldif.SchemaObjectClass] = [
-                m.Ldif.SchemaObjectClass.model_validate(oc.model_dump())
+                m.Ldif.SchemaObjectClass.model_validate(oc)
                 for oc in objectclasses_parsed
             ]
             schema_dict: MutableMapping[
@@ -540,7 +548,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
         def parse_parts_hook(
             definition: str,
-        ) -> r[t.MutableFlatContainerMapping]:
+        ) -> r[t.Ldif.MutableMetadataMapping]:
             return u.Ldif.parse_attribute(definition)
 
         parse_result_raw = u.Ldif.parse(
@@ -552,7 +560,12 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             return r[m.Ldif.SchemaAttribute].fail(
                 parse_result_raw.error or "Attribute parsing failed",
             )
-        parsed = parse_result_raw.value
+        parsed_raw = parse_result_raw.value
+        if not isinstance(parsed_raw, MutableMapping):
+            return r[m.Ldif.SchemaAttribute].fail(
+                "Attribute parsing returned an invalid payload",
+            )
+        parsed: t.Ldif.MutableMetadataMapping = dict(parsed_raw)
         syntax = parsed.get("syntax")
         syntax_str = str(syntax) if syntax is not None else None
         syntax_validation_error = self._extract_syntax_validation_error(
@@ -600,7 +613,12 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         parse_result = self._parse_objectclass_core(oc_definition)
         if parse_result.failure:
             return parse_result
-        return self._hook_post_parse_objectclass(parse_result.value)
+        objectclass_model = parse_result.value
+        if not isinstance(objectclass_model, m.Ldif.SchemaObjectClass):
+            return r[m.Ldif.SchemaObjectClass].fail(
+                "ObjectClass parsing returned an invalid payload",
+            )
+        return self._hook_post_parse_objectclass(objectclass_model)
 
     def _parse_objectclass_core(
         self,

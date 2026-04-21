@@ -7,8 +7,7 @@ from collections.abc import (
 )
 from typing import override
 
-from flext_ldif import FlextLdifServersBase, m, r, u
-from flext_ldif.typings import t
+from flext_ldif import FlextLdifServersBase, m, r, t, u
 
 logger = u.fetch_logger(__name__)
 

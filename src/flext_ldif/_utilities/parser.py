@@ -9,13 +9,12 @@ from collections.abc import (
     MutableMapping,
     MutableSequence,
 )
-from typing import TypeIs
 
 from flext_core import u
 
 from flext_ldif import (
-    FlextLdifUtilitiesOID,
-    FlextLdifUtilitiesServer,
+    FlextLdifUtilitiesOID as uo,
+    FlextLdifUtilitiesServer as us,
     c,
     m,
     r,
@@ -50,12 +49,12 @@ class FlextLdifUtilitiesParser:
         metadata_extensions["original_format"] = [attr_definition.strip()]
         metadata_extensions["schema_original_string_complete"] = [attr_definition]
         quirk_type = (
-            FlextLdifUtilitiesServer.normalize_server_type(server_type)
+            us.normalize_server_type(server_type)
             if server_type
-            else FlextLdifUtilitiesServer.normalize_server_type("rfc")
+            else us.normalize_server_type("rfc")
         )
         if metadata_extensions:
-            extensions_typed: t.MutableStrSequenceMapping = {}
+            extensions_typed: t.Ldif.MutableMetadataMapping = {}
             for key, val in metadata_extensions.items():
                 extensions_typed[key] = list(val)
             return m.Ldif.QuirkMetadata(
@@ -72,7 +71,7 @@ class FlextLdifUtilitiesParser:
         attribute_metadata: MutableMapping[str, t.MutableAttributeMapping],
         attr_name: str,
         value: str,
-        value_origin: c.Ldif.ValueOriginLiteral,
+        value_origin: c.Ldif.ValueOrigin,
         raw_value: str | None,
     ) -> None:
         """Append value while tracking its RFC serialization details."""
@@ -96,7 +95,7 @@ class FlextLdifUtilitiesParser:
         control_type = tokens[0] if tokens else ""
         criticality: bool | None = None
         value: str | None = None
-        value_origin: c.Ldif.ValueOriginLiteral | None = None
+        value_origin: c.Ldif.ValueOrigin | None = None
         raw_value: str | None = None
         value_token: str | None = None
         if len(tokens) >= minimum_control_tokens:
@@ -137,7 +136,7 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def decode_value(
         remainder: str,
-    ) -> tuple[str, c.Ldif.ValueOriginLiteral, str | None]:
+    ) -> tuple[str, c.Ldif.ValueOrigin, str | None]:
         """Decode an LDIF value-spec preserving origin details."""
         payload = remainder.lstrip()
         if payload.startswith(":"):
@@ -182,7 +181,7 @@ class FlextLdifUtilitiesParser:
         controls: MutableSequence[m.Ldif.Control] = []
         change_operations: MutableSequence[m.Ldif.ChangeOperation] = []
         current_change_operation: m.Ldif.ChangeOperation | None = None
-        changetype: c.Ldif.LdifChangeTypeLiteral | None = None
+        changetype: c.Ldif.LdifChangeType | None = None
         record_kind = c.Ldif.RecordKind.CONTENT
         newrdn: str | None = None
         deleteoldrdn: bool | None = None
@@ -234,8 +233,8 @@ class FlextLdifUtilitiesParser:
                 record_kind = c.Ldif.RecordKind.CHANGE
                 continue
             if changetype in {
-                c.Ldif.ChangeTypeOperations.MODDN,
-                c.Ldif.ChangeTypeOperations.MODRDN,
+                c.Ldif.LdifChangeType.MODDN,
+                c.Ldif.LdifChangeType.MODRDN,
             }:
                 if key_lower == "newrdn":
                     newrdn = value
@@ -246,7 +245,7 @@ class FlextLdifUtilitiesParser:
                 if key_lower == "newsuperior":
                     newsuperior = value
                     continue
-            if changetype == c.Ldif.ChangeTypeOperations.MODIFY:
+            if changetype == c.Ldif.LdifChangeType.MODIFY:
                 if key_lower in modify_ops:
                     FlextLdifUtilitiesParser.finalize_change_operation(
                         current_change_operation,
@@ -338,7 +337,7 @@ class FlextLdifUtilitiesParser:
         """Validate syntax OID format."""
         if syntax is None or not syntax.strip():
             return None
-        validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
+        validate_result = uo.validate_format(syntax)
         if validate_result.failure:
             return f"Syntax OID validation failed: {validate_result.error}"
         if not validate_result.value:
@@ -350,14 +349,6 @@ class FlextLdifUtilitiesParser:
         metadata: m.Ldif.DynamicMetadata,
     ) -> t.MutableStrSequenceMapping:
         """Extract extension information from parsed metadata."""
-
-        def _is_metadata_value(
-            value: t.Container,
-        ) -> TypeIs[t.Ldif.MetadataValue]:
-            return value is None or isinstance(
-                value,
-                (str, int, float, bool, list, Mapping),
-            )
 
         def _as_str_list(value: t.Ldif.MetadataValue) -> MutableSequence[str] | None:
             if isinstance(value, list):
@@ -373,17 +364,15 @@ class FlextLdifUtilitiesParser:
         if not isinstance(result, Mapping):
             extensions: t.MutableStrSequenceMapping = {}
             for key, value in metadata.items():
-                if not _is_metadata_value(value):
-                    continue
                 str_list = _as_str_list(value)
                 if str_list is not None:
                     extensions[key] = str_list
             return extensions
-        extensions_metadata = m.Ldif.DynamicMetadata.from_dict(result)
+        extensions_metadata = m.Ldif.DynamicMetadata.from_dict({
+            str(key): u.normalize_to_metadata(value) for key, value in result.items()
+        })
         strict_result: t.MutableStrSequenceMapping = {}
         for key, value in extensions_metadata.items():
-            if not _is_metadata_value(value):
-                continue
             str_list = _as_str_list(value)
             if str_list is not None:
                 strict_result[key] = str_list
@@ -406,23 +395,20 @@ class FlextLdifUtilitiesParser:
         if not definition:
             return {}
         extensions: t.MutableStrSequenceMapping = {}
-        x_pattern = re.compile(
-            r"X-([A-Z0-9_-]+)\s+[\"']?([^\"']*)[\"']?(?:\s|$)",
-            re.IGNORECASE,
-        )
+        x_pattern = re.compile(c.Ldif.SCHEMA_X_EXTENSION, re.IGNORECASE)
         for match in x_pattern.finditer(definition):
             key = f"X-{match.group(1)}"
             value = match.group(2).strip()
             extensions[key] = [value]
-        desc_pattern = re.compile(r"DESC\s+['\\\"]([^'\\\"]*)['\\\"]")
+        desc_pattern = re.compile(c.Ldif.SCHEMA_DESC_FLEX)
         desc_match = desc_pattern.search(definition)
         if desc_match:
             extensions["DESC"] = [desc_match.group(1)]
-        ordering_pattern = re.compile(r"ORDERING\s+([A-Za-z0-9_-]+)")
+        ordering_pattern = re.compile(c.Ldif.SCHEMA_ORDERING_TOKEN)
         ordering_match = ordering_pattern.search(definition)
         if ordering_match:
             extensions["ORDERING"] = [ordering_match.group(1)]
-        substr_pattern = re.compile(r"SUBSTR\s+([A-Za-z0-9_-]+)")
+        substr_pattern = re.compile(c.Ldif.SCHEMA_SUBSTR_TOKEN)
         substr_match = substr_pattern.search(definition)
         if substr_match:
             extensions["SUBSTR"] = [substr_match.group(1)]
@@ -433,7 +419,7 @@ class FlextLdifUtilitiesParser:
         """Extract OID from schema definition string."""
         if not definition:
             return r[str].fail("Empty definition: cannot extract OID")
-        oid_pattern = re.compile(r"\(\s*([0-9.]+)")
+        oid_pattern = re.compile(c.Ldif.SCHEMA_OID_CAPTURE)
         match = re.match(oid_pattern, definition.strip())
         if match:
             return r[str].ok(match.group(1))

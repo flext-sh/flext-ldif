@@ -114,10 +114,10 @@ class FlextLdifServersBaseSchemaAcl(
     def create_metadata(
         self,
         original_format: str,
-        extensions: t.MutableFlatContainerMapping | None = None,
+        extensions: t.Ldif.MetadataInputMapping | None = None,
     ) -> m.Ldif.QuirkMetadata:
         """Create ACL quirk metadata."""
-        all_extensions: t.MutableFlatContainerMapping = {
+        all_extensions: t.Ldif.MutableMetadataInputMapping = {
             "original_format": original_format,
         }
         if extensions:

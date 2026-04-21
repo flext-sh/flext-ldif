@@ -9,8 +9,7 @@ from collections.abc import (
 from pathlib import Path
 from typing import override
 
-from flext_ldif import FlextLdifServer, m, p, r, s, u
-from flext_ldif.typings import t
+from flext_ldif import FlextLdifServer, m, p, r, s, t, u
 
 
 class FlextLdifDetectorMixin:

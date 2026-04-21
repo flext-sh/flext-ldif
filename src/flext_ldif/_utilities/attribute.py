@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import Final
 
-from flext_ldif.constants import c
+from flext_ldif import c
 
 
 class FlextLdifUtilitiesAttribute:

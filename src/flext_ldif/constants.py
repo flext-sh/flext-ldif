@@ -2,356 +2,44 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import ClassVar, Final
 
 from flext_cli import FlextCliConstants, t
 
+from flext_ldif import FlextLdifConstantsBase, FlextLdifConstantsEnums
+
 
 class FlextLdifConstants(FlextCliConstants):
     """LDIF domain constants extending flext-core FlextConstants."""
 
-    class Ldif:
+    class Ldif(FlextLdifConstantsBase, FlextLdifConstantsEnums):
         """LDIF domain constants namespace."""
 
-        @unique
-        class Category(StrEnum):
-            """LDIF entry categories — single source of truth."""
+        BINARY_ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset(
+            attribute.value for attribute in FlextLdifConstantsEnums.BinaryAttribute
+        )
 
-            USERS = "users"
-            GROUPS = "groups"
-            HIERARCHY = "hierarchy"
-            SCHEMA = "schema"
-            ACL = "acl"
-            REJECTED = "rejected"
-
-        @unique
-        class SortStrategy(StrEnum):
-            """Valid sorting strategies for LDIF entries (type-safe enum)."""
-
-            HIERARCHY = "hierarchy"
-            DN = "dn"
-            ALPHABETICAL = "alphabetical"
-            SCHEMA = "schema"
-            CUSTOM = "custom"
-
-        @unique
-        class SortingStrategyType(StrEnum):
-            """Sorting strategy types for metadata tracking."""
-
-            ALPHABETICAL_CASE_SENSITIVE = "alphabetical_case_sensitive"
-            ALPHABETICAL_CASE_INSENSITIVE = "alphabetical_case_insensitive"
-            CUSTOM_ORDER = "custom_order"
-
-        @unique
-        class SortTarget(StrEnum):
-            """What to sort in LDIF data (type-safe enum)."""
-
-            ENTRIES = "entries"
-            ATTRIBUTES = "attributes"
-            ACL = "acl"
-            SCHEMA = "schema"
-            COMBINED = "combined"
-
-        @unique
-        class RfcAclPermission(StrEnum):
-            """RFC 4876 standard ACL permissions (type-safe enum)."""
-
-            READ = "read"
-            WRITE = "write"
-            ADD = "add"
-            DELETE = "delete"
-            SEARCH = "search"
-            COMPARE = "compare"
-            ALL = "all"
-            NONE = "none"
-
-        @unique
-        class Encoding(StrEnum):
-            """Standard character encodings used in LDIF processing."""
-
-            UTF8 = "utf-8"
-            UTF16LE = "utf-16-le"
-            UTF16 = "utf-16"
-            UTF32 = "utf-32"
-            ASCII = "ascii"
-            LATIN1 = "latin-1"
-            CP1252 = "cp1252"
-            ISO8859_1 = "iso-8859-1"
-
-        @unique
-        class LdifFormat(StrEnum):
-            """RFC 2849 LDIF format indicators for attribute value encoding."""
-
-            REGULAR = ":"
-            BASE64 = "::"
-            URL = ":<"
-
-        LDIF_BASE64_INDICATOR: Final[str] = LdifFormat.BASE64.value
-        LDIF_REGULAR_INDICATOR: Final[str] = LdifFormat.REGULAR.value
-
-        @unique
-        class AclSubjectType(StrEnum):
-            """ACL subject/who types for permission subjects."""
-
-            USER = "user"
-            GROUP = "group"
-            ROLE = "role"
-            SELF = "self"
-            ALL = "all"
-            PUBLIC = "public"
-            ANONYMOUS = "anonymous"
-            AUTHENTICATED = "authenticated"
-            SDDL = "sddl"
-            DN = "dn"
-
-        @unique
-        class DictKeys(StrEnum):
-            """Dictionary keys for LDIF entry data access - CORE KEYS ONLY per SRP."""
-
-            DN = "dn"
-            ATTRIBUTES = "attributes"
-            OBJECTCLASS = "objectClass"
-            CN = "cn"
-            OID = "oid"
-
-        @unique
-        class CaseFoldOption(StrEnum):
-            """Case folding options for DN normalization."""
-
-            NONE = "none"
-            LOWER = "lower"
-            UPPER = "upper"
-
-        @unique
-        class QuirkMetadataKeys(StrEnum):
-            """Dictionary keys for quirk metadata and server-specific entry properties."""
-
-            SERVER_TYPE = "server_type"
-            IS_CONFIG_ENTRY = "is_config_entry"
-            IS_TRADITIONAL_DIT = "is_traditional_dit"
-
-        ASCII_PRINTABLE_MIN: Final[int] = 32
-        ASCII_PRINTABLE_MAX: Final[int] = 126
-
-        SAFE_CHAR_MIN: Final[int] = 1
-        SAFE_CHAR_MAX: Final[int] = 127
-        SAFE_CHAR_EXCLUDE: Final[frozenset[int]] = frozenset({0, 10, 13})
-        SAFE_INIT_CHAR_EXCLUDE: Final[frozenset[int]] = frozenset({
-            0,
-            10,
-            13,
-            32,
-            58,
-            60,
-        })
-
-        @unique
-        class Base64StartChar(StrEnum):
-            """RFC 2849 §2 - Characters requiring base64 encoding at value start."""
-
-            SPACE = " "
-            LANGLE = "<"
-            COLON = ":"
-
-        BASE64_START_CHARS: Final[frozenset[str]] = frozenset({
-            Base64StartChar.SPACE,
-            Base64StartChar.LANGLE,
-            Base64StartChar.COLON,
-        })
-        LINE_FOLD_WIDTH: Final[int] = 76
-        LINE_CONTINUATION_SPACE: Final[str] = " "
-        LINE_SEPARATOR: Final[str] = "\n"
-
-        DN_LUTF1_EXCLUDE: Final[frozenset[int]] = frozenset({
-            0,
-            32,
-            34,
-            35,
-            43,
-            44,
-            59,
-            60,
-            62,
-            92,
-        })
-        DN_TUTF1_EXCLUDE: Final[frozenset[int]] = frozenset({
-            0,
-            32,
-            34,
-            43,
-            44,
-            59,
-            60,
-            62,
-            92,
-        })
-        DN_SUTF1_EXCLUDE: Final[frozenset[int]] = frozenset({
-            0,
-            34,
-            43,
-            44,
-            59,
-            60,
-            62,
-            92,
-        })
-
-        @unique
-        class DnEscapeChar(StrEnum):
-            """RFC 4514 §2.4 - Characters always requiring escape in DN values."""
-
-            DQUOTE = '"'
-            PLUS = "+"
-            COMMA = ","
-            SEMICOLON = ";"
-            LANGLE = "<"
-            RANGLE = ">"
-            BACKSLASH = "\\"
-
-        DN_ESCAPE_CHARS: Final[frozenset[str]] = frozenset({
-            DnEscapeChar.DQUOTE,
-            DnEscapeChar.PLUS,
-            DnEscapeChar.COMMA,
-            DnEscapeChar.SEMICOLON,
-            DnEscapeChar.LANGLE,
-            DnEscapeChar.RANGLE,
-            DnEscapeChar.BACKSLASH,
-        })
-
-        MIN_DN_LENGTH: Final[int] = 2
-        META_TRANSFORMATION_TIMESTAMP: Final[str] = "_transform_ts"
-        META_TRANSFORMATION_SOURCE: Final[str] = "_transform_source"
-        META_TRANSFORMATION_TARGET: Final[str] = "_transform_target"
-        META_DN_ORIGINAL: Final[str] = "_dn_original"
-        META_DN_WAS_BASE64: Final[str] = "_dn_was_base64"
-        META_DN_ESCAPES_APPLIED: Final[str] = "_dn_escapes_applied"
-
-        MAX_ATTRIBUTE_NAME_LENGTH: Final[int] = 127
-
-        @unique
-        class BinaryAttribute(StrEnum):
-            """RFC 4517/4523/4524 - Binary attributes requiring ;binary option."""
-
-            USER_CERTIFICATE = "usercertificate"
-            CA_CERTIFICATE = "cacertificate"
-            CERTIFICATE_REVOCATION_LIST = "certificaterevocationlist"
-            AUTHORITY_REVOCATION_LIST = "authorityrevocationlist"
-            CROSS_CERTIFICATE_PAIR = "crosscertificatepair"
-            PHOTO = "photo"
-            JPEG_PHOTO = "jpegphoto"
-            AUDIO = "audio"
-            USER_PKCS12 = "userpkcs12"
-            USER_SMIME_CERTIFICATE = "usersmimecertificate"
-            THUMBNAIL_PHOTO = "thumbnailphoto"
-            THUMBNAIL_LOGO = "thumbnaillogo"
-            OBJECT_GUID = "objectguid"
-            OBJECT_SID = "objectsid"
-
-        BINARY_ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset([
-            BinaryAttribute.USER_CERTIFICATE,
-            BinaryAttribute.CA_CERTIFICATE,
-            BinaryAttribute.CERTIFICATE_REVOCATION_LIST,
-            BinaryAttribute.AUTHORITY_REVOCATION_LIST,
-            BinaryAttribute.CROSS_CERTIFICATE_PAIR,
-            BinaryAttribute.PHOTO,
-            BinaryAttribute.JPEG_PHOTO,
-            BinaryAttribute.AUDIO,
-            BinaryAttribute.USER_PKCS12,
-            BinaryAttribute.USER_SMIME_CERTIFICATE,
-            BinaryAttribute.THUMBNAIL_PHOTO,
-            BinaryAttribute.THUMBNAIL_LOGO,
-            BinaryAttribute.OBJECT_GUID,
-            BinaryAttribute.OBJECT_SID,
-        ])
-
-        OBJECTCLASS_REQUIRED_SERVERS: ClassVar[frozenset[str]] = frozenset([
-            "oid",
-            "oud",
-            "ad",
-            "389ds",
+        OBJECTCLASS_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset({
+            FlextLdifConstantsEnums.ServerTypes.OID.value,
+            FlextLdifConstantsEnums.ServerTypes.OUD.value,
+            FlextLdifConstantsEnums.ServerTypes.AD.value,
+            FlextLdifConstantsEnums.ServerTypes.DS389.value,
             "novell_edirectory",
-            "ibm_tivoli",
-        ])
-        NAMING_ATTR_REQUIRED_SERVERS: ClassVar[frozenset[str]] = frozenset([
-            "oid",
-            "oud",
-            "ad",
-        ])
-        BINARY_OPTION_REQUIRED_SERVERS: ClassVar[frozenset[str]] = frozenset([
-            "openldap",
-            "oid",
-            "oud",
-        ])
-
-        @unique
-        class TransformationType(StrEnum):
-            """Types of transformations applied to entries."""
-
-            DN_CLEANED = "dn_cleaned"
-            DN_NORMALIZED = "dn_normalized"
-            TAB_NORMALIZED = "tab_normalized"
-            SPACE_CLEANED = "space_cleaned"
-            UTF8_DECODED = "utf8_decoded"
-            BASE64_DECODED = "base64_decoded"
-            TRAILING_SPACE_REMOVED = "trailing_space_removed"
-            ESCAPE_NORMALIZED = "escape_normalized"
-            BOOLEAN_CONVERTED = "boolean_converted"
-            ACL_CONVERTED = "acl_converted"
-            ATTRIBUTE_REMOVED = "attribute_removed"
-            ATTRIBUTE_ADDED = "attribute_added"
-            ATTRIBUTE_RENAMED = "attribute_renamed"
-            MODIFIED = "modified"
-            MATCHING_RULE_REPLACED = "matching_rule_replaced"
-            SYNTAX_OID_REPLACED = "syntax_oid_replaced"
-            OBJECTCLASS_FILTERED = "objectclass_filtered"
-
-        @unique
-        class RejectionCategory(StrEnum):
-            """Categories for entry rejection."""
-
-            INVALID_DN = "invalid_dn"
-            BASE_DN_FILTER = "base_dn_filter"
-            SCHEMA_VIOLATION = "schema_violation"
-            FORBIDDEN_ATTRIBUTE = "forbidden_attribute"
-            FORBIDDEN_OBJECTCLASS = "forbidden_objectclass"
-            CATEGORIZATION_FAILED = "categorization_failed"
-            NO_CATEGORY_MATCH = "no_category_match"
-            PARSING_ERROR = "parsing_error"
-            CONVERSION_ERROR = "conversion_error"
-
-        @unique
-        class AttributeMarkerStatus(StrEnum):
-            """Marker status for attribute processing in metadata."""
-
-            NORMAL = "normal"
-            MARKED_FOR_REMOVAL = "marked_for_removal"
-            FILTERED = "filtered"
-            OPERATIONAL = "operational"
-            HIDDEN = "hidden"
-            RENAMED = "renamed"
-
-        @unique
-        class ServerTypes(StrEnum):
-            """Server type identifiers - Single source of truth for all server types."""
-
-            OID = "oid"
-            OUD = "oud"
-            OPENLDAP = "openldap"
-            OPENLDAP1 = "openldap1"
-            OPENLDAP2 = "openldap2"
-            AD = "ad"
-            APACHE = "apache"
-            DS389 = "ds389"
-            RFC = "rfc"
-            RELAXED = "relaxed"
-            NOVELL = "novell"
-            IBM_TIVOLI = "ibm_tivoli"
-            GENERIC = "generic"
-
-        ATTRIBUTE_TYPES: Final[str] = "attributeTypes"
-        OBJECT_CLASSES: Final[str] = "objectClasses"
+            FlextLdifConstantsEnums.ServerTypes.IBM_TIVOLI.value,
+        })
+        NAMING_ATTR_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset({
+            FlextLdifConstantsEnums.ServerTypes.OID.value,
+            FlextLdifConstantsEnums.ServerTypes.OUD.value,
+            FlextLdifConstantsEnums.ServerTypes.AD.value,
+        })
+        BINARY_OPTION_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset({
+            FlextLdifConstantsEnums.ServerTypes.OPENLDAP.value,
+            FlextLdifConstantsEnums.ServerTypes.OID.value,
+            FlextLdifConstantsEnums.ServerTypes.OUD.value,
+        })
 
         DEFAULT_ACL_ATTRIBUTES: Final[t.StrSequence] = (
             "acl",
@@ -359,44 +47,10 @@ class FlextLdifConstants(FlextCliConstants):
             "olcAccess",
         )
 
-        @unique
-        class DnValuedAttribute(StrEnum):
-            """Attributes that contain Distinguished Names as values."""
+        ALL_DN_VALUED: Final[frozenset[str]] = frozenset(
+            attribute.value for attribute in FlextLdifConstantsEnums.DnValuedAttribute
+        )
 
-            MEMBER = "member"
-            UNIQUE_MEMBER = "uniqueMember"
-            OWNER = "owner"
-            MANAGED_BY = "managedBy"
-            MANAGER = "manager"
-            SECRETARY = "secretary"
-            SEES_ALSO = "seeAlso"
-            PARENT = "parent"
-            REFERS_TO = "refersTo"
-            MEMBER_OF = "memberOf"
-            GROUPS = "groups"
-            AUTHORIZED_TO = "authorizedTo"
-            HAS_SUBORDINATES = "hasSubordinates"
-            SUBORDINATE_DN = "subordinateDn"
-
-        ALL_DN_VALUED: Final[frozenset[str]] = frozenset([
-            DnValuedAttribute.MEMBER,
-            DnValuedAttribute.UNIQUE_MEMBER,
-            DnValuedAttribute.OWNER,
-            DnValuedAttribute.MANAGED_BY,
-            DnValuedAttribute.MANAGER,
-            DnValuedAttribute.SECRETARY,
-            DnValuedAttribute.SEES_ALSO,
-            DnValuedAttribute.PARENT,
-            DnValuedAttribute.REFERS_TO,
-            DnValuedAttribute.MEMBER_OF,
-            DnValuedAttribute.GROUPS,
-            DnValuedAttribute.AUTHORIZED_TO,
-            DnValuedAttribute.HAS_SUBORDINATES,
-            DnValuedAttribute.SUBORDINATE_DN,
-        ])
-
-        TRUE_RFC: Final[str] = "TRUE"
-        FALSE_RFC: Final[str] = "FALSE"
         OID_TRUE: Final[str] = "1"
         OID_FALSE: Final[str] = "0"
 
@@ -425,14 +79,14 @@ class FlextLdifConstants(FlextCliConstants):
         })
 
         OID_TO_RFC_BOOL: Final[t.StrMapping] = MappingProxyType({
-            OID_TRUE: TRUE_RFC,
-            OID_FALSE: FALSE_RFC,
-            "true": TRUE_RFC,
-            "false": FALSE_RFC,
+            OID_TRUE: FlextLdifConstantsBase.TRUE_RFC,
+            OID_FALSE: FlextLdifConstantsBase.FALSE_RFC,
+            "true": FlextLdifConstantsBase.TRUE_RFC,
+            "false": FlextLdifConstantsBase.FALSE_RFC,
         })
         RFC_TO_OID_BOOL: Final[t.StrMapping] = MappingProxyType({
-            TRUE_RFC: OID_TRUE,
-            FALSE_RFC: OID_FALSE,
+            FlextLdifConstantsBase.TRUE_RFC: OID_TRUE,
+            FlextLdifConstantsBase.FALSE_RFC: OID_FALSE,
             "true": OID_TRUE,
             "false": OID_FALSE,
         })
@@ -460,212 +114,9 @@ class FlextLdifConstants(FlextCliConstants):
             "all",
         )
 
-        SCHEMA_ORIGINAL_FORMAT: Final[str] = "schema_original_format"
-        SCHEMA_ORIGINAL_STRING_COMPLETE: Final[str] = "schema_original_string_complete"
-        SCHEMA_SOURCE_SERVER: Final[str] = "schema_source_server"
-        OBSOLETE: Final[str] = "obsolete"
-        SCHEMA_SOURCE_SYNTAX_OID: Final[str] = "schema_source_syntax_oid"
-        SCHEMA_TARGET_SYNTAX_OID: Final[str] = "schema_target_syntax_oid"
-        SCHEMA_SOURCE_MATCHING_RULES: Final[str] = "schema_source_matching_rules"
-        SCHEMA_TARGET_MATCHING_RULES: Final[str] = "schema_target_matching_rules"
-        SCHEMA_TARGET_ATTRIBUTE_NAME: Final[str] = "schema_target_attribute_name"
-        SYNTAX_OID_VALID: Final[str] = "syntax_oid_valid"
-        SYNTAX_VALIDATION_ERROR: Final[str] = "syntax_validation_error"
-        X_ORIGIN: Final[str] = "x_origin"
-        COLLECTIVE: Final[str] = "collective"
-        ENTRY_ORIGINAL_FORMAT: Final[str] = "entry_original_format"
-        ENTRY_SOURCE_DN_CASE: Final[str] = "entry_source_dn_case"
-        ENTRY_TARGET_DN_CASE: Final[str] = "entry_target_dn_case"
-        ACL_ORIGINAL_FORMAT: Final[str] = "original_format"
-        ACL_SOURCE_SUBJECT_TYPE: Final[str] = "source_subject_type"
-        ACL_FILTER: Final[str] = "filter"
-        ACL_CONSTRAINT: Final[str] = "added_object_constraint"
-        ACL_BINDMODE: Final[str] = "bindmode"
-        ACL_DENY_GROUP_OVERRIDE: Final[str] = "deny_group_override"
-        ACL_APPEND_TO_ALL: Final[str] = "append_to_all"
-        ACL_BIND_IP: Final[str] = "bind_ip"
-        ACL_BIND_IP_FILTER: Final[str] = "bind_ip_filter"
-        ACL_CONSTRAIN_TO_ADDED_OBJECT: Final[str] = "constrain_to_added_object"
-        ACL_BIND_TIMEOFDAY: Final[str] = "bind_timeofday"
-        ACL_SSF: Final[str] = "ssf"
-        ORIGINAL_FORMAT: Final[str] = "original_format"
-        VERSION: Final[str] = "version"
-        ATTRIBUTE_ORDER: Final[str] = "attribute_order"
-        SORTING_NEW_ATTRIBUTE_ORDER: Final[str] = "sorting_new_attribute_order"
-        SORTING_STRATEGY: Final[str] = "sorting_strategy"
-        SORTING_CUSTOM_ORDER: Final[str] = "sorting_custom_order"
-        SORTING_ORDERED_ATTRIBUTES: Final[str] = "sorting_ordered_attributes"
-        SORTING_REMAINING_ATTRIBUTES: Final[str] = "sorting_remaining_attributes"
-        SORTING_ACL_ATTRIBUTES: Final[str] = "sorting_acl_attributes"
-        SORTING_ACL_SORTED: Final[str] = "sorting_acl_sorted"
-        SOURCE_FILE: Final[str] = "source_file"
-        HIDDEN_ATTRIBUTES: Final[str] = "hidden_attributes"
-        ORIGINAL_DN_COMPLETE: Final[str] = "original_dn_complete"
-        ORIGINAL_ATTRIBUTES_COMPLETE: Final[str] = "original_attributes_complete"
-        WRITE_OPTIONS: Final[str] = "_write_options"
-        CONVERSION_BOOLEAN_CONVERSIONS: Final[str] = "boolean_conversions"
-        CONVERSION_ATTRIBUTE_NAME_CONVERSIONS: Final[str] = "attribute_name_conversions"
-        CONVERSION_ORIGINAL_VALUE: Final[str] = "original"
-        CONVERSION_CONVERTED_VALUE: Final[str] = "converted"
-        CONVERSION_CONVERTED_ATTRIBUTE_NAMES: Final[str] = (
-            "conversion_converted_attribute_names"
+        VALID_SERVER_TYPES: Final[frozenset[str]] = frozenset(
+            server_type.value for server_type in FlextLdifConstantsEnums.ServerTypes
         )
-        CONVERTED_ATTRIBUTES: Final[str] = "converted_attributes"
-        HAS_DIFFERENCES: Final[str] = "has_differences"
-        MINIMAL_DIFFERENCES_DN: Final[str] = "minimal_differences_dn"
-        ORIGINAL_DN_LINE_COMPLETE: Final[str] = "original_dn_line_complete"
-        ACL_SOURCE_SERVER: Final[str] = "acl_source_server"
-        ACL_NAME_SANITIZED: Final[str] = "acl_name_sanitized"
-        ACL_ORIGINAL_NAME_RAW: Final[str] = "acl_original_name_raw"
-        ACL_EXTOP: Final[str] = "extop"
-        ACL_BIND_DNS: Final[str] = "bind_dns"
-        ACL_BIND_DAYOFWEEK: Final[str] = "bind_dayofweek"
-        ACL_AUTHMETHOD: Final[str] = "authmethod"
-        ACL_TARGETATTR_FILTERS: Final[str] = "targattrfilters"
-        ACL_TARGET_CONTROL: Final[str] = "targetcontrol"
-        ACL_SOURCE_PERMISSIONS: Final[str] = "source_permissions"
-        ACL_SSFS: Final[str] = "ssfs"
-        ACL_TARGETSCOPE: Final[str] = "targetscope"
-        ACL_NUMBERING: Final[str] = "numbering"
-
-        DN_COMMA: Final[str] = ","
-        DN_TRAILING_BACKSLASH_SPACE: Final[str] = "\\\\\\s+,"
-        DN_SPACES_AROUND_COMMA: Final[str] = ",\\s+"
-        DN_UNNECESSARY_ESCAPES: Final[str] = '\\\\([^,+"\\<>;\\\\# ])'
-        DN_MULTIPLE_SPACES: Final[str] = "\\s+"
-
-        DEFAULT_ACL_FORMAT: Final[str] = "aci"
-
-        _CANONICAL_SERVER_NAMES: ClassVar[tuple[str, ...]] = (
-            "oid",
-            "oud",
-            "openldap",
-            "openldap1",
-            "openldap2",
-            "ad",
-            "apache",
-            "generic",
-            "rfc",
-            "ds389",
-            "relaxed",
-            "novell",
-            "ibm_tivoli",
-        )
-        _LONG_NAMES_DICT: ClassVar[t.MutableStrMapping] = {
-            name: name for name in _CANONICAL_SERVER_NAMES
-        }
-        _FROM_LONG_DICT: ClassVar[t.MutableStrMapping] = {
-            v: k for k, v in _LONG_NAMES_DICT.items()
-        }
-        FROM_LONG: Final[t.StrMapping] = MappingProxyType(_FROM_LONG_DICT)
-        DN_COMPONENT: Final[str] = "^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\\\,]|\\\\.)*$"
-        ATTRIBUTE_NAME: Final[str] = "^[a-zA-Z][a-zA-Z0-9-]*$"
-        ATTRIBUTE_OPTION: Final[str] = ";[a-zA-Z][a-zA-Z0-9-_]*"
-        SCHEMA_NAME: Final[str] = "(?i)NAME\\s+\\(?\\s*'([^']+)'"
-        SCHEMA_DESC: Final[str] = "DESC\\s+'([^']+)'"
-        SCHEMA_EQUALITY: Final[str] = "EQUALITY\\s+([^\\s)]+)"
-        SCHEMA_SUBSTR: Final[str] = "SUBSTR\\s+([^\\s)]+)"
-        SCHEMA_ORDERING: Final[str] = "ORDERING\\s+([^\\s)]+)"
-        SCHEMA_SUP: Final[str] = "SUP\\s+'?(\\w+)'?"
-        SCHEMA_USAGE: Final[str] = "USAGE\\s+(\\w+)"
-        SCHEMA_SYNTAX_LENGTH: Final[str] = (
-            "SYNTAX\\s+(?:')?([0-9.]+)(?:')?(?:\\{(\\d+)\\})?"
-        )
-        SCHEMA_SINGLE_VALUE: Final[str] = "\\bSINGLE-VALUE\\b"
-        SCHEMA_NO_USER_MODIFICATION: Final[str] = "\\bNO-USER-MODIFICATION\\b"
-        SCHEMA_OBJECTCLASS_KIND: Final[str] = "\\b(ABSTRACT|STRUCTURAL|AUXILIARY)\\b"
-        SCHEMA_OBJECTCLASS_SUP: Final[str] = (
-            "SUP\\s+(?:\\(\\s*([^)]+)\\s*\\)|'(\\w+)'|(\\w+))"
-        )
-        SCHEMA_OBJECTCLASS_MUST: Final[str] = "MUST\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))"
-        SCHEMA_OBJECTCLASS_MAY: Final[str] = "MAY\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))"
-
-        CONFIDENCE_THRESHOLD: Final[float] = 0.6
-        ATTRIBUTE_MATCH_SCORE: Final[int] = 2
-        DEFAULT_MAX_LINES: Final[int] = 1000
-
-        @unique
-        class ChangeType(StrEnum):
-            """LDIF change types — single source of truth."""
-
-            ADDED = "added"
-            REMOVED = "removed"
-            MODIFIED = "modified"
-            FILTERED = "filtered"
-
-        @unique
-        class ChangeOperation(StrEnum):
-            """RFC 2849 modify operation names."""
-
-            ADD = "add"
-            DELETE = "delete"
-            REPLACE = "replace"
-            INCREMENT = "increment"
-
-        @unique
-        class LdifChangeType(StrEnum):
-            """RFC 2849 changetype names."""
-
-            ADD = "add"
-            DELETE = "delete"
-            MODIFY = "modify"
-            MODDN = "moddn"
-            MODRDN = "modrdn"
-
-        @unique
-        class RecordKind(StrEnum):
-            """High-level LDIF record kinds preserved in Entry."""
-
-            CONTENT = "content"
-            CHANGE = "change"
-
-        @unique
-        class ValueOrigin(StrEnum):
-            """Original LDIF value encoding/source markers."""
-
-            PLAIN = "plain"
-            BASE64 = "base64"
-            URL = "url"
-            FILE = "file"
-
-        @unique
-        class SchemaKind(StrEnum):
-            """RFC 4512 objectClass kind types."""
-
-            ABSTRACT = "ABSTRACT"
-            STRUCTURAL = "STRUCTURAL"
-            AUXILIARY = "AUXILIARY"
-
-        # Keep these aliases — referenced from frozen _utilities/ files
-        type AclSubjectTypeLiteral = AclSubjectType
-        type ChangeOperationLiteral = ChangeOperation
-        type AttributeMarkerStatusLiteral = AttributeMarkerStatus
-        type ChangeTypeLiteral = ChangeType
-        type EncodingLiteral = Encoding
-        type LdifChangeTypeLiteral = LdifChangeType
-        type RecordKindLiteral = RecordKind
-        type ServerTypeLiteral = ServerTypes
-        type TransformationTypeLiteral = TransformationType
-        type ValueOriginLiteral = ValueOrigin
-
-        DEFAULT_MAX_ATTR_VALUE_LENGTH: Final[int] = 1048576
-        TUPLE_LENGTH_PAIR: Final[int] = 2
-
-        VALID_SERVER_TYPES: Final[frozenset[str]] = frozenset({
-            "oid",
-            "oud",
-            "rfc",
-            "openldap",
-            "openldap1",
-            "openldap2",
-            "ad",
-            "apache",
-            "ds389",
-            "novell",
-            "ibm_tivoli",
-            "relaxed",
-            "generic",
-        })
 
         CLASS_SUFFIXES: Final[tuple[str, ...]] = ("Acl", "Schema", "Entry", "Constants")
 
@@ -811,41 +262,59 @@ class FlextLdifConstants(FlextCliConstants):
             "TRUE",
             "FALSE",
         })
-        SYNTAX_TIME_PATTERN: Final[str] = "^\\d{14}(\\.\\d+)?Z$"
-
-        DEFAULT_LINE_WIDTH: Final[int] = 78
 
         @unique
-        class SpaceHandlingOption(StrEnum):
-            """Space handling options for DN normalization."""
+        class EntryCriteriaMode(StrEnum):
+            """Matching strategy for entry criteria evaluation."""
 
-            PRESERVE = "preserve"
-            TRIM = "trim"
-            NORMALIZE = "normalize"
-
-        @unique
-        class ObsoleteField(StrEnum):
-            """Obsolete field constants."""
-
-            OBSOLETE = "obsolete"
-
-        @unique
-        class Categories(StrEnum):
-            """Entry category constants."""
-
+            ANY = "any"
             ALL = "all"
-            USERS = "users"
-            GROUPS = "groups"
-            HIERARCHY = "hierarchy"
-            SCHEMA = "schema"
-            ACL = "acl"
-            REJECTED = "rejected"
+
+        @unique
+        class SchemaItemKind(StrEnum):
+            """Schema item discriminator used in conversion flows."""
+
+            ATTRIBUTE = "attribute"
+            OBJECTCLASS = "objectclass"
+
+        @unique
+        class NormalizeFallback(StrEnum):
+            """Fallback strategy when DN normalization fails."""
+
+            LOWER = "lower"
+            UPPER = "upper"
+            ORIGINAL = "original"
 
         class SettingsDefaults:
             """LDIF settings default values."""
 
             DEFAULT_ENCODING: Final[str] = "utf-8"
             DEFAULT_STRICT_VALIDATION: Final[bool] = True
+
+        SERVER_TYPE_ALIASES: Final[
+            Mapping[str, FlextLdifConstantsEnums.ServerTypes]
+        ] = MappingProxyType({
+            "active_directory": FlextLdifConstantsEnums.ServerTypes.AD,
+            "activedirectory": FlextLdifConstantsEnums.ServerTypes.AD,
+            "oracle_oid": FlextLdifConstantsEnums.ServerTypes.OID,
+            "oracleoid": FlextLdifConstantsEnums.ServerTypes.OID,
+            "oracle_oud": FlextLdifConstantsEnums.ServerTypes.OUD,
+            "oracleoud": FlextLdifConstantsEnums.ServerTypes.OUD,
+            "openldap": FlextLdifConstantsEnums.ServerTypes.OPENLDAP2,
+            "openldap1": FlextLdifConstantsEnums.ServerTypes.OPENLDAP1,
+            "openldap2": FlextLdifConstantsEnums.ServerTypes.OPENLDAP2,
+            "ibm_tivoli": FlextLdifConstantsEnums.ServerTypes.IBM_TIVOLI,
+            "ibmtivoli": FlextLdifConstantsEnums.ServerTypes.IBM_TIVOLI,
+            "tivoli": FlextLdifConstantsEnums.ServerTypes.IBM_TIVOLI,
+            "novell_edirectory": FlextLdifConstantsEnums.ServerTypes.NOVELL,
+            "novelledirectory": FlextLdifConstantsEnums.ServerTypes.NOVELL,
+            "edirectory": FlextLdifConstantsEnums.ServerTypes.NOVELL,
+            "apache_directory": FlextLdifConstantsEnums.ServerTypes.APACHE,
+            "apachedirectory": FlextLdifConstantsEnums.ServerTypes.APACHE,
+            "apacheds": FlextLdifConstantsEnums.ServerTypes.APACHE,
+            "389ds": FlextLdifConstantsEnums.ServerTypes.DS389,
+            "389directory": FlextLdifConstantsEnums.ServerTypes.DS389,
+        })
 
         class EntryDefaults:
             """Entry processing default values (RFC 2849 LDIF domain)."""
@@ -868,15 +337,6 @@ class FlextLdifConstants(FlextCliConstants):
                 "subschemaSubentry",
                 "dseType",
             })
-
-        class ChangeTypeOperations:
-            """RFC 2849 LDIF changetype operations."""
-
-            ADD = "add"
-            MODIFY = "modify"
-            DELETE = "delete"
-            MODDN = "moddn"
-            MODRDN = "modrdn"
 
         @unique
         class LogLevelLower(StrEnum):

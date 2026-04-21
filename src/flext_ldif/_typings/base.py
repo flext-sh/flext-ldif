@@ -10,7 +10,6 @@ from collections.abc import (
     Sequence,
     Set as AbstractSet,
 )
-from datetime import datetime
 from typing import Annotated
 
 from flext_cli import m, r, t
@@ -20,13 +19,15 @@ class FlextLdifTypesBase:
     """Base LDIF aliases for recursive containers and raw LDIF payloads."""
 
     type Scalar = t.Primitives | None
-    type MetadataLeaf = t.Primitives | datetime | None
-    type MetadataNode = (
-        MetadataLeaf | Sequence[MetadataLeaf] | Mapping[str, MetadataLeaf]
-    )
-    type MetadataValue = (
-        MetadataLeaf | Sequence[MetadataNode] | Mapping[str, MetadataNode]
-    )
+    type MetadataInputValue = t.Cli.JsonLikeValue
+    type MetadataInputMapping = Mapping[str, MetadataInputValue]
+    type MutableMetadataInputMapping = MutableMapping[str, MetadataInputValue]
+    type MetadataLeaf = t.JsonValue
+    type MetadataNode = t.JsonValue
+    type MetadataValue = t.JsonValue
+    type MetadataMapping = Mapping[str, MetadataValue]
+    type MutableMetadataMapping = MutableMapping[str, MetadataValue]
+    type MetadataCarrierValue = MetadataInputValue
     type RecursiveContainer = t.JsonValue
     type ValueType = Scalar | t.StrSequence
     type ValueList = Sequence[ValueType]
@@ -38,6 +39,8 @@ class FlextLdifTypesBase:
         str,
         str | MutableSequence[str] | AbstractSet[str],
     ]
+    type UnconvertedAttributeValue = str | MutableSequence[str] | bytes
+    type UnconvertedAttributes = MutableMapping[str, UnconvertedAttributeValue]
     type SchemaExtensionsMapping = MutableMapping[
         str,
         MutableSequence[str] | str | bool | None,

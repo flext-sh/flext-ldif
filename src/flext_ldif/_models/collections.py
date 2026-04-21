@@ -15,11 +15,10 @@ from typing import TYPE_CHECKING, Annotated, override
 
 from flext_cli import m, u
 
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif.typings import t
+from flext_ldif import FlextLdifModelsMetadata as mdm, t
 
 if TYPE_CHECKING:
-    from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
+    from flext_ldif import FlextLdifModelsDomainsEntries as mde
 
 
 class FlextLdifModelsCollections:
@@ -90,18 +89,18 @@ class FlextLdifModelsCollections:
 
     class SchemaContent(m.FrozenModel):
         attributes: Annotated[
-            MutableSequence[FlextLdifModelsDomainsEntries.SchemaAttribute],
+            MutableSequence[mde.SchemaAttribute],
             u.Field(description="Schema attribute definitions extracted from LDIF"),
         ]
         object_classes: Annotated[
-            MutableSequence[FlextLdifModelsDomainsEntries.SchemaObjectClass],
+            MutableSequence[mde.SchemaObjectClass],
             u.Field(description="Schema object class definitions extracted from LDIF"),
         ]
 
-    class CategoryPaths(FlextLdifModelsMetadata.DynamicMetadata):
+    class CategoryPaths(mdm.DynamicMetadata):
         """Category to file path mapping model."""
 
-    class ConfigSettings(FlextLdifModelsMetadata.DynamicMetadata):
+    class ConfigSettings(mdm.DynamicMetadata):
         def set_setting(self, key: str, value: t.Scalar) -> None:
             self[key] = value
 
@@ -129,9 +128,9 @@ class FlextLdifModelsCollections:
             return bool(extra[key])
 
     class FlexibleCategories(m.DynamicModel):
-        categories: MutableMapping[
-            str, MutableSequence[FlextLdifModelsDomainsEntries.Entry]
-        ] = u.Field(default_factory=dict)
+        categories: MutableMapping[str, MutableSequence[mde.Entry]] = u.Field(
+            default_factory=dict
+        )
 
         @override
         def __eq__(self, other: t.ValueOrModel) -> bool:
@@ -148,7 +147,7 @@ class FlextLdifModelsCollections:
         def __getitem__(
             self,
             category: str,
-        ) -> MutableSequence[FlextLdifModelsDomainsEntries.Entry]:
+        ) -> MutableSequence[mde.Entry]:
             key = str(category)
             if key not in self.categories:
                 self.categories[key] = []
@@ -157,19 +156,19 @@ class FlextLdifModelsCollections:
         def __setitem__(
             self,
             category: str,
-            entries: MutableSequence[FlextLdifModelsDomainsEntries.Entry],
+            entries: MutableSequence[mde.Entry],
         ) -> None:
             self.categories[str(category)] = list(entries)
 
         def add_entries(
             self,
             category: str,
-            entries: MutableSequence[FlextLdifModelsDomainsEntries.Entry],
+            entries: MutableSequence[mde.Entry],
         ) -> None:
             key = str(category)
             existing = self.categories.get(key)
             if existing is None:
-                existing_entries: list[FlextLdifModelsDomainsEntries.Entry] = []
+                existing_entries: list[mde.Entry] = []
                 existing = existing_entries
             existing.extend(entries)
             self.categories[key] = existing
@@ -179,7 +178,7 @@ class FlextLdifModelsCollections:
 
         def items(
             self,
-        ) -> Iterator[tuple[str, MutableSequence[FlextLdifModelsDomainsEntries.Entry]]]:
+        ) -> Iterator[tuple[str, MutableSequence[mde.Entry]]]:
             yield from self.categories.items()
 
         def keys(self) -> Iterator[str]:
@@ -188,8 +187,8 @@ class FlextLdifModelsCollections:
         def get(
             self,
             category: str,
-            default: MutableSequence[FlextLdifModelsDomainsEntries.Entry] | None = None,
-        ) -> MutableSequence[FlextLdifModelsDomainsEntries.Entry]:
+            default: MutableSequence[mde.Entry] | None = None,
+        ) -> MutableSequence[mde.Entry]:
             entries = self.categories.get(str(category))
             if entries is not None:
                 return entries
@@ -197,7 +196,7 @@ class FlextLdifModelsCollections:
 
         def values(
             self,
-        ) -> Iterator[MutableSequence[FlextLdifModelsDomainsEntries.Entry]]:
+        ) -> Iterator[MutableSequence[mde.Entry]]:
             yield from self.categories.values()
 
 
