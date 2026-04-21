@@ -22,15 +22,20 @@ from flext_ldif import (
     c,
     m,
     r,
-    s,
     t,
 )
 
 
 class FlextLdif(
+    FlextLdifServer,
+    FlextLdifServersBaseSchema,
     FlextLdifDetectorMixin,
-    s[m.Ldif.Response],
+    FlextLdifAnalysis,
+    FlextLdifCategorization,
+    FlextLdifMigrationPipeline,
     FlextLdifParser,
+    FlextLdifSettings,
+    FlextLdifValidation,
     FlextLdifWriter,
 ):
     """MRO facade over LDIF services.
