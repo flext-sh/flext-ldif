@@ -1,0 +1,14 @@
+src/flext_ldif/api.py
+  h_9db9d35f50cf33 31,34-35,38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "b74008fae83b39247dbd624b54c431f7f94eac6d",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
