@@ -6,16 +6,15 @@ from collections.abc import (
     MutableSequence,
 )
 from pathlib import Path
-from typing import override
+from typing import Self, override
 
 from flext_ldif import (
     FlextLdifAnalysis,
     FlextLdifCategorization,
-    FlextLdifDetectorMixin,
+    FlextLdifDetector,
     FlextLdifMigrationPipeline,
     FlextLdifParser,
     FlextLdifServer,
-    FlextLdifServersBaseSchema,
     FlextLdifSettings,
     FlextLdifValidation,
     FlextLdifWriter,
@@ -27,15 +26,8 @@ from flext_ldif import (
 
 
 class FlextLdif(
-    FlextLdifServer,
-    FlextLdifServersBaseSchema,
-    FlextLdifDetectorMixin,
-    FlextLdifAnalysis,
-    FlextLdifCategorization,
-    FlextLdifMigrationPipeline,
+    FlextLdifDetector,
     FlextLdifParser,
-    FlextLdifSettings,
-    FlextLdifValidation,
     FlextLdifWriter,
 ):
     """MRO facade over LDIF services.
@@ -50,12 +42,23 @@ class FlextLdif(
         server: FlextLdifServer | None = None,
         settings: FlextLdifSettings | None = None,
     ) -> None:
-        """Initialize LDIF facade with server registry."""
+        """Initialize the LDIF facade with the canonical shared registry."""
         super().__init__(server=server, settings=settings)
 
-    @classmethod
+    def __call__(
+        self,
+        *,
+        server: FlextLdifServer | None = None,
+        settings: FlextLdifSettings | None = None,
+    ) -> Self:
+        """Return a configured facade instance while keeping the DSL alias callable."""
+        return type(self)(
+            server=self._server if server is None else server,
+            settings=settings,
+        )
+
     def categorization(
-        cls,
+        self,
         *,
         categorization_rules: m.Ldif.CategoryRules | None = None,
         schema_whitelist_rules: m.Ldif.WhitelistRules | None = None,
@@ -64,7 +67,7 @@ class FlextLdif(
         base_dn: str | None = None,
         server_type: str = c.Ldif.ServerTypes.RFC.value,
     ) -> FlextLdifCategorization:
-        """Create a categorization service with the global server registry."""
+        """Create a categorization service bound to the facade registry."""
         return FlextLdifCategorization(
             categorization_rules=categorization_rules,
             schema_whitelist_rules=schema_whitelist_rules,
@@ -72,7 +75,7 @@ class FlextLdif(
             forbidden_objectclasses=forbidden_objectclasses,
             base_dn=base_dn,
             server_type=server_type,
-            server_registry=FlextLdifServer.get_global_instance(),
+            server_registry=self._server,
         )
 
     def migrate(
@@ -93,13 +96,6 @@ class FlextLdif(
             output_filename=output_filename,
         )
         return pipeline.execute()
-
-    def get_schema_quirk(
-        self,
-        server_type: str,
-    ) -> FlextLdifServersBaseSchema | None:
-        """Expose schema quirk lookup through the public LDIF facade."""
-        return self._server.get_schema_quirk(server_type)
 
     def validate_entries(
         self,
@@ -122,6 +118,6 @@ class FlextLdif(
         )
 
 
-ldif = FlextLdif
+ldif = FlextLdif()
 
 __all__: list[str] = ["FlextLdif", "ldif"]

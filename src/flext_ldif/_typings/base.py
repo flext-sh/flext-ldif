@@ -19,7 +19,7 @@ class FlextLdifTypesBase:
     """Base LDIF aliases for recursive containers and raw LDIF payloads."""
 
     type Scalar = t.Primitives | None
-    type MetadataInputValue = t.Cli.JsonLikeValue
+    type MetadataInputValue = t.Cli.JsonValue
     type MetadataInputMapping = Mapping[str, MetadataInputValue]
     type MutableMetadataInputMapping = MutableMapping[str, MetadataInputValue]
     type MetadataLeaf = t.JsonValue

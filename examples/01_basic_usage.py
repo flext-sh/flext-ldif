@@ -21,121 +21,142 @@ SRP: Each method does ONE thing, composition handles complexity
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-)
 from pathlib import Path
 from typing import Final
 
 from flext_core import FlextContext
 
-from flext_ldif import FlextLdif, ldif, m, r, u
+from examples import c, m, r
+from flext_ldif import ldif
 
-logger: Final = u.fetch_logger(__name__)
+type LdifSource = str | Path
+type Entries = list[m.Ldif.Entry]
+type EntriesResult = r[Entries]
+type MessageResult = r[str]
 
 
 class BasicUsageDry:
     """DRY railway pattern: auto-detect -> parse -> validate -> process."""
 
-    SAMPLE_LDIF = "dn: cn=John Doe,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: John Doe\nsn: Doe\nmail: john.doe@example.com\n\ndn: cn=Jane Smith,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Jane Smith\nsn: Smith\nmail: jane.smith@example.com\n"
+    SAMPLE_LDIF: Final[str] = (
+        "dn: cn=John Doe,ou=People,dc=example,dc=com\n"
+        "objectClass: person\n"
+        "objectClass: inetOrgPerson\n"
+        "cn: John Doe\n"
+        "sn: Doe\n"
+        "mail: john.doe@example.com\n\n"
+        "dn: cn=Jane Smith,ou=People,dc=example,dc=com\n"
+        "objectClass: person\n"
+        "objectClass: inetOrgPerson\n"
+        "cn: Jane Smith\n"
+        "sn: Smith\n"
+        "mail: jane.smith@example.com\n"
+    )
+    SAMPLE_INPUT_PATH: Final[Path] = Path("examples/sample_basic.ldif")
+    SAMPLE_OUTPUT_PATH: Final[Path] = Path("examples/output_dry.ldif")
+    SAMPLE_CORRELATION_ID: Final[str] = "req-123-dry"
+    DEFAULT_SERVER_TYPE: Final[str] = c.Ldif.ServerTypes.RFC.value
+    DEFAULT_ENCODING: Final[str] = c.Ldif.Encoding.UTF8.value
+    OBJECT_CLASSES: Final[tuple[str, str]] = ("person", "inetOrgPerson")
+    BASE_DN: Final[str] = "ou=People,dc=example,dc=com"
 
-    @staticmethod
-    def batch_transform() -> r[MutableSequence[m.Ldif.Entry]]:
+    @classmethod
+    def _build_entry(cls, index: int) -> m.Ldif.Entry:
+        """Build one canonical LDIF entry for batch examples."""
+        return m.Ldif.Entry(
+            dn=m.Ldif.DN(value=f"cn=User{index},{cls.BASE_DN}"),
+            attributes=m.Ldif.Attributes(
+                attributes={
+                    "objectClass": [*cls.OBJECT_CLASSES],
+                    "cn": [f"User{index}"],
+                    "sn": [f"Name{index}"],
+                    "mail": [f"user{index}@example.com"],
+                },
+                attribute_metadata={},
+            ),
+        )
+
+    @classmethod
+    def _resolve_server_type(cls, source: LdifSource) -> r[str]:
+        """Resolve the server type from canonical LDIF input sources."""
+        match source:
+            case Path() as path:
+                result = ldif.get_effective_server_type(ldif_path=path)
+            case _:
+                result = ldif.get_effective_server_type(ldif_content=source)
+        return result.map(lambda server_type: server_type or cls.DEFAULT_SERVER_TYPE)
+
+    @classmethod
+    def _parse_validated_entries(
+        cls,
+        source: LdifSource,
+        *,
+        server_type: str | None = None,
+    ) -> EntriesResult:
+        """Parse and validate LDIF input through the public facade only."""
+        match source:
+            case Path() as path:
+                parse_result = ldif.parse_ldif_file(
+                    path,
+                    server_type=server_type,
+                    encoding=cls.DEFAULT_ENCODING,
+                )
+            case _:
+                parse_result = ldif.parse_ldif(source, server_type=server_type)
+        return parse_result.flat_map(
+            lambda response: ldif.validate_entries(response).map(
+                lambda _: list(response.entries),
+            ),
+        )
+
+    @classmethod
+    def batch_transform(cls) -> EntriesResult:
         """DRY batch transformation - returns created entries."""
-        entries: list[m.Ldif.Entry] = []
-        for i in range(10):
-            entry = m.Ldif.Entry(
-                dn=m.Ldif.DN(value=f"cn=User{i},ou=People,dc=example,dc=com"),
-                attributes=m.Ldif.Attributes(
-                    attributes={
-                        "objectClass": ["person", "inetOrgPerson"],
-                        "cn": [f"User{i}"],
-                        "sn": [f"Name{i}"],
-                        "mail": [f"user{i}@example.com"],
-                    },
-                    attribute_metadata={},
-                ),
-            )
-            entries.append(entry)
-        if not entries:
-            return r[MutableSequence[m.Ldif.Entry]].fail("Failed to create entries")
-        api: FlextLdif = ldif()
-        validate_result = api.validate_entries(entries)
-        if validate_result.failure:
-            return r[MutableSequence[m.Ldif.Entry]].fail(
-                validate_result.error or "Validation failed",
-            )
-        return r[MutableSequence[m.Ldif.Entry]].ok(entries)
+        entries = [cls._build_entry(index) for index in range(10)]
+        return ldif.validate_entries(entries).map(lambda _: entries)
 
-    @staticmethod
-    def file_pipeline() -> r[str]:
+    @classmethod
+    def file_pipeline(cls) -> MessageResult:
         """DRY file processing: detect -> parse -> validate -> write.
 
         Returns:
             r with processing result or error.
 
         """
-        api: FlextLdif = ldif()
-        sample_file = Path("examples/sample_basic.ldif")
-        if not sample_file.exists():
-            return r[str].fail("Sample file not found")
-        ldif_content = sample_file.read_text(encoding="utf-8")
-        detect_result = api.detect_server_type(ldif_content=ldif_content)
-        if detect_result.failure:
-            return r[str].fail(detect_result.error or "Server detection failed")
-
-        detection = m.Ldif.ServerDetectionResult.model_validate(detect_result.value)
-        server_type = detection.detected_server_type or "rfc"
-        parse_result = api.parse_ldif(sample_file, server_type=server_type)
-        if parse_result.failure:
-            return r[str].fail(parse_result.error or "Parse failed")
-
-        parse_response = m.Ldif.ParseResponse.model_validate(parse_result.value)
-        parsed_entries = parse_response.entries
-        validate_result = api.validate_entries(parsed_entries)
-        if validate_result.failure:
-            return r[str].fail(validate_result.error or "Validation failed")
-        write_result = api.write_ldif_file(
-            parsed_entries, Path("examples/output_dry.ldif")
+        if not cls.SAMPLE_INPUT_PATH.exists():
+            return r[str].fail_op(
+                "load sample ldif",
+                f"Sample file not found: {cls.SAMPLE_INPUT_PATH}",
+            )
+        return cls._resolve_server_type(cls.SAMPLE_INPUT_PATH).flat_map(
+            lambda server_type: cls._parse_validated_entries(
+                cls.SAMPLE_INPUT_PATH,
+                server_type=server_type,
+            ).flat_map(
+                lambda entries: ldif.write_ldif_file(
+                    entries,
+                    cls.SAMPLE_OUTPUT_PATH,
+                    server_type=server_type,
+                ).map(lambda _: "File processing complete")
+            ),
         )
-        if write_result.failure:
-            return r[str].fail(write_result.error or "Write failed")
-        return r[str].ok("File processing complete")
 
-    def context_pipeline(self) -> r[MutableSequence[m.Ldif.Entry]]:
+    def context_pipeline(self) -> EntriesResult:
         """Context-aware processing with correlation tracking.
 
         Returns:
             r with processing result or error.
 
         """
-        api: FlextLdif = ldif()
-        with FlextContext.Correlation.new_correlation("req-123-dry"):
-            server_result = api.get_effective_server_type(
-                ldif_content=self.SAMPLE_LDIF,
+        with FlextContext.Correlation.new_correlation(self.SAMPLE_CORRELATION_ID):
+            return self._resolve_server_type(self.SAMPLE_LDIF).flat_map(
+                lambda server_type: self._parse_validated_entries(
+                    self.SAMPLE_LDIF,
+                    server_type=server_type,
+                ),
             )
-            if server_result.failure:
-                return r[MutableSequence[m.Ldif.Entry]].fail(
-                    server_result.error or "Server detection failed",
-                )
-            resolved_server_type = str(server_result.value)
-            parse_result = api.parse_ldif(
-                self.SAMPLE_LDIF[:100],
-                server_type=resolved_server_type,
-            )
-            if parse_result.failure:
-                return r[MutableSequence[m.Ldif.Entry]].fail(
-                    parse_result.error or "Parse failed",
-                )
-            parse_response = m.Ldif.ParseResponse.model_validate(parse_result.value)
-            validate_result = api.validate_entries(parse_response.entries)
-            if validate_result.failure:
-                return r[MutableSequence[m.Ldif.Entry]].fail(
-                    validate_result.error or "Validation failed",
-                )
-            return r[MutableSequence[m.Ldif.Entry]].ok(parse_response.entries)
 
-    def process_pipeline(self) -> r[MutableSequence[m.Ldif.Entry]]:
+    def process_pipeline(self) -> EntriesResult:
         """DRY railway: detect -> parse -> validate.
 
         Python 3.13+ Features:
@@ -147,29 +168,9 @@ class BasicUsageDry:
             r with parsed and validated entries or error.
 
         """
-        api: FlextLdif = ldif()
-        server_type = "rfc"
-        detect_result = api.detect_server_type(ldif_content=self.SAMPLE_LDIF)
-        if detect_result.success:
-            detection = m.Ldif.ServerDetectionResult.model_validate(
-                detect_result.value,
-            )
-            if detection.detected_server_type:
-                server_type = str(detection.detected_server_type)
-        elif detect_result.failure:
-            return r[MutableSequence[m.Ldif.Entry]].fail(
-                detect_result.error or "Detection failed",
-            )
-        parse_result = api.parse_ldif(self.SAMPLE_LDIF, server_type=server_type)
-        if parse_result.failure:
-            return r[MutableSequence[m.Ldif.Entry]].fail(
-                parse_result.error or "Parse failed"
-            )
-        parse_response = m.Ldif.ParseResponse.model_validate(parse_result.value)
-        entries = parse_response.entries
-        validate_result = api.validate_entries(entries)
-        if validate_result.failure:
-            return r[MutableSequence[m.Ldif.Entry]].fail(
-                validate_result.error or "Validation failed",
-            )
-        return r[MutableSequence[m.Ldif.Entry]].ok(entries)
+        return self._resolve_server_type(self.SAMPLE_LDIF).flat_map(
+            lambda server_type: self._parse_validated_entries(
+                self.SAMPLE_LDIF,
+                server_type=server_type,
+            ),
+        )

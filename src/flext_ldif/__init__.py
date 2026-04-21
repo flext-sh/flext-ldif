@@ -98,7 +98,7 @@ if _t.TYPE_CHECKING:
     from flext_ldif.services.analysis import FlextLdifAnalysis
     from flext_ldif.services.categorization import FlextLdifCategorization
     from flext_ldif.services.conversion import FlextLdifConversion
-    from flext_ldif.services.detector import FlextLdifDetector, FlextLdifDetectorMixin
+    from flext_ldif.services.detector import FlextLdifDetector
     from flext_ldif.services.entries import FlextLdifEntries
     from flext_ldif.services.filters import FlextLdifFilters
     from flext_ldif.services.migration import FlextLdifMigrationPipeline
@@ -233,10 +233,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".services.analysis": ("FlextLdifAnalysis",),
             ".services.categorization": ("FlextLdifCategorization",),
             ".services.conversion": ("FlextLdifConversion",),
-            ".services.detector": (
-                "FlextLdifDetector",
-                "FlextLdifDetectorMixin",
-            ),
+            ".services.detector": ("FlextLdifDetector",),
             ".services.entries": ("FlextLdifEntries",),
             ".services.filters": ("FlextLdifFilters",),
             ".services.migration": ("FlextLdifMigrationPipeline",),
@@ -292,7 +289,6 @@ __all__: list[str] = [
     "FlextLdifConstantsEnums",
     "FlextLdifConversion",
     "FlextLdifDetector",
-    "FlextLdifDetectorMixin",
     "FlextLdifEntries",
     "FlextLdifFilters",
     "FlextLdifMigrationPipeline",

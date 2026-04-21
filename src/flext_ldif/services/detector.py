@@ -9,15 +9,35 @@ from collections.abc import (
 from pathlib import Path
 from typing import override
 
-from flext_ldif import FlextLdifServer, m, p, r, s, t, u
+from flext_ldif import (
+    FlextLdifServer,
+    FlextLdifServiceBase,
+    FlextLdifSettings,
+    c,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
 
 
-class FlextLdifDetectorMixin:
-    """Detector methods for MRO composition on FlextLdif.
+class FlextLdifDetector(FlextLdifServiceBase):
+    """Detector service composed directly into the LDIF facade via MRO.
 
-    Overrides ``_get_effective_server_type_value`` from ParserMixin/WriterMixin
-    to integrate auto-detection when FlextLdif composes all three mixins.
+    Overrides ``_get_effective_server_type_value`` from parser and writer
+    services so the facade can auto-detect the active server type.
     """
+
+    @override
+    def __init__(
+        self,
+        *,
+        server: FlextLdifServer | None = None,
+        settings: FlextLdifSettings | None = None,
+    ) -> None:
+        """Forward shared LDIF runtime state through the service MRO."""
+        super().__init__(server=server, settings=settings)
 
     @staticmethod
     def _add_pattern_if_match(
@@ -123,14 +143,15 @@ class FlextLdifDetectorMixin:
             )
             if detection_result.success:
                 return r[str].ok(detection_result.value.detected_server_type)
-        return r[str].ok("rfc")
+        return r[str].ok(c.Ldif.ServerTypes.RFC.value)
 
+    @override
     def _get_effective_server_type_value(self) -> str:
         """Resolve effective server type via detector (overrides ParserMixin default)."""
         result = self.get_effective_server_type()
         if result.success:
             return result.value
-        return "rfc"
+        return c.Ldif.ServerTypes.RFC.value
 
     def _calculate_scores(self, content: str) -> t.MutableIntMapping:
         """Calculate detection scores for each server type."""
@@ -236,19 +257,20 @@ class FlextLdifDetectorMixin:
         scores: t.MutableIntMapping,
     ) -> tuple[str, float]:
         """Determine the most likely server type from scores."""
+        rfc_server_type = c.Ldif.ServerTypes.RFC.value
         if not scores:
-            return ("rfc", 0.0)
+            return (rfc_server_type, 0.0)
         max_score: int = max(scores.values()) if scores else 0
         scores_values: MutableSequence[int] = list(scores.values()) if scores else []
         total_score: int = sum(scores_values)
         if max_score == 0:
-            return ("rfc", 0.0)
+            return (rfc_server_type, 0.0)
         confidence = max_score / total_score if total_score > 0 else 0.0
         detected_key: str = max(scores, key=lambda k: scores[k])
         if confidence < u.Ldif.get_confidence_threshold():
-            return ("rfc", confidence)
+            return (rfc_server_type, confidence)
         if detected_key == "generic":
-            return ("rfc", confidence)
+            return (rfc_server_type, confidence)
         server_type_map: t.MutableStrMapping = {
             "oid": "oid",
             "oud": "oud",
@@ -261,10 +283,10 @@ class FlextLdifDetectorMixin:
             "ibm_tivoli": "ibm_tivoli",
             "389ds": "ds389",
             "relaxed": "relaxed",
-            "rfc": "rfc",
-            "generic": "rfc",
+            rfc_server_type: rfc_server_type,
+            "generic": rfc_server_type,
         }
-        detected: str = server_type_map.get(detected_key, "rfc")
+        detected: str = server_type_map.get(detected_key, rfc_server_type)
         return (detected, confidence)
 
     def _extract_oid_patterns(
@@ -503,21 +525,4 @@ class FlextLdifDetectorMixin:
             if server_type_lower in item_lower or item_lower in server_type_lower:
                 scores[server_type] += score_attr_match
 
-
-class FlextLdifDetector(FlextLdifDetectorMixin, s[m.Ldif.ClientStatus]):
-    """Standalone detector service (also usable outside FlextLdif MRO)."""
-
-    @override
-    def execute(self) -> r[m.Ldif.ClientStatus]:
-        """Execute server detector self-check (required by s)."""
-        config_settings = m.Ldif.ConfigSettings()
-        config_settings.set_setting("service", "FlextLdifDetector")
-        status_result = m.Ldif.ClientStatus(
-            status="initialized",
-            services=["detect_server_type"],
-            settings=config_settings,
-        )
-        return r[m.Ldif.ClientStatus].ok(status_result)
-
-
-__all__: list[str] = ["FlextLdifDetector", "FlextLdifDetectorMixin"]
+    __all__: list[str] = ["FlextLdifDetector"]

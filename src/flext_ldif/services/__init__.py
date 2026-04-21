@@ -20,10 +20,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".analysis": ("FlextLdifAnalysis",),
             ".categorization": ("FlextLdifCategorization",),
             ".conversion": ("FlextLdifConversion",),
-            ".detector": (
-                "FlextLdifDetector",
-                "FlextLdifDetectorMixin",
-            ),
+            ".detector": ("FlextLdifDetector",),
             ".entries": ("FlextLdifEntries",),
             ".filters": ("FlextLdifFilters",),
             ".migration": ("FlextLdifMigrationPipeline",),

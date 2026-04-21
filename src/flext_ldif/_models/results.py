@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import (
     MutableSequence,
 )
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, Self
 
 from flext_cli import m, u
 
@@ -346,8 +346,6 @@ class FlextLdifModelsResults:
         ]
 
     class ValidationResult(m.FrozenModel):
-        _flext_enforcement_exempt: ClassVar[bool] = True
-
         valid: Annotated[
             bool,
             u.Field(description="Whether all entries passed validation"),

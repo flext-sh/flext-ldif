@@ -50,7 +50,8 @@ class TestFlextLdifAPIIntegration:
         expected_entries: int,
     ) -> None:
         """Test parsing LDIF content across different scenarios."""
-        api = ldif()
+        _ = scenario
+        api = ldif
         result = api.parse_ldif(ldif_content)
         assert result.success
         entries = result.value.entries
@@ -85,7 +86,7 @@ class TestFlextLdifAPIIntegration:
 
     def test_validate_entries_workflow(self) -> None:
         """Test complete validation workflow."""
-        api = ldif()
+        api = ldif
         parse_result = api.parse_ldif(c.Ldif.Tests.RFC_SAMPLE_LDIF_BASIC)
         assert parse_result.success
         entries = parse_result.value.entries
@@ -96,6 +97,7 @@ class TestFlextLdifAPIIntegration:
         """Test that multiple ldif instances work independently."""
         ldif1 = ldif()
         ldif2 = ldif()
+        assert ldif1 is not ldif2
         result1 = ldif1.parse_ldif(c.Ldif.Tests.RFC_SAMPLE_LDIF_BASIC)
         result2 = ldif2.parse_ldif(c.Ldif.Tests.RFC_SAMPLE_LDIF_BASIC)
         assert result1.success
@@ -109,7 +111,7 @@ class TestFlextLdifAPIIntegration:
 
     def test_api_facade_property_access(self) -> None:
         """Test facade operations with the canonical LDIF model namespace."""
-        api = ldif()
+        api = ldif
         create_result = m.Ldif.Entry.create(
             dn="cn=namespace-check,dc=example,dc=com",
             attributes={
@@ -126,7 +128,7 @@ class TestFlextLdifAPIIntegration:
 
     def test_end_to_end_workflow_complete(self) -> None:
         """Test complete end-to-end workflow from parse to filter."""
-        api = ldif()
+        api = ldif
         parse_result = api.parse_ldif(c.Ldif.Tests.RFC_SAMPLE_LDIF_BASIC)
         assert parse_result.success
         entries = parse_result.value.entries
@@ -136,6 +138,12 @@ class TestFlextLdifAPIIntegration:
         assert stats.total_entries == 1
         validate_result = api.validate_entries(entries)
         assert validate_result.success
+
+    def test_runtime_alias_exposes_direct_dsl(self) -> None:
+        """Test the runtime alias as the primary no-ceremony facade."""
+        result = ldif.parse_ldif(c.Ldif.Tests.RFC_SAMPLE_LDIF_BASIC)
+        assert result.success
+        assert len(result.value.entries) == 1
 
 
 if __name__ == "__main__":

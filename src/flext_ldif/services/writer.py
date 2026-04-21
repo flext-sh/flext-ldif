@@ -6,17 +6,30 @@ from collections.abc import (
     MutableSequence,
 )
 from pathlib import Path
+from typing import override
 
 from flext_ldif import (
+    FlextLdifServer,
     FlextLdifServiceBase,
+    FlextLdifSettings,
     m,
     r,
     u,
 )
 
 
-class FlextLdifWriter(FlextLdifServiceBase[m.Ldif.WriteResponse]):
+class FlextLdifWriter(FlextLdifServiceBase):
     """LDIF writer orchestrator over the server quirk registry."""
+
+    @override
+    def __init__(
+        self,
+        *,
+        server: FlextLdifServer | None = None,
+        settings: FlextLdifSettings | None = None,
+    ) -> None:
+        """Forward shared LDIF runtime state through the service MRO."""
+        super().__init__(server=server, settings=settings)
 
     @staticmethod
     def _coerce_entries(

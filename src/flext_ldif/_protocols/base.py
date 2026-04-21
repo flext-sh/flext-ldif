@@ -11,7 +11,7 @@ from collections.abc import (
     Sequence,
     ValuesView,
 )
-from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_cli import m
 
@@ -513,8 +513,6 @@ class FlextLdifProtocolsBase(Protocol):
     @runtime_checkable
     class ValidationResult(Protocol):
         """Validation summary contract."""
-
-        _flext_enforcement_exempt: ClassVar[bool] = True
 
         @property
         def valid(self) -> bool:

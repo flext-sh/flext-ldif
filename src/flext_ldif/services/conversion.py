@@ -429,7 +429,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _normalize_metadata_value(
-        value: t.Cli.JsonLikeValue | None,
+        value: t.Cli.JsonValue | None,
     ) -> t.Cli.JsonValue:
         """Normalize metadata value to proper type."""
         return u.Cli.normalize_json_value("" if value is None else value)
@@ -1249,7 +1249,7 @@ class FlextLdifConversion(
 
     def _convert_to_metadata_attribute_value(
         self,
-        value: t.Cli.JsonLikeValue | None,
+        value: t.Cli.JsonValue | None,
     ) -> t.Container:
         """Convert value to MetadataAttributeValue type."""
         return u.Cli.normalize_json_value("" if value is None else value)

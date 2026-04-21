@@ -3,20 +3,14 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import (
-    Sequence,
-)
 from typing import override
 
 from flext_core import FlextSettings, s
 
-from flext_ldif import FlextLdifServer, FlextLdifSettings, c, m, t, u
+from flext_ldif import FlextLdifServer, FlextLdifSettings, c, m, p, r, u
 
 
-class FlextLdifServiceBase[TDomainResult: t.ValueOrModel | Sequence[t.ValueOrModel]](
-    s[TDomainResult],
-    ABC,
-):
+class FlextLdifServiceBase(s[m.Ldif.Response], ABC):
     """Base class for LDIF services with typed settings helper."""
 
     _server: FlextLdifServer = u.PrivateAttr()
@@ -33,6 +27,13 @@ class FlextLdifServiceBase[TDomainResult: t.ValueOrModel | Sequence[t.ValueOrMod
             self,
             "_server",
             server or FlextLdifServer.get_global_instance(),
+        )
+
+    @override
+    def execute(self) -> p.Result[m.Ldif.Response]:
+        """Return the canonical LDIF domain response for DSL service execution."""
+        return r[m.Ldif.Response].ok(
+            m.Ldif.Response(statistics=m.Ldif.Statistics()),
         )
 
     @property

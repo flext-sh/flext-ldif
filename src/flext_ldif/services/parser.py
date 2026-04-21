@@ -3,12 +3,23 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import override
 
-from flext_ldif import FlextLdifServiceBase, m, r
+from flext_ldif import FlextLdifServer, FlextLdifServiceBase, FlextLdifSettings, m, r
 
 
-class FlextLdifParser(FlextLdifServiceBase[m.Ldif.ParseResponse]):
+class FlextLdifParser(FlextLdifServiceBase):
     """LDIF parser orchestrator over the server quirk registry."""
+
+    @override
+    def __init__(
+        self,
+        *,
+        server: FlextLdifServer | None = None,
+        settings: FlextLdifSettings | None = None,
+    ) -> None:
+        """Forward shared LDIF runtime state through the service MRO."""
+        super().__init__(server=server, settings=settings)
 
     def parse_ldif(
         self,
