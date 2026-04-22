@@ -220,7 +220,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     @classmethod
     def _extract_syntax_validation_error(
         cls,
-        value: t.Container | None,
+        value: t.Ldif.MetadataValue | None,
     ) -> str | None:
         syntax_validation = cls._coerce_dynamic_metadata(value)
         syntax_error = syntax_validation.get("syntax_validation_error")
@@ -231,7 +231,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     @classmethod
     def _to_optional_str_or_list(
         cls,
-        value: t.Container | None,
+        value: t.Ldif.MetadataValue | None,
     ) -> str | MutableSequence[str] | None:
         if isinstance(value, str):
             return value
@@ -265,7 +265,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     @staticmethod
     def _coerce_dynamic_metadata(
-        value: t.Container | None,
+        value: t.Ldif.MetadataValue | None,
     ) -> m.Ldif.DynamicMetadata:
         if isinstance(value, m.Ldif.DynamicMetadata):
             return value
@@ -298,7 +298,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return extensions
 
     @staticmethod
-    def _to_optional_int(value: t.Container) -> int | None:
+    def _to_optional_int(value: t.Ldif.MetadataValue | None) -> int | None:
         match value:
             case int() as int_value:
                 return int_value
@@ -308,32 +308,33 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 return None
 
     @staticmethod
-    def _to_optional_str(value: t.Container) -> str | None:
+    def _to_optional_str(value: t.Ldif.MetadataValue | None) -> str | None:
         match value:
             case str() as str_value:
                 return str_value
-            case _ if value and value is not True:
-                return str(value)
+            case int() | float() as scalar_value:
+                return str(scalar_value)
             case _:
                 return None
 
     @staticmethod
-    def _to_required_str(value: t.Container, default: str = "") -> str:
+    def _to_required_str(
+        value: t.Ldif.MetadataValue | None,
+        default: str = "",
+    ) -> str:
         match value:
             case str() as str_value:
                 return str_value
-            case _ if value:
-                return str(value)
+            case int() | float() as scalar_value:
+                return str(scalar_value)
             case _:
                 return default
 
     @staticmethod
     def _to_string_list(
-        value: t.Container | None,
+        value: t.Ldif.MetadataValue | None,
     ) -> MutableSequence[str] | None:
-        if isinstance(value, Sequence) and (
-            not isinstance(value, str | bytes | bytearray)
-        ):
+        if isinstance(value, Sequence) and not isinstance(value, str):
             return [str(item) for item in value]
         return None
 

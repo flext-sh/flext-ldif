@@ -35,7 +35,7 @@ class TestFlextLdifSettingsIntegration:
 
     def test_default_config_initialization(self) -> None:
         """Test facade initializes with default settings."""
-        api = ldif()
+        api = ldif
         result = api.parse_ldif(c.Ldif.Tests.CONFIG_BASIC_ENTRY)
         assert result.success
 
@@ -71,7 +71,7 @@ class TestFlextLdifSettingsIntegration:
     @pytest.mark.parametrize("server_type", c.Ldif.Tests.CONFIG_SERVER_TYPES[:3])
     def test_config_affects_parsing_behavior(
         self,
-        server_type: c.Ldif.ServerTypeLiteral,
+        server_type: str,
     ) -> None:
         """Test that settings settings affect parsing behavior."""
         settings = FlextLdifSettings()
@@ -92,7 +92,7 @@ class TestFlextLdifSettingsIntegration:
     )
     def test_config_with_server_type(
         self,
-        server_type: c.Ldif.ServerTypeLiteral,
+        server_type: str,
         expected_content_key: str,
     ) -> None:
         """Test settings with specific server type using parametrization."""

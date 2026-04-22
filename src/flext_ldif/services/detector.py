@@ -256,23 +256,7 @@ class FlextLdifDetector(FlextLdifServiceBase):
             return (rfc_server_type, confidence)
         if detected_key == "generic":
             return (rfc_server_type, confidence)
-        server_type_map: dict[str, str] = {
-            "oid": "oid",
-            "oud": "oud",
-            "openldap": "openldap",
-            "openldap1": "openldap1",
-            "openldap2": "openldap2",
-            "active_directory": "active_directory",
-            "apache_directory": "apache_directory",
-            "novell_edirectory": "novell_edirectory",
-            "ibm_tivoli": "ibm_tivoli",
-            "389ds": "ds389",
-            "relaxed": "relaxed",
-            rfc_server_type: rfc_server_type,
-            "generic": rfc_server_type,
-        }
-        detected: str = server_type_map.get(detected_key, rfc_server_type)
-        return (detected, confidence)
+        return (detected_key, confidence)
 
     def _extract_oid_patterns(
         self,

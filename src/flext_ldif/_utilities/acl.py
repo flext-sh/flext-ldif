@@ -270,15 +270,15 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def build_metadata_extensions(
         settings: m.Ldif.AclMetadataConfig,
-    ) -> t.MutableFlatContainerMapping:
+    ) -> t.Ldif.MutableMetadataMapping:
         """Build QuirkMetadata extensions for ACL."""
-        normalized_line_breaks: list[t.Cli.JsonValue] | None = None
+        normalized_line_breaks: t.Cli.JsonValue | None = None
         if settings.line_breaks is not None:
             normalized_line_breaks = [int(value) for value in settings.line_breaks]
-        normalized_targetscope: list[t.Cli.JsonValue] | None = None
+        normalized_targetscope: t.Cli.JsonValue | None = None
         if settings.targetscope is not None:
             normalized_targetscope = [int(value) for value in settings.targetscope]
-        result: t.MutableFlatContainerMapping = {}
+        result: t.Ldif.MutableMetadataMapping = {}
         if normalized_line_breaks is not None:
             result["line_breaks"] = normalized_line_breaks
         if settings.dn_spaces is not None:
@@ -351,7 +351,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def extract_bind_rules_from_extensions(
-        extensions: t.MutableFlatContainerMapping | None,
+        extensions: t.Ldif.MutableMetadataMapping | None,
         rule_config: MutableSequence[tuple[str, str, str | None]],
         *,
         tuple_length: int = 2,
@@ -363,7 +363,7 @@ class FlextLdifUtilitiesACL:
         def process_rule_config(rule_item: tuple[str, str, str | None]) -> str | None:
             """Process single rule settings item."""
             ext_key, format_template, operator_default = rule_item
-            value_raw: t.Container = extensions.get(ext_key) if extensions else None
+            value_raw = extensions.get(ext_key)
             if value_raw is None:
                 return None
             operator_placeholder = "{" + "operator" + "}"

@@ -5,8 +5,6 @@ from __future__ import annotations
 import re
 import struct
 from collections.abc import (
-    Mapping,
-    MutableMapping,
     MutableSequence,
 )
 from typing import ClassVar, override
@@ -466,9 +464,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             return is_config_dn or has_olc_attrs or has_olc_classes
 
         @staticmethod
-        def _dn_case_rules() -> MutableMapping[
-            str, t.Scalar | MutableSequence[str] | None
-        ]:
+        def _dn_case_rules() -> dict[str, t.Cli.JsonValue]:
             """Return DN case rules for OpenLDAP."""
             normalize_to: str | None = None
             return {"preserve_case": True, "normalize_to": normalize_to}
@@ -476,13 +472,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         def _inject_validation_rules(self, entry: m.Ldif.Entry) -> m.Ldif.Entry:
             """Inject OpenLDAP-specific validation rules into Entry metadata via DI."""
             server_type = c.Ldif.ServerTypes.OPENLDAP.value
-            validation_rules: MutableMapping[
-                str,
-                t.Scalar
-                | MutableMapping[str, t.Scalar | MutableSequence[str] | None]
-                | MutableSequence[str]
-                | None,
-            ] = {
+            validation_rules: dict[str, t.Cli.JsonValue] = {
                 "requires_objectclass": server_type
                 in c.Ldif.OBJECTCLASS_REQUIRED_SERVERS,
                 "requires_naming_attr": server_type
@@ -515,15 +505,22 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 )
             if entry.metadata is None:
                 return entry
-            validation_rules_payload = dict(validation_rules.items())
             validation_rules_str = m.Ldif.DynamicMetadata.from_dict(
-                validation_rules_payload,
+                validation_rules,
             ).model_dump_json()
             entry.metadata.extensions["validation_rules"] = validation_rules_str
             acl_format_rules = validation_rules["acl_format_rules"]
+            acl_format_payload: dict[str, t.Cli.JsonValue] | None = (
+                {
+                    str(key): u.normalize_to_metadata(value)
+                    for key, value in acl_format_rules.items()
+                }
+                if isinstance(acl_format_rules, dict)
+                else None
+            )
             acl_format_str = (
-                m.Ldif.DynamicMetadata.from_dict(acl_format_rules).model_dump_json()
-                if isinstance(acl_format_rules, Mapping)
+                m.Ldif.DynamicMetadata.from_dict(acl_format_payload).model_dump_json()
+                if acl_format_payload is not None
                 else ""
             )
             FlextLdifServersOpenldap._logger.debug(

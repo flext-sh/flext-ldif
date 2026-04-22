@@ -273,7 +273,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _normalize_acl_values(
-        acl_values_raw: t.Container,
+        acl_values_raw: t.Ldif.MetadataValue,
     ) -> MutableSequence[str] | str | m.Ldif.Acl:
         """Normalize ACL values to expected type for comment generation.
 
@@ -294,8 +294,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _parse_commented_values(
-        commented_raw: t.Container,
-    ) -> t.MutableFlatContainerMapping | None:
+        commented_raw: t.Ldif.MetadataValue,
+    ) -> t.Ldif.MutableMetadataMapping | None:
         """Parse commented ACL values from raw storage format.
 
         Args:
@@ -305,16 +305,16 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             Parsed dict or None if unparseable
 
         """
-        parsed: m.Ldif.DynamicMetadata | t.Container
+        parsed: m.Ldif.DynamicMetadata | t.Ldif.MetadataValue
         if isinstance(commented_raw, str):
             parsed = m.Ldif.DynamicMetadata.model_validate_json(commented_raw)
         else:
             parsed = commented_raw
         if not isinstance(parsed, Mapping):
             return None
-        normalized: t.MutableFlatContainerMapping = {}
+        normalized: t.Ldif.MutableMetadataMapping = {}
         for raw_key, raw_value in parsed.items():
-            normalized[raw_key] = raw_value
+            normalized[str(raw_key)] = u.normalize_to_metadata(raw_value)
         return normalized
 
     @staticmethod
@@ -440,7 +440,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """
         metadata_typed: m.Ldif.QuirkMetadata = metadata
         current_extensions: t.Ldif.MutableMetadataInputMapping = (
-            dict(metadata_typed.extensions) if metadata_typed.extensions else {}
+            metadata_typed.extensions.to_dict() if metadata_typed.extensions else {}
         )
         hidden_attribute_names: set[str] = set()
         hidden_attrs_raw = current_extensions.get(c.Ldif.HIDDEN_ATTRIBUTES, [])
@@ -459,17 +459,21 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 current_extensions.setdefault(c.Ldif.BASE_DN, base_dn_value)
         hidden_attribute_names.update(attr.lower() for attr in hidden_attrs)
         if hidden_attribute_names:
-            current_extensions[c.Ldif.HIDDEN_ATTRIBUTES] = sorted(
-                hidden_attribute_names
+            current_extensions[c.Ldif.HIDDEN_ATTRIBUTES] = u.normalize_to_metadata(
+                sorted(hidden_attribute_names)
             )
         if commented_acl_values:
             converted_attrs_list: MutableSequence[str] = list(
                 commented_acl_values.keys(),
             )
-            converted_attrs_typed: t.Container = list(converted_attrs_list)
-            current_extensions[c.Ldif.CONVERTED_ATTRIBUTES] = converted_attrs_typed
+            current_extensions[c.Ldif.CONVERTED_ATTRIBUTES] = u.normalize_to_metadata(
+                converted_attrs_list
+            )
             current_extensions[c.Ldif.COMMENTED_ATTRIBUTE_VALUES] = (
-                m.Ldif.DynamicMetadata.from_dict(commented_acl_values).model_dump_json()
+                m.Ldif.DynamicMetadata.from_dict({
+                    str(comment_key): u.normalize_to_metadata(comment_value)
+                    for comment_key, comment_value in commented_acl_values.items()
+                }).model_dump_json()
             )
         commented_attrs_raw = current_extensions.get(
             c.Ldif.ACL_COMMENTED_ATTRIBUTES, []
@@ -483,8 +487,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if acl_attr in entry_attributes_dict and acl_attr not in commented_attrs:
                 commented_attrs.append(acl_attr)
         if commented_attrs:
-            commented_attrs_typed: t.Container = list(commented_attrs)
-            current_extensions[c.Ldif.ACL_COMMENTED_ATTRIBUTES] = commented_attrs_typed
+            current_extensions[c.Ldif.ACL_COMMENTED_ATTRIBUTES] = (
+                u.normalize_to_metadata(commented_attrs)
+            )
         update_dict_final: MutableMapping[str, t.Ldif.MutableMetadataInputMapping] = {
             "extensions": current_extensions,
         }
@@ -1167,22 +1172,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         for src_key, dest_key in key_mapping.items():
             value_raw = acl_extensions.get(src_key)
             if value_raw is not None:
-                if u.primitive(value_raw):
-                    acl_metadata_extensions[dest_key] = value_raw
-                elif isinstance(value_raw, (list, tuple)):
-                    value_list: MutableSequence[t.Ldif.Scalar] = [
-                        item if item is None or u.primitive(item) else str(item)
-                        for item in value_raw
-                    ]
-                    acl_metadata_extensions[dest_key] = value_list
-                elif isinstance(value_raw, Mapping):
-                    value_dict_2: t.MutableConfigurationMapping = {}
-                    for k, v in value_raw.items():
-                        key = str(k)
-                        value_dict_2[key] = v if u.primitive(v) else str(v)
-                    acl_metadata_extensions[dest_key] = value_dict_2
-                else:
-                    acl_metadata_extensions[dest_key] = str(value_raw)
+                acl_metadata_extensions[dest_key] = u.normalize_to_metadata(value_raw)
 
     def _extract_acl_metadata_from_dynamic(
         self,
@@ -1211,26 +1201,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             value_raw = acl_extensions.get(src_key)
             if value_raw is None:
                 continue
-            if u.primitive(value_raw):
-                scalar_value: t.Scalar = value_raw
-                acl_metadata_extensions[dest_key] = scalar_value
-            elif isinstance(value_raw, (list, tuple)):
-                value_list: MutableSequence[t.Ldif.Scalar] = [
-                    item if item is None or u.primitive(item) else str(item)
-                    for item in value_raw
-                ]
-                acl_metadata_extensions[dest_key] = value_list
-            elif isinstance(value_raw, Mapping):
-                value_dict_1: t.MutableConfigurationMapping = {}
-                for k, v in value_raw.items():
-                    key = str(k)
-                    if u.primitive(v):
-                        value_dict_1[key] = v
-                    else:
-                        value_dict_1[key] = str(v)
-                acl_metadata_extensions[dest_key] = value_dict_1
-            else:
-                acl_metadata_extensions[dest_key] = str(value_raw)
+            acl_metadata_extensions[dest_key] = u.normalize_to_metadata(value_raw)
 
     def _finalize_and_parse_entry(
         self,
@@ -1274,10 +1245,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             converted_attrs: MutableMapping[str, MutableSequence[str | bytes]] = {
                 k: list(v) for k, v in parsed_attrs.items()
             }
-            entry_attrs_for_diff: MutableMapping[
-                str,
-                t.Scalar | MutableSequence[str] | t.MutableStrMapping | None,
-            ] = {}
+            entry_attrs_for_diff: t.Ldif.MutableMetadataMapping = {}
             for raw_key, raw_value in original_entry_dict.items():
                 key_str = str(raw_key)
                 if isinstance(raw_value, bytes):
@@ -1288,7 +1256,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     entry_attrs_for_diff[key_str] = [str(item) for item in raw_value]
                 elif isinstance(raw_value, Mapping):
                     entry_attrs_for_diff[key_str] = {
-                        str(k): str(v) for k, v in raw_value.items()
+                        str(k): u.normalize_to_metadata(v) for k, v in raw_value.items()
                     }
                 else:
                     entry_attrs_for_diff[key_str] = str(raw_value)
@@ -1311,7 +1279,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     dn_differences,
                 ).model_dump_json(),
                 attribute_differences=m.Ldif.DynamicMetadata.from_dict(
-                    attribute_differences,
+                    {
+                        str(key): u.normalize_to_metadata(value)
+                        for key, value in attribute_differences.items()
+                    },
                 ).model_dump_json(),
                 original_dn=original_dn or "",
                 parsed_dn=parsed_dn or "",
@@ -1349,14 +1320,14 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if original_attrs:
             original_aci = original_attrs.get("aci")
             if isinstance(original_aci, list):
-                aci_input: t.Container = [str(v) for v in original_aci]
+                aci_input: list[t.Cli.JsonValue] = [str(v) for v in original_aci]
                 aci_values = self._normalize_aci_value_simple(aci_input)
             elif isinstance(original_aci, str):
                 aci_values = self._normalize_aci_value_simple(original_aci)
         if not aci_values and entry.attributes and entry.attributes.attributes:
             entry_aci = entry.attributes.attributes.get("aci")
             if isinstance(entry_aci, list):
-                entry_aci_input: t.Container = [str(v) for v in entry_aci]
+                entry_aci_input: list[t.Cli.JsonValue] = [str(v) for v in entry_aci]
                 aci_values = self._normalize_aci_value_simple(entry_aci_input)
         if not aci_values:
             aci_values = self._find_aci_in_dict(original_attrs)
@@ -1624,7 +1595,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _normalize_aci_value_simple(
         self,
-        value: t.Container,
+        value: t.Ldif.MetadataValue,
     ) -> MutableSequence[str] | str | None:
         """Normalize ACI value to MutableSequence[str] | str | None."""
         if isinstance(value, list):
@@ -1777,20 +1748,21 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if value is None or u.primitive(value):
                 current_extensions[final_key] = value
             elif isinstance(value, (list, tuple)):
-                value_list: MutableSequence[t.Ldif.Scalar] = [
+                value_list: list[t.Cli.JsonValue] = [
                     item if item is None or u.primitive(item) else str(item)
                     for item in value
                 ]
-                current_extensions[final_key] = value_list
+                current_extensions[final_key] = u.normalize_to_metadata(value_list)
             elif isinstance(value, Mapping):
-                value_dict_inner: t.MutableConfigurationMapping = {}
+                value_dict_inner: dict[str, t.Cli.JsonValue] = {}
                 for k, v in value.items():
                     key = str(k)
-                    if u.primitive(v):
-                        value_dict_inner[key] = v
-                    else:
-                        value_dict_inner[key] = str(v)
-                current_extensions[final_key] = value_dict_inner
+                    value_dict_inner[key] = (
+                        v if u.primitive(v) else u.normalize_to_metadata(v)
+                    )
+                current_extensions[final_key] = u.normalize_to_metadata(
+                    value_dict_inner
+                )
             else:
                 current_extensions[final_key] = str(value)
 

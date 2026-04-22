@@ -6,7 +6,7 @@ from collections.abc import (
     Mapping,
     MutableSequence,
 )
-from typing import Annotated, Self
+from typing import Annotated, Self, override
 
 from flext_ldif import (
     FlextLdifTransformer,
@@ -39,6 +39,7 @@ class FlextLdifProcessingPipeline(s):
     )
     _pipeline: u.Ldif.Pipeline = u.PrivateAttr()
 
+    @override
     def model_post_init(self, __context: Mapping[str, t.Container] | None, /) -> None:
         """Initialize the processing pipeline after model validation."""
         super().model_post_init(__context)
@@ -74,6 +75,7 @@ class FlextLdifProcessingPipeline(s):
         )
         return cls(transform_config=transform_config)
 
+    @override
     def execute(
         self,
         entries: MutableSequence[m.Ldif.Entry],

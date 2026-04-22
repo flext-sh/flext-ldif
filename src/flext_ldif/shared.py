@@ -52,12 +52,12 @@ class FlextLdifShared:
         alias_value = c.Ldif.SERVER_TYPE_ALIASES.get(server_type_lower)
         if alias_value is not None:
             return alias_value
-        for server_enum in c.Ldif.ServerTypes.__members__.values():
-            if server_enum.value == server_type_lower:
-                return server_enum
-        valid_types = [s.value for s in c.Ldif.ServerTypes.__members__.values()]
-        msg = f"Invalid server type: {server_type}. Valid types: {valid_types}"
-        raise ValueError(msg)
+        try:
+            return c.Ldif.ServerTypes(server_type_lower)
+        except ValueError as error:
+            valid_types = [server_type.value for server_type in c.Ldif.ServerTypes]
+            msg = f"Invalid server type: {server_type}. Valid types: {valid_types}"
+            raise ValueError(msg) from error
 
 
 __all__: list[str] = ["FlextLdifShared"]

@@ -9,13 +9,14 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar, Self, override
 
+from flext_core import s
+
 from flext_ldif import (
     FlextLdifServerMethodsMixin,
     c,
     m,
     p,
     r,
-    s,
     t,
     u,
 )
@@ -25,7 +26,7 @@ logger = u.fetch_logger(__name__)
 
 class FlextLdifServersBaseSchemaAcl(
     FlextLdifServerMethodsMixin,
-    s[m.Ldif.Acl | str],
+    s[t.Ldif.AclPayload],
 ):
     """Base class for ACL quirks - satisfies Acl (structural typing)."""
 
@@ -192,7 +193,7 @@ class FlextLdifServersBaseSchemaAcl(
 
     def _coerce_acl_data(
         self,
-        value: str | m.Ldif.Acl | t.Container,
+        value: t.Container | t.Cli.JsonValue | m.Ldif.Acl | None,
     ) -> str | m.Ldif.Acl | None:
         """Coerce generic value to ACL payload union."""
         if value is None:

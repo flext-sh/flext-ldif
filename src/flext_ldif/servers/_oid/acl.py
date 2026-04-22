@@ -284,7 +284,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _build_oid_acl_metadata(
         self,
         settings: m.Ldif.OidAclMetadataConfig,
-    ) -> t.MutableConfigurationMapping:
+    ) -> t.Ldif.MutableMetadataMapping:
         """Build metadata extensions for OID ACL with Oracle-specific features."""
         target_attrs_str: str = (
             _OidAclTargetAttributesJson(root=settings.target_attrs).model_dump_json()
@@ -296,27 +296,28 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             if settings.perms_dict
             else ""
         )
-        metadata_dict: t.MutableConfigurationMapping = dict(
-            u.Ldif.build_acl_metadata_complete(
-                "oid",
-                acl_line=settings.acl_line,
-                server_type="oid",
-                subject_type=settings.oid_subject_type,
-                subject_value=settings.oid_subject_value,
-                target_dn=settings.target_dn,
-                target_attrs=target_attrs_str,
-                permissions=permissions_str,
-                target_subject_type=settings.rfc_subject_type,
-                acl_filter=settings.acl_filter,
-                acl_constraint=settings.acl_constraint,
-                bindmode=settings.bindmode,
-                deny_group_override=settings.deny_group_override is True,
-                append_to_all=settings.append_to_all is True,
-                bind_ip_filter=settings.bind_ip_filter,
-                constrain_to_added_object=settings.constrain_to_added_object,
-                target_key=FlextLdifServersOidConstants.OID_ACL_SOURCE_TARGET,
-            ),
+        metadata_raw = u.Ldif.build_acl_metadata_complete(
+            "oid",
+            acl_line=settings.acl_line,
+            server_type="oid",
+            subject_type=settings.oid_subject_type,
+            subject_value=settings.oid_subject_value,
+            target_dn=settings.target_dn,
+            target_attrs=target_attrs_str,
+            permissions=permissions_str,
+            target_subject_type=settings.rfc_subject_type,
+            acl_filter=settings.acl_filter,
+            acl_constraint=settings.acl_constraint,
+            bindmode=settings.bindmode,
+            deny_group_override=settings.deny_group_override is True,
+            append_to_all=settings.append_to_all is True,
+            bind_ip_filter=settings.bind_ip_filter,
+            constrain_to_added_object=settings.constrain_to_added_object,
+            target_key=FlextLdifServersOidConstants.OID_ACL_SOURCE_TARGET,
         )
+        metadata_dict: t.Ldif.MutableMetadataMapping = {
+            key: u.normalize_to_metadata(value) for key, value in metadata_raw.items()
+        }
         if settings.oid_subject_type:
             metadata_dict["acl_source_subject_type"] = settings.oid_subject_type
         return metadata_dict
@@ -328,17 +329,18 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             str,
             t.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ],
-    ) -> MutableMapping[str, t.Scalar | MutableSequence[str] | None]:
+    ) -> t.Ldif.MutableMetadataMapping:
         """Extract extensions dict from metadata, converting types if needed."""
         try:
             metadata = m.Ldif.QuirkMetadata.model_validate(metadata)
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return {}
-        return getattr(metadata, "extensions", None) or {}
+        extensions = getattr(metadata, "extensions", None)
+        return extensions.to_dict() if extensions is not None else {}
 
     def _format_extensions(
         self,
-        meta_extensions: MutableMapping[str, t.Scalar | MutableSequence[str] | None],
+        meta_extensions: t.Ldif.MutableMetadataMapping,
     ) -> MutableSequence[str]:
         """Format extension values based on metadata key type."""
         extensions: MutableSequence[str] = []

@@ -92,7 +92,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         )
 
     @staticmethod
-    def _scalar_or_list_value(value: t.Container) -> bool:
+    def _scalar_or_list_value(value: t.Ldif.MetadataValue) -> bool:
         """Check if value is scalar metadata value or list."""
         return u.primitive(value) or isinstance(value, list)
 
@@ -174,8 +174,10 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 if isinstance(val, (str, bool, int, float)):
                     perms_data[k] = val
                 elif isinstance(val, list):
-                    str_list = [str(item) for item in val if isinstance(item, str)]
-                    perms_data[k] = str_list
+                    str_list: list[t.Cli.JsonValue] = [
+                        str(item) for item in val if isinstance(item, str)
+                    ]
+                    perms_data[k] = u.normalize_to_metadata(str_list)
             if perms_data:
                 perms = m.Ldif.AclPermissions(
                     read=bool(perms_data.get("read")),
@@ -264,13 +266,13 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if not target and acl_data.metadata:
             extensions = acl_data.metadata.extensions
             target_dict = extensions.get("acl_target_target") if extensions else None
-            target_data: t.MutableFlatContainerMapping = {}
+            target_data: t.Ldif.MutableMetadataMapping = {}
             if isinstance(target_dict, Mapping):
                 for raw_key, raw_value in target_dict.items():
                     if isinstance(raw_value, Mapping):
                         continue
                     if FlextLdifServersOudAcl._scalar_or_list_value(raw_value):
-                        target_data[raw_key] = raw_value
+                        target_data[str(raw_key)] = u.normalize_to_metadata(raw_value)
             if target_data:
                 attrs_raw = target_data.get("attributes")
                 dn_raw = target_data.get("target_dn")
@@ -441,8 +443,8 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Write RFC-compliant ACL model to OUD ACI string format (protected internal method)."""
         try:
             sc = FlextLdifServersOudConstants
-            extensions: t.MutableFlatContainerMapping | None = (
-                dict(acl_data.metadata.extensions.to_dict())
+            extensions: t.Ldif.MutableMetadataMapping | None = (
+                acl_data.metadata.extensions.to_dict()
                 if acl_data.metadata and acl_data.metadata.extensions
                 else None
             )

@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdifParser, ldif
+from flext_ldif import FlextLdif, FlextLdifParser, ldif
 from tests import c, m, t, u
 
 
@@ -26,14 +26,14 @@ class TestMinimalDifferencesOidOud:
         return FlextLdifParser()
 
     @pytest.fixture
-    def writer(self) -> ldif:
+    def writer(self) -> FlextLdif:
         """Create writer instance via ldif."""
         return ldif()
 
     def test_oid_fixture_all_differences_captured(
         self,
         parser: FlextLdifParser,
-        writer: ldif,
+        writer: FlextLdif,
     ) -> None:
         """Test that ALL minimal differences in OID fixtures are captured in metadata."""
         fixture_path = (
@@ -60,7 +60,7 @@ class TestMinimalDifferencesOidOud:
     def test_oud_fixture_all_differences_captured(
         self,
         parser: FlextLdifParser,
-        writer: ldif,
+        writer: FlextLdif,
     ) -> None:
         """Test that ALL minimal differences in OUD fixtures are captured in metadata."""
         fixture_path = (
@@ -84,7 +84,7 @@ class TestMinimalDifferencesOidOud:
     def test_round_trip_oid_preserves_all_differences(
         self,
         parser: FlextLdifParser,
-        writer: ldif,
+        writer: FlextLdif,
     ) -> None:
         """Test round-trip: OID -> RFC -> OID preserves ALL differences."""
         oid_ldif = "dn: cn=test, dc=example, dc=com\nobjectClass: top\nobjectClass: person\ncn: test\nsn: User\norcldasisenabled: 1\n"

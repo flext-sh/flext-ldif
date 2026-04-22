@@ -53,6 +53,14 @@ class FlextLdifMigrationPipeline(s):
             description="Optional output filename override used for single-file migration.",
         ),
     ]
+    mode: Annotated[
+        str | None,
+        u.Field(
+            default=None,
+            exclude=True,
+            description="Public migration mode input accepted by the pipeline DSL.",
+        ),
+    ]
     source_server: Annotated[
         str | c.Ldif.ServerTypes | None,
         u.Field(
@@ -202,10 +210,12 @@ class FlextLdifMigrationPipeline(s):
         entries: MutableSequence[m.Ldif.Entry],
     ) -> r[MutableSequence[m.Ldif.Entry]]:
         """Migrate entries from source to target server format."""
+        source_server = self.source_server_type or self._DEFAULT_SERVER
+        target_server = self.target_server_type or self._DEFAULT_SERVER
         try:
             pipeline = FlextLdifProcessingPipeline.for_servers(
-                source_server=self.source_server_type,
-                target_server=self.target_server_type,
+                source_server=source_server,
+                target_server=target_server,
             )
             return pipeline.execute(entries)
         except (
@@ -217,8 +227,8 @@ class FlextLdifMigrationPipeline(s):
         ) as e:
             self.logger.exception(
                 "Migration failed",
-                source=self.source_server_type,
-                target=self.target_server_type,
+                source=str(source_server),
+                target=str(target_server),
                 error=str(e),
             )
             return r[MutableSequence[m.Ldif.Entry]].fail(f"Migration failed: {e}")

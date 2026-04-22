@@ -38,7 +38,6 @@ class TestsFlextLdifMigrationPipelineQuirks:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            mode="simple",
             output_filename="migrated.ldif",
             source_server=c.Ldif.ServerTypes.OID,
             target_server=c.Ldif.ServerTypes.RFC,
@@ -70,7 +69,6 @@ class TestsFlextLdifMigrationPipelineQuirks:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            mode="simple",
             output_filename="migrated.ldif",
             source_server=c.Ldif.ServerTypes.RFC,
             target_server=c.Ldif.ServerTypes.OID,
@@ -99,7 +97,6 @@ class TestsFlextLdifMigrationPipelineQuirks:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            mode="simple",
             output_filename="migrated.ldif",
             source_server=c.Ldif.ServerTypes.OID,
             target_server=c.Ldif.ServerTypes.RFC,
@@ -130,7 +127,6 @@ class TestsFlextLdifMigrationPipelineQuirks:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            mode="simple",
             output_filename="migrated.ldif",
             source_server=c.Ldif.ServerTypes.RFC,
             target_server=c.Ldif.ServerTypes.OID,
@@ -154,7 +150,6 @@ class TestsFlextLdifMigrationPipelineQuirks:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            mode="simple",
             output_filename="migrated.ldif",
             source_server=c.Ldif.ServerTypes.OID,
             target_server=c.Ldif.ServerTypes.RFC,
@@ -183,7 +178,6 @@ class TestsFlextLdifMigrationPipelineQuirks:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            mode="simple",
             output_filename="migrated.ldif",
             source_server=c.Ldif.ServerTypes.RFC,
             target_server=c.Ldif.ServerTypes.OID,

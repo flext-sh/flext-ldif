@@ -6,13 +6,14 @@ import struct
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
+from flext_core import s
+
 from flext_ldif import (
     FlextLdifServerMethodsMixin,
     c,
     m,
     p,
     r,
-    s,
     t,
     u,
 )
@@ -22,7 +23,7 @@ logger = u.fetch_logger(__name__)
 
 class FlextLdifServersBaseSchema(
     FlextLdifServerMethodsMixin,
-    s[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str],
+    s[m.Ldif.SchemaAttribute],
 ):
     """Base class for schema quirks using `s` with enhanced usability."""
 

@@ -102,7 +102,7 @@ class FlextLdifModelsCollections:
         """Category to file path mapping model."""
 
     class ConfigSettings(mdm.DynamicMetadata):
-        def set_setting(self, key: str, value: t.Scalar) -> None:
+        def set_setting(self, key: str, value: t.Ldif.MetadataCarrierValue) -> None:
             self[key] = value
 
     class BooleanFlags(m.FrozenDynamicModel):

@@ -604,11 +604,11 @@ class FlextLdifUtilitiesMetadata:
                 write_option_key: u.normalize_to_metadata(value)
                 for write_option_key, value in metadata_obj.items()
             }
-            config_root: dict[str, t.Container | m.BaseModel] = dict(
-                normalized_metadata
-            )
+            config_root: dict[str, t.Cli.JsonValue] = dict(normalized_metadata)
             object.__setattr__(
-                model, "validation_metadata", m.ConfigMap(root=config_root)
+                model,
+                "validation_metadata",
+                m.ConfigMap(root=config_root),
             )
         except (AttributeError, TypeError, ValueError):
             pass

@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 from flext_tests import tm
 
-from flext_ldif import ldif
+from flext_ldif import FlextLdif, ldif
 from tests import c
 
 
@@ -26,7 +26,7 @@ def cleanup_state() -> None:
 
 
 @pytest.fixture
-def ldif_api() -> ldif:
+def ldif_api() -> FlextLdif:
     """Provides a ldif API instance for the test function."""
     return ldif()
 
@@ -34,7 +34,7 @@ def ldif_api() -> ldif:
 class TestsFlextLdifEdgeCases:
     """Test edge cases with real fixture files."""
 
-    def test_unicode_names(self, ldif_api: ldif) -> None:
+    def test_unicode_names(self, ldif_api: FlextLdif) -> None:
         """Test parsing of entries with unicode characters in names."""
         unicode_ldif = "dn: cn=José,ou=Users,dc=example,dc=com\ncn: José\nsn: García\nobjectClass: person\n\n"
         result = ldif_api.parse_ldif(unicode_ldif, server_type=c.Ldif.Tests.RFC)
@@ -49,7 +49,7 @@ class TestsFlextLdifEdgeCases:
                 if has_unicode:
                     tm.that(len(entry.dn.value) > 0, eq=True)
 
-    def test_deep_dn(self, ldif_api: ldif) -> None:
+    def test_deep_dn(self, ldif_api: FlextLdif) -> None:
         """Test parsing of entries with very deep DN hierarchies."""
         deep_dn_ldif = "dn: cn=level1,ou=level2,ou=level3,ou=level4,ou=level5,ou=level6,dc=example,dc=com\ncn: level1\nobjectClass: person\n\n"
         result = ldif_api.parse_ldif(deep_dn_ldif, server_type=c.Ldif.Tests.RFC)
@@ -63,7 +63,7 @@ class TestsFlextLdifEdgeCases:
                 max_depth = max(max_depth, depth)
         _ = tm.that(max_depth, gt=5)
 
-    def test_large_multivalue(self, ldif_api: ldif) -> None:
+    def test_large_multivalue(self, ldif_api: FlextLdif) -> None:
         """Test parsing of attributes with many values."""
         fixture_path = (
             Path(__file__).resolve().parents[2]
@@ -84,7 +84,7 @@ class TestsFlextLdifEdgeCases:
                 max_values = max(max_values, len(attr_value))
         _ = tm.that(max_values, gte=10)
 
-    def test_roundtrip_unicode(self, ldif_api: ldif, tmp_path: Path) -> None:
+    def test_roundtrip_unicode(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of unicode entries."""
         unicode_ldif = "dn: cn=José,ou=Users,dc=example,dc=com\ncn: José\nsn: García\nobjectClass: person\n\n"
         parse_result = ldif_api.parse_ldif(unicode_ldif, server_type=c.Ldif.Tests.RFC)
@@ -103,7 +103,7 @@ class TestsFlextLdifEdgeCases:
         roundtrip_entries = roundtrip_result.value.entries
         tm.that(len(roundtrip_entries), eq=1)
 
-    def test_roundtrip_deep_dn(self, ldif_api: ldif, tmp_path: Path) -> None:
+    def test_roundtrip_deep_dn(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of deep DN entries."""
         deep_dn_ldif = "dn: cn=level1,ou=level2,ou=level3,ou=level4,ou=level5,ou=level6,dc=example,dc=com\ncn: level1\nobjectClass: person\n\n"
         parse_result = ldif_api.parse_ldif(deep_dn_ldif, server_type=c.Ldif.Tests.RFC)
@@ -124,7 +124,7 @@ class TestsFlextLdifEdgeCases:
 
     def test_roundtrip_large_multivalue(
         self,
-        ldif_api: ldif,
+        ldif_api: FlextLdif,
         tmp_path: Path,
     ) -> None:
         """Test roundtrip of large multivalue entries."""

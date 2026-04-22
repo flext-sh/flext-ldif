@@ -14,7 +14,9 @@ class FlextLdifTypesDomain:
     """Composite LDIF aliases built from canonical protocols."""
 
     type DnLike = str | p.Ldif.DN
+    type AclPayload = p.Ldif.Acl | str
     type DnRegistryLike = p.Ldif.DnRegistry
+    type EntryPayload = p.Ldif.Entry | str
     type EntryLike = p.Ldif.Entry
     type EntrySequence = MutableSequence[p.Ldif.Entry]
     type EntryOrEntries = p.Ldif.Entry | EntrySequence
@@ -35,6 +37,7 @@ class FlextLdifTypesDomain:
     type ParseOidHook = Callable[[str], str | None]
     type SchemaAttributeLike = p.Ldif.SchemaAttribute
     type SchemaObjectClassLike = p.Ldif.SchemaObjectClass
+    type SchemaPayload = p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str
     type SchemaItem = SchemaAttributeLike | SchemaObjectClassLike
     type SchemaItemSequence = MutableSequence[SchemaItem]
     type AclLike = p.Ldif.Acl

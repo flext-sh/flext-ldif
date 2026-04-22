@@ -10,7 +10,9 @@ from collections.abc import (
     MutableSequence,
 )
 from datetime import UTC, datetime
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, ClassVar, Self, override
+
+from flext_core import s
 
 from flext_ldif import (
     FlextLdifServerMethodsMixin,
@@ -18,7 +20,6 @@ from flext_ldif import (
     m,
     p,
     r,
-    s,
     t,
     u,
 )
@@ -28,7 +29,7 @@ logger = u.fetch_logger(__name__)
 
 class FlextLdifServersBaseEntry(
     FlextLdifServerMethodsMixin,
-    s[m.Ldif.Entry | str],
+    s[t.Ldif.EntryPayload],
 ):
     """Base class for entry processing quirks - satisfies Entry (structural typing)."""
 
@@ -73,17 +74,13 @@ class FlextLdifServersBaseEntry(
     ) -> m.Ldif.WriteFormatOptions | None:
         if metadata is None:
             return None
-        format_options_raw: t.Container | None = metadata.extensions.get(
+        format_options_raw: t.Ldif.MetadataValue | None = metadata.extensions.get(
             c.Ldif.WRITE_FORMAT_OPTIONS,
         )
         if isinstance(format_options_raw, Mapping):
-            format_options_map: t.MutableFlatContainerMapping = {}
-            for raw_key, raw_value in format_options_raw.items():
-                key = str(raw_key)
-                format_options_map[key] = raw_value
             try:
                 return m.Ldif.WriteFormatOptions.model_validate(
-                    dict(format_options_map),
+                    t.Cli.JSON_MAPPING_ADAPTER.validate_python(format_options_raw),
                 )
             except (c.ValidationError, TypeError) as exc:
                 logger.warning(
@@ -113,11 +110,11 @@ class FlextLdifServersBaseEntry(
         _ = objectclass
         return False
 
+    @override
     def execute(self, **kwargs: t.MutableFlatContainerMapping) -> r[m.Ldif.Entry | str]:
         """Execute entry operation (parse/write)."""
-        kwargs_map: MutableMapping[str, t.MutableFlatContainerMapping] = kwargs
-        ldif_content = kwargs_map.get("ldif_content")
-        entry_model = kwargs_map.get("entry_model")
+        ldif_content = kwargs.get("ldif_content")
+        entry_model = kwargs.get("entry_model")
         if isinstance(ldif_content, str):
             entries_result = self._parse_content(ldif_content)
             if entries_result.success:
@@ -294,7 +291,7 @@ class FlextLdifServersBaseEntry(
         use_original_acl_format_as_name = False
         hidden_attributes: set[str] = set()
         acl_original_format: str | None = None
-        extensions_data: t.MutableFlatContainerMapping = {}
+        extensions_data: t.Ldif.MutableMetadataMapping = {}
         if entry_data.metadata:
             metadata_extensions = entry_data.metadata.extensions
             if u.matches_type(metadata_extensions, Mapping):
