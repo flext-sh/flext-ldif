@@ -36,6 +36,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestSchemaTransformerNormalizeSyntaxOid",
                 "TestsFlextLdifSchemaTransformerNormalizeAttributeName",
             ),
+            ".services.test_api_server_registry": (
+                "TestsTestFlextLdifApiServerRegistry",
+            ),
             ".services.test_migration_pipeline": (
                 "TestsTestFlextLdifMigrationPipeline",
             ),

@@ -31,7 +31,7 @@ class TestsFlextLdifDnOperationsPure:
 
     def test_split_dn_edge_cases(self) -> None:
         """Test splitting DN edge cases."""
-        tm.that(u.Ldif.split(""), eq=[])
+        tm.that(u.Ldif.split(""), empty=True)
         tm.that(u.Ldif.split("cn=test"), eq=["cn=test"])
         dn = "cn=Test\\, User\\\\More,ou=Users\\, Group,dc=example"
         result = u.Ldif.split(dn)
@@ -182,7 +182,7 @@ class TestLdifParser:
         """Test extracting extensions from empty schema definition."""
         definition = ""
         result = u.Ldif.extract_extensions(definition)
-        tm.that(result, eq={})
+        tm.that(result, empty=True)
 
     def test_extract_extensions_with_x_extension(self) -> None:
         """Test extracting X- extensions from schema definition."""

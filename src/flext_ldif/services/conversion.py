@@ -14,6 +14,7 @@ from collections.abc import (
 from typing import (
     Self,
     TypeIs,
+    override,
 )
 
 from flext_ldif import (
@@ -98,7 +99,7 @@ class FlextLdifConversion(
     def _analyze_attribute_case(
         original_attribute_case: t.Cli.JsonMapping,
         target_server_type: str,
-    ) -> MutableMapping[str, t.MutableFlatContainerMapping]:
+    ) -> MutableMapping[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze attribute case for target compatibility."""
         if bool(original_attribute_case):
             return {
@@ -116,11 +117,11 @@ class FlextLdifConversion(
     def _analyze_boolean_conversions(
         boolean_conversions: t.Cli.JsonMapping,
         target_server_type: str,
-    ) -> MutableMapping[str, t.MutableStrMapping]:
+    ) -> MutableMapping[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze boolean conversions for target compatibility."""
         if not boolean_conversions:
             return {}
-        result: MutableMapping[str, t.MutableStrMapping] = {}
+        result: MutableMapping[str, t.Ldif.MutableMetadataInputMapping] = {}
         for attr_name, conv_info in boolean_conversions.items():
             source_format = ""
             if isinstance(conv_info, Mapping):
@@ -137,7 +138,7 @@ class FlextLdifConversion(
     def _analyze_dn_format(
         original_format_details: t.Cli.JsonMapping,
         target_server_type: str,
-    ) -> MutableMapping[str, t.MutableFlatContainerMapping]:
+    ) -> MutableMapping[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze DN spacing for target compatibility."""
         spacing = original_format_details.get("dn_spacing")
         if spacing:
@@ -156,11 +157,10 @@ class FlextLdifConversion(
     def _analyze_metadata_for_conversion(
         source_metadata: m.Ldif.QuirkMetadata | m.Ldif.DynamicMetadata | None,
         target_server_type: str,
-    ) -> MutableMapping[str, str | t.MutableFlatContainerMapping]:
+    ) -> MutableMapping[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze source metadata for intelligent conversion to target server."""
         conversion_analysis: MutableMapping[
-            str,
-            str | t.MutableFlatContainerMapping,
+            str, t.Ldif.MutableMetadataInputMapping
         ] = {}
         if not source_metadata or not FlextLdifConversion._has_attr(
             source_metadata,
@@ -177,14 +177,9 @@ class FlextLdifConversion(
             boolean_conversions,
             target_server_str,
         )
-        acc_typed: MutableMapping[
-            str,
-            str | t.MutableFlatContainerMapping,
-        ] = {}
+        acc_typed: MutableMapping[str, t.Ldif.MutableMetadataInputMapping] = {}
         for key, value in boolean_analysis.items():
-            if isinstance(value, str):
-                acc_typed[key] = value
-            elif isinstance(value, dict):
+            if isinstance(value, dict):
                 acc_typed[key] = {
                     str(k): FlextLdifConversion._normalize_metadata_value(v)
                     for k, v in value.items()
@@ -430,8 +425,8 @@ class FlextLdifConversion(
 
     @staticmethod
     def _normalize_metadata_value(
-        value: t.Cli.JsonValue | None,
-    ) -> t.Cli.JsonValue:
+        value: t.Cli.JsonPayload | None,
+    ) -> t.Ldif.MetadataValue:
         """Normalize metadata value to proper type."""
         return u.Cli.normalize_json_value("" if value is None else value)
 
@@ -610,6 +605,7 @@ class FlextLdifConversion(
             model_instance=model_instance,
         )
 
+    @override
     def execute(
         self,
     ) -> r[
@@ -1250,15 +1246,20 @@ class FlextLdifConversion(
 
     def _convert_to_metadata_attribute_value(
         self,
-        value: t.Cli.JsonValue | None,
-    ) -> t.Container:
+        value: t.Cli.JsonPayload | None,
+    ) -> t.Ldif.MetadataValue:
         """Convert value to MetadataData type."""
         return u.Cli.normalize_json_value("" if value is None else value)
 
-    def _get_extensions_dict(self, acl: m.Ldif.Acl) -> t.MutableFlatContainerMapping:
+    def _get_extensions_dict(
+        self,
+        acl: m.Ldif.Acl,
+    ) -> t.Ldif.MutableMetadataInputMapping:
         """Extract extensions dict from ACL metadata."""
 
-        def to_general_value(value: t.Ldif.MetadataCarrierValue) -> t.Container:
+        def to_general_value(
+            value: t.Cli.JsonPayload | None,
+        ) -> t.Ldif.MetadataValue:
             return u.Cli.normalize_json_value(value)
 
         get_metadata = u.prop("metadata")
@@ -1350,7 +1351,7 @@ class FlextLdifConversion(
             return acl_step1
         conv_ext = self._get_extensions_dict(acl_step1)
         orig_ext = self._get_extensions_dict(original_acl)
-        merged_ext_raw: t.MutableFlatContainerMapping = {
+        merged_ext_raw: t.Ldif.MutableMetadataInputMapping = {
             **orig_ext,
             **conv_ext,
         }
@@ -1360,7 +1361,7 @@ class FlextLdifConversion(
             or (not acl_step1.metadata)
         ):
             return acl_step1
-        dynamic_metadata_dict: t.MutableFlatContainerMapping = {}
+        dynamic_metadata_dict: t.Ldif.MutableMetadataInputMapping = {}
         for key, value in merged_ext_raw.items():
             if value is None:
                 dynamic_metadata_dict[key] = ""
@@ -1371,7 +1372,7 @@ class FlextLdifConversion(
                 )
                 continue
             if isinstance(value, Mapping):
-                normalized_mapping: t.MutableFlatContainerMapping = {}
+                normalized_mapping: t.Ldif.MutableMetadataInputMapping = {}
                 for raw_k, raw_v in value.items():
                     normalized_mapping[str(raw_k)] = (
                         FlextLdifConversion._normalize_metadata_value(raw_v)
@@ -1381,7 +1382,7 @@ class FlextLdifConversion(
                 )
                 continue
             if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-                normalized_sequence: list[t.Container] = [
+                normalized_sequence: list[t.Ldif.MetadataValue] = [
                     FlextLdifConversion._normalize_metadata_value(raw_item)
                     for raw_item in value
                 ]
@@ -1393,7 +1394,7 @@ class FlextLdifConversion(
                 str(value),
             )
         if acl_step1.metadata:
-            metadata_kwargs: t.MutableFlatContainerMapping = dynamic_metadata_dict
+            metadata_kwargs: t.Ldif.MutableMetadataInputMapping = dynamic_metadata_dict
             updated_metadata = acl_step1.metadata.model_copy(
                 update={
                     "extensions": m.Ldif.DynamicMetadata.from_dict(metadata_kwargs),
@@ -1493,7 +1494,7 @@ class FlextLdifConversion(
                 normalized_source_server = u.try_(
                     lambda: u.Ldif.normalize_server_type(source_quirk_name),
                 ).map_or(None)
-            extensions_update: t.MutableFlatContainerMapping = {
+            extensions_update: t.Ldif.MutableMetadataInputMapping = {
                 "converted_from_server": source_quirk_name,
             }
             if conversion_analysis:

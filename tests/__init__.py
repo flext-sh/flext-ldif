@@ -144,6 +144,9 @@ if _t.TYPE_CHECKING:
         TestSchemaTransformerNormalizeSyntaxOid,
         TestsFlextLdifSchemaTransformerNormalizeAttributeName,
     )
+    from tests.unit.services.test_api_server_registry import (
+        TestsTestFlextLdifApiServerRegistry,
+    )
     from tests.unit.services.test_migration_pipeline import (
         TestsTestFlextLdifMigrationPipeline,
     )
@@ -331,6 +334,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestSchemaTransformerNormalizeSyntaxOid",
                 "TestsFlextLdifSchemaTransformerNormalizeAttributeName",
             ),
+            ".unit.services.test_api_server_registry": (
+                "TestsTestFlextLdifApiServerRegistry",
+            ),
             ".unit.services.test_migration_pipeline": (
                 "TestsTestFlextLdifMigrationPipeline",
             ),
@@ -512,6 +518,7 @@ __all__: list[str] = [
     "TestsFlextLdifVersion",
     "TestsTestFlextLdifAclAttributeRegistry",
     "TestsTestFlextLdifApacheQuirks",
+    "TestsTestFlextLdifApiServerRegistry",
     "TestsTestFlextLdifCrossDirectionConversion",
     "TestsTestFlextLdifDs389Quirks",
     "TestsTestFlextLdifMigrationPipeline",
