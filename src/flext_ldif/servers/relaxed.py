@@ -14,7 +14,6 @@ from flext_ldif import (
     FlextLdifServersRfc,
     c,
     m,
-    p,
     r,
     t,
     u,
@@ -23,8 +22,6 @@ from flext_ldif import (
 
 class FlextLdifServersRelaxed(FlextLdifServersRfc):
     """Relaxed mode server quirks for non-compliant LDIF."""
-
-    logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for Relaxed (lenient) quirk."""

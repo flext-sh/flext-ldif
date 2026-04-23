@@ -13,7 +13,6 @@ from flext_ldif import (
     FlextLdifServersRfc,
     c,
     m,
-    p,
     r,
     t,
     u,
@@ -24,8 +23,6 @@ logger = u.fetch_logger(__name__)
 
 class FlextLdifServersOpenldap(FlextLdifServersRfc):
     """OpenLDAP 2.x Quirks - Complete Implementation."""
-
-    logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for OpenLDAP 2.x quirk."""

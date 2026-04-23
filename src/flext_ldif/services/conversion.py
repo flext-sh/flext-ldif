@@ -1230,11 +1230,6 @@ class FlextLdifConversion(
                 key: to_general_value(value)
                 for key, value in extensions_raw.to_dict().items()
             }
-        if isinstance(extensions_raw, Mapping):
-            return {
-                str(key): to_general_value(value)
-                for key, value in extensions_raw.items()
-            }
         return {}
 
     def _get_schema_quirk_for_support_check(
