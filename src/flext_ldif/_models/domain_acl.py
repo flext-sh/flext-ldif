@@ -9,14 +9,11 @@ from __future__ import annotations
 from collections.abc import (
     MutableSequence,
 )
-from typing import TYPE_CHECKING, Annotated, Self
+from typing import Annotated, Self
 
 from flext_cli import m, u
 
-from flext_ldif import FlextLdifModelsBases as mb, c, t
-
-if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModelsDomainMetadata
+from flext_ldif import FlextLdifModelsBases as mb, FlextLdifModelsDomainMetadata, c, t
 
 
 class FlextLdifModelsDomainAcl:

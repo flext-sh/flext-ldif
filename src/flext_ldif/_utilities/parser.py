@@ -56,7 +56,8 @@ class FlextLdifUtilitiesParser:
         if metadata_extensions:
             extensions_typed: t.Ldif.MutableMetadataMapping = {}
             for key, val in metadata_extensions.items():
-                extensions_typed[key] = list(val)
+                val_payload: list[t.JsonValue] = list(val)
+                extensions_typed[key] = val_payload
             return m.Ldif.QuirkMetadata(
                 quirk_type=quirk_type,
                 extensions=m.Ldif.DynamicMetadata.from_dict(
@@ -130,7 +131,8 @@ class FlextLdifUtilitiesParser:
         metadata.original_strings["dn_original"] = dn
         metadata.original_strings["entry_original_ldif"] = "\n".join(raw_record_lines)
         if comments:
-            metadata.extensions["entry_comments"] = list(comments)
+            comments_payload: list[t.JsonValue] = list(comments)
+            metadata.extensions["entry_comments"] = comments_payload
         return metadata
 
     @staticmethod

@@ -361,7 +361,7 @@ class FlextLdifModelsDomainEntry:
         _ATTRIBUTES_VALIDATE_DEFAULTS: ClassVar[Mapping[str, object]] = (
             MappingProxyType(
                 {
-                    "attribute_metadata": MappingProxyType({}),
+                    "attribute_metadata": {},
                     "metadata": None,
                 },
             )
@@ -381,7 +381,7 @@ class FlextLdifModelsDomainEntry:
                     "rfc_violations": tuple[str, ...](),
                     "errors": tuple[str, ...](),
                     "warnings": tuple[str, ...](),
-                    "context": MappingProxyType({}),
+                    "context": {},
                     "server_specific_violations": tuple[str, ...](),
                     "validation_server_type": None,
                 },

@@ -152,7 +152,6 @@ class FlextLdifMigrationPipeline(s):
             ),
         )
 
-    @override
     def execute(self) -> r[m.Ldif.MigrationPipelineResult]:
         """Execute migration pipeline for all files in input_dir."""
         in_dir = self.input_dir

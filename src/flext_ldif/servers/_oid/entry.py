@@ -159,11 +159,12 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             original_entry.attributes.attributes if original_entry.attributes else {}
         )
         mk = c.Ldif
-        conversion_metadata: t.Ldif.MutableMetadataInputMapping = (
-            {mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: list(converted_attrs)}
-            if converted_attrs
-            else {}
-        )
+        conversion_metadata: t.Ldif.MutableMetadataInputMapping = {}
+        if converted_attrs:
+            converted_attrs_payload: list[t.JsonValue] = list(converted_attrs)
+            conversion_metadata[mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES] = (
+                converted_attrs_payload
+            )
         mk = c.Ldif
         dn_metadata: t.Ldif.MutableMetadataInputMapping = (
             {

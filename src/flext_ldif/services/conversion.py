@@ -415,14 +415,16 @@ class FlextLdifConversion(
     @staticmethod
     def _normalize_metadata_value(
         value: t.JsonPayload | Mapping[str, t.JsonPayload] | None,
-    ) -> t.JsonPayload:
+    ) -> t.JsonValue:
         """Normalize metadata value to proper type."""
         if value is None:
             return u.Cli.normalize_json_value("")
         if isinstance(value, Mapping):
-            return u.normalize_to_metadata({
-                str(key): item for key, item in value.items()
-            })
+            normalized_mapping: dict[str, t.JsonValue] = {
+                str(key): u.Cli.normalize_json_value(item)
+                for key, item in value.items()
+            }
+            return normalized_mapping
         return u.Cli.normalize_json_value(value)
 
     @staticmethod
@@ -1204,8 +1206,8 @@ class FlextLdifConversion(
     def _convert_to_metadata_attribute_value(
         self,
         value: t.JsonPayload | None,
-    ) -> t.JsonPayload:
-        """Convert value to JsonPayload type."""
+    ) -> t.JsonValue:
+        """Convert value to JsonValue type."""
         return u.Cli.normalize_json_value("" if value is None else value)
 
     def _get_extensions_dict(
@@ -1216,8 +1218,8 @@ class FlextLdifConversion(
 
         def to_general_value(
             value: t.JsonPayload | None,
-        ) -> t.JsonPayload:
-            return u.Cli.normalize_json_value(value)
+        ) -> t.JsonValue:
+            return u.Cli.normalize_json_value(value if value is not None else "")
 
         metadata = acl.metadata
         if metadata is None or not metadata:

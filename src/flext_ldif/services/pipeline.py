@@ -74,7 +74,6 @@ class FlextLdifProcessingPipeline(s):
         )
         return cls(transform_config=transform_config)
 
-    @override
     def execute(
         self,
         entries: MutableSequence[m.Ldif.Entry],
