@@ -2,7 +2,7 @@
 
 Facade that groups all LDIF model classes for the ``FlextLdifModels``
 namespace.  Every nested class uses real MRO inheritance from its
-internal ``_models`` definition — no ``TypeAlias`` for classes.
+internal ``models`` definition — no ``TypeAlias`` for classes.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -33,7 +33,7 @@ class FlextLdifModels(FlextCliModels):
     """LDIF domain models — flat façade with MRO class inheritance.
 
     Architecture: Domain layer helper
-    All nested classes inherit via MRO from their ``_models`` implementations.
+    All nested classes inherit via MRO from their ``models`` implementations.
     Types live in ``typings.py``, constants in ``constants.py``.
     """
 
@@ -50,7 +50,7 @@ class FlextLdifModels(FlextCliModels):
         """LDIF namespace for cross-project access."""
 
         # =================================================================
-        # COMPOSITE MODELS — defined here, not in _models
+        # COMPOSITE MODELS — defined here, not in models
         # =================================================================
 
         class Stats(FlextCliModels.BaseModel):

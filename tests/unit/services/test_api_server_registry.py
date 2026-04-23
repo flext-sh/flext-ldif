@@ -37,20 +37,20 @@ class TestsTestFlextLdifApiServerRegistry:
         tm.that(api.acl(c.Ldif.Tests.OID), none=False)
         tm.that(api.entry(c.Ldif.Tests.OID), none=False)
 
-    def test_get_all_quirks_and_constants_expose_public_registry_contract(
+    def test_registry_resolution_exposes_public_registry_contract(
         self,
         api: FlextLdif,
     ) -> None:
         """The facade should expose the same registry metadata as the server API."""
         quirk_bundle = u.Tests.assert_success(
-            api.get_all_quirks(c.Ldif.Tests.OUD),
+            api.resolve_quirk_bundle(c.Ldif.Tests.OUD),
             error_msg="OUD quirk bundle must resolve from the facade",
         )
         constants = u.Tests.assert_success(
-            api.get_constants(c.Ldif.Tests.OUD),
+            api.resolve_server_constants(c.Ldif.Tests.OUD),
             error_msg="OUD constants must resolve from the facade",
         )
-        stats = api.get_registry_stats()
+        stats = api.summarize_registry()
 
         tm.that("schema" in quirk_bundle, eq=True)
         tm.that("acl" in quirk_bundle, eq=True)

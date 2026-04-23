@@ -118,7 +118,7 @@ class FlextLdifDetector(FlextLdifServiceBase):
         })
         return r[m.Ldif.ServerDetectionResult].ok(detection_result)
 
-    def get_effective_server_type(
+    def resolve_effective_server_type(
         self,
         ldif_path: Path | None = None,
         ldif_content: str | None = None,
@@ -136,7 +136,7 @@ class FlextLdifDetector(FlextLdifServiceBase):
     @override
     def _get_effective_server_type_value(self) -> str:
         """Resolve effective server type via detector (overrides ParserMixin default)."""
-        result = self.get_effective_server_type()
+        result = self.resolve_effective_server_type()
         if result.success:
             return result.value
         return c.Ldif.ServerTypes.RFC.value

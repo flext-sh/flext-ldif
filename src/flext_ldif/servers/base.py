@@ -93,7 +93,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         """Access to nested schema quirk instance (alias for schema)."""
         return self._schema_quirk
 
-    def get_schema_quirk(self) -> FlextLdifServersBaseSchema:
+    def resolve_schema_quirk(self) -> FlextLdifServersBaseSchema:
         """Get schema quirk instance."""
         return self.schema_quirk
 
@@ -116,7 +116,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             result = instance.execute(
                 ldif_text=ldif_text,
                 entries=entries,
-                _operation=operation,
+                operation=operation,
             )
             unwrapped = result.value
             if isinstance(unwrapped, cls):
@@ -159,7 +159,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         result = self.execute(
             ldif_text=ldif_text,
             entries=entries,
-            _operation=operation,
+            operation=operation,
         )
         value = result.unwrap()
         if isinstance(value, str):
@@ -366,9 +366,17 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         *,
         ldif_text: str | None = None,
         entries: MutableSequence[m.Ldif.Entry] | None = None,
-        _operation: str | None = None,
+        operation: str | None = None,
     ) -> r[m.Ldif.Entry]:
         """Execute quirk operation with auto-detection."""
+        if operation == "parse":
+            if ldif_text is None:
+                return r[m.Ldif.Entry].fail("Parse operation requires ldif_text")
+            return self._execute_parse(ldif_text)
+        if operation == "write":
+            if not entries:
+                return r[m.Ldif.Entry].fail("Write operation requires entries")
+            return r[m.Ldif.Entry].ok(entries[0])
         if ldif_text is not None:
             return self._execute_parse(ldif_text)
         if entries:

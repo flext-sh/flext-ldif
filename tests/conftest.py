@@ -387,7 +387,7 @@ def oid_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
 def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get OUD server quirk via FlextLdifServer API."""
     return u.Tests.assert_success(
-        server.get_base_quirk("oud"),
+        server.resolve_base_quirk("oud"),
         error_msg="OUD quirk must be registered",
     )
 

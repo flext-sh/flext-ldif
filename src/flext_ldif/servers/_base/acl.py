@@ -55,7 +55,7 @@ class FlextLdifServersBaseSchemaAcl(
         self,
         acl_service: p.Ldif.AclQuirk | None = None,
         _parent_quirk: Self | None = None,
-        **_kwargs: t.Scalar,
+        **kwargs: t.Scalar,
     ) -> None:
         """Initialize ACL quirk service with optional DI service injection."""
         super().__init__()
@@ -71,13 +71,13 @@ class FlextLdifServersBaseSchemaAcl(
         "aclEntry",
     ]
 
-    def get_acl_attributes(self) -> MutableSequence[str]:
+    def resolve_acl_attributes(self) -> MutableSequence[str]:
         """Get ACL attributes for this server."""
         return self.RFC_ACL_ATTRIBUTES
 
-    def is_acl_attribute(self, attribute_name: str) -> bool:
+    def matches_acl_attribute(self, attribute_name: str) -> bool:
         """Check if attribute is ACL attribute (case-insensitive)."""
-        all_attrs_lower = {a.lower() for a in self.get_acl_attributes()}
+        all_attrs_lower = {a.lower() for a in self.resolve_acl_attributes()}
         return attribute_name.lower() in all_attrs_lower
 
     auto_execute: ClassVar[bool] = False

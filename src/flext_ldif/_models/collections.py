@@ -79,7 +79,7 @@ class FlextLdifModelsCollections:
             extra = self._extra()
             return [(k, self._to_count(v)) for k, v in extra.items()]
 
-        def set_count(self, key: str, value: int) -> None:
+        def update_count(self, key: str, value: int) -> None:
             setattr(self, key, value)
 
         def _extra(self) -> MutableMapping[str, t.JsonValue]:
@@ -102,7 +102,7 @@ class FlextLdifModelsCollections:
         """Category to file path mapping model."""
 
     class ConfigSettings(mdm.DynamicMetadata):
-        def set_setting(self, key: str, value: t.Ldif.MetadataCarrierValue) -> None:
+        def update_setting(self, key: str, value: t.Ldif.MetadataCarrierValue) -> None:
             self[key] = value
 
     class BooleanFlags(m.FrozenDynamicModel):
@@ -129,9 +129,10 @@ class FlextLdifModelsCollections:
             return bool(extra[key])
 
     class FlexibleCategories(m.DynamicModel):
-        categories: MutableMapping[str, MutableSequence[mde.Entry]] = u.Field(
-            default_factory=dict
-        )
+        categories: Annotated[
+            MutableMapping[str, MutableSequence[mde.Entry]],
+            u.Field(description="Category name to grouped LDIF entries mapping."),
+        ] = u.Field(default_factory=dict)
 
         @override
         def __eq__(self, other: object) -> bool:

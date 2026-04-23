@@ -232,9 +232,14 @@ class FlextLdifModelsDomainMetadata:
                 description="Map of conversion operation name → human-readable description",
             ),
         ] = u.Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
-        attribute_transformations: MutableMapping[
-            str,
-            FlextLdifModelsDomainAttributes.AttributeTransformation,
+        attribute_transformations: Annotated[
+            MutableMapping[
+                str,
+                FlextLdifModelsDomainAttributes.AttributeTransformation,
+            ],
+            u.Field(
+                description="Per-attribute transformation audit trail captured during conversion.",
+            ),
         ] = u.Field(default_factory=dict)
         server_specific_data: Annotated[
             FlextLdifModelsMetadata.EntryMetadata,

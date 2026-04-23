@@ -23,8 +23,8 @@ class TestsTestFlextLdifCrossDirectionConversion:
         server_registry: FlextLdifServer,
     ) -> None:
         """OID→RFC→OUD should move substrings rule from equality to substr."""
-        oid_schema = server_registry.get_schema_quirk("oid")
-        oud_schema = server_registry.get_schema_quirk("oud")
+        oid_schema = server_registry.resolve_schema_quirk("oid")
+        oud_schema = server_registry.resolve_schema_quirk("oud")
         assert oid_schema is not None
         assert oud_schema is not None
         attr_def = (
@@ -45,8 +45,8 @@ class TestsTestFlextLdifCrossDirectionConversion:
         server_registry: FlextLdifServer,
     ) -> None:
         """OID→RFC→OUD should normalize quoted SUP to target form."""
-        oid_schema = server_registry.get_schema_quirk("oid")
-        oud_schema = server_registry.get_schema_quirk("oud")
+        oid_schema = server_registry.resolve_schema_quirk("oid")
+        oud_schema = server_registry.resolve_schema_quirk("oud")
         assert oid_schema is not None
         assert oud_schema is not None
         oc_def = (
@@ -66,8 +66,8 @@ class TestsTestFlextLdifCrossDirectionConversion:
         server_registry: FlextLdifServer,
     ) -> None:
         """OID→RFC→OUD should keep RFC-normalized syntax OID."""
-        oid_schema = server_registry.get_schema_quirk("oid")
-        oud_schema = server_registry.get_schema_quirk("oud")
+        oid_schema = server_registry.resolve_schema_quirk("oid")
+        oud_schema = server_registry.resolve_schema_quirk("oud")
         assert oid_schema is not None
         assert oud_schema is not None
         attr_def = (
@@ -88,7 +88,7 @@ class TestsTestFlextLdifCrossDirectionConversion:
         server_registry: FlextLdifServer,
     ) -> None:
         """OID→RFC→OID should preserve same-server original schema text."""
-        oid_schema = server_registry.get_schema_quirk("oid")
+        oid_schema = server_registry.resolve_schema_quirk("oid")
         assert oid_schema is not None
         attr_def = (
             "( 2.16.840.1.113894.1.1.327 NAME 'orclDASUIType' "
@@ -106,7 +106,7 @@ class TestsTestFlextLdifCrossDirectionConversion:
         server_registry: FlextLdifServer,
     ) -> None:
         """OID→RFC→OID should preserve same-server objectClass semantics."""
-        oid_schema = server_registry.get_schema_quirk("oid")
+        oid_schema = server_registry.resolve_schema_quirk("oid")
         assert oid_schema is not None
         oc_def = (
             "( 2.16.840.1.113894.1.2.50 NAME 'orclTestOC' "
@@ -126,7 +126,7 @@ class TestsTestFlextLdifCrossDirectionConversion:
         server_registry: FlextLdifServer,
     ) -> None:
         """OUD→RFC→OUD should be stable for regular schema attributes."""
-        oud_schema = server_registry.get_schema_quirk("oud")
+        oud_schema = server_registry.resolve_schema_quirk("oud")
         assert oud_schema is not None
         attr_def = (
             "( 1.3.6.1.4.1.26027.1.1.1 NAME 'ds-sync-hist' "
@@ -144,7 +144,7 @@ class TestsTestFlextLdifCrossDirectionConversion:
         server_registry: FlextLdifServer,
     ) -> None:
         """OUD→RFC→OUD should be stable for regular objectClasses."""
-        oud_schema = server_registry.get_schema_quirk("oud")
+        oud_schema = server_registry.resolve_schema_quirk("oud")
         assert oud_schema is not None
         oc_def = (
             "( 1.3.6.1.4.1.26027.1.2.1 NAME 'ds-root-dse' SUP top STRUCTURAL MAY cn )"
@@ -162,8 +162,8 @@ class TestsTestFlextLdifCrossDirectionConversion:
         server_registry: FlextLdifServer,
     ) -> None:
         """OUD→RFC→OID should not rewrite generic caseIgnoreMatch to accessDirectiveMatch."""
-        oud_schema = server_registry.get_schema_quirk("oud")
-        oid_schema = server_registry.get_schema_quirk("oid")
+        oud_schema = server_registry.resolve_schema_quirk("oud")
+        oid_schema = server_registry.resolve_schema_quirk("oid")
         assert oud_schema is not None
         assert oid_schema is not None
         attr_def = (
@@ -184,8 +184,8 @@ class TestsTestFlextLdifCrossDirectionConversion:
         server_registry: FlextLdifServer,
     ) -> None:
         """OID case variants should normalize through the OID→OUD pipeline."""
-        oid_schema = server_registry.get_schema_quirk("oid")
-        oud_schema = server_registry.get_schema_quirk("oud")
+        oid_schema = server_registry.resolve_schema_quirk("oid")
+        oud_schema = server_registry.resolve_schema_quirk("oud")
         assert oid_schema is not None
         assert oud_schema is not None
         attr_def = (

@@ -425,7 +425,7 @@ class FlextLdifCategorization(s):
                 c.Ldif.Category.REJECTED,
                 f"Unknown server type: {effective_server_type_raw} - {e}",
             )
-        if self.is_schema_entry(entry):
+        if self.matches_schema_entry(entry):
             return (c.Ldif.Category.SCHEMA, None)
         merged_category_map = self._build_category_map_from_rules(normalized_rules)
         constants: type | None = None
@@ -577,7 +577,7 @@ class FlextLdifCategorization(s):
         error_msg = result.error or "Failed to filter entries"
         return r[MutableSequence[m.Ldif.Entry]].fail(error_msg)
 
-    def is_schema_entry(self, entry: m.Ldif.Entry) -> bool:
+    def matches_schema_entry(self, entry: m.Ldif.Entry) -> bool:
         """Check if entry is a schema definition."""
         schema_attrs = {
             "attributetypes",
@@ -753,7 +753,7 @@ class FlextLdifCategorization(s):
         return (
             r[type[c.Ldif]]
             .from_result(
-                self._server_registry.get_constants(server_type),
+                self._server_registry.resolve_server_constants(server_type),
             )
             .map_error(
                 lambda error: error or f"Failed to resolve constants for {server_type}",

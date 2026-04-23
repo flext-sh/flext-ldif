@@ -246,7 +246,7 @@ class FlextLdifModelsDomainDN:
             self._registry.clear()
             self._case_variants.clear()
 
-        def get_canonical_dn(self, dn: str) -> str | None:
+        def resolve_canonical_dn(self, dn: str) -> str | None:
             """Get canonical case for a DN (case-insensitive lookup)."""
             normalized = self._normalize_dn(dn)
             value = self._registry.get(normalized)

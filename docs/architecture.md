@@ -49,7 +49,7 @@ src/flext_ldif/
 └── utilities.py          # Cross-cutting helpers for DN, ACL, detection, validation
 ```
 
-Supporting modules live under `_models/` (domain/settings/processing/results) and
+Supporting modules live under `models/` (domain/settings/processing/results) and
 `_utilities/` (helpers split by concern). Type hints ship with `py.typed`.
 
 ## Core Components
@@ -115,7 +115,7 @@ while keeping the facade and services unchanged.
 
 ### Models and Typing
 
-Domain, processing, and result models live in `_models/` and are aggregated in
+Domain, processing, and result models live in `models/` and are aggregated in
 `models.py` under the `FlextLdifModels` namespace. They use Pydantic v2 for
 validation and serialization. `typings.py` defines helper aliases for common
 result shapes, and `constants.py` centralizes literals such as server types and

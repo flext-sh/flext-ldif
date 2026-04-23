@@ -128,10 +128,14 @@ class FlextLdifProcessingPipeline(s):
             and self._config.process_config.target_server
         ):
             source_server = c.Ldif.ServerTypes(
-                u.Ldif.normalize_server_type(self._config.process_config.source_server),
+                u.Ldif.normalize_server_type(
+                    self._config.process_config.source_server,
+                ),
             )
             target_server = c.Ldif.ServerTypes(
-                u.Ldif.normalize_server_type(self._config.process_config.target_server),
+                u.Ldif.normalize_server_type(
+                    self._config.process_config.target_server,
+                ),
             )
             pipeline.add(
                 FlextLdifTransformer(

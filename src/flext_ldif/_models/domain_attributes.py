@@ -117,23 +117,6 @@ class FlextLdifModelsDomainAttributes:
                 return self.attributes[key]
             return []
 
-        def get_values(
-            self,
-            key: str,
-            default: MutableSequence[str] | None = None,
-        ) -> MutableSequence[str]:
-            """Get attribute values as a list (same as get()).
-
-            Args:
-                key: Attribute name
-                default: Default list if not found
-
-            Returns:
-                List of attribute values, or default if not found
-
-            """
-            return self.get(key, default)
-
         def has_attribute(self, key: str) -> bool:
             """Check if attribute exists.
 

@@ -616,7 +616,7 @@ class FlextLdifModelsDomainEntry:
         @override
         def model_post_init(
             self,
-            _context: t.ScalarMapping | None,
+            context: t.ScalarMapping | None,
             /,
         ) -> None:
             """Post-init hook to ensure metadata is always initialized.

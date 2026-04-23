@@ -137,22 +137,22 @@ class FlextLdif(
         """Expose base quirk lookup through the public facade."""
         return self._server.quirk(server_type)
 
-    def get_base_quirk(self, server_type: str) -> r[FlextLdifServersBase]:
+    def resolve_base_quirk(self, server_type: str) -> r[FlextLdifServersBase]:
         """Expose base quirk resolution through the public facade."""
-        return self._server.get_base_quirk(server_type)
+        return self._server.resolve_base_quirk(server_type)
 
     def schema_quirk(self, server_type: str) -> FlextLdifServersBaseSchema | None:
         """Expose schema quirk lookup through the public facade."""
         return self._server.schema_quirk(server_type)
 
-    def get_schema_quirk(
+    def resolve_schema_quirk(
         self,
         server_type: str,
     ) -> FlextLdifServersBaseSchema | None:
         """Expose canonical schema quirk resolution through the public facade."""
-        return self._server.get_schema_quirk(server_type)
+        return self._server.resolve_schema_quirk(server_type)
 
-    def get_all_quirks(
+    def resolve_quirk_bundle(
         self,
         server_type: str,
     ) -> r[
@@ -164,19 +164,19 @@ class FlextLdif(
         ]
     ]:
         """Expose full quirk bundle resolution through the public facade."""
-        return self._server.get_all_quirks(server_type)
+        return self._server.resolve_quirk_bundle(server_type)
 
-    def get_constants(self, server_type: str) -> r[type]:
+    def resolve_server_constants(self, server_type: str) -> r[type]:
         """Expose server constants lookup through the public facade."""
-        return self._server.get_constants(server_type)
+        return self._server.resolve_server_constants(server_type)
 
     def list_registered_servers(self) -> MutableSequence[str]:
         """Expose the normalized registered server list through the facade."""
         return self._server.list_registered_servers()
 
-    def get_registry_stats(self) -> t.Ldif.MutableMetadataInputMapping:
+    def summarize_registry(self) -> t.Ldif.MutableMetadataInputMapping:
         """Expose registry statistics through the public facade."""
-        return self._server.get_registry_stats()
+        return self._server.summarize_registry()
 
     def processing_pipeline(
         self,

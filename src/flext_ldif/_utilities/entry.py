@@ -20,7 +20,7 @@ from flext_ldif import FlextLdifModelsSettings, c, p, t
 class FlextLdifUtilitiesEntry:
     """Entry transformation utilities - pure helper functions."""
 
-    _logger = u.fetch_logger(__name__)
+    logger = u.fetch_logger(__name__)
     _ATTR_NAME_PATTERN = re.compile(c.Ldif.ATTRIBUTE_NAME)
     _ATTR_OPTION_PATTERN = re.compile(c.Ldif.ATTRIBUTE_OPTION)
     _BINARY_CHAR_PATTERN = re.compile(c.Ldif.BINARY_CHAR_PATTERN)
@@ -500,7 +500,7 @@ class FlextLdifUtilitiesEntry:
                     )
                 )
             except c.ValidationError as exc:
-                FlextLdifUtilitiesEntry._logger.warning(
+                FlextLdifUtilitiesEntry.logger.warning(
                     f"Failed to validate server rules from JSON string: {exc}",
                 )
                 return None
@@ -510,7 +510,7 @@ class FlextLdifUtilitiesEntry:
                     validation_rules,
                 )
             except c.ValidationError as exc:
-                FlextLdifUtilitiesEntry._logger.warning(
+                FlextLdifUtilitiesEntry.logger.warning(
                     f"Failed to validate server rules from mapping: {exc}",
                 )
         return None

@@ -52,14 +52,14 @@ class FlextLdifConversion(
 
     @staticmethod
     def _has_attr(
-        obj: t.JsonValue | m.BaseModel | p.Ldif.SchemaQuirk | type,
+        obj: t.JsonPayload | m.BaseModel | p.Ldif.SchemaQuirk | type,
         attr_name: str,
     ) -> bool:
         return hasattr(obj, attr_name)
 
     @staticmethod
     def _is_schema_quirk_protocol(
-        obj: t.JsonValue | m.BaseModel | p.Ldif.SchemaQuirk | type,
+        obj: t.JsonPayload | m.BaseModel | p.Ldif.SchemaQuirk | type,
     ) -> TypeIs[p.Ldif.SchemaQuirk]:
         return (
             FlextLdifConversion._has_attr(obj, "parse_attribute")
@@ -414,8 +414,8 @@ class FlextLdifConversion(
 
     @staticmethod
     def _normalize_metadata_value(
-        value: t.JsonPayload | Mapping[str, t.JsonValue] | None,
-    ) -> t.JsonValue:
+        value: t.JsonPayload | Mapping[str, t.JsonPayload] | None,
+    ) -> t.JsonPayload:
         """Normalize metadata value to proper type."""
         if value is None:
             return u.Cli.normalize_json_value("")
@@ -600,7 +600,7 @@ class FlextLdifConversion(
             model_instance=model_instance,
         )
 
-    def get_supported_conversions(
+    def resolve_supported_conversions(
         self,
         quirk: FlextLdifServersBase,
     ) -> t.MutableBoolMapping:
@@ -735,7 +735,7 @@ class FlextLdifConversion(
 
     def _check_attribute_support(
         self,
-        quirk_schema: t.JsonValue | FlextLdifServersBase,
+        quirk_schema: m.BaseModel | FlextLdifServersBase,
         test_attr_def: str,
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
@@ -804,7 +804,7 @@ class FlextLdifConversion(
 
     def _check_objectclass_support(
         self,
-        quirk_schema: t.JsonValue | FlextLdifServersBase,
+        quirk_schema: m.BaseModel | FlextLdifServersBase,
         test_oc_def: str,
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
@@ -1204,7 +1204,7 @@ class FlextLdifConversion(
     def _convert_to_metadata_attribute_value(
         self,
         value: t.JsonPayload | None,
-    ) -> t.JsonValue:
+    ) -> t.JsonPayload:
         """Convert value to JsonPayload type."""
         return u.Cli.normalize_json_value("" if value is None else value)
 
@@ -1216,14 +1216,13 @@ class FlextLdifConversion(
 
         def to_general_value(
             value: t.JsonPayload | None,
-        ) -> t.JsonValue:
+        ) -> t.JsonPayload:
             return u.Cli.normalize_json_value(value)
 
-        get_metadata = u.prop("metadata")
-        get_extensions = u.prop("extensions")
-        if not get_metadata(acl) or not acl.metadata:
+        metadata = acl.metadata
+        if metadata is None or not metadata:
             return {}
-        extensions_raw = get_extensions(acl.metadata)
+        extensions_raw = metadata.extensions
         if isinstance(extensions_raw, m.Ldif.DynamicMetadata):
             return {
                 key: to_general_value(value)
@@ -1239,7 +1238,7 @@ class FlextLdifConversion(
     def _get_schema_quirk_for_support_check(
         self,
         quirk: FlextLdifServersBase,
-    ) -> t.JsonValue | FlextLdifServersBase | None:
+    ) -> m.BaseModel | FlextLdifServersBase | None:
         """Get schema quirk from base quirk for support checking."""
         if FlextLdifConversion._has_attr(
             quirk,
@@ -1253,7 +1252,7 @@ class FlextLdifConversion(
             ):
                 return quirk
             return None
-        schema_quirk_raw: t.JsonValue | None = getattr(
+        schema_quirk_raw: m.BaseModel | None = getattr(
             quirk,
             "schema_quirk",
             None,
@@ -1339,7 +1338,7 @@ class FlextLdifConversion(
                 )
                 continue
             if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-                normalized_sequence: MutableSequence[t.JsonValue] = [
+                normalized_sequence: MutableSequence[t.JsonPayload] = [
                     FlextLdifConversion._normalize_metadata_value(raw_item)
                     for raw_item in value
                 ]

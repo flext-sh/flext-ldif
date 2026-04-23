@@ -77,7 +77,10 @@ class FlextLdifModelsBases:
         ] = c.Ldif.ServerTypes.RFC
         validation_violations: Annotated[
             MutableSequence[str],
-            u.Field(default_factory=list),
+            u.Field(
+                default_factory=list,
+                description="Validation violations recorded while normalizing ACL data.",
+            ),
         ] = u.Field(default_factory=list)
         validation_metadata: Annotated[
             m.ConfigMap | None,

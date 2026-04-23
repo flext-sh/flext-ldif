@@ -81,9 +81,9 @@ class BasicUsageDry:
         """Resolve the server type from canonical LDIF input sources."""
         match source:
             case Path() as path:
-                result = ldif.get_effective_server_type(ldif_path=path)
+                result = ldif.resolve_effective_server_type(ldif_path=path)
             case _:
-                result = ldif.get_effective_server_type(ldif_content=source)
+                result = ldif.resolve_effective_server_type(ldif_content=source)
         return result.map(lambda server_type: server_type or cls.DEFAULT_SERVER_TYPE)
 
     @classmethod

@@ -99,7 +99,7 @@ class FlextLdifEntries(s):
         return m.Ldif.Entry.create(dn=dn, attributes=final_attrs)
 
     @staticmethod
-    def get_attribute_values(
+    def normalize_attribute_values(
         attribute: str
         | MutableSequence[str]
         | tuple[str, ...]
@@ -118,7 +118,7 @@ class FlextLdifEntries(s):
                 return r[MutableSequence[str]].fail("Unsupported attribute input type")
 
     @staticmethod
-    def get_entry_attributes(
+    def resolve_entry_attributes(
         entry: m.Ldif.Entry,
     ) -> r[t.MutableStrSequenceMapping]:
         """Get entry attributes mapping."""
@@ -132,7 +132,7 @@ class FlextLdifEntries(s):
         return r[t.MutableStrSequenceMapping].ok(attrs)
 
     @staticmethod
-    def get_entry_dn(
+    def resolve_entry_dn(
         entry: m.Ldif.Entry | t.MutableAttributeMapping,
     ) -> r[str]:
         """Read DN from model or dictionary entry."""
@@ -141,9 +141,9 @@ class FlextLdifEntries(s):
         return FlextLdifEntries._extract_dn_from_object(entry)
 
     @staticmethod
-    def get_entry_objectclasses(entry: m.Ldif.Entry) -> r[MutableSequence[str]]:
+    def resolve_entry_objectclasses(entry: m.Ldif.Entry) -> r[MutableSequence[str]]:
         """Get objectClass values from entry attributes."""
-        attributes_result = FlextLdifEntries.get_entry_attributes(entry)
+        attributes_result = FlextLdifEntries.resolve_entry_attributes(entry)
         if attributes_result.failure:
             return r[MutableSequence[str]].fail(
                 f"Failed to get entry attributes: {attributes_result.error}",

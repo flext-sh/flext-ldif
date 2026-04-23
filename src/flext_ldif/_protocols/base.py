@@ -644,7 +644,7 @@ class FlextLdifProtocolsBase(Protocol):
             """Reset all registered DN state."""
             ...
 
-        def get_canonical_dn(self, dn: str) -> str | None:
+        def resolve_canonical_dn(self, dn: str) -> str | None:
             """Return canonical DN casing when known."""
             ...
 

@@ -46,19 +46,19 @@ class FlextLdifServer:
 
     def acl(self, server_type: str) -> FlextLdifServersBaseSchemaAcl | None:
         """Get ACL quirk for a server type."""
-        base = self._resolve_base_quirk(server_type)
+        base = self._lookup_base_quirk(server_type)
         if base is None:
             return None
         return base.acl_quirk
 
     def entry(self, server_type: str) -> FlextLdifServersBaseEntry | None:
         """Get entry quirk for a server type."""
-        base = self._resolve_base_quirk(server_type)
+        base = self._lookup_base_quirk(server_type)
         if base is None:
             return None
         return base.entry_quirk
 
-    def get_all_quirks(
+    def resolve_quirk_bundle(
         self,
         server_type: str,
     ) -> r[
@@ -70,7 +70,7 @@ class FlextLdifServer:
         ]
     ]:
         """Get all quirk types for a server."""
-        base = self._resolve_base_quirk(server_type)
+        base = self._lookup_base_quirk(server_type)
         if base is None:
             return r[
                 MutableMapping[
@@ -93,11 +93,11 @@ class FlextLdifServer:
             "entry": base.entry_quirk,
         })
 
-    def get_base_quirk(self, server_type: str) -> r[FlextLdifServersBase]:
+    def resolve_base_quirk(self, server_type: str) -> r[FlextLdifServersBase]:
         """Get base quirk for a given server type."""
         return self.quirk(server_type)
 
-    def get_constants(self, server_type: str) -> r[type]:
+    def resolve_server_constants(self, server_type: str) -> r[type]:
         """Get Constants class from server quirk."""
         quirk_result = self.quirk(server_type)
         if quirk_result.failure:
@@ -115,13 +115,13 @@ class FlextLdifServer:
             )
         return r[type].ok(constants)
 
-    def get_registry_stats(self) -> t.Ldif.MutableMetadataInputMapping:
+    def summarize_registry(self) -> t.Ldif.MutableMetadataInputMapping:
         """Get comprehensive registry statistics."""
         servers = self.list_registered_servers()
         quirks_by_server: dict[str, t.JsonValue] = {}
         priorities: dict[str, t.JsonValue] = {}
         for st in servers:
-            base = self._resolve_base_quirk(st)
+            base = self._lookup_base_quirk(st)
             if base is None:
                 continue
             quirks_by_server[st] = {
@@ -141,16 +141,19 @@ class FlextLdifServer:
 
     def schema_quirk(self, server_type: str) -> FlextLdifServersBaseSchema | None:
         """Get schema quirk for a server type."""
-        return self.get_schema_quirk(server_type)
+        return self.resolve_schema_quirk(server_type)
 
-    def get_schema_quirk(self, server_type: str) -> FlextLdifServersBaseSchema | None:
+    def resolve_schema_quirk(
+        self,
+        server_type: str,
+    ) -> FlextLdifServersBaseSchema | None:
         """Get schema quirk for a server type."""
-        base = self._resolve_base_quirk(server_type)
+        base = self._lookup_base_quirk(server_type)
         if base is None:
             return None
         return base.schema_quirk
 
-    def _resolve_base_quirk(self, server_type: str) -> FlextLdifServersBase | None:
+    def _lookup_base_quirk(self, server_type: str) -> FlextLdifServersBase | None:
         """Resolve a concrete base quirk or return None on lookup failure."""
         quirk_result = self.quirk(server_type)
         if quirk_result.failure:

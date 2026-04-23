@@ -144,7 +144,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         )
 
     @override
-    def get_acl_attributes(self) -> MutableSequence[str]:
+    def resolve_acl_attributes(self) -> MutableSequence[str]:
         """Get RFC + OUD extensions."""
         return [*self.RFC_ACL_ATTRIBUTES, *self.OUD_ACL_ATTRIBUTES]
 

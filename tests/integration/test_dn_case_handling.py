@@ -39,31 +39,31 @@ class TestDnCaseRegistry:
         canonical = registry.register_dn("cn=ADMIN,dc=COM", force=True)
         assert canonical == "cn=ADMIN,dc=COM"
 
-    def test_get_canonical_dn_case_insensitive(
+    def test_resolve_canonical_dn_case_insensitive(
         self,
         registry: m.Ldif.DnRegistry,
     ) -> None:
         """Test case-insensitive DN lookup."""
         registry.register_dn("cn=test,dc=example,dc=com")
         assert (
-            registry.get_canonical_dn("cn=test,dc=example,dc=com")
+            registry.resolve_canonical_dn("cn=test,dc=example,dc=com")
             == "cn=test,dc=example,dc=com"
         )
         assert (
-            registry.get_canonical_dn("CN=Test,DC=Example,DC=Com")
+            registry.resolve_canonical_dn("CN=Test,DC=Example,DC=Com")
             == "cn=test,dc=example,dc=com"
         )
         assert (
-            registry.get_canonical_dn("cn=TEST,dc=EXAMPLE,dc=COM")
+            registry.resolve_canonical_dn("cn=TEST,dc=EXAMPLE,dc=COM")
             == "cn=test,dc=example,dc=com"
         )
 
-    def test_get_canonical_dn_unknown_returns_none(
+    def test_resolve_canonical_dn_unknown_returns_none(
         self,
         registry: m.Ldif.DnRegistry,
     ) -> None:
         """Test unknown DN returns None."""
-        assert registry.get_canonical_dn("cn=unknown,dc=com") is None
+        assert registry.resolve_canonical_dn("cn=unknown,dc=com") is None
 
     def test_validate_oud_consistency_single_case(
         self,
@@ -90,10 +90,10 @@ class TestDnCaseRegistry:
         """Test clearing registry removes all DNs."""
         registry.register_dn("cn=admin,dc=com")
         registry.register_dn("cn=user,dc=com")
-        assert registry.get_canonical_dn("cn=admin,dc=com") is not None
+        assert registry.resolve_canonical_dn("cn=admin,dc=com") is not None
         registry.clear()
-        assert registry.get_canonical_dn("cn=admin,dc=com") is None
-        assert registry.get_canonical_dn("cn=user,dc=com") is None
+        assert registry.resolve_canonical_dn("cn=admin,dc=com") is None
+        assert registry.resolve_canonical_dn("cn=user,dc=com") is None
 
 
 class TestDnCaseNormalizationScenarios:
@@ -112,7 +112,7 @@ class TestDnCaseNormalizationScenarios:
         registry.register_dn("cn=admin,dc=com")
         registry.register_dn("CN=Admin,DC=Com")
         registry.register_dn("cn=ADMIN,dc=COM")
-        canonical = registry.get_canonical_dn("CN=ADMIN,DC=COM")
+        canonical = registry.resolve_canonical_dn("CN=ADMIN,DC=COM")
         assert canonical == "cn=admin,dc=com"
         result = registry.validate_oud_consistency()
         assert result.success
@@ -123,10 +123,11 @@ class TestDnCaseNormalizationScenarios:
         registry.register_dn("dc=example,dc=com")
         registry.register_dn("ou=users,dc=example,dc=com")
         registry.register_dn("cn=admin,ou=users,dc=example,dc=com")
-        assert registry.get_canonical_dn("dc=example,dc=com") is not None
-        assert registry.get_canonical_dn("ou=users,dc=example,dc=com") is not None
+        assert registry.resolve_canonical_dn("dc=example,dc=com") is not None
+        assert registry.resolve_canonical_dn("ou=users,dc=example,dc=com") is not None
         assert (
-            registry.get_canonical_dn("cn=admin,ou=users,dc=example,dc=com") is not None
+            registry.resolve_canonical_dn("cn=admin,ou=users,dc=example,dc=com")
+            is not None
         )
         result = registry.validate_oud_consistency()
         assert result.value is True

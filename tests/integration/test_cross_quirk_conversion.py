@@ -193,13 +193,13 @@ class TestQuirksConversionMatrixFacade:
         """Test that conversion matrix can be instantiated."""
         assert conversion_matrix is not None
 
-    def test_get_supported_conversions(
+    def test_resolve_supported_conversions(
         self,
         conversion_matrix: FlextLdifConversion,
         oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test checking supported conversions."""
-        supported = conversion_matrix.get_supported_conversions(oud_quirk)
+        supported = conversion_matrix.resolve_supported_conversions(oud_quirk)
         assert supported["attribute"] is True
         assert supported["objectClass"] is True
         assert supported["acl"] is True

@@ -49,7 +49,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     ]
 
     @override
-    def get_acl_attributes(self) -> MutableSequence[str]:
+    def resolve_acl_attributes(self) -> MutableSequence[str]:
         """Get RFC + OID extensions."""
         return [*self.RFC_ACL_ATTRIBUTES, *self.OID_ACL_ATTRIBUTES]
 
@@ -575,8 +575,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             })
             extensions = self._build_oid_acl_metadata(settings)
             server_type: c.Ldif.ServerTypes = c.Ldif.ServerTypes.OID
-            rfc_compliant_perms = m.Ldif.AclPermissions.get_rfc_compliant_permissions(
-                perms_dict,
+            rfc_compliant_perms = (
+                m.Ldif.AclPermissions.filter_rfc_compliant_permissions(
+                    perms_dict,
+                )
             )
             extensions_metadata = m.Ldif.DynamicMetadata.from_dict(
                 extensions,

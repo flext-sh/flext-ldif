@@ -112,8 +112,8 @@ ______________________________________________________________________
 class FlextLdifParser(Flext[t.JsonMapping]):
     """LDIF parsing service following FLEXT patterns."""
 
-    _logger: FlextLogger  # Structured logging
-    _config: FlextLdifSettings  # Configuration
+    logger: FlextLogger  # Structured logging
+    config: FlextLdifSettings  # Configuration
 ```
 
 ### Dependencies
@@ -145,10 +145,10 @@ class ldif(Flext[t.JsonMapping]):
 
     def __init__(self, settings: FlextLdifSettings | None = None) -> None:
         super().__init__()
-        self._config = settings if settings is not None else FlextLdifSettings()
+        self.config = settings if settings is not None else FlextLdifSettings()
 
         # Initialize parser service
-        self._parser = FlextLdifParser(client=self._client, settings=self._config)
+        self._parser = FlextLdifParser(client=self._client, settings=self.config)
         # ... rest of initialization
 
     def parse(self, source, server_type, *, batch, paginate, page_size):

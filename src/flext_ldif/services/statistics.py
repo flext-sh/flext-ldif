@@ -37,10 +37,10 @@ class FlextLdifStatistics(FlextLdifServiceBase):
                     server_type_distribution[server_type_value] += 1
         obj_class_model = m.Ldif.DynamicCounts()
         for class_name, count in object_class_distribution.items():
-            obj_class_model.set_count(class_name, count)
+            obj_class_model.update_count(class_name, count)
         server_type_model = m.Ldif.DynamicCounts()
         for server_type, count in server_type_distribution.items():
-            server_type_model.set_count(server_type, count)
+            server_type_model.update_count(server_type, count)
         entries_stats = m.Ldif.EntriesStatistics(
             total_entries=len(normalized_entries),
             object_class_distribution=obj_class_model,

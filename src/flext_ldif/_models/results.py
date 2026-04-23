@@ -300,7 +300,10 @@ class FlextLdifModelsResults:
             default_factory=lambda: FlextLdifModelsResults.Statistics(),
             description="Migration processing statistics",
         )
-        output_files: MutableSequence[str] = u.Field(default_factory=list)
+        output_files: MutableSequence[str] = u.Field(
+            default_factory=list,
+            description="Output file paths produced by the migration pipeline.",
+        )
 
         @u.computed_field()
         @property

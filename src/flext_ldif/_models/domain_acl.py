@@ -84,7 +84,7 @@ class FlextLdifModelsDomainAcl:
         ] = False
 
         @staticmethod
-        def get_rfc_compliant_permissions(
+        def filter_rfc_compliant_permissions(
             perms_dict: t.MutableBoolMapping,
         ) -> t.MutableBoolMapping:
             """Filter permissions dict to RFC-compliant fields only.
@@ -181,7 +181,7 @@ class FlextLdifModelsDomainAcl:
         ] = None
 
         @classmethod
-        def get_acl_format(cls) -> str:
+        def resolve_acl_format(cls) -> str:
             """Get ACL format for this server type.
 
             Business Rule: This method doesn't use instance state, only class constants.
@@ -193,7 +193,7 @@ class FlextLdifModelsDomainAcl:
             """
             return c.Ldif.DEFAULT_ACL_FORMAT
 
-        def get_acl_type(self) -> str:
+        def resolve_acl_type(self) -> str:
             """Get ACL type identifier for this server using canonical enum normalization."""
             server_type_raw = str(self.server_type).lower().strip()
             aliased_server_type = c.Ldif.SERVER_TYPE_ALIASES.get(server_type_raw)
