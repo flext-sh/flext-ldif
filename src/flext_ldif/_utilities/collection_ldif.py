@@ -15,10 +15,10 @@ class FlextLdifUtilitiesCollectionLdif:
 
     @staticmethod
     def find(
-        items: t.FlatContainerList,
+        items: t.JsonList,
         *,
         predicate: Callable[..., bool],
-    ) -> t.Container | None:
+    ) -> t.JsonValue | None:
         """Find first item matching predicate."""
         for elem in items:
             if predicate(elem):

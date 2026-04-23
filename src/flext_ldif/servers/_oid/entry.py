@@ -177,19 +177,20 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         rfc_violations_str: str = u.Ldif.dump_json_payload(
             list(rfc_violations) if rfc_violations else None,
         )
-        attribute_conflicts_payload: list[dict[str, t.Cli.JsonValue]] = [
-            {
-                str(key): (
-                    str(value)
-                    if isinstance(value, str)
-                    else [str(item) for item in value]
-                )
-                for key, value in conflict.items()
-            }
-            for conflict in attribute_conflicts
-        ]
-        attribute_conflicts_json: t.Cli.JsonValue = u.Cli.normalize_json_value(
-            attribute_conflicts_payload,
+        attribute_conflicts_json: t.JsonValue = (
+            t.Cli.JSON_VALUE_ADAPTER.validate_python(
+                [
+                    {
+                        str(key): (
+                            str(value)
+                            if isinstance(value, str)
+                            else [str(item) for item in value]
+                        )
+                        for key, value in conflict.items()
+                    }
+                    for conflict in attribute_conflicts
+                ],
+            )
         )
         attribute_conflicts_str: str = u.Ldif.dump_json_payload(
             attribute_conflicts_json if attribute_conflicts else None,
@@ -197,7 +198,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         boolean_conversions_metadata: t.Ldif.MutableMetadataMapping | None = (
             {
                 attr_name: {
-                    conversion_key: u.normalize_to_metadata(conversion_value)
+                    conversion_key: t.Cli.JSON_VALUE_ADAPTER.validate_python(
+                        conversion_value,
+                    )
                     for conversion_key, conversion_value in conversion_data.items()
                 }
                 for attr_name, conversion_data in boolean_conversions.items()
@@ -293,17 +296,25 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         )
         boolean_conversions_dict: t.Ldif.MutableMetadataMapping = {
             attr_name: {
-                conversion_key: u.normalize_to_metadata(conversion_value)
+                conversion_key: t.Cli.JSON_VALUE_ADAPTER.validate_python(
+                    conversion_value,
+                )
                 for conversion_key, conversion_value in conversion_data.items()
             }
             for attr_name, conversion_data in boolean_conversions.items()
         }
-        boolean_conversions_json: dict[str, t.Cli.JsonValue] = {
-            attr_name: u.Cli.normalize_json_value(conversion_data)
-            for attr_name, conversion_data in boolean_conversions_dict.items()
-        }
-        attr_name_conversions_json: dict[str, t.Cli.JsonValue] = dict(
-            attr_name_conversions,
+        boolean_conversions_json: t.JsonMapping = (
+            t.Cli.JSON_MAPPING_ADAPTER.validate_python(
+                {
+                    attr_name: u.Cli.normalize_json_value(conversion_data)
+                    for attr_name, conversion_data in boolean_conversions_dict.items()
+                },
+            )
+        )
+        attr_name_conversions_json: t.JsonMapping = (
+            t.Cli.JSON_MAPPING_ADAPTER.validate_python(
+                dict(attr_name_conversions),
+            )
         )
         converted_attrs_data = u.Cli.normalize_json_value({
             c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions_json,
@@ -328,13 +339,17 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 extensions_data[key] = [str(item) for item in val]
             elif isinstance(val, Mapping):
                 extensions_data[key] = {
-                    str(nested_key): u.normalize_to_metadata(nested_value)
+                    str(nested_key): t.Cli.JSON_VALUE_ADAPTER.validate_python(
+                        nested_value,
+                    )
                     for nested_key, nested_value in val.items()
                 }
             else:
-                extensions_data[key] = u.normalize_to_metadata(val)
+                extensions_data[key] = t.Cli.JSON_VALUE_ADAPTER.validate_python(val)
         for ext_key, ext_val in original_extensions.items():
-            extensions_data[ext_key] = u.normalize_to_metadata(ext_val)
+            extensions_data[ext_key] = t.Cli.JSON_VALUE_ADAPTER.validate_python(
+                ext_val,
+            )
         extensions_data[c.Ldif.ORIGINAL_DN_COMPLETE] = str(
             original_entry.dn,
         )
@@ -414,7 +429,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             (
                 {
                     attr_name: {
-                        conversion_key: u.normalize_to_metadata(conversion_value)
+                        conversion_key: t.Cli.JSON_VALUE_ADAPTER.validate_python(
+                            conversion_value,
+                        )
                         for conversion_key, conversion_value in conversion_data.items()
                     }
                     for attr_name, conversion_data in boolean_conversions.items()
@@ -472,7 +489,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 else []
             )
             schema_transformations.append("schema_dn_normalization")
-            schema_transformations_typed: MutableSequence[t.Ldif.MetadataValue] = [
+            schema_transformations_typed: MutableSequence[t.JsonValue] = [
                 str(item) for item in schema_transformations
             ]
             metadata.extensions.schema_transformations = schema_transformations_typed
@@ -662,7 +679,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             else None
         )
         if isinstance(converted_attrs_data, Mapping):
-            boolean_conversions_obj: t.Ldif.MetadataValue = converted_attrs_data.get(
+            boolean_conversions_obj: t.JsonValue = converted_attrs_data.get(
                 mk.CONVERSION_BOOLEAN_CONVERSIONS,
                 {},
             )
@@ -768,32 +785,27 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 list(rfc_violations),
             )
         if attribute_conflicts:
-            attribute_conflicts_payload: list[dict[str, t.Cli.JsonValue]] = [
-                {
-                    str(key): (
-                        str(value)
-                        if isinstance(value, str)
-                        else [str(item) for item in value]
-                    )
-                    for key, value in conflict.items()
-                }
-                for conflict in attribute_conflicts
-            ]
-            attribute_conflicts_json = u.Cli.normalize_json_value(
-                attribute_conflicts_payload,
+            attribute_conflicts_json: t.JsonValue = (
+                t.Cli.JSON_VALUE_ADAPTER.validate_python(
+                    [
+                        {
+                            str(key): (
+                                str(value)
+                                if isinstance(value, str)
+                                else [str(item) for item in value]
+                            )
+                            for key, value in conflict.items()
+                        }
+                        for conflict in attribute_conflicts
+                    ],
+                )
             )
             current_extensions["attribute_conflicts"] = u.Ldif.dump_json_payload(
                 attribute_conflicts_json,
             )
-        if current_extensions != (entry.metadata.extensions if entry.metadata else {}):
-            updated_extensions = (
-                m.Ldif.DynamicMetadata.from_dict(current_extensions)
-                if current_extensions
-                else m.Ldif.DynamicMetadata()
-            )
-            entry.metadata = entry.metadata.model_copy(
-                update={"extensions": updated_extensions},
-            )
+        entry.metadata.extensions = m.Ldif.DynamicMetadata.from_dict(
+            current_extensions,
+        )
         return r[m.Ldif.Entry].ok(entry)
 
     @override
@@ -818,27 +830,33 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if entry.metadata:
                 if not entry.metadata.extensions:
                     entry.metadata.extensions = m.Ldif.DynamicMetadata()
-                converted_attrs_list: MutableSequence[t.Ldif.MetadataValue] = [
+                converted_attrs_list: MutableSequence[t.JsonValue] = [
                     str(item) for item in converted_attrs
                 ]
-                converted_attrs_json: list[t.Cli.JsonValue] = [
-                    str(item) for item in converted_attrs_list
-                ]
+                converted_attrs_json: t.JsonList = (
+                    t.Cli.JSON_LIST_ADAPTER.validate_python(
+                        converted_attrs_list,
+                    )
+                )
                 if boolean_conversions:
                     boolean_conversions_dict: MutableMapping[
                         str,
-                        t.Ldif.MetadataValue,
+                        t.JsonValue,
                     ] = {
                         attr_name: {
-                            conversion_key: u.normalize_to_metadata(conversion_value)
+                            conversion_key: t.Cli.JSON_VALUE_ADAPTER.validate_python(
+                                conversion_value,
+                            )
                             for conversion_key, conversion_value in conversion_data.items()
                         }
                         for attr_name, conversion_data in boolean_conversions.items()
                     }
-                    boolean_conversions_json: dict[str, t.Cli.JsonValue] = {
-                        attr_name: u.Cli.normalize_json_value(conversion_data)
-                        for attr_name, conversion_data in boolean_conversions_dict.items()
-                    }
+                    boolean_conversions_json: t.JsonMapping = t.Cli.JSON_MAPPING_ADAPTER.validate_python(
+                        {
+                            attr_name: u.Cli.normalize_json_value(conversion_data)
+                            for attr_name, conversion_data in boolean_conversions_dict.items()
+                        },
+                    )
                     conv_data = u.Cli.normalize_json_value({
                         mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: converted_attrs_json,
                         mk.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions_json,

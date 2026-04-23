@@ -6,7 +6,7 @@ from collections.abc import (
     MutableMapping,
     MutableSequence,
 )
-from typing import Annotated, override
+from typing import Annotated
 
 from flext_ldif import m, r, s, t, u
 
@@ -19,7 +19,7 @@ class FlextLdifEntries(s):
         u.Field(
             default_factory=list,
             exclude=True,
-            description="Entries processed when execute() is used as an operation runner.",
+            description="Entries processed when the configured operation runner is used.",
         ),
     ]
     operation: Annotated[
@@ -27,7 +27,7 @@ class FlextLdifEntries(s):
         u.Field(
             default=None,
             exclude=True,
-            description="Configured entry operation executed by execute().",
+            description="Configured entry operation executed by run_configured_operation().",
         ),
     ]
     attributes_to_remove: Annotated[
@@ -35,7 +35,7 @@ class FlextLdifEntries(s):
         u.Field(
             default_factory=list,
             exclude=True,
-            description="Attributes removed by execute() when using remove_attributes.",
+            description="Attributes removed by run_configured_operation() when using remove_attributes.",
         ),
     ]
 
@@ -55,7 +55,7 @@ class FlextLdifEntries(s):
                 return r[str].fail("Dict entry has unsupported 'dn' value type")
 
     @staticmethod
-    def _extract_dn_from_object(entry: t.Container | m.Ldif.Entry) -> r[str]:
+    def _extract_dn_from_object(entry: t.JsonValue | m.Ldif.Entry) -> r[str]:
         dn_value = getattr(entry, "dn", None)
         if dn_value is None:
             return r[str].fail("Entry missing DN (dn is None)")
@@ -148,12 +148,9 @@ class FlextLdifEntries(s):
             return r[MutableSequence[str]].fail(
                 f"Failed to get entry attributes: {attributes_result.error}",
             )
-        attributes_raw = attributes_result.value
-        if not isinstance(attributes_raw, MutableMapping):
-            return r[MutableSequence[str]].fail("Entry attributes payload is invalid")
         attributes: t.MutableStrSequenceMapping = {
             str(attr_name): list(attr_values)
-            for attr_name, attr_values in attributes_raw.items()
+            for attr_name, attr_values in attributes_result.value.items()
         }
         for attr_name, attr_values in attributes.items():
             if attr_name.lower() == "objectclass":
@@ -181,9 +178,8 @@ class FlextLdifEntries(s):
             metadata=entry.metadata,
         )
 
-    @override
-    def execute(self) -> r[MutableSequence[m.Ldif.Entry]]:
-        """Run configured entry operation."""
+    def run_configured_operation(self) -> r[MutableSequence[m.Ldif.Entry]]:
+        """Run the configured entry operation against the bound entries."""
         if not self.operation:
             return r[MutableSequence[m.Ldif.Entry]].fail("No operation specified")
         if self.operation == "remove_attributes":
@@ -195,12 +191,7 @@ class FlextLdifEntries(s):
             for entry in self.entries:
                 result = self.remove_attributes(entry, self.attributes_to_remove)
                 if result.success:
-                    updated_entry = result.value
-                    if not isinstance(updated_entry, m.Ldif.Entry):
-                        return r[MutableSequence[m.Ldif.Entry]].fail(
-                            "Entry operation returned an invalid payload",
-                        )
-                    results.append(updated_entry)
+                    results.append(result.value)
             return r[MutableSequence[m.Ldif.Entry]].ok(results)
         return r[MutableSequence[m.Ldif.Entry]].fail(
             f"Unknown operation: {self.operation}",

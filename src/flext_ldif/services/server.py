@@ -118,8 +118,8 @@ class FlextLdifServer:
     def get_registry_stats(self) -> t.Ldif.MutableMetadataInputMapping:
         """Get comprehensive registry statistics."""
         servers = self.list_registered_servers()
-        quirks_by_server: dict[str, t.Cli.JsonValue] = {}
-        priorities: dict[str, t.Cli.JsonValue] = {}
+        quirks_by_server: dict[str, t.JsonValue] = {}
+        priorities: dict[str, t.JsonValue] = {}
         for st in servers:
             base = self._resolve_base_quirk(st)
             if base is None:
@@ -132,7 +132,7 @@ class FlextLdifServer:
                 "entry": type(base.entry_quirk).__name__ if base.entry_quirk else None,
             }
             priorities[st] = base.priority
-        stats: dict[str, t.Cli.JsonValue] = {
+        stats: dict[str, t.JsonValue] = {
             "total_servers": len(servers),
             "quirks_by_server": quirks_by_server,
             "server_priorities": priorities,

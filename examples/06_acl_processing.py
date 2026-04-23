@@ -100,7 +100,7 @@ def execute_acl_service() -> None:
     if entry_result.failure:
         return
     acl_service = _get_acl_service()
-    exec_result = acl_service.execute()
+    exec_result = acl_service.service_check()
     if exec_result.success:
         _ = exec_result.unwrap()
 

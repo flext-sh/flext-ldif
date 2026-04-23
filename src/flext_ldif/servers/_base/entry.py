@@ -10,7 +10,7 @@ from collections.abc import (
     MutableSequence,
 )
 from datetime import UTC, datetime
-from typing import Annotated, ClassVar, Self, override
+from typing import Annotated, ClassVar, Self
 
 from flext_core import s
 
@@ -74,7 +74,7 @@ class FlextLdifServersBaseEntry(
     ) -> m.Ldif.WriteFormatOptions | None:
         if metadata is None:
             return None
-        format_options_raw: t.Ldif.MetadataValue | None = metadata.extensions.get(
+        format_options_raw: t.JsonValue | None = metadata.extensions.get(
             c.Ldif.WRITE_FORMAT_OPTIONS,
         )
         if isinstance(format_options_raw, Mapping):
@@ -110,8 +110,7 @@ class FlextLdifServersBaseEntry(
         _ = objectclass
         return False
 
-    @override
-    def execute(self, **kwargs: t.MutableFlatContainerMapping) -> r[m.Ldif.Entry | str]:
+    def execute(self, **kwargs: t.MutableJsonMapping) -> r[m.Ldif.Entry | str]:
         """Execute entry operation (parse/write)."""
         ldif_content = kwargs.get("ldif_content")
         entry_model = kwargs.get("entry_model")

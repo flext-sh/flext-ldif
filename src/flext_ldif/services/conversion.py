@@ -14,13 +14,11 @@ from collections.abc import (
 from typing import (
     Self,
     TypeIs,
-    override,
 )
 
 from flext_ldif import (
     FlextLdifServer,
     FlextLdifServersBase,
-    FlextLdifServersBaseSchema,
     c,
     m,
     p,
@@ -54,25 +52,14 @@ class FlextLdifConversion(
 
     @staticmethod
     def _has_attr(
-        obj: t.Container
-        | FlextLdifServersBase
-        | FlextLdifServersBaseSchema
-        | p.Ldif.SchemaQuirk
-        | m.Ldif.QuirkMetadata
-        | m.Ldif.DynamicMetadata
-        | m.Ldif.AclPermissions,
+        obj: t.JsonValue | m.BaseModel | p.Ldif.SchemaQuirk | type,
         attr_name: str,
     ) -> bool:
         return hasattr(obj, attr_name)
 
     @staticmethod
     def _is_schema_quirk_protocol(
-        obj: (
-            t.Container
-            | FlextLdifServersBase
-            | FlextLdifServersBaseSchema
-            | p.Ldif.SchemaQuirk
-        ),
+        obj: t.JsonValue | m.BaseModel | p.Ldif.SchemaQuirk | type,
     ) -> TypeIs[p.Ldif.SchemaQuirk]:
         return (
             FlextLdifConversion._has_attr(obj, "parse_attribute")
@@ -97,7 +84,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_attribute_case(
-        original_attribute_case: t.Cli.JsonMapping,
+        original_attribute_case: t.JsonMapping,
         target_server_type: str,
     ) -> MutableMapping[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze attribute case for target compatibility."""
@@ -115,7 +102,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_boolean_conversions(
-        boolean_conversions: t.Cli.JsonMapping,
+        boolean_conversions: t.JsonMapping,
         target_server_type: str,
     ) -> MutableMapping[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze boolean conversions for target compatibility."""
@@ -125,7 +112,9 @@ class FlextLdifConversion(
         for attr_name, conv_info in boolean_conversions.items():
             source_format = ""
             if isinstance(conv_info, Mapping):
-                conv_info_dict = u.Cli.json_as_mapping(conv_info)
+                conv_info_dict = u.Cli.json_as_mapping(
+                    u.normalize_to_metadata(conv_info),
+                )
                 source_format = str(conv_info_dict.get("format", "") or "")
             result[f"boolean_{attr_name}"] = {
                 "source_format": source_format,
@@ -136,7 +125,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_dn_format(
-        original_format_details: t.Cli.JsonMapping,
+        original_format_details: t.JsonMapping,
         target_server_type: str,
     ) -> MutableMapping[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze DN spacing for target compatibility."""
@@ -286,7 +275,7 @@ class FlextLdifConversion(
     def _extract_schema_values_from_entry(
         entry: m.Ldif.Entry,
         field_name: str,
-    ) -> Sequence[str]:
+    ) -> t.StrSequence:
         attributes_model = entry.attributes
         if attributes_model is None:
             return tuple[str, ...]()
@@ -425,8 +414,8 @@ class FlextLdifConversion(
 
     @staticmethod
     def _normalize_metadata_value(
-        value: t.Cli.JsonPayload | None,
-    ) -> t.Ldif.MetadataValue:
+        value: t.JsonPayload | Mapping[str, t.JsonValue] | None,
+    ) -> t.JsonValue:
         """Normalize metadata value to proper type."""
         return u.Cli.normalize_json_value("" if value is None else value)
 
@@ -605,44 +594,6 @@ class FlextLdifConversion(
             model_instance=model_instance,
         )
 
-    @override
-    def execute(
-        self,
-    ) -> r[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-    ]:
-        """Execute conversion service health check."""
-        try:
-            empty_entry = m.Ldif.Entry(
-                dn=m.Ldif.DN(value="cn=health-check", metadata=m.Ldif.EntryMetadata()),
-                attributes=m.Ldif.Attributes(
-                    attributes={},
-                    attribute_metadata={},
-                    metadata=None,
-                ),
-                changetype=None,
-                metadata=None,
-            )
-            return r[
-                m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
-                | m.Ldif.Acl
-            ].ok(empty_entry)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            return r[
-                m.Ldif.Entry
-                | m.Ldif.SchemaAttribute
-                | m.Ldif.SchemaObjectClass
-                | m.Ldif.Acl
-            ].fail(f"Conversion service health check failed: {e}")
-
     def get_supported_conversions(
         self,
         quirk: FlextLdifServersBase,
@@ -778,7 +729,7 @@ class FlextLdifConversion(
 
     def _check_attribute_support(
         self,
-        quirk_schema: t.Container | FlextLdifServersBase,
+        quirk_schema: t.JsonValue | FlextLdifServersBase,
         test_attr_def: str,
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
@@ -847,7 +798,7 @@ class FlextLdifConversion(
 
     def _check_objectclass_support(
         self,
-        quirk_schema: t.Container | FlextLdifServersBase,
+        quirk_schema: t.JsonValue | FlextLdifServersBase,
         test_oc_def: str,
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
@@ -1246,8 +1197,8 @@ class FlextLdifConversion(
 
     def _convert_to_metadata_attribute_value(
         self,
-        value: t.Cli.JsonPayload | None,
-    ) -> t.Ldif.MetadataValue:
+        value: t.JsonPayload | None,
+    ) -> t.JsonValue:
         """Convert value to MetadataData type."""
         return u.Cli.normalize_json_value("" if value is None else value)
 
@@ -1258,8 +1209,8 @@ class FlextLdifConversion(
         """Extract extensions dict from ACL metadata."""
 
         def to_general_value(
-            value: t.Cli.JsonPayload | None,
-        ) -> t.Ldif.MetadataValue:
+            value: t.JsonPayload | None,
+        ) -> t.JsonValue:
             return u.Cli.normalize_json_value(value)
 
         get_metadata = u.prop("metadata")
@@ -1282,7 +1233,7 @@ class FlextLdifConversion(
     def _get_schema_quirk_for_support_check(
         self,
         quirk: FlextLdifServersBase,
-    ) -> t.Container | FlextLdifServersBase | None:
+    ) -> t.JsonValue | FlextLdifServersBase | None:
         """Get schema quirk from base quirk for support checking."""
         if FlextLdifConversion._has_attr(
             quirk,
@@ -1296,7 +1247,7 @@ class FlextLdifConversion(
             ):
                 return quirk
             return None
-        schema_quirk_raw: t.Container | None = getattr(
+        schema_quirk_raw: t.JsonValue | None = getattr(
             quirk,
             "schema_quirk",
             None,
@@ -1378,16 +1329,16 @@ class FlextLdifConversion(
                         FlextLdifConversion._normalize_metadata_value(raw_v)
                     )
                 dynamic_metadata_dict[key] = self._convert_to_metadata_attribute_value(
-                    normalized_mapping,
+                    t.Cli.JSON_VALUE_ADAPTER.validate_python(normalized_mapping),
                 )
                 continue
             if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-                normalized_sequence: list[t.Ldif.MetadataValue] = [
+                normalized_sequence: MutableSequence[t.JsonValue] = [
                     FlextLdifConversion._normalize_metadata_value(raw_item)
                     for raw_item in value
                 ]
                 dynamic_metadata_dict[key] = self._convert_to_metadata_attribute_value(
-                    normalized_sequence,
+                    t.Cli.JSON_VALUE_ADAPTER.validate_python(normalized_sequence),
                 )
                 continue
             dynamic_metadata_dict[key] = self._convert_to_metadata_attribute_value(

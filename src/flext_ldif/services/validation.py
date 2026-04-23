@@ -6,14 +6,12 @@ import struct
 from collections.abc import (
     MutableSequence,
 )
-from typing import Annotated, override
+from typing import Annotated
 
-from flext_core import d, r
+from flext_core import r
 
 from flext_ldif import (
     FlextLdifServiceBase,
-    m,
-    p,
     u,
 )
 
@@ -41,11 +39,6 @@ class FlextLdifValidation(
         int | None,
         u.Field(description="Maximum allowed attribute value length for validation"),
     ] = None
-
-    @override
-    @d.log_operation("validation_service_check", track_perf=True)
-    def execute(self) -> p.Result[m.Ldif.Response]:
-        return super().execute()
 
     def validate_attribute_name(self, name: str) -> r[bool]:
         """Validate_attribute_name method."""

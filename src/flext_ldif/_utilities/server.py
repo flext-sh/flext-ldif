@@ -145,7 +145,7 @@ class FlextLdifUtilitiesServer:
 
     @staticmethod
     def get_parent_server_type(
-        nested_class_instance_or_type: type | t.Container,
+        nested_class_instance_or_type: type | t.JsonValue,
     ) -> c.Ldif.ServerTypes:
         """Get server_type from parent server class via __qualname__."""
         cls = (

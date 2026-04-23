@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Mapping, MutableMapping, MutableSequence
-from typing import Annotated, ClassVar, Self, override
+from collections.abc import (
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+)
+from typing import Annotated, ClassVar, Self
 
 from flext_core import s
 
@@ -287,7 +291,6 @@ class FlextLdifServersBaseSchema(
         _ = oc_definition
         return False
 
-    @override
     def execute(
         self,
         *,
@@ -296,8 +299,13 @@ class FlextLdifServersBaseSchema(
         **kwargs: t.Scalar,
     ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
         """Execute schema operation with auto-detection: str→parse, Model→write."""
-        resolved_data = self._resolve_data(data, kwargs)
-        operation = self._resolve_operation(operation, kwargs)
+        json_value_adapter = t.json_value_adapter()
+        kwargs_dict: t.MutableJsonMapping = {
+            str(key): json_value_adapter.validate_python(u.to_jsonable_python(value))
+            for key, value in kwargs.items()
+        }
+        resolved_data = self._resolve_data(data, kwargs_dict)
+        operation = self._resolve_operation(operation, kwargs_dict)
         if resolved_data is None:
             empty_str: str = ""
             return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].ok(
@@ -309,7 +317,7 @@ class FlextLdifServersBaseSchema(
 
     def _coerce_schema_data(
         self,
-        value: t.Container | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None,
+        value: t.JsonValue | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None,
     ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None:
         """Coerce raw execute payload to the concrete schema payload union."""
         if value is None:
@@ -351,7 +359,7 @@ class FlextLdifServersBaseSchema(
 
     def _coerce_attribute_model(
         self,
-        value: t.Container | t.Ldif.SchemaConversionValue,
+        value: t.JsonValue | t.Ldif.SchemaConversionValue,
     ) -> m.Ldif.SchemaAttribute | None:
         """Coerce raw value to a schema attribute model when possible."""
         try:
@@ -367,7 +375,7 @@ class FlextLdifServersBaseSchema(
 
     def _coerce_objectclass_model(
         self,
-        value: t.Container | t.Ldif.SchemaConversionValue,
+        value: t.JsonValue | t.Ldif.SchemaConversionValue,
     ) -> m.Ldif.SchemaObjectClass | None:
         """Coerce raw value to a schema objectClass model when possible."""
         try:
@@ -384,7 +392,7 @@ class FlextLdifServersBaseSchema(
     def _resolve_data(
         self,
         data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None,
-        kwargs: Mapping[str, t.Container],
+        kwargs: t.JsonMapping,
     ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None:
         """Resolve schema payload from parameter or kwargs."""
         if data is not None:
@@ -394,7 +402,7 @@ class FlextLdifServersBaseSchema(
     def _resolve_operation(
         self,
         operation: str | None,
-        kwargs: Mapping[str, t.Container],
+        kwargs: t.JsonMapping,
     ) -> str | None:
         """Resolve schema operation from parameter or kwargs."""
         if operation is not None:

@@ -189,7 +189,7 @@ class FlextLdifUtilitiesACL:
         return (version, acl_name)
 
     @staticmethod
-    def _is_metadata_scalar_or_container(value: t.Container) -> bool:
+    def _is_metadata_scalar_or_container(value: t.JsonValue) -> bool:
         """Check supported metadata extension value shape."""
         return u.primitive(value) or isinstance(value, (list, dict))
 
@@ -272,10 +272,10 @@ class FlextLdifUtilitiesACL:
         settings: m.Ldif.AclMetadataConfig,
     ) -> t.Ldif.MutableMetadataMapping:
         """Build QuirkMetadata extensions for ACL."""
-        normalized_line_breaks: t.Cli.JsonValue | None = None
+        normalized_line_breaks: t.JsonValue | None = None
         if settings.line_breaks is not None:
             normalized_line_breaks = [int(value) for value in settings.line_breaks]
-        normalized_targetscope: t.Cli.JsonValue | None = None
+        normalized_targetscope: t.JsonValue | None = None
         if settings.targetscope is not None:
             normalized_targetscope = [int(value) for value in settings.targetscope]
         result: t.Ldif.MutableMetadataMapping = {}

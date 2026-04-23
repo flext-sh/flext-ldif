@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import re
 from collections.abc import (
-    Mapping,
     MutableSequence,
 )
-from typing import Annotated, ClassVar, Self, override
+from typing import Annotated, ClassVar, Self
 
 from flext_core import s
 
@@ -131,7 +130,6 @@ class FlextLdifServersBaseSchemaAcl(
             extensions=extensions_model,
         )
 
-    @override
     def execute(
         self,
         *,
@@ -140,7 +138,11 @@ class FlextLdifServersBaseSchemaAcl(
         **kwargs: t.Scalar,
     ) -> r[m.Ldif.Acl | str]:
         """Execute ACL operation with auto-detection: str→parse, Acl→write."""
-        kwargs_dict = dict(kwargs)
+        json_value_adapter = t.json_value_adapter()
+        kwargs_dict: t.MutableJsonMapping = {
+            str(key): json_value_adapter.validate_python(u.to_jsonable_python(value))
+            for key, value in kwargs.items()
+        }
         data = self._resolve_data(data, kwargs_dict)
         operation = self._resolve_operation(operation, kwargs_dict)
         if data is None:
@@ -193,7 +195,7 @@ class FlextLdifServersBaseSchemaAcl(
 
     def _coerce_acl_data(
         self,
-        value: t.Container | t.Cli.JsonValue | m.Ldif.Acl | None,
+        value: t.JsonValue | m.Ldif.Acl | None,
     ) -> str | m.Ldif.Acl | None:
         """Coerce generic value to ACL payload union."""
         if value is None:
@@ -210,7 +212,7 @@ class FlextLdifServersBaseSchemaAcl(
             )
             return None
 
-    def _coerce_operation(self, value: t.Container) -> str | None:
+    def _coerce_operation(self, value: t.JsonValue) -> str | None:
         """Coerce operation token to supported ACL operation."""
         if not isinstance(value, str):
             return None
@@ -260,7 +262,7 @@ class FlextLdifServersBaseSchemaAcl(
 
     def _extract_acl_parameters(
         self,
-        kwargs: t.MutableFlatContainerMapping,
+        kwargs: t.MutableJsonMapping,
     ) -> tuple[str | m.Ldif.Acl | None, str | None]:
         """Extract and validate ACL operation parameters from kwargs."""
         data_raw = kwargs.get("data")
@@ -296,7 +298,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _resolve_data(
         self,
         data: str | m.Ldif.Acl | None,
-        kwargs: Mapping[str, t.Container],
+        kwargs: t.JsonMapping,
     ) -> str | m.Ldif.Acl | None:
         """Resolve data from parameter or kwargs."""
         if data is not None:
@@ -307,7 +309,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _resolve_operation(
         self,
         operation: str | None,
-        kwargs: Mapping[str, t.Container],
+        kwargs: t.JsonMapping,
     ) -> str | None:
         """Resolve operation from parameter or kwargs."""
         if operation is not None:

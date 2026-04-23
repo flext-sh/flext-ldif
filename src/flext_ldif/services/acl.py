@@ -6,7 +6,6 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-from typing import Annotated, override
 
 from flext_ldif import (
     m,
@@ -19,15 +18,6 @@ from flext_ldif import (
 
 class FlextLdifAcl(s):
     """Direct ACL processing service using flext-core APIs."""
-
-    server: Annotated[
-        object | None,
-        u.Field(
-            default=None,
-            exclude=True,
-            description="Optional LDIF server registry override for ACL parsing.",
-        ),
-    ]
 
     @staticmethod
     def _build_acl_response(
@@ -115,9 +105,8 @@ class FlextLdifAcl(s):
             ),
         )
 
-    @override
-    def execute(self) -> r[m.Ldif.AclResponse]:
-        """Execute ACL service health check."""
+    def service_check(self) -> r[m.Ldif.AclResponse]:
+        """Return a minimal ACL response for service wiring checks."""
         return r[m.Ldif.AclResponse].ok(
             m.Ldif.AclResponse(acls=[], statistics=m.Ldif.Statistics()),
         )

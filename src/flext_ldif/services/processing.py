@@ -6,7 +6,6 @@ from collections.abc import (
     MutableSequence,
 )
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import override
 
 from flext_ldif import m, r, s, u
 
@@ -34,13 +33,6 @@ class FlextLdifProcessing(s):
             "dn": dn_str,
             "attributes": attrs_dict,
         })
-
-    @override
-    def execute(self) -> r[MutableSequence[m.Ldif.ProcessingResult]]:
-        """Execute method required by s abstract base class."""
-        return r[MutableSequence[m.Ldif.ProcessingResult]].fail(
-            "FlextLdifProcessing does not support generic execute(). Use specific methods instead.",
-        )
 
     def process_entries(
         self,

@@ -229,25 +229,25 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_metadata_value(
-        value: t.Ldif.MetadataValue,
-    ) -> t.Ldif.MetadataValue:
+        value: t.JsonValue,
+    ) -> t.JsonValue:
         return u.normalize_to_metadata(value)
 
     @staticmethod
     def _convert_nested_metadata_value(
-        value: t.Ldif.MetadataValue,
-    ) -> t.Ldif.MetadataValue:
+        value: t.JsonValue,
+    ) -> t.JsonValue:
         return u.normalize_to_metadata(value)
 
     @staticmethod
     def _is_object_mapping(
-        value: t.Ldif.MetadataValue,
+        value: t.JsonValue,
     ) -> bool:
         return isinstance(value, Mapping)
 
     @staticmethod
     def _is_object_sequence(
-        value: t.Ldif.MetadataValue,
+        value: t.JsonValue,
     ) -> bool:
         return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
@@ -587,7 +587,7 @@ class FlextLdifUtilitiesSchema:
         result_dict: t.Ldif.MutableMetadataMapping = {}
         for key, val in syntax_extensions.items():
             if val is not None:
-                result_dict[key] = u.normalize_to_metadata(val)
+                result_dict[key] = t.Cli.JSON_VALUE_ADAPTER.validate_python(val)
         return result_dict
 
     @staticmethod

@@ -104,8 +104,8 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     def matches_server_patterns(
         value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        oid_pattern: t.MutableFlatContainerMapping | str,
-        detection_names: t.Container | frozenset[str],
+        oid_pattern: t.MutableJsonMapping | str,
+        detection_names: t.JsonValue | frozenset[str],
         detection_string: str | None = None,
         *,
         use_prefix_match: bool = False,
@@ -156,7 +156,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def validate(
-        value_or_entries: MutableSequence[m.Ldif.Entry] | t.Container | str | m.Ldif.DN,
+        value_or_entries: MutableSequence[m.Ldif.Entry] | t.JsonValue | str | m.Ldif.DN,
         validator_first: p.ValidatorSpec | None = None,
         *validators_rest: p.ValidatorSpec,
         strict: bool = True,
@@ -164,7 +164,7 @@ class FlextLdifUtilitiesDispatch:
         max_errors: int = 0,
     ) -> (
         r[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]
-        | r[t.Container]
+        | r[t.JsonValue]
         | bool
     ):
         """Validate entries against rules."""
@@ -186,7 +186,7 @@ class FlextLdifUtilitiesDispatch:
         if isinstance(value_or_entries, Sequence) and (
             not isinstance(value_or_entries, (str, bytes))
         ):
-            return r[t.Container].fail(
+            return r[t.JsonValue].fail(
                 "validator call requires scalar, not entry sequence",
             )
         if isinstance(value_or_entries, m.Ldif.DN):
@@ -195,7 +195,7 @@ class FlextLdifUtilitiesDispatch:
                 *validators,
             )
         if isinstance(value_or_entries, bytes):
-            return r[t.Container].fail("bytes value not supported for validation")
+            return r[t.JsonValue].fail("bytes value not supported for validation")
         return FlextLdifUtilitiesValidation.validate_value(
             value_or_entries,
             *validators,
@@ -219,7 +219,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def _is_entry_sequence(
-        obj: MutableSequence[m.Ldif.Entry] | t.Container | str | m.Ldif.DN,
+        obj: MutableSequence[m.Ldif.Entry] | t.JsonValue | str | m.Ldif.DN,
     ) -> TypeGuard[MutableSequence[m.Ldif.Entry]]:
         """Check if value is a Sequence of Entry objects (dispatch helper)."""
         if isinstance(obj, (str, bytes, m.Ldif.DN)):
@@ -236,10 +236,10 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def find(
-        items: t.FlatContainerList,
+        items: t.JsonList,
         *,
         predicate: Callable[..., bool],
-    ) -> t.Container | None:
+    ) -> t.JsonValue | None:
         """Route to CollectionLdif.find (resolves CollectionLdif vs core)."""
         return FlextLdifUtilitiesCollectionLdif.find(items, predicate=predicate)
 

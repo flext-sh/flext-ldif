@@ -7,9 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
+from collections.abc import MutableMapping, MutableSequence, Sequence
 from pathlib import Path
 
 from flext_ldif import FlextLdif, ldif, m, r, t, u
@@ -31,7 +29,7 @@ class ExampleServerMigration:
             return f'dn: cn=User{i},ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: User{i}\nsn: TestUser{i}\nmail: user{i}@example.com\norclguid: user{i}guid456\naci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="ldap:///self";)\n'
 
         batch_result = u.process(list(range(20)), create_entry_data, on_error="skip")
-        source_data: list[str] = []
+        source_data: MutableSequence[str] = []
         if batch_result.success:
             source_data = list(batch_result.value)
 
@@ -46,17 +44,17 @@ class ExampleServerMigration:
     def _detect_server_type(
         api: FlextLdif,
         source_dir: Path,
-    ) -> tuple[str, Mapping[str, t.Container]]:
+    ) -> tuple[str, t.JsonMapping]:
         """Detect server type from source data."""
         sample_file = source_dir / "data_00.ldif"
         detect_result = api.detect_server_type(ldif_content=sample_file.read_text())
-        detection_data: dict[str, str | float | None] = {}
+        detection_data: t.JsonMapping = t.json_mapping_adapter().validate_python({})
         if detect_result.success:
             detection = detect_result.unwrap()
-            detection_data = {
+            detection_data = t.json_mapping_adapter().validate_python({
                 "detected_server": detection.detected_server_type,
                 "detection_confidence": detection.confidence,
-            }
+            })
             return (detection.detected_server_type or "oid", detection_data)
         return ("oid", detection_data)
 
@@ -79,22 +77,20 @@ class ExampleServerMigration:
         return (source_dir, intermediate_dir, final_dir)
 
     @staticmethod
-    def auto_detection_migration_pipeline() -> r[Mapping[str, t.Container]]:
+    def auto_detection_migration_pipeline() -> r[t.JsonMapping]:
         """Migration pipeline with automatic server detection."""
         api = ldif()
         mixed_ldif = 'dn: cn=Auto Detect Test,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Auto Detect Test\nsn: Test\nmail: auto@example.com\n# This could be from OID (has orclaci) or OUD (has aci)\norclaci: access to * by * read\naci: (target="ldap:///cn=Auto Detect Test")(version 3.0; acl "test"; allow (read) userdn="ldap:///anyone";)\n\ndn: cn=Auto Group,ou=Groups,dc=example,dc=com\nobjectClass: groupOfUniqueNames\nobjectClass: groupOfNames\ncn: Auto Group\nuniquemember: cn=Auto Detect Test,ou=People,dc=example,dc=com\nmember: cn=Auto Detect Test,ou=People,dc=example,dc=com\n'
         detect_result = api.detect_server_type(ldif_content=mixed_ldif)
         if detect_result.failure:
-            return r[Mapping[str, t.Container]].fail(
+            return r[t.JsonMapping].fail(
                 f"Server detection failed: {detect_result.error}",
             )
         detection = detect_result.unwrap()
         detected_server = detection.detected_server_type or "rfc"
         parse_result = api.parse_ldif(mixed_ldif, server_type=detected_server)
         if parse_result.failure:
-            return r[Mapping[str, t.Container]].fail(
-                f"Parse failed: {parse_result.error}"
-            )
+            return r[t.JsonMapping].fail(f"Parse failed: {parse_result.error}")
         parse_response = parse_result.unwrap()
         entries = parse_response.entries
         migration_dir = Path("examples/auto_migration")
@@ -107,72 +103,74 @@ class ExampleServerMigration:
             target_server="rfc",
         )
         if migration_result.failure:
-            return r[Mapping[str, t.Container]].fail(
+            return r[t.JsonMapping].fail(
                 f"Migration to RFC failed: {migration_result.error}",
             )
-        return r[Mapping[str, t.Container]].ok({
-            "detected_server": detected_server,
-            "confidence": detection.confidence,
-            "patterns_found": detection.patterns_found,
-            "total_entries": len(entries),
-            "migration_success": True,
-        })
+        return r[t.JsonMapping].ok(
+            t.json_mapping_adapter().validate_python({
+                "detected_server": detected_server,
+                "confidence": detection.confidence,
+                "patterns_found": detection.patterns_found,
+                "total_entries": len(entries),
+                "migration_success": True,
+            })
+        )
 
     @staticmethod
-    def batch_server_comparison() -> r[Mapping[str, t.Container]]:
+    def batch_server_comparison() -> r[t.JsonMapping]:
         """Batch comparison of parsing across multiple LDAP servers."""
         api = ldif()
         test_ldif = 'dn: cn=Server Comparison,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Server Comparison\nsn: Test\nmail: comparison@example.com\n# OID-specific attributes\norclguid: abc123def456\norclaci: access to attr=mail by * read\n# OUD-specific attributes\naci: (targetattr="mail")(version 3.0; acl "mail access"; allow (read,search) userdn="ldap:///anyone";)\n# OpenLDAP-specific attributes\nentryUUID: 12345678-1234-1234-1234-123456789012\nentryCSN: 20240101000000.000000Z#000000#000#000000\n'
-        servers: list[str] = ["rfc", "oid", "oud", "openldap"]
-        comparison_results: dict[
-            str,
-            dict[str, bool | int | str | None],
-        ] = {}
+        servers: Sequence[str] = ("rfc", "oid", "oud", "openldap")
+        comparison_results: MutableMapping[str, t.JsonMapping] = {}
         for server in servers:
             server_type = server
             parse_result = api.parse_ldif(test_ldif, server_type=server_type)
             if parse_result.success:
                 parse_response = parse_result.unwrap()
                 entries = parse_response.entries
-                comparison_results[server] = {
+                server_result = t.json_mapping_adapter().validate_python({
                     "parsed_successfully": True,
                     "entry_count": len(entries),
                     "server_type": server,
-                }
+                })
                 if entries:
                     validate_result = api.validate_entries(entries)
                     if validate_result.success:
                         report = validate_result.unwrap()
-                        server_result = comparison_results[server]
-                        server_result["validation_is_valid"] = report.valid
-                        server_result["validation_valid_entries"] = report.valid_entries
-                        server_result["validation_invalid_entries"] = (
-                            report.invalid_entries
-                        )
-                        server_result["validation_error_count"] = len(report.errors)
+                        server_result = t.json_mapping_adapter().validate_python({
+                            **server_result,
+                            "validation_is_valid": report.valid,
+                            "validation_valid_entries": report.valid_entries,
+                            "validation_invalid_entries": report.invalid_entries,
+                            "validation_error_count": len(report.errors),
+                        })
+                comparison_results[server] = server_result
             else:
-                comparison_results[server] = {
+                comparison_results[server] = t.json_mapping_adapter().validate_python({
                     "parsed_successfully": False,
                     "error": parse_result.error,
                     "server_type": server,
-                }
+                })
         successful_parses = sum(
             1
             for res in comparison_results.values()
             if res.get("parsed_successfully", False)
         )
         total_servers = len(servers)
-        return r[Mapping[str, t.Container]].ok({
-            "servers_tested": total_servers,
-            "successful_parses": successful_parses,
-            "success_rate": successful_parses / total_servers
-            if total_servers > 0
-            else 0,
-            "server_results": comparison_results,
-        })
+        return r[t.JsonMapping].ok(
+            t.json_mapping_adapter().validate_python({
+                "servers_tested": total_servers,
+                "successful_parses": successful_parses,
+                "success_rate": successful_parses / total_servers
+                if total_servers > 0
+                else 0,
+                "server_results": comparison_results,
+            })
+        )
 
     @staticmethod
-    def comprehensive_migration_workflow() -> r[Mapping[str, t.Container]]:
+    def comprehensive_migration_workflow() -> r[t.JsonMapping]:
         """Comprehensive migration workflow with parallel processing and validation."""
         api = ldif()
         workflow_dir = Path("examples/comprehensive_migration")
@@ -192,7 +190,7 @@ class ExampleServerMigration:
             target_server="oud",
         )
         if intermediate_migration.failure:
-            return r[Mapping[str, t.Container]].fail(
+            return r[t.JsonMapping].fail(
                 f"Intermediate migration failed: {intermediate_migration.error}",
             )
         final_migration = api.migrate(
@@ -202,23 +200,24 @@ class ExampleServerMigration:
             target_server="rfc",
         )
         if final_migration.failure:
-            return r[Mapping[str, t.Container]].fail(
+            return r[t.JsonMapping].fail(
                 f"Final migration failed: {final_migration.error}",
             )
         final_result = final_migration.unwrap()
         final_stats = final_result.stats
         final_count = final_stats.processed_entries if final_stats is not None else 0
-        workflow_results = {
-            **detection_data,
-            "intermediate_migration": "success",
-            "final_migration": "success",
-            "final_entry_count": final_count,
-            "source_server_detected": source_server,
-            "migration_pipeline": "oid → oud → rfc",
-            "parallel_processing": True,
-            "validation_performed": True,
-        }
-        return r[Mapping[str, t.Container]].ok(workflow_results)
+        return r[t.JsonMapping].ok(
+            t.json_mapping_adapter().validate_python({
+                **detection_data,
+                "intermediate_migration": "success",
+                "final_migration": "success",
+                "final_entry_count": final_count,
+                "source_server_detected": source_server,
+                "migration_pipeline": "oid → oud → rfc",
+                "parallel_processing": True,
+                "validation_performed": True,
+            })
+        )
 
     @staticmethod
     def parallel_server_migration() -> r[m.Ldif.MigrationPipelineResult]:

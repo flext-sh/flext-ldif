@@ -350,7 +350,7 @@ class FlextLdifUtilitiesParser:
     ) -> t.MutableStrSequenceMapping:
         """Extract extension information from parsed metadata."""
 
-        def _as_str_list(value: t.Ldif.MetadataValue) -> MutableSequence[str] | None:
+        def _as_str_list(value: t.JsonValue) -> MutableSequence[str] | None:
             if isinstance(value, list):
                 normalized: MutableSequence[str] = []
                 for item in value:

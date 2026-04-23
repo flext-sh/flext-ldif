@@ -12,7 +12,7 @@ from flext_ldif import (
 
 
 class FlextLdifServersOid(FlextLdifServersRfc):
-    """Oracle OID server quirks - implements t.Container."""
+    """Oracle OID server quirks - implements t.JsonValue."""
 
     class Constants(FlextLdifServersOidConstants):
         """OID server constants."""

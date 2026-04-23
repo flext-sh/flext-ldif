@@ -517,7 +517,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def normalize_unconverted_attributes(
-        value: Mapping[str, t.Container] | t.Container | None,
+        value: t.JsonMapping | t.JsonValue | None,
     ) -> t.Ldif.UnconvertedAttributes:
         """Normalize metadata-carried unconverted attributes to the public LDIF shape."""
         if not isinstance(value, Mapping):
@@ -546,10 +546,10 @@ class FlextLdifUtilitiesEntry:
         original: str,
         converted: str | None,
         context: str = "entry",
-    ) -> t.Cli.JsonMapping:
+    ) -> t.Ldif.MutableMetadataMapping:
         """Analyze minimal differences between original and converted strings."""
         mk = c.Ldif
-        differences: dict[str, t.JsonValue] = {
+        differences: t.Ldif.MutableMetadataMapping = {
             mk.HAS_DIFFERENCES: False,
             "context": context,
             "original": original,
@@ -571,9 +571,9 @@ class FlextLdifUtilitiesEntry:
         cleaned_dn: str,
         normalize_attr_fn: Callable[[str], str] | None = None,
     ) -> tuple[
-        t.Cli.JsonMapping,
-        MutableMapping[str, t.Cli.JsonMapping],
-        t.Cli.JsonMapping,
+        t.Ldif.MutableMetadataMapping,
+        MutableMapping[str, t.Ldif.MutableMetadataMapping],
+        t.Ldif.MutableMetadataMapping,
         t.MutableStrMapping,
     ]:
         """Analyze DN and attribute differences for round-trip support (DRY utility)."""
@@ -603,8 +603,8 @@ class FlextLdifUtilitiesEntry:
                     original_attribute_case[key] = value
             except (ValueError, TypeError, AttributeError):
                 continue
-        attribute_differences: MutableMapping[str, t.Cli.JsonMapping] = {}
-        original_attributes_complete: dict[str, t.JsonValue] = {}
+        attribute_differences: MutableMapping[str, t.Ldif.MutableMetadataMapping] = {}
+        original_attributes_complete: t.Ldif.MutableMetadataMapping = {}
         for attr_name, attr_values in entry_attrs.items():
             original_attr_name = str(attr_name)
             canonical_name = normalize(original_attr_name)

@@ -19,16 +19,12 @@ class FlextLdifTypesBase:
     """Base LDIF aliases for recursive containers and raw LDIF payloads."""
 
     type Scalar = t.Primitives | None
-    type MetadataInputValue = t.Cli.JsonValue
+    type MetadataInputValue = t.JsonValue
     type MetadataInputMapping = Mapping[str, MetadataInputValue]
     type MutableMetadataInputMapping = MutableMapping[str, MetadataInputValue]
-    type MetadataLeaf = t.JsonValue
-    type MetadataNode = t.JsonValue
-    type MetadataValue = t.JsonValue
-    type MetadataMapping = Mapping[str, MetadataValue]
-    type MutableMetadataMapping = MutableMapping[str, MetadataValue]
+    type MetadataMapping = Mapping[str, t.JsonValue]
+    type MutableMetadataMapping = MutableMapping[str, t.JsonValue]
     type MetadataCarrierValue = MetadataInputValue
-    type RecursiveContainer = t.JsonValue
     type ValueType = Scalar | t.StrSequence
     type ValueList = Sequence[ValueType]
     type AttributeValue = str | bytes
@@ -52,16 +48,16 @@ class FlextLdifTypesBase:
     type DN = str
     type ParseMethodArg = str
     type ParseMethodReturn = r[t.Scalar | t.StrSequence | None]
-    type ParseMethod = Callable[[RecursiveContainer, str], ParseMethodReturn]
+    type ParseMethod = Callable[[t.JsonValue, str], ParseMethodReturn]
     type ParseMethodDecorator = Callable[[ParseMethod], ParseMethod]
     type WriteMethodArg = t.Scalar | t.StrSequence | None
     type WriteMethodReturn = (
         t.Scalar | t.StrSequence | r[t.Scalar | t.StrSequence | None] | None
     )
-    type WriteMethod = Callable[[RecursiveContainer, WriteMethodArg], WriteMethodReturn]
+    type WriteMethod = Callable[[t.JsonValue, WriteMethodArg], WriteMethodReturn]
     type WriteMethodDecorator = Callable[[WriteMethod], WriteMethod]
     type SafeMethod = Callable[
-        [RecursiveContainer, ParseMethodArg],
+        [t.JsonValue, ParseMethodArg],
         t.Scalar | t.StrSequence | None,
     ]
     type SafeMethodDecorator = Callable[[SafeMethod], SafeMethod]

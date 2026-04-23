@@ -72,7 +72,7 @@ python -c "from flext_ldif import ldif; print('FLEXT-LDIF installed successfully
 make lint           # Code quality checking with Ruff (ZERO TOLERANCE)
 make type-check     # Type safety validation with Pyrefly (MyPy successor)
 make test           # Run test suite (990/990 tests passing)
-make validate       # Complete validation pipeline (lint + type + security + test)
+make val       # Complete validation pipeline (lint + type + security + test)
 
 # Testing commands (⚠️ CRITICAL: Requires PYTHONPATH=src)
 PYTHONPATH=src pytest                           # Full test suite

@@ -5,12 +5,11 @@ from __future__ import annotations
 from collections.abc import (
     MutableSequence,
 )
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING
 
 from flext_ldif import (
     FlextLdifServiceBase,
     m,
-    p,
     r,
     u,
 )
@@ -153,11 +152,6 @@ class FlextLdifAnalysis(FlextLdifServiceBase):
                 "errors": errors[:100],
             }),
         )
-
-    @override
-    def execute(self) -> p.Result[m.Ldif.Response]:
-        """Return the canonical LDIF response for service-facade composition."""
-        return super().execute()
 
 
 __all__: list[str] = ["FlextLdifAnalysis"]

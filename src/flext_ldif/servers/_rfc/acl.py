@@ -42,7 +42,9 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             object.__setattr__(acl_instance, "_parent_quirk", parent_quirk_value)
         if cls.auto_execute:
             data_raw = kwargs.get("data")
-            data = instance._coerce_acl_data(data_raw)
+            data: str | m.Ldif.Acl | None = (
+                data_raw if isinstance(data_raw, str) else None
+            )
             op_raw = kwargs.get("operation")
             op: str | None = None
             if isinstance(op_raw, str) and op_raw == "parse":
@@ -121,7 +123,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         self,
         permission: str,
         _feature_id: str | None,
-        _metadata: t.MutableFlatContainerMapping,
+        _metadata: t.MutableJsonMapping,
     ) -> str:
         """Convert RFC permission back to server-specific format."""
         return permission
@@ -134,7 +136,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
     def _normalize_permission(
         self,
         permission: str,
-        _metadata: t.MutableFlatContainerMapping,
+        _metadata: t.MutableJsonMapping,
     ) -> tuple[str, str | None]:
         """Normalize a server-specific permission to RFC standard."""
         return (permission, None)

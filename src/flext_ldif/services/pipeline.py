@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import (
-    Mapping,
     MutableSequence,
 )
 from typing import Annotated, Self, override
@@ -40,7 +39,7 @@ class FlextLdifProcessingPipeline(s):
     _pipeline: u.Ldif.Pipeline = u.PrivateAttr()
 
     @override
-    def model_post_init(self, __context: Mapping[str, t.Container] | None, /) -> None:
+    def model_post_init(self, __context: t.JsonMapping | None, /) -> None:
         """Initialize the processing pipeline after model validation."""
         super().model_post_init(__context)
         self._config = self.transform_config or m.Ldif.TransformConfig()

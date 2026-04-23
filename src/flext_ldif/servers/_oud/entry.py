@@ -273,7 +273,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _normalize_acl_values(
-        acl_values_raw: t.Ldif.MetadataValue,
+        acl_values_raw: t.JsonValue,
     ) -> MutableSequence[str] | str | m.Ldif.Acl:
         """Normalize ACL values to expected type for comment generation.
 
@@ -294,7 +294,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _parse_commented_values(
-        commented_raw: t.Ldif.MetadataValue,
+        commented_raw: t.JsonValue,
     ) -> t.Ldif.MutableMetadataMapping | None:
         """Parse commented ACL values from raw storage format.
 
@@ -305,7 +305,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             Parsed dict or None if unparseable
 
         """
-        parsed: m.Ldif.DynamicMetadata | t.Ldif.MetadataValue
+        parsed: m.Ldif.DynamicMetadata | t.JsonValue
         if isinstance(commented_raw, str):
             parsed = m.Ldif.DynamicMetadata.model_validate_json(commented_raw)
         else:
@@ -459,19 +459,23 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 current_extensions.setdefault(c.Ldif.BASE_DN, base_dn_value)
         hidden_attribute_names.update(attr.lower() for attr in hidden_attrs)
         if hidden_attribute_names:
-            current_extensions[c.Ldif.HIDDEN_ATTRIBUTES] = u.normalize_to_metadata(
-                sorted(hidden_attribute_names)
+            current_extensions[c.Ldif.HIDDEN_ATTRIBUTES] = (
+                t.Cli.JSON_VALUE_ADAPTER.validate_python(
+                    sorted(hidden_attribute_names),
+                )
             )
         if commented_acl_values:
             converted_attrs_list: MutableSequence[str] = list(
                 commented_acl_values.keys(),
             )
-            current_extensions[c.Ldif.CONVERTED_ATTRIBUTES] = u.normalize_to_metadata(
-                converted_attrs_list
+            current_extensions[c.Ldif.CONVERTED_ATTRIBUTES] = (
+                t.Cli.JSON_VALUE_ADAPTER.validate_python(converted_attrs_list)
             )
             current_extensions[c.Ldif.COMMENTED_ATTRIBUTE_VALUES] = (
                 m.Ldif.DynamicMetadata.from_dict({
-                    str(comment_key): u.normalize_to_metadata(comment_value)
+                    str(comment_key): t.Cli.JSON_VALUE_ADAPTER.validate_python(
+                        comment_value,
+                    )
                     for comment_key, comment_value in commented_acl_values.items()
                 }).model_dump_json()
             )
@@ -488,7 +492,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 commented_attrs.append(acl_attr)
         if commented_attrs:
             current_extensions[c.Ldif.ACL_COMMENTED_ATTRIBUTES] = (
-                u.normalize_to_metadata(commented_attrs)
+                t.Cli.JSON_VALUE_ADAPTER.validate_python(commented_attrs)
             )
         update_dict_final: MutableMapping[str, t.Ldif.MutableMetadataInputMapping] = {
             "extensions": current_extensions,
@@ -1205,7 +1209,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _finalize_and_parse_entry(
         self,
-        entry_dict: t.MutableFlatContainerMapping,
+        entry_dict: t.MutableJsonMapping,
         entries_list: MutableSequence[m.Ldif.Entry],
     ) -> None:
         """Finalize entry dict and parse into entries list.
@@ -1280,7 +1284,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 ).model_dump_json(),
                 attribute_differences=m.Ldif.DynamicMetadata.from_dict(
                     {
-                        str(key): u.normalize_to_metadata(value)
+                        str(key): t.Cli.JSON_VALUE_ADAPTER.validate_python(value)
                         for key, value in attribute_differences.items()
                     },
                 ).model_dump_json(),
@@ -1320,14 +1324,14 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if original_attrs:
             original_aci = original_attrs.get("aci")
             if isinstance(original_aci, list):
-                aci_input: list[t.Cli.JsonValue] = [str(v) for v in original_aci]
+                aci_input: list[t.JsonValue] = [str(v) for v in original_aci]
                 aci_values = self._normalize_aci_value_simple(aci_input)
             elif isinstance(original_aci, str):
                 aci_values = self._normalize_aci_value_simple(original_aci)
         if not aci_values and entry.attributes and entry.attributes.attributes:
             entry_aci = entry.attributes.attributes.get("aci")
             if isinstance(entry_aci, list):
-                entry_aci_input: list[t.Cli.JsonValue] = [str(v) for v in entry_aci]
+                entry_aci_input: list[t.JsonValue] = [str(v) for v in entry_aci]
                 aci_values = self._normalize_aci_value_simple(entry_aci_input)
         if not aci_values:
             aci_values = self._find_aci_in_dict(original_attrs)
@@ -1595,7 +1599,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def _normalize_aci_value_simple(
         self,
-        value: t.Ldif.MetadataValue,
+        value: t.JsonValue,
     ) -> MutableSequence[str] | str | None:
         """Normalize ACI value to MutableSequence[str] | str | None."""
         if isinstance(value, list):
@@ -1748,20 +1752,27 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if value is None or u.primitive(value):
                 current_extensions[final_key] = value
             elif isinstance(value, (list, tuple)):
-                value_list: list[t.Cli.JsonValue] = [
-                    item if item is None or u.primitive(item) else str(item)
-                    for item in value
-                ]
-                current_extensions[final_key] = u.normalize_to_metadata(value_list)
+                current_extensions[final_key] = (
+                    t.Cli.JSON_VALUE_ADAPTER.validate_python(
+                        [
+                            item if item is None or u.primitive(item) else str(item)
+                            for item in value
+                        ],
+                    )
+                )
             elif isinstance(value, Mapping):
-                value_dict_inner: dict[str, t.Cli.JsonValue] = {}
+                value_dict_inner: MutableMapping[str, t.JsonValue] = {}
                 for k, v in value.items():
                     key = str(k)
                     value_dict_inner[key] = (
-                        v if u.primitive(v) else u.normalize_to_metadata(v)
+                        v
+                        if u.primitive(v)
+                        else t.Cli.JSON_VALUE_ADAPTER.validate_python(v)
                     )
-                current_extensions[final_key] = u.normalize_to_metadata(
-                    value_dict_inner
+                current_extensions[final_key] = (
+                    t.Cli.JSON_VALUE_ADAPTER.validate_python(
+                        value_dict_inner,
+                    )
                 )
             else:
                 current_extensions[final_key] = str(value)

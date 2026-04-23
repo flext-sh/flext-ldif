@@ -420,7 +420,7 @@ class FlextLdifModelsDomainEntry:
         @classmethod
         def coerce_attributes_from_dict(
             cls,
-            value: mda.Attributes | t.MutableFlatContainerMapping | None,
+            value: mda.Attributes | t.MutableJsonMapping | None,
         ) -> mda.Attributes | None:
             """Convert dict to Attributes instance.
 
@@ -441,7 +441,7 @@ class FlextLdifModelsDomainEntry:
         @classmethod
         def coerce_dn_from_string(
             cls,
-            value: mdn.DN | t.MutableFlatContainerMapping | str | None,
+            value: mdn.DN | t.MutableJsonMapping | str | None,
         ) -> mdn.DN | None:
             """Convert string DN to DN instance.
 
@@ -564,10 +564,10 @@ class FlextLdifModelsDomainEntry:
         @classmethod
         def ensure_metadata_initialized(
             cls,
-            data: t.MutableFlatContainerMapping,
+            data: t.MutableJsonMapping,
         ) -> MutableMapping[
             str,
-            t.Container | datetime | mdm.QuirkMetadata,
+            t.JsonValue | datetime | mdm.QuirkMetadata,
         ]:
             """Ensure metadata field is always initialized to a QuirkMetadata instance.
 
@@ -588,7 +588,7 @@ class FlextLdifModelsDomainEntry:
             """
             data_dict: MutableMapping[
                 str,
-                t.Container | datetime | mdm.QuirkMetadata,
+                t.JsonValue | datetime | mdm.QuirkMetadata,
             ] = dict(data)
             for dt_field in cls._DATETIME_FIELDS:
                 field_value = data_dict.get(dt_field)
@@ -704,14 +704,14 @@ class FlextLdifModelsDomainEntry:
                     attribute_count=attribute_count,
                     total_violations=len(violations),
                 )
-                payload: dict[str, object] = {
+                payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
                     **self._EMPTY_VALIDATION_RESULT_PAYLOAD,
                     "rfc_violations": list(violations),
                     "errors": list[str](),
                     "warnings": list[str](),
                     "server_specific_violations": list[str](),
                     "context": context_payload,
-                }
+                })
                 self.metadata.validation_results = (
                     mdm.ValidationMetadata.model_validate(
                         payload,
@@ -762,7 +762,7 @@ class FlextLdifModelsDomainEntry:
                     )
                 )
                 self.metadata.validation_results = updated_validation_results
-                ext_violations: MutableSequence[t.Ldif.MetadataValue] = list(
+                ext_violations: MutableSequence[t.JsonValue] = list(
                     server_violations,
                 )
                 self.metadata.extensions.server_specific_violations = ext_violations
@@ -773,13 +773,13 @@ class FlextLdifModelsDomainEntry:
             cls,
         ) -> mdm.ValidationMetadata:
             """Create empty ValidationMetadata from canonical immutable payload."""
-            payload: dict[str, object] = {
+            payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
                 **cls._EMPTY_VALIDATION_RESULT_PAYLOAD,
                 "rfc_violations": list[str](),
                 "errors": list[str](),
                 "warnings": list[str](),
                 "server_specific_violations": list[str](),
-            }
+            })
             return mdm.ValidationMetadata.model_validate(
                 payload,
             )
@@ -787,7 +787,7 @@ class FlextLdifModelsDomainEntry:
         @classmethod
         def _build_rfc_validation_context(
             cls,
-            old_context: Mapping[str, str],
+            old_context: t.StrMapping,
             dn_value: str,
             attribute_count: int,
             total_violations: int,
@@ -901,13 +901,13 @@ class FlextLdifModelsDomainEntry:
             cls,
             attributes: t.MutableAttributeMapping | mda.Attributes,
         ) -> mda.Attributes:
-            """Normalize attributes to Attributes t.Container.
+            """Normalize attributes to Attributes t.JsonValue.
 
             Args:
-                attributes: Attributes as dict or Attributes t.Container
+                attributes: Attributes as dict or Attributes t.JsonValue
 
             Returns:
-                Attributes t.Container with normalized values
+                Attributes t.JsonValue with normalized values
 
             Note:
                 Lenient processing: Empty attributes dict is accepted and will be captured
@@ -925,10 +925,10 @@ class FlextLdifModelsDomainEntry:
                 else:
                     values_list = [str(attr_values)]
                 attrs_dict[attr_name] = values_list
-            validate_payload: dict[str, object] = {
+            validate_payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
                 "attributes": attrs_dict,
                 **cls._ATTRIBUTES_VALIDATE_DEFAULTS,
-            }
+            })
             return mda.Attributes.model_validate(
                 validate_payload,
             )

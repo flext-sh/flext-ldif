@@ -28,34 +28,34 @@
 
 attributetype ( 1.3.6.1.4.1.42.2.27.4.1.14
 	NAME 'corbaIor'
-	DESC 'Stringified interoperable t.Container reference of a CORBA t.Container'
+	DESC 'Stringified interoperable t.JsonValue reference of a CORBA t.JsonValue'
 	EQUALITY caseIgnoreIA5Match
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.4.1.42.2.27.4.1.15
 	NAME 'corbaRepositoryId'
-	DESC 'Repository ids of interfaces implemented by a CORBA t.Container'
+	DESC 'Repository ids of interfaces implemented by a CORBA t.JsonValue'
 	EQUALITY caseExactMatch
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
 
 objectclass ( 1.3.6.1.4.1.42.2.27.4.2.10
 	NAME 'corbaContainer'
-	DESC 'Container for a CORBA t.Container'
+	DESC 'Container for a CORBA t.JsonValue'
 	SUP top
 	STRUCTURAL
 	MUST cn )
 
 objectclass ( 1.3.6.1.4.1.42.2.27.4.2.9
 	NAME 'corbaObject'
-	DESC 'CORBA t.Container representation'
+	DESC 'CORBA t.JsonValue representation'
 	SUP top
 	ABSTRACT
 	MAY ( corbaRepositoryId $ description ) )
 
 objectclass ( 1.3.6.1.4.1.42.2.27.4.2.11
 	NAME 'corbaObjectReference'
-	DESC 'CORBA interoperable t.Container reference'
+	DESC 'CORBA interoperable t.JsonValue reference'
 	SUP corbaObject
 	AUXILIARY
 	MUST corbaIor )

@@ -52,8 +52,8 @@ class FlextLdif(
 ):
     """MRO facade over LDIF services.
 
-    All operations come from mixin bases via MRO. Only ``execute()``
-    and infrastructure classmethods are defined locally.
+    All operations come from mixin bases via MRO. Only infrastructure
+    helpers are defined locally.
     """
 
     def __init__(
@@ -233,25 +233,17 @@ class FlextLdif(
         )
         return pipeline.execute()
 
+    @staticmethod
     @override
     def validate_entries(
-        self,
         entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        validation_service: FlextLdifValidation | None = None,
     ) -> r[m.Ldif.ValidationResult]:
         """Validate list of entries."""
-        validation_service = FlextLdifValidation()
-        return FlextLdifAnalysis.validate_entries(entries, validation_service)
-
-    @override
-    def execute(
-        self,
-        params: t.Container | None = None,
-    ) -> r[m.Ldif.Response]:
-        """Execute FlextServiceBase pattern compliance."""
-        _ = params
-        return r[m.Ldif.Response].fail_op(
-            "execute ldif facade",
-            "FlextLdif is a facade. Use parse_ldif(), write(), or migrate() instead.",
+        resolved_validation_service = validation_service or FlextLdifValidation()
+        return FlextLdifAnalysis.validate_entries(
+            entries,
+            resolved_validation_service,
         )
 
 

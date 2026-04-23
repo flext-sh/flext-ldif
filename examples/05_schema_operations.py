@@ -8,7 +8,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import (
-    Mapping,
     MutableSequence,
     Sequence,
 )
@@ -93,7 +92,7 @@ def intelligent_schema_building() -> r[MutableSequence[m.Ldif.Entry]]:
     return r[MutableSequence[m.Ldif.Entry]].ok(schema_entries)
 
 
-def parallel_schema_validation() -> r[Mapping[str, t.Container]]:
+def parallel_schema_validation() -> r[t.JsonMapping]:
     """Schema validation with comprehensive error analysis."""
     api = ldif()
     test_entries: list[m.Ldif.Entry] = []
@@ -155,7 +154,7 @@ def parallel_schema_validation() -> r[Mapping[str, t.Container]]:
             test_entries.append(entry_result.unwrap())
     validation_result = api.validate_entries(test_entries)
     if validation_result.failure:
-        return r[Mapping[str, t.Container]].fail(
+        return r[t.JsonMapping].fail(
             f"Schema validation failed: {validation_result.error}",
         )
     validation_report = validation_result.unwrap()
@@ -165,7 +164,6 @@ def parallel_schema_validation() -> r[Mapping[str, t.Container]]:
         "valid_entries": validation_report.valid_entries,
         "invalid_entries": validation_report.invalid_entries,
         "schema_errors": len(validation_report.errors),
-        "error_analysis": error_analysis,
     }
     for error in validation_report.errors:
         if "schema" in error.lower():
@@ -178,10 +176,11 @@ def parallel_schema_validation() -> r[Mapping[str, t.Container]]:
     analysis["compliance_rate"] = (
         validation_report.valid_entries / len(test_entries) if test_entries else 0
     )
-    return r[Mapping[str, t.Container]].ok(analysis)
+    analysis["error_analysis"] = error_analysis
+    return r[t.JsonMapping].ok(t.json_mapping_adapter().validate_python(analysis))
 
 
-def schema_migration_pipeline() -> r[Mapping[str, t.Container]]:
+def schema_migration_pipeline() -> r[t.JsonMapping]:
     """Schema-aware migration pipeline with validation."""
     api = ldif()
     migration_dir = Path("examples/schema_migration")
@@ -245,10 +244,12 @@ def schema_migration_pipeline() -> r[Mapping[str, t.Container]]:
         output_file = migrated_dir / "migrated_schema_compliant.ldif"
         write_result = api.write_ldif_file(migrated_entries, output_file)
         migration_results["output_written"] = write_result.success
-    return r[Mapping[str, t.Container]].ok(migration_results)
+    return r[t.JsonMapping].ok(
+        t.json_mapping_adapter().validate_python(migration_results),
+    )
 
 
-def batch_schema_operations() -> r[Mapping[str, t.Container]]:
+def batch_schema_operations() -> r[t.JsonMapping]:
     """Batch schema operations with validation."""
     api = ldif()
     schema_batches: list[tuple[str, list[m.Ldif.Entry]]] = []
@@ -331,26 +332,26 @@ def batch_schema_operations() -> r[Mapping[str, t.Container]]:
             b for b in batch_results if not b.endswith("_error") and b != "summary"
         ]),
     }
-    return r[Mapping[str, t.Container]].ok(batch_results)
+    return r[t.JsonMapping].ok(t.json_mapping_adapter().validate_python(batch_results))
 
 
-def railway_schema_pipeline() -> r[Mapping[str, t.Container]]:
+def railway_schema_pipeline() -> r[t.JsonMapping]:
     """Railway-oriented schema pipeline with integrated validation."""
     api = ldif()
     schema_build_result = intelligent_schema_building()
     if schema_build_result.failure:
-        return r[Mapping[str, t.Container]].fail(
+        return r[t.JsonMapping].fail(
             f"Schema building failed: {schema_build_result.error}",
         )
     schema_entries = schema_build_result.unwrap()
     schema_validation = api.validate_entries(schema_entries)
     if schema_validation.failure:
-        return r[Mapping[str, t.Container]].fail(
+        return r[t.JsonMapping].fail(
             f"Schema validation failed: {schema_validation.error}",
         )
     schema_report = schema_validation.unwrap()
     if not schema_report.valid:
-        return r[Mapping[str, t.Container]].fail(
+        return r[t.JsonMapping].fail(
             f"Schema entries invalid: {schema_report.errors}",
         )
     test_entries: list[m.Ldif.Entry] = []
@@ -380,12 +381,12 @@ def railway_schema_pipeline() -> r[Mapping[str, t.Container]]:
             test_entries.append(entry_result.unwrap())
     entry_validation = api.validate_entries(test_entries)
     if entry_validation.failure:
-        return r[Mapping[str, t.Container]].fail(
+        return r[t.JsonMapping].fail(
             f"Entry validation failed: {entry_validation.error}",
         )
     entry_report = entry_validation.unwrap()
     if not entry_report.valid:
-        return r[Mapping[str, t.Container]].fail(
+        return r[t.JsonMapping].fail(
             f"Test entries invalid: {entry_report.errors}",
         )
     output_dir = Path("examples/schema_compliant_output")
@@ -394,12 +395,14 @@ def railway_schema_pipeline() -> r[Mapping[str, t.Container]]:
     schema_write = api.write_ldif_file(list(schema_entries), schema_file)
     entries_file = output_dir / "entries.ldif"
     entries_write = api.write_ldif_file(test_entries, entries_file)
-    return r[Mapping[str, t.Container]].ok({
-        "schema_entries": len(schema_entries),
-        "schema_valid": schema_report.valid_entries,
-        "test_entries": len(test_entries),
-        "entries_valid": entry_report.valid_entries,
-        "schema_file_written": schema_write.success,
-        "entries_file_written": entries_write.success,
-        "pipeline_completed": True,
-    })
+    return r[t.JsonMapping].ok(
+        t.json_mapping_adapter().validate_python({
+            "schema_entries": len(schema_entries),
+            "schema_valid": schema_report.valid_entries,
+            "test_entries": len(test_entries),
+            "entries_valid": entry_report.valid_entries,
+            "schema_file_written": schema_write.success,
+            "entries_file_written": entries_write.success,
+            "pipeline_completed": True,
+        }),
+    )

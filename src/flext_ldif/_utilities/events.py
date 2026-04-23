@@ -16,7 +16,7 @@ class FlextLdifUtilitiesEvents:
     def _build_conversion_event_logging(
         event: m.Ldif.ConversionEvent,
         settings: m.Ldif.ConversionEventConfig,
-    ) -> tuple[t.MutableScalarMapping, str]:
+    ) -> tuple[t.MutableJsonMapping, str]:
         return (
             {
                 "aggregate_id": event.aggregate_id,
@@ -36,7 +36,7 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def _log_and_emit_generic_event(
         logger: p.Logger,
-        log_context: t.MutableScalarMapping,
+        log_context: t.MutableJsonMapping,
         log_message: str,
         log_level: str = c.Ldif.LogLevelLower.INFO.value,
         extras: m.Ldif.LogContextExtras | None = None,
@@ -57,9 +57,9 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def _process_extras(
         extras: m.Ldif.LogContextExtras | None = None,
-    ) -> t.MutableScalarMapping:
+    ) -> t.MutableJsonMapping:
         """Extract and filter extras into a dict of loggable context."""
-        filtered_extras: t.MutableScalarMapping = {}
+        filtered_extras: t.MutableJsonMapping = {}
         if not extras:
             return filtered_extras
         if extras.user_id is not None:
@@ -78,7 +78,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _to_error_details_list(
-        error_details: list[t.Container] | tuple[t.Container, ...] | None,
+        error_details: list[t.JsonValue] | tuple[t.JsonValue, ...] | None,
     ) -> MutableSequence[str]:
         if error_details is None:
             return []
@@ -153,7 +153,7 @@ class FlextLdifUtilitiesEvents:
         """Create DnEvent, log with context, and attach to logger context."""
         event = FlextLdifUtilitiesEvents.create_dn_event(settings)
         aggregate_id = event.aggregate_id or ""
-        log_context: t.MutableScalarMapping = {
+        log_context: t.MutableJsonMapping = {
             "aggregate_id": aggregate_id,
             "dn_operation": settings.dn_operation,
             "input_dn": settings.input_dn,

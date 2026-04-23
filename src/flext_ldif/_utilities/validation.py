@@ -6,11 +6,11 @@ from flext_ldif import c, p, r, t
 class FlextLdifUtilitiesValidation:
     @staticmethod
     def validate_value(
-        value: t.Container,
+        value: t.JsonValue,
         *validators: p.ValidatorSpec,
-    ) -> r[t.Container]:
+    ) -> r[t.JsonValue]:
         del validators
-        return r[t.Container].ok(value)
+        return r[t.JsonValue].ok(value)
 
     class Rfc:
         """RFC validation helpers."""

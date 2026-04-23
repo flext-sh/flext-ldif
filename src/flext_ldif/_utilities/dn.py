@@ -396,7 +396,7 @@ class FlextLdifUtilitiesDN:
         for diagnostic and audit purposes.
 
         Args:
-            dn: DN string or DN t.Container
+            dn: DN string or DN t.JsonValue
 
         Returns:
             Tuple of (cleaned_dn, DNStatistics with transformation history)

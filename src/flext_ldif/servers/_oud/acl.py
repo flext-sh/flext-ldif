@@ -92,7 +92,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         )
 
     @staticmethod
-    def _scalar_or_list_value(value: t.Ldif.MetadataValue) -> bool:
+    def _scalar_or_list_value(value: t.JsonValue) -> bool:
         """Check if value is scalar metadata value or list."""
         return u.primitive(value) or isinstance(value, list)
 
@@ -174,7 +174,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 if isinstance(val, (str, bool, int, float)):
                     perms_data[k] = val
                 elif isinstance(val, list):
-                    str_list: list[t.Cli.JsonValue] = [
+                    str_list: list[t.JsonValue] = [
                         str(item) for item in val if isinstance(item, str)
                     ]
                     perms_data[k] = u.normalize_to_metadata(str_list)
@@ -194,7 +194,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             else:
                 perms = None
         if not perms:
-            return r[str].fail("ACL model has no permissions t.Container")
+            return r[str].fail("ACL model has no permissions t.JsonValue")
         ops: MutableSequence[str] = [
             field_name
             for field_name in (

@@ -22,7 +22,7 @@ from flext_ldif import FlextLdif, ldif
 from tests import c, m, t
 
 
-def _entry_extensions(entry: m.Ldif.Entry) -> Mapping[str, t.Container]:
+def _entry_extensions(entry: m.Ldif.Entry) -> t.JsonMapping:
     metadata = entry.metadata
     assert metadata is not None
     extensions = metadata.extensions

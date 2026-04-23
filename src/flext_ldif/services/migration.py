@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import struct
 from collections.abc import (
-    Mapping,
     MutableSequence,
 )
 from pathlib import Path
@@ -95,7 +94,7 @@ class FlextLdifMigrationPipeline(s):
     ]
 
     @override
-    def model_post_init(self, __context: Mapping[str, t.Container] | None, /) -> None:
+    def model_post_init(self, __context: t.JsonMapping | None, /) -> None:
         """Normalize migration configuration after Pydantic initialization."""
         super().model_post_init(__context)
         self.source_server_type = self._coerce_server_type(

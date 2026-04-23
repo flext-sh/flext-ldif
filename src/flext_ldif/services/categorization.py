@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import struct
 from collections.abc import (
-    Mapping,
     MutableMapping,
     MutableSequence,
 )
@@ -13,13 +12,6 @@ from typing import Annotated, Final, override
 from flext_ldif import FlextLdifFilters, FlextLdifServer, c, m, r, s, t, u
 
 _MAX_DN_PREVIEW_LENGTH: Final[int] = 100
-
-
-class _MissingSentinel:
-    pass
-
-
-_MISSING_ATTR: Final[_MissingSentinel] = _MissingSentinel()
 
 
 class FlextLdifCategorization(s):
@@ -121,7 +113,7 @@ class FlextLdifCategorization(s):
     )
 
     @override
-    def model_post_init(self, __context: Mapping[str, t.Container] | None, /) -> None:
+    def model_post_init(self, __context: t.JsonMapping | None, /) -> None:
         """Normalize configured categorization state after Pydantic initialization."""
         super().model_post_init(__context)
         self._server_registry = self.server_registry or self._server
@@ -153,7 +145,7 @@ class FlextLdifCategorization(s):
 
     @staticmethod
     def _ensure_entry_model(
-        value: t.Container | m.Ldif.Entry,
+        value: t.JsonValue | m.Ldif.Entry,
     ) -> m.Ldif.Entry | None:
         if isinstance(value, m.Ldif.Entry):
             return value
@@ -184,10 +176,6 @@ class FlextLdifCategorization(s):
             else:
                 excluded.append(entry)
         return (included, excluded)
-
-    @staticmethod
-    def _has_attr(obj: t.Container | type, attr_name: str) -> bool:
-        return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
 
     @staticmethod
     def _mark_entry_rejected(
@@ -416,9 +404,7 @@ class FlextLdifCategorization(s):
     def categorize_entry(
         self,
         entry: m.Ldif.Entry,
-        rules: m.Ldif.CategoryRules
-        | MutableMapping[str, t.MetadataValue]
-        | None = None,
+        rules: m.Ldif.CategoryRules | MutableMapping[str, t.JsonValue] | None = None,
         server_type: str | None = None,
     ) -> tuple[str, str | None]:
         """Categorize single entry using provided or instance categorization rules."""
@@ -462,21 +448,6 @@ class FlextLdifCategorization(s):
         if constants is not None and self._check_hierarchy_priority(entry, constants):
             return (c.Ldif.Category.HIERARCHY, None)
         return self._match_entry_to_category(entry, priority_order, merged_category_map)
-
-    @override
-    def execute(self) -> r[m.Ldif.FlexibleCategories]:
-        """Execute categorization pass (use individual methods for specific operations)."""
-        categories = m.Ldif.FlexibleCategories()
-        for cat in (
-            c.Ldif.Category.SCHEMA,
-            c.Ldif.Category.HIERARCHY,
-            c.Ldif.Category.USERS,
-            c.Ldif.Category.GROUPS,
-            c.Ldif.Category.ACL,
-            c.Ldif.Category.REJECTED,
-        ):
-            categories[cat] = []
-        return r[m.Ldif.FlexibleCategories].ok(categories)
 
     def filter_by_base_dn(
         self,
@@ -856,7 +827,7 @@ class FlextLdifCategorization(s):
 
     def _normalize_rules(
         self,
-        rules: m.Ldif.CategoryRules | MutableMapping[str, t.MetadataValue] | None,
+        rules: m.Ldif.CategoryRules | MutableMapping[str, t.JsonValue] | None,
     ) -> r[m.Ldif.CategoryRules]:
         """Normalize rules to CategoryRules model."""
         if isinstance(rules, m.Ldif.CategoryRules):

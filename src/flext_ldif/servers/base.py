@@ -6,7 +6,7 @@ from collections.abc import (
     Callable,
     MutableSequence,
 )
-from typing import ClassVar, Self, overload, override
+from typing import ClassVar, Self, overload
 
 from flext_core import s
 
@@ -37,7 +37,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         """Initialize base quirk and its nested quirks."""
         init_kwargs: t.MutableScalarMapping = {}
         for key, value in kwargs.items():
-            if u.primitive(value):
+            if isinstance(value, t.PRIMITIVES_TYPES):
                 init_kwargs[key] = value
         super().__init__()
         parent_ref: FlextLdifServersBase = self
@@ -103,7 +103,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         """Override __new__ to support auto-execute and processor instantiation."""
         instance: Self = object.__new__(cls)
         filtered_kwargs: t.MutableConfigValueMapping = {}
-        execute_kwargs: t.MutableFlatContainerMapping = {}
+        execute_kwargs: t.MutableJsonMapping = {}
         for k, v in kwargs.items():
             value = v
             if isinstance(value, (str, float, bool)):
@@ -169,7 +169,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     @classmethod
     def _extract_execute_params(
         cls,
-        kwargs: t.MutableFlatContainerMapping,
+        kwargs: t.MutableJsonMapping,
     ) -> tuple[str | None, MutableSequence[m.Ldif.Entry] | None, str | None]:
         """Extract type-safe execution parameters from kwargs."""
         return (
@@ -179,10 +179,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         )
 
     @classmethod
-    def _get_priority_from_mro(cls, quirk_class: type[t.Container]) -> int:
+    def _get_priority_from_mro(cls, quirk_class: type[t.JsonValue]) -> int:
         """Get priority from parent class Constants via MRO traversal."""
 
-        def is_valid_server_class(mro_cls: type[t.Container]) -> bool:
+        def is_valid_server_class(mro_cls: type[t.JsonValue]) -> bool:
             """Check if MRO class is a valid server class with PRIORITY."""
             if not mro_cls.__name__.startswith("FlextLdifServers"):
                 return False
@@ -192,7 +192,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             priority = getattr(constants, "PRIORITY", None)
             return isinstance(priority, int)
 
-        def extract_priority(mro_cls: type[t.Container]) -> int | None:
+        def extract_priority(mro_cls: type[t.JsonValue]) -> int | None:
             """Extract priority if it's a valid integer."""
             constants = getattr(mro_cls, "Constants", None)
             if constants is None:
@@ -219,10 +219,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         raise AttributeError(msg)
 
     @classmethod
-    def _get_server_type_from_mro(cls, quirk_class: type[t.Container]) -> str:
+    def _get_server_type_from_mro(cls, quirk_class: type[t.JsonValue]) -> str:
         """Get server_type from parent class Constants via MRO traversal."""
 
-        def is_valid_server_class(mro_cls: type[t.Container]) -> bool:
+        def is_valid_server_class(mro_cls: type[t.JsonValue]) -> bool:
             """Check if MRO class is a valid server class with SERVER_TYPE."""
             if not mro_cls.__name__.startswith("FlextLdifServers"):
                 return False
@@ -232,7 +232,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             server_type = getattr(constants, "SERVER_TYPE", None)
             return isinstance(server_type, str)
 
-        def extract_server_type(mro_cls: type[t.Container]) -> str | None:
+        def extract_server_type(mro_cls: type[t.JsonValue]) -> str | None:
             """Extract server type if it's a valid string."""
             constants = getattr(mro_cls, "Constants", None)
             if constants is None:
@@ -260,15 +260,15 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     def _register_in_registry(
         cls,
         quirk_instance: p.Ldif.SchemaQuirk | FlextLdifServersBase,
-        registry: p.Ldif.QuirkRegistry | t.Container,
+        registry: p.Ldif.QuirkRegistry | t.JsonValue,
     ) -> None:
         """Helper method to register a quirk instance in the registry."""
 
         def validate_registry(
-            registry_obj: p.Ldif.QuirkRegistry | t.Container,
+            registry_obj: p.Ldif.QuirkRegistry | t.JsonValue,
         ) -> (
             Callable[
-                [str, p.Ldif.SchemaQuirk | t.Container | FlextLdifServersBase],
+                [str, p.Ldif.SchemaQuirk | t.JsonValue | FlextLdifServersBase],
                 None,
             ]
             | None
@@ -280,7 +280,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
                 def typed_register(
                     server_type: str,
-                    quirk: p.Ldif.SchemaQuirk | t.Container | FlextLdifServersBase,
+                    quirk: p.Ldif.SchemaQuirk | t.JsonValue | FlextLdifServersBase,
                 ) -> None:
                     _ = captured(server_type, quirk)
 
@@ -289,7 +289,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
         def perform_registration(
             register_func: Callable[
-                [str, p.Ldif.SchemaQuirk | t.Container | FlextLdifServersBase],
+                [str, p.Ldif.SchemaQuirk | t.JsonValue | FlextLdifServersBase],
                 None,
             ]
             | None,
@@ -309,7 +309,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     @staticmethod
     def _extract_entries(
-        kwargs: t.MutableFlatContainerMapping,
+        kwargs: t.MutableJsonMapping,
     ) -> MutableSequence[m.Ldif.Entry] | None:
         """Extract and validate entries parameter."""
         if "entries" not in kwargs:
@@ -333,7 +333,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     @staticmethod
     def _extract_ldif_text(
-        kwargs: t.MutableFlatContainerMapping,
+        kwargs: t.MutableJsonMapping,
     ) -> str | None:
         """Extract and validate ldif_text parameter."""
         if "ldif_text" not in kwargs:
@@ -346,7 +346,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     @staticmethod
     def _extract_operation(
-        kwargs: t.MutableFlatContainerMapping,
+        kwargs: t.MutableJsonMapping,
     ) -> str | None:
         """Extract and validate operation parameter."""
         if "operation" not in kwargs:
@@ -361,7 +361,6 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         msg = f"Expected 'parse' | 'write' | None for operation, got {raw}"
         raise ValueError(msg)
 
-    @override
     def execute(
         self,
         *,

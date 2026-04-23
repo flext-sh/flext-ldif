@@ -75,7 +75,7 @@ class FlextLdifServersBase.Acl(ABC, QuirkRegistrationMixin):
 class Acl(Protocol):
     """Protocol for ACL quirks."""
 
-    def parse(self, acl_line: str) -> p.Result[Mapping[str, t.Container]]:
+    def parse(self, acl_line: str) -> p.Result[t.JsonMapping]:
         """Parse ACL - returns r with dict or Acl model."""
 ```
 

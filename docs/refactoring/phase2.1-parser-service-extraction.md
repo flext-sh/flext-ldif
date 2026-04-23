@@ -109,7 +109,7 @@ ______________________________________________________________________
 ### Service Design
 
 ```python
-class FlextLdifParser(Flext[Mapping[str, t.Container]]):
+class FlextLdifParser(Flext[t.JsonMapping]):
     """LDIF parsing service following FLEXT patterns."""
 
     _logger: FlextLogger  # Structured logging
@@ -140,7 +140,7 @@ ______________________________________________________________________
 Replace existing parse methods in `ldif` class:
 
 ```python
-class ldif(Flext[Mapping[str, t.Container]]):
+class ldif(Flext[t.JsonMapping]):
     _parser: FlextLdifParser  # Add new service
 
     def __init__(self, settings: FlextLdifSettings | None = None) -> None:
@@ -247,7 +247,7 @@ from collections.abc import Mapping, Sequence`)
 
 ### FLEXT Compliance
 
-- ✅ Inherits from s\[Mapping[str, t.Container]\]
+- ✅ Inherits from s\[t.JsonMapping\]
 - ✅ Implements execute() method for health checks
 - ✅ Uses r for all operations
 - ✅ Uses FlextLogger for structured logging

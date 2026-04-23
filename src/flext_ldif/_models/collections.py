@@ -27,7 +27,7 @@ class FlextLdifModelsCollections:
         model_config = m.ConfigDict(extra="allow", validate_assignment=True)
 
         @override
-        def __eq__(self, other: t.RuntimeData) -> bool:
+        def __eq__(self, other: object) -> bool:
             if isinstance(other, dict):
                 self_dict = {
                     key: value
@@ -59,7 +59,7 @@ class FlextLdifModelsCollections:
             return key in self._extra()
 
         @staticmethod
-        def _to_count(value: t.MetadataValue) -> int:
+        def _to_count(value: t.JsonValue) -> int:
             if isinstance(value, t.NUMERIC_TYPES) and not isinstance(value, bool):
                 return int(value)
             if isinstance(value, str):
@@ -82,7 +82,7 @@ class FlextLdifModelsCollections:
         def set_count(self, key: str, value: int) -> None:
             setattr(self, key, value)
 
-        def _extra(self) -> MutableMapping[str, t.MetadataValue]:
+        def _extra(self) -> MutableMapping[str, t.JsonValue]:
             extra = self.__pydantic_extra__
             if extra is None:
                 return {}
@@ -107,7 +107,7 @@ class FlextLdifModelsCollections:
 
     class BooleanFlags(m.FrozenDynamicModel):
         @override
-        def __eq__(self, other: t.RuntimeData) -> bool:
+        def __eq__(self, other: object) -> bool:
             if isinstance(other, dict):
                 extra = self.model_extra
                 return (extra or {}) == other
@@ -134,7 +134,7 @@ class FlextLdifModelsCollections:
         )
 
         @override
-        def __eq__(self, other: t.RuntimeData) -> bool:
+        def __eq__(self, other: object) -> bool:
             if isinstance(other, self.__class__):
                 return self.categories == other.categories
             if isinstance(other, dict):

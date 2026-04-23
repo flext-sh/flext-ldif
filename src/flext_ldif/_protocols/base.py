@@ -26,19 +26,19 @@ class FlextLdifProtocolsBase(Protocol):
     class DynamicMetadata(Protocol):
         """Mapping-like metadata contract for dynamic extensions."""
 
-        def __getitem__(self, key: str) -> t.Ldif.MetadataValue:
+        def __getitem__(self, key: str) -> t.JsonValue:
             """Return metadata value by key."""
             ...
 
         def get(
             self,
             key: str,
-            default: t.Ldif.MetadataValue | None = None,
-        ) -> t.Ldif.MetadataValue | None:
+            default: t.JsonValue | None = None,
+        ) -> t.JsonValue | None:
             """Return metadata value by key with optional default."""
             ...
 
-        def items(self) -> ItemsView[str, t.Ldif.MetadataValue]:
+        def items(self) -> ItemsView[str, t.JsonValue]:
             """Return metadata items view."""
             ...
 
@@ -46,15 +46,15 @@ class FlextLdifProtocolsBase(Protocol):
             """Return metadata keys view."""
             ...
 
-        def values(self) -> ValuesView[t.Ldif.MetadataValue]:
+        def values(self) -> ValuesView[t.JsonValue]:
             """Return metadata values view."""
             ...
 
-        def to_dict(self) -> MutableMapping[str, t.Ldif.MetadataValue]:
+        def to_dict(self) -> MutableMapping[str, t.JsonValue]:
             """Convert metadata to a mutable dictionary."""
             ...
 
-        def model_dump(self) -> Mapping[str, t.Ldif.MetadataValue]:
+        def model_dump(self) -> Mapping[str, t.JsonValue]:
             """Serialize metadata to a mapping."""
             ...
 

@@ -29,7 +29,7 @@ class FlextLdifUtilitiesMetadata:
     """Metadata utilities for LDIF validation metadata management."""
 
     @staticmethod
-    def dump_json_payload(value: t.Cli.JsonPayload | None) -> str:
+    def dump_json_payload(value: t.JsonPayload | None) -> str:
         """Serialize any CLI JSON-compatible payload through the canonical DSL."""
         if value is None:
             return ""
@@ -52,7 +52,7 @@ class FlextLdifUtilitiesMetadata:
     def _add_to_dict_metadata(
         metadata: t.Ldif.MutableMetadataMapping,
         metadata_key: str,
-        item_data: t.Ldif.MetadataValue,
+        item_data: t.JsonValue,
     ) -> None:
         """Add item to dict metadata."""
         value = metadata.get(metadata_key)
@@ -75,7 +75,7 @@ class FlextLdifUtilitiesMetadata:
     def _add_to_list_metadata(
         metadata: t.Ldif.MutableMetadataMapping,
         metadata_key: str,
-        item_data: t.Ldif.MetadataValue,
+        item_data: t.JsonValue,
     ) -> None:
         """Add item to list metadata."""
         value = metadata.get(metadata_key)
@@ -174,7 +174,9 @@ class FlextLdifUtilitiesMetadata:
         for extractor in extractors:
             extracted_raw = extractor(definition)
             for write_option_key, value in extracted_raw.items():
-                combined[write_option_key] = u.normalize_to_metadata(value)
+                combined[write_option_key] = t.Cli.JSON_VALUE_ADAPTER.validate_python(
+                    value,
+                )
         field_order, field_positions = FlextLdifUtilitiesMetadata._extract_field_order(
             definition,
         )
@@ -568,28 +570,28 @@ class FlextLdifUtilitiesMetadata:
         return {}
 
     @staticmethod
-    def _is_metadata_scalar(value: t.Ldif.MetadataValue) -> bool:
+    def _is_metadata_scalar(value: t.JsonValue) -> bool:
         return value is None or u.scalar(value)
 
     @staticmethod
     def _is_metadata_scalar_typed(
-        value: t.Ldif.MetadataValue,
+        value: t.JsonValue,
     ) -> TypeIs[str | int | float | bool | None]:
         return FlextLdifUtilitiesMetadata._is_metadata_scalar(value)
 
     @staticmethod
     def _normalize_dict_list(
-        values: Sequence[t.Ldif.MetadataValue],
-    ) -> MutableSequence[t.Ldif.MetadataValue]:
-        normalized: MutableSequence[t.Ldif.MetadataValue] = []
+        values: Sequence[t.JsonValue],
+    ) -> MutableSequence[t.JsonValue]:
+        normalized: MutableSequence[t.JsonValue] = []
         for item in values:
             normalized.append(u.normalize_to_metadata(item))
         return normalized
 
     @staticmethod
     def _normalize_metadata_list_item(
-        item: t.Ldif.MetadataValue,
-    ) -> t.Ldif.MetadataValue:
+        item: t.JsonValue,
+    ) -> t.JsonValue:
         return u.normalize_to_metadata(item)
 
     @staticmethod
@@ -604,7 +606,7 @@ class FlextLdifUtilitiesMetadata:
                 write_option_key: u.normalize_to_metadata(value)
                 for write_option_key, value in metadata_obj.items()
             }
-            config_root: dict[str, t.Cli.JsonValue] = dict(normalized_metadata)
+            config_root: dict[str, t.JsonValue] = dict(normalized_metadata)
             object.__setattr__(
                 model,
                 "validation_metadata",

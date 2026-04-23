@@ -177,10 +177,10 @@ class TestMinimalDifferencesOidOud:
             boolean_conversions = (
                 dict(raw_boolean_conversions)
                 if isinstance(raw_boolean_conversions, dict)
-                else dict[str, t.Ldif.MetadataValue]()
+                else dict[str, t.JsonValue]()
             )
         else:
-            boolean_conversions = dict[str, t.Ldif.MetadataValue]()
+            boolean_conversions = dict[str, t.JsonValue]()
         if (
             u.dict_non_empty(boolean_conversions)
             and "orcldasisenabled" in boolean_conversions

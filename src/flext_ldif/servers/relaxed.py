@@ -457,7 +457,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         @override
         def can_handle_acl(
             self,
-            acl_line: str | m.Ldif.Acl | t.Container,
+            acl_line: str | m.Ldif.Acl | t.JsonValue,
         ) -> bool:
             """Accept any ACL line in relaxed mode."""
             _ = acl_line

@@ -315,8 +315,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             constrain_to_added_object=settings.constrain_to_added_object,
             target_key=FlextLdifServersOidConstants.OID_ACL_SOURCE_TARGET,
         )
+        json_value_adapter = t.json_value_adapter()
         metadata_dict: t.Ldif.MutableMetadataMapping = {
-            key: u.normalize_to_metadata(value) for key, value in metadata_raw.items()
+            key: json_value_adapter.validate_python(u.to_jsonable_python(value))
+            for key, value in metadata_raw.items()
         }
         if settings.oid_subject_type:
             metadata_dict["acl_source_subject_type"] = settings.oid_subject_type

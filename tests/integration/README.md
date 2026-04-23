@@ -684,7 +684,7 @@ All integration tests are run in CI/CD pipelines:
 
 ```bash
 # Complete validation pipeline
-make validate
+make val
 
 # Just tests
 make test

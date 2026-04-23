@@ -6,13 +6,10 @@ from collections import Counter
 from collections.abc import (
     MutableSequence,
 )
-from typing import override
 
 from flext_ldif import (
     FlextLdifServiceBase,
-    d,
     m,
-    p,
     r,
     u,
 )
@@ -50,12 +47,6 @@ class FlextLdifStatistics(FlextLdifServiceBase):
             server_type_distribution=server_type_model,
         )
         return r[m.Ldif.EntriesStatistics].ok(entries_stats)
-
-    @override
-    @d.log_operation("statistics_service_check", track_perf=True)
-    def execute(self) -> p.Result[m.Ldif.Response]:
-        """Return the canonical LDIF response for service-facade composition."""
-        return super().execute()
 
 
 __all__: list[str] = ["FlextLdifStatistics"]

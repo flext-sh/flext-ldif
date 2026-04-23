@@ -467,7 +467,7 @@ def debug_railway_chain(file_path: str) -> p.Result[list]:
 ### Health Check Utility
 
 ```python
-def run_health_check() -> Mapping[str, t.Container]:
+def run_health_check() -> t.JsonMapping:
     """Run comprehensive health check for FLEXT-LDIF."""
     results = {"status": "healthy", "checks": {}, "warnings": [], "errors": []}
 
@@ -595,7 +595,7 @@ def enable_debug_mode() -> ldif:
 When creating support requests, include:
 
 ```python
-def generate_support_info() -> Mapping[str, t.Container]:
+def generate_support_info() -> t.JsonMapping:
     """Generate information for support requests."""
     import sys
     import platform

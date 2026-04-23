@@ -27,10 +27,10 @@ class FlextLdifShared:
     """Shared LDIF helpers — single class per module (no loose functions)."""
 
     @staticmethod
-    def _has_attr(obj: t.Container, attr_name: str) -> bool:
+    def _has_attr(obj: t.JsonValue, attr_name: str) -> bool:
         """Check if an object has a non-None attribute (canonical implementation).
 
-        Uses a sentinel t.Container to distinguish between attributes that are None
+        Uses a sentinel t.JsonValue to distinguish between attributes that are None
         and attributes that don't exist at all.
         """
         return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
