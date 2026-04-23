@@ -1,0 +1,86 @@
+src/flext_ldif/servers/_oid/acl.py
+  h_9db9d35f50cf33 52,578-579,581
+src/flext_ldif/services/detector.py
+  h_9db9d35f50cf33 121,139
+src/flext_ldif/services/entries.py
+  h_9db9d35f50cf33 102,121,135,144,146
+tests/conftest.py
+  h_9db9d35f50cf33 390
+docs/architecture.md
+  h_9db9d35f50cf33 52,118
+src/flext_ldif/services/pipeline.py
+  h_9db9d35f50cf33 133,138
+src/flext_ldif/services/server.py
+  h_9db9d35f50cf33 49,56,61,73,96,100,118,124,144,146,148,151,156
+src/flext_ldif/_models/domain_metadata.py
+  h_9db9d35f50cf33 235,238-242
+src/flext_ldif/_models/results.py
+  h_9db9d35f50cf33 304-305
+src/flext_ldif/_models/collections.py
+  h_9db9d35f50cf33 82,105,132-134
+docs/refactoring/phase2.1-parser-service-extraction.md
+  h_9db9d35f50cf33 115-116,148,151
+tests/unit/servers/test_oid_quirks.py
+  h_9db9d35f50cf33 20,31,47,66,82,98,113,128,143
+tests/unit/services/test_api_server_registry.py
+  h_9db9d35f50cf33 40,46,50,53
+src/flext_ldif/servers/novell.py
+  h_9db9d35f50cf33 434
+src/flext_ldif/services/conversion.py
+  h_9db9d35f50cf33 55,62,417-418,603,738,807,1207,1219,1222-1223,1225,1241,1255,1341
+tests/utilities.py
+  h_9db9d35f50cf33 36
+src/flext_ldif/servers/relaxed.py
+  h_9db9d35f50cf33 27,252,306,326,542,606,649,673,678,692,772,783,819
+src/flext_ldif/models.py
+  h_9db9d35f50cf33 5,36,53
+src/flext_ldif/servers/_oud/acl.py
+  h_9db9d35f50cf33 147
+src/flext_ldif/_utilities/entry.py
+  h_9db9d35f50cf33 23,503,513
+src/flext_ldif/_models/domain_dn.py
+  h_9db9d35f50cf33 249
+src/flext_ldif/_models/domain_entry.py
+  h_9db9d35f50cf33 619
+tests/integration/test_dn_case_handling.py
+  h_9db9d35f50cf33 42,49,53,57,61,66,93,95-96,115,126-127,129
+src/flext_ldif/api.py
+  h_9db9d35f50cf33 140,142,148,153,155,167,169,171,177,179
+src/flext_ldif/servers/base.py
+  h_9db9d35f50cf33 96,119,162,369,372-379
+tests/integration/test_cross_direction_conversion.py
+  h_9db9d35f50cf33 26-27,48-49,69-70,91,109,129,147,165-166,187-188
+src/flext_ldif/servers/openldap.py
+  h_9db9d35f50cf33 28,526
+src/flext_ldif/_protocols/base.py
+  h_9db9d35f50cf33 647
+examples/01_basic_usage.py
+  h_9db9d35f50cf33 84,86
+src/flext_ldif/servers/_base/acl.py
+  h_9db9d35f50cf33 58,74,78,80
+src/flext_ldif/servers/_base/entry.py
+  h_9db9d35f50cf33 61
+src/flext_ldif/_models/base.py
+  h_9db9d35f50cf33 81-82
+tests/unit/servers/test_apache_quirks.py
+  h_9db9d35f50cf33 303
+src/flext_ldif/_models/domain_acl.py
+  h_9db9d35f50cf33 87,184,196
+tests/integration/test_cross_quirk_conversion.py
+  h_9db9d35f50cf33 196,202
+src/flext_ldif/services/categorization.py
+  h_9db9d35f50cf33 428,580,756
+src/flext_ldif/services/statistics.py
+  h_9db9d35f50cf33 40,43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "7851c59df641d1193385b8d57152fcdaf4cf92e2",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
