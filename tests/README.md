@@ -208,7 +208,7 @@ def test_ldif_rfc_compliance(rfc_compliant_ldif):
 
 **Example**:
 
-```python
+```text
 @pytest.mark.performance
 def test_large_file_processing_performance():
     """Test processing performance with large LDIF files."""
@@ -227,7 +227,7 @@ def test_large_file_processing_performance():
 
 ### Core Fixtures (`conftest.py`)
 
-```python
+```text
 @pytest.fixture
 def flext_ldif_api():
     """Configured ldif instance for testing."""
@@ -276,7 +276,7 @@ mail: jane.smith@example.com
 
 ### Docker Integration Fixtures (`docker_fixtures.py`)
 
-```python
+```text
 @pytest.fixture(scope="session")
 def ldap_server():
     """Docker-based LDAP server for integration testing."""

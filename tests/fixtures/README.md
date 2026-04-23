@@ -97,7 +97,7 @@ Available markers:
 
 ### Extract Schema Elements
 
-```python
+```text
 from tests import helpers
 
 attributes = helpers.extract_attributes(schema_content)
@@ -108,7 +108,7 @@ name = helpers.extract_name(attr_definition)
 
 ### Validate Fixtures
 
-```python
+```text
 from tests import FixtureValidator
 
 validator = FixtureValidator()
@@ -120,7 +120,7 @@ if result.is_success:
 
 ## Example Test Pattern
 
-```python
+```text
 @pytest.mark.parametrize("attr_index", range(10))
 def test_parse_real_attributes(oid_schema_attributes, attr_index):
     """Test parsing multiple real attributes from fixtures."""
@@ -153,7 +153,7 @@ Each includes realistic entry structures and ACL configurations.
 
 Run fixture coverage report:
 
-```python
+```text
 from tests import FixtureCoverageReport
 
 coverage = FixtureCoverageReport.generate_summary(all_fixtures)
