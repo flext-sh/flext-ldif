@@ -55,7 +55,6 @@ class FlextLdifServersBaseSchemaAcl(
         self,
         acl_service: p.Ldif.AclQuirk | None = None,
         _parent_quirk: Self | None = None,
-        **kwargs: t.Scalar,
     ) -> None:
         """Initialize ACL quirk service with optional DI service injection."""
         super().__init__()
