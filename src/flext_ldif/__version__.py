@@ -13,13 +13,13 @@ from __future__ import annotations
 
 from importlib.metadata import PackageMetadata, metadata
 
-from flext_core import FlextVersion, t
+from flext_core import FlextVersion
 
 
 class FlextLdifVersion(FlextVersion):
     """flext-ldif version — MRO-derived from FlextVersion."""
 
-    _metadata: PackageMetadata | t.StrMapping = metadata("flext-ldif")
+    _metadata: PackageMetadata = metadata("flext-ldif")
 
 
 __version__ = FlextLdifVersion.__version__
