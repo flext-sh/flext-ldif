@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import (
+    Mapping,
     MutableMapping,
     MutableSequence,
 )
@@ -116,7 +117,7 @@ class FlextLdif(
     def filter_schema_attribute_values(
         self,
         entry: m.Ldif.Entry,
-        allowed_oids: dict[str, frozenset[str]],
+        allowed_oids: Mapping[str, frozenset[str]],
     ) -> m.Ldif.Entry:
         """Expose schema-attribute OID filtering through the facade DSL."""
         return FlextLdifFilters.filter_schema_attribute_values(

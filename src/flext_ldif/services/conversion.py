@@ -417,7 +417,13 @@ class FlextLdifConversion(
         value: t.JsonPayload | Mapping[str, t.JsonValue] | None,
     ) -> t.JsonValue:
         """Normalize metadata value to proper type."""
-        return u.Cli.normalize_json_value("" if value is None else value)
+        if value is None:
+            return u.Cli.normalize_json_value("")
+        if isinstance(value, Mapping):
+            return u.normalize_to_metadata({
+                str(key): item for key, item in value.items()
+            })
+        return u.Cli.normalize_json_value(value)
 
     @staticmethod
     def _parse_attribute_with_schema(
@@ -1199,7 +1205,7 @@ class FlextLdifConversion(
         self,
         value: t.JsonPayload | None,
     ) -> t.JsonValue:
-        """Convert value to MetadataData type."""
+        """Convert value to JsonPayload type."""
         return u.Cli.normalize_json_value("" if value is None else value)
 
     def _get_extensions_dict(
