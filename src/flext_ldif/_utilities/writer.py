@@ -100,9 +100,6 @@ class FlextLdifUtilitiesWriter:
         if not char or len(char) != 1:
             return False
         code = ord(char)
-        # c.Ldif.SAFE_CHAR_MIN = c.Ldif.SAFE_CHAR_MIN
-        # c.Ldif.SAFE_CHAR_MAX = c.Ldif.SAFE_CHAR_MAX
-        # c.Ldif.SAFE_CHAR_EXCLUDE = c.Ldif.SAFE_CHAR_EXCLUDE
         return (
             c.Ldif.SAFE_CHAR_MIN <= code <= c.Ldif.SAFE_CHAR_MAX
             and code not in c.Ldif.SAFE_CHAR_EXCLUDE

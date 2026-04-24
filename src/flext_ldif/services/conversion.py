@@ -28,7 +28,6 @@ from flext_ldif import (
     u,
 )
 
-# c.Ldif.TUPLE_LENGTH_PAIR = c.Ldif.c.Ldif.TUPLE_LENGTH_PAIR
 logger = u.fetch_logger(__name__)
 
 

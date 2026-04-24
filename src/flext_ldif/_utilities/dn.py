@@ -498,7 +498,6 @@ class FlextLdifUtilitiesDN:
         """
         if not value:
             return value
-        # c.Ldif.DN_ESCAPE_CHARS = c.Ldif.DN_ESCAPE_CHARS
 
         def escape_char(item: tuple[int, str]) -> str:
             """Escape single character if needed."""
