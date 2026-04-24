@@ -16,7 +16,7 @@ from flext_ldif import typings
 from tests import c, t
 
 
-class TestFlextLdifTypesStructure:
+class TestsFlextLdifTypingsUnit:
     """Tests for FlextLdifTypes structure and namespace access."""
 
     def test_namespace_exists(self) -> None:
@@ -62,10 +62,6 @@ class TestFlextLdifTypesStructure:
         ]
         _ = tm.that(not service_imports, eq=True)
 
-
-class TestsFlextLdifCommonDictionaryTypes:
-    """Test common dictionary type definitions with REAL data."""
-
     def test_attribute_dict_with_ldif_entry(self) -> None:
         """AttributeDict must work with real LDIF entry attributes."""
         attr_dict: t.Ldif.AttributeDict = c.Ldif.Tests.TYPINGS_SAMPLE_ATTR_DICT
@@ -92,10 +88,6 @@ class TestsFlextLdifCommonDictionaryTypes:
             "dITContentRules": 23,
         }
         tm.that(len(dist), eq=3)
-
-
-class TestModelsNamespace:
-    """Test Models namespace type definitions with REAL data patterns."""
 
     def test_entry_attributes_dict_with_real_ldif_data(self) -> None:
         """EntryAttributesDict must work with real LDIF attribute data."""
@@ -175,10 +167,6 @@ class TestModelsNamespace:
         supports_dn_case: t.Scalar | None = extensions.get("supports_dn_case_registry")
         tm.that(supports_dn_case is True, eq=True)
 
-
-class TestRemovalOfOverEngineering:
-    """Test that over-engineered types were properly removed."""
-
     @pytest.mark.parametrize("namespace", c.Ldif.Tests.TYPINGS_REMOVED_NAMESPACES)
     def test_removed_namespaces(self, namespace: str) -> None:
         """Over-engineered namespaces must be removed."""
@@ -193,10 +181,6 @@ class TestRemovalOfOverEngineering:
     def test_removed_entry_types(self, type_name: str) -> None:
         """Unused Entry types must be removed."""
         tm.that(not hasattr(t.Ldif, "Entry"), eq=True)
-
-
-class TestPhase1StandardizationResults:
-    """Test that Phase 1 standardization goals were achieved."""
 
     def test_minimal_type_system(self) -> None:
         """Type system should be minimal and focused on actual usage."""
@@ -231,10 +215,6 @@ class TestPhase1StandardizationResults:
         )
         tm.that(sum(distribution.values()), eq=3)
         tm.that(distribution[c.Ldif.Tests.NAME_PERSON], eq=1)
-
-
-class TestIntegrationWithLdifFixtures:
-    """Integration tests using real LDIF fixture data."""
 
     @pytest.fixture
     def oid_ldif_path(self) -> Path:

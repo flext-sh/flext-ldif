@@ -6,7 +6,7 @@ from flext_tests import tm
 from tests import m, u
 
 
-class TestFlextLdifUtilitiesServer:
+class TestsFlextLdifServerUtilities:
     def test_extract_server_type_from_constants_success(self) -> None:
         result = u.Ldif.extract_server_type_from_constants(m.Ldif.Tests.OudServerStub)
 

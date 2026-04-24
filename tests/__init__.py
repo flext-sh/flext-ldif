@@ -156,23 +156,16 @@ if _t.TYPE_CHECKING:
         TestQuirksWithRealLdifFixtures,
         TestsFlextLdifServersStandardizedConstants,
     )
-    from tests.unit.test_acl_registry import TestsTestFlextLdifAclAttributeRegistry
+    from tests.unit.test_acl_registry import TestsFlextLdifAclRegistry
     from tests.unit.test_migration_pipeline import TestsFlextLdifMigrationPipeline
     from tests.unit.test_migration_pipeline_quirks import (
         TestsFlextLdifMigrationPipelineQuirks,
     )
-    from tests.unit.test_oid_utilities import TestFlextLdifUtilitiesOID
-    from tests.unit.test_parser_utilities import TestFlextLdifUtilitiesParser
-    from tests.unit.test_protocols import TestsTestFlextLdifProtocols
-    from tests.unit.test_server_utilities import TestFlextLdifUtilitiesServer
-    from tests.unit.test_typings import (
-        TestFlextLdifTypesStructure,
-        TestIntegrationWithLdifFixtures,
-        TestModelsNamespace,
-        TestPhase1StandardizationResults,
-        TestRemovalOfOverEngineering,
-        TestsFlextLdifCommonDictionaryTypes,
-    )
+    from tests.unit.test_oid_utilities import TestsFlextLdifOidUtilities
+    from tests.unit.test_parser_utilities import TestsFlextLdifParserUtilities
+    from tests.unit.test_protocols import TestsFlextLdifProtocolsUnit
+    from tests.unit.test_server_utilities import TestsFlextLdifServerUtilities
+    from tests.unit.test_typings import TestsFlextLdifTypingsUnit
     from tests.unit.test_version import TestsFlextLdifVersion
     from tests.unit.utilities.test_utilities_comprehensive import (
         TestFlextLdifUtilitiesComprehensive,
@@ -346,23 +339,16 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestQuirksWithRealLdifFixtures",
                 "TestsFlextLdifServersStandardizedConstants",
             ),
-            ".unit.test_acl_registry": ("TestsTestFlextLdifAclAttributeRegistry",),
+            ".unit.test_acl_registry": ("TestsFlextLdifAclRegistry",),
             ".unit.test_migration_pipeline": ("TestsFlextLdifMigrationPipeline",),
             ".unit.test_migration_pipeline_quirks": (
                 "TestsFlextLdifMigrationPipelineQuirks",
             ),
-            ".unit.test_oid_utilities": ("TestFlextLdifUtilitiesOID",),
-            ".unit.test_parser_utilities": ("TestFlextLdifUtilitiesParser",),
-            ".unit.test_protocols": ("TestsTestFlextLdifProtocols",),
-            ".unit.test_server_utilities": ("TestFlextLdifUtilitiesServer",),
-            ".unit.test_typings": (
-                "TestFlextLdifTypesStructure",
-                "TestIntegrationWithLdifFixtures",
-                "TestModelsNamespace",
-                "TestPhase1StandardizationResults",
-                "TestRemovalOfOverEngineering",
-                "TestsFlextLdifCommonDictionaryTypes",
-            ),
+            ".unit.test_oid_utilities": ("TestsFlextLdifOidUtilities",),
+            ".unit.test_parser_utilities": ("TestsFlextLdifParserUtilities",),
+            ".unit.test_protocols": ("TestsFlextLdifProtocolsUnit",),
+            ".unit.test_server_utilities": ("TestsFlextLdifServerUtilities",),
+            ".unit.test_typings": ("TestsFlextLdifTypingsUnit",),
             ".unit.test_version": ("TestsFlextLdifVersion",),
             ".unit.utilities.test_utilities_comprehensive": (
                 "TestFlextLdifUtilitiesComprehensive",
@@ -425,20 +411,14 @@ __all__: list[str] = [
     "TestFlextLdifAPIIntegration",
     "TestFlextLdifFacadeWorkflows",
     "TestFlextLdifSettingsIntegration",
-    "TestFlextLdifTypesStructure",
     "TestFlextLdifUtilitiesComprehensive",
-    "TestFlextLdifUtilitiesOID",
-    "TestFlextLdifUtilitiesParser",
-    "TestFlextLdifUtilitiesServer",
     "TestIncompleteEntries",
-    "TestIntegrationWithLdifFixtures",
     "TestInvalidSchemaDefinitions",
     "TestLargeAndComplexCases",
     "TestLdifFixturesIntegration",
     "TestLdifParser",
     "TestMalformedLdifHandling",
     "TestMinimalDifferencesOidOud",
-    "TestModelsNamespace",
     "TestNovellAcls",
     "TestNovellEntryDetection",
     "TestNovellSchemaAttributeDetection",
@@ -465,7 +445,6 @@ __all__: list[str] = [
     "TestOudToOidEntryMigration",
     "TestOudToOidFullMigration",
     "TestOudToOidSchemaMigration",
-    "TestPhase1StandardizationResults",
     "TestQuirksAutoInterchange",
     "TestQuirksConversionMatrixFacade",
     "TestQuirksPropertyValidation",
@@ -477,7 +456,6 @@ __all__: list[str] = [
     "TestRealLdapImport",
     "TestRealLdapRailwayComposition",
     "TestRealLdapRoundtrip",
-    "TestRemovalOfOverEngineering",
     "TestRfcDockerRealData",
     "TestRfcExceptionHandlingRealScenarios",
     "TestRfcIntegrationRealWorld",
@@ -502,7 +480,7 @@ __all__: list[str] = [
     "TestSystematicFixtureCoverage",
     "TestUnicodeBoundaries",
     "TestZeroDataLossOidOud",
-    "TestsFlextLdifCommonDictionaryTypes",
+    "TestsFlextLdifAclRegistry",
     "TestsFlextLdifConstants",
     "TestsFlextLdifDnOperationsPure",
     "TestsFlextLdifEdgeCases",
@@ -510,20 +488,23 @@ __all__: list[str] = [
     "TestsFlextLdifMigrationPipelineQuirks",
     "TestsFlextLdifModels",
     "TestsFlextLdifNovellInitialization",
+    "TestsFlextLdifOidUtilities",
+    "TestsFlextLdifParserUtilities",
     "TestsFlextLdifProtocols",
+    "TestsFlextLdifProtocolsUnit",
     "TestsFlextLdifSchemaTransformerNormalizeAttributeName",
+    "TestsFlextLdifServerUtilities",
     "TestsFlextLdifServersStandardizedConstants",
     "TestsFlextLdifTypes",
+    "TestsFlextLdifTypingsUnit",
     "TestsFlextLdifUtilities",
     "TestsFlextLdifVersion",
-    "TestsTestFlextLdifAclAttributeRegistry",
     "TestsTestFlextLdifApacheQuirks",
     "TestsTestFlextLdifApiServerRegistry",
     "TestsTestFlextLdifCrossDirectionConversion",
     "TestsTestFlextLdifDs389Quirks",
     "TestsTestFlextLdifMigrationPipeline",
     "TestsTestFlextLdifOidQuirks",
-    "TestsTestFlextLdifProtocols",
     "TestsTestFlextLdifRelaxedQuirks",
     "c",
     "d",

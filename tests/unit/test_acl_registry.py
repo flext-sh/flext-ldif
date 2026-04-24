@@ -13,7 +13,7 @@ from tests import c, t, u
 
 
 @pytest.mark.unit
-class TestsTestFlextLdifAclAttributeRegistry:
+class TestsFlextLdifAclRegistry:
     """Test suite for AclAttributeRegistry."""
 
     @pytest.mark.parametrize(

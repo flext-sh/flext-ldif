@@ -7,7 +7,7 @@ from flext_tests import tm
 from tests import u
 
 
-class TestFlextLdifUtilitiesOID:
+class TestsFlextLdifOidUtilities:
     def test_extract_from_definition_failure_no_match(self) -> None:
         result = u.Ldif.extract_from_definition("( NAME 'cn' DESC 'no oid' )")
 

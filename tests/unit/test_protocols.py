@@ -38,7 +38,7 @@ def _create_server_implementations() -> Sequence[tuple[str, type, type]]:
     ]
 
 
-class TestsTestFlextLdifProtocols:
+class TestsFlextLdifProtocolsUnit:
     """Test suite for FlextLdifProtocols protocol definitions.
 
     Uses nested classes for organization: ProtocolNames, ServerTypes, TestCase,

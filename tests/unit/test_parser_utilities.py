@@ -5,7 +5,7 @@ from flext_tests import tm
 from tests import u
 
 
-class TestFlextLdifUtilitiesParser:
+class TestsFlextLdifParserUtilities:
     def test_extract_oid_failure_empty_string(self) -> None:
         result = u.Ldif.extract_oid("")
 
