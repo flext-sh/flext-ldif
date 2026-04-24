@@ -657,7 +657,7 @@ class FlextLdifUtilitiesEntry:
 
         def _stringify(value: str | bytes | float) -> str:
             if isinstance(value, bytes):
-                return value.decode("utf-8", errors="replace")
+                return value.decode(c.DEFAULT_ENCODING, errors="replace")
             return str(value)
 
         def _convert_bool(value: str) -> str:

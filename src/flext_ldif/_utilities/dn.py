@@ -1030,12 +1030,12 @@ class FlextLdifUtilitiesDN:
         directory = Path(str(ldif_dir))
         transformed_files: MutableSequence[str] = []
         for ldif_file in sorted(directory.glob("*.ldif")):
-            content = ldif_file.read_text(encoding="utf-8")
+            content = ldif_file.read_text(encoding=c.DEFAULT_ENCODING)
             new_content = FlextLdifUtilitiesDN._transform_ldif_content(
                 content, source_basedn, target_basedn
             )
             if new_content != content:
-                _ = ldif_file.write_text(new_content, encoding="utf-8")
+                _ = ldif_file.write_text(new_content, encoding=c.DEFAULT_ENCODING)
                 transformed_files.append(ldif_file.name)
         return {
             "total_count": len(transformed_files),
