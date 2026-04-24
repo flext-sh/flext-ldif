@@ -30,7 +30,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         self,
         schema_service: p.Ldif.SchemaQuirk | None = None,
         parent_quirk: p.Ldif.SchemaQuirk | None = None,
-        **kwargs: t.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize OUD schema quirk."""
         filtered_kwargs: t.MutableConfigValueMapping = {

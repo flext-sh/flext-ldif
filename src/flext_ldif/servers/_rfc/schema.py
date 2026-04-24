@@ -33,7 +33,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         cls,
         schema_service: p.Ldif.SchemaQuirk | None = None,
         parent_quirk: p.Ldif.SchemaQuirk | None = None,
-        **kwargs: t.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         instance = object.__new__(cls)
@@ -98,7 +98,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         self,
         schema_service: p.Ldif.SchemaQuirk | None = None,
         parent_quirk: p.Ldif.SchemaQuirk | None = None,
-        **kwargs: t.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize RFC schema quirk service."""
         filtered_kwargs: t.MutableConfigurationMapping = {}

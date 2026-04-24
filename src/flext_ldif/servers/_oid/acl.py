@@ -165,7 +165,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         | t.MutableConfigurationMapping
         | MutableMapping[
             str,
-            t.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
+            t.Ldif.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ]
         | str
         | None,
@@ -269,7 +269,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         metadata: m.Ldif.QuirkMetadata
         | MutableMapping[
             str,
-            t.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
+            t.Ldif.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ]
         | None,
     ) -> MutableSequence[str]:
@@ -329,7 +329,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         metadata: m.Ldif.QuirkMetadata
         | MutableMapping[
             str,
-            t.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
+            t.Ldif.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ],
     ) -> t.Ldif.MutableMetadataMapping:
         """Extract extensions dict from metadata, converting types if needed."""
@@ -629,7 +629,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         metadata: m.Ldif.QuirkMetadata
         | MutableMapping[
             str,
-            t.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
+            t.Ldif.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ]
         | None,
     ) -> tuple[str, str]:

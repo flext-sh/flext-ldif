@@ -96,7 +96,7 @@ class FlextLdifServersBaseSchema(
         cls,
         _schema_service: p.Ldif.SchemaQuirk | None = None,
         _parent_quirk: Self | None = None,
-        **kwargs: t.Scalar,
+        **kwargs: t.Ldif.Scalar,
     ) -> Self:
         """Override __new__ to filter _parent_quirk before passing to s."""
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
@@ -109,13 +109,13 @@ class FlextLdifServersBaseSchema(
         self,
         _schema_service: p.Ldif.SchemaQuirk | None = None,
         _parent_quirk: Self | None = None,
-        **kwargs: t.Scalar,
+        **kwargs: t.Ldif.Scalar,
     ) -> None:
         """Initialize schema quirk service with optional DI service injection."""
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
         service_kwargs: MutableMapping[
             str,
-            t.Scalar | m.ConfigMap | MutableSequence[t.Scalar],
+            t.Ldif.Scalar | m.ConfigMap | MutableSequence[t.Ldif.Scalar],
         ] = {}
         for key, value in filtered_kwargs.items():
             if isinstance(value, t.SCALAR_TYPES):
@@ -297,7 +297,7 @@ class FlextLdifServersBaseSchema(
         *,
         data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None,
         operation: str | None = None,
-        **kwargs: t.Scalar,
+        **kwargs: t.Ldif.Scalar,
     ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
         """Execute schema operation with auto-detection: str→parse, Model→write."""
         json_value_adapter = t.json_value_adapter()
@@ -339,7 +339,7 @@ class FlextLdifServersBaseSchema(
                 continue
         return None
 
-    def _coerce_operation(self, value: t.Scalar | None) -> str | None:
+    def _coerce_operation(self, value: t.Ldif.Scalar | None) -> str | None:
         """Coerce raw operation token to a supported schema operation."""
         if isinstance(value, str) and value in {"parse", "write"}:
             return value

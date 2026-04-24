@@ -25,7 +25,7 @@ class FlextLdifModelsMetadata:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(extra="allow")
 
         transformations: Annotated[
-            MutableSequence[t.Scalar] | None,
+            MutableSequence[t.Ldif.Scalar] | None,
             u.Field(description="List of transformations applied to this metadata"),
         ] = None
         original_format: Annotated[

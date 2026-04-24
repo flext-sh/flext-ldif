@@ -134,7 +134,7 @@ class FlextLdifServersBaseSchemaAcl(
         *,
         data: str | m.Ldif.Acl | None = None,
         operation: str | None = None,
-        **kwargs: t.Scalar,
+        **kwargs: t.Ldif.Scalar,
     ) -> r[m.Ldif.Acl | str]:
         """Execute ACL operation with auto-detection: str→parse, Acl→write."""
         json_value_adapter = t.json_value_adapter()

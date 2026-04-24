@@ -242,7 +242,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_sequence_to_str_list(
-        seq: MutableSequence[t.Scalar],
+        seq: MutableSequence[t.Ldif.Scalar],
     ) -> MutableSequence[str]:
         """Convert Sequence to MutableSequence[str] (internal helper, no loose functions)."""
         return [str(item) for item in seq]

@@ -708,7 +708,7 @@ class FlextLdifUtilitiesMetadata:
     def build_acl_metadata_complete(
         quirk_type: str,
         _original_acl_format: str | None = None,
-        **extra: t.Scalar,
+        **extra: t.Ldif.Scalar,
     ) -> t.MutableConfigurationMapping:
         """Build metadata for ACL parsing as a dictionary."""
         result: t.MutableConfigurationMapping = {
@@ -775,7 +775,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def build_original_format_details(
         quirk_type: str,
-        **extra: t.Scalar,
+        **extra: t.Ldif.Scalar,
     ) -> m.Ldif.FormatDetails:
         """Build original format details for round-trip preservation."""
         original_dn_line = extra.get("original_dn_line")
@@ -788,7 +788,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def build_rfc_compliance_metadata(
         quirk_type: str,
-        **extra: t.Scalar,
+        **extra: t.Ldif.Scalar,
     ) -> MutableMapping[
         str,
         str | bool | MutableSequence[str] | t.MutableAttributeMapping,
@@ -830,7 +830,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def store_minimal_differences(
         metadata: m.Ldif.QuirkMetadata,
-        **extra: t.Scalar,
+        **extra: t.Ldif.Scalar,
     ) -> None:
         """Store minimal differences in metadata for delta tracking."""
         _ = metadata

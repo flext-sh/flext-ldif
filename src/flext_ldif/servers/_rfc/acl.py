@@ -24,7 +24,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         cls,
         acl_service: p.Ldif.AclQuirk | None = None,
         parent_quirk: Self | None = None,
-        **kwargs: t.Scalar,
+        **kwargs: t.Ldif.Scalar,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         _ = acl_service
@@ -58,7 +58,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         self,
         acl_service: p.Ldif.AclQuirk | None = None,
         parent_quirk: Self | None = None,
-        **kwargs: t.Scalar,
+        **kwargs: t.Ldif.Scalar,
     ) -> None:
         """Initialize RFC ACL quirk service."""
         _ = kwargs

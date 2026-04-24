@@ -35,7 +35,7 @@ class FlextLdifServer:
     def __init__(
         self,
         dispatcher: p.Dispatcher | None = None,
-        **data: t.Scalar,
+        **data: t.Ldif.Scalar,
     ) -> None:
         """Initialize registry and trigger auto-discovery."""
         _ = data

@@ -43,7 +43,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         self,
         acl_service: p.Ldif.AclQuirk | None = None,
         parent_quirk: Self | None = None,
-        **kwargs: t.Scalar,
+        **kwargs: t.Ldif.Scalar,
     ) -> None:
         """Initialize OUD ACL quirk."""
         filtered_kwargs: t.MutableConfigValueMapping = {

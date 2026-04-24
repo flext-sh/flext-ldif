@@ -321,7 +321,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         entry: m.Ldif.Entry,
         corrected_data: MutableMapping[
             str,
-            t.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
+            t.Ldif.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ],
         syntax_corrections: MutableSequence[str] | t.MutableStrMapping | None,
     ) -> r[m.Ldif.Entry]:
@@ -362,7 +362,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         corrected_data = corrected_result.value
         corrected_data_typed: MutableMapping[
             str,
-            t.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
+            t.Ldif.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ] = {k: list(v) for k, v in corrected_data.items()}
         syntax_corrections_raw = corrected_data_typed.get("syntax_corrections")
         syntax_corrections_typed: MutableSequence[str] | t.MutableStrMapping | None = (

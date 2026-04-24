@@ -461,7 +461,7 @@ class FlextLdifModelsResults:
     class DictAccessibleValue(m.Value):
         """Temporary wrapper for values accessed like dicts."""
 
-        def __getitem__(self, key: str) -> t.Scalar | None:
+        def __getitem__(self, key: str) -> t.Ldif.Scalar | None:
             value = self._resolve_key(key)
             return str(value) if value is not None else None
 
@@ -475,14 +475,14 @@ class FlextLdifModelsResults:
             self,
             key: str,
             default: str | float | bool | None = None,
-        ) -> t.Scalar | None:
+        ) -> t.Ldif.Scalar | None:
             try:
                 return self[key]
             except KeyError:
                 return default
 
-        def items(self) -> MutableSequence[tuple[str, t.Scalar]]:
-            results: MutableSequence[tuple[str, t.Scalar]] = []
+        def items(self) -> MutableSequence[tuple[str, t.Ldif.Scalar]]:
+            results: MutableSequence[tuple[str, t.Ldif.Scalar]] = []
             for key in self.model_fields_set:
                 val = getattr(self, key)
                 if isinstance(val, t.PRIMITIVES_TYPES):
