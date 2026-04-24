@@ -9,8 +9,6 @@ from typing import Annotated
 
 from flext_cli import m, u
 
-from flext_ldif._models.domain_entry import FlextLdifModelsDomainEntry
-
 
 class FlextLdifModelsEvents:
     """LDIF event and configuration models container class."""
@@ -57,7 +55,7 @@ class FlextLdifModelsEvents:
             u.Field(description="Error messages for failed items"),
         ] = None
 
-    class DnEvent(FlextLdifModelsDomainEntry.Entry):
+    class DnEvent(m.DomainEvent):
         dn_operation: str = u.Field(description="DN operation type performed")
         input_dn: str = u.Field(description="Original DN before operation")
         output_dn: Annotated[
@@ -76,7 +74,7 @@ class FlextLdifModelsEvents:
             int, u.Field(description="Number of RDN components in the DN")
         ] = 0
 
-    class ConversionEvent(FlextLdifModelsDomainEntry.Entry):
+    class ConversionEvent(m.DomainEvent):
         conversion_operation: str = u.Field(
             description="Conversion operation type performed"
         )

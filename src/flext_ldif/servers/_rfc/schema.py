@@ -101,7 +101,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize RFC schema quirk service."""
-        filtered_kwargs: t.MutableConfigurationMapping = {}
+        filtered_kwargs: dict[str, t.Primitives | None] = {}
         excluded_keys = {
             "_parent_quirk",
             "parent_quirk",
@@ -115,7 +115,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         for key, value in kwargs.items():
             if key in excluded_keys:
                 continue
-            if isinstance(value, t.SCALAR_TYPES):
+            if isinstance(value, t.PRIMITIVES_TYPES):
                 filtered_kwargs[key] = value
         schema_service_typed: p.Ldif.SchemaQuirk | None = schema_service
         FlextLdifServersBaseSchema.__init__(

@@ -33,10 +33,10 @@ class FlextLdifTypesBase:
     type AttributeDict = t.StrSequenceMapping
     type DN = str
     type ParseMethodArg = str
-    type ParseMethodReturn = r[t.Ldif.Scalar | t.StrSequence | None]
-    type WriteMethodArg = t.Ldif.Scalar | t.StrSequence | None
+    type ParseMethodReturn = r[Scalar | t.StrSequence | None]
+    type WriteMethodArg = Scalar | t.StrSequence | None
     type WriteMethodReturn = (
-        t.Ldif.Scalar | t.StrSequence | r[t.Ldif.Scalar | t.StrSequence | None] | None
+        Scalar | t.StrSequence | r[Scalar | t.StrSequence | None] | None
     )
     type Rfc4512Descriptor = Annotated[
         str,
