@@ -28,8 +28,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         SERVER_TYPE: ClassVar[str] = "ad"
         PRIORITY: ClassVar[int] = 10
-        DEFAULT_PORT: ClassVar[int] = 389
-        DEFAULT_SSL_PORT: ClassVar[int] = 636
+        DEFAULT_PORT: ClassVar[int] = c.LDAP_PORT
+        DEFAULT_SSL_PORT: ClassVar[int] = c.LDAPS_PORT
         DEFAULT_PAGE_SIZE: ClassVar[int] = 1000
         GLOBAL_CATALOG_PORT: ClassVar[int] = 3268
         GLOBAL_CATALOG_SSL_PORT: ClassVar[int] = 3269

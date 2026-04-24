@@ -29,8 +29,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         SERVER_TYPE: ClassVar[str] = "openldap2"
         PRIORITY: ClassVar[int] = 20
-        DEFAULT_PORT: ClassVar[int] = 389
-        DEFAULT_SSL_PORT: ClassVar[int] = 636
+        DEFAULT_PORT: ClassVar[int] = c.LDAP_PORT
+        DEFAULT_SSL_PORT: ClassVar[int] = c.LDAPS_PORT
         DEFAULT_PAGE_SIZE: ClassVar[int] = 1000
         CANONICAL_NAME: ClassVar[str] = "openldap"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["openldap", "openldap2"])
