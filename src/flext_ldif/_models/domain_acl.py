@@ -324,12 +324,13 @@ class FlextLdifModelsDomainAcl:
 
             """
             if not extensions:
-                return cls.model_validate({
+                validated: Self = cls.model_validate({
                     "original_format": None,
                     "source_server": None,
                     "name_sanitized": False,
                     "original_name_raw": None,
                 })
+                return validated
             keys = c.Ldif
             original_format = extensions.get(keys.ACL_ORIGINAL_FORMAT)
             source_server = extensions.get(keys.ACL_SOURCE_SERVER)

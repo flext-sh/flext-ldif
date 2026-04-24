@@ -393,10 +393,11 @@ class FlextLdifModelsDomainMetadata:
                 extensions_model = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
                     extensions,
                 )
-            return cls.model_validate({
+            validated: Self = cls.model_validate({
                 "quirk_type": default_quirk_type,
                 "extensions": extensions_model,
             })
+            return validated
 
         def add_conversion_note(self, operation: str, description: str) -> Self:
             """Add a conversion note to the audit trail.

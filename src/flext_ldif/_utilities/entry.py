@@ -494,11 +494,12 @@ class FlextLdifUtilitiesEntry:
             return validation_rules
         if isinstance(validation_rules, str):
             try:
-                return (
+                validated_json: FlextLdifModelsSettings.ServerValidationRules = (
                     FlextLdifModelsSettings.ServerValidationRules.model_validate_json(
                         validation_rules,
                     )
                 )
+                return validated_json
             except c.ValidationError as exc:
                 FlextLdifUtilitiesEntry.logger.warning(
                     f"Failed to validate server rules from JSON string: {exc}",
@@ -506,9 +507,12 @@ class FlextLdifUtilitiesEntry:
                 return None
         if isinstance(validation_rules, Mapping):
             try:
-                return FlextLdifModelsSettings.ServerValidationRules.model_validate(
-                    validation_rules,
+                validated: FlextLdifModelsSettings.ServerValidationRules = (
+                    FlextLdifModelsSettings.ServerValidationRules.model_validate(
+                        validation_rules,
+                    )
                 )
+                return validated
             except c.ValidationError as exc:
                 FlextLdifUtilitiesEntry.logger.warning(
                     f"Failed to validate server rules from mapping: {exc}",

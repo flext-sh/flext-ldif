@@ -1011,7 +1011,8 @@ class FlextLdifUtilitiesDN:
                 new_attrs = entry_attrs.model_copy(update={"attributes": new_attr_dict})
                 updates["attributes"] = new_attrs
         if updates:
-            return entry.model_copy(update=updates)
+            copied: m.Ldif.Entry = entry.model_copy(update=updates)
+            return copied
         return entry
 
     @staticmethod

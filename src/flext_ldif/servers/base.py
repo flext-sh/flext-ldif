@@ -164,7 +164,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         value = result.unwrap()
         if isinstance(value, str):
             return value
-        return u.Ldif.as_entry(value)
+        as_entry: m.Ldif.Entry = u.Ldif.as_entry(value)
+        return as_entry
 
     @classmethod
     def _extract_execute_params(
@@ -252,7 +253,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             None,
         )
         if server_type:
-            return u.Ldif.normalize_server_type(server_type)
+            normalized: str = u.Ldif.normalize_server_type(server_type)
+            return normalized
         msg = f"Cannot find SERVER_TYPE in Constants for quirk class: {quirk_class.__name__}"
         raise AttributeError(msg)
 
@@ -421,7 +423,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 detected_server_type=detected_server_type,
             )
 
-        return (
+        parse_response_result: r[m.Ldif.ParseResponse] = (
             entry_quirk
             .parse_quirk(value)
             .map_error(
@@ -431,6 +433,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 build_parse_response,
             )
         )
+        return parse_response_result
 
     def write(
         self,
@@ -441,9 +444,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         entry_quirk = getattr(self, "entry_quirk", None)
         if not entry_quirk:
             return r[str].fail("Entry quirk not available")
-        return entry_quirk.write(entries, write_options).map(
+        write_result: r[str] = entry_quirk.write(entries, write_options).map(
             lambda ldif: ldif if not ldif or ldif.endswith("\n") else f"{ldif}\n",
         )
+        return write_result
 
     def _execute_parse(self, ldif_text: str) -> r[m.Ldif.Entry]:
         """Execute parse operation."""

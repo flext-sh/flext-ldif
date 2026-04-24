@@ -130,17 +130,22 @@ class FlextLdifCategorization(s):
         if isinstance(self.categorization_rules, m.Ldif.CategoryRules):
             return self.categorization_rules
         if isinstance(self.categorization_rules, MutableMapping):
-            return m.Ldif.CategoryRules.model_validate(dict(self.categorization_rules))
-        return m.Ldif.CategoryRules.model_validate({})
+            validated_map: m.Ldif.CategoryRules = m.Ldif.CategoryRules.model_validate(
+                dict(self.categorization_rules),
+            )
+            return validated_map
+        validated_empty: m.Ldif.CategoryRules = m.Ldif.CategoryRules.model_validate({})
+        return validated_empty
 
     def _normalize_initial_whitelist_rules(self) -> m.Ldif.WhitelistRules | None:
         """Normalize optional schema whitelist rules into the canonical model."""
         if isinstance(self.schema_whitelist_rules, m.Ldif.WhitelistRules):
             return self.schema_whitelist_rules
         if isinstance(self.schema_whitelist_rules, MutableMapping):
-            return m.Ldif.WhitelistRules.model_validate(
+            validated: m.Ldif.WhitelistRules = m.Ldif.WhitelistRules.model_validate(
                 dict(self.schema_whitelist_rules),
             )
+            return validated
         return None
 
     @staticmethod
@@ -151,7 +156,8 @@ class FlextLdifCategorization(s):
             return value
         if isinstance(value, m.BaseModel):
             try:
-                return m.Ldif.Entry.model_validate(value)
+                validated: m.Ldif.Entry = m.Ldif.Entry.model_validate(value)
+                return validated
             except c.ValidationError as exc:
                 FlextLdifCategorization._get_or_create_logger().warning(
                     "Failed to coerce BaseModel to Entry",
@@ -184,7 +190,11 @@ class FlextLdifCategorization(s):
         reason: str,
     ) -> m.Ldif.Entry:
         """Mark entry as rejected in metadata using u."""
-        return u.Ldif.update_entry_statistics(entry, mark_rejected=(category, reason))
+        updated: m.Ldif.Entry = u.Ldif.update_entry_statistics(
+            entry,
+            mark_rejected=(category, reason),
+        )
+        return updated
 
     @staticmethod
     def _merge_category_from_constants(

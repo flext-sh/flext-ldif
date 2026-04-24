@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import base64
 import re
 from collections.abc import (
     MutableSequence,
@@ -113,12 +112,13 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         ) -> bool:
             """Detect eDirectory attribute definitions using Constants."""
             if isinstance(attr_definition, m.Ldif.SchemaAttribute):
-                return u.Ldif.matches_server_patterns(
+                matches: bool = u.Ldif.matches_server_patterns(
                     value=attr_definition,
                     oid_pattern=FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES,
                     use_prefix_match=True,
                 )
+                return matches
             attr_lower = attr_definition.lower()
             if re.search(
                 FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
@@ -151,11 +151,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         ) -> bool:
             """Detect eDirectory objectClass definitions using Constants."""
             if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
-                return u.Ldif.matches_server_patterns(
+                matches: bool = u.Ldif.matches_server_patterns(
                     value=oc_definition,
                     oid_pattern=FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES,
                 )
+                return matches
             if re.search(
                 FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
                 oc_definition,
@@ -447,15 +448,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
                 processed_attributes: t.MutableStrSequenceMapping = {}
                 for attr_name, attr_values in attributes.items():
-                    processed_values: MutableSequence[str] = []
-                    value: bytes | str
-                    for value in attr_values:
-                        str_value: str
-                        if isinstance(value, bytes):
-                            str_value = base64.b64encode(value).decode("ascii")
-                        else:
-                            str_value = str(value)
-                        processed_values.append(str_value)
+                    processed_values: MutableSequence[str] = [
+                        str(value) for value in attr_values
+                    ]
                     processed_attributes[attr_name] = processed_values
                 processed_attributes[c.Ldif.QuirkMetadataKeys.SERVER_TYPE] = [
                     self._get_server_type(),

@@ -204,7 +204,8 @@ class FlextLdifModelsDomainEntry:
         @classmethod
         def create_minimal(cls) -> Self:
             """Create minimal statistics for newly parsed entry."""
-            return cls.model_validate({"was_parsed": True})
+            validated: Self = cls.model_validate({"was_parsed": True})
+            return validated
 
         @u.field_validator("filters_applied", mode="after")
         @classmethod
@@ -236,7 +237,8 @@ class FlextLdifModelsDomainEntry:
             Returns new instance with error added (frozen model).
             """
             errors = [*self.errors, error]
-            return self.model_copy(update={"errors": errors})
+            copy_result: Self = self.model_copy(update={"errors": errors})
+            return copy_result
 
         def add_warning(self, warning: str) -> Self:
             """Add warning message.
@@ -244,7 +246,8 @@ class FlextLdifModelsDomainEntry:
             Returns new instance with warning added (frozen model).
             """
             warnings = [*self.warnings, warning]
-            return self.model_copy(update={"warnings": warnings})
+            copy_result: Self = self.model_copy(update={"warnings": warnings})
+            return copy_result
 
         def mark_filtered(self, filter_type: str, *, passed: bool) -> Self:
             """Mark entry as filtered with result.
@@ -258,26 +261,28 @@ class FlextLdifModelsDomainEntry:
             """
             filters_applied = [*self.filters_applied, filter_type]
             filter_results = {**self.filter_results, filter_type: passed}
-            return self.model_copy(
+            copy_result: Self = self.model_copy(
                 update={
                     "was_filtered": True,
                     "filters_applied": filters_applied,
                     "filter_results": filter_results,
                 },
             )
+            return copy_result
 
         def mark_rejected(self, category: str, reason: str) -> Self:
             """Mark entry as rejected.
 
             Returns new instance with rejection details (frozen model).
             """
-            return self.model_copy(
+            copy_result: Self = self.model_copy(
                 update={
                     "was_rejected": True,
                     "rejection_category": category,
                     "rejection_reason": reason,
                 },
             )
+            return copy_result
 
     class Control(m.Value):
         """Structured RFC 2849 control line."""
@@ -431,10 +436,12 @@ class FlextLdifModelsDomainEntry:
             if isinstance(value, mda.Attributes):
                 return value
             if "attributes" not in value:
-                return mda.Attributes.model_validate(
+                validated_dict: mda.Attributes = mda.Attributes.model_validate(
                     {"attributes": dict(value)},
                 )
-            return mda.Attributes.model_validate(value)
+                return validated_dict
+            validated: mda.Attributes = mda.Attributes.model_validate(value)
+            return validated
 
         @u.field_validator("dn", mode="before")
         @classmethod
@@ -452,7 +459,8 @@ class FlextLdifModelsDomainEntry:
             if isinstance(value, mdn.DN):
                 return value
             if isinstance(value, Mapping):
-                return mdn.DN.model_validate(value)
+                validated: mdn.DN = mdn.DN.model_validate(value)
+                return validated
             return mdn.DN(
                 value=str(value),
                 metadata=mm.EntryMetadata(),
@@ -631,11 +639,15 @@ class FlextLdifModelsDomainEntry:
         def normalize_record_kind(self) -> Self:
             """Keep record_kind aligned with changetype semantics."""
             if self.changetype and self.record_kind != c.Ldif.RecordKind.CHANGE:
-                return self.model_copy(update={"record_kind": c.Ldif.RecordKind.CHANGE})
+                copy_change: Self = self.model_copy(
+                    update={"record_kind": c.Ldif.RecordKind.CHANGE},
+                )
+                return copy_change
             if not self.changetype and self.record_kind != c.Ldif.RecordKind.CONTENT:
-                return self.model_copy(
+                copy_content: Self = self.model_copy(
                     update={"record_kind": c.Ldif.RecordKind.CONTENT},
                 )
+                return copy_content
             return self
 
         @u.model_validator(mode="after")
@@ -779,9 +791,10 @@ class FlextLdifModelsDomainEntry:
                 "warnings": list[str](),
                 "server_specific_violations": list[str](),
             })
-            return mdm.ValidationMetadata.model_validate(
+            validated: mdm.ValidationMetadata = mdm.ValidationMetadata.model_validate(
                 payload,
             )
+            return validated
 
         @classmethod
         def _build_rfc_validation_context(
@@ -926,9 +939,10 @@ class FlextLdifModelsDomainEntry:
                 "attributes": attrs_dict,
                 **cls._ATTRIBUTES_VALIDATE_DEFAULTS,
             })
-            return mda.Attributes.model_validate(
+            validated: mda.Attributes = mda.Attributes.model_validate(
                 validate_payload,
             )
+            return validated
 
         @classmethod
         def _update_existing_metadata(
@@ -1018,10 +1032,12 @@ class FlextLdifModelsDomainEntry:
                     entry_data["raw_record_lines"] = list(raw_record_lines)
                 if statistics is not None:
                     entry_data["statistics"] = statistics
-                entry_instance = cls.model_validate(entry_data)
-                return r[Self].ok(entry_instance)
+                entry_instance: Self = cls.model_validate(entry_data)
+                ok_result: r[Self] = r[Self].ok(entry_instance)
+                return ok_result
             except (ValueError, TypeError, AttributeError) as e:
-                return r[Self].fail(f"Failed to create Entry: {e}")
+                fail_result: r[Self] = r[Self].fail(f"Failed to create Entry: {e}")
+                return fail_result
 
 
 __all__: list[str] = ["FlextLdifModelsDomainEntry"]

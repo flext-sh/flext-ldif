@@ -39,7 +39,8 @@ class FlextLdifModelsCollections:
                     self_dict.update(extra)
                 return self_dict == other
             if isinstance(other, self.__class__):
-                return super().__eq__(other)
+                eq_result: bool = super().__eq__(other)
+                return eq_result
             return False
 
         def __hash__(self) -> int:
@@ -110,9 +111,11 @@ class FlextLdifModelsCollections:
         def __eq__(self, other: object) -> bool:
             if isinstance(other, dict):
                 extra = self.model_extra
-                return (extra or {}) == other
+                dict_eq: bool = (extra or {}) == other
+                return dict_eq
             if isinstance(other, self.__class__):
-                return self.model_extra == other.model_extra
+                cls_eq: bool = self.model_extra == other.model_extra
+                return cls_eq
             return False
 
         def __hash__(self) -> int:

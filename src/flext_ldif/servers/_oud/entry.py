@@ -218,7 +218,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             hidden_attrs,
             entry_data.attributes.attributes,
         )
-        return entry_data.model_copy(
+        copy_result: m.Ldif.Entry = entry_data.model_copy(
             update={
                 "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": {**new_attributes_dict},
@@ -228,6 +228,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 "metadata": updated_metadata,
             },
         )
+        return copy_result
 
     @staticmethod
     def _hook_pre_write_entry_static(
@@ -288,8 +289,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return acl_values_raw
         if isinstance(acl_values_raw, list):
             return [str(v) for v in acl_values_raw]
-        if isinstance(acl_values_raw, m.Ldif.Acl):
-            return acl_values_raw
         return str(acl_values_raw)
 
     @staticmethod
@@ -497,7 +496,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         update_dict_final: MutableMapping[str, t.Ldif.MutableMetadataInputMapping] = {
             "extensions": current_extensions,
         }
-        return metadata_typed.model_copy(update=update_dict_final)
+        copy_result: m.Ldif.QuirkMetadata = metadata_typed.model_copy(
+            update=update_dict_final,
+        )
+        return copy_result
 
     @staticmethod
     def validate_aci_macros_in_entry(
@@ -1231,8 +1233,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     for item in v
                 ]
                 entry_attrs[str(k)] = values
-            elif isinstance(v, bytes):
-                entry_attrs[str(k)] = [v.decode("utf-8")]
             elif isinstance(v, str):
                 entry_attrs[str(k)] = [v]
             else:
@@ -1251,9 +1251,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entry_attrs_for_diff: t.Ldif.MutableMetadataMapping = {}
             for raw_key, raw_value in original_entry_dict.items():
                 key_str = str(raw_key)
-                if isinstance(raw_value, bytes):
-                    entry_attrs_for_diff[key_str] = raw_value.decode("utf-8")
-                elif raw_value is None or u.primitive(raw_value):
+                if raw_value is None or u.primitive(raw_value):
                     entry_attrs_for_diff[key_str] = raw_value
                 elif isinstance(raw_value, list):
                     entry_attrs_for_diff[key_str] = [str(item) for item in raw_value]
@@ -1548,7 +1546,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _is_schema_entry(self, entry: m.Ldif.Entry) -> bool:
         """Check if entry is a schema entry - delegate to utility."""
         facade_entry = entry
-        return u.Ldif.is_schema_entry(facade_entry, strict=False)
+        return bool(u.Ldif.is_schema_entry(facade_entry, strict=False))
 
     def _merge_acl_metadata_to_entry(
         self,
@@ -1568,7 +1566,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             merged_extensions = m.Ldif.DynamicMetadata.from_dict(
                 current_extensions,
             )
-            return entry.model_copy(
+            merged_entry: m.Ldif.Entry = entry.model_copy(
                 update={
                     "metadata": entry.metadata.model_copy(
                         update={"extensions": merged_extensions},
@@ -1577,13 +1575,18 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 },
                 deep=True,
             )
+            return merged_entry
         entry_metadata = m.Ldif.QuirkMetadata.create_for(
             "oud",
             extensions=m.Ldif.DynamicMetadata.from_dict(
                 acl_metadata_extensions,
             ),
         )
-        return entry.model_copy(update={"metadata": entry_metadata}, deep=True)
+        copy_entry: m.Ldif.Entry = entry.model_copy(
+            update={"metadata": entry_metadata},
+            deep=True,
+        )
+        return copy_entry
 
     def _normalize_aci_value(
         self,

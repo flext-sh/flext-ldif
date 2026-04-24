@@ -78,9 +78,12 @@ class FlextLdifServersBaseEntry(
         )
         if isinstance(format_options_raw, Mapping):
             try:
-                return m.Ldif.WriteFormatOptions.model_validate(
-                    t.Cli.JSON_MAPPING_ADAPTER.validate_python(format_options_raw),
+                validated: m.Ldif.WriteFormatOptions = (
+                    m.Ldif.WriteFormatOptions.model_validate(
+                        t.Cli.JSON_MAPPING_ADAPTER.validate_python(format_options_raw),
+                    )
                 )
+                return validated
             except (c.ValidationError, TypeError) as exc:
                 logger.warning(
                     "Failed to validate extension write format options",
@@ -109,7 +112,10 @@ class FlextLdifServersBaseEntry(
         _ = objectclass
         return False
 
-    def execute(self, **kwargs: t.MutableJsonMapping) -> r[m.Ldif.Entry | str]:
+    def execute(
+        self,
+        **kwargs: str | m.Ldif.Entry | t.MutableJsonMapping,
+    ) -> r[m.Ldif.Entry | str]:
         """Execute entry operation (parse/write)."""
         ldif_content = kwargs.get("ldif_content")
         entry_model = kwargs.get("entry_model")
@@ -255,7 +261,8 @@ class FlextLdifServersBaseEntry(
                 quirk_type=c.Ldif.ServerTypes.RFC,
                 extensions=existing_extensions,
             )
-        return entry.model_copy(update={"metadata": updated_metadata})
+        copied: m.Ldif.Entry = entry.model_copy(update={"metadata": updated_metadata})
+        return copied
 
     def _normalize_attribute_name(self, attr_name: str) -> str:
         """Normalize attribute name to RFC 2849 canonical form."""

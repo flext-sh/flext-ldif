@@ -39,7 +39,8 @@ class FlextLdifServerMethodsMixin:
         quirk_class: type,
     ) -> c.Ldif.ServerTypes:
         """Infer the server type from the utilities namespace."""
-        return u.Ldif.get_parent_server_type(quirk_class)
+        resolved: c.Ldif.ServerTypes = u.Ldif.get_parent_server_type(quirk_class)
+        return resolved
 
     def _get_parent_quirk_safe(self) -> p.Ldif.SchemaQuirk | None:
         """Get the effective parent quirk safely."""

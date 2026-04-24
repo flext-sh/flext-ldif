@@ -95,7 +95,7 @@ class FlextLdifUtilitiesEvents:
             if settings.error_details is not None
             else None,
         )
-        return m.Ldif.ConversionEvent.model_validate({
+        event: m.Ldif.ConversionEvent = m.Ldif.ConversionEvent.model_validate({
             "event_type": "ldif.conversion",
             "aggregate_id": aggregate_id,
             "conversion_operation": settings.conversion_operation,
@@ -106,13 +106,14 @@ class FlextLdifUtilitiesEvents:
             "conversion_duration_ms": settings.conversion_duration_ms,
             "error_details": error_details_list,
         })
+        return event
 
     @staticmethod
     def create_dn_event(
         settings: m.Ldif.DnEventConfig,
     ) -> m.Ldif.DnEvent:
         """Create DnEvent with standardized fields from settings Model."""
-        return m.Ldif.DnEvent.model_validate({
+        event: m.Ldif.DnEvent = m.Ldif.DnEvent.model_validate({
             "event_type": "ldif.dn",
             "aggregate_id": settings.input_dn,
             "dn_operation": settings.dn_operation,
@@ -121,6 +122,7 @@ class FlextLdifUtilitiesEvents:
             "dn_duration_ms": settings.operation_duration_ms,
             "validation_result": settings.validation_result,
         })
+        return event
 
     @staticmethod
     def log_and_emit_conversion_event(

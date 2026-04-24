@@ -162,7 +162,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             """Extract OID from attribute definition using multiple strategies."""
             oid_result = u.Ldif.extract_oid(attr_definition)
             if oid_result.success:
-                return oid_result.value
+                oid_val: str = oid_result.value
+                return oid_val
             oid_match = re.search(
                 FlextLdifServersRelaxed.Constants.OID_NUMERIC_WITH_PAREN,
                 attr_definition,
@@ -187,7 +188,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             """Extract OID using multiple fallback patterns for relaxed mode."""
             oid_result = u.Ldif.extract_oid(definition)
             if oid_result.success:
-                return oid_result.value
+                oid_val: str = oid_result.value
+                return oid_val
             oid_match = re.search(
                 FlextLdifServersRelaxed.Constants.OID_NUMERIC_WITH_PAREN,
                 definition,

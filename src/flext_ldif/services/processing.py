@@ -29,10 +29,11 @@ class FlextLdifProcessing(s):
             msg = "Entry attributes cannot be None"
             raise ValueError(msg)
         attrs_dict = entry.attributes.attributes
-        return m.Ldif.ProcessingResult.model_validate({
+        validated: m.Ldif.ProcessingResult = m.Ldif.ProcessingResult.model_validate({
             "dn": dn_str,
             "attributes": attrs_dict,
         })
+        return validated
 
     def process_entries(
         self,

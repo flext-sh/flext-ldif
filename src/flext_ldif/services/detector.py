@@ -41,7 +41,8 @@ class FlextLdifDetector(FlextLdifServiceBase):
     @staticmethod
     def _get_all_server_types() -> MutableSequence[str]:
         """Get all supported server types from constants."""
-        return u.Ldif.get_all_server_types()
+        types: MutableSequence[str] = u.Ldif.get_all_server_types()
+        return types
 
     @staticmethod
     def _get_server_constants(
@@ -68,7 +69,8 @@ class FlextLdifDetector(FlextLdifServiceBase):
                 or getattr(constants, "DETECTION_OID_PATTERN", None) is not None
             )
         ):
-            return constants
+            typed_constants: type[p.Ldif.ServerDetectionConstants] = constants
+            return typed_constants
         return None
 
     def detect_server_type(

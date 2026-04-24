@@ -10,7 +10,6 @@ from collections.abc import (
     MutableSequence,
     Sequence,
 )
-from datetime import datetime
 from typing import Self, overload, override
 
 from flext_ldif import (
@@ -92,11 +91,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 data = attr_mod
             elif oc_mod is not None:
                 data = oc_mod
-            result = schema_instance.execute(data=data, operation=op)
-            unwrapped = result.value
-            if isinstance(unwrapped, cls):
-                return unwrapped
-            return instance
+            schema_instance.execute(data=data, operation=op)
         return instance
 
     def __init__(
@@ -263,7 +258,10 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         if isinstance(value, m.Ldif.DynamicMetadata):
             return value
         if isinstance(value, Mapping):
-            return m.Ldif.DynamicMetadata.model_validate(value)
+            validated: m.Ldif.DynamicMetadata = m.Ldif.DynamicMetadata.model_validate(
+                value,
+            )
+            return validated
         return m.Ldif.DynamicMetadata()
 
     @staticmethod
@@ -280,9 +278,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 continue
             if isinstance(value, list):
                 extensions[key] = [str(item) for item in value]
-                continue
-            if isinstance(value, datetime):
-                extensions[key] = value.isoformat()
                 continue
             if isinstance(value, (int, float)):
                 extensions[key] = str(value)
@@ -476,13 +471,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         attr_data: m.Ldif.SchemaAttribute,
     ) -> MutableSequence[str]:
         """Build RFC attribute definition parts."""
-        return u.Ldif.build_attribute_parts_with_metadata(
+        parts: MutableSequence[str] = u.Ldif.build_attribute_parts_with_metadata(
             attr_data,
             restore_original=u.Ldif.should_restore_schema_original_format(
                 attr_data.metadata,
                 self._get_server_type(),
             ),
         )
+        return parts
 
     def _build_objectclass_metadata(
         self,
@@ -511,13 +507,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         oc_data: m.Ldif.SchemaObjectClass,
     ) -> MutableSequence[str]:
         """Build RFC objectClass definition parts."""
-        return u.Ldif.build_objectclass_parts_with_metadata(
+        parts: MutableSequence[str] = u.Ldif.build_objectclass_parts_with_metadata(
             oc_data,
             restore_original=u.Ldif.should_restore_schema_original_format(
                 oc_data.metadata,
                 self._get_server_type(),
             ),
         )
+        return parts
 
     def _ensure_x_origin(
         self,
@@ -543,7 +540,10 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         def parse_parts_hook(
             definition: str,
         ) -> r[t.Ldif.MutableMetadataMapping]:
-            return u.Ldif.parse_attribute(definition)
+            parsed: r[t.Ldif.MutableMetadataMapping] = u.Ldif.parse_attribute(
+                definition,
+            )
+            return parsed
 
         parse_result_raw = u.Ldif.parse(
             definition=attr_definition,

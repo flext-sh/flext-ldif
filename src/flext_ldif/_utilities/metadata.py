@@ -46,7 +46,8 @@ class FlextLdifUtilitiesMetadata:
         """Serialize metadata-shaped mappings through the LDIF metadata model."""
         if not value:
             return ""
-        return m.Ldif.DynamicMetadata.from_dict(value).model_dump_json()
+        dumped: str = m.Ldif.DynamicMetadata.from_dict(value).model_dump_json()
+        return dumped
 
     @staticmethod
     def _add_to_dict_metadata(
@@ -96,7 +97,10 @@ class FlextLdifUtilitiesMetadata:
         category: str,
     ) -> m.Ldif.EntryStatistics:
         """Apply category update to stats using model_copy."""
-        return stats.model_copy(update={"category_assigned": category})
+        copied: m.Ldif.EntryStatistics = stats.model_copy(
+            update={"category_assigned": category},
+        )
+        return copied
 
     @staticmethod
     def _apply_filter_update(
@@ -143,10 +147,11 @@ class FlextLdifUtilitiesMetadata:
         extensions = m.Ldif.DynamicMetadata.model_validate(
             extension_kwargs,
         )
-        return m.Ldif.SchemaFormatDetails.model_validate({
+        details: m.Ldif.SchemaFormatDetails = m.Ldif.SchemaFormatDetails.model_validate({
             **known_field_values,
             "extensions": extensions,
         })
+        return details
 
     @staticmethod
     def _extract_all_schema_details(
@@ -609,7 +614,7 @@ class FlextLdifUtilitiesMetadata:
                 write_option_key: u.normalize_to_metadata(value)
                 for write_option_key, value in metadata_obj.items()
             }
-            config_root: dict[str, t.JsonValue] = dict(normalized_metadata)
+            config_root: dict[str, t.JsonPayload] = dict(normalized_metadata)
             object.__setattr__(
                 model,
                 "validation_metadata",
@@ -653,7 +658,10 @@ class FlextLdifUtilitiesMetadata:
             "processing_stats": updated_stats,
         }
         updated_metadata = entry_metadata.model_copy(update=update_dict)
-        return entry.model_copy(update={"metadata": updated_metadata})
+        updated_entry: m.Ldif.Entry = entry.model_copy(
+            update={"metadata": updated_metadata},
+        )
+        return updated_entry
 
     @staticmethod
     def analyze_minimal_differences(

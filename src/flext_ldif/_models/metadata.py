@@ -65,8 +65,10 @@ class FlextLdifModelsMetadata:
 
         def __getitem__(self, key: str) -> t.JsonValue:
             if key in type(self).model_fields:
-                return getattr(self, key)
-            return self._extra()[key]
+                attr_val: t.JsonValue = getattr(self, key)
+                return attr_val
+            item: t.JsonValue = self._extra()[key]
+            return item
 
         def __setitem__(self, key: str, value: t.Ldif.MetadataCarrierValue) -> None:
             setattr(self, key, u.normalize_to_metadata(value))
@@ -85,9 +87,10 @@ class FlextLdifModelsMetadata:
             """Create DynamicMetadata from a dictionary."""
             if data is None:
                 return cls()
-            return cls.model_validate({
+            validated: Self = cls.model_validate({
                 str(key): u.normalize_to_metadata(value) for key, value in data.items()
             })
+            return validated
 
         @staticmethod
         def coerce_metadata_value(
@@ -108,8 +111,10 @@ class FlextLdifModelsMetadata:
         ) -> t.JsonValue | None:
             """Get value by key, returning default if not found."""
             if key in type(self).model_fields:
-                return getattr(self, key)
-            return self._extra().get(key, default)
+                attr_val: t.JsonValue = getattr(self, key)
+                return attr_val
+            extra_val: t.JsonValue | None = self._extra().get(key, default)
+            return extra_val
 
         def items(self) -> ItemsView[str, t.JsonValue]:
             return self._extra().items()
@@ -124,7 +129,8 @@ class FlextLdifModelsMetadata:
         ) -> t.JsonValue | None:
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
-                return extra.pop(key)
+                popped: t.JsonValue | None = extra.pop(key)
+                return popped
             return default
 
         def to_dict(self) -> MutableMapping[str, t.JsonValue]:

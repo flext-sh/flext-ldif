@@ -226,13 +226,14 @@ class FlextLdifFilters(s):
                 del updated_attrs[attr_name]
         if not changed:
             return entry
-        return entry.model_copy(
+        copied: m.Ldif.Entry = entry.model_copy(
             update={
                 "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": updated_attrs
                 }),
             },
         )
+        return copied
 
 
 __all__: list[str] = ["FlextLdifFilters"]

@@ -22,7 +22,8 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         lines: MutableSequence[str],
     ) -> r[m.Ldif.Entry]:
         """Parse one unfolded LDIF record using the shared RFC utility."""
-        return u.Ldif.parse_ldif_record(lines)
+        parsed: r[m.Ldif.Entry] = u.Ldif.parse_ldif_record(lines)
+        return parsed
 
     @override
     def can_handle(

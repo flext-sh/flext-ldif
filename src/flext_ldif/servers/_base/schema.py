@@ -167,7 +167,8 @@ class FlextLdifServersBaseSchema(
         if not server_type:
             return c.Ldif.ServerTypes.RFC
         try:
-            return u.Ldif.normalize_server_type(server_type)
+            normalized: c.Ldif.ServerTypes = u.Ldif.normalize_server_type(server_type)
+            return normalized
         except ValueError:
             return c.Ldif.ServerTypes.RFC
 

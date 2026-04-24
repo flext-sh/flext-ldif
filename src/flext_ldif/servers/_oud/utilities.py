@@ -16,7 +16,7 @@ class FlextLdifServersOudUtilities:
     def get_parser_config() -> m.Ldif.AciParserConfig:
         """Create AciParserConfig for OUD ACL parsing."""
         constants = FlextLdifServersOudConstants
-        return m.Ldif.AciParserConfig.model_validate({
+        config: m.Ldif.AciParserConfig = m.Ldif.AciParserConfig.model_validate({
             "server_type": c.Ldif.ServerTypes.OUD,
             "aci_prefix": "aci:",
             "version_acl_pattern": constants.ACL_VERSION_ACL_PATTERN,
@@ -38,6 +38,7 @@ class FlextLdifServersOudUtilities:
                 "ssf": constants.ACL_SSF_PATTERN,
             },
         })
+        return config
 
 
 __all__: list[str] = ["FlextLdifServersOudUtilities"]

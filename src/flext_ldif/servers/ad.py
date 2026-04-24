@@ -156,12 +156,13 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect AD attribute definitions using centralized constants."""
-            return u.Ldif.matches_server_patterns(
+            matches: bool = u.Ldif.matches_server_patterns(
                 value=attr_definition,
                 oid_pattern=FlextLdifServersAd.Constants.DETECTION_OID_PATTERN,
                 detection_names=FlextLdifServersAd.Constants.DETECTION_ATTRIBUTE_NAMES,
                 detection_string=FlextLdifServersAd.Constants.DETECTION_MICROSOFT_ACTIVE_DIRECTORY,
             )
+            return matches
 
         @override
         def can_handle_objectclass(
@@ -169,11 +170,12 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect AD objectClass definitions using centralized constants."""
-            return u.Ldif.matches_server_patterns(
+            matches: bool = u.Ldif.matches_server_patterns(
                 value=oc_definition,
                 oid_pattern=FlextLdifServersAd.Constants.DETECTION_OID_PATTERN,
                 detection_names=FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES,
             )
+            return matches
 
         @override
         def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
@@ -367,12 +369,9 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 return True
             raw_object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
             object_classes = list(raw_object_classes)
-            normalized_object_classes: MutableSequence[str] = []
-            for oc in object_classes:
-                if isinstance(oc, list):
-                    normalized_object_classes.extend(str(item) for item in oc)
-                else:
-                    normalized_object_classes.append(str(oc))
+            normalized_object_classes: MutableSequence[str] = [
+                str(oc) for oc in object_classes
+            ]
             return bool(
                 any(
                     oc.lower()

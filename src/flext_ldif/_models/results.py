@@ -268,7 +268,8 @@ class FlextLdifModelsResults:
                 ),
                 "events": [*self.events, *other.events],
             }
-            return self.model_copy(update=updates)
+            copied: Self = self.model_copy(update=updates)
+            return copied
 
         def to_summary(self) -> FlextLdifModelsResults.StatisticsSummary:
             fields = {
@@ -497,10 +498,12 @@ class FlextLdifModelsResults:
 
         def _resolve_key(self, key: str) -> t.JsonValue:
             if key in type(self).model_fields:
-                return getattr(self, key)
+                attr_val: t.JsonValue = getattr(self, key)
+                return attr_val
             extra = self.__pydantic_extra__
             if extra is not None and key in extra:
-                return extra[key]
+                extra_val: t.JsonValue = extra[key]
+                return extra_val
             raise KeyError(key)
 
     class SchemaServiceStatus(DictAccessibleValue):

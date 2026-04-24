@@ -38,26 +38,34 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     def as_entry(value: t.Ldif.EntryLike | t.ModelInput) -> m.Ldif.Entry:
         """Coerce an entry-like value into the canonical LDIF entry model."""
-        return m.Ldif.Entry.model_validate(value)
+        validated: m.Ldif.Entry = m.Ldif.Entry.model_validate(value)
+        return validated
 
     @staticmethod
     def as_entries(
         values: Sequence[t.Ldif.EntryLike] | t.ModelInput,
     ) -> MutableSequence[m.Ldif.Entry]:
         """Coerce an entry sequence into canonical LDIF entry models."""
-        return FlextLdifUtilitiesDispatch._ENTRY_LIST_ADAPTER.validate_python(values)
+        validated: MutableSequence[m.Ldif.Entry] = (
+            FlextLdifUtilitiesDispatch._ENTRY_LIST_ADAPTER.validate_python(values)
+        )
+        return validated
 
     @staticmethod
     def as_acl(value: t.Ldif.AclLike | t.ModelInput) -> m.Ldif.Acl:
         """Coerce an ACL-like value into the canonical LDIF ACL model."""
-        return m.Ldif.Acl.model_validate(value)
+        validated: m.Ldif.Acl = m.Ldif.Acl.model_validate(value)
+        return validated
 
     @staticmethod
     def as_acls(
         values: Sequence[t.Ldif.AclLike] | t.ModelInput,
     ) -> MutableSequence[m.Ldif.Acl]:
         """Coerce an ACL sequence into canonical LDIF ACL models."""
-        return FlextLdifUtilitiesDispatch._ACL_LIST_ADAPTER.validate_python(values)
+        validated: MutableSequence[m.Ldif.Acl] = (
+            FlextLdifUtilitiesDispatch._ACL_LIST_ADAPTER.validate_python(values)
+        )
+        return validated
 
     @staticmethod
     @overload

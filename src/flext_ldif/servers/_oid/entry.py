@@ -762,9 +762,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         if not orclaci_raw:
             orclaci_raw = normalized_attrs.get("orclaci") if normalized_attrs else None
         orclaci_values: MutableSequence[str] | str | None = None
-        if isinstance(orclaci_raw, str):
-            orclaci_values = orclaci_raw
-        elif isinstance(orclaci_raw, list):
+        if isinstance(orclaci_raw, list):
             orclaci_values = [str(v) for v in orclaci_raw]
         self._process_orclaci_values(orclaci_values, current_extensions)
         acl_transformations = self._detect_entry_acl_transformations(
@@ -1120,7 +1118,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         entry_metadata: m.Ldif.EntryMetadata | None = None
         if entry_data.attributes and entry_data.attributes.metadata:
             entry_metadata = entry_data.attributes.metadata
-        return entry_data.model_copy(
+        copied: m.Ldif.Entry = entry_data.model_copy(
             update={
                 "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": restored_attrs,
@@ -1131,6 +1129,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 }),
             },
         )
+        return copied
 
     def _restore_entry_from_metadata(self, entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
         """Restore OID-specific formats from metadata (RFC → OID denormalization)."""
@@ -1154,7 +1153,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             changed = True
         if not changed:
             return restored_entry
-        return restored_entry.model_copy(
+        restored_copy: m.Ldif.Entry = restored_entry.model_copy(
             update={
                 "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": restored_attrs,
@@ -1163,6 +1162,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 }),
             },
         )
+        return restored_copy
 
     @override
     def _write_entry(self, entry_data: m.Ldif.Entry) -> r[str]:

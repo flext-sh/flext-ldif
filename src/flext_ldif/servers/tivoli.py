@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import base64
 import re
 from collections.abc import (
     MutableSequence,
@@ -115,12 +114,13 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ) -> bool:
             """Detect Tivoli-specific attributes."""
             if isinstance(attr_definition, m.Ldif.SchemaAttribute):
-                return u.Ldif.matches_server_patterns(
+                matches: bool = u.Ldif.matches_server_patterns(
                     value=attr_definition,
                     oid_pattern=FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES,
                     use_prefix_match=True,
                 )
+                return matches
             if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN_COMPILED.search(
                 attr_definition,
             ):
@@ -138,11 +138,12 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ) -> bool:
             """Detect Tivoli objectClass definitions."""
             if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
-                return u.Ldif.matches_server_patterns(
+                matches: bool = u.Ldif.matches_server_patterns(
                     value=oc_definition,
                     oid_pattern=FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersTivoli.Constants.DETECTION_OBJECTCLASS_NAMES,
                 )
+                return matches
             if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN_COMPILED.search(
                 oc_definition,
             ):
@@ -352,7 +353,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             """Normalize DN for Tivoli DS."""
             norm_result = u.Ldif.norm(entry_dn)
             if norm_result.success:
-                return norm_result.value
+                normalized: str = norm_result.value
+                return normalized
             return entry_dn.lower()
 
         def process_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
@@ -378,14 +380,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     **attributes,
                 }
                 for attr_name, attr_values in processed_attributes.items():
-                    processed_values: MutableSequence[str] = []
-                    for value in attr_values:
-                        str_value: str
-                        if isinstance(value, bytes):
-                            str_value = base64.b64encode(value).decode("utf-8")
-                        else:
-                            str_value = str(value)
-                        processed_values.append(str_value)
+                    processed_values: MutableSequence[str] = [
+                        str(value) for value in attr_values
+                    ]
                     processed_attributes[attr_name] = processed_values
                 processed_attributes[c.Ldif.QuirkMetadataKeys.SERVER_TYPE] = [
                     self._get_server_type(),

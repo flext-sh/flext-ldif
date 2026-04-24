@@ -38,7 +38,8 @@ class FlextLdifAcl(s):
     @staticmethod
     def _is_schema_entry(entry: m.Ldif.Entry) -> bool:
         """Check if entry is a schema entry."""
-        return u.Ldif.is_schema_entry(entry, strict=False)
+        is_schema: bool = u.Ldif.is_schema_entry(entry, strict=False)
+        return is_schema
 
     @staticmethod
     def evaluate_acl_context(

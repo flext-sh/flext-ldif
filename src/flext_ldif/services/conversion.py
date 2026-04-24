@@ -45,8 +45,6 @@ class FlextLdifConversion(
             schema = quirk.schema_quirk
             if FlextLdifConversion._is_schema_quirk_protocol(schema):
                 return schema
-            msg = f"Expected Schema quirk, got {type(schema)}"
-            raise TypeError(msg)
         msg = "Quirk must be a Schema quirk or have schema_quirk attribute"
         raise TypeError(msg)
 
@@ -308,7 +306,7 @@ class FlextLdifConversion(
                 "metadata": None,
             },
         )
-        return m.Ldif.Entry.model_validate(
+        entry_result: m.Ldif.Entry = m.Ldif.Entry.model_validate(
             {
                 "dn": m.Ldif.DN(
                     value="cn=schema,dc=example,dc=com",
@@ -318,6 +316,7 @@ class FlextLdifConversion(
                 "metadata": metadata,
             },
         )
+        return entry_result
 
     def _convert_schema_model_via_entry(
         self,
@@ -418,14 +417,16 @@ class FlextLdifConversion(
     ) -> t.JsonValue:
         """Normalize metadata value to proper type."""
         if value is None:
-            return u.Cli.normalize_json_value("")
+            empty_val: t.JsonValue = u.Cli.normalize_json_value("")
+            return empty_val
         if isinstance(value, Mapping):
             normalized_mapping: dict[str, t.JsonValue] = {
                 str(key): u.Cli.normalize_json_value(item)
                 for key, item in value.items()
             }
             return normalized_mapping
-        return u.Cli.normalize_json_value(value)
+        normalized: t.JsonValue = u.Cli.normalize_json_value(value)
+        return normalized
 
     @staticmethod
     def _parse_attribute_with_schema(
@@ -467,7 +468,10 @@ class FlextLdifConversion(
         clean_dict: t.MutableBoolMapping = {
             k: v for k, v in perms_dict.items() if v is not None
         }
-        return m.Ldif.AclPermissions.model_validate(clean_dict)
+        validated: m.Ldif.AclPermissions = m.Ldif.AclPermissions.model_validate(
+            clean_dict,
+        )
+        return validated
 
     @staticmethod
     def _resolve_quirk(
@@ -1208,7 +1212,10 @@ class FlextLdifConversion(
         value: t.JsonPayload | None,
     ) -> t.JsonValue:
         """Convert value to JsonValue type."""
-        return u.Cli.normalize_json_value("" if value is None else value)
+        normalized: t.JsonValue = u.Cli.normalize_json_value(
+            "" if value is None else value,
+        )
+        return normalized
 
     def _get_extensions_dict(
         self,
@@ -1219,7 +1226,10 @@ class FlextLdifConversion(
         def to_general_value(
             value: t.JsonPayload | None,
         ) -> t.JsonValue:
-            return u.Cli.normalize_json_value(value if value is not None else "")
+            normalized_local: t.JsonValue = u.Cli.normalize_json_value(
+                value if value is not None else "",
+            )
+            return normalized_local
 
         metadata = acl.metadata
         if metadata is None or not metadata:

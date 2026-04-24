@@ -116,13 +116,17 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             ):
                 return False
             if acl_model.metadata and acl_model.metadata.quirk_type:
-                return str(acl_model.metadata.quirk_type) == self._get_server_type()
+                matches_type: bool = (
+                    str(acl_model.metadata.quirk_type) == self._get_server_type()
+                )
+                return matches_type
             if acl_model.name:
-                return u.Ldif.normalize_attribute_name(
+                matches_name: bool = u.Ldif.normalize_attribute_name(
                     acl_model.name,
                 ) == u.Ldif.normalize_attribute_name(
                     FlextLdifServersOudConstants.ACL_ATTRIBUTE_NAME,
                 )
+                return matches_name
             return False
         normalized = acl_line.strip()
         if not normalized:
@@ -254,11 +258,12 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             subject_type,
             "userdn",
         )
-        return u.Ldif.format_aci_subject(
+        formatted: str = u.Ldif.format_aci_subject(
             subject_type,
             filtered_value,
             bind_operator,
         )
+        return formatted
 
     def _build_aci_target(self, acl_data: m.Ldif.Acl) -> str:
         """Build ACI target clause from ACL model."""
@@ -286,11 +291,12 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                     "target_dn": dn,
                     "attributes": attrs,
                 })
-        return u.Ldif.build_aci_target_clause(
+        clause: str = u.Ldif.build_aci_target_clause(
             target_attributes=target.attributes if target else None,
             target_dn=target.target_dn if target else None,
             separator=" || ",
         )
+        return clause
 
     def _extract_and_resolve_acl_subject(
         self,
@@ -355,7 +361,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     def _parse_aci_format(self, acl_line: str) -> r[m.Ldif.Acl]:
         """Parse RFC 4876 ACI format using utility with OUD-specific settings."""
         settings = FlextLdifServersOudUtilities.get_parser_config()
-        result = u.Ldif.parse_aci(acl_line, settings)
+        result: r[m.Ldif.Acl] = u.Ldif.parse_aci(acl_line, settings)
         if not result.success:
             return result
         acl = result.value

@@ -25,7 +25,8 @@ class FlextLdifWriter(FlextLdifServiceBase):
         """Keep write inputs on canonical Entry models."""
         if isinstance(entries, m.Ldif.ParseResponse):
             return entries.entries
-        return u.Ldif.as_entries(entries)
+        as_entries: MutableSequence[m.Ldif.Entry] = u.Ldif.as_entries(entries)
+        return as_entries
 
     def write(
         self,

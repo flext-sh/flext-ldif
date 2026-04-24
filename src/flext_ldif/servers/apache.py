@@ -75,12 +75,13 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ) -> bool:
             """Detect ApacheDS attribute definitions using centralized constants."""
             if isinstance(attr_definition, m.Ldif.SchemaAttribute):
-                return u.Ldif.matches_server_patterns(
+                matches: bool = u.Ldif.matches_server_patterns(
                     value=attr_definition,
                     oid_pattern=FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersApache.Constants.DETECTION_ATTRIBUTE_PREFIXES,
                     use_prefix_match=True,
                 )
+                return matches
             attr_lower = attr_definition.lower()
             if re.search(
                 FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
@@ -111,11 +112,12 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ) -> bool:
             """Detect ApacheDS objectClass definitions using centralized constants."""
             if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
-                return u.Ldif.matches_server_patterns(
+                matches: bool = u.Ldif.matches_server_patterns(
                     value=oc_definition,
                     oid_pattern=FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
                     detection_names=FlextLdifServersApache.Constants.DETECTION_OBJECTCLASS_NAMES,
                 )
+                return matches
             if re.search(
                 FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
                 oc_definition,

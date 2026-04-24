@@ -51,11 +51,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
                 op = "parse"
             elif isinstance(op_raw, str) and op_raw == "write":
                 op = "write"
-            result = acl_instance.execute(data=data, operation=op)
-            unwrapped: m.Ldif.Acl | str = result.value
-            if isinstance(unwrapped, cls):
-                return unwrapped
-            return instance
+            acl_instance.execute(data=data, operation=op)
         return instance
 
     def __init__(

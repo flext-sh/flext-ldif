@@ -112,11 +112,12 @@ class FlextLdifModelsDomainDN:
         @classmethod
         def create_minimal(cls, dn: str) -> Self:
             """Create minimal statistics for unchanged DN."""
-            return cls.model_validate({
+            validated: Self = cls.model_validate({
                 "original_dn": dn,
                 "cleaned_dn": dn,
                 "normalized_dn": dn,
             })
+            return validated
 
         @u.field_validator("transformations", mode="after")
         @classmethod
@@ -220,12 +221,13 @@ class FlextLdifModelsDomainDN:
             if dn is None:
                 msg = "dn cannot be None"
                 raise ValueError(msg)
-            return cls.model_validate({
+            validated: Self = cls.model_validate({
                 "value": str(dn),
                 "metadata": mdm.EntryMetadata.model_validate(
                     {},
                 ),
             })
+            return validated
 
     class DnRegistry(m.StrictModel):
         """Registry for tracking canonical DN case during conversions."""

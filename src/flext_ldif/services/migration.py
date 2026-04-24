@@ -143,14 +143,17 @@ class FlextLdifMigrationPipeline(s):
         processed_entries: int,
     ) -> m.Ldif.MigrationPipelineResult:
         """Build result with defaults, keeping service as pure orchestrator."""
-        return m.Ldif.MigrationPipelineResult.model_construct(
-            entries=entries,
-            output_files=output_files,
-            stats=cls._build_stats(
-                total_entries=total_entries,
-                processed_entries=processed_entries,
-            ),
+        constructed: m.Ldif.MigrationPipelineResult = (
+            m.Ldif.MigrationPipelineResult.model_construct(
+                entries=entries,
+                output_files=output_files,
+                stats=cls._build_stats(
+                    total_entries=total_entries,
+                    processed_entries=processed_entries,
+                ),
+            )
         )
+        return constructed
 
     def execute(self) -> r[m.Ldif.MigrationPipelineResult]:
         """Execute migration pipeline for all files in input_dir."""
