@@ -3,12 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import (
-    Callable,
     Mapping,
     MutableMapping,
     MutableSequence,
-    Sequence,
-    Set as AbstractSet,
 )
 from typing import Annotated
 
@@ -22,19 +19,11 @@ class FlextLdifTypesBase:
     type MetadataInputValue = t.JsonValue
     type MetadataInputMapping = Mapping[str, MetadataInputValue]
     type MutableMetadataInputMapping = MutableMapping[str, MetadataInputValue]
-    type MetadataMapping = Mapping[str, t.JsonValue]
     type MutableMetadataMapping = MutableMapping[str, t.JsonValue]
     type MetadataCarrierValue = MetadataInputValue
     type ValueType = Scalar | t.StrSequence
-    type ValueList = Sequence[ValueType]
     type AttributeValue = str | bytes
-    type EntryAttributesDict = t.StrSequenceMapping
     type MutableEntryAttributesDict = t.MutableStrSequenceMapping
-    type RawEntryDict = Mapping[str, str | t.StrSequence | AbstractSet[str]]
-    type MutableRawEntryDict = MutableMapping[
-        str,
-        str | MutableSequence[str] | AbstractSet[str],
-    ]
     type UnconvertedAttributeValue = str | MutableSequence[str] | bytes
     type UnconvertedAttributes = MutableMapping[str, UnconvertedAttributeValue]
     type SchemaExtensionsMapping = MutableMapping[
@@ -42,25 +31,13 @@ class FlextLdifTypesBase:
         MutableSequence[str] | str | bool | None,
     ]
     type AttributeDict = t.StrSequenceMapping
-    type AttributeDictGeneric = Mapping[str, t.StrSequence | str]
-    type DistributionDict = t.IntMapping
-    type TemplateValue = t.Scalar | None
     type DN = str
     type ParseMethodArg = str
     type ParseMethodReturn = r[t.Scalar | t.StrSequence | None]
-    type ParseMethod = Callable[[t.JsonValue, str], ParseMethodReturn]
-    type ParseMethodDecorator = Callable[[ParseMethod], ParseMethod]
     type WriteMethodArg = t.Scalar | t.StrSequence | None
     type WriteMethodReturn = (
         t.Scalar | t.StrSequence | r[t.Scalar | t.StrSequence | None] | None
     )
-    type WriteMethod = Callable[[t.JsonValue, WriteMethodArg], WriteMethodReturn]
-    type WriteMethodDecorator = Callable[[WriteMethod], WriteMethod]
-    type SafeMethod = Callable[
-        [t.JsonValue, ParseMethodArg],
-        t.Scalar | t.StrSequence | None,
-    ]
-    type SafeMethodDecorator = Callable[[SafeMethod], SafeMethod]
     type Rfc4512Descriptor = Annotated[
         str,
         t.StringConstraints(
