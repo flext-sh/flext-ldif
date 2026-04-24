@@ -1225,19 +1225,18 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         original_entry_dict = dict(entry_dict)
         entry_attrs: t.MutableStrSequenceMapping = {}
         for k, v in entry_dict.items():
-            match v:
-                case list():
-                    values: MutableSequence[str] = [
-                        item.decode("utf-8") if isinstance(item, bytes) else str(item)
-                        for item in v
-                    ]
-                    entry_attrs[str(k)] = values
-                case bytes():
-                    entry_attrs[str(k)] = [v.decode("utf-8")]
-                case str():
-                    entry_attrs[str(k)] = [v]
-                case _:
-                    entry_attrs[str(k)] = [str(v)]
+            if isinstance(v, list):
+                values: MutableSequence[str] = [
+                    item.decode("utf-8") if isinstance(item, bytes) else str(item)
+                    for item in v
+                ]
+                entry_attrs[str(k)] = values
+            elif isinstance(v, bytes):
+                entry_attrs[str(k)] = [v.decode("utf-8")]
+            elif isinstance(v, str):
+                entry_attrs[str(k)] = [v]
+            else:
+                entry_attrs[str(k)] = [str(v)]
         result = self.parse_entry(dn, entry_attrs)
         if result.success:
             entry = result.value
@@ -1258,12 +1257,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     entry_attrs_for_diff[key_str] = raw_value
                 elif isinstance(raw_value, list):
                     entry_attrs_for_diff[key_str] = [str(item) for item in raw_value]
-                elif isinstance(raw_value, Mapping):
+                else:
                     entry_attrs_for_diff[key_str] = {
                         str(k): u.normalize_to_metadata(v) for k, v in raw_value.items()
                     }
-                else:
-                    entry_attrs_for_diff[key_str] = str(raw_value)
             dn_differences, attribute_differences, original_attrs_complete, _ = (
                 u.Ldif.analyze_differences(
                     entry_attrs=entry_attrs_for_diff,

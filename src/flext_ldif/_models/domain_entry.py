@@ -10,7 +10,6 @@ from collections.abc import (
     Mapping,
     MutableMapping,
     MutableSequence,
-    Sequence,
 )
 from datetime import datetime
 from types import MappingProxyType
@@ -918,12 +917,10 @@ class FlextLdifModelsDomainEntry:
                 return attributes
             attrs_dict: t.MutableStrSequenceMapping = {}
             for attr_name, attr_values in attributes.items():
-                if isinstance(attr_values, Sequence) and not isinstance(
-                    attr_values, str
-                ):
-                    values_list: MutableSequence[str] = [str(v) for v in attr_values]
+                if isinstance(attr_values, str):
+                    values_list: MutableSequence[str] = [str(attr_values)]
                 else:
-                    values_list = [str(attr_values)]
+                    values_list = [str(v) for v in attr_values]
                 attrs_dict[attr_name] = values_list
             validate_payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
                 "attributes": attrs_dict,

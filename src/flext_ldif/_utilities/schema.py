@@ -39,27 +39,19 @@ class FlextLdifUtilitiesSchema:
     ) -> None:
         """Add MUST and MAY to objectclass parts list."""
         if oc_data.must:
-            if isinstance(oc_data.must, Sequence) and not isinstance(oc_data.must, str):
-                must_list_str: MutableSequence[str] = [
-                    str(item) for item in oc_data.must
-                ]
-                if len(must_list_str) == 1:
-                    parts.append(f"MUST {must_list_str[0]}")
-                else:
-                    must_str = " $ ".join(must_list_str)
-                    parts.append(f"MUST ( {must_str} )")
+            must_list_str: MutableSequence[str] = [str(item) for item in oc_data.must]
+            if len(must_list_str) == 1:
+                parts.append(f"MUST {must_list_str[0]}")
             else:
-                parts.append(f"MUST {oc_data.must}")
+                must_str = " $ ".join(must_list_str)
+                parts.append(f"MUST ( {must_str} )")
         if oc_data.may:
-            if isinstance(oc_data.may, Sequence) and not isinstance(oc_data.may, str):
-                may_list_str: MutableSequence[str] = [str(item) for item in oc_data.may]
-                if len(may_list_str) == 1:
-                    parts.append(f"MAY {may_list_str[0]}")
-                else:
-                    may_str = " $ ".join(may_list_str)
-                    parts.append(f"MAY ( {may_str} )")
+            may_list_str: MutableSequence[str] = [str(item) for item in oc_data.may]
+            if len(may_list_str) == 1:
+                parts.append(f"MAY {may_list_str[0]}")
             else:
-                parts.append(f"MAY {oc_data.may}")
+                may_str = " $ ".join(may_list_str)
+                parts.append(f"MAY ( {may_str} )")
 
     @staticmethod
     def _add_objectclass_sup(
@@ -68,15 +60,12 @@ class FlextLdifUtilitiesSchema:
     ) -> None:
         """Add SUP to objectclass parts list."""
         if oc_data.sup:
-            if isinstance(oc_data.sup, Sequence) and not isinstance(oc_data.sup, str):
-                sup_list_str: MutableSequence[str] = [str(item) for item in oc_data.sup]
-                if len(sup_list_str) == 1:
-                    parts.append(f"SUP {sup_list_str[0]}")
-                else:
-                    sup_str = " $ ".join(sup_list_str)
-                    parts.append(f"SUP ( {sup_str} )")
+            sup_list_str: MutableSequence[str] = [str(item) for item in oc_data.sup]
+            if len(sup_list_str) == 1:
+                parts.append(f"SUP {sup_list_str[0]}")
             else:
-                parts.append(f"SUP {oc_data.sup}")
+                sup_str = " $ ".join(sup_list_str)
+                parts.append(f"SUP ( {sup_str} )")
 
     @staticmethod
     def _apply_trailing_spaces(
@@ -449,22 +438,22 @@ class FlextLdifUtilitiesSchema:
         """Format attribute list (MUST/MAY) for objectClass definition."""
         if not attr_list:
             return None
-        if isinstance(attr_list, Sequence) and not isinstance(attr_list, str):
-            attr_strs = [str(item) for item in attr_list]
-            if len(attr_strs) == 1:
-                return f"{prefix} {attr_strs[0]}"
-            return f"{prefix} ( {' $ '.join(attr_strs)} )"
-        return f"{prefix} {attr_list}"
+        if isinstance(attr_list, str):
+            return f"{prefix} {attr_list}"
+        attr_strs = [str(item) for item in attr_list]
+        if len(attr_strs) == 1:
+            return f"{prefix} {attr_strs[0]}"
+        return f"{prefix} ( {' $ '.join(attr_strs)} )"
 
     @staticmethod
     def _format_sup_list(sup_value: str | MutableSequence[str] | None) -> str | None:
         """Format SUP (superior) list for objectClass definition."""
         if not sup_value:
             return None
-        if isinstance(sup_value, Sequence) and not isinstance(sup_value, str):
-            sup_strs = [str(item) for item in sup_value]
-            return f"SUP ( {' $ '.join(sup_strs)} )"
-        return f"SUP {sup_value}"
+        if isinstance(sup_value, str):
+            return f"SUP {sup_value}"
+        sup_strs = [str(item) for item in sup_value]
+        return f"SUP ( {' $ '.join(sup_strs)} )"
 
     @staticmethod
     def _get_field_order(
@@ -963,9 +952,6 @@ class FlextLdifUtilitiesSchema:
         if basic_fields_result.failure:
             return r[t.Ldif.MutableMetadataMapping].fail(basic_fields_result.error)
         basic_fields_value = basic_fields_result.value
-        if not isinstance(basic_fields_value, tuple):
-            msg = "RFC attribute parsing failed: invalid basic field payload"
-            raise TypeError(msg)
         oid = str(basic_fields_value[0])
         name = str(basic_fields_value[1])
         desc = basic_fields_value[2]
@@ -1035,9 +1021,6 @@ class FlextLdifUtilitiesSchema:
             msg = basic_fields_result.error or "RFC objectClass parsing failed"
             raise ValueError(msg)
         basic_fields_value = basic_fields_result.value
-        if not isinstance(basic_fields_value, tuple):
-            msg = "RFC objectClass parsing failed: invalid basic field payload"
-            raise TypeError(msg)
         oid = str(basic_fields_value[0])
         name = str(basic_fields_value[1])
         desc = basic_fields_value[2]

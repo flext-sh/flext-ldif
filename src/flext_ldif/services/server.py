@@ -102,10 +102,7 @@ class FlextLdifServer:
         quirk_result = self.quirk(server_type)
         if quirk_result.failure:
             return r[type].fail(quirk_result.error or server_type)
-        base_raw = quirk_result.value
-        if not isinstance(base_raw, FlextLdifServersBase):
-            return r[type].fail(f"Invalid quirk payload for {server_type}")
-        base: FlextLdifServersBase = base_raw
+        base = quirk_result.value
         constants = getattr(type(base), "Constants", None)
         if constants is None:
             return r[type].fail(f"Server {server_type} missing Constants")
@@ -158,11 +155,7 @@ class FlextLdifServer:
         quirk_result = self.quirk(server_type)
         if quirk_result.failure:
             return None
-        base_raw = quirk_result.value
-        if not isinstance(base_raw, FlextLdifServersBase):
-            return None
-        base: FlextLdifServersBase = base_raw
-        return base
+        return quirk_result.value
 
     def list_registered_servers(self) -> MutableSequence[str]:
         """List all registered server types."""

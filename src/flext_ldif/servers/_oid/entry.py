@@ -1103,7 +1103,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if attr_name.lower() not in boolean_attr_names:
                 continue
             conv_data = boolean_conversions.get(attr_name, {})
-            if isinstance(conv_data, Mapping) and conv_data:
+            if conv_data:
                 self._restore_boolean_attribute_from_metadata(
                     attr_name,
                     conv_data,

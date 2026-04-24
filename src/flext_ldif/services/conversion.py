@@ -1225,12 +1225,10 @@ class FlextLdifConversion(
         if metadata is None or not metadata:
             return {}
         extensions_raw = metadata.extensions
-        if isinstance(extensions_raw, m.Ldif.DynamicMetadata):
-            return {
-                key: to_general_value(value)
-                for key, value in extensions_raw.to_dict().items()
-            }
-        return {}
+        return {
+            key: to_general_value(value)
+            for key, value in extensions_raw.to_dict().items()
+        }
 
     def _get_schema_quirk_for_support_check(
         self,
