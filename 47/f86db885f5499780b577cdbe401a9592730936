@@ -1,0 +1,14 @@
+docs/api-reference.md
+  h_9db9d35f50cf33 503
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "47f86db885f5499780b577cdbe401a9592730936",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
