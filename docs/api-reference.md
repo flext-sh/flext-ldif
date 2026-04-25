@@ -4,7 +4,7 @@
 - [🎯 Library Overview](#library-overview)
   - [Generic RFC-Based Architecture with ZERO Bypass Paths](#generic-rfc-based-architecture-with-zero-bypass-paths)
 - [Core API Classes](#core-api-classes)
-  - [ldif](#flextldif)
+  - [ldif](#ldif)
   - [QuirksConversionMatrix](#quirksconversionmatrix)
   - [DnCaseRegistry](#dncaseregistry)
 - [Domain Models](#domain-models)

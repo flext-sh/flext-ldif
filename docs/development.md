@@ -6,7 +6,7 @@
   - [Initial Setup](#initial-setup)
   - [Development Commands](#development-commands)
 - [LDIF Processing Architecture](#ldif-processing-architecture)
-  - [Current Implementation (v0.12.0-dev)](#current-implementation-v099)
+  - [Current Implementation (v0.12.0-dev)](#current-implementation-v0120-dev)
   - [LDIF-Specific Development Patterns](#ldif-specific-development-patterns)
 - [Testing LDIF Functionality](#testing-ldif-functionality)
   - [LDIF Test Data](#ldif-test-data)

@@ -14,7 +14,7 @@ class FlextLdifServiceBase(s[m.Ldif.Response], ABC):
     """Base class for LDIF services with typed settings helper."""
 
     _server: FlextLdifServer = u.PrivateAttr(
-        default_factory=FlextLdifServer.get_global_instance,
+        default_factory=FlextLdifServer.fetch_global_instance,
     )
     server: Annotated[
         FlextLdifServer | None,

@@ -49,7 +49,7 @@ class FlextLdifDetector(FlextLdifServiceBase):
         server_type: str,
     ) -> type[p.Ldif.ServerDetectionConstants] | None:
         """Get server Constants class dynamically via FlextLdifServer registry."""
-        registry = FlextLdifServer.get_global_instance()
+        registry = FlextLdifServer.fetch_global_instance()
         server_quirk_result = registry.quirk(server_type)
         if not server_quirk_result.success:
             return None

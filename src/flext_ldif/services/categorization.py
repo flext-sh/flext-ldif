@@ -109,7 +109,7 @@ class FlextLdifCategorization(s):
         )
     )
     _server_registry: FlextLdifServer = u.PrivateAttr(
-        default_factory=FlextLdifServer.get_global_instance,
+        default_factory=FlextLdifServer.fetch_global_instance,
     )
 
     @override

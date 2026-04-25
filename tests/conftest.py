@@ -371,7 +371,7 @@ def conversion_matrix() -> FlextLdifConversion:
 @pytest.fixture
 def server() -> FlextLdifServer:
     """Get FlextLdifServer instance for quirk management."""
-    return FlextLdifServer.get_global_instance()
+    return FlextLdifServer.fetch_global_instance()
 
 
 @pytest.fixture

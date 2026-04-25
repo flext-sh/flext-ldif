@@ -16,7 +16,7 @@
   - [Test Pattern](#test-pattern)
 - [5. INTEGRATION POINTS](#5-integration-points)
   - [FlextLdifCategorizedMigrationPipeline](#flextldifcategorizedmigrationpipeline)
-  - [ldif High-Level API](#flextldif-high-level-api)
+  - [ldif High-Level API](#ldif-high-level-api)
 - [6. CURRENT DATA FLOW](#6-current-data-flow)
 - [7. AFFECTED CODE LOCATIONS (SUMMARY)](#7-affected-code-locations-summary)
   - [Must Be Updated (High Impact)](#must-be-updated-high-impact)

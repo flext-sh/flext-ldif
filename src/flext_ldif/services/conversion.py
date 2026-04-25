@@ -478,7 +478,7 @@ class FlextLdifConversion(
     ) -> FlextLdifServersBase:
         """Resolve server quirk instance from string type or return instance."""
         if isinstance(quirk_or_type, str):
-            server = FlextLdifServer.get_global_instance()
+            server = FlextLdifServer.fetch_global_instance()
             server_type_str: str = quirk_or_type
             resolved_result = server.quirk(server_type_str)
             if resolved_result.failure:

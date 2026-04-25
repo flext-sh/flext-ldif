@@ -13,7 +13,7 @@
   - [💡 Examples (`examples/`)](#examples-examples)
   - [🚨 Troubleshooting (`troubleshooting.md`)](#troubleshooting-troubleshootingmd)
 - [🌟 Key Features Documented](#key-features-documented)
-  - [Current Implementation (v0.12.0-dev)](#current-implementation-v099)
+  - [Current Implementation (v0.12.0-dev)](#current-implementation-v0120-dev)
   - [Known Limitations](#known-limitations)
   - [Future Development Goals](#future-development-goals)
 - [📖 Documentation Principles](#documentation-principles)

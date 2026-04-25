@@ -1,8 +1,8 @@
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
-# flext_ldif.servers
+# flext_ldif.services.writer
 
-::: flext_ldif.servers
+::: flext_ldif.services.writer
     options:
       show_root_heading: true
       show_root_full_path: false

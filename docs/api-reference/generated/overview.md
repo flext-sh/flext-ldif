@@ -3,15 +3,15 @@
 # flext-ldif API Overview
 
 - Package: `flext_ldif`
-- Version: `0.12.0-dev`
+- Version: ``
 - Description: FLEXT LDIF - Enterprise LDIF Processing Library
 - Project class: `domain`
 - Keywords: `adapter`, `enterprise`, `flext`, `integration`, `typed`
-- Main facades: `FlextLdif`, `FlextLdifConstants`, `FlextLdifModels`, `FlextLdifProtocols`, `s`, `FlextLdifSettings`, `FlextLdifShared`, `FlextLdifTypes` (+1 more)
+- Main facades: `FlextLdifModelsSettings`, `FlextLdifUtilitiesParser`, `FlextLdifConversion`, `FlextLdifUtilitiesWriter`, `FlextLdifModelsCollections`, `FlextLdifCategorization`, `FlextLdifTypes`, `FlextLdifServersBase` (+85 more)
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `FlextLdif`, `FlextLdifConstants`, `FlextLdifModels`, `FlextLdifProtocols`, `s`, `FlextLdifSettings`, `FlextLdifShared`, `FlextLdifTypes`, `FlextLdifUtilities`, `ldif`
-- Exported module shortcuts: `api`, `base`, `constants`, `models`, `protocols`, `servers`, `services`, `settings` (+3 more)
-- Generated module pages: `11`
+- Public symbol exports: `FlextLdifModelsSettings`, `ldif`, `FlextLdifUtilitiesParser`, `FlextLdifConversion`, `FlextLdifUtilitiesWriter`, `FlextLdifModelsCollections`, `FlextLdifCategorization`, `FlextLdifTypes`, `FlextLdifServersBase`, `FlextLdifServersOid` (+84 more)
+- Exported module shortcuts: _none_
+- Generated module pages: `38`
 
 ## Next Pages
 

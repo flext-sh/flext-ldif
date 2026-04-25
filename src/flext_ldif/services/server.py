@@ -220,8 +220,8 @@ class FlextLdifServer:
     _global_instance: ClassVar[FlextLdifServer | None] = None
 
     @classmethod
-    def get_global_instance(cls) -> FlextLdifServer:
-        """Get or create global registry instance."""
+    def fetch_global_instance(cls) -> FlextLdifServer:
+        """Return the shared registry instance, creating it on first call."""
         if cls._global_instance is None:
             cls._global_instance = cls()
         return cls._global_instance
