@@ -255,8 +255,6 @@ class FlextLdifUtilitiesServer:
         return check_model_patterns(value)
 
     @staticmethod
-    def normalize_server_type(
-        server_type: str,
-    ) -> c.Ldif.ServerTypes:
+    def normalize_server_type(server_type: str) -> c.Ldif.ServerTypes:
         """Normalize server type string to canonical ServerTypes enum member."""
         return FlextLdifShared.normalize_server_type(server_type)
