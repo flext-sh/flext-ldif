@@ -500,7 +500,8 @@ class Entry(m.BaseModel):
 
     dn: str = u.Field(..., description="Distinguished Name")
     attributes: Mapping[str, t.StringList] = u.Field(
-        default_factory=dict, description="Entry attributes as key-value pairs"
+        default_factory=lambda: MappingProxyType({}),
+        description="Entry attributes as key-value pairs",
     )
 
     def get_object_classes(self) -> t.StringList:
