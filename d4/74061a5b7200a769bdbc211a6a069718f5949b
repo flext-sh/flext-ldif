@@ -1,0 +1,35 @@
+tests/integration/test_edge_cases.py
+  h_9db9d35f50cf33 26
+tests/integration/test_error_recovery.py
+  8c2cbdeb70613e9e 24
+tests/integration/test_zero_data_loss_schema.py
+  h_9db9d35f50cf33 31
+tests/__init__.py
+  h_9db9d35f50cf33 20,22,24,27,33,35-37,39,42,44-45,47,49-50,52-53,55-59,61,67,69-70,73,81,85,94,108,110,124,126,128,131,137,139-141,143,146,148-149,151,153-154,156-157,159-163,165,171,174,177,194,198,207,221,223
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "d474061a5b7200a769bdbc211a6a069718f5949b",
+  "prompts": {
+    "8c2cbdeb70613e9e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2e74716b-0d32-4eb3-b239-a0f08c033edc",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 8,
+      "accepted_lines": 1,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/70745c3eb2d55b00ae82be17c9199be79819509fd298338b769011b54da517d4"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
