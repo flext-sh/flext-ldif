@@ -22,7 +22,7 @@ from flext_ldif import FlextLdif, ldif
 from tests import c, t, u
 
 
-class TestOudSchemaIntegration:
+class TestsFlextLdifOudIntegration:
     """Integration tests for OUD schema processing.
 
     Uses centralized fixtures from tests/integration/conftest.py:
@@ -110,14 +110,7 @@ class TestOudSchemaIntegration:
             else:
                 assert oracle_oc_count > 0
 
-
-class TestOudAclIntegration:
     """Integration tests for OUD ACL processing."""
-
-    @pytest.fixture
-    def api(self) -> FlextLdif:
-        """Create ldif API instance."""
-        return ldif()
 
     @pytest.fixture
     def acl_fixture(self) -> str:
@@ -162,14 +155,7 @@ class TestOudAclIntegration:
             if has_multiline:
                 break
 
-
-class TestOudEntryIntegration:
     """Integration tests for OUD entry processing."""
-
-    @pytest.fixture
-    def api(self) -> FlextLdif:
-        """Create ldif API instance."""
-        return ldif()
 
     @pytest.fixture
     def entry_fixture(self) -> str:
@@ -226,14 +212,7 @@ class TestOudEntryIntegration:
                     break
         assert entries_with_oracle_oc > 0, "No entries with Oracle objectClasses found"
 
-
-class TestOudRoundTripIntegration:
     """Integration tests for complete OUD round-trip workflow."""
-
-    @pytest.fixture
-    def api(self) -> FlextLdif:
-        """Create ldif API instance."""
-        return ldif()
 
     @pytest.fixture
     def integration_fixture(self) -> str:
@@ -297,8 +276,6 @@ class TestOudRoundTripIntegration:
             parsed_rdns = re.split(r"\\s*,\\s*", parsed_dn)
             assert len(original_rdns) == len(parsed_rdns), "RDN count mismatch"
 
-
-class TestOudMetadataPreservation:
     """Integration tests for metadata preservation in OUD quirks."""
 
     @pytest.fixture
@@ -317,10 +294,4 @@ class TestOudMetadataPreservation:
         entries[0]
 
 
-__all__: list[str] = [
-    "TestOudAclIntegration",
-    "TestOudEntryIntegration",
-    "TestOudMetadataPreservation",
-    "TestOudRoundTripIntegration",
-    "TestOudSchemaIntegration",
-]
+__all__: list[str] = ["TestsFlextLdifOudIntegration"]

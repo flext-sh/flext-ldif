@@ -18,7 +18,7 @@ from flext_ldif import FlextLdif, ldif
 from tests import c
 
 
-class TestLdifFixturesIntegration:
+class TestsFlextLdifLdifFixturesIntegration:
     """Test LDIF fixture parsing and structure validation across all servers."""
 
     @pytest.fixture

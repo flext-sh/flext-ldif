@@ -11,7 +11,7 @@ from flext_tests import tm
 from tests import u
 
 
-class TestsFlextLdifSchemaTransformerNormalizeAttributeName:
+class TestsFlextLdifSchemaTransformer:
     """Test normalize_attribute_name transformation."""
 
     def test_normalize_removes_binary_suffix(self) -> None:
@@ -54,8 +54,6 @@ class TestsFlextLdifSchemaTransformerNormalizeAttributeName:
         result = u.Ldif.normalize_name(None)
         tm.that(result, none=True)
 
-
-class TestSchemaTransformerNormalizeMatchingRule:
     """Test normalize_matching_rule transformation."""
 
     def test_fix_substr_rule_in_equality_field(self) -> None:
@@ -107,8 +105,6 @@ class TestSchemaTransformerNormalizeMatchingRule:
         tm.that(equality, eq="caseIgnoreMatch")
         tm.that(substr, eq="caseIgnoreSubstringsMatch")
 
-
-class TestSchemaTransformerNormalizeSyntaxOid:
     """Test normalize_syntax_oid transformation."""
 
     def test_remove_quotes_from_syntax(self) -> None:

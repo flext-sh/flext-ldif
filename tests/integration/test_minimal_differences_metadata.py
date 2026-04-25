@@ -17,7 +17,7 @@ from flext_ldif import FlextLdif, FlextLdifParser, ldif
 from tests import c, m, t, u
 
 
-class TestMinimalDifferencesOidOud:
+class TestsFlextLdifMinimalDifferencesMetadata:
     """Test suite for minimal differences tracking between OID and OUD fixtures."""
 
     @pytest.fixture
@@ -206,4 +206,4 @@ class TestMinimalDifferencesOidOud:
         assert entry.metadata is not None
 
 
-__all__: list[str] = ["TestMinimalDifferencesOidOud"]
+__all__: list[str] = ["TestsFlextLdifMinimalDifferencesMetadata"]

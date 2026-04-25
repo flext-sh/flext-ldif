@@ -40,7 +40,7 @@ def flext_api() -> FlextLdif:
 @pytest.mark.docker
 @pytest.mark.integration
 @pytest.mark.real_ldap
-class TestRealLdapCRUD:
+class TestsFlextLdifRealLdapCrud:
     """Test CRUD operations with LDAP server."""
 
     def test_complete_crud_cycle(
@@ -96,11 +96,6 @@ class TestRealLdapCRUD:
         )
         assert not result or not ldap_connection.entries
 
-
-@pytest.mark.docker
-@pytest.mark.integration
-@pytest.mark.real_ldap
-class TestRealLdapBatchOperations:
     """Test batch processing operations with real LDAP server."""
 
     def test_batch_entry_creation_via_api(
@@ -210,4 +205,4 @@ class TestRealLdapBatchOperations:
         assert len(parsed_entries) == actual_count
 
 
-__all__: list[str] = ["TestRealLdapBatchOperations", "TestRealLdapCRUD"]
+__all__: list[str] = []

@@ -27,7 +27,7 @@ def flext_api() -> FlextLdif:
 
 
 @pytest.mark.integration
-class TestRealLdapConfigurationFromEnv:
+class TestsFlextLdifRealLdapConfig:
     """Test configuration loading from .env file."""
 
     def test_config_loaded_from_env(self, flext_api: FlextLdif) -> None:
@@ -51,9 +51,6 @@ class TestRealLdapConfigurationFromEnv:
         assert root_config.max_workers >= 1
         assert root_config.max_workers > 0
 
-
-@pytest.mark.integration
-class TestRealLdapRailwayComposition:
     """Test railway-oriented r composition (write -> parse -> validate)."""
 
     def test_railway_parse_validate_write_cycle(
@@ -90,7 +87,4 @@ class TestRealLdapRailwayComposition:
         assert len(entries) == 1
 
 
-__all__: list[str] = [
-    "TestRealLdapConfigurationFromEnv",
-    "TestRealLdapRailwayComposition",
-]
+__all__: list[str] = ["TestsFlextLdifRealLdapConfig"]

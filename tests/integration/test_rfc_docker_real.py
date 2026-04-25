@@ -19,13 +19,8 @@ from flext_ldif import FlextLdifParser, FlextLdifServer, FlextLdifWriter
 from tests import c, m
 
 
-class TestRfcDockerRealData:
+class TestsFlextLdifRfcDockerReal:
     """Test RFC implementations with real Docker LDAP data."""
-
-    @pytest.fixture
-    def quirk_registry(self) -> FlextLdifServer:
-        """Create quirk registry."""
-        return FlextLdifServer()
 
     @pytest.fixture
     def oid_fixtures_dir(self) -> Path:
@@ -252,8 +247,6 @@ class TestRfcDockerRealData:
             if e.attributes is not None
         )
 
-
-class TestRfcIntegrationRealWorld:
     """Real-world RFC integration scenarios."""
 
     @pytest.fixture

@@ -14,7 +14,7 @@ from tests import c, m, u
 
 
 @pytest.mark.unit
-class TestsFlextLdifDnOperationsPure:
+class TestsFlextLdifUtilitiesCore:
     """Test DN operations as pure functions returning primitives."""
 
     def test_split_dn_components(self) -> None:
@@ -108,9 +108,6 @@ class TestsFlextLdifDnOperationsPure:
         tm.that(result, is_=str)
         tm.that("  " not in result or result == dn, eq=True)
 
-
-@pytest.mark.unit
-class TestDnObjectClassMethods:
     """Test ObjectClass-related DN operations."""
 
     def test_fix_missing_sup(self) -> None:
@@ -135,9 +132,6 @@ class TestDnObjectClassMethods:
         u.Ldif.fix_kind_mismatch(obj)
         tm.that(obj.kind, eq="STRUCTURAL")
 
-
-@pytest.mark.unit
-class TestAttributeFixer:
     """Test attribute definition normalization."""
 
     def test_normalize_name_basic(self) -> None:
@@ -173,9 +167,6 @@ class TestAttributeFixer:
         )
         tm.that(result, eq=("caseIgnoreMatch", "caseIgnoreSubstringsMatch"))
 
-
-@pytest.mark.unit
-class TestLdifParser:
     """Test LDIF parsing utilities - simple helper functions."""
 
     def test_extract_extensions_empty(self) -> None:
@@ -203,9 +194,6 @@ class TestLdifParser:
         result = u.Ldif.unfold_lines(content)
         tm.that(any("withfoldedcontinuation" in line for line in result), eq=True)
 
-
-@pytest.mark.unit
-class TestServerTypes:
     """Test server type operations (via u.Ldif MRO)."""
 
     def test_normalize_server_type(self) -> None:
@@ -218,9 +206,6 @@ class TestServerTypes:
         tm.that(u.Ldif.matches("oid", "oid", "oud"), eq=True)
         tm.that(not u.Ldif.matches("ad", "oid", "oud"), eq=True)
 
-
-@pytest.mark.unit
-class TestObjectClassUtilities:
     """Test ObjectClass validation and correction utilities."""
 
     def test_fix_missing_sup_auxiliary_without_sup(self) -> None:

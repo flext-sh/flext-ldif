@@ -24,7 +24,7 @@ import pytest
 from flext_ldif import FlextLdif, ldif
 
 
-class TestSystematicFixtureCoverage:
+class TestsFlextLdifSystematicFixtureCoverage:
     """Systematic validation of server×fixture type combinations.
 
     Tests that each LDAP server quirk can process every fixture type,
@@ -316,4 +316,4 @@ class TestSystematicFixtureCoverage:
         assert str(roundtrip_entries[0].dn) == str(entries[0].dn)
 
 
-__all__: list[str] = ["TestSystematicFixtureCoverage"]
+__all__: list[str] = ["TestsFlextLdifSystematicFixtureCoverage"]

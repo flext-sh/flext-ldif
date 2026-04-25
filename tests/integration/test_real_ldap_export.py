@@ -37,7 +37,7 @@ def flext_api() -> FlextLdif:
 @pytest.mark.docker
 @pytest.mark.integration
 @pytest.mark.real_ldap
-class TestRealLdapExport:
+class TestsFlextLdifRealLdapExport:
     """Test LDIF export from real LDAP server."""
 
     def test_export_single_entry(
@@ -279,4 +279,4 @@ class TestRealLdapExport:
         assert f"cn: {unique_username}" in content
 
 
-__all__: list[str] = ["TestRealLdapExport"]
+__all__: list[str] = ["TestsFlextLdifRealLdapExport"]

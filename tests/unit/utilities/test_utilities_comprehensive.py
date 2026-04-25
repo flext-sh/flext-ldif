@@ -15,7 +15,7 @@ from flext_tests import tm
 from tests import m, t, u
 
 
-class TestFlextLdifUtilitiesComprehensive:
+class TestsFlextLdifUtilitiesComprehensive:
     """Comprehensive automated tests for all utilities functionality."""
 
     def test_real_ldif_processing_pipeline(self) -> None:

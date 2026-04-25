@@ -39,7 +39,7 @@ def _verify_soft_deleted_attributes(entry: m.Ldif.Entry) -> None:
             )
 
 
-class TestZeroDataLossOidOud:
+class TestsFlextLdifZeroDataLossOidOud:
     """Test zero data loss in OID↔OUD↔RFC conversions."""
 
     @pytest.fixture

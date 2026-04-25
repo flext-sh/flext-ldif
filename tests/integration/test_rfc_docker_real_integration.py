@@ -19,7 +19,7 @@ from flext_ldif import FlextLdifParser, FlextLdifServer, FlextLdifWriter
 from tests import c, m
 
 
-class TestRfcParserRealFixtures:
+class TestsFlextLdifRfcDockerRealIntegration:
     """Test RFC parser with real fixture data."""
 
     @pytest.fixture
@@ -77,15 +77,6 @@ class TestRfcParserRealFixtures:
         parse_response = result.value
         assert parse_response.entries
 
-
-class TestRfcSchemaParserRealFixtures:
-    """Test RFC schema parser with real fixture data."""
-
-    @pytest.fixture
-    def quirk_registry(self) -> FlextLdifServer:
-        """Create quirk registry."""
-        return FlextLdifServer()
-
     def test_parse_oid_schema_fixture(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing real OID schema from fixtures."""
         schema_file = (
@@ -109,15 +100,6 @@ class TestRfcSchemaParserRealFixtures:
         parser = FlextLdifParser()
         result = parser.parse_ldif_file(schema_file)
         assert result.success, f"Failed to parse: {result.error}"
-
-
-class TestRfcWriterRealFixtures:
-    """Test RFC writer with real fixture data."""
-
-    @pytest.fixture
-    def quirk_registry(self) -> FlextLdifServer:
-        """Create quirk registry."""
-        return FlextLdifServer()
 
     def test_write_and_reparse_oid_entries(
         self,
@@ -193,15 +175,6 @@ class TestRfcWriterRealFixtures:
         )
         assert result.success, f"Failed to write ACL entries: {result.error}"
         assert output_file.exists()
-
-
-class TestRfcExceptionHandlingRealScenarios:
-    """Test RFC exception handling with real scenarios."""
-
-    @pytest.fixture
-    def quirk_registry(self) -> FlextLdifServer:
-        """Create quirk registry."""
-        return FlextLdifServer()
 
     def test_parse_nonexistent_file(self, quirk_registry: FlextLdifServer) -> None:
         """Test parsing nonexistent file returns error."""

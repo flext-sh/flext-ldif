@@ -29,7 +29,7 @@ from flext_ldif import (
 from tests import c
 
 
-class TestOidToOudSchemaConversion:
+class TestsFlextLdifCrossQuirkConversion:
     """Test OID schema → OUD schema conversion.
 
     Uses centralized fixtures from tests/integration/conftest.py:
@@ -99,8 +99,6 @@ class TestOidToOudSchemaConversion:
         assert oud_data.kind == parsed_data.kind
         assert oud_data.sup == parsed_data.sup
 
-
-class TestOidToOudAclConversion:
     """Test OID ACL parsing and OUD ACL parsing independently.
 
     Note: Direct ACL conversion between OID and OUD formats is not supported
@@ -137,8 +135,6 @@ class TestOidToOudAclConversion:
         written_format = write_result.value
         assert isinstance(written_format, str)
 
-
-class TestOidToOudIntegrationConversion:
     """Test complete OID fixture → OUD conversion workflow.
 
     Uses centralized fixtures from tests/integration/conftest.py:
@@ -185,8 +181,6 @@ class TestOidToOudIntegrationConversion:
                 assert oud_data.name == parsed_data.name
                 break
 
-
-class TestQuirksConversionMatrixFacade:
     """Test QuirksConversionMatrix facade for universal translation."""
 
     def test_matrix_instantiation(self, conversion_matrix: FlextLdifConversion) -> None:
@@ -325,9 +319,4 @@ class TestQuirksConversionMatrixFacade:
         assert result.error is not None
 
 
-__all__: list[str] = [
-    "TestOidToOudAclConversion",
-    "TestOidToOudIntegrationConversion",
-    "TestOidToOudSchemaConversion",
-    "TestQuirksConversionMatrixFacade",
-]
+__all__: list[str] = ["TestsFlextLdifCrossQuirkConversion"]

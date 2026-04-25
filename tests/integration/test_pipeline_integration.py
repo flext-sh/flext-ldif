@@ -19,7 +19,7 @@ from pathlib import Path
 from flext_ldif import ldif
 
 
-class TestFlextLdifFacadeWorkflows:
+class TestsFlextLdifPipelineIntegration:
     """Integration tests for ldif facade workflows."""
 
     def test_parse_simple_ldif_complete_workflow(self) -> None:

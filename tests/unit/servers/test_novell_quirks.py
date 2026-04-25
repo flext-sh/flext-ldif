@@ -37,7 +37,7 @@ def entry_quirk(novell_server: FlextLdifServersNovell) -> FlextLdifServersNovell
     return quirk
 
 
-class TestsFlextLdifNovellInitialization:
+class TestsFlextLdifNovellQuirks:
     """Test initialization of Novell quirks."""
 
     def test_server_initialization(self) -> None:
@@ -53,8 +53,6 @@ class TestsFlextLdifNovellInitialization:
         """Test schema quirk is initialized."""
         tm.that(schema_quirk, none=False)
 
-
-class TestNovellSchemaAttributeDetection:
     """Test schema attribute detection."""
 
     @pytest.mark.parametrize("test_case", c.Ldif.Tests.NOVELL_ATTRIBUTE_TEST_CASES)
@@ -67,8 +65,6 @@ class TestNovellSchemaAttributeDetection:
         result = schema_quirk.can_handle_attribute(test_case.attr_definition)
         tm.that(result is test_case.expected_can_handle, eq=True)
 
-
-class TestNovellSchemaAttributeParsing:
     """Test schema attribute parsing."""
 
     def test_parse_attribute_success(
@@ -112,8 +108,6 @@ class TestNovellSchemaAttributeParsing:
         if result.error is not None:
             tm.that(result.error, has="missing an OID")
 
-
-class TestNovellSchemaObjectClassDetection:
     """Test schema objectClass detection."""
 
     @pytest.mark.parametrize("test_case", c.Ldif.Tests.NOVELL_OBJECTCLASS_TEST_CASES)
@@ -126,8 +120,6 @@ class TestNovellSchemaObjectClassDetection:
         result = schema_quirk.can_handle_objectclass(test_case.oc_definition)
         tm.that(result is test_case.expected_can_handle, eq=True)
 
-
-class TestNovellSchemaObjectClassParsing:
     """Test schema objectClass parsing."""
 
     def test_parse_objectclass_structural(
@@ -227,16 +219,12 @@ class TestNovellSchemaObjectClassParsing:
             must_contain=["2.16.840.1.113719.2.2.6.1", "ndsPerson", "STRUCTURAL"],
         )
 
-
-class TestNovellAcls:
     """Tests for Novell eDirectory ACL quirk handling."""
 
     def test_acl_initialization(self, novell_server: FlextLdifServersNovell) -> None:
         """Test ACL quirk initialization."""
         novell_server.Acl()
 
-
-class TestNovellEntryDetection:
     """Test entry detection."""
 
     def test_entry_initialization(

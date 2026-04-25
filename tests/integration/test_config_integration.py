@@ -26,7 +26,7 @@ from tests import c, u
 logger = u.fetch_logger(__name__)
 
 
-class TestFlextLdifSettingsIntegration:
+class TestsFlextLdifConfigIntegration:
     """Test FlextLdifSettings integration through ldif facade.
 
     All tests use real implementations without mocks.

@@ -32,13 +32,8 @@ def _entry_extensions(entry: m.Ldif.Entry) -> t.JsonMapping:
     return dict(extensions.model_dump())
 
 
-class TestOidAclMetadataPreservation:
+class TestsFlextLdifAclMetadataPreservation:
     """Test OID ACL metadata preservation."""
-
-    @pytest.fixture
-    def api(self) -> FlextLdif:
-        """Create ldif API instance."""
-        return ldif()
 
     def test_oid_bindmode_preservation(self, api: FlextLdif) -> None:
         """Test that OID BINDMODE is preserved in metadata."""
@@ -119,14 +114,7 @@ class TestOidAclMetadataPreservation:
             extensions.get(c.Ldif.ACL_CONSTRAIN_TO_ADDED_OBJECT) == "objectclass=person"
         )
 
-
-class TestOudAciMetadataPreservation:
     """Test OUD ACI metadata preservation."""
-
-    @pytest.fixture
-    def api(self) -> FlextLdif:
-        """Create ldif API instance."""
-        return ldif()
 
     def test_oud_targattrfilters_preservation(self, api: FlextLdif) -> None:
         """Test that OUD targattrfilters is preserved in metadata."""
@@ -247,8 +235,6 @@ class TestOudAciMetadataPreservation:
         assert extensions.get(c.Ldif.ACL_AUTHMETHOD) == "ssl"
         assert extensions.get(c.Ldif.ACL_SSF) is not None
 
-
-class TestAclRoundTripPreservation:
     """Test ACL round-trip preservation (parse → write → parse)."""
 
     @pytest.fixture

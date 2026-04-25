@@ -17,110 +17,60 @@ if _t.TYPE_CHECKING:
 
     from tests.constants import TestsFlextLdifConstants, c
     from tests.integration.test_acl_metadata_preservation import (
-        TestAclRoundTripPreservation,
-        TestOidAclMetadataPreservation,
-        TestOudAciMetadataPreservation,
+        TestsFlextLdifAclMetadataPreservation,
     )
-    from tests.integration.test_api_integration import TestFlextLdifAPIIntegration
+    from tests.integration.test_api_integration import TestsFlextLdifApiIntegration
     from tests.integration.test_categorization_real_data import (
-        TestCategorizationRealData,
+        TestsFlextLdifCategorizationRealData,
     )
     from tests.integration.test_config_integration import (
-        TestFlextLdifSettingsIntegration,
+        TestsFlextLdifConfigIntegration,
     )
     from tests.integration.test_cross_direction_conversion import (
         TestsTestFlextLdifCrossDirectionConversion,
     )
     from tests.integration.test_cross_quirk_conversion import (
-        TestOidToOudAclConversion,
-        TestOidToOudIntegrationConversion,
-        TestOidToOudSchemaConversion,
-        TestQuirksConversionMatrixFacade,
+        TestsFlextLdifCrossQuirkConversion,
     )
-    from tests.integration.test_dn_case_handling import (
-        TestDnCaseNormalizationScenarios,
-        TestDnCaseRegistry,
-    )
-    from tests.integration.test_edge_cases import (
-        TestBoundaryValues,
-        TestEmptyAndMinimalCases,
-        TestLargeAndComplexCases,
-        TestRoundtripEdgeCases,
-        TestUnicodeBoundaries,
-    )
-    from tests.integration.test_error_recovery import (
-        TestEncodingErrors,
-        TestIncompleteEntries,
-        TestInvalidSchemaDefinitions,
-        TestMalformedLdifHandling,
-    )
+    from tests.integration.test_dn_case_handling import TestsFlextLdifDnCaseHandling
+    from tests.integration.test_edge_cases import TestsFlextLdifEdgeCasesInt
+    from tests.integration.test_error_recovery import TestsFlextLdifErrorRecovery
     from tests.integration.test_ldif_fixtures_integration import (
-        TestLdifFixturesIntegration,
+        TestsFlextLdifLdifFixturesIntegration,
     )
     from tests.integration.test_minimal_differences_metadata import (
-        TestMinimalDifferencesOidOud,
+        TestsFlextLdifMinimalDifferencesMetadata,
     )
-    from tests.integration.test_oid_integration import (
-        TestOidEntryIntegration,
-        TestOidRoundTripIntegration,
-        TestOidSchemaIntegration,
-    )
-    from tests.integration.test_oud_integration import (
-        TestOudAclIntegration,
-        TestOudEntryIntegration,
-        TestOudMetadataPreservation,
-        TestOudRoundTripIntegration,
-        TestOudSchemaIntegration,
-    )
+    from tests.integration.test_oid_integration import TestsFlextLdifOidIntegration
+    from tests.integration.test_oud_integration import TestsFlextLdifOudIntegration
     from tests.integration.test_oud_to_oid_migration import (
-        TestOudToOidAclMigration,
-        TestOudToOidEntryMigration,
-        TestOudToOidFullMigration,
-        TestOudToOidSchemaMigration,
+        TestsFlextLdifOudToOidMigration,
     )
-    from tests.integration.test_pipeline_integration import TestFlextLdifFacadeWorkflows
+    from tests.integration.test_pipeline_integration import (
+        TestsFlextLdifPipelineIntegration,
+    )
     from tests.integration.test_quirks_transformations import (
-        TestOidQuirksTransformations,
-        TestOudQuirksTransformations,
-        TestQuirksPropertyValidation,
+        TestsFlextLdifQuirksTransformations,
     )
-    from tests.integration.test_real_ldap_config import (
-        TestRealLdapConfigurationFromEnv,
-        TestRealLdapRailwayComposition,
+    from tests.integration.test_real_ldap_config import TestsFlextLdifRealLdapConfig
+    from tests.integration.test_real_ldap_export import TestsFlextLdifRealLdapExport
+    from tests.integration.test_real_ldap_import import TestsFlextLdifRealLdapImport
+    from tests.integration.test_real_ldap_roundtrip import (
+        TestsFlextLdifRealLdapRoundtrip,
     )
-    from tests.integration.test_real_ldap_crud import (
-        TestRealLdapBatchOperations,
-        TestRealLdapCRUD,
-    )
-    from tests.integration.test_real_ldap_export import TestRealLdapExport
-    from tests.integration.test_real_ldap_import import TestRealLdapImport
-    from tests.integration.test_real_ldap_roundtrip import TestRealLdapRoundtrip
-    from tests.integration.test_rfc_docker_real import (
-        TestRfcDockerRealData,
-        TestRfcIntegrationRealWorld,
-    )
+    from tests.integration.test_rfc_docker_real import TestsFlextLdifRfcDockerReal
     from tests.integration.test_rfc_docker_real_integration import (
-        TestRfcExceptionHandlingRealScenarios,
-        TestRfcParserRealFixtures,
-        TestRfcSchemaParserRealFixtures,
-        TestRfcWriterRealFixtures,
+        TestsFlextLdifRfcDockerRealIntegration,
     )
+    from tests.integration.test_simple_ldap import TestsFlextLdifSimpleLdap
     from tests.integration.test_systematic_fixture_coverage import (
-        TestSystematicFixtureCoverage,
+        TestsFlextLdifSystematicFixtureCoverage,
     )
-    from tests.integration.test_zero_data_loss_oid_oud import TestZeroDataLossOidOud
+    from tests.integration.test_zero_data_loss_oid_oud import (
+        TestsFlextLdifZeroDataLossOidOud,
+    )
     from tests.integration.test_zero_data_loss_schema import (
-        TestSchemaDeviationsAttributeKeyCasing,
-        TestSchemaDeviationsComplete,
-        TestSchemaDeviationsMissingSpaces,
-        TestSchemaDeviationsNameAliases,
-        TestSchemaDeviationsObsolete,
-        TestSchemaDeviationsOriginalString,
-        TestSchemaDeviationsRoundTrip,
-        TestSchemaDeviationsSpacing,
-        TestSchemaDeviationsSyntaxQuotes,
-        TestSchemaDeviationsUtilities,
-        TestSchemaDeviationsXOrigin,
+        TestsFlextLdifZeroDataLossSchema,
     )
     from tests.models import TestsFlextLdifModels, m
     from tests.protocols import TestsFlextLdifProtocols, p
@@ -128,21 +78,11 @@ if _t.TYPE_CHECKING:
     from tests.unit.servers.test_apache_quirks import TestsTestFlextLdifApacheQuirks
     from tests.unit.servers.test_ds389_quirks import TestsTestFlextLdifDs389Quirks
     from tests.unit.servers.test_edge_cases import TestsFlextLdifEdgeCases
-    from tests.unit.servers.test_novell_quirks import (
-        TestNovellAcls,
-        TestNovellEntryDetection,
-        TestNovellSchemaAttributeDetection,
-        TestNovellSchemaAttributeParsing,
-        TestNovellSchemaObjectClassDetection,
-        TestNovellSchemaObjectClassParsing,
-        TestsFlextLdifNovellInitialization,
-    )
+    from tests.unit.servers.test_novell_quirks import TestsFlextLdifNovellQuirks
     from tests.unit.servers.test_oid_quirks import TestsTestFlextLdifOidQuirks
     from tests.unit.servers.test_relaxed_quirks import TestsTestFlextLdifRelaxedQuirks
     from tests.unit.servers.test_schema_transformer import (
-        TestSchemaTransformerNormalizeMatchingRule,
-        TestSchemaTransformerNormalizeSyntaxOid,
-        TestsFlextLdifSchemaTransformerNormalizeAttributeName,
+        TestsFlextLdifSchemaTransformer,
     )
     from tests.unit.services.test_api_server_registry import (
         TestsTestFlextLdifApiServerRegistry,
@@ -151,10 +91,7 @@ if _t.TYPE_CHECKING:
         TestsTestFlextLdifMigrationPipeline,
     )
     from tests.unit.services.test_quirks_standardization import (
-        TestAliasDiscovery,
-        TestQuirksAutoInterchange,
-        TestQuirksWithRealLdifFixtures,
-        TestsFlextLdifServersStandardizedConstants,
+        TestsFlextLdifQuirksStandardization,
     )
     from tests.unit.test_acl_registry import TestsFlextLdifAclRegistry
     from tests.unit.test_migration_pipeline import TestsFlextLdifMigrationPipeline
@@ -168,16 +105,9 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_typings import TestsFlextLdifTypingsUnit
     from tests.unit.test_version import TestsFlextLdifVersion
     from tests.unit.utilities.test_utilities_comprehensive import (
-        TestFlextLdifUtilitiesComprehensive,
+        TestsFlextLdifUtilitiesComprehensive,
     )
-    from tests.unit.utilities.test_utilities_core import (
-        TestAttributeFixer,
-        TestDnObjectClassMethods,
-        TestLdifParser,
-        TestObjectClassUtilities,
-        TestServerTypes,
-        TestsFlextLdifDnOperationsPure,
-    )
+    from tests.unit.utilities.test_utilities_core import TestsFlextLdifUtilitiesCore
     from tests.utilities import TestsFlextLdifUtilities, u
 _LAZY_IMPORTS = merge_lazy_imports(
     (
@@ -191,110 +121,60 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "c",
             ),
             ".integration.test_acl_metadata_preservation": (
-                "TestAclRoundTripPreservation",
-                "TestOidAclMetadataPreservation",
-                "TestOudAciMetadataPreservation",
+                "TestsFlextLdifAclMetadataPreservation",
             ),
-            ".integration.test_api_integration": ("TestFlextLdifAPIIntegration",),
+            ".integration.test_api_integration": ("TestsFlextLdifApiIntegration",),
             ".integration.test_categorization_real_data": (
-                "TestCategorizationRealData",
+                "TestsFlextLdifCategorizationRealData",
             ),
             ".integration.test_config_integration": (
-                "TestFlextLdifSettingsIntegration",
+                "TestsFlextLdifConfigIntegration",
             ),
             ".integration.test_cross_direction_conversion": (
                 "TestsTestFlextLdifCrossDirectionConversion",
             ),
             ".integration.test_cross_quirk_conversion": (
-                "TestOidToOudAclConversion",
-                "TestOidToOudIntegrationConversion",
-                "TestOidToOudSchemaConversion",
-                "TestQuirksConversionMatrixFacade",
+                "TestsFlextLdifCrossQuirkConversion",
             ),
-            ".integration.test_dn_case_handling": (
-                "TestDnCaseNormalizationScenarios",
-                "TestDnCaseRegistry",
-            ),
-            ".integration.test_edge_cases": (
-                "TestBoundaryValues",
-                "TestEmptyAndMinimalCases",
-                "TestLargeAndComplexCases",
-                "TestRoundtripEdgeCases",
-                "TestUnicodeBoundaries",
-            ),
-            ".integration.test_error_recovery": (
-                "TestEncodingErrors",
-                "TestIncompleteEntries",
-                "TestInvalidSchemaDefinitions",
-                "TestMalformedLdifHandling",
-            ),
+            ".integration.test_dn_case_handling": ("TestsFlextLdifDnCaseHandling",),
+            ".integration.test_edge_cases": ("TestsFlextLdifEdgeCasesInt",),
+            ".integration.test_error_recovery": ("TestsFlextLdifErrorRecovery",),
             ".integration.test_ldif_fixtures_integration": (
-                "TestLdifFixturesIntegration",
+                "TestsFlextLdifLdifFixturesIntegration",
             ),
             ".integration.test_minimal_differences_metadata": (
-                "TestMinimalDifferencesOidOud",
+                "TestsFlextLdifMinimalDifferencesMetadata",
             ),
-            ".integration.test_oid_integration": (
-                "TestOidEntryIntegration",
-                "TestOidRoundTripIntegration",
-                "TestOidSchemaIntegration",
-            ),
-            ".integration.test_oud_integration": (
-                "TestOudAclIntegration",
-                "TestOudEntryIntegration",
-                "TestOudMetadataPreservation",
-                "TestOudRoundTripIntegration",
-                "TestOudSchemaIntegration",
-            ),
+            ".integration.test_oid_integration": ("TestsFlextLdifOidIntegration",),
+            ".integration.test_oud_integration": ("TestsFlextLdifOudIntegration",),
             ".integration.test_oud_to_oid_migration": (
-                "TestOudToOidAclMigration",
-                "TestOudToOidEntryMigration",
-                "TestOudToOidFullMigration",
-                "TestOudToOidSchemaMigration",
+                "TestsFlextLdifOudToOidMigration",
             ),
-            ".integration.test_pipeline_integration": ("TestFlextLdifFacadeWorkflows",),
+            ".integration.test_pipeline_integration": (
+                "TestsFlextLdifPipelineIntegration",
+            ),
             ".integration.test_quirks_transformations": (
-                "TestOidQuirksTransformations",
-                "TestOudQuirksTransformations",
-                "TestQuirksPropertyValidation",
+                "TestsFlextLdifQuirksTransformations",
             ),
-            ".integration.test_real_ldap_config": (
-                "TestRealLdapConfigurationFromEnv",
-                "TestRealLdapRailwayComposition",
+            ".integration.test_real_ldap_config": ("TestsFlextLdifRealLdapConfig",),
+            ".integration.test_real_ldap_export": ("TestsFlextLdifRealLdapExport",),
+            ".integration.test_real_ldap_import": ("TestsFlextLdifRealLdapImport",),
+            ".integration.test_real_ldap_roundtrip": (
+                "TestsFlextLdifRealLdapRoundtrip",
             ),
-            ".integration.test_real_ldap_crud": (
-                "TestRealLdapBatchOperations",
-                "TestRealLdapCRUD",
-            ),
-            ".integration.test_real_ldap_export": ("TestRealLdapExport",),
-            ".integration.test_real_ldap_import": ("TestRealLdapImport",),
-            ".integration.test_real_ldap_roundtrip": ("TestRealLdapRoundtrip",),
-            ".integration.test_rfc_docker_real": (
-                "TestRfcDockerRealData",
-                "TestRfcIntegrationRealWorld",
-            ),
+            ".integration.test_rfc_docker_real": ("TestsFlextLdifRfcDockerReal",),
             ".integration.test_rfc_docker_real_integration": (
-                "TestRfcExceptionHandlingRealScenarios",
-                "TestRfcParserRealFixtures",
-                "TestRfcSchemaParserRealFixtures",
-                "TestRfcWriterRealFixtures",
+                "TestsFlextLdifRfcDockerRealIntegration",
             ),
+            ".integration.test_simple_ldap": ("TestsFlextLdifSimpleLdap",),
             ".integration.test_systematic_fixture_coverage": (
-                "TestSystematicFixtureCoverage",
+                "TestsFlextLdifSystematicFixtureCoverage",
             ),
-            ".integration.test_zero_data_loss_oid_oud": ("TestZeroDataLossOidOud",),
+            ".integration.test_zero_data_loss_oid_oud": (
+                "TestsFlextLdifZeroDataLossOidOud",
+            ),
             ".integration.test_zero_data_loss_schema": (
-                "TestSchemaDeviationsAttributeKeyCasing",
-                "TestSchemaDeviationsComplete",
-                "TestSchemaDeviationsMissingSpaces",
-                "TestSchemaDeviationsNameAliases",
-                "TestSchemaDeviationsObsolete",
-                "TestSchemaDeviationsOriginalString",
-                "TestSchemaDeviationsRoundTrip",
-                "TestSchemaDeviationsSpacing",
-                "TestSchemaDeviationsSyntaxQuotes",
-                "TestSchemaDeviationsUtilities",
-                "TestSchemaDeviationsXOrigin",
+                "TestsFlextLdifZeroDataLossSchema",
             ),
             ".models": (
                 "TestsFlextLdifModels",
@@ -311,21 +191,11 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.servers.test_apache_quirks": ("TestsTestFlextLdifApacheQuirks",),
             ".unit.servers.test_ds389_quirks": ("TestsTestFlextLdifDs389Quirks",),
             ".unit.servers.test_edge_cases": ("TestsFlextLdifEdgeCases",),
-            ".unit.servers.test_novell_quirks": (
-                "TestNovellAcls",
-                "TestNovellEntryDetection",
-                "TestNovellSchemaAttributeDetection",
-                "TestNovellSchemaAttributeParsing",
-                "TestNovellSchemaObjectClassDetection",
-                "TestNovellSchemaObjectClassParsing",
-                "TestsFlextLdifNovellInitialization",
-            ),
+            ".unit.servers.test_novell_quirks": ("TestsFlextLdifNovellQuirks",),
             ".unit.servers.test_oid_quirks": ("TestsTestFlextLdifOidQuirks",),
             ".unit.servers.test_relaxed_quirks": ("TestsTestFlextLdifRelaxedQuirks",),
             ".unit.servers.test_schema_transformer": (
-                "TestSchemaTransformerNormalizeMatchingRule",
-                "TestSchemaTransformerNormalizeSyntaxOid",
-                "TestsFlextLdifSchemaTransformerNormalizeAttributeName",
+                "TestsFlextLdifSchemaTransformer",
             ),
             ".unit.services.test_api_server_registry": (
                 "TestsTestFlextLdifApiServerRegistry",
@@ -334,10 +204,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsTestFlextLdifMigrationPipeline",
             ),
             ".unit.services.test_quirks_standardization": (
-                "TestAliasDiscovery",
-                "TestQuirksAutoInterchange",
-                "TestQuirksWithRealLdifFixtures",
-                "TestsFlextLdifServersStandardizedConstants",
+                "TestsFlextLdifQuirksStandardization",
             ),
             ".unit.test_acl_registry": ("TestsFlextLdifAclRegistry",),
             ".unit.test_migration_pipeline": ("TestsFlextLdifMigrationPipeline",),
@@ -351,16 +218,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_typings": ("TestsFlextLdifTypingsUnit",),
             ".unit.test_version": ("TestsFlextLdifVersion",),
             ".unit.utilities.test_utilities_comprehensive": (
-                "TestFlextLdifUtilitiesComprehensive",
+                "TestsFlextLdifUtilitiesComprehensive",
             ),
-            ".unit.utilities.test_utilities_core": (
-                "TestAttributeFixer",
-                "TestDnObjectClassMethods",
-                "TestLdifParser",
-                "TestObjectClassUtilities",
-                "TestServerTypes",
-                "TestsFlextLdifDnOperationsPure",
-            ),
+            ".unit.utilities.test_utilities_core": ("TestsFlextLdifUtilitiesCore",),
             ".utilities": (
                 "TestsFlextLdifUtilities",
                 "u",
@@ -408,107 +268,51 @@ _LAZY_IMPORTS = merge_lazy_imports(
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__: list[str] = [
-    "TestAclRoundTripPreservation",
-    "TestAliasDiscovery",
-    "TestAttributeFixer",
-    "TestBoundaryValues",
-    "TestCategorizationRealData",
-    "TestDnCaseNormalizationScenarios",
-    "TestDnCaseRegistry",
-    "TestDnObjectClassMethods",
-    "TestEmptyAndMinimalCases",
-    "TestEncodingErrors",
-    "TestFlextLdifAPIIntegration",
-    "TestFlextLdifFacadeWorkflows",
-    "TestFlextLdifSettingsIntegration",
-    "TestFlextLdifUtilitiesComprehensive",
-    "TestIncompleteEntries",
-    "TestInvalidSchemaDefinitions",
-    "TestLargeAndComplexCases",
-    "TestLdifFixturesIntegration",
-    "TestLdifParser",
-    "TestMalformedLdifHandling",
-    "TestMinimalDifferencesOidOud",
-    "TestNovellAcls",
-    "TestNovellEntryDetection",
-    "TestNovellSchemaAttributeDetection",
-    "TestNovellSchemaAttributeParsing",
-    "TestNovellSchemaObjectClassDetection",
-    "TestNovellSchemaObjectClassParsing",
-    "TestObjectClassUtilities",
-    "TestOidAclMetadataPreservation",
-    "TestOidEntryIntegration",
-    "TestOidQuirksTransformations",
-    "TestOidRoundTripIntegration",
-    "TestOidSchemaIntegration",
-    "TestOidToOudAclConversion",
-    "TestOidToOudIntegrationConversion",
-    "TestOidToOudSchemaConversion",
-    "TestOudAciMetadataPreservation",
-    "TestOudAclIntegration",
-    "TestOudEntryIntegration",
-    "TestOudMetadataPreservation",
-    "TestOudQuirksTransformations",
-    "TestOudRoundTripIntegration",
-    "TestOudSchemaIntegration",
-    "TestOudToOidAclMigration",
-    "TestOudToOidEntryMigration",
-    "TestOudToOidFullMigration",
-    "TestOudToOidSchemaMigration",
-    "TestQuirksAutoInterchange",
-    "TestQuirksConversionMatrixFacade",
-    "TestQuirksPropertyValidation",
-    "TestQuirksWithRealLdifFixtures",
-    "TestRealLdapBatchOperations",
-    "TestRealLdapCRUD",
-    "TestRealLdapConfigurationFromEnv",
-    "TestRealLdapExport",
-    "TestRealLdapImport",
-    "TestRealLdapRailwayComposition",
-    "TestRealLdapRoundtrip",
-    "TestRfcDockerRealData",
-    "TestRfcExceptionHandlingRealScenarios",
-    "TestRfcIntegrationRealWorld",
-    "TestRfcParserRealFixtures",
-    "TestRfcSchemaParserRealFixtures",
-    "TestRfcWriterRealFixtures",
-    "TestRoundtripEdgeCases",
-    "TestSchemaDeviationsAttributeKeyCasing",
-    "TestSchemaDeviationsComplete",
-    "TestSchemaDeviationsMissingSpaces",
-    "TestSchemaDeviationsNameAliases",
-    "TestSchemaDeviationsObsolete",
-    "TestSchemaDeviationsOriginalString",
-    "TestSchemaDeviationsRoundTrip",
-    "TestSchemaDeviationsSpacing",
-    "TestSchemaDeviationsSyntaxQuotes",
-    "TestSchemaDeviationsUtilities",
-    "TestSchemaDeviationsXOrigin",
-    "TestSchemaTransformerNormalizeMatchingRule",
-    "TestSchemaTransformerNormalizeSyntaxOid",
-    "TestServerTypes",
-    "TestSystematicFixtureCoverage",
-    "TestUnicodeBoundaries",
-    "TestZeroDataLossOidOud",
+    "TestsFlextLdifAclMetadataPreservation",
     "TestsFlextLdifAclRegistry",
+    "TestsFlextLdifApiIntegration",
+    "TestsFlextLdifCategorizationRealData",
+    "TestsFlextLdifConfigIntegration",
     "TestsFlextLdifConstants",
-    "TestsFlextLdifDnOperationsPure",
+    "TestsFlextLdifCrossQuirkConversion",
+    "TestsFlextLdifDnCaseHandling",
     "TestsFlextLdifEdgeCases",
+    "TestsFlextLdifEdgeCasesInt",
+    "TestsFlextLdifErrorRecovery",
+    "TestsFlextLdifLdifFixturesIntegration",
     "TestsFlextLdifMigrationPipeline",
     "TestsFlextLdifMigrationPipelineQuirks",
+    "TestsFlextLdifMinimalDifferencesMetadata",
     "TestsFlextLdifModels",
-    "TestsFlextLdifNovellInitialization",
+    "TestsFlextLdifNovellQuirks",
+    "TestsFlextLdifOidIntegration",
     "TestsFlextLdifOidUtilities",
+    "TestsFlextLdifOudIntegration",
+    "TestsFlextLdifOudToOidMigration",
     "TestsFlextLdifParserUtilities",
+    "TestsFlextLdifPipelineIntegration",
     "TestsFlextLdifProtocols",
     "TestsFlextLdifProtocolsUnit",
-    "TestsFlextLdifSchemaTransformerNormalizeAttributeName",
+    "TestsFlextLdifQuirksStandardization",
+    "TestsFlextLdifQuirksTransformations",
+    "TestsFlextLdifRealLdapConfig",
+    "TestsFlextLdifRealLdapExport",
+    "TestsFlextLdifRealLdapImport",
+    "TestsFlextLdifRealLdapRoundtrip",
+    "TestsFlextLdifRfcDockerReal",
+    "TestsFlextLdifRfcDockerRealIntegration",
+    "TestsFlextLdifSchemaTransformer",
     "TestsFlextLdifServerUtilities",
-    "TestsFlextLdifServersStandardizedConstants",
+    "TestsFlextLdifSimpleLdap",
+    "TestsFlextLdifSystematicFixtureCoverage",
     "TestsFlextLdifTypes",
     "TestsFlextLdifTypingsUnit",
     "TestsFlextLdifUtilities",
+    "TestsFlextLdifUtilitiesComprehensive",
+    "TestsFlextLdifUtilitiesCore",
     "TestsFlextLdifVersion",
+    "TestsFlextLdifZeroDataLossOidOud",
+    "TestsFlextLdifZeroDataLossSchema",
     "TestsTestFlextLdifApacheQuirks",
     "TestsTestFlextLdifApiServerRegistry",
     "TestsTestFlextLdifCrossDirectionConversion",

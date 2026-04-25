@@ -37,7 +37,7 @@ def flext_api() -> FlextLdif:
 @pytest.mark.docker
 @pytest.mark.integration
 @pytest.mark.real_ldap
-class TestRealLdapRoundtrip:
+class TestsFlextLdifRealLdapRoundtrip:
     """Test LDAP → LDIF → LDAP data roundtrip."""
 
     def test_roundtrip_preserves_data(
@@ -121,4 +121,4 @@ class TestRealLdapRoundtrip:
         )
 
 
-__all__: list[str] = ["TestRealLdapRoundtrip"]
+__all__: list[str] = ["TestsFlextLdifRealLdapRoundtrip"]

@@ -28,7 +28,7 @@ from flext_ldif import (
 from tests import u
 
 
-class TestSchemaDeviationsSyntaxQuotes:
+class TestsFlextLdifZeroDataLossSchema:
     """Test syntax OID quotation tracking (OID uses quotes, OUD/RFC don't)."""
 
     @pytest.fixture
@@ -78,20 +78,6 @@ class TestSchemaDeviationsSyntaxQuotes:
             "Should detect no syntax quotes"
         )
 
-
-class TestSchemaDeviationsXOrigin:
-    """Test X-ORIGIN presence/absence tracking."""
-
-    @pytest.fixture
-    def oid_schema(self) -> FlextLdifServersBaseSchema:
-        """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema_quirk
-
-    @pytest.fixture
-    def oud_schema(self) -> FlextLdifServersBaseSchema:
-        """Create OUD schema quirk instance."""
-        return FlextLdifServersOud().schema_quirk
-
     def test_oid_no_x_origin_tracked(
         self,
         oid_schema: FlextLdifServersBaseSchema,
@@ -136,20 +122,6 @@ class TestSchemaDeviationsXOrigin:
             "x_origin_value should be a string when X-ORIGIN is present"
         )
 
-
-class TestSchemaDeviationsNameAliases:
-    """Test multiple NAME aliases preservation."""
-
-    @pytest.fixture
-    def oid_schema(self) -> FlextLdifServersBaseSchema:
-        """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema_quirk
-
-    @pytest.fixture
-    def oud_schema(self) -> FlextLdifServersBaseSchema:
-        """Create OUD schema quirk instance."""
-        return FlextLdifServersOud().schema_quirk
-
     def test_oid_single_name_tracked(
         self,
         oid_schema: FlextLdifServersBaseSchema,
@@ -193,15 +165,6 @@ class TestSchemaDeviationsNameAliases:
         assert "uid" in name_values, "Should include 'uid' in name values"
         assert "userid" in name_values, "Should include 'userid' in name values"
 
-
-class TestSchemaDeviationsObsolete:
-    """Test OBSOLETE marker preservation."""
-
-    @pytest.fixture
-    def oid_schema(self) -> FlextLdifServersBaseSchema:
-        """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema_quirk
-
     def test_obsolete_marker_tracked(
         self,
         oid_schema: FlextLdifServersBaseSchema,
@@ -239,15 +202,6 @@ class TestSchemaDeviationsObsolete:
         assert extensions_dict.get("obsolete_presence") is False, (
             "Should detect no OBSOLETE"
         )
-
-
-class TestSchemaDeviationsSpacing:
-    """Test spacing preservation between fields."""
-
-    @pytest.fixture
-    def oid_schema(self) -> FlextLdifServersBaseSchema:
-        """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema_quirk
 
     def test_trailing_spaces_tracked(
         self,
@@ -292,20 +246,6 @@ class TestSchemaDeviationsSpacing:
                 f"u.Field name should be string, got {type(field_name)}"
             )
             assert field_name, "u.Field name should not be empty"
-
-
-class TestSchemaDeviationsOriginalString:
-    """Test complete original string preservation."""
-
-    @pytest.fixture
-    def oid_schema(self) -> FlextLdifServersBaseSchema:
-        """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema_quirk
-
-    @pytest.fixture
-    def oud_schema(self) -> FlextLdifServersBaseSchema:
-        """Create OUD schema quirk instance."""
-        return FlextLdifServersOud().schema_quirk
 
     def test_oid_original_string_preserved(
         self,
@@ -354,8 +294,6 @@ class TestSchemaDeviationsOriginalString:
             "SYNTAX should be preserved"
         )
 
-
-class TestSchemaDeviationsRoundTrip:
     """Test round-trip conversion preserves all deviations."""
 
     @pytest.fixture
@@ -412,8 +350,6 @@ class TestSchemaDeviationsRoundTrip:
         )
         assert model_fields, "Should have model fields"
 
-
-class TestSchemaDeviationsUtilities:
     """Test schema formatting utilities."""
 
     def test_analyze_schema_formatting_comprehensive(self) -> None:
@@ -468,15 +404,6 @@ class TestSchemaDeviationsUtilities:
         assert isinstance(x_origin_value, str), "x_origin_value should be a string"
         assert x_origin_value, "x_origin_value should not be empty"
 
-
-class TestSchemaDeviationsMissingSpaces:
-    """Test malformed definitions with missing spaces."""
-
-    @pytest.fixture
-    def oud_schema(self) -> FlextLdifServersBaseSchema:
-        """Create OUD schema quirk instance."""
-        return FlextLdifServersOud().schema_quirk
-
     def test_missing_space_before_syntax_oid_tracked(
         self,
         oud_schema: FlextLdifServersBaseSchema,
@@ -503,8 +430,6 @@ class TestSchemaDeviationsMissingSpaces:
                         "Original string should contain malformed SYNTAX"
                     )
 
-
-class TestSchemaDeviationsAttributeKeyCasing:
     """Test attribute key casing (attributetypes vs attributeTypes)."""
 
     def test_oid_lowercase_attribute_key(self) -> None:
@@ -533,8 +458,6 @@ class TestSchemaDeviationsAttributeKeyCasing:
             "OUD should use mixed-case 'attributeTypes'"
         )
 
-
-class TestSchemaDeviationsComplete:
     """Integration tests for complete deviation tracking."""
 
     def test_all_oid_deviations_tracked(self) -> None:

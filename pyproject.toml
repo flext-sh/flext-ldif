@@ -568,6 +568,7 @@ split-on-trailing-comma = true
   "D106",
   "D107",
   "EM102",
+  "F811",
   "F822",
   "FBT001",
   "FBT002",

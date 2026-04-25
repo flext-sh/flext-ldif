@@ -45,16 +45,8 @@ def migration_inputs(
     return {"oid": oid_input_dir, "oud": oud_input_dir}
 
 
-class TestOidQuirksTransformations:
+class TestsFlextLdifQuirksTransformations:
     """Test OID quirks with actual data transformations."""
-
-    @pytest.fixture(scope="class")
-    def oid(self) -> FlextLdifServersOid:
-        return FlextLdifServersOid()
-
-    @pytest.fixture(scope="class")
-    def api(self) -> FlextLdif:
-        return ldif()
 
     def test_oid_parse_and_transform_schema(
         self,
@@ -109,13 +101,7 @@ class TestOidQuirksTransformations:
         )
         assert result.success or result.failure
 
-
-class TestOudQuirksTransformations:
     """Test OUD quirks with actual data transformations."""
-
-    @pytest.fixture(scope="class")
-    def ouds(self) -> FlextLdifServersOud:
-        return FlextLdifServersOud()
 
     @pytest.fixture(scope="class")
     def api(self) -> FlextLdif:
@@ -191,8 +177,6 @@ class TestOudQuirksTransformations:
         )
         assert result.success or result.failure
 
-
-class TestQuirksPropertyValidation:
     """Test quirks properties and identification."""
 
     @pytest.fixture(scope="class")

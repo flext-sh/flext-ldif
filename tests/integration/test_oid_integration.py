@@ -18,7 +18,7 @@ from flext_ldif import FlextLdif
 from tests import m
 
 
-class TestOidSchemaIntegration:
+class TestsFlextLdifOidIntegration:
     """Integration tests for OID schema processing.
 
     Uses centralized fixtures from tests/integration/conftest.py:
@@ -130,8 +130,6 @@ class TestOidSchemaIntegration:
         )
         assert oracle_oc_count >= 0, "Schema parsing should complete successfully"
 
-
-class TestOidEntryIntegration:
     """Integration tests for OID entry processing.
 
     Uses centralized fixtures from tests/integration/conftest.py:
@@ -212,8 +210,6 @@ class TestOidEntryIntegration:
             )
             assert entries_with_attr > 0, f"No entries with {attr_name} found"
 
-
-class TestOidRoundTripIntegration:
     """Integration tests for OID round-trip: parse → write → parse.
 
     Uses centralized fixtures from tests/integration/conftest.py:
@@ -326,8 +322,4 @@ class TestOidRoundTripIntegration:
         )
 
 
-__all__: list[str] = [
-    "TestOidEntryIntegration",
-    "TestOidRoundTripIntegration",
-    "TestOidSchemaIntegration",
-]
+__all__: list[str] = ["TestsFlextLdifOidIntegration"]

@@ -17,7 +17,7 @@ from flext_ldif import FlextLdifStatistics, ldif
 from tests import c, m
 
 
-class TestFlextLdifAPIIntegration:
+class TestsFlextLdifApiIntegration:
     """Comprehensive API integration tests for ldif facade.
 
     Uses advanced Python 3.13 patterns:

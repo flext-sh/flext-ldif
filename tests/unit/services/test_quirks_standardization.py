@@ -25,7 +25,7 @@ from tests import c
 
 
 @pytest.mark.unit
-class TestsFlextLdifServersStandardizedConstants:
+class TestsFlextLdifQuirksStandardization:
     """Verify all quirks have standardized Constants."""
 
     def test_rfc_schema_constants(self) -> None:
@@ -102,9 +102,6 @@ class TestsFlextLdifServersStandardizedConstants:
             _ = tm.that(constants.CAN_NORMALIZE_FROM, has=canonical)
             _ = tm.that(constants.CAN_DENORMALIZE_TO, has=canonical)
 
-
-@pytest.mark.unit
-class TestQuirksAutoInterchange:
     """Test automatic interchange between quirks via RFC intermediate."""
 
     def test_oid_to_oud_interchange_path(self) -> None:
@@ -117,10 +114,6 @@ class TestQuirksAutoInterchange:
         tm.that(oud_constants.CAN_NORMALIZE_FROM, has="rfc")
         tm.that(oud_constants.CAN_DENORMALIZE_TO, has="oud")
 
-
-@pytest.mark.unit
-@pytest.mark.ldif
-class TestQuirksWithRealLdifFixtures:
     """Test quirks with real LDIF fixture data."""
 
     @staticmethod
@@ -189,9 +182,6 @@ class TestQuirksWithRealLdifFixtures:
         result = oud.parse_input(oud_schema_ldif)
         tm.that(result, none=False)
 
-
-@pytest.mark.unit
-class TestAliasDiscovery:
     """Test that Registry will discover aliases from quirk Constants."""
 
     def test_oid_aliases_discoverable(self) -> None:

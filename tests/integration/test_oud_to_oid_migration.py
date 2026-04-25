@@ -21,7 +21,7 @@ from flext_ldif import FlextLdifServersOid, FlextLdifServersOud
 from tests import c, u
 
 
-class TestOudToOidSchemaMigration:
+class TestsFlextLdifOudToOidMigration:
     """Test OUD to OID schema migration."""
 
     @pytest.fixture
@@ -39,8 +39,6 @@ class TestOudToOidSchemaMigration:
         """Load OUD schema fixture data."""
         return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OUD, c.Ldif.Tests.SCHEMA)
 
-
-class TestOudToOidAclMigration:
     """Test OUD to OID ACL migration."""
 
     @pytest.fixture
@@ -53,8 +51,6 @@ class TestOudToOidAclMigration:
         """Create OID ACL quirk instance."""
         return FlextLdifServersOid.Acl()
 
-
-class TestOudToOidEntryMigration:
     """Test OUD to OID entry migration."""
 
     @pytest.fixture
@@ -62,8 +58,6 @@ class TestOudToOidEntryMigration:
         """Create OUD entry quirk instance."""
         return FlextLdifServersOud.Entry()
 
-
-class TestOudToOidFullMigration:
     """Test complete OUD to OID migration workflow."""
 
     @pytest.fixture
@@ -72,29 +66,11 @@ class TestOudToOidFullMigration:
         return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OUD, c.Ldif.Tests.ENTRIES)
 
     @pytest.fixture
-    def oud(self) -> FlextLdifServersOud:
-        """Create OUD schema quirk."""
-        return FlextLdifServersOud()
-
-    @pytest.fixture
-    def oid(self) -> FlextLdifServersOid:
-        """Create OID schema quirk."""
-        return FlextLdifServersOid()
-
-    @pytest.fixture
-    def oud_entry(self) -> FlextLdifServersOud.Entry:
-        """Create OUD entry quirk."""
-        return FlextLdifServersOud.Entry()
-
-    @pytest.fixture
     def oid_entry(self) -> FlextLdifServersOid.Entry:
         """Create OID entry quirk."""
         return FlextLdifServersOid.Entry()
 
 
 __all__: list[str] = [
-    "TestOudToOidAclMigration",
-    "TestOudToOidEntryMigration",
-    "TestOudToOidFullMigration",
-    "TestOudToOidSchemaMigration",
+    "TestsFlextLdifOudToOidMigration",
 ]

@@ -111,7 +111,7 @@ def _write_category_header(
     output_content_lines.append(category_header)
 
 
-class TestCategorizationRealData:
+class TestsFlextLdifCategorizationRealData:
     """Test categorization with real-world data scenarios."""
 
     def test_base_dn_substring_matching_edge_cases(self, tmp_path: Path) -> None:

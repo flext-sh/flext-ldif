@@ -15,7 +15,7 @@ import pytest
 from tests import m
 
 
-class TestDnCaseRegistry:
+class TestsFlextLdifDnCaseHandling:
     """Test DN case registry functionality."""
 
     @pytest.fixture
@@ -95,15 +95,6 @@ class TestDnCaseRegistry:
         assert registry.resolve_canonical_dn("cn=admin,dc=com") is None
         assert registry.resolve_canonical_dn("cn=user,dc=com") is None
 
-
-class TestDnCaseNormalizationScenarios:
-    """Test various DN case normalization scenarios."""
-
-    @pytest.fixture
-    def registry(self) -> m.Ldif.DnRegistry:
-        """Create DN registry."""
-        return m.Ldif.DnRegistry()
-
     def test_multiple_references_to_same_dn_different_cases(
         self,
         registry: m.Ldif.DnRegistry,
@@ -133,4 +124,4 @@ class TestDnCaseNormalizationScenarios:
         assert result.value is True
 
 
-__all__: list[str] = ["TestDnCaseNormalizationScenarios", "TestDnCaseRegistry"]
+__all__: list[str] = ["TestsFlextLdifDnCaseHandling"]
