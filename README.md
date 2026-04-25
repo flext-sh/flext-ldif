@@ -1,27 +1,57 @@
-# FLEXT LDIF
+<!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
-Biblioteca para parsing, validacao e transformacao de arquivos LDIF em fluxos de migracao de diretorio.
+# flext-ldif
 
-Descricao oficial atual: "FLEXT LDIF - Enterprise LDIF Processing Library".
+**Version**: `unknown` | **Python**: 3.13+ | **Project class**: `domain`
 
-## O que este projeto entrega
+## Purpose
 
-- Processa arquivos LDIF para uso em pipelines.
-- Valida consistencia de formato e conteudo.
-- Converte registros para etapas de migracao e carga.
+FLEXT LDIF - Enterprise LDIF Processing Library
 
-## Contexto operacional
+## Module Map
 
-- Entrada: arquivos LDIF de origem.
-- Saida: estrutura de dados validada para pipeline.
-- Dependencias: componentes consumidores como migracao, taps e dbt.
+- Primary facades: `FlextLdifServersOpenldap`, `FlextLdifUtilitiesWriter`, `FlextLdifUtilitiesDispatch`, `FlextLdif`, `FlextLdifServersRfcConstants`, `FlextLdifModelsDomainAttributes` (+87 more)
+- Alias namespaces: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
+- Public symbol exports: `94`
+- Exported module shortcuts: _none_
 
-## Estado atual e risco de adocao
+## Collection Rules (regras de coletas)
 
-- Qualidade: **Alpha**
-- Uso recomendado: **Nao produtivo**
-- Nivel de estabilidade: em maturacao funcional e tecnica, sujeito a mudancas de contrato sem garantia de retrocompatibilidade.
+Required pre-work before changing this project (per AGENTS.md §9):
 
-## Diretriz para uso nesta fase
+1. Read [`/flext/AGENTS.md`](../AGENTS.md) (governance) and this project's `pyproject.toml`.
+2. Confirm parent MRO chain via `pyproject.toml` `dependencies` filtered by `flext-*` (excluding `flext-ldif` self).
+3. Verify Scope: `cd <project> && scope status` (re-bootstrap per `flext-scope-bootstrap` if absent).
+4. Load skills relevant to the change scope from [`/flext/.agents/skills/`](../.agents/skills/) (start with `flext-mro-namespace-rules`, `flext-import-rules`, `flext-patterns`).
+5. Confirm the canonical zero-debt baseline:
+    - `make check` exits 0
+    - `make val VALIDATE_SCOPE=project` exits 0
+    - `make docs DOCS_PHASE=audit` reports zero issues
+6. Cross-check the c/p/t/m/u slot registry in [`flext-mro-namespace-rules`](../.agents/skills/flext-mro-namespace-rules/SKILL.md) to confirm this project's owned slots before adding/renaming any symbol.
 
-Aplicar este projeto somente em desenvolvimento, prova de conceito e homologacao controlada, com expectativa de ajustes frequentes ate maturidade de release.
+## Operation Flow
+
+- Public surface: see [`docs/index.md`](docs/index.md) and [`docs/api-reference/README.md`](docs/api-reference/README.md).
+- Generated module overview: [`docs/api-reference/generated/overview.md`](docs/api-reference/generated/overview.md).
+- Settings env prefix: see project `pyproject.toml` `[tool.flext]` and `FlextSettings` ConfigDict.
+
+## Integration Points
+
+- Parent MRO chain: read this project's `pyproject.toml` `dependencies` array filtered by `flext-*`. The MRO cascade is encoded in the inheritance lists of the facade classes listed under Module Map above.
+- Public extensions exposed by this project: `FlextLdifServersOpenldap`, `FlextLdifUtilitiesWriter`, `FlextLdifUtilitiesDispatch`, `FlextLdif`, `FlextLdifServersRfcConstants`, `FlextLdifModelsDomainAttributes` (+87 more).
+- Library abstraction boundaries: see AGENTS.md §2.7.
+
+## Quality Gates
+
+- `make check` — Lint suite (ruff, pyrefly, mypy, pyright per project).
+- `make test` — Pytest with project coverage threshold from `pyproject.toml`.
+- `make val VALIDATE_SCOPE=project` — Validation gates (complexity, docstring, namespace).
+- `make docs DOCS_PHASE=audit` — Docs audit (broken links, stale symbols, missing docstrings).
+- `make docs DOCS_PHASE=build` — Build mkdocs HTML output to `.reports/docs/site/`.
+
+## Governance Pointer
+
+- Canonical engineering law: [`/flext/AGENTS.md`](../AGENTS.md).
+- Project skills index: [`/flext/.agents/skills/`](../.agents/skills/).
+- Workspace onboarding: [`/flext/docs/guides/onboarding.md`](../docs/guides/onboarding.md).
+- Full project portal: [`docs/index.md`](docs/index.md).

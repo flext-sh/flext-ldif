@@ -159,10 +159,6 @@ class FlextLdifUtilitiesDispatch:
         return False
 
     @staticmethod
-    def matches(server_type: str, *allowed_types: str) -> bool:
-        return FlextLdifUtilitiesServer.matches(server_type, *allowed_types)
-
-    @staticmethod
     def validate(
         value_or_entries: MutableSequence[m.Ldif.Entry] | t.JsonValue | str | m.Ldif.DN,
         validator_first: p.ValidatorSpec | None = None,
