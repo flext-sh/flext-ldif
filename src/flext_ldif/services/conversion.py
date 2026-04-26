@@ -745,22 +745,14 @@ class FlextLdifConversion(
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
         """Check attribute support for schema quirk."""
-        if not FlextLdifConversion._has_attr(quirk_schema, "can_handle_attribute"):
-            return support
-        if not FlextLdifConversion._has_attr(quirk_schema, "parse_attribute"):
-            return support
-        can_handle_attr = getattr(quirk_schema, "can_handle_attribute", None)
-        if can_handle_attr is None or not callable(can_handle_attr):
-            return support
-        if not can_handle_attr(test_attr_def):
-            return support
-        parse_attr = getattr(quirk_schema, "parse_attribute", None)
-        if parse_attr is None or not callable(parse_attr):
-            return support
-        attr_result = parse_attr(test_attr_def)
-        if isinstance(attr_result, r) and attr_result.success:
-            support["attribute"] = 1
-        return support
+        return self._check_schema_component_support(
+            quirk_schema,
+            can_handle_attr="can_handle_attribute",
+            parse_attr="parse_attribute",
+            test_definition=test_attr_def,
+            support_key="attribute",
+            support=support,
+        )
 
     def _check_converted_has_permissions(self, converted_acl: m.Ldif.Acl) -> bool:
         """Check if converted ACL has any permissions set."""
@@ -807,6 +799,34 @@ class FlextLdifConversion(
             support["entry"] = 1
         return support
 
+    def _check_schema_component_support(
+        self,
+        quirk_schema: m.BaseModel | FlextLdifServersBase,
+        *,
+        can_handle_attr: str,
+        parse_attr: str,
+        test_definition: str,
+        support_key: str,
+        support: t.MutableIntMapping,
+    ) -> t.MutableIntMapping:
+        """Check schema support for one component type (attribute/objectclass)."""
+        if not FlextLdifConversion._has_attr(quirk_schema, can_handle_attr):
+            return support
+        if not FlextLdifConversion._has_attr(quirk_schema, parse_attr):
+            return support
+        can_handle = getattr(quirk_schema, can_handle_attr, None)
+        if can_handle is None or not callable(can_handle):
+            return support
+        if not can_handle(test_definition):
+            return support
+        parse_component = getattr(quirk_schema, parse_attr, None)
+        if parse_component is None or not callable(parse_component):
+            return support
+        component_result = parse_component(test_definition)
+        if isinstance(component_result, r) and component_result.success:
+            support[support_key] = 1
+        return support
+
     def _check_objectclass_support(
         self,
         quirk_schema: m.BaseModel | FlextLdifServersBase,
@@ -814,22 +834,14 @@ class FlextLdifConversion(
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
         """Check objectClass support for schema quirk."""
-        if not FlextLdifConversion._has_attr(quirk_schema, "can_handle_objectclass"):
-            return support
-        if not FlextLdifConversion._has_attr(quirk_schema, "parse_objectclass"):
-            return support
-        can_handle_oc = getattr(quirk_schema, "can_handle_objectclass", None)
-        if can_handle_oc is None or not callable(can_handle_oc):
-            return support
-        if not can_handle_oc(test_oc_def):
-            return support
-        parse_oc = getattr(quirk_schema, "parse_objectclass", None)
-        if parse_oc is None or not callable(parse_oc):
-            return support
-        oc_result = parse_oc(test_oc_def)
-        if isinstance(oc_result, r) and oc_result.success:
-            support["objectclass"] = 1
-        return support
+        return self._check_schema_component_support(
+            quirk_schema,
+            can_handle_attr="can_handle_objectclass",
+            parse_attr="parse_objectclass",
+            test_definition=test_oc_def,
+            support_key="objectclass",
+            support=support,
+        )
 
     def _check_schema_support(
         self,

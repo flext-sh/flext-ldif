@@ -316,54 +316,54 @@ class FlextLdifUtilitiesMetadata:
         definition: str,
     ) -> t.MutableAttributeMapping:
         """Extract NAME format details."""
-        empty_name_values: MutableSequence[str] = []
-        empty_name_quotes: MutableSequence[str] = []
         details: t.MutableAttributeMapping = {
             "name_format": "single",
-            "name_values": empty_name_values,
-            "name_quotes": empty_name_quotes,
+            "name_values": [],
+            "name_quotes": [],
             "name_spacing_before": "",
         }
         name_match = re.search(
             r"NAME\s+(\()?\s*([\"']?)([^\"'()]+)([\"']?)(\s*\))?",
             definition,
         )
-        if name_match:
-            has_parens = bool(name_match.group(1))
-            name_quote_start = name_match.group(2) or ""
-            name_value = name_match.group(3)
-            name_quote_end = name_match.group(4) or ""
-            multiple_match = re.search(
-                r"NAME\s+\(\s*([\"'])([^\"']+)([\"'])\s+([\"'])([^\"']+)([\"'])",
-                definition,
+        if name_match is None:
+            return details
+        has_parens = bool(name_match.group(1))
+        name_quote_start = name_match.group(2) or ""
+        name_value = name_match.group(3)
+        name_quote_end = name_match.group(4) or ""
+        multiple_match = re.search(
+            r"NAME\s+\(\s*([\"'])([^\"']+)([\"'])\s+([\"'])([^\"']+)([\"'])",
+            definition,
+        )
+        name_section = definition[name_match.start() : name_match.end() + 50]
+        if multiple_match or (has_parens and " " in name_value):
+            all_name_matches = re.findall(r"([\"'])([^\"']+)([\"'])", name_section)
+            details.update(
+                {
+                    "name_format": "multiple",
+                    "name_values": [match[1] for match in all_name_matches],
+                    "name_quotes": [match[0] for match in all_name_matches],
+                    "name_spacing_between": re.findall(
+                        r"[\"']\s+([\"'])",
+                        name_section,
+                    ),
+                },
             )
-            if multiple_match or (has_parens and " " in name_value):
-                details["name_format"] = "multiple"
-                all_name_matches = re.findall(
-                    r"([\"'])([^\"']+)([\"'])",
-                    definition[name_match.start() : name_match.end() + 50],
-                )
-                details["name_values"] = [m[1] for m in all_name_matches]
-                name_quotes_list: MutableSequence[str] = (
-                    [m[0] for m in all_name_matches] if all_name_matches else []
-                )
-                details["name_quotes"] = name_quotes_list
-                name_section = definition[name_match.start() : name_match.end() + 50]
-                name_spacing = re.findall(r"[\"']\s+([\"'])", name_section)
-                details["name_spacing_between"] = name_spacing
-            else:
-                details["name_format"] = "single"
-                details["name_values"] = [name_value]
-                quote_char = name_quote_start or name_quote_end
-                name_quotes_2: MutableSequence[str] = [quote_char] if quote_char else []
-                details["name_quotes"] = name_quotes_2
-            name_pos = definition.find("NAME")
-            if name_pos >= 0:
-                before_name = definition[:name_pos]
-                before_match = re.search(r"(\s+)$", before_name)
-                details["name_spacing_before"] = (
-                    before_match.group(1) if before_match else ""
-                )
+        else:
+            quote_char = name_quote_start or name_quote_end
+            details.update(
+                {
+                    "name_values": [name_value],
+                    "name_quotes": [quote_char] if quote_char else [],
+                },
+            )
+        name_pos = definition.find("NAME")
+        if name_pos >= 0:
+            before_match = re.search(r"(\s+)$", definition[:name_pos])
+            details["name_spacing_before"] = (
+                before_match.group(1) if before_match else ""
+            )
         return details
 
     @staticmethod

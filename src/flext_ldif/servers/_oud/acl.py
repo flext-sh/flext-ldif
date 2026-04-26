@@ -116,18 +116,14 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             ):
                 return False
             if acl_model.metadata and acl_model.metadata.quirk_type:
-                matches_type: bool = (
-                    str(acl_model.metadata.quirk_type) == self._get_server_type()
-                )
-                return matches_type
-            if acl_model.name:
-                matches_name: bool = u.Ldif.normalize_attribute_name(
-                    acl_model.name,
-                ) == u.Ldif.normalize_attribute_name(
+                return str(acl_model.metadata.quirk_type) == self._get_server_type()
+            return bool(
+                acl_model.name
+                and u.Ldif.normalize_attribute_name(acl_model.name)
+                == u.Ldif.normalize_attribute_name(
                     FlextLdifServersOudConstants.ACL_ATTRIBUTE_NAME,
                 )
-                return matches_name
-            return False
+            )
         normalized = acl_line.strip()
         if not normalized:
             return False
@@ -138,14 +134,14 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             FlextLdifServersOudConstants.ACL_TARGETSCOPE_PREFIX,
             FlextLdifServersOudConstants.ACL_DEFAULT_VERSION,
         ]
-        if (
+        starts_like_oud = (
             any(normalized.startswith(prefix) for prefix in oud_prefixes)
             or "ds-cfg-" in normalized_lower
-        ):
-            return True
-        return not any(
+        )
+        is_non_legacy_acl = not any(
             pattern in normalized_lower for pattern in ["access to", "(", ")", "=", ":"]
         )
+        return starts_like_oud or is_non_legacy_acl
 
     @override
     def resolve_acl_attributes(self) -> MutableSequence[str]:

@@ -158,32 +158,6 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 ]
             return (must, may)
 
-        def _extract_oid_from_attribute(self, attr_definition: str) -> str | None:
-            """Extract OID from attribute definition using multiple strategies."""
-            oid_result = u.Ldif.extract_oid(attr_definition)
-            if oid_result.success:
-                oid_val: str = oid_result.value
-                return oid_val
-            oid_match = re.search(
-                FlextLdifServersRelaxed.Constants.OID_NUMERIC_WITH_PAREN,
-                attr_definition,
-            )
-            if oid_match:
-                return oid_match.group(1)
-            oid_match = re.search(
-                FlextLdifServersRelaxed.Constants.OID_NUMERIC_ANYWHERE,
-                attr_definition,
-            )
-            if oid_match:
-                return oid_match.group(1)
-            oid_match = re.search(
-                FlextLdifServersRelaxed.Constants.OID_ALPHANUMERIC_RELAXED,
-                attr_definition,
-            )
-            if oid_match:
-                return oid_match.group(1)
-            return None
-
         def _extract_oid_with_fallback_patterns(self, definition: str) -> str | None:
             """Extract OID using multiple fallback patterns for relaxed mode."""
             oid_result = u.Ldif.extract_oid(definition)
@@ -252,7 +226,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 f"RFC parser failed, using best-effort parsing: {parent_result.error}",
             )
             try:
-                oid = self._extract_oid_from_attribute(attr_definition)
+                oid = self._extract_oid_with_fallback_patterns(attr_definition)
                 if not oid:
                     return r[m.Ldif.SchemaAttribute].fail(
                         "Cannot extract OID from attribute definition",

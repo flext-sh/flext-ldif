@@ -197,6 +197,30 @@ class FlextLdifCategorization(s):
         return updated
 
     @staticmethod
+    def _append_rejected_entries(
+        filtered: m.Ldif.FlexibleCategories,
+        rejected_entries: MutableSequence[m.Ldif.Entry],
+    ) -> None:
+        """Append rejected entries into the canonical REJECTED bucket."""
+        if not rejected_entries:
+            return
+        rejected_category = c.Ldif.Category.REJECTED
+        existing_rejected_raw: MutableSequence[m.Ldif.Entry] = filtered.get(
+            rejected_category,
+            [],
+        )
+        filtered[rejected_category] = [
+            entry_model
+            for rejected_raw_item in [*existing_rejected_raw, *rejected_entries]
+            if (
+                entry_model := FlextLdifCategorization._ensure_entry_model(
+                    rejected_raw_item
+                )
+            )
+            is not None
+        ]
+
+    @staticmethod
     def _merge_category_from_constants(
         category_map: t.MutableFrozensetMapping,
         server_map: MutableMapping[str, frozenset[str] | str],
@@ -283,22 +307,7 @@ class FlextLdifCategorization(s):
                     )
                     is not None
                 ]
-        if excluded_entries:
-            rejected_category = c.Ldif.Category.REJECTED
-            existing_rejected_raw: MutableSequence[m.Ldif.Entry] = filtered.get(
-                rejected_category,
-                [],
-            )
-            filtered[c.Ldif.Category.REJECTED] = [
-                entry_model
-                for rejected_raw_item in [*existing_rejected_raw, *excluded_entries]
-                if (
-                    entry_model := FlextLdifCategorization._ensure_entry_model(
-                        rejected_raw_item
-                    )
-                )
-                is not None
-            ]
+        FlextLdifCategorization._append_rejected_entries(filtered, excluded_entries)
         return filtered
 
     def categorize_entries(
@@ -531,22 +540,7 @@ class FlextLdifCategorization(s):
                     )
                     is not None
                 ]
-        if all_excluded_entries:
-            rejected_category = c.Ldif.Category.REJECTED
-            existing_rejected_raw: MutableSequence[m.Ldif.Entry] = filtered.get(
-                rejected_category,
-                [],
-            )
-            filtered[c.Ldif.Category.REJECTED] = [
-                entry_model
-                for rejected_raw_item in [*existing_rejected_raw, *all_excluded_entries]
-                if (
-                    entry_model := FlextLdifCategorization._ensure_entry_model(
-                        rejected_raw_item
-                    )
-                )
-                is not None
-            ]
+        FlextLdifCategorization._append_rejected_entries(filtered, all_excluded_entries)
         return filtered
 
     def filter_schema_by_oids(
