@@ -130,75 +130,39 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     @overload
     def __call__(
         self,
-        attr_definition: str,
+        data: str,
         *,
-        oc_definition: None = None,
-        attr_model: None = None,
-        oc_model: None = None,
         operation: str | None = None,
     ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass: ...
 
     @overload
     def __call__(
         self,
-        *,
-        attr_definition: None = None,
-        oc_definition: str,
-        attr_model: None = None,
-        oc_model: None = None,
-        operation: str | None = None,
-    ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass: ...
-
-    @overload
-    def __call__(
-        self,
-        *,
-        attr_definition: None = None,
-        oc_definition: None = None,
-        attr_model: m.Ldif.SchemaAttribute,
-        oc_model: None = None,
+        data: m.Ldif.SchemaAttribute,
         operation: str | None = None,
     ) -> str: ...
 
     @overload
     def __call__(
         self,
-        *,
-        attr_definition: None = None,
-        oc_definition: None = None,
-        attr_model: None = None,
-        oc_model: m.Ldif.SchemaObjectClass,
+        data: m.Ldif.SchemaObjectClass,
         operation: str | None = None,
     ) -> str: ...
 
     @overload
     def __call__(
         self,
-        attr_definition: str | None = None,
-        oc_definition: str | None = None,
-        attr_model: m.Ldif.SchemaAttribute | None = None,
-        oc_model: m.Ldif.SchemaObjectClass | None = None,
+        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None,
+        *,
         operation: str | None = None,
     ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass: ...
 
     def __call__(
         self,
-        attr_definition: str | None = None,
-        oc_definition: str | None = None,
-        attr_model: m.Ldif.SchemaAttribute | None = None,
-        oc_model: m.Ldif.SchemaObjectClass | None = None,
+        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None,
         operation: str | None = None,
     ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
         """Callable interface - automatic polymorphic processor."""
-        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None
-        if attr_definition is not None:
-            data = attr_definition
-        elif oc_definition is not None:
-            data = oc_definition
-        elif attr_model is not None:
-            data = attr_model
-        elif oc_model is not None:
-            data = oc_model
         result = self.execute(data=data, operation=operation)
         if result.failure:
             msg = result.error or "RFC schema operation failed"
@@ -224,32 +188,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         if isinstance(value, str):
             return value
         return cls._to_string_list(value)
-
-    @staticmethod
-    def _build_attribute_metadata(
-        attr_definition: str,
-        syntax: str | None,
-        syntax_validation_error: str | None,
-        attribute_oid: str | None = None,
-        equality_oid: str | None = None,
-        ordering_oid: str | None = None,
-        substr_oid: str | None = None,
-        sup_oid: str | None = None,
-        _server_type: str | None = None,
-    ) -> m.Ldif.QuirkMetadata | None:
-        """Build metadata for attribute including extensions and OID validation."""
-        server_type_to_use = _server_type or "rfc"
-        return FlextLdifServersBase.Schema.build_attribute_metadata(
-            attr_definition,
-            syntax,
-            syntax_validation_error,
-            attribute_oid=attribute_oid,
-            equality_oid=equality_oid,
-            ordering_oid=ordering_oid,
-            substr_oid=substr_oid,
-            sup_oid=sup_oid,
-            server_type=server_type_to_use,
-        )
 
     @staticmethod
     def _coerce_dynamic_metadata(
@@ -354,10 +292,12 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     ) -> bool:
         """Shared detection: model -> matches_server_patterns; str -> OID + NAME match."""
         if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
-            return u.Ldif.matches_server_patterns(
-                value=oc_definition,
-                oid_pattern=oid_pattern,
-                detection_names=oc_names,
+            return bool(
+                u.Ldif.matches_server_patterns(
+                    value=oc_definition,
+                    oid_pattern=oid_pattern,
+                    detection_names=oc_names,
+                ),
             )
         if re.search(oid_pattern, oc_definition):
             return True
@@ -582,7 +522,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             parsed.get("syntax_validation"),
         )
         attribute_oid = str(parsed.get("oid")) if parsed.get("oid") else None
-        metadata = self._build_attribute_metadata(
+        metadata = FlextLdifServersBaseSchema.build_attribute_metadata(
             attr_definition,
             syntax_str,
             syntax_validation_error,
@@ -595,7 +535,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             else None,
             substr_oid=str(parsed.get("substr")) if parsed.get("substr") else None,
             sup_oid=str(parsed.get("sup")) if parsed.get("sup") else None,
-            _server_type=server_type,
+            server_type=server_type,
         )
         attr_name = self._to_optional_str(parsed.get("name"))
         if attr_name is None:

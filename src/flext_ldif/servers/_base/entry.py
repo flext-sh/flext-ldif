@@ -282,7 +282,6 @@ class FlextLdifServersBaseEntry(
 
     def _write_entry(self, entry_data: m.Ldif.Entry) -> r[str]:
         """Write Entry model to RFC-compliant LDIF string (internal)."""
-        ascii_printable_limit = 127
         output_lines: MutableSequence[str] = []
         fold_long_lines = True
         line_width = c.Ldif.LINE_FOLD_WIDTH
@@ -327,6 +326,10 @@ class FlextLdifServersBaseEntry(
             ldif_changetype = format_options.ldif_changetype
             ldif_modify_operation = format_options.ldif_modify_operation or "add"
 
+        effective_line_width = (
+            line_width if fold_long_lines else max(line_width, 1_000_000)
+        )
+
         def should_restore_original() -> bool:
             """Restore original LDIF only for same-server round-trips."""
             if not restore_original_format or entry_data.metadata is None:
@@ -340,55 +343,6 @@ class FlextLdifServersBaseEntry(
             if original_server is None:
                 original_server = str(entry_data.metadata.quirk_type)
             return str(original_server).lower() == str(self.server_type).lower()
-
-        def fold_line(line: str) -> MutableSequence[str]:
-            """Fold a line per RFC 2849 if fold_long_lines is enabled."""
-            effective_width = (
-                line_width if fold_long_lines else max(line_width, 1_000_000)
-            )
-            if len(line.encode("utf-8")) <= effective_width:
-                return [line]
-            folded: MutableSequence[str] = []
-            line_bytes = line.encode("utf-8")
-            pos = 0
-            while pos < len(line_bytes):
-                if not folded:
-                    chunk_end = min(pos + effective_width, len(line_bytes))
-                else:
-                    chunk_end = min(pos + effective_width - 1, len(line_bytes))
-                while chunk_end > pos:
-                    try:
-                        chunk = line_bytes[pos:chunk_end].decode("utf-8")
-                        break
-                    except UnicodeDecodeError:
-                        chunk_end -= 1
-                else:
-                    chunk_end = pos + 1
-                    chunk = line_bytes[pos:chunk_end].decode("utf-8", errors="replace")
-                if folded:
-                    folded.append(" " + chunk)
-                else:
-                    folded.append(chunk)
-                pos = chunk_end
-            return folded
-
-        def should_base64_encode(attr_name: str, value: str) -> bool:
-            if attr_name.lower() in c.Ldif.BINARY_ATTRIBUTE_NAMES:
-                return True
-            if not value:
-                return False
-            if value[0] in c.Ldif.BASE64_START_CHARS:
-                return True
-            if value[-1] == " ":
-                return True
-            for char in value:
-                char_ord = ord(char)
-                if (
-                    char_ord < c.Ldif.ASCII_PRINTABLE_MIN
-                    or char_ord > ascii_printable_limit
-                ):
-                    return True
-            return False
 
         def maybe_replace_acl_name(attr_name: str, value: str) -> str:
             if not use_original_acl_format_as_name:
@@ -420,7 +374,8 @@ class FlextLdifServersBaseEntry(
                 and raw_value
             ):
                 return f"{effective_name}:< {raw_value}"
-            if should_base64_encode(effective_name, effective_value):
+            should_encode = effective_name.lower() in c.Ldif.BINARY_ATTRIBUTE_NAMES
+            if should_encode or u.Ldif.needs_base64_encoding(effective_value):
                 encoded = base64.b64encode(effective_value.encode("utf-8")).decode(
                     "ascii",
                 )
@@ -473,7 +428,7 @@ class FlextLdifServersBaseEntry(
             if attr_name.lower() in acl_attribute_names:
                 output_lines.append(line)
                 return
-            output_lines.extend(fold_line(line))
+            output_lines.extend(u.Ldif.fold_line(line, width=effective_line_width))
 
         if should_restore_original() and entry_data.metadata is not None:
             original_ldif = entry_data.metadata.original_strings.get(
@@ -491,11 +446,16 @@ class FlextLdifServersBaseEntry(
             output_lines.append(f"# DN: {entry_data.dn.value}")
         if entry_data.dn:
             dn_line = f"dn: {entry_data.dn.value}"
-            output_lines.extend(fold_line(dn_line))
+            output_lines.extend(u.Ldif.fold_line(dn_line, width=effective_line_width))
         else:
             return r[str].fail("Entry DN is None")
         for control in entry_data.controls:
-            output_lines.extend(fold_line(emit_control_line(control)))
+            output_lines.extend(
+                u.Ldif.fold_line(
+                    emit_control_line(control),
+                    width=effective_line_width,
+                ),
+            )
         effective_changetype = entry_data.changetype or ldif_changetype
         if effective_changetype in {
             c.Ldif.LdifChangeType.ADD,
@@ -551,13 +511,21 @@ class FlextLdifServersBaseEntry(
             c.Ldif.LdifChangeType.MODRDN,
         }:
             if entry_data.newrdn:
-                output_lines.extend(fold_line(f"newrdn: {entry_data.newrdn}"))
+                output_lines.extend(
+                    u.Ldif.fold_line(
+                        f"newrdn: {entry_data.newrdn}",
+                        width=effective_line_width,
+                    ),
+                )
             if entry_data.deleteoldrdn is not None:
                 delete_old = "1" if entry_data.deleteoldrdn else "0"
                 output_lines.append(f"deleteoldrdn: {delete_old}")
             if entry_data.newsuperior:
                 output_lines.extend(
-                    fold_line(f"newsuperior: {entry_data.newsuperior}"),
+                    u.Ldif.fold_line(
+                        f"newsuperior: {entry_data.newsuperior}",
+                        width=effective_line_width,
+                    ),
                 )
             output_lines.append("")
             return r[str].ok("\n".join(output_lines))

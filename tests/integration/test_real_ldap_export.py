@@ -23,9 +23,10 @@ from collections.abc import (
 from pathlib import Path
 
 import pytest
+from flext_ldap import FlextLdapEntryAdapter
 
 from flext_ldif import FlextLdif, ldif
-from tests import m, p, t
+from tests import m, p
 
 
 @pytest.fixture
@@ -66,21 +67,11 @@ class TestsFlextLdifRealLdapExport:
             attributes=["*"],
         )
         assert len(ldap_connection.entries) == 1
-        ldap_entry = ldap_connection.entries[0]
-        attrs_dict: t.MutableAttributeMapping = {}
-        for attr_name in ldap_entry.entry_attributes:
-            attr_obj = ldap_entry[attr_name]
-            values: list[str] = [v.decode("utf-8") for v in attr_obj.raw_values]
-            attrs_dict[attr_name] = values
-        assert ldap_entry.entry_dn is not None
-        entry_result = m.Ldif.Entry.create(
-            dn=ldap_entry.entry_dn,
-            attributes=attrs_dict,
-            metadata=None,
+        entry_result = FlextLdapEntryAdapter().ldap3_to_ldif_entry(
+            ldap_connection.entries[0],
         )
         assert entry_result.success
-        flext_entry = entry_result.value
-        write_result = flext_api.write([flext_entry])
+        write_result = flext_api.write([entry_result.value])
         assert write_result.success
         ldif_output = write_result.value.content
         assert ldif_output is not None
@@ -111,44 +102,12 @@ class TestsFlextLdifRealLdapExport:
             )
         ldap_connection.search(clean_test_ou, "(objectClass=person)", attributes=["*"])
         assert len(ldap_connection.entries) == 5
+        adapter = FlextLdapEntryAdapter()
         entries: MutableSequence[m.Ldif.Entry] = []
-        for entry in ldap_connection.entries:
-            attrs_dict: t.MutableAttributeMapping = {}
-            for attr_name in entry.entry_attributes:
-                attr_obj = entry[attr_name]
-                if hasattr(attr_obj, "raw_values"):
-                    values = [v.decode("utf-8") for v in attr_obj.raw_values]
-                elif hasattr(attr_obj, "value"):
-                    val = attr_obj.value
-                    if isinstance(val, bytes):
-                        values = [val.decode("utf-8")]
-                    elif isinstance(val, list):
-                        values = [
-                            v.decode("utf-8") if isinstance(v, bytes) else str(v)
-                            for v in val
-                        ]
-                    else:
-                        values = [str(val)]
-                else:
-                    values = [str(attr_obj)]
-                attrs_dict[attr_name] = values
-            assert entry.entry_dn is not None
-            result = m.Ldif.Entry.create(
-                dn=entry.entry_dn,
-                attributes=attrs_dict,
-                metadata=None,
-            )
+        for ldap3_entry in ldap_connection.entries:
+            result = adapter.ldap3_to_ldif_entry(ldap3_entry)
             assert result.success
-            unwrapped_entry = result.value
-            if hasattr(unwrapped_entry, "dn") and hasattr(
-                unwrapped_entry,
-                "attributes",
-            ):
-                entries.append(unwrapped_entry)
-            else:
-                entry_dict = unwrapped_entry.model_dump()
-                facade_entry = m.Ldif.Entry.model_validate(entry_dict)
-                entries.append(facade_entry)
+            entries.append(result.value)
         write_result = flext_api.write(entries)
         assert write_result.success
         ldif_output = write_result.value.content
@@ -188,44 +147,12 @@ class TestsFlextLdifRealLdapExport:
             search_scope="SUBTREE",
             attributes=["*"],
         )
+        adapter = FlextLdapEntryAdapter()
         entries: MutableSequence[m.Ldif.Entry] = []
-        for entry in ldap_connection.entries:
-            attrs_dict: t.MutableAttributeMapping = {}
-            for attr_name in entry.entry_attributes:
-                attr_obj = entry[attr_name]
-                if hasattr(attr_obj, "raw_values"):
-                    values = [v.decode("utf-8") for v in attr_obj.raw_values]
-                elif hasattr(attr_obj, "value"):
-                    val = attr_obj.value
-                    if isinstance(val, bytes):
-                        values = [val.decode("utf-8")]
-                    elif isinstance(val, list):
-                        values = [
-                            v.decode("utf-8") if isinstance(v, bytes) else str(v)
-                            for v in val
-                        ]
-                    else:
-                        values = [str(val)]
-                else:
-                    values = [str(attr_obj)]
-                attrs_dict[attr_name] = values
-            assert entry.entry_dn is not None
-            result = m.Ldif.Entry.create(
-                dn=entry.entry_dn,
-                attributes=attrs_dict,
-                metadata=None,
-            )
+        for ldap3_entry in ldap_connection.entries:
+            result = adapter.ldap3_to_ldif_entry(ldap3_entry)
             assert result.success
-            unwrapped_entry = result.value
-            if hasattr(unwrapped_entry, "dn") and hasattr(
-                unwrapped_entry,
-                "attributes",
-            ):
-                entries.append(unwrapped_entry)
-            else:
-                entry_dict = unwrapped_entry.model_dump()
-                facade_entry = m.Ldif.Entry.model_validate(entry_dict)
-                entries.append(facade_entry)
+            entries.append(result.value)
         write_result = flext_api.write(entries)
         assert write_result.success
         ldif_output = write_result.value.content
@@ -252,27 +179,12 @@ class TestsFlextLdifRealLdapExport:
             {"cn": unique_username, "sn": "Test", "mail": "export@example.com"},
         )
         ldap_connection.search(person_dn, "(objectClass=*)", attributes=["*"])
-        ldap_entry = ldap_connection.entries[0]
-        attrs_dict: t.MutableAttributeMapping = {}
-        for attr_name in ldap_entry.entry_attributes:
-            attr_obj = ldap_entry[attr_name]
-            if hasattr(attr_obj, "values"):
-                values = [
-                    str(v) if not isinstance(v, str) else v for v in attr_obj.values
-                ]
-            else:
-                values = [str(attr_obj)]
-            attrs_dict[attr_name] = values
-        assert ldap_entry.entry_dn is not None
-        entry_result = m.Ldif.Entry.create(
-            dn=ldap_entry.entry_dn,
-            attributes=attrs_dict,
-            metadata=None,
+        entry_result = FlextLdapEntryAdapter().ldap3_to_ldif_entry(
+            ldap_connection.entries[0],
         )
         assert entry_result.success
-        flext_entry = entry_result.value
         output_file = tmp_path / "export.ldif"
-        write_result = flext_api.write_ldif_file([flext_entry], output_file)
+        write_result = flext_api.write_ldif_file([entry_result.value], output_file)
         assert write_result.success
         assert output_file.exists()
         content = output_file.read_text()

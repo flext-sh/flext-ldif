@@ -873,12 +873,12 @@ class FlextLdifUtilitiesSchema:
     def normalize_matching_rules(
         equality: str | None,
         substr: str | None = None,
-        *,
-        replacements: t.MutableStrMapping | None = None,
-        substr_rules_in_equality: t.MutableStrMapping | None = None,
-        normalized_substr_values: t.MutableStrMapping | None = None,
+        **kwargs: t.MutableStrMapping | None,
     ) -> tuple[str | None, str | None]:
         """Normalize EQUALITY and SUBSTR matching rules."""
+        replacements = kwargs.get("replacements")
+        substr_rules_in_equality = kwargs.get("substr_rules_in_equality")
+        normalized_substr_values = kwargs.get("normalized_substr_values")
         result_equality = equality
         result_substr = substr
         if (
