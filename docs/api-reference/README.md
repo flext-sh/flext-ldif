@@ -19,7 +19,7 @@ This section is generated from public exports and real docstrings.
 
 ## Surface Summary
 
-- Primary facades: `FlextLdifServersOpenldap`, `FlextLdifUtilitiesWriter`, `FlextLdifUtilitiesDispatch`, `FlextLdif`, `FlextLdifServersRfcConstants`, `FlextLdifModelsDomainAttributes` (+87 more)
+- Primary facades: `FlextLdifServersOidAcl`, `FlextLdifUtilitiesAttribute`, `FlextLdifTransformer`, `FlextLdifUtilitiesSchema`, `FlextLdifServersRelaxed`, `FlextLdifUtilitiesEvents` (+87 more)
 - Generated module pages: `38`
 
 - [Back to project docs](../index.md)
