@@ -1,0 +1,22 @@
+src/flext_ldif/services/categorization.py
+  h_9db9d35f50cf33 200-208,212-214,219-222,310,543
+src/flext_ldif/servers/_oud/acl.py
+  h_9db9d35f50cf33 119-120,122,126,137,141,144
+src/flext_ldif/servers/relaxed.py
+  h_9db9d35f50cf33 229
+src/flext_ldif/_utilities/metadata.py
+  h_9db9d35f50cf33 321-322,329-330,337-359,362-364
+src/flext_ldif/services/conversion.py
+  h_9db9d35f50cf33 748-755,802,805-809,812-813,815,817-818,820,822-823,825-827,830-844
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "06ddef946580dccd149b78696d8d4727fc3c5324",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
