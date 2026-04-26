@@ -653,42 +653,36 @@ class FlextLdifUtilitiesEntry:
         target_format: str = "TRUE/FALSE",
     ) -> t.MutableStrSequenceMapping:
         """Convert boolean attribute values between formats."""
-
-        def _stringify(value: str | bytes | float) -> str:
-            if isinstance(value, bytes):
-                return value.decode(c.DEFAULT_ENCODING, errors="replace")
-            return str(value)
-
-        def _convert_bool(value: str) -> str:
-            if source_format == "0/1" and target_format == "TRUE/FALSE":
-                return "TRUE" if value == "1" else "FALSE"
-            if source_format == "TRUE/FALSE" and target_format == "0/1":
-                return "1" if value.upper() == "TRUE" else "0"
-            return value
-
-        if not attributes or not boolean_attr_names:
-            if not attributes:
-                return {}
-            normalized_result: t.MutableStrSequenceMapping = {}
-            for attr_name in attributes:
-                raw_values = attributes[attr_name]
-                if isinstance(raw_values, str | bytes):
-                    normalized_result[attr_name] = [_stringify(raw_values)]
-                else:
-                    normalized_result[attr_name] = [_stringify(v) for v in raw_values]
-            return normalized_result
         result: t.MutableStrSequenceMapping = {}
+        format_pair = (source_format, target_format)
+        normalized_boolean_names = {attr_name.lower() for attr_name in boolean_attr_names}
         for attr_name in attributes:
             attr_raw_values = attributes[attr_name]
-            str_values: MutableSequence[str]
+            str_values: MutableSequence[str] = []
             if isinstance(attr_raw_values, str | bytes):
-                str_values = [_stringify(attr_raw_values)]
+                raw_items = [attr_raw_values]
             else:
-                str_values = [_stringify(v) for v in attr_raw_values]
-            if attr_name.lower() in boolean_attr_names:
-                result[attr_name] = [_convert_bool(v) for v in str_values]
-            else:
-                result[attr_name] = str_values
+                raw_items = attr_raw_values
+            for raw_item in raw_items:
+                normalized_value = (
+                    raw_item.decode(c.DEFAULT_ENCODING, errors="replace")
+                    if isinstance(raw_item, bytes)
+                    else str(raw_item)
+                )
+                if attr_name.lower() in normalized_boolean_names:
+                    match format_pair:
+                        case ("0/1", "TRUE/FALSE"):
+                            normalized_value = (
+                                "TRUE" if normalized_value == "1" else "FALSE"
+                            )
+                        case ("TRUE/FALSE", "0/1"):
+                            normalized_value = (
+                                "1" if normalized_value.upper() == "TRUE" else "0"
+                            )
+                        case _:
+                            pass
+                str_values.append(normalized_value)
+            result[attr_name] = str_values
         return result
 
     @staticmethod

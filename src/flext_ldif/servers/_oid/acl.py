@@ -229,6 +229,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     @override
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this is an Oracle OID ACL."""
+        can_handle = False
         if not isinstance(acl_line, str):
             try:
                 acl_model = m.Ldif.Acl.model_validate(acl_line)
@@ -239,20 +240,17 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 UnicodeDecodeError,
                 struct.error,
             ):
-                return False
-            if acl_model.metadata and acl_model.metadata.quirk_type:
-                return acl_model.metadata.quirk_type == self._get_server_type()
-            return False
-        if not acl_line:
-            return False
-        acl_line_str: str = str(acl_line)
-        acl_line_lower = acl_line_str.strip().lower()
-        if acl_line_lower.startswith((
-            f"{FlextLdifServersOidConstants.ORCLACI}:",
-            f"{FlextLdifServersOidConstants.ORCLENTRYLEVELACI}:",
-        )):
-            return True
-        return acl_line_lower.startswith("access to ")
+                acl_model = None
+            if acl_model and acl_model.metadata and acl_model.metadata.quirk_type:
+                can_handle = acl_model.metadata.quirk_type == self._get_server_type()
+        else:
+            acl_line_lower = str(acl_line).strip().lower()
+            can_handle = bool(acl_line_lower) and acl_line_lower.startswith((
+                f"{FlextLdifServersOidConstants.ORCLACI}:",
+                f"{FlextLdifServersOidConstants.ORCLENTRYLEVELACI}:",
+                "access to ",
+            ))
+        return can_handle
 
     @override
     def convert_rfc_acl_to_aci(

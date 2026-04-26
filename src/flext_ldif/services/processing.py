@@ -7,13 +7,11 @@ from collections.abc import (
 )
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from flext_ldif import m, r, s, u
+from flext_ldif import m, r, s, t, u
 
 
 class FlextLdifProcessing(s):
     """Service for batch and parallel entry processing."""
-
-    _SUPPORTED_PROCESSORS: frozenset[str] = frozenset({"transform", "validate"})
 
     @staticmethod
     def _process_entry(entry: m.Ldif.Entry) -> m.Ldif.ProcessingResult:
@@ -37,28 +35,25 @@ class FlextLdifProcessing(s):
 
     def process_entries(
         self,
-        processor_name: str,
         entries: MutableSequence[m.Ldif.Entry],
-        *,
-        parallel: bool = False,
-        batch_size: int = 100,
-        max_workers: int = 4,
+        options: m.Ldif.ProcessEntriesOptions | None = None,
+        **kwargs: t.JsonValue,
     ) -> r[MutableSequence[m.Ldif.ProcessingResult]]:
         """Unified processing method supporting batch and parallel modes."""
-        if processor_name not in self._SUPPORTED_PROCESSORS:
-            supported = "'transform', 'validate'"
-            return r[MutableSequence[m.Ldif.ProcessingResult]].fail(
-                f"Unknown processor: '{processor_name}'. Supported: {supported}",
-            )
-        if parallel:
-            max_workers_actual = min(len(entries), max_workers)
+        payload: t.MutableJsonMapping = (
+            options.model_dump(mode="python") if options is not None else {}
+        )
+        payload.update(kwargs)
+        validated_options = m.Ldif.ProcessEntriesOptions.model_validate(payload)
+        if validated_options.parallel:
+            max_workers_actual = min(len(entries), validated_options.max_workers)
             with ThreadPoolExecutor(max_workers=max_workers_actual) as executor:
                 futures = [
                     executor.submit(self._process_entry, entry) for entry in entries
                 ]
                 results = [future.result() for future in as_completed(futures)]
             return r[MutableSequence[m.Ldif.ProcessingResult]].ok(results)
-        _ = batch_size
+        _ = validated_options.batch_size
         return (
             r[MutableSequence[m.Ldif.ProcessingResult]]
             .from_result(

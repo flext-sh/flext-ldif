@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from flext_cli import m, u
 from flext_ldif import t
@@ -22,3 +22,23 @@ class FlextLdifModelsProcessing:
             t.MutableStrSequenceMapping,
             u.Field(..., description="LDAP attributes as name -> list of values"),
         ]
+
+    class ProcessEntriesOptions(m.StrictModel):
+        """Validated options for batch/parallel entry processing."""
+
+        processor_name: Annotated[
+            Literal["transform", "validate"],
+            u.Field(description="Canonical processor name for entry handling."),
+        ]
+        parallel: Annotated[
+            bool,
+            u.Field(description="Enable thread-pool execution mode."),
+        ] = False
+        batch_size: Annotated[
+            int,
+            u.Field(ge=1, description="Batch size for sequential processing."),
+        ] = 100
+        max_workers: Annotated[
+            int,
+            u.Field(ge=1, description="Maximum thread workers for parallel mode."),
+        ] = 4

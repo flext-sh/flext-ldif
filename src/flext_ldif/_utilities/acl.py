@@ -19,6 +19,8 @@ logger = u.fetch_logger(__name__)
 class FlextLdifUtilitiesACL:
     """Generic ACL parsing and writing utilities."""
 
+    _OPERATOR_PLACEHOLDER: str = "{operator}"
+
     @staticmethod
     def _is_acl_subject_type(
         value: str,
@@ -359,43 +361,36 @@ class FlextLdifUtilitiesACL:
         if not extensions:
             return []
 
-        def process_rule_config(rule_item: tuple[str, str, str | None]) -> str | None:
-            """Process single rule settings item."""
-            ext_key, format_template, operator_default = rule_item
-            value_raw = extensions.get(ext_key)
-            if value_raw is None:
-                return None
-            operator_placeholder = "{" + "operator" + "}"
-            expected_tuple_length = tuple_length
-            if isinstance(value_raw, tuple) and len(value_raw) == expected_tuple_length:
-                tuple_items = list(value_raw)
-                if len(tuple_items) >= c.Ldif.TUPLE_LENGTH_PAIR:
-                    operator_val = str(tuple_items[0])
-                    value_val = str(tuple_items[1])
-                    if operator_placeholder in format_template:
-                        return format_template.format(
-                            operator=operator_val,
-                            value=value_val,
-                        )
-                    return format_template.format(value=value_val)
-            if operator_placeholder in format_template and operator_default is not None:
-                return format_template.format(
-                    operator=operator_default,
-                    value=str(value_raw),
-                )
-            return format_template.format(value=str(value_raw))
-
-        def rule_predicate(item: tuple[str, str, str | None]) -> bool:
-            """Filter rule settings items based on extensions."""
-            return bool(extensions.get(item[0]) if extensions else None)
-
         result: MutableSequence[str] = []
-        for item in rule_config:
+        for ext_key, format_template, operator_default in rule_config:
             try:
-                if rule_predicate(item):
-                    processed = process_rule_config(item)
-                    if processed is not None:
-                        result.append(processed)
+                value_raw = extensions.get(ext_key)
+                if value_raw is None:
+                    continue
+                has_operator_placeholder = (
+                    FlextLdifUtilitiesACL._OPERATOR_PLACEHOLDER in format_template
+                )
+                match value_raw:
+                    case tuple() as tuple_items if len(tuple_items) == tuple_length and len(tuple_items) >= c.Ldif.TUPLE_LENGTH_PAIR:
+                        operator_val = str(tuple_items[0])
+                        value_val = str(tuple_items[1])
+                        result.append(
+                            format_template.format(
+                                operator=operator_val,
+                                value=value_val,
+                            )
+                            if has_operator_placeholder
+                            else format_template.format(value=value_val)
+                        )
+                    case _ if has_operator_placeholder and operator_default is not None:
+                        result.append(
+                            format_template.format(
+                                operator=operator_default,
+                                value=str(value_raw),
+                            )
+                        )
+                    case _:
+                        result.append(format_template.format(value=str(value_raw)))
             except (
                 ValueError,
                 KeyError,
