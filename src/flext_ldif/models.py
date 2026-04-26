@@ -16,7 +16,6 @@ from collections.abc import (
 from typing import Annotated, ClassVar
 
 from flext_cli import FlextCliModels, t, u
-
 from flext_ldif import (
     FlextLdifModelsBases,
     FlextLdifModelsCollections,

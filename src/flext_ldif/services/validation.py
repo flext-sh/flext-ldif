@@ -9,7 +9,6 @@ from collections.abc import (
 from typing import Annotated
 
 from flext_core import r
-
 from flext_ldif import (
     FlextLdifServiceBase,
     u,

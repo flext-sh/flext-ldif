@@ -24,9 +24,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Final
 
-from flext_core import FlextContext
-
 from examples import c, m, r
+from flext_core import FlextContext
 from flext_ldif import ldif
 
 type LdifSource = str | Path

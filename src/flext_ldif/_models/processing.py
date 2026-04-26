@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_cli import m, u
-
 from flext_ldif import t
 
 

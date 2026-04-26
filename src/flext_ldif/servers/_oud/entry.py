@@ -15,7 +15,8 @@ from collections.abc import (
     MutableMapping,
     MutableSequence,
 )
-from typing import override
+from types import MappingProxyType
+from typing import ClassVar, override
 
 from flext_ldif import (
     FlextLdifServersBase,
@@ -1152,14 +1153,14 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 dn_registry = dn_registry_value
         return (base_dn, dn_registry)
 
-    def _extract_acl_metadata_from_dict(
-        self,
-        acl_extensions: t.Ldif.MetadataInputMapping,
-        acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
-    ) -> None:
-        """Extract ACL metadata from dict extensions."""
+    @classmethod
+    def _acl_metadata_key_mapping(cls) -> Mapping[str, str]:
+        """Lazy frozen mapping: ACL extension key → canonical metadata key."""
+        cached = cls.__dict__.get("_ACL_METADATA_KEY_MAPPING_CACHE")
+        if cached is not None:
+            return cached
         mk = c.Ldif
-        key_mapping: t.MutableStrMapping = {
+        cached = MappingProxyType({
             "extop": mk.ACL_EXTOP,
             "ip": mk.ACL_BIND_IP_FILTER,
             "bind_ip": mk.ACL_BIND_IP_FILTER,
@@ -1174,8 +1175,19 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             "targetcontrol": "targetcontrol",
             "targetscope": "targetscope",
             "targattrfilters": mk.ACL_TARGETATTR_FILTERS,
-        }
-        for src_key, dest_key in key_mapping.items():
+        })
+        cls._ACL_METADATA_KEY_MAPPING_CACHE = cached
+        return cached
+
+    _ACL_METADATA_KEY_MAPPING_CACHE: ClassVar[Mapping[str, str] | None] = None
+
+    def _extract_acl_metadata_from_dict(
+        self,
+        acl_extensions: t.Ldif.MetadataInputMapping,
+        acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
+    ) -> None:
+        """Extract ACL metadata from dict extensions."""
+        for src_key, dest_key in self._acl_metadata_key_mapping().items():
             value_raw = acl_extensions.get(src_key)
             if value_raw is not None:
                 acl_metadata_extensions[dest_key] = u.normalize_to_metadata(value_raw)
@@ -1186,24 +1198,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
         """Extract ACL metadata from DynamicMetadata extensions."""
-        mk = c.Ldif
-        key_mapping: t.MutableStrMapping = {
-            "extop": mk.ACL_EXTOP,
-            "ip": mk.ACL_BIND_IP_FILTER,
-            "bind_ip": mk.ACL_BIND_IP_FILTER,
-            "dns": mk.ACL_BIND_DNS,
-            "bind_dns": mk.ACL_BIND_DNS,
-            "dayofweek": mk.ACL_BIND_DAYOFWEEK,
-            "bind_dayofweek": mk.ACL_BIND_DAYOFWEEK,
-            "timeofday": mk.ACL_BIND_TIMEOFDAY,
-            "bind_timeofday": mk.ACL_BIND_TIMEOFDAY,
-            "authmethod": mk.ACL_AUTHMETHOD,
-            "ssf": mk.ACL_SSF,
-            "targetcontrol": "targetcontrol",
-            "targetscope": "targetscope",
-            "targattrfilters": mk.ACL_TARGETATTR_FILTERS,
-        }
-        for src_key, dest_key in key_mapping.items():
+        for src_key, dest_key in self._acl_metadata_key_mapping().items():
             value_raw = acl_extensions.get(src_key)
             if value_raw is None:
                 continue

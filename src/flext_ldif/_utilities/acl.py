@@ -11,7 +11,6 @@ from collections.abc import (
 from typing import TypeIs
 
 from flext_core import u
-
 from flext_ldif import c, m, r, t
 
 logger = u.fetch_logger(__name__)

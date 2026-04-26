@@ -10,7 +10,6 @@ from types import MappingProxyType
 from typing import ClassVar, Final
 
 from flext_cli import FlextCliConstants, t
-
 from flext_ldif import FlextLdifConstantsBase, FlextLdifConstantsEnums
 
 

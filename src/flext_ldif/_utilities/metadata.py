@@ -13,7 +13,6 @@ from collections.abc import (
 from typing import TypeIs
 
 from flext_core import u
-
 from flext_ldif import (
     FlextLdifUtilitiesServer as us,
     c,

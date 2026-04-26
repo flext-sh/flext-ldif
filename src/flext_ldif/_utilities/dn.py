@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, overload
 
 from flext_core import u
-
 from flext_ldif import c, m, r
 
 if TYPE_CHECKING:

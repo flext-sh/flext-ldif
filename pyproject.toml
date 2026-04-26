@@ -143,7 +143,7 @@ omit = [ "*/dependency_injector/providers.pyx" ]
 
 # [MANAGED] deptry
 [tool.deptry]
-known_first_party = [ "flext_ldif" ]
+known_first_party = [ "flext_cli", "flext_core", "flext_ldif" ]
 pep621_dev_dependency_groups = [ "dev" ]
 
 [tool.hatch.metadata]
@@ -167,7 +167,7 @@ extra_checks = true
 follow_imports = "normal"
 ignore_missing_imports = true
 local_partial_types = true
-mypy_path = [ ".", "src" ]
+mypy_path = [ ".", "../typings", "src" ]
 namespace_packages = true
 no_implicit_reexport = true
 overrides = [  ]
@@ -332,8 +332,8 @@ exclude = [
   "**/venv/**",
   ".venv",
 ]
-extraPaths = [ ".", "src" ]
-ignore = [ "**/*.pyi" ]
+extraPaths = [ ".", "../typings", "src" ]
+ignore = [ "**/*.pyi", "../typings" ]
 include = [ "examples", "src", "tests" ]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
@@ -363,6 +363,7 @@ reportUnusedClass = "error"
 reportUnusedFunction = "error"
 reportUnusedImport = "error"
 reportUnusedVariable = "error"
+stubPath = "../typings"
 typeCheckingMode = "strict"
 venv = ".venv"
 venvPath = ".."
@@ -501,7 +502,7 @@ select = [ "ALL" ]
 [tool.ruff.lint.isort]
 combine-as-imports = true
 force-single-line = false
-known-first-party = [ "flext_ldif" ]
+known-first-party = [ "flext_cli", "flext_core", "flext_ldif" ]
 split-on-trailing-comma = true
 
 [tool.ruff.lint.per-file-ignores]

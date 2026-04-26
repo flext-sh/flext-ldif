@@ -18,7 +18,6 @@ from collections.abc import (
 from typing import Annotated, Self
 
 from flext_cli import u
-
 from flext_ldif import (
     FlextLdifModelsBases as mb,
     FlextLdifModelsDomainMetadata as mdm,

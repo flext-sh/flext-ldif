@@ -150,27 +150,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect eDirectory objectClass definitions using Constants."""
-            if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
-                matches: bool = u.Ldif.matches_server_patterns(
-                    value=oc_definition,
-                    oid_pattern=FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
-                    detection_names=FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES,
-                )
-                return matches
-            if re.search(
-                FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
+            consts = FlextLdifServersNovell.Constants
+            return self._detect_oc_via_constants(
                 oc_definition,
-            ):
-                return True
-            name_matches = re.findall(
-                FlextLdifServersNovell.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
-                oc_definition,
-                re.IGNORECASE,
-            )
-            return any(
-                name.lower()
-                in FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES
-                for name in name_matches
+                oid_pattern=consts.DETECTION_OID_PATTERN,
+                oc_names=consts.DETECTION_OBJECTCLASS_NAMES,
+                name_regex=consts.SCHEMA_ATTRIBUTE_NAME_REGEX,
             )
 
         @override

@@ -9,7 +9,6 @@ from collections.abc import (
 from typing import Annotated, ClassVar, Self
 
 from flext_core import s
-
 from flext_ldif import (
     FlextLdifServerMethodsMixin,
     c,

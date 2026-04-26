@@ -13,7 +13,6 @@ from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self
 
 from flext_core import s
-
 from flext_ldif import (
     FlextLdifServerMethodsMixin,
     c,

@@ -111,27 +111,12 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect ApacheDS objectClass definitions using centralized constants."""
-            if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
-                matches: bool = u.Ldif.matches_server_patterns(
-                    value=oc_definition,
-                    oid_pattern=FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
-                    detection_names=FlextLdifServersApache.Constants.DETECTION_OBJECTCLASS_NAMES,
-                )
-                return matches
-            if re.search(
-                FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
+            consts = FlextLdifServersApache.Constants
+            return self._detect_oc_via_constants(
                 oc_definition,
-            ):
-                return True
-            name_matches = re.findall(
-                FlextLdifServersApache.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
-                oc_definition,
-                re.IGNORECASE,
-            )
-            return any(
-                name.lower()
-                in FlextLdifServersApache.Constants.DETECTION_OBJECTCLASS_NAMES
-                for name in name_matches
+                oid_pattern=consts.DETECTION_OID_PATTERN,
+                oc_names=consts.DETECTION_OBJECTCLASS_NAMES,
+                name_regex=consts.SCHEMA_ATTRIBUTE_NAME_REGEX,
             )
 
         @override

@@ -14,7 +14,6 @@ from collections.abc import (
 from typing import Annotated, override
 
 from flext_cli import m, u
-
 from flext_ldif import (
     FlextLdifModelsDomainsEntries as mde,
     FlextLdifModelsMetadata as mdm,

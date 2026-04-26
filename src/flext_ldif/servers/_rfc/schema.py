@@ -344,6 +344,26 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         _ = (self, oc_definition)
         return True
 
+    def _detect_oc_via_constants(
+        self,
+        oc_definition: str | m.Ldif.SchemaObjectClass,
+        *,
+        oid_pattern: str,
+        oc_names: frozenset[str],
+        name_regex: str,
+    ) -> bool:
+        """Shared detection: model -> matches_server_patterns; str -> OID + NAME match."""
+        if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
+            return u.Ldif.matches_server_patterns(
+                value=oc_definition,
+                oid_pattern=oid_pattern,
+                detection_names=oc_names,
+            )
+        if re.search(oid_pattern, oc_definition):
+            return True
+        name_matches = re.findall(name_regex, oc_definition, re.IGNORECASE)
+        return any(name.lower() in oc_names for name in name_matches)
+
     def create_metadata(
         self,
         original_format: str,

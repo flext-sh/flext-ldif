@@ -13,7 +13,6 @@ from collections.abc import (
 )
 
 from flext_cli import u
-
 from flext_ldif import FlextLdifModelsSettings, c, p, t
 
 

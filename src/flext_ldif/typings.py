@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from flext_cli import FlextCliTypes
-
 from flext_ldif import FlextLdifTypesBase, FlextLdifTypesDomain
 
 

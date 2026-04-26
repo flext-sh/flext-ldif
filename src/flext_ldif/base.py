@@ -6,7 +6,6 @@ from abc import ABC
 from typing import Annotated, override
 
 from flext_core import FlextSettings, s
-
 from flext_ldif import FlextLdifServer, FlextLdifSettings, c, m, t, u
 
 

@@ -15,7 +15,6 @@ from __future__ import annotations
 from typing import Annotated, ClassVar
 
 from flext_core import FlextSettings
-
 from flext_ldif import c, m, u
 
 

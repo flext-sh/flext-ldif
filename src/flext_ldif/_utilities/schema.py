@@ -13,7 +13,6 @@ from collections.abc import (
 )
 
 from flext_core import u
-
 from flext_ldif import (
     FlextLdifUtilitiesOID as uo,
     FlextLdifUtilitiesParser as up,

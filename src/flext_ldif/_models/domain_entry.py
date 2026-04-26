@@ -16,7 +16,6 @@ from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
 
 from flext_cli import m, r, u
-
 from flext_ldif import (
     FlextLdifModelsDomainAcl as mdac,
     FlextLdifModelsDomainAttributes as mda,
