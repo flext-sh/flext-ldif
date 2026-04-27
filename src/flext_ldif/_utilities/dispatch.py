@@ -172,38 +172,56 @@ class FlextLdifUtilitiesDispatch:
         | bool
     ):
         """Validate entries against rules."""
-        if isinstance(value_or_entries, (str, m.Ldif.DN)) and validator_first is None:
-            return FlextLdifUtilitiesDN.validate_dn(value_or_entries)
-        if (
-            FlextLdifUtilitiesDispatch._is_entry_sequence(value_or_entries)
-            and validator_first is None
-        ):
-            return FlextLdifUtilitiesDispatch._validate_entries(
-                value_or_entries,
-                strict=strict,
-                collect_all=collect_all,
-                max_errors=max_errors,
-            )
         validators: tuple[p.ValidatorSpec, ...] = (
             (validator_first, *validators_rest) if validator_first else ()
         )
-        if isinstance(value_or_entries, Sequence) and (
-            not isinstance(value_or_entries, (str, bytes))
-        ):
-            return r[t.JsonValue].fail(
-                "validator call requires scalar, not entry sequence",
-            )
-        if isinstance(value_or_entries, m.Ldif.DN):
-            return FlextLdifUtilitiesValidation.validate_value(
-                value_or_entries.value,
-                *validators,
-            )
-        if isinstance(value_or_entries, bytes):
-            return r[t.JsonValue].fail("bytes value not supported for validation")
-        return FlextLdifUtilitiesValidation.validate_value(
-            value_or_entries,
-            *validators,
-        )
+        match True:
+            case _ if validator_first is None and isinstance(
+                value_or_entries,
+                (str, m.Ldif.DN),
+            ):
+                result: (
+                    r[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]
+                    | r[t.JsonValue]
+                    | bool
+                ) = FlextLdifUtilitiesDN.validate_dn(value_or_entries)
+            case _ if (
+                validator_first is None
+                and FlextLdifUtilitiesDispatch._is_entry_sequence(
+                    value_or_entries,
+                )
+            ):
+                result = FlextLdifUtilitiesDispatch._validate_entries(
+                    value_or_entries,
+                    strict=strict,
+                    collect_all=collect_all,
+                    max_errors=max_errors,
+                )
+            case _ if isinstance(value_or_entries, Sequence) and not isinstance(
+                value_or_entries,
+                (str, bytes),
+            ):
+                result = r[t.JsonValue].fail(
+                    "validator call requires scalar, not entry sequence",
+                )
+            case _ if isinstance(value_or_entries, bytes):
+                result = r[t.JsonValue].fail(
+                    "bytes value not supported for validation",
+                )
+            case _ if isinstance(value_or_entries, m.Ldif.DN):
+                result = FlextLdifUtilitiesValidation.validate_value(
+                    value_or_entries.value,
+                    *validators,
+                )
+            case _:
+                validated_value: t.JsonValue = t.json_value_adapter().validate_python(
+                    value_or_entries,
+                )
+                result = FlextLdifUtilitiesValidation.validate_value(
+                    validated_value,
+                    *validators,
+                )
+        return result
 
     @staticmethod
     def _validate_entries(

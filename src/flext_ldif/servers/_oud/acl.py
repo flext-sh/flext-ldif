@@ -300,46 +300,45 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     ) -> tuple[str | None, str, str]:
         """Extract metadata and resolve subject type and value in one pass."""
         ext = acl_data.metadata.extensions if acl_data.metadata else None
-        base_dn: str | None = None
-        source_subject_type: str | None = None
-        if ext is not None:
-            base_dn_raw = ext.get("base_dn")
-            if isinstance(base_dn_raw, str):
-                base_dn = base_dn_raw
-            source_subject_type_raw = ext.get("acl_source_subject_type")
-            if isinstance(source_subject_type_raw, str):
-                source_subject_type = source_subject_type_raw
-        if source_subject_type in {"dn_attr", "guid_attr", "group_attr"}:
-            subject_type = source_subject_type
-        else:
-            subject_type = (
-                acl_data.subject.subject_type
-                if acl_data.subject
-                else source_subject_type
-            ) or "self"
-        if subject_type == "bind_rules":
-            if source_subject_type in {"dn_attr", "guid_attr", "group_attr"}:
-                subject_type = source_subject_type
-            elif source_subject_type == "group_dn" or (
-                acl_data.subject
-                and acl_data.subject.subject_value
-                and any(
-                    kw in acl_data.subject.subject_value.lower()
-                    for kw in ("group=", "groupdn")
-                )
-            ):
-                subject_type = "group"
-        subject_value: str | None = (
-            acl_data.subject.subject_value if acl_data.subject else None
+        base_dn = self._extension_get_str(ext, "base_dn")
+        source_subject_type = self._extension_get_str(ext, "acl_source_subject_type")
+        subject = acl_data.subject
+        attr_subject_types = {"dn_attr", "guid_attr", "group_attr"}
+        subject_type = (
+            source_subject_type
+            if source_subject_type in attr_subject_types
+            else (subject.subject_type if subject else source_subject_type)
+        ) or "self"
+        if subject_type == FlextLdifServersOudConstants.ACL_SUBJECT_TYPE_BIND_RULES:
+            subject_value_lower = (
+                (subject.subject_value or "").lower() if subject else ""
+            )
+            source_subject_type_normalized = source_subject_type or ""
+            match source_subject_type_normalized:
+                case "dn_attr" | "guid_attr" | "group_attr":
+                    subject_type = source_subject_type_normalized
+                case "group_dn":
+                    subject_type = "group"
+                case _ if (
+                    "group=" in subject_value_lower
+                    or FlextLdifServersOudConstants.ACL_BIND_RULE_TYPE_GROUPDN
+                    in subject_value_lower
+                ):
+                    subject_type = "group"
+                case _:
+                    pass
+        subject_value = (
+            subject.subject_value if subject else None
+        ) or self._extension_get_str(
+            ext,
+            "acl_original_subject_value",
         )
-        if not subject_value and ext is not None:
-            subject_value_raw = ext.get("acl_original_subject_value")
-            if isinstance(subject_value_raw, str):
-                subject_value = subject_value_raw
-        if not subject_value and subject_type == "self":
-            subject_value = FlextLdifServersOudConstants.ACL_SELF_SUBJECT
         if not subject_value:
-            subject_value = ""
+            subject_value = (
+                FlextLdifServersOudConstants.ACL_SELF_SUBJECT
+                if subject_type == "self"
+                else ""
+            )
         return (base_dn, subject_type, subject_value)
 
     def _finalize_aci(
