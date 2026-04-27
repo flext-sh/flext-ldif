@@ -11,7 +11,6 @@ from typing import Annotated, ClassVar, Self
 from flext_core import s
 from flext_ldif import (
     FlextLdifServerMethodsMixin,
-    FlextLdifServersBaseConstants,
     c,
     m,
     p,
@@ -63,7 +62,7 @@ class FlextLdifServersBaseSchemaAcl(
             object.__setattr__(self, "_parent_quirk", _parent_quirk)
 
     RFC_ACL_ATTRIBUTES: ClassVar[tuple[str, ...]] = (
-        FlextLdifServersBaseConstants.RFC_ACL_ATTRIBUTES
+        c.Ldif.RFC_ACL_ATTRIBUTES
     )
 
     def resolve_acl_attributes(self) -> MutableSequence[str]:

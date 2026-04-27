@@ -29,7 +29,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         arbitrary_types_allowed=True,
         extra="forbid",
     )
-    server_type: ClassVar[str] = c.Ldif.EntryDefaults.UNKNOWN_VALUE
+    server_type: ClassVar[str] = c.Ldif.UNKNOWN_VALUE
     priority: ClassVar[int] = 0
 
     def __init__(self, **kwargs: t.Ldif.Scalar) -> None:

@@ -340,11 +340,8 @@ class FlextLdifConstants(FlextCliConstants):
             "389directory": FlextLdifConstantsEnums.ServerTypes.DS389,
         })
 
-        class EntryDefaults:
-            """Entry processing default values (RFC 2849 LDIF domain)."""
-
-            UNKNOWN_VALUE = "unknown"
-            ASCII_THRESHOLD = 127
+        UNKNOWN_VALUE: Final[str] = "unknown"
+        ASCII_THRESHOLD: Final[int] = 127
 
         class OperationalAttributes:
             """Operational attributes to ignore in LDIF entry processing."""

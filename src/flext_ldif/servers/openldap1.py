@@ -18,15 +18,27 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for OpenLDAP 1.x quirk."""
 
-        SERVER_TYPE: ClassVar[str] = "openldap1"
+        SERVER_TYPE: ClassVar[str] = c.Ldif.ServerTypes.OPENLDAP1
         PRIORITY: ClassVar[int] = 10
         DEFAULT_PORT: ClassVar[int] = c.LDAP_PORT
         DEFAULT_SSL_PORT: ClassVar[int] = c.LDAPS_PORT
         DEFAULT_PAGE_SIZE: ClassVar[int] = 1000
-        CANONICAL_NAME: ClassVar[str] = "openldap1"
-        ALIASES: ClassVar[frozenset[str]] = frozenset(["openldap1"])
-        CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["openldap1"])
-        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["openldap1", "rfc"])
+        CANONICAL_NAME: ClassVar[str] = c.Ldif.ServerTypes.OPENLDAP1
+        ALIASES: ClassVar[frozenset[str]] = frozenset({
+            c.Ldif.ServerTypes.OPENLDAP1,
+            *(
+                alias
+                for alias, server_type in c.Ldif.SERVER_TYPE_ALIASES.items()
+                if server_type == c.Ldif.ServerTypes.OPENLDAP1
+            ),
+        })
+        CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset({
+            c.Ldif.ServerTypes.OPENLDAP1,
+        })
+        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset({
+            c.Ldif.ServerTypes.OPENLDAP1,
+            c.Ldif.ServerTypes.RFC,
+        })
         ACL_FORMAT: ClassVar[str] = "access"
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "access"
         ACL_PERMISSION_AUTH: ClassVar[str] = "auth"
@@ -133,7 +145,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             result = super()._parse_attribute(stripped)
             if result.success:
                 attr_data = result.value
-                metadata = m.Ldif.QuirkMetadata.create_for("openldap1")
+                metadata = m.Ldif.QuirkMetadata.create_for(
+                    FlextLdifServersOpenldap1.Constants.SERVER_TYPE,
+                )
                 return r[m.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata}),
                 )
@@ -150,7 +164,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             result = super()._parse_objectclass(stripped)
             if result.success:
                 oc_data = result.value
-                metadata = m.Ldif.QuirkMetadata.create_for("openldap1")
+                metadata = m.Ldif.QuirkMetadata.create_for(
+                    FlextLdifServersOpenldap1.Constants.SERVER_TYPE,
+                )
                 return r[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata}),
                 )

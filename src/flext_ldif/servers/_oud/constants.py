@@ -11,16 +11,29 @@ from flext_ldif import FlextLdifServersRfc, c, t
 class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     """Oracle Unified Directory-specific constants using Python 3.13 patterns."""
 
-    SERVER_TYPE: ClassVar[str] = c.Ldif.ServerTypes.OUD.value
+    SERVER_TYPE: ClassVar[str] = c.Ldif.ServerTypes.OUD
     PRIORITY: ClassVar[int] = 10
     DEFAULT_PORT: ClassVar[int] = 1389
     DEFAULT_SSL_PORT: ClassVar[int] = 1636
     DEFAULT_PAGE_SIZE: ClassVar[int] = 1000
     MAX_LOG_LINE_LENGTH: ClassVar[int] = 200
-    CANONICAL_NAME: ClassVar[str] = c.Ldif.ServerTypes.OUD.value
-    ALIASES: ClassVar[frozenset[str]] = frozenset(["oud", "oracle_oud"])
-    CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["oud", "rfc"])
-    CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["oud", "rfc"])
+    CANONICAL_NAME: ClassVar[str] = c.Ldif.ServerTypes.OUD
+    ALIASES: ClassVar[frozenset[str]] = frozenset({
+        c.Ldif.ServerTypes.OUD,
+        *(
+            alias
+            for alias, server_type in c.Ldif.SERVER_TYPE_ALIASES.items()
+            if server_type == c.Ldif.ServerTypes.OUD
+        ),
+    })
+    CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset({
+        c.Ldif.ServerTypes.OUD,
+        c.Ldif.ServerTypes.RFC,
+    })
+    CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset({
+        c.Ldif.ServerTypes.OUD,
+        c.Ldif.ServerTypes.RFC,
+    })
     ACL_FORMAT: ClassVar[str] = "aci"
     ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"
     PERMISSION_SELFWRITE: ClassVar[str] = "selfwrite"

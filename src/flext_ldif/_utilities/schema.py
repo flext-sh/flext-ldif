@@ -873,7 +873,7 @@ class FlextLdifUtilitiesSchema:
     def normalize_matching_rules(
         equality: str | None,
         substr: str | None = None,
-        **kwargs: t.MutableStrMapping | None,
+        **kwargs: t.StrMapping | None,
     ) -> tuple[str | None, str | None]:
         """Normalize EQUALITY and SUBSTR matching rules."""
         replacements = kwargs.get("replacements")
@@ -926,7 +926,7 @@ class FlextLdifUtilitiesSchema:
     def normalize_syntax_oid(
         syntax: str | None,
         *,
-        replacements: t.MutableStrMapping | None = None,
+        replacements: t.StrMapping | None = None,
     ) -> str | None:
         """Normalize SYNTAX OID field."""
         if not syntax:
@@ -1048,7 +1048,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def replace_invalid_substr_rule(
         substr: str | None,
-        invalid_rules: t.MutableOptionalStrMapping,
+        invalid_rules: t.OptionalStrMapping,
     ) -> str | None:
         """Replace invalid SUBSTR rule with valid replacement."""
         if not substr or not invalid_rules:

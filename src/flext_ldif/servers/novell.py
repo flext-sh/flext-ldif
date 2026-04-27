@@ -80,7 +80,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = "NAME\\s+\\(?\\s*'([^']+)'"
         ACL_DEFAULT_SUBJECT_TYPE: ClassVar[str] = "trustee"
         ACL_DEFAULT_SUBJECT_VALUE_UNKNOWN: ClassVar[str] = (
-            c.Ldif.EntryDefaults.UNKNOWN_VALUE
+            c.Ldif.UNKNOWN_VALUE
         )
         ACL_ATTRIBUTE_NAME_WRITE: ClassVar[str] = "acl"
         ACL_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
