@@ -1,0 +1,14 @@
+tests/unit/servers/test_relaxed_quirks.py
+  h_9db9d35f50cf33 254,256-259,263-265,268,272-273,275,278,280-281
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "c449c4f08aac6b2f39d9eae180da50b0711690a3",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
