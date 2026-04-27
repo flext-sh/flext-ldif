@@ -1,0 +1,16 @@
+src/flext_ldif/servers/_oud/acl.py
+  h_9db9d35f50cf33 303-309,311-320,322-326,329-333
+src/flext_ldif/_utilities/dispatch.py
+  h_9db9d35f50cf33 178-191,197-221
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "952c60f2e6a962e44d914bdcffc8f8c195f1cfad",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
