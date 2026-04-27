@@ -251,42 +251,34 @@ class TestsTestFlextLdifRelaxedQuirks:
         )
 
     @pytest.mark.parametrize(
-        ("parse_type", "input_without_oid"),
-        [("attribute", "( \x00 )"), ("objectclass", "( \x00 )")],
-        ids=["attribute_no_oid", "objectclass_no_oid"],
+        ("parse_type", "definition", "expected_success"),
+        [
+            ("attribute", "( \x00 )", False),
+            ("objectclass", "( \x00 )", False),
+            ("attribute", "( 1.2.3.4 \x00 )", True),
+            ("objectclass", "( 1.2.3.4 \x00 )", True),
+        ],
+        ids=[
+            "attribute_no_oid",
+            "objectclass_no_oid",
+            "attribute_with_oid",
+            "objectclass_with_oid",
+        ],
     )
-    def test_fallback_fails_without_oid(
+    def test_fallback_behavior_depends_on_oid_presence(
         self,
         schema_quirk: FlextLdifServersRelaxed.Schema,
         parse_type: str,
-        input_without_oid: str,
+        definition: str,
+        expected_success: bool,
     ) -> None:
-        """Test parsing fails without OID even in relaxed mode."""
+        """Test relaxed fallback requires an OID to recover binary definitions."""
         result: p.Result[m.Ldif.SchemaAttribute] | r[m.Ldif.SchemaObjectClass]
         if parse_type == "attribute":
-            result = schema_quirk.parse_attribute(input_without_oid)
+            result = schema_quirk.parse_attribute(definition)
         else:
-            result = schema_quirk.parse_objectclass(input_without_oid)
-        tm.that(result.failure, eq=True)
-
-    @pytest.mark.parametrize(
-        ("parse_type", "input_with_oid"),
-        [("attribute", "( 1.2.3.4 \x00 )"), ("objectclass", "( 1.2.3.4 \x00 )")],
-        ids=["attribute_with_oid", "objectclass_with_oid"],
-    )
-    def test_fallback_succeeds_with_oid(
-        self,
-        schema_quirk: FlextLdifServersRelaxed.Schema,
-        parse_type: str,
-        input_with_oid: str,
-    ) -> None:
-        """Test parsing succeeds with OID even with binary data."""
-        result: p.Result[m.Ldif.SchemaAttribute] | r[m.Ldif.SchemaObjectClass]
-        if parse_type == "attribute":
-            result = schema_quirk.parse_attribute(input_with_oid)
-        else:
-            result = schema_quirk.parse_objectclass(input_with_oid)
-        tm.that(result.success, eq=True)
+            result = schema_quirk.parse_objectclass(definition)
+        tm.that(result.success, eq=expected_success)
 
     def test_relaxed_mode_integration(
         self,
