@@ -11,7 +11,7 @@ from collections.abc import (
     MutableMapping,
     MutableSequence,
 )
-from typing import Annotated, override
+from typing import Annotated, ClassVar, override
 
 from flext_cli import m, u
 from flext_ldif import (
@@ -23,7 +23,9 @@ from flext_ldif import (
 
 class FlextLdifModelsCollections:
     class DynamicCounts(m.DynamicModel):
-        model_config = m.ConfigDict(extra="allow", validate_assignment=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+            extra="allow", validate_assignment=True
+        )
 
         @override
         def __eq__(self, other: object) -> bool:
