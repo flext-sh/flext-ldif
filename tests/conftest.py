@@ -18,6 +18,7 @@ from collections.abc import (
 from pathlib import Path
 
 import pytest
+from ldap3 import Connection
 
 from flext_ldif import (
     FlextLdif,
@@ -544,7 +545,7 @@ def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
 @pytest.fixture
 def ldap_connection(
     ldap_container: t.JsonMapping,
-) -> Generator[p.Ldap.Ldap3Connection]:
+) -> Generator[Connection]:
     """Provide a bound LDAP connection or skip when unavailable."""
     server_url = str(
         ldap_container.get(
@@ -581,12 +582,16 @@ def ldap_connection(
 
 @pytest.fixture
 def clean_test_ou(
-    ldap_connection: p.Ldap.Ldap3Connection,
+    ldap_connection: Connection,
     make_test_base_dn: Callable[[str], str],
 ) -> Generator[str]:
     """Create and clean up an isolated OU for integration tests."""
     test_ou_dn = make_test_base_dn("FlextLdifTests")
-    ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
+    ldap_connection.search(
+        test_ou_dn,
+        "(objectClass=*)",
+        search_scope=c.Ldap.Ldap3SearchScope.SUBTREE.value,
+    )
     entries: Sequence[p.Ldap.Ldap3Entry] = list(ldap_connection.entries)
     if entries:
         dns_to_delete: t.StrSequence = [str(entry.entry_dn) for entry in entries]
@@ -598,7 +603,11 @@ def clean_test_ou(
         {"ou": "FlextLdifTests"},
     )
     yield test_ou_dn
-    ldap_connection.search(test_ou_dn, "(objectClass=*)", search_scope="SUBTREE")
+    ldap_connection.search(
+        test_ou_dn,
+        "(objectClass=*)",
+        search_scope=c.Ldap.Ldap3SearchScope.SUBTREE.value,
+    )
     entries2: Sequence[p.Ldap.Ldap3Entry] = list(ldap_connection.entries)
     if entries2:
         dns_to_delete2: t.StrSequence = [str(entry.entry_dn) for entry in entries2]

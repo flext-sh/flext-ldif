@@ -26,9 +26,10 @@ from collections.abc import (
 from pathlib import Path
 
 import pytest
+from ldap3 import Connection
 
 from flext_ldif import FlextLdif, ldif
-from tests import m, p, t, u
+from tests import c, m, t, u
 
 
 @pytest.fixture
@@ -45,7 +46,7 @@ class TestsFlextLdifRealLdapCrud:
 
     def test_complete_crud_cycle(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: Connection,
         clean_test_ou: str,
         make_test_username: Callable[[str], str],
     ) -> None:
@@ -92,7 +93,7 @@ class TestsFlextLdifRealLdapCrud:
         result = ldap_connection.search(
             str(person_entry.dn),
             "(objectClass=*)",
-            search_scope="BASE",
+            search_scope=c.Ldap.Ldap3SearchScope.BASE.value,
         )
         assert not result or not ldap_connection.entries
 
@@ -100,7 +101,7 @@ class TestsFlextLdifRealLdapCrud:
 
     def test_batch_entry_creation_via_api(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: Connection,
         clean_test_ou: str,
         flext_api: FlextLdif,
         make_test_username: Callable[[str], str],
@@ -146,7 +147,7 @@ class TestsFlextLdifRealLdapCrud:
 
     def test_batch_ldif_export_import(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: Connection,
         clean_test_ou: str,
         flext_api: FlextLdif,
         tmp_path: Path,
@@ -168,7 +169,7 @@ class TestsFlextLdifRealLdapCrud:
         ldap_connection.search(
             clean_test_ou,
             "(objectClass=person)",
-            search_scope="SUBTREE",
+            search_scope=c.Ldap.Ldap3SearchScope.SUBTREE.value,
             attributes=["*"],
         )
         actual_count = len(ldap_connection.entries)

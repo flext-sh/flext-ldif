@@ -26,9 +26,10 @@ from collections.abc import (
 from pathlib import Path
 
 import pytest
+from ldap3 import Connection
 
 from flext_ldif import FlextLdif, ldif
-from tests import p, t, u
+from tests import c, t, u
 
 
 @pytest.fixture
@@ -45,7 +46,7 @@ class TestsFlextLdifRealLdapImport:
 
     def test_import_single_entry(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: Connection,
         clean_test_ou: str,
         flext_api: FlextLdif,
         make_test_username: Callable[[str], str],
@@ -77,7 +78,7 @@ class TestsFlextLdifRealLdapImport:
         assert ldap_connection.search(
             str(entry.dn),
             "(objectClass=*)",
-            search_scope="BASE",
+            search_scope=c.Ldap.Ldap3SearchScope.BASE.value,
             attributes=["*"],
         )
         imported_entry = ldap_connection.entries[0]
@@ -86,7 +87,7 @@ class TestsFlextLdifRealLdapImport:
 
     def test_import_with_binary_attributes(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: Connection,
         clean_test_ou: str,
         flext_api: FlextLdif,
         make_test_username: Callable[[str], str],
@@ -117,7 +118,7 @@ class TestsFlextLdifRealLdapImport:
         assert ldap_connection.search(
             str(entry.dn),
             "(objectClass=*)",
-            search_scope="BASE",
+            search_scope=c.Ldap.Ldap3SearchScope.BASE.value,
             attributes=["*"],
         )
         imported_entry = ldap_connection.entries[0]
@@ -125,7 +126,7 @@ class TestsFlextLdifRealLdapImport:
 
     def test_import_from_file(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: Connection,
         clean_test_ou: str,
         flext_api: FlextLdif,
         tmp_path: Path,
@@ -160,7 +161,7 @@ class TestsFlextLdifRealLdapImport:
         assert ldap_connection.search(
             str(entry.dn),
             "(objectClass=*)",
-            search_scope="BASE",
+            search_scope=c.Ldap.Ldap3SearchScope.BASE.value,
             attributes=["*"],
         )
         imported = ldap_connection.entries[0]

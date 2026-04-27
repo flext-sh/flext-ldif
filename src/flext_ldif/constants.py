@@ -61,6 +61,14 @@ class FlextLdifConstants(FlextCliConstants):
             "olcAccess",
         )
 
+        RFC_ACL_ATTRIBUTES: Final[tuple[str, ...]] = (
+            "aci",
+            "acl",
+            "olcAccess",
+            "aclRights",
+            "aclEntry",
+        )
+
         ALL_DN_VALUED: Final[frozenset[str]] = frozenset({
             "member",
             "uniqueMember",

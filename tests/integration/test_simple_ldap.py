@@ -6,14 +6,16 @@ from collections.abc import (
     Callable,
 )
 
+from ldap3 import Connection
+
 from flext_ldif import ldif
-from tests import m, p, t
+from tests import c, m, t
 
 
 class TestsFlextLdifSimpleLdap:
     """Behavior contract for test_simple_ldap."""
 
-    def test_ldap_connection(self, ldap_connection: p.Ldap.Ldap3Connection) -> None:
+    def test_ldap_connection(self, ldap_connection: Connection) -> None:
         """Test basic LDAP connection."""
         assert ldap_connection.bound
         server_info = getattr(ldap_connection.server, "info", None)
@@ -27,18 +29,22 @@ class TestsFlextLdifSimpleLdap:
 
     def test_simple_ldap_search(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: Connection,
         ldap_container: t.StrMapping,
     ) -> None:
         """Test simple LDAP search."""
         base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
-        result = ldap_connection.search(base_dn, "(objectClass=*)", search_scope="BASE")
+        result = ldap_connection.search(
+            base_dn,
+            "(objectClass=*)",
+            search_scope=c.Ldap.Ldap3SearchScope.BASE.value,
+        )
         assert result is True
         assert len(ldap_connection.entries) >= 1
 
     def test_create_and_export_entry(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: Connection,
         ldap_container: t.StrMapping,
         make_test_username: Callable[[str], str],
     ) -> None:
@@ -46,14 +52,18 @@ class TestsFlextLdifSimpleLdap:
         base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
         unique_username = make_test_username("SimpleTest")
         test_dn = f"cn={unique_username},{base_dn}"
-        ldap_connection.search(test_dn, "(objectClass=*)", search_scope="BASE")
+        ldap_connection.search(
+            test_dn,
+            "(objectClass=*)",
+            search_scope=c.Ldap.Ldap3SearchScope.BASE.value,
+        )
         if ldap_connection.entries:
             ldap_connection.delete(test_dn)
         ldap_connection.add(test_dn, ["person"], {"cn": unique_username, "sn": "Test"})
         ldap_connection.search(
             test_dn,
             "(objectClass=*)",
-            search_scope="BASE",
+            search_scope=c.Ldap.Ldap3SearchScope.BASE.value,
             attributes=["*"],
         )
         assert len(ldap_connection.entries) == 1

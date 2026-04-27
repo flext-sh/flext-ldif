@@ -14,6 +14,7 @@ from typing import ClassVar
 
 from flext_ldap import u
 from flext_tests import FlextTestsUtilities, tk
+from ldap3 import Connection
 
 from tests import c, m, p, t
 
@@ -49,7 +50,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             def create_server_from_url(
                 server_url: str,
                 *,
-                get_info: t.Ldap.Ldap3GetInfo = "ALL",
+                get_info: t.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
             ) -> p.Ldap.Ldap3Server:
                 """Create an LDAP server from a URL for test connectivity checks."""
                 return u.Ldap.create_server_from_url(server_url, get_info=get_info)
@@ -59,7 +60,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 host: str,
                 *,
                 port: int = c.Ldif.Tests.DOCKER_PORT,
-                get_info: t.Ldap.Ldap3GetInfo = "NO_INFO",
+                get_info: t.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.NO_INFO,
             ) -> p.Ldap.Ldap3Server:
                 """Create a minimal LDAP server for connectivity checks."""
                 return u.Ldap.create_server_from_url(
@@ -75,7 +76,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 password: str,
                 auto_bind: bool = True,
                 receive_timeout: int | None = None,
-            ) -> p.Ldap.Ldap3Connection:
+            ) -> Connection:
                 """Create an LDAP connection for test workflows."""
                 if receive_timeout is None:
                     return u.Ldap.create_connection(
@@ -329,7 +330,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                         server = cls.create_bare_server(
                             "localhost",
                             port=c.Ldif.Tests.DOCKER_PORT,
-                            get_info="NO_INFO",
+                            get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
                         )
                         connection = cls.create_connection(
                             server,

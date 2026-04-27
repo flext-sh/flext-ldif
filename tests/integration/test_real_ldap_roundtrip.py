@@ -23,9 +23,10 @@ from collections.abc import (
 )
 
 import pytest
+from ldap3 import Connection
 
 from flext_ldif import FlextLdif, ldif
-from tests import m, p, t, u
+from tests import m, t, u
 
 
 @pytest.fixture
@@ -42,7 +43,7 @@ class TestsFlextLdifRealLdapRoundtrip:
 
     def test_roundtrip_preserves_data(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: Connection,
         clean_test_ou: str,
         flext_api: FlextLdif,
         make_test_username: Callable[[str], str],

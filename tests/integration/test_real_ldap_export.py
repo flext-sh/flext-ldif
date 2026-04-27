@@ -24,9 +24,10 @@ from pathlib import Path
 
 import pytest
 from flext_ldap import FlextLdapEntryAdapter
+from ldap3 import Connection
 
 from flext_ldif import FlextLdif, ldif
-from tests import m, p
+from tests import c, m
 
 
 @pytest.fixture
@@ -43,7 +44,7 @@ class TestsFlextLdifRealLdapExport:
 
     def test_export_single_entry(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: Connection,
         clean_test_ou: str,
         flext_api: FlextLdif,
         make_test_username: Callable[[str], str],
@@ -82,7 +83,7 @@ class TestsFlextLdifRealLdapExport:
 
     def test_export_multiple_entries(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: Connection,
         clean_test_ou: str,
         flext_api: FlextLdif,
         make_test_username: Callable[[str], str],
@@ -117,7 +118,7 @@ class TestsFlextLdifRealLdapExport:
 
     def test_export_hierarchical_structure(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: Connection,
         clean_test_ou: str,
         flext_api: FlextLdif,
         make_test_username: Callable[[str], str],
@@ -144,7 +145,7 @@ class TestsFlextLdifRealLdapExport:
         ldap_connection.search(
             clean_test_ou,
             "(objectClass=*)",
-            search_scope="SUBTREE",
+            search_scope=c.Ldap.Ldap3SearchScope.SUBTREE.value,
             attributes=["*"],
         )
         adapter = FlextLdapEntryAdapter()
@@ -164,7 +165,7 @@ class TestsFlextLdifRealLdapExport:
 
     def test_export_to_file(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: Connection,
         clean_test_ou: str,
         flext_api: FlextLdif,
         tmp_path: Path,
