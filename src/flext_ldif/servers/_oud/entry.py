@@ -1861,60 +1861,58 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             uniquemember: cn = user1
 
         """
-        if not (entry_data.metadata and entry_data.metadata.extensions):
+        metadata = entry_data.metadata
+        if metadata is None or not metadata.extensions:
             return entry_data
-        ext = entry_data.metadata.extensions
+        ext = metadata.extensions
         mk = c.Ldif
         original_dn_value = ext.get(mk.ORIGINAL_DN_COMPLETE)
-        if isinstance(original_dn_value, str) and entry_data.dn:
-            dn_diff_raw = ext.get(mk.MINIMAL_DIFFERENCES_DN, {})
-            if isinstance(dn_diff_raw, Mapping):
-                has_diff = bool(dn_diff_raw.get(mk.HAS_DIFFERENCES, False))
-                if has_diff:
-                    entry_data = entry_data.model_copy(
-                        update={"dn": m.Ldif.DN(value=original_dn_value)},
-                    )
-        original_case_map_raw = (
-            entry_data.metadata.original_attribute_case if entry_data.metadata else None
+        dn_diff_raw = ext.get(mk.MINIMAL_DIFFERENCES_DN, {})
+        should_restore_dn = (
+            isinstance(original_dn_value, str)
+            and entry_data.dn is not None
+            and isinstance(dn_diff_raw, Mapping)
+            and bool(dn_diff_raw.get(mk.HAS_DIFFERENCES, False))
         )
-        original_attributes_raw = ext.get(
-            c.Ldif.ORIGINAL_ATTRIBUTES_COMPLETE,
+        restored_entry = (
+            entry_data.model_copy(
+                update={"dn": m.Ldif.DN(value=original_dn_value)},
+            )
+            if should_restore_dn
+            else entry_data
         )
-        if (
-            entry_data.attributes
-            and isinstance(original_case_map_raw, Mapping)
-            and isinstance(original_attributes_raw, Mapping)
-        ):
-            restored: t.MutableStrSequenceMapping = {}
-            for attr_name, attr_values in entry_data.attributes.attributes.items():
-                orig_case_raw = original_case_map_raw.get(attr_name.lower(), attr_name)
-                orig_case: str = (
-                    orig_case_raw if isinstance(orig_case_raw, str) else attr_name
-                )
-                if orig_case in original_attributes_raw:
-                    val = original_attributes_raw[orig_case]
-                    restored[orig_case] = (
-                        [str(i) for i in val]
-                        if isinstance(val, (list, tuple))
-                        else [str(val)]
-                    )
-                else:
-                    restored[orig_case] = (
-                        [str(i) for i in attr_values]
-                        if attr_values
-                        else [str(attr_values)]
-                    )
-            if restored:
-                entry_data = entry_data.model_copy(
-                    update={
-                        "attributes": m.Ldif.Attributes.model_validate({
-                            "attributes": restored,
-                            "attribute_metadata": entry_data.attributes.attribute_metadata,
-                            "metadata": entry_data.attributes.metadata,
-                        }),
-                    },
-                )
-        return entry_data
+
+        attributes = restored_entry.attributes
+        original_case_map = metadata.original_attribute_case
+        original_attributes_raw = ext.get(c.Ldif.ORIGINAL_ATTRIBUTES_COMPLETE)
+        if attributes is None or not isinstance(original_attributes_raw, Mapping):
+            return restored_entry
+
+        missing = object()
+        restored: t.MutableStrSequenceMapping = {}
+        for attr_name, attr_values in attributes.attributes.items():
+            orig_case_raw = original_case_map.get(attr_name.lower(), attr_name)
+            orig_case = orig_case_raw if isinstance(orig_case_raw, str) else attr_name
+            fallback_values = [str(item) for item in attr_values or [attr_values]]
+            original_value = original_attributes_raw.get(orig_case, missing)
+            restored_values = (
+                [str(item) for item in original_value]
+                if isinstance(original_value, (list, tuple))
+                else [str(original_value)]
+                if original_value is not missing
+                else fallback_values
+            )
+            restored[orig_case] = restored_values
+        restored_copy: m.Ldif.Entry = restored_entry.model_copy(
+            update={
+                "attributes": m.Ldif.Attributes.model_validate({
+                    "attributes": restored,
+                    "attribute_metadata": attributes.attribute_metadata,
+                    "metadata": attributes.metadata,
+                }),
+            },
+        )
+        return restored_copy
 
     def _validate_aci_macros(self, _aci_value: str) -> r[bool]:
         """Validate OUD ACI macro consistency rules (no-op)."""

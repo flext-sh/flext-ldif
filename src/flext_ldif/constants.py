@@ -19,9 +19,22 @@ class FlextLdifConstants(FlextCliConstants):
     class Ldif(FlextLdifConstantsBase, FlextLdifConstantsEnums):
         """LDIF domain constants namespace."""
 
-        BINARY_ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset(
-            attribute.value for attribute in FlextLdifConstantsEnums.BinaryAttribute
-        )
+        BINARY_ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset({
+            "usercertificate",
+            "cacertificate",
+            "certificaterevocationlist",
+            "authorityrevocationlist",
+            "crosscertificatepair",
+            "photo",
+            "jpegphoto",
+            "audio",
+            "userpkcs12",
+            "usersmimecertificate",
+            "thumbnailphoto",
+            "thumbnaillogo",
+            "objectguid",
+            "objectsid",
+        })
 
         OBJECTCLASS_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset({
             FlextLdifConstantsEnums.ServerTypes.OID.value,
@@ -48,9 +61,22 @@ class FlextLdifConstants(FlextCliConstants):
             "olcAccess",
         )
 
-        ALL_DN_VALUED: Final[frozenset[str]] = frozenset(
-            attribute.value for attribute in FlextLdifConstantsEnums.DnValuedAttribute
-        )
+        ALL_DN_VALUED: Final[frozenset[str]] = frozenset({
+            "member",
+            "uniqueMember",
+            "owner",
+            "managedBy",
+            "manager",
+            "secretary",
+            "seeAlso",
+            "parent",
+            "refersTo",
+            "memberOf",
+            "groups",
+            "authorizedTo",
+            "hasSubordinates",
+            "subordinateDn",
+        })
 
         OID_TRUE: Final[str] = "1"
         OID_FALSE: Final[str] = "0"
@@ -286,11 +312,8 @@ class FlextLdifConstants(FlextCliConstants):
             UPPER = "upper"
             ORIGINAL = "original"
 
-        class SettingsDefaults:
-            """LDIF settings default values."""
-
-            DEFAULT_ENCODING: Final[str] = "utf-8"
-            DEFAULT_STRICT_VALIDATION: Final[bool] = True
+        DEFAULT_ENCODING: Final[str] = FlextLdifConstantsEnums.Encoding.UTF8.value
+        DEFAULT_STRICT_VALIDATION: Final[bool] = True
 
         SERVER_TYPE_ALIASES: Final[
             Mapping[str, FlextLdifConstantsEnums.ServerTypes]

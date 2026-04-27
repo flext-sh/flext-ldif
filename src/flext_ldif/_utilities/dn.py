@@ -619,59 +619,40 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def norm(dn: str | m.Ldif.DN | None) -> r[str]:
         """Normalize DN per RFC 4514 (lowercase attrs, preserve values)."""
-        if dn is None:
-            return r[str].fail("DN cannot be None")
-        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
-        if not dn_str or "=" not in dn_str:
-            error_msg = (
-                "Failed to normalize DN: DN string is empty"
-                if not dn_str
-                else f"Failed to normalize DN: Invalid DN format: missing '=' separator in '{dn_str}'"
-            )
-            return r[str].fail(error_msg)
-        try:
-            components = FlextLdifUtilitiesDN.split(dn_str)
-
-            def normalize_component(comp: str) -> str | None:
-                """Normalize single component."""
-                if "=" not in comp:
-                    return None
-                attr, _, value = comp.partition("=")
-                return f"{attr.strip().lower()}={value.strip()}"
-
-            process_result = u.process(
-                components,
-                processor=normalize_component,
-                predicate=lambda comp: "=" in comp,
-                on_error="skip",
-            )
-            if process_result.failure:
-                return r[str].fail(
-                    f"Failed to normalize DN: no valid components in '{dn_str}'",
+        result = r[str].fail("DN cannot be None")
+        if dn is not None:
+            dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
+            if not dn_str or "=" not in dn_str:
+                error_msg = (
+                    "Failed to normalize DN: DN string is empty"
+                    if not dn_str
+                    else f"Failed to normalize DN: Invalid DN format: missing '=' separator in '{dn_str}'"
                 )
-            normalized_list = process_result.value
-            filtered_str = u.filter(
-                normalized_list,
-                predicate=lambda x: isinstance(x, str),
-            )
-            normalized: MutableSequence[str] = [
-                str(item) for item in filtered_str if item is not None
-            ]
-            return (
-                r[str].ok(",".join(normalized))
-                if normalized
-                else r[str].fail(
-                    f"Failed to normalize DN: no valid components in '{dn_str}'",
-                )
-            )
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            return r[str].fail(f"DN normalization error: {e}")
+                result = r[str].fail(error_msg)
+            else:
+                try:
+                    normalized: MutableSequence[str] = [
+                        f"{attr.strip().lower()}={value.strip()}"
+                        for component in FlextLdifUtilitiesDN.split(dn_str)
+                        if "=" in component
+                        for attr, _, value in [component.partition("=")]
+                    ]
+                    result = (
+                        r[str].ok(",".join(normalized))
+                        if normalized
+                        else r[str].fail(
+                            f"Failed to normalize DN: no valid components in '{dn_str}'",
+                        )
+                    )
+                except (
+                    ValueError,
+                    KeyError,
+                    AttributeError,
+                    UnicodeDecodeError,
+                    struct.error,
+                ) as e:
+                    result = r[str].fail(f"DN normalization error: {e}")
+        return result
 
     @staticmethod
     def norm_or_fallback(
@@ -735,106 +716,107 @@ class FlextLdifUtilitiesDN:
         dn: str | m.Ldif.DN | None,
     ) -> r[MutableSequence[tuple[str, str]]]:
         """Parse DN into RFC 4514 components (attr, value pairs)."""
-        if dn is None:
-            return r[MutableSequence[tuple[str, str]]].fail("DN cannot be None")
-        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
-        if not dn_str or "=" not in dn_str:
-            error_msg = (
-                "DN string is empty"
-                if not dn_str
-                else f"Invalid DN format: missing '=' separator in '{dn_str}'"
-            )
-            return r[MutableSequence[tuple[str, str]]].fail(error_msg)
-        try:
-            components = FlextLdifUtilitiesDN.split(dn_str)
-
-            def parse_component(comp: str) -> tuple[str, str] | None:
-                """Parse single component into (attr, value) tuple."""
-                if "=" not in comp:
-                    return None
-                attr, _, value = comp.partition("=")
-                return (attr.strip(), value.strip())
-
-            result = [
-                parsed
-                for comp in components
-                if "=" in comp
-                for parsed in [parse_component(comp)]
-                if parsed is not None
-            ]
-            return (
-                r[MutableSequence[tuple[str, str]]].ok(result)
-                if result
-                else r[MutableSequence[tuple[str, str]]].fail(
-                    f"Failed to parse DN components from '{dn_str}'",
+        result = r[MutableSequence[tuple[str, str]]].fail("DN cannot be None")
+        if dn is not None:
+            dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
+            if not dn_str or "=" not in dn_str:
+                error_msg = (
+                    "DN string is empty"
+                    if not dn_str
+                    else f"Invalid DN format: missing '=' separator in '{dn_str}'"
                 )
-            )
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            return r[MutableSequence[tuple[str, str]]].fail(f"DN parsing error: {e}")
+                result = r[MutableSequence[tuple[str, str]]].fail(error_msg)
+            else:
+                try:
+                    parsed_pairs: MutableSequence[tuple[str, str]] = []
+                    failure_message: str | None = None
+                    for component in FlextLdifUtilitiesDN.split(dn_str):
+                        parsed_component = FlextLdifUtilitiesDN.parse_rdn(component)
+                        if parsed_component.failure:
+                            failure_message = str(parsed_component.error)
+                            break
+                        parsed_pairs.extend(parsed_component.value)
+                    if failure_message is None and parsed_pairs:
+                        result = r[MutableSequence[tuple[str, str]]].ok(parsed_pairs)
+                    else:
+                        result = r[MutableSequence[tuple[str, str]]].fail(
+                            failure_message
+                            or f"Failed to parse DN components from '{dn_str}'",
+                        )
+                except (
+                    ValueError,
+                    KeyError,
+                    AttributeError,
+                    UnicodeDecodeError,
+                    struct.error,
+                ) as e:
+                    result = r[MutableSequence[tuple[str, str]]].fail(
+                        f"DN parsing error: {e}",
+                    )
+        return result
 
     @staticmethod
     def parse_rdn(rdn: str) -> r[MutableSequence[tuple[str, str]]]:
         """Parse a single RDN component per RFC 4514."""
-        if not rdn:
-            return r[MutableSequence[tuple[str, str]]].fail(
-                "RDN must be a non-empty string",
-            )
-        try:
-            pairs: MutableSequence[tuple[str, str]] = []
-            current_attr = ""
-            current_val = ""
-            in_value = False
-            rdn_len: int = len(rdn)
-            position: int = 0
-            rdn_config = m.Ldif.RdnProcessingConfig()
-            rdn_config.current_attr = current_attr
-            rdn_config.current_val = current_val
-            rdn_config.in_value = in_value
-            rdn_config.pairs = pairs
-            while position < rdn_len:
-                idx: int = position
-                char_at_pos: str = rdn[idx]
-                current_attr, current_val, in_value, position = (
-                    FlextLdifUtilitiesDN._advance_rdn_position(
-                        char_at_pos,
-                        rdn,
-                        idx,
-                        rdn_config,
-                    )
-                )
+        result = r[MutableSequence[tuple[str, str]]].fail(
+            "RDN must be a non-empty string",
+        )
+        if rdn:
+            try:
+                pairs: MutableSequence[tuple[str, str]] = []
+                current_attr = ""
+                current_val = ""
+                in_value = False
+                rdn_len: int = len(rdn)
+                position: int = 0
+                error_message: str | None = None
+                rdn_config = m.Ldif.RdnProcessingConfig()
                 rdn_config.current_attr = current_attr
                 rdn_config.current_val = current_val
                 rdn_config.in_value = in_value
-                pairs = rdn_config.pairs
-                if char_at_pos == "=" and (not in_value) and (not current_attr):
-                    return r[MutableSequence[tuple[str, str]]].fail(
-                        f"Invalid RDN format: unexpected '=' at position {idx}",
+                rdn_config.pairs = pairs
+                while position < rdn_len and error_message is None:
+                    idx: int = position
+                    char_at_pos: str = rdn[idx]
+                    current_attr, current_val, in_value, position = (
+                        FlextLdifUtilitiesDN._advance_rdn_position(
+                            char_at_pos,
+                            rdn,
+                            idx,
+                            rdn_config,
+                        )
                     )
-            if not in_value or not current_attr:
-                return r[MutableSequence[tuple[str, str]]].fail(
-                    f"Invalid RDN format: missing attribute or value in '{rdn}'",
+                    rdn_config.current_attr = current_attr
+                    rdn_config.current_val = current_val
+                    rdn_config.in_value = in_value
+                    pairs = rdn_config.pairs
+                    if char_at_pos == "=" and (not in_value) and (not current_attr):
+                        error_message = (
+                            f"Invalid RDN format: unexpected '=' at position {idx}"
+                        )
+                if error_message is None and (not in_value or not current_attr):
+                    error_message = (
+                        f"Invalid RDN format: missing attribute or value in '{rdn}'"
+                    )
+                current_val = current_val.strip()
+                if error_message is None and not current_val:
+                    error_message = f"Invalid RDN format: empty value in '{rdn}'"
+                if error_message is None:
+                    pairs.append((current_attr, current_val))
+                    result = r[MutableSequence[tuple[str, str]]].ok(pairs)
+                else:
+                    result = r[MutableSequence[tuple[str, str]]].fail(error_message)
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                UnicodeDecodeError,
+                struct.error,
+            ) as e:
+                result = r[MutableSequence[tuple[str, str]]].fail(
+                    f"RDN parsing error: {e}",
                 )
-            current_val = current_val.strip()
-            if not current_val:
-                return r[MutableSequence[tuple[str, str]]].fail(
-                    f"Invalid RDN format: empty value in '{rdn}'",
-                )
-            pairs.append((current_attr, current_val))
-            return r[MutableSequence[tuple[str, str]]].ok(pairs)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            return r[MutableSequence[tuple[str, str]]].fail(f"RDN parsing error: {e}")
+        return result
 
     @overload
     @staticmethod
@@ -1029,12 +1011,12 @@ class FlextLdifUtilitiesDN:
         directory = Path(str(ldif_dir))
         transformed_files: MutableSequence[str] = []
         for ldif_file in sorted(directory.glob("*.ldif")):
-            content = ldif_file.read_text(encoding=c.DEFAULT_ENCODING)
+            content = ldif_file.read_text(encoding=c.Ldif.DEFAULT_ENCODING)
             new_content = FlextLdifUtilitiesDN._transform_ldif_content(
                 content, source_basedn, target_basedn
             )
             if new_content != content:
-                _ = ldif_file.write_text(new_content, encoding=c.DEFAULT_ENCODING)
+                _ = ldif_file.write_text(new_content, encoding=c.Ldif.DEFAULT_ENCODING)
                 transformed_files.append(ldif_file.name)
         return {
             "total_count": len(transformed_files),

@@ -5,7 +5,6 @@ from __future__ import annotations
 import struct
 import time
 from collections.abc import (
-    Callable,
     Mapping,
     MutableMapping,
     MutableSequence,
@@ -186,48 +185,6 @@ class FlextLdifConversion(
                 }
         return acc_typed
 
-    @staticmethod
-    def _apply_oid_to_oud_mapping(
-        orig_perms_dict: t.MutableBoolMapping,
-        converted_acl: m.Ldif.Acl,
-        perms_to_model: Callable[
-            [t.MutableOptionalBoolMapping],
-            m.Ldif.AclPermissions,
-        ],
-    ) -> m.Ldif.Acl:
-        """Apply OID to OUD permission mapping."""
-        mapped_perms = u.Ldif.map_oid_to_oud_permissions(orig_perms_dict)
-        oid_to_oud_perms = u.Ldif.build_mapped_permissions_dict(
-            mapped_perms,
-            {
-                key: u.Ldif.normalize_permission_key(key)
-                for key in c.Ldif.ACL_PERMISSION_KEYS
-            },
-        )
-        perms_model = perms_to_model(oid_to_oud_perms)
-        return converted_acl.model_copy(update={"permissions": perms_model}, deep=True)
-
-    @staticmethod
-    def _apply_oud_to_oid_mapping(
-        orig_perms_dict: t.MutableBoolMapping,
-        converted_acl: m.Ldif.Acl,
-        perms_to_model: Callable[
-            [t.MutableOptionalBoolMapping],
-            m.Ldif.AclPermissions,
-        ],
-    ) -> m.Ldif.Acl:
-        """Apply OUD to OID permission mapping."""
-        mapped_perms = u.Ldif.map_oud_to_oid_permissions(orig_perms_dict)
-        oud_to_oid_perms = u.Ldif.build_mapped_permissions_dict(
-            mapped_perms,
-            {
-                key: u.Ldif.normalize_permission_key(key)
-                for key in c.Ldif.ACL_PERMISSION_KEYS
-            },
-        )
-        perms_model = perms_to_model(oud_to_oid_perms)
-        return converted_acl.model_copy(update={"permissions": perms_model}, deep=True)
-
     def _convert_schema_attribute(
         self,
         source_quirk: FlextLdifServersBase,
@@ -235,12 +192,27 @@ class FlextLdifConversion(
         attribute: m.Ldif.SchemaAttribute,
     ) -> r[t.Ldif.ConvertedModel]:
         """Convert SchemaAttribute model through Entry bridge orchestration."""
+        source_schema_result = self._resolve_schema_quirk(source_quirk, role="Source")
+        if source_schema_result.failure:
+            return r[t.Ldif.ConvertedModel].fail(
+                source_schema_result.error or "Source schema not available",
+            )
+        target_schema_result = self._resolve_schema_quirk(target_quirk, role="Target")
+        if target_schema_result.failure:
+            return r[t.Ldif.ConvertedModel].fail(
+                target_schema_result.error or "Target schema not available",
+            )
+        conversion_config = (
+            m.Ldif.SchemaAttributeConversionPipelineConfig.model_validate({
+                "source_schema": source_schema_result.value,
+                "target_schema": target_schema_result.value,
+                "item": attribute,
+            })
+        )
         return self._convert_schema_model_via_entry(
             source_quirk,
             target_quirk,
-            item=attribute,
-            schema_item_kind=c.Ldif.SchemaItemKind.ATTRIBUTE,
-            item_name="attribute",
+            conversion_config=conversion_config,
         )
 
     def _convert_schema_objectclass(
@@ -250,12 +222,27 @@ class FlextLdifConversion(
         objectclass: m.Ldif.SchemaObjectClass,
     ) -> r[t.Ldif.ConvertedModel]:
         """Convert SchemaObjectClass model through Entry bridge orchestration."""
+        source_schema_result = self._resolve_schema_quirk(source_quirk, role="Source")
+        if source_schema_result.failure:
+            return r[t.Ldif.ConvertedModel].fail(
+                source_schema_result.error or "Source schema not available",
+            )
+        target_schema_result = self._resolve_schema_quirk(target_quirk, role="Target")
+        if target_schema_result.failure:
+            return r[t.Ldif.ConvertedModel].fail(
+                target_schema_result.error or "Target schema not available",
+            )
+        conversion_config = (
+            m.Ldif.SchemaObjectClassConversionPipelineConfig.model_validate({
+                "source_schema": source_schema_result.value,
+                "target_schema": target_schema_result.value,
+                "item": objectclass,
+            })
+        )
         return self._convert_schema_model_via_entry(
             source_quirk,
             target_quirk,
-            item=objectclass,
-            schema_item_kind=c.Ldif.SchemaItemKind.OBJECTCLASS,
-            item_name="objectclass",
+            conversion_config=conversion_config,
         )
 
     @staticmethod
@@ -311,94 +298,97 @@ class FlextLdifConversion(
         self,
         source_quirk: FlextLdifServersBase,
         target_quirk: FlextLdifServersBase,
-        item: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        *,
-        schema_item_kind: c.Ldif.SchemaItemKind,
-        item_name: str,
+        conversion_config: (
+            m.Ldif.SchemaAttributeConversionPipelineConfig
+            | m.Ldif.SchemaObjectClassConversionPipelineConfig
+        ),
     ) -> r[t.Ldif.ConvertedModel]:
         """Orchestrate schema conversion through m.Ldif.Entry intermediary."""
-        source_schema_result = self._resolve_schema_quirk(source_quirk, role="Source")
-        if source_schema_result.failure:
-            return r[t.Ldif.ConvertedModel].fail(
-                source_schema_result.error or "Source schema not available",
+        result = r[t.Ldif.ConvertedModel].fail(
+            f"Failed to convert {conversion_config.item_name} via Entry intermediary",
+        )
+        if isinstance(
+            conversion_config,
+            m.Ldif.SchemaAttributeConversionPipelineConfig,
+        ):
+            write_result = conversion_config.source_schema.write_attribute(
+                conversion_config.item,
             )
-        target_schema_result = self._resolve_schema_quirk(target_quirk, role="Target")
-        if target_schema_result.failure:
-            return r[t.Ldif.ConvertedModel].fail(
-                target_schema_result.error or "Target schema not available",
-            )
-        if schema_item_kind == c.Ldif.SchemaItemKind.ATTRIBUTE:
-            if not isinstance(item, m.Ldif.SchemaAttribute):
-                return r[t.Ldif.ConvertedModel].fail(
-                    "Expected SchemaAttribute in attribute conversion path",
-                )
-            write_result = source_schema_result.value.write_attribute(item)
+            field_name = c.Ldif.ATTRIBUTE_TYPES
         else:
-            if not isinstance(item, m.Ldif.SchemaObjectClass):
-                return r[t.Ldif.ConvertedModel].fail(
-                    "Expected SchemaObjectClass in objectclass conversion path",
-                )
-            write_result = source_schema_result.value.write_objectclass(item)
+            write_result = conversion_config.source_schema.write_objectclass(
+                conversion_config.item,
+            )
+            field_name = c.Ldif.OBJECT_CLASSES
         source_value_result = (
             r[str]
             .from_result(write_result)
             .map_error(
                 lambda error: (
-                    f"Failed to write {item_name} in source format: "
+                    f"Failed to write {conversion_config.item_name} in source format: "
                     f"{error or 'Unknown write error'}"
                 ),
             )
         )
-        if source_value_result.failure:
-            return r[t.Ldif.ConvertedModel].fail(source_value_result.error)
-        bridge_entry = self._build_schema_bridge_entry(
-            source_quirk,
-            schema_item_kind,
-            source_value_result.value,
-        )
-        converted_entry_result = self._convert_entry(
-            source_quirk,
-            target_quirk,
-            bridge_entry,
-        )
-        if converted_entry_result.failure:
-            return r[t.Ldif.ConvertedModel].fail(
-                converted_entry_result.error
-                or f"Failed to convert {item_name} via Entry intermediary",
+        if source_value_result.success:
+            bridge_entry = self._build_schema_bridge_entry(
+                source_quirk,
+                conversion_config.item_type,
+                source_value_result.value,
             )
-        converted_entry_value = converted_entry_result.value
-        if not isinstance(converted_entry_value, m.Ldif.Entry):
-            return r[t.Ldif.ConvertedModel].fail(
-                "Entry intermediary returned unexpected type: "
-                f"{type(converted_entry_value).__name__}",
+            converted_entry_result = self._convert_entry(
+                source_quirk,
+                target_quirk,
+                bridge_entry,
             )
-        field_name = (
-            c.Ldif.ATTRIBUTE_TYPES
-            if schema_item_kind == "attribute"
-            else c.Ldif.OBJECT_CLASSES
-        )
-        converted_values = self._extract_schema_values_from_entry(
-            converted_entry_value,
-            field_name,
-        )
-        if not converted_values:
-            return r[t.Ldif.ConvertedModel].fail(
-                f"Converted Entry does not contain {field_name}",
+            if converted_entry_result.failure:
+                result = r[t.Ldif.ConvertedModel].fail(
+                    converted_entry_result.error
+                    or f"Failed to convert {conversion_config.item_name} via Entry intermediary",
+                )
+            else:
+                converted_entry_value = converted_entry_result.value
+                if not isinstance(converted_entry_value, m.Ldif.Entry):
+                    result = r[t.Ldif.ConvertedModel].fail(
+                        "Entry intermediary returned unexpected type: "
+                        f"{type(converted_entry_value).__name__}",
+                    )
+                else:
+                    converted_values = self._extract_schema_values_from_entry(
+                        converted_entry_value,
+                        field_name,
+                    )
+                    if not converted_values:
+                        result = r[t.Ldif.ConvertedModel].fail(
+                            f"Converted Entry does not contain {field_name}",
+                        )
+                    else:
+                        first_value = converted_values[0]
+                        if isinstance(
+                            conversion_config,
+                            m.Ldif.SchemaAttributeConversionPipelineConfig,
+                        ):
+                            result = self._parse_attribute_with_schema(
+                                conversion_config.target_schema,
+                                first_value,
+                                parse_error_message="Failed to parse converted attribute",
+                            ).flat_map(
+                                lambda parsed: r[t.Ldif.ConvertedModel].ok(parsed),
+                            )
+                        else:
+                            result = self._parse_objectclass_with_schema(
+                                conversion_config.target_schema,
+                                first_value,
+                                parse_error_message="Failed to parse converted objectclass",
+                            ).flat_map(
+                                lambda parsed: r[t.Ldif.ConvertedModel].ok(parsed),
+                            )
+        else:
+            result = r[t.Ldif.ConvertedModel].fail(
+                source_value_result.error
+                or "Failed to write schema item in source format",
             )
-        first_value = converted_values[0]
-        if schema_item_kind == "attribute":
-            parsed_result = self._parse_attribute_with_schema(
-                target_schema_result.value,
-                first_value,
-                parse_error_message="Failed to parse converted attribute",
-            )
-            return parsed_result.map(lambda parsed: parsed)
-        parsed_oc_result = self._parse_objectclass_with_schema(
-            target_schema_result.value,
-            first_value,
-            parse_error_message="Failed to parse converted objectclass",
-        )
-        return parsed_oc_result.map(lambda parsed: parsed)
+        return result
 
     @staticmethod
     def _normalize_metadata_value(
@@ -617,98 +607,6 @@ class FlextLdifConversion(
             "entry": bool(support.get("entry", 0)),
         }
 
-    def _apply_permission_mapping(
-        self,
-        settings: m.Ldif.PermissionMappingConfig | None = None,
-        *,
-        original_acl: m.Ldif.Acl | None = None,
-        converted_acl: m.Ldif.Acl | None = None,
-        orig_perms_dict: t.MutableBoolMapping | None = None,
-        source_server_type: str | None = None,
-        target_server_type: str | None = None,
-        converted_has_permissions: bool = False,
-    ) -> m.Ldif.Acl:
-        """Apply permission mapping based on server types."""
-        if settings is not None:
-            resolved_config = settings
-        else:
-            if original_acl is None or converted_acl is None:
-                if converted_acl is not None:
-                    return converted_acl
-                if original_acl is not None:
-                    return original_acl
-                return m.Ldif.Acl(
-                    server_type=c.Ldif.ServerTypes.RFC,
-                    validation_violations=[],
-                    name="",
-                    target=None,
-                    subject=None,
-                    permissions=None,
-                    raw_line="",
-                    raw_acl="",
-                    metadata=None,
-                )
-            resolved_config = m.Ldif.PermissionMappingConfig(
-                original_acl=original_acl,
-                converted_acl=converted_acl,
-                orig_perms_dict=dict((orig_perms_dict or {}).items()),
-                source_server_type=source_server_type,
-                target_server_type=target_server_type,
-                converted_has_permissions=converted_has_permissions,
-            )
-        normalized_source = (
-            u.Ldif.normalize_server_type(resolved_config.source_server_type)
-            if isinstance(resolved_config.source_server_type, str)
-            else resolved_config.source_server_type
-        )
-        normalized_target = (
-            u.Ldif.normalize_server_type(resolved_config.target_server_type)
-            if isinstance(resolved_config.target_server_type, str)
-            else resolved_config.target_server_type
-        )
-        mapping_type = "none"
-        pair = (normalized_source, normalized_target)
-        if pair == ("oid", "oud"):
-            mapping_type = "oid_to_oud"
-        elif pair == ("oud", "oid"):
-            mapping_type = "oud_to_oid"
-        elif (
-            not resolved_config.converted_has_permissions
-            and resolved_config.original_acl.permissions is not None
-        ):
-            mapping_type = "preserve_original"
-        logger.debug(
-            "ACL mapping decision",
-            mapping_type=str(mapping_type),
-            normalized_source=str(normalized_source),
-            normalized_target=str(normalized_target),
-        )
-        converted_acl_typed: m.Ldif.Acl = resolved_config.converted_acl
-        if mapping_type == "oid_to_oud":
-            return FlextLdifConversion._apply_oid_to_oud_mapping(
-                resolved_config.orig_perms_dict,
-                converted_acl_typed,
-                self._perms_dict_to_model,
-            )
-        if mapping_type == "oud_to_oid":
-            return FlextLdifConversion._apply_oud_to_oid_mapping(
-                resolved_config.orig_perms_dict,
-                converted_acl_typed,
-                self._perms_dict_to_model,
-            )
-        if mapping_type == "preserve_original":
-            original_acl_typed: m.Ldif.Acl = resolved_config.original_acl
-            return converted_acl_typed.model_copy(
-                update={
-                    "permissions": original_acl_typed.permissions.model_copy(deep=True)
-                    if original_acl_typed.permissions
-                    and hasattr(original_acl_typed.permissions, "model_copy")
-                    else None,
-                },
-                deep=True,
-            )
-        return converted_acl_typed
-
     def _check_acl_support(
         self,
         quirk: FlextLdifServersBase,
@@ -783,17 +681,13 @@ class FlextLdifConversion(
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
         """Check schema support for one component type (attribute/objectclass)."""
-        if not hasattr(quirk_schema, can_handle_attr):
-            return support
-        if not hasattr(quirk_schema, parse_attr):
-            return support
         can_handle = getattr(quirk_schema, can_handle_attr, None)
-        if can_handle is None or not callable(can_handle):
-            return support
-        if not can_handle(test_definition):
-            return support
         parse_component = getattr(quirk_schema, parse_attr, None)
-        if parse_component is None or not callable(parse_component):
+        if (
+            not callable(can_handle)
+            or not callable(parse_component)
+            or not can_handle(test_definition)
+        ):
             return support
         component_result = parse_component(test_definition)
         if isinstance(component_result, r) and component_result.success:
@@ -840,38 +734,6 @@ class FlextLdifConversion(
     ) -> r[t.Ldif.ConvertedModel]:
         """Convert Acl model via Entry RFC + Metadata pipeline."""
         try:
-
-            def extract_converted_acl(
-                converted_entry_value: t.Ldif.ConvertedModel,
-            ) -> r[m.Ldif.Acl]:
-                if not isinstance(converted_entry_value, m.Ldif.Entry):
-                    return r[m.Ldif.Acl].fail(
-                        "Entry conversion returned unexpected type: "
-                        f"{type(converted_entry_value).__name__}",
-                    )
-                get_metadata = u.prop("metadata")
-                converted_metadata_raw = get_metadata(converted_entry_value)
-                if converted_metadata_raw is None:
-                    return r[m.Ldif.Acl].fail(
-                        "Converted entry has no ACLs in metadata.acls",
-                    )
-                if not isinstance(converted_metadata_raw, m.Ldif.QuirkMetadata):
-                    return r[m.Ldif.Acl].fail(
-                        f"Unexpected metadata type: {type(converted_metadata_raw).__name__}",
-                    )
-                converted_metadata = converted_metadata_raw
-                acls_raw = converted_metadata.acls
-                if not isinstance(acls_raw, list):
-                    return r[m.Ldif.Acl].fail(
-                        "Converted entry has no ACLs in metadata.acls",
-                    )
-                acls = [item for item in acls_raw if isinstance(item, m.Ldif.Acl)]
-                if not acls:
-                    return r[m.Ldif.Acl].fail(
-                        "Converted entry has no ACLs in metadata.acls",
-                    )
-                return r[m.Ldif.Acl].ok(acls[0])
-
             acl = acl.model_copy(deep=True)
             entry_dn = m.Ldif.DN(
                 value="cn=acl-conversion,dc=example,dc=com",
@@ -918,27 +780,59 @@ class FlextLdifConversion(
                     else None
                 ),
             ).map_or(None)
-            return (
-                self
-                ._convert_entry(
-                    source_quirk,
-                    target_quirk,
-                    rfc_entry,
+            converted_entry_result = self._convert_entry(
+                source_quirk,
+                target_quirk,
+                rfc_entry,
+            )
+            converted_acl_result: r[m.Ldif.Acl]
+            if converted_entry_result.failure:
+                converted_acl_result = r[m.Ldif.Acl].fail(
+                    converted_entry_result.error or "Acl conversion returned no entry",
                 )
-                .flat_map(
-                    extract_converted_acl,
+            elif not isinstance(converted_entry_result.value, m.Ldif.Entry):
+                converted_acl_result = r[m.Ldif.Acl].fail(
+                    "Entry conversion returned unexpected type: "
+                    f"{type(converted_entry_result.value).__name__}",
                 )
-                .flat_map(
-                    lambda converted_acl: r[t.Ldif.ConvertedModel].ok(
-                        self._preserve_acl_metadata(
-                            acl,
-                            converted_acl,
-                            source_server_type=source_server_type,
-                            target_server_type=target_server_type,
-                        ).model_copy(
-                            update={"server_type": target_server_type},
-                            deep=True,
-                        ),
+            else:
+                get_metadata = u.prop("metadata")
+                converted_metadata_raw = get_metadata(converted_entry_result.value)
+                if converted_metadata_raw is None:
+                    converted_acl_result = r[m.Ldif.Acl].fail(
+                        "Converted entry has no ACLs in metadata.acls",
+                    )
+                elif not isinstance(converted_metadata_raw, m.Ldif.QuirkMetadata):
+                    converted_acl_result = r[m.Ldif.Acl].fail(
+                        f"Unexpected metadata type: {type(converted_metadata_raw).__name__}",
+                    )
+                elif not isinstance(converted_metadata_raw.acls, list):
+                    converted_acl_result = r[m.Ldif.Acl].fail(
+                        "Converted entry has no ACLs in metadata.acls",
+                    )
+                else:
+                    acls = [
+                        item
+                        for item in converted_metadata_raw.acls
+                        if isinstance(item, m.Ldif.Acl)
+                    ]
+                    converted_acl_result = (
+                        r[m.Ldif.Acl].ok(acls[0])
+                        if acls
+                        else r[m.Ldif.Acl].fail(
+                            "Converted entry has no ACLs in metadata.acls",
+                        )
+                    )
+            return converted_acl_result.flat_map(
+                lambda converted_acl: r[t.Ldif.ConvertedModel].ok(
+                    self._preserve_acl_metadata(
+                        acl,
+                        converted_acl,
+                        source_server_type=source_server_type,
+                        target_server_type=target_server_type,
+                    ).model_copy(
+                        update={"server_type": target_server_type},
+                        deep=True,
                     ),
                 )
             )
@@ -1023,57 +917,70 @@ class FlextLdifConversion(
         entry: m.Ldif.Entry,
     ) -> r[m.Ldif.Entry]:
         """Convert schema definition attributes embedded in a schema entry."""
-        if entry.attributes is None or not u.Ldif.is_schema_entry(entry):
-            return r[m.Ldif.Entry].ok(entry)
-        source_schema_result = self._resolve_schema_quirk(source_quirk, role="Source")
-        if source_schema_result.failure:
-            return r[m.Ldif.Entry].fail(
-                source_schema_result.error or "Source schema not available",
+        result = r[m.Ldif.Entry].ok(entry)
+        if entry.attributes is not None and u.Ldif.is_schema_entry(entry):
+            source_schema_result = self._resolve_schema_quirk(
+                source_quirk,
+                role="Source",
             )
-        target_schema_result = self._resolve_schema_quirk(target_quirk, role="Target")
-        if target_schema_result.failure:
-            return r[m.Ldif.Entry].fail(
-                target_schema_result.error or "Target schema not available",
+            target_schema_result = self._resolve_schema_quirk(
+                target_quirk,
+                role="Target",
             )
-        schema_field_kinds: dict[str, c.Ldif.SchemaItemKind] = {
-            c.Ldif.ATTRIBUTE_TYPES.lower(): c.Ldif.SchemaItemKind.ATTRIBUTE,
-            c.Ldif.OBJECT_CLASSES.lower(): c.Ldif.SchemaItemKind.OBJECTCLASS,
-        }
-        updated_attributes = dict(entry.attributes.attributes)
-        changed = False
-        for attr_name, values in entry.attributes.attributes.items():
-            schema_item_kind = schema_field_kinds.get(attr_name.lower())
-            if schema_item_kind is None:
-                continue
-            converted_values: MutableSequence[str] = []
-            for value in values:
-                converted_value_result = self._convert_schema_entry_value(
-                    source_schema_result.value,
-                    target_schema_result.value,
-                    value,
-                    schema_item_kind=schema_item_kind,
-                    field_name=attr_name,
+            if source_schema_result.failure:
+                result = r[m.Ldif.Entry].fail(
+                    source_schema_result.error or "Source schema not available",
                 )
-                if converted_value_result.failure:
-                    return r[m.Ldif.Entry].fail(
-                        converted_value_result.error
-                        or f"Failed converting schema field {attr_name}",
+            elif target_schema_result.failure:
+                result = r[m.Ldif.Entry].fail(
+                    target_schema_result.error or "Target schema not available",
+                )
+            else:
+                schema_field_kinds: dict[str, c.Ldif.SchemaItemKind] = {
+                    c.Ldif.ATTRIBUTE_TYPES.lower(): c.Ldif.SchemaItemKind.ATTRIBUTE,
+                    c.Ldif.OBJECT_CLASSES.lower(): c.Ldif.SchemaItemKind.OBJECTCLASS,
+                }
+                updated_attributes = dict(entry.attributes.attributes)
+                changed = False
+                conversion_error: str | None = None
+                for attr_name, values in entry.attributes.attributes.items():
+                    schema_item_kind = schema_field_kinds.get(attr_name.lower())
+                    if schema_item_kind is None:
+                        continue
+                    converted_values: MutableSequence[str] = []
+                    for value in values:
+                        converted_value_result = self._convert_schema_entry_value(
+                            source_schema_result.value,
+                            target_schema_result.value,
+                            value,
+                            schema_item_kind=schema_item_kind,
+                            field_name=attr_name,
+                        )
+                        if converted_value_result.failure:
+                            conversion_error = (
+                                converted_value_result.error
+                                or f"Failed converting schema field {attr_name}"
+                            )
+                            break
+                        converted_values.append(converted_value_result.value)
+                    if conversion_error is not None:
+                        break
+                    updated_attributes[attr_name] = converted_values
+                    changed = True
+                if conversion_error is not None:
+                    result = r[m.Ldif.Entry].fail(conversion_error)
+                elif changed:
+                    updated_entry = entry.model_copy(
+                        update={
+                            "attributes": entry.attributes.model_copy(
+                                update={"attributes": updated_attributes},
+                                deep=True,
+                            ),
+                        },
+                        deep=True,
                     )
-                converted_values.append(converted_value_result.value)
-            updated_attributes[attr_name] = converted_values
-            changed = True
-        if not changed:
-            return r[m.Ldif.Entry].ok(entry)
-        updated_entry = entry.model_copy(
-            update={
-                "attributes": entry.attributes.model_copy(
-                    update={"attributes": updated_attributes},
-                    deep=True,
-                ),
-            },
-            deep=True,
-        )
-        return r[m.Ldif.Entry].ok(updated_entry)
+                    result = r[m.Ldif.Entry].ok(updated_entry)
+        return result
 
     def _convert_entry(
         self,
@@ -1262,13 +1169,96 @@ class FlextLdifConversion(
     ) -> m.Ldif.Acl:
         """Preserve permissions and metadata from original ACL."""
         converted_has_permissions = self._check_converted_has_permissions(converted_acl)
-        converted_acl = self._preserve_permissions(
-            original_acl,
-            converted_acl,
-            source_server_type,
-            target_server_type,
-            converted_has_permissions=converted_has_permissions,
-        )
+        if original_acl.permissions:
+            orig_perms_dict_raw = original_acl.permissions.model_dump(
+                exclude_unset=True
+            )
+            orig_perms_dict: t.MutableBoolMapping = {
+                key: value
+                for key, value in orig_perms_dict_raw.items()
+                if value is True
+            }
+            logger.debug(
+                "ACL permission preservation",
+                source_server_type=source_server_type or "",
+                target_server_type=target_server_type or "",
+                original_permissions=str(orig_perms_dict),
+            )
+            if orig_perms_dict:
+                permission_settings = m.Ldif.PermissionMappingConfig.model_validate({
+                    "original_acl": original_acl,
+                    "converted_acl": converted_acl,
+                    "orig_perms_dict": orig_perms_dict,
+                    "source_server_type": source_server_type,
+                    "target_server_type": target_server_type,
+                    "converted_has_permissions": converted_has_permissions,
+                })
+                normalized_source = (
+                    u.Ldif.normalize_server_type(
+                        permission_settings.source_server_type,
+                    )
+                    if isinstance(permission_settings.source_server_type, str)
+                    else permission_settings.source_server_type
+                )
+                normalized_target = (
+                    u.Ldif.normalize_server_type(
+                        permission_settings.target_server_type,
+                    )
+                    if isinstance(permission_settings.target_server_type, str)
+                    else permission_settings.target_server_type
+                )
+                permission_mapper = None
+                mapping_type = "none"
+                match (normalized_source, normalized_target):
+                    case ("oid", "oud"):
+                        mapping_type = "oid_to_oud"
+                        permission_mapper = u.Ldif.map_oid_to_oud_permissions
+                    case ("oud", "oid"):
+                        mapping_type = "oud_to_oid"
+                        permission_mapper = u.Ldif.map_oud_to_oid_permissions
+                    case _ if (
+                        not permission_settings.converted_has_permissions
+                        and permission_settings.original_acl.permissions is not None
+                    ):
+                        mapping_type = "preserve_original"
+                        converted_acl = permission_settings.converted_acl.model_copy(
+                            update={
+                                "permissions": permission_settings.original_acl.permissions.model_copy(
+                                    deep=True,
+                                )
+                                if permission_settings.original_acl.permissions
+                                and hasattr(
+                                    permission_settings.original_acl.permissions,
+                                    "model_copy",
+                                )
+                                else None,
+                            },
+                            deep=True,
+                        )
+                    case _:
+                        pass
+                if permission_mapper is not None:
+                    mapped_perms = permission_mapper(
+                        permission_settings.orig_perms_dict
+                    )
+                    normalized_perms = u.Ldif.build_mapped_permissions_dict(
+                        mapped_perms,
+                        {
+                            key: u.Ldif.normalize_permission_key(key)
+                            for key in c.Ldif.ACL_PERMISSION_KEYS
+                        },
+                    )
+                    perms_model = self._perms_dict_to_model(normalized_perms)
+                    converted_acl = permission_settings.converted_acl.model_copy(
+                        update={"permissions": perms_model},
+                        deep=True,
+                    )
+                logger.debug(
+                    "ACL mapping decision",
+                    mapping_type=mapping_type,
+                    normalized_source=str(normalized_source),
+                    normalized_target=str(normalized_target),
+                )
         get_metadata = u.prop("metadata")
         get_extensions = u.prop("extensions")
         acl_step1: m.Ldif.Acl = (
@@ -1347,39 +1337,6 @@ class FlextLdifConversion(
                 deep=True,
             )
         return acl_step1
-
-    def _preserve_permissions(
-        self,
-        original_acl: m.Ldif.Acl,
-        converted_acl: m.Ldif.Acl,
-        source_server_type: str | None,
-        target_server_type: str | None,
-        *,
-        converted_has_permissions: bool,
-    ) -> m.Ldif.Acl:
-        """Preserve permissions from original ACL."""
-        if not original_acl.permissions:
-            return converted_acl
-        orig_perms_dict_raw = original_acl.permissions.model_dump(exclude_unset=True)
-        orig_perms_dict: t.MutableBoolMapping = {
-            k: v for k, v in orig_perms_dict_raw.items() if v is True
-        }
-        logger.debug(
-            "ACL permission preservation",
-            source_server_type=source_server_type or "",
-            target_server_type=target_server_type or "",
-            original_permissions=str(orig_perms_dict),
-        )
-        if orig_perms_dict:
-            return self._apply_permission_mapping(
-                original_acl=original_acl,
-                converted_acl=converted_acl,
-                orig_perms_dict=orig_perms_dict,
-                source_server_type=source_server_type,
-                target_server_type=target_server_type,
-                converted_has_permissions=converted_has_permissions,
-            )
-        return converted_acl
 
     def _resolve_schema_quirk(
         self,

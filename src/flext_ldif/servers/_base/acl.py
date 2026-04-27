@@ -11,6 +11,7 @@ from typing import Annotated, ClassVar, Self
 from flext_core import s
 from flext_ldif import (
     FlextLdifServerMethodsMixin,
+    FlextLdifServersBaseConstants,
     c,
     m,
     p,
@@ -61,17 +62,13 @@ class FlextLdifServersBaseSchemaAcl(
         if _parent_quirk is not None:
             object.__setattr__(self, "_parent_quirk", _parent_quirk)
 
-    RFC_ACL_ATTRIBUTES: ClassVar[MutableSequence[str]] = [
-        "aci",
-        "acl",
-        "olcAccess",
-        "aclRights",
-        "aclEntry",
-    ]
+    RFC_ACL_ATTRIBUTES: ClassVar[tuple[str, ...]] = (
+        FlextLdifServersBaseConstants.RFC_ACL_ATTRIBUTES
+    )
 
     def resolve_acl_attributes(self) -> MutableSequence[str]:
         """Get ACL attributes for this server."""
-        return self.RFC_ACL_ATTRIBUTES
+        return list(self.RFC_ACL_ATTRIBUTES)
 
     def matches_acl_attribute(self, attribute_name: str) -> bool:
         """Check if attribute is ACL attribute (case-insensitive)."""

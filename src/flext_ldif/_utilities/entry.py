@@ -667,7 +667,7 @@ class FlextLdifUtilitiesEntry:
                 raw_items = attr_raw_values
             for raw_item in raw_items:
                 normalized_value = (
-                    raw_item.decode(c.DEFAULT_ENCODING, errors="replace")
+                    raw_item.decode(c.Ldif.DEFAULT_ENCODING, errors="replace")
                     if isinstance(raw_item, bytes)
                     else str(raw_item)
                 )

@@ -338,57 +338,94 @@ def batch_schema_operations() -> r[t.JsonMapping]:
 def railway_schema_pipeline() -> r[t.JsonMapping]:
     """Railway-oriented schema pipeline with integrated validation."""
     api = ldif()
-    schema_build_result = intelligent_schema_building()
-    if schema_build_result.failure:
-        return r[t.JsonMapping].fail(
-            f"Schema building failed: {schema_build_result.error}",
+    test_entries = [
+        entry
+        for i in range(10)
+        if (
+            entry := _create_entry_or_none(
+                dn=(
+                    f"cn=Schema Test User{i},ou=People,dc=example,dc=com"
+                    if i % 2 == 0
+                    else f"cn=Schema Test Group{i},ou=Groups,dc=example,dc=com"
+                ),
+                attributes=(
+                    {
+                        "objectClass": ["person", "inetOrgPerson"],
+                        "cn": [f"Schema Test User{i}"],
+                        "sn": [f"TestUser{i}"],
+                        "mail": [f"user{i}@schema.example.com"],
+                        "departmentNumber": ["Engineering"],
+                    }
+                    if i % 2 == 0
+                    else {
+                        "objectClass": ["groupOfNames"],
+                        "cn": [f"Schema Test Group{i}"],
+                        "member": [
+                            f"cn=Schema Test User{j},ou=People,dc=example,dc=com"
+                            for j in range(2)
+                        ],
+                        "description": [f"Schema-compliant group {i}"],
+                    }
+                ),
+            )
         )
-    schema_entries = schema_build_result.unwrap()
-    schema_validation = api.validate_entries(schema_entries)
-    if schema_validation.failure:
-        return r[t.JsonMapping].fail(
-            f"Schema validation failed: {schema_validation.error}",
+        is not None
+    ]
+    validated_pipeline = (
+        intelligent_schema_building()
+        .map_error(
+            lambda error: f"Schema building failed: {error}",
         )
-    schema_report = schema_validation.unwrap()
-    if not schema_report.valid:
-        return r[t.JsonMapping].fail(
-            f"Schema entries invalid: {schema_report.errors}",
+        .flat_map(
+            lambda schema_entries: (
+                api
+                .validate_entries(schema_entries)
+                .map_error(lambda error: f"Schema validation failed: {error}")
+                .flat_map(
+                    lambda schema_report: (
+                        r[tuple[list[m.Ldif.Entry], int]].fail(
+                            f"Schema entries invalid: {schema_report.errors}",
+                        )
+                        if not schema_report.valid
+                        else r[tuple[list[m.Ldif.Entry], int]].ok(
+                            (list(schema_entries), schema_report.valid_entries),
+                        )
+                    )
+                )
+            ),
         )
-    test_entries: list[m.Ldif.Entry] = []
-    for i in range(10):
-        if i % 2 == 0:
-            attrs: t.MutableAttributeMapping = {
-                "objectClass": ["person", "inetOrgPerson"],
-                "cn": [f"Schema Test User{i}"],
-                "sn": [f"TestUser{i}"],
-                "mail": [f"user{i}@schema.example.com"],
-                "departmentNumber": ["Engineering"],
-            }
-            dn = f"cn=Schema Test User{i},ou=People,dc=example,dc=com"
-        else:
-            attrs = {
-                "objectClass": ["groupOfNames"],
-                "cn": [f"Schema Test Group{i}"],
-                "member": [
-                    f"cn=Schema Test User{j},ou=People,dc=example,dc=com"
-                    for j in range(2)
-                ],
-                "description": [f"Schema-compliant group {i}"],
-            }
-            dn = f"cn=Schema Test Group{i},ou=Groups,dc=example,dc=com"
-        entry_result = m.Ldif.Entry.create(dn=dn, attributes=attrs)
-        if entry_result.success:
-            test_entries.append(entry_result.unwrap())
-    entry_validation = api.validate_entries(test_entries)
-    if entry_validation.failure:
-        return r[t.JsonMapping].fail(
-            f"Entry validation failed: {entry_validation.error}",
+        .flat_map(
+            lambda schema_data: (
+                api
+                .validate_entries(test_entries)
+                .map_error(lambda error: f"Entry validation failed: {error}")
+                .flat_map(
+                    lambda entry_report: (
+                        r[tuple[list[m.Ldif.Entry], int, int]].fail(
+                            f"Test entries invalid: {entry_report.errors}",
+                        )
+                        if not entry_report.valid
+                        else r[tuple[list[m.Ldif.Entry], int, int]].ok(
+                            (
+                                schema_data[0],
+                                schema_data[1],
+                                entry_report.valid_entries,
+                            ),
+                        )
+                    )
+                )
+            ),
         )
-    entry_report = entry_validation.unwrap()
-    if not entry_report.valid:
+    )
+    if validated_pipeline.failure:
         return r[t.JsonMapping].fail(
-            f"Test entries invalid: {entry_report.errors}",
+            validated_pipeline.error or "Schema pipeline failed",
         )
+
+    schema_entries, schema_valid_entries, entry_valid_entries = (
+        validated_pipeline.unwrap()
+    )
+
     output_dir = Path("examples/schema_compliant_output")
     output_dir.mkdir(exist_ok=True)
     schema_file = output_dir / "schema.ldif"
@@ -398,9 +435,9 @@ def railway_schema_pipeline() -> r[t.JsonMapping]:
     return r[t.JsonMapping].ok(
         t.json_mapping_adapter().validate_python({
             "schema_entries": len(schema_entries),
-            "schema_valid": schema_report.valid_entries,
+            "schema_valid": schema_valid_entries,
             "test_entries": len(test_entries),
-            "entries_valid": entry_report.valid_entries,
+            "entries_valid": entry_valid_entries,
             "schema_file_written": schema_write.success,
             "entries_file_written": entries_write.success,
             "pipeline_completed": True,

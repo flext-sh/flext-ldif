@@ -7,6 +7,7 @@ import struct
 from collections.abc import (
     MutableSequence,
 )
+from types import MappingProxyType
 from typing import ClassVar, override
 
 from flext_ldif import (
@@ -94,11 +95,11 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             "x_origin",
             "ordering",
         ])
-        OBJECTCLASS_REQUIREMENTS: ClassVar[t.MutableBoolMapping] = {
+        OBJECTCLASS_REQUIREMENTS: ClassVar[t.BoolMapping] = MappingProxyType({
             "requires_sup_for_auxiliary": True,
             "allows_multiple_sup": True,
             "requires_explicit_structural": False,
-        }
+        })
         DETECTION_OID_PATTERN: ClassVar[str] = "1\\.3\\.6\\.1\\.4\\.1\\.4203\\."
         DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
             "olc",

@@ -129,25 +129,6 @@ class FlextLdifConstantsEnums:
         BACKSLASH = "\\"
 
     @unique
-    class BinaryAttribute(StrEnum):
-        """RFC 4517/4523/4524 - Binary attributes requiring ;binary option."""
-
-        USER_CERTIFICATE = "usercertificate"
-        CA_CERTIFICATE = "cacertificate"
-        CERTIFICATE_REVOCATION_LIST = "certificaterevocationlist"
-        AUTHORITY_REVOCATION_LIST = "authorityrevocationlist"
-        CROSS_CERTIFICATE_PAIR = "crosscertificatepair"
-        PHOTO = "photo"
-        JPEG_PHOTO = "jpegphoto"
-        AUDIO = "audio"
-        USER_PKCS12 = "userpkcs12"
-        USER_SMIME_CERTIFICATE = "usersmimecertificate"
-        THUMBNAIL_PHOTO = "thumbnailphoto"
-        THUMBNAIL_LOGO = "thumbnaillogo"
-        OBJECT_GUID = "objectguid"
-        OBJECT_SID = "objectsid"
-
-    @unique
     class TransformationType(StrEnum):
         """Types of transformations applied to entries."""
 
@@ -211,25 +192,6 @@ class FlextLdifConstantsEnums:
         NOVELL = "novell"
         IBM_TIVOLI = "ibm_tivoli"
         GENERIC = "generic"
-
-    @unique
-    class DnValuedAttribute(StrEnum):
-        """Attributes that contain Distinguished Names as values."""
-
-        MEMBER = "member"
-        UNIQUE_MEMBER = "uniqueMember"
-        OWNER = "owner"
-        MANAGED_BY = "managedBy"
-        MANAGER = "manager"
-        SECRETARY = "secretary"
-        SEES_ALSO = "seeAlso"
-        PARENT = "parent"
-        REFERS_TO = "refersTo"
-        MEMBER_OF = "memberOf"
-        GROUPS = "groups"
-        AUTHORIZED_TO = "authorizedTo"
-        HAS_SUBORDINATES = "hasSubordinates"
-        SUBORDINATE_DN = "subordinateDn"
 
     @unique
     class ChangeType(StrEnum):

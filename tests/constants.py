@@ -49,21 +49,45 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             PROJECT_ROOT: Final[Path] = Path(__file__).resolve().parents[1]
             WORKSPACE_ROOT: Final[Path] = Path(__file__).resolve().parents[2]
 
-            RFC: Final[t.Ldif.Tests.FixtureServer] = "rfc"
-            OID: Final[t.Ldif.Tests.FixtureServer] = "oid"
-            OUD: Final[t.Ldif.Tests.FixtureServer] = "oud"
-            OPENLDAP: Final[t.Ldif.Tests.FixtureServer] = "openldap"
-            OPENLDAP1: Final[t.Ldif.Tests.FixtureServer] = "openldap1"
-            DS389: Final[t.Ldif.Tests.FixtureServer] = "ds389"
-            APACHE: Final[t.Ldif.Tests.FixtureServer] = "apache"
-            NOVELL: Final[t.Ldif.Tests.FixtureServer] = "novell"
-            TIVOLI: Final[t.Ldif.Tests.FixtureServer] = "tivoli"
-            AD: Final[t.Ldif.Tests.FixtureServer] = "ad"
+            @unique
+            class _ServerType(StrEnum):
+                """Canonical server identifiers for tests."""
 
-            SCHEMA: Final[t.Ldif.Tests.FixtureKind] = "schema"
-            ACL: Final[t.Ldif.Tests.FixtureKind] = "acl"
-            ENTRIES: Final[t.Ldif.Tests.FixtureKind] = "entries"
-            INTEGRATION: Final[t.Ldif.Tests.FixtureKind] = "integration"
+                RFC = "rfc"
+                OID = "oid"
+                OUD = "oud"
+                OPENLDAP = "openldap"
+                OPENLDAP1 = "openldap1"
+                DS389 = "ds389"
+                APACHE = "apache"
+                NOVELL = "novell"
+                TIVOLI = "tivoli"
+                AD = "ad"
+
+            @unique
+            class _FixtureType(StrEnum):
+                """Canonical fixture categories for tests."""
+
+                SCHEMA = "schema"
+                ACL = "acl"
+                ENTRIES = "entries"
+                INTEGRATION = "integration"
+
+            RFC: Final[t.Ldif.Tests.FixtureServer] = _ServerType.RFC
+            OID: Final[t.Ldif.Tests.FixtureServer] = _ServerType.OID
+            OUD: Final[t.Ldif.Tests.FixtureServer] = _ServerType.OUD
+            OPENLDAP: Final[t.Ldif.Tests.FixtureServer] = _ServerType.OPENLDAP
+            OPENLDAP1: Final[t.Ldif.Tests.FixtureServer] = _ServerType.OPENLDAP1
+            DS389: Final[t.Ldif.Tests.FixtureServer] = _ServerType.DS389
+            APACHE: Final[t.Ldif.Tests.FixtureServer] = _ServerType.APACHE
+            NOVELL: Final[t.Ldif.Tests.FixtureServer] = _ServerType.NOVELL
+            TIVOLI: Final[t.Ldif.Tests.FixtureServer] = _ServerType.TIVOLI
+            AD: Final[t.Ldif.Tests.FixtureServer] = _ServerType.AD
+
+            SCHEMA: Final[t.Ldif.Tests.FixtureKind] = _FixtureType.SCHEMA
+            ACL: Final[t.Ldif.Tests.FixtureKind] = _FixtureType.ACL
+            ENTRIES: Final[t.Ldif.Tests.FixtureKind] = _FixtureType.ENTRIES
+            INTEGRATION: Final[t.Ldif.Tests.FixtureKind] = _FixtureType.INTEGRATION
 
             class _Docker:
                 """Docker container infrastructure constants for integration tests.
@@ -1083,30 +1107,6 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                             expected_can_handle=False,
                         ),
                     )
-
-            @unique
-            class _ServerType(StrEnum):
-                """Canonical server identifiers for tests."""
-
-                RFC = "rfc"
-                OID = "oid"
-                OUD = "oud"
-                OPENLDAP = "openldap"
-                OPENLDAP1 = "openldap1"
-                DS389 = "ds389"
-                APACHE = "apache"
-                NOVELL = "novell"
-                TIVOLI = "tivoli"
-                AD = "ad"
-
-            @unique
-            class _FixtureType(StrEnum):
-                """Canonical fixture categories for tests."""
-
-                SCHEMA = "schema"
-                ACL = "acl"
-                ENTRIES = "entries"
-                INTEGRATION = "integration"
 
             DOCKER_CONTAINER_NAME: Final[str] = _Docker.CONTAINER_NAME
             DOCKER_COMPOSE_FILE_REL: Final[str] = _Docker.COMPOSE_FILE_REL

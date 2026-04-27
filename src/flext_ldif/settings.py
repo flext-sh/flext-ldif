@@ -33,7 +33,7 @@ class FlextLdifSettings(FlextSettings):
     ldif_strict_validation: Annotated[
         bool,
         u.Field(description="Enable strict LDIF validation rules"),
-    ] = c.Ldif.SettingsDefaults.DEFAULT_STRICT_VALIDATION
+    ] = c.Ldif.DEFAULT_STRICT_VALIDATION
 
 
 __all__: list[str] = ["FlextLdifSettings"]

@@ -48,7 +48,6 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         ACL_WRITE_PREFIX: ClassVar[str] = "acl: "
         LDIF_DN_PREFIX: ClassVar[str] = "dn: "
         LDIF_ATTR_SEPARATOR: ClassVar[str] = ": "
-        ENCODING_UTF8: ClassVar[str] = "utf-8"
         ENCODING_ERROR_HANDLING: ClassVar[str] = "replace"
         LDIF_NEWLINE: ClassVar[str] = "\n"
         LDIF_JOIN_SEPARATOR: ClassVar[str] = "\n"

@@ -68,7 +68,7 @@ class FlextLdifUtilitiesWriter:
         """Fold long LDIF line according to RFC 2849 §3."""
         if not line:
             return [line]
-        line_bytes = line.encode(c.DEFAULT_ENCODING)
+        line_bytes = line.encode(c.Ldif.DEFAULT_ENCODING)
         if len(line_bytes) <= width:
             return [line]
         folded: MutableSequence[str] = []
@@ -80,14 +80,14 @@ class FlextLdifUtilitiesWriter:
                 chunk_end = min(pos + width - 1, len(line_bytes))
             while chunk_end > pos:
                 try:
-                    chunk = line_bytes[pos:chunk_end].decode(c.DEFAULT_ENCODING)
+                    chunk = line_bytes[pos:chunk_end].decode(c.Ldif.DEFAULT_ENCODING)
                     break
                 except UnicodeDecodeError:
                     chunk_end -= 1
             else:
                 chunk_end = pos + 1
                 chunk = line_bytes[pos:chunk_end].decode(
-                    c.DEFAULT_ENCODING, errors="replace"
+                    c.Ldif.DEFAULT_ENCODING, errors="replace"
                 )
             if folded:
                 folded.append(c.Ldif.LINE_CONTINUATION_SPACE + chunk)

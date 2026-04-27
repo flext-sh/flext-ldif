@@ -54,8 +54,8 @@ class BasicUsageDry:
     SAMPLE_INPUT_PATH: Final[Path] = Path("examples/sample_basic.ldif")
     SAMPLE_OUTPUT_PATH: Final[Path] = Path("examples/output_dry.ldif")
     SAMPLE_CORRELATION_ID: Final[str] = "req-123-dry"
-    DEFAULT_SERVER_TYPE: Final[str] = c.Ldif.ServerTypes.RFC.value
-    DEFAULT_ENCODING: Final[str] = c.Ldif.Encoding.UTF8.value
+    DEFAULT_SERVER_TYPE: Final[str] = c.Ldif.ServerTypes.RFC
+    DEFAULT_ENCODING: Final[str] = c.Ldif.Encoding.UTF8
     OBJECT_CLASSES: Final[tuple[str, str]] = ("person", "inetOrgPerson")
     BASE_DN: Final[str] = "ou=People,dc=example,dc=com"
 

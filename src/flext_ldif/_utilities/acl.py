@@ -7,6 +7,7 @@ import struct
 from collections.abc import (
     MutableMapping,
     MutableSequence,
+    Sequence,
 )
 from typing import TypeIs
 
@@ -20,24 +21,16 @@ class FlextLdifUtilitiesACL:
     """Generic ACL parsing and writing utilities."""
 
     _OPERATOR_PLACEHOLDER: str = "{operator}"
+    _ACL_SUBJECT_TYPE_VALUES: frozenset[str] = frozenset(
+        subject_type.value for subject_type in c.Ldif.AclSubjectType
+    )
 
     @staticmethod
     def _is_acl_subject_type(
         value: str,
     ) -> TypeIs[c.Ldif.AclSubjectType]:
         """Type guard to check if a string is a valid ACL subject enum value."""
-        return value in {
-            "user",
-            "group",
-            "role",
-            "self",
-            "all",
-            "public",
-            "anonymous",
-            "authenticated",
-            "sddl",
-            "dn",
-        }
+        return value in FlextLdifUtilitiesACL._ACL_SUBJECT_TYPE_VALUES
 
     _RFC_ACL_ATTRIBUTES: tuple[str, ...] = (
         "aci",
@@ -353,7 +346,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def extract_bind_rules_from_extensions(
         extensions: t.Ldif.MutableMetadataMapping | None,
-        rule_config: MutableSequence[tuple[str, str, str | None]],
+        rule_config: Sequence[tuple[str, str, str | None]],
         *,
         tuple_length: int = 2,
     ) -> MutableSequence[str]:
@@ -476,7 +469,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def extract_target_extensions(
         extensions: m.Ldif.DynamicMetadata | t.Ldif.MetadataInputMapping | None,
-        target_config: MutableSequence[tuple[str, str]],
+        target_config: Sequence[tuple[str, str]],
     ) -> MutableSequence[str]:
         """Extract and format target extensions from metadata extensions."""
         if not extensions:

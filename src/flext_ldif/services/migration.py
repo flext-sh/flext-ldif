@@ -26,7 +26,6 @@ class FlextLdifMigrationPipeline(s):
     """Migration Pipeline for Server-to-Server LDIF Migration."""
 
     _DEFAULT_SERVER: Final[c.Ldif.ServerTypes] = c.Ldif.ServerTypes.RFC
-    _ENCODING_UTF8: Final[str] = c.Ldif.Encoding.UTF8.value
 
     input_dir: Annotated[
         Path | None,
@@ -245,7 +244,7 @@ class FlextLdifMigrationPipeline(s):
                 return r[m.Ldif.MigrationPipelineResult].fail(
                     f"Input file not found: {input_file}",
                 )
-            content = input_file.read_text(encoding=self._ENCODING_UTF8)
+            content = input_file.read_text(encoding=c.Ldif.DEFAULT_ENCODING)
             parser = FlextLdifParser()
             parse_result = parser.parse_string(
                 content,

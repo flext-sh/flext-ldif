@@ -37,16 +37,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         instance = object.__new__(cls)
-        filtered_kwargs = {
-            "attr_definition",
-            "oc_definition",
-            "attr_model",
-            "oc_model",
-            "operation",
-            "_parent_quirk",
-            "parent_quirk",
-        }
-        _ = {k: v for k, v in kwargs.items() if k not in filtered_kwargs}
         parent_quirk_raw = (
             parent_quirk if parent_quirk is not None else kwargs.get("_parent_quirk")
         )
@@ -82,15 +72,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             op: str | None = (
                 "parse" if isinstance(op_raw, str) and op_raw == "parse" else None
             )
-            data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None
-            if attr_def is not None:
-                data = attr_def
-            elif oc_def is not None:
-                data = oc_def
-            elif attr_mod is not None:
-                data = attr_mod
-            elif oc_mod is not None:
-                data = oc_mod
+            data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = next(
+                (
+                    candidate
+                    for candidate in (attr_def, oc_def, attr_mod, oc_mod)
+                    if candidate is not None
+                ),
+                None,
+            )
             schema_instance.execute(data=data, operation=op)
         return instance
 

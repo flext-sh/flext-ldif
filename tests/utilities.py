@@ -219,11 +219,8 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 server_type: t.Ldif.Tests.FixtureServer,
             ) -> Mapping[t.Ldif.Tests.FixtureKind, str]:
                 """Load all available fixtures for a server type."""
-                fixture_types: tuple[t.Ldif.Tests.FixtureKind, ...] = (
-                    c.Ldif.Tests.SCHEMA,
-                    c.Ldif.Tests.ACL,
-                    c.Ldif.Tests.ENTRIES,
-                    c.Ldif.Tests.INTEGRATION,
+                fixture_types: tuple[t.Ldif.Tests.FixtureKind, ...] = tuple(
+                    c.Ldif.Tests.FIXTURE_TYPES
                 )
                 return {
                     fixture_type: cls.load_fixture(server_type, fixture_type)
@@ -234,17 +231,8 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             @classmethod
             def available_fixture_servers(cls) -> Sequence[t.Ldif.Tests.FixtureServer]:
                 """Return the server types that currently have fixture directories."""
-                server_types: tuple[t.Ldif.Tests.FixtureServer, ...] = (
-                    c.Ldif.Tests.OID,
-                    c.Ldif.Tests.OUD,
-                    c.Ldif.Tests.OPENLDAP,
-                    c.Ldif.Tests.OPENLDAP1,
-                    c.Ldif.Tests.DS389,
-                    c.Ldif.Tests.APACHE,
-                    c.Ldif.Tests.NOVELL,
-                    c.Ldif.Tests.TIVOLI,
-                    c.Ldif.Tests.AD,
-                    c.Ldif.Tests.RFC,
+                server_types: tuple[t.Ldif.Tests.FixtureServer, ...] = tuple(
+                    c.Ldif.Tests.FIXTURE_SERVERS
                 )
                 return tuple(
                     server_type
@@ -258,11 +246,8 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 server_type: t.Ldif.Tests.FixtureServer,
             ) -> Sequence[t.Ldif.Tests.FixtureKind]:
                 """Return the fixture kinds available for one server type."""
-                fixture_types: tuple[t.Ldif.Tests.FixtureKind, ...] = (
-                    c.Ldif.Tests.SCHEMA,
-                    c.Ldif.Tests.ACL,
-                    c.Ldif.Tests.ENTRIES,
-                    c.Ldif.Tests.INTEGRATION,
+                fixture_types: tuple[t.Ldif.Tests.FixtureKind, ...] = tuple(
+                    c.Ldif.Tests.FIXTURE_TYPES
                 )
                 return tuple(
                     fixture_type

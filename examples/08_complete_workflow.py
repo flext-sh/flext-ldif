@@ -18,7 +18,7 @@ def complete_ldif_processing_workflow() -> None:
     """Run a complete LDIF processing workflow."""
     api: FlextLdif = ldif()
     content = "dn: cn=Workflow User,dc=example,dc=com\nobjectClass: person\ncn: Workflow User\nsn: User\n"
-    parse_result = api.parse_ldif(content, server_type="rfc")
+    parse_result = api.parse_ldif(content, server_type=c.Ldif.ServerTypes.RFC)
     if parse_result.failure:
         return
     parse_response = parse_result.unwrap()
@@ -41,13 +41,13 @@ def server_migration_workflow() -> None:
     source_file = source_dir / "source.ldif"
     source_file.write_text(
         "dn: cn=Migration User,dc=example,dc=com\nobjectClass: person\ncn: Migration User\nsn: User\n",
-        encoding="utf-8",
+        encoding=c.Ldif.Encoding.UTF8,
     )
     migration_result = api.migrate(
         input_dir=source_dir,
         output_dir=target_dir,
-        source_server="rfc",
-        target_server="rfc",
+        source_server=c.Ldif.ServerTypes.RFC,
+        target_server=c.Ldif.ServerTypes.RFC,
     )
     if migration_result.failure:
         return

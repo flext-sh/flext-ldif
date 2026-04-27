@@ -61,7 +61,6 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         DETECTION_WEIGHT: ClassVar[int] = 8
         ACL_SDDL_PREFIX_PATTERN: ClassVar[str] = "^(O:|G:|D:|S:)"
         ENCODING_UTF16LE: ClassVar[str] = "utf-16-le"
-        ENCODING_UTF8: ClassVar[str] = "utf-8"
         ENCODING_ERROR_IGNORE: ClassVar[str] = "ignore"
         AD_REQUIRED_CLASSES: ClassVar[frozenset[str]] = frozenset([
             "top",

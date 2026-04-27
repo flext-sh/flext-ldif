@@ -144,7 +144,7 @@ class FlextLdifUtilitiesParser:
             encoded_value = payload[1:].lstrip()
             try:
                 decoded_value = base64.b64decode(encoded_value).decode(
-                    c.DEFAULT_ENCODING,
+                    c.Ldif.DEFAULT_ENCODING,
                     errors="replace",
                 )
             except ValueError:

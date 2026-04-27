@@ -30,14 +30,12 @@ logger = u.fetch_logger(__name__)
 class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     """Oracle OUD ACL Implementation (RFC 4876 ACI Format)."""
 
-    RFC_ACL_ATTRIBUTES: ClassVar[MutableSequence[str]] = [
-        "aci",
-        "acl",
-        "olcAccess",
-        "aclRights",
-        "aclEntry",
-    ]
-    OUD_ACL_ATTRIBUTES: ClassVar[MutableSequence[str]] = ["ds-privilege-name"]
+    RFC_ACL_ATTRIBUTES: ClassVar[tuple[str, ...]] = (
+        FlextLdifServersOudConstants.RFC_ACL_ATTRIBUTES
+    )
+    OUD_ACL_ATTRIBUTES: ClassVar[tuple[str, ...]] = (
+        FlextLdifServersOudConstants.OUD_ACL_ATTRIBUTES
+    )
 
     def __init__(
         self,
