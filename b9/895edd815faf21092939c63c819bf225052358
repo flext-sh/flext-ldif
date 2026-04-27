@@ -1,0 +1,60 @@
+src/flext_ldif/servers/openldap.py
+  h_9db9d35f50cf33 98,102
+src/flext_ldif/servers/_oud/constants.py
+  h_9db9d35f50cf33 5,8,14,20,30-36,80,87-88,92-93,96,101,114,118,121-122,184,189,193-198,202-203,205-206,211-212,219
+src/flext_ldif/_utilities/acl.py
+  h_9db9d35f50cf33 10,24-26,33,349,472
+tests/constants.py
+  h_9db9d35f50cf33 55,66,70,75-90
+src/flext_ldif/services/conversion.py
+  h_9db9d35f50cf33 198-211,215,228-241,303-304,309-310,312-315,317,319,321-322,335-337,339,341-342,344,346-354,358-367,369-374,376-389,687-690,784,787-791,794-796,799-827,921-922,931-932,935-939,946-947,952-955,959-961,964-973,983,1173-1176,1185-1233,1237-1241,1248-1257
+src/flext_ldif/_utilities/writer.py
+  h_9db9d35f50cf33 71,83,90
+src/flext_ldif/_utilities/entry.py
+  h_9db9d35f50cf33 670
+src/flext_ldif/servers/_base/constants.py
+  h_9db9d35f50cf33 5,24-30,32,35-37
+examples/05_schema_operations.py
+  h_9db9d35f50cf33 341-351,359-360,369-370,372-377,379-394,397-407,409-413,420,425
+src/flext_ldif/servers/_oid/acl.py
+  h_9db9d35f50cf33 38-43,101,103-107,109,111,113,115,118,121-122,396-400,403-405,409,414,416-417,425-426,428,430,433-435,438-442,451,454-458,463,465-467,469-473,477-480,483,485,487-489,538,540-541,543-544,698,701-703,708-710
+tests/utilities.py
+  h_9db9d35f50cf33 222-223,234-235,249-250
+src/flext_ldif/settings.py
+  h_9db9d35f50cf33 36
+src/flext_ldif/servers/_rfc/schema.py
+  h_9db9d35f50cf33 75-82
+src/flext_ldif/services/migration.py
+  h_9db9d35f50cf33 247
+examples/01_basic_usage.py
+  h_9db9d35f50cf33 57-58
+src/flext_ldif/servers/_oid/constants.py
+  h_9db9d35f50cf33 5-6,9,15,20-25,28,36-37,39-40,42-43,45-46,48,83,85,89,101-114,136-143,147-149,163-164,169-170,190-214,248-250,276-280,283-284,287-289,293-294,298-299,301-305,307-329,360-361
+src/flext_ldif/_utilities/dn.py
+  h_9db9d35f50cf33 622-623,631-633,635-640,654-655,719-720,728-745,753-754,756,761,764,772,777-783,792-808,816-817,819,1014,1019
+src/flext_ldif/servers/_oud/entry.py
+  h_9db9d35f50cf33 1864-1865,1870-1875,1877-1882,1884-1891,1894,1896-1903,1905-1906,1915
+src/flext_ldif/servers/_rfc/constants.py
+  h_9db9d35f50cf33 5,8,14,45,49-50,63,68-69,83,89,109-115
+src/flext_ldif/servers/_base/acl.py
+  h_9db9d35f50cf33 65-67,71
+src/flext_ldif/_utilities/parser.py
+  h_9db9d35f50cf33 147
+examples/08_complete_workflow.py
+  h_9db9d35f50cf33 21,44,49-50
+src/flext_ldif/servers/_oud/acl.py
+  h_9db9d35f50cf33 33-38
+src/flext_ldif/constants.py
+  h_9db9d35f50cf33 22-37,64-79,315
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "b9895edd815faf21092939c63c819bf225052358",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
