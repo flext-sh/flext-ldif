@@ -655,7 +655,9 @@ class FlextLdifUtilitiesEntry:
         """Convert boolean attribute values between formats."""
         result: t.MutableStrSequenceMapping = {}
         format_pair = (source_format, target_format)
-        normalized_boolean_names = {attr_name.lower() for attr_name in boolean_attr_names}
+        normalized_boolean_names = {
+            attr_name.lower() for attr_name in boolean_attr_names
+        }
         for attr_name in attributes:
             attr_raw_values = attributes[attr_name]
             str_values: MutableSequence[str] = []

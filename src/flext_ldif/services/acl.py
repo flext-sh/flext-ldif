@@ -84,11 +84,7 @@ class FlextLdifAcl(s):
                 return False
             return all(getattr(permissions, perm, False) for perm in required_perms)
 
-        def predicate(value: t.Ldif.AclLike) -> bool:
-            """Check if ACL grants all permissions."""
-            return acl_grants_all(value)
-
-        found_result = u.find(acls, predicate=predicate)
+        found_result = u.find(acls, predicate=acl_grants_all)
         if found_result.success:
             found_acl = found_result.value
             return r[m.Ldif.AclEvaluationResult].ok(

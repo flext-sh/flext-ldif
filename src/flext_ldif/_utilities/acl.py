@@ -371,7 +371,10 @@ class FlextLdifUtilitiesACL:
                     FlextLdifUtilitiesACL._OPERATOR_PLACEHOLDER in format_template
                 )
                 match value_raw:
-                    case tuple() as tuple_items if len(tuple_items) == tuple_length and len(tuple_items) >= c.Ldif.TUPLE_LENGTH_PAIR:
+                    case tuple() as tuple_items if (
+                        len(tuple_items) == tuple_length
+                        and len(tuple_items) >= c.Ldif.TUPLE_LENGTH_PAIR
+                    ):
                         operator_val = str(tuple_items[0])
                         value_val = str(tuple_items[1])
                         result.append(

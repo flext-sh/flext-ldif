@@ -11,9 +11,9 @@ class FlextLdifServerMethodsMixin:
     @staticmethod
     def get_parent_quirk_from_instance(
         instance: FlextLdifServerMethodsMixin,
-    ) -> p.Ldif.SchemaQuirk | None:
+    ) -> p.Ldif.ServerQuirk | None:
         """Get the effective parent quirk when available."""
-        parent_raw: p.Ldif.SchemaQuirk | None = getattr(instance, "_parent_quirk", None)
+        parent_raw: p.Ldif.ServerQuirk | None = getattr(instance, "_parent_quirk", None)
         if (
             parent_raw is not None
             and getattr(parent_raw, "_parent_quirk", None) is not None
@@ -22,7 +22,7 @@ class FlextLdifServerMethodsMixin:
         return None
 
     @staticmethod
-    def get_priority_from_parent(parent: p.Ldif.SchemaQuirk | None) -> int:
+    def get_priority_from_parent(parent: p.Ldif.ServerQuirk | None) -> int:
         """Resolve priority from the parent server Constants class."""
         if parent is None:
             return 100
@@ -42,7 +42,7 @@ class FlextLdifServerMethodsMixin:
         resolved: c.Ldif.ServerTypes = u.Ldif.get_parent_server_type(quirk_class)
         return resolved
 
-    def _get_parent_quirk_safe(self) -> p.Ldif.SchemaQuirk | None:
+    def _get_parent_quirk_safe(self) -> p.Ldif.ServerQuirk | None:
         """Get the effective parent quirk safely."""
         return FlextLdifServerMethodsMixin.get_parent_quirk_from_instance(self)
 

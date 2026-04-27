@@ -1041,7 +1041,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         if not orclaci_values:
             return
         parent = self._get_parent_quirk_safe()
-        acl_quirk = getattr(parent, "_acl_quirk", None) if parent is not None else None
+        acl_quirk = parent.acl_quirk if parent is not None else None
         acl_list = (
             list(orclaci_values)
             if u.matches_type(orclaci_values, (list, tuple))

@@ -1398,10 +1398,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         parent = self._get_parent_quirk_safe()
         if parent is None:
             return r[m.Ldif.Entry].ok(entry)
-        acl_quirk_raw = getattr(parent, "_acl_quirk", None)
+        acl_quirk_raw = parent.acl_quirk
         if not acl_quirk_raw:
             return r[m.Ldif.Entry].ok(entry)
-        if not u.matches_type(acl_quirk_raw, FlextLdifServersOudAcl):
+        if not isinstance(acl_quirk_raw, FlextLdifServersOudAcl):
             return r[m.Ldif.Entry].ok(entry)
         acl_quirk: FlextLdifServersOudAcl = acl_quirk_raw
         self._process_aci_list_for_finalize(aci_values, acl_quirk, current_extensions)

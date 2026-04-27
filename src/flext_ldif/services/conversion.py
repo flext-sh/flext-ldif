@@ -40,7 +40,7 @@ class FlextLdifConversion(
     def _get_schema_from_attribute(
         quirk: FlextLdifServersBase,
     ) -> p.Ldif.SchemaQuirk:
-        if FlextLdifConversion._has_attr(quirk, "schema_quirk"):
+        if hasattr(quirk, "schema_quirk"):
             schema = quirk.schema_quirk
             if FlextLdifConversion._is_schema_quirk_protocol(schema):
                 return schema
@@ -48,21 +48,14 @@ class FlextLdifConversion(
         raise TypeError(msg)
 
     @staticmethod
-    def _has_attr(
-        obj: t.JsonPayload | m.BaseModel | p.Ldif.SchemaQuirk | type,
-        attr_name: str,
-    ) -> bool:
-        return hasattr(obj, attr_name)
-
-    @staticmethod
     def _is_schema_quirk_protocol(
         obj: t.JsonPayload | m.BaseModel | p.Ldif.SchemaQuirk | type,
     ) -> TypeIs[p.Ldif.SchemaQuirk]:
         return (
-            FlextLdifConversion._has_attr(obj, "parse_attribute")
-            and FlextLdifConversion._has_attr(obj, "parse_objectclass")
-            and FlextLdifConversion._has_attr(obj, "write_attribute")
-            and FlextLdifConversion._has_attr(obj, "write_objectclass")
+            hasattr(obj, "parse_attribute")
+            and hasattr(obj, "parse_objectclass")
+            and hasattr(obj, "write_attribute")
+            and hasattr(obj, "write_objectclass")
         )
 
     dn_registry: m.Ldif.DnRegistry = u.Field(
@@ -148,10 +141,7 @@ class FlextLdifConversion(
         conversion_analysis: MutableMapping[
             str, t.Ldif.MutableMetadataInputMapping
         ] = {}
-        if not source_metadata or not FlextLdifConversion._has_attr(
-            source_metadata,
-            "boolean_conversions",
-        ):
+        if not source_metadata or not hasattr(source_metadata, "boolean_conversions"):
             return conversion_analysis
         target_server_str = target_server_type
         get_boolean = u.prop("boolean_conversions")
@@ -712,10 +702,7 @@ class FlextLdifConversion(
                 update={
                     "permissions": original_acl_typed.permissions.model_copy(deep=True)
                     if original_acl_typed.permissions
-                    and FlextLdifConversion._has_attr(
-                        original_acl_typed.permissions,
-                        "model_copy",
-                    )
+                    and hasattr(original_acl_typed.permissions, "model_copy")
                     else None,
                 },
                 deep=True,
@@ -728,9 +715,7 @@ class FlextLdifConversion(
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
         """Check ACL support."""
-        acl = getattr(quirk, "acl_quirk", None)
-        if acl is None:
-            acl = getattr(quirk, "_acl_quirk", None)
+        acl = quirk.acl_quirk
         test_acl_def = 'targetattr="*" (version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
         if acl and callable(getattr(acl, "parse_quirk", None)):
             acl_result = acl.parse_quirk(test_acl_def)
@@ -782,20 +767,8 @@ class FlextLdifConversion(
         quirk: FlextLdifServersBase,
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
-        """Check Entry support."""
-        entry = getattr(quirk, "entry_quirk", None)
-        if entry is None:
-            entry = getattr(quirk, "_entry_quirk", None)
-        if (
-            entry is None
-            and FlextLdifConversion._has_attr(quirk, "_parse_content")
-            and FlextLdifConversion._has_attr(quirk, "can_handle")
-        ):
-            entry = quirk
-        if entry is not None and (
-            callable(getattr(entry, "_parse_content", None))
-            or callable(getattr(entry, "can_handle", None))
-        ):
+        """Check Entry support via the canonical entry quirk public surface."""
+        if callable(getattr(quirk.entry_quirk, "parse_entry", None)):
             support["entry"] = 1
         return support
 
@@ -810,9 +783,9 @@ class FlextLdifConversion(
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
         """Check schema support for one component type (attribute/objectclass)."""
-        if not FlextLdifConversion._has_attr(quirk_schema, can_handle_attr):
+        if not hasattr(quirk_schema, can_handle_attr):
             return support
-        if not FlextLdifConversion._has_attr(quirk_schema, parse_attr):
+        if not hasattr(quirk_schema, parse_attr):
             return support
         can_handle = getattr(quirk_schema, can_handle_attr, None)
         if can_handle is None or not callable(can_handle):
@@ -1256,14 +1229,10 @@ class FlextLdifConversion(
         quirk: FlextLdifServersBase,
     ) -> m.BaseModel | FlextLdifServersBase | None:
         """Get schema quirk from base quirk for support checking."""
-        if FlextLdifConversion._has_attr(
-            quirk,
-            "parse_attribute",
-        ) or FlextLdifConversion._has_attr(quirk, "parse_objectclass"):
+        if hasattr(quirk, "parse_attribute") or hasattr(quirk, "parse_objectclass"):
             required_methods = ("parse_attribute", "write")
             if all(
-                FlextLdifConversion._has_attr(quirk, method)
-                and callable(getattr(quirk, method))
+                hasattr(quirk, method) and callable(getattr(quirk, method))
                 for method in required_methods
             ):
                 return quirk
@@ -1276,7 +1245,7 @@ class FlextLdifConversion(
         if schema_quirk_raw is not None:
             required_methods = ("parse_attribute", "write")
             if all(
-                FlextLdifConversion._has_attr(schema_quirk_raw, method)
+                hasattr(schema_quirk_raw, method)
                 and callable(getattr(schema_quirk_raw, method))
                 for method in required_methods
             ):

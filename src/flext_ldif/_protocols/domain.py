@@ -52,7 +52,13 @@ class FlextLdifProtocolsDomain(Protocol):
 
     @runtime_checkable
     class SchemaQuirk(Protocol):
-        """Schema quirk contract."""
+        """Schema quirk contract.
+
+        ``acl_quirk`` was removed — it had zero workspace consumers
+        (per AGENTS.md §3.5 + STRICT YAGNI). Server-level ``acl_quirk``
+        access lives on the parent ``Quirk`` protocol above, where the
+        actual entry-conversion code reads it.
+        """
 
         def parse_quirk(
             self,
