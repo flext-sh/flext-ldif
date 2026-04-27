@@ -61,9 +61,7 @@ class FlextLdifServersBaseSchemaAcl(
         if _parent_quirk is not None:
             object.__setattr__(self, "_parent_quirk", _parent_quirk)
 
-    RFC_ACL_ATTRIBUTES: ClassVar[tuple[str, ...]] = (
-        c.Ldif.RFC_ACL_ATTRIBUTES
-    )
+    RFC_ACL_ATTRIBUTES: ClassVar[tuple[str, ...]] = c.Ldif.RFC_ACL_ATTRIBUTES
 
     def resolve_acl_attributes(self) -> MutableSequence[str]:
         """Get ACL attributes for this server."""
