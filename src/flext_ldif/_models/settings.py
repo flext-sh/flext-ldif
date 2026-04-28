@@ -108,7 +108,7 @@ class FlextLdifModelsSettings:
         """Configuration for building ACL metadata extensions."""
 
         line_breaks: Annotated[
-            MutableSequence[int] | None,
+            list[t.JsonValue] | None,
             u.Field(description="Line break positions"),
         ] = None
         dn_spaces: Annotated[
@@ -116,7 +116,7 @@ class FlextLdifModelsSettings:
             u.Field(description="DN spacing information"),
         ] = None
         targetscope: Annotated[
-            MutableSequence[int] | None,
+            list[t.JsonValue] | None,
             u.Field(description="Target scope values"),
         ] = None
         version: Annotated[

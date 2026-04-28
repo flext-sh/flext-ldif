@@ -266,19 +266,13 @@ class FlextLdifUtilitiesACL:
         settings: m.Ldif.AclMetadataConfig,
     ) -> t.Ldif.MutableMetadataMapping:
         """Build QuirkMetadata extensions for ACL."""
-        normalized_line_breaks: t.JsonValue | None = None
-        if settings.line_breaks is not None:
-            normalized_line_breaks = [int(value) for value in settings.line_breaks]
-        normalized_targetscope: t.JsonValue | None = None
-        if settings.targetscope is not None:
-            normalized_targetscope = [int(value) for value in settings.targetscope]
         result: t.Ldif.MutableMetadataMapping = {}
-        if normalized_line_breaks is not None:
-            result["line_breaks"] = normalized_line_breaks
+        if settings.line_breaks is not None:
+            result["line_breaks"] = settings.line_breaks
         if settings.dn_spaces is not None:
             result["dn_spaces"] = settings.dn_spaces
-        if normalized_targetscope is not None:
-            result["targetscope"] = normalized_targetscope
+        if settings.targetscope is not None:
+            result["targetscope"] = settings.targetscope
         if settings.version is not None:
             result["version"] = settings.version
         if settings.action_type is not None:

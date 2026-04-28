@@ -424,13 +424,13 @@ class FlextLdifUtilitiesDN:
         )
         validation_warnings_raw = flags.get("validation_warnings", [])
         validation_warnings: MutableSequence[str] = (
-            [str(item) for item in validation_warnings_raw]
+            list(validation_warnings_raw)
             if isinstance(validation_warnings_raw, list)
             else []
         )
         validation_errors_raw = flags.get("validation_errors", [])
         validation_errors: MutableSequence[str] = (
-            [str(item) for item in validation_errors_raw]
+            list(validation_errors_raw)
             if isinstance(validation_errors_raw, list)
             else []
         )

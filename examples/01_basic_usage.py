@@ -147,7 +147,7 @@ class BasicUsageDry:
             r with processing result or error.
 
         """
-        with FlextContext.Correlation.new_correlation(self.SAMPLE_CORRELATION_ID):
+        with FlextContext.new_correlation(self.SAMPLE_CORRELATION_ID):
             return self._resolve_server_type(self.SAMPLE_LDIF).flat_map(
                 lambda server_type: self._parse_validated_entries(
                     self.SAMPLE_LDIF,
