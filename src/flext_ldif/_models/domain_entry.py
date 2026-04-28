@@ -739,7 +739,7 @@ class FlextLdifModelsDomainEntry:
             validation_rules = self.metadata.extensions.get(self._VALIDATION_RULES_KEY)
             if not validation_rules:
                 return self
-            normalized_validation_rules = u.Cli.normalize_json_value(validation_rules)
+            normalized_validation_rules = u.normalize_to_json_value(validation_rules)
             rules = FlextLdifUtilitiesEntry.parse_validation_rules(
                 normalized_validation_rules,
             )

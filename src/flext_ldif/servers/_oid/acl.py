@@ -243,7 +243,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             if acl_model and acl_model.metadata and acl_model.metadata.quirk_type:
                 can_handle = acl_model.metadata.quirk_type == self._get_server_type()
         else:
-            acl_line_lower = str(acl_line).strip().lower()
+            acl_line_lower = acl_line.strip().lower()
             can_handle = bool(acl_line_lower) and acl_line_lower.startswith((
                 f"{FlextLdifServersOidConstants.ORCLACI}:",
                 f"{FlextLdifServersOidConstants.ORCLENTRYLEVELACI}:",

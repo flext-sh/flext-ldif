@@ -479,11 +479,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     }
                     boolean_conversions_json: t.JsonMapping = t.Cli.JSON_MAPPING_ADAPTER.validate_python(
                         {
-                            attr_name: u.Cli.normalize_json_value(conversion_data)
+                            attr_name: u.normalize_to_json_value(conversion_data)
                             for attr_name, conversion_data in boolean_conversions_dict.items()
                         },
                     )
-                    conv_data = u.Cli.normalize_json_value({
+                    conv_data = u.normalize_to_json_value({
                         mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: converted_attrs_json,
                         mk.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions_json,
                     })

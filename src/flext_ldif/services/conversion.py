@@ -396,15 +396,14 @@ class FlextLdifConversion(
     ) -> t.JsonValue:
         """Normalize metadata value to proper type."""
         if value is None:
-            empty_val: t.JsonValue = u.Cli.normalize_json_value("")
+            empty_val: t.JsonValue = u.normalize_to_json_value("")
             return empty_val
         if isinstance(value, Mapping):
             normalized_mapping: dict[str, t.JsonValue] = {
-                str(key): u.Cli.normalize_json_value(item)
-                for key, item in value.items()
+                str(key): u.normalize_to_json_value(item) for key, item in value.items()
             }
             return normalized_mapping
-        normalized: t.JsonValue = u.Cli.normalize_json_value(value)
+        normalized: t.JsonValue = u.normalize_to_json_value(value)
         return normalized
 
     @staticmethod
@@ -1103,7 +1102,7 @@ class FlextLdifConversion(
         value: t.JsonPayload | None,
     ) -> t.JsonValue:
         """Convert value to JsonValue type."""
-        normalized: t.JsonValue = u.Cli.normalize_json_value(
+        normalized: t.JsonValue = u.normalize_to_json_value(
             "" if value is None else value,
         )
         return normalized
@@ -1117,7 +1116,7 @@ class FlextLdifConversion(
         def to_general_value(
             value: t.JsonPayload | None,
         ) -> t.JsonValue:
-            normalized_local: t.JsonValue = u.Cli.normalize_json_value(
+            normalized_local: t.JsonValue = u.normalize_to_json_value(
                 value if value is not None else "",
             )
             return normalized_local

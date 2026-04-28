@@ -557,7 +557,7 @@ class FlextLdifUtilitiesEntry:
             "context": context,
             "original": original,
             "converted": converted if converted is not None else original,
-            "differences": u.Cli.normalize_json_value(list[str]()),
+            "differences": u.normalize_to_json_value(list[str]()),
             "original_length": len(original),
             "converted_length": len(converted) if converted else len(original),
         }
@@ -619,7 +619,7 @@ class FlextLdifUtilitiesEntry:
             elif attr_values is not None:
                 original_values_list = [str(attr_values)]
             original_attributes_complete[original_attr_name] = (
-                u.Cli.normalize_json_value(original_values_list)
+                u.normalize_to_json_value(original_values_list)
             )
             converted_values = converted_attrs.get(canonical_name, [])
             original_str = f"{original_attr_name}: {', '.join(original_values_list)}"

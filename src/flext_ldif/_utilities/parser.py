@@ -12,7 +12,6 @@ from collections.abc import (
 
 from flext_core import u
 from flext_ldif import (
-    FlextLdifUtilitiesOID as uo,
     FlextLdifUtilitiesServer as us,
     c,
     m,
@@ -64,27 +63,6 @@ class FlextLdifUtilitiesParser:
                 ),
             )
         return None
-
-    @staticmethod
-    def append_attribute_value(
-        attributes: t.MutableStrSequenceMapping,
-        attribute_metadata: MutableMapping[str, t.MutableAttributeMapping],
-        attr_name: str,
-        value: str,
-        value_origin: c.Ldif.ValueOrigin,
-        raw_value: str | None,
-    ) -> None:
-        """Append value while tracking its RFC serialization details."""
-        attributes.setdefault(attr_name, []).append(value)
-        metadata = attribute_metadata.setdefault(attr_name, {})
-        value_origins = metadata.setdefault("value_origins", [])
-        if isinstance(value_origins, list):
-            value_origins.append(str(value_origin))
-        if raw_value is None:
-            return
-        raw_values = metadata.setdefault("raw_values", [])
-        if isinstance(raw_values, list):
-            raw_values.append(raw_value)
 
     @staticmethod
     def build_control(payload: str) -> m.Ldif.Control:
@@ -221,6 +199,7 @@ class FlextLdifUtilitiesParser:
             value, value_origin, raw_value = FlextLdifUtilitiesParser.decode_value(
                 remainder,
             )
+            attribute_name = key
             if key_lower == "dn":
                 dn = value
                 continue
@@ -265,23 +244,17 @@ class FlextLdifUtilitiesParser:
                             raw_value=raw_value,
                         ),
                     )
-                    FlextLdifUtilitiesParser.append_attribute_value(
-                        attrs,
-                        attribute_metadata,
-                        current_change_operation.attribute,
-                        value,
-                        value_origin,
-                        raw_value,
-                    )
-                    continue
-            FlextLdifUtilitiesParser.append_attribute_value(
-                attrs,
-                attribute_metadata,
-                key,
-                value,
-                value_origin,
-                raw_value,
-            )
+                    attribute_name = current_change_operation.attribute
+            attrs.setdefault(attribute_name, []).append(value)
+            metadata = attribute_metadata.setdefault(attribute_name, {})
+            value_origins = metadata.setdefault("value_origins", [])
+            if isinstance(value_origins, list):
+                value_origins.append(str(value_origin))
+            if raw_value is None:
+                continue
+            raw_values = metadata.setdefault("raw_values", [])
+            if isinstance(raw_values, list):
+                raw_values.append(raw_value)
         FlextLdifUtilitiesParser.finalize_change_operation(
             current_change_operation,
             change_operations,
@@ -334,24 +307,14 @@ class FlextLdifUtilitiesParser:
         return records
 
     @staticmethod
-    def _validate_syntax_oid(syntax: str | None) -> str | None:
-        """Validate syntax OID format."""
-        if syntax is None or not syntax.strip():
-            return None
-        validate_result = uo.validate_format(syntax)
-        if validate_result.failure:
-            return f"Syntax OID validation failed: {validate_result.error}"
-        if not validate_result.value:
-            return f"Invalid syntax OID format: {syntax}"
-        return None
-
-    @staticmethod
     def ext(
         metadata: m.Ldif.DynamicMetadata,
     ) -> t.MutableStrSequenceMapping:
         """Extract extension information from parsed metadata."""
 
-        def _as_str_list(value: t.JsonValue) -> MutableSequence[str] | None:
+        def _as_str_list(
+            value: MutableSequence[t.JsonValue] | t.JsonValue | None,
+        ) -> MutableSequence[str] | None:
             if isinstance(value, list):
                 normalized: MutableSequence[str] = []
                 for item in value:
@@ -361,7 +324,9 @@ class FlextLdifUtilitiesParser:
                 return normalized
             return None
 
-        result = metadata.get("extensions")
+        result: Mapping[str, t.JsonValue] | t.JsonValue | None = metadata.get(
+            "extensions"
+        )
         if not isinstance(result, Mapping):
             extensions: t.MutableStrSequenceMapping = {}
             for key, value in metadata.items():

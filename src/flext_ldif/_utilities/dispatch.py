@@ -10,6 +10,7 @@ from collections.abc import (
 )
 from typing import ClassVar, TypeGuard, overload
 
+from flext_cli import u
 from flext_ldif import (
     FlextLdifUtilitiesCollectionLdif,
     FlextLdifUtilitiesDN,
@@ -113,21 +114,22 @@ class FlextLdifUtilitiesDispatch:
     def matches_server_patterns(
         value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         oid_pattern: t.MutableJsonMapping | str,
-        detection_names: t.JsonValue | frozenset[str],
+        detection_names: m.Ldif.ServerPatternsConfig | frozenset[str],
         detection_string: str | None = None,
         *,
         use_prefix_match: bool = False,
     ) -> bool:
-        if isinstance(oid_pattern, Mapping) and (
-            not isinstance(detection_names, frozenset)
+        if isinstance(oid_pattern, Mapping) and isinstance(
+            detection_names,
+            m.Ldif.ServerPatternsConfig,
         ):
             entry_dn = value if isinstance(value, str) else str(value)
             attributes = dict(oid_pattern)
             attr_names_lower = {k.lower() for k in attributes}
-            dn_patterns = getattr(detection_names, "dn_patterns", None)
-            attr_prefixes = getattr(detection_names, "attr_prefixes", None)
-            attr_names = getattr(detection_names, "attr_names", None)
-            keyword_patterns = getattr(detection_names, "keyword_patterns", None)
+            dn_patterns = detection_names.dn_patterns
+            attr_prefixes = detection_names.attr_prefixes
+            attr_names = detection_names.attr_names
+            keyword_patterns = detection_names.keyword_patterns
             if dn_patterns and any(
                 all(pattern in entry_dn for pattern in pattern_set)
                 for pattern_set in dn_patterns
@@ -214,7 +216,7 @@ class FlextLdifUtilitiesDispatch:
                     *validators,
                 )
             case _:
-                validated_value: t.JsonValue = t.json_value_adapter().validate_python(
+                validated_value: t.JsonValue = u.normalize_to_json_value(
                     value_or_entries,
                 )
                 result = FlextLdifUtilitiesValidation.validate_value(
