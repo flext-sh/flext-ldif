@@ -1,0 +1,18 @@
+src/flext_ldif/servers/_oid/acl.py
+  h_9db9d35f50cf33 246
+src/flext_ldif/_utilities/dispatch.py
+  h_9db9d35f50cf33 13,117,122-124,129-132,219
+src/flext_ldif/_utilities/parser.py
+  h_9db9d35f50cf33 202,247-253,255-257,316,327
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "b1a665450d7ba71b3a6277d508d3d3b7650cd8c2",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
