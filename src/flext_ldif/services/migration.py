@@ -22,7 +22,7 @@ from flext_ldif import (
 )
 
 
-class FlextLdifMigrationPipeline(FlextLdifServiceBase):
+class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.Ldif.MigrationPipelineResult]):
     """Migration Pipeline for Server-to-Server LDIF Migration."""
 
     _DEFAULT_SERVER: Final[c.Ldif.ServerTypes] = c.Ldif.ServerTypes.RFC

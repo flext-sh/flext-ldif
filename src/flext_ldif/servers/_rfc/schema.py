@@ -236,9 +236,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             return None
         if isinstance(value, str):
             return value
-        if isinstance(value, int | float):
-            return str(value)
-        return None
+        return str(value)
 
     @staticmethod
     def _to_required_value(
@@ -253,9 +251,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             return default
         if isinstance(value, str):
             return value
-        if isinstance(value, int | float):
-            return str(value)
-        return default
+        return str(value)
 
     @staticmethod
     def _to_string_list(

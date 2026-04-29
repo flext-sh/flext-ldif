@@ -205,7 +205,7 @@ class ExampleServerMigration:
             )
         final_result = final_migration.unwrap()
         final_stats = final_result.stats
-        final_count = final_stats.processed_entries if final_stats is not None else 0
+        final_count = final_stats.processed_entries
         return r[t.JsonMapping].ok(
             t.json_mapping_adapter().validate_python({
                 **detection_data,
@@ -244,5 +244,5 @@ class ExampleServerMigration:
         pipeline_result = migration_result.unwrap()
         _ = len(pipeline_result.entries)
         stats = pipeline_result.stats
-        _ = stats.processed_entries if stats is not None else 0
+        _ = stats.processed_entries
         return r[m.Ldif.MigrationPipelineResult].ok(pipeline_result)

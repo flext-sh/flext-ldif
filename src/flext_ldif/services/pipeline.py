@@ -18,7 +18,7 @@ from flext_ldif import (
 )
 
 
-class FlextLdifProcessingPipeline(FlextLdifServiceBase):
+class FlextLdifProcessingPipeline(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
     """Full processing pipeline with configuration."""
 
     _DEFAULT_CASE_FOLD: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.NONE
