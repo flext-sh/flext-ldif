@@ -95,7 +95,9 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
     ) -> m.Ldif.Acl | str:
         """Callable interface - automatic polymorphic processor."""
         result = self.execute(data=data, operation=operation)
-        return result.value
+        if isinstance(result.value, str):
+            return result.value
+        return m.Ldif.Acl.model_validate(result.value)
 
     @override
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:

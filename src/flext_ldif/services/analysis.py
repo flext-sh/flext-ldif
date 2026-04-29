@@ -74,7 +74,7 @@ class FlextLdifAnalysis(FlextLdifServiceBase):
             else None
         )
         if isinstance(oc_values_raw, list):
-            oc_values: MutableSequence[str] = [str(oc) for oc in oc_values_raw]
+            oc_values: MutableSequence[str] = list(oc_values_raw)
         else:
             oc_values = []
         for oc_item in oc_values:

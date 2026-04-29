@@ -226,12 +226,13 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     == FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME.lower()
                 ):
                     return True
-                return bool(
+                return (
                     re.match(
                         FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN,
                         normalized,
                         re.IGNORECASE,
-                    ),
+                    )
+                    is not None
                 )
             raw_acl = getattr(acl_line, "raw_acl", None)
             if not isinstance(raw_acl, str) or not raw_acl:
@@ -245,12 +246,13 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 == FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME.lower()
             ):
                 return True
-            return bool(
+            return (
                 re.match(
                     FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN,
                     normalized,
                     re.IGNORECASE,
-                ),
+                )
+                is not None
             )
 
         @override
@@ -368,15 +370,10 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 return True
             raw_object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
             object_classes = list(raw_object_classes)
-            normalized_object_classes: MutableSequence[str] = [
-                str(oc) for oc in object_classes
-            ]
-            return bool(
-                any(
-                    oc.lower()
-                    in FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES
-                    for oc in normalized_object_classes
-                ),
+            normalized_object_classes: MutableSequence[str] = list(object_classes)
+            return any(
+                oc.lower() in FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES
+                for oc in normalized_object_classes
             )
 
 

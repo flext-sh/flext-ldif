@@ -38,7 +38,7 @@ class DRYValidationAnalysis:
                 category = getattr(error, "category", "unknown")
                 if category not in error_groups:
                     error_groups[category] = []
-                error_groups[category].append(str(error))
+                error_groups[category].append(error)
         return r[m.Ldif.ValidationResult].ok(validation_result)
 
     @staticmethod

@@ -487,12 +487,10 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             objectclass_key = c.Ldif.DictKeys.OBJECTCLASS.lower()
             object_classes_raw = normalized_attrs.get(objectclass_key, [])
             object_classes: MutableSequence[str] = object_classes_raw
-            return bool(
-                any(
-                    str(oc).lower()
-                    in FlextLdifServersDs389.Constants.DETECTION_OBJECTCLASS_NAMES
-                    for oc in object_classes
-                ),
+            return any(
+                oc.lower()
+                in FlextLdifServersDs389.Constants.DETECTION_OBJECTCLASS_NAMES
+                for oc in object_classes
             )
 
         def process_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:

@@ -248,7 +248,7 @@ class FlextLdifCategorization(s):
             return
         if override_existing or key_str not in category_map:
             category_map[key_str] = (
-                value if isinstance(value, frozenset) else frozenset([str(value)])
+                value if isinstance(value, frozenset) else frozenset([value])
             )
 
     @staticmethod

@@ -219,8 +219,8 @@ class FlextLdifUtilitiesDN:
                 f"Comparison failed (RFC 4514): Failed to normalize second DN: {norm2_result.error}",
             )
         return r[tuple[str, str]].ok((
-            str(norm1_result.value).lower(),
-            str(norm2_result.value).lower(),
+            norm1_result.value.lower(),
+            norm2_result.value.lower(),
         ))
 
     @staticmethod
@@ -464,8 +464,8 @@ class FlextLdifUtilitiesDN:
             normalized_pair = norm_result.value
             if len(normalized_pair) != c.Ldif.TUPLE_LENGTH_PAIR:
                 return r[int].fail("Normalization returned unexpected DN pair")
-            norm1_lower = str(normalized_pair[0])
-            norm2_lower = str(normalized_pair[1])
+            norm1_lower = normalized_pair[0]
+            norm2_lower = normalized_pair[1]
             comparison = (norm1_lower > norm2_lower) - (norm1_lower < norm2_lower)
             return r[int].ok(comparison)
         except (
@@ -694,7 +694,7 @@ class FlextLdifUtilitiesDN:
             return ""
         result = FlextLdifUtilitiesDN.norm(dn)
         if result.success:
-            return str(result.value)
+            return result.value
         if fallback == c.Ldif.NormalizeFallback.LOWER:
             return dn.lower()
         if fallback == c.Ldif.NormalizeFallback.UPPER:
@@ -888,7 +888,7 @@ class FlextLdifUtilitiesDN:
         if not dn_str or not source_dn or (not target_dn):
             return dn_str
         norm_result = FlextLdifUtilitiesDN.norm(dn_str)
-        normalized_dn = str(norm_result.map_or(dn_str))
+        normalized_dn = norm_result.map_or(dn_str)
         source_escaped = re.escape(source_dn)
         result = re.sub(
             f",{source_escaped}$",

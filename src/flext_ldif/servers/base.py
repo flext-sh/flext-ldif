@@ -6,7 +6,7 @@ from collections.abc import (
     Callable,
     MutableSequence,
 )
-from typing import ClassVar, Self, overload
+from typing import ClassVar, Self, overload, override
 
 from flext_core import s
 from flext_ldif import (
@@ -362,6 +362,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         msg = f"Expected 'parse' | 'write' | None for operation, got {raw}"
         raise ValueError(msg)
 
+    @override
     def execute(
         self,
         *,

@@ -12,17 +12,17 @@ from typing import Annotated, Final, override
 from flext_ldif import (
     FlextLdifParser,
     FlextLdifProcessingPipeline,
+    FlextLdifServiceBase,
     FlextLdifWriter,
     c,
     m,
     r,
-    s,
     t,
     u,
 )
 
 
-class FlextLdifMigrationPipeline(s):
+class FlextLdifMigrationPipeline(FlextLdifServiceBase):
     """Migration Pipeline for Server-to-Server LDIF Migration."""
 
     _DEFAULT_SERVER: Final[c.Ldif.ServerTypes] = c.Ldif.ServerTypes.RFC
@@ -154,6 +154,7 @@ class FlextLdifMigrationPipeline(s):
         )
         return constructed
 
+    @override
     def execute(self) -> r[m.Ldif.MigrationPipelineResult]:
         """Execute migration pipeline for all files in input_dir."""
         in_dir = self.input_dir

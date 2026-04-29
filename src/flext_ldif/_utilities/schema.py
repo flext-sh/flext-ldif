@@ -38,14 +38,14 @@ class FlextLdifUtilitiesSchema:
     ) -> None:
         """Add MUST and MAY to objectclass parts list."""
         if oc_data.must:
-            must_list_str: MutableSequence[str] = [str(item) for item in oc_data.must]
+            must_list_str: MutableSequence[str] = list(oc_data.must)
             if len(must_list_str) == 1:
                 parts.append(f"MUST {must_list_str[0]}")
             else:
                 must_str = " $ ".join(must_list_str)
                 parts.append(f"MUST ( {must_str} )")
         if oc_data.may:
-            may_list_str: MutableSequence[str] = [str(item) for item in oc_data.may]
+            may_list_str: MutableSequence[str] = list(oc_data.may)
             if len(may_list_str) == 1:
                 parts.append(f"MAY {may_list_str[0]}")
             else:
@@ -59,7 +59,7 @@ class FlextLdifUtilitiesSchema:
     ) -> None:
         """Add SUP to objectclass parts list."""
         if oc_data.sup:
-            sup_list_str: MutableSequence[str] = [str(item) for item in oc_data.sup]
+            sup_list_str: MutableSequence[str] = list(oc_data.sup)
             if len(sup_list_str) == 1:
                 parts.append(f"SUP {sup_list_str[0]}")
             else:
@@ -148,7 +148,7 @@ class FlextLdifUtilitiesSchema:
             parts.append("OBSOLETE")
         FlextLdifUtilitiesSchema._add_objectclass_sup(oc_data, parts)
         kind = oc_data.kind or c.Ldif.SchemaKind.STRUCTURAL.value
-        parts.append(str(kind))
+        parts.append(kind)
         FlextLdifUtilitiesSchema._add_objectclass_must_may(oc_data, parts)
         if oc_data.metadata and oc_data.metadata.extensions.get("x_origin"):
             parts.append(f"X-ORIGIN '{oc_data.metadata.extensions.get('x_origin')}'")
@@ -345,7 +345,7 @@ class FlextLdifUtilitiesSchema:
             return r[tuple[str, str, str | None]].fail(
                 f"RFC {definition_label} parsing failed: unknown result state",
             )
-        oid = str(oid_result.value)
+        oid = oid_result.value
         name_raw = up.extract_optional_field(
             definition,
             c.Ldif.SCHEMA_NAME,
@@ -439,7 +439,7 @@ class FlextLdifUtilitiesSchema:
             return None
         if isinstance(attr_list, str):
             return f"{prefix} {attr_list}"
-        attr_strs = [str(item) for item in attr_list]
+        attr_strs = list(attr_list)
         if len(attr_strs) == 1:
             return f"{prefix} {attr_strs[0]}"
         return f"{prefix} ( {' $ '.join(attr_strs)} )"
@@ -451,7 +451,7 @@ class FlextLdifUtilitiesSchema:
             return None
         if isinstance(sup_value, str):
             return f"SUP {sup_value}"
-        sup_strs = [str(item) for item in sup_value]
+        sup_strs = list(sup_value)
         return f"SUP ( {' $ '.join(sup_strs)} )"
 
     @staticmethod
@@ -649,7 +649,7 @@ class FlextLdifUtilitiesSchema:
         """Build set of available attribute names (lowercase) for dependency validation."""
         available: set[str] = set()
         for attr_data in attributes:
-            attr_name = str(attr_data.name).lower()
+            attr_name = attr_data.name.lower()
             available.add(attr_name)
         return available
 
@@ -712,7 +712,7 @@ class FlextLdifUtilitiesSchema:
         if sup_part:
             parts.append(sup_part)
         kind = oc_data.kind or c.Ldif.SchemaKind.STRUCTURAL.value
-        parts.append(str(kind))
+        parts.append(kind)
         must_part = FlextLdifUtilitiesSchema._format_attribute_list(
             oc_data.must,
             "MUST",
@@ -951,8 +951,8 @@ class FlextLdifUtilitiesSchema:
         if basic_fields_result.failure:
             return r[t.Ldif.MutableMetadataMapping].fail(basic_fields_result.error)
         basic_fields_value = basic_fields_result.value
-        oid = str(basic_fields_value[0])
-        name = str(basic_fields_value[1])
+        oid = basic_fields_value[0]
+        name = basic_fields_value[1]
         desc = basic_fields_value[2]
         syntax, length = FlextLdifUtilitiesSchema._extract_attribute_syntax(
             attr_definition,
@@ -1020,8 +1020,8 @@ class FlextLdifUtilitiesSchema:
             msg = basic_fields_result.error or "RFC objectClass parsing failed"
             raise ValueError(msg)
         basic_fields_value = basic_fields_result.value
-        oid = str(basic_fields_value[0])
-        name = str(basic_fields_value[1])
+        oid = basic_fields_value[0]
+        name = basic_fields_value[1]
         desc = basic_fields_value[2]
         sup = FlextLdifUtilitiesSchema._extract_objectclass_sup(oc_definition)
         kind = FlextLdifUtilitiesSchema._extract_objectclass_kind(oc_definition)

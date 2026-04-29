@@ -55,7 +55,7 @@ class FlextLdifParser(FlextLdifServiceBase):
         effective_server_type = server_type or self._get_effective_server_type_value()
         return (
             self._server
-            .quirk(str(effective_server_type))
+            .quirk(effective_server_type)
             .map_error(
                 lambda error: error or "Failed to resolve LDIF server quirk",
             )

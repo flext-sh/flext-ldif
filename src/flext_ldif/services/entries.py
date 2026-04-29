@@ -149,7 +149,7 @@ class FlextLdifEntries(s):
                 f"Failed to get entry attributes: {attributes_result.error}",
             )
         attributes: t.MutableStrSequenceMapping = {
-            str(attr_name): list(attr_values)
+            attr_name: list(attr_values)
             for attr_name, attr_values in attributes_result.value.items()
         }
         for attr_name, attr_values in attributes.items():

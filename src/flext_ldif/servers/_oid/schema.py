@@ -111,7 +111,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
     ) -> t.MutableOptionalStrMapping:
         """Capture attribute values for metadata tracking."""
         return {
-            "syntax_oid": str(attr_data.syntax) if attr_data.syntax else None,
+            "syntax_oid": attr_data.syntax or None,
             "equality": attr_data.equality,
             "substr": attr_data.substr,
             "ordering": attr_data.ordering,
@@ -126,7 +126,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         """Hook: Transform parsed attribute using OID-specific normalizations."""
         try:
             if attr.syntax:
-                attr.syntax = u.Ldif.normalize_syntax_oid(str(attr.syntax))
+                attr.syntax = u.Ldif.normalize_syntax_oid(attr.syntax)
             normalized_equality, normalized_substr = u.Ldif.normalize_matching_rules(
                 attr.equality,
                 attr.substr,
@@ -147,7 +147,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                     attr.ordering = normalized_ordering
             if attr.syntax:
                 attr.syntax = u.Ldif.normalize_syntax_oid(
-                    str(attr.syntax),
+                    attr.syntax,
                     replacements=FlextLdifServersOidConstants.SYNTAX_OID_TO_RFC,
                 )
             attr = self._transform_case_ignore_substrings(attr)
@@ -271,9 +271,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                     normalized_sup="top",
                 )
                 return "top"
-            case [sup_item] if (
-                sup_clean := str(sup_item).strip()
-            ) in sup_normalize_set:
+            case [sup_item] if (sup_clean := sup_item.strip()) in sup_normalize_set:
                 logger.debug(
                     "OID→RFC transform: SUP normalization (list)",
                     objectclass_name=oc_data.name,
@@ -521,7 +519,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         if source_syntax:
             oid_syntax = str(source_syntax) if source_syntax else None
         else:
-            oid_syntax = str(attr_copy.syntax) if attr_copy.syntax else None
+            oid_syntax = attr_copy.syntax or None
         oid_metadata = attr_copy.metadata
         if attr_copy.metadata and attr_copy.metadata.extensions:
             keys_to_remove = {c.Ldif.SCHEMA_ORIGINAL_FORMAT}

@@ -10,7 +10,7 @@ from collections.abc import (
     MutableSequence,
 )
 from datetime import UTC, datetime
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, ClassVar, Self, override
 
 from flext_core import s
 from flext_ldif import (
@@ -111,10 +111,11 @@ class FlextLdifServersBaseEntry(
         _ = objectclass
         return False
 
+    @override
     def execute(
         self,
         **kwargs: str | m.Ldif.Entry | t.MutableJsonMapping,
-    ) -> r[m.Ldif.Entry | str]:
+    ) -> r[t.Ldif.EntryPayload]:
         """Execute entry operation (parse/write)."""
         ldif_content = kwargs.get("ldif_content")
         entry_model = kwargs.get("entry_model")
@@ -122,12 +123,12 @@ class FlextLdifServersBaseEntry(
             entries_result = self._parse_content(ldif_content)
             if entries_result.success:
                 entries = entries_result.value
-                return r[m.Ldif.Entry | str].ok(entries[0] if entries else "")
-            return r[m.Ldif.Entry | str].ok("")
+                return r[t.Ldif.EntryPayload].ok(entries[0] if entries else "")
+            return r[t.Ldif.EntryPayload].ok("")
         if isinstance(entry_model, m.Ldif.Entry):
             str_result = self._write_entry(entry_model)
-            return r[m.Ldif.Entry | str].ok(str_result.map_or(""))
-        return r[m.Ldif.Entry | str].ok("")
+            return r[t.Ldif.EntryPayload].ok(str_result.map_or(""))
+        return r[t.Ldif.EntryPayload].ok("")
 
     def parse_quirk(self, value: str) -> r[MutableSequence[m.Ldif.Entry]]:
         """Parse LDIF content string into Entry models."""
@@ -310,18 +311,18 @@ class FlextLdifServersBaseEntry(
         ldif_changetype: str | None = None
         ldif_modify_operation: str = "add"
         if format_options is not None:
-            fold_long_lines = bool(format_options.fold_long_lines)
-            line_width = int(format_options.line_width)
-            include_dn_comments = bool(format_options.include_dn_comments)
-            normalize_attribute_names = bool(format_options.normalize_attribute_names)
-            restore_original_format = bool(format_options.restore_original_format)
-            write_empty_values = bool(format_options.write_empty_values)
-            write_hidden_attributes_as_comments = bool(
-                format_options.write_hidden_attributes_as_comments,
+            fold_long_lines = format_options.fold_long_lines
+            line_width = format_options.line_width
+            include_dn_comments = format_options.include_dn_comments
+            normalize_attribute_names = format_options.normalize_attribute_names
+            restore_original_format = format_options.restore_original_format
+            write_empty_values = format_options.write_empty_values
+            write_hidden_attributes_as_comments = (
+                format_options.write_hidden_attributes_as_comments
             )
-            write_metadata_as_comments = bool(format_options.write_metadata_as_comments)
-            use_original_acl_format_as_name = bool(
-                format_options.use_original_acl_format_as_name,
+            write_metadata_as_comments = format_options.write_metadata_as_comments
+            use_original_acl_format_as_name = (
+                format_options.use_original_acl_format_as_name
             )
             ldif_changetype = format_options.ldif_changetype
             ldif_modify_operation = format_options.ldif_modify_operation or "add"
@@ -334,15 +335,10 @@ class FlextLdifServersBaseEntry(
             """Restore original LDIF only for same-server round-trips."""
             if not restore_original_format or entry_data.metadata is None:
                 return False
-            original_ldif_raw = entry_data.metadata.original_strings.get(
-                "entry_original_ldif",
+            return (
+                str(entry_data.metadata.original_server_type).lower()
+                == self.server_type.lower()
             )
-            if not isinstance(original_ldif_raw, str) or not original_ldif_raw:
-                return False
-            original_server = entry_data.metadata.original_server_type
-            if original_server is None:
-                original_server = str(entry_data.metadata.quirk_type)
-            return str(original_server).lower() == str(self.server_type).lower()
 
         def maybe_replace_acl_name(attr_name: str, value: str) -> str:
             if not use_original_acl_format_as_name:
@@ -415,9 +411,9 @@ class FlextLdifServersBaseEntry(
             origin: str | None = None
             raw_value: str | None = None
             if isinstance(origins_raw, list) and value_index < len(origins_raw):
-                origin = str(origins_raw[value_index])
+                origin = origins_raw[value_index]
             if isinstance(raw_values_raw, list) and value_index < len(raw_values_raw):
-                raw_value = str(raw_values_raw[value_index])
+                raw_value = raw_values_raw[value_index]
             return (origin, raw_value)
 
         acl_attribute_names: set[str] = {
@@ -431,14 +427,15 @@ class FlextLdifServersBaseEntry(
             output_lines.extend(u.Ldif.fold_line(line, width=effective_line_width))
 
         if should_restore_original() and entry_data.metadata is not None:
-            original_ldif = entry_data.metadata.original_strings.get(
+            original_ldif_raw: object = entry_data.metadata.original_strings.get(
                 "entry_original_ldif"
             )
-            if isinstance(original_ldif, str):
-                restored_output = original_ldif
-                if restored_output and not restored_output.endswith("\n"):
-                    restored_output += "\n"
-                return r[str].ok(restored_output)
+            if not original_ldif_raw:
+                return r[str].ok("")
+            restored_output = str(original_ldif_raw)
+            if restored_output and not restored_output.endswith("\n"):
+                restored_output += "\n"
+            return r[str].ok(restored_output)
 
         if write_metadata_as_comments and entry_data.metadata is not None:
             output_lines.append("# Entry Metadata:")
@@ -487,7 +484,7 @@ class FlextLdifServersBaseEntry(
                 for attr_name, values in entry_data.attributes.items():
                     if attr_name.lower() in modify_excluded:
                         continue
-                    non_empty = [str(v) for v in values if str(v)]
+                    non_empty = [v for v in values if v]
                     if not non_empty:
                         continue
                     output_lines.append(f"{ldif_modify_operation}: {attr_name}")
@@ -536,7 +533,7 @@ class FlextLdifServersBaseEntry(
             for attr_name, values in entry_data.attributes.items():
                 attr_is_hidden = attr_name.lower() in hidden_attributes
                 for value_index, value in enumerate(values):
-                    str_value = str(value)
+                    str_value = value
                     if not str_value and (not write_empty_values):
                         continue
                     value_origin, raw_value = get_attribute_value_metadata(

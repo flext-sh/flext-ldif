@@ -86,7 +86,7 @@ class FlextLdifUtilitiesTransformers:
                         dn_str,
                     )
                     .map_error(
-                        lambda error: str(error) if error else "DN validation failed",
+                        lambda error: error or "DN validation failed",
                     )
                     .map(
                         lambda __: dn_str,

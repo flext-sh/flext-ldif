@@ -452,9 +452,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             )
             has_olc_attrs = any(attr.startswith("olc") for attr in attributes)
             object_classes_raw = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
-            object_classes_list: MutableSequence[str] = [
-                str(item) for item in object_classes_raw
-            ]
+            object_classes_list: MutableSequence[str] = list(object_classes_raw)
             has_olc_classes = any(
                 oc in FlextLdifServersOpenldap.Constants.OPENLDAP_2_OBJECTCLASSES
                 for oc in object_classes_list
@@ -510,7 +508,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             acl_format_rules = validation_rules["acl_format_rules"]
             acl_format_payload: dict[str, t.JsonValue] | None = (
                 {
-                    str(key): u.normalize_to_metadata(value)
+                    key: u.normalize_to_metadata(value)
                     for key, value in acl_format_rules.items()
                 }
                 if isinstance(acl_format_rules, dict)

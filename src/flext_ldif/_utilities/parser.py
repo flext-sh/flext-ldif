@@ -335,7 +335,7 @@ class FlextLdifUtilitiesParser:
                     extensions[key] = str_list
             return extensions
         extensions_metadata = m.Ldif.DynamicMetadata.from_dict({
-            str(key): u.normalize_to_metadata(value) for key, value in result.items()
+            key: u.normalize_to_metadata(value) for key, value in result.items()
         })
         strict_result: t.MutableStrSequenceMapping = {}
         for key, value in extensions_metadata.items():

@@ -87,7 +87,7 @@ class FlextLdifModelsMetadata:
             if data is None:
                 return cls()
             validated: Self = cls.model_validate({
-                str(key): u.normalize_to_metadata(value) for key, value in data.items()
+                key: u.normalize_to_metadata(value) for key, value in data.items()
             })
             return validated
 

@@ -118,7 +118,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         """Apply OID validation and tracking metadata to attribute."""
         if not attr or not attr.oid:
             return attr
-        oid_str = str(attr.oid)
+        oid_str = attr.oid
         oid_validation = self._validate_attribute_oid(oid_str)
         if oid_validation.failure:
             return attr
@@ -185,7 +185,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                 "ordering": normalized_ordering,
             },
         )
-        oid = str(attr.oid)
+        oid = attr.oid
         oid_validation = self._validate_attribute_oid(oid)
         if oid_validation.failure:
             return r[m.Ldif.SchemaAttribute].fail(
@@ -295,7 +295,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
     ) -> r[m.Ldif.SchemaObjectClass]:
         """Validate ObjectClass OID and SUP OID formats."""
         if oc and oc.oid:
-            oid_str = str(oc.oid)
+            oid_str = oc.oid
             oid_validation = self._validate_attribute_oid(oid_str)
             if oid_validation.failure:
                 return r[m.Ldif.SchemaObjectClass].fail(

@@ -439,29 +439,10 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
         Path.home() / ".flext" / f"{c.Ldif.Tests.DOCKER_CONTAINER_NAME}.lock",
     )
     with lock:
-        start_result = docker_control.start_existing_container(
-            c.Ldif.Tests.DOCKER_CONTAINER_NAME,
-        )
-        if start_result.failure:
-            compose_file = str(
-                c.Ldif.Tests.WORKSPACE_ROOT / c.Ldif.Tests.DOCKER_COMPOSE_FILE_REL
-            )
-            compose_result = docker_control.compose_up(
-                compose_file,
-                c.Ldif.Tests.DOCKER_SERVICE_NAME,
-            )
-            if compose_result.failure:
-                pytest.skip(
-                    f"Could not start shared OpenLDAP container: {compose_result.error}",
-                )
-        port_result = docker_control.wait_for_port_ready(
-            "localhost",
-            c.Ldif.Tests.DOCKER_PORT,
-            15,
-        )
-        if port_result.failure or not port_result.value:
+        execute_result = docker_control.execute()
+        if execute_result.failure:
             pytest.skip(
-                f"LDAP container port {c.Ldif.Tests.DOCKER_PORT} is not ready",
+                f"Could not start shared OpenLDAP container: {execute_result.error}",
             )
         admin_dn, admin_password = u.Ldif.Tests.get_admin_credentials()
         # Verify LDAP bind readiness

@@ -290,7 +290,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                         rights.extend(char_mapping[char_upper])
                 attributes: MutableSequence[str] = []
                 for right_segment in rights:
-                    segment_str = str(right_segment).strip()
+                    segment_str = right_segment.strip()
                     if segment_str and ":" in segment_str:
                         parts = segment_str.split(":")
                         if parts[0].strip():
@@ -404,12 +404,10 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             ):
                 return True
             object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
-            return bool(
-                any(
-                    str(oc).lower()
-                    in FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES
-                    for oc in object_classes
-                ),
+            return any(
+                oc.lower()
+                in FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES
+                for oc in object_classes
             )
 
         @override
@@ -431,9 +429,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
                 processed_attributes: t.MutableStrSequenceMapping = {}
                 for attr_name, attr_values in attributes.items():
-                    processed_values: MutableSequence[str] = [
-                        str(value) for value in attr_values
-                    ]
+                    processed_values: MutableSequence[str] = list(attr_values)
                     processed_attributes[attr_name] = processed_values
                 processed_attributes[c.Ldif.QuirkMetadataKeys.SERVER_TYPE] = [
                     self._get_server_type(),

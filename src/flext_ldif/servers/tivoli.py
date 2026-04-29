@@ -334,15 +334,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 for prefix in FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES
             ):
                 return True
-            object_classes = [
-                str(oc) for oc in attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
-            ]
-            return bool(
-                any(
-                    str(oc).lower()
-                    in FlextLdifServersTivoli.Constants.DETECTION_OBJECTCLASS_NAMES
-                    for oc in object_classes
-                ),
+            object_classes = list(attributes.get(c.Ldif.DictKeys.OBJECTCLASS, []))
+            return any(
+                oc.lower()
+                in FlextLdifServersTivoli.Constants.DETECTION_OBJECTCLASS_NAMES
+                for oc in object_classes
             )
 
         def normalize_attribute_name(self, attr_name: str) -> str:
@@ -373,16 +369,12 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     **entry.attributes.attributes,
                 }
                 dn_lower = entry_dn.lower()
-                object_classes = [
-                    str(oc) for oc in attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
-                ]
+                object_classes = list(attributes.get(c.Ldif.DictKeys.OBJECTCLASS, []))
                 processed_attributes: t.MutableStrSequenceMapping = {
                     **attributes,
                 }
                 for attr_name, attr_values in processed_attributes.items():
-                    processed_values: MutableSequence[str] = [
-                        str(value) for value in attr_values
-                    ]
+                    processed_values: MutableSequence[str] = list(attr_values)
                     processed_attributes[attr_name] = processed_values
                 processed_attributes[c.Ldif.QuirkMetadataKeys.SERVER_TYPE] = [
                     self._get_server_type(),

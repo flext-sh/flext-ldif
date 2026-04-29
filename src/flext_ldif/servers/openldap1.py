@@ -227,11 +227,11 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     oc_str += f" SUP {sup}"
                 oc_str += f" {kind}"
                 if must:
-                    must_list_str: MutableSequence[str] = [str(item) for item in must]
+                    must_list_str: MutableSequence[str] = list(must)
                     must_attrs = " $ ".join(must_list_str)
                     oc_str += f" MUST ( {must_attrs} )"
                 if may:
-                    may_list_str: MutableSequence[str] = [str(item) for item in may]
+                    may_list_str: MutableSequence[str] = list(may)
                     may_attrs = " $ ".join(may_list_str)
                     oc_str += f" MAY ( {may_attrs} )"
                 oc_str += " )"

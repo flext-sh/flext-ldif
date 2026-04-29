@@ -59,11 +59,11 @@ class FlextLdifUtilitiesCollectionLdif:
             case str() as value_str:
                 return normalize_single(value_str)
             case list() | tuple() as seq_value:
-                return [normalize_single(str(v)) for v in seq_value]
+                return [normalize_single(v) for v in seq_value]
             case set() | frozenset() as set_value:
-                return {normalize_single(str(v)) for v in set_value}
+                return {normalize_single(v) for v in set_value}
             case _:
-                return [normalize_single(str(v)) for v in value]
+                return [normalize_single(v) for v in value]
 
     nz = normalize_ldif
 

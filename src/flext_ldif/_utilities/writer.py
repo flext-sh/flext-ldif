@@ -47,7 +47,7 @@ class FlextLdifUtilitiesWriter:
     ) -> None:
         """Add syntax and length to attribute parts list."""
         if attr_data.syntax:
-            syntax_str = str(attr_data.syntax)
+            syntax_str = attr_data.syntax
             if attr_data.length is not None:
                 syntax_str += f"{{{attr_data.length}}}"
             parts.append(f"SYNTAX {syntax_str}")

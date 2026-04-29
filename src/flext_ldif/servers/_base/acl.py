@@ -6,7 +6,7 @@ import re
 from collections.abc import (
     MutableSequence,
 )
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, ClassVar, Self, override
 
 from flext_core import s
 from flext_ldif import (
@@ -122,23 +122,24 @@ class FlextLdifServersBaseSchemaAcl(
             extensions=extensions_model,
         )
 
+    @override
     def execute(
         self,
         *,
         data: str | m.Ldif.Acl | None = None,
         operation: str | None = None,
         **kwargs: t.Ldif.Scalar,
-    ) -> r[m.Ldif.Acl | str]:
+    ) -> r[t.Ldif.AclPayload]:
         """Execute ACL operation with auto-detection: str→parse, Acl→write."""
         json_value_adapter = t.json_value_adapter()
         kwargs_dict: t.MutableJsonMapping = {
-            str(key): json_value_adapter.validate_python(u.to_jsonable_python(value))
+            key: json_value_adapter.validate_python(u.to_jsonable_python(value))
             for key, value in kwargs.items()
         }
         data = self._resolve_data(data, kwargs_dict)
         operation = self._resolve_operation(operation, kwargs_dict)
         if data is None:
-            return r[m.Ldif.Acl | str].ok(m.Ldif.Acl())
+            return r[t.Ldif.AclPayload].ok(m.Ldif.Acl())
         detected_op = self._detect_operation(operation, data)
         return self._execute_detected_operation(detected_op=detected_op, data=data)
 
@@ -192,8 +193,9 @@ class FlextLdifServersBaseSchemaAcl(
         """Coerce generic value to ACL payload union."""
         if value is None:
             return None
-        if isinstance(value, str):
-            return value
+        raw_value: object = value
+        if isinstance(raw_value, str):
+            return raw_value
         try:
             return m.Ldif.Acl.model_validate(value)
         except c.ValidationError as exc:
@@ -204,10 +206,8 @@ class FlextLdifServersBaseSchemaAcl(
             )
             return None
 
-    def _coerce_operation(self, value: t.JsonValue) -> str | None:
+    def _coerce_operation(self, value: str) -> str | None:
         """Coerce operation token to supported ACL operation."""
-        if not isinstance(value, str):
-            return None
         if value in {"parse", "write"}:
             return value
         return None
@@ -218,36 +218,36 @@ class FlextLdifServersBaseSchemaAcl(
             return "parse" if operation == "parse" else "write"
         return "parse" if isinstance(data, str) else "write"
 
-    def _execute_acl_parse(self, data: str) -> r[m.Ldif.Acl | str]:
+    def _execute_acl_parse(self, data: str) -> r[t.Ldif.AclPayload]:
         """Execute ACL parse operation."""
         parse_result = self.parse_quirk(data)
         if parse_result.success:
-            return r[m.Ldif.Acl | str].ok(parse_result.value)
-        return r[m.Ldif.Acl | str].fail(parse_result.error or "Parse failed")
+            return r[t.Ldif.AclPayload].ok(parse_result.value)
+        return r[t.Ldif.AclPayload].fail(parse_result.error or "Parse failed")
 
-    def _execute_acl_write(self, data: m.Ldif.Acl) -> r[m.Ldif.Acl | str]:
+    def _execute_acl_write(self, data: m.Ldif.Acl) -> r[t.Ldif.AclPayload]:
         """Execute ACL write operation."""
         write_result = self.write(data)
         if write_result.success:
-            return r[m.Ldif.Acl | str].ok(write_result.value)
-        return r[m.Ldif.Acl | str].fail(write_result.error or "Write failed")
+            return r[t.Ldif.AclPayload].ok(write_result.value)
+        return r[t.Ldif.AclPayload].fail(write_result.error or "Write failed")
 
     def _execute_detected_operation(
         self,
         *,
         detected_op: str,
         data: str | m.Ldif.Acl,
-    ) -> r[m.Ldif.Acl | str]:
+    ) -> r[t.Ldif.AclPayload]:
         """Execute parse/write with strongly typed dispatch."""
         if detected_op == "parse":
             if not isinstance(data, str):
-                return r[m.Ldif.Acl | str].fail(
+                return r[t.Ldif.AclPayload].fail(
                     f"parse requires str, got {type(data).__name__}",
                 )
             return self._execute_acl_parse(data)
         parsed_acl = self._coerce_acl_data(data)
         if parsed_acl is None or isinstance(parsed_acl, str):
-            return r[m.Ldif.Acl | str].fail(
+            return r[t.Ldif.AclPayload].fail(
                 f"write requires Acl, got {type(data).__name__}",
             )
         return self._execute_acl_write(parsed_acl)
@@ -259,9 +259,11 @@ class FlextLdifServersBaseSchemaAcl(
         """Extract and validate ACL operation parameters from kwargs."""
         data_raw = kwargs.get("data")
         data: str | m.Ldif.Acl | None = self._coerce_acl_data(data_raw)
-        operation_raw = kwargs.get("operation")
+        operation_raw: object = kwargs.get("operation")
         operation = (
-            self._coerce_operation(operation_raw) if operation_raw is not None else None
+            self._coerce_operation(operation_raw)
+            if isinstance(operation_raw, str)
+            else None
         )
         return (data, operation)
 
@@ -306,8 +308,8 @@ class FlextLdifServersBaseSchemaAcl(
         """Resolve operation from parameter or kwargs."""
         if operation is not None:
             return operation
-        operation_raw = kwargs.get("operation")
-        if operation_raw is None:
+        operation_raw: object = kwargs.get("operation")
+        if not isinstance(operation_raw, str):
             return None
         return self._coerce_operation(operation_raw)
 

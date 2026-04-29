@@ -33,7 +33,7 @@ class TestsFlextLdifSimpleLdap:
         ldap_container: t.StrMapping,
     ) -> None:
         """Test simple LDAP search."""
-        base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
+        base_dn = ldap_container.get("base_dn", "dc=flext,dc=local")
         result = ldap_connection.search(
             base_dn,
             "(objectClass=*)",
@@ -49,7 +49,7 @@ class TestsFlextLdifSimpleLdap:
         make_test_username: Callable[[str], str],
     ) -> None:
         """Create LDAP entry and export to LDIF."""
-        base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
+        base_dn = ldap_container.get("base_dn", "dc=flext,dc=local")
         unique_username = make_test_username("SimpleTest")
         test_dn = f"cn={unique_username},{base_dn}"
         ldap_connection.search(

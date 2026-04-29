@@ -297,7 +297,13 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             @staticmethod
             def get_docker_control(worker_id: str = "master") -> tk:
                 """Create Docker test infrastructure controller."""
-                return tk(
+                return tk.compose(
+                    compose_file=c.Ldif.Tests.DOCKER_COMPOSE_FILE_REL,
+                    container_name=c.Ldif.Tests.DOCKER_CONTAINER_NAME,
+                    service=c.Ldif.Tests.DOCKER_SERVICE_NAME,
+                    host=c.LOCALHOST,
+                    port=c.Ldif.Tests.DOCKER_PORT,
+                    startup_timeout=15,
                     workspace_root=c.Ldif.Tests.PROJECT_ROOT,
                     worker_id=worker_id,
                 )

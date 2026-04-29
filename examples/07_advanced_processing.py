@@ -165,7 +165,7 @@ def complete_processing_pipeline() -> None:
 
     valid_entries: MutableSequence[m.Ldif.Entry] = []
     for entry in entries:
-        dn_result = u.Ldif.parse_dn(str(entry.dn.value) if entry.dn else "")
+        dn_result = u.Ldif.parse_dn(entry.dn.value if entry.dn else "")
         if dn_result.success:
             valid_entries.append(entry)
 

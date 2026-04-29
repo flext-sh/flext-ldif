@@ -49,12 +49,12 @@ class FlextLdifAcl(s):
         """Evaluate if ACLs grant required permissions."""
         if isinstance(required_permissions, Mapping):
             required = m.Ldif.AclPermissions(
-                read=bool(required_permissions.get("read", False)),
-                write=bool(required_permissions.get("write", False)),
-                delete=bool(required_permissions.get("delete", False)),
-                add=bool(required_permissions.get("add", False)),
-                search=bool(required_permissions.get("search", False)),
-                compare=bool(required_permissions.get("compare", False)),
+                read=required_permissions.get("read", False),
+                write=required_permissions.get("write", False),
+                delete=required_permissions.get("delete", False),
+                add=required_permissions.get("add", False),
+                search=required_permissions.get("search", False),
+                compare=required_permissions.get("compare", False),
             )
         else:
             required = required_permissions
@@ -131,7 +131,7 @@ class FlextLdifAcl(s):
             failed_count += 1
             self.logger.warning(
                 "Failed to parse ACL value",
-                error=str(parse_result.error) if parse_result.error else "",
+                error=parse_result.error or "",
                 server_type=server_type,
             )
         return r[m.Ldif.AclResponse].ok(

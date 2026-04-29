@@ -170,7 +170,7 @@ class FlextLdifModelsDomainEntry:
             """Check if DN underwent transformation."""
             if self.dn_statistics is None:
                 return False
-            return bool(self.dn_statistics.was_transformed)
+            return self.dn_statistics.was_transformed
 
         @u.computed_field()
         @property
@@ -461,7 +461,7 @@ class FlextLdifModelsDomainEntry:
                 validated: mdn.DN = mdn.DN.model_validate(value)
                 return validated
             return mdn.DN(
-                value=str(value),
+                value=value,
                 metadata=mm.EntryMetadata(),
             )
 
@@ -681,7 +681,7 @@ class FlextLdifModelsDomainEntry:
             if self.dn is None:
                 violations.append("RFC 2849 § 2: DN is required")
             else:
-                dn_value = str(self.dn.value)
+                dn_value = self.dn.value
                 violations.extend(FlextLdifUtilitiesEntry.validate_dn_format(dn_value))
                 violations.extend(
                     FlextLdifUtilitiesEntry.validate_attributes_required(self),
@@ -704,10 +704,7 @@ class FlextLdifModelsDomainEntry:
                 attribute_count = len(self.attributes) if self.attributes else 0
                 old_context: t.MutableStrMapping = {}
                 if self.metadata.validation_results is not None:
-                    old_context = {
-                        key: str(value)
-                        for key, value in self.metadata.validation_results.context.items()
-                    }
+                    old_context = dict(self.metadata.validation_results.context.items())
                 context_payload = self._build_rfc_validation_context(
                     old_context=old_context,
                     dn_value=dn_value,
@@ -745,7 +742,7 @@ class FlextLdifModelsDomainEntry:
             )
             if rules is None:
                 return self
-            dn_value = str(self.dn.value) if self.dn else ""
+            dn_value = self.dn.value if self.dn else ""
             server_violations: MutableSequence[str] = []
             server_violations.extend(
                 FlextLdifUtilitiesEntry.check_objectclass_rule(self, rules, dn_value)
@@ -930,9 +927,9 @@ class FlextLdifModelsDomainEntry:
             attrs_dict: t.MutableStrSequenceMapping = {}
             for attr_name, attr_values in attributes.items():
                 if isinstance(attr_values, str):
-                    values_list: MutableSequence[str] = [str(attr_values)]
+                    values_list: MutableSequence[str] = [attr_values]
                 else:
-                    values_list = [str(v) for v in attr_values]
+                    values_list = list(attr_values)
                 attrs_dict[attr_name] = values_list
             validate_payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
                 "attributes": attrs_dict,

@@ -375,7 +375,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 if not isinstance(original_format_raw, str):
                     msg = f"Expected str, got {type(original_format_raw)}"
                     raise TypeError(msg)
-                original_format = str(original_format_raw)
+                original_format = original_format_raw
                 return r[str].ok(original_format)
             if not attr_data.oid:
                 return r[str].fail("Attribute OID is required for writing")
@@ -406,7 +406,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 if not isinstance(original_format_raw, str):
                     msg = f"Expected str, got {type(original_format_raw)}"
                     raise TypeError(msg)
-                original_format = str(original_format_raw)
+                original_format = original_format_raw
                 return r[str].ok(original_format)
             if not oc_data.oid:
                 return r[str].fail("ObjectClass OID is required for writing")
@@ -697,7 +697,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                                     errors=FlextLdifServersRelaxed.Constants.ENCODING_ERROR_HANDLING,
                                 ),
                             )
-                    attr_dict[str(attr_key)] = converted_list
+                    attr_dict[attr_key] = converted_list
                 ldif_attrs = m.Ldif.Attributes.model_validate({
                     "attributes": attr_dict,
                     "attribute_metadata": {},
@@ -705,7 +705,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 })
                 original_attribute_case: t.MutableStrMapping = {}
                 for attr_name in entry_attrs:
-                    attr_str = str(attr_name)
+                    attr_str = attr_name
                     if attr_str.lower() == "objectclass":
                         original_attribute_case["objectClass"] = attr_str
                 format_details = m.Ldif.FormatDetails(

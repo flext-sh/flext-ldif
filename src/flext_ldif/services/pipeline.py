@@ -8,17 +8,17 @@ from collections.abc import (
 from typing import Annotated, Self, override
 
 from flext_ldif import (
+    FlextLdifServiceBase,
     FlextLdifTransformer,
     c,
     m,
     r,
-    s,
     t,
     u,
 )
 
 
-class FlextLdifProcessingPipeline(s):
+class FlextLdifProcessingPipeline(FlextLdifServiceBase):
     """Full processing pipeline with configuration."""
 
     _DEFAULT_CASE_FOLD: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.NONE
@@ -31,6 +31,14 @@ class FlextLdifProcessingPipeline(s):
             default=None,
             exclude=True,
             description="Optional transformation configuration for the processing pipeline.",
+        ),
+    ]
+    entries_input: Annotated[
+        MutableSequence[m.Ldif.Entry] | None,
+        u.Field(
+            default=None,
+            exclude=True,
+            description="Optional entry batch used when the service executes without explicit input.",
         ),
     ]
     _config: m.Ldif.TransformConfig = u.PrivateAttr(
@@ -74,13 +82,17 @@ class FlextLdifProcessingPipeline(s):
         )
         return cls(transform_config=transform_config)
 
+    @override
     def execute(
         self,
-        entries: MutableSequence[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry] | None = None,
     ) -> r[MutableSequence[m.Ldif.Entry]]:
         """Execute the processing pipeline."""
+        batch = entries if entries is not None else self.entries_input
+        if batch is None:
+            return r[MutableSequence[m.Ldif.Entry]].fail("No entries provided")
         return r[MutableSequence[m.Ldif.Entry]].from_result(
-            self._pipeline.execute(entries),
+            self._pipeline.execute(batch),
         )
 
     def _build_pipeline(self) -> u.Ldif.Pipeline:

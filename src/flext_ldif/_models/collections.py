@@ -88,7 +88,7 @@ class FlextLdifModelsCollections:
             extra = self.__pydantic_extra__
             if extra is None:
                 return {}
-            return {str(k): v for k, v in extra.items()}
+            return dict(extra.items())
 
     class SchemaContent(m.FrozenModel):
         attributes: Annotated[
@@ -154,7 +154,7 @@ class FlextLdifModelsCollections:
             self,
             category: str,
         ) -> MutableSequence[mde.Entry]:
-            key = str(category)
+            key = category
             if key not in self.categories:
                 self.categories[key] = []
             return self.categories[key]
@@ -164,14 +164,14 @@ class FlextLdifModelsCollections:
             category: str,
             entries: MutableSequence[mde.Entry],
         ) -> None:
-            self.categories[str(category)] = list(entries)
+            self.categories[category] = list(entries)
 
         def add_entries(
             self,
             category: str,
             entries: MutableSequence[mde.Entry],
         ) -> None:
-            key = str(category)
+            key = category
             existing = self.categories.get(key)
             if existing is None:
                 existing_entries: list[mde.Entry] = []
@@ -180,7 +180,7 @@ class FlextLdifModelsCollections:
             self.categories[key] = existing
 
         def __contains__(self, category: str) -> bool:
-            return str(category) in self.categories
+            return category in self.categories
 
         def items(
             self,
@@ -195,7 +195,7 @@ class FlextLdifModelsCollections:
             category: str,
             default: MutableSequence[mde.Entry] | None = None,
         ) -> MutableSequence[mde.Entry]:
-            entries = self.categories.get(str(category))
+            entries = self.categories.get(category)
             if entries is not None:
                 return entries
             return default if default is not None else []

@@ -115,7 +115,7 @@ class FlextLdifUtilitiesEntry:
         remapped: t.MutableStrSequenceMapping = {}
         for attr_name, values in attributes.items():
             normalized_name = attr_name.lower()
-            normalized_values: MutableSequence[str] = [str(item) for item in values]
+            normalized_values: MutableSequence[str] = list(values)
             converted_values = (
                 [boolean_value_mapping.get(value, value) for value in normalized_values]
                 if normalized_name in c.Ldif.OID_BOOLEAN_ATTRIBUTES
@@ -193,7 +193,7 @@ class FlextLdifUtilitiesEntry:
         if filter_func is None:
             return True
         try:
-            return bool(filter_func(entry))
+            return filter_func(entry)
         except (
             ValueError,
             KeyError,
@@ -340,7 +340,7 @@ class FlextLdifUtilitiesEntry:
         if not entry.changetype:
             return violations
         valid_changetypes = {"add", "delete", "modify", "moddn", "modrdn"}
-        if str(entry.changetype).lower() not in valid_changetypes:
+        if entry.changetype.lower() not in valid_changetypes:
             violations.append(
                 f"RFC 2849 § 5.7: changetype '{entry.changetype}' invalid",
             )
@@ -527,7 +527,7 @@ class FlextLdifUtilitiesEntry:
             return {}
         normalized: t.Ldif.UnconvertedAttributes = {}
         for key, raw_value in value.items():
-            key_str = str(key)
+            key_str = key
             if isinstance(raw_value, str | bytes):
                 normalized[key_str] = raw_value
                 continue
@@ -593,7 +593,7 @@ class FlextLdifUtilitiesEntry:
 
         def extract_case_mapping(attr_name: str) -> tuple[str, str] | None:
             """Extract case mapping if different."""
-            attr_str = str(attr_name)
+            attr_str = attr_name
             canonical = normalize(attr_str)
             return (canonical, attr_str) if canonical != attr_str else None
 
@@ -609,7 +609,7 @@ class FlextLdifUtilitiesEntry:
         attribute_differences: MutableMapping[str, t.Ldif.MutableMetadataMapping] = {}
         original_attributes_complete: t.Ldif.MutableMetadataMapping = {}
         for attr_name, attr_values in entry_attrs.items():
-            original_attr_name = str(attr_name)
+            original_attr_name = attr_name
             canonical_name = normalize(original_attr_name)
             original_values_list: list[str] = []
             if isinstance(attr_values, Sequence) and (
@@ -669,7 +669,7 @@ class FlextLdifUtilitiesEntry:
                 normalized_value = (
                     raw_item.decode(c.Ldif.DEFAULT_ENCODING, errors="replace")
                     if isinstance(raw_item, bytes)
-                    else str(raw_item)
+                    else raw_item
                 )
                 if attr_name.lower() in normalized_boolean_names:
                     match format_pair:

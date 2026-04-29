@@ -51,7 +51,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
                     continue
                 logger.debug(
                     "Skipping invalid entry block",
-                    error=str(result.error) if result.error else "",
+                    error=result.error or "",
                 )
             return r[MutableSequence[m.Ldif.Entry]].ok(entries)
         except ValueError as exc:

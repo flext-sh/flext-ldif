@@ -9,7 +9,7 @@ from flext_core import FlextSettings, s
 from flext_ldif import FlextLdifServer, FlextLdifSettings, c, m, t, u
 
 
-class FlextLdifServiceBase(s[m.Ldif.Response], ABC):
+class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult], ABC):
     """Base class for LDIF services with typed settings helper."""
 
     _server: FlextLdifServer = u.PrivateAttr(

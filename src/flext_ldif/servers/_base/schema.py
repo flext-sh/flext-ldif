@@ -8,7 +8,7 @@ from collections.abc import (
     MutableMapping,
     MutableSequence,
 )
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, ClassVar, Self, override
 
 from flext_core import s
 from flext_ldif import (
@@ -26,7 +26,7 @@ logger = u.fetch_logger(__name__)
 
 class FlextLdifServersBaseSchema(
     FlextLdifServerMethodsMixin,
-    s[m.Ldif.SchemaAttribute],
+    s[t.Ldif.SchemaConversionValue],
 ):
     """Base class for schema quirks using `s` with enhanced usability."""
 
@@ -291,24 +291,25 @@ class FlextLdifServersBaseSchema(
         _ = oc_definition
         return False
 
+    @override
     def execute(
         self,
         *,
         data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None,
         operation: str | None = None,
         **kwargs: t.Ldif.Scalar,
-    ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+    ) -> r[t.Ldif.SchemaConversionValue]:
         """Execute schema operation with auto-detection: str→parse, Model→write."""
         json_value_adapter = t.json_value_adapter()
         kwargs_dict: t.MutableJsonMapping = {
-            str(key): json_value_adapter.validate_python(u.to_jsonable_python(value))
+            key: json_value_adapter.validate_python(u.to_jsonable_python(value))
             for key, value in kwargs.items()
         }
         resolved_data = self._resolve_data(data, kwargs_dict)
         operation = self._resolve_operation(operation, kwargs_dict)
         if resolved_data is None:
             empty_str: str = ""
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].ok(
+            return r[t.Ldif.SchemaConversionValue].ok(
                 empty_str,
             )
         operation_final = operation if operation in {"parse", "write"} else None
@@ -322,8 +323,12 @@ class FlextLdifServersBaseSchema(
         """Coerce raw execute payload to the concrete schema payload union."""
         if value is None:
             return None
-        if isinstance(value, str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass):
-            return value
+        raw_value: object = value
+        if isinstance(
+            raw_value,
+            (str, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass),
+        ):
+            return raw_value
         for model in (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass):
             try:
                 return model.model_validate(value)
@@ -407,8 +412,8 @@ class FlextLdifServersBaseSchema(
         """Resolve schema operation from parameter or kwargs."""
         if operation is not None:
             return self._coerce_operation(operation)
-        raw_operation = kwargs.get("operation")
-        if not isinstance(raw_operation, t.SCALAR_TYPES):
+        raw_operation: object = kwargs.get("operation")
+        if not isinstance(raw_operation, str):
             return None
         return self._coerce_operation(raw_operation)
 
@@ -501,7 +506,7 @@ class FlextLdifServersBaseSchema(
         self,
         attr_definition: str | None,
         oc_definition: str | None,
-    ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+    ) -> r[t.Ldif.SchemaConversionValue]:
         """Handle parse operation for schema quirk."""
         if attr_definition:
             attr_result = self.parse_attribute(attr_definition)
@@ -509,11 +514,11 @@ class FlextLdifServersBaseSchema(
                 parsed_attr = m.Ldif.SchemaAttribute.model_validate(
                     attr_result.unwrap(),
                 )
-                return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].ok(
+                return r[t.Ldif.SchemaConversionValue].ok(
                     parsed_attr,
                 )
             error_msg: str = attr_result.error or "Parse attribute failed"
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].fail(
+            return r[t.Ldif.SchemaConversionValue].fail(
                 error_msg,
             )
         if oc_definition:
@@ -522,14 +527,14 @@ class FlextLdifServersBaseSchema(
                 parsed_oc = m.Ldif.SchemaObjectClass.model_validate(
                     oc_result.unwrap(),
                 )
-                return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].ok(
+                return r[t.Ldif.SchemaConversionValue].ok(
                     parsed_oc,
                 )
             error_msg = oc_result.error or "Parse objectclass failed"
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].fail(
+            return r[t.Ldif.SchemaConversionValue].fail(
                 error_msg,
             )
-        return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].fail(
+        return r[t.Ldif.SchemaConversionValue].fail(
             "No parse parameter provided",
         )
 
@@ -537,31 +542,31 @@ class FlextLdifServersBaseSchema(
         self,
         attr_model: m.Ldif.SchemaAttribute | None,
         oc_model: m.Ldif.SchemaObjectClass | None,
-    ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+    ) -> r[t.Ldif.SchemaConversionValue]:
         """Handle write operation for schema quirk."""
         if attr_model:
             write_result = self.write_attribute(attr_model)
             if write_result.success:
-                written_text = str(write_result.unwrap())
-                return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].ok(
+                written_text = write_result.unwrap()
+                return r[t.Ldif.SchemaConversionValue].ok(
                     written_text,
                 )
             error_msg: str = write_result.error or "Write attribute failed"
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].fail(
+            return r[t.Ldif.SchemaConversionValue].fail(
                 error_msg,
             )
         if oc_model:
             write_oc_result = self.write_objectclass(oc_model)
             if write_oc_result.success:
-                written_text = str(write_oc_result.unwrap())
-                return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].ok(
+                written_text = write_oc_result.unwrap()
+                return r[t.Ldif.SchemaConversionValue].ok(
                     written_text,
                 )
             error_msg = write_oc_result.error or "Write objectclass failed"
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].fail(
+            return r[t.Ldif.SchemaConversionValue].fail(
                 error_msg,
             )
-        return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].fail(
+        return r[t.Ldif.SchemaConversionValue].fail(
             "No write parameter provided",
         )
 
@@ -603,11 +608,11 @@ class FlextLdifServersBaseSchema(
         self,
         data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         operation: str,
-    ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str]:
+    ) -> r[t.Ldif.SchemaConversionValue]:
         """Route data to appropriate parse or write handler."""
         if operation == "parse":
             if not isinstance(data, str):
-                return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].fail(
+                return r[t.Ldif.SchemaConversionValue].fail(
                     f"parse operation requires str, got {type(data).__name__}",
                 )
             if self._is_objectclass_schema_type(data):
@@ -629,7 +634,7 @@ class FlextLdifServersBaseSchema(
             oc_model = self._coerce_objectclass_model(data)
             if oc_model is not None:
                 return self._handle_write_operation(attr_model=None, oc_model=oc_model)
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str].fail(
+            return r[t.Ldif.SchemaConversionValue].fail(
                 f"write operation requires SchemaAttribute or SchemaObjectClass, got {type(data).__name__}",
             )
         msg = f"Unknown operation: {operation}"

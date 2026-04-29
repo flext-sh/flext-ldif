@@ -160,20 +160,18 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                     extensions.get("target_permissions") if extensions else None
                 )
             if isinstance(target_perms_dict_raw, Mapping):
-                target_perms_dict = {
-                    str(k): v for k, v in target_perms_dict_raw.items()
-                }
+                target_perms_dict = dict(target_perms_dict_raw.items())
         if target_perms_dict:
             perms_data: t.Ldif.MutableMetadataInputMapping = {}
             for key, val in target_perms_dict.items():
-                k = str(key)
+                k = key
                 if isinstance(val, Mapping):
                     continue
                 if isinstance(val, (str, bool, int, float)):
                     perms_data[k] = val
                 elif isinstance(val, list):
                     str_list: list[t.JsonValue] = [
-                        str(item) for item in val if isinstance(item, str)
+                        item for item in val if isinstance(item, str)
                     ]
                     perms_data[k] = u.normalize_to_metadata(str_list)
             if perms_data:
@@ -271,7 +269,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                     if isinstance(raw_value, Mapping):
                         continue
                     if FlextLdifServersOudAcl._scalar_or_list_value(raw_value):
-                        target_data[str(raw_key)] = u.normalize_to_metadata(raw_value)
+                        target_data[raw_key] = u.normalize_to_metadata(raw_value)
             if target_data:
                 attrs_raw = target_data.get("attributes")
                 dn_raw = target_data.get("target_dn")

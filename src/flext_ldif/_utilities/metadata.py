@@ -59,12 +59,12 @@ class FlextLdifUtilitiesMetadata:
         if isinstance(value, Mapping) and isinstance(item_data, Mapping):
             merged_value = dict(
                 t.Cli.JSON_MAPPING_ADAPTER.validate_python({
-                    str(inner_key): u.normalize_to_metadata(inner_value)
+                    inner_key: u.normalize_to_metadata(inner_value)
                     for inner_key, inner_value in value.items()
                 })
             )
             for write_option_key, inner_value in item_data.items():
-                merged_value[str(write_option_key)] = u.normalize_to_metadata(
+                merged_value[write_option_key] = u.normalize_to_metadata(
                     inner_value,
                 )
             metadata[metadata_key] = merged_value
@@ -571,7 +571,7 @@ class FlextLdifUtilitiesMetadata:
             metadata_obj = m.Metadata(attributes={})
         if isinstance(metadata_obj, m.Metadata):
             return {
-                str(key): u.normalize_to_metadata(value)
+                key: u.normalize_to_metadata(value)
                 for key, value in metadata_obj.attributes.items()
             }
         return {}

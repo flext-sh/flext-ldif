@@ -83,7 +83,7 @@ class FlextLdifConversion(
                     "source_case": FlextLdifConversion._normalize_metadata_value(
                         original_attribute_case,
                     ),
-                    "target_server": str(target_server_type),
+                    "target_server": target_server_type,
                     "action": "apply_target_conventions",
                 },
             }
@@ -125,7 +125,7 @@ class FlextLdifConversion(
                     "source_dn": FlextLdifConversion._normalize_metadata_value(
                         spacing,
                     ),
-                    "target_server": str(target_server_type),
+                    "target_server": target_server_type,
                     "action": "normalize_for_target",
                 },
             }
@@ -156,7 +156,7 @@ class FlextLdifConversion(
         for key, value in boolean_analysis.items():
             if isinstance(value, dict):
                 acc_typed[key] = {
-                    str(k): FlextLdifConversion._normalize_metadata_value(v)
+                    k: FlextLdifConversion._normalize_metadata_value(v)
                     for k, v in value.items()
                 }
         attr_case_raw = get_attr_case(source_metadata)
@@ -168,7 +168,7 @@ class FlextLdifConversion(
         for key, attr_case_value in attr_case_analysis.items():
             if isinstance(attr_case_value, dict):
                 acc_typed[key] = {
-                    str(k): FlextLdifConversion._normalize_metadata_value(v)
+                    k: FlextLdifConversion._normalize_metadata_value(v)
                     for k, v in attr_case_value.items()
                 }
         format_raw = get_format_details(source_metadata)
@@ -180,7 +180,7 @@ class FlextLdifConversion(
         for key, dn_format_value in dn_format_analysis.items():
             if isinstance(dn_format_value, dict):
                 acc_typed[key] = {
-                    str(k): FlextLdifConversion._normalize_metadata_value(v)
+                    k: FlextLdifConversion._normalize_metadata_value(v)
                     for k, v in dn_format_value.items()
                 }
         return acc_typed
@@ -255,7 +255,7 @@ class FlextLdifConversion(
             return tuple[str, ...]()
         for attr_name, values in attributes_model.attributes.items():
             if attr_name.lower() == field_name.lower():
-                return [str(value) for value in values]
+                return list(values)
         return tuple[str, ...]()
 
     def _build_schema_bridge_entry(
@@ -400,7 +400,7 @@ class FlextLdifConversion(
             return empty_val
         if isinstance(value, Mapping):
             normalized_mapping: dict[str, t.JsonValue] = {
-                str(key): u.normalize_to_json_value(item) for key, item in value.items()
+                key: u.normalize_to_json_value(item) for key, item in value.items()
             }
             return normalized_mapping
         normalized: t.JsonValue = u.normalize_to_json_value(value)
@@ -526,8 +526,8 @@ class FlextLdifConversion(
         conversion_operation = f"convert_{model_type}"
         self.logger.debug(
             "Converting model",
-            source_format=str(source_format),
-            target_format=str(target_format),
+            source_format=source_format,
+            target_format=target_format,
             model_type=model_type,
         )
         try:
@@ -750,7 +750,7 @@ class FlextLdifConversion(
             )
             source_server_type: str | None = u.try_(
                 lambda: (
-                    u.Ldif.normalize_server_type(str(server_type_attr))
+                    u.Ldif.normalize_server_type(server_type_attr)
                     if isinstance(server_type_attr, str)
                     else None
                 ),
@@ -1033,13 +1033,13 @@ class FlextLdifConversion(
                 if isinstance(source_server_type_obj, str)
                 else c.IDENTIFIER_UNKNOWN
             )
-            source_type_norm = str(source_quirk_name).lower()
+            source_type_norm = source_quirk_name.lower()
             target_type_norm = str(target_server_type_str).lower()
             converted_entry = self._update_entry_metadata(
                 converted_entry,
                 validated_quirk_type,
                 str(conversion_analysis) if conversion_analysis else None,
-                str(source_quirk_name),
+                source_quirk_name,
             )
             if source_type_norm != target_type_norm:
                 schema_entry_result = self._convert_schema_entry_attributes(
@@ -1304,7 +1304,7 @@ class FlextLdifConversion(
             if isinstance(value, Mapping):
                 normalized_mapping: t.Ldif.MutableMetadataInputMapping = {}
                 for raw_k, raw_v in value.items():
-                    normalized_mapping[str(raw_k)] = (
+                    normalized_mapping[raw_k] = (
                         FlextLdifConversion._normalize_metadata_value(raw_v)
                     )
                 dynamic_metadata_dict[key] = self._convert_to_metadata_attribute_value(

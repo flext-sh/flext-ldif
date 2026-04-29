@@ -33,7 +33,7 @@ class FlextLdifUtilitiesObjectClass:
             sup_lower = sup_value.lower() if sup_value else ""
         else:
             first_sup = sup_value[0] if sup_value else ""
-            sup_lower = str(first_sup).lower() if first_sup else ""
+            sup_lower = first_sup.lower() if first_sup else ""
         schema_constants = FlextLdifUtilitiesObjectClass.SchemaConstants
         if (
             sup_lower in structural_superiors

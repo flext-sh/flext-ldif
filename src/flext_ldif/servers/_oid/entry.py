@@ -95,7 +95,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         new_values: MutableSequence[str] = []
         changed = False
         for val in current_values:
-            converted, was_converted = self._convert_rfc_boolean_to_oid(str(val))
+            converted, was_converted = self._convert_rfc_boolean_to_oid(val)
             new_values.append(converted)
             if was_converted:
                 changed = True
@@ -175,12 +175,10 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     ) -> MutableMapping[str, m.Ldif.AttributeTransformation]:
         """Detect ACL attribute transformations (orclaci→aci)."""
         original_attr_names: t.MutableStrMapping = {
-            normalized.lower(): str(raw_attr_name)
+            normalized.lower(): raw_attr_name
             for raw_attr_name in entry_attrs
-            if (
-                normalized := self._normalize_attribute_name(str(raw_attr_name))
-            ).lower()
-            != str(raw_attr_name).lower()
+            if (normalized := self._normalize_attribute_name(raw_attr_name)).lower()
+            != raw_attr_name.lower()
         }
         acl_transformations: MutableMapping[str, m.Ldif.AttributeTransformation] = {
             original_name: m.Ldif.AttributeTransformation.model_validate({
@@ -207,7 +205,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     ]:
         """Detect RFC compliance violations in entry."""
         object_classes_raw = converted_attributes.get("objectClass", [])
-        object_classes: MutableSequence[str] = [str(oc) for oc in object_classes_raw]
+        object_classes: MutableSequence[str] = list(object_classes_raw)
         object_classes_lower = {oc.lower() for oc in object_classes}
         structural_classes = {
             "domain",
@@ -384,13 +382,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             dict(entry.metadata.extensions) if entry.metadata.extensions else {}
         )
         mk = c.Ldif
-        current_extensions[mk.ORIGINAL_DN_COMPLETE] = str(original_dn)
+        current_extensions[mk.ORIGINAL_DN_COMPLETE] = original_dn
         orclaci_raw = original_attrs.get("orclaci") if original_attrs else None
         if not orclaci_raw:
             orclaci_raw = normalized_attrs.get("orclaci") if normalized_attrs else None
         orclaci_values: MutableSequence[str] | str | None = None
         if isinstance(orclaci_raw, list):
-            orclaci_values = [str(v) for v in orclaci_raw]
+            orclaci_values = list(orclaci_raw)
         self._process_orclaci_values(orclaci_values, current_extensions)
         acl_transformations = self._detect_entry_acl_transformations(
             original_attrs,
@@ -415,11 +413,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 t.Cli.JSON_VALUE_ADAPTER.validate_python(
                     [
                         {
-                            str(key): (
-                                str(value)
-                                if isinstance(value, str)
-                                else [str(item) for item in value]
-                            )
+                            key: (value if isinstance(value, str) else list(value))
                             for key, value in conflict.items()
                         }
                         for conflict in attribute_conflicts
@@ -456,9 +450,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if entry.metadata:
                 if not entry.metadata.extensions:
                     entry.metadata.extensions = m.Ldif.DynamicMetadata()
-                converted_attrs_list: MutableSequence[t.JsonValue] = [
-                    str(item) for item in converted_attrs
-                ]
+                converted_attrs_list: MutableSequence[t.JsonValue] = list(
+                    converted_attrs
+                )
                 converted_attrs_json: t.JsonList = (
                     t.Cli.JSON_LIST_ADAPTER.validate_python(
                         converted_attrs_list,
@@ -698,7 +692,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             case str() as s:
                 converted_val_list: t.StrSequence = [s]
             case list() as items:
-                converted_val_list = [str(item) for item in items]
+                converted_val_list = list(items)
             case _:
                 return False
         rfc_value = converted_val_list[0]
@@ -776,7 +770,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             current_values = restored_attrs.pop(current_name, None)
             if current_values is None or original_name in restored_attrs:
                 continue
-            restored_attrs[original_name] = [str(value) for value in current_values]
+            restored_attrs[original_name] = list(current_values)
             changed = True
         if not changed:
             return restored_entry
@@ -806,9 +800,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         """Restore attribute from metadata or apply denormalization."""
         if original_attrs:
             for orig_name, orig_values in original_attrs.items():
-                if self._normalize_attribute_name(str(orig_name)) == attr_name:
-                    restored_values = [str(v) for v in orig_values]
-                    return (str(orig_name), restored_values)
+                if self._normalize_attribute_name(orig_name) == attr_name:
+                    restored_values = list(orig_values)
+                    return (orig_name, restored_values)
         denorm_name = (
             FlextLdifServersOidConstants.ORCLACI
             if attr_name.lower()

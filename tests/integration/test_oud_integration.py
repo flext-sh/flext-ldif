@@ -205,7 +205,7 @@ class TestsFlextLdifOudIntegration:
                 objectclasses = list(raw_oc) if raw_oc else []
             for oc in objectclasses:
                 if any(
-                    pattern in str(oc).lower()
+                    pattern in oc.lower()
                     for pattern in [p.lower() for p in oracle_oc_patterns]
                 ):
                     entries_with_oracle_oc += 1

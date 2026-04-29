@@ -110,9 +110,9 @@ class FlextLdifUtilitiesACL:
             permissions_list,
             settings.permission_map,
         )
-        permissions_dict: t.MutableBoolMapping = {
-            k: bool(v) for k, v in dict(permissions_dict_raw).items()
-        }
+        permissions_dict: t.MutableBoolMapping = dict(
+            dict(permissions_dict_raw).items()
+        )
         return (subject_type, subject_value, permissions_dict)
 
     @staticmethod

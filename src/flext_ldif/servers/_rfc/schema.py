@@ -156,7 +156,11 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         if result.failure:
             msg = result.error or "RFC schema operation failed"
             raise ValueError(msg)
-        return result.value
+        value = result.value
+        if isinstance(value, (str, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass)):
+            return value
+        msg = "RFC schema operation returned unsupported value"
+        raise TypeError(msg)
 
     @classmethod
     def _extract_syntax_validation_error(
@@ -165,9 +169,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     ) -> str | None:
         syntax_validation = cls._coerce_dynamic_metadata(value)
         syntax_error = syntax_validation.get("syntax_validation_error")
-        if isinstance(syntax_error, str):
-            return syntax_error
-        return None
+        return syntax_error if isinstance(syntax_error, str) else None
 
     @classmethod
     def _to_optional_str_or_list(
@@ -184,12 +186,15 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     ) -> m.Ldif.DynamicMetadata:
         if isinstance(value, m.Ldif.DynamicMetadata):
             return value
-        if isinstance(value, Mapping):
+        if value is None:
+            return m.Ldif.DynamicMetadata()
+        try:
             validated: m.Ldif.DynamicMetadata = m.Ldif.DynamicMetadata.model_validate(
                 value,
             )
             return validated
-        return m.Ldif.DynamicMetadata()
+        except c.ValidationError:
+            return m.Ldif.DynamicMetadata()
 
     @staticmethod
     def _convert_extensions_for_quirk(
@@ -197,60 +202,68 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     ) -> t.Ldif.SchemaExtensionsMapping:
         extensions: t.Ldif.SchemaExtensionsMapping = {}
         for key, value in metadata.items():
-            if isinstance(value, bool):
-                extensions[key] = value
-                continue
-            if isinstance(value, str):
-                extensions[key] = value
-                continue
             if isinstance(value, list):
-                extensions[key] = [str(item) for item in value]
-                continue
-            if isinstance(value, (int, float)):
-                extensions[key] = str(value)
-                continue
-            extensions[key] = str(value)
+                list_value: MutableSequence[str] = [str(item) for item in value]
+                extensions[key] = list_value
+            elif isinstance(value, (bool, str)):
+                extensions[key] = value
+            else:
+                extensions[key] = str(u.normalize_to_json_value(value))
         return extensions
 
     @staticmethod
     def _to_optional_int(value: t.JsonValue | None) -> int | None:
-        match value:
-            case int() as int_value:
-                return int_value
-            case str() as str_value if str_value:
-                return int(str_value)
-            case _:
-                return None
+        if isinstance(value, int):
+            return value
+        if value is None or not value:
+            return None
+        if isinstance(value, Mapping) or (
+            isinstance(value, Sequence) and not isinstance(value, str | bytes)
+        ):
+            return None
+        try:
+            return int(str(value))
+        except (TypeError, ValueError):
+            return None
 
     @staticmethod
     def _to_optional_str(value: t.JsonValue | None) -> str | None:
-        match value:
-            case str() as str_value:
-                return str_value
-            case int() | float() as scalar_value:
-                return str(scalar_value)
-            case _:
-                return None
+        if value is None:
+            return None
+        if isinstance(value, Mapping) or (
+            isinstance(value, Sequence) and not isinstance(value, str | bytes)
+        ):
+            return None
+        if isinstance(value, str):
+            return value
+        if isinstance(value, int | float):
+            return str(value)
+        return None
 
     @staticmethod
-    def _to_required_str(
+    def _to_required_value(
         value: t.JsonValue | None,
         default: str = "",
     ) -> str:
-        match value:
-            case str() as str_value:
-                return str_value
-            case int() | float() as scalar_value:
-                return str(scalar_value)
-            case _:
-                return default
+        if value is None:
+            return default
+        if isinstance(value, Mapping) or (
+            isinstance(value, Sequence) and not isinstance(value, str | bytes)
+        ):
+            return default
+        if isinstance(value, str):
+            return value
+        if isinstance(value, int | float):
+            return str(value)
+        return default
 
     @staticmethod
     def _to_string_list(
         value: t.JsonValue | None,
     ) -> MutableSequence[str] | None:
-        if isinstance(value, Sequence) and not isinstance(value, str):
-            return [str(item) for item in value]
+        if isinstance(value, Sequence) and not isinstance(value, str | bytes):
+            list_value: MutableSequence[str] = [str(item) for item in value]
+            return list_value
         return None
 
     @override
@@ -281,13 +294,12 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     ) -> bool:
         """Shared detection: model -> matches_server_patterns; str -> OID + NAME match."""
         if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
-            return bool(
-                u.Ldif.matches_server_patterns(
-                    value=oc_definition,
-                    oid_pattern=oid_pattern,
-                    detection_names=oc_names,
-                ),
+            matches_server_patterns: bool = u.Ldif.matches_server_patterns(
+                value=oc_definition,
+                oid_pattern=oid_pattern,
+                detection_names=oc_names,
             )
+            return matches_server_patterns
         if re.search(oid_pattern, oc_definition):
             return True
         name_matches = re.findall(name_regex, oc_definition, re.IGNORECASE)
@@ -471,12 +483,17 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         metadata: m.Ldif.QuirkMetadata | None,
     ) -> str:
         """Ensure X-ORIGIN extension is present if in metadata."""
-        if not metadata or not metadata.extensions:
+        if metadata is None:
             return output_str
-        x_origin_raw = metadata.extensions.get(c.Ldif.X_ORIGIN)
+        extensions = metadata.extensions
+        if not extensions:
+            return output_str
+        x_origin_raw = extensions.get(c.Ldif.X_ORIGIN)
         if not isinstance(x_origin_raw, str):
             return output_str
-        if ")" not in output_str or "X-ORIGIN" in output_str:
+        if "X-ORIGIN" in output_str:
+            return output_str
+        if not output_str.endswith(")"):
             return output_str
         x_origin_str = f" X-ORIGIN '{x_origin_raw}'"
         return output_str.rstrip(")") + x_origin_str + ")"
@@ -528,9 +545,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         )
         attr_name = self._to_optional_str(parsed.get("name"))
         if attr_name is None:
-            attr_name = self._to_required_str(parsed.get("oid"))
+            attr_name = self._to_required_value(parsed.get("oid"))
         attr_model = m.Ldif.SchemaAttribute(
-            oid=self._to_required_str(parsed.get("oid")),
+            oid=self._to_required_value(parsed.get("oid")),
             name=attr_name,
             desc=self._to_optional_str(parsed.get("desc")),
             equality=self._to_optional_str(parsed.get("equality")),
@@ -606,11 +623,11 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 oc_definition,
                 metadata_extensions,
             )
-            oc_oid: str = self._to_required_str(parsed.get("oid"))
-            oc_name: str = self._to_required_str(parsed.get("name"))
+            oc_oid: str = self._to_required_value(parsed.get("oid"))
+            oc_name: str = self._to_required_value(parsed.get("name"))
             oc_desc: str | None = self._to_optional_str(parsed.get("desc"))
             oc_sup = self._to_optional_str_or_list(parsed.get("sup"))
-            oc_kind: str = self._to_required_str(
+            oc_kind: str = self._to_required_value(
                 parsed.get("kind"),
                 default="STRUCTURAL",
             )
