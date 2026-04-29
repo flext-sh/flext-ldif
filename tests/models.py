@@ -26,10 +26,20 @@ class TestsFlextLdifModels(FlextTestsModels, m):
             class LdifTestData(m.Value):
                 """Test data for LDIF utilities."""
 
-                id: str
-                server_type: str
-                dn: str
-                attributes: t.StrSequenceMapping
+                id: Annotated[
+                    str,
+                    u.Field(description="Unique identifier for the test data entry"),
+                ]
+                server_type: Annotated[
+                    str, u.Field(description="Type of server associated with the entry")
+                ]
+                dn: Annotated[
+                    str, u.Field(description="Distinguished name of the LDAP entry")
+                ]
+                attributes: Annotated[
+                    t.StrSequenceMapping,
+                    u.Field(description="LDAP attributes mapped to their values"),
+                ]
 
             class FixtureMetadata(m.BaseModel):
                 """Metadata about a discovered fixture file."""
