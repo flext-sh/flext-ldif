@@ -1,0 +1,43 @@
+tests/conftest.py
+  h_9db9d35f50cf33 449,456,471,477-478,482,484-485,502,540-543,554,563
+tests/unit/test_version.py
+  h_9db9d35f50cf33 1,9-10,15,17-18,23-25,27-31,33-35,39-43,45-46,48,50-51,53-54
+tests/constants.py
+  h_9db9d35f50cf33 1,5-6,11,15-16,19-20,22-23,26,31-45,47-54,57-90,92-98,100-101,104-114,116-117,119-159,161-170,172-173,175,178,182-183,185-231,233-249,251,253-332,334,336-440,442-445,449-451,453,460,465-466,468-471,475-477,479-482,484-487,491,493,497,527,546,550,577,583,586,592,602,607,638,642,662,665-666,671,678,684,689,695,701,707,709,711,720-721,725,730,761,765,784,788,812
+tests/unit/test_migration_pipeline_quirks.py
+  h_9db9d35f50cf33 12,26-31,33-37,39,44-57,64-65,72-80,82-84,87-88,91-92,96-101,103-107,109,114-125,131-132,141,143,145-146,148-149,157-163,189-195
+tests/unit/servers/test_edge_cases.py
+  h_9db9d35f50cf33 37-40,42,44-48,50-51,54,56,63,71,89-91,95-96,100-101,106
+tests/utilities.py
+  h_9db9d35f50cf33 47-50
+tests/unit/services/test_writer_service.py
+  h_9db9d35f50cf33 1-120
+tests/unit/services/test_parser_service.py
+  h_9db9d35f50cf33 1-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "d03e24cd21cad87bb066bc2321a69f7f9539c6e3",
+  "prompts": {
+    "a019e02d703e3170": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0c10bd3b-6b5f-49cd-9118-854d321e6ead",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 139,
+      "accepted_lines": 0,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/61145d3be85a3a681cf7300f5e115e188cc254f66dc2482da6fd9dc5651187e3"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
