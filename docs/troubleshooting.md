@@ -29,10 +29,14 @@ This document provides solutions to common issues encountered when using FLEXT-L
 **Symptom**: Parse operations fail with format-related error messages.
 
 ```python
-result = api.parse_string(ldif_content)
-if result.failure:
-    print(f"Parse error: {result.error}")
-    # Common error: "Invalid LDIF format: missing DN"
+from flext_ldif import ldif
+
+if (
+    result := ldif.parse_string(
+        "dn: cn=test,dc=example,dc=com\nobjectClass: inetOrgPerson\ncn: test"
+    )
+).failure:
+    print(result.error)
 ```
 
 **Solution**:
@@ -76,6 +80,9 @@ UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 123
 **Solution**:
 
 ```python
+from flext_ldif import ldif, p, r
+
+
 def handle_encoding_issues(file_path: str) -> p.Result[str]:
     """Handle various character encodings."""
     encodings_to_try = ["utf-8", "latin-1", "cp1252", "iso-8859-1"]
@@ -118,6 +125,9 @@ MemoryError: Unable to allocate array
 **Solution**:
 
 ```python
+from flext_ldif import ldif, FlextLdifModels, p, r, m, t
+
+
 def process_large_file_safely(file_path: str) -> p.Result[m.Dict]:
     """Process large LDIF files with memory management."""
     import psutil
@@ -183,7 +193,7 @@ def chunk_process_file(file_path: str, chunk_size: int = 10000) -> p.Result[m.Di
         return r[m.Dict].fail(f"Chunk processing failed: {e}")
 
 
-def process_chunk(chunk_entries: t.StringList) -> p.Result[bool]:
+def process_chunk(chunk_entries: list[str]) -> p.Result[bool]:
     """Process a chunk of LDIF entries."""
     chunk_content = "\n\n".join(chunk_entries)
     api = ldif()
@@ -205,6 +215,9 @@ result = api.validate_entries(entries)
 **Solution**:
 
 ```python
+from flext_ldif import ldif, FlextLdifModels, p, r
+
+
 def handle_validation_errors(entries: list) -> p.Result[list]:
     """Handle validation errors with detailed reporting."""
     # Try with strict validation first
@@ -559,7 +572,10 @@ def print_health_check_report() -> None:
 ### Debug Mode Configuration
 
 ```python
-def enable_debug_mode() -> ldif:
+from flext_ldif import FlextLdif, FlextLdifModels, ldif, u
+
+
+def enable_debug_mode() -> FlextLdif:
     """Enable comprehensive debug mode."""
 
     # Configure debug logging

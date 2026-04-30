@@ -145,6 +145,8 @@ oid = FlextLdifServersOid()
 oud = FlextLdifServersOud()
 
 # DEPOIS
+from flext_ldif import FlextLdifServer
+
 server = FlextLdifServer()
 oid = server.quirk("oid")
 oud = server.quirk("oud")
@@ -186,6 +188,8 @@ ______________________________________________________________________
 ## 🎯 Servers Disponíveis via API
 
 ```python
+from flext_ldif import FlextLdifServer
+
 server = FlextLdifServer()
 
 # Servers totalmente implementados

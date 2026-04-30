@@ -201,7 +201,7 @@ from flext_ldif import ldif
 api = ldif()
 
 # Use functionality
-result = api.parse("dn: cn=test,dc=example,dc=com\ncn: test\n")
+result = api.parse_string("dn: cn=test,dc=example,dc=com\ncn: test\n")
 
 if result.is_success:
     entries = result.unwrap()

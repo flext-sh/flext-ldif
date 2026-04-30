@@ -104,19 +104,18 @@ print(f"Strict validation: {settings.strict_validation}")
 ### Initialization
 
 ```python
-from flext_ldif import initialize_ldif_config, get_ldif_config
+from flext_ldif import FlextLdif, FlextLdifSettings
 
-# Initialize global configuration
-initialize_ldif_config({
-    "max_entries": 50000,
-    "strict_validation": True,
-    "encoding": "utf-8",
-    "log_level": "INFO",
-})
+# Initialize configuration and use it with the public facade
+settings = FlextLdifSettings(
+    max_entries=50000,
+    strict_validation=True,
+    encoding="utf-8",
+    log_level="INFO",
+)
+api = FlextLdif(settings=settings)
 
-# Access global configuration
-global_config = get_ldif_config()
-print(f"Global max entries: {global_config.max_entries}")
+print(f"Global max entries: {settings.max_entries}")
 ```
 
 ### Environment Variables
@@ -140,12 +139,12 @@ export FLEXT_LDIF_LOG_LEVEL=DEBUG
 
 ```python
 import os
-from flext_ldif import FlextLdifModels
+from flext_ldif import FlextLdifSettings, ldif
 
 
-def load_config_from_environment() -> FlextLdifModels.Config:
+def load_config_from_environment() -> FlextLdifSettings:
     """Load configuration from environment variables."""
-    return FlextLdifModels.Config(
+    return FlextLdifSettings(
         max_entries=int(os.getenv("FLEXT_LDIF_MAX_ENTRIES", "0")) or None,
         strict_validation=os.getenv("FLEXT_LDIF_STRICT_VALIDATION", "").lower()
         == "true",
@@ -430,8 +429,13 @@ api = ldif(settings=settings)
 Always use the Pydantic-based configuration models:
 
 ```python
+from flext_ldif import FlextLdifSettings
+
 # ✅ Good: Type-safe configuration
-settings = FlextLdifModels.Config(max_entries=50000, strict_validation=True)
+settings = FlextLdifSettings(
+    ldif_max_entries=50000,
+    ldif_strict_validation=True,
+)
 
 # ❌ Avoid: Raw dictionaries without validation
 config_dict = {
@@ -445,12 +449,16 @@ config_dict = {
 Validate configuration at application startup:
 
 ```python
+import os
+from flext_ldif import ldif, p, r, FlextLdifSettings
+
+
 def initialize_application_config() -> p.Result[ldif]:
     """Initialize application with validated configuration."""
     try:
-        settings = FlextLdifModels.Config(
-            max_entries=int(os.getenv("MAX_ENTRIES", "50000")),
-            strict_validation=os.getenv("STRICT_VALIDATION", "").lower() == "true",
+        settings = FlextLdifSettings(
+            ldif_max_entries=int(os.getenv("MAX_ENTRIES", "50000")),
+            ldif_strict_validation=os.getenv("STRICT_VALIDATION", "").lower() == "true",
         )
         api = ldif(settings=settings)
         return r[ldif].ok(api)

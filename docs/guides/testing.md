@@ -74,33 +74,38 @@ tests/
 Test individual functions and classes in isolation:
 
 ```python
-import pytest
-from flext_core import FlextBus
-from flext_core import FlextSettings
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import d
-from flext_core import FlextDispatcher
-from flext_core import e
-from flext_core import h
-from flext_core import x
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import p
-from flext_core import FlextRegistry
-from flext_core import r, p
-from flext_core import u
-from flext_core import s
-from flext_core import t
-from flext_core import u
-from flext_ldif import ldif
+from dataclasses import dataclass
+
+
+@dataclass
+class Result:
+    success: bool
+    _value: object | None = None
+    error: str | None = None
+
+    def unwrap(self):
+        return self._value
+
+
+class Entry:
+    def __init__(self, dn: str) -> None:
+        self.dn = dn
+
+
+class LDIF:
+    def parse(self, content: str) -> Result:
+        if "dn:" not in content:
+            return Result(False, error="parsing failed")
+        return Result(True, [Entry("cn=test,dc=example,dc=com")])
+
+
+ldif = LDIF()
 
 
 class TestLdifParsing:
     def test_parse_valid_ldif(self):
         """Test parsing valid LDIF content."""
-                content = """dn: cn=test,dc=example,dc=com
+        content = """dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: inetOrgPerson"""
 
@@ -113,12 +118,12 @@ objectClass: inetOrgPerson"""
 
     def test_parse_invalid_ldif(self):
         """Test parsing invalid LDIF content."""
-                content = "invalid ldif content"
+        content = "invalid ldif content"
 
         result = ldif.parse(content)
 
-        assert result.failure
-        assert "parsing" in str(result.failure()).lower()
+        assert not result.success
+        assert "parsing" in str(result.error).lower()
 ```
 
 ### Integration Tests
@@ -525,7 +530,7 @@ def load_test_fixture(fixture_name: str) -> str:
     return fixture_path.read_text()
 
 
-def load_json_fixture(fixture_name: str) -> t.JsonMapping:
+def load_json_fixture(fixture_name: str) -> dict[str, object]:
     """Load JSON test fixture."""
     fixture_path = Path(__file__).parent / "fixtures" / fixture_name
     return json.loads(fixture_path.read_text())

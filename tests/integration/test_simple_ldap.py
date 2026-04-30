@@ -6,16 +6,14 @@ from collections.abc import (
     Callable,
 )
 
-from ldap3 import Connection
-
 from flext_ldif import ldif
-from tests import c, m, t
+from tests import c, m, t, p
 
 
 class TestsFlextLdifSimpleLdap:
     """Behavior contract for test_simple_ldap."""
 
-    def test_ldap_connection(self, ldap_connection: Connection) -> None:
+    def test_ldap_connection(self, ldap_connection: p.Ldap.Ldap3Connection) -> None:
         """Test basic LDAP connection."""
         assert ldap_connection.bound
         server_info = getattr(ldap_connection.server, "info", None)
@@ -29,7 +27,7 @@ class TestsFlextLdifSimpleLdap:
 
     def test_simple_ldap_search(
         self,
-        ldap_connection: Connection,
+        ldap_connection: p.Ldap.Ldap3Connection,
         ldap_container: t.StrMapping,
     ) -> None:
         """Test simple LDAP search."""
@@ -44,7 +42,7 @@ class TestsFlextLdifSimpleLdap:
 
     def test_create_and_export_entry(
         self,
-        ldap_connection: Connection,
+        ldap_connection: p.Ldap.Ldap3Connection,
         ldap_container: t.StrMapping,
         make_test_username: Callable[[str], str],
     ) -> None:

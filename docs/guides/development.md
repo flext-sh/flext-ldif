@@ -167,6 +167,29 @@ def process_data(data):
 ### Railway-Oriented Programming
 
 ```python
+from flext_ldif import p, r
+
+
+class ProcessedData(dict):
+    pass
+
+
+def validate_data(data: dict) -> p.Result[ProcessedData]:
+    return r[ProcessedData].ok(ProcessedData(data))
+
+
+def transform_data(data: ProcessedData) -> p.Result[ProcessedData]:
+    return r[ProcessedData].ok(data)
+
+
+def enrich_data(data: ProcessedData) -> p.Result[ProcessedData]:
+    return r[ProcessedData].ok(data)
+
+
+def handle_error(error: object) -> str:
+    return str(error)
+
+
 # ✅ CORRECT - Use r for all operations
 def validate_and_process(data: dict) -> p.Result[ProcessedData]:
     return (
@@ -312,25 +335,26 @@ cd flext-newlib
 
 ```python
 # src/flext_newlib/__init__.py
-from flext_core import FlextBus
-from flext_core import FlextSettings
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import d
-from flext_core import FlextDispatcher
-from flext_core import e
-from flext_core import h
-from flext_core import x
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import p
-from flext_core import FlextRegistry
-from flext_core import r, p
-from flext_core import u
-from flext_core import s
-from flext_core import t
-from flext_core import u
+from typing import Any
+
+
+class p:
+    class Result:
+        pass
+
+
+class r:
+    pass
+
+
+class m:
+    class BaseModel:
+        pass
+
+
+class t:
+    JsonMapping = dict
+    JsonValue = object
 
 
 # Main API class

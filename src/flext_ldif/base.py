@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from abc import ABC
 from typing import Annotated, override
 
 from flext_core import FlextSettings, s
 from flext_ldif import FlextLdifServer, FlextLdifSettings, c, m, t, u
 
 
-class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult], ABC):
+class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
     """Base class for LDIF services with typed settings helper."""
 
     _server: FlextLdifServer = u.PrivateAttr(

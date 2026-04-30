@@ -99,33 +99,12 @@ docker run -v $(pwd)/data:/app/data flext:latest
 ### 1. Basic Setup
 
 ```python
-from flext_core import FlextBus
-from flext_core import FlextSettings
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import d
-from flext_core import FlextDispatcher
-from flext_core import e
-from flext_core import h
-from flext_core import x
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import p
-from flext_core import FlextRegistry
-from flext_core import r, p
-from flext_core import u
-from flext_core import s
-from flext_core import t
-from flext_core import u
+from flext_ldif import ldif, FlextLdifSettings
 
-# Create dependency injection container
-container = FlextContainer()
+settings = FlextLdifSettings(ldif_strict_validation=True)
+api = ldif(settings=settings)
 
-# Register services (example)
-# container.bind(IService, ServiceImplementation())
-
-print("FLEXT application initialized!")
+print("FLEXT-LDIF application initialized!")
 ```
 
 ### 2. Using flext-ldif for LDIF Processing

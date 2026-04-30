@@ -85,7 +85,7 @@ git status
 
 #### Problem: ModuleNotFoundError
 
-```python
+```text
 # Error
 ModuleNotFoundError: No module named 'flext_core'
 ```
@@ -172,7 +172,7 @@ mypy src/ --show-error-codes | grep "error-code"
 
 #### Problem: Tests failing
 
-```python
+```text
 # Error
 AssertionError: Expected success but got failure
 ```
@@ -223,31 +223,13 @@ env | grep FLEXT_
 **Validate configuration:**
 
 ```python
-from flext_core import FlextBus
-from flext_core import FlextSettings
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import d
-from flext_core import FlextDispatcher
-from flext_core import e
-from flext_core import h
-from flext_core import x
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import p
-from flext_core import FlextRegistry
-from flext_core import r, p
-from flext_core import u
-from flext_core import s
-from flext_core import t
-from flext_core import u
+from flext_ldif import FlextLdifSettings
 
 try:
-    settings = FlextSettings()
+    settings = FlextLdifSettings()
     print("Configuration valid")
-except c.ValidationError as e:
-    print(f"Configuration error: {e}")
+except Exception as error:
+    print(f"Configuration error: {error}")
 ```
 
 **Debug configuration loading:**
@@ -347,7 +329,7 @@ def validate_ldif_content(content: str) -> t.StringList:
 
 ```python
 # Error
-LdifMigrationException: Server compatibility error
+# LdifMigrationException: Server compatibility error
 ```
 
 #### Solutions
@@ -378,6 +360,8 @@ settings = FlextLdifSettings(
 **Test with sample data:**
 
 ```python
+from flext_ldif import ldif
+
 # Test migration with small sample
 sample_ldif = """dn: cn=test,dc=example,dc=com
 cn: test
@@ -641,6 +625,7 @@ monitor_memory()
 
 ```python
 # Monitor CPU usage
+import os
 import psutil
 import time
 
@@ -722,8 +707,9 @@ When reporting issues, include:
    ```python
    # Full error traceback
    import traceback
+
    try:
-       # Your code here
+       raise RuntimeError("Example failure for troubleshooting")
    except Exception as e:
        traceback.print_exc()
    ```
@@ -732,31 +718,11 @@ When reporting issues, include:
 
    ```python
    # Minimal code that reproduces the issue
-   from flext_core import FlextBus
-   ```
+   from flext_ldif import ldif, FlextLdifSettings
 
-from flext_core import FlextSettings
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import d
-from flext_core import FlextDispatcher
-from flext_core import e
-from flext_core import h
-from flext_core import x
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import p
-from flext_core import FlextRegistry
-from flext_core import r, p
-from flext_core import u
-from flext_core import s
-from flext_core import t
-from flext_core import u
-
-### Your minimal example here
-
-1. **Expected vs Actual Behavior**
+   settings = FlextLdifSettings(ldif_strict_validation=True)
+   api = ldif(settings=settings)
+```
 
 - What you expected to happen
 - What actually happened
@@ -782,6 +748,9 @@ def process(data: dict) -> ProcessedData:
 1. **Validate Input Early**
 
    ```python
+   from flext_ldif import p, r
+
+
    def process_data(data: dict) -> p.Result[dict]:
        if not data:
            return r.fail("Data required")

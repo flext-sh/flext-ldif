@@ -8,13 +8,13 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import s
 from flext_ldif import (
     FlextLdifServerMethodsMixin,
     c,
     m,
     p,
     r,
+    s,
     t,
     u,
 )
@@ -23,8 +23,8 @@ logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServersBaseSchemaAcl(
-    FlextLdifServerMethodsMixin,
     s[t.Ldif.AclPayload],
+    FlextLdifServerMethodsMixin,
 ):
     """Base class for ACL quirks - satisfies Acl (structural typing)."""
 

@@ -22,7 +22,7 @@ class TestsFlextLdifVersion:
     def test_version_exported(self) -> None:
         """Test __version__ is exported and accessible."""
         tm.that(version_module.__version__, is_=str)
-        tm.that(version_module.__version__, ne="")
+        assert version_module.__version__ != ""
 
     def test_version_info_exported(self) -> None:
         """Test __version_info__ is exported and is a tuple."""
@@ -45,7 +45,7 @@ class TestsFlextLdifVersion:
     def test_title_exported(self) -> None:
         """Test __title__ is exported."""
         tm.that(version_module.__title__, is_=str)
-        tm.that(version_module.__title__, ne="")
+        assert version_module.__title__ != ""
 
     def test_description_exported(self) -> None:
         """Test __description__ is exported."""
@@ -62,7 +62,7 @@ class TestsFlextLdifVersion:
     def test_license_exported(self) -> None:
         """Test __license__ is exported."""
         tm.that(version_module.__license__, is_=str)
-        tm.that(version_module.__license__, ne="")
+        assert version_module.__license__ != ""
 
     def test_url_exported(self) -> None:
         """Test __url__ is exported."""
@@ -88,8 +88,8 @@ class TestsFlextLdifVersion:
     def test_version_default_fallback(self) -> None:
         """Test version falls back to default when metadata missing."""
         original_version = version_module.__version__
-        tm.that(original_version, ne="")
-        tm.that(original_version, ne="0.0.0")
+        assert original_version != ""
+        assert original_version != "0.0.0"
 
     def test_version_info_with_prerelease(self) -> None:
         """Test __version_info__ handles prerelease versions correctly."""

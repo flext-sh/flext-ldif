@@ -12,13 +12,13 @@ from collections.abc import (
 from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import s
 from flext_ldif import (
     FlextLdifServerMethodsMixin,
     c,
     m,
     p,
     r,
+    s,
     t,
     u,
 )
@@ -27,8 +27,8 @@ logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServersBaseEntry(
-    FlextLdifServerMethodsMixin,
     s[t.Ldif.EntryPayload],
+    FlextLdifServerMethodsMixin,
 ):
     """Base class for entry processing quirks - satisfies Entry (structural typing)."""
 

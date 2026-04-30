@@ -76,6 +76,9 @@ make reset          # Full reset of environment
 FLEXT-LDIF uses a custom LDIF parser implementation with the following characteristics:
 
 ```python
+from collections.abc import Iterator, Mapping
+
+
 # Current implementation approach
 class _ParserHelper:
     """Custom LDIF parser - loads entire files into memory."""
@@ -84,7 +87,7 @@ class _ParserHelper:
         self._content = content
         self._lines = content.splitlines()  # Loads all lines into memory
 
-    def parse(self) -> Iterator[tuple[str, Mapping[str, t.StringList]]]:
+    def parse(self) -> Iterator[tuple[str, Mapping[str, list[str]]]]:
         """Parse LDIF content and yield (dn, attributes) tuples."""
         # Process all lines already in memory
         pass
@@ -113,7 +116,7 @@ entry_data = {
         "mail": ["user@example.com"],
     },
 }
-entry = FlextLdifModels.Entry.create(entry_data)
+entry = FlextLdifModels.Factory.create(entry_data)
 
 # LDIF processing with memory awareness
 api = ldif()
@@ -128,6 +131,10 @@ result = api.parse_file("small_directory.ldif")
 #### LDIF Validation Patterns
 
 ```python
+from typing import Sequence
+from flext_ldif import p, r, FlextLdifModels
+
+
 # LDIF-specific validation
 def validate_ldif_structure(entries: Sequence[FlextLdifModels.Entry]) -> p.Result[bool]:
     """Validate LDIF entries for common issues."""
@@ -140,7 +147,7 @@ def validate_ldif_structure(entries: Sequence[FlextLdifModels.Entry]) -> p.Resul
         if "objectClass" not in entry.attributes.data:
             return r[bool].fail(f"Missing objectClass in {entry.dn.value}")
 
-    return r[bool].| ok(value=True)
+    return r[bool].ok(value=True)
 ```
 
 #### Memory-Conscious Processing
@@ -225,6 +232,10 @@ def test_memory_usage():
 ### Performance Guidelines
 
 ```python
+from flext_ldif import ldif, p, r, m
+import os
+
+
 # Good: Process small files directly
 def process_small_ldif(file_path: str) -> p.Result[m.Dict]:
     """Process LDIF files under 100MB."""

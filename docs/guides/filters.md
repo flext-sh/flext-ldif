@@ -59,6 +59,9 @@ result = FlextLdifFilters.by_attributes(
 ### Pattern 2: Classmethod for Composable/Chainable Operations
 
 ```python
+from flext_ldif import FlextLdifFilters
+
+my_entries: list = []
 result = (
     FlextLdifFilters
     .filter(entries=my_entries, criteria="dn", pattern="*,ou=users,*")

@@ -31,6 +31,13 @@ Implement a **DN Case Registry** that:
 **Key Components**:
 
 ```python
+class Result: ...
+
+
+class p:
+    Result = Result
+
+
 class DnCaseRegistry:
     """Tracks canonical DN case for migration consistency."""
 
@@ -47,6 +54,17 @@ class DnCaseRegistry:
 **Implementation**:
 
 ```python
+class DnCaseRegistry:
+    def register_dn(self, dn: str) -> str:
+        return dn.lower()
+
+    def get_canonical_dn(self, dn: str) -> str:
+        return dn.lower()
+
+    def validate_oud_consistency(self) -> bool:
+        return True
+
+
 # During conversion pipeline
 registry = DnCaseRegistry()
 

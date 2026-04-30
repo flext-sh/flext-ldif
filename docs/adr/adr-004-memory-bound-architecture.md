@@ -38,6 +38,28 @@ Implement a **memory-bound processing architecture** that loads entire LDIF file
 **Implementation**:
 
 ```python
+from pathlib import Path
+from typing import Sequence
+
+
+class Entry: ...
+
+
+class Result: ...
+
+
+class p:
+    Result = Result
+
+
+class Logger:
+    def warning(self, message: str) -> None:
+        pass
+
+
+logger = Logger()
+
+
 # Memory-bound file processing
 def parse_ldif_file(self, file_path: Path) -> p.Result[Sequence[Entry]]:
     """Parse LDIF file with memory-bound architecture."""

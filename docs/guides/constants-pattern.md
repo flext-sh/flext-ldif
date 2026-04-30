@@ -15,6 +15,9 @@
 - Provides baseline values
 
 ```python
+from typing import ClassVar, Final
+
+
 class Constants:
     # ✅ Correto - pode ser sobrescrito
     PERMISSION_READ: ClassVar[str] = "read"

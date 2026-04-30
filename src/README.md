@@ -137,7 +137,7 @@ from flext_ldif import FlextLdif
 from flext_ldif import FlextLdifSettings
 
 # Core processing (advanced usage)
-from flext_ldif import TLdif
+from flext_ldif import ldif
 ```
 
 ### Recommended Public API

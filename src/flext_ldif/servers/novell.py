@@ -413,7 +413,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         @override
         def model_post_init(
             self,
-            context: t.ScalarMapping | None,
+            __context: t.JsonMapping | None,
             /,
         ) -> None:
             """Initialize eDirectory entry quirk."""

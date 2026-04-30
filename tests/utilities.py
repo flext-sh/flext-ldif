@@ -13,8 +13,7 @@ from pathlib import Path
 from typing import ClassVar
 
 from flext_ldap import u
-from flext_tests import FlextTestsUtilities, tk
-from ldap3 import Connection
+from flext_tests import FlextTestsUtilities, td, tk
 
 from tests import c, m, p, t
 
@@ -76,7 +75,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 password: str,
                 auto_bind: bool = True,
                 receive_timeout: int | None = None,
-            ) -> Connection:
+            ) -> p.Ldap.Ldap3Connection:
                 """Create an LDAP connection for test workflows."""
                 if receive_timeout is None:
                     return u.Ldap.create_connection(
@@ -192,12 +191,12 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 fixture_type: t.Ldif.Tests.FixtureKind,
             ) -> Path:
                 """Return the canonical path for a fixture file."""
-                server_dir = c.Ldif.Tests.FIXTURES_DIR / server_type
-                file_path = server_dir / f"{server_type}_{fixture_type}_fixtures.ldif"
-                if not file_path.exists():
-                    msg = f"Fixture file not found: {file_path}"
-                    raise FileNotFoundError(msg)
-                return file_path
+                return td.fixture_path(
+                    server_type,
+                    fixture_type,
+                    fixtures_root=c.Ldif.Tests.FIXTURES_DIR,
+                    file_extension=".ldif",
+                )
 
             @classmethod
             def load_fixture(
@@ -205,14 +204,13 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 server_type: t.Ldif.Tests.FixtureServer,
                 fixture_type: t.Ldif.Tests.FixtureKind,
             ) -> str:
-                """Load one fixture file with caching."""
-                cache_key = (server_type, fixture_type)
-                if cache_key not in cls._fixture_cache:
-                    file_path = cls.fixture_path(server_type, fixture_type)
-                    cls._fixture_cache[cache_key] = file_path.read_text(
-                        encoding="utf-8"
-                    )
-                return cls._fixture_cache[cache_key]
+                """Load one fixture file."""
+                return td.load_fixture(
+                    server_type,
+                    fixture_type,
+                    fixtures_root=c.Ldif.Tests.FIXTURES_DIR,
+                    file_extension=".ldif",
+                )
 
             @classmethod
             def load_server_fixtures(
@@ -220,25 +218,17 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 server_type: t.Ldif.Tests.FixtureServer,
             ) -> Mapping[t.Ldif.Tests.FixtureKind, str]:
                 """Load all available fixtures for a server type."""
-                fixture_types: tuple[t.Ldif.Tests.FixtureKind, ...] = tuple(
-                    c.Ldif.Tests.FIXTURE_TYPES
+                return td.load_server_fixtures(
+                    server_type,
+                    fixtures_root=c.Ldif.Tests.FIXTURES_DIR,
+                    file_extension=".ldif",
                 )
-                return {
-                    fixture_type: cls.load_fixture(server_type, fixture_type)
-                    for fixture_type in fixture_types
-                    if cls.fixture_exists(server_type, fixture_type)
-                }
 
             @classmethod
             def available_fixture_servers(cls) -> Sequence[t.Ldif.Tests.FixtureServer]:
                 """Return the server types that currently have fixture directories."""
-                server_types: tuple[t.Ldif.Tests.FixtureServer, ...] = tuple(
-                    c.Ldif.Tests.FIXTURE_SERVERS
-                )
-                return tuple(
-                    server_type
-                    for server_type in server_types
-                    if (c.Ldif.Tests.FIXTURES_DIR / server_type).is_dir()
+                return td.available_fixture_servers(
+                    fixtures_root=c.Ldif.Tests.FIXTURES_DIR,
                 )
 
             @classmethod
@@ -247,13 +237,10 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 server_type: t.Ldif.Tests.FixtureServer,
             ) -> Sequence[t.Ldif.Tests.FixtureKind]:
                 """Return the fixture kinds available for one server type."""
-                fixture_types: tuple[t.Ldif.Tests.FixtureKind, ...] = tuple(
-                    c.Ldif.Tests.FIXTURE_TYPES
-                )
-                return tuple(
-                    fixture_type
-                    for fixture_type in fixture_types
-                    if cls.fixture_exists(server_type, fixture_type)
+                return td.available_fixture_types(
+                    server_type,
+                    fixtures_root=c.Ldif.Tests.FIXTURES_DIR,
+                    file_extension=".ldif",
                 )
 
             @classmethod
@@ -263,11 +250,12 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 fixture_type: t.Ldif.Tests.FixtureKind,
             ) -> bool:
                 """Return whether a fixture exists."""
-                try:
-                    cls.fixture_path(server_type, fixture_type)
-                except FileNotFoundError:
-                    return False
-                return True
+                return td.fixture_exists(
+                    server_type,
+                    fixture_type,
+                    fixtures_root=c.Ldif.Tests.FIXTURES_DIR,
+                    file_extension=".ldif",
+                )
 
             @classmethod
             def fixture_metadata(

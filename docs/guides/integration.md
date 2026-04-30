@@ -29,29 +29,12 @@ LDIF-specific integration patterns for using FLEXT-LDIF within the FLEXT ecosyst
 ### Core LDIF Operations with r
 
 ```python
-from flext_core import FlextBus
-from flext_core import FlextSettings
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import d
-from flext_core import FlextDispatcher
-from flext_core import e
-from flext_core import h
-from flext_core import x
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import p
-from flext_core import FlextRegistry
-from flext_core import r, p
-from flext_core import u
-from flext_core import s
-from flext_core import t
-from flext_core import u
+from pathlib import Path
 from flext_ldif import ldif
+from flext_ldif import p
 
 
-def process_directory_export(file_path: str) -> p.Result[m.Dict]:
+def process_directory_export(file_path: str) -> p.Result[dict]:
     """Process LDIF directory export with railway programming."""
     api = ldif()
 
@@ -103,27 +86,8 @@ def process_ldif_with_memory_check(file_path: Path) -> p.Result[m.Dict]:
 ### FLEXT Oracle Unified Directory Migration
 
 ```python
-from flext_ldif import ldif, FlextLdifModels
-from flext_core import FlextBus
-from flext_core import FlextSettings
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import d
-from flext_core import FlextDispatcher
-from flext_core import e
-from flext_core import h
-from flext_core import x
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import p
-from flext_core import FlextRegistry
-from flext_core import r, p
-from flext_core import u
-from flext_core import s
-from flext_core import t
-from flext_core import u
 from pathlib import Path
+from flext_ldif import ldif, FlextLdifSettings, m, p, r, t, u
 
 
 class FLEXTOUDMigrationService:
@@ -133,11 +97,11 @@ class FLEXTOUDMigrationService:
         self.logger = u.fetch_logger(__name__)
 
         # Configure for enterprise migration with legacy data accommodation
-        migration_config = FlextLdifModels.Config(
-            max_entries=None,  # No entry limits for enterprise data
-            strict_validation=False,  # Accommodate legacy LDIF variations
-            ignore_unknown_attributes=True,  # Handle custom schema attributes
-            encoding="utf-8",
+        migration_config = FlextLdifSettings(
+            ldif_max_entries=None,  # No entry limits for enterprise data
+            ldif_strict_validation=False,  # Accommodate legacy LDIF variations
+            ldif_ignore_unknown_attributes=True,  # Handle custom schema attributes
+            ldif_encoding="utf-8",
         )
 
         self._ldif_api = ldif(settings=migration_config)
@@ -511,6 +475,10 @@ def process_multiple_ldif_files(file_paths: Sequence[Path]) -> p.Result[m.Dict]:
 Always check file sizes before processing with current implementation:
 
 ```python
+from pathlib import Path
+from flext_ldif import ldif, p, r
+
+
 def safe_ldif_processing(file_path: Path) -> p.Result[list]:
     """Process LDIF with memory safety checks."""
     file_size = file_path.stat().st_size

@@ -8,7 +8,6 @@ from collections.abc import (
 )
 from typing import ClassVar, Self, overload, override
 
-from flext_core import s
 from flext_ldif import (
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,
@@ -17,6 +16,7 @@ from flext_ldif import (
     m,
     p,
     r,
+    s,
     t,
     u,
 )

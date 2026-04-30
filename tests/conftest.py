@@ -18,7 +18,6 @@ from collections.abc import (
 from pathlib import Path
 
 import pytest
-from ldap3 import Connection
 
 from flext_ldif import (
     FlextLdif,
@@ -90,13 +89,19 @@ def writer() -> FlextLdifWriter:
 @pytest.fixture
 def oid_schema_fixture() -> str:
     """Load OID schema fixture data."""
-    return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OID, c.Ldif.Tests.SCHEMA)
+    return u.Ldif.Tests.load_fixture(
+        c.Ldif.Tests.OID,
+        c.Ldif.Tests.SCHEMA,
+    )
 
 
 @pytest.fixture
 def oid_acl_fixture() -> str:
     """Load OID ACL fixture data."""
-    return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OID, c.Ldif.Tests.ACL)
+    return u.Ldif.Tests.load_fixture(
+        c.Ldif.Tests.OID,
+        c.Ldif.Tests.ACL,
+    )
 
 
 @pytest.fixture
@@ -457,7 +462,7 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
                     password=admin_password,
                     auto_bind=False,
                 )
-                bound: bool = bool(conn.bind())
+                bound: bool = conn.bind()
                 if bound:
                     conn.unbind()
                     break
@@ -526,7 +531,7 @@ def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
 @pytest.fixture
 def ldap_connection(
     ldap_container: t.JsonMapping,
-) -> Generator[Connection]:
+) -> Generator[p.Ldap.Ldap3Connection]:
     """Provide a bound LDAP connection or skip when unavailable."""
     server_url = str(
         ldap_container.get(
@@ -545,7 +550,7 @@ def ldap_connection(
         auto_bind=False,
     )
     try:
-        bind_ok: bool = bool(conn.bind())
+        bind_ok: bool = conn.bind()
         if not bind_ok:
             pytest.skip(
                 f"LDAP server not available at {server_url} for bind_dn={bind_dn}",
@@ -563,7 +568,7 @@ def ldap_connection(
 
 @pytest.fixture
 def clean_test_ou(
-    ldap_connection: Connection,
+    ldap_connection: p.Ldap.Ldap3Connection,
     make_test_base_dn: Callable[[str], str],
 ) -> Generator[str]:
     """Create and clean up an isolated OU for integration tests."""
