@@ -26,7 +26,6 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".test_oud_integration": ("TestsFlextLdifOudIntegration",),
         ".test_oud_to_oid_migration": ("TestsFlextLdifOudToOidMigration",),
         ".test_pipeline_integration": ("TestsFlextLdifPipelineIntegration",),
-        ".test_quirks_transformations": ("TestsFlextLdifQuirksTransformations",),
         ".test_real_ldap_config": ("TestsFlextLdifRealLdapConfig",),
         ".test_real_ldap_crud": ("test_real_ldap_crud",),
         ".test_real_ldap_export": ("TestsFlextLdifRealLdapExport",),
@@ -41,7 +40,6 @@ _LAZY_IMPORTS = build_lazy_import_map(
             "TestsFlextLdifSystematicFixtureCoverage",
         ),
         ".test_zero_data_loss_oid_oud": ("TestsFlextLdifZeroDataLossOidOud",),
-        ".test_zero_data_loss_schema": ("TestsFlextLdifZeroDataLossSchema",),
     },
 )
 

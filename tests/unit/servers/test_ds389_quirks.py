@@ -16,30 +16,6 @@ from tests import c, m, u
 class TestsTestFlextLdifDs389Quirks:
     """Test ldif DS389 server quirks."""
 
-    def test_server_initialization(self) -> None:
-        """Test DS389 server initialization."""
-        server = FlextLdifServersDs389()
-        tm.that(server.server_type, eq="ds389")
-        tm.that(server.priority, eq=30)
-
-    def test_schema_quirk_initialization(self) -> None:
-        """Test schema quirk is initialized."""
-        server = FlextLdifServersDs389()
-        schema_quirk = server.schema_quirk
-        tm.that(schema_quirk, none=False)
-
-    def test_acl_quirk_initialization(self) -> None:
-        """Test ACL quirk is initialized."""
-        server = FlextLdifServersDs389()
-        acl_quirk = server.acl_quirk
-        tm.that(acl_quirk, none=False)
-
-    def test_entry_quirk_initialization(self) -> None:
-        """Test entry quirk is initialized."""
-        server = FlextLdifServersDs389()
-        entry_quirk = server.entry_quirk
-        tm.that(entry_quirk, none=False)
-
     @pytest.mark.parametrize("test_case", c.Ldif.Tests.DS389_ATTRIBUTE_TEST_CASES)
     def test_schema_attribute_can_handle(
         self, test_case: m.Ldif.Tests.AttributeTestCase

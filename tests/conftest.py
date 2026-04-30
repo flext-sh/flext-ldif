@@ -446,13 +446,14 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
     with lock:
         execute_result = docker_control.execute()
         if execute_result.failure:
-            pytest.skip(
+            pytest.fail(
                 f"Could not start shared OpenLDAP container: {execute_result.error}",
             )
         admin_dn, admin_password = u.Ldif.Tests.get_admin_credentials()
         # Verify LDAP bind readiness
         waited = 0.0
         max_wait = 10.0
+        last_error: str | None = None
         while waited < max_wait:
             try:
                 srv = u.Ldif.Tests.create_server_from_url(server_url)
@@ -467,17 +468,22 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
                     conn.unbind()
                     break
                 conn.unbind()
+                last_error = "LDAP bind returned False"
             except (
                 t.Ldap.LDAPException,
                 ConnectionError,
                 TimeoutError,
                 OSError,
-            ):
-                pass
+            ) as exc:
+                last_error = str(exc)
             time.sleep(1.0)
             waited += 1.0
         else:
-            pytest.skip("LDAP container is running but bind is not ready")
+            pytest.fail(
+                "LDAP container is running but bind is not ready"
+                if last_error is None
+                else f"LDAP container bind is not ready: {last_error}",
+            )
     return {
         "server_url": server_url,
         "host": "localhost",
@@ -493,8 +499,7 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
 @pytest.fixture(scope="session")
 def ldap_container_shared(ldap_container: t.JsonMapping) -> str:
     """Provide LDAP connection URL for tests requiring Docker container."""
-    default_url = f"ldap://localhost:{c.Ldif.Tests.DOCKER_PORT}"
-    return str(ldap_container.get("server_url", default_url))
+    return str(ldap_container["server_url"])
 
 
 @pytest.fixture
@@ -532,16 +537,10 @@ def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
 def ldap_connection(
     ldap_container: t.JsonMapping,
 ) -> Generator[p.Ldap.Ldap3Connection]:
-    """Provide a bound LDAP connection or skip when unavailable."""
-    server_url = str(
-        ldap_container.get(
-            "server_url", f"ldap://localhost:{c.Ldif.Tests.DOCKER_PORT}"
-        ),
-    )
-    bind_dn = str(ldap_container.get("bind_dn", c.Ldif.Tests.DOCKER_ADMIN_DN))
-    password = str(
-        ldap_container.get("password", c.Ldif.Tests.DOCKER_ADMIN_PASSWORD),
-    )
+    """Provide a bound LDAP connection for integration tests."""
+    server_url = str(ldap_container["server_url"])
+    bind_dn = str(ldap_container["bind_dn"])
+    password = str(ldap_container["password"])
     srv = u.Ldif.Tests.create_server_from_url(server_url)
     conn = u.Ldif.Tests.create_connection(
         srv,
@@ -552,7 +551,7 @@ def ldap_connection(
     try:
         bind_ok: bool = conn.bind()
         if not bind_ok:
-            pytest.skip(
+            pytest.fail(
                 f"LDAP server not available at {server_url} for bind_dn={bind_dn}",
             )
     except (
@@ -561,7 +560,7 @@ def ldap_connection(
         TimeoutError,
         OSError,
     ) as exc:
-        pytest.skip(f"LDAP server not available: {exc}")
+        pytest.fail(f"LDAP server not available: {exc}")
     yield conn
     conn.unbind()
 

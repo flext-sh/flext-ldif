@@ -34,15 +34,11 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextLdifQuirksStandardization",
             ),
             ".test_acl_registry": ("TestsFlextLdifAclRegistry",),
-            ".test_migration_pipeline": ("TestsFlextLdifMigrationPipeline",),
             ".test_migration_pipeline_quirks": (
                 "TestsFlextLdifMigrationPipelineQuirks",
             ),
             ".test_oid_utilities": ("TestsFlextLdifOidUtilities",),
             ".test_parser_utilities": ("TestsFlextLdifParserUtilities",),
-            ".test_protocols": ("TestsFlextLdifProtocolsUnit",),
-            ".test_server_utilities": ("TestsFlextLdifServerUtilities",),
-            ".test_typings": ("TestsFlextLdifTypingsUnit",),
             ".test_version": ("TestsFlextLdifVersion",),
             ".utilities.test_utilities_comprehensive": (
                 "TestsFlextLdifUtilitiesComprehensive",

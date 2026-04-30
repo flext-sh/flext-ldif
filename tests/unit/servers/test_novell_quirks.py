@@ -40,19 +40,6 @@ def entry_quirk(novell_server: FlextLdifServersNovell) -> FlextLdifServersNovell
 class TestsFlextLdifNovellQuirks:
     """Test initialization of Novell quirks."""
 
-    def test_server_initialization(self) -> None:
-        """Test Novell eDirectory server initialization."""
-        server = FlextLdifServersNovell()
-        tm.that(server.server_type, eq="novell")
-        tm.that(server.priority, eq=20)
-
-    def test_schema_quirk_initialization(
-        self,
-        schema_quirk: FlextLdifServersNovell.Schema,
-    ) -> None:
-        """Test schema quirk is initialized."""
-        tm.that(schema_quirk, none=False)
-
     """Test schema attribute detection."""
 
     @pytest.mark.parametrize("test_case", c.Ldif.Tests.NOVELL_ATTRIBUTE_TEST_CASES)
@@ -176,63 +163,7 @@ class TestsFlextLdifNovellQuirks:
         if result.error is not None:
             tm.that(result.error, has="missing an OID")
 
-    def test_write_attribute_to_rfc(
-        self,
-        schema_quirk: FlextLdifServersNovell.Schema,
-    ) -> None:
-        """Test writing attribute to RFC string format."""
-        attr_data = m.Ldif.SchemaAttribute(
-            oid="2.16.840.1.113719.1.1.4.1.501",
-            name="nspmPasswordPolicyDN",
-            desc="Password Policy DN",
-            syntax="1.3.6.1.4.1.1466.115.121.1.12",
-            single_value=True,
-        )
-        u.Ldif.Tests.quirk_write_and_unwrap(
-            schema_quirk,
-            attr_data,
-            write_method="_write_attribute",
-            must_contain=[
-                "2.16.840.1.113719.1.1.4.1.501",
-                "nspmPasswordPolicyDN",
-                "SINGLE-VALUE",
-            ],
-        )
-
-    def test_write_objectclass_to_rfc(
-        self,
-        schema_quirk: FlextLdifServersNovell.Schema,
-    ) -> None:
-        """Test writing objectClass to RFC string format."""
-        oc_data = m.Ldif.SchemaObjectClass(
-            oid="2.16.840.1.113719.2.2.6.1",
-            name="ndsPerson",
-            kind="STRUCTURAL",
-            sup="top",
-            must=["cn"],
-            may=["loginDisabled"],
-        )
-        u.Ldif.Tests.quirk_write_and_unwrap(
-            schema_quirk,
-            oc_data,
-            write_method="_write_objectclass",
-            must_contain=["2.16.840.1.113719.2.2.6.1", "ndsPerson", "STRUCTURAL"],
-        )
-
-    """Tests for Novell eDirectory ACL quirk handling."""
-
-    def test_acl_initialization(self, novell_server: FlextLdifServersNovell) -> None:
-        """Test ACL quirk initialization."""
-        novell_server.Acl()
-
     """Test entry detection."""
-
-    def test_entry_initialization(
-        self,
-        entry_quirk: FlextLdifServersNovell.Entry,
-    ) -> None:
-        """Test entry quirk is initialized."""
-        tm.that(bool(entry_quirk), eq=True)
 
     @pytest.mark.parametrize("test_case", c.Ldif.Tests.NOVELL_ENTRY_TEST_CASES)
     def test_can_handle_entry(

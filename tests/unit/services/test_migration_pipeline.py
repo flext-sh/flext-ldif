@@ -222,38 +222,6 @@ class TestsTestFlextLdifMigrationPipeline:
         migration_result = result.value
         tm.that(migration_result.stats.total_entries, gte=1)
 
-    @pytest.mark.parametrize(
-        ("source", "target"),
-        [
-            (c.Ldif.Tests.OID, c.Ldif.Tests.OUD),
-            (c.Ldif.Tests.OUD, c.Ldif.Tests.OID),
-            (c.Ldif.Tests.RFC, c.Ldif.Tests.OID),
-            (c.Ldif.Tests.RFC, c.Ldif.Tests.OUD),
-        ],
-    )
-    def test_server_conversion_modes(
-        self,
-        source: str,
-        target: str,
-        tmp_path: Path,
-    ) -> None:
-        """Test server-specific conversion modes."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
-        input_dir.mkdir()
-        output_dir.mkdir()
-        (input_dir / "test.ldif").write_text(
-            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
-        )
-        pipeline = FlextLdifMigrationPipeline(
-            input_dir=input_dir,
-            output_dir=output_dir,
-            source_server_type=source,
-            target_server_type=target,
-        )
-        result = pipeline.execute()
-        tm.that(result.success or result.failure, eq=True)
-
     def test_execute_with_multiple_files(self, tmp_path: Path) -> None:
         """Test pipeline processes multiple input files."""
         input_dir = tmp_path / "input"

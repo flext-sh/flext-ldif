@@ -25,7 +25,7 @@ from collections.abc import (
 import pytest
 
 from flext_ldif import FlextLdif, ldif
-from tests import m, t, u, p
+from tests import m, p, t, u
 
 
 @pytest.fixture

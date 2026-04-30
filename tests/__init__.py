@@ -49,9 +49,6 @@ if _t.TYPE_CHECKING:
     from tests.integration.test_pipeline_integration import (
         TestsFlextLdifPipelineIntegration,
     )
-    from tests.integration.test_quirks_transformations import (
-        TestsFlextLdifQuirksTransformations,
-    )
     from tests.integration.test_real_ldap_config import TestsFlextLdifRealLdapConfig
     from tests.integration.test_real_ldap_export import TestsFlextLdifRealLdapExport
     from tests.integration.test_real_ldap_import import TestsFlextLdifRealLdapImport
@@ -68,9 +65,6 @@ if _t.TYPE_CHECKING:
     )
     from tests.integration.test_zero_data_loss_oid_oud import (
         TestsFlextLdifZeroDataLossOidOud,
-    )
-    from tests.integration.test_zero_data_loss_schema import (
-        TestsFlextLdifZeroDataLossSchema,
     )
     from tests.models import TestsFlextLdifModels, m
     from tests.protocols import TestsFlextLdifProtocols, p
@@ -94,15 +88,11 @@ if _t.TYPE_CHECKING:
         TestsFlextLdifQuirksStandardization,
     )
     from tests.unit.test_acl_registry import TestsFlextLdifAclRegistry
-    from tests.unit.test_migration_pipeline import TestsFlextLdifMigrationPipeline
     from tests.unit.test_migration_pipeline_quirks import (
         TestsFlextLdifMigrationPipelineQuirks,
     )
     from tests.unit.test_oid_utilities import TestsFlextLdifOidUtilities
     from tests.unit.test_parser_utilities import TestsFlextLdifParserUtilities
-    from tests.unit.test_protocols import TestsFlextLdifProtocolsUnit
-    from tests.unit.test_server_utilities import TestsFlextLdifServerUtilities
-    from tests.unit.test_typings import TestsFlextLdifTypingsUnit
     from tests.unit.test_version import TestsFlextLdifVersion
     from tests.unit.utilities.test_utilities_comprehensive import (
         TestsFlextLdifUtilitiesComprehensive,
@@ -153,9 +143,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".integration.test_pipeline_integration": (
                 "TestsFlextLdifPipelineIntegration",
             ),
-            ".integration.test_quirks_transformations": (
-                "TestsFlextLdifQuirksTransformations",
-            ),
             ".integration.test_real_ldap_config": ("TestsFlextLdifRealLdapConfig",),
             ".integration.test_real_ldap_export": ("TestsFlextLdifRealLdapExport",),
             ".integration.test_real_ldap_import": ("TestsFlextLdifRealLdapImport",),
@@ -172,9 +159,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".integration.test_zero_data_loss_oid_oud": (
                 "TestsFlextLdifZeroDataLossOidOud",
-            ),
-            ".integration.test_zero_data_loss_schema": (
-                "TestsFlextLdifZeroDataLossSchema",
             ),
             ".models": (
                 "TestsFlextLdifModels",
@@ -207,15 +191,11 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextLdifQuirksStandardization",
             ),
             ".unit.test_acl_registry": ("TestsFlextLdifAclRegistry",),
-            ".unit.test_migration_pipeline": ("TestsFlextLdifMigrationPipeline",),
             ".unit.test_migration_pipeline_quirks": (
                 "TestsFlextLdifMigrationPipelineQuirks",
             ),
             ".unit.test_oid_utilities": ("TestsFlextLdifOidUtilities",),
             ".unit.test_parser_utilities": ("TestsFlextLdifParserUtilities",),
-            ".unit.test_protocols": ("TestsFlextLdifProtocolsUnit",),
-            ".unit.test_server_utilities": ("TestsFlextLdifServerUtilities",),
-            ".unit.test_typings": ("TestsFlextLdifTypingsUnit",),
             ".unit.test_version": ("TestsFlextLdifVersion",),
             ".unit.utilities.test_utilities_comprehensive": (
                 "TestsFlextLdifUtilitiesComprehensive",
@@ -280,7 +260,6 @@ __all__: list[str] = [
     "TestsFlextLdifEdgeCasesInt",
     "TestsFlextLdifErrorRecovery",
     "TestsFlextLdifLdifFixturesIntegration",
-    "TestsFlextLdifMigrationPipeline",
     "TestsFlextLdifMigrationPipelineQuirks",
     "TestsFlextLdifMinimalDifferencesMetadata",
     "TestsFlextLdifModels",
@@ -292,9 +271,7 @@ __all__: list[str] = [
     "TestsFlextLdifParserUtilities",
     "TestsFlextLdifPipelineIntegration",
     "TestsFlextLdifProtocols",
-    "TestsFlextLdifProtocolsUnit",
     "TestsFlextLdifQuirksStandardization",
-    "TestsFlextLdifQuirksTransformations",
     "TestsFlextLdifRealLdapConfig",
     "TestsFlextLdifRealLdapExport",
     "TestsFlextLdifRealLdapImport",
@@ -302,17 +279,14 @@ __all__: list[str] = [
     "TestsFlextLdifRfcDockerReal",
     "TestsFlextLdifRfcDockerRealIntegration",
     "TestsFlextLdifSchemaTransformer",
-    "TestsFlextLdifServerUtilities",
     "TestsFlextLdifSimpleLdap",
     "TestsFlextLdifSystematicFixtureCoverage",
     "TestsFlextLdifTypes",
-    "TestsFlextLdifTypingsUnit",
     "TestsFlextLdifUtilities",
     "TestsFlextLdifUtilitiesComprehensive",
     "TestsFlextLdifUtilitiesCore",
     "TestsFlextLdifVersion",
     "TestsFlextLdifZeroDataLossOidOud",
-    "TestsFlextLdifZeroDataLossSchema",
     "TestsTestFlextLdifApacheQuirks",
     "TestsTestFlextLdifApiServerRegistry",
     "TestsTestFlextLdifCrossDirectionConversion",

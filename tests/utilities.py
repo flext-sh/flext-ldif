@@ -44,6 +44,10 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             _fixture_metadata_cache: ClassVar[
                 MutableMapping[Path, m.Ldif.Tests.FixtureMetadata]
             ] = {}
+            fixtures: ClassVar[td.BoundFixtures] = td.bind(
+                c.Ldif.Tests.FIXTURES_DIR,
+                file_extension=".ldif",
+            )
 
             @staticmethod
             def create_server_from_url(

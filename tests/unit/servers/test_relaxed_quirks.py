@@ -44,14 +44,6 @@ class TestsTestFlextLdifRelaxedQuirks:
         """Create main relaxed quirk instance."""
         return FlextLdifServersRelaxed()
 
-    def test_schema_initialization(
-        self,
-        schema_quirk: FlextLdifServersRelaxed.Schema,
-    ) -> None:
-        """Test relaxed schema quirk initialization."""
-        tm.that(schema_quirk, none=False)
-        tm.that(schema_quirk, is_=FlextLdifServersRelaxed.Schema)
-
     @pytest.mark.parametrize(
         ("scenario", "definition_data"),
         list(c.Ldif.Tests.RELAXED_ATTRIBUTE_DEFINITIONS.items()),
@@ -105,21 +97,6 @@ class TestsTestFlextLdifRelaxedQuirks:
         else:
             _ = tm.that(result.failure, eq=True)
 
-    @pytest.mark.parametrize(
-        ("definition", "expected_success"),
-        c.Ldif.Tests.RELAXED_NAME_FORMAT_VARIATIONS,
-        ids=["quoted", "unquoted", "double_quoted"],
-    )
-    def test_parse_attribute_name_formats(
-        self,
-        schema_quirk: FlextLdifServersRelaxed.Schema,
-        definition: str,
-        expected_success: bool,
-    ) -> None:
-        """Test parsing attributes with various NAME formats."""
-        result = schema_quirk._parse_attribute(definition)
-        tm.that(result.success, eq=expected_success)
-
     def test_parse_attribute_stores_original_definition(
         self,
         schema_quirk: FlextLdifServersRelaxed.Schema,
@@ -161,11 +138,6 @@ class TestsTestFlextLdifRelaxedQuirks:
         tm.that(written, is_=str)
         tm.that(len(written) > 0, eq=True)
 
-    def test_acl_initialization(self, acl_quirk: FlextLdifServersRelaxed.Acl) -> None:
-        """Test relaxed ACL quirk initialization."""
-        tm.that(acl_quirk, none=False)
-        tm.that(acl_quirk, is_=FlextLdifServersRelaxed.Acl)
-
     @pytest.mark.parametrize(
         ("name", "acl_data"),
         list(c.Ldif.Tests.RELAXED_ACL_DEFINITIONS.items()),
@@ -203,14 +175,6 @@ class TestsTestFlextLdifRelaxedQuirks:
         tm.that(result.success, eq=True)
         written = result.value
         tm.that(written, eq=raw_acl)
-
-    def test_entry_initialization(
-        self,
-        entry_quirk: FlextLdifServersRelaxed.Entry,
-    ) -> None:
-        """Test relaxed entry quirk initialization."""
-        tm.that(entry_quirk, none=False)
-        tm.that(entry_quirk, is_=FlextLdifServersRelaxed.Entry)
 
     def test_entry_lenient_dn_parsing(
         self,

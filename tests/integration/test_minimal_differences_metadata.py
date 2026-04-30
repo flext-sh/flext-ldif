@@ -78,8 +78,6 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         parse_response = parse_result.value
         entries = parse_response.entries
         assert entries, "No entries parsed from OUD fixture"
-        for _entry in entries:
-            pass
 
     def test_round_trip_oid_preserves_all_differences(
         self,

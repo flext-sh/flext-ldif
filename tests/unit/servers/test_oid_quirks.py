@@ -15,14 +15,6 @@ class TestsTestFlextLdifOidQuirks:
         """Create server registry."""
         return FlextLdifServer()
 
-    def test_server_type_and_priority(self, server_registry: FlextLdifServer) -> None:
-        """OID base quirk should expose canonical type and priority."""
-        oid_result = server_registry.resolve_base_quirk("oid")
-        assert oid_result.success, f"OID quirk not found: {oid_result.error}"
-        oid_quirk = oid_result.value
-        assert oid_quirk.server_type == "oid"
-        assert oid_quirk.priority == 10
-
     def test_parse_attribute_syntax_oid_normalization(
         self,
         server_registry: FlextLdifServer,

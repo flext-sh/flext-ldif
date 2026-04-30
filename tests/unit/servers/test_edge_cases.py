@@ -34,43 +34,47 @@ def ldif_api() -> FlextLdif:
 class TestsFlextLdifEdgeCases:
     """Test edge cases with real fixture files."""
 
-    def test_unicode_names(self, ldif_api: FlextLdif) -> None:
-        """Test parsing of entries with unicode characters in names."""
-        unicode_ldif = "dn: cn=José,ou=Users,dc=example,dc=com\ncn: José\nsn: García\nobjectClass: person\n\n"
-        result = ldif_api.parse_ldif(unicode_ldif, server_type=c.Ldif.Tests.RFC)
+    @pytest.mark.parametrize(
+        (
+            "ldif_content",
+            "expected_entry_count",
+            "expected_min_depth",
+            "expect_non_ascii",
+        ),
+        list(c.Ldif.Tests.EDGE_CASE_INLINE_PARSE_RULES.values()),
+        ids=list(c.Ldif.Tests.EDGE_CASE_INLINE_PARSE_RULES.keys()),
+    )
+    def test_parse_inline_edge_cases(
+        self,
+        ldif_api: FlextLdif,
+        ldif_content: str,
+        expected_entry_count: int,
+        expected_min_depth: int,
+        expect_non_ascii: bool,
+    ) -> None:
+        """Test inline edge-case parsing rules using centralized datasets."""
+        result = ldif_api.parse_ldif(ldif_content, server_type=c.Ldif.Tests.RFC)
         _ = tm.that(result.success, eq=True)
         entries = result.value.entries
-        tm.that(len(entries) > 0, eq=True)
+        tm.that(len(entries), gte=expected_entry_count)
+        max_depth = 0
+        has_non_ascii = False
         for entry in entries:
             tm.that(entry.dn, none=False)
             if entry.dn is not None:
-                tm.that(len(entry.dn.value) > 0, eq=True)
-                has_unicode = any(ord(c) > 127 for c in entry.dn.value)
-                if has_unicode:
-                    tm.that(len(entry.dn.value) > 0, eq=True)
-
-    def test_deep_dn(self, ldif_api: FlextLdif) -> None:
-        """Test parsing of entries with very deep DN hierarchies."""
-        deep_dn_ldif = "dn: cn=level1,ou=level2,ou=level3,ou=level4,ou=level5,ou=level6,dc=example,dc=com\ncn: level1\nobjectClass: person\n\n"
-        result = ldif_api.parse_ldif(deep_dn_ldif, server_type=c.Ldif.Tests.RFC)
-        _ = tm.that(result.success, eq=True)
-        entries = result.value.entries
-        tm.that(len(entries) > 0, eq=True)
-        max_depth = 0
-        for entry in entries:
-            if entry.dn is not None:
                 depth = entry.dn.value.count(",") + 1
                 max_depth = max(max_depth, depth)
-        _ = tm.that(max_depth, gt=5)
+                if c.Ldif.Tests.EDGE_CASE_NON_ASCII_REGEX.search(entry.dn.value):
+                    has_non_ascii = True
+        if expected_min_depth > 0:
+            _ = tm.that(max_depth, gte=expected_min_depth)
+        tm.that(has_non_ascii, eq=expect_non_ascii)
 
     def test_large_multivalue(self, ldif_api: FlextLdif) -> None:
         """Test parsing of attributes with many values."""
         fixture_path = (
-            Path(__file__).resolve().parents[2]
-            / "fixtures"
-            / "edge_cases"
-            / "size"
-            / "large_multivalue.ldif"
+            c.Ldif.Tests.FIXTURES_DIR
+            / c.Ldif.Tests.EDGE_CASE_LARGE_MULTIVALUE_FIXTURE_RELATIVE
         )
         result = ldif_api.parse_ldif(fixture_path, server_type=c.Ldif.Tests.RFC)
         _ = tm.that(result.success, eq=True)
@@ -82,60 +86,29 @@ class TestsFlextLdifEdgeCases:
                 continue
             for attr_value in entry.attributes.values():
                 max_values = max(max_values, len(attr_value))
-        _ = tm.that(max_values, gte=10)
+        _ = tm.that(max_values, gte=c.Ldif.Tests.EDGE_CASE_MIN_MULTIVALUE_COUNT)
 
-    def test_roundtrip_unicode(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
-        """Test roundtrip of unicode entries."""
-        unicode_ldif = "dn: cn=José,ou=Users,dc=example,dc=com\ncn: José\nsn: García\nobjectClass: person\n\n"
-        parse_result = ldif_api.parse_ldif(unicode_ldif, server_type=c.Ldif.Tests.RFC)
-        _ = tm.that(parse_result.success, eq=True)
-        entries = parse_result.value.entries
-        tm.that(len(entries), eq=1)
-        output_path = tmp_path / "unicode_roundtrip.ldif"
-        write_result = ldif_api.write_ldif_file(
-            entries, output_path, server_type=c.Ldif.Tests.RFC
-        )
-        _ = tm.that(write_result.success, eq=True)
-        roundtrip_result = ldif_api.parse_ldif(
-            output_path, server_type=c.Ldif.Tests.RFC
-        )
-        _ = tm.that(roundtrip_result.success, eq=True)
-        roundtrip_entries = roundtrip_result.value.entries
-        tm.that(len(roundtrip_entries), eq=1)
-
-    def test_roundtrip_deep_dn(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
-        """Test roundtrip of deep DN entries."""
-        deep_dn_ldif = "dn: cn=level1,ou=level2,ou=level3,ou=level4,ou=level5,ou=level6,dc=example,dc=com\ncn: level1\nobjectClass: person\n\n"
-        parse_result = ldif_api.parse_ldif(deep_dn_ldif, server_type=c.Ldif.Tests.RFC)
-        _ = tm.that(parse_result.success, eq=True)
-        entries = parse_result.value.entries
-        tm.that(len(entries), eq=1)
-        output_path = tmp_path / "deep_dn_roundtrip.ldif"
-        write_result = ldif_api.write_ldif_file(
-            entries, output_path, server_type=c.Ldif.Tests.RFC
-        )
-        _ = tm.that(write_result.success, eq=True)
-        roundtrip_result = ldif_api.parse_ldif(
-            output_path, server_type=c.Ldif.Tests.RFC
-        )
-        _ = tm.that(roundtrip_result.success, eq=True)
-        roundtrip_entries = roundtrip_result.value.entries
-        tm.that(len(roundtrip_entries), eq=1)
-
-    def test_roundtrip_large_multivalue(
+    @pytest.mark.parametrize(
+        ("ldif_content", "output_name"),
+        list(c.Ldif.Tests.EDGE_CASE_ROUNDTRIP_CASES.values()),
+        ids=list(c.Ldif.Tests.EDGE_CASE_ROUNDTRIP_CASES.keys()),
+    )
+    def test_roundtrip_inline_edge_cases(
         self,
         ldif_api: FlextLdif,
         tmp_path: Path,
+        ldif_content: str,
+        output_name: str,
     ) -> None:
-        """Test roundtrip of large multivalue entries."""
-        large_multivalue_ldif = "dn: cn=test,dc=example,dc=com\ncn: test\nmember: cn=user1,dc=example,dc=com\nmember: cn=user2,dc=example,dc=com\nmember: cn=user3,dc=example,dc=com\nmember: cn=user4,dc=example,dc=com\nmember: cn=user5,dc=example,dc=com\nobjectClass: groupOfNames\n\n"
+        """Test roundtrip of inline edge-case LDIF payloads."""
         parse_result = ldif_api.parse_ldif(
-            large_multivalue_ldif, server_type=c.Ldif.Tests.RFC
+            ldif_content,
+            server_type=c.Ldif.Tests.RFC,
         )
         _ = tm.that(parse_result.success, eq=True)
         entries = parse_result.value.entries
         tm.that(len(entries), eq=1)
-        output_path = tmp_path / "large_multivalue_roundtrip.ldif"
+        output_path = tmp_path / output_name
         write_result = ldif_api.write_ldif_file(
             entries, output_path, server_type=c.Ldif.Tests.RFC
         )

@@ -1,11 +1,4 @@
-"""Tests for flext_ldif.__version__ module.
-
-Tests version metadata loading from pyproject.toml via importlib.metadata.
-Covers all edge cases including missing metadata, invalid versions, and all exports.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Behavior tests for the public flext_ldif.__version__ module."""
 
 from __future__ import annotations
 
@@ -13,103 +6,58 @@ import importlib
 
 from flext_tests import tm
 
+from tests import c
+
 version_module = importlib.import_module("flext_ldif.__version__")
 
 
 class TestsFlextLdifVersion:
-    """Test version module metadata loading and exports."""
+    """Validate exported public version metadata."""
 
-    def test_version_exported(self) -> None:
-        """Test __version__ is exported and accessible."""
+    def test_version_exports_are_present(self) -> None:
+        """Public metadata exports are available and non-empty where required."""
         tm.that(version_module.__version__, is_=str)
-        assert version_module.__version__ != ""
-
-    def test_version_info_exported(self) -> None:
-        """Test __version_info__ is exported and is a tuple."""
-        tm.that(version_module.__version_info__, is_=tuple)
-        tm.that(len(version_module.__version_info__), gte=2)
-
-    def test_version_info_parsing(self) -> None:
-        """Test __version_info__ correctly parses version string."""
-        version_parts = version_module.__version__.split(".")
-        version_info = version_module.__version_info__
-        tm.that(len(version_info), eq=len(version_parts))
-        for part, info_part in zip(version_parts, version_info, strict=False):
-            if part.isdigit():
-                tm.that(info_part, is_=int)
-                tm.that(info_part, eq=int(part))
-            else:
-                tm.that(info_part, is_=str)
-                tm.that(info_part, eq=part)
-
-    def test_title_exported(self) -> None:
-        """Test __title__ is exported."""
         tm.that(version_module.__title__, is_=str)
-        assert version_module.__title__ != ""
-
-    def test_description_exported(self) -> None:
-        """Test __description__ is exported."""
-        tm.that(version_module.__description__, is_=str)
-
-    def test_author_exported(self) -> None:
-        """Test __author__ is exported."""
-        tm.that(version_module.__author__, is_=str)
-
-    def test_author_email_exported(self) -> None:
-        """Test __author_email__ is exported."""
-        tm.that(version_module.__author_email__, is_=str)
-
-    def test_license_exported(self) -> None:
-        """Test __license__ is exported."""
         tm.that(version_module.__license__, is_=str)
-        assert version_module.__license__ != ""
-
-    def test_url_exported(self) -> None:
-        """Test __url__ is exported."""
-        tm.that(version_module.__url__, is_=str)
-
-    def test_all_exports(self) -> None:
-        """Test __all__ contains all expected exports."""
-        expected_exports = [
-            "__author__",
-            "__author_email__",
-            "__description__",
-            "__license__",
-            "__title__",
-            "__url__",
-            "__version__",
-            "__version_info__",
-        ]
         tm.that(version_module.__all__, is_=list)
-        for export in expected_exports:
-            _ = tm.that(version_module.__all__, has=export)
-            _ = tm.that(hasattr(version_module, export), eq=True)
+        tm.that(version_module.__version__ != "", eq=True)
+        tm.that(version_module.__title__ != "", eq=True)
+        tm.that(version_module.__license__ != "", eq=True)
 
-    def test_version_default_fallback(self) -> None:
-        """Test version falls back to default when metadata missing."""
-        original_version = version_module.__version__
-        assert original_version != ""
-        assert original_version != "0.0.0"
+    def test_version_info_matches_version_shape(self) -> None:
+        """__version_info__ aligns with the split version token count."""
+        version_parts = version_module.__version__.split(".")
+        tm.that(version_module.__version_info__, is_=tuple)
+        tm.that(len(version_module.__version_info__), eq=len(version_parts))
 
-    def test_version_info_with_prerelease(self) -> None:
-        """Test __version_info__ handles prerelease versions correctly."""
-        version_str = "1.2.3-alpha.1"
-        parts = version_str.split(".")
-        version_info = tuple(int(part) if part.isdigit() else part for part in parts)
-        tm.that(version_info[0], eq=1)
-        tm.that(version_info[1], eq=2)
-        tm.that(version_info[2], is_=str)
-        if isinstance(version_info[2], str):
-            tm.that(version_info[2], has="alpha")
+    def test_all_public_symbols_are_exported(self) -> None:
+        """All documented symbols are exported through __all__."""
+        for export in c.Ldif.Tests.VERSION_EXPECTED_EXPORTS:
+            tm.that(version_module.__all__, has=export)
+            tm.that(hasattr(version_module, export), eq=True)
 
-    def test_version_info_with_build(self) -> None:
-        """Test __version_info__ handles build metadata correctly."""
-        version_str = "1.2.3+build.123"
-        parts = version_str.split(".")
-        version_info = tuple(int(part) if part.isdigit() else part for part in parts)
-        tm.that(version_info[0], eq=1)
-        tm.that(version_info[1], eq=2)
-        tm.that(version_info[2], is_=str)
-        if isinstance(version_info[2], str):
-            tm.that(version_info[2], has="+build")
-        tm.that(version_info[3], eq=123)
+    def test_exports_reference_flextldifversion_class(self) -> None:
+        """Module-level exports are derived from FlextLdifVersion fields."""
+        tm.that(
+            version_module.__version__, eq=version_module.FlextLdifVersion.__version__
+        )
+        tm.that(
+            version_module.__version_info__,
+            eq=version_module.FlextLdifVersion.__version_info__,
+        )
+        tm.that(version_module.__title__, eq=version_module.FlextLdifVersion.__title__)
+        tm.that(
+            version_module.__description__,
+            eq=version_module.FlextLdifVersion.__description__,
+        )
+        tm.that(
+            version_module.__author__, eq=version_module.FlextLdifVersion.__author__
+        )
+        tm.that(
+            version_module.__author_email__,
+            eq=version_module.FlextLdifVersion.__author_email__,
+        )
+        tm.that(
+            version_module.__license__, eq=version_module.FlextLdifVersion.__license__
+        )
+        tm.that(version_module.__url__, eq=version_module.FlextLdifVersion.__url__)

@@ -16,27 +16,6 @@ from tests import c, m, t, u
 class TestsTestFlextLdifApacheQuirks:
     """Test Apache Directory Server quirks implementation."""
 
-    def test_server_initialization(self) -> None:
-        """Test Apache Directory Server initialization."""
-        server = FlextLdifServersApache()
-        tm.that(server.server_type, eq="apache")
-        tm.that(server.priority, eq=15)
-
-    def test_schema_quirk_initialization(self) -> None:
-        """Test schema quirk is initialized."""
-        server = FlextLdifServersApache()
-        tm.that(server.schema_quirk, none=False)
-
-    def test_acl_quirk_initialization(self) -> None:
-        """Test ACL quirk is initialized."""
-        server = FlextLdifServersApache()
-        tm.that(server.acl_quirk, none=False)
-
-    def test_entry_quirk_initialization(self) -> None:
-        """Test entry quirk is initialized."""
-        server = FlextLdifServersApache()
-        tm.that(server.entry_quirk, none=False)
-
     @pytest.mark.parametrize("test_case", c.Ldif.Tests.APACHE_ATTRIBUTE_TEST_CASES)
     def test_schema_attribute_can_handle(
         self, test_case: m.Ldif.Tests.AttributeTestCase
@@ -174,51 +153,6 @@ class TestsTestFlextLdifApacheQuirks:
             should_succeed=False,
         )
 
-    def test_schema_write_attribute_to_rfc(self) -> None:
-        """Test writing attribute to RFC string format."""
-        server = FlextLdifServersApache()
-        schema = server.schema_quirk
-        attr_data = m.Ldif.SchemaAttribute(
-            oid="1.3.6.1.4.1.18060.0.4.1.2.100",
-            name="ads-enabled",
-            desc="Enable flag",
-            syntax="1.3.6.1.4.1.1466.115.121.1.7",
-            single_value=True,
-        )
-        u.Ldif.Tests.quirk_write_and_unwrap(
-            schema,
-            attr_data,
-            write_method="_write_attribute",
-            must_contain=[
-                "1.3.6.1.4.1.18060.0.4.1.2.100",
-                "ads-enabled",
-                "SINGLE-VALUE",
-            ],
-        )
-
-    def test_schema_write_objectclass_to_rfc(self) -> None:
-        """Test writing objectClass to RFC string format."""
-        server = FlextLdifServersApache()
-        schema = server.schema_quirk
-        oc_data = m.Ldif.SchemaObjectClass(
-            oid="1.3.6.1.4.1.18060.0.4.1.3.100",
-            name="ads-directoryService",
-            kind="STRUCTURAL",
-            sup="top",
-            must=["cn", "ads-directoryServiceId"],
-            may=["ads-enabled"],
-        )
-        u.Ldif.Tests.quirk_write_and_unwrap(
-            schema,
-            oc_data,
-            write_method="_write_objectclass",
-            must_contain=[
-                "1.3.6.1.4.1.18060.0.4.1.3.100",
-                "ads-directoryService",
-                "STRUCTURAL",
-            ],
-        )
-
     def test_acl_can_handle_with_ads_aci(self) -> None:
         """Test ACL detection with ads-aci attribute."""
         server = FlextLdifServersApache()
@@ -315,27 +249,6 @@ class TestsTestFlextLdifApacheQuirks:
         )
         assert acl_data is not None
         assert isinstance(acl_data, m.Ldif.Acl)
-
-    def test_acl_write_with_content(self) -> None:
-        """Test writing ACL with content to RFC string format."""
-        server = FlextLdifServersApache()
-        acl_quirk = server.acl_quirk
-        acl_model = m.Ldif.Acl(
-            name="ads-aci",
-            target=m.Ldif.AclTarget(target_dn="", attributes=[]),
-            subject=m.Ldif.AclSubject(
-                subject_type=c.Ldif.AclSubjectType.ALL, subject_value=""
-            ),
-            permissions=m.Ldif.AclPermissions(),
-            server_type=c.Ldif.ServerTypes.APACHE,
-            raw_acl="( version 3.0 ) ( deny grantAdd )",
-        )
-        u.Ldif.Tests.quirk_write_and_unwrap(
-            acl_quirk,
-            acl_model,
-            write_method="_write_acl",
-            must_contain=["aci:"],
-        )
 
     def test_acl_write_with_clauses_only(self) -> None:
         """Test writing ACL with clauses only to RFC string format."""

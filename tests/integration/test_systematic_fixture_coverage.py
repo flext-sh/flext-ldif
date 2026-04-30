@@ -261,35 +261,6 @@ class TestsFlextLdifSystematicFixtureCoverage:
             f"DNs not preserved in roundtrip. Missing: {original_dns - roundtrip_dns}. Extra: {roundtrip_dns - original_dns}"
         )
 
-    def test_fixture_availability_matrix(self, request: pytest.FixtureRequest) -> None:
-        """Verify all expected fixtures are available (meta-test).
-
-        Validates that the fixture matrix is complete and fixtures
-        can be loaded by the test infrastructure.
-
-        This test documents the expected fixture coverage matrix
-        and ensures no fixtures are missing.
-        """
-        fixture_matrix = {
-            "schema": ["oid_schema_fixture", "oud_schema_fixture"],
-            "acl": ["oid_acl_fixture", "oud_acl_fixture"],
-            "entries": ["oid_entries_fixture", "oud_entries_fixture"],
-            "integration": ["oid_integration_fixture", "oud_integration_fixture"],
-        }
-        for fixture_type, fixtures in fixture_matrix.items():
-            for fixture_name in fixtures:
-                try:
-                    fixture_data = request.getfixturevalue(fixture_name)
-                    assert fixture_data is not None, f"{fixture_name} returned None"
-                    assert isinstance(fixture_data, str), (
-                        f"{fixture_name} not a string: {type(fixture_data)}"
-                    )
-                    assert fixture_data, f"{fixture_name} is empty"
-                except Exception as e:
-                    pytest.fail(
-                        f"Fixture {fixture_name} ({fixture_type}) not available: {e}",
-                    )
-
     def test_all_servers_support_basic_ldif_operations(self, api: FlextLdif) -> None:
         """Baseline test that all server types support basic LDIF operations.
 

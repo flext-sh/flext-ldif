@@ -136,7 +136,6 @@ class TestsFlextLdifModels(FlextTestsModels, m):
             class ProtocolServer(m.BaseModel):
                 """Server implementation for protocol testing."""
 
-                __test__ = False
                 model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
                 name: Annotated[str, u.Field(description="Implementation name")]
@@ -146,25 +145,6 @@ class TestsFlextLdifModels(FlextTestsModels, m):
                     Sequence[t.Ldif.Tests.FixtureServer],
                     u.Field(description="Servers covered by the implementation"),
                 ] = ()
-
-            class OidServerStub:
-                """Minimal nested server stub for server-type extraction tests."""
-
-                class Constants:
-                    """Server constants stub used by detection helpers."""
-
-                    SERVER_TYPE = "oid"
-
-                class Entry:
-                    """Nested entry stub preserving the server namespace."""
-
-            class OudServerStub:
-                """Minimal server stub for server-type extraction tests."""
-
-                class Constants:
-                    """Server constants stub used by detection helpers."""
-
-                    SERVER_TYPE = "oud"
 
             class AclTestCase(m.BaseModel):
                 """Unified test case for ACL handling."""

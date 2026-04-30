@@ -28,7 +28,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdif, ldif
-from tests import c, t, u, p
+from tests import c, p, t, u
 
 
 @pytest.fixture
