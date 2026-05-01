@@ -1,0 +1,96 @@
+tests/integration/test_api_integration.py
+  h_9db9d35f50cf33 35-36,40-41,67,72-74,82-83,88,99-100,130,142
+tests/integration/test_acl_metadata_preservation.py
+  h_9db9d35f50cf33 41,60,70,80,92,104,122,136,148,158,168,178,188,199,209,220,248,252,256,267,271,275
+tests/unit/servers/test_apache_quirks.py
+  h_9db9d35f50cf33 19,35,54,70,77,94,119,134,149,161,168,179,186,197,204,230,245,267,287,293,316
+tests/unit/services/test_api_server_registry.py
+  h_9db9d35f50cf33 21-23,31,35-43,51,55,72,86-97,100
+tests/utilities.py
+  h_9db9d35f50cf33 24,35,54,80-86,110,116-117,140-142,144-151,154-168,170,173-196,198-247,249-269,290,292,294,298-308,310,312,314,321,323,325,330,332,337-359,361-362,381-384,386,388-404,406-424,440-445,447-461,463,465-467,471-475,477-478,483-484,488-500,502,504-506,508,510-522,524,526
+tests/unit/servers/test_edge_cases.py
+  h_9db9d35f50cf33 44-45,56,67,76,78,88,92-93,105,112,115
+tests/integration/test_rfc_docker_real.py
+  h_9db9d35f50cf33 28,33,38,129,163,197,213,230,257,269,306
+tests/unit/services/test_quirks_standardization.py
+  h_9db9d35f50cf33 63,72
+tests/protocols.py
+  h_9db9d35f50cf33 21,25,32,36,43,47,54,58,65,69,76,80
+tests/unit/services/test_analysis_service.py
+  h_9db9d35f50cf33 32-33,53,63-64,81,94,96,105-106,109,120-121,124,131,133,143-144,147-148,159,166,170,186-187,190
+tests/unit/services/test_filters_service.py
+  h_9db9d35f50cf33 25-27,33-34,36-37,39-43,50-51,53-56,58-61,70-73,77-78,85,91-92,94-97,103,115,124,133,144,152,161,166-167,174,184-185,193-195,198-200,202-203,206,221-222,224-226,228,234-235,243,246,255-256,258,264,269,275-276,278-279,284,290,299
+tests/integration/test_ldif_fixtures_integration.py
+  h_9db9d35f50cf33 31,41,51,59,68,80-83,95
+tests/integration/test_config_integration.py
+  h_9db9d35f50cf33 39,47-48,61-62,65-66,71,79,85-88,99,120
+tests/unit/servers/test_ds389_quirks.py
+  h_9db9d35f50cf33 19,36,52,71,89,106,156
+tests/unit/services/test_entries_service.py
+  h_9db9d35f50cf33 22,29-30,36-38,55,63,65,71,75,86,109,115,155-156,168,176,192,205,217,238,240,249,251,260
+tests/unit/test_migration_pipeline_quirks.py
+  h_9db9d35f50cf33 28-29,44-55,72-74,76-77,80,84,87,91,97-98,113-121,123,140,144,156,158-161,183,189-193,207,210
+tests/integration/test_zero_data_loss_oid_oud.py
+  h_9db9d35f50cf33 53,58,66,92,111,152,155,159,208,211,215,220,226,264,295,307,322,355,360
+tests/unit/test_acl_registry.py
+  h_9db9d35f50cf33 29,51
+tests/constants.py
+  h_9db9d35f50cf33 11,18,21,27-37,84-86,93,678,684,690,696,707,713,719,730,736,742,748,754,760,769,775,787,794,800,806,812,822,830,836,846,849,852,855,858,861,864,870,876,882,886,893,897,908,915,921,927,933,943,950,956,966,972,978,984,993,999,1005,1055-1063
+tests/integration/test_categorization_real_data.py
+  h_9db9d35f50cf33 162,269,346,351
+tests/unit/services/test_acl_service.py
+  h_9db9d35f50cf33 25,38,49,67-79,81-82,86,90,95,114,116,119,124,129,137,139,142,159,202,204,207
+tests/integration/test_minimal_differences_metadata.py
+  h_9db9d35f50cf33 42,47
+tests/integration/test_rfc_docker_real_integration.py
+  h_9db9d35f50cf33 32,51,66,78,89,102,124,140,162,194
+tests/integration/test_oud_integration.py
+  h_9db9d35f50cf33 118,163,220
+tests/unit/services/test_detector_service.py
+  h_9db9d35f50cf33 33,42-43,52-53,60,67,78,98,101,108-109,128,141
+tests/integration/test_cross_quirk_conversion.py
+  h_9db9d35f50cf33 46,76,117,128,209,232,256,287
+tests/unit/services/test_processing_service.py
+  h_9db9d35f50cf33 19,21-22,27-28,38,50,55,66,73
+tests/integration/test_oud_to_oid_migration.py
+  h_9db9d35f50cf33 40,66
+tests/unit/services/test_parser_service.py
+  h_9db9d35f50cf33 22-23,25,37,39,44,56,58,67-68,72,83-84
+tests/unit/services/test_transformers_service.py
+  h_9db9d35f50cf33 20-21,23-24,34
+tests/unit/services/test_writer_service.py
+  h_9db9d35f50cf33 22
+tests/unit/utilities/test_utilities_comprehensive.py
+  h_9db9d35f50cf33 23,62
+tests/unit/services/test_statistics_service.py
+  h_9db9d35f50cf33 16,19,38,41,49,52-53,57,68
+tests/models.py
+  h_9db9d35f50cf33 20,22,25,40,43,45,47,51,67,70,72,89,92,94,116,119,121,132,135,137,142,145,148,150
+tests/typings.py
+  h_9db9d35f50cf33 17-18
+tests/unit/services/test_migration_pipeline.py
+  h_9db9d35f50cf33 34-35,40-41,54-55,60-65,92-93,105-106,120-121,138-139,166,171-172,188-189,193,211,217-218,240-241,257-258,274-275,284-285,294,305,309-310,324-325,329-330,346-347,351-352,365,370-371,390,402-403,415-416
+tests/unit/test_version.py
+  h_9db9d35f50cf33 35
+tests/unit/servers/test_novell_quirks.py
+  h_9db9d35f50cf33 45,63,79,100,118,135,147,168
+tests/unit/test_constants_data_driven.py
+  h_9db9d35f50cf33 17-22,32-37,42-46,57,63-65,78-79,84-85
+tests/fixtures/README.md
+  h_9db9d35f50cf33 66
+tests/conftest.py
+  h_9db9d35f50cf33 48,54,57,68,92-93,100-102,109-111,118,124-126,159,165,171,177-179,212-214,221,227-229,236-238,271,290,296,302,308,320,389-390,393-396,404,411-412,444-445,483,496-497
+tests/unit/servers/test_relaxed_quirks.py
+  h_9db9d35f50cf33 49-50,65-66,83-84,143-144
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "5002e17c7dd027fcded4fd3eb6e34494076045e3",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
