@@ -91,8 +91,14 @@ if _t.TYPE_CHECKING:
         TestsTestFlextLdifMigrationPipeline,
     )
     from tests.unit.services.test_parser_service import TestsFlextLdifParserService
+    from tests.unit.services.test_processing_service import (
+        TestsFlextLdifProcessingService,
+    )
     from tests.unit.services.test_quirks_standardization import (
         TestsFlextLdifQuirksStandardization,
+    )
+    from tests.unit.services.test_statistics_service import (
+        TestsFlextLdifStatisticsService,
     )
     from tests.unit.services.test_writer_service import TestsFlextLdifWriterService
     from tests.unit.test_acl_registry import TestsFlextLdifAclRegistry
@@ -203,8 +209,14 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsTestFlextLdifMigrationPipeline",
             ),
             ".unit.services.test_parser_service": ("TestsFlextLdifParserService",),
+            ".unit.services.test_processing_service": (
+                "TestsFlextLdifProcessingService",
+            ),
             ".unit.services.test_quirks_standardization": (
                 "TestsFlextLdifQuirksStandardization",
+            ),
+            ".unit.services.test_statistics_service": (
+                "TestsFlextLdifStatisticsService",
             ),
             ".unit.services.test_writer_service": ("TestsFlextLdifWriterService",),
             ".unit.test_acl_registry": ("TestsFlextLdifAclRegistry",),
@@ -296,6 +308,7 @@ __all__: list[str] = [
     "TestsFlextLdifParserUtilities",
     "TestsFlextLdifPipelineIntegration",
     "TestsFlextLdifProcessingPipeline",
+    "TestsFlextLdifProcessingService",
     "TestsFlextLdifProtocols",
     "TestsFlextLdifQuirksStandardization",
     "TestsFlextLdifRealLdapConfig",
@@ -306,6 +319,7 @@ __all__: list[str] = [
     "TestsFlextLdifRfcDockerRealIntegration",
     "TestsFlextLdifSchemaTransformer",
     "TestsFlextLdifSimpleLdap",
+    "TestsFlextLdifStatisticsService",
     "TestsFlextLdifSystematicFixtureCoverage",
     "TestsFlextLdifTypes",
     "TestsFlextLdifUtilities",
