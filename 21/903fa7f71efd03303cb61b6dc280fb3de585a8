@@ -1,0 +1,64 @@
+docs/guides/integration.md
+  h_9db9d35f50cf33 424
+docs/adr/adr-006-simplification-refactoring.md
+  h_9db9d35f50cf33 305
+src/flext_ldif/services/validation.py
+  h_9db9d35f50cf33 10-11
+docs/guides/sorting.md
+  h_9db9d35f50cf33 82
+src/flext_ldif/_utilities/dn.py
+  h_9db9d35f50cf33 17,108-109,112-115,128,283,299,425,431,579,581,633,705,711,716,718,727,730,739,741,760,807
+src/flext_ldif/_utilities/writer.py
+  h_9db9d35f50cf33 5,14,29,42,52,63,70
+docs/guides/filters.md
+  h_9db9d35f50cf33 87
+tests/unit/services/test_filters_service.py
+  h_9db9d35f50cf33 1,81
+src/flext_ldif/servers/_oud/entry.py
+  h_9db9d35f50cf33 1178,1184
+src/flext_ldif/_models/base.py
+  h_9db9d35f50cf33 8,75
+examples/04_server_migration.py
+  h_9db9d35f50cf33 124
+src/flext_ldif/_protocols/base.py
+  h_9db9d35f50cf33 18,26-77,371-372,374-375
+src/flext_ldif/services/analysis.py
+  h_9db9d35f50cf33 11
+tests/unit/services/test_writer_service.py
+  h_9db9d35f50cf33 43,61,72,90,107,123,131
+tests/constants.py
+  h_9db9d35f50cf33 15,350,369,489,516,564,1240
+src/flext_ldif/_models/events.py
+  h_9db9d35f50cf33 7,26,51,90
+src/flext_ldif/services/writer.py
+  h_9db9d35f50cf33 21
+docs/guides/troubleshooting.md
+  h_9db9d35f50cf33 766
+docs/development.md
+  h_9db9d35f50cf33 90,139
+src/flext_ldif/protocols.py
+  h_9db9d35f50cf33 18
+src/flext_ldif/_utilities/dispatch.py
+  h_9db9d35f50cf33 47,63
+src/flext_ldif/_utilities/metadata.py
+  h_9db9d35f50cf33 161,591
+docs/api-reference.md
+  h_9db9d35f50cf33 149,172,196,221,245,267,292,315,376,391,400,502,595,823,849,1076,1086,1096
+docs/guides/flext_ldif_parse_acl_usages.md
+  h_9db9d35f50cf33 151-152
+src/flext_ldif/_typings/domain.py
+  h_9db9d35f50cf33 5
+src/flext_ldif/services/statistics.py
+  h_9db9d35f50cf33 11,21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "21903fa7f71efd03303cb61b6dc280fb3de585a8",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
