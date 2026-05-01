@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import (
     MutableMapping,
-    MutableSequence,
 )
 from typing import Annotated
 
@@ -15,7 +14,7 @@ class FlextLdifEntries(s):
     """Entry operations with strict contracts."""
 
     entries: Annotated[
-        MutableSequence[m.Ldif.Entry],
+        t.MutableSequenceOf[m.Ldif.Entry],
         u.Field(
             default_factory=list,
             exclude=True,
@@ -31,7 +30,7 @@ class FlextLdifEntries(s):
         ),
     ]
     attributes_to_remove: Annotated[
-        MutableSequence[str],
+        t.MutableSequenceOf[str],
         u.Field(
             default_factory=list,
             exclude=True,
@@ -72,7 +71,7 @@ class FlextLdifEntries(s):
         return r[str].fail("Invalid DN value type")
 
     @staticmethod
-    def _normalize_list_value(value: MutableSequence[str]) -> r[str]:
+    def _normalize_list_value(value: t.MutableSequenceOf[str]) -> r[str]:
         if not value:
             return r[str].fail("Cannot normalize empty list")
         return FlextLdifEntries._normalize_string_value(value[0])
@@ -88,7 +87,7 @@ class FlextLdifEntries(s):
     def create_entry(
         dn: str,
         attributes: t.MutableAttributeMapping,
-        objectclasses: MutableSequence[str] | None = None,
+        objectclasses: t.MutableSequenceOf[str] | None = None,
     ) -> r[m.Ldif.Entry]:
         """Create a validated entry from DN and attributes."""
         if not u.Ldif.validate_dn(dn):
@@ -101,21 +100,23 @@ class FlextLdifEntries(s):
     @staticmethod
     def normalize_attribute_values(
         attribute: str
-        | MutableSequence[str]
+        | t.MutableSequenceOf[str]
         | tuple[str, ...]
         | set[str]
         | frozenset[str],
-    ) -> r[MutableSequence[str]]:
+    ) -> r[t.MutableSequenceOf[str]]:
         """Normalize attribute input into a list of strings."""
         match attribute:
             case str() as value:
-                return r[MutableSequence[str]].ok([value])
+                return r[t.MutableSequenceOf[str]].ok([value])
             case list() as values:
-                return r[MutableSequence[str]].ok(values)
+                return r[t.MutableSequenceOf[str]].ok(values)
             case tuple() | set() | frozenset() as values:
-                return r[MutableSequence[str]].ok(list(values))
+                return r[t.MutableSequenceOf[str]].ok(list(values))
             case _:
-                return r[MutableSequence[str]].fail("Unsupported attribute input type")
+                return r[t.MutableSequenceOf[str]].fail(
+                    "Unsupported attribute input type"
+                )
 
     @staticmethod
     def resolve_entry_attributes(
@@ -141,11 +142,11 @@ class FlextLdifEntries(s):
         return FlextLdifEntries._extract_dn_from_object(entry)
 
     @staticmethod
-    def resolve_entry_objectclasses(entry: m.Ldif.Entry) -> r[MutableSequence[str]]:
+    def resolve_entry_objectclasses(entry: m.Ldif.Entry) -> r[t.MutableSequenceOf[str]]:
         """Get objectClass values from entry attributes."""
         attributes_result = FlextLdifEntries.resolve_entry_attributes(entry)
         if attributes_result.failure:
-            return r[MutableSequence[str]].fail(
+            return r[t.MutableSequenceOf[str]].fail(
                 f"Failed to get entry attributes: {attributes_result.error}",
             )
         attributes: t.MutableStrSequenceMapping = {
@@ -154,13 +155,15 @@ class FlextLdifEntries(s):
         }
         for attr_name, attr_values in attributes.items():
             if attr_name.lower() == "objectclass":
-                return r[MutableSequence[str]].ok(list(attr_values))
-        return r[MutableSequence[str]].fail("Entry is missing objectClass attribute")
+                return r[t.MutableSequenceOf[str]].ok(list(attr_values))
+        return r[t.MutableSequenceOf[str]].fail(
+            "Entry is missing objectClass attribute"
+        )
 
     @staticmethod
     def remove_attributes(
         entry: m.Ldif.Entry,
-        attributes_to_remove: MutableSequence[str],
+        attributes_to_remove: t.MutableSequenceOf[str],
     ) -> r[m.Ldif.Entry]:
         """Remove selected attributes from a single entry."""
         if entry.attributes is None:
@@ -178,22 +181,22 @@ class FlextLdifEntries(s):
             metadata=entry.metadata,
         )
 
-    def run_configured_operation(self) -> r[MutableSequence[m.Ldif.Entry]]:
+    def run_configured_operation(self) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Run the configured entry operation against the bound entries."""
         if not self.operation:
-            return r[MutableSequence[m.Ldif.Entry]].fail("No operation specified")
+            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail("No operation specified")
         if self.operation == "remove_attributes":
             if not self.attributes_to_remove:
-                return r[MutableSequence[m.Ldif.Entry]].fail(
+                return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
                     "No attributes_to_remove specified for remove_attributes operation",
                 )
-            results: MutableSequence[m.Ldif.Entry] = []
+            results: t.MutableSequenceOf[m.Ldif.Entry] = []
             for entry in self.entries:
                 result = self.remove_attributes(entry, self.attributes_to_remove)
                 if result.success:
                     results.append(result.value)
-            return r[MutableSequence[m.Ldif.Entry]].ok(results)
-        return r[MutableSequence[m.Ldif.Entry]].fail(
+            return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(results)
+        return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
             f"Unknown operation: {self.operation}",
         )
 

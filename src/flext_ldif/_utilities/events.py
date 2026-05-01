@@ -2,10 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-)
-
 from flext_ldif import c, m, p, t
 
 
@@ -79,7 +75,7 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def _to_error_details_list(
         error_details: list[t.JsonValue] | tuple[t.JsonValue, ...] | None,
-    ) -> MutableSequence[str]:
+    ) -> t.MutableSequenceOf[str]:
         if error_details is None:
             return []
         return [str(detail) for detail in error_details]

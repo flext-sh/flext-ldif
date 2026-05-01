@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
-
 import pytest
 from flext_tests import tm
 
@@ -206,7 +204,7 @@ class TestsFlextLdifEntriesService:
         )
         result = entries_svc.run_configured_operation()
         if should_succeed:
-            cleaned: MutableSequence[m.Ldif.Entry] = u.Tests.assert_success(result)
+            cleaned: t.MutableSequenceOf[m.Ldif.Entry] = u.Tests.assert_success(result)
             tm.that(isinstance(cleaned, list), eq=True)
         else:
             tm.fail(result)

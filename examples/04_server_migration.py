@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping, MutableSequence, Sequence
+from collections.abc import MutableMapping, MutableSequence
 from pathlib import Path
 
 from flext_ldif import FlextLdif, ldif, m, r, t, u
@@ -121,7 +121,7 @@ class ExampleServerMigration:
         """Batch comparison of parsing across multiple LDAP servers."""
         api = ldif()
         test_ldif = 'dn: cn=Server Comparison,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Server Comparison\nsn: Test\nmail: comparison@example.com\n# OID-specific attributes\norclguid: abc123def456\norclaci: access to attr=mail by * read\n# OUD-specific attributes\naci: (targetattr="mail")(version 3.0; acl "mail access"; allow (read,search) userdn="ldap:///anyone";)\n# OpenLDAP-specific attributes\nentryUUID: 12345678-1234-1234-1234-123456789012\nentryCSN: 20240101000000.000000Z#000000#000#000000\n'
-        servers: Sequence[str] = ("rfc", "oid", "oud", "openldap")
+        servers: t.SequenceOf[str] = ("rfc", "oid", "oud", "openldap")
         comparison_results: MutableMapping[str, t.JsonMapping] = {}
         for server in servers:
             server_type = server

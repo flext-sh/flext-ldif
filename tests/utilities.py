@@ -5,9 +5,7 @@ from __future__ import annotations
 import os
 import uuid
 from collections.abc import (
-    Mapping,
     MutableMapping,
-    Sequence,
 )
 from pathlib import Path
 from typing import ClassVar
@@ -88,7 +86,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         @staticmethod
         def create_real_entry(
             dn: str | None = None,
-            attributes: Mapping[str, t.StrSequence] | None = None,
+            attributes: t.MappingKV[str, t.StrSequence] | None = None,
             server_type: str = "generic",
         ) -> m.Ldif.Entry:
             """Create a real Entry model with valid data."""
@@ -154,7 +152,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             return "\n".join(lines)
 
         @staticmethod
-        def parametrize_real_data() -> Sequence[m.Tests.LdifTestData]:
+        def parametrize_real_data() -> t.SequenceOf[m.Tests.LdifTestData]:
             """Generate parametrized test data for comprehensive coverage."""
             server_types = ("generic", *c.Tests.PARAMETRIZED_REAL_SERVERS)
             return [

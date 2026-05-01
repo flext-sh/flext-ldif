@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-)
 from typing import Annotated
 
-from flext_cli import m, u
+from flext_cli import m, t, u
 
 
 class FlextLdifModelsEvents:
@@ -26,7 +23,7 @@ class FlextLdifModelsEvents:
             bool | None, u.Field(description="Whether the DN passed validation")
         ] = None
         parse_components: Annotated[
-            MutableSequence[tuple[str, str]] | None,
+            t.MutableSequenceOf[tuple[str, str]] | None,
             u.Field(
                 description="Parsed RDN components as (attribute, value) pairs",
             ),
@@ -51,7 +48,7 @@ class FlextLdifModelsEvents:
             float, u.Field(description="Conversion duration in milliseconds")
         ] = 0.0
         error_details: Annotated[
-            MutableSequence[str] | None,
+            t.MutableSequenceOf[str] | None,
             u.Field(description="Error messages for failed items"),
         ] = None
 
@@ -90,7 +87,7 @@ class FlextLdifModelsEvents:
             float, u.Field(description="Conversion duration in milliseconds")
         ] = 0.0
         error_details: Annotated[
-            MutableSequence[str] | None,
+            t.MutableSequenceOf[str] | None,
             u.Field(description="Error messages for failed items"),
         ] = None
         conversion_success_rate: Annotated[

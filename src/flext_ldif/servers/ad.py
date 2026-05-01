@@ -5,9 +5,6 @@ from __future__ import annotations
 import base64
 import binascii
 import re
-from collections.abc import (
-    MutableSequence,
-)
 from typing import ClassVar, override
 
 from flext_ldif import (
@@ -370,7 +367,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 return True
             raw_object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
             object_classes = list(raw_object_classes)
-            normalized_object_classes: MutableSequence[str] = list(object_classes)
+            normalized_object_classes: t.MutableSequenceOf[str] = list(object_classes)
             return any(
                 oc.lower() in FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES
                 for oc in normalized_object_classes

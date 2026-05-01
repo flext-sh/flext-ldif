@@ -421,7 +421,7 @@ import psutil
 import os
 
 
-def process_multiple_ldif_files(file_paths: Sequence[Path]) -> p.Result[m.Dict]:
+def process_multiple_ldif_files(file_paths: t.SequenceOf[Path]) -> p.Result[m.Dict]:
     """Process multiple LDIF files with memory monitoring."""
     api = ldif()
     all_entries = []

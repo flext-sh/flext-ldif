@@ -6,7 +6,6 @@ from collections.abc import (
     ItemsView,
     KeysView,
     MutableMapping,
-    MutableSequence,
     ValuesView,
 )
 from typing import Annotated, ClassVar, Self, override
@@ -24,7 +23,7 @@ class FlextLdifModelsMetadata:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(extra="allow")
 
         transformations: Annotated[
-            MutableSequence[t.Ldif.Scalar] | None,
+            t.MutableSequenceOf[t.Ldif.Scalar] | None,
             u.Field(description="List of transformations applied to this metadata"),
         ] = None
         original_format: Annotated[
@@ -40,11 +39,11 @@ class FlextLdifModelsMetadata:
             bool | None, u.Field(description="Whether relaxed parsing mode was used")
         ] = None
         server_specific_violations: Annotated[
-            MutableSequence[t.JsonValue] | None,
+            t.MutableSequenceOf[t.JsonValue] | None,
             u.Field(description="Server-specific validation violations"),
         ] = None
         schema_transformations: Annotated[
-            MutableSequence[t.JsonValue] | None,
+            t.MutableSequenceOf[t.JsonValue] | None,
             u.Field(
                 description="Schema transformations applied during processing",
             ),

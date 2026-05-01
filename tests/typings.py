@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
 from typing import Literal
 
 from flext_ldap import t
@@ -18,7 +15,7 @@ class TestsFlextLdifTypes(FlextTestsTypes, t):
         """flext-ldif-specific test type definitions namespace."""
 
         type GenericFieldsDict = t.StrMapping
-        type DnRefData = Mapping[
+        type DnRefData = t.MappingKV[
             str,
             t.StrMapping | t.StrSequence | str,
         ]

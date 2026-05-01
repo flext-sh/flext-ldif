@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import (
     Mapping,
-    Sequence,
 )
 
 from flext_ldif import (
@@ -21,7 +20,7 @@ class FlextLdifAcl(s):
 
     @staticmethod
     def _build_acl_response(
-        acls: Sequence[t.Ldif.AclLike],
+        acls: t.SequenceOf[t.Ldif.AclLike],
         *,
         processed_entries: int = 1,
         failed_entries: int = 0,
@@ -43,7 +42,7 @@ class FlextLdifAcl(s):
 
     @staticmethod
     def evaluate_acl_context(
-        acls: Sequence[t.Ldif.AclLike],
+        acls: t.SequenceOf[t.Ldif.AclLike],
         required_permissions: m.Ldif.AclPermissions | t.MutableBoolMapping,
     ) -> r[m.Ldif.AclEvaluationResult]:
         """Evaluate if ACLs grant required permissions."""

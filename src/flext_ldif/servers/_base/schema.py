@@ -6,7 +6,6 @@ import struct
 from collections.abc import (
     Mapping,
     MutableMapping,
-    MutableSequence,
 )
 from typing import Annotated, ClassVar, Self, override
 
@@ -114,7 +113,7 @@ class FlextLdifServersBaseSchema(
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
         service_kwargs: MutableMapping[
             str,
-            t.Ldif.Scalar | m.ConfigMap | MutableSequence[t.Ldif.Scalar],
+            t.Ldif.Scalar | m.ConfigMap | t.MutableSequenceOf[t.Ldif.Scalar],
         ] = {}
         for key, value in filtered_kwargs.items():
             if isinstance(value, t.SCALAR_TYPES):
@@ -245,7 +244,7 @@ class FlextLdifServersBaseSchema(
     def validate_and_track_oid(
         metadata_extensions: MutableMapping[
             str,
-            MutableSequence[str] | str | bool | None,
+            t.MutableSequenceOf[str] | str | bool | None,
         ],
         oid_value: str | None,
         oid_name: str,
@@ -586,7 +585,7 @@ class FlextLdifServersBaseSchema(
 
     def _hook_validate_attributes(
         self,
-        attributes: MutableSequence[m.Ldif.SchemaAttribute],
+        attributes: t.MutableSequenceOf[m.Ldif.SchemaAttribute],
         available_attrs: set[str],
     ) -> r[bool]:
         """Hook for server-specific attribute validation during schema extraction."""

@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import (
-    MutableSequence,
-)
 from pathlib import Path
 from typing import Annotated, Final, override
 
@@ -136,8 +133,8 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.Ldif.MigrationPipelineRe
     def _build_pipeline_result(
         cls,
         *,
-        entries: MutableSequence[m.Ldif.Entry],
-        output_files: MutableSequence[str],
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        output_files: t.MutableSequenceOf[str],
         total_entries: int,
         processed_entries: int,
     ) -> m.Ldif.MigrationPipelineResult:
@@ -170,8 +167,8 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.Ldif.MigrationPipelineRe
         try:
             total_processed = 0
             total_migrated = 0
-            all_entries: MutableSequence[m.Ldif.Entry] = []
-            output_files: MutableSequence[str] = []
+            all_entries: t.MutableSequenceOf[m.Ldif.Entry] = []
+            output_files: t.MutableSequenceOf[str] = []
             for input_file in in_dir.glob("*.ldif"):
                 self.logger.debug("Processing input file", input_file=str(input_file))
                 result = self.migrate_file(input_file)
@@ -208,8 +205,8 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.Ldif.MigrationPipelineRe
 
     def migrate_entries(
         self,
-        entries: MutableSequence[m.Ldif.Entry],
-    ) -> r[MutableSequence[m.Ldif.Entry]]:
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
+    ) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Migrate entries from source to target server format."""
         source_server = self.source_server_type or self._DEFAULT_SERVER
         target_server = self.target_server_type or self._DEFAULT_SERVER
@@ -232,7 +229,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.Ldif.MigrationPipelineRe
                 target=str(target_server),
                 error=str(e),
             )
-            return r[MutableSequence[m.Ldif.Entry]].fail(f"Migration failed: {e}")
+            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(f"Migration failed: {e}")
 
     def migrate_file(
         self,
@@ -256,7 +253,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.Ldif.MigrationPipelineRe
                     f"Parse failed: {parse_result.error}",
                 )
             response = parse_result.value
-            entries_list: MutableSequence[m.Ldif.Entry] = list(response.entries)
+            entries_list: t.MutableSequenceOf[m.Ldif.Entry] = list(response.entries)
             migrate_result = self.migrate_entries(entries_list)
             if migrate_result.failure:
                 return r[m.Ldif.MigrationPipelineResult].fail(

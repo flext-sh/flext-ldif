@@ -9,13 +9,12 @@ from collections.abc import (
     Callable,
     Generator,
     MutableMapping,
-    MutableSequence,
 )
 from pathlib import Path
 from typing import TYPE_CHECKING, overload
 
 from flext_core import u
-from flext_ldif import c, m, r
+from flext_ldif import c, m, r, t
 
 if TYPE_CHECKING:
     from flext_ldif import FlextLdifModelsDomainEntry as mde
@@ -106,14 +105,14 @@ class FlextLdifUtilitiesDN:
         original_dn: str,
     ) -> tuple[
         str,
-        MutableSequence[str],
-        MutableMapping[str, bool | str | MutableSequence[str]],
+        t.MutableSequenceOf[str],
+        MutableMapping[str, bool | str | t.MutableSequenceOf[str]],
     ]:
         """Apply DN transformations and collect flags."""
-        transformations: MutableSequence[str] = []
-        empty_warnings: MutableSequence[str] = []
-        empty_errors: MutableSequence[str] = []
-        flags: MutableMapping[str, bool | str | MutableSequence[str]] = {
+        transformations: t.MutableSequenceOf[str] = []
+        empty_warnings: t.MutableSequenceOf[str] = []
+        empty_errors: t.MutableSequenceOf[str] = []
+        flags: MutableMapping[str, bool | str | t.MutableSequenceOf[str]] = {
             "had_tab_chars": False,
             "had_trailing_spaces": False,
             "had_leading_spaces": False,
@@ -126,7 +125,7 @@ class FlextLdifUtilitiesDN:
             "validation_errors": empty_errors,
         }
         result = original_dn
-        transform_rules: MutableSequence[tuple[str, str, str, str, str]] = [
+        transform_rules: t.MutableSequenceOf[tuple[str, str, str, str, str]] = [
             (
                 "[\\t\\r\\n\\x0b\\x0c]",
                 "[\\t\\r\\n\\x0b\\x0c]",
@@ -281,7 +280,7 @@ class FlextLdifUtilitiesDN:
         return bool(dn_str and "=" in dn_str)
 
     @staticmethod
-    def _validate_components(components: MutableSequence[str]) -> bool:
+    def _validate_components(components: t.MutableSequenceOf[str]) -> bool:
         """Validate each DN component has attr=value format (helper method)."""
 
         def is_valid_component(comp: str) -> bool:
@@ -297,7 +296,7 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def _validate_dn_structure(dn_str: str) -> bool:
         """Validate DN structure (commas, escape sequences, components)."""
-        checks: MutableSequence[Callable[[], bool]] = [
+        checks: t.MutableSequenceOf[Callable[[], bool]] = [
             lambda: FlextLdifUtilitiesDN._validate_escape_sequences(dn_str),
             lambda: not FlextLdifUtilitiesDN._has_double_unescaped_commas(dn_str),
             lambda: not dn_str.startswith(","),
@@ -423,13 +422,13 @@ class FlextLdifUtilitiesDN:
             validation_status_raw if isinstance(validation_status_raw, str) else ""
         )
         validation_warnings_raw = flags.get("validation_warnings", [])
-        validation_warnings: MutableSequence[str] = (
+        validation_warnings: t.MutableSequenceOf[str] = (
             list(validation_warnings_raw)
             if isinstance(validation_warnings_raw, list)
             else []
         )
         validation_errors_raw = flags.get("validation_errors", [])
-        validation_errors: MutableSequence[str] = (
+        validation_errors: t.MutableSequenceOf[str] = (
             list(validation_errors_raw)
             if isinstance(validation_errors_raw, list)
             else []
@@ -577,9 +576,9 @@ class FlextLdifUtilitiesDN:
         value: str,
         *,
         strict: bool = True,
-    ) -> tuple[bool, MutableSequence[str]]:
+    ) -> tuple[bool, t.MutableSequenceOf[str]]:
         """Validate DN attribute value per RFC 4514 string production."""
-        errors: MutableSequence[str] = []
+        errors: t.MutableSequenceOf[str] = []
         if not value:
             return (True, errors)
         if len(value) == 1:
@@ -631,7 +630,7 @@ class FlextLdifUtilitiesDN:
                 result = r[str].fail(error_msg)
             else:
                 try:
-                    normalized: MutableSequence[str] = [
+                    normalized: t.MutableSequenceOf[str] = [
                         f"{attr.strip().lower()}={value.strip()}"
                         for component in FlextLdifUtilitiesDN.split(dn_str)
                         if "=" in component
@@ -703,20 +702,20 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def parse_dn(dn: str) -> r[MutableSequence[tuple[str, str]]]: ...
+    def parse_dn(dn: str) -> r[t.MutableSequenceOf[tuple[str, str]]]: ...
 
     @overload
     @staticmethod
     def parse_dn(
         dn: m.Ldif.DN,
-    ) -> r[MutableSequence[tuple[str, str]]]: ...
+    ) -> r[t.MutableSequenceOf[tuple[str, str]]]: ...
 
     @staticmethod
     def parse_dn(
         dn: str | m.Ldif.DN | None,
-    ) -> r[MutableSequence[tuple[str, str]]]:
+    ) -> r[t.MutableSequenceOf[tuple[str, str]]]:
         """Parse DN into RFC 4514 components (attr, value pairs)."""
-        result = r[MutableSequence[tuple[str, str]]].fail("DN cannot be None")
+        result = r[t.MutableSequenceOf[tuple[str, str]]].fail("DN cannot be None")
         if dn is not None:
             dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
             if not dn_str or "=" not in dn_str:
@@ -725,10 +724,10 @@ class FlextLdifUtilitiesDN:
                     if not dn_str
                     else f"Invalid DN format: missing '=' separator in '{dn_str}'"
                 )
-                result = r[MutableSequence[tuple[str, str]]].fail(error_msg)
+                result = r[t.MutableSequenceOf[tuple[str, str]]].fail(error_msg)
             else:
                 try:
-                    parsed_pairs: MutableSequence[tuple[str, str]] = []
+                    parsed_pairs: t.MutableSequenceOf[tuple[str, str]] = []
                     failure_message: str | None = None
                     for component in FlextLdifUtilitiesDN.split(dn_str):
                         parsed_component = FlextLdifUtilitiesDN.parse_rdn(component)
@@ -737,9 +736,11 @@ class FlextLdifUtilitiesDN:
                             break
                         parsed_pairs.extend(parsed_component.value)
                     if failure_message is None and parsed_pairs:
-                        result = r[MutableSequence[tuple[str, str]]].ok(parsed_pairs)
+                        result = r[t.MutableSequenceOf[tuple[str, str]]].ok(
+                            parsed_pairs
+                        )
                     else:
-                        result = r[MutableSequence[tuple[str, str]]].fail(
+                        result = r[t.MutableSequenceOf[tuple[str, str]]].fail(
                             failure_message
                             or f"Failed to parse DN components from '{dn_str}'",
                         )
@@ -750,20 +751,20 @@ class FlextLdifUtilitiesDN:
                     UnicodeDecodeError,
                     struct.error,
                 ) as e:
-                    result = r[MutableSequence[tuple[str, str]]].fail(
+                    result = r[t.MutableSequenceOf[tuple[str, str]]].fail(
                         f"DN parsing error: {e}",
                     )
         return result
 
     @staticmethod
-    def parse_rdn(rdn: str) -> r[MutableSequence[tuple[str, str]]]:
+    def parse_rdn(rdn: str) -> r[t.MutableSequenceOf[tuple[str, str]]]:
         """Parse a single RDN component per RFC 4514."""
-        result = r[MutableSequence[tuple[str, str]]].fail(
+        result = r[t.MutableSequenceOf[tuple[str, str]]].fail(
             "RDN must be a non-empty string",
         )
         if rdn:
             try:
-                pairs: MutableSequence[tuple[str, str]] = []
+                pairs: t.MutableSequenceOf[tuple[str, str]] = []
                 current_attr = ""
                 current_val = ""
                 in_value = False
@@ -803,9 +804,9 @@ class FlextLdifUtilitiesDN:
                     error_message = f"Invalid RDN format: empty value in '{rdn}'"
                 if error_message is None:
                     pairs.append((current_attr, current_val))
-                    result = r[MutableSequence[tuple[str, str]]].ok(pairs)
+                    result = r[t.MutableSequenceOf[tuple[str, str]]].ok(pairs)
                 else:
-                    result = r[MutableSequence[tuple[str, str]]].fail(error_message)
+                    result = r[t.MutableSequenceOf[tuple[str, str]]].fail(error_message)
             except (
                 ValueError,
                 KeyError,
@@ -813,21 +814,21 @@ class FlextLdifUtilitiesDN:
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                result = r[MutableSequence[tuple[str, str]]].fail(
+                result = r[t.MutableSequenceOf[tuple[str, str]]].fail(
                     f"RDN parsing error: {e}",
                 )
         return result
 
     @overload
     @staticmethod
-    def split(dn: str) -> MutableSequence[str]: ...
+    def split(dn: str) -> t.MutableSequenceOf[str]: ...
 
     @overload
     @staticmethod
-    def split(dn: m.Ldif.DN) -> MutableSequence[str]: ...
+    def split(dn: m.Ldif.DN) -> t.MutableSequenceOf[str]: ...
 
     @staticmethod
-    def split(dn: str | m.Ldif.DN) -> MutableSequence[str]:
+    def split(dn: str | m.Ldif.DN) -> t.MutableSequenceOf[str]:
         r"""Split DN string into individual RDN components per RFC 4514.
 
         RFC 4514 Section 2 ABNF:
@@ -924,7 +925,7 @@ class FlextLdifUtilitiesDN:
         """
         if not value or "\\" not in value:
             return value
-        result: MutableSequence[str] = []
+        result: t.MutableSequenceOf[str] = []
         i = 0
         while i < len(value):
             if value[i] == "\\" and i + 1 < len(value):
@@ -971,10 +972,10 @@ class FlextLdifUtilitiesDN:
         entry_attrs = entry.attributes
         if entry_attrs is not None:
             attr_dict = entry_attrs.attributes
-            changed_attrs: MutableMapping[str, MutableSequence[str]] = {}
+            changed_attrs: MutableMapping[str, t.MutableSequenceOf[str]] = {}
             for attr_name, values in attr_dict.items():
                 if attr_name.lower() in {a.lower() for a in attrs_to_transform}:
-                    new_values: MutableSequence[str] = []
+                    new_values: t.MutableSequenceOf[str] = []
                     attr_changed = False
                     for val in values:
                         new_val = FlextLdifUtilitiesDN.transform_dn_attribute(
@@ -1000,7 +1001,7 @@ class FlextLdifUtilitiesDN:
         ldif_dir: str | object,
         source_basedn: str,
         target_basedn: str,
-    ) -> MutableMapping[str, int | MutableSequence[str]]:
+    ) -> MutableMapping[str, int | t.MutableSequenceOf[str]]:
         """Transform base DN in all LDIF files in a directory.
 
         Reads each .ldif file, replaces source_basedn with target_basedn
@@ -1009,7 +1010,7 @@ class FlextLdifUtilitiesDN:
         Returns dict with total_count (files transformed) and transformed_files list.
         """
         directory = Path(str(ldif_dir))
-        transformed_files: MutableSequence[str] = []
+        transformed_files: t.MutableSequenceOf[str] = []
         for ldif_file in sorted(directory.glob("*.ldif")):
             content = ldif_file.read_text(encoding=c.Ldif.DEFAULT_ENCODING)
             new_content = FlextLdifUtilitiesDN._transform_ldif_content(

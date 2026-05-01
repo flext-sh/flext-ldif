@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from collections.abc import (
     MutableMapping,
-    MutableSequence,
 )
 from typing import ClassVar, override
 
@@ -213,7 +212,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def _parse_entry(
             self,
             entry_dn: str,
-            entry_attrs: MutableMapping[str, MutableSequence[str | bytes]],
+            entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
         ) -> r[m.Ldif.Entry]:
             """Parse raw LDIF entry data into Entry model."""
             str_attrs: t.MutableStrSequenceMapping = {

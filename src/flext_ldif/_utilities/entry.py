@@ -8,7 +8,6 @@ from collections.abc import (
     Callable,
     Mapping,
     MutableMapping,
-    MutableSequence,
     Sequence,
 )
 
@@ -31,7 +30,7 @@ class FlextLdifUtilitiesEntry:
     def get_attribute_values(
         entry: p.Ldif.Entry,
         attribute_name: str,
-    ) -> MutableSequence[str]:
+    ) -> t.MutableSequenceOf[str]:
         """Get all values for a specific attribute (case-insensitive).
 
         Args:
@@ -54,7 +53,7 @@ class FlextLdifUtilitiesEntry:
         return []
 
     @staticmethod
-    def get_dn_components(entry: p.Ldif.Entry) -> MutableSequence[str]:
+    def get_dn_components(entry: p.Ldif.Entry) -> t.MutableSequenceOf[str]:
         """Get DN components (RDN parts) from the entry's DN.
 
         Returns:
@@ -66,7 +65,7 @@ class FlextLdifUtilitiesEntry:
         return [comp.strip() for comp in entry.dn.value.split(",") if comp.strip()]
 
     @staticmethod
-    def get_objectclass_names(entry: p.Ldif.Entry) -> MutableSequence[str]:
+    def get_objectclass_names(entry: p.Ldif.Entry) -> t.MutableSequenceOf[str]:
         """Get list of objectClass attribute values from entry."""
         return FlextLdifUtilitiesEntry.get_attribute_values(
             entry,
@@ -115,7 +114,7 @@ class FlextLdifUtilitiesEntry:
         remapped: t.MutableStrSequenceMapping = {}
         for attr_name, values in attributes.items():
             normalized_name = attr_name.lower()
-            normalized_values: MutableSequence[str] = list(values)
+            normalized_values: t.MutableSequenceOf[str] = list(values)
             converted_values = (
                 [boolean_value_mapping.get(value, value) for value in normalized_values]
                 if normalized_name in c.Ldif.OID_BOOLEAN_ATTRIBUTES
@@ -206,7 +205,7 @@ class FlextLdifUtilitiesEntry:
     # --- Validation helpers (called by u.model_validators) ---
 
     @staticmethod
-    def validate_dn_format(dn_value: str) -> MutableSequence[str]:
+    def validate_dn_format(dn_value: str) -> t.MutableSequenceOf[str]:
         """Validate DN format per RFC 4514 section 2.3, 2.4.
 
         Args:
@@ -216,7 +215,7 @@ class FlextLdifUtilitiesEntry:
             List of validation violation messages (empty if valid)
 
         """
-        violations: MutableSequence[str] = []
+        violations: t.MutableSequenceOf[str] = []
         if not dn_value or not dn_value.strip():
             violations.append(
                 "RFC 2849 § 2: DN is required (empty or whitespace DN)",
@@ -234,12 +233,12 @@ class FlextLdifUtilitiesEntry:
         return violations
 
     @staticmethod
-    def validate_attributes_required(entry: p.Ldif.Entry) -> MutableSequence[str]:
+    def validate_attributes_required(entry: p.Ldif.Entry) -> t.MutableSequenceOf[str]:
         """Validate that entry has at least one attribute per RFC 2849 section 2.
 
         Note: entry.attributes may be None when using model_construct (bypasses validation).
         """
-        violations: MutableSequence[str] = []
+        violations: t.MutableSequenceOf[str] = []
         if entry.changetype in {"delete", "moddn", "modrdn"}:
             return violations
         change_operations = getattr(entry, "change_operations", [])
@@ -257,12 +256,14 @@ class FlextLdifUtilitiesEntry:
         return violations
 
     @staticmethod
-    def validate_attribute_descriptions(entry: p.Ldif.Entry) -> MutableSequence[str]:
+    def validate_attribute_descriptions(
+        entry: p.Ldif.Entry,
+    ) -> t.MutableSequenceOf[str]:
         """Validate attribute descriptions per RFC 4512 section 2.5.
 
         Note: entry.attributes may be None when using model_construct (bypasses validation).
         """
-        violations: MutableSequence[str] = []
+        violations: t.MutableSequenceOf[str] = []
         if entry.attributes is None or not entry.attributes:
             return violations
         for attr_desc in entry.attributes.attributes:
@@ -287,12 +288,12 @@ class FlextLdifUtilitiesEntry:
         return violations
 
     @staticmethod
-    def validate_attribute_syntax(entry: p.Ldif.Entry) -> MutableSequence[str]:
+    def validate_attribute_syntax(entry: p.Ldif.Entry) -> t.MutableSequenceOf[str]:
         """Validate attribute name/option syntax per RFC 4512 section 2.5.1-2.5.2.
 
         Note: entry.attributes may be None when using model_construct (bypasses validation).
         """
-        violations: MutableSequence[str] = []
+        violations: t.MutableSequenceOf[str] = []
         if entry.attributes is None or not entry.attributes:
             return violations
         for attr_desc in entry.attributes.attributes:
@@ -311,7 +312,7 @@ class FlextLdifUtilitiesEntry:
         return violations
 
     @staticmethod
-    def validate_binary_options(entry: p.Ldif.Entry) -> MutableSequence[str]:
+    def validate_binary_options(entry: p.Ldif.Entry) -> t.MutableSequenceOf[str]:
         """Validate binary attribute options per RFC 2849 section 5.2.
 
         Uses compiled regex for O(1)-per-match detection instead of
@@ -319,7 +320,7 @@ class FlextLdifUtilitiesEntry:
 
         Note: entry.attributes may be None when using model_construct (bypasses validation).
         """
-        violations: MutableSequence[str] = []
+        violations: t.MutableSequenceOf[str] = []
         if entry.attributes is None or not entry.attributes:
             return violations
         for attr_name, attr_values in entry.attributes.items():
@@ -334,9 +335,9 @@ class FlextLdifUtilitiesEntry:
         return violations
 
     @staticmethod
-    def validate_changetype(entry: p.Ldif.Entry) -> MutableSequence[str]:
+    def validate_changetype(entry: p.Ldif.Entry) -> t.MutableSequenceOf[str]:
         """Validate changetype field per RFC 2849 section 5.7."""
-        violations: MutableSequence[str] = []
+        violations: t.MutableSequenceOf[str] = []
         if not entry.changetype:
             return violations
         valid_changetypes = {"add", "delete", "modify", "moddn", "modrdn"}
@@ -350,12 +351,12 @@ class FlextLdifUtilitiesEntry:
     def validate_naming_attribute(
         entry: p.Ldif.Entry,
         dn_value: str,
-    ) -> MutableSequence[str]:
+    ) -> t.MutableSequenceOf[str]:
         """Validate naming attribute presence per RFC 4512 section 2.3.
 
         Note: entry.attributes may be None when using model_construct (bypasses validation).
         """
-        violations: MutableSequence[str] = []
+        violations: t.MutableSequenceOf[str] = []
         if entry.changetype:
             return violations
         if not dn_value or entry.attributes is None or (not entry.attributes):
@@ -382,12 +383,12 @@ class FlextLdifUtilitiesEntry:
     def validate_objectclass(
         entry: p.Ldif.Entry,
         dn_value: str,
-    ) -> MutableSequence[str]:
+    ) -> t.MutableSequenceOf[str]:
         """Validate objectClass presence per RFC 4512 section 2.4.1.
 
         Note: entry.attributes may be None when using model_construct (bypasses validation).
         """
-        violations: MutableSequence[str] = []
+        violations: t.MutableSequenceOf[str] = []
         if entry.changetype:
             return violations
         is_schema_entry = dn_value.lower().startswith(
@@ -411,9 +412,9 @@ class FlextLdifUtilitiesEntry:
     def check_binary_option_rule(
         entry: p.Ldif.Entry,
         rules: FlextLdifModelsSettings.ServerValidationRules,
-    ) -> MutableSequence[str]:
+    ) -> t.MutableSequenceOf[str]:
         """Check binary attribute option requirement from server rules."""
-        violations: MutableSequence[str] = []
+        violations: t.MutableSequenceOf[str] = []
         if not rules.requires_binary_option or not entry.attributes:
             return violations
         for attr_name, attr_values in entry.attributes.items():
@@ -436,9 +437,9 @@ class FlextLdifUtilitiesEntry:
         entry: p.Ldif.Entry,
         rules: FlextLdifModelsSettings.ServerValidationRules,
         dn_value: str,
-    ) -> MutableSequence[str]:
+    ) -> t.MutableSequenceOf[str]:
         """Check naming attribute requirement from server rules."""
-        violations: MutableSequence[str] = []
+        violations: t.MutableSequenceOf[str] = []
         if not rules.requires_naming_attr or not dn_value or (not entry.attributes):
             return violations
         first_rdn = dn_value.split(",", maxsplit=1)[0].strip()
@@ -458,9 +459,9 @@ class FlextLdifUtilitiesEntry:
         entry: p.Ldif.Entry,
         rules: FlextLdifModelsSettings.ServerValidationRules,
         dn_value: str,
-    ) -> MutableSequence[str]:
+    ) -> t.MutableSequenceOf[str]:
         """Check objectClass requirement from server rules."""
-        violations: MutableSequence[str] = []
+        violations: t.MutableSequenceOf[str] = []
         if not rules.requires_objectclass:
             return violations
         has_objectclass = (
@@ -569,7 +570,9 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def analyze_differences(
         entry_attrs: t.Ldif.MetadataInputMapping,
-        converted_attrs: MutableMapping[str, MutableSequence[t.Ldif.AttributeValue]],
+        converted_attrs: MutableMapping[
+            str, t.MutableSequenceOf[t.Ldif.AttributeValue]
+        ],
         original_dn: str,
         cleaned_dn: str,
         normalize_attr_fn: Callable[[str], str] | None = None,
@@ -643,9 +646,9 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def convert_boolean_attributes(
-        attributes: Mapping[
+        attributes: t.MappingKV[
             str,
-            MutableSequence[str] | MutableSequence[bytes] | str | bytes,
+            t.MutableSequenceOf[str] | t.MutableSequenceOf[bytes] | str | bytes,
         ],
         boolean_attr_names: set[str],
         *,
@@ -660,7 +663,7 @@ class FlextLdifUtilitiesEntry:
         }
         for attr_name in attributes:
             attr_raw_values = attributes[attr_name]
-            str_values: MutableSequence[str] = []
+            str_values: t.MutableSequenceOf[str] = []
             if isinstance(attr_raw_values, str | bytes):
                 raw_items = [attr_raw_values]
             else:
@@ -720,7 +723,7 @@ class FlextLdifUtilitiesEntry:
             if settings is not None
             else FlextLdifModelsSettings.EntryCriteriaConfig.model_validate(kwargs)
         )
-        checks: MutableSequence[bool] = []
+        checks: t.MutableSequenceOf[bool] = []
         if resolved_config.is_schema is not None:
             checks.append(
                 FlextLdifUtilitiesEntry.is_schema_entry(entry)

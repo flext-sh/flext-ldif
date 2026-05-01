@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import (
-    Mapping,
     MutableMapping,
-    MutableSequence,
 )
 from pathlib import Path
 from typing import Self, override
@@ -83,8 +81,8 @@ class FlextLdif(
         *,
         categorization_rules: m.Ldif.CategoryRules | None = None,
         schema_whitelist_rules: m.Ldif.WhitelistRules | None = None,
-        forbidden_attributes: MutableSequence[str] | None = None,
-        forbidden_objectclasses: MutableSequence[str] | None = None,
+        forbidden_attributes: t.MutableSequenceOf[str] | None = None,
+        forbidden_objectclasses: t.MutableSequenceOf[str] | None = None,
         base_dn: str | None = None,
         server_type: str = c.Ldif.ServerTypes.RFC.value,
     ) -> FlextLdifCategorization:
@@ -117,7 +115,7 @@ class FlextLdif(
     def filter_schema_attribute_values(
         self,
         entry: m.Ldif.Entry,
-        allowed_oids: Mapping[str, frozenset[str]],
+        allowed_oids: t.MappingKV[str, frozenset[str]],
     ) -> m.Ldif.Entry:
         """Expose schema-attribute OID filtering through the facade DSL."""
         return FlextLdifFilters.filter_schema_attribute_values(
@@ -170,7 +168,7 @@ class FlextLdif(
         """Expose server constants lookup through the public facade."""
         return self._server.resolve_server_constants(server_type)
 
-    def list_registered_servers(self) -> MutableSequence[str]:
+    def list_registered_servers(self) -> t.MutableSequenceOf[str]:
         """Expose the normalized registered server list through the facade."""
         return self._server.list_registered_servers()
 
@@ -237,7 +235,7 @@ class FlextLdif(
     @staticmethod
     @override
     def validate_entries(
-        entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
         validation_service: FlextLdifValidation | None = None,
     ) -> r[m.Ldif.ValidationResult]:
         """Validate list of entries."""

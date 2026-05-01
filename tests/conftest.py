@@ -13,7 +13,6 @@ import time
 from collections.abc import (
     Callable,
     Generator,
-    Sequence,
 )
 from pathlib import Path
 
@@ -131,7 +130,7 @@ def oid_integration_fixture() -> str:
 def oid_schema_entries(
     api: FlextLdif,
     oid_schema_fixture: str,
-) -> Sequence[m.Ldif.Entry]:
+) -> t.SequenceOf[m.Ldif.Entry]:
     """Parse OID schema fixture into Entry models."""
     parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(oid_schema_fixture),
@@ -144,7 +143,7 @@ def oid_schema_entries(
 def oid_entries(
     api: FlextLdif,
     oid_entries_fixture: str,
-) -> Sequence[m.Ldif.Entry]:
+) -> t.SequenceOf[m.Ldif.Entry]:
     """Parse OID entries fixture into Entry models."""
     parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(oid_entries_fixture),
@@ -184,7 +183,7 @@ def oud_integration_fixture() -> str:
 def oud_schema_entries(
     api: FlextLdif,
     oud_schema_fixture: str,
-) -> Sequence[m.Ldif.Entry]:
+) -> t.SequenceOf[m.Ldif.Entry]:
     """Parse OUD schema fixture into Entry models."""
     parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(oud_schema_fixture),
@@ -197,7 +196,7 @@ def oud_schema_entries(
 def oud_entries(
     api: FlextLdif,
     oud_entries_fixture: str,
-) -> Sequence[m.Ldif.Entry]:
+) -> t.SequenceOf[m.Ldif.Entry]:
     """Parse OUD entries fixture into Entry models."""
     parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(oud_entries_fixture),
@@ -243,7 +242,7 @@ def openldap_integration_fixture() -> str:
 def openldap_schema_entries(
     api: FlextLdif,
     openldap_schema_fixture: str,
-) -> Sequence[m.Ldif.Entry]:
+) -> t.SequenceOf[m.Ldif.Entry]:
     """Parse OpenLDAP schema fixture into Entry models."""
     parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(openldap_schema_fixture),
@@ -256,7 +255,7 @@ def openldap_schema_entries(
 def openldap_entries(
     api: FlextLdif,
     openldap_entries_fixture: str,
-) -> Sequence[m.Ldif.Entry]:
+) -> t.SequenceOf[m.Ldif.Entry]:
     """Parse OpenLDAP entries fixture into Entry models."""
     parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(openldap_entries_fixture),
@@ -275,7 +274,7 @@ def rfc_schema_fixture() -> str:
 def rfc_schema_entries(
     api: FlextLdif,
     rfc_schema_fixture: str,
-) -> Sequence[m.Ldif.Entry]:
+) -> t.SequenceOf[m.Ldif.Entry]:
     """Parse RFC schema fixture into Entry models."""
     parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(rfc_schema_fixture),
@@ -529,7 +528,7 @@ def clean_test_ou(
         "(objectClass=*)",
         search_scope=c.Ldap.Ldap3SearchScope.SUBTREE.value,
     )
-    entries: Sequence[p.Ldap.Ldap3Entry] = list(ldap_connection.entries)
+    entries: t.SequenceOf[p.Ldap.Ldap3Entry] = list(ldap_connection.entries)
     if entries:
         dns_to_delete: t.StrSequence = [str(entry.entry_dn) for entry in entries]
         for dn in reversed(dns_to_delete):
@@ -545,7 +544,7 @@ def clean_test_ou(
         "(objectClass=*)",
         search_scope=c.Ldap.Ldap3SearchScope.SUBTREE.value,
     )
-    entries2: Sequence[p.Ldap.Ldap3Entry] = list(ldap_connection.entries)
+    entries2: t.SequenceOf[p.Ldap.Ldap3Entry] = list(ldap_connection.entries)
     if entries2:
         dns_to_delete2: t.StrSequence = [str(entry.entry_dn) for entry in entries2]
         for dn in reversed(dns_to_delete2):

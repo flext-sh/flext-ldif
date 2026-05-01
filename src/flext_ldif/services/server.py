@@ -5,7 +5,6 @@ from __future__ import annotations
 import inspect
 from collections.abc import (
     MutableMapping,
-    MutableSequence,
 )
 from typing import ClassVar
 
@@ -157,7 +156,7 @@ class FlextLdifServer:
             return None
         return quirk_result.value
 
-    def list_registered_servers(self) -> MutableSequence[str]:
+    def list_registered_servers(self) -> t.MutableSequenceOf[str]:
         """List all registered server types."""
         return sorted(
             self._registry.list_plugins(

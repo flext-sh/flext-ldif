@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from collections.abc import (
     MutableMapping,
-    MutableSequence,
 )
 from typing import Annotated, Self
 
@@ -37,17 +36,17 @@ class FlextLdifModelsDomainMetadata:
         """
 
         rfc_violations: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="RFC violations detected during validation",
             ),
         ]
         errors: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(description="Validation errors that occurred"),
         ]
         warnings: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(description="Non-fatal validation warnings"),
         ]
         context: Annotated[
@@ -55,7 +54,7 @@ class FlextLdifModelsDomainMetadata:
             u.Field(description="Validation context information"),
         ]
         server_specific_violations: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="Server-specific validation violations",
             ),
@@ -82,7 +81,7 @@ class FlextLdifModelsDomainMetadata:
             u.Field(description="Base DN for relative DN conversions"),
         ] = None
         hidden_attrs: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="Attributes to exclude from output",
             ),
@@ -150,7 +149,7 @@ class FlextLdifModelsDomainMetadata:
             u.Field(description="Spacing around schema fields"),
         ] = None
         field_order: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="Original order of schema fields",
             ),
@@ -160,7 +159,7 @@ class FlextLdifModelsDomainMetadata:
             u.Field(description="X-ORIGIN value from schema"),
         ] = None
         x_ordered: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="X-ORDERED field values",
             ),
@@ -214,13 +213,13 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = u.Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
         rfc_violations: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="RFC violations detected (e.g., 'RFC 2849 §2: DN required')",
             ),
         ] = u.Field(default_factory=list)
         rfc_warnings: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="Non-fatal RFC warnings (e.g., unusual but valid formatting)",
             ),
@@ -259,13 +258,13 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = None
         acls: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="Access Control Lists extracted from entry attributes during parsing",
             ),
         ] = u.Field(default_factory=list)
         objectclasses: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="ObjectClass definitions for schema validation (not RFC LDIF data)",
             ),
@@ -307,7 +306,7 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = None
         soft_delete_markers: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="Attributes soft-deleted during conversion (can be restored). Different from removed_attributes: these are intentionally hidden for target server but preserved for reverse conversion.",
             ),
@@ -319,7 +318,7 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = u.Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
         schema_quirks_applied: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="List of schema quirks applied during parsing: ['matching_rule_normalization', 'syntax_oid_conversion', 'schema_dn_quirk']",
             ),
@@ -343,7 +342,7 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = u.Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
         conversion_history: Annotated[
-            MutableSequence[t.MutableStrMapping],
+            t.MutableSequenceOf[t.MutableStrMapping],
             u.Field(
                 description="Complete conversion history for audit trail: [{'step': 'parse_oid_entry', 'timestamp': '2025-01-01T00:00:00Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'oid', 'operation': 'parse'}, {'step': 'normalize_to_rfc', 'timestamp': '2025-01-01T00:00:01Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'rfc', 'operation': 'normalize'}, ...]",
             ),

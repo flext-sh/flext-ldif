@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import (
     Callable,
     Mapping,
-    MutableSequence,
     Sequence,
 )
 from typing import ClassVar, TypeGuard, overload
@@ -44,10 +43,10 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def as_entries(
-        values: Sequence[t.Ldif.EntryLike] | t.ModelInput,
-    ) -> MutableSequence[m.Ldif.Entry]:
+        values: t.SequenceOf[t.Ldif.EntryLike] | t.ModelInput,
+    ) -> t.MutableSequenceOf[m.Ldif.Entry]:
         """Coerce an entry sequence into canonical LDIF entry models."""
-        validated: MutableSequence[m.Ldif.Entry] = (
+        validated: t.MutableSequenceOf[m.Ldif.Entry] = (
             FlextLdifUtilitiesDispatch._ENTRY_LIST_ADAPTER.validate_python(values)
         )
         return validated
@@ -60,10 +59,10 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def as_acls(
-        values: Sequence[t.Ldif.AclLike] | t.ModelInput,
-    ) -> MutableSequence[m.Ldif.Acl]:
+        values: t.SequenceOf[t.Ldif.AclLike] | t.ModelInput,
+    ) -> t.MutableSequenceOf[m.Ldif.Acl]:
         """Coerce an ACL sequence into canonical LDIF ACL models."""
-        validated: MutableSequence[m.Ldif.Acl] = (
+        validated: t.MutableSequenceOf[m.Ldif.Acl] = (
             FlextLdifUtilitiesDispatch._ACL_LIST_ADAPTER.validate_python(values)
         )
         return validated
@@ -74,7 +73,7 @@ class FlextLdifUtilitiesDispatch:
         definition: str | m.Ldif.DN | None,
         server_type: str | None = None,
         parse_parts_hook: None = None,
-    ) -> r[MutableSequence[tuple[str, str]]]: ...
+    ) -> r[t.MutableSequenceOf[tuple[str, str]]]: ...
 
     @staticmethod
     @overload
@@ -92,7 +91,7 @@ class FlextLdifUtilitiesDispatch:
         parse_parts_hook: Callable[[str], t.Ldif.MutableMetadataMapping]
         | Callable[[str], r[t.Ldif.MutableMetadataMapping]]
         | None = None,
-    ) -> r[MutableSequence[tuple[str, str]]] | r[t.Ldif.MutableMetadataMapping]:
+    ) -> r[t.MutableSequenceOf[tuple[str, str]]] | r[t.Ldif.MutableMetadataMapping]:
         if definition is None:
             return r[t.Ldif.MutableMetadataMapping].fail("DN cannot be None")
         if isinstance(definition, m.Ldif.DN):
@@ -162,14 +161,17 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def validate(
-        value_or_entries: MutableSequence[m.Ldif.Entry] | t.JsonValue | str | m.Ldif.DN,
+        value_or_entries: t.MutableSequenceOf[m.Ldif.Entry]
+        | t.JsonValue
+        | str
+        | m.Ldif.DN,
         validator_first: p.ValidatorSpec | None = None,
         *validators_rest: p.ValidatorSpec,
         strict: bool = True,
         collect_all: bool = True,
         max_errors: int = 0,
     ) -> (
-        r[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]
+        r[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]
         | r[t.JsonValue]
         | bool
     ):
@@ -183,7 +185,7 @@ class FlextLdifUtilitiesDispatch:
                 (str, m.Ldif.DN),
             ):
                 result: (
-                    r[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]
+                    r[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]
                     | r[t.JsonValue]
                     | bool
                 ) = FlextLdifUtilitiesDN.validate_dn(value_or_entries)
@@ -227,12 +229,12 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def _validate_entries(
-        entries: MutableSequence[m.Ldif.Entry],
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
         *,
         strict: bool,
         collect_all: bool,
         max_errors: int,
-    ) -> r[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]:
+    ) -> r[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]:
         """Internal: Validate LDIF entries."""
         pipeline = FlextLdifUtilitiesPipeline.ValidationPipeline(
             strict=strict,
@@ -243,8 +245,8 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def _is_entry_sequence(
-        obj: MutableSequence[m.Ldif.Entry] | t.JsonValue | str | m.Ldif.DN,
-    ) -> TypeGuard[MutableSequence[m.Ldif.Entry]]:
+        obj: t.MutableSequenceOf[m.Ldif.Entry] | t.JsonValue | str | m.Ldif.DN,
+    ) -> TypeGuard[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Check if value is a Sequence of Entry objects (dispatch helper)."""
         if isinstance(obj, (str, bytes, m.Ldif.DN)):
             return False

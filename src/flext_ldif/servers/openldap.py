@@ -4,9 +4,6 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import (
-    MutableSequence,
-)
 from types import MappingProxyType
 from typing import ClassVar, override
 
@@ -256,7 +253,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         def _build_openldap_acl_model(
             self,
             what: str,
-            attributes: MutableSequence[str],
+            attributes: t.MutableSequenceOf[str],
             subject_value: str,
             access: str,
             acl_line: str,
@@ -353,7 +350,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         def _parse_what_clause(
             self,
             acl_content: str,
-        ) -> tuple[str | None, MutableSequence[str]]:
+        ) -> tuple[str | None, t.MutableSequenceOf[str]]:
             """Parse "to <what>" clause and extract attributes."""
             to_match = re.match(
                 FlextLdifServersOpenldap.Constants.ACL_TO_BY_PATTERN,
@@ -363,7 +360,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             if not to_match:
                 return (None, [])
             what = to_match.group(1).strip()
-            attributes: MutableSequence[str] = []
+            attributes: t.MutableSequenceOf[str] = []
             attrs_match = re.search(
                 FlextLdifServersOpenldap.Constants.ACL_ATTRS_PATTERN,
                 what,
@@ -416,7 +413,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 acl_parts = [f"{constants.ACL_PREFIX_TO}{what}"]
                 acl_parts.append(f"{constants.ACL_PREFIX_BY}{who}")
                 if acl_data.permissions:
-                    perms: MutableSequence[str] = []
+                    perms: t.MutableSequenceOf[str] = []
                     if acl_data.permissions.read:
                         perms.append("read")
                     if acl_data.permissions.write:
@@ -452,7 +449,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             )
             has_olc_attrs = any(attr.startswith("olc") for attr in attributes)
             object_classes_raw = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
-            object_classes_list: MutableSequence[str] = list(object_classes_raw)
+            object_classes_list: t.MutableSequenceOf[str] = list(object_classes_raw)
             has_olc_classes = any(
                 oc in FlextLdifServersOpenldap.Constants.OPENLDAP_2_OBJECTCLASSES
                 for oc in object_classes_list

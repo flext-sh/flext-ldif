@@ -130,11 +130,11 @@ class FlextLdifServersBaseEntry(
             return r[t.Ldif.EntryPayload].ok(str_result.map_or(""))
         return r[t.Ldif.EntryPayload].ok("")
 
-    def parse_quirk(self, value: str) -> r[MutableSequence[m.Ldif.Entry]]:
+    def parse_quirk(self, value: str) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Parse LDIF content string into Entry models."""
         return self._parse_content(value)
 
-    def parse_input(self, ldif_text: str) -> MutableSequence[m.Ldif.Entry] | None:
+    def parse_input(self, ldif_text: str) -> t.MutableSequenceOf[m.Ldif.Entry] | None:
         """Compatibility parser entrypoint for direct quirk consumers."""
         parse_result = self.parse_quirk(ldif_text)
         if parse_result.failure:
@@ -162,7 +162,7 @@ class FlextLdifServersBaseEntry(
 
     def write(
         self,
-        entry_data: m.Ldif.Entry | MutableSequence[m.Ldif.Entry],
+        entry_data: m.Ldif.Entry | t.MutableSequenceOf[m.Ldif.Entry],
         write_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> r[str]:
         """Write Entry model(s) to LDIF string format."""
@@ -174,9 +174,9 @@ class FlextLdifServersBaseEntry(
         self,
         write_options: m.Ldif.WriteFormatOptions | None,
         entry_count: int,
-    ) -> MutableSequence[str]:
+    ) -> t.MutableSequenceOf[str]:
         """Build header lines based on write options."""
-        lines: MutableSequence[str] = []
+        lines: t.MutableSequenceOf[str] = []
         if write_options is None:
             return lines
         if write_options.include_version_header:
@@ -191,7 +191,7 @@ class FlextLdifServersBaseEntry(
 
     def _convert_raw_attributes(
         self,
-        entry_attrs: MutableMapping[str, MutableSequence[str | bytes]],
+        entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
     ) -> t.MutableStrSequenceMapping:
         """Convert raw LDIF attributes to t.MutableStrSequenceMapping format."""
         converted_attrs: t.MutableStrSequenceMapping = {}
@@ -229,7 +229,7 @@ class FlextLdifServersBaseEntry(
     def _hook_validate_entry_raw(
         self,
         dn: str,
-        attrs: MutableMapping[str, MutableSequence[str | bytes]],
+        attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
     ) -> r[bool]:
         """Hook to validate raw entry before parsing."""
         _ = attrs
@@ -276,14 +276,16 @@ class FlextLdifServersBaseEntry(
         """Normalize entry to RFC format with metadata tracking."""
         return entry
 
-    def _parse_content(self, ldif_content: str) -> r[MutableSequence[m.Ldif.Entry]]:
+    def _parse_content(self, ldif_content: str) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal)."""
         _ = ldif_content
-        return r[MutableSequence[m.Ldif.Entry]].fail("Must be implemented by subclass")
+        return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
+            "Must be implemented by subclass"
+        )
 
     def _write_entry(self, entry_data: m.Ldif.Entry) -> r[str]:
         """Write Entry model to RFC-compliant LDIF string (internal)."""
-        output_lines: MutableSequence[str] = []
+        output_lines: t.MutableSequenceOf[str] = []
         fold_long_lines = True
         line_width = c.Ldif.LINE_FOLD_WIDTH
         include_dn_comments = False
@@ -302,7 +304,7 @@ class FlextLdifServersBaseEntry(
                 extensions_data = dict(metadata_extensions)
         hidden_raw = extensions_data.get(c.Ldif.HIDDEN_ATTRIBUTES)
         if isinstance(hidden_raw, list):
-            hidden_text: MutableSequence[str] = [str(value) for value in hidden_raw]
+            hidden_text: t.MutableSequenceOf[str] = [str(value) for value in hidden_raw]
             hidden_attributes = {attr.lower() for attr in hidden_text}
         acl_original_raw = extensions_data.get(c.Ldif.ACL_ORIGINAL_FORMAT)
         if isinstance(acl_original_raw, str):
@@ -555,7 +557,7 @@ class FlextLdifServersBaseEntry(
 
     def _write_entry_list(
         self,
-        entries: MutableSequence[m.Ldif.Entry],
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
         write_options: m.Ldif.WriteFormatOptions | None,
     ) -> r[str]:
         """Write list of entries to LDIF."""

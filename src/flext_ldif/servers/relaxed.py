@@ -6,7 +6,6 @@ import re
 import struct
 from collections.abc import (
     MutableMapping,
-    MutableSequence,
 )
 from typing import ClassVar, override
 
@@ -117,7 +116,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _extract_must_may_from_objectclass(
             self,
             oc_definition: str,
-        ) -> tuple[MutableSequence[str] | None, MutableSequence[str] | None]:
+        ) -> tuple[t.MutableSequenceOf[str] | None, t.MutableSequenceOf[str] | None]:
             """Extract MUST and MAY fields from objectClass definition."""
             must = None
             must_match = re.search(
@@ -587,7 +586,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _adapted_parse_entry_relaxed(self, entry_content: str) -> r[m.Ldif.Entry]:
             """Parse entry content in relaxed mode (extracted from _parse_content)."""
             dn: str = ""
-            attrs: MutableMapping[str, MutableSequence[str | bytes]] = {}
+            attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]] = {}
             for raw_line in entry_content.split("\n"):
                 line = raw_line.strip()
                 if not line or line.startswith("#"):
@@ -613,7 +612,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return self._parse_entry(dn, attrs)
 
         @override
-        def _parse_content(self, ldif_content: str) -> r[MutableSequence[m.Ldif.Entry]]:
+        def _parse_content(
+            self, ldif_content: str
+        ) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
             """Parse raw LDIF content string into Entry models (internal)."""
             parent_result = super()._parse_content(ldif_content)
             if parent_result.success:
@@ -622,7 +623,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 f"RFC parser failed, using relaxed mode: {parent_result.error}",
             )
             try:
-                entries: MutableSequence[m.Ldif.Entry] = []
+                entries: t.MutableSequenceOf[m.Ldif.Entry] = []
                 raw_entries = ldif_content.strip().split("\n\n")
                 successful = 0
                 failed = 0
@@ -653,7 +654,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     successful=successful,
                     failed=failed,
                 )
-                return r[MutableSequence[m.Ldif.Entry]].ok(entries)
+                return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(entries)
             except (
                 ValueError,
                 KeyError,
@@ -665,14 +666,14 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "Failed to parse content",
                     server_type=self._get_server_type(),
                 )
-                return r[MutableSequence[m.Ldif.Entry]].fail(
+                return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
                     f"Failed to parse content: {error}",
                 )
 
         def _parse_entry(
             self,
             entry_dn: str,
-            entry_attrs: MutableMapping[str, MutableSequence[str | bytes]],
+            entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
         ) -> r[m.Ldif.Entry]:
             """Parse entry with best-effort approach."""
             try:
@@ -684,9 +685,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 })
                 attr_dict: t.MutableStrSequenceMapping = {}
                 attr_key: str
-                attr_value: MutableSequence[str | bytes]
+                attr_value: t.MutableSequenceOf[str | bytes]
                 for attr_key, attr_value in entry_attrs.items():
-                    converted_list: MutableSequence[str] = []
+                    converted_list: t.MutableSequenceOf[str] = []
                     for v in attr_value:
                         if isinstance(v, str):
                             converted_list.append(v)
@@ -756,7 +757,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 f"RFC write failed, using relaxed mode: {parent_result.error}",
             )
             try:
-                ldif_lines: MutableSequence[str] = []
+                ldif_lines: t.MutableSequenceOf[str] = []
                 if not entry_data.dn or not entry_data.dn.value:
                     return r[str].fail("Entry DN is required for LDIF output")
                 ldif_lines.append(

@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from collections.abc import (
     MutableMapping,
-    MutableSequence,
-    Sequence,
 )
 from typing import ClassVar, override
 
@@ -21,7 +19,7 @@ class FlextLdifUtilitiesTransformer[T]:
         """Apply the transformation to an item."""
         raise NotImplementedError
 
-    def apply_batch(self, items: MutableSequence[T]) -> r[Sequence[T]]:
+    def apply_batch(self, items: t.MutableSequenceOf[T]) -> r[t.SequenceOf[T]]:
         """Apply transformation to a batch of items."""
         return r.traverse(items, self.apply)
 
@@ -51,7 +49,7 @@ class FlextLdifUtilitiesTransformers:
         def validate_dn_components(dn_str: str) -> r[bool]:
             """Helper: Validate DN components."""
             components = udn.split(dn_str)
-            all_errors: MutableSequence[str] = []
+            all_errors: t.MutableSequenceOf[str] = []
             for comp in components:
                 if "=" not in comp:
                     all_errors.append(f"Invalid RDN (missing '='): {comp}")
@@ -158,10 +156,10 @@ class FlextLdifUtilitiesTransformers:
                 attrs = {k.lower(): v for k, v in attrs.items()}
 
             def process_value_list(
-                values: MutableSequence[str],
-            ) -> MutableSequence[str]:
+                values: t.MutableSequenceOf[str],
+            ) -> t.MutableSequenceOf[str]:
                 """Process a single attribute's values."""
-                processed: MutableSequence[str] = []
+                processed: t.MutableSequenceOf[str] = []
                 for value_item in values:
                     trimmed_value = (
                         value_item.strip() if self._trim_values else value_item
@@ -173,8 +171,8 @@ class FlextLdifUtilitiesTransformers:
 
             def map_process_value(
                 _key: str,
-                value: MutableSequence[str],
-            ) -> MutableSequence[str]:
+                value: t.MutableSequenceOf[str],
+            ) -> t.MutableSequenceOf[str]:
                 """Process value list for attribute."""
                 return process_value_list(value)
 

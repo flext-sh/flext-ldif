@@ -6,9 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-)
 from typing import Annotated, Self
 
 from flext_cli import m, u
@@ -125,7 +122,7 @@ class FlextLdifModelsDomainAcl:
 
         target_dn: Annotated[str, u.Field(..., description="Target DN pattern")]
         attributes: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(description="Target attributes"),
         ]
 
@@ -210,7 +207,7 @@ class FlextLdifModelsDomainAcl:
 
             See: https://docs.pydantic.dev/latest/concepts/validators/#model-validators
             """
-            violations: MutableSequence[str] = []
+            violations: t.MutableSequenceOf[str] = []
             valid_server_types: frozenset[c.Ldif.ServerTypes] = frozenset({
                 c.Ldif.ServerTypes.RFC,
                 c.Ldif.ServerTypes.OPENLDAP,

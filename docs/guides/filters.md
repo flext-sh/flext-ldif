@@ -84,7 +84,7 @@ filtered_result = (
     .with_dn_pattern("*,ou=users,dc=example,dc=com")
     .with_objectclass("person")
     .with_required_attributes(["cn", "mail"])
-    .build()  # Returns Sequence[Entry] directly
+    .build()  # Returns t.SequenceOf[Entry] directly
 )
 ```
 

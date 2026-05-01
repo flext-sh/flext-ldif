@@ -15,18 +15,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-)
-
 from flext_ldif import (
-    FlextLdifConversion,
     FlextLdifServersOid,
     FlextLdifServersOud,
-    m,
-    p,
 )
-from tests import c
+from tests import c, m, p, t
 
 
 class TestsFlextLdifCrossQuirkConversion:
@@ -183,13 +176,13 @@ class TestsFlextLdifCrossQuirkConversion:
 
     """Test QuirksConversionMatrix facade for universal translation."""
 
-    def test_matrix_instantiation(self, conversion_matrix: FlextLdifConversion) -> None:
+    def test_matrix_instantiation(self, conversion_matrix: p.Ldif.LdifClient) -> None:
         """Test that conversion matrix can be instantiated."""
         assert conversion_matrix is not None
 
     def test_resolve_supported_conversions(
         self,
-        conversion_matrix: FlextLdifConversion,
+        conversion_matrix: p.Ldif.LdifClient,
         oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test checking supported conversions."""
@@ -201,7 +194,7 @@ class TestsFlextLdifCrossQuirkConversion:
 
     def test_convert_attribute_oud_to_oid(
         self,
-        conversion_matrix: FlextLdifConversion,
+        conversion_matrix: p.Ldif.LdifClient,
         oud_quirk: FlextLdifServersOud,
         oid_quirk: FlextLdifServersOid,
     ) -> None:
@@ -224,7 +217,7 @@ class TestsFlextLdifCrossQuirkConversion:
 
     def test_convert_objectclass_oid_to_oud(
         self,
-        conversion_matrix: FlextLdifConversion,
+        conversion_matrix: p.Ldif.LdifClient,
         oud_quirk: FlextLdifServersOud,
         oid_quirk: FlextLdifServersOid,
     ) -> None:
@@ -247,7 +240,7 @@ class TestsFlextLdifCrossQuirkConversion:
 
     def test_batch_convert_attributes(
         self,
-        conversion_matrix: FlextLdifConversion,
+        conversion_matrix: p.Ldif.LdifClient,
         oud_quirk: FlextLdifServersOud,
         oid_quirk: FlextLdifServersOid,
     ) -> None:
@@ -256,13 +249,13 @@ class TestsFlextLdifCrossQuirkConversion:
             c.Tests.CROSS_QUIRK_OUD_ATTRIBUTE_ORCLGUID,
             "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
         ]
-        oud_attr_models: MutableSequence[m.Ldif.SchemaAttribute] = []
+        oud_attr_models: t.MutableSequenceOf[m.Ldif.SchemaAttribute] = []
         for attr_string in oud_attr_strings:
             parse_result = oud_quirk.schema_quirk.parse_attribute(attr_string)
             assert parse_result.success, f"Parse failed: {parse_result.error}"
             oud_attr_models.append(parse_result.value)
         assert len(oud_attr_models) == 2
-        oid_attr_strings: MutableSequence[str] = []
+        oid_attr_strings: t.MutableSequenceOf[str] = []
         for oud_model in oud_attr_models:
             write_result = oud_quirk.schema_quirk.write(oud_model)
             assert write_result.success, f"Write failed: {write_result.error}"
@@ -279,7 +272,7 @@ class TestsFlextLdifCrossQuirkConversion:
 
     def test_bidirectional_conversion(
         self,
-        conversion_matrix: FlextLdifConversion,
+        conversion_matrix: p.Ldif.LdifClient,
         oud_quirk: FlextLdifServersOud,
         oid_quirk: FlextLdifServersOid,
     ) -> None:
@@ -308,7 +301,7 @@ class TestsFlextLdifCrossQuirkConversion:
 
     def test_invalid_data_type(
         self,
-        conversion_matrix: FlextLdifConversion,
+        conversion_matrix: p.Ldif.LdifClient,
         oud_quirk: FlextLdifServersOud,
         oid_quirk: FlextLdifServersOid,
     ) -> None:

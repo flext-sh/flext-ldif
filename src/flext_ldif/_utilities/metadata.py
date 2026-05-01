@@ -7,8 +7,6 @@ from collections.abc import (
     Callable,
     Mapping,
     MutableMapping,
-    MutableSequence,
-    Sequence,
 )
 from typing import TypeIs
 
@@ -158,9 +156,10 @@ class FlextLdifUtilitiesMetadata:
     ) -> t.Ldif.MutableMetadataMapping:
         """Extract all schema formatting details into combined dict."""
         combined: t.Ldif.MutableMetadataMapping = {}
-        extractors: Sequence[
+        extractors: t.SequenceOf[
             Callable[
-                [str], Mapping[str, str | bool | int | MutableSequence[str] | None]
+                [str],
+                t.MappingKV[str, str | bool | int | t.MutableSequenceOf[str] | None],
             ]
         ] = [
             FlextLdifUtilitiesMetadata._extract_prefix_details,
@@ -237,7 +236,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _extract_field_order(
         definition: str,
-    ) -> tuple[MutableSequence[str], t.MutableIntMapping]:
+    ) -> tuple[t.MutableSequenceOf[str], t.MutableIntMapping]:
         """Extract field order and positions."""
         field_patterns = {
             "OID": "\\(\\s*([0-9.]+)",
@@ -252,7 +251,7 @@ class FlextLdifUtilitiesMetadata:
             "OBSOLETE": "OBSOLETE",
             "X-ORIGIN": "X-ORIGIN",
         }
-        field_order: MutableSequence[str] = []
+        field_order: t.MutableSequenceOf[str] = []
         field_positions: t.MutableIntMapping = {}
         for field_name, pattern in field_patterns.items():
             match = re.search(pattern, definition, re.IGNORECASE)
@@ -451,7 +450,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _extract_spacing_between_fields(
         definition: str,
-        field_order: MutableSequence[str],
+        field_order: t.MutableSequenceOf[str],
         field_positions: t.MutableIntMapping,
         field_patterns: t.MutableStrMapping,
     ) -> t.MutableStrMapping:
@@ -588,9 +587,9 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _normalize_dict_list(
-        values: Sequence[t.JsonValue],
-    ) -> MutableSequence[t.JsonValue]:
-        normalized: MutableSequence[t.JsonValue] = []
+        values: t.SequenceOf[t.JsonValue],
+    ) -> t.MutableSequenceOf[t.JsonValue]:
+        normalized: t.MutableSequenceOf[t.JsonValue] = []
         for item in values:
             normalized.append(u.normalize_to_metadata(item))
         return normalized
@@ -670,7 +669,7 @@ class FlextLdifUtilitiesMetadata:
     ) -> t.Ldif.MutableMetadataMapping:
         """Analyze minimal differences between original and converted strings."""
         mk = c.Ldif
-        empty_diffs: MutableSequence[str] = []
+        empty_diffs: t.MutableSequenceOf[str] = []
         differences = dict(
             t.Cli.JSON_MAPPING_ADAPTER.validate_python({
                 mk.HAS_DIFFERENCES: False,
@@ -750,7 +749,7 @@ class FlextLdifUtilitiesMetadata:
         server_data = m.Ldif.EntryMetadata.model_validate(
             server_data_dict,
         )
-        original_ldif_parts: MutableSequence[str] = []
+        original_ldif_parts: t.MutableSequenceOf[str] = []
         if settings.original_dn_line:
             original_ldif_parts.append(settings.original_dn_line)
         if settings.original_attr_lines:
@@ -790,12 +789,12 @@ class FlextLdifUtilitiesMetadata:
         **extra: t.Ldif.Scalar,
     ) -> MutableMapping[
         str,
-        str | bool | MutableSequence[str] | t.MutableAttributeMapping,
+        str | bool | t.MutableSequenceOf[str] | t.MutableAttributeMapping,
     ]:
         """Build RFC compliance metadata as a dictionary."""
         result: MutableMapping[
             str,
-            str | bool | MutableSequence[str] | t.MutableAttributeMapping,
+            str | bool | t.MutableSequenceOf[str] | t.MutableAttributeMapping,
         ] = {
             "quirk_type": quirk_type,
             "source_server": quirk_type,

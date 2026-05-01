@@ -1,14 +1,12 @@
-"""Data-driven unit tests for FlextLdifFilters service."""
+"""Data-driven unit tests for ldif service."""
 
 from __future__ import annotations
-
-from collections.abc import Mapping, MutableSequence
 
 import pytest
 from flext_tests import tm
 
-from flext_ldif import FlextLdifFilters, m
-from tests import c, u
+from flext_ldif import ldif
+from tests import c, m, t, u
 
 
 class TestsFlextLdifFiltersService:
@@ -16,7 +14,7 @@ class TestsFlextLdifFiltersService:
 
     @staticmethod
     def _mutable_allowed_oids(
-        mapping: Mapping[str, frozenset[str]],
+        mapping: t.MappingKV[str, frozenset[str]],
     ) -> dict[str, frozenset[str]]:
         return {key: frozenset(values) for key, values in mapping.items()}
 
@@ -78,9 +76,9 @@ class TestsFlextLdifFiltersService:
         tm.that(key_name in c.Tests.FILTERS_ALLOWED_OIDS_EMPTY, eq=True)
 
     def test_filter_schema_by_oids_keeps_matching_entry(self) -> None:
-        entries: MutableSequence[m.Ldif.Entry] = [self._schema_entry()]
+        entries: t.MutableSequenceOf[m.Ldif.Entry] = [self._schema_entry()]
 
-        result = FlextLdifFilters.filter_schema_by_oids(
+        result = ldif.filter_schema_by_oids(
             entries,
             self._mutable_allowed_oids(c.Tests.FILTERS_ALLOWED_OIDS_FULL),
         )
@@ -98,7 +96,7 @@ class TestsFlextLdifFiltersService:
                 ],
             },
         )
-        result = FlextLdifFilters.filter_schema_by_oids(
+        result = ldif.filter_schema_by_oids(
             [unmatched],
             self._mutable_allowed_oids(c.Tests.FILTERS_ALLOWED_OIDS_FULL),
         )
@@ -106,11 +104,11 @@ class TestsFlextLdifFiltersService:
         tm.that(len(filtered), eq=0)
 
     def test_filter_schema_by_oids_returns_all_when_allowed_oids_empty(self) -> None:
-        entries: MutableSequence[m.Ldif.Entry] = [
+        entries: t.MutableSequenceOf[m.Ldif.Entry] = [
             self._schema_entry(),
             self._regular_entry(),
         ]
-        result = FlextLdifFilters.filter_schema_by_oids(
+        result = ldif.filter_schema_by_oids(
             entries,
             self._mutable_allowed_oids(c.Tests.FILTERS_ALLOWED_OIDS_EMPTY),
         )
@@ -118,8 +116,8 @@ class TestsFlextLdifFiltersService:
         tm.that(len(filtered), eq=2)
 
     def test_filter_schema_by_oids_passes_through_non_schema_entries(self) -> None:
-        entries: MutableSequence[m.Ldif.Entry] = [self._regular_entry()]
-        result = FlextLdifFilters.filter_schema_by_oids(
+        entries: t.MutableSequenceOf[m.Ldif.Entry] = [self._regular_entry()]
+        result = ldif.filter_schema_by_oids(
             entries,
             self._mutable_allowed_oids(c.Tests.FILTERS_ALLOWED_OIDS_FULL),
         )
@@ -128,7 +126,7 @@ class TestsFlextLdifFiltersService:
 
     def test_filter_schema_by_oids_entry_without_attributes(self) -> None:
         bare_entry = self._entry_without_attributes()
-        result = FlextLdifFilters.filter_schema_by_oids(
+        result = ldif.filter_schema_by_oids(
             [bare_entry],
             self._mutable_allowed_oids(c.Tests.FILTERS_ALLOWED_OIDS_FULL),
         )
@@ -139,7 +137,7 @@ class TestsFlextLdifFiltersService:
 
     def test_filter_entry_attributes_removes_forbidden_attrs(self) -> None:
         entry = self._regular_entry()
-        result = FlextLdifFilters.filter_entry_attributes(
+        result = ldif.filter_entry_attributes(
             entry,
             list(c.Tests.FILTERS_FORBIDDEN_ATTRS_ORDERED),
             [],
@@ -155,7 +153,7 @@ class TestsFlextLdifFiltersService:
 
     def test_filter_entry_attributes_removes_forbidden_objectclasses(self) -> None:
         entry = self._regular_entry()
-        result = FlextLdifFilters.filter_entry_attributes(
+        result = ldif.filter_entry_attributes(
             entry,
             [],
             list(c.Tests.FILTERS_FORBIDDEN_OCS_ORDERED),
@@ -169,7 +167,7 @@ class TestsFlextLdifFiltersService:
 
     def test_filter_entry_attributes_noop_when_no_attributes_on_entry(self) -> None:
         bare = self._entry_without_attributes()
-        result = FlextLdifFilters.filter_entry_attributes(
+        result = ldif.filter_entry_attributes(
             bare,
             [c.Tests.NAME_CN],
             [],
@@ -206,7 +204,7 @@ class TestsFlextLdifFiltersService:
                 c.Tests.NAME_OBJECTCLASS: [c.Tests.NAME_TOP],
             },
         )
-        result = FlextLdifFilters.filter_schema_attribute_values(
+        result = ldif.filter_schema_attribute_values(
             entry,
             {attr_key.lower(): frozenset({allowed_oid})},
         )
@@ -228,7 +226,7 @@ class TestsFlextLdifFiltersService:
                 c.Tests.NAME_OBJECTCLASS: [c.Tests.NAME_TOP],
             },
         )
-        result = FlextLdifFilters.filter_schema_attribute_values(
+        result = ldif.filter_schema_attribute_values(
             entry,
             {
                 c.Tests.FILTERS_SCHEMA_ATTR_KEY.lower(): frozenset({
@@ -247,7 +245,7 @@ class TestsFlextLdifFiltersService:
 
     def test_filter_schema_attribute_values_noop_when_no_attributes(self) -> None:
         bare = self._entry_without_attributes()
-        result = FlextLdifFilters.filter_schema_attribute_values(bare, {})
+        result = ldif.filter_schema_attribute_values(bare, {})
         tm.that(result, is_=m.Ldif.Entry)
 
     def test_filter_entry_attributes_removes_all_objectclasses(self) -> None:
@@ -258,7 +256,7 @@ class TestsFlextLdifFiltersService:
                 c.Tests.NAME_OBJECTCLASS: list(c.Tests.FILTERS_FORBIDDEN_OCS_ORDERED)
             },
         )
-        result = FlextLdifFilters.filter_entry_attributes(
+        result = ldif.filter_entry_attributes(
             entry,
             [],
             list(c.Tests.FILTERS_FORBIDDEN_OCS_ORDERED),
@@ -279,7 +277,7 @@ class TestsFlextLdifFiltersService:
                 c.Tests.NAME_OBJECTCLASS: [c.Tests.NAME_TOP],
             },
         )
-        result = FlextLdifFilters.filter_schema_attribute_values(
+        result = ldif.filter_schema_attribute_values(
             entry,
             {c.Tests.FILTERS_SCHEMA_ATTR_KEY.lower(): frozenset()},
         )
@@ -299,7 +297,7 @@ class TestsFlextLdifFiltersService:
             dn=c.Tests.FILTERS_DN_SCHEMA,
             attributes=None,
         )
-        result = FlextLdifFilters._should_include_entry(
+        result = ldif._should_include_entry(
             entry,
             frozenset(),
             frozenset(),
@@ -312,15 +310,15 @@ class TestsFlextLdifFiltersService:
 
     def test_extract_oid_empty_values_returns_none(self) -> None:
         """Line 50: empty values list returns None."""
-        result = FlextLdifFilters._extract_oid_from_schema_attr([])
+        result = ldif._extract_oid_from_schema_attr([])
         tm.that(result, eq=None)
 
     def test_extract_oid_non_oid_value_returns_none(self) -> None:
         """Line 59: value doesn't start with '(' so OID not found returns None."""
-        result = FlextLdifFilters._extract_oid_from_schema_attr(["not-an-oid"])
+        result = ldif._extract_oid_from_schema_attr(["not-an-oid"])
         tm.that(result, eq=None)
 
     def test_extract_oid_oid_not_starting_with_digit_returns_none(self) -> None:
         """Line 59: parenthesized but OID doesn't start with digit returns None."""
-        result = FlextLdifFilters._extract_oid_from_schema_attr(["( cn SYNTAX )"])
+        result = ldif._extract_oid_from_schema_attr(["( cn SYNTAX )"])
         tm.that(result, eq=None)

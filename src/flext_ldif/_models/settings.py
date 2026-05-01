@@ -12,7 +12,6 @@ from __future__ import annotations
 from collections.abc import (
     Callable,
     MutableMapping,
-    MutableSequence,
 )
 from typing import Annotated, ClassVar, Self
 
@@ -304,7 +303,7 @@ class FlextLdifModelsSettings:
         """
 
         objectclasses: Annotated[
-            MutableSequence[str] | None,
+            t.MutableSequenceOf[str] | None,
             u.Field(description="Required objectClasses"),
         ] = None
         objectclass_mode: Annotated[
@@ -312,11 +311,11 @@ class FlextLdifModelsSettings:
             u.Field(description='"any" (has any) or "all" (has all)'),
         ] = c.Ldif.EntryCriteriaMode.ANY
         required_attrs: Annotated[
-            MutableSequence[str] | None,
+            t.MutableSequenceOf[str] | None,
             u.Field(description="All of these attributes must exist"),
         ] = None
         any_attrs: Annotated[
-            MutableSequence[str] | None,
+            t.MutableSequenceOf[str] | None,
             u.Field(
                 description="At least one of these attributes must exist",
             ),
@@ -368,7 +367,7 @@ class FlextLdifModelsSettings:
             ),
         ] = None
         original_attr_lines: Annotated[
-            MutableSequence[str] | None,
+            t.MutableSequenceOf[str] | None,
             u.Field(description="Original attribute lines from LDIF"),
         ] = None
         dn_was_base64: Annotated[
@@ -404,7 +403,7 @@ class FlextLdifModelsSettings:
             ),
         ] = None
         remove_attrs: Annotated[
-            MutableSequence[str] | None,
+            t.MutableSequenceOf[str] | None,
             u.Field(description="Attributes to remove from entries"),
         ] = None
         fail_fast: Annotated[
@@ -420,50 +419,50 @@ class FlextLdifModelsSettings:
         """
 
         user_dn_patterns: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 default_factory=list,
                 description="DN patterns for user entries (e.g., '*,ou=users,*')",
             ),
         ]
         group_dn_patterns: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(default_factory=list, description="DN patterns for group entries"),
         ]
         hierarchy_dn_patterns: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 default_factory=list,
                 description="DN patterns for organizational hierarchy",
             ),
         ]
         schema_dn_patterns: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(default_factory=list, description="DN patterns for schema entries"),
         ]
         user_objectclasses: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 default_factory=list,
                 description="ObjectClasses identifying user entries",
             ),
         ]
         group_objectclasses: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 default_factory=list,
                 description="ObjectClasses identifying group entries",
             ),
         ]
         hierarchy_objectclasses: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 default_factory=list,
                 description="ObjectClasses identifying organizational units",
             ),
         ]
         acl_attributes: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 default_factory=list,
                 description="Attribute names containing ACL information",
@@ -500,53 +499,53 @@ class FlextLdifModelsSettings:
         """
 
         blocked_objectclasses: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="ObjectClasses that should be blocked/rejected",
             ),
         ]
         allowed_objectclasses: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="ObjectClasses that are explicitly allowed",
             ),
         ]
         required_attributes: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(description="Attributes that must be present"),
         ]
         blocked_attributes: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="Attributes that should be blocked",
             ),
         ]
         allowed_attribute_oids: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="OID patterns for allowed schema attributes",
             ),
         ]
         allowed_objectclass_oids: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="OID patterns for allowed objectClasses",
             ),
         ]
         allowed_matchingrule_oids: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="OID patterns for allowed matchingRules",
             ),
         ]
         allowed_matchingruleuse_oids: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="OID patterns for allowed matchingRuleUse definitions",
             ),
         ]
         allowed_ldapsyntax_oids: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="OID patterns for allowed ldapSyntaxes definitions",
             ),
@@ -582,7 +581,7 @@ class FlextLdifModelsSettings:
             ),
         ] = None
         input_files: Annotated[
-            MutableSequence[str] | None,
+            t.MutableSequenceOf[str] | None,
             u.Field(
                 description="Ordered list of LDIF files to process (categorized mode)",
             ),
@@ -612,11 +611,11 @@ class FlextLdifModelsSettings:
             ),
         ] = None
         forbidden_attributes: Annotated[
-            MutableSequence[str] | None,
+            t.MutableSequenceOf[str] | None,
             u.Field(description="Attributes to remove from entries"),
         ] = None
         forbidden_objectclasses: Annotated[
-            MutableSequence[str] | None,
+            t.MutableSequenceOf[str] | None,
             u.Field(description="ObjectClasses to remove from entries"),
         ] = None
         base_dn: Annotated[
@@ -822,7 +821,7 @@ class FlextLdifModelsSettings:
             ),
         ] = False
         rfc_order_priority_attributes: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="Attributes to write first after DN, in order. Default: ['objectClass']. Remaining attributes sorted alphabetically.",
             ),
@@ -943,7 +942,7 @@ class FlextLdifModelsSettings:
         server_type: Annotated[str, u.Field(..., description="Server type identifier")]
         write_attributes_hook: Annotated[
             Callable[
-                [p.Ldif.Entry, MutableSequence[str]],
+                [p.Ldif.Entry, t.MutableSequenceOf[str]],
                 None,
             ],
             u.Field(
@@ -951,7 +950,7 @@ class FlextLdifModelsSettings:
             ),
         ]
         write_comments_hook: Annotated[
-            (Callable[[p.Ldif.Entry, MutableSequence[str]], None] | None),
+            (Callable[[p.Ldif.Entry, t.MutableSequenceOf[str]], None] | None),
             u.Field(
                 description="Optional comments writing",
             ),
@@ -963,7 +962,7 @@ class FlextLdifModelsSettings:
             ),
         ] = None
         write_dn_hook: Annotated[
-            Callable[[str, MutableSequence[str]], None] | None,
+            Callable[[str, t.MutableSequenceOf[str]], None] | None,
             u.Field(
                 description="Optional DN writing",
             ),
@@ -984,7 +983,7 @@ class FlextLdifModelsSettings:
         """
 
         entries: Annotated[
-            MutableSequence[p.Ldif.Entry],
+            t.MutableSequenceOf[p.Ldif.Entry],
             u.Field(
                 description="List of entries to write",
             ),
@@ -1018,7 +1017,7 @@ class FlextLdifModelsSettings:
         """
 
         entries: Annotated[
-            MutableSequence[p.Ldif.Entry],
+            t.MutableSequenceOf[p.Ldif.Entry],
             u.Field(
                 description="List of entries to sort",
             ),
@@ -1040,11 +1039,13 @@ class FlextLdifModelsSettings:
             bool, u.Field(description="Sort attributes within entries")
         ] = False
         attribute_order: Annotated[
-            MutableSequence[str] | None, u.Field(description="Custom attribute order")
+            t.MutableSequenceOf[str] | None,
+            u.Field(description="Custom attribute order"),
         ] = None
         sort_acl: Annotated[bool, u.Field(description="Sort ACL attributes")] = False
         acl_attributes: Annotated[
-            MutableSequence[str] | None, u.Field(description="ACL attributes to sort")
+            t.MutableSequenceOf[str] | None,
+            u.Field(description="ACL attributes to sort"),
         ] = None
 
     class RdnProcessingConfig(m.ArbitraryTypesModel):
@@ -1057,7 +1058,7 @@ class FlextLdifModelsSettings:
             u.Field(description="Whether parser is inside the value portion"),
         ] = False
         pairs: Annotated[
-            MutableSequence[tuple[str, str]],
+            t.MutableSequenceOf[tuple[str, str]],
             u.Field(description="Accumulated (attr, value) pairs"),
         ] = u.Field(default_factory=lambda: list[tuple[str, str]]())
 

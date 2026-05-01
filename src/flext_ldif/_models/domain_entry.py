@@ -9,7 +9,6 @@ from __future__ import annotations
 from collections.abc import (
     Mapping,
     MutableMapping,
-    MutableSequence,
 )
 from datetime import datetime
 from types import MappingProxyType
@@ -80,41 +79,41 @@ class FlextLdifModelsDomainEntry:
             u.Field(description="Human-readable rejection reason"),
         ] = None
         attributes_added: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="Attribute names added during processing",
             ),
         ]
         attributes_removed: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="Attribute names removed during processing",
             ),
         ]
         attributes_modified: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="Attribute names modified during processing",
             ),
         ]
         attributes_filtered: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="Attribute names filtered by whitelist/blacklist",
             ),
         ]
         objectclasses_original: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(description="Original objectClass values"),
         ]
         objectclasses_final: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="Final objectClass values after transformation",
             ),
         ]
         quirks_applied: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="List of quirk types applied to this entry",
             ),
@@ -128,7 +127,7 @@ class FlextLdifModelsDomainEntry:
             u.Field(description="DN transformation statistics (if applicable)"),
         ] = None
         filters_applied: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="List of filters applied (use FilterType constants)",
             ),
@@ -140,13 +139,13 @@ class FlextLdifModelsDomainEntry:
             ),
         ]
         errors: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="Error messages (use ErrorCategory constants for keys)",
             ),
         ]
         warnings: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(description="Warning messages"),
         ]
         category_assigned: Annotated[
@@ -208,10 +207,12 @@ class FlextLdifModelsDomainEntry:
 
         @u.field_validator("filters_applied", mode="after")
         @classmethod
-        def deduplicate_filters(cls, v: MutableSequence[str]) -> MutableSequence[str]:
+        def deduplicate_filters(
+            cls, v: t.MutableSequenceOf[str]
+        ) -> t.MutableSequenceOf[str]:
             """Remove duplicate filters while preserving order."""
             seen: set[str] = set()
-            result: MutableSequence[str] = []
+            result: t.MutableSequenceOf[str] = []
             for item in v:
                 if item not in seen:
                     seen.add(item)
@@ -220,10 +221,12 @@ class FlextLdifModelsDomainEntry:
 
         @u.field_validator("quirks_applied", mode="after")
         @classmethod
-        def deduplicate_quirks(cls, v: MutableSequence[str]) -> MutableSequence[str]:
+        def deduplicate_quirks(
+            cls, v: t.MutableSequenceOf[str]
+        ) -> t.MutableSequenceOf[str]:
             """Remove duplicate quirks while preserving order."""
             seen: set[str] = set()
-            result: MutableSequence[str] = []
+            result: t.MutableSequenceOf[str] = []
             for item in v:
                 if item not in seen:
                     seen.add(item)
@@ -335,7 +338,7 @@ class FlextLdifModelsDomainEntry:
             u.Field(description="Target attribute for the modify block"),
         ]
         values: Annotated[
-            MutableSequence[FlextLdifModelsDomainEntry.ChangeOperationValue],
+            t.MutableSequenceOf[FlextLdifModelsDomainEntry.ChangeOperationValue],
             u.Field(description="Decoded values in the block"),
         ] = u.Field(default_factory=list)
 
@@ -361,7 +364,7 @@ class FlextLdifModelsDomainEntry:
             extra="allow",
         )
         _DATETIME_FIELDS: ClassVar[tuple[str, str]] = ("created_at", "updated_at")
-        _ATTRIBUTES_VALIDATE_DEFAULTS: ClassVar[Mapping[str, object]] = (
+        _ATTRIBUTES_VALIDATE_DEFAULTS: ClassVar[t.MappingKV[str, object]] = (
             MappingProxyType(
                 {
                     "attribute_metadata": {},
@@ -378,7 +381,7 @@ class FlextLdifModelsDomainEntry:
         _VALIDATION_CONTEXT_RFC_COMPLIANCE_NAME: ClassVar[str] = (
             "validate_entry_rfc_compliance"
         )
-        _EMPTY_VALIDATION_RESULT_PAYLOAD: ClassVar[Mapping[str, object]] = (
+        _EMPTY_VALIDATION_RESULT_PAYLOAD: ClassVar[t.MappingKV[str, object]] = (
             MappingProxyType(
                 {
                     "rfc_violations": tuple[str, ...](),
@@ -409,11 +412,11 @@ class FlextLdifModelsDomainEntry:
             ),
         ] = c.Ldif.RecordKind.CONTENT
         controls: Annotated[
-            MutableSequence[FlextLdifModelsDomainEntry.Control],
+            t.MutableSequenceOf[FlextLdifModelsDomainEntry.Control],
             u.Field(description="RFC 2849 control lines associated with the record"),
         ] = u.Field(default_factory=list)
         change_operations: Annotated[
-            MutableSequence[FlextLdifModelsDomainEntry.ChangeOperation],
+            t.MutableSequenceOf[FlextLdifModelsDomainEntry.ChangeOperation],
             u.Field(
                 description="Structured modify operation blocks for changetype=modify"
             ),
@@ -505,7 +508,7 @@ class FlextLdifModelsDomainEntry:
             u.Field(description="RFC 2849 newsuperior field for moddn/modrdn records"),
         ] = None
         raw_record_lines: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 description="Original unfolded LDIF lines for loss-aware round-trip"
             ),
@@ -676,7 +679,7 @@ class FlextLdifModelsDomainEntry:
             Strategy: PRESERVE problematic entries for round-trip conversions,
             capture violations in validation_metadata for downstream handling.
             """
-            violations: MutableSequence[str] = []
+            violations: t.MutableSequenceOf[str] = []
             dn_value = "<None>"
             if self.dn is None:
                 violations.append("RFC 2849 § 2: DN is required")
@@ -743,7 +746,7 @@ class FlextLdifModelsDomainEntry:
             if rules is None:
                 return self
             dn_value = self.dn.value if self.dn else ""
-            server_violations: MutableSequence[str] = []
+            server_violations: t.MutableSequenceOf[str] = []
             server_violations.extend(
                 FlextLdifUtilitiesEntry.check_objectclass_rule(self, rules, dn_value)
             )
@@ -769,7 +772,7 @@ class FlextLdifModelsDomainEntry:
                     )
                 )
                 self.metadata.validation_results = updated_validation_results
-                ext_violations: MutableSequence[t.JsonValue] = list(
+                ext_violations: t.MutableSequenceOf[t.JsonValue] = list(
                     server_violations,
                 )
                 self.metadata.extensions.server_specific_violations = ext_violations
@@ -927,7 +930,7 @@ class FlextLdifModelsDomainEntry:
             attrs_dict: t.MutableStrSequenceMapping = {}
             for attr_name, attr_values in attributes.items():
                 if isinstance(attr_values, str):
-                    values_list: MutableSequence[str] = [attr_values]
+                    values_list: t.MutableSequenceOf[str] = [attr_values]
                 else:
                     values_list = list(attr_values)
                 attrs_dict[attr_name] = values_list
@@ -965,15 +968,16 @@ class FlextLdifModelsDomainEntry:
             dn: str | mdn.DN,
             attributes: t.MutableAttributeMapping | mda.Attributes,
             metadata: mdm.QuirkMetadata | None = None,
-            acls: MutableSequence[mdac.Acl] | None = None,
-            objectclasses: MutableSequence[mds.SchemaObjectClass] | None = None,
-            attributes_schema: MutableSequence[mds.SchemaAttribute] | None = None,
+            acls: t.MutableSequenceOf[mdac.Acl] | None = None,
+            objectclasses: t.MutableSequenceOf[mds.SchemaObjectClass] | None = None,
+            attributes_schema: t.MutableSequenceOf[mds.SchemaAttribute] | None = None,
             entry_metadata: mm.EntryMetadata | None = None,
             validation_metadata: mdm.ValidationMetadata | None = None,
             server_type: c.Ldif.ServerTypes | None = None,
             record_kind: c.Ldif.RecordKind = c.Ldif.RecordKind.CONTENT,
-            controls: MutableSequence[FlextLdifModelsDomainEntry.Control] | None = None,
-            change_operations: MutableSequence[
+            controls: t.MutableSequenceOf[FlextLdifModelsDomainEntry.Control]
+            | None = None,
+            change_operations: t.MutableSequenceOf[
                 FlextLdifModelsDomainEntry.ChangeOperation
             ]
             | None = None,
@@ -981,7 +985,7 @@ class FlextLdifModelsDomainEntry:
             newrdn: str | None = None,
             deleteoldrdn: bool | None = None,
             newsuperior: str | None = None,
-            raw_record_lines: MutableSequence[str] | None = None,
+            raw_record_lines: t.MutableSequenceOf[str] | None = None,
             source_entry: str | None = None,
             unconverted_attributes: mm.DynamicMetadata | None = None,
             statistics: FlextLdifModelsDomainEntry.EntryStatistics | None = None,

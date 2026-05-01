@@ -8,7 +8,6 @@ from collections.abc import (
     Callable,
     Mapping,
     MutableMapping,
-    MutableSequence,
     Sequence,
 )
 
@@ -34,18 +33,18 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _add_objectclass_must_may(
         oc_data: m.Ldif.SchemaObjectClass,
-        parts: MutableSequence[str],
+        parts: t.MutableSequenceOf[str],
     ) -> None:
         """Add MUST and MAY to objectclass parts list."""
         if oc_data.must:
-            must_list_str: MutableSequence[str] = list(oc_data.must)
+            must_list_str: t.MutableSequenceOf[str] = list(oc_data.must)
             if len(must_list_str) == 1:
                 parts.append(f"MUST {must_list_str[0]}")
             else:
                 must_str = " $ ".join(must_list_str)
                 parts.append(f"MUST ( {must_str} )")
         if oc_data.may:
-            may_list_str: MutableSequence[str] = list(oc_data.may)
+            may_list_str: t.MutableSequenceOf[str] = list(oc_data.may)
             if len(may_list_str) == 1:
                 parts.append(f"MAY {may_list_str[0]}")
             else:
@@ -55,11 +54,11 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _add_objectclass_sup(
         oc_data: m.Ldif.SchemaObjectClass,
-        parts: MutableSequence[str],
+        parts: t.MutableSequenceOf[str],
     ) -> None:
         """Add SUP to objectclass parts list."""
         if oc_data.sup:
-            sup_list_str: MutableSequence[str] = list(oc_data.sup)
+            sup_list_str: t.MutableSequenceOf[str] = list(oc_data.sup)
             if len(sup_list_str) == 1:
                 parts.append(f"SUP {sup_list_str[0]}")
             else:
@@ -69,7 +68,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _apply_trailing_spaces(
         attr_data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        parts: MutableSequence[str],
+        parts: t.MutableSequenceOf[str],
     ) -> None:
         """Apply trailing spaces from metadata if available."""
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
@@ -85,9 +84,9 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _build_attribute_parts_from_model(
         attr_data: m.Ldif.SchemaAttribute,
-    ) -> MutableSequence[str]:
+    ) -> t.MutableSequenceOf[str]:
         """Build RFC 4512 attribute definition parts (simple version)."""
-        parts: MutableSequence[str] = [f"( {attr_data.oid}"]
+        parts: t.MutableSequenceOf[str] = [f"( {attr_data.oid}"]
         if attr_data.name:
             parts.append(f"NAME '{attr_data.name}'")
         if attr_data.desc:
@@ -124,7 +123,7 @@ class FlextLdifUtilitiesSchema:
             return f"NAME '{attr_data.name}'"
         name_format = getattr(schema_details, "name_format", "single")
         name_values_ = getattr(schema_details, "name_values", [])
-        name_values: MutableSequence[str] = (
+        name_values: t.MutableSequenceOf[str] = (
             [str(v) for v in name_values_] if u.list_like(name_values_) else []
         )
         if name_format == "multiple" and name_values:
@@ -135,9 +134,9 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _build_objectclass_parts_from_model(
         oc_data: m.Ldif.SchemaObjectClass,
-    ) -> MutableSequence[str]:
+    ) -> t.MutableSequenceOf[str]:
         """Build RFC 4512 objectClass definition parts (extracted to reduce complexity)."""
-        parts: MutableSequence[str] = [f"( {oc_data.oid}"]
+        parts: t.MutableSequenceOf[str] = [f"( {oc_data.oid}"]
         if oc_data.name:
             parts.append(f"NAME '{oc_data.name}'")
         if oc_data.desc:
@@ -158,8 +157,8 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _build_obsolete_part(
         attr_data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        parts: MutableSequence[str],
-        field_order: MutableSequence[str] | None,
+        parts: t.MutableSequenceOf[str],
+        field_order: t.MutableSequenceOf[str] | None,
         *,
         restore_position: bool = False,
     ) -> None:
@@ -241,9 +240,9 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _convert_sequence_to_str_list(
-        seq: MutableSequence[t.Ldif.Scalar],
-    ) -> MutableSequence[str]:
-        """Convert Sequence to MutableSequence[str] (internal helper, no loose functions)."""
+        seq: t.MutableSequenceOf[t.Ldif.Scalar],
+    ) -> t.MutableSequenceOf[str]:
+        """Convert Sequence to t.MutableSequenceOf[str] (internal helper, no loose functions)."""
         return [str(item) for item in seq]
 
     @staticmethod
@@ -375,7 +374,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _extract_objectclass_must_may(
         oc_definition: str,
-    ) -> tuple[MutableSequence[str] | None, MutableSequence[str] | None]:
+    ) -> tuple[t.MutableSequenceOf[str] | None, t.MutableSequenceOf[str] | None]:
         """Extract MUST and MAY attributes from objectClass definition."""
         must = None
         must_match = re.search(
@@ -407,9 +406,9 @@ class FlextLdifUtilitiesSchema:
         parse_callback: Callable[[str], r[SchemaModelT]],
         line_prefix: str,
         model_type: type[SchemaModelT],
-    ) -> MutableSequence[SchemaModelT]:
+    ) -> t.MutableSequenceOf[SchemaModelT]:
         """Generic extraction of schema items from LDIF content lines."""
-        items: MutableSequence[SchemaModelT] = []
+        items: t.MutableSequenceOf[SchemaModelT] = []
         for raw_line in ldif_content.split("\n"):
             line = raw_line.strip()
             if line.lower().startswith(line_prefix.lower()):
@@ -431,7 +430,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def _format_attribute_list(
-        attr_list: str | MutableSequence[str] | None,
+        attr_list: str | t.MutableSequenceOf[str] | None,
         prefix: str,
     ) -> str | None:
         """Format attribute list (MUST/MAY) for objectClass definition."""
@@ -445,7 +444,9 @@ class FlextLdifUtilitiesSchema:
         return f"{prefix} ( {' $ '.join(attr_strs)} )"
 
     @staticmethod
-    def _format_sup_list(sup_value: str | MutableSequence[str] | None) -> str | None:
+    def _format_sup_list(
+        sup_value: str | t.MutableSequenceOf[str] | None,
+    ) -> str | None:
         """Format SUP (superior) list for objectClass definition."""
         if not sup_value:
             return None
@@ -457,7 +458,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _get_field_order(
         attr_data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-    ) -> MutableSequence[str] | None:
+    ) -> t.MutableSequenceOf[str] | None:
         """Extract field order from metadata if available."""
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
             return None
@@ -471,7 +472,7 @@ class FlextLdifUtilitiesSchema:
         return None
 
     @staticmethod
-    def _split_schema_values(value: str) -> MutableSequence[str]:
+    def _split_schema_values(value: str) -> t.MutableSequenceOf[str]:
         return [item.strip() for item in value.strip().split("$")]
 
     @staticmethod
@@ -479,7 +480,7 @@ class FlextLdifUtilitiesSchema:
         oc_data: m.Ldif.SchemaObjectClass,
         *,
         restore_original: bool = True,
-    ) -> MutableSequence[str] | None:
+    ) -> t.MutableSequenceOf[str] | None:
         """Try to restore original format from metadata for objectClass."""
         if not restore_original or not oc_data.metadata:
             return None
@@ -497,7 +498,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _try_restore_original_format(
         attr_data: m.Ldif.SchemaAttribute,
-    ) -> MutableSequence[str] | None:
+    ) -> t.MutableSequenceOf[str] | None:
         """Try to restore original format from metadata for perfect round-trip."""
         if not (
             attr_data.metadata
@@ -558,7 +559,7 @@ class FlextLdifUtilitiesSchema:
             return None
         syntax_extensions: MutableMapping[
             str,
-            bool | MutableSequence[str] | str | None,
+            bool | t.MutableSequenceOf[str] | str | None,
         ] = {}
         validate_result = uo.validate_format(syntax)
         if validate_result.failure:
@@ -583,7 +584,7 @@ class FlextLdifUtilitiesSchema:
         data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         expected_type: (type[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]),
         type_name: str,
-        parts_builder: Callable[..., MutableSequence[str]],
+        parts_builder: Callable[..., t.MutableSequenceOf[str]],
     ) -> str:
         """Generic helper for writing schema elements (DRY pattern)."""
         if not isinstance(data, expected_type):
@@ -601,7 +602,7 @@ class FlextLdifUtilitiesSchema:
         attr_data: m.Ldif.SchemaAttribute,
         *,
         restore_original: bool = True,
-    ) -> MutableSequence[str]:
+    ) -> t.MutableSequenceOf[str]:
         """Build RFC 4512 attribute parts with full metadata restoration."""
         if restore_original:
             original_parts = FlextLdifUtilitiesSchema._try_restore_original_format(
@@ -609,7 +610,7 @@ class FlextLdifUtilitiesSchema:
             )
             if original_parts:
                 return original_parts
-        parts: MutableSequence[str] = [f"( {attr_data.oid}"]
+        parts: t.MutableSequenceOf[str] = [f"( {attr_data.oid}"]
         field_order = FlextLdifUtilitiesSchema._get_field_order(attr_data)
         name_part = FlextLdifUtilitiesSchema._build_name_part(
             attr_data,
@@ -644,7 +645,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def build_available_attributes_set(
-        attributes: MutableSequence[m.Ldif.SchemaAttribute],
+        attributes: t.MutableSequenceOf[m.Ldif.SchemaAttribute],
     ) -> set[str]:
         """Build set of available attribute names (lowercase) for dependency validation."""
         available: set[str] = set()
@@ -674,7 +675,7 @@ class FlextLdifUtilitiesSchema:
         oc_data: m.Ldif.SchemaObjectClass,
         *,
         restore_original: bool = True,
-    ) -> MutableSequence[str]:
+    ) -> t.MutableSequenceOf[str]:
         """Build RFC 4512 objectClass parts with full metadata restoration."""
         original_parts = (
             FlextLdifUtilitiesSchema._try_restore_objectclass_original_format(
@@ -684,7 +685,7 @@ class FlextLdifUtilitiesSchema:
         )
         if original_parts:
             return original_parts
-        parts: MutableSequence[str] = [f"( {oc_data.oid}"]
+        parts: t.MutableSequenceOf[str] = [f"( {oc_data.oid}"]
         name_part = FlextLdifUtilitiesSchema._build_name_part(
             oc_data,
             restore_format=True,
@@ -803,7 +804,7 @@ class FlextLdifUtilitiesSchema:
     def extract_attributes_from_lines(
         ldif_content: str,
         parse_callback: Callable[[str], r[m.Ldif.SchemaAttribute]],
-    ) -> MutableSequence[m.Ldif.SchemaAttribute]:
+    ) -> t.MutableSequenceOf[m.Ldif.SchemaAttribute]:
         """Extract and parse all attributeTypes from LDIF content lines."""
         return FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
             ldif_content,
@@ -816,7 +817,7 @@ class FlextLdifUtilitiesSchema:
     def extract_objectclasses_from_lines(
         ldif_content: str,
         parse_callback: Callable[[str], r[m.Ldif.SchemaObjectClass]],
-    ) -> MutableSequence[m.Ldif.SchemaObjectClass]:
+    ) -> t.MutableSequenceOf[m.Ldif.SchemaObjectClass]:
         """Extract and parse all objectClasses from LDIF content lines."""
         return FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
             ldif_content,
@@ -828,7 +829,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def is_attribute_in_list(
         attribute_name: str | None,
-        attribute_list: MutableSequence[str] | set[str] | None,
+        attribute_list: t.MutableSequenceOf[str] | set[str] | None,
     ) -> bool:
         """Check if attribute exists in list or set (case-insensitive)."""
         if not attribute_name or not attribute_list:
@@ -901,7 +902,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def normalize_name(
         name_value: str | None,
-        suffixes_to_remove: MutableSequence[str] | None = None,
+        suffixes_to_remove: t.MutableSequenceOf[str] | None = None,
         char_replacements: t.MutableStrMapping | None = None,
     ) -> str | None:
         """Normalize attribute NAME field."""

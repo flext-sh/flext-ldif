@@ -7,7 +7,6 @@ import struct
 from collections.abc import (
     Mapping,
     MutableMapping,
-    MutableSequence,
 )
 from typing import ClassVar, Self, override
 
@@ -142,7 +141,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         return starts_like_oud or is_non_legacy_acl
 
     @override
-    def resolve_acl_attributes(self) -> MutableSequence[str]:
+    def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
         """Get RFC + OUD extensions."""
         return [*self.RFC_ACL_ATTRIBUTES, *self.OUD_ACL_ATTRIBUTES]
 
@@ -191,7 +190,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 perms = None
         if not perms:
             return r[str].fail("ACL model has no permissions t.JsonValue")
-        ops: MutableSequence[str] = [
+        ops: t.MutableSequenceOf[str] = [
             field_name
             for field_name in (
                 "read",
@@ -273,7 +272,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             if target_data:
                 attrs_raw = target_data.get("attributes")
                 dn_raw = target_data.get("target_dn")
-                attrs: MutableSequence[str] = (
+                attrs: t.MutableSequenceOf[str] = (
                     [item for item in attrs_raw if isinstance(item, str)]
                     if isinstance(attrs_raw, list)
                     else []
@@ -339,8 +338,8 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     def _finalize_aci(
         self,
-        current_aci: MutableSequence[str],
-        acls: MutableSequence[m.Ldif.Acl],
+        current_aci: t.MutableSequenceOf[str],
+        acls: t.MutableSequenceOf[m.Ldif.Acl],
     ) -> None:
         """Parse and add accumulated ACI to ACL list."""
         if current_aci:

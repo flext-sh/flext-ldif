@@ -12,9 +12,6 @@ from __future__ import annotations
 
 import re
 import struct
-from collections.abc import (
-    MutableSequence,
-)
 from typing import Annotated, Self
 
 from flext_cli import u
@@ -22,6 +19,7 @@ from flext_ldif import (
     FlextLdifModelsBases as mb,
     FlextLdifModelsDomainMetadata as mdm,
     c,
+    t,
 )
 
 
@@ -319,7 +317,7 @@ class FlextLdifModelsDomainSchema:
             u.Field(description="Object class description (RFC 4512 DESC)"),
         ] = None
         sup: Annotated[
-            str | MutableSequence[str] | None,
+            str | t.MutableSequenceOf[str] | None,
             u.Field(
                 description="Superior object class(es) (RFC 4512 SUP)",
             ),
@@ -331,11 +329,11 @@ class FlextLdifModelsDomainSchema:
             ),
         ] = "STRUCTURAL"
         must: Annotated[
-            MutableSequence[str] | None,
+            t.MutableSequenceOf[str] | None,
             u.Field(description="Required attributes (RFC 4512 MUST)"),
         ] = None
         may: Annotated[
-            MutableSequence[str] | None,
+            t.MutableSequenceOf[str] | None,
             u.Field(description="Optional attributes (RFC 4512 MAY)"),
         ] = None
         metadata: Annotated[

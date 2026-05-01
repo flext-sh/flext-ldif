@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
 from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import ClassVar, Final
@@ -324,7 +321,7 @@ class FlextLdifConstants(FlextCliConstants):
         DEFAULT_STRICT_VALIDATION: Final[bool] = True
 
         SERVER_TYPE_ALIASES: Final[
-            Mapping[str, FlextLdifConstantsEnums.ServerTypes]
+            t.MappingKV[str, FlextLdifConstantsEnums.ServerTypes]
         ] = MappingProxyType({
             "active_directory": FlextLdifConstantsEnums.ServerTypes.AD,
             "activedirectory": FlextLdifConstantsEnums.ServerTypes.AD,

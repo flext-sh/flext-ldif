@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 import re
-from collections.abc import (
-    MutableSequence,
-)
 from pathlib import Path
 from typing import override
 
@@ -16,6 +13,7 @@ from flext_ldif import (
     m,
     p,
     r,
+    t,
     u,
 )
 
@@ -32,16 +30,16 @@ class FlextLdifDetector(FlextLdifServiceBase):
         *,
         condition: bool,
         description: str,
-        patterns: MutableSequence[str],
+        patterns: t.MutableSequenceOf[str],
     ) -> None:
         """Add pattern description if condition is met."""
         if condition:
             patterns.append(description)
 
     @staticmethod
-    def _get_all_server_types() -> MutableSequence[str]:
+    def _get_all_server_types() -> t.MutableSequenceOf[str]:
         """Get all supported server types from constants."""
-        types: MutableSequence[str] = u.Ldif.get_all_server_types()
+        types: t.MutableSequenceOf[str] = u.Ldif.get_all_server_types()
         return types
 
     @staticmethod
@@ -248,7 +246,9 @@ class FlextLdifDetector(FlextLdifServiceBase):
         if not scores:
             return (rfc_server_type, 0.0)
         max_score: int = max(scores.values()) if scores else 0
-        scores_values: MutableSequence[int] = list(scores.values()) if scores else []
+        scores_values: t.MutableSequenceOf[int] = (
+            list(scores.values()) if scores else []
+        )
         total_score: int = sum(scores_values)
         if max_score == 0:
             return (rfc_server_type, 0.0)
@@ -267,7 +267,7 @@ class FlextLdifDetector(FlextLdifServiceBase):
         description: str,
         content: str,
         content_lower: str,
-        patterns: MutableSequence[str],
+        patterns: t.MutableSequenceOf[str],
         *,
         case_sensitive: bool = False,
     ) -> None:
@@ -285,7 +285,7 @@ class FlextLdifDetector(FlextLdifServiceBase):
         self,
         constants: type[p.Ldif.ServerDetectionConstants] | None,
         content: str,
-        patterns: MutableSequence[str],
+        patterns: t.MutableSequenceOf[str],
     ) -> None:
         """Extract OID-specific patterns (ACLs, etc.)."""
         if not constants:
@@ -307,7 +307,7 @@ class FlextLdifDetector(FlextLdifServiceBase):
         pattern_attr: str,
         description: str,
         content_lower: str,
-        patterns: MutableSequence[str],
+        patterns: t.MutableSequenceOf[str],
     ) -> None:
         """Extract pattern using pattern attribute from constants."""
         constants = self._get_server_constants(server_type)
@@ -319,9 +319,9 @@ class FlextLdifDetector(FlextLdifServiceBase):
                 patterns=patterns,
             )
 
-    def _extract_patterns(self, content: str) -> MutableSequence[str]:
+    def _extract_patterns(self, content: str) -> t.MutableSequenceOf[str]:
         """Extract detected patterns from content."""
-        patterns: MutableSequence[str] = []
+        patterns: t.MutableSequenceOf[str] = []
         content_lower = content.lower()
         oid_server_type = u.Ldif.normalize_server_type(
             u.Ldif.get_server_type_value("OID"),
@@ -477,13 +477,13 @@ class FlextLdifDetector(FlextLdifServiceBase):
         server_type: str,
         pattern: str,
         weight: int,
-        attributes: MutableSequence[str] | frozenset[str],
+        attributes: t.MutableSequenceOf[str] | frozenset[str],
         content: str,
         content_lower: str,
         scores: dict[str, int],
         *,
         case_sensitive: bool = False,
-        objectclasses: MutableSequence[str] | frozenset[str] | None = None,
+        objectclasses: t.MutableSequenceOf[str] | frozenset[str] | None = None,
     ) -> None:
         """Update scores for a server type based on pattern, attribute, and objectClass matches."""
         search_content = content if case_sensitive else content_lower

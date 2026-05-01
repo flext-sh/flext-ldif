@@ -12,7 +12,7 @@ from flext_ldap import c
 from flext_tests import FlextTestsConstants
 from frozenlist import FrozenList
 
-from tests import m
+from tests import m, t
 
 
 class TestsFlextLdifConstants(FlextTestsConstants, c):
@@ -347,7 +347,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             {"mail", "telephoneNumber", "description"},
         )
         ENTRIES_NORMALIZE_CASES: Final[
-            Mapping[
+            t.MappingKV[
                 str,
                 tuple[
                     str | list[str] | tuple[str, ...] | set[str] | frozenset[str],
@@ -366,7 +366,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             },
         )
         ENTRIES_DN_DICT_CASES: Final[
-            Mapping[str, tuple[dict[str, str | list[str]], bool]]
+            t.MappingKV[str, tuple[dict[str, str | list[str]], bool]]
         ] = MappingProxyType(
             {
                 "str_dn": ({"dn": "cn=x,dc=example,dc=com"}, True),
@@ -486,7 +486,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         )
         EDGE_CASE_MIN_MULTIVALUE_COUNT: Final[int] = 10
         EDGE_CASE_INLINE_PARSE_RULES: Final[
-            Mapping[str, tuple[str, int, int, bool]]
+            t.MappingKV[str, tuple[str, int, int, bool]]
         ] = MappingProxyType(
             {
                 "unicode": (EDGE_CASE_UNICODE_LDIF, 1, 0, True),
@@ -513,7 +513,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         )
 
         ACL_REGISTRY_GET_ACL_ATTRIBUTES_DATA: Final[
-            Mapping[str, tuple[str, str | None, tuple[str, ...], tuple[str, ...]]]
+            t.MappingKV[str, tuple[str, str | None, tuple[str, ...], tuple[str, ...]]]
         ] = MappingProxyType(
             {
                 "get_acl_attributes_rfc_foundation": (
@@ -561,7 +561,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             },
         )
         ACL_REGISTRY_IS_ACL_ATTRIBUTE_DATA: Final[
-            Mapping[str, tuple[str, str, str | None, bool]]
+            t.MappingKV[str, tuple[str, str, str | None, bool]]
         ] = MappingProxyType(
             {
                 "is_acl_attribute_rfc_aci": ("valid_rfc", "aci", None, True),
@@ -1237,7 +1237,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             },
         )
         PROCESSING_OPTIONS_CASES: Final[
-            Mapping[
+            t.MappingKV[
                 str,
                 tuple[Literal["transform", "validate"], bool, int, int],
             ]

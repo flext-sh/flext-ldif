@@ -5,7 +5,6 @@ from __future__ import annotations
 import struct
 from collections.abc import (
     MutableMapping,
-    MutableSequence,
 )
 from typing import Annotated, Final, override
 
@@ -19,7 +18,7 @@ class FlextLdifCategorization(s):
 
     @staticmethod
     def _build_rejection_tracker() -> MutableMapping[
-        str, MutableSequence[m.Ldif.Entry]
+        str, t.MutableSequenceOf[m.Ldif.Entry]
     ]:
         """Build the canonical rejection tracker structure for one categorization run."""
         return {
@@ -30,7 +29,7 @@ class FlextLdifCategorization(s):
 
     categorization_rules: Annotated[
         m.Ldif.CategoryRules
-        | MutableMapping[str, str | MutableSequence[str] | None]
+        | MutableMapping[str, str | t.MutableSequenceOf[str] | None]
         | None,
         u.Field(
             default=None,
@@ -40,7 +39,7 @@ class FlextLdifCategorization(s):
     ]
     schema_whitelist_rules: Annotated[
         m.Ldif.WhitelistRules
-        | MutableMapping[str, str | MutableSequence[str] | bool | None]
+        | MutableMapping[str, str | t.MutableSequenceOf[str] | bool | None]
         | None,
         u.Field(
             default=None,
@@ -49,7 +48,7 @@ class FlextLdifCategorization(s):
         ),
     ]
     forbidden_attributes: Annotated[
-        MutableSequence[str] | None,
+        t.MutableSequenceOf[str] | None,
         u.Field(
             default=None,
             exclude=True,
@@ -57,7 +56,7 @@ class FlextLdifCategorization(s):
         ),
     ]
     forbidden_objectclasses: Annotated[
-        MutableSequence[str] | None,
+        t.MutableSequenceOf[str] | None,
         u.Field(
             default=None,
             exclude=True,
@@ -95,15 +94,17 @@ class FlextLdifCategorization(s):
     _schema_whitelist_rules: m.Ldif.WhitelistRules | None = u.PrivateAttr(
         default_factory=lambda: None
     )
-    _forbidden_attributes: MutableSequence[str] = u.PrivateAttr(default_factory=list)
-    _forbidden_objectclasses: MutableSequence[str] = u.PrivateAttr(
+    _forbidden_attributes: t.MutableSequenceOf[str] = u.PrivateAttr(
+        default_factory=list
+    )
+    _forbidden_objectclasses: t.MutableSequenceOf[str] = u.PrivateAttr(
         default_factory=list,
     )
     _base_dn: str | None = u.PrivateAttr(default_factory=lambda: None)
     _server_type: str = u.PrivateAttr(
         default_factory=lambda: c.Ldif.ServerTypes.RFC.value,
     )
-    _rejection_tracker: MutableMapping[str, MutableSequence[m.Ldif.Entry]] = (
+    _rejection_tracker: MutableMapping[str, t.MutableSequenceOf[m.Ldif.Entry]] = (
         u.PrivateAttr(
             default_factory=_build_rejection_tracker,
         )
@@ -168,13 +169,13 @@ class FlextLdifCategorization(s):
 
     @staticmethod
     def _filter_entries_by_base_dn(
-        entries: MutableSequence[m.Ldif.Entry],
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
         base_dn: str,
-    ) -> tuple[MutableSequence[m.Ldif.Entry], MutableSequence[m.Ldif.Entry]]:
+    ) -> tuple[t.MutableSequenceOf[m.Ldif.Entry], t.MutableSequenceOf[m.Ldif.Entry]]:
         """Filter entries by base DN using u.Ldif."""
-        model_entries: MutableSequence[m.Ldif.Entry] = list(entries)
-        included: MutableSequence[m.Ldif.Entry] = []
-        excluded: MutableSequence[m.Ldif.Entry] = []
+        model_entries: t.MutableSequenceOf[m.Ldif.Entry] = list(entries)
+        included: t.MutableSequenceOf[m.Ldif.Entry] = []
+        excluded: t.MutableSequenceOf[m.Ldif.Entry] = []
         for entry in model_entries:
             dn_str = entry.dn.value if entry.dn else None
             if dn_str and u.Ldif.is_under_base(dn_str, base_dn):
@@ -199,13 +200,13 @@ class FlextLdifCategorization(s):
     @staticmethod
     def _append_rejected_entries(
         filtered: m.Ldif.FlexibleCategories,
-        rejected_entries: MutableSequence[m.Ldif.Entry],
+        rejected_entries: t.MutableSequenceOf[m.Ldif.Entry],
     ) -> None:
         """Append rejected entries into the canonical REJECTED bucket."""
         if not rejected_entries:
             return
         rejected_category = c.Ldif.Category.REJECTED
-        existing_rejected_raw: MutableSequence[m.Ldif.Entry] = filtered.get(
+        existing_rejected_raw: t.MutableSequenceOf[m.Ldif.Entry] = filtered.get(
             rejected_category,
             [],
         )
@@ -260,7 +261,7 @@ class FlextLdifCategorization(s):
         if not base_dn or not categories:
             return categories
         filtered = m.Ldif.FlexibleCategories()
-        excluded_entries: MutableSequence[m.Ldif.Entry] = []
+        excluded_entries: t.MutableSequenceOf[m.Ldif.Entry] = []
         filterable_categories: t.MutableBoolMapping = {
             c.Ldif.Category.HIERARCHY: True,
             c.Ldif.Category.USERS: True,
@@ -272,7 +273,7 @@ class FlextLdifCategorization(s):
                 filtered[category] = []
                 continue
             if category in filterable_categories:
-                entries_list: MutableSequence[m.Ldif.Entry] = [
+                entries_list: t.MutableSequenceOf[m.Ldif.Entry] = [
                     entry_model
                     for entry_raw in entries
                     if (
@@ -312,7 +313,7 @@ class FlextLdifCategorization(s):
 
     def categorize_entries(
         self,
-        entries: MutableSequence[m.Ldif.Entry],
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
     ) -> r[m.Ldif.FlexibleCategories]:
         """Categorize entries into 6 categories."""
         category_lists: MutableMapping[str, list[m.Ldif.Entry]] = {
@@ -485,7 +486,7 @@ class FlextLdifCategorization(s):
             c.Ldif.Category.REJECTED,
         ):
             filtered[cat] = []
-        all_excluded_entries: MutableSequence[m.Ldif.Entry] = []
+        all_excluded_entries: t.MutableSequenceOf[m.Ldif.Entry] = []
         for category, entries in categories.items():
             if not entries:
                 continue
@@ -495,7 +496,7 @@ class FlextLdifCategorization(s):
                 c.Ldif.Category.GROUPS,
                 c.Ldif.Category.ACL,
             }:
-                entries_list: MutableSequence[m.Ldif.Entry] = [
+                entries_list: t.MutableSequenceOf[m.Ldif.Entry] = [
                     entry_model
                     for entry_raw in entries
                     if (
@@ -545,11 +546,11 @@ class FlextLdifCategorization(s):
 
     def filter_schema_by_oids(
         self,
-        schema_entries: MutableSequence[m.Ldif.Entry],
-    ) -> r[MutableSequence[m.Ldif.Entry]]:
+        schema_entries: t.MutableSequenceOf[m.Ldif.Entry],
+    ) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Filter schema entries by OID whitelist."""
         if not self._schema_whitelist_rules:
-            return r[MutableSequence[m.Ldif.Entry]].ok(schema_entries)
+            return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(schema_entries)
         allowed_oids: t.MutableFrozensetMapping = {
             "allowed_attribute_oids": frozenset(
                 self._schema_whitelist_rules.allowed_attribute_oids,
@@ -577,9 +578,9 @@ class FlextLdifCategorization(s):
                     filtered_entries=u.count(filtered),
                     removed_entries=u.count(schema_entries) - u.count(filtered),
                 )
-                return r[MutableSequence[m.Ldif.Entry]].ok(filtered)
+                return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(filtered)
         error_msg = result.error or "Failed to filter entries"
-        return r[MutableSequence[m.Ldif.Entry]].fail(error_msg)
+        return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(error_msg)
 
     def matches_schema_entry(self, entry: m.Ldif.Entry) -> bool:
         """Check if entry is a schema definition."""
@@ -601,8 +602,8 @@ class FlextLdifCategorization(s):
 
     def validate_dns(
         self,
-        entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
-    ) -> r[MutableSequence[m.Ldif.Entry]]:
+        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+    ) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Validate and normalize all DNs to RFC 4514."""
         normalized_entries = (
             entries.entries if isinstance(entries, m.Ldif.ParseResponse) else entries
@@ -642,7 +643,7 @@ class FlextLdifCategorization(s):
             dn_obj = m.Ldif.DN(value=normalized_dn)
             return r[m.Ldif.Entry].ok(entry.model_copy(update={"dn": dn_obj}))
 
-        validated: MutableSequence[m.Ldif.Entry] = [
+        validated: t.MutableSequenceOf[m.Ldif.Entry] = [
             validation_result.value
             for entry in normalized_entries
             if (validation_result := validate_entry(entry)).success
@@ -667,7 +668,7 @@ class FlextLdifCategorization(s):
                 sample_count=len(sample_rejected_dns),
                 rejected_dns_preview=", ".join(sample_rejected_dns),
             )
-        return r[MutableSequence[m.Ldif.Entry]].ok(validated)
+        return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(validated)
 
     def _build_category_map_from_rules(
         self,
@@ -707,7 +708,7 @@ class FlextLdifCategorization(s):
         entry_ocs = {oc.lower() for oc in u.Ldif.get_objectclass_names(entry)}
         return any(oc.lower() in entry_ocs for oc in priority_classes)
 
-    def _get_default_priority_order(self) -> MutableSequence[str]:
+    def _get_default_priority_order(self) -> t.MutableSequenceOf[str]:
         """Get default category priority order."""
         return [
             c.Ldif.Category.USERS,
@@ -719,7 +720,7 @@ class FlextLdifCategorization(s):
     def _get_priority_order_from_constants(
         self,
         constants: type[c.Ldif] | None,
-    ) -> MutableSequence[str]:
+    ) -> t.MutableSequenceOf[str]:
         """Get priority order from constants or use default."""
         if constants is not None and hasattr(constants, "CATEGORIZATION_PRIORITY"):
 
@@ -734,16 +735,16 @@ class FlextLdifCategorization(s):
                     c.Ldif.Category.REJECTED,
                 }
 
-            priority_list: MutableSequence[str] = getattr(
+            priority_list: t.MutableSequenceOf[str] = getattr(
                 constants,
                 "CATEGORIZATION_PRIORITY",
                 [],
             )
-            filtered: MutableSequence[str] = [
+            filtered: t.MutableSequenceOf[str] = [
                 item for item in priority_list if is_valid_category(item)
             ]
             valid_categories: frozenset[str] = frozenset(c.Ldif.Category)
-            result: MutableSequence[str] = [
+            result: t.MutableSequenceOf[str] = [
                 item for item in filtered if item in valid_categories
             ]
             return result
@@ -767,11 +768,13 @@ class FlextLdifCategorization(s):
     def _match_entry_to_category(
         self,
         entry: m.Ldif.Entry,
-        priority_order: MutableSequence[str],
+        priority_order: t.MutableSequenceOf[str],
         category_map: t.MutableFrozensetMapping,
     ) -> tuple[str, str | None]:
         """Match entry to category using priority order and category map."""
-        objectclass_names: MutableSequence[str] = u.Ldif.get_objectclass_names(entry)
+        objectclass_names: t.MutableSequenceOf[str] = u.Ldif.get_objectclass_names(
+            entry
+        )
         entry_ocs: set[str] = {oc.lower() for oc in objectclass_names}
         for category in priority_order:
             if category not in category_map:
@@ -853,11 +856,11 @@ class FlextLdifCategorization(s):
 
     def _update_metadata_for_filtered_entries(
         self,
-        entries: MutableSequence[m.Ldif.Entry],
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
         *,
         passed: bool,
         rejection_reason: str | None = None,
-    ) -> MutableSequence[m.Ldif.Entry]:
+    ) -> t.MutableSequenceOf[m.Ldif.Entry]:
         """Update metadata for filtered entries using u."""
         return [
             u.Ldif.update_entry_statistics(

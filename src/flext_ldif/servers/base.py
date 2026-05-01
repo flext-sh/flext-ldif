@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import (
     Callable,
-    MutableSequence,
 )
 from typing import ClassVar, Self, overload, override
 
@@ -136,7 +135,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         self,
         *,
         ldif_text: None = None,
-        entries: MutableSequence[m.Ldif.Entry],
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
         operation: str | None = None,
     ) -> str: ...
 
@@ -144,14 +143,14 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     def __call__(
         self,
         ldif_text: str | None = None,
-        entries: MutableSequence[m.Ldif.Entry] | None = None,
+        entries: t.MutableSequenceOf[m.Ldif.Entry] | None = None,
         operation: str | None = None,
     ) -> m.Ldif.Entry | str: ...
 
     def __call__(
         self,
         ldif_text: str | None = None,
-        entries: MutableSequence[m.Ldif.Entry] | None = None,
+        entries: t.MutableSequenceOf[m.Ldif.Entry] | None = None,
         operation: str | None = None,
     ) -> m.Ldif.Entry | str:
         """Callable interface - use as processor."""
@@ -170,7 +169,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     def _extract_execute_params(
         cls,
         kwargs: t.MutableJsonMapping,
-    ) -> tuple[str | None, MutableSequence[m.Ldif.Entry] | None, str | None]:
+    ) -> tuple[str | None, t.MutableSequenceOf[m.Ldif.Entry] | None, str | None]:
         """Extract type-safe execution parameters from kwargs."""
         return (
             cls._extract_ldif_text(kwargs),
@@ -311,7 +310,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     @staticmethod
     def _extract_entries(
         kwargs: t.MutableJsonMapping,
-    ) -> MutableSequence[m.Ldif.Entry] | None:
+    ) -> t.MutableSequenceOf[m.Ldif.Entry] | None:
         """Extract and validate entries parameter."""
         if "entries" not in kwargs:
             return None
@@ -319,16 +318,16 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         if raw is None:
             return None
         if not isinstance(raw, list):
-            msg = f"Expected MutableSequence[Entry | None] for entries, got {type(raw)}"
+            msg = f"Expected t.MutableSequenceOf[Entry | None] for entries, got {type(raw)}"
             raise TypeError(msg)
         if not raw:
             return []
-        entries: MutableSequence[m.Ldif.Entry] = []
+        entries: t.MutableSequenceOf[m.Ldif.Entry] = []
         for item in raw:
             if isinstance(item, m.Ldif.Entry):
                 entries.append(item)
             else:
-                msg = f"Expected MutableSequence[Entry] for entries, got item of type {type(item)}"
+                msg = f"Expected t.MutableSequenceOf[Entry] for entries, got item of type {type(item)}"
                 raise TypeError(msg)
         return entries
 
@@ -367,7 +366,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         self,
         *,
         ldif_text: str | None = None,
-        entries: MutableSequence[m.Ldif.Entry] | None = None,
+        entries: t.MutableSequenceOf[m.Ldif.Entry] | None = None,
         operation: str | None = None,
     ) -> r[m.Ldif.Entry]:
         """Execute quirk operation with auto-detection."""
@@ -437,7 +436,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     def write(
         self,
-        entries: MutableSequence[m.Ldif.Entry],
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
         write_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> r[str]:
         """Write Entry models to LDIF text."""

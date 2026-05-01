@@ -87,7 +87,7 @@ class _ParserHelper:
         self._content = content
         self._lines = content.splitlines()  # Loads all lines into memory
 
-    def parse(self) -> Iterator[tuple[str, Mapping[str, list[str]]]]:
+    def parse(self) -> Iterator[tuple[str, t.MappingKV[str, list[str]]]]:
         """Parse LDIF content and yield (dn, attributes) tuples."""
         # Process all lines already in memory
         pass
@@ -136,7 +136,9 @@ from flext_ldif import p, r, FlextLdifModels
 
 
 # LDIF-specific validation
-def validate_ldif_structure(entries: Sequence[FlextLdifModels.Entry]) -> p.Result[bool]:
+def validate_ldif_structure(
+    entries: t.SequenceOf[FlextLdifModels.Entry],
+) -> p.Result[bool]:
     """Validate LDIF entries for common issues."""
     for entry in entries:
         # Check DN format

@@ -10,9 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-)
 from typing import Annotated, ClassVar
 
 from flext_cli import FlextCliModels, t, u
@@ -74,7 +71,7 @@ class FlextLdifModels(FlextCliModels):
                 u.Field(),
             ] = u.Field(default_factory=dict)
             target_dn: Annotated[str, u.Field()] = "entry"
-            target_attrs: MutableSequence[str] = u.Field(default_factory=list)
+            target_attrs: t.MutableSequenceOf[str] = u.Field(default_factory=list)
             acl_filter: Annotated[str, u.Field()] = ""
             acl_constraint: Annotated[str, u.Field()] = ""
             bindmode: Annotated[str, u.Field()] = ""

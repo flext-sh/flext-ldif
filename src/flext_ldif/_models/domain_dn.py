@@ -9,7 +9,6 @@ from __future__ import annotations
 import re
 from collections.abc import (
     MutableMapping,
-    MutableSequence,
 )
 from typing import Annotated, ClassVar, Self, override
 
@@ -122,11 +121,11 @@ class FlextLdifModelsDomainDN:
         @classmethod
         def deduplicate_transformations(
             cls,
-            v: MutableSequence[str],
-        ) -> MutableSequence[str]:
+            v: t.MutableSequenceOf[str],
+        ) -> t.MutableSequenceOf[str]:
             """Remove duplicate transformations while preserving order."""
             seen: set[str] = set()
-            result: MutableSequence[str] = []
+            result: t.MutableSequenceOf[str] = []
             for item in v:
                 if item not in seen:
                     seen.add(item)
@@ -172,11 +171,11 @@ class FlextLdifModelsDomainDN:
             ),
         ] = "valid"
         validation_warnings: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(description="Non-fatal validation warnings"),
         ] = u.Field(default_factory=list)
         validation_errors: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(description="Fatal validation errors"),
         ] = u.Field(default_factory=list)
 
@@ -268,8 +267,8 @@ class FlextLdifModelsDomainDN:
 
         def validate_oud_consistency(self) -> r[bool]:
             """Validate DN case consistency for server conversion."""
-            inconsistencies: MutableSequence[
-                MutableMapping[str, str | int | MutableSequence[str]]
+            inconsistencies: t.MutableSequenceOf[
+                MutableMapping[str, str | int | t.MutableSequenceOf[str]]
             ] = []
             for normalized_dn, variants in self._case_variants.items():
                 if len(variants) > 1:

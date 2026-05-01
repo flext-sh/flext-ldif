@@ -302,7 +302,7 @@ from typing import Literal
 
 def parse(
     self,
-    source: str | Path | Sequence[str | Path],
+    source: str | Path | t.SequenceOf[str | Path],
     *,
     mode: Literal["single", "batch", "paginate"] = "single",
     server_type: str = "rfc",

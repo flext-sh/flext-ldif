@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-)
-
-from flext_ldif import c, m
+from flext_ldif import c, m, t
 
 
 class FlextLdifUtilitiesWriter:
@@ -15,7 +11,7 @@ class FlextLdifUtilitiesWriter:
     @staticmethod
     def add_attribute_flags(
         attr_data: m.Ldif.SchemaAttribute,
-        parts: MutableSequence[str],
+        parts: t.MutableSequenceOf[str],
     ) -> None:
         """Add flags to attribute parts list."""
         if attr_data.single_value:
@@ -30,7 +26,7 @@ class FlextLdifUtilitiesWriter:
     @staticmethod
     def add_attribute_matching_rules(
         attr_data: m.Ldif.SchemaAttribute,
-        parts: MutableSequence[str],
+        parts: t.MutableSequenceOf[str],
     ) -> None:
         """Add matching rules to attribute parts list."""
         if attr_data.equality:
@@ -43,7 +39,7 @@ class FlextLdifUtilitiesWriter:
     @staticmethod
     def add_attribute_syntax(
         attr_data: m.Ldif.SchemaAttribute,
-        parts: MutableSequence[str],
+        parts: t.MutableSequenceOf[str],
     ) -> None:
         """Add syntax and length to attribute parts list."""
         if attr_data.syntax:
@@ -53,7 +49,7 @@ class FlextLdifUtilitiesWriter:
             parts.append(f"SYNTAX {syntax_str}")
 
     @staticmethod
-    def finalize_ldif_text(ldif_lines: MutableSequence[str]) -> str:
+    def finalize_ldif_text(ldif_lines: t.MutableSequenceOf[str]) -> str:
         """Join LDIF lines and ensure proper trailing newline."""
         ldif_text = "\n".join(ldif_lines)
         if ldif_text and (not ldif_text.endswith("\n")):
@@ -64,14 +60,14 @@ class FlextLdifUtilitiesWriter:
     def fold_line(
         line: str,
         width: int = c.Ldif.LINE_FOLD_WIDTH,
-    ) -> MutableSequence[str]:
+    ) -> t.MutableSequenceOf[str]:
         """Fold long LDIF line according to RFC 2849 §3."""
         if not line:
             return [line]
         line_bytes = line.encode(c.Ldif.DEFAULT_ENCODING)
         if len(line_bytes) <= width:
             return [line]
-        folded: MutableSequence[str] = []
+        folded: t.MutableSequenceOf[str] = []
         pos = 0
         while pos < len(line_bytes):
             if not folded:

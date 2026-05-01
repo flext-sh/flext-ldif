@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import (
-    Mapping,
     MutableMapping,
-    MutableSequence,
 )
 from typing import Annotated
 
@@ -17,18 +15,18 @@ class FlextLdifTypesBase:
 
     type Scalar = t.Primitives | None
     type MetadataInputValue = t.JsonValue
-    type MetadataInputMapping = Mapping[str, MetadataInputValue]
+    type MetadataInputMapping = t.MappingKV[str, MetadataInputValue]
     type MutableMetadataInputMapping = MutableMapping[str, MetadataInputValue]
     type MutableMetadataMapping = MutableMapping[str, t.JsonValue]
     type MetadataCarrierValue = MetadataInputValue
     type ValueType = Scalar | t.StrSequence
     type AttributeValue = str | bytes
     type MutableEntryAttributesDict = t.MutableStrSequenceMapping
-    type UnconvertedAttributeValue = str | MutableSequence[str] | bytes
+    type UnconvertedAttributeValue = str | t.MutableSequenceOf[str] | bytes
     type UnconvertedAttributes = MutableMapping[str, UnconvertedAttributeValue]
     type SchemaExtensionsMapping = MutableMapping[
         str,
-        MutableSequence[str] | str | bool | None,
+        t.MutableSequenceOf[str] | str | bool | None,
     ]
     type AttributeDict = t.StrSequenceMapping
     type DN = str

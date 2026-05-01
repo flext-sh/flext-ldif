@@ -7,7 +7,6 @@ import time
 from collections.abc import (
     Mapping,
     MutableMapping,
-    MutableSequence,
     Sequence,
 )
 from typing import (
@@ -392,7 +391,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _normalize_metadata_value(
-        value: t.JsonPayload | Mapping[str, t.JsonPayload] | None,
+        value: t.JsonPayload | t.MappingKV[str, t.JsonPayload] | None,
     ) -> t.JsonValue:
         """Normalize metadata value to proper type."""
         if value is None:
@@ -946,7 +945,7 @@ class FlextLdifConversion(
                     schema_item_kind = schema_field_kinds.get(attr_name.lower())
                     if schema_item_kind is None:
                         continue
-                    converted_values: MutableSequence[str] = []
+                    converted_values: t.MutableSequenceOf[str] = []
                     for value in values:
                         converted_value_result = self._convert_schema_entry_value(
                             source_schema_result.value,
@@ -1312,7 +1311,7 @@ class FlextLdifConversion(
                 )
                 continue
             if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-                normalized_sequence: MutableSequence[t.JsonPayload] = [
+                normalized_sequence: t.MutableSequenceOf[t.JsonPayload] = [
                     FlextLdifConversion._normalize_metadata_value(raw_item)
                     for raw_item in value
                 ]

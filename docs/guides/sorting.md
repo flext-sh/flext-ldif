@@ -79,7 +79,7 @@ sorted_entries = (
     .with_entries(my_entries)
     .with_strategy("hierarchy")
     .with_attribute_sorting(order=["cn", "sn", "mail"])
-    .build()  # Returns Sequence[Entry] directly
+    .build()  # Returns t.SequenceOf[Entry] directly
 )
 ```
 

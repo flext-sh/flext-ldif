@@ -5,22 +5,75 @@ from __future__ import annotations
 from collections.abc import (
     ItemsView,
     KeysView,
-    Mapping,
     MutableMapping,
-    MutableSequence,
-    Sequence,
     ValuesView,
 )
+from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_cli import m
+from flext_core import p
 
 if TYPE_CHECKING:
-    from flext_ldif import t
+    from flext_ldif import m as lm, t
 
 
 class FlextLdifProtocolsBase(Protocol):
     """Base LDIF protocols shared across utilities, services, and servers."""
+
+    @runtime_checkable
+    class LdifClient(Protocol):
+        """Protocol for LDIF clients that support CRUD operations."""
+
+        def migrate(
+            self,
+            input_dir: Path | None = None,
+            output_dir: Path | None = None,
+            source_server: str = "rfc",
+            target_server: str = "rfc",
+            options: lm.Ldif.MigrateOptions | None = None,
+        ) -> p.Result[lm.Ldif.MigrationPipelineResult]:
+            """Run the public LDIF migration pipeline."""
+            ...
+
+        def parse_ldif(
+            self,
+            value: str | Path,
+            *,
+            server_type: str | None = None,
+        ) -> p.Result[lm.Ldif.ParseResponse]:
+            """Parse LDIF content from text or file path."""
+            ...
+
+        def parse_ldif_file(
+            self,
+            path: Path,
+            server_type: str | None = None,
+            encoding: str = "utf-8",
+        ) -> p.Result[lm.Ldif.ParseResponse]:
+            """Parse LDIF content from a file path."""
+            ...
+
+        def write(
+            self,
+            entries: t.MutableSequenceOf[lm.Ldif.Entry] | lm.Ldif.ParseResponse,
+            *,
+            server_type: str | None = None,
+            format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
+        ) -> p.Result[lm.Ldif.WriteResponse]:
+            """Write canonical LDIF entries to text response."""
+            ...
+
+        def write_ldif_file(
+            self,
+            entries: t.MutableSequenceOf[lm.Ldif.Entry] | lm.Ldif.ParseResponse,
+            path: Path,
+            *,
+            server_type: str | None = None,
+            format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
+        ) -> p.Result[lm.Ldif.WriteResponse]:
+            """Write canonical LDIF entries to a file."""
+            ...
 
     @runtime_checkable
     class DynamicMetadata(Protocol):
@@ -54,7 +107,7 @@ class FlextLdifProtocolsBase(Protocol):
             """Convert metadata to a mutable dictionary."""
             ...
 
-        def model_dump(self) -> Mapping[str, t.JsonValue]:
+        def model_dump(self) -> t.MappingKV[str, t.JsonValue]:
             """Serialize metadata to a mapping."""
             ...
 
@@ -84,19 +137,19 @@ class FlextLdifProtocolsBase(Protocol):
         """Attribute container contract used by entry utilities."""
 
         @property
-        def attributes(self) -> MutableMapping[str, MutableSequence[str]]:
+        def attributes(self) -> MutableMapping[str, t.MutableSequenceOf[str]]:
             """Return the underlying attribute mapping."""
             ...
 
         def get(
             self,
             key: str,
-            default: MutableSequence[str] | None = None,
-        ) -> MutableSequence[str]:
+            default: t.MutableSequenceOf[str] | None = None,
+        ) -> t.MutableSequenceOf[str]:
             """Return attribute values with optional default."""
             ...
 
-        def items(self) -> MutableSequence[tuple[str, MutableSequence[str]]]:
+        def items(self) -> t.MutableSequenceOf[tuple[str, t.MutableSequenceOf[str]]]:
             """Return attribute items as a list of tuples."""
             ...
 
@@ -104,7 +157,7 @@ class FlextLdifProtocolsBase(Protocol):
             """Return attribute names view."""
             ...
 
-        def values(self) -> ValuesView[MutableSequence[str]]:
+        def values(self) -> ValuesView[t.MutableSequenceOf[str]]:
             """Return attribute value lists view."""
             ...
 
@@ -114,8 +167,8 @@ class FlextLdifProtocolsBase(Protocol):
 
         original_name: str
         target_name: str | None
-        original_values: MutableSequence[str]
-        target_values: MutableSequence[str] | None
+        original_values: t.MutableSequenceOf[str]
+        target_values: t.MutableSequenceOf[str] | None
         transformation_type: str
         reason: str
 
@@ -143,7 +196,7 @@ class FlextLdifProtocolsBase(Protocol):
 
         operation: str
         attribute: str
-        values: Sequence[FlextLdifProtocolsBase.ChangeOperationValue]
+        values: t.SequenceOf[FlextLdifProtocolsBase.ChangeOperationValue]
 
     @runtime_checkable
     class AclPermissions(Protocol):
@@ -179,7 +232,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
-        def attributes(self) -> MutableSequence[str]:
+        def attributes(self) -> t.MutableSequenceOf[str]:
             """Return target attribute names."""
             ...
 
@@ -202,17 +255,17 @@ class FlextLdifProtocolsBase(Protocol):
         """Validation result payload stored in metadata."""
 
         @property
-        def rfc_violations(self) -> MutableSequence[str]:
+        def rfc_violations(self) -> t.MutableSequenceOf[str]:
             """Return RFC violations."""
             ...
 
         @property
-        def errors(self) -> MutableSequence[str]:
+        def errors(self) -> t.MutableSequenceOf[str]:
             """Return validation errors."""
             ...
 
         @property
-        def warnings(self) -> MutableSequence[str]:
+        def warnings(self) -> t.MutableSequenceOf[str]:
             """Return validation warnings."""
             ...
 
@@ -283,7 +336,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
-        def field_order(self) -> MutableSequence[str]:
+        def field_order(self) -> t.MutableSequenceOf[str]:
             """Return original field order."""
             ...
 
@@ -312,14 +365,14 @@ class FlextLdifProtocolsBase(Protocol):
         was_rejected: bool
         rejection_category: str | None
         rejection_reason: str | None
-        attributes_added: MutableSequence[str]
-        attributes_removed: MutableSequence[str]
-        attributes_modified: MutableSequence[str]
-        attributes_filtered: MutableSequence[str]
-        quirks_applied: MutableSequence[str]
+        attributes_added: t.MutableSequenceOf[str]
+        attributes_removed: t.MutableSequenceOf[str]
+        attributes_modified: t.MutableSequenceOf[str]
+        attributes_filtered: t.MutableSequenceOf[str]
+        quirks_applied: t.MutableSequenceOf[str]
         dn_statistics: FlextLdifProtocolsBase.DNStatistics | None
-        errors: MutableSequence[str]
-        warnings: MutableSequence[str]
+        errors: t.MutableSequenceOf[str]
+        warnings: t.MutableSequenceOf[str]
 
     @runtime_checkable
     class QuirkMetadata(Protocol):
@@ -419,14 +472,14 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
-        def controls(self) -> Sequence[object]:
+        def controls(self) -> t.SequenceOf[object]:
             """Return parsed LDIF controls."""
             ...
 
         @property
         def change_operations(
             self,
-        ) -> Sequence[object]:
+        ) -> t.SequenceOf[object]:
             """Return parsed modify blocks."""
             ...
 
@@ -481,7 +534,7 @@ class FlextLdifProtocolsBase(Protocol):
         @property
         def events(
             self,
-        ) -> Sequence[
+        ) -> t.SequenceOf[
             FlextLdifProtocolsBase.ConversionEvent | FlextLdifProtocolsBase.DnEvent
         ]:
             """Return accumulated processing events."""
@@ -501,7 +554,7 @@ class FlextLdifProtocolsBase(Protocol):
         """Parsed LDIF batch response."""
 
         @property
-        def entries(self) -> Sequence[FlextLdifProtocolsBase.Entry]:
+        def entries(self) -> t.SequenceOf[FlextLdifProtocolsBase.Entry]:
             """Return parsed entries."""
             ...
 
@@ -544,7 +597,7 @@ class FlextLdifProtocolsBase(Protocol):
         """Migration pipeline result contract."""
 
         @property
-        def entries(self) -> Sequence[FlextLdifProtocolsBase.Entry]:
+        def entries(self) -> t.SequenceOf[FlextLdifProtocolsBase.Entry]:
             """Return migrated entries."""
             ...
 
@@ -563,7 +616,7 @@ class FlextLdifProtocolsBase(Protocol):
         """ACL extraction response payload."""
 
         @property
-        def acls(self) -> Sequence[FlextLdifProtocolsBase.Acl]:
+        def acls(self) -> t.SequenceOf[FlextLdifProtocolsBase.Acl]:
             """Return extracted ACLs."""
             ...
 
@@ -669,7 +722,7 @@ class FlextLdifProtocolsBase(Protocol):
         DETECTION_OBJECTCLASS_NAMES: frozenset[str] | None
         DETECTION_DN_MARKERS: frozenset[str] | None
         ACL_ATTRIBUTE_NAME: str | None
-        CATEGORIZATION_PRIORITY: MutableSequence[str]
+        CATEGORIZATION_PRIORITY: t.MutableSequenceOf[str]
         CATEGORY_OBJECTCLASSES: t.MutableFrozensetMapping
 
     @runtime_checkable
@@ -678,9 +731,9 @@ class FlextLdifProtocolsBase(Protocol):
 
         DETECTION_PATTERN: str
         DETECTION_WEIGHT: int
-        DETECTION_ATTRIBUTES: frozenset[str] | MutableSequence[str]
+        DETECTION_ATTRIBUTES: frozenset[str] | t.MutableSequenceOf[str]
         DETECTION_OID_PATTERN: str | None
-        DETECTION_OBJECTCLASS_NAMES: frozenset[str] | MutableSequence[str] | None
+        DETECTION_OBJECTCLASS_NAMES: frozenset[str] | t.MutableSequenceOf[str] | None
 
     @runtime_checkable
     class Predicate[T](Protocol):

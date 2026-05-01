@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import (
-    MutableSequence,
-)
 
 from flext_ldif import (
     FlextLdifServiceBase,
     m,
     r,
+    t,
     u,
 )
 
@@ -20,7 +18,7 @@ class FlextLdifStatistics(FlextLdifServiceBase):
 
     def calculate_for_entries(
         self,
-        entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
     ) -> r[m.Ldif.EntriesStatistics]:
         """Calculate general-purpose statistics for a list of Entry models."""
         normalized_entries = (

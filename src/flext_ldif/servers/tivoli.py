@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 import re
-from collections.abc import (
-    MutableSequence,
-)
 from typing import ClassVar, override
 
 from flext_ldif import (
@@ -270,7 +267,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 )
                 if acl_data.raw_acl:
                     return r[str].ok(acl_data.raw_acl)
-                parts: MutableSequence[str] = []
+                parts: t.MutableSequenceOf[str] = []
                 if acl_data.target and acl_data.target.target_dn:
                     parts.append(acl_data.target.target_dn)
                 if acl_data.subject and acl_data.subject.subject_value:
@@ -283,7 +280,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     "search": FlextLdifServersTivoli.Constants.PERMISSION_SEARCH,
                     "compare": FlextLdifServersTivoli.Constants.PERMISSION_COMPARE,
                 }
-                active_perms: MutableSequence[str] = []
+                active_perms: t.MutableSequenceOf[str] = []
                 if acl_data.permissions:
                     perms_dict = {
                         key: getattr(acl_data.permissions, key)
@@ -374,7 +371,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     **attributes,
                 }
                 for attr_name, attr_values in processed_attributes.items():
-                    processed_values: MutableSequence[str] = list(attr_values)
+                    processed_values: t.MutableSequenceOf[str] = list(attr_values)
                     processed_attributes[attr_name] = processed_values
                 processed_attributes[c.Ldif.QuirkMetadataKeys.SERVER_TYPE] = [
                     self._get_server_type(),

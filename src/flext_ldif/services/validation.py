@@ -3,32 +3,30 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import (
-    MutableSequence,
-)
 from typing import Annotated
 
 from flext_core import r
 from flext_ldif import (
-    FlextLdifServiceBase,
+    s,
+    t,
     u,
 )
 
 
 class FlextLdifValidation(
-    FlextLdifServiceBase,
+    s,
 ):
     """FlextLdifValidation class."""
 
     attribute_names: Annotated[
-        MutableSequence[str],
+        t.MutableSequenceOf[str],
         u.Field(
             default_factory=list,
             description="Attribute names to validate against RFC 4512",
         ),
     ] = u.Field(default_factory=list)
     objectclass_names: Annotated[
-        MutableSequence[str],
+        t.MutableSequenceOf[str],
         u.Field(
             default_factory=list,
             description="Object class names to validate against RFC 4512",

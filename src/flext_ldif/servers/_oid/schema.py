@@ -6,7 +6,6 @@ import struct
 from collections.abc import (
     Mapping,
     MutableMapping,
-    MutableSequence,
 )
 from typing import override
 
@@ -62,8 +61,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
     ) -> r[
         MutableMapping[
             str,
-            MutableSequence[m.Ldif.SchemaAttribute]
-            | MutableSequence[m.Ldif.SchemaObjectClass],
+            t.MutableSequenceOf[m.Ldif.SchemaAttribute]
+            | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
         ]
     ]:
         """Extract and parse all schema definitions from LDIF content."""
@@ -189,7 +188,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             updated_kind = self._normalize_auxiliary_typo(oc, original_format_str)
             normalized_must = self._normalize_attribute_names(oc.must)
             normalized_may = self._normalize_attribute_names(oc.may)
-            update_dict: MutableMapping[str, str | MutableSequence[str] | None] = {
+            update_dict: MutableMapping[str, str | t.MutableSequenceOf[str] | None] = {
                 k: v
                 for k, v in {
                     "sup": updated_sup,
@@ -216,8 +215,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     def _normalize_attribute_names(
         self,
-        attr_list: MutableSequence[str] | None,
-    ) -> MutableSequence[str] | None:
+        attr_list: t.MutableSequenceOf[str] | None,
+    ) -> t.MutableSequenceOf[str] | None:
         """Normalize attribute names using OID case mappings."""
         if not attr_list:
             return attr_list
@@ -255,7 +254,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 return None
 
     def _normalize_sup_from_model(self, oc_data: m.Ldif.SchemaObjectClass) -> str | (
-        MutableSequence[str] | None
+        t.MutableSequenceOf[str] | None
     ):
         """Normalize SUP from objectClass model."""
         if not oc_data.sup:

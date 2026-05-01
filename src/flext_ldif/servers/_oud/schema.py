@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import (
     MutableMapping,
-    MutableSequence,
 )
 from typing import override
 
@@ -57,8 +56,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
     ) -> r[
         MutableMapping[
             str,
-            MutableSequence[m.Ldif.SchemaAttribute]
-            | MutableSequence[m.Ldif.SchemaObjectClass],
+            t.MutableSequenceOf[m.Ldif.SchemaAttribute]
+            | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
         ]
     ]:
         """Extract and parse all schema definitions from LDIF content."""
@@ -143,9 +142,9 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
     def _collect_attribute_extensions(
         self,
         attr: m.Ldif.SchemaAttribute,
-    ) -> MutableSequence[str]:
+    ) -> t.MutableSequenceOf[str]:
         """Collect OUD X-* extensions from attribute."""
-        extensions: MutableSequence[str] = []
+        extensions: t.MutableSequenceOf[str] = []
         if attr.x_origin:
             extensions.append("X-ORIGIN")
         if attr.x_file_ref:

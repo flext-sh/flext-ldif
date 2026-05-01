@@ -2,35 +2,33 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-)
 from pathlib import Path
 
 from flext_ldif import (
-    FlextLdifServiceBase,
     m,
     r,
+    s,
+    t,
     u,
 )
 
 
-class FlextLdifWriter(FlextLdifServiceBase):
+class FlextLdifWriter(s):
     """LDIF writer orchestrator over the server quirk registry."""
 
     @staticmethod
     def _coerce_entries(
-        entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
-    ) -> MutableSequence[m.Ldif.Entry]:
+        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+    ) -> t.MutableSequenceOf[m.Ldif.Entry]:
         """Keep write inputs on canonical Entry models."""
         if isinstance(entries, m.Ldif.ParseResponse):
             return entries.entries
-        as_entries: MutableSequence[m.Ldif.Entry] = u.Ldif.as_entries(entries)
+        as_entries: t.MutableSequenceOf[m.Ldif.Entry] = u.Ldif.as_entries(entries)
         return as_entries
 
     def write(
         self,
-        entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
         *,
         server_type: str | None = None,
         format_options: m.Ldif.WriteFormatOptions | None = None,
@@ -59,7 +57,7 @@ class FlextLdifWriter(FlextLdifServiceBase):
 
     def write_ldif_file(
         self,
-        entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
         path: Path,
         *,
         server_type: str | None = None,
@@ -105,7 +103,7 @@ class FlextLdifWriter(FlextLdifServiceBase):
 
     def write_to_string(
         self,
-        entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
         server_type: str | None = None,
         format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> r[str]:

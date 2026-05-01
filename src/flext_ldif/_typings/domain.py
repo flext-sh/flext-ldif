@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-)
-
-from flext_ldif import FlextLdifProtocols as p
+from flext_core import t
+from flext_ldif import p
 
 
 class FlextLdifTypesDomain:
@@ -15,13 +12,13 @@ class FlextLdifTypesDomain:
     type AclPayload = p.Ldif.Acl | str
     type EntryPayload = p.Ldif.Entry | str
     type EntryLike = p.Ldif.Entry
-    type EntrySequence = MutableSequence[p.Ldif.Entry]
+    type EntrySequence = t.MutableSequenceOf[p.Ldif.Entry]
     type EntryOrEntries = p.Ldif.Entry | EntrySequence
     type SchemaAttributeLike = p.Ldif.SchemaAttribute
     type SchemaObjectClassLike = p.Ldif.SchemaObjectClass
     type SchemaItem = SchemaAttributeLike | SchemaObjectClassLike
     type AclLike = p.Ldif.Acl
-    type AclSequence = MutableSequence[AclLike]
+    type AclSequence = t.MutableSequenceOf[AclLike]
     type ConvertedModel = EntryLike | SchemaItem | AclLike
     type SchemaConversionValue = SchemaItem | str
     type EventType = p.Ldif.ConversionEvent | p.Ldif.DnEvent

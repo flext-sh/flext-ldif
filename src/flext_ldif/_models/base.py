@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-)
 from typing import Annotated
 
 from flext_core import m, u
-from flext_ldif import FlextLdifShared, c
+from flext_ldif import FlextLdifShared, c, t
 
 
 class FlextLdifModelsBases:
@@ -75,7 +72,7 @@ class FlextLdifModelsBases:
             ),
         ] = c.Ldif.ServerTypes.RFC
         validation_violations: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(
                 default_factory=list,
                 description="Validation violations recorded while normalizing ACL data.",

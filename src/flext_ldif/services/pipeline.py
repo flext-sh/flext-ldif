@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-)
 from typing import Annotated, Self, override
 
 from flext_ldif import (
@@ -18,7 +15,9 @@ from flext_ldif import (
 )
 
 
-class FlextLdifProcessingPipeline(FlextLdifServiceBase[MutableSequence[m.Ldif.Entry]]):
+class FlextLdifProcessingPipeline(
+    FlextLdifServiceBase[t.MutableSequenceOf[m.Ldif.Entry]]
+):
     """Full processing pipeline with configuration."""
 
     _DEFAULT_CASE_FOLD: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.NONE
@@ -34,7 +33,7 @@ class FlextLdifProcessingPipeline(FlextLdifServiceBase[MutableSequence[m.Ldif.En
         ),
     ]
     entries_input: Annotated[
-        MutableSequence[m.Ldif.Entry] | None,
+        t.MutableSequenceOf[m.Ldif.Entry] | None,
         u.Field(
             default=None,
             exclude=True,
@@ -85,13 +84,13 @@ class FlextLdifProcessingPipeline(FlextLdifServiceBase[MutableSequence[m.Ldif.En
     @override
     def execute(
         self,
-        entries: MutableSequence[m.Ldif.Entry] | None = None,
-    ) -> r[MutableSequence[m.Ldif.Entry]]:
+        entries: t.MutableSequenceOf[m.Ldif.Entry] | None = None,
+    ) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Execute the processing pipeline."""
         batch = entries if entries is not None else self.entries_input
         if batch is None:
-            return r[MutableSequence[m.Ldif.Entry]].fail("No entries provided")
-        return r[MutableSequence[m.Ldif.Entry]].from_result(
+            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail("No entries provided")
+        return r[t.MutableSequenceOf[m.Ldif.Entry]].from_result(
             self._pipeline.execute(batch),
         )
 

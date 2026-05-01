@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import (
     Callable,
-    MutableSequence,
 )
 
 from flext_ldif import t
@@ -28,16 +27,20 @@ class FlextLdifUtilitiesCollectionLdif:
     @classmethod
     def normalize_ldif(
         cls,
-        value: str | MutableSequence[str] | tuple[str, ...] | set[str] | frozenset[str],
+        value: str
+        | t.MutableSequenceOf[str]
+        | tuple[str, ...]
+        | set[str]
+        | frozenset[str],
         other: str
-        | MutableSequence[str]
+        | t.MutableSequenceOf[str]
         | tuple[str, ...]
         | set[str]
         | frozenset[str]
         | None = None,
         *,
         case: str = "lower",
-    ) -> str | MutableSequence[str] | set[str] | bool:
+    ) -> str | t.MutableSequenceOf[str] | set[str] | bool:
         """Normalize for LDIF comparison (mnemonic: nz)."""
 
         def normalize_single(v: str) -> str:

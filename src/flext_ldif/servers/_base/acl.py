@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 import re
-from collections.abc import (
-    MutableSequence,
-)
 from typing import Annotated, ClassVar, Self, override
 
 from flext_ldif import (
@@ -63,7 +60,7 @@ class FlextLdifServersBaseSchemaAcl(
 
     RFC_ACL_ATTRIBUTES: ClassVar[tuple[str, ...]] = c.Ldif.RFC_ACL_ATTRIBUTES
 
-    def resolve_acl_attributes(self) -> MutableSequence[str]:
+    def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
         """Get ACL attributes for this server."""
         return list(self.RFC_ACL_ATTRIBUTES)
 

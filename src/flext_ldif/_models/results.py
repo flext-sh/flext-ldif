@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-)
 from typing import Annotated, Self
 
 from flext_cli import m, u
@@ -161,7 +158,7 @@ class FlextLdifModelsResults:
             default_factory=mc.DynamicCounts,
             description="Counts of entries rejected by reason category",
         )
-        events: MutableSequence[me.ConversionEvent | me.DnEvent] = u.Field(
+        events: t.MutableSequenceOf[me.ConversionEvent | me.DnEvent] = u.Field(
             default_factory=lambda: list[me.ConversionEvent | me.DnEvent](),
             description="Domain events emitted during processing",
         )
@@ -292,7 +289,7 @@ class FlextLdifModelsResults:
             ),
             description="Schema content after migration transformation",
         )
-        entries: MutableSequence[mde.Entry] = u.Field(
+        entries: t.MutableSequenceOf[mde.Entry] = u.Field(
             default_factory=list,
             description="Migrated LDIF entries",
         )
@@ -300,7 +297,7 @@ class FlextLdifModelsResults:
             default_factory=lambda: FlextLdifModelsResults.Statistics(),
             description="Migration processing statistics",
         )
-        output_files: MutableSequence[str] = u.Field(
+        output_files: t.MutableSequenceOf[str] = u.Field(
             default_factory=list,
             description="Output file paths produced by the migration pipeline.",
         )
@@ -340,7 +337,7 @@ class FlextLdifModelsResults:
     class ClientStatus(m.Value):
         status: Annotated[str, u.Field(description="Current client operational status")]
         services: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(description="Available service names"),
         ]
         settings: Annotated[
@@ -361,7 +358,7 @@ class FlextLdifModelsResults:
             description="Entries that failed validation"
         )
         errors: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(description="Validation error messages"),
         ]
 
@@ -379,7 +376,7 @@ class FlextLdifModelsResults:
             u.Field(description="Distribution of objectClass values across entries"),
         ]
         patterns_detected: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(description="Entry patterns identified during analysis"),
         ]
 
@@ -401,7 +398,7 @@ class FlextLdifModelsResults:
             u.Field(description="Per-server-type detection scores"),
         ]
         patterns_found: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(description="Server-identifying patterns found in LDIF"),
         ]
         is_confident: Annotated[
@@ -480,8 +477,8 @@ class FlextLdifModelsResults:
             except KeyError:
                 return default
 
-        def items(self) -> MutableSequence[tuple[str, t.Ldif.Scalar]]:
-            results: MutableSequence[tuple[str, t.Ldif.Scalar]] = []
+        def items(self) -> t.MutableSequenceOf[tuple[str, t.Ldif.Scalar]]:
+            results: t.MutableSequenceOf[tuple[str, t.Ldif.Scalar]] = []
             for key in self.model_fields_set:
                 val = getattr(self, key)
                 if isinstance(val, t.PRIMITIVES_TYPES):
@@ -492,7 +489,7 @@ class FlextLdifModelsResults:
                     results.append((key, str(val)))
             return results
 
-        def keys(self) -> MutableSequence[str]:
+        def keys(self) -> t.MutableSequenceOf[str]:
             return list(self.model_fields_set)
 
         def _resolve_key(self, key: str) -> t.JsonValue:
@@ -519,7 +516,7 @@ class FlextLdifModelsResults:
             u.Field(description="RFC compliance level of the schema service"),
         ]
         operations: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(description="Supported schema operations"),
         ]
 
@@ -547,7 +544,7 @@ class FlextLdifModelsResults:
             str, u.Field(description="Current service operational status")
         ]
         capabilities: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(description="Supported statistics capabilities"),
         ]
         version: Annotated[str, u.Field(description="Service version identifier")]
@@ -562,7 +559,7 @@ class FlextLdifModelsResults:
             u.Field(description="RFC compliance level of the validation service"),
         ]
         validation_types: Annotated[
-            MutableSequence[str],
+            t.MutableSequenceOf[str],
             u.Field(description="Supported validation types"),
         ]
 
@@ -582,7 +579,7 @@ class FlextLdifModelsResults:
 
     class ParseResponse(Response):
         entries: Annotated[
-            MutableSequence[mde.Entry],
+            t.MutableSequenceOf[mde.Entry],
             u.Field(
                 description="Parsed LDIF entries",
             ),
@@ -594,7 +591,7 @@ class FlextLdifModelsResults:
 
     class AclResponse(Response):
         acls: Annotated[
-            MutableSequence[mde.Acl],
+            t.MutableSequenceOf[mde.Acl],
             u.Field(
                 description="Extracted ACL models",
             ),

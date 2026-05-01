@@ -7,7 +7,6 @@ import re
 from collections.abc import (
     Mapping,
     MutableMapping,
-    MutableSequence,
 )
 
 from flext_core import u
@@ -98,8 +97,8 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def build_rfc_entry_metadata(
         dn: str,
-        raw_record_lines: MutableSequence[str],
-        comments: MutableSequence[str],
+        raw_record_lines: t.MutableSequenceOf[str],
+        comments: t.MutableSequenceOf[str],
     ) -> m.Ldif.QuirkMetadata:
         """Build RFC metadata for a parsed LDIF record."""
         metadata = m.Ldif.QuirkMetadata.create_for("rfc")
@@ -141,7 +140,7 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def finalize_change_operation(
         current_op: m.Ldif.ChangeOperation | None,
-        change_operations: MutableSequence[m.Ldif.ChangeOperation],
+        change_operations: t.MutableSequenceOf[m.Ldif.ChangeOperation],
     ) -> None:
         """Append a pending modify block when present."""
         if current_op is not None:
@@ -149,16 +148,16 @@ class FlextLdifUtilitiesParser:
 
     @staticmethod
     def parse_ldif_record(
-        lines: MutableSequence[str],
+        lines: t.MutableSequenceOf[str],
     ) -> r[m.Ldif.Entry]:
         """Parse a single unfolded LDIF record into Entry."""
         dn = ""
         attrs: t.MutableStrSequenceMapping = {}
         attribute_metadata: MutableMapping[str, t.MutableAttributeMapping] = {}
-        comments: MutableSequence[str] = []
-        raw_record_lines: MutableSequence[str] = []
-        controls: MutableSequence[m.Ldif.Control] = []
-        change_operations: MutableSequence[m.Ldif.ChangeOperation] = []
+        comments: t.MutableSequenceOf[str] = []
+        raw_record_lines: t.MutableSequenceOf[str] = []
+        controls: t.MutableSequenceOf[m.Ldif.Control] = []
+        change_operations: t.MutableSequenceOf[m.Ldif.ChangeOperation] = []
         current_change_operation: m.Ldif.ChangeOperation | None = None
         changetype: c.Ldif.LdifChangeType | None = None
         record_kind = c.Ldif.RecordKind.CONTENT
@@ -287,11 +286,13 @@ class FlextLdifUtilitiesParser:
             return r[m.Ldif.Entry].fail(f"Failed to create entry {dn}: {exc}")
 
     @staticmethod
-    def split_ldif_records(ldif_content: str) -> MutableSequence[MutableSequence[str]]:
+    def split_ldif_records(
+        ldif_content: str,
+    ) -> t.MutableSequenceOf[t.MutableSequenceOf[str]]:
         """Split unfolded LDIF content into record blocks."""
         unfolded_lines = FlextLdifUtilitiesParser.unfold_lines(ldif_content)
-        records: MutableSequence[MutableSequence[str]] = []
-        current_record: MutableSequence[str] = []
+        records: t.MutableSequenceOf[t.MutableSequenceOf[str]] = []
+        current_record: t.MutableSequenceOf[str] = []
         for raw_line in unfolded_lines:
             line = raw_line.rstrip("\r")
             if not current_record and line.lower().startswith("version:"):
@@ -313,10 +314,10 @@ class FlextLdifUtilitiesParser:
         """Extract extension information from parsed metadata."""
 
         def _as_str_list(
-            value: MutableSequence[t.JsonValue] | t.JsonValue | None,
-        ) -> MutableSequence[str] | None:
+            value: t.MutableSequenceOf[t.JsonValue] | t.JsonValue | None,
+        ) -> t.MutableSequenceOf[str] | None:
             if isinstance(value, list):
-                normalized: MutableSequence[str] = []
+                normalized: t.MutableSequenceOf[str] = []
                 for item in value:
                     if not isinstance(item, str):
                         return None
@@ -324,7 +325,7 @@ class FlextLdifUtilitiesParser:
                 return normalized
             return None
 
-        result: Mapping[str, t.JsonValue] | t.JsonValue | None = metadata.get(
+        result: t.MappingKV[str, t.JsonValue] | t.JsonValue | None = metadata.get(
             "extensions"
         )
         if not isinstance(result, Mapping):
@@ -422,9 +423,9 @@ class FlextLdifUtilitiesParser:
         return r[tuple[str, str, bool]].ok((attr_name, attr_value, is_base64))
 
     @staticmethod
-    def unfold_lines(ldif_content: str) -> MutableSequence[str]:
+    def unfold_lines(ldif_content: str) -> t.MutableSequenceOf[str]:
         """Unfold LDIF lines folded across multiple lines per RFC 2849 §3."""
-        lines: MutableSequence[str] = []
+        lines: t.MutableSequenceOf[str] = []
         current_line: str | None = None
         for raw_line in ldif_content.split(c.Ldif.LINE_SEPARATOR):
             if (

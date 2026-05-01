@@ -9,7 +9,6 @@ from __future__ import annotations
 from collections.abc import (
     Iterator,
     MutableMapping,
-    MutableSequence,
 )
 from typing import Annotated, ClassVar, override
 
@@ -77,7 +76,7 @@ class FlextLdifModelsCollections:
                 return self._to_count(extra[key])
             return default
 
-        def items(self) -> MutableSequence[tuple[str, int]]:
+        def items(self) -> t.MutableSequenceOf[tuple[str, int]]:
             extra = self._extra()
             return [(k, self._to_count(v)) for k, v in extra.items()]
 
@@ -92,11 +91,11 @@ class FlextLdifModelsCollections:
 
     class SchemaContent(m.FrozenModel):
         attributes: Annotated[
-            MutableSequence[mde.SchemaAttribute],
+            t.MutableSequenceOf[mde.SchemaAttribute],
             u.Field(description="Schema attribute definitions extracted from LDIF"),
         ]
         object_classes: Annotated[
-            MutableSequence[mde.SchemaObjectClass],
+            t.MutableSequenceOf[mde.SchemaObjectClass],
             u.Field(description="Schema object class definitions extracted from LDIF"),
         ]
 
@@ -134,7 +133,7 @@ class FlextLdifModelsCollections:
 
     class FlexibleCategories(m.DynamicModel):
         categories: Annotated[
-            MutableMapping[str, MutableSequence[mde.Entry]],
+            MutableMapping[str, t.MutableSequenceOf[mde.Entry]],
             u.Field(description="Category name to grouped LDIF entries mapping."),
         ] = u.Field(default_factory=dict)
 
@@ -153,7 +152,7 @@ class FlextLdifModelsCollections:
         def __getitem__(
             self,
             category: str,
-        ) -> MutableSequence[mde.Entry]:
+        ) -> t.MutableSequenceOf[mde.Entry]:
             key = category
             if key not in self.categories:
                 self.categories[key] = []
@@ -162,14 +161,14 @@ class FlextLdifModelsCollections:
         def __setitem__(
             self,
             category: str,
-            entries: MutableSequence[mde.Entry],
+            entries: t.MutableSequenceOf[mde.Entry],
         ) -> None:
             self.categories[category] = list(entries)
 
         def add_entries(
             self,
             category: str,
-            entries: MutableSequence[mde.Entry],
+            entries: t.MutableSequenceOf[mde.Entry],
         ) -> None:
             key = category
             existing = self.categories.get(key)
@@ -184,7 +183,7 @@ class FlextLdifModelsCollections:
 
         def items(
             self,
-        ) -> Iterator[tuple[str, MutableSequence[mde.Entry]]]:
+        ) -> Iterator[tuple[str, t.MutableSequenceOf[mde.Entry]]]:
             yield from self.categories.items()
 
         def keys(self) -> Iterator[str]:
@@ -193,8 +192,8 @@ class FlextLdifModelsCollections:
         def get(
             self,
             category: str,
-            default: MutableSequence[mde.Entry] | None = None,
-        ) -> MutableSequence[mde.Entry]:
+            default: t.MutableSequenceOf[mde.Entry] | None = None,
+        ) -> t.MutableSequenceOf[mde.Entry]:
             entries = self.categories.get(category)
             if entries is not None:
                 return entries
@@ -202,7 +201,7 @@ class FlextLdifModelsCollections:
 
         def values(
             self,
-        ) -> Iterator[MutableSequence[mde.Entry]]:
+        ) -> Iterator[t.MutableSequenceOf[mde.Entry]]:
             yield from self.categories.values()
 
 

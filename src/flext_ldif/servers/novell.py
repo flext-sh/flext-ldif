@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 import re
-from collections.abc import (
-    MutableSequence,
-)
 from typing import ClassVar, override
 
 from flext_ldif import FlextLdifServersRfc, c, m, r, t, u
@@ -220,7 +217,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         def _build_novell_permissions_from_rights(
             self,
-            rights: MutableSequence[str],
+            rights: t.MutableSequenceOf[str],
             permission_name_map: t.MutableStrMapping,
         ) -> t.MutableBoolMapping:
             """Build AclPermissions dict from parsed rights list."""
@@ -283,12 +280,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     "S": ["supervisor"],
                     "E": ["entry"],
                 }
-                rights: MutableSequence[str] = []
+                rights: t.MutableSequenceOf[str] = []
                 for char in rights_str:
                     char_upper = char.upper()
                     if char_upper in char_mapping:
                         rights.extend(char_mapping[char_upper])
-                attributes: MutableSequence[str] = []
+                attributes: t.MutableSequenceOf[str] = []
                 for right_segment in rights:
                     segment_str = right_segment.strip()
                     if segment_str and ":" in segment_str:
@@ -344,7 +341,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 )
                 if acl_data.raw_acl:
                     return r[str].ok(acl_data.raw_acl)
-                parts: MutableSequence[str] = []
+                parts: t.MutableSequenceOf[str] = []
                 if acl_data.target and acl_data.target.target_dn:
                     parts.append(acl_data.target.target_dn)
                 if acl_data.subject and acl_data.subject.subject_value:
@@ -357,7 +354,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     "search": c.Ldif.RfcAclPermission.SEARCH,
                     "compare": c.Ldif.RfcAclPermission.COMPARE,
                 }
-                active_perms: MutableSequence[str] = []
+                active_perms: t.MutableSequenceOf[str] = []
                 if acl_data.permissions:
                     perms_dict = {
                         key: getattr(acl_data.permissions, key)
@@ -429,7 +426,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
                 processed_attributes: t.MutableStrSequenceMapping = {}
                 for attr_name, attr_values in attributes.items():
-                    processed_values: MutableSequence[str] = list(attr_values)
+                    processed_values: t.MutableSequenceOf[str] = list(attr_values)
                     processed_attributes[attr_name] = processed_values
                 processed_attributes[c.Ldif.QuirkMetadataKeys.SERVER_TYPE] = [
                     self._get_server_type(),

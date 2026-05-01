@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from collections.abc import (
     MutableSequence,
-    Sequence,
 )
 from pathlib import Path
 
@@ -38,7 +37,7 @@ def intelligent_schema_building() -> r[MutableSequence[m.Ldif.Entry]]:
     )
     if schema_root is not None:
         schema_entries.append(schema_root)
-    attribute_types: Sequence[tuple[str, str, str, bool]] = [
+    attribute_types: t.SequenceOf[tuple[str, str, str, bool]] = [
         ("cn", "Common Name", "1.3.6.1.4.1.1466.115.121.1.15", False),
         ("sn", "Surname", "1.3.6.1.4.1.1466.115.121.1.15", False),
         ("mail", "Email Address", "1.3.6.1.4.1.1466.115.121.1.26", False),
@@ -58,7 +57,7 @@ def intelligent_schema_building() -> r[MutableSequence[m.Ldif.Entry]]:
         )
         if entry is not None:
             schema_entries.append(entry)
-    object_classes: Sequence[tuple[str, str, str, list[str], list[str]]] = [
+    object_classes: t.SequenceOf[tuple[str, str, str, list[str], list[str]]] = [
         (
             "person",
             "Person object class",
@@ -125,7 +124,7 @@ def parallel_schema_validation() -> r[t.JsonMapping]:
         entry_result = m.Ldif.Entry.create(dn=dn, attributes=attrs)
         if entry_result.success:
             test_entries.append(entry_result.unwrap())
-    invalid_scenarios: Sequence[tuple[str, t.MutableAttributeMapping]] = [
+    invalid_scenarios: t.SequenceOf[tuple[str, t.MutableAttributeMapping]] = [
         (
             "cn=Invalid Person,ou=People,dc=example,dc=com",
             {"objectClass": ["person"], "cn": ["Invalid Person"]},
@@ -254,7 +253,7 @@ def batch_schema_operations() -> r[t.JsonMapping]:
     api = ldif()
     schema_batches: list[tuple[str, list[m.Ldif.Entry]]] = []
     core_attrs: list[m.Ldif.Entry] = []
-    core_attribute_definitions: Sequence[tuple[str, str, str, bool]] = [
+    core_attribute_definitions: t.SequenceOf[tuple[str, str, str, bool]] = [
         ("cn", "Common Name", "1.3.6.1.4.1.1466.115.121.1.15", False),
         ("sn", "Surname", "1.3.6.1.4.1.1466.115.121.1.15", False),
         ("mail", "Email Address", "1.3.6.1.4.1.1466.115.121.1.26", False),
@@ -275,7 +274,7 @@ def batch_schema_operations() -> r[t.JsonMapping]:
             core_attrs.append(attr_result.unwrap())
     schema_batches.append(("core_attributes", core_attrs))
     object_classes: list[m.Ldif.Entry] = []
-    oc_definitions: Sequence[tuple[str, str, str, list[str], list[str]]] = [
+    oc_definitions: t.SequenceOf[tuple[str, str, str, list[str], list[str]]] = [
         ("person", "Person", "top", ["cn", "sn"], ["mail", "telephoneNumber"]),
         (
             "inetOrgPerson",

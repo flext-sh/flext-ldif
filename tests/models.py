@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    Sequence,
-)
 from pathlib import Path
 from typing import Annotated, ClassVar
 
@@ -137,7 +134,7 @@ class TestsFlextLdifModels(FlextTestsModels, m):
             server_class: Annotated[type, u.Field(description="Server class")]
             schema_class: Annotated[type, u.Field(description="Schema class")]
             fixture_servers: Annotated[
-                Sequence[t.Tests.FixtureServer],
+                t.SequenceOf[t.Tests.FixtureServer],
                 u.Field(description="Servers covered by the implementation"),
             ] = ()
 

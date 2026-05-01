@@ -4,9 +4,6 @@ from __future__ import annotations
 
 import re
 import sys
-from collections.abc import (
-    MutableSequence,
-)
 from typing import TypeIs
 
 from flext_ldif import (
@@ -126,7 +123,7 @@ class FlextLdifUtilitiesServer:
         return None
 
     @staticmethod
-    def get_all_server_types() -> MutableSequence[str]:
+    def get_all_server_types() -> t.MutableSequenceOf[str]:
         """Get all supported server type values."""
         return [s.value for s in c.Ldif.ServerTypes.__members__.values()]
 
